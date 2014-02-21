@@ -18,6 +18,7 @@
 with GPS.Editors; use GPS.Editors;
 with GPS.Kernel; use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
 
 package body Completion.Python is
 
@@ -32,6 +33,106 @@ package body Completion.Python is
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Editor_Location'Class;
    --  Return the current location
+
+   function Object_To_Proposal
+     (Resolver : access Completion_Python;
+      Object   : Class_Instance)
+      return Simple_Python_Completion_Proposal;
+   --  Return a completion proposal, assuming Object is a CompletionProposal
+
+   ----------------------
+   -- Lazy computation --
+   ----------------------
+
+   --  The following implements a virtual list binding to a python object
+   --  which is capable of computing lazily a list of completion proposals.
+
+   type Python_Component is
+     new Completion_List_Pckg.Virtual_List_Component
+   with record
+      Resolver : access Completion_Python;
+      Object   : Class_Instance;
+   end record;
+
+   type Python_Iterator is
+     new Completion_List_Pckg.Virtual_List_Component_Iterator
+   with record
+      Resolver : access Completion_Python;
+      Object   : Class_Instance;
+   end record;
+
+   overriding function First (List : Python_Component)
+      return Completion_List_Pckg.Virtual_List_Component_Iterator'Class;
+   overriding function At_End (It : Python_Iterator) return Boolean;
+   overriding procedure Next (It : in out Python_Iterator);
+   overriding function Get
+     (It : Python_Iterator) return Completion_Proposal'Class;
+
+   -----------
+   -- First --
+   -----------
+
+   overriding function First
+     (List : Python_Component)
+      return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
+   is
+      Sub    : constant Subprogram_Type := Get_Method
+        (List.Object, "_ada_first");
+      Script : constant Scripting_Language  := Get_Script (Sub.all);
+      Args   : constant Callback_Data'Class := Create (Script, 0);
+
+      Iterator : Python_Iterator;
+   begin
+      Iterator.Resolver := List.Resolver;
+      Iterator.Object := Execute (Sub, Args);
+
+      return Iterator;
+   end First;
+
+   ------------
+   -- At_End --
+   ------------
+
+   overriding function At_End (It : Python_Iterator) return Boolean is
+      Sub    : constant Subprogram_Type := Get_Method
+        (It.Object, "_ada_at_end");
+      Script : constant Scripting_Language  := Get_Script (Sub.all);
+      Args   : constant Callback_Data'Class := Create (Script, 0);
+   begin
+      return Execute (Sub, Args);
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next (It : in out Python_Iterator) is
+      Sub     : constant Subprogram_Type := Get_Method
+        (It.Object, "_ada_next");
+      Script  : constant Scripting_Language  := Get_Script (Sub.all);
+      Args    : constant Callback_Data'Class := Create (Script, 0);
+      Ignored : Any_Type := Execute (Sub, Args);
+   begin
+      null;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   overriding function Get
+     (It : Python_Iterator) return Completion_Proposal'Class
+   is
+      Sub    : constant Subprogram_Type := Get_Method
+        (It.Object, "_ada_get");
+      Script : constant Scripting_Language  := Get_Script (Sub.all);
+      Args   : constant Callback_Data'Class := Create (Script, 0);
+      Object : Class_Instance;
+
+   begin
+      Object := Execute (Sub, Args);
+      return Object_To_Proposal (It.Resolver, Object);
+   end Get;
 
    ----------------------
    -- Current_Location --
@@ -74,6 +175,33 @@ package body Completion.Python is
       return Proposal;
    end Create_Simple_Proposal;
 
+   ------------------------
+   -- Object_To_Proposal --
+   ------------------------
+
+   function Object_To_Proposal
+     (Resolver : access Completion_Python;
+      Object   : Class_Instance)
+      return Simple_Python_Completion_Proposal
+   is
+      Sub      : constant Subprogram_Type     :=
+        Get_Method (Object, "get_data_as_list");
+      Script   : constant Scripting_Language  := Get_Script (Sub.all);
+      Proposal : Simple_Python_Completion_Proposal;
+      Args     : constant Callback_Data'Class := Create (Script, 0);
+      Fields   : constant List_Instance       := Execute (Sub, Args);
+   begin
+      Proposal := Create_Simple_Proposal
+        (Resolver,
+         Cat_Custom,
+         Nth_Arg (Fields, 1),
+         Nth_Arg (Fields, 2),
+         Nth_Arg (Fields, 3),
+         Nth_Arg (Fields, 4),
+         Nth_Arg (Fields, 5));
+      return Proposal;
+   end Object_To_Proposal;
+
    -------------------------
    -- Get_Completion_Root --
    -------------------------
@@ -86,49 +214,21 @@ package body Completion.Python is
    is
       pragma Unreferenced (Offset);
 
-      List      : Completion_List_Extensive_Pckg.Extensive_List_Pckg.List;
-      Proposal  : Simple_Python_Completion_Proposal;
-      Sub       : Subprogram_Type := Get_Method
-        (Resolver.Class, "get_completions");
+      Sub       : constant Subprogram_Type := Get_Method
+        (Resolver.Object, "_ada_get_completions");
       Script    : constant Scripting_Language  := Get_Script (Sub.all);
       Args      : Callback_Data'Class := Create (Script, 2);
-      P         : Class_Instance;
 
       Loc : constant Editor_Location'Class := Current_Location
         (Get_Kernel (Script), Context.File);
 
+      Component : Python_Component;
    begin
-      Set_Nth_Arg (Args, 1, Resolver.Class);
+      Set_Nth_Arg (Args, 1, Resolver.Object);
       Set_Nth_Arg (Args, 2, Create_Instance (Loc, Script));
 
-      declare
-         Proposals : constant List_Instance := Execute (Sub, Args);
-      begin
-         for J in 1 .. Proposals.Number_Of_Arguments loop
-            P   := Nth_Arg (Proposals, J);
-
-            Sub := Get_Method (P, "get_data_as_list");
-            declare
-               Args   : constant Callback_Data'Class := Create (Script, 0);
-               Fields : constant List_Instance       := Execute (Sub, Args);
-            begin
-               Proposal := Create_Simple_Proposal
-                 (Resolver,
-                  Cat_Custom,
-                  Nth_Arg (Fields, 1),
-                  Nth_Arg (Fields, 2),
-                  Nth_Arg (Fields, 3),
-                  Nth_Arg (Fields, 4),
-                  Nth_Arg (Fields, 5));
-            end;
-
-            Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
-              (List, Proposal);
-         end loop;
-      end;
-
-      Completion_List_Pckg.Append
-        (Result.List, Completion_List_Extensive_Pckg.To_Extensive_List (List));
+      Component := (Resolver, Execute (Sub, Args));
+      Completion_List_Pckg.Append (Result.List, Component);
    end Get_Completion_Root;
 
    ------------
@@ -137,12 +237,9 @@ package body Completion.Python is
 
    overriding function Get_Id
      (Resolver : Completion_Python)
-      return String
-   is
-      pragma Unreferenced (Resolver);
+      return String is
    begin
-      return "python";
-      --  ??? implement a system to make this unique per resolver
+      return "python" & Resolver.Id'Img;
    end Get_Id;
 
    ---------------------
@@ -210,11 +307,17 @@ package body Completion.Python is
    -- Create --
    ------------
 
+   Counter : Positive := 1;
+   --  A counter to implement unicity of the identifiers for the registered
+   --  resolvers. Positive overflow? unlikely.
+
    function Create (Class : Class_Instance) return Completion_Python_Access is
       R : Completion_Python_Access;
    begin
       R := new Completion_Python;
-      R.Class := Class;
+      R.Object := Class;
+      R.Id     := Counter;
+      Counter := Counter + 1;
       return R;
    end Create;
 

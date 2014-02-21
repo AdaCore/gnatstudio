@@ -55,7 +55,8 @@ package Completion.Python is
 private
 
    type Completion_Python is new Completion_Resolver with record
-      Class : Class_Instance;
+      Object : Class_Instance;
+      Id     : Positive;
    end record;
 
    type Simple_Python_Completion_Proposal is new Simple_Completion_Proposal
