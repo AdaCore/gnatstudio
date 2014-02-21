@@ -42,7 +42,6 @@ returns a list of completion proposals, and one which is a function
             pass
 
         def get_completions(self, loc):
-            """ complete with start_number """
             current = 1
             while current < 1000:
                 yield CompletionProposal(
