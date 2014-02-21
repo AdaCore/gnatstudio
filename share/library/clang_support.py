@@ -8,6 +8,7 @@ from clang import cindex as ci
 import GPS
 from modules import Module
 from text_utils import forward_until
+from completion import CompletionResolver, CompletionProposal
 
 style_warning = None
 style_error = None
@@ -186,6 +187,41 @@ class Clang(object):
 # Global clang module #
 #######################
 
+class ClangCompletionResolver(CompletionResolver):
+    """
+        A completion resolver based on clang results
+    """
+
+    def __init__(self):
+        pass
+
+    def get_completions(self, loc):
+        loc_begin = to_completion_point(loc)
+        prefix = loc.buffer().get_chars(loc_begin, loc)[:-1]  # ??? improve
+
+        cr = Clang_Module.clang_instance.get_completions_at(loc)
+        if not cr:
+            return
+
+        current_result = 0
+        while current_result < cr.results.numResults:
+            s = cr.results[current_result].string
+
+            len = s.num_chunks
+            chunks = [s[n].spelling for n in range(0, len)]
+
+            # Useful debug trace
+            # print "found " + " ".join(chunks)
+
+            if len >= 2:
+                if chunks[1].startswith(prefix):
+                    yield CompletionProposal(
+                        chunks[1],
+                        chunks[1],
+                        " ".join(chunks))
+
+            current_result += 1
+
 
 class Clang_Module(Module):
 
@@ -200,6 +236,7 @@ class Clang_Module(Module):
     def gps_started(self):
         self.init_clang_instance()
         Clang_Module.clang_instance.refresh_buffer(GPS.EditorBuffer.get())
+        GPS.Completion.register(ClangCompletionResolver())
 
     def project_changed(self):
         self.init_clang_instance()
