@@ -8,6 +8,7 @@ from clang import cindex as ci
 import GPS
 from modules import Module
 from text_utils import forward_until
+import completion
 from completion import CompletionResolver, CompletionProposal
 
 style_warning = None
@@ -208,17 +209,18 @@ class ClangCompletionResolver(CompletionResolver):
             s = cr.results[current_result].string
 
             len = s.num_chunks
-            chunks = [s[n].spelling for n in range(0, len)]
 
             # Useful debug trace
-            # print "found " + " ".join(chunks)
+            # print "found " + " ".join([s[n].spelling for n in range(0, len)])
 
             if len >= 2:
-                if chunks[1].startswith(prefix):
+                label = s[1].spelling
+                if label.startswith(prefix):
                     yield CompletionProposal(
-                        chunks[1],
-                        chunks[1],
-                        " ".join(chunks))
+                        label,
+                        label,
+                        " ".join([s[n].spelling for n in range(0, len)]),
+                        language_category=completion.Cat_Unknown)
 
             current_result += 1
 

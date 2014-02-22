@@ -59,6 +59,7 @@ package body Completion.Python is
    with record
       Resolver : access Completion_Python;
       Object   : Class_Instance;
+      Proposal : Simple_Python_Completion_Proposal := No_Proposal;
    end record;
 
    overriding function First (List : Python_Component)
@@ -130,6 +131,16 @@ package body Completion.Python is
       Object : Class_Instance;
 
    begin
+      --  The code below can be used to implement a cache
+      --  ??? and probably should
+
+--        if It.Proposal = No_Proposal then
+--           Object := Execute (Sub, Args);
+--           It.Proposal := Object_To_Proposal (It.Resolver, Object);
+--        end if;
+--
+--        return It.Proposal;
+
       Object := Execute (Sub, Args);
       return Object_To_Proposal (It.Resolver, Object);
    end Get;
@@ -193,7 +204,7 @@ package body Completion.Python is
    begin
       Proposal := Create_Simple_Proposal
         (Resolver,
-         Cat_Custom,
+         Language_Category'Val (Nth_Arg (Fields, 6) - 1),
          Nth_Arg (Fields, 1),
          Nth_Arg (Fields, 2),
          Nth_Arg (Fields, 3),

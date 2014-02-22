@@ -87,4 +87,9 @@ private
       Db       : access Xref.General_Xref_Database_Record'Class)
       return Completion_Id;
 
+   No_Proposal : constant Simple_Python_Completion_Proposal :=
+     (null, null, Cat_Unknown,
+      Null_Unbounded_String, Null_Unbounded_String,
+      Null_Unbounded_String, Null_Unbounded_String);
+
 end Completion.Python;
