@@ -1855,7 +1855,7 @@ following attributes:
 
 * :file:`name` (required)
 
-  The name by which the action is referenced elsewehre in the customization
+  The name by which the action is referenced elsewhere in the customization
   files, for example when it's associated with a menu or toolbar button.
   It can contain any character, although you should avoid XML special
   characters and it can't start with a '/'.
@@ -2728,10 +2728,17 @@ Adding new menus
 Actions can be associated with menus, tool bar buttons and keys, all
 using similar syntax.
 
-You bind a menu item to an action through the :file:`<menu>` and
-:file:`<submenu>` tags.
+Each menu item has an associated path, which it behaves like a UNIX path,
+except it references menus, starting from the menu bar itself. The first
+character of this path must be :kbd:`/`. The last part is the name of the
+menu item.  For example, specifying :command:`/Parent1/Parent2/Item` as a
+menu path is a reference to a :menuselection:`Parent1 --> Parent2 -> Item`
+menu.  If you're creating a new menu item, GPS creates any parent menus
+that don't already exist.
 
-The :file:`<menu>` tag can have the following attributes:
+You bind a menu item to an action through the :file:`<menu>` and
+:file:`<submenu>` tags.  The :file:`<menu>` tag can have the following
+attributes:
 
 * :file:`action` (required)
 
@@ -2740,8 +2747,8 @@ The :file:`<menu>` tag can have the following attributes:
   action name starts with a '/', it represents the absolute path to an
   action.
 
-  You can omit this attribute only when no title is specified for the
-  menu.  Doing that makes it a separator (see below).
+  Omit this attribute only when no title is specified for the menu.  Doing
+  that makes it a separator (see below).
 
   If you associate a filter with the action via the :file:`<filter>`
   tag, the menu is greyed out when the filter doesn't match.
@@ -2761,10 +2768,7 @@ The :file:`<menu>` tag can have the following attributes:
 
 The :file:`<menu>` tag should have one XML child called
 :file:`<title>`, which specifies the label of the menu. This label is
-actually a path to a menu, so you can define submenus. For example,
-specifying :command:`/Parent1/Parent2/Item` in the title creates a
-:menuselection:`Parent1 --> Parent2 -> Item` menu and creates the
-parent menus if they don't already exist.
+actually a path to a menu, so you can define submenus. 
 
 You can define the accelerator keys for your menus using underscores
 in the title to designate the accelerator key. For example, if you
@@ -2772,11 +2776,9 @@ want an accelerator on the first letter in a menu named :file:`File`,
 set its title to :file:`_File`.
 
 The :file:`<submenu>` tag accepts the :file:`before` and :file:`after`
-attributes, which operate the same way as for the :file:`<menu>` tag.
-
-It accepts several children, such as :file:`<title>` (which can
-present at most once), :file:`<submenu>` (for nested menus), and
-:file:`<menu>`.
+attributes, which operate the same way as for the :file:`<menu>` tag.  It
+accepts several children, such as :file:`<title>` (which can present at
+most once), :file:`<submenu>` (for nested menus), and :file:`<menu>`.
 
 :file:`<submenu>` doesn't accept the :file:`action` attribute.  Use
 :file:`<menu>` for clickable items that result in an action and
@@ -2911,14 +2913,14 @@ attributes:
 
 The :file:`<contextual>` tag accepts one child tag, :file:`<Title>` which
 specifies the name of the menu item. If not specified, the menu item uses
-the name of the action. The title is actually fact the full path to the new
-menu item, like for the :file:`<menu>` tag.  You can create submenus by
-using a title of the form :command:`Parent1/Parent2/Menu`.  You can use
-macro arguments in the title, which are expended based on the current
-context. See :ref:`Macro_arguments`.
+the name of the action. The title is the full path to the new menu item,
+like in the :file:`<menu>` tag.  Can create submenus by using a title of
+the form :command:`Parent1/Parent2/Menu`.  You can use macro arguments in
+the title, which are expended based on the current context. See
+:ref:`Macro_arguments`.
 
-The new contextual menu item is only shown if the filters associated with
-the action match the current context.
+GPS only displays the new contextual menu item if the filters associated
+with the action match the current context.
 
 For example, the following example inserts a new contextual menu item that
 displays the name of the current file in the GPS console. This contextual
@@ -2956,10 +2958,10 @@ action doesn't exist.
 This tag accepts one optional attribute, :file:`stock` which you can use to
 override the default image registered for the action or set one if the
 action no image. The value for this attribute is an icon specified by a
-:file:`<stock>` node (which can also be used to provide a label for the
-button or several sizes of the images for better rendering).  (The
-:file:`stock` attribute replaces the old :file:`<pixmap>` child, which is
-no longer supported.)
+:file:`<stock>` node (which you can use to provide a label for the button
+or several sizes of the images for better rendering).  (The :file:`stock`
+attribute replaces the old :file:`<pixmap>` child, which is no longer
+supported.)
 
 The following example defines a new button::
 
@@ -4086,7 +4088,7 @@ name of the executable generated when compiling each of the main files in
 the project (e.g., the executable for :file:`gps.adb` is :file:`gps.exe`
 and the one for :file:`main.c` is :file:`myapp.exe`).
 
-Such attributes can also be declared through XML files. In such cases, the
+You can also declare such attributes in XML files. In such cases, the
 :file:`<project_attribute>` tag should have one :file:`<index>` child, and
 zero or more :file:`<specialized_index>` children.  Each of these two tags
 in turn accepts one of the already mentioned :file:`<string>`,
@@ -4294,11 +4296,13 @@ Adding casing exceptions
 
 .. highlight:: xml
 
-A set of case exceptions can be declared in this file. Each case
-exception is put inside the tag `<word>` or `<substring>`. These
-exceptions are used by GPS to set identifiers or keywords case when
-editing case insensitive languages (except if corresponding case is
-set to Unchanged). :ref:`The_Preferences_Dialog`::
+You can use the customization files to declare a set of case exceptions by
+using the :file:`<case_exceptions>` tag.  Put each exception in child tag
+of :file:`<word>` or :file:`<substring>`.  GPS uses these exceptions to
+determine the case of identifiers and keywords when editing case
+insensitive languages (except if corresponding case is set to
+:command:`Unchanged`). See :ref:`The_Preferences_Dialog`.  Here's an
+example::
 
   <?xml version="1.0" ?>
   <exceptions>
@@ -4316,81 +4320,69 @@ Adding documentation
 
 .. index:: <documentation_file>
 
-New documentation can be added in GPS in various ways. This is useful if you
-want to point to your own project documentation for instance.
+You can add new documentation to GPS in various ways.  You can create a new
+menu, through a :file:`<menu>` tag in configuration file, associated with
+an action that either spawns an external web browser or calls the internal
+:command:`GPS.Help.browse()` shell command.  However, this won't show the
+documentation in the :menuselection:`Help --> Contents` menu, which is
+where people expect to find it.  To do both, use the
+:file:`<documentation_file>` tag. These tags are usually found in a
+:file:`gps_index.xml` file, but are permitted in any customization file.
 
-The first possibility is to create a new menu, through a `<menu>` tag in an XML
-file, associated with an action that either spawn an external web browser or
-calls the internal `GPS.Help.browse()` shell command.
-
-However, this will not show the documentation in the `Help->Contents` menu,
-which you also might want to do.
-
-To have both results, you should use the `<documentation_file>` tag in an XML
-file. These tags are generally found in a :file:`gps_index.xml` files but you
-can in fact add them in any of your customization files.
-
-The documentation files you display can contain the usual type of html links.
-In addition, GPS will treat specially links starting with '%', and consider
-them as script commands to execute instead of file to display. The following
-example show how to insert a link that will in effect open a file in GPS when
-clicked by the user::
+Your documentation files can contain the usual HTML links.  In addition,
+GPS treats links starting with '%' specially and considers them as script
+commands to execute instead of file to display. The following examples show
+how to insert a link that, which clicked by the user, opens a file in GPS::
 
   <a href="%shell:Editor.editor g-os_lib.ads">Open runtime file</a>
 
-The first word after '%' is the name of the language, and the command to
-execute is found after the ':' character.
+The first token after '%' is the name of the language; the command to
+execute is after the ':' character.
 
-The `<documentation_file>` accepts a number of child nodes:
+The :file:`<documentation_file>` tag accepts the following child tags:
 
-*name*
-  This is the name of the file. It can be either an absolute file name,
-  or a file name relative to one of the directories in `GPS_DOC_PATH`.
-  If this child is omitted, you must specify a `<shell>` child.
+* :file:`<name>`
 
-  This name can contain a reference to a specific anchor in the html
-  file, using the standard HTML syntax::
+  Name of the file, either an absolute filename or a filename relative to
+  one of the directories in :file:`GPS_DOC_PATH`.  If this child is
+  omitted, you must specify a :file:`<shell>` child.  The name can contain
+  a reference to a specific anchor in the HTML file, using the standard
+  HTML syntax::
 
       <name>file#anchor</name>
 
-*shell*
-  This child specifies the name of a shell command to execute to get the
-  name of the HTML file. This command can for instance create the HTML file
-  dynamically, or download it locally using some special mechanism.
-  This child accepts one attribute, `"lang"`, which is the name of the
-  language in which the command is written
+* :file:`<shell>`
 
-*descr*
-  This is the description for this help file. It appears in a tool tip
-  for the menu item.
+  Name of a shell command to execute to get the name of the HTML file. This
+  command could create the HTML file dynamically or download it locally
+  using some special mechanism.  This child accepts one attribute,
+  :file:`lang`, the name of the language in which the command is written
 
-*category*
-  This is used in the `Help->Contents` menu to organize all the
+* :file:`<descr>`
+
+  Description for this help file, which appears as a tool tip for the menu
+  item.
+
+* :file:`>category>`
+
+  Used in the :menuselection:`Help --> Contents` menu to organize all
   documentation files.
 
-*menu*
-  This is the full path to the menu. It behaves like a UNIX path, except
-  it reference the various menus, starting from the menu bar itself. The
-  first character of this path must be `"/"`. The last part of the
-  path is the name of the new menu item. If not set, no menu is
-  displayed for this file, although it will still appear in the
-  `Help->Contents` menu
+* :file:`<menu>`
 
-  The `<menu>` child tag accepts two attributes.
+  Full path to the menu. See :ref:`Adding_new_menus`.  If not set, GPS
+  doesn't display a menu item for this file, although it still appears
+  in the :menuselection:`Help->Contents` menu
 
-  *before (optional, default="")*
-    The name of the menu before which the new entry should be inserted. If the
-    new menu is inserted in some submenus, this tag controls the deeper
-    nesting.  Parent menus are created as needed, but if you wish to control
-    their specific order, you should create them first with a `<menu>` tag.
+  This tag accepts two attributes, :file:`before` and :file:`after` that
+  control the position of the menu item.  If the new menu is inserted in a
+  submenu, the attribute controls the deeper nesting.  Parent menus are
+  created as needed, but if you wish to control their display order, create
+  them first with a :file:`<submenu>` tag.
 
-  *after (optional, default="")*
-    The name of the menu after which the new entry should be inserted.
-
-
-The following example shows how to create a new entry "item" in the Help
-menu, that will display :file:`file.html`. The latter is searched in the
-`GPS_DOC_PATH` list of directories::
+The following example creates a new entry :guilabel:`item` in the
+:guilabel:`Help` menu, that displays :file:`file.html` (searched for in the
+:file:`GPS_DOC_PATH` path)::
 
   <?xml version="1.0"?>
   <index>
@@ -4404,23 +4396,23 @@ menu, that will display :file:`file.html`. The latter is searched in the
 
 .. index:: <doc_path>
 
-As mentioned above, HTML files are looked for through the `GPS_DOC_PATH`
-environment variable. However, you can also use the `<doc_path>` XML
-node to defined additional directories to be searched.
-
-Such a directory is relative to the installation directory of GPS::
+The directories given by the :file:`GPS_DOC_PATH` environment variable are
+searched for the HTML documentation files. However, you can also use the
+:file:`<doc_path>` XML node to define additional directories to search..
+Such a directory is relative to the installation directory of GPS.  For
+example::
 
   <?xml version="1.0"?>
   <GPS>
      <doc_path>doc/application/</doc_path>
   </GPS>
 
-will add the directory :file:`<prefix>/doc/application` to the search path
-for the documentation.
+adds the directory :file:`<prefix>/doc/application` to the search path
+for documentation.
 
 .. highlight:: python
 
-Such a directory can also be added through Python, as in::
+Youc an also add such a directory via Python, as in::
 
   GPS.HTML.add_doc_directory ('doc/application')
 
@@ -4432,16 +4424,16 @@ Adding stock icons
 .. index:: stock_icons
 .. index:: <stock_icons>
 
-XML files can be used to define 'stock icons'. Stock icons are pictures that
-are identified by their label, and which are used through GPS in various
-places, such as buttons, menus, toolbars, and so on.
+You can also define 'stock icons' in an XML configuration file. Stock icons
+are pictures that are identified by their label and are used throughout GPS
+in places such as buttons, menus, and toolbars.
 
-The stock icons must be declared using the tag `<icon>`, within the global tag
-`<stock>`. The attribute `id` indicates the label used to identify the stock
-icon, and the attribute `file` points to the file which contains the actual
-picture, either in absolute format, or relative to the GPS icons directory.
-If you would like to read the icons from a directory relative to the location
-of the plug-in, you should use a python script like::
+You must declare stock icons using the tag :file:`<icon>` within the global
+tag :file:`<stock>`. The attribute :file:`id` is the label used to identify
+the stock icon and the attribute :file:`file` is the filename (either
+absolute or relative to the GPS icons directory) containing the actual
+picture.  If you need to read the icons from a directory relative to the
+location of the plug-in, you should use a python script like::
 
     XML = r"""<GPS><stock>
         <icon id="gtk-new" file="${icons}/file.svg"/>
@@ -4452,45 +4444,33 @@ of the plug-in, you should use a python script like::
     XML = XML.replace("${icons}", icons)
     GPS.parse_xml(XML)
 
-If the stock icon is to be used in a toolbar, use the attribute `label` to
-specify the text to display in the toolbar, under the button, when the toolbar
-is configured to show text.
+If you intend to use the stock icon in a toolbar, use the attribute
+:file:`label` to specify the text to display in the toolbar, under the
+button, when the toolbar is configured to show text.
 
-For icons that are intended to be displayed at multiple sizes, you can specify
-multiple files corresponding to these multiple sizes. This is done by adding
-children to the main icon node, with the tag `alternate`, containing a `file`
-attribute and a `size` attribute which correspond to the size for which this
-alternate source should be used.
+For icons intended to be displayed at multiple sizes, specify multiple
+files corresponding to these multiple sizes by adding children to the main
+:file:`<icon>` tag, with the tag :file:`<alternate>` containing a
+:file:`file` attribute and a :file:`size` attribute giving the size for
+which this alternate source should be used.
 
-Possible sizes are:
+Possible values for the :file:`size` attribute are:
 
-*1*
-  Menu item (ideal size: 16x16 pixels)
-
-*2*
-  Button in a small toolbar (ideal size: 18x18 pixels)
-
-*3*
-  Button in a large toolbar (ideal size: 24x24 pixels)
-
-*4*
-  Image for a standard button (ideal size: 20x20 pixels)
-
-*5*
-  Image used during drag-and-drop operation (ideal size: 32x32 pixels)
-
-*6*
-  Main image in a dialog (ideal size: 48x48 pixels)
+* 1: menu item, typically 16x16 pixels
+* 2: button in a small toolbar, typically 18x18 pixels
+* 3: button in a large toolbar, typically 24x24 pixels
+* 4: a standard button, typically 20x20 pixels
+* 5: image used during drag-and-drop operation, typically 32x32 pixels
+* 6: main image in a dialog, typically 48x48 pixels
 
 .. highlight:: xml
 
-Here is an example::
+Here's an example::
 
   <?xml version="1.0"?>
   <my_visual_preferences>
     <stock>
       <icon id="myproject-my-picture" file="icons/my-picture.png" />
-
       <icon id="myproject-multipurpose-image"
              label="do something"
              file="icons/icon_default.png">
@@ -4502,9 +4482,9 @@ Here is an example::
     </stock>
   </my_visual_preferences>
 
-Note: as shown in the example above, it is a good practice to prefix the label
-by a unique name (e.g. `myproject-`), in order to make sure that
-predefined stock icons will not get overridden by your icons.
+As shown in the example above, you should prefix the label with a unique
+name, here :file:`myproject-`, to make sure predefined stock icons don't
+get overridden by your icons.
 
 .. _Remote_programming_customization:
 
