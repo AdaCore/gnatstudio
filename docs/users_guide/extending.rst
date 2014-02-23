@@ -1506,7 +1506,7 @@ GPS.
 
 For example, color themes are a convenient way to change all colors in GPS
 simultaneously to predefined choices such as strongly contrasted colors or
-monochrome.  Yuo can also have key themes, defining a set of key bindings,
+monochrome.  You can also have key themes, defining a set of key bindings,
 for example to emulate other editors.
 
 You can activate any number of themes simultaneously via the preferences
@@ -4488,23 +4488,25 @@ get overridden by your icons.
 
 .. _Remote_programming_customization:
 
-Remote programming customization
---------------------------------
+Customizing Remote Programming
+------------------------------
 
 .. index:: remote
 
-The configuration of the remote programming functionality has two
-separate parts: the tools configuration (remote connection tools,
-shells, and rsync parameters) and the servers configuration.
+There are two parts to specifying the configuration of remote programming
+functionality: the configuration of the tools (remote connection tools,
+shells, and rsync parameters) and the servers.
 
 The first part (see :ref:`Defining_a_remote_connection_tool`,
-:ref:`Defining_a_shell` and :ref:`Configuring_rsync_usage`) is handled by a
-pre-installed file in the plug-ins directory called :file:`protocols.xml`.
+:ref:`Defining_a_shell` and :ref:`Configuring_rsync_usage`) is performed by
+a pre-installed file in the plug-ins directory called
+:file:`protocols.xml`.
 
 The second part (see :ref:`Defining_a_remote_server` and
-:ref:`Defining_a_remote_path_translation`), when configured via the user
-interface (see :ref:`Setup_the_remote_servers`), will create a remote.xml file
-in the user's gps directory. System-wide servers can be also installed.
+:ref:`Defining_a_remote_path_translation`) creates a :file:`remote.xml`
+file in the user's :file:`gps` directory when the user has configured them
+(see :ref:`Setup_the_remote_servers`). System-wide servers can be also
+installed.
 
 .. _Defining_a_remote_connection_tool:
 
@@ -4513,165 +4515,159 @@ Defining a remote connection tool
 
 .. index:: remote
 
-Several remote access tools are already defined in GPS: ssh, rsh,
-telnet and plink. It is possible to add other tools, using the node
-`remote_connection_config`.
+A remote connection tool is responsible for making a connection to a remote
+machine.  GPS already defines several remote access tools: :program:`ssh`,
+:program:`rsh`, :program:`telnet` and :program:`plink`. You can add support
+other tools using the tag :file:`<remote_connection_config>`, which
+requires a :file:`name` attribute giving the name of the tool. This name
+need not necessarilly correspond to the command used to launch the tool.
 
-The attributes for this node are:
+The following child tags are defined:
 
-*name (string) (mandatory)*
-  The name of the tool. This name does not necessarilly correspond to
-  the command used to launch the tool.
+* :file:`<start_command>` (required)
 
+  The command used to launch the tool.  This tag supports the
+  :file:`use_pipes` attribute, which selects on Windows the manner in which
+  GPS launchs the remote tools and accepts the following values:
 
-The following children are defined:
+  * :command:`true`
 
-*start_command (mandatory)*
-  The command used to launch the tool.
-  This tag supports the `use_pipes` attribute. This attribute selects on
-  Windows the way GPS will launch the remote tools, and can take the following
-  values:
+    Use pipes to launch the tool.
 
-  *true*
-    use pipes to launch the tool.
+  * :command:`false` (default)
 
-  *false (default)*
-    use a tty emulation, which is a bit slower but allow
-    password prompts retrieval with some tools.
+    Use a tty emulation, a bit slower but which allows password prompts
+    retrieval with some tools.
 
-  Note that this argument has effects only on Windows platforms.
+* :file:`<start_command_common_arg>`
 
-*start_command_common_args (optional)*
-  The arguments that are provided to the tool. This string can contain the
-  following replacement macros:
+  Arguments provided to the tool. This string can contain the
+  following macros, which are replaced by the following strings:
 
-  *%C*
-    is replaced by the command executed on the remote host (e.g. the shell
-    command)
+  * :command:`%C`: Command executed on the remote host (normally the shell
+    command).
 
-  *%h*
-    is replaced by the remote host name
+  * :command:`%h`: Remote host name.
 
-  *%U*
-    is replaced by the start_command_user_args, if a user is specified
+  * :command:`%U`: Value of :file:`<fstart_command_user_args>`, if specified.
 
-  *%u*
-    is replaced by the user name
+  * :command:`%u`: User name.
 
-  Note that if neither %u nor %U is found, and a user is specified in the remote
-  connection configuration, then the start_command_user_args is placed at the
+  If neither you haven't included :command:`%u` or :command:`%U` in the
+  string and a user is specified in the remote connection configuration,
+  GPS places the value of :file:`<start_command_user_args>` at the
   beginning of the arguments.
 
-*start_command_user_args (optional)*
-  The arguments used to define a specific user during connection. %u is replaced
-  by the user name
+* :file:`<start_command_user_args>`
 
-*send_interrupt (optional)*
-  The characters sequence to send to the remote tool to interrupt the remote
-  application. If unset, then an Interrupt signal is sent directly to the remote
+  Arguments used to define a specific user during connection. :command:`%u`
+  is replaced by the user name.
+
+* :file:`<send_interrupt>`
+
+  Character sequence to send to the connection tool to interrupt the remote
+  application. If no specified, an Interrupt signal is sent directly to the
   tool.
 
-*user_prompt_ptrn (optional)*
-  A regular expression, used to catch user name prompts from the
-  connection tool. If undefined, a default regular expression is used.
+* :file:`<user_prompt_ptrn>`, :file:`<password_prompt_ptrn>`,
+  :file:`<passphrase_prompt_ptrn>`
 
-*password_prompt_ptrn (optional)*
-  .. index:: password
+  Regular expressions to detect username, password, and passphrase prompts,
+  respectively, sent by the connection tool. If not specified,
+  appropriate defaults are used.
 
-  A regular expression, used to catch password prompts from the
-  connection tool. If undefined, a default regular expression is used.
+* :file:`<extra_ptrn>`
 
-*passphrase_prompt_ptrn (optional)*
-  A regular expression, used to catch passphrase prompts from the
-  connection tool. If undefined, a default regular expression is used.
-
-*extra_ptrn (optional)*
-  Complex child. Used to catch extra prompts from the connection tool,
-  other than password, passphrase or usename prompts. This tag has an
-  attribute `auto_answer` telling if GPS automatically answers to
-  this prompt, or ask the user. If auto_answer is `true`, then this
-  tag needs an `answer` child, whose value is used for the answer. If
-  auto_answer is `false`, then this tag needs a `question` child,
-  whose value is used as question to the end user.
+  Used to handle prompts from the connection tool other than for username,
+  password, or passphrase.  The :file:`auto_answer` attribute selects
+  whether GPS provides an answer to this prompt or asks the user. If
+  :command:`true`, an :file:`<answer>` child is required.  Its value is the
+  answer to be supplied by GPS. If :command:`false`, a :file:`<question>`
+  child is required.  Its value is used by GPS to ask the user a question.
+  Provide this child once for every prompt that must be handled.
 
 .. _Defining_a_shell:
 
 Defining a shell
 ^^^^^^^^^^^^^^^^
 
-.. index:: remote
+.. index:: shell
 
-Several shells are already defined in GPS: sh, bash, csh, tcsh and
-cmd.exe (Windows). It is possible to add other shells, using the node
-`remote_shell_config`.
+GPS already defines several shells: :program:`sh`, :program:`bash`,
+:program:`csh`, :program:`tcsh` and, on Windows, :file:`cmd.exe`). You can
+add other shells by using the :file:`<remote_shell_config>` tag which has
+one require attribute, :file:`name`, denoting the name of the shell. This
+name need not be same as the command used to launch the shell.
 
-The attributes for this node are:
+The following child tags are defined:
 
-*name (string) (mandatory)*
-  The name of the shell. This name does not necessarilly correspond to
-  the command used to launch the shell.
+* :file:`<start_command>` (require)
 
+  Command used to launch the shell.  Put any required arguments here,
+  separated by spaces.
 
-The following children are defined:
+* :file:`<generic_prompt>` (optional)
 
-*start_command (mandatory)*
-  The command used to launch the shell. If arguments are required, they
-  should be put here, separated with spaces.
-
-*generic_prompt (optional)*
-  The regular expression used to identify a prompt after the initial
+  Regular expression used to identify a prompt after the initial
   connection. If not set, a default value is used.
 
-*gps_prompt (mandatory)*
-  The regular expression used to identify a prompt after the initial
-  setup is performed. If not set, a default value is used.
+* :file:`<gps_prompt>` (required)
 
-*filesystem (mandatory)*
-  Takes the following values: `unix` or `windows`. This is the
-  filesystem used by the shell.
+  Regular expression used to identify a prompt after the initial setup is
+  performed. If not set, a default value is used.
 
-*init_commands (optional)*
-  Complex child. Each `cmd` child contains a command used to
-  initialise a new session.
+* :file:`<filesystem>` (required)
 
-*exit_commands (optional)*
-  Complex child. Each `cmd` child contains a command used to
-  exit a session.
+  Either :command:`unix` or :command:`windows`, representing the filesystem
+  used by the shell.
 
-*no_echo_command (optional)*
-  Command used to suppress the echo of the remote shell.
+* :file:`<init_commands>` (optional)
 
-*cd_command (mandatory)*
-  Command used to go to a directory. `%d` is replaced by the
+  Contains :file:`<cmd>` children, each containing a command to initialize
+  a new session.
+
+* :file:`<exit_commands>` (optional)
+
+  Like :file:`<init_commands>`, but each :file:`<cmd>` child contains a
+  command to exit a session.
+
+* :file:`<no_echo_command>` (optional)
+
+  Command used to tell the remote shell to suppress echo.
+
+* :file:`<cd_command>` (require)
+
+  Command to change directories. :command:`%d` is replaced by the
   directory's full name.
 
-*get_status_command (mandatory)*
+* :file:`<get_status_command>` (required)
+
   Command used to retrieve the status of the last command launched.
 
-*get_status_ptrn (mandatory)*
+* :file:`<get_status_ptrn>` (mandatory)
+
   Regular expression used to retrieve the status returned by
-  `get_status_command`. A pair of parenthesis is required, and
-  identifies the status.
+  :file:`<get_status_command>`. You must include a single pair of
+  parentheses; that subexpression identifies the status.
 
 .. _Configuring_rsync_usage:
 
-Configuring rsync usage
-^^^^^^^^^^^^^^^^^^^^^^^
+Configuring :command:`rsync` usage
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. index:: rsync
 
-GPS has native support for the rsync tool, for paths synchronization
-during remote programming operations.
+GPS includes native support for the :command:`rsync` tool to synchronize
+paths during remote programming operations.
 
-By default, GPS will use --rsh=ssh option if ssh is the main
-connection tool for the concerned server. It will also define the -L
+By default, GPS uses the :command:`--rsh=ssh` option if :program:`ssh` is
+the connection tool used for the server. It also uses the :command:`-L`
 switch when transfering files to a Windows local host.
 
-It is possible to define additional arguments to rsync using the
-`rsync_configuration` tag.
-
-This tag accepts the child tagged `arguments`, and containing
-additional arguments to pass to rsync.
+You can possible to define additional arguments to rsync by using the
+:file:`<rsync_configuration>` tag, which accepts :file:`<arguments>` tags
+as children, each containing additional arguments to pass to
+:program:`rsync`.
 
 .. _Defining_a_remote_server:
 
@@ -4681,50 +4677,56 @@ Defining a remote server
 .. index:: server
 .. index:: remote
 
-Remote servers can be defined via the user interface, as described in
-:ref:`Setup_the_remote_servers`. This user interface will create a
-remote.xml file in the user's gps directory, which in turn can be
-installed in any plug-ins directory to set the values
-system-wide. This file will define for each server the node
-`remote_machine_descriptor`.
+Users can define remote servers, as described in
+:ref:`Setup_the_remote_servers`.  Doing this creates a :file:`remote.xml`
+file in the user's :file:`gps` directory, which can be installed in any
+plug-ins directory to set the values system-wide.  The tag used in this file
+is :file:`<remote_machine_descriptor>` for each remote server.  You can
+also write this tag manually.  Its attributes are:
 
-The attributes for this node are:
+* :file:`nickname` (required)
 
-*nickname (mandatory)*
-  Identifies uniquely the server in GPS.
+  Uniquely identifies the server.
 
-*network_name (mandatory)*
-  The server's network name or IP address.
+* :file:`network_name` (required)
 
-*remote_access (mandatory)*
-  The tool's name used to access the server. Shall point to one of the
-  tools defined in :ref:`Defining_a_remote_connection_tool`.
+  Server's network name or IP address.
 
-*remote_shell (mandatory)*
-  The shell's name used to access the server. Shall point to one of the
-  shells defined in :ref:`Defining_a_shell`.
+* :file:`remote_access` (required)
 
-*remote_sync (mandatory)*
-  The remote file synchronisation tool used to synchronize files between
-  the local host and the server. Only `rsync` is recognized currently.
+  Name of the remote access tool used to access the server.  These tools
+  are defined in :ref:`Defining_a_remote_connection_tool`.
 
-*debug_console (optional)*
-  Can take the value `True` or `False`. Tells if a debug console
-  should be displayed during connection with a remote host. False by default.
+* :file:`remote_shell` (required)
 
-The children for this node are:
+  Name of the shell used to access the server. See :ref:`Defining_a_shell`.
 
-*extra_init_commands (optional)*
-  Complex child. Can contain `cmd` children whose values are used
-  to set server specific initialization commands.
+* :file:`remote_sync` (required)
 
-*max_nb_connections (optional)*
+  Remote file synchronisation tool used to synchronize files between the
+  local host and the server. Must be :command:`rsync`.
+
+* :file:`debug_console` (optional)
+
+  Boolean that indicates whether GPS displays a debug console during the
+  connection with a remote host. Default is :command:`false`.
+
+The optionally child tags for this tag are:
+
+* :file:`<extra_init_commands>`
+
+  Contains :file:`<cmd>` children whose values are used to set
+  server-specific initialization commands.
+
+* :file:`max_nb_connections`
+
   Positive number representing the maximum number of simultaneous
-  connections GPS can launch.
+  connections GPS is permitted to launch.
 
-*timeout (optional)*
-  Positive number representing a timeout value (in ms) used for every
-  action performed on the remote host.
+* :file:`timeout`
+
+  Positive number representing a timeout value (in ms) for every action
+  performed on the remote host.
 
 .. _Defining_a_remote_path_translation:
 
@@ -4735,40 +4737,36 @@ Defining a remote path translation
 .. index:: path
 .. index:: remote
 
-Remote path translation can also be defined via the user interface, as
-described in :ref:`Setup_the_remote_servers`. The remote paths
-translation are defined with the node `remote_path_config`.
+The user can also define a remote path translation, as described in
+:ref:`Setup_the_remote_servers`.  Each remote paths translations
+corresponds to one :file:`<remote_path_config>` tag, which has one required
+attribute, :file:`server_name`, the server name that uses this path
+translation, and contains child :file:`<remote_path_config>` tags, that have
+the following required attributes:
 
-The attributes for this node are:
+* :file:`local_path`
 
-*server_name (mandatory)*
-  The server name concerned by the paths translation.
+  Absolute local path, written using local filesystem syntax.
 
-The `remote_path_config` node contains `mirror_path`
-children.
+* :file:`remote_path`
 
-The attributes for the node `mirror_path` are:
-
-*local_path (mandatory)*
-  The absolute local path, expressed using the local filesystem
+  Absolute remote path, written using remote filesystem syntax.
   standards.
 
-*remote_path (mandatory)*
-  The absolute remote path, expressed using the remote filesystem
-  standards.
+* :file:`sync`
 
-*sync (mandatory)*
-  Specify the synchronization mechanism used for the paths (see
-  :ref:`Path_settings`). Possible values are `NEVER`, `ONCE_TO_LOCAL`,
-  `ONCE_TO_REMOTE` and `ALWAYS`.
+  Synchronization mechanism used for the paths (see
+  :ref:`Path_settings`). Must be one of :command:`NEVER`,
+  :command:`ONCE_TO_LOCAL`, :command:`ONCE_TO_REMOTE` or :command:`ALWAYS`.
 
 .. _Customizing_build_Targets_and_Models:
 
-Customizing build Targets and Models
+Customizing Build Targets and Models
 ------------------------------------
 
-The information displayed in :ref:`The_Target_Configuration_Dialog` and in
-the Mode selection can be customized through XML.
+You can customize the information displayed in
+:ref:`The_Target_Configuration_Dialog` and in the :guilabel:`Mode
+selection` via the XML configuration files.
 
 .. _Defining_new_Target_Models:
 
@@ -4777,41 +4775,45 @@ Defining new Target Models
 
 .. index:: Model
 
-Models are defined in a `target-model` node which has one attributes,
-`name`, which contains the name of the model, and which supports the
-following sub-nodes:
+Define a model with a :file:`target-model` tag, which has one attribute,
+:file:`name`, containing the name of the model, and which supports the
+following child tags:
 
-*<icon>*
-  The stock name of the icon to associate by default with targets of this
-  model.
+* :file:`<icon>` (required)
 
-*<description>*
-  A one-line description of what the Model supports
+  Name of the stock icon associated by default with targets of this model.
+  See :ref:`Adding_stock_icons`.
 
-*<server>*
-  Optional, defaulting to `Build_Server`. Indicates the server used for
-  launching Targets of this model. :ref:`Remote_operations`.
+* :file:`<description>` (required)
 
-*<is-run>*
-  Optional, defaulting to `False`. A boolean indicating whether this
-  target corresponds to the launching of an executable rather than a build.
-  Targets with such a model are launched through an interactive console in
-  GPS, and their output is not parsed for errors.
+  One-line description of what the model supports
 
-*<uses-shell>*
-  Optional, defaulting to `False`. A boolean indicating whether Targets
-  of this model should be launched via the shell pointed to by the SHELL
-  environment variable.
+* :file:`<server> (default :command:`Build Server`)
 
-*<command-line>*
-  Contains a number of `<arg>` nodes, each containing an argument of the
-  default command line for this model, starting with the executable.
+  Server used for launching targets of this model. See
+  :ref:`Remote_operations`.
+
+* :file:`<is-run>` (default :command:`False`)
+
+  Whether targets of this model correspond to the launching of an
+  executable instead of performing a build. GPS launches such targets
+  using an interactive console and doesn't parse their output for errors.
+
+* :file:`<uses-shell>` (default :command:`False`)
+
+  Whether GPS should launch targets of this model with the shell pointed to
+  by the :file:`SHELL` environment variable.
+
+* :file:`<command-line>` (required)
+
+  Contains :file:`<arg>` child tags, each containing an argument of the
+  default command line for this model, beginning with the executable name.
 
 .. highlight:: xml
 
-*<switches command="executable_name">*
-  The graphical description of the switches.
-  (:ref:`Defining_tool_switches`)::
+* :file:`<switches>`
+
+  Description of the switches.  (:ref:`Defining_tool_switches`)::
 
     <?xml version="1.0" ?>
        <my_model>
@@ -4837,74 +4839,84 @@ Defining new Targets
 
 .. index:: Target
 
-Targets are defined in a `target` node which has three attributes:
+Define targets with a :file:`<target>` tag, which has three attributes:
 
-*name*
-  Contains the name of the Target. It must be a unique name.
-  Underscores are interpreted as menu mnemonics. To represent an actual
-  underscore, use a double underscore.
+* :file:`name`
 
-*category*
-  The category which contains the Target, for purposes of ordering the
-  tree in the Target Configuration Dialog, and for ordering in the Build
-  menu.Underscores are interpreted as menu mnemonics. To represent an actual
-  underscore, use a double underscore.
-  If `category` begins and ends with an underscore, the menu for the
-  Target is placed in the toplevel Build menu.
+  Name of the target. It must be a unique name.  Underscores are
+  interpreted as menu mnemonics. If you want an actual underscore, use a
+  double underscore.
 
-*messages_category*
-  The name of the category to be used to organize messages in Locations
-  window.
+* :file:`category`
 
-*model*
-  The name of the Model of which this Target inherits initially.
+  Category containing the target for purposes of ordering the tree in the
+  :guilabel:`Target Configuration Dialog` and the :guilabel:`Build` menu.
+  Underscores are interpreted as menu mnemonics. If you want an actual
+  underscore, use a double underscore.  If the string begins and ends with
+  an underscore, GPS places the menu for the target in the toplevel
+  :guilabel:`Build` menu.
 
-*<icon>*
-  The stock name of the icon to associate by default with the Target.
+* :file:`messages_category`
 
-*<in-toolbar>*
-  Optional, defaulting to `False`. A boolean indicating whether the
-  Target should have an associated icon in the Toolbar.
+  Name of category to organize messages in the :guilabel:`Locations` view.
 
-*<in-menu>*
-  Optional, defaulting to `True`. A boolean indicating whether the
-  Target should have an associated entry in the Build menu.
+* :file:`model`
 
-*<in-contextual-menus-for-projects>*
-  Optional, defaulting to `False`. A boolean indicating whether the
-  Target should have an associated entry in the contextual menu for projects.
+  Name of the initial model that this target inherits.
 
-*<in-contextual-menus-for-files>*
-  Optional, defaulting to `False`. A boolean indicating whether the
-  Target should have an associated entry in the contextual menu for files.
+This tag accepts the following child tags:
 
-*<visible>*
-  Optional, defaulting to `True`. A boolean indicating whether the
-  Target should initially be visible in GPS.
+* :file:`<icon>`
 
-*<read-only>*
-  Optional, defaulting to `False`. A boolean indicating whether the
-  Target can be removed by the user.
+  Name of the stock icon associated by default with targets of this model.
+  See :ref:`Adding_stock_icons`.
 
-*<target-type>*
-  Optional, defaulting to an empty string. A string indicating whether the
-  Target represents a simple target (if empty), or a
-  family of Targets. The name represents a parameter passed to the
-  `compute_build_targets` hook. If set to `main`, a new subtarget
-  will be create for each Main source defined in the project.
+* :file:`<in-toolbar>` (default :command:`False`)
 
-*<launch-mode>*
-  Optional, defaulting to `MANUALLY`. Indicates how the Target should be
-  launched. Possible values are `MANUALLY`, `MANUALLY_WITH_DIALOG`,
-  `MANUALLY_WITH_NO_DIALOG`, and `ON_FILE_SAVE`.
+  Whether the target has an associated icon in the toolbar.
 
-*<server>*
-  Optional, defaulting to `Build_Server`. Indicates the server used for
-  launching Target. :ref:`Remote_operations`.
+* file:`<in-menu>` (default :command:`True`)
 
-*<command-line>*
-  Contains a number of `<arg>` nodes, each containing an argument of the
-  default command line for this Target, starting with the executable::
+  Whether the target has an associated entry in the :guilabel:`Build` menu.
+
+* :file:`<in-contextual-menus-for-projects>` (default :command:`False`)
+
+  Whether the target has an associated entry in the contextual menu for
+  projects.
+
+* :file:`<in-contextual-menus-for-files>`
+
+  Likewise, but for files.
+
+* :file:`<visible>` (default :command:`True`)
+
+  Whether the target is initially visible in GPS.
+
+* :file:`<read-only>` (default :command:`False`)
+
+  Whether the user can remove the target.
+
+* :file:`<target-type>`
+
+  If present, a string indicating whether the target represents a simple
+  target (empty) or a family of targets. The name is a parameter passed to
+  the :command:`compute_build_targets` hook. If set to :command:`main`, a
+  new subtarget is created for each main source defined in the project.
+
+* :file:`<launch-mode>` (default :command:`MANUALLY`)
+
+  How GPS should launch the target. Possible values are
+  :command:`MANUALLY`, :command:`MANUALLY_WITH_DIALOG`,
+  :command:`MANUALLY_WITH_NO_DIALOG`, and :command:`ON_FILE_SAVE`.
+
+* :file:`<server>` (default :command:`Build_Server`)
+
+  Server used for launching Target. See :ref:`Remote_operations`.
+
+* :file:`<command-line>`
+
+  Contains a number of `<arg>` nodes, each with an argument of the default
+  command line for this target, beginnng with the name of the executable::
 
     <?xml version="1.0" ?>
     <my_target>
@@ -4923,7 +4935,8 @@ Targets are defined in a `target` node which has three attributes:
       </target>
     </my_target>
 
-*<output-parsers>*
+* :file:`<output-parsers>`
+
   Optional list of output filters. See :ref:`Processing_Targets_Output`
   for details.
 
@@ -4931,51 +4944,59 @@ Targets are defined in a `target` node which has three attributes:
 
 Processing Target's Output
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-Output produced by target's run could be filtered by custom code.
-Here is list of filters already provided by GPS. Each of them is executed
-during each run of a target.
 
-*output_chopper*
-  This filter breaks output stream to pieces. Each of the piece contains
-  one or more line of output and is rounded by end of line. Such rounding
-  makes further processing easier.
+You can filter output produced by target's run using by custom code.  The
+list of filters already provided by GPS is shown below.  By default, each
+is executed during each run of a target.
 
-*utf_converter*
-  The filter converts stream to UTF-8 encoding if output is not in UTF-8 yet.
+* :file:`output_chopper`
 
-*progress_parser*
-  The filter drives GPS's progress bar by looking for progress messages
-  in the output stream. Such messages are excluded from the stream.
+  Breaks output stream to pieces. Each of the piece contains one or more
+  line of output and an end of line.
+  easier.
 
-*console_writer*
-  The filter populates GPS console with given output.
+* :file:`utf_converter`
 
-*location_parser*
-  The filter looks for special patterns in output to extract messages
-  associated with processed files and locations in these files. Then it sends
-  such messages to Location view (:ref:`The_Locations_View`).
+  Converts the stream to UTF-8 encoding if output is not in UTF-8.
 
-*text_splitter*
-  This filter splits output to separate lines to suit further processing.
+* :file:`progress_parser`
 
-*output_collector*
-  The filter aggregates output and associates it with build target.
-  As result, the output is available for scripting
-  (see :func:`GPS.get_build_output`)
-  after build finished::
+  Drives GPS's progress bar by looking for progress messages in the output
+  stream.  It excludes such messages from the stream.
+
+* :file:`console_writer`
+
+  Populates the GPS console with output from the stream.
+
+* :file:`location_parser`
+
+  Looks for special patterns in output to extract messages associated with
+  processed files and locations and sends such messages to
+  :guilabel:`Location` view (see :ref:`The_Locations_View`).
+
+* :file:`text_splitter`
+
+  Splits output into separate lines to simplify further processing.
+
+* :file:`output_collector`
+
+  Aggregates output and associates it with the build target.  As result,
+  the output is available for scripting (see :func:`GPS.get_build_output`)
+  after the build completes::
 
     text = GPS.get_build_output(<name of your target>)
 
-*elaboration_cycles*
-  This filter detects gnatbind report about circles in elaboration
-  dependencies and draws them in Elaboration Circularities browser
-  (:ref:`Elaboration_Cycles_Browser`).
+* :file:`elaboration_cycles`
 
-*end_of_build*
-  This is internal purpose filter. It cleans internal data up after
-  build run.
+  Detects the :program:`gnatbind` report about circles in elaboration
+  dependencies and draws them in the :guilabel:`Elaboration Circularities`
+  browser (see :ref:`Elaboration_Cycles_Browser`).
 
-See :class:`GPS.OutputParserWrapper` for example of writing custom filter.
+* :file:`end_of_build`
+
+  cleans up internal data after a build run.
+
+See :class:`GPS.OutputParserWrapper` for examples of writing custom filter.
 
 .. _Defining_new_Modes:
 
@@ -4984,31 +5005,33 @@ Defining new Modes
 
 .. index:: Mode
 
-Modes are defined in a `builder-mode` node which has one attributes,
-`name`, which contains the name of the model, and which supports the
-following sub-nodes:
+Define modes with a :file:`<builder-mode>` tag which has one attribute,
+:file:`name`, containing the name of the model.  It supports the following
+child tags:
 
-*<description>*
-  A one-line description of what the Mode does
+* :file:`<description>`
 
-*<subdir>*
-  Optional. The base name of the subdirectory to create for this Mode.
-  The macro argument `%subdir` in the `extra-args` nodes will be
-  substituted with this.
+  One-line description of what the mode does
 
-*<supported-model>*
-  The name of a model supported by this Mode. There can be multiple
-  `supported-model` nodes, each corresponding to a supported Model.
-  Optionally, you can specify a `filter` attribute for this node,
-  corresponding to the switches that are relevant for this mode. By default,
-  all switches will be taken into account.
-  The `extra-args` of the Mode that match `filter` will be passed
-  to commands of the supported Models.
+* :file:`<subdir>`
 
-*<extra-args>*
-  Contains a list of `<arg>` nodes, each containing one extra argument
-  to append to the command line when launching Targets while this Mode is
-  active.
+  Optional base name of the subdirectory to create for this mode.  GPS will
+  subsitute the macro arguments :file:`%subdir` in the :file:`<extra-args>`
+  tags with this value.
+
+* :file:`<supported-model>`
+
+  Name of a model supported by this mode.  You can provide multiple tags,
+  each corresponding to a supported model and optionally specify a
+  :file:`filter` attribute corresponding to the switches used for this
+  mode. By default, all switches are considered.  GPS passes the
+  :file:`<extra-args>` of the mode matching :file:`filter`
+  to commands of the supported models.
+
+* :file:`<extra-args>`
+
+  List of :file:`<arg>` tags, each containing one extra argument to append
+  to the command line when launching targets while this mode is active.
   Macros are supported in the `<arg>` nodes::
 
      <?xml version="1.0" ?>
