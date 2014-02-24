@@ -55,6 +55,7 @@ with Config;                            use Config;
 with Default_Preferences;               use Default_Preferences;
 with File_Utils;                        use File_Utils;
 with Find_Utils;                        use Find_Utils;
+with GPS.Core_Kernels;                  use GPS.Core_Kernels;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
@@ -2769,11 +2770,22 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
       Command : Interactive_Command_Access;
+      Proxy   : Command_Access;
+      Context : Interactive_Command_Context := Null_Context;
    begin
       Command := new Close_Command;
       Close_Command (Command.all).Mode := Close_All_Except_Current;
+
+      Context.Context := New_Context;
+      Set_Context_Information
+        (Context => Context.Context,
+         Kernel  => Kernel,
+         Creator => Abstract_Module (Src_Editor_Module_Id));
+
+      Proxy := Create_Proxy (Command, Context);
+
       Launch_Background_Command (Kernel          => Kernel,
-                                 Command         => Command,
+                                 Command         => Proxy,
                                  Active          => True,
                                  Show_Bar        => False,
                                  Destroy_On_Exit => True,
