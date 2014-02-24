@@ -18,6 +18,7 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with GNAT.Expect;
+with GNAT.Strings;
 with GPS.Core_Kernels;       use GPS.Core_Kernels;
 with GNATCOLL.Traces;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
@@ -81,6 +82,9 @@ package GNATdoc is
 
       Backend_Name    : Ada.Strings.Unbounded.Unbounded_String;
       --  Name of selected backend.
+
+      Ignore_Files    : GNAT.Strings.String_Access;
+      --  List of files to be skipped by GNATdoc
 
       --  -------------------------- Internal switches -----------------------
 

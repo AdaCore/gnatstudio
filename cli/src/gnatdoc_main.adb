@@ -49,6 +49,7 @@ procedure GNATdoc_Main is
 
    --  Switches
 
+   Ignore_Files         : aliased GNAT.Strings.String_Access;
    Leading_Doc          : aliased Boolean;
    Regular_Expr         : aliased GNAT.Strings.String_Access;
    Process_C_Files      : aliased Boolean;
@@ -182,6 +183,11 @@ begin
 
    Define_Switch
      (Cmdline,
+      Output       => Ignore_Files'Access,
+      Switch       => "--ignore-files=",
+      Help         => "Comma separated list of files ignored by GNATdoc");
+   Define_Switch
+     (Cmdline,
       Output       => Leading_Doc'Access,
       Switch       => "-l",
       Help         => "Leading documentation");
@@ -271,6 +277,7 @@ begin
                                           (Pattern, Single_Line))),
          Report_Errors   => (if Suppress_Warnings then Errors_Only
                                                   else Errors_And_Warnings),
+         Ignore_Files    => Ignore_Files,
          Leading_Doc     => Leading_Doc,
          Skip_C_Files    => not Process_C_Files,
          Tree_Output     => ((if Internal_Output then Full

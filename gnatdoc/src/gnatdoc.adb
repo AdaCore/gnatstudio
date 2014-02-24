@@ -19,7 +19,6 @@ with Ada.Unchecked_Deallocation;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Config;
-with GNAT.Strings;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Messages_Windows;    use GPS.Messages_Windows;
@@ -380,10 +379,80 @@ package body GNATdoc is
       ---------------------
 
       procedure Check_Src_Files is
+         Ignored_Files : Files_List.Vector;
+
+         procedure Init_Ignored_Files;
+         --  Initialize the contents of the list of Ignored_Files
+
+         function In_Ignored_Files (Base_Name : String) return Boolean;
+         --  Search for Base_Name in the list of ignored files and return
+         --  true if found.
 
          function Skip_File (File_Index : Files_List.Cursor) return Boolean;
          --  Return True if the file Src_Files (File_Index) cannot be
          --  processed.
+
+         ------------------------
+         -- Init_Ignored_Files --
+         ------------------------
+
+         procedure Init_Ignored_Files is
+            use type GNAT.Strings.String_Access;
+         begin
+            if Options.Ignore_Files = null
+              or else Options.Ignore_Files.all = ""
+            then
+               return;
+            end if;
+
+            --  Traverse the string containing the list of ignored files. The
+            --  supported separators of the list are comma and space.
+
+            declare
+               S    : String renames Options.Ignore_Files.all;
+               From : Natural;
+               J    : Natural;
+
+            begin
+               J := S'First;
+               while J < S'Last loop
+                  while J <= S'Last
+                    and then (S (J) = ' ' or else S (J) = ',')
+                  loop
+                     J := J + 1;
+                  end loop;
+
+                  exit when J > S'Last;
+
+                  From := J;
+
+                  while J <= S'Last
+                    and then S (J) /= ' '
+                    and then S (J) /= ','
+                  loop
+                     J := J + 1;
+                  end loop;
+
+                  Ignored_Files.Append
+                    (GNATCOLL.VFS.Create (+S (From .. J - 1)));
+               end loop;
+            end;
+         end Init_Ignored_Files;
+
+         ---------------------
+         -- Ignore_File --
+         ---------------------
+
+         function In_Ignored_Files (Base_Name : String) return Boolean is
+         begin
+            for File of Ignored_Files loop
+               if File.Base_Name = +Base_Name then
+                  return True;
+               end if;
+            end loop;
+
+            return False;
+         end In_Ignored_Files;
 
          ---------------
          -- Skip_File --
@@ -460,6 +529,14 @@ package body GNATdoc is
                return True;
             end if;
 
+            if In_Ignored_Files (+File.Base_Name) then
+               if not Options.Quiet_Mode then
+                  GNAT.IO.Put_Line ("- " & (+File.Base_Name) & " ignored");
+               end if;
+
+               return True;
+            end if;
+
             return False;
          end Skip_File;
 
@@ -474,6 +551,8 @@ package body GNATdoc is
       --  Start of processing for Check_Src_Files
 
       begin
+         Init_Ignored_Files;
+
          Prj_Index := Prj_Files.First;
          while Project_Files_List.Has_Element (Prj_Index) loop
             Prj_Srcs := Project_Files_List.Element (Prj_Index);
@@ -495,6 +574,8 @@ package body GNATdoc is
 
             Project_Files_List.Next (Prj_Index);
          end loop;
+
+         Ignored_Files.Clear;
       end Check_Src_Files;
 
       ---------------------------
