@@ -185,7 +185,7 @@ begin
      (Cmdline,
       Output       => Ignore_Files'Access,
       Switch       => "--ignore-files=",
-      Help         => "Comma separated list of files ignored by GNATdoc");
+      Help         => "List of files ignored by GNATdoc");
    Define_Switch
      (Cmdline,
       Output       => Leading_Doc'Access,
