@@ -6978,7 +6978,7 @@ command is also executed and is passed the parameters that were specified
 when the hook is run. The first parameter is always the name of the hook
 being executed.
 
-This funcnction applies to an instance of the hook class and takes one
+This function applies to an instance of the hook class and takes one
 parameter, the command to be executed. This is a subprogram parameter
 (see :ref:`Subprogram_parameters`).
 
@@ -7187,37 +7187,36 @@ hook, since you don't know in advance how many parameters the call of
 
 .. _Adding_support_for_new_Version_Control_Systems:
 
-Adding support for new Version Control Systems
-==============================================
+Adding support for a new Version Control System
+===============================================
 
 .. index:: generic_vcs
 
 .. _Custom_VCS_interfaces:
 
-Custom VCS interfaces
----------------------
+Custom VCS interface
+--------------------
 
-The Version Control interface in GPS can be customized, either to refine the
-behavior of the existing system and adapt it to specific needs, or to add
-support for other Version Control systems.
+You can customize the Version Control interface in GPS, either to refine
+the behavior of the existing system and adapt it to your specific needs or
+to add support for other Version Control systems.
 
 Custom VCS interfaces are defined through XML files and Python plugins.  Those
 files are read in the same location as all the other XML and Python
 customizations that GPS offers. See
 :ref:`Customizing_through_XML_and_Python_files` for a complete description.
 
-There are three steps to follow when creating a custom VCS interface. The first
-step is to describe the VCS itself, the second step is to implement actions
-corresponding to all the operations that this VCS can perform, and the third
-step is to define the layout of the menus. The following three sections
-(:ref:`Describing_a_VCS`, :ref:`Implementing_VCS_actions`, and
+To create a custom VCS interface you must first describe the VCS itself,
+then implement actions corresponding to all the operations the VCS can
+perform, and finally define the layout of the menus. The following three
+sections (:ref:`Describing_a_VCS`, :ref:`Implementing_VCS_actions`, and
 :ref:`Implementing_VCS_menus`) describe those steps.
 
-GPS is distributed with XML/Python files describing the interfaces to
-ClearCase, CVS, Subversion, Git and Mercurial (experimental support).
-These XML/Python files are located in the directory `share/gps/plug-ins`
-in the GPS installation, and can be used as a reference for implementing
-new custom VCS interfaces.
+GPS is distributed with XML and Python files describing the interfaces to
+ClearCase, CVS, Subversion, and Git and experimental support for Mercurial.
+These files are located in the directory :file:`share/gps/plug-ins` in the
+GPS installation.  You can use them as a reference for implementing custom
+VCS interfaces.
 
 .. _Describing_a_VCS:
 
@@ -7229,85 +7228,81 @@ Describing a VCS
 The VCS node
 ^^^^^^^^^^^^
 
-The `vcs` node is the toplevel node which contains the description of the
+The :file:`<vcs>` tag is the toplevel tag containing the description of the
 general behavior expected from the VCS. It has the following attributes:
 
-*name*
-  The attribute `name` indicates the identifier of the VCS. The
-  casing of this name is important, and the same casing must be used in
-  the project files.
+* :file:`name`
 
-*absolute_names*
-  The attribute `absolute_names` indicates the behavior of the VCS relative to
-  file names, and can take the values `TRUE` or `FALSE`. If it is set to
-  `TRUE`, it means that all commands in the VCS will work on absolute file
-  names. If it set to `FALSE`, it means that all actions work on base file
-  names, and that GPS will move to the appropriate directory before executing
-  an action.
+  Identifier of the VCS. The casing of this name is significant: the same
+  casing must be used in project files.
 
-*group_queries_by_directory*
-  The attribute `group_queries_by_directory` indicates that, when querying
-  status for all the source files in a directory, a query for the directory
-  should be launched, instead of launching a query for multiple files.  This
-  operation is faster on some Version Control systems. By default, this is set
-  to `FALSE`.
+* :file:`absolute_names`
 
-*ignore_file*
-  The attribute `ignore_file` specifies the name of the file used by the VCS
-  Explorer to get the list of files to ignore. By default for the CVS mode this
-  is set to :file:`.cvsignore`.
+  If :command:`True`, all commands in the VCS work on absolute
+  filenames. If :command:`FALSE`, all actions work on base filenames and
+  GPS must switch to the appropriate directory before executing an action.
 
-*atomic_commands*
-  The attribute `atomic_commands` specifies if the VCS supports atomicity and
-  can take the values `TRUE` or `FALSE`. If it is set to `TRUE` it means that
-  the VCS supports atomic commands. It is `FALSE` by default. This attribute is
-  important to trigger the activities group commit feature. See
+* :file:`group_queries_by_directory`
+
+  Whether, when querying status for all the source files in a directory,
+  GPS should launch a query for the directory instead of launching a query
+  for multiple files.  The default is :command:`FALSE`.
+
+* :file:`ignore_file`
+
+  Name of the file used by the :guilabel:`VCS Explorer` to obtain the list
+  of files to ignore. For CVS, the default is :file:`.cvsignore`.
+
+* :file:`atomic_commands`
+
+  Whether the VCS supports atomicity. If :command:`TRUE`, the VCS supports
+  atomic commands.  The default is :command:`FALSE` by default. This
+  attribute triggers the activities group commit feature. See
   :ref:`VCS_Activities`.
 
-*path_style*
-  The attribute `path_style` specifies which kind of directory separator is
-  supported by the VCS and can take the values `UNIX`, `DOS`, `Cygwin` or
-  `System_Default`. The later value is the default value. With this attribute
-  it is possible to control the directory separator to use when specifying
-  files to the VCS. For the `Cygwin` case the drive is specified as
-  `/cygdrive/<drive>`.
+* :file:`path_style`
 
-*dir_sep*
+  Which kind of directory separator is supported by the VCS, one of
+  :command:`UNIX`, :command:`DOS`, :command:`Cygwin` or
+  :command:`System_Default`. The later value is the default value. Use this
+  attribute to control the directory separator used when specifying files
+  to the VCS.  If :command:`Cygwin`, the drive is specified as
+  :command:`/cygdrive/<drive>`.
+
+* :file:`dir_sep`
+
   Alias for `path_style`, obsolescent.
 
-*commit_directory*
-  The attribute `commit_directory` specifies if the VCS supports
-  commit on directories and can take the values `TRUE` or `FALSE`.
-  If it is set to `TRUE` it means that the VCS supports commit on
-  directories this is the case for `Subversion` for example.
+* :file:`commit_directory`
 
-*administrative_directory*
-  The attribute `administrative_directory` specifies the name of
-  the directory where the external VCS stores the local repository
-  information. For example for Subversion this is :file:`.svn`. This
-  information is used when the project is setup to select automatically
-  the external VCS. :ref:`Version_Control_System`.
+  Whether the VCS supports commits on directories.  If :command:`TRUE`, the
+  VCS supports commit on directories (like Subversion).
 
-*prev_revision*
-  A string which can be used when querying revisions to indicate the
-  previous revision of a file, for instance "PREV" for subversion.
+* :file:`administrative_directory`
 
-*head_revision*
-  A string which can be used when querying revisions to indicate the
-  latest revision of a file, for instance "HEAD" for subversion.
+  Name of the directory where the external VCS stores the local repository
+  information. For example, this is :file:`.svn` for Subversion. This
+  information is used when the project is set up so that GPS can
+  automatically select the external VCS. See :ref:`Version_Control_System`.
 
-*require_log*
-  The attribute `require_log` specifies if the VCS require a log for the
-  commit/add/delete actions. It can take the values `TRUE` or `FALSE`. If it is
-  set to `TRUE` GPS will ensure that a log is created for each file. If it is
-  set to `FALSE` GPS will not ask for log, it is expected to be handled by the
-  external VCS.
+* :file:`prev_revision`, :file:`head_revision`
 
-Note that to support group commit with shared log on GPS both `absolute_name`
-and `atomic_commands` must be true. This is the case for the Subversion VCS for
-example.
+  String used when querying revisions to indicate the previous or head
+  (respectively) revision of a file. For example, :command:`PREV` and
+  :command:`HEAD` for Subversion.
 
-Here is an example, adapted to the use of CVS::
+* :file:`require_log`
+
+  Whether the VCS require a log for commit, add, and delete actions.  If
+  :command:`TRUE`, GPS ensures that a log is created for each file. If
+  :command:`FALSE`, GPS doesn't ask for log, but expects the external VCS
+  to do so.
+
+To support group commit with shared log, both :file:`absolute_name` and
+:file:`atomic_commands` must be true. This is the case for the Subversion
+VCS, for example.
+
+Here's an example, adapted to the use of CVS::
 
      <vcs name="Custom CVS" absolute_names="FALSE">
 
@@ -7319,428 +7314,410 @@ Here is an example, adapted to the use of CVS::
 
 .. _Associating_actions_to_operations:
 
-Associating actions to operations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Associating actions with operations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-GPS knows about a certain set of predefined 'operations' that a VCS can
-perform. The user can decide to implement some of them - not necessarily all of
-them - in this section.
+GPS knows about a set of predefined 'operations' that a VCS can perform.
+When adding support for a VCS, you can decide to implement some, but
+not necessarily all of them. This section describes how.
 
-The following node is used to associate a predefined operation to an action::
+Each predefined action described in :ref:`Implementing_VCS_actions`
+has a tag of the same name, with the following attributes:
 
-     <OPERATION  action="ACTION_LABEL" label="NAME OF OPERATION" />
+* :file:`action`
 
-Where:
+  Name of the action to launched when GPS ask the VCS to perform the
+  operation.
 
-*OPERATION*
-  is the name of the predefined action. The list of predefined actions
-  is described in :ref:`Implementing_VCS_actions`,
+* :file:`label`
 
-*ACTION_LABEL*
-  is the name of the corresponding gps Action that will be launched when
-  GPS wants to ask the VCS to perform OPERATION,
-
-*NAME OF OPERATION*
-  is the name that will appear in the GPS menus when working on a file
-  under the control of the defined VCS.
+  Name that appears in the GPS menus when working on a file under the
+  control of the defined VCS.
 
 .. _Defining_revision_information:
 
 Defining revision information
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Some VCS reports revisions number from which it is possible to deduce the
-related branches. This is the case in CVS for example where a revision number
-for a branch uses as prefix the branch point revision number. For such VCS it
-is possible to specify two regular expressions:
-
-*`parent_revision`*
-  Parse the revision number and report as first match the parent revision::
-
-      <parent_revision regexp="..." />
-
-  For CVS on **1.2.4.5** it must match **1.2**.
-
-*`branch_root_revision`*
-  Parse the revision number and report as first match the branch root
-  revision::
-
-      <branch_root_revision regexp="..." />
-
-  For CVS on **1.2.4.5** it must match **1.2.4**.
+Some VCS's have revisions number that can be used to find the related
+branch. This is the case in CVS, for example, where a revision number for a
+branch uses as prefix the branch point revision number. For such VCS, you
+can specify two regular expressions as the :file:`regexp` attribute of
+one of the :file:`<parent_revision>` and :file:`<branch_root_revision>` tags,
+which, when passed the revision number, have subexpressins that match the
+parent revision and the branch root, respectively.  For example, in CVS,
+with a revision number of :command:`1.2.4.5`, the regular expressionin
+:file:`<parent_revision>` should match :command:`1.2` and that in
+:file:`<branch_root_revision>` should match :command:`1.2.4`.
 
 .. _Defining_status:
 
 Defining status
 ^^^^^^^^^^^^^^^
 
-All VCS have the notion of 'status' or 'state' to describe the
-relationship between the local file and the repository. The XML node
-`status` is used to describe the status that are known to a
-custom VCS, and the icons associated to it::
+All VCS have the notion of 'status' or 'state' to describe the relationship
+between the local file and the repository. Use the XML tag :file:`<status>`
+to describe the statuses supported by a custom VCS and the icon associated
+with each.  This tag supports two attributes:
 
-    <status label="STATUS_LABEL" stock="STOCK_LABEL" />
+* :file:`label`
 
-Where:
+  Name of the status, for example :command:`Up to date` or :command:`Needs
+  update` for CVS.
 
+* :file:`stock`
 
-*STATUS_LABEL*
-  is the name of the status, for example 'Up to date' or 'Needs update'
-  in the context of CVS.
+  Stock identifier of the icon associated to this status used to denote the
+  status in the :guilabel:`VCS Explorer`. See :ref:`Adding_stock_icons` for
+  details on defining stock icons.
 
-*STOCK_LABEL*
-  is the stock identifier of the icon associated to this status, that
-  will be used, for example, in the VCS Explorer. See section
-  :ref:`Adding_stock_icons` for more details on how to define stock
-  icons.
-
-Note that the order in which status are defined in the XML file is
-important: the first status to be displayed must correspond to the
-status 'Up-to-date' or equivalent.
+The order in which status are defined in the XML file is significant: the
+first status listed displayed must correspond to the equivalent of the
+:command:`Up-to-date` status.
 
 .. _Output_parsers:
 
 Output parsers
 ^^^^^^^^^^^^^^
 
-There are cases in which GPS needs to parse the output of the VCS
-commands: when querying the status, or when 'annotating' a
-file.
+GPS needs to parse the output of VCS commands when querying the status or
+annotating a file.  You specify how to parse the results by specifying a
+set of regular expressions as child tags within the :file:`<vcs>` tag.
+node.
 
-The following parsers can be implemented in the `vcs` node.
+* :file:`<status_parser>`, :file:`<local_status_parser>`, and
+  :file:`<update_parser>`
 
-*`<status_parser>`, `<local_status_parser>` and `<update_parser>`*
-  These parsers are used by the command VCS.status_parse, to parse a string for
-  the status of files controlled by a VCS.
+  Used by the function :file:`VCS.status_parse` to parse a string for the
+  status of files controlled by a VCS.
 
-  They accept the following child nodes:
+  They each accept the following child tags:
 
-  *`<regexp>` (mandatory)*
-    Indicates the regular expression to match.
+  * :file:`<regexp>` (required)
 
-  *`<file_index>`*
-    An index of a parenthesized expression in `regexp` that contains the name
-    of a file.
+    Regular expression to match against.
 
-  *`<status_index>`*
-    An index of a parenthesized expression in `regexp` that contains the file
-    status. This status is passed through the regular expressions defined in the
-    `status_matcher` nodes, see below.
+  * :file:`<file_index>`
 
-  *`<local_revision_index>`*
-    An index of a parenthesized expression in `regexp` that contains the name
-    of the local revision (the version of the file that was checked out).
+    Index of a parenthesized subexpression that matches the filename.
+    name of a file.
 
-  *`<repository_revision_index>`*
-    An index of a parenthesized expression in `regexp` that contains the name
-    of the repository revision (the latest version of the file in the VCS).
+  * :file:`<status_index>`
 
+    Index of a parenthesized expression that matches the status, which
+    status is passed to the regular expressions defined in the
+    :file:`<status_matcher>` tags described below.
 
-  *`<status_matcher>`*
-    A regular expression which, when matching an expressions, identifies the
-    status passed in the node attribute `label`.
+  * :file:`<local_revision_index>`
 
-*`<annotations_parser>`*
-  This parser is used by the command VCS.annotations_parse, to parse a string
-  for annotations in a file controlled by a VCS.
+    Index of a parenthesized expression that matches the name of the local
+    revision (the version of the file that was checked out).
 
-  It accepts the following child nodes:
+  * :file:`<repository_revision_index>`
 
-  *`<regexp>` (mandatory)*
-    Indicates the regular expression to match.
+    Index of a parenthesized expression that matches the name of the
+    repository revision (the latest version of the file in the VCS).
 
-  *`<repository_revision_index>` (mandatory)*
-    An index of a parenthesized expression in `regexp` that contains the
-    repository revision of the line.
+  * :file:`<status_matcher>`
 
-  *`<author_index>`*
-    An index of a parenthesized expression in `regexp` that contains the
-    author of the line.
+    Regular expression which, when matching an expressions indicates that
+    the status is that given in the :file:`label` attribute of this tag.
 
-  *`<date_index>`*
-    An index of a parenthesized expression in `regexp` that contains the
-    date of the line.
+* :file:`<annotations_parser>`
 
-  *`<file_index>`*
-    An index of a parenthesized expression in `regexp` that indicates the
-    part of the line that belongs to the file.
+  Used by the function :file:`VCS.annotations_parse` to parse a line of for
+  annotations in a file controlled by a VCS.
 
-  *`<tooltip_pattern>`*
-    A template pattern that will be used to format the tooltip information.
-    It can contain text and reference parenthesized expressions in
-    `regexp` using \\`n` (where `n` represents the nth
-    expression in `regexp`).
+  It accepts the following child tags:
 
-*`<log_parser>`*
-  This parser is used by the command VCS.log_parse, to parse a string for
-  revision histories in a file controlled by a VCS.
+  * :file:`<regexp>` (required)
 
-  It accepts the following child nodes:
+    Regular expression to match against.
 
-  *`<regexp>` (mandatory)*
-    Indicates the regular expression to match.
+  * :file:`<repository_revision_index>` (required)
 
-  *`<repository_revision_index>` (mandatory)*
-    An index of a parenthesized expression in `regexp` that contains the
-    repository revision of the log.
+    Index of a parenthesized expression that matches the repository
+    revision of the line.
 
-  *`<author_index>`*
-    An index of a parenthesized expression in `regexp` that contains the
-    author of the log.
+  * :file:`<author_index>`
 
-  *`<date_index>`*
-    An index of a parenthesized expression in `regexp` that contains the
-    date of the log.
+    Index of a parenthesized expression that matches the author of the
+    line.
 
-  *`<log_index>`*
-    An index of a parenthesized expression in `regexp` that contains the
-    actual text of the log.
+  * :file:`<date_index>`
 
-*`<revision_parser>`*
-  This parser is used by the command VCS.revision_parse, to parse a string for
+    Index of a parenthesized expression that matches the date of the line.
+
+  * :file:`<file_index>`
+
+    Index of a parenthesized expression that matches the part of the line
+    that belongs to the file (e.g., the actual line text).
+
+  * :file:`<tooltip_pattern>`
+
+    Template pattern used to format the tooltip information.  It can
+    contain text and reference parenthesized expressions using
+    :file:`\\{n}` (where :command:`n` represents the nth expression in
+    the value of :file:`<regexp>`)).
+
+* :file:`<log_parser>`
+
+  Used by the function :file:`VCS.log_parse` to parse the log for revision
+  histories in a file controlled by a VCS.
+
+  It accepts the following child tags:
+
+  * :file:`<regexp>` (required)
+
+    Regular expression to match against.
+
+  * :file:`<repository_revision_index>` (required)
+
+    Index of a parenthesized expression that matches the repository
+    revision.
+
+  * :file:`<author_index>`
+
+    Index of a parenthesized expression that matches the author.
+
+  * :file:`<date_index>`
+
+    Index of a parenthesized expression that matches the date.
+
+  * :file:`<log_index>`
+
+    Index of a parenthesized expression that matches the revision text.
+
+* :file:`<revision_parser>`
+
+  Used by the function :file:`VCS.revision_parse` to parse a string for
   revision tags and branches in a file controlled by a VCS.
 
-  It accepts the following child nodes:
+  It accepts the following child tags, all of which are required:
 
-  *`<regexp>` (mandatory)*
-    Indicates the regular expression to match.
+  * :file:`<regexp>`
 
-  *`<sym_index>` (mandatory)*
-    An index of a parenthesized expression in `regexp` that contains the
-    tags or branches symbolic name of the revision.
+    Regular expression to match against.
 
-  *`<repository_revision_index>` (mandatory)*
-    An index of a parenthesized expression in `regexp` that contains the
-    repository revision number of the revision.
+  * :file:`<sym_index>`
+
+    Index of a parenthesized expression that matches the tags or branches
+    symbolic name of the revision.
+
+  * :file:`<repository_revision_index>`
+
+    Index of a parenthesized expression that matches the repository
+    revision number of the revision.
 
 .. _Implementing_VCS_actions:
 
 Implementing VCS actions
 ------------------------
 
-A number of 'standard' VCS operations are known to GPS. Each of
-these operations can be implemented, using Actions. See :ref:`Defining_Actions`) for a complete description of how to implement actions.
+GPS defines standard VCS operations, each of which can be implemented using
+Actions (see :ref:`Defining_Actions`).  Here's a list of all the defined
+VCS operations and their parameters:
 
-Here is a list of all the defined VCS operations, and their
-parameters:
+* :command:`status_files`
 
-*status_files*
+  Query the status of a list of files. This performs a complete VCS query
+  and returns as complete results as possible.
 
   * $1  = whether the log files should be cleared when obtaining up-to-date
     status
   * $2- = the list of files to query status for.
 
-  Query the status for a list of files. This should perform a complete
-  VCS query and return results as complete as possible.
+* :command:`status_dir`
 
-*status_dir*
-
-  * $1 = the directory.
-
-  Same as above, but works on all the files in one directory.
-
-*status_dir_recursive*
+  Likewise, but queries all files in one directory.
 
   * $1 = the directory.
 
-  Same as above, but works on all the files in one directory and all
+* :command:`status_dir_recursive`
+
+  Likewise, but queries all the files in one directory and all
   subdirectories, recursively.
 
-*local_status_files*
+  * $1 = the directory.
+
+* :command:`local_status_files`
+
+  Query the local status for specified files. This query should be as fast
+  as possible and avoid connecting to any remote VCS. The results need not
+  be complete, but you should not implement this command if the output
+  doesn't at least contain the working revision.
 
   * $* = list of files
 
-  Query the local status for specified files. This query should be as
-  fast as possible, not connecting to any remote VCS. The results need
-  not be complete, but it is not useful to implement this command if
-  the output does not contain at least the working revision.
+* :command:`open`
 
-*open*
-
-  * $* = list of files
-
-  Open files or directories for editing. This command should be
-  implemented on any VCS that require an explicit check-out/open/edit
-  action before being able to edit a file.
-
-*update*
+  Open files or directories for editing. Implement this command for any VCS
+  that require an explicit check-out, open, or edit action before being
+  able to edit a file.
 
   * $* = list of files
 
-  Bring the specified files in sync with the latest repository revision.
+* :command:`update`
 
-*resolved*
+  Bring the specified files up to date with the latest repository revision.
 
   * $* = list of files
+
+* :command:`resolved`
 
   Mark files' merge conflics as resolved. Some version control systems
-  (like Subversion) will block any commit until this action is called.
+  (such as Subversion) block any commit until this action is called.
 
-*commit*
+  * $* = list of files
+
+* :command:`commit`
+
+  Commit, submit, or check-in files or directories with the provided
+  log. The log is passed in a file.
 
   * $1  = log file
   * $2- = list of files
 
-  Commit/submit/check-in files or directories with provided log. The log is
-  passed in a file.
+* :command:`commit_dir`
 
-*commit_dir*
+  Likewise, but for all the files in a directory.
 
   * $1  = log
   * $2  = directory
 
-  Commit/submit one directory with provided log. The log is passed in
-  a file.
+* :command:`history_text`
 
-*history_text*
-
-  * $1 = file
-
-  Query the entire changelog history for the specified file. The result
-  is expected to be placed into an editor as plain text.
-
-*history*
+  Query the complete log history for the specified file. The result is
+  expected to be placed into an editor as plain text.
 
   * $1 = file
 
-  Query the entire changelog history for the specified file. The result
-  is expected to be placed into a Revision View.
+* :command:`history`
 
-*history_revision*
+  Likewise, but the result is expected to be placed into a
+  :guilabel:`Revision` view.
+
+  * $1 = file
+
+* :command:`history_revision`
+
+  Query the history for the corresponding revision of the specified file.
 
   * $1 = revision
   * $2 = file
 
-  Query the history for corresponding revision of the specified file.
-
-*annotate*
-
-  * $1 = file
+* :command:`annotate`
 
   Query the annotations for a file.
 
-*add*
+  * $1 = file
+
+* :command:`add`
+
+  Add files and/or direcories to the repository, with the provided revision
+  log. The added files and directories are commited.
+
+  * $1  = log
+  * $2- = list of files and/or directories
+
+* :command:`add_no_commit`
+
+  Likewise, but don't comment any added files or directories.
 
   * $1  = log
   * $2- = list of files or dirs
 
-  Add files/dirs to the repository, with the provided revision log. The
-  added files/dirs are commited.
+* :command:`remove`
 
-*add_no_commit*
-
-  * $1  = log
-  * $2- = list of files or dirs
-
-  Add files/dirs to the repository, with the provided revision log. The
-  added files/dirs are not commited.
-
-*remove*
+  Remove the file or directory from the repository, with the provided
+  revision log.
 
   * $1 = log
-  * $2 = file or dir
+  * $2 = file or directory
 
-  Remove file/dir from the repository, with the provided revision log.
+* :command:`remove_no_commit`
 
-*remove_no_commit*
+  Likewise, but don't commit the removal.
 
   * $1 = log
-  * $2 = file or dir
+  * $2 = file or directory
 
-  Remove file/dir from the repository, with the provided revision log.
-  The removed files/dirs are not commited.
+* :command:`revert`
 
-*revert*
+  Revert the local file to the repository revision, cancelling all local
+  changes, and close the file for editing if it was open.
 
   * $* = files
 
-  Revert the local file to repository revision, cancelling all local
-  changes, and close the file for editing if it was open.
+* :command:`diff_patch`
 
-*diff_patch*
-
-  * $1 = file
-
-  Create a textual diff for the given file. This command is used to
-  build the activity patch file.
-
-*diff_head*
+  Create a textual diff for the given file. This command is used to build
+  the activity patch file.
 
   * $1 = file
+
+* :command:`diff_head`
 
   Display a visual comparison between the local file and the latest
-  repository revision. The diff command must report a *normal* diff
-  as opposed to *context* or *unified* ones.
-
-*diff_base_head*
+  repository revision. The diff command must provide a *normal* diff as
+  opposed to *context* or *unified* ones.
 
   * $1 = file
 
-  Display a visual comparison between the revision from which the file
-  has been checked-out and the latest revision. The diff command must
-  report a *normal* diff as opposed to *context* or *unified* ones.
+* :command:`diff_base_head`
 
-*diff_working*
+  Likewise, but compare the revision from which the file has been
+  checked-out with the latest repository revision.
 
-  * $1 = file
+* :command:`diff_working`
 
-  Display a visual comparison between the local file and the revision
-  from which it was obtained. The diff command must report a *normal* diff
-  as opposed to *context* or *unified* ones.
+  Likewise, but compare the local file and the revision from which it was
+  obtained.
 
-*diff*
+* :command:`diff`
 
-  * $1 = rev
-  * $2 = file
+  Likewise, but compare the local file with a specific revision.
 
-  Display a visual comparison between the local file and the specified
-  revision. The diff command must report a *normal* diff
-  as opposed to *context* or *unified* ones.
+* :command:`diff2`
 
-*diff2*
+  Display a visual comparison between the two specified revisions of the
+  file. The diff command must provide a *normal* diff as opposed to
+  *context* or *unified* ones.
 
   * $1 = revision 1
   * $2 = revision 2
   * $3 = file
-
-  Display a visual comparison between the two specified revisions of
-  the file. The diff command must report a *normal* diff
-  as opposed to *context* or *unified* ones.
 
 .. _Implementing_VCS_menus:
 
 Implementing VCS menus
 ----------------------
 
-GPS defines a standard set of Actions to interact with Version Control Systems.
-All these actions can be viewed, for instance, in the "VCS" of the Key
-Shortcuts dialog (see :ref:`The_Key_Manager_Dialog`).
+All of the actions defined in the previous section can, for example, be
+viewed in the :guilabel:`VCS` page of the :guilabel:`Key Shortcuts` dialog
+(see :ref:`The_Key_Manager_Dialog`).
 
-A Python facility exists in plugin `vcs.py` to associate menu items to VCS
-actions. This facility defines in one place the VCS menus that are to be
-displayed in the global VCS menu, in the contextual menus on contexts that
-contain files, and on the menus in the VCS explorer.
+GPS provides a Python facility in the plugin :file:`vcs.py` that associates
+menu items to VCS actions. This facility defines, in one place, the VCS
+menus to be displayed in the global VCS menu, in the contextual menus on
+contexts that contain files, and on the menus in the VCS explorer.
 
-To use this facility, you must first define a list of associations in Python,
-and then register this list through a call to `vcs.register_vcs_actions`.
+To use this facility, you must first define a list of associations in
+Python, and then register this list through a call to the function
+:file:`vcs.register_vcs_actions`, which has the following parameters:
 
-This function takes as parameter:
+* the name of the version control system as defined in the :file:`name`
+  attribute of the :file:`<vcs>` tag in the XML definition.
 
-*the name of the version control system*
-  as defined in the `name` attribute of the `vcs` node in the XML
-  definition.
+* a list of dictionaries of the form :command:`ACTION : <name of the vcs
+  action>, LABEL: <menu label>`.  You can use the predefined
+  :command:`SEPARATOR` dictionary to indicate a separator to be displayed
+  in the contextual menus on files and in the :guilabel:`VCS Explorer`.
 
-*a list of dictionaries*
-  of the form `ACTION : <name of the vcs action>, LABEL: <menu label>`.
-  The predefined `SEPARATOR` dictionary can be used to indicate a
-  separator which will be displayed in the contextual menus on file and on the
-  VCS Explorer.
-
-If you have defined a custom VCS in a previous version of GPS, you will need
-to define your menus through this facility. The easiest is to simply copy one
-of the existing plugins (for instance `subversion.py` or
-`clearcase.py`) and simply change the first parameter in the call to
-`register_vcs_actions`.
+If you defined a custom VCS in a previous version of GPS, you need to
+define your menus through this facility. The easiest way is to copy one of
+the existing plugins (for example, `subversion.py` or `clearcase.py`) and
+change the first parameter in the call to :file:`register_vcs_actions`.
 
 .. _The_Server_Mode:
 
@@ -7749,51 +7726,47 @@ The Server Mode
 
 .. index:: server
 
-In order to give access to the GPS capabilities from external processes
-(e.g. `Emacs`), GPS can be launched in *server mode*.
+To give access to the GPS capabilities from external processes
+(e.g. :program:`emacs`), you can launch GPS in **server mode**.
 
-The two relevant command line switches are `--server` and `--hide`.
-
-`--server` will open a socket on the given port, allowing multiple clients to
-connect to a running GPS, and sending GPS shell or python commands.
-
-`--hide` tells GPS not to display its main window when starting.  note that
-under unix systems, you still need to have access to the current screen (as
-determined by the `DISPLAY` environment variable) in this mode.
-
-Using the two switches together provides a way to launch GPS as a background
-process with no initial user interface.
+The relevant command line switches are :command:`--server` and
+:command:`--hide`.  :command:`--server` opens a socket on the specified
+port, allowing multiple clients to connect to a running GPS and send GPS
+shell or Python commands.  :command:`--hide` tells GPS not to display its
+main window when starting.  On unix systems, you still need to have access
+to the current screen (as determined by the :file:`DISPLAY` environment
+variable) in this mode.  Using both switches provides a way to launch GPS
+as a background process with no initial user interface.
 
 Clients connecting through a standard socket have access to a simple shell
-using `GPS>>` as the separating prompt between each command. This is needed in
-order to determine when the output (result) of a command is terminated.
+using `GPS>>` as the prompt between each command. This is needed in order
+to determine when the output (result) of a command is completed.  All GPS
+shell commands (as defined in :ref:`The_GPS_Shell`) are available from this
+shell. In addition, the Python interpreter, if enabled, is also available
+through the use of the :command:`python` prefix before a Python command.
 
-All the GPS shell commands (as defined in :ref:`The_GPS_Shell`) are available
-from this shell. In addition, the python interpreter, if enabled, is also
-available through the use of the `python` prefix before a python command.
-
-For example, sending `pwd` through the socket will send the `pwd` command
-through the GPS shell and display the result on the socket; similarly, sending
-`python GPS.pwd()` will send the `GPS.help()` command through the python
-interpreter (see :ref:`The_Python_Interpreter` for more details).
+For example, sending :command:`pwd` through the socket sends the
+:command:`pwd` command through the GPS shell and sends the result to the
+socket; similarly, sending :command:`python GPS.pwd()` will send the
+:command:`GPS.help()` command through the python interpreter (see
+:ref:`The_Python_Interpreter` for more details).
 
 The socket shell provides also additional commands:
 
-* logout
-  This command will inform the GPS server that the connection should now
-  be closed.
+* :command:`logout`
 
-* id <string>
-  This command will register the current session with a given string.
-  This string can then be used within GPS itself (for example via a
-  .xml or python plug-in) to display extra information to the client via
-  the socket, using the command GPS.Socket().send.
+  Inform the GPS server that the connection should be closed.
 
-For example, let suppose that we start gps with the `--server=1234`
-command: this will bring up GPS as usual.
+* :command:`id <string>`
 
-Now, on a separate terminal, create a simple client by typing the following::
+  Register the current session with a given string.  This string can then
+  be used within GPS itself (for example via a :file:`.xml` or Python
+  plug-in) to display extra information to the client via the socket, using
+  the function :file:`GPS.Socket().send`.
 
+For example, suppose we start GPS with the :command:`--server=1234`
+command: this brings up GPS as usual.  Now, on a separate terminal, create
+a simple client by typing the following::
 
   telnet localhost 1234
   Trying 127.0.0.1...
@@ -7808,7 +7781,6 @@ Now, on a separate terminal, create a simple client by typing the following::
 Then in the GPS Python Console::
 
   >>> GPS.Socket ("test-1").send ("hello, it's time to logout\\n");
-
 
 At this point, the following is received on the client (telnet) side::
 
@@ -7826,21 +7798,18 @@ Adding project templates
 
 .. index:: project templates
 
-The Project template wizard lists a selection of templates. The default set is
-found automatically by GPS in the `share/gps/templates` directory of your GPS
-installation.
+The :guilabel:`Project` template wizard lists a selection of templates.
+GPS locates the default set in the :file:`share/gps/templates` directory of
+your GPS installation.
 
-It is possible to register new directories in which GPS will look for
-templates, by using the Shell/Python command
-`GPS.ProjectTemplate.add_templates_dir`.
+You can register new directories in which GPS looks for templates by using
+the Shell/Python function :file:`GPS.ProjectTemplate.add_templates_{dir}`.
 
 To create a new project template, first create a subdirectory in the
-`share/gps/templates/` directory, or in one of the directories which has been
-registered through `GPS.ProjectTemplate.add_templates_dir`. Then, in this
-directory, create one template description file.
-
-A template description file is a text file with the `.gpt` extension,
-with the following syntax::
+:file:`share/gps/templates/` directory or in one of the directories you've
+registered with :file:`GPS.ProjectTemplate.add`. Then, in this directory,
+create one template description file, which is a text file with the
+:file:`.gpt` extension and the following syntax::
 
   Name: <name>
   Category: <category>
@@ -7854,48 +7823,53 @@ with the following syntax::
   [Description]
   <the description>
 
+Where the following are specified:
 
-Where the following should be defined:
+* :file:`<name>`
 
-* <name>
-  The name of the template as it will appear in the template tree in the project
-  template wizard.
+  Name of the template as it appears in the template tree in the
+  :guilabel:`Project` template wizard.
 
-* <category>
-  The category in which the template will be inserted in the template tree. There
-  can be multiple levels of categories, separated with `/`.
+* :file:`<category>`
 
-* <variable_1>
-  A name which will be substituted in the template files when deploying the
-  template, see below.
+  Category in which the template is inserted in the template tree. There
+  can be multiple levels of categories, separated with :kbd:`/`.
 
-* <variable_1_default_value>
-  The default value for variable 1, which will appear in the project template
+* :file:`<variable_1>`
+
+  Name substituted in the template files when deploying the template; see
+  below.
+
+* :file:`<variable_1_default_value>`
+
+  Default value for variable 1, which appears in the project template
   wizard.
 
-* <variable_1_description>
-  The description of variable 1.
+* :file:`<variable_1_description>`
 
-* <optional_hook_line>
-  An optional line of the form `post_hook: <python_file>` where
-  `<python_file>` is the name of a Python file present in the same directory
-  as the template description file. This Python file will be run by GPS once,
-  right after the project template is deployed
+  Description of variable 1.
 
-* <description>
-  A short paragraph describing the project template. This paragraph will be
-  displayed in the project template wizard when the template is selected in the
-  tree.
+* :file:`<optional_hook_line>`
 
-When deploying templates, GPS will copy in the destination directory chosen by
-the use all files and directories present in the directory that contains the
-template description file, except the Python file indicated as post_hook, and
-the template description file itself.
+  Optional line of the form :command:`post_hook: <python_file>` where
+  :file:`<python_file>` is the name of a Python file present in the same
+  directory as the template description file. This Python file is run by
+  GPS once, immediately after it deploys the project template.
 
-As it deploys templates, GPS will replace strings of the form
-@code{@_<variable_name>_} with the value of the variable.  If `<variable_name>`
-is all lower case, the substitution will be transformed to lower-case. If
-`<variable_name>` is in Mixed_Case, the substitution will be transformed into
-Mixed_Case as well. If it is in upper case, then the substitution will contain
-the original value specified by the user.
+* :file:`<description>`
 
+  Short paragraph describing the project template. This paragraph is
+  displayed in the :guilabel:`Project` template wizard when the user
+  selects the template in the tree.
+
+When deploying templates, GPS copies all files and directories present in
+the directory containing the template description file (except the Python
+file indicated as :file:`post_hook`) and the template description file
+itself into the destination directory chosen by the user.
+
+As it deploys templates, GPS replaces strings of the form
+:command:`<variable_name>` with the value of the variable.  If
+:command:`<variable_name>` is all lower case, the substitution is convert
+to lower-case. If :command:`<variable_name>` is in mixed case, the
+substitution is convert into mixed case as well. If it's in upper case, the
+substitution contains the original value specified by the user.
