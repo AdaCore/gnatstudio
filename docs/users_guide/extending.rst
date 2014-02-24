@@ -1662,7 +1662,7 @@ automatically loaded by GPS (and thus can immediately modify things in
 GPS), or only be made visible in the Plug-ins Editor (see
 :ref:`The_Plug-ins_Editor`).
 
-These directories are searched in the order given below. Any script loaded
+GPS searches these directories in the order given below. Any script loaded
 latter can override operations performed by previously loaded scripts. For
 example, they can override a key shortcut, remove a menu, or redefine a GPS
 action.
@@ -3927,7 +3927,7 @@ The :file:`<project_attribute>` tag accepts the following attributes:
   Only relevant if the project attribute contains a list of values, when it
   indicates whether the order of the values is relevant.  In most cases,
   it's not.  However, the order of source directories, for example,
-  matters, since it also indicates where the source files are searched for
+  matters, since it also indicates where GPS searches for the source files
   and it stops at the first match.
 
 * :file:`omit_if_default` (boolean, default :command:`true`)
@@ -4553,10 +4553,10 @@ The following child tags are defined:
 
   * :command:`%u`: User name.
 
-  If neither you haven't included :command:`%u` or :command:`%U` in the
-  string and a user is specified in the remote connection configuration,
-  GPS places the value of :file:`<start_command_user_args>` at the
-  beginning of the arguments.
+  If you haven't included either :command:`%u` or :command:`%U` in the
+  string and the user specifies a username in the remote connection
+  configuration, GPS places the value of :file:`<start_command_user_args>`
+  at the beginning of the arguments.
 
 * :file:`<start_command_user_args>`
 
@@ -4788,7 +4788,7 @@ following child tags:
 
   One-line description of what the model supports
 
-* :file:`<server> (default :command:`Build Server`)
+* :file:`<server>` (default :command:`Build Server`)
 
   Server used for launching targets of this model. See
   :ref:`Remote_operations`.
@@ -4813,7 +4813,7 @@ following child tags:
 
 * :file:`<switches>`
 
-  Description of the switches.  (:ref:`Defining_tool_switches`)::
+  Description of the switches.  (See :ref:`Defining_tool_switches`)::
 
     <?xml version="1.0" ?>
        <my_model>
@@ -5052,41 +5052,52 @@ child tags:
 
 .. _Toolchains_customization:
 
-Toolchains customization
-------------------------
+Customizing Toolchains
+----------------------
 
-The list of toolchains and their values presented in the project editor
-(:ref:`The_Project_Wizard`) can be customized through XML. The GPS default
-list is contained in `toolchains.xml`. You can add your own toolchain
-by providing an xml description following the below described structure:
+Yuo can customize the list of toolchains and their values presented in the
+project editor (see :ref:`The_Project_Wizard`) with the XML configuration
+files.  GPS's default list is contained in :file:`toolchains.xml`. You can
+add your own toolchain by providing an XML description with the
+following tags:
 
-*<toolchain_default>*
-  Contains the default names for the different tools used by all toolchains.
-  The final name used will be `toolchain_name-default_name`.
+* :file:`<toolchain_default>`
 
-*<toolchain name="name">*
-  Defines a toolchain using name "name". This toolchain can override the
-  default values defined in the toolchain_default above.
+  Default names for the different tools used by all toolchains.
+  The final name used is :file:`toolchain_name-default_name`.
 
-Each of the above tags can have the following chilren
+* :file:`<toolchain>`
 
-*<gnat_driver>*
-  Defines the gnat driver to use.
+  Defines a toolchain, with an attribute, :file:`name`, giving the name of
+  the toolchain, which overrides the default values defined in
+  :file:`<toolchain_default>`.
 
-*<gnat_list>*
-  Defines the gnat list tool to use.
+Each of the above tags can have the following child tags:
 
-*<debugger>*
-  Defines the debugger to use.
+* :file:`<gnat_driver>`
 
-*<cpp_filt>*
-  Not used by GPS.
+  GNAT driver to use.
 
-*<compiler lang="lang">*
-  Defines the compiler to use to compile language "lang"
+* :file:`<gnat_list>`
 
-The toolchain_default values can either be overriden or nullified by just
-providing the same tab with an empty value in a toolchain definition.
+  GNAT list tool to use.
+
+* :file:`<debugger>`
+
+  Debugger to use.
+
+* :file:`<cpp_filt>`
+
+  Reserved.
+
+* :file:`<compiler>`
+
+  Requires a :file:`lang` attribute naming an language and defines the
+  compiler to use to compile that language.
+
+You can override (including by setting the value to null) any value in the
+:file:`<toolchain_default>` tag by providing the same tag withing a
+:file:`toolchain` tag.
 
 .. _Adding_support_for_new_tools:
 
@@ -5096,73 +5107,70 @@ Adding support for new tools
 .. index:: external tool
 .. index:: <tool>
 
-GPS has built-in support for external tools. This feature can be used to
-support a wide variety of tools (in particular, to specify different
-compilers). Regular enhancements are done in this area, so if you are
-planning to use the external tool support in GPS, check for the latest GPS
-version available.
+GPS has built-in support for many external tools.  This of tools is
+frequently enhanced, so if you're planning to use the external tool support
+in GPS, check the latest GPS version available.
 
-Typically, the following things need to be achieved to successfully use a
-tool:
+You can use this feature to support a additional tools (in particular,
+different compilers). You need to do following to successfully use a tool:
 
 * Specify its command line switches
-* Pass it the appropriate arguments depending on the current context, or
+* Pass it the appropriate arguments depending on the current context and
   on user input
 * Spawn the tool
 * Optionally parse its result and act accordingly
 
-Each of these points is discussed in further sections. In all these cases, most
-of the work can be done statically through XML customization files.  These
-files have the same format as other XML customization files
-(:ref:`Customizing_through_XML_and_Python_files`), and the tool descriptions
-are found in `<tool>` tags.
+Each of these is discussed below. In all cases most of the work can be done
+statically through XML customization files.  These files have the same
+format as other XML customization files
+(:ref:`Customizing_through_XML_and_Python_files`). Tool descriptions are
+found in :file:`<tool>` tags, which accept the following attributes:
 
-This tag accepts the following attributes:
+* :file:`name` (required)
 
-*name (mandatory)*
-  This is the name of the tool. This is purely descriptive, and will appear
-  throughout the GPS interface whenever this tool is referenced. This includes
-  for instances the tabs of the switches editor.
+  Name of the tool. This is purely descriptive and appears throughout the
+  GPS interface whenever this tool is referenced, for example the tabs of
+  the switch editor.
 
-*package (Default value is ide)*
-  This optional attribute specifies which package should be used in the project
-  to store information about this tool, in particular its switches. Most of
-  the time the default value should be used, unless you are working with one of
-  the predefined packages.
+* :file:`package` (default :command:`ide`)
 
-  See also :ref:`Defining_project_attributes`, for more information on defining
-  your own project attributes. Using the "package", "attribute" or "index"
-  XML attributes of <tool> will implicitly create new project attributes as
-  needed.
+  Which package is used in the project to store information about this
+  tool, including its switches. You should use the default value unless
+  you're using one of the predefined packages.
 
-  If this attribute is set to "ide", then the switches cannot be set for a
-  specific file, only at the project level. Support for file-specific switches
+  See also :ref:`Defining_project_attributes` for more information on
+  defining your own project attributes. Using the XML :file:`package`,
+  :file:`attribute` or :file:`index` attributes of :file:`<tool>`
+  implicitly creates new project attributes as needed.
+
+  If :command:`ide` is specified, switches can't be set for a specific
+  file, but only at the project level. Support for file-specific switches
   currently requires modification of the GPS sources themselves.
 
-*attribute (Default value is default_switches)*
-  This optional attribute specifies the name of the attribute in the project
-  which is used to store the switches for that tool.
+* :file:`attribute` (default :command:`default_switches`)
 
-*index (Default value is the tool name)*
-  This optional attribute specifies what index is used in the project. This is
-  mostly for internal use by GPS, and describes what index of the project
-  attribute is used to store the switches for that tool.
+  Name of the attribute in the project used to store the switches for the
+  tool.
 
-*override (Default value is 'false')*
-  This optional attribute specifies whether the tool definition can be
-  redefined.  The accepted values are 'true' or 'false'. If override is not
-  set, and the tool is defined several times, then a Warning will be displayed.
+* :file:`index` (default is the tool name)
 
-This tag accepts the following children, described in separate sections:
+  What index is used in the project. This is mostly for internal use by GPS
+  and indicates which index of the project attribute GPS uses to store the
+  switches for the tool.
 
-*<switches>*
-  (:ref:`Defining_tool_switches`)
+* :file:`override` (default :command:'False')*
 
-*<language>*
-  (:ref:`Defining_supported_languages`)
+  Whether the tool definition can be redefined.  If the tool is defined
+  several times GPS will display a warning.
 
-*<initial-cmd-line>*
-  (:ref:`Defining_default_command_line`)
+This tag supports the following child tags, each described in a separate
+section:
+
+* :ref:`\<switches\> <Defining_tool_switches>`
+
+* :ref:`\<language\> <Defining_supported_languages>`
+
+* :ref:`\<initial-cmd-line\> <Defining_default_command_line>`
 
 .. _Defining_supported_languages:
 
@@ -5171,17 +5179,13 @@ Defining supported languages
 
 .. index:: <language>
 
-This is the language to which the tool applies.  There can be from no to any
-number of such nodes for one `<tool>` tag.
+A tool supports one or more languages.  If you don't specify any language,
+the tool applies to all languages and the switches editor page is displayed
+for all languages.  If at least one language is specified, the switches
+editor page will only be displayed if that language is supported by the
+project.
 
-If no language is specified, the tool applies to all languages. In particular,
-the switches editor page will be displayed for all languages, no matter what
-languages they support.
-
-.. highlight:: xml
-
-If at least one language is specified, the switches editor page will only be
-displayed if that language is supported by the project::
+Specify the languages that the tool supports using the :file:`<tool>` tag::
 
   <?xml version="1.0" ?>
   <my_tool>
@@ -5193,18 +5197,16 @@ displayed if that language is supported by the project::
 
 .. _Defining_default_command_line:
 
-Defining default command line
------------------------------
+Defining the default command line
+---------------------------------
 
 .. index:: <initial-cmd-line>
 
-It is possible to define the command line that should be used for a tool when
-the user is using the default project, or hasn't overridden this command line
-in the project.
-
-This is done through the `<initial-cmd-line>` tag, as a child of the
-`<tool>` tag. Its value is the command line that would be passed to the
-tool. This command line is parsed as usual, e.g. quotes are taken into account
+You can define the command line to be used for a tool when the user is
+using the default project and hasn't overridden the command line in the
+project.  Do this with the :file:`<initial-cmd-line>` tag, as a child of
+the :file:`<tool>` tag. Its value is the command line to be passed to the
+tool.  This command line is parsed in the usual manner and quotes are used
 to avoid splitting switches each time a space is encountered::
 
   <?xml version="1.0" ?>
@@ -5214,7 +5216,6 @@ to avoid splitting switches each time a space is encountered::
     </tool>
   </my_tool>
 
-
 .. _Defining_tool_switches:
 
 Defining tool switches
@@ -5222,395 +5223,406 @@ Defining tool switches
 
 .. index:: <switches>
 
-The user has to be able to specify which switches to use with the tool.  If the
-tool is simply called through custom menus, you might want to hard code some or
-all of the switches. However, in the general case it is better to use the
-project properties editor, so that project-specific switches can be specified.
+The user must be able to specify which switches are passed to the tool.  If
+the tool is only called through custom menus, you can hardcode some or all
+of the switches. However, it's usually better to use the project properties
+editor so the user can specify project-specific switches.
 
-This is what GPS does by default for Ada, C and C++. You can find in the GPS
-installation directory how the switches for these languages are defined in an
-XML file. These provide extended examples of the use of customization files.
+This is what GPS does by default for Ada, C and C++. Look the GPS
+installation directory to see how the switches for these languages are
+defined in an XML file. These provide extended examples of the use of
+customization files.
 
 The switches editor in the project properties editor provides a powerful
-interface to the command line, where the user can edit the command line both as
-text and through GUI widgets.
+interface to the command line, allowing the user can edit the command line
+both as text and through GUI widgets.
 
-The switches are declared through the `<switches>` tag in the customization
-file, which must be a child of a `<tool>` tag as described above.
+In customization files, the switches are declared with the
+:file:`<switches>` tag, which must be a child of a :file:`<tool>` tag
+as described above.  Use this tag to produce the needed GUI widgets to
+allow a user to specify the desired switch value.
 
-This `<switches>` tag accepts the following attributes:
+This tag accepts the following attributes:
 
-*lines (default value is 1)*
-  The switches in the project properties editor are organized into boxes,
-  each surrounded by a frame, optionally with a title. This attribute specifies
-  the number of rows of such frames.
+* :file:`lines` (default :command:`1`), :file:`columns` (default :command:`1`)
 
-*columns (default value is 1)*
-  This attribute specifies the number of columns of frames in the project
-  properties page.
+  Switches in the project properties editor are organized into boxes, each
+  surrounded by a frame, optionally with a title. These attribute specify
+  the number of rows or columns (respectively) of such frames.
 
-*separator (default value is "")*
-  This attribute specifies the default character that should go between a switch
-  and its value, to distinguishes cases like "-a 1", "-a1" and "-a=1". This can
-  be overridden separately for each switch. Note that if you want the separator
-  to be a space, you must use the value `"&#32;"` rather than `" "`,
-  since XML parser must normalize the latter to the empty string when reading
-  the XML file.
+* :file:`separator`
 
-*use_scrolled_window (Default value is false)*
-  This optional attribute specifies if the boxes of the project editor are
-  placed into scrolled window. This is particularily useful if the number of
-  displayed switches if important.
+  Default character placed between a switch and its value, for example,
+  :command:`=` produces :command:`-a=1`. Can can override this separately
+  for each switch. If you want the separator to be a space, you must use
+  the value :command:`&#32;` instead of a blank since XML parser will
+  normalize the latter to the empty string when reading the XML file.
 
-*show_command_line (Default value is true)*
-  If this attribute is set to "false", the command line will not be displayed
-  in the project properties editor. This can be used for instance if you only
-  want users to edit it through the buttons and other widgets, and not directly.
+* :file:`use_scrolled_window` (default :command:`False`)
 
-*switch_char (Default value is "-")*
-  This is the leading character of command line arguments that indicate they
-  are considered as switches. Arguments not starting with this character will
-  be kept as is, and cannot have graphical widgets associated with them
+  Whether boxes of the project editor are placed into scrolled window. This
+  is particularily useful if the number of displayed switches is large.
 
-*sections (Default value is empty)*
-  This is a space separated list of switches delimiting a section (such as
-  "-bargs -cargs -largs"). A section of switches is a set of switches that
-  need to be grouped together and preceded by a specific switch. Sections are
-  always placed at the end of the command line, after regular switches.
+* :file:`show_command_line` (default :command:`True`)
 
-This `<switches>` tag can have any number of child tag, among the
-following. They can be repeated multiple times if you need several check boxes.
-For consistency, most of these child tags accept attributes among the
-following:
+  If :command:`False`, the command line is not displayed in the project
+  properties editor.  Use this, for example, if you only want users to edit
+  the command line through the buttons and other widgets but not directly
+  as text.
 
-*line (default value is 1)*
-  This indicates the row of the frame that should contain the switch. See the
-  description of `lines` above.
+* :file:`switch_char` (Default :command:`-`)
 
-*column (default value is 1)*
-  This indicates the column of the frame that should contain the switch. See the
-  description of `columns` above.
+  Leading character of command line arguments that are considered to be
+  switches. Arguments not starting with this character remain unmodified
+  and don't have graphical widgets associated with them.
 
-*label (mandatory)*
-  This is the label which is displayed in the graphical interface
+* :file:`sections`
 
-*switch (mandatory)*
-  This is the text that should be put on the command line if that switch is
-  selected. Depending on its type, a variant of the text might be put instead,
-  see the description of `combo` and `spin` below.
-  This switch shouldn't contain any space.
+  Spaceseparated list of switches delimiting a section (such as
+  :command:`-bargs -cargs -largs`). A section of switches is a set of
+  switches that are grouped together and preceded by a particular
+  switch. Sections are always placed at the end of the command line, after
+  regular switches.
 
-*switch-off (default value is empty)*
-  This attribute is used for `<check>` tags, and indicates the switch
-  used for deactivating the concerned feature. This is useful for features that
-  are on by default on certain occasions, but can be individually deactivated.
+The :file:`<switches>` tag can have any number of child tags, listed below.
+Repeat them multiple times if you need several check boxes.  For
+consistency, most of these child tags accept the following attributes:
 
-*section (default value is empty)*
-  This is the switch section delimiter (such as "-cargs"). See the 'sections'
-  attribute of the tag 'switches' for more information.
+* :file:`line` (default :command:`1`), :file:`column` (default :command:`1`)
 
-*tip (default value is empty)*
-  This is the tooltip which describes that switch more extensively. It is
-  displayed in a small popup window if the user leaves the mouse on top of
-  the widget. Note that tags accepting the tip attribute also accept a single
-  child `<tip>` whose value will contain the text to be displayed. The
-  advantage of the latter is that the text formatting is then kept.
+  This indicates the row or column (respectively) of the frame to contain
+  the switch.  See the attributes of the same name above.
 
-*before (default value is "false")*
-  This attribute is used to indicate that a switch needs to be always inserted
-  at the begining of the command line.
+* :file:`label` (required)
 
-*min (default value is 1)*
-  This attribute is used for `<spin>` tags, and indicates the minimum
-  value authorized for that switch.
+  Label displayed in the graphical interface.
 
-*max (default value is 1)*
-  This attribute is used for `<spin>` tags, and indicates the maximum
-  value authorized for that switch.
+* :file:`switch` (required)
 
-*default (default value is 1)*
-  This attribute is used for `<check>` and `<spin>` tags. See the
+  Text put in the command line if the switch is selected. This text might
+  be modified, see the description of :file:`<combo>` and :file:`<spin>`
+  below.  The value must not contain any spaces.
+
+* :file:`switch-off`
+
+  Defined in `<check>` tags, where it specified the switch used for
+  deactivating the relevant feature. Use this for features that are enabled
+  by default, but can be disabled.
+
+* :file:`section`
+
+  Switch section delimiter (such as :command:`-cargs`). See the
+  :file:'sections' attribute of the :file:'<switches>' tag for more
+  information.
+
+* :file:`tip`
+
+  Tooltip describing the switch more extensively. Tags accepting this
+  attribute also accept a single child :file:`<tip>` whose value contains
+  the text to be displayed. The advantage of the latter is that text
+  formatting is retained.
+
+* :file:`before` (default :command:`false`
+
+  Whether the switch must always be inserted at the begining of the command
+  line.
+
+* :file:`min` (default :command:`1`), :file:`max` (default :command:`1`)
+
+  Only supported for :file:`<spin>` tags.  Specifies the minimum or
+  maximum (respectively)value allowed for the switch.
+
+* :file:`default` (default :command:`1`)
+
+  Used for :file:`<check>` and :file:`<spin>` tags. See the
   description below.
 
-*noswitch (default is empty)*
-  This attribute is only valid for `<combo>` tags, and described below.
+* :file:`noswitch`, :file:`nodigit`
 
-*nodigit (default is empty)*
-  This attribute is only valid for `<combo>` tags, and described below.
+  Only valid for :file:`<combo>` tags and documented there.
 
-*value (mandatory)*
-  This attribute is only valid for `<combo-entry>` tags.
+* :file:`value` (required)
 
-*separator (default is the value given to `<switches>`*
-  This attribute specifies the separator to use between the switch and its
-  value.  See the description of this attribute for `<switches>`.
+  Only valid for `<combo-entry>` tags and documentd there.
 
-Here are the valid children for `<switches>`:
+* :file:`separator`
 
-*<title>*
+  Overrides the separator to use between the switch and its value.  See the
+  description of this attribute for :file:`<switches>`.
+
+Here are the valid children for :file:`<switches>`:
+
+* :file:`<title>`
+
   .. index:: <title>
 
-  This tag, which accepts the `line` and `column` attributes, is used
-  to give a name to a specific frame.
-  The value of the tag is the title itself. You do not have to specify
-  a name, and this can be left to an empty value.
+  Accepts the :file:`line` and :file:`column` attributes and used to give a
+  name to a specific frame.  The value of the tag is the title. You need
+  not specify a name.
 
-  Extra attributes for `<title>` are:
+  Use the :file:`line-span` or :file:`column-span` attribute to specify how
+  many rows or columns (respectively) the frame should span. The default
+  for both is :command:`1`.  If is set to :command:`0`, the frame is hidden
+  from the user. See, for example, the usage in the Ada or C switches
+  editor.
 
-  *line-span (default value is 1)*
-    This indicates how many rows the frame should span. If this is set to 0,
-    then the frame is hidden from the user. See for instance the Ada or C
-    switches editor.
+* :file:`<check>`
 
-  *column-span (default value is 1)*
-    This indicates how many columns the frame should span. If this is set to 0,
-    then the frame is hidden from the user. See for instance the Ada or C
-    switches editor.
-
-*<check>*
   .. index:: <check>
 
-  This tag accepts the `line`, `column`, `label`, `switch`, `switch-off`,
-  `section`, `default`, `before` and `tip` attributes.
+  Creates a toggle button. When active, the text defined in the switch
+  attribute is added to the command line. The switch can also be activated
+  by default (the :file:`default` attribute is :command:`on` or
+  :command:`true`), in which case, deactivating the switch adds the value
+  of :file:`switch-off` to the command line.
 
-  This tag doesn't have any value. An optional `<tip>` child can be present.
+  Accepts the :file:`line`, :file:`column`, :file:`label`, :file:`switch`,
+  :file:`switch-off`, :file:`section`, :file:`default`, :file:`before` and
+  :file:`tip` attributes and you can specify an optional :file:`<tip>`
+  child.
 
-  It creates a toggle button. When the latter is active, the text defined in
-  the switch attribute is added as is to the command line. The switch can be
-  also activated by default (`default` attribute is "on" or "true"). In this
-  case, deactivating the switch will add `switch-off` to the command line.
+* :file:`<spin>`
 
-*<spin>*
   .. index:: <spin>
 
-  This tag accepts the `line`, `column`, `label`, `switch`, `section`, `tip`,
-  `min`, `max`, `separator` and `default` attributes.
+  Adds the contents of the :file:`switch` attribute followed by the current
+  numeric value of the widget to the command line. One usage is to indicate
+  indentation length.  If the current value of the widget is equal to the
+  :file:`default` attribute, nothing is added to the command line.
 
-  This tag doesn't have any value. An optional `<tip>` child can be present.
+  This tag accepts the :file:`line`, :file:`column`, :file:`label`,
+  :file:`switch`, :file:`section`, :file:`tip`, :file:`min`, :file:`max`,
+  :file:`separator` and :file:`default` attributes and you can specify an
+  optional :file:`<tip>` child.
 
-  This switch will add the contents of the `switch` attribute followed by the
-  current numeric value of the widget to the command line. This is typically
-  used to indicate indentation length for instance.  If the current value of
-  the widget is equal to the `default` attribute, then nothing is added to the
-  command line.
+* :file:`<radio>`
 
-*<radio>*
   .. index:: <radio>
 
+  Groups together any number of children, each of which is associated with
+  its own switch, allowing only one of the children can be selected at any
+  given time. 
 
-  This tag accepts the `line` and `column` attributes. It groups any number of
-  children, each of which is associated with its own switch. However, only one
-  of the children can be selected at any given time.
+  This tag accepts the :file:`line`, :file:`column` , :file:`label`,
+  :file:`switch`, :file:`section`, :file:`before` and :file:`tip`
+  attributes.  Specify an empty value for the :file:`switch` attribute to
+  indicate the default switch to use in this group of radio buttons.  Each
+  child must have the tag :file:`radio-entry` or :file:`<tip>`.
 
-  The children must have the tag `radio-entry`. This tag accepts the attributes
-  `label`, `switch`, `section`, `before` and `tip`. As a special case, the
-  switch attribute can have an empty value ("") to indicate this is the default
-  switch to use in this group of radio buttons.
+* :file:`<field>`
 
-  This tag doesn't have any value. An optional `<tip>` child can also be
-  present.
-
-*<field>*
   .. index:: <field>
 
-  This tag accepts the `line`, `column`, `label`, `switch`, `section`,
-  `separator`, `before` and `tip` attributes.
+  Creates a text field, which can contain any text the user types and be
+  editable by the user. This text is prefixed by the value of the
+  :file:`switch` attribute and the separator character. If the user doesn't
+  enter any text in the field, nothing is added to the command line.
 
-  This tag doesn't have any value. An optional `<tip>` child can be present.
+  You can specify an optional :file:`<tip>` child tag.  This tag accepts
+  the :file:`line`, :file:`column`, :file:`label`, :file:`switch`,
+  :file:`section`, :file:`separator`, :file:`before`, and :file:`tip`
+  attributes and the following additional attributes:
 
-  This tag describes a text edition field, which can contain any text the user
-  types. This text will be prefixed by the value of the `switch` attribute, and
-  the separator (by default nothing). If no text is entered in the field by the
-  user, nothing is put on the command line.
+  * :file:`as-directory`
 
-  This tag accepts two extra attributes:
-
-  *as-directory  (optional)*
     .. index:: as-directory
 
-    If this attribute is specified and set to "true", then an extra "Browse"
-    button is displayed, so that the user can easily select a directory.
+    If :command:`true`, an extra :guilabel:`Browse` button is displayed,
+    allowing the user to easily select a directory.
 
-  *as-file (optional)*
+  * :file:`as-file`
+
     .. index:: as-file
 
-    This attribute is similar to `as-directory`, but opens a dialog to
-    select a file instead of a directory. If both attributes are set to "true",
-    the user will select a file.
+    Like :file:`as-directory`, but opens a dialog to select a file instead
+    of a directory. If both attributes are :command:`true`, GPS displays
+    a file selector.
 
-*<combo>*
+* :file:`<combo>`
+
   .. index:: <combo>
   .. index:: <combo-entry>
 
-  This tag accepts the `line`, `column`, `label`, `switch`, `section`,
-  `before`, `tip`, `noswitch`, `separator` and `nodigit` attributes.
+  GPS inserts the text from the :file:`switch` attribute, concatenated
+  with the text of the :file:`value` attribute for the currently
+  selected entry, into the command line.  If the value of the current
+  entry is the same as that of the :file:`nodigit` attribute, only the
+  text of the :file:`switch` attribute is inserted into the command
+  line. (This is used, for example, to interpret the gcc switch
+  :command:`-O` as :command:`-O1`.)  If the value of the current entry
+  is the same as that of the :file:`noswitch` attribute, nothing is
+  added to the command line.
 
-  The tag `<combo>` accepts any number of `combo-entry` children tags,
-  each of which accepts the `label` and `value` attribute. An optional
-  `<tip>` child can also be present.
+  This tag accepts the :file:`line`, :file:`column`, :file:`label`,
+  :file:`switch`, :file:`section`, :file:`before`, :file:`tip`,
+  :file:`noswitch`, :file:`separator` and :file:`nodigit` attributes
+  and any number of :file:`combo-entry` child tags, each of which
+  accepts the :file:`label` and :file:`value` attribute.  You can also
+  include an optional :file:`<tip>` child.
 
-  The text inserted in the command line is the text from the `switch`
-  attribute, concatenated with the text of the `value` attribute for the
-  currently selected entry. If the value of the current entry is the same
-  as that of the `nodigit` attribute, then only the text of the
-  `switch` attribute is put on the command line. This is in fact necessary
-  to interpret the gcc switch "-O" as "-O1".
+* :file:`<popup>`
 
-  If the value of the current entry is that of the `noswitch` attribute,
-  then nothing is put in the command line.
-
-*<popup>*
   .. index:: <popup>
 
-  This tag accepts the `line`, `column`, `label`, `lines` and `columns`
-  attributes. This displays a simply button that, when clicked, displays a
-  dialog with some extra switches. This dialog, just as the switches editor
-  itself, is organizes into lines and columns of frames, the number of which is
-  provided by the `lines` and `columns` attributes.
+  Displays a button that, when clicked, displays a dialog with some
+  additional switches. This dialog, like the switches editor itself,
+  is organizes into lines and columns of frames, the number of which
+  is provided by the :file:`lines` and :file:`columns` attributes.
 
-  This tag accepts any number of children, which are the same as the
-  `<switches>` attribute itself.
+  This tag accepts those attributes as well as the :file:`label` attribute and
+  any number of child :file:`<switch>` tags.
 
-*<dependency>*
+* :file:`<dependency>`
+
   .. index:: <dependency>
 
-  This tag is used to describe a relationship between two switches. It is used
-  for instance when the "Debug Information" switch is selected for "Make", which
-  forces it for the Ada compiler as well.
+  Describes a relationship between two switches.  For example, when
+  the :guilabel:`Debug Information` switch is selected for
+  :guilabel:`Make`, we need to force it for the compiler as well.
 
-  It has its own set of attributes:
+  This tag supports the followin additional attributes:
 
-  *master-page master-switch master-section*
-    These two attributes define the switch that possibly forces a specific
-    setting on the slave switch. In our example, they would have the values
-    "Make" and "-g".
-    The switch referenced by these attributes must be of type `<check>`
-    or `<field>`. If it is part of a section, then 'master-section' needs
-    to be defined. If the check button is selected, it forces the
-    selection of the slave check button. Likewise, if the field is set to
-    any value, it forces the selection of the slave.
+  * :file:`master-page`, :file:`master-switch`, :file:`master-section`
 
-  *slave-page slave-switch slave-section*
-    These two attributes define the switch which is acted upon by the master
-    switch. In our example, they would have the values "Ada" and "-g".
-    The switch referenced by these attributes must be of type `<check>`.
+    Define the switch that can force a specific setting for a slave
+    switch. In our example, they have the values :command:`Make` and
+    :command:`-g`.  The switch referenced by these attributes must be
+    of type :file:`<check>` or :file:`<field>`. If it is part of a
+    section, you must also specify the :file:'master-section'
+    attribute. If the uses selects the check button of the this
+    switch, GPS forces the selection of the check button for the slave
+    switch. Likewise, if user sets the field to any value, GPS sets
+    the slave switch to that same value. 
 
-  *master-status slave-status*
-    These two switches indicate which state of the master switch forces which
-    state of the slave-status. In our example, they would have the values
-    "on" and "on", so that when the make debug information is activated, the
-    compiler debug information is also activated. However, if the make debug
-    information is not activated, no specific setup is forced for the compiler
-    debug information.
-    if master-status is "off" and the master switch is a field, then the
-    status of the slave will be changed when no value is set in the field.
+  * :file:`slave-page`, :file:`slave-switch`, :file:` slave-section`
 
-*<default-value-dependency>*
+    Likewise, but designates the slave switch.  In our example, they
+    have the values :command:`Ada` and :command:`-g`.  The switch
+    referenced by these attributes must be of type :file:`<check>`
+    or :file:`<field>`.
+
+  * :file:`master-status`, :file:`slave-status`
+
+    Which state of the master switch forces which state of the slave
+    switch. In our example, they both have the value :command:`on`:
+    when the user enables debug information for :program:`make`, GPS
+    also enables compiler debug information. However, if the user
+    doesn't enable debug information for :program:`make`, nothing is
+    changed for the compiler debug information.  If you specify
+    :command:`off` for :file:`master-status` and the master switch is
+    a field, GPS changs the status of the slave when the users doesn't
+    specify any value in the master switch's field.
+
+* :file:`<default-value-dependency>`
+
   .. index:: <default-value-dependency>
 
-  This tag is used to describe a relationship between two switches. It is
-  slightly different from the <dependency> tag in that the relationship concerns
-  only the default activation states. It is used for instance when the "-gnatwa"
-  switch is selected for the "Ada" Compiler, which imply that the default values
-  for "-gnatwc", "-gnatwd", etc. become activated by default. They can however
-  still be deactivated with respectively "-gnatwC" and "-gnatwD".
+  Describes a relationship between two switches, which is slightly
+  different from the :file:`<dependency>` tag.  This relationsip only
+  affects the default values. For example, when the :command:`-gnatwa`
+  switch is selected for the Ada compiler, other switches, such as
+  :command:`-gnatwc` and :command:`-gnatwd`, are enabled by default. But
+  the user can disable them by specifying, e,g., :command:`-gnatwC` and
+  "-gnatwD".
 
-  It has its own set of attributes:
+  It supports the following additional attributes:
 
-  *master-switch*
-    This is the switch that triggers the dependency. If `master-switch` is
-    present in the command line, then the switch's default status of
-    `slave-switch` is modified accordingly.
+  * :file:`master-switch`
 
-  *slave-switch*
-    This is the switch whose default value depends on `master-switch`. This
-    needs to be a switch already defined in a `<switch>` tag. It can match
-    its 'switch' or 'switch-off' attributes. In the latter case, the
-    slave-switch default value is deactivated if master-switch is present.
+    Switch that triggers the dependency. If that switch is present in the
+    command line, GPS changes the default status of :file:`slave-switch`.
 
-*<expansion>*
+  * :file:`slave-switch`
+
+    Switch whose default value depends on :file:`master-switch`. This must
+    be a switch already defined in a :file:`<switch>` tag.  The switch can
+    match the :file:'switch' or :file:'switch-off' attributes. In the
+    latter case, the slave-switch default value is disabled if the user
+    specifies the :file:`master-switch`.
+
+* :file:`<expansion>`
+
   .. index:: <expansion>
-
   .. index:: <entry>
 
-  This tag is used to describe how switches can be grouped together on the
-  command line to keep it shorter. It is also used to define aliases between
-  switches.
+  Describe how switches are grouped together on the command line to keep it
+  shorter. It also defines aliases between switches.
 
-  It is easier to explain it through an example. Specifying the GNAT switch
-  "-gnatyy" is equivalent to specifying "-gnaty3abcefhiklmnprst". This is in
-  fact a style check switch, with a number of default values. But it is also
-  equivalent to decomposing it into several switches, as in "-gnatya",
-  "-gnatyb", ...; With this information, GPS will try to keep the
-  command line length as short as possible, to keep it readable.
+  It's easier to explain the functioning of this tag with an
+  example. Specifying the GNAT switch :command:`-gnatyy` is equivalent to
+  specifying :command:`-gnaty3abcefhiklmnprst`. This is a style check
+  switch with a number of default values.  But it can also be decomposed it
+  into several switches, such as :command:`-gnatya` and :command:`-gnatyb`.
+  Knowing this, GPS can keep the command line length as short as possible,
+  making it more readable.
 
-  Both these aspects are defined in a unique `<expansion>` tag, which
-  accepts two attributes: `switch` is mandatory, and `alias` is
-  optional. Alias contains the text "-gnatyabcefhiklmnprst" in our example.
+  Specify the above details in the :file:`<expansion>` tag, which supports
+  two attributes: :file:`switch` is mandatory and :file:`alias` is
+  optional. In our example, :file:`alias` contains the text
+  :command:`-gnatyabcefhiklmnprst`.
 
-  There are two possible uses for this tag:
+  This tag works in two ways:
 
-  * If the "alias" attribute is not specified, then the "switch" attribute
-    indicates that all switches starting with that prefix should be grouped.
-    For instance, if you pass "-gnatw" as the value for the "switch" attribute,
-    then a command line with "-gnatwa -gnatw.b" will in fact result in
-    "-gnatwa.b".
+  * If you don't specify the :file:`alias` attribute, the :file:`switch`
+    attribute requests GPS to group all switches starting with that prefix.
+    For example, if you specify :command:`-gnatw` as the value of the
+    :file:`switch` attribute, if the user selects both the :command:`-gnatwa`
+    and :command:`-gnatw.b` switches, GPS merges them on the command line as
+    :command:`-gnatwa.b`.
 
-  * If the "alias" attribute is specified, then the "switch" attribute is
-    considered as a shorter way of writting "alias". For instance, if "switch"
-    is "-gnatyy" and "alias" is "-gnaty3abcefhiklmnprst", then the user can
-    simply type "-gnatyy" to mean the whole set of options.
+  * If you specify the :file:`alias`, GPS views the :file:`switch`
+    attribute as a shorter way of writting the switch. For example, if
+    :file:`switch` is :command:`-gnatyy` and :file:`alias` is
+    ":command:`-gnaty3abcefhiklmnprst`, then if the user types
+    :command:`-gnatyy`, it means the whole set of options.
 
-  The same "switch" attribute can be used in two expansion nodes if you want
-  to combine the behavior.
+  You can specify the same :file:`switch` attribute can be used in multiple
+  :file:`<expansion>` tags nodes if you want to combine their behavior.
 
-  For historical reasons, this tag accepts `<entry>` children, but these
-  are no longer used.
+  For historical reasons, this tag supports :file:`<entry>` child tags, but
+  these are no longer used.
 
 .. _Executing_external_tools:
 
 Executing external tools
 ------------------------
 
-The user has now specified the default switches he wants to use for the
-external tool. Spawning the external tool can be done either from a menu
-item, or as a result of a key press.
-
-Both cases are described in an XML customization file, as described previously,
-and both are setup to execute what GPS calls an action, i.e. a set of commands
-defined by the `<action>` tag.
+Once the user specified the switches to use for the external tool, it can
+be spawned from a menu item or by pressing a key.  Both cases are described
+in an XML customization file, as described previously, and both execute
+what GPS calls an action, a set of commands defined by an :file:`<action>`
+tag.
 
 .. _Chaining_commands:
 
 Chaining commands
 ^^^^^^^^^^^^^^^^^
 
-This action tag, as described previously, executes one or more commands, which
-can either be internal GPS commands (written in any of the scripting language
-supported by GPS), or external commands provided by executables found on the
-PATH.
+The :file:`<action>` tag (see :ref:`Defining_Actions`) executes one or more
+commands, either internal GPS commands (written in any of the scripting
+language supported by GPS) or external commands provided by executables
+found on the :file:`PATH`.
 
-The command line for each of these commands can either be hard-coded in the
-customization file, or be the result of previous commands executed as part of
-the same action. As GPS executes each command from the action in turn, it saves
-its output on a stack as needed. If a command line contains a special construct
-`%1`, `%2`... then these constructs will be replaced by the result of
-respectively the last command executed, the previous from last command, and so
-on. They are replaced by the returned value of the command, not by any output
-it might have done to some of the consoles in GPS.
-
-Every time you execute a new command, it pushes the previous %1, %2...
-parameters one step further on the stack, so that they become respectively %2,
-%3... and the output of that command becomes %1.
+You can hard-code the command line for each of these commands in the
+customization file or it can be the result of previous commands executed as
+part of the same action. As GPS executes each command from the action, it
+saves its output on a stack. If a command line contains the construct
+:command:`%1`, :command:`%2`, etc., these constructs are replaced
+respectively by the result the last command executed, the previous command,
+and so on. The replacement is done with the value returned by the command,
+not by any output it might have made to some of the consoles in GPS.  Each
+time GPS executes a new command, it pushes the previous result on the
+stack, so that, for example, the value of :command:`%1` becomes the value
+of :command:`%2`.
 
 .. highlight:: xml
 
-The result value of the previous commands is substituted exactly as is.
-However, if the output is surrounded by quotes, they are ignored when a
-substitution takes place, so you need to put them back if they are needed. The
-reason for this behavior is so that for scripting languages that systematically
-protect their output with quotes (simple or double), these quotes are sometimes
-in the way when calling external commands::
+The result of the previous commands is substituted exactly as is.  However,
+if the output is surrounded by quotes, GPS ignores them when a substitution
+is done, so you must put them back if needed. This is done because many
+scripting languages systematically protect their output with quotes (simple
+or double) and these quotes are often undesired when calling further
+external commands::
 
   <?xml version="1.0" ?>
   <quotes>
@@ -5621,9 +5633,6 @@ in the way when calling external commands::
     </action>
   </quotes>
 
-If one of the commands in the action raises an error, the execution of the
-action is stopped immediately, and no further command is performed.
-
 .. _Saving_open_windows:
 
 Saving open windows
@@ -5631,14 +5640,14 @@ Saving open windows
 
 .. index:: MDI.save_all
 
-Before launching the external tool, you might want to force GPS to save all
-open files, the project...; This is done using the same command GPS itself
-uses before starting a compilation. This command is called `MDI.save_all`,
-and takes one optional boolean argument which specifies whether an interactive
-dialog should be displayed for the user.
+Before launching the external tool, you may want to force GPS to save all
+open files. Do this using the same command GPS uses before starting a
+compilation, :command:`MDI.save_all`, which takes one optional boolean
+argument specifiying whether GPS displays an interactive dialog for the
+user.
 
-Since this command aborts when the user presses cancel, you can
-simply put it in its own `<shell>` command, as in::
+This command fails when the user presses cancel, so you can put it in its
+own :file:`<shell>` command, as in::
 
   <?xml version="1.0" ?>
   <save_children>
@@ -5658,23 +5667,24 @@ Querying project switches
 .. index:: get_attribute_as_string
 .. index:: get_attribute_as_list
 
-Some GPS shell commands can be used to query the default switches set by the
-user in the project file. These are `get_tool_switches_as_string`,
-`get_tool_switches_as_list`, or, more generally, `get_attribute_as_string` and
-`get_attribute_as_list`. The first two require a unique parameter which is the
-name of the tool as specified in the `<tool>` tag. This name is case-sensitive.
-The last two commands are more general and can be used to query the status of
-any attribute from the project. See their description by typing the following
-in the GPS shell console window::
+You can use GPS shell commands to query the default switches set by the
+user in the project file. These are :file:`get_tool_switches_as_string`,
+:file:`get_tool_switches_as_list`, or, more generally,
+:file:`get_attribute_as_string` and :file:`get_attribute_as_list`. The
+first two require a unique parameter, the name of the tool as specified in
+the :file:`<tool>` tag. This name is case-sensitive.  The last two commands
+are more general and can be used to query the status of any attribute in
+the project. See their description by typing the following in the GPS shell
+console window::
 
   help Project.get_attribute_as_string
   help Project.get_attribute_as_list
 
 The following is a short example on how to query the switches for the tool
-"Find" from the project, :ref:`Tool_example`. It first creates an object
-representing the current project, then passes this object as the first
-argument of the `get_tool_switches_as_string` command. The last external
-command is a simple output of these switches::
+:guilabel:`Find` from the project shown as :ref:`Tool_example`. It first
+creates an object representing the current project, then passes this object
+as the first argument of the :file:`get_tool_switches_as_string`
+command. The last external command outputs these switches::
 
   <?xml version="1.0" ?>
   <find_switches>
@@ -5685,10 +5695,9 @@ command is a simple output of these switches::
     </action>
   </find_switches>
 
-The following example shows how something similar can be done from Python, in
-a simpler manner. For a change, this function queries the Ada compiler
-switches for the current project, and prints them out in the messages
-window. The::
+The following example shows how something similar can be done from Python,
+in a simpler manner.  This function queries the Ada compiler switches for
+the current project and prints them in the :guilabel:`Messages` view::
 
   <?xml version="1.0" ?>
   <query_switches>
@@ -5709,36 +5718,34 @@ Querying switches interactively
 .. index:: input_dialog
 .. index:: yes_no_dialog
 
-Another solution to query the arguments for the tool is to ask the user
+You can also query the arguments for the tool by asking the user
 interactively.  The scripting languages provides a number of solutions for
-these.
+these, which generally have their own native way to read input, possibly by
+creating a dialog.  The simplest solution is to often use the predefined
+GPS commands:
 
-They generally have their own native way to read input, possibly by creating a
-dialog.
+* :file:`yes_no_dialog`
 
-In addition, the simplest solution is to use the predefined GPS commands for
-this. These are the two functions:
+  This takes a single argument, a question to display, and presents two
+  buttons to the user, :guilabel:`Yes` and :guilabel:`No`. The result of
+  this function is the button the user selected, as a boolean value.
 
-*yes_no_dialog*
-  This function takes a single argument, which is a question to display. Two
-  buttons are then available to the user, "Yes" and "No". The result of this
-  function is the button the user has selected, as a boolean value.
+* :file:`input_dialog`
 
-*input_dialog*
-  This function is more general. It takes a minimum of two arguments, with no
-  upper limit. The first argument is a message describing what input is expected
-  from the user. The second, third and following arguments each correspond to
-  an entry line in the dialog, to query one specific value (as a string). The
-  result of this function is a list of strings, each corresponding to these
-  arguments.
+  This function is more general. It takes a minimum of two arguments. The
+  first argument is a message describing what input is expected from the
+  user. The second, third and following arguments each correspond to an
+  entry line in the dialog, each querying one specific value (as a
+  string). The result of this function is a list of strings, each
+  corresponding to these arguments.
 
-  From the GPS shell, it is only convenient to query one value at a time, since
-  it doesn't have support for lists, and would return a concatenation of the
-  values. However, this function is especially useful with other scripting
-  languages.
+  From the GPS shell, it's only convenient to query one value at a time,
+  since it doesn't have support for lists and would return a concatenation
+  of the values. However, this function is especially useful in other
+  scripting languages.
 
 The following is a short example that queries the name of a directory and a
-file name, and displays each in the Messages window::
+file name and displays each in the :guilabel:`Messages` view::
 
   <?xml version="1.0" ?>
   <query_file>
@@ -5757,31 +5764,21 @@ Redirecting the command output
 
 .. index:: output
 
-The output of external commands is send by default to the GPS console window.
-In addition, finer control can be exercised using the `output` attribute
-of the `<external>` and `<shell>` tags.
+By default, GPS sends the output of external commands to the
+:guilabel:`Messages` view.  However, you can exercise finer control using
+the :file:`output` attribute of the :file:`<external>` and :file:`<shell>`
+tags.  You can also specify this attribute in the :file:`<action>` tag,
+where it defines the default value for all :file:`<shell>` and
+:file:`<external>` tags.
 
-This attribute is a string that may take any value. Two values have specific
-meanings:
-
-*"none"*
-  The output of the command, as well as the text of the command itself, will not
-  be shown to the user at all.
-
-*""*
-  The output of the command is sent to the GPS console window, entitled
-  "Messages".
-
-*other values*
-  A new window is created, with the title given by the attribute. If such
-  a window already exists, it is cleared up before any of the command in the
-  chain is executed. The output of the command, as well
-  as the text of the command itself, are sent to this new window.
-
-This attribute can also be specified at the `<action>` tag level, in which
-case it defines the default value for all `<shell>` and `<external>`
-tags underneath. If it isn't specified for the action itself, its default value
-will always be the empty string, i.e. output is sent to the GPS console::
+This attribute is a string.  Specifying an empty string (to override a
+specification in the :file:`<action>` tag)` produces the default behavior.
+A value of :command:`none` tells GPS to hide the output of the command as
+well as the text of the command itself and not show it to the user.  If you
+specify any other value, GPS creates a new window with the title given by
+the attribute. If such a window already exists, it's cleared before any
+command in the chain is executed. The output of the command, as well as the
+text of the command itself, are sent to this new window::
 
   <?xml version="1.0" ?>
   <ls>
@@ -5796,40 +5793,40 @@ will always be the empty string, i.e. output is sent to the GPS console::
 Processing the tool output
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The output of the tool has now either been hidden or made visible to the user
-in one or more windows.
-
-There are several additional things that can be done with this output, for
-further integration of the tool in GPS.
+Once the output of the tool has either been hidden or made visible to the
+user in one or more windows, you can do several additional things with this
+output, for further integration of the tool in GPS.
 
 * Parsing error messages
+
   .. index:: Locations.parse
 
-  External tools can usually display error messages for the user that
-  are associated with specific files and locations in these files. This is for
-  instance the way the GPS builder itself analyzes the output of `make`.
+  External tools usually display error messages for the user that are
+  associated with specific locations in specific files. For example, the
+  GPS builder itself analyzes the output of :program:`make` using this
+  information.
 
-  This can be done for your own tools using the shell command
-  `Locations.parse`. This command takes several arguments, so that you
-  can specify your own regular expression to find the file name, line number and
-  so on in the error message. By default, it is configured to work
-  seamlessly with error message of the forms::
+  You can do this done for your own tools using the shell command
+  :file:`Locations.parse`, which takes several arguments so that you can
+  specify your own regular expression to find the file name, line number
+  and so on in the error message. By default, it's configured to work with
+  error message of the forms::
 
     file:line: message
     file:line:column: message
 
 
   Please refer to the online help for this command to get more information (by
-  e.g. typing `help Locations.parse` in the GPS Shell).
+  typing `help Locations.parse` in the GPS Shell).
 
-  Here is a small example on how to run a make command and send the errors to
-  the location window afterward.
+  Here's a small example showing how to run a make command and send the
+  errors to the :guilabel:`Locations` view..
 
-  For languages that support it, it is also recommended that you quote the
-  argument with triple quotes, so that any special character (newlines, quotes,
-  ...) in the output of the tool are not specially interpreted by GPS. Note
-  also that you should leave a space at the end, in case the output itself ends
-  with a quote::
+  For languages that support it, it's recommended that you quote the
+  argument with triple quotes, so that any special character such as
+  newlines and quotes in the output of the tool are not specially
+  interpreted by GPS.  You should also leave a space at the end, in case
+  the output itself ends with a quote::
 
     <?xml version="1.0" ?>
     <make>
@@ -5842,35 +5839,37 @@ further integration of the tool in GPS.
     </make>
 
 * Auto-correcting errors
+
   .. index:: Codefix.parse
 
-  GPS has support for automatically correcting errors for some of the languages.
-  You can get access to this auto-fixing feature through the `Codefix.parse`
-  shell command, which takes the same arguments as for `Locations.parse`.
-
-  This will automatically add pixmaps to the relevant entries in the location
-  window, and therefore `Locations.parse` should be called first prior to
-  calling this command.
+  GPS supports automatically correcting errors for some of languages.  You
+  can get access to this auto-fixing feature through the
+  :file:`Codefix.parse` shell command, which takes the same arguments as
+  :file:`Locations.parse`.  This automatically adds pixmaps to the relevant
+  entries in the :guilabel:`Locations` view, so you should call
+  :file:`Locations.parse` before calling this command.
 
   Errors can also be fixed automatically by calling the methods of the
-  `Codefix` class. Several codefix sessions can be active at the same time,
-  each of which is associated with a specific category. The list of currently
-  active sessions can be retrieved through the `Codefix.sessions()` command.
+  :file:`Codefix` class. Several codefix sessions can be active at the same
+  time, each of which is associated with a specific category. The list of
+  currently active sessions can be retrieved through the
+  :file:`Codefix.sessions()` command.
 
   .. index:: Codefix.errors
   .. index:: CodefixError.fix
   .. index:: CodefixError.possible_fixes
 
-  If support for python is enabled, you can also manipulate the fixable errors
-  for a given session.  To do so, you must first get a handle on that section,
-  as shown in the example below. You can then get the list of fixable errors
-  through the `errors` command.
+  If support for Python is enabled, you can also manipulate those errors
+  that can be fixed for a given session.  To do so, first get a handle for
+  that section, as shown in the example below.  Then get the list of
+  fixable errors through the :file:`errors` command.
 
   .. highlight:: python
 
-  Each error is of the class `CodefixError`, which has one important method
-  `fix` which allows you to perform an automatic fixing for that error. The
-  list of possible fixes is retrieved through `possible_fixes`::
+  Each error is of the class :file:`CodefixError`, which has one important
+  method, :file:`fix`, allowing you to perform an automatic correction of
+  that error. The list of possible fixes is retrieved through
+  :file:`possible_fixes`::
 
     print GPS.Codefix.sessions ()
     session = GPS.Codefix ("category")
@@ -5891,9 +5890,9 @@ Menu example
 .. highlight:: xml
 
 This section provides a full example of a customization file.  It creates a
-top-level menu named `custom menu`.  This menu contains a menu item named `item
-1`, which is associated to the external command `external-command 1`, a sub
-menu named `other menu`, etc...::
+top-level menu named :guilabel:`custom menu`, that contains a menu item
+named :guilabel:`item 1`, associated with the external command
+:file:`external-command 1` and a sub menu named :guilabel:`other menu`::
 
   <?xml version="1.0"?>
   <menu-example>
@@ -5925,16 +5924,15 @@ menu named `other menu`, etc...::
 Tool example
 ------------
 
-This section provides an example that defines a new tool. This is only a short
-example, since Ada, C and C++ support themselves are provided through such a
-file, available in the GPS installation.
+This section provides an example of how you can define a new tool. This is
+only a short example, since Ada, C and C++ support themselves are provided
+through such a file, available in the GPS installation.
 
-This example adds support for the "find" Unix utility, with a few switches. All
-these switches are editable through the project properties editor.
-
-It also adds a new action and menu. The action associated with this menu gets
-the default switches from the currently selected project, and then ask the user
-interactively for the name of the file to search::
+This example adds support for the :program:`find` Unix utility, with a few
+switches. All the switches are editable through the project properties
+editor.  It also adds a new action and menu. The action associated with
+this menu gets the default switches from the currently selected project,
+and asks the user interactively for the name of the file to search::
 
   <?xml version="1.0" ?>
   <toolexample>
