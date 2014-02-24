@@ -2821,7 +2821,7 @@ package body Src_Editor_Module.Editors is
                (Kernel          => This.Buffer.Contents.Kernel,
                 All_Occurrences => False,
                 Scope           => Search_Scope'Value (Scope)));
-      Iter        : Gtk_Text_Iter;
+      Iter        : Gtk_Text_Iter := Null_Text_Iter;
       From, To    : Editor_Coordinates;
    begin
       Set_Context
