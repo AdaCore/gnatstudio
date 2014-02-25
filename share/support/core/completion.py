@@ -155,6 +155,19 @@ class CompletionResolver(object):
     def __init__(self):
         pass
 
+    def get_completion_prefix(self, loc):
+        """
+           Return the current replacement prefix, as a string.
+           For instance when completing
+             foo (bl
+           then this should return "bl", indicating that the completions
+           being proposed will complete a word starting with "bl"
+
+           The engine will call get_completion_prefix before get_completions,
+           so you may cache the result of get_completion_prefix if you need.
+        """
+        return ""
+
     def get_completions(self, loc):
         """
             Return an iterable object returning iteration proposals.

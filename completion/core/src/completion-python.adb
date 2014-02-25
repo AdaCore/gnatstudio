@@ -225,18 +225,26 @@ package body Completion.Python is
    is
       pragma Unreferenced (Offset);
 
-      Sub       : constant Subprogram_Type := Get_Method
-        (Resolver.Object, "_ada_get_completions");
+      Sub       : Subprogram_Type :=
+        Get_Method (Resolver.Object, "get_completion_prefix");
       Script    : constant Scripting_Language  := Get_Script (Sub.all);
       Args      : Callback_Data'Class := Create (Script, 2);
 
-      Loc : constant Editor_Location'Class := Current_Location
-        (Get_Kernel (Script), Context.File);
+      Loc : constant Editor_Location'Class :=
+        Current_Location (Get_Kernel (Script), Context.File);
+      Loc_Inst  : constant Class_Instance := Create_Instance (Loc, Script);
 
       Component : Python_Component;
    begin
+      --  First get the completion prefix
       Set_Nth_Arg (Args, 1, Resolver.Object);
-      Set_Nth_Arg (Args, 2, Create_Instance (Loc, Script));
+      Set_Nth_Arg (Args, 2, Loc_Inst);
+      Result.Searched_Identifier := new String'(Execute (Sub, Args));
+
+      --  And get the list of completions
+      Sub := Get_Method (Resolver.Object, "_ada_get_completions");
+      Set_Nth_Arg (Args, 1, Resolver.Object);
+      Set_Nth_Arg (Args, 2, Loc_Inst);
 
       Component := (Resolver, Execute (Sub, Args));
       Completion_List_Pckg.Append (Result.List, Component);

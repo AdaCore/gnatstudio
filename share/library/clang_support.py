@@ -194,11 +194,15 @@ class ClangCompletionResolver(CompletionResolver):
     """
 
     def __init__(self):
+        self.prefix = None
         pass
 
-    def get_completions(self, loc):
+    def get_completion_prefix(self, loc):
         loc_begin = to_completion_point(loc)
-        prefix = loc.buffer().get_chars(loc_begin, loc)[:-1]  # ??? improve
+        self.prefix = loc.buffer().get_chars(loc_begin, loc)[:-1]
+        return self.prefix
+
+    def get_completions(self, loc):
 
         cr = Clang_Module.clang_instance.get_completions_at(loc)
         if not cr:
@@ -215,7 +219,7 @@ class ClangCompletionResolver(CompletionResolver):
 
             if len >= 2:
                 label = s[1].spelling
-                if label.startswith(prefix):
+                if label.startswith(self.prefix):
                     yield CompletionProposal(
                         label,
                         label,
