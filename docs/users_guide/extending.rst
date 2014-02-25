@@ -6516,7 +6516,7 @@ This is handled in different ways depending on what language you're using:
     the string that matched the regular expression, and the string before
     that match.
 
-    In the first example above, we're passing :fucn:`self.on_match`, a
+    In the first example above, we're passing :func:`self.on_match`, a
     bound method, as a callback. That tells Python it should automatically
     and transparently add an extra first parameter, :func:`self`, when
     calling :func:`MyClass.on_match`. This is why the first example has
@@ -7038,7 +7038,7 @@ Action hooks
 .. index:: hooks, action_hooks
 .. index:: hooks, open_file_action_hook
 
-Hooks whose name ends with :commnd:`_action_hook` are handled specially by
+Hooks whose name ends with :command:`_action_hook` are handled specially by
 GPS.  As opposed to the standard hooks described in the previous section,
 the execution of the action hooks stops if one of the subprograms returns a
 True value (:command:`1` or :command:`true`). The subprograms associated
