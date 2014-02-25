@@ -215,6 +215,16 @@ KP-60-MC09-035 GPS: Color problems with Open Text Exceed 14 X server
 
   Workaround: Use another X Server (Cygwin's for example)
 
+KP-60-MC05-046 GB: Highlight space in GB editor
+
+  Problem:    When a text is highlighted and the space bar is pressed, the
+              GB Ada editor doesn't replace the highlighted text with space.
+              It inserts the space in front of the highlighted text.
+
+  Status:     This was fixed in 2.9 on 2014-02-10
+
+  Workaround: No workaround needed
+
 KP-60-MC05-001 GPS: Keyboard not working in editor's contextual menus
 
   Problem:    When in a contextual menu in the editor, keys would be grabbed by
