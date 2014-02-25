@@ -5868,10 +5868,10 @@ output, for further integration of the tool in GPS.
   :func:`Locations.parse` before calling this command.
 
   Errors can also be fixed automatically by calling the methods of the
-  :func:`Codefix` class. Several codefix sessions can be active at the same
+  :class:`Codefix` class. Several codefix sessions can be active at the same
   time, each of which is associated with a specific category. The list of
   currently active sessions can be retrieved through the
-  :func:`Codefix.sessions()` command.
+  :func:`Codefix.sessions` command.
 
   .. index:: Codefix.errors
   .. index:: CodefixError.fix
@@ -5884,7 +5884,7 @@ output, for further integration of the tool in GPS.
 
   .. highlight:: python
 
-  Each error is of the class :func:`CodefixError`, which has one important
+  Each error is of the class :class:`CodefixError`, which has one important
   method, :func:`fix`, allowing you to perform an automatic correction of
   that error. The list of possible fixes is retrieved through
   :func:`possible_fixes`::
@@ -6194,9 +6194,9 @@ The screen representation of the classes exported by GPS to Python has been
 modified, so most GPS functions return an instance of a class, but still
 display their output in a user-readable manner.
 
-Python has extensive introspection capabilities. Continuing the previous
-example, you can find what class :func:`e` is an instance of with the
-following command::
+Python has extensive introspection capabilities. Continuing the
+previous example, you can find what class :class:`e` is an instance of
+with the following command::
 
   >>> help(e)
   Help on instance of Entity:
@@ -6204,7 +6204,7 @@ following command::
   <GPS.Entity instance>
 
 You can also to find all attributes and methods that can be applied to
-:func:`e`, as in the following example::
+:class:`e`, as in the following example::
 
   >>> dir (e)
   ['__doc__', '__gps_data__', '__module__', 'called_by', 'calls',
@@ -6267,15 +6267,15 @@ which the user should install in the :file:`plug-ins` directory.
 To make the Python functions accessible through GPS, you can:
 
 * Export the APIs directly through Python, under the form of Actions (the
-  :func:`Action` class), Menus (the :func:`Contextual` and :func:`Menu`
-  classes) or toolbar buttons (the :func:`ToolButton` and :func:`Toolbar`
+  :class:`Action` class), Menus (the :class:`Contextual` and :class:`Menu`
+  classes) or toolbar buttons (the :class:`ToolButton` and :class:`Toolbar`
   classes).
 
 * Write an XML that creates a set of actions using the
   :file:`<action>` tag (see :ref:`Defining_Actions` and which is
   exported to the user. This allows him to either create menus to
   execute these commands or to bind them to special key shortcuts. The
-  menus can be created directly in Python, with the :func:`GPS.Menu`
+  menus can be created directly in Python, with the :class:`GPS.Menu`
   class. The same XML can be directly embedded in the Python file
   itself and executed through :file:`GPS.parse_xml`.
 
@@ -6405,11 +6405,11 @@ This is handled in different ways depending on what language you're using:
 
     However, whatever class the method is defined in, the first parameter
     is always an instance of the class documented in the GPS documentation
-    (in this case a :func:`GPS.Combo` instance), not an instance of the
+    (in this case a :class:`GPS.Combo` instance), not an instance of the
     current class.
 
     In this first example, since we don't have access to the instance of
-    :func:`MyClass`, we also need to store the global data as a class
+    :class:`MyClass`, we also need to store the global data as a class
     component. This is a problem if multiple instances of the class can be
     created::
 
@@ -6430,10 +6430,10 @@ This is handled in different ways depending on what language you're using:
       MyClass()
 
     As the example above illustrates, there's no direct access to
-    :func:`MyClass` when executing :func:`on_changed`. An easy workaround
+    :class:`MyClass` when executing :func:`on_changed`. An easy workaround
     is the following, in which the global data is stored in the instance of
-    :func:`MyClass` and therefore be different for each instance of
-    :func:`MyClass`::
+    :class:`MyClass` and therefore be different for each instance of
+    :class:`MyClass`::
 
       import GPS
       class MyClass:
@@ -6480,7 +6480,7 @@ This is handled in different ways depending on what language you're using:
 
     You may find it convenient to use the object-oriented approach when
     writing Python scripts. If, for example, you want to spawn an external
-    process, GPS provides the :func:`GPS.Process` class. When you create an
+    process, GPS provides the :class:`GPS.Process` class. When you create an
     instance, you specify a callback to be called when some input is made
     available by the process.  Matching the above example, the code looks
     something like::
@@ -6494,7 +6494,7 @@ This is handled in different ways depending on what language you're using:
            print "Process output: " + unmatched + matched + "\\n"
 
     A more natural approach, rather than having a class with a
-    :func:`process` field, is to directly extend the :func:`GPS.Process`
+    :func:`process` field, is to directly extend the :class:`GPS.Process`
     class, as in::
 
       class MyClass (GPS.Process):
@@ -6506,7 +6506,7 @@ This is handled in different ways depending on what language you're using:
            print "Process output: " + unmatched + matched + "\\n"
 
     Any command that can be used on a process (such as :func:`send`) can
-    then directly be used on instances of :func:`MyClass`.
+    then directly be used on instances of :class:`MyClass`.
 
     There's one non-obvious improvement possible in the code above: the
     :func:`on_match` callback has one less parameter. What happens is the
@@ -6523,7 +6523,7 @@ This is handled in different ways depending on what language you're using:
     four parameters for :func:`on_match`.
 
     However, the second example only has three parameters, because GPS
-    detected that :func:`self` (the instance of :func:`MyClass`) and the
+    detected that :func:`self` (the instance of :class:`MyClass`) and the
     instance of :func:`GPS.Process` are the same in this case. So it need
     not ada an extra parameter (:func:`self` and :func:`process` would have
     been the same).
@@ -6575,7 +6575,7 @@ Spawning external processes
 
 There are various mechanisms to spawn external processes from a script:
 
-* Use the functionalities provided by the :func:`GPS.Process` class.
+* Use the functionalities provided by the :class:`GPS.Process` class.
 
 * Execute a GPS action through :func:`GPS.execute_action`.
 
@@ -6592,7 +6592,7 @@ There are various mechanisms to spawn external processes from a script:
   various Python :program:`expect` libraries that already exist.
 
   These libraries generally try to copy the parameters of the standard
-  :func:`file` class. They may fail doing so, since GPS's consoles don't
+  :class:`file` class. They may fail doing so, since GPS's consoles don't
   fully emulate all the primitive functions of that class (there's no file
   descriptor, for example).
 
@@ -6811,7 +6811,7 @@ shortcuts` menu.
 
 If you copy this file into one of the :file:`plug-ins` directories, GPS
 automatically loads it at startup.  The function :func:`myfunc` is in a
-separate namespace, with the name :func:`mymod`, like the file.  If you
+separate namespace, with the name :file:`mymod`, like the file.  If you
 decide, during your GPS session, to edit this file, for exampl to have the
 function print "In myfunc2" instead, you then to reload the file by typing
 the following command in the Python console::
@@ -6820,7 +6820,7 @@ the following command in the Python console::
 
 The first parameter is the full path to the file that you want to reload.
 The second argument is less obvious, but indicates the file should be
-reloaded in the namespace :func:`mymod`.
+reloaded in the namespace :file:`mymod`.
 
 If you omit the optional second parameter, Python loads the file, but the
 function :func:`myfunc` is defined in the global namespace, so the new
@@ -6902,7 +6902,7 @@ want to control what's displayed in them. There are several ways to do that:
   for menus where you cannot easily modify the associated filter, you can
   use shell and Python commands to hide the menu entry.  To do this, you
   need to find the name of the menu, which can be done by consulting the
-  list returned by :func:`GPS.Contextual.list()`. This name is also the
+  list returned by :func:`GPS.Contextual.list`. This name is also the
   value of the :file:`<title>` tag for contextual menus you've
   created. Using this name, you can disable the contextual menu by
   executing::
@@ -6926,7 +6926,7 @@ pygobject, you can create your own dialogs and graphical windows using the
 Python capabilities provided by GPS.
 
 See the :menuselection:`Help --> Python Extensions` menu, specifically the
-documentation for :func:`GPS.MDI`, for a sample of code on how to create
+documentation for :class:`GPS.MDI`, for a sample of code on how to create
 your own graphical interfaces and integrate them with GPS.
 
 .. _Hooks:
@@ -6967,7 +6967,7 @@ which is what parameters the subprograms in this hook receive.
 .. index:: hooks, Hook.list_types
 
 You can find the list of all known hook types can be found using the
-:func:`Hook.list_types` fucntion, which takes no argument and returns a
+:func:`Hook.list_types` function, which takes no argument and returns a
 list of all known types of hooks.  You can find more information for
 each of these type by calling :func:`Hook.describe_type`.
 
@@ -7025,7 +7025,7 @@ the :func:`file_edited` hook receives the file name as a parameter.
 
   The following code prints the name of the file being edited by GPS in the
   Python console whenever a new file is opened. The second argument is of
-  type :func:`GPS.File`::
+  type :class:`GPS.File`::
 
     def my_file_callback (name, file):
         print "Editing " + file.name()
@@ -7097,7 +7097,7 @@ As usual, this results in the execution of all the functions bound to that
 hook, whether they are defined in Ada or in any of the scripting languages.
 
 This is done by the :func:`Hook.run` function. It applies to an instance of
-the :func:`Hook` class and has a variable number of arguments, which must
+the :class:`Hook` class and has a variable number of arguments, which must
 be in the right order and of the right type for that specific type of hook.
 If you're running an action hook, the execution stops as usual as soon as
 one of the subprograms return a :command:`True` value.
@@ -7866,7 +7866,7 @@ Where the following are specified:
 
 When deploying templates, GPS copies all files and directories present in
 the directory containing the template description file (except the Python
-file indicated as :func:`post_hook`) and the template description file
+file indicated as :func:`post_hook` and the template description file
 itself into the destination directory chosen by the user.
 
 As it deploys templates, GPS replaces strings of the form
