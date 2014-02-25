@@ -406,9 +406,13 @@ package body Completion_Module is
          Free (D.Lock);
 
          Free (D.Manager);
-         Free (D.Constructs_Resolver);
+         if D.Constructs_Resolver /= null then
+            Free (D.Constructs_Resolver);
+         end if;
          Free (D.Result);
          Free (D.The_Text);
+
+         --  ??? We need to free the Python resolvers
 
          Completion_Module.Smart_Completion := null;
 
@@ -858,12 +862,16 @@ package body Completion_Module is
                   Register_Resolver
                     (Data.Manager, Completion_Module.Completion_Aliases);
                else
+
                   Data.Manager := new C_Completion_Manager;
 
-                  Data.Constructs_Resolver :=
-                    New_C_Construct_Completion_Resolver
-                      (Kernel         => Kernel,
-                       Current_File   => Get_Filename (Buffer));
+                  --  If we are using Clang, deactivate the constructs resolver
+                  if not Active (Clang_Support) then
+                     Data.Constructs_Resolver :=
+                       New_C_Construct_Completion_Resolver
+                         (Kernel       => Kernel,
+                          Current_File => Get_Filename (Buffer));
+                  end if;
                end if;
 
                for R of Data.Python_Resolvers loop
@@ -874,7 +882,10 @@ package body Completion_Module is
                  (Data.Manager, Completion_Module.Completion_History);
                Register_Resolver
                  (Data.Manager, Completion_Module.Completion_Keywords);
-               Register_Resolver (Data.Manager, Data.Constructs_Resolver);
+
+               if Data.Constructs_Resolver /= null then
+                  Register_Resolver (Data.Manager, Data.Constructs_Resolver);
+               end if;
 
                Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
 
