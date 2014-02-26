@@ -53,7 +53,7 @@ def only_in_submenu (context):
     try:
         file = context.file()
 
-        if context.directory() == file:
+        if GPS.File(context.directory()) == file:
             return False
 
         if file.name().endswith("$log"):
