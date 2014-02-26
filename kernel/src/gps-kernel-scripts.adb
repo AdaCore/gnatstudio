@@ -770,11 +770,14 @@ package body GPS.Kernel.Scripts is
       elsif Command = "directory" then
          Context := Get_Data (Data, 1);
          if Has_Directory_Information (Context) then
+            --  ??? We should return the Virtual_File here ?
+            --  Set_Return_Value
+            --    (Data,
+            --     Create_File
+            --       (Get_Script (Data),
+            --        Directory_Information (Context)));
             Set_Return_Value
-              (Data,
-               Create_File
-                 (Get_Script (Data),
-                  Directory_Information (Context)));
+              (Data, Directory_Information (Context).Full_Name);
          else
             Set_Error_Msg (Data, -"No directory stored in the context");
          end if;

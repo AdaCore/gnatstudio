@@ -542,7 +542,7 @@ class FileContext(Context):
         """
         Return the current directory of the context.
 
-        :return: An instance of :class:`GPS.File`
+        :return: A string
         """
         pass  # implemented in Ada
 
