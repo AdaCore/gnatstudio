@@ -1648,8 +1648,15 @@ package body Build_Command_Utils is
             return R;
          end;
       else
-         return Self.Outputs (Output).Element
-           (To_Unbounded_String (Target));
+         declare
+            K : constant Unbounded_String := To_Unbounded_String (Target);
+         begin
+            if Self.Outputs (Output).Contains (K) then
+               return Self.Outputs (Output).Element (K);
+            else
+               return Null_Unbounded_String;
+            end if;
+         end;
       end if;
    end Get_Build_Output;
 
