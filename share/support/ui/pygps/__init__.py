@@ -7,7 +7,7 @@
 # with this script (see /Edit/Startup Scripts)
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 """Utility routines for GPS scripts
@@ -23,7 +23,6 @@ depends on it should use the statement:
 """
 
 import GPS
-import time
 import os
 import sys
 
@@ -34,15 +33,6 @@ last_sent_event = None
 # Do not use, since otherwise the functions defined in this module are
 # not visible
 # __all__ = ["notebook", "project", "tree"]
-
-
-def print_children_tree(w):
-    """
-    Prints a tree of the widget w and all its children, recursively
-    """
-    import pprint
-    ct = get_children_tree(w)
-    print pprint.pformat(ct)
 
 
 def get_children_tree(w):
@@ -57,8 +47,6 @@ def get_children_tree(w):
         return (w, map(get_children_tree, ch))
     else:
         return w
-
-
 
 
 def delayed_exit(delay=200):
@@ -100,11 +88,10 @@ try:
     # #########
     # # Misc ##
     # #########
-    # The following functions provide wrappers around pygobject functions, to make
-    # their use easier
+    # The following functions provide wrappers around pygobject functions, to
+    # make their use easier
 
     device = None  # The current event device
-
 
     def default_event_device():
         """ Retrieve and cache the default event device """
@@ -116,29 +103,28 @@ try:
 
         return device
 
-
     def process_all_events():
-        """Process all pending events. This is often needed in the testsuite,
-           where we need to wait for events to be processed to make sure that
-           a view is refreshed for instance.
-           Using this function is not recommended in the general case, but is
-           sometimes unavoidable. In general, it is better to use idle callbacks
-           through GObject.idle_add, to avoid blocking the whole GPS interface.
+        """
+        Process all pending events. This is often needed in the testsuite,
+        where we need to wait for events to be processed to make sure that a
+        view is refreshed for instance.  Using this function is not recommended
+        in the general case, but is sometimes unavoidable. In general, it is
+        better to use idle callbacks through GObject.idle_add, to avoid
+        blocking the whole GPS interface.
         """
 
         while Gtk.events_pending():
             Gtk.main_iteration_do(blocking=0)
-
 
     # ###############################
     # # Traversing the widget tree ##
     # ###############################
     # The following classes and functions are used to traverse the tree of
     # widgets displayed on the screen, or access specific widgets
-
     class WidgetTreeIterator:
-
-        """An iterator for WidgetTree (see the class WidgetTree for examples)"""
+        """
+        An iterator for WidgetTree (see the class WidgetTree for examples)
+        """
 
         def __init__(self, list):
             self.to_traverse = list
@@ -154,8 +140,8 @@ try:
                 self.to_traverse = self.to_traverse + w.get_children()
             return w
 
-
     class WidgetTree(object):
+
         """Virtual container that represents the widget hierarchy.
            You can traverse it with
               for w in WidgetTree(): ...
@@ -177,8 +163,8 @@ try:
         def __iter__(self):
             return WidgetTreeIterator(self.list)
 
-
     class MenuIterator(object):
+
         """An iterator for MenuTree (see the class MenuTree for examples)"""
 
         def __init__(self, menu, accel_path_prefix):
@@ -235,8 +221,8 @@ try:
 
             raise StopIteration
 
-
     class MenuTree(object):
+
         """Iterates over a menu and all its submenus. For each item, return
            a tuple (menu, label, accel, level), where menu is the
            Gtk.MenuItem widget.
@@ -253,7 +239,6 @@ try:
         def __iter__(self):
             return MenuIterator(self.menu, self.prefix)
 
-
     def get_widget_by_name(name, list=None):
         """Search in the whole hierarchy given by list (see WidgetTree) the
            first widget with the given name.
@@ -267,12 +252,15 @@ try:
         else:
             return None
 
-
     def get_widgets_by_type(type, list=None):
         """Find all widgets that are instances of type"""
 
         return [x for x in WidgetTree(list) if isinstance(x, type)]
 
+    def get_gtk_buffer(ed_buf):
+        gtk_tv = get_widgets_by_type(Gtk.TextView,
+                                     ed_buf.current_view().pywidget())[0]
+        return gtk_tv.get_buffer()
 
     def get_window_by_title(title, list=None):
         """Search the whole hierarchy given by list (see WidgetTree) the
@@ -286,7 +274,6 @@ try:
         else:
             return result
 
-
     def get_stock_button(parents, stock=Gtk.STOCK_OK):
         """Find the first button in the possible parents that is a stock button
            with the given stock label.
@@ -295,7 +282,6 @@ try:
 
         return [x for x in WidgetTree(parents) if isinstance(x, Gtk.Button)
                 and x.get_use_stock() and x.get_label() == stock][0]
-
 
     def get_button_from_label(label, parents=None):
         """Return the first button with the matching label"""
@@ -308,13 +294,11 @@ try:
                     return x
         return None
 
-
     # ##########
     # # Menus ##
     # ##########
     # The following subprograms are provided to access GPS menus and wait
     # until they have open a dialog
-
     def open_menu(menu, on_open, widgets, args, kwargs, timeout=0):
         """Generic function to open a menu, wait for the dialog to appear,
            and then call a user callback with several arguments: one for the
@@ -346,13 +330,12 @@ try:
 
         windows = Gtk.Window.list_toplevels()
         if timeout == 0:
-            GObject.idle_add(lambda : internal_on_open(on_open, widgets,
+            GObject.idle_add(lambda: internal_on_open(on_open, widgets,
                              windows, args, kwargs))
         else:
-            GObject.timeout_add(timeout, lambda : internal_on_open(on_open,
+            GObject.timeout_add(timeout, lambda: internal_on_open(on_open,
                                 widgets, windows, args, kwargs))
         GPS.Menu.get(menu).pywidget().activate()
-
 
     # ###############
     # # Key events ##
@@ -361,7 +344,6 @@ try:
     # just as if the user was pressing the corresponding key. In general,
     # it is better to directly call the appropriate GPS action or menu
     # rather than rely on these functions
-
     GDK_BACKSPACE = 65288
     GDK_TAB = 65289
     GDK_RETURN = 65293
