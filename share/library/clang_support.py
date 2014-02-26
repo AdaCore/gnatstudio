@@ -10,6 +10,7 @@ from modules import Module
 from text_utils import forward_until
 import completion
 from completion import CompletionResolver, CompletionProposal
+import os
 
 style_warning = None
 style_error = None
@@ -35,12 +36,52 @@ def to_completion_point(ed_loc):
         backwards=True
     ).forward_char()
 
+
 ####################
 # Main clang class #
 ####################
 
 
 class Clang(object):
+
+    def get_builtin_headers_path(self, library_path=None):
+        # TODO: We will want to get the headers of the compiler the user is
+        # using for that particular project
+
+        if not library_path:
+            # TODO: Very extremely hackish way of getting the lib path !!! Find
+            # a better way
+            lib = ci.Config().get_cindex_library()
+            try:
+                lib.foo
+            except Exception, e:
+                library_path = str(e).split(":")[0]
+
+        knownPaths = [
+            library_path + "/../lib/clang",  # default value
+            library_path + "/../clang",      # gentoo
+            library_path + "/clang",         # opensuse
+            library_path + "/",              # Google
+            "/usr/lib64/clang",              # x86_64 (openSUSE, Fedora)
+            "/usr/lib/clang"
+        ]
+
+        for path in knownPaths:
+            try:
+                files = os.listdir(path)
+                if len(files) >= 1:
+                    files = sorted(files)
+                    subDir = files[-1]
+                else:
+                    subDir = '.'
+                path = path + "/" + subDir + "/include/"
+                arg = "-I" + path
+                if self.can_find_builtin_headers([arg]):
+                    return path
+            except:
+                pass
+
+        return None
 
     def can_find_builtin_headers(self, args=[]):
         flags = 0
@@ -57,9 +98,14 @@ class Clang(object):
 
         self.project = project
         self.index = ci.Index.create()
+        self.global_opts = []
 
         if not self.can_find_builtin_headers():
-            raise Exception("Must implement smart headers resolution !")
+            hpath = self.get_builtin_headers_path()
+            if not hpath:
+                raise Exception("Couldn't find clang headers")
+            else:
+                self.global_opts = ["-I" + hpath]
 
         self.translation_units = {}
         self.translation_units_changed = {}
@@ -75,7 +121,7 @@ class Clang(object):
         custom switches on a per file basis, that are not taken care of for the
         moment.
         """
-        return self.project.get_attribute_as_list(
+        return self.global_opts + gps_file.project().get_attribute_as_list(
             package="compiler", attribute="switches",
             index=gps_file.language().upper()
         )
@@ -128,8 +174,7 @@ class Clang(object):
     def refresh_buffer(self, ed_buffer, update=False):
         f = ed_buffer.file()
         if f.language() in ("c", "c++"):
-            if update:
-                self.update_translation_unit(ed_buffer)
+            _ = self.get_translation_unit(ed_buffer, update)
 
             self.add_diagnostics(ed_buffer)
             self.translation_units_changed[f.name()] = False
@@ -184,9 +229,10 @@ class Clang(object):
         return cr
 
 
-#######################
-# Global clang module #
-#######################
+#############################
+# Clang completion resolver #
+#############################
+
 
 class ClangCompletionResolver(CompletionResolver):
     """
@@ -229,6 +275,11 @@ class ClangCompletionResolver(CompletionResolver):
             current_result += 1
 
 
+#######################
+# Global clang module #
+#######################
+
+
 class Clang_Module(Module):
 
     clang_instance = None
@@ -241,8 +292,10 @@ class Clang_Module(Module):
 
     def gps_started(self):
         self.init_clang_instance()
-        Clang_Module.clang_instance.refresh_buffer(GPS.EditorBuffer.get())
         GPS.Completion.register(ClangCompletionResolver())
+        ed = GPS.EditorBuffer.get()
+        if ed.file().language() in ("c", "c++"):
+            Clang_Module.clang_instance.refresh_buffer(ed)
 
     def project_changed(self):
         self.init_clang_instance()
@@ -256,5 +309,8 @@ class Clang_Module(Module):
         )
 
     def file_edited(self, f):
+        """
+        This hook is called when a new file editor is being opened
+        """
         if f.language() in ("c", "c++"):
             self.clang_instance.refresh_buffer(GPS.EditorBuffer.get(f))
