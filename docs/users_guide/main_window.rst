@@ -41,7 +41,7 @@ Open the other views through one of the submenus of the
 
 .. index:: windows; local toolbar
 
-Some of the view have their own local toolbar that contains shortcuts to
+Some of the views have their own local toolbar that contains shortcuts to
 the most often used features of that view.
 
 .. index:: windows; local settings menu
