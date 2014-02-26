@@ -451,6 +451,7 @@ package Language is
       ----------------------
 
       Cat_Custom);
+   --  Keep the above synchronized with completion.py
 
    subtype Enclosing_Entity_Category is Language_Category
      range Cat_Package .. Cat_Union;
