@@ -1,4 +1,5 @@
-Useful plug-ins ===============
+Useful plug-ins
+===============
 
 User plug-ins
 ^^^^^^^^^^^^^
