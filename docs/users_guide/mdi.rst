@@ -7,7 +7,7 @@ Multiple Document Interface
 ***************************
 
 All windows (whether editors or views) that are part of the GPS environment
-are under control of what's commonly called a multiple document interface
+are under control of what is commonly called a multiple document interface
 (MDI for short). This is a common paradigm on windowing systems, where
 related windows are put into a larger window which is itself under control
 of the system or the windows manager.
@@ -56,7 +56,7 @@ via the :menuselection:`Edit --> Key Shortcuts` menu (the name of the
 action is :menuselection:`Search --> Global Search in context: Opened`. If
 you load the :file:`emacs.py` plugin, a standard key binding is set for
 :kbd:`control-xb`.  Any window whose name contains the specified letter
-matches the search field. For example, if you're currently editing the
+matches the search field. For example, if you are currently editing the
 files :file:`unit1.adb` and :file:`file.adb`, pressing :kbd:`t` leaves only
 :file:`unit1.adb` selectable.
 
@@ -72,7 +72,7 @@ in its title bar and selecting the :menuselection:`Window --> Close` menu.
 
 .. index:: preferences; windows --> show title bars
 
-If you've chosen to display window title bars, you can also click the
+If you have chosen to display window title bars, you can also click the
 :guilabel:`X` button in the title bar or double-click the icon to the left
 of the title bar, if present.
 
@@ -86,9 +86,9 @@ Finally, you can close a window by right-clicking in the associated
 notebook tab (if the tabs are visible) and selecting :guilabel:`Close` in
 the contextual menu.
 
-There's a :menuselection:`Close all other editors` menu in the notebook tab
-when you're in an editor, which closes most windows except a single editor,
-the one you're using.
+There is a :menuselection:`Close all other editors` menu in the notebook tab
+when you are in an editor, which closes most windows except a single editor,
+the one you are using.
 
 
 .. index:: menu; windows --> split horizontally
@@ -111,7 +111,7 @@ to achieve any desired layout.
 You can resize any split windows by dragging the handles that separate
 them. A preference (the :menuselection:`Edit --> Preferences` menu)
 controls whether this resizing is done in opaque or border mode. In the
-latter case, only the new handle position is displayed while you're
+latter case, only the new handle position is displayed while you are
 dragging the window.
 
 You may want to bind the key shortcuts to the :menuselection:`Window -->
@@ -125,13 +125,13 @@ Emacs behavior (where :kbd:`control-x 2` splits a window horizontally and
 is the fastest way.
 
 You can put several editors or browsers in the same area. In that case,
-they're grouped together in a notebook; select any of them by clicking on
+they are grouped together in a notebook; select any of them by clicking on
 the corresponding tab.  If there are many windows, two small arrows appear
 on the right of the tabs.  Click these arrows to show the remaining tabs.
 
 GPS changes the color and size of the title (name) of a window in the
 notebook tab to indicate that the window content has been updated but the
-window isn't visible.  This commonly occurs when new messages have been
+window is not visible.  This commonly occurs when new messages have been
 written in the :guilabel:`Messages` or :guilabel:`Console` views.
 
 
@@ -161,7 +161,7 @@ Floating`.
 
 .. index:: preferences; windows --> destroy floats
 
-The second method assumes you've set the preference :guilabel:`Destroy
+The second method assumes you have set the preference :guilabel:`Destroy
 Floats` in the :menuselection:`Edit --> Preferences` menu to false.  If so,
 you can close the floating window by clicking the appropriate title bar
 button; the window is put back in GPS's main windows. If you want to close
@@ -245,8 +245,8 @@ You can switch to a different perspective for different types of activities
 you want to perform (such as debugging or version control operations).  For
 example, when using the debugger, the default perspective consists of
 windows containing the call stack, data window, and the debugger console,
-each at the location you've set.  When you start the debugger again, you
-don't have to reopen these windows.
+each at the location you have set.  When you start the debugger again, you
+do not have to reopen these windows.
 
 .. index:: menu; window --> perspectives
 .. index:: menu; window --> perspectives --> create new
@@ -257,7 +257,7 @@ selecting the :menuselection:`Window --> Perspectives --> Create New` menu.
 
 GPS sometimes automatically changes perspectives. For example, if you start
 a debugger, it switches to the perspective called :guilabel:`Debug` if one
-exists. When the debugger terminates, you're switched back to the
+exists. When the debugger terminates, you are switched back to the
 :guilabel:`Default` perspective, if one exists).
 
 When you leave a perspective, GPS automatically saves its contents
@@ -275,9 +275,9 @@ One difficulty in working with perspectives is knowing which windows are
 preserved when you switch to another perspective and which are hidden.  To
 help you determine this, there's a central area where you can find all
 preserved windows.  It usually only contains editors (including those that
-you've split side by side). If you drop another window on top or to one
+you have split side by side). If you drop another window on top or to one
 side of an editor, that window is preserved when changing perspectives
-unless it's already in the new perspective.  The color of the highlight
+unless it is already in the new perspective.  The color of the highlight
 appearing on the screen while you drag tells you whether the window (if
 dropped at the current location) will be visible or hidden in other
 perspectives.

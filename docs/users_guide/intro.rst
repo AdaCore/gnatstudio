@@ -7,14 +7,14 @@ wide range of tools, providing easy access to each. It integrates
 especially well with AdaCore's tools, but can easily be extended to work
 with other tools by writing small plug-ing in Python.
 
-Here's a summary of the features of the GNAT Programming Studio:
+Here is a summary of the features of the GNAT Programming Studio:
 
 * :ref:`Multiple_Document_Interface`
 
   GPS uses a multiple document interface, allowing you to organize windows
   the way you want and organize your desktop by floating them to other
   screens or dragging them to any location.  (GPS restores the desktop the
-  next time it's restarted.)
+  next time it is restarted.)
 
 * Built-in editor (:ref:`Editing_Files`)
 

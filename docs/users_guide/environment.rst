@@ -53,7 +53,7 @@ in :ref:`Setup_the_remote_servers`.
 By default, files you specify on the command line can have absolute or
 relative pathnames.  If you prepend a filename with the :samp:`=`
 character, GPS looks for the file in the source search path of the
-project.  If you don't specify a project on the command line, GPS
+project.  If you do not specify a project on the command line, GPS
 tries to find one.  Otherwise, it displays the :ref:`welcome dialog
 <The_Welcome_Dialog>`.
 
@@ -135,7 +135,7 @@ settings in GPS:
   .. index:: GNAT_CODE_PAGE
 
   You can set this variable to :samp:`CP_ACP` or :samp:`CP_UTF8`.
-  It's used to control the code page used on Windows platform. The
+  It is used to control the code page used on Windows platform. The
   default is :samp:`CP_UTF8` (to support more languages).  If file or
   directory names are using accents, it may be necessary to set this
   variable to :samp:`CP_ACP` which is the default Windows ANSI code page.
@@ -145,7 +145,7 @@ settings in GPS:
   .. index:: GPS_ROOT
 
   Overrides and hardcodes the default root installation directory.  You
-  usually don't need to set this variable unless you're a GPS developer in
+  usually do not need to set this variable unless you are a GPS developer in
   unusual circumstances. GPS finds all its resource files (e.g., images,
   plug-ins, and xml files) from this variable, so setting it to an
   incorrect value will cause GPS to misbehave.
@@ -182,7 +182,7 @@ Files
 
   Log file automatically created by GPS.  When GPS is running, it creates a
   file :file:`log.<pid>`, where :file:`<pid>` is the GPS process id, so
-  multiple GPS sessions don't clobber each other's log. In case of a
+  multiple GPS sessions do not clobber each other's log. In case of a
   successful session, this file is renamed to :file:`log` when exiting; in
   case of an unexpected exit (when bug box is displayed), the log file
   retains its original name.  The name of the log file is configured by the
@@ -225,7 +225,7 @@ Files
 * :file:`$HOME/.gps/perspectives6.xml`
 
   Desktop file in XML format (created using the :menuselection:`File -->
-  Save More --> Desktop` menu).  It's loaded automatically if found.
+  Save More --> Desktop` menu).  It is loaded automatically if found.
 
 
 * :file:`$HOME/.gps/locations.xml`
@@ -238,7 +238,7 @@ Files
 * :file:`$HOME/.gps/properties.xml`
 
   Stores file-specific properties across GPS sessions. In particular, it
-  contains the encoding to use for files where the default encoding isn't
+  contains the encoding to use for files where the default encoding is not
   appropriate.
 
 
@@ -267,12 +267,12 @@ Files
 * :file:`$HOME/.gps/traces.cfg`
 
   Default configuration for system traces. These traces are used to analyze
-  problems with GPS.  By default, they're sent to the file
+  problems with GPS.  By default, they are sent to the file
   :file:`$HOME/.gps/log.<pid>`.
 
-  This file is created automatically when the :file:`$HOME/.gps/` directory is
-  created. If you remove it manually, it won't be recreated the next time you
-  start GPS.
+  This file is created automatically when the :file:`$HOME/.gps/` directory
+  is created. If you remove it manually, it is not recreated the next time
+  you start GPS.
 
 * :file:`$HOME/.gps/startup.xml`
 
@@ -346,7 +346,7 @@ Files
   .. index:: default desktop
   .. index:: desktop, default
 
-  Description of the default desktop that GPS uses when the user hasn't
+  Description of the default desktop that GPS uses when the user has not
   defined any default desktop and no project specific desktop exists.  You
   can modify this file if needed, but keep in mind that this will impact
   all users of GPS sharing this installation.  The format of this file is
@@ -383,7 +383,7 @@ Reporting Suggestions and Bugs
 .. index:: suggestions
 .. index:: submitting bugs
 
-If you'd like to make suggestions about GPS or if you encounter a bug,
+If you would like to make suggestions about GPS or if you encounter a bug,
 please send it to `mailto:report@gnat.com <mailto:report@gnat.com>`_ if you
 are a supported user and to `mailto:gps-devel@lists.act-europe.fr
 <mailto:gps-devel@lists.act-europe.fr>`_ otherwise.
@@ -397,7 +397,7 @@ The files :file:`$HOME/.gps/log` may also bring some useful information
 when reporting a bug.
 
 If GPS generates a bug box, the log file is kept under a separate name
-(:file:`$HOME/.gps/log.<pid>` so it doesn't get erased by further
+(:file:`$HOME/.gps/log.<pid>` so it does not get erased by further
 sessions. Be sure to include the right log file when reporting a bug box.
 
 
@@ -412,7 +412,7 @@ installing GPS.
 
 *GPS crashes on some GNU/Linux distributions at start up*
 
-  Look at the :file:`~/.gps/log.xxx` file and if there's a message that
+  Look at the :file:`~/.gps/log.xxx` file and if there is a message that
   looks like:
 
     [GPS.MAIN_WINDOW] 1/16 loading gps-animation.png
@@ -427,7 +427,7 @@ installing GPS.
 *Non-privileged users cannot start GPS*
 
   If you have originally installed GPS as root and can run GPS
-  successfully, but normal users can't, you should check the permissions of
+  successfully, but normal users cannot, you should check the permissions of
   the directory :file:`$HOME/.gps` and its subdirectories: they should be
   owned by the user.
 
@@ -443,10 +443,10 @@ installing GPS.
   .. index:: debugger
 
   If GPS cannot properly initialize the debugger (using the
-  :menuselection:`Debug --> Initialize`menu), it's usually because the
-  underlying debugger (gdb) can't be launched properly. To verify this is
+  :menuselection:`Debug --> Initialize`menu), it is usually because the
+  underlying debugger (gdb) cannot be launched properly. To verify this is
   the problem, try to launch the :program:`gdb` command from a shell (i.e.,
-  outside of GPS). If you can't launch :program:`gdb` from a shell, it
+  outside of GPS). If you cannot launch :program:`gdb` from a shell, it
   usually means you are using the wrong version of :program:`gdb` (e.g a
   version of :program:`gdb` built for Solaris 8 but run on Solaris 2.6).
 
@@ -458,8 +458,8 @@ installing GPS.
   wait a little longer, since some communications between GPS and
   :program:`gdb` can take significant time to finish. If GPS is still not
   responding after a few minutes, you can usually get control back in GPS
-  by either typing :kbd:`Ctrl-C` in the shell where you've started GPS,
-  which should unblock it. If that doesn't work, kill the :`program:`gdb`
+  by either typing :kbd:`Ctrl-C` in the shell where you have started GPS,
+  which should unblock it. If that does not work, kill the :`program:`gdb`
   process launched by GPS using :program:`ps` and :program:`kill` or the
   :program:`top` command under Unix,
 
@@ -484,13 +484,13 @@ installing GPS.
   The name of the package containing the main program is
   :file:`b~xxx.ads/adb` where :samp:`xxx` is the name of the Ada main unit
   specified in the :program:`gnatbind` command.  Edit and debug this file
-  in the usual manner. You'll see a series of calls to the elaboration
+  in the usual manner. You will see a series of calls to the elaboration
   routines of packages.  Debug these in the usual manner, just as if you
   were debugging code in your application.
 
 *How can I debug the Ada run-time library ?*
 
-  The run time distributed in binary versions of GNAT hasn't been compiled
+  The run time distributed in binary versions of GNAT has not been compiled
   with debug information, so it needs to be recompiled before you can debug
   it.
 
@@ -512,19 +512,19 @@ installing GPS.
 
 *My project have several files with the same name. How can I import it in GPS?*
 
-  GPS's projects don't allow implicit overriding of sources files, so you
-  can't have the same filename multiple times in the project
+  GPS's projects do not allow implicit overriding of sources files, so you
+  cannot have the same filename multiple times in the project
   hierarchy. This is because GPS needs to know exactly where the file is
-  and can't reliably guess which occurrence to use.
+  and cannot reliably guess which occurrence to use.
 
   There are several ways to handle this issue:
 
   *Put all duplicate files in the same project*
 
-    There's one specific case where a project is allowed to have duplicate
+    There is one specific case where a project is allowed to have duplicate
     source files: if the list of source directories is specified
     explicitly.  All duplicate files must be in the same project. Under
-    these conditions, there's no ambiguity for GPS and the GNAT tools as to
+    these conditions, there is no ambiguity for GPS and the GNAT tools as to
     which file to use and the first file found on the source path is the
     one hiding all the others. GPS only shows the first file.
 
@@ -545,12 +545,12 @@ installing GPS.
   *Use extended projects*
 
     These projects cannot currently be created through GPS, so you need to
-    edit them by hand. See the GNAT User'S guide for more information on
+    edit them by hand. See the GNAT User's guide for more information on
     extending projects.
 
     The idea behind this approach is that you can have a local overriding
     of some source files from the common build/source setup (e.g., if
-    you're working on a small part of the whole system, you may not want to
+    you are working on a small part of the whole system, you may not want to
     have a complete copy of the code on your local machine).
 
 *GPS is very slow compared to previous versions under unix (GPS < 4.0.0)*

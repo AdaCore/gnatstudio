@@ -11,7 +11,7 @@ developers can work on the same project.  Each project can be associated
 with a VCS, through the :guilabel:`VCS` tab in the Project properties
 editor.  See :ref:`The_Project_Properties_Editor`.
 
-GPS doesn't come with any version control system.  Instead, it provides a
+GPS does not come with any version control system.  Instead, it provides a
 high level user interface to a command-line system such as Subversion or
 ClearCase that you may already have on your system.
 
@@ -139,51 +139,51 @@ The :guilabel:`VCS Explorer` contains the following columns:
   Shows the status of the file. You can sort this column by clicking on
   its header. The possible status for files are:
 
-  *Unknown*
+  * :command:`Unknown`
     .. image:: gps-vcs-unknown.jpg
 
     The status is not yet determined or the VCS repository is not able to
-    give this information (for example, it's unavailable or locked).
+    give this information (for example, it is unavailable or locked).
 
-  *Not registered*
+  * :command:`Not registered`
     .. image:: gps-vcs-not-registered.jpg
 
     The file is not known to the VCS repository.
 
-  *Up-to-date*
+  * :command:`Up-to-date`
     .. image:: gps-vcs-up-to-date.jpg
 
     The file corresponds to the latest version in the corresponding branch
     on the repository.
 
-  *Added*
+  * :command:`Added`
     .. image:: gps-vcs-added.jpg
 
     The file has been added remotely but is not yet updated in the local
     view.
 
-  *Removed*
+  * :command:`Removed`
     .. image:: gps-vcs-removed.jpg
 
     The file still exists locally but is known to have been removed from
     the VCS repository.
 
-  *Modified*
+  * :command:`Modified`
     .. image:: gps-vcs-modified.jpg
 
-    You've modified the file or explicitly opened it for editing.
+    You modified the file or explicitly opened it for editing.
 
-  *Needs merge*
+  * :command:`Needs merge`
     .. image:: gps-vcs-needs-merge.jpg
 
-    You've modified the file both locally and in the repository.
+    You modified the file both locally and in the repository.
 
-  *Needs update*
+  * :command:`Needs update`
     .. image:: gps-vcs-needs-update.jpg
 
     The file has been modified in the repository but not locally.
 
-  *Contains merge conflicts*
+  * :command:`Contains merge conflicts`
     .. image:: gps-vcs-has-conflicts.jpg
 
     The file contains conflicts from a previous update operation.
@@ -404,7 +404,7 @@ various parts of GPS, including the project view, the source editor and the
 :guilabel:`VCS Explorer`.
 
 Depending on the context, some of the items described in this section
-aren't shown because they're not relevant to that context.
+are not shown because they are not relevant to that context.
 
 * :guilabel:`Remove project`
 
@@ -533,7 +533,7 @@ aren't shown because they're not relevant to that context.
 
 * :guilabel:`Add/No commit`
 
-  Likewise, but don't commit the file.
+  Likewise, but do not commit the file.
 
 * :guilabel:`Remove`
 
@@ -543,7 +543,7 @@ aren't shown because they're not relevant to that context.
 
 * :guilabel:`Remove/No commit`
 
-  Likewise, but don't commit.
+  Likewise, but do not commit.
 
 * :guilabel:`Revert`
 
@@ -676,7 +676,7 @@ aren't shown because they're not relevant to that context.
 
   * :guilabel:`Show all status`
 
-    Don't exclude any file from the list.
+    Do not exclude any file from the list.
 
   * :guilabel:`Hide all status`
     Remove all files from the list.
@@ -739,7 +739,7 @@ e-mail address unless the :command:`GPS_CHANGELOG_USER` environment
 variable is present.
 
 This :file:`ChangeLog` file serves as a location for revision logs.  When
-you're ready to check-in a file, use the :guilabel:`Edit revision log` menu
+you are ready to check-in a file, use the :guilabel:`Edit revision log` menu
 command in the standard revision log buffer with the content filled from
 the global :file:`ChangeLog` file.
 

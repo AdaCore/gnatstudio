@@ -46,7 +46,7 @@ You can modify the list of toolchains that can be selected when using the
 :ref:`Customizing_and_Extending_GPS` and in particular
 :ref:`Toolchains_customization` for further information.
 
-If you're using an alternative run time, e.g. a *soft float* run time,
+If you are using an alternative run time, e.g. a *soft float* run time,
 you need to add the option :command:`--RTS=soft-float` to the
 :guilabel:`Gnatls` property, e.g: :command:`powerpc-wrs-vxworks-gnatls
 --RTS=soft-float` and add this same option to the :guilabel:`Gnatmake`
@@ -89,7 +89,7 @@ Debugger Issues
 .. index:: debugger
 
 This section describes debugger issues specific to cross
-environments. You'll find more information on debugging at
+environments. You will find more information on debugging at
 :ref:`Debugging`.
 
 To automatically connect to the correct remote debug agent when
@@ -98,7 +98,7 @@ starting a debugging session (using the menu
 :guilabel:`Program host` and :guilabel:`Protocol` project properties,
 as described in the previous section.
 
-For example, if you're using the *Tornado* environment, with a target
+For example, if you are using the *Tornado* environment, with a target
 server called :samp:`target_ppc`, set the :guilabel:`Protocol` to
 :command:`wtx` and the :guilabel:`Program host` to :command:`target_ppc`.
 
@@ -115,6 +115,6 @@ If a module has been loaded on the target and is not known to the current
 debug session, use the :menuselection:`Debug->Debug->Add Symbols...` menu
 to load the symbol tables in the current debugger.
 
-Similarly, if you're running the underlying debugger (gdb) on a remote
+Similarly, if you are running the underlying debugger (gdb) on a remote
 machine, specify the name of this machine by setting the
 :guilabel:`Tools host` field of the project properties.

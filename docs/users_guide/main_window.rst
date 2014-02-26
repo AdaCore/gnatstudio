@@ -46,7 +46,7 @@ the most often used features of that view.
 
 .. index:: windows; local settings menu
 
-There's often a button to the right of these local toolbars that opens a
+There is often a button to the right of these local toolbars that opens a
 local settings menu. This menu either contains more actions you can perform
 in that view or various configuration settings allowing you to change the
 behavior or display of the view.
@@ -87,7 +87,7 @@ Browsers provide the following additional capabilities:
 
 * Links
 
-  Boxes can be linked together and remain linked when they're moved.  The
+  Boxes can be linked together and remain linked when they are moved.  The
   are different types of links; see the description of the various browsers
   for more details.
 
@@ -122,7 +122,7 @@ Browsers provide the following additional capabilities:
   Move boxes with your mouse. Drag the box by clicking on its title
   bar. The box's links are still displayed during the move, so you can see
   whether it overlaps any other box. If you try to move the box outside the
-  visible part of the browser, it's scrolled.
+  visible part of the browser, it is scrolled.
 
 * Selecting boxes
 
@@ -261,7 +261,7 @@ find the sources of your project. This project is often specified on the
 command line (via a :command:`-P` switch).  If not, and the current
 directory contains only one project file, GPS selects it automatically.
 Finally, if you specify the name of a source file to edit, GPS loads a
-default project.  If GPS can't find a project file, it displays a welcome
+default project.  If GPS cannot find a project file, it displays a welcome
 dialog, giving you the following choices:
 
 * :guilabel:`Create new project from template`
@@ -280,16 +280,16 @@ dialog, giving you the following choices:
   and load it if found. Otherwise, it copies the default project
   :file:`<prefix>/share/gps/default.gpr` into the current directory and
   loads it.  GPS removs this temporary copy when exiting or loading another
-  project if you haven't modified the copy.
+  project if you have not modified the copy.
 
   The default project contains all the Ada source files from the specified
   directory (assuming they use the default GNAT naming scheme :file:`.ads`
   and :file:`.adb`).
 
-  If the current directory isn't writable, GPS instead loads
+  If the current directory is not writable, GPS instead loads
   :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS run in a
   degraded mode, where some capabilities (such as building and source
-  navigation) are not available. This project won't contain any sources.
+  navigation) are not available. This project will not contain any sources.
 
 .. index:: project; wizard
 
@@ -308,7 +308,7 @@ dialog, giving you the following choices:
   One of the wizards, :guilabel:`Project Tree`, tries to import a set of
   sources and object files and attempt to create one or more project files
   so that building your application through these project files puts the
-  objects in the same directory they're currently in. If you haven't
+  objects in the same directory they are currently in. If you have not
   compiled your application when launching this wizard, GPS creates a
   single project file that puts all object files in the same directory.
   This is the prefered method when importing sources with duplicate file
@@ -326,7 +326,7 @@ dialog, giving you the following choices:
 
 * :guilabel:`Always show this dialog when GPS starts`
 
-  If unset, the welcome dialog won't be shown in future sessions.  In this
+  If unset, the welcome dialog will not be shown in future sessions.  In this
   case, GPS behaves as follows: it first looks for a :command:`-P` switch
   on the command line and loads the corresponding project if so; otherwise,
   it looks for a project file in the current directory and loads it if
@@ -374,7 +374,7 @@ The Menu Bar
 .. image:: menubar.png
 
 GPS provides a standard menu bar giving access to all operations. However,
-it's usually easier to access a feature using the various contextual menus
+it is usually easier to access a feature using the various contextual menus
 provided throughout GPS: these give direct access to the most relevant
 actions in the current context (for example, a project, directory, file, or
 entity). Contextual menus pop up when you click the right mouse button or
@@ -482,7 +482,7 @@ There are various ways to use the omni-search:
   click on the context again, GPS again displays the results from all
   contexts.
 
-* If you're searching in a single context, GPS defines a number of actions
+* If you are searching in a single context, GPS defines a number of actions
   to which you can bind key shortcuts via the :menuselection:`Edit --> Key
   Shortcuts` dialog instead of using the above procedure. These actions are
   found in the :guilabel:`Search` category and are called :guilabel:`Global
@@ -517,9 +517,9 @@ equivalent :menuselection:`File --> Open From Project...` menu, only a
 subset of the settings are displayed.
 
 You can also reorder the contexts from this settings dialog, which affects
-the order in which they're searched and displayed. We recommend keeping the
-:guilabel:`Sources` context last, because it's the slowest and while GPS
-is searching it, it's not able to search the other, faster, contexts.
+the order in which they are searched and displayed. We recommend keeping the
+:guilabel:`Sources` context last, because it is the slowest and while GPS
+is searching it, cannot search the other, faster, contexts.
 
 In the settings dialog, you can chose whether to display a
 :guilabel:`Preview` for the matches. This preview is displayed when you use
@@ -532,8 +532,8 @@ window are).
 
 One search context looks for file names and is convenient for quickly
 opening files. By default, it looks at all files found in any of the source
-directories of your project, even if those files aren't explicit sources of
-the project (for example because they don't match the naming scheme for any
+directories of your project, even if those files are not explicit sources of
+the project (for example because they do not match the naming scheme for any
 of the languages used by the project). This is often convenient because you
 can easily open support files like :file:`Makefiles` or documentation, but
 it can also sometimes be annoying if the source directories include too
@@ -547,7 +547,7 @@ GPS allows you to chose among various search algorithms:
   contents of a file, or the name of an entity).
 
 * :guilabel:`Regular Expression` assumes the text you typed is a valid
-  regular expression and searches for it. If it isn't a valid regexp, it
+  regular expression and searches for it. If it is not a valid regexp, it
   tries to search for the exact text (like :guilabel:`Full Text`).
 
 * :guilabel:`Fuzzy Match` tries to find each of the characters you typed,
@@ -570,18 +570,18 @@ the most meaningful way for you. Scoring is based on a number of criteria:
 
 * length of the match
 
-  For example, when searching file names, it's more likely that typing
+  For example, when searching file names, it is more likely that typing
   'foo' was intended to match 'foo.ads' than 'the_long_foo.ads'.
 
 * the grouping of characters in the match
 
-  As we've seen, when doing a fuzzy match GPS allows extra characters
+  As we have seen, when doing a fuzzy match GPS allows extra characters
   between the ones you typed. But the closer the ones you typed are in the
   match result, the more likely it is that this is what you were looking for.
 
 * when was the item last selected
 
-  If you recently selected an item (like a file name), GPS assumes you're
+  If you recently selected an item (like a file name), GPS assumes you are
   more likely to want it again and raises its score.
 
 
@@ -612,7 +612,7 @@ total elapsed time.
 
 .. index:: menu; tools --> views --> messages
 
-You can't close the :guilabel:`Messages` view because it might contain
+You cannot close the :guilabel:`Messages` view because it might contain
 important messages.  If GPS closed it, you can reopen it with the
 :menuselection:`Tools --> Views --> Messages` menu.
 
@@ -649,9 +649,9 @@ buttons:
   message as well as the corresponding highlighting in the source editor.
 
 * :guilabel:`Save` saves the contents of the view to a text file for later
-  reference.  You cna't load this file back into the :guilabel:`Locations`
+  reference.  You cannot load this file back into the :guilabel:`Locations`
   view, but you can load it into the :guilabel:`Messages` view.  However,
-  if you plan to reload it later, it's better to save and reload the
+  if you plan to reload it later, it is better to save and reload the
   contents of the :guilabel:`Messages` view instead.
 
 * :guilabel:`Expand All` and :guilabel:`Collapse All` shows or hides all
@@ -676,7 +676,7 @@ The local settings menu contains the following entries:
   Sort messages by filenames (sorted alphabetically). The default does not
   sort by filenames to make it easier to manipulate :guilabel:`Locations`
   view while the compilation is proceeding.  (If sorted, the messages might
-  be reordered while you're trying to click on them).
+  be reordered while you are trying to click on them).
 
 * :menuselection:`Jump to first location`
 
@@ -734,7 +734,7 @@ The :guilabel:`Project` view
 .. index:: menu; tools --> views --> project
 
 The project view displays a representation of the various components of
-your project.  By default, it's displayed on the left side of the
+your project.  By default, it is displayed on the left side of the
 workspace.  Select it using the :menuselection:`Project --> Project View`
 or :menuselection:`Tools --> Views --> Project` menus.
 
@@ -752,7 +752,7 @@ The project view, combined with the file and outline view, provide an
 interactive search capability allowing you to quickly search information
 currently displayed.  Start typing the text to search when the view has the
 focus.  Note that the contents of the :guilabel:`Project` view are computed
-lazily, so not all files are known to this search capability before they've
+lazily, so not all files are known to this search capability before they have
 been opened.
 
 This search opens a small window at the bottom of the view where you can
@@ -764,7 +764,7 @@ The various components displayed in the project view are:
 
 *projects*
 
-  Each source file you're working with is part of a project.  Projects are
+  Each source file you are working with is part of a project.  Projects are
   a way to record the switches to use for the various tools as well as a
   number of other properties such as the naming schemes for the sources.
   They can be organized into a project hierarchy where a root project can
@@ -833,9 +833,9 @@ The various components displayed in the project view are:
   times in the :guilabel:`Project` view if the project it belongs to is
   imported by several other projects.
 
-  You can drag a file into GPS. This opens a new editor if the file isn't
+  You can drag a file into GPS. This opens a new editor if the file is not
   already being edited or moves to the existing editor otherwise.  If you
-  press :kbd:`shift` while dragging the file and it's already being edited,
+  press :kbd:`shift` while dragging the file and it is already being edited,
   GPS creates a new view of the existing editor.
 
 *entities*
@@ -869,7 +869,7 @@ also available in other modules, for example when selecting a file in the
 .. index:: project; reload
 
 The local toolbar of the :guilabel:`Project` view contains a button to
-reload the project.  Use this when you've created or removed source files
+reload the project.  Use this when you have created or removed source files
 from other applications and want to let GPS know there might have been
 changes on the file system that impact the contents of the current project.
 
@@ -904,7 +904,7 @@ understand or modify your project:
   :index:`Saves <single: project; saving>` a single project in the
   hierarchy after you modified it. Modified but unsaved projects in the
   hierarchy have a special icon (a pen mark on top of the standard
-  icon). If you'd rather :index:`save all <single: menu; project -->
+  icon). If you would rather :index:`save all <single: menu; project -->
   save_all>` modified projects in a single step, use the menu bar item
   :menuselection:`Project --> Save All`.
 
@@ -919,7 +919,7 @@ understand or modify your project:
 * :menuselection:`Project --> Edit source file`
 
   Loads the project file into an editor so you can edit it.  Use this
-  if you need to access some features of the project files that aren't
+  if you need to access some features of the project files that are not
   accessible graphically (such as rename statements and variables).
 
 * :menuselection:`Project --> Dependencies`
@@ -957,7 +957,7 @@ since they provide various scenarios for the same set of project files.
 
 Each such variable is listed on its own line along with its current value.
 Change the current value by clicking on it and selecting the new value
-among the ones that pop up. GPS doesn't remember the value from one session
+among the ones that pop up. GPS does not remember the value from one session
 to the next: the variables' initial values come from the project files
 themselves (where you can specify a default value) or from the environment
 in which GPS is started, just as would be the case when spawning command
@@ -986,7 +986,7 @@ object directories (see :ref:`The_Build_Mode`).  Like scenario variables,
 change the mode by clicking on the value and selecting a new value in the
 popup window.
 
-If you're not using build modes and want to save some space on the screen,
+If you are not using build modes and want to save some space on the screen,
 use the local settings menu :menuselection:`Show build modes` to disable
 the display.
 
@@ -1004,7 +1004,7 @@ In addition to the :guilabel:`Project` view, GPS also provides a
 :guilabel:`Files` view through the :menuselection:`Tools --> Views -->
 Files` menu.
 
-In this view, directories are displayed exactly as they're organized on the
+In this view, directories are displayed exactly as they are organized on the
 disk (including Windows drives).  You can also explore each source file
 explored as described in :ref:`The_Project_View`.  You can also drop files
 into the :guilabel:`Files` view to conveniently open a file.
@@ -1045,7 +1045,7 @@ drag the window to another place on the desktop (see the description of the
 Select multiple windows by clicking while pressing the control or shift
 keys. The Window view provides a contextual menu to easily close all
 selected windows at once, which is a fast way to clean up your desktop
-after you've finished working on a task.
+after you have finished working on a task.
 
 
 
@@ -1065,7 +1065,7 @@ The :guilabel:`Outline` view, which you activate through the
 :menuselection:`Tools --> Views --> Outline` menu, shows the contents of
 the current file.
 
-Exactly what's displayed depends on the language of the file. For Ada, C
+Exactly what is displayed depends on the language of the file. For Ada, C
 and C++ files, this view displays the list of entities declared at the
 global level in your current file (such as Ada packages, C++ classes,
 subprograms, and Ada types).  This view is refreshed whenever the current
@@ -1102,15 +1102,15 @@ how the outline view is displayed:
 
   Controls whether the entities are always displayed at the top level of
   the outline view. When disabled, nested subprograms are displayed below
-  the subprogram in which they're declared.
+  the subprogram in which they are declared.
 
 * :guilabel:`Group spec and body`
 
   Displays up to two icons on each line (one for the spec and one for the
   body if both occur in the file).  Click on one of the icons to go
-  directly to that location. If you click on the name of the entity, you're
-  taken to its declaration unless it's already the current location in the
-  editor, in which case you're taken to its body.
+  directly to that location. If you click on the name of the entity, you are
+  taken to its declaration unless it is already the current location in the
+  editor, in which case you are taken to its body.
 
 * :guilabel:`Dynamic link with editor`
 
@@ -1135,7 +1135,7 @@ GPS has an advanced mechanism for handling copy/paste operations.
 
 When you click the :menuselection:`Edit --> Copy` or :menuselection:`Edit
 --> Cut` menu, GPS adds the current selection to the clipboard.  However,
-unlike many applications, GPS doesn't discard the previous contents of the
+unlike many applications, GPS does not discard the previous contents of the
 clipboard, but instead saves it for future use.  By default, up to 10
 entries are saved, but you can change that number using the
 :guilabel:`Clipboard Size` preference.
@@ -1156,7 +1156,7 @@ without having to go back and forth between the two editors.
 
 .. index:: menu; tools --> views --> clipboard
 
-The :guilabel:`Clipboard` view graphically displays what's currently stored
+The :guilabel:`Clipboard` view graphically displays what is currently stored
 in the clipboard. Open it via the :menuselection:`Tools --> Views -->
 Clipboard` menu.
 
@@ -1216,7 +1216,7 @@ called by a given entity, and what entities are calling a given subprogram.
 Some references are displayed with an additional "(dispatching)" text,
 which indicates the call to the entity is not explicit in the sources but
 could potentially occur through dynamic dispatching.  (This depends on what
-arguments are passed to the caller at run time; it's possible the
+arguments are passed to the caller at run time; it is possible the
 subprogram is in fact never called.)
 
 .. index:: contextual menu; calls
@@ -1281,7 +1281,7 @@ one of them is calling the other.
 GPS provides special handling for renamed entities (in Ada): if a
 subprogram is a renaming of another, both items are displayed in the
 browser with a special hashed link between the two. Since the renamed
-subprogram doesn't have a proper body, you need to ask for the subprograms
+subprogram does not have a proper body, you need to ask for the subprograms
 called by the renamed entity to get the list.
 
 In this browser, clicking on the right arrow in the title bar displays all
@@ -1341,7 +1341,7 @@ Bookmarks automatically remember the exact location in an editor, not in
 terms of line and column, but in terms of which character they point to. If
 you modify the file through GPS, the bookmark is automatically updated so
 it refers to the same place.  However, if the file is modified outside of
-GPS, it won't be aware of that change and the bookmark may reference a
+GPS, it will not be aware of that change and the bookmark may reference a
 different place in the file.
 
 .. index:: menu; edit --> create bookmark
@@ -1447,7 +1447,7 @@ The Execution window
 
 When a program is launched using the :menuselection:`Build --> Run` menu,
 GPS creates a new execution window allowing input and output for the
-program.  To allow post-mortem analysis and copy/pasting, GPS doesn't close
+program.  To allow post-mortem analysis and copy/pasting, GPS does not close
 execution windows when the program terminates; you must close them
 manually.  If you try to close the execution window while the program is
 still running, GPS displays a dialog window asking if you want to kill it.
@@ -1657,7 +1657,7 @@ The :guilabel:`Entity` browser
 .. image:: entity-browser.png
 
 The :guilabel:`Entity` browser displays static information about any source
-entity.  What's displayed for each entity depends on the type of the
+entity.  What is displayed for each entity depends on the type of the
 entity, but are normally other entities.  For example:
 
 * :samp:`Ada record / C struct`
@@ -1749,5 +1749,5 @@ the file selector provides the following contents:
   provided by the :kbd:`Tab` key.
 
 * A button bar with the :guilabel:`OK` and :guilabel:`Cancel` buttons.
-  When you've selected the desired file, click :guilabel:`OK` to confirm or
+  When you have selected the desired file, click :guilabel:`OK` to confirm or
   click :guilabel:`Cancel` at any time to cancel the file selection.

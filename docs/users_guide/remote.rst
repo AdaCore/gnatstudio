@@ -8,8 +8,8 @@ Using GPS for Remote Development
 .. index:: network
 .. index:: client/server
 
-It's common for programmers in a networked environment to use a desktop
-computer that's not itself suitable for their development tasks. For
+It is common for programmers in a networked environment to use a desktop
+computer that is not itself suitable for their development tasks. For
 example, each developer may have a desktop PC running Windows or GNU/Linux
 as their access to a company network and do all their development work on
 shared networked servers. These remote servers may be running an operating
@@ -17,7 +17,7 @@ system different from the one on their desktop machine.
 
 One common way of operating in such an environment is to access the server
 through a remote windowing system such as X-Windows. GPS can be used in
-such way, but it's not necessarily the most efficient configuration because
+such way, but it is not necessarily the most efficient configuration because
 running GPS remotely on a shared server increases the workload of the
 server as well as traffic on the network. When the network is slow, user
 interactions can become uncomfortably sluggish. This is unfortunate because
@@ -75,8 +75,8 @@ and :ref:`Defining_a_remote_path_translation`, for more information.)
 .. index:: screen shot
 .. image:: remote-view.jpg
 
-Once you've opened the Remote View, click on :guilabel:`Settings` to open
-the servers configuration dialog.
+Once you have opened the :guilabel:`Remote` view, click on
+:guilabel:`Settings` to open the servers configuration dialog.
 
 .. index:: screen shot
 .. image:: servers-configuration.jpg
@@ -121,9 +121,9 @@ asterisk:
   * plink (Windows tool) in ssh, rsh or telnet mode
 
   See :ref:`Defining_a_remote_connection_tool` if you need to add a
-  different tool.  If a tool isn't in your path (for example, because it's
+  different tool.  If a tool is not in your path (for example, because it's
   not installed), it won't appear in the tools list. Some tools
-  incompatible with GPS aren't displayed either, such as the Microsoft
+  incompatible with GPS are not displayed either, such as the Microsoft
   telnet client.
 
 * Shell
@@ -137,7 +137,7 @@ asterisk:
   * tcsh
 
   GPS also support the Windows shell (:file:`cmd.exe`). See
-  :ref:`Limitations`, for Cygwin's shell usage on Windows: it's preferable
+  :ref:`Limitations`, for Cygwin's shell usage on Windows: it is preferable
   to use :file:`cmd.exe` as a remote shell on Windows servers.
 
 You may need to specify other fields, but they are not mandatory. Most are
@@ -214,10 +214,10 @@ You can set one of five types of path synchronization for each path:
 * :guilabel:`Manually`: synchronization is needed, but is only performed
   manually using the remote view buttons.
 * :guilabel:`Always`: Relevant to source and object paths of your project.
-  They're kept synchronised by GPS before and after every remote action (such
+  They are kept synchronised by GPS before and after every remote action (such
   as performing a build or run).
 * :guilabel:`Once to local`/`Once to remote`: Relevant to project's
-  dependencies. They're synchronized once when a remote project is
+  dependencies. They are synchronized once when a remote project is
   loaded or when a local project is set remote. They can still be
   manually synchronized using the Remote View (:ref:`The_remote_view`.)
 
@@ -256,8 +256,8 @@ Execution_Server. The GPS_Server (the local machine) is used for all other
 operations.  These "servers" may not (and are often not) different
 machines.
 
-The Tools_Server handles all compiler related operations that don't depend
-on a specific compiler version. It's used in dual compilation mode, for
+The Tools_Server handles all compiler related operations that do not depend
+on a specific compiler version. It is used in dual compilation mode, for
 example, to determine whether the action can be safely run using a very
 recent compiler toolchain (which the Tools_Server runs), or whether a
 specific, older baseline compiler version must be used.
@@ -276,7 +276,7 @@ Use the :guilabel:`Remote` view (`Tools->Views->Remote`) to assign servers
 to categories of operations for the currently loaded project.  You can
 assign a different server to each operation category if you fully expand
 the :guilabel:`Servers Assignment` tab. Alternatively, assign all
-categories to a single server in one step if the you've left the
+categories to a single server in one step if the you have left the
 :guilabel:`Servers Assignment` tab collapsed.
 
 .. index:: screen shot
@@ -329,15 +329,15 @@ Limitations
 
 The GPS remote mode imposes some limitations:
 
-* Execution: you can't use an external terminal to remotely execute your
+* Execution: you cannot use an external terminal to remotely execute your
   application. The :guilabel:`Use external terminal` checkbox of the run
   dialog has no effect if the program is run remotely.
 
-* Debugging: you can't use a separate execution window. The :guilabel:`Use
+* Debugging: you cannot use a separate execution window. The :guilabel:`Use
   separate execution window` option is ignored for remote debugging
   sessions.
 
-* Cygwin on remote host: the GNAT compilation toolchain doesn't understand
+* Cygwin on remote host: the GNAT compilation toolchain does not understand
   Cygwin's mounted directories.  To use GPS with a remote Windows server
   using Cygwin's :program:`bash`, you must use directories that are the
   same on Windows and Cygwin (absolute paths). For example, a project using

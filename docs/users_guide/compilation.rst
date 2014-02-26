@@ -31,7 +31,7 @@ The Build Menu
 Use the build menu to access capabilities related to checking, parsing
 and compiling files as well as creating and running executables.  This
 menu is fully configurable via the :guilabel:`Targets` settings;
-what's documented here are the default menus (see
+what is documented here are the default menus (see
 :menuselection:`Build --> Settings --> Targets` below).
 
 .. index:: menu; build --> check syntax
@@ -130,7 +130,7 @@ what's documented here are the default menus (see
 * :menuselection:`Build --> Makefile`
 
   If the :program:`make` utility is in your PATH and you have a file called
-  :file:`Makefile` in the same directory as your project file or if you've
+  :file:`Makefile` in the same directory as your project file or if you have
   set the :guilabel:`makefile` property in the :guilabel:`Make` section of
   the project properties (see :ref:`The_Project_Properties_Editor`), this
   menu is displayed, giving access to all the targets defined in your
@@ -142,7 +142,7 @@ what's documented here are the default menus (see
 * :menuselection:`Build --> Ant`
 
   If the :program:`ant` utility is in your PATH and you have a file called
-  :file:`build.xml` in the same directory as your project file or if you've
+  :file:`build.xml` in the same directory as your project file or if you have
   set the :guilabel:`antfile` property in the :guilabel:`Ant` section of
   the project properties (see :ref:`The_Project_Properties_Editor`), this
   menu is displayed, giving access to all the targets defined in your ant
@@ -161,7 +161,7 @@ what's documented here are the default menus (see
 
    When running an application within GPS, a new execution view is added to
    the bottom area to display input and output of the application. This
-   view isn't closed automatically, even when the application terminates,
+   view is not closed automatically, even when the application terminates,
    so you still have access to the application's output. If you explicitly
    close an execution window while an application is running, GPS displays
    a dialog window to confirm whether the application should be terminated.
@@ -173,8 +173,8 @@ what's documented here are the default menus (see
    dialog.
 
    The GPS execution views have several limitations that external terminals
-   do not. In particular, they don't handle signals like :kbd:`ctrl-z` and
-   :kbd:`control-c`. If you're running an interactive application, we
+   do not. In particular, they do not handle signals like :kbd:`ctrl-z` and
+   :kbd:`control-c`. If you are running an interactive application, we
    strongly encourage you to run it in an external terminal.
 
    Similarly, the :menuselection:`Run` contextual menu item of a project
@@ -381,7 +381,7 @@ a new background compilation has finished or a non-background compilation
 is launched.
 
 GPS launches background compilations for all targets that have a
-:guilabel:`Launch mode` set to :guilabel:`In background` after you've made
+:guilabel:`Launch mode` set to :guilabel:`In background` after you have made
 modifications in a source editor.  Background compilation is mostly useful
 for targets such as :samp:`Compile File` or :samp:`Check Syntax`. For
 targets that operate on Mains, the last main used in a non-background is
@@ -450,7 +450,7 @@ In this dialog, two paths need to be configured: the compiler path and the
 tools path. The first is used to compile the code, while the second is used
 to run up-to-date tools in order to get more functionality or more accurate
 results.  GPS only enables the :guilabel:`OK` button when the two paths are
-set to different location since that's the only case where it makes sense
+set to different location since that is the only case where it makes sense
 to enable the multiple toolchains mode.
 
 You can also activate an automated cross-reference generation from this
@@ -471,7 +471,7 @@ cross-reference files, while keeping the ensure that the old toolchain's
 
 .. index:: menu; tools --> consoles --> auxiliary builds
 
-Cross-reference files generation doesn't output anything in the
+Cross-reference files generation does not output anything in the
 :guilabel:`Messages` view so as to not be confused with the output of the
 regular build process. If needed, you can see the output of the cross-ref
 generation command with the :menuselection:`Tools --> Consoles -->
@@ -492,7 +492,7 @@ multiple toolchains mode is in use:
   compilation actions are performed normally on the build server.
 * The tools path is used and all related actions are performed on the local
   machine using this path.
-* The cross-reference files are handled :program:`rsync` so they don't get
+* The cross-reference files are handled :program:`rsync` so they do not get
   overwritten during local and remote host synchronizations.  Otherwise,
   gthey would because build and cross-reference generation actions occur at
   the same time on the local machine and on remote server.

@@ -6,7 +6,7 @@ Searching and Replacing
 
 GPS provides extensive search capabilities in different contexts. For
 example, you can search in the currently edited source file or in all
-source files belonging to the project, even those that aren't currently
+source files belonging to the project, even those that are not currently
 open. You can also search in the project view (on the left side of the main
 GPS window).
 
@@ -70,7 +70,7 @@ This dialog contains three fields:
   :guilabel:`Files...` and :guilabel:`Open Files`), the last one you used
   is selected.  In most contexts, the :guilabel:`Scope` option restricts
   the search to a set of language constructs.  For example, use this to to
-  avoid matching comments when you're only interested in actual code or to
+  avoid matching comments when you are only interested in actual code or to
   only search strings and comment, but not code.
 
 Change the context to a different one by clicking on the arrow on the
@@ -106,8 +106,8 @@ right, which displays the list of all possible contexts, inluding:
 
     Search all files from the current project, defaulting to the root
     project if none. The currently selected project might be the one to
-    which the source file belongs (if you're in an editor) or the selected
-    project (if you're in the:guilabel:`Project` view).
+    which the source file belongs (if you are in an editor) or the selected
+    project (if you are in the :guilabel:`Project` view).
 
   *Files From Runtime*
 
@@ -124,7 +124,7 @@ right, which displays the list of all possible contexts, inluding:
   .. index:: preferences; search --> preserve search context
 
   Normally, GPS sets the default value for :guilabel:`Look In` that matches
-  the currently selected window. For example, if you're in an editor and
+  the currently selected window. For example, if you are in an editor and
   open the search dialog, the context is set to :guilabel:`Current
   File`. If the project view is the active window, the context is set to
   the :guilabel:`Project` view.  Optionally, GPS can remember the last
@@ -211,7 +211,7 @@ out if no occurence of the pattern is found. To enable them, start a
 search, for example by pressing the :guilabel:`Find` button. Pressing
 :guilabel:`Replace` replaces the current occurrence (grayes out the two
 buttons) and :guilabel:`Replace & Find` replaces the occurrence and jumps
-to the next one, if any. If you don't want to replace the current
+to the next one, if any. If you do not want to replace the current
 occurence, jump to the next one by pressing :guilabel:`Next`.
 
 The :guilabel:`Repl all` button replaces all occurences found. By default,
@@ -230,5 +230,5 @@ menu, and either select :menuselection:`Window --> Floating` or
 :menuselection:`Window --> Docked`.
 
 If you save the desktop (:menuselection:`File --> Save More --> Desktop`),
-GPS automatically reopens the search dialog in its new place when it's next
+GPS automatically reopens the search dialog in its new place when it is next
 started.

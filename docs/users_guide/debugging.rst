@@ -7,7 +7,7 @@ Debugging
 
 GPS also serves as a graphical front-end for text-based debuggers such as
 GDB.  If you understand the basics of the underlying debugger used by GPS,
-you'll better understand how GPS works and what kind of functionality it
+you will better understand how GPS works and what kind of functionality it
 provides.
 
 Please refer to the debugger-specific documentation, e.g. the GNAT User's
@@ -63,7 +63,7 @@ The Debug Menu
 
 The :menuselection:`Debug` entry in the menu bar provides operations acting
 at a global level. Key shortcuts are available for the most common
-operations and are displayed in the menus.  Here's a detailed list of the
+operations and are displayed in the menus.  Here is a detailed list of the
 items in the menu bar:
 
 .. index:: menu; debug --> run
@@ -247,7 +247,7 @@ items. Failure to do so will result in empty windows.
 
 * :menuselection:`Debug --> Data --> Data Window`
 
-  Displays the :guilabel:`Data` browser. If it already exists, it's raised
+  Displays the :guilabel:`Data` browser. If it already exists, it is raised
   so it becomes visible
 
 .. index:: menu; debug --> data --> call stack
@@ -466,7 +466,7 @@ following information:
 
     This is a clickable icon that changes the state of the box from
     automatically updated (the flashlight icon) to frozen (the lock icon).
-    When frozen, the value is grayed out and doesn't change until you
+    When frozen, the value is grayed out and does not change until you
     change the state. When updated, the value of the box is recomputed each
     time an execution command is sent to the debugger (e.g step, next).
 
@@ -559,7 +559,7 @@ useful buttons:
 * :guilabel:`Zoom out`
 
   Displays the items with smaller fonts and pixmaps. Use this when you have
-  several items in the browser and you can't see all of them at the same
+  several items in the browser and you cannot see all of them at the same
   time (for example, a tree whose structure you want to see clearly).
 
 * :guilabel:`Zoom`
@@ -631,7 +631,7 @@ following special meanings:
 
 *trash bin icon*
 
-  Indicates the debugger couldn't get the value of the variable or
+  Indicates the debugger could not get the value of the variable or
   expression.  For example, because the variable is currently not in scope
   (and thus does not exist) or might have been optimized away by the
   compiler. In all cases, the display is updated as soon as the variable's
@@ -836,7 +836,7 @@ variable.  Disable these automatic tooltips using the preferences menu.
 When the debugger is active, the contextual menu of the source window
 contains a :menuselection:`Debug` submenu providing the entries
 below. These entries are dynamic and apply to the entity under the pointer
-(depending on the current language). In addition, if you've made a
+(depending on the current language). In addition, if you have made a
 selection in the editor, the text of the selection is used instead. This
 allows you to easily display complex expressions (for example, you can add
 comments to your code with expressions you want to display in the
@@ -893,8 +893,8 @@ debugger).
 The Assembly Window
 ===================
 
-It's sometimes convenient to look at the assembly code for the subprogram
-or source line you're currently debugging.
+It is sometimes convenient to look at the assembly code for the subprogram
+or source line you are currently debugging.
 
 
 .. index:: menu; debug --> data --> assembly
@@ -928,7 +928,7 @@ A convenient complement when debugging at the assembly level is the ability
 to display the contents of machine registers.  When the debugger supports
 it (as :program:`gdb` does), select the :menuselection:`Debug --> Data -->
 Display Registers` menu to get an item in the data browswer that shows the
-current contents of each machine register and that's updated every time one
+current contents of each machine register and that is updated every time one
 of them changes.
 
 .. index:: menu; debug --> Data --> display any expression
@@ -940,7 +940,7 @@ enter something like::
   output /x $eax
 
 in the field and select toggle button :guilabel:`Expression is a subprogram
-call`. This creates a new browser item that's refreshed every time the
+call`. This creates a new browser item that is refreshed every time the
 value of the register (in this case :command:`eax`) changes.
 
 
@@ -960,7 +960,7 @@ If the underlying debugger allows it, pressing :kbd:`Tab` in this window
 provides completion for the command being typed (or its arguments).
 
 additional commands are defined here to provide a simple text interface to
-some graphical features.  Here's the complete list of such commands. The
+some graphical features.  Here is the complete list of such commands. The
 arguments between square brackets are optional and can be omitted.
 
 
@@ -973,7 +973,7 @@ arguments between square brackets are optional and can be omitted.
   which is the name of a variable, or one of its fields, in the current
   scope for the debugger.  The command `graph print` creates a frozen item,
   one that is not automatically refreshed when the debugger stops, while
-  :samp:`graph display` displays an item that's automatically refreshed.
+  :samp:`graph display` displays an item that is automatically refreshed.
 
   The new item is associated with a number displayed in its title bar.
   This number can be specified with the :samp:`num` keyword and can be used
@@ -1041,7 +1041,7 @@ can be used to add your own commands. The example below uses this hook.
 
 .. highlight:: python
 
-Here's the code::
+Here is the code::
 
   import GPS
 

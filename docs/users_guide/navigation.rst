@@ -17,25 +17,25 @@ GPS provides cross-reference navigation for program entities defined in
 your application such as types, procedures, functions, and variables.  This
 support relies on compiler-generated cross-reference information, so you
 need to compile your project before being able to navigate within it.
-Similarly, if you've modified your sources, you need to rebuild and
+Similarly, if you have modified your sources, you need to rebuild and
 recompute the xref information it you want your changes to be taken into
 account by GPS.
 
-Here's language specific information about source navigation:
+Here is language specific information about source navigation:
 
 *Ada*
 
   .. index:: Ada; cross-references
 
   By default, GPS uses the GNAT compiler to generate the cross-reference
-  information it needs.  However, if you're using the :command:`-gnatD` or
+  information it needs.  However, if you are using the :command:`-gnatD` or
   :command:`-gnatx` switches, no cross reference information is available
   to GPS.
 
   .. index:: GNAT; -gnatQ
   .. index:: GNAT; -k
 
-  If you need to navigate through sources that don't compile (such as after
+  If you need to navigate through sources that do not compile (such as after
   modifications or while porting or initially developing an application),
   GNAT generates partial cross-reference information if you specify the
   :command:`-gnatQ` switch. Using this along with the :command:`-k` switch
@@ -44,17 +44,17 @@ Here's language specific information about source navigation:
 
   .. index:: GNAT; ALI files
 
-  Sometimes GPS can't find the external files (called :file:`ALI files`)
+  Sometimes GPS cannot find the external files (called :file:`ALI files`)
   containing the cross-reference information. Most likely, this is either
-  because you haven't compiled your sources yet or because the sources
+  because you have not compiled your sources yet or because the sources
   changed since the :file:`ALI files` were generated.  Another possibility
-  is that you haven't included the object directories that contain the
+  is that you have not included the object directories that contain the
   :file:`ALI files` in the project.
 
   .. index:: separate unit
   .. index:: gnatkr
 
-  In addition, GPS can't automatically handle one special case, when you
+  In addition, GPS cannot automatically handle one special case, when you
   have separate units whose file names have been crunched by the
   :program:`gnatkr` command.
 
@@ -78,7 +78,7 @@ Ada xrefs heuristics
 
 GPS provides basic navigation support for Ada, C and C++ sources even in
 the absence of information coming from the compiler by using a built-in
-parser, parsing the files both at startup and when they're modified.  This
+parser, parsing the files both at startup and when they are modified.  This
 provides basic navigation in simple cases.
 
 In this mode, GPS can navigate to an entity body from the declaration and
@@ -124,11 +124,11 @@ project this user might be working on, as in the following examples::
    end Default;
 
 One drawback in altering the default location is that :program:`gprclean`
-won't remove this database when you clean your project.  But it might speed
-up GPS if your project isn't on a fast local disk and you can put the
+will not remove this database when you clean your project.  But it might speed
+up GPS if your project is not on a fast local disk and you can put the
 database there.
 
-**WARNING**: You shouldn't store this file in a directory that is accessed via
+**WARNING**: You should not store this file in a directory that is accessed via
 a network filesystem, like NFS, or Clearcase's MVFS. If your obj directory is
 on such a filesystem, be sure to specify a custom Xref_Database directory in
 your project file.
@@ -309,7 +309,7 @@ cross-references.
 * :menuselection:`Goto declarations of *entity*`
 
   This entry appears when clicking on a dispatching subprogram call. In
-  that case, GPS can't know what subprogram will actually be called at run
+  that case, GPS cannot know what subprogram will actually be called at run
   time, so it gives you a list of all entities in the tagged type hierarchy
   and lets you choose which of the declarations you want to jump to. See
   also the :file:`methods.py` plug-in (enabled by default) which, given an
@@ -397,7 +397,7 @@ cross-references.
   same file.
 
   Selecting the :guilabel:`Show context` option produces a list of all
-  the references to these entities within the file.  If it's not
+  the references to these entities within the file.  If it is not
   selected, you just get a pointer to the declaration of the imported
   entities.
 
