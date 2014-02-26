@@ -18,16 +18,16 @@ Programming System.
 
 These functions are made available through various programming languages
 (Python and the GPS shell at the moment). The documentation in this package is
-mostly oriented towards Python, but it can also be used as a reference for the
-GPS shell
+mostly oriented towards Python, but can also be used as a reference for the
+GPS shell.
 
 Function description
 --------------------
 
-For all functions, the list of parameters is given. The first parameter will
-often be called "self", and refers to the instance of the class to which the
-method applies. In Python, the parameter is generally put before the method's
-name, as in::
+For all functions, the list of parameters is specified. The first parameter
+is often called "self", and refers to the instance of the class to which
+the method applies. In Python, the parameter is generally put before the
+method's name, as in::
 
     self.method(arg1, arg2)
 
@@ -52,39 +52,39 @@ of the function.
 User data in instances
 ----------------------
 
-A very useful feature of python is that all class instances can be associated
-with any number of user data fields. For example, if you create an instance of
-the class GPS.EditorBuffer, you can associate two fields "field1" and "field2"
-to it (the names and number are purely for demonstration purposes, and you can
-use your own), as in::
+A very useful feature of Python is that all class instances can be associated
+with any number of user data fields. For example, if you create an instance
+of the class :class:`GPS.EditorBuffer`, you can associate two fields "field1"
+and "field2" to it (the names and number are purely for demonstration
+purposes, and you can use your own), as in::
 
     ed = GPS.EditorBuffer.get(GPS.File("a.adb"))
     ed.field1 = "value1"
     ed.field2 = 2
 
-GPS takes great care for most classes of always returning the same python
-instance for a given GUI object. For instance, if you were to get another
-instance of GPS.EditorBuffer for the same file as above, you would in fact
-receive the same Python instance, and thus the two fields are available to you,
-as in::
+GPS takes great care for most classes to always return the same Python
+instance for a given GUI object. For example, if you were to get another
+instance of :class:`GPS.EditorBuffer` for the same file as above, you would
+receive the same Python instance and thus the two fields are available to
+you, as in::
 
     ed = GPS.EditorBuffer.get(GPS.File("a.adb"))
     # ed.field1 is still "value1"
 
 This is a very convenient way to store your own data associated with the
-various objects exported by GPS. These data will cease to exist when the GPS
+various objects exported by GPS. These data cease to exist when the GPS
 object itself is destroyed (for instance when the editor is closed in the
 example above).
 
 Hooks
 -----
 
-In a lot of cases, you will need to connect to specific hooks exported by GPS
-to be aware of events happening in GPS (loading of a file, closing a file,...).
-These hooks and their use are described in the GPS manual (see also the
-:class:`GPS.Hook` class).
+In many cases, you need to connect to specific hooks exported by GPS to be
+aware of events happening in GPS (such as the loading of a file or closing
+a file).  These hooks and their use are described in the GPS manual (see
+also the :class:`GPS.Hook` class).
 
-Here is a small example, where the function on_gps_started is called
+Here is a small example, where the function :func:`on_gps_started` is called
 when the GPS window is fully visible to the user::
 
     import GPS
@@ -97,10 +97,10 @@ The list of parameters for the hooks is described for each hook below. The
 first parameter is always the name of the hook, so that the same function can
 be used for multiple hooks if necessary.
 
-There are two categories of hooks: the standard hooks and the action hooks. The
-former return nothing, the latter return a boolean indicating whether your
-callback was able to perform the requested action. They are used to override
-some of GPS's internal behavior.
+There are two categories of hooks: the standard hooks and the action
+hooks. The former return nothing, the latter return a boolean indicating
+whether your callback was able to perform the requested action. They are
+used to override some of GPS's internal behavior.
 
 """
 
@@ -115,15 +115,16 @@ class GUI(object):
 
     """
     This is an abstract class (ie no instances of it can be created from your
-    code, which represents a graphical element of the GPS interface
+    code, which represents a graphical element of the GPS interface.
 
     .. seealso:: :func:`GPS.GUI.__init__`
     """
 
     def __init__(self):
         """
-        Prevents the creation of instances of GPS.GUI. Such instances are
-        created automatically by GPS as a result of calling other functions
+        Prevents the creation of instances of :class:`GPS.GUI`. Such
+        instances are created automatically by GPS as a result of calling
+        other functions.
 
         .. seealso:: :func:`GPS.Toolbar.append`
         .. seealso:: :func:`GPS.Toolbar.entry`
@@ -133,15 +134,15 @@ class GUI(object):
 
     def destroy(self):
         """
-        Destroy the graphical element. It will disappear from the interface,
-        and cannot necessarily be recreated later on
+        Destroy the graphical element. It disappears from the interface,
+        and cannot necessarily be recreated later on.
         """
         pass  # implemented in Ada
 
     def hide(self):
         """
         Temporarily hide the graphical element. It can be shown again through a
-        call to GPS.GUI.show()
+        call to :func:`GPS.GUI.show`.
 
         .. seealso:: :func:`GPS.GUI.show`
         """
@@ -149,8 +150,8 @@ class GUI(object):
 
     def is_sensitive(self):
         """
-        Return False if the widget is currently greyed out, and is not
-        clickable by users
+        Return False if the widget is currently greyed out and not clickable
+        by users.
 
         :return: A boolean
 
@@ -161,10 +162,10 @@ class GUI(object):
     def pywidget(self):
         """
         This function is only available if GPS was compiled with support for
-        pygobject, and the latter was found at run time. It returns a widget
-        that can be manipulated through the usual PyGtk functions. PyGObject is
-        a binding to the gtk+ toolkit, and allows you to create your own
-        windows easily, or manipulate the entire GPS GUI from python
+        pygobject and the latter was found at run time. It returns a widget
+        that can be manipulated through the usual PyGtk functions. PyGObject
+        is a binding to the gtk+ toolkit, and allows you to create your own
+        windows easily, or manipulate the entire GPS GUI from Python.
 
         :return: An instance of PyWidget
 
@@ -173,7 +174,7 @@ class GUI(object):
         .. code-block:: python
 
            # The following example makes the project view inactive. One could
-           # easily change the contents of the project view as well
+           # easily change the contents of the project view as well.
            widget = GPS.MDI.get("Project View")
            widget.pywidget().set_sensitive False)
 
@@ -183,8 +184,8 @@ class GUI(object):
     def set_sensitive(self, sensitive=True):
         """
         Indicate whether the associated graphical element should respond to
-        user interaction or not. If the element is not sensitive, then the user
-        will not be able to click on it
+        user interaction or not. If the element is not sensitive, the user
+        will not be able to click on it.
 
         :param sensitive: A boolean
 
@@ -194,7 +195,7 @@ class GUI(object):
 
     def show(self):
         """
-        Show again the graphical element that was hidden by hide()
+        Show again the graphical element that was hidden by :func:`hide`.
 
         .. seealso:: :func:`GPS.GUI.hide`
         """
@@ -209,19 +210,18 @@ class Action(GUI):
 
     """
     This class gives access to the interactive commands in GPS. These are the
-    commands to which the user can bind a key shortcut, or for which we can
+    commands to which the user can bind a key shortcut or for which we can
     create a menu. Another way to manipulate those commands is through the XML
-    tag <action>, but it might be more convenient to use python since you do
-    not have to qualify the function name as a result
+    tag <action>, but it might be more convenient to use Python since you
+    do not have to qualify the function name.
     """
 
     def __init__(self, name):
         """
-        Creates a new instance of Action. This is bound with either an existing
-        action, or with an action that will be created through
-        GPS.Action.create(). The name of the action can either be a simple
-        name, or a path name to reference a menu, as in /Edit/Copy for
-        instance.
+        Creates a new instance of :class:`Action`. This is bound with either
+        an existing action or with an action that will be created through
+        :func:`GPS.Action.create`. The name of the action can either be a
+        simple name, or a path name to reference a menu, such as /Edit/Copy.
 
         :param name: A string
         """
@@ -229,11 +229,11 @@ class Action(GUI):
 
     def contextual(self, path, ref='', add_before=True):
         """
-        Create a new contextual menu associated with the command. This function
-        is somewhat a duplicate of GPS.Contextual.create, but with one major
-        difference: the callback for the action is a python function that takes
-        no argument, whereas the callback for GPS.Contextual receives one
-        argument.
+        Create a new contextual menu associated with the command. This
+        function is somewhat of a duplicate of :func:`GPS.Contextual.create`,
+        but with one major difference: the callback for the action is a
+        Python function that takes no argument while the callback for
+        :func:`GPS.Contextual` receives one argument.
 
         :param path: A string
         :param ref: A string
@@ -244,28 +244,31 @@ class Action(GUI):
     def create(self, on_activate, filter='', category='General',
                description=''):
         """
-        Export the function on_activate and make it interactive so that users
-        can bind keys and menus to it. The function should not require any
-        argument, since it will be called with none.
+        Export the function :func:`on_activate` and make it interactive so
+        that users can bind keys and menus to it. The function should not
+        require any argument, since it will be called with none.
 
-        The package gps_utils.py provides a somewhat more convenient python
-        interface to make function interactives (see gps_utils.interactive).
+        The package :file:`gps_utils.py` provides a somewhat more convenient
+        Python interface to make functions interactive (see
+        gps_utils.interactive).
 
         :param on_activate: A subprogram
 
         :param filter: A string or subprogram
-           This is either the name of a predefined filter (a string), or a
+           Either the name of a predefined filter (a string), or a
            subprogram that receives the context as a parameter, and should
-           return True if the command can be executed within that context. This
-           is used to disable menu items when they are not available.
+           return True if the command can be executed within that
+           context. This is used to disable menu items when they are not
+           available.
 
         :param category: A string
-           The category of the command in the /Edit/Key Shortcuts dialog.
+           Category of the command in the /Edit/Key Shortcuts dialog.
 
         :param description: A string
-           The description of the command that appears in that
-           dialog. If you are using python, a convenient value is
+           Description of the command that appears in that
+           dialog. If you are using Python, a convenient value is
            on_activate.__doc__, which avoids duplicating the comment.
+
         """
         pass  # implemented in Ada
 
@@ -279,9 +282,9 @@ class Action(GUI):
 
     def key(self, key):
         """
-        Associate a default key binding with the action. This will be ignored
-        if the user has defined his own key binding. Possible values for key
-        can be experimented with by using the /Edit/Key Shortcuts dialog
+        Associate a default key binding with the action. This is ignored if
+        the user defined his own key binding. You can experiment with
+        possible values for keys by using the /Edit/Key Shortcuts dialog.
 
         :param key: A string
         """
@@ -298,7 +301,7 @@ class Action(GUI):
         :param path: A string
         :param ref: A string
         :param add_before: A boolean
-        :return: the instance of GPS.Menu that was created
+        :return: The instance of GPS.Menu that was created
         """
         pass  # implemented in Ada
 
@@ -317,7 +320,7 @@ class Activities(object):
         """
         Creates a new activity and returns its instance
 
-        :param name: Activity's name to be given to this instance
+        :param name: Activity name to be given to this instance
 
         .. code-block:: python
 
@@ -328,7 +331,7 @@ class Activities(object):
 
     def add_file(self, file):
         """
-        Adds the file into the activity
+        Adds the file to the activity.
 
         :param file: An instance of :class:`GPS.File`
         """
@@ -336,19 +339,19 @@ class Activities(object):
 
     def commit(self):
         """
-        Commit the activity
+        Commit the activity.
         """
         pass  # implemented in Ada
 
     def diff(self):
         """
-        Diff all activity's files
+        Diff all the activity's files.
         """
         pass  # implemented in Ada
 
     def files(self):
         """
-        Returns the activity's files list
+        Returns the activity's file list.
 
         :return: A list of files
         """
@@ -357,7 +360,7 @@ class Activities(object):
     @staticmethod
     def from_file(file):
         """
-        Returns the activity containing the given file
+        Returns the activity containing the given file.
 
         :param file: An instance of :class:`GPS.File`
         :return: An instance of :class:`GPS.Activities`
@@ -367,10 +370,10 @@ class Activities(object):
     @staticmethod
     def get(id):
         """
-        Returns the activity given its id
+        Returns the activity given its id.
 
         :param id: The unique activity's id
-        :return: An instance of :func:`GPS.Activities`
+        :return: An instance of :class:`GPS.Activities`
 
         .. seealso:: :func:`GPS.Activities.list`
 
@@ -379,7 +382,7 @@ class Activities(object):
 
     def group_commit(self):
         """
-        Returns true if the activity will be commit atomically
+        Returns true if the activity will be committed atomically.
 
         :return: A boolean
         """
@@ -387,7 +390,7 @@ class Activities(object):
 
     def has_log(self):
         """
-        Returns true if the activity has a log present
+        Returns true if the activity has a log present.
 
         :return: A boolean
         """
@@ -395,7 +398,7 @@ class Activities(object):
 
     def id(self):
         """
-        Returns the activity's unique id
+        Returns the activity's unique id.
 
         :return: A string
         """
@@ -403,7 +406,7 @@ class Activities(object):
 
     def is_closed(self):
         """
-        Returns true if the activity is closed
+        Returns true if the activity is closed.
 
         :return: A boolean
         """
@@ -412,15 +415,15 @@ class Activities(object):
     @staticmethod
     def list():
         """
-        Returns the list of all activities's id
+        Returns the list of all activity's id.
 
-        :return: A list of all activities's id defined
+        :return: A list of all activity's id defined
         """
         pass  # implemented in Ada
 
     def log(self):
         """
-        Returns the activity's log content
+        Returns the activity's log content.
 
         :return: A string
         """
@@ -428,7 +431,7 @@ class Activities(object):
 
     def log_file(self):
         """
-        Returns the activity's log file
+        Returns the activity's log file.
 
         :return: A file
         """
@@ -436,20 +439,22 @@ class Activities(object):
 
     def name(self):
         """
-        Returns the activity's name
+        Returns the activity's name.
+
         :return: A string
         """
         pass  # implemented in Ada
 
     def query_status(self):
         """
-        Query status of all activity's files
+        Queries the status of all the activity's files.
+
         """
         pass  # implemented in Ada
 
     def remove_file(self, file):
         """
-        Removes the file into the activity
+        Removes the file from the activity.
 
         :param file: An instance of :class:`GPS.File`
         """
@@ -457,7 +462,7 @@ class Activities(object):
 
     def set_closed(self, status):
         """
-        Set the activity's closed status
+        Set the activity's status to closed.
 
         :param status: A boolean
         """
@@ -465,19 +470,21 @@ class Activities(object):
 
     def toggle_group_commit(self):
         """
-        Change the activity's group commit status
+        Changes the activity's group commit status.
+
         """
         pass  # implemented in Ada
 
     def update(self):
         """
-        Update all activity's files
+        Updates all the activity's files.
+
         """
         pass  # implemented in Ada
 
     def vcs(self):
         """
-        Returns the activity's VCS name
+        Returns the activity's VCS name.
 
         :return: A string
         """
@@ -503,8 +510,9 @@ class Context(object):
     @staticmethod
     def contextual_menu():
         """
-        returns a list containing the contextual menu labels of the currently
-        focused window. The output have the form "depth - label"
+        Returns a list containing the contextual menu labels of the currently
+        focused window. The output has the form "depth - label".
+
         """
         pass  # implemented in Ada
 
@@ -516,7 +524,7 @@ class Context(object):
 class FileContext(Context):
 
     """
-    Represents a context that contains file information
+    Represents a context that contains file information.
 
     .. seealso:: :func:`GPS.FileContext.__init__`
     """
@@ -524,14 +532,15 @@ class FileContext(Context):
     def __init__(self):
         """
         Dummy function, whose goal is to prevent user-creation of a
-        GPS.FileContext instance. Such instances can only be created internally
-        by GPS
+        :class:GPS.FileContext instance. Such instances can only be created
+        internally by GPS.
+
         """
         pass  # implemented in Ada
 
     def directory(self):
         """
-        Return the current directory in the context
+        Return the current directory of the context.
 
         :return: A string
         """
@@ -539,7 +548,7 @@ class FileContext(Context):
 
     def file(self):
         """
-        Return the name of the file in the context
+        Return the name of the file in the context.
 
         :return: An instance of :class:`GPS.File`
         """
@@ -555,7 +564,7 @@ class FileContext(Context):
 
     def location(self):
         """
-        Return the file location stored in the context
+        Return the file location stored in the context.
 
         :return: An instance of :class:`GPS.FileLocation`
         """
@@ -563,9 +572,9 @@ class FileContext(Context):
 
     def project(self):
         """
-        Return the project in the context, or the root project if none was
-        specified in the context. Return an error if no project can be
-        determined from the context
+        Return the project in the context or the root project if none was
+        specified in the context. Return an error if no project can be found
+        from the context.
 
         :return: An instance of :class:`GPS.Project`
         """
@@ -580,7 +589,7 @@ class AreaContext(FileContext):
 
     """
     Represents a context that contains file information and a range of lines
-    currently selected
+    currently selected.
 
     .. seealso:: :func:`GPS.AreaContext.__init__`
 
@@ -589,14 +598,15 @@ class AreaContext(FileContext):
     def __init__(self):
         """
         Dummy function, whose goal is to prevent user-creation of a
-        GPS.AreaContext instance. Such instances can only be created internally
-        by GPS
+        :class:GPS.AreaContext instance. Such instances can only be created
+        internally by GPS.
+
         """
         pass  # implemented in Ada
 
     def end_line(self):
         """
-        Return the last selected line in the context
+        Return the last selected line in the context.
 
         :return: An integer
         """
@@ -604,7 +614,7 @@ class AreaContext(FileContext):
 
     def start_line(self):
         """
-        Return the first selected line in the context
+        Return the first selected line in the context.
 
         :return: An integer
         """
@@ -618,17 +628,17 @@ class AreaContext(FileContext):
 class Bookmark(object):
 
     """
-    This class provides access to the bookmarks of GPS. These are special types
+    This class provides access to GPS's bookmarks. These are special types
     of markers that are saved across sessions, and can be used to save a
     context within GPS. They are generally associated with a specific location
-    in an editor, but can also be used to location special boxes in a graphical
-    browser for instance.
+    in an editor, but can also be used to locate special boxes in a graphical
+    browser, for example.
     """
 
     def __init__(self):
         """
         This function prevents the creation of a bookmark instance directly.
-        You must use :func:`GPS.Bookmark.get` instead, which will always return
+        You must use :func:`GPS.Bookmark.get` instead, which always returns
         the same instance for a given bookmark, thus allowing you to save your
         own custom data with the bookmark
 
@@ -639,15 +649,16 @@ class Bookmark(object):
     @staticmethod
     def create(name):
         """
-        This function creates a new bookmark at the current location in GPS. If
-        the current window is an editor, it creates a bookmark that will save
-        the exact line and column, so that the user can go back to them
+        This function creates a new bookmark at the current location in
+        GPS. If the current window is an editor, it creates a bookmark that
+        will save the exact line and column, so the user can go back to them
         easily. Name is the string that appears in the bookmarks window, and
         that can be used later to query the same instance using
-        :func:`GPS.Bookmark.get`. This function emits the hook bookmark_added.
+        :func:`GPS.Bookmark.get`. This function emits the hook
+        bookmark_added.
 
         :param name: A string
-        :return: An instance of GPS.Bookmark
+        :return: An instance of :class:`GPS.Bookmark`
 
         .. seealso:: :func:`GPS.Bookmark.get`
 
@@ -660,22 +671,24 @@ class Bookmark(object):
 
     def delete(self):
         """
-        Delete an existing bookmark. This emits the hook bookmark_removed
+        Delete an existing bookmark. This emits the hook
+        :file:`bookmark_removed`.
+
         """
         pass  # implemented in Ada
 
     @staticmethod
     def get(name):
         """
-        This function retrieves a bookmark by its name. If no such bookmark
-        exists, an exception is raised. The same instance of GPS.Bookmark is
-        always return for a given bookmark, so that you can store your own user
+        Retrieves a bookmark by its name. If no such bookmark exists, an
+        exception is raised. The same instance of :class:GPS.Bookmark is
+        always returned for a given bookmark, so you can store your own user
         data within the instance. Note however that this custom data will not
-        be automatically preserved across GPS sessions, so you might want to
+        be automatically preserved across GPS sessions, so you may want to
         save all your data when GPS exits
 
         :param name: A string
-        :return: An instance of GPS.Bookmark
+        :return: An instance of :class:`GPS.Bookmark`
 
         .. seealso:: :func:`GPS.Bookmark.create`
 
@@ -689,8 +702,8 @@ class Bookmark(object):
 
     def goto(self):
         """
-        Change the current context in GPS so that it matches the one saved in
-        the bookmark. In particular, if the bookmark is inside an editor, this
+        Changes the current context in GPS so it matches the one saved in the
+        bookmark. In particular, if the bookmark is inside an editor, this
         editor is raised, and the cursor moved to the correct line and
         column. You cannot query directly the line and column from the
         bookmark, since these might not exist, for instance when the editor
@@ -701,9 +714,9 @@ class Bookmark(object):
     @staticmethod
     def list():
         """
-        Return the list of all existing bookmarks
+        Return the list of all existing bookmarks.
 
-        :return: A list of GPS.Bookmark instances
+        :return: A list of :class`GPS.Bookmark` instances
 
         .. code-block:: python
 
@@ -718,7 +731,7 @@ class Bookmark(object):
         """
         Return the current name of the bookmark. It might not be the same one
         that was used to create or get the bookmark, since the user might have
-        used the bookmarks view to rename it
+        used the bookmarks view to rename it.
 
         :return: A string
         """
@@ -727,7 +740,8 @@ class Bookmark(object):
     def rename(self, name):
         """
         Rename an existing bookmark. This updates the bookmarks view
-        automatically, and emits the hooks bookmark_removed and bookmark_added
+        automatically, and emits the hooks :file:`bookmark_removed` and
+        :file:`bookmark_added`.
 
         :param name: A string
         """
@@ -747,8 +761,8 @@ class BuildTarget(object):
 
     def __init__(self, name):
         """
-        Initializes a new instance of the class BuildTarget. Name must
-        correspond to an existing target.
+        Initializes a new instance of the class :class:`BuildTarget`. ``name``
+        must correspond to an existing target.
 
         :param name: Name of the target associated with this instance
 
@@ -826,7 +840,7 @@ class Button(GUI):
 
     """
     This class represents a button that can be pressed to trigger various
-    actions
+    actions.
 
     .. seealso:: :func:`GPS.Button.__init__()`
     """
@@ -834,7 +848,7 @@ class Button(GUI):
     def __init__(self, id, label, on_click):
         """
         Initializes a new button. When the button is pressed by the user,
-        ``on_click`` is called with the a single parameter, ``self``.
+        :func:`on_click` is called with the a single parameter, ``self``.
 
         :param id: A string, a unique identifier for the button
         :param label: A string, the text that appears on the button
@@ -851,7 +865,7 @@ class Button(GUI):
 
     def set_text(self, label):
         """
-        Change the text that appears on the button
+        Changes the text that appears on the button.
 
         :param label: A string
         """
@@ -868,7 +882,7 @@ class Clipboard(object):
     This class provides an interface to the GPS clipboard. This clipboard
     contains the previous selections that were copied or cut from a text
     editor. Several older selections are also saved so that they can be pasted
-    later on
+    later on.
     """
 
     @staticmethod
@@ -877,8 +891,8 @@ class Clipboard(object):
         This function returns the contents of the clipboard. Each item in the
         list corresponds to a past selection, the one at position 0 being the
         most recent. If you want to paste text in a buffer, you should paste
-        the text at position :func:`GPS.Clipboard.current`` rather than the
-        first in the list
+        the text at position :func:`GPS.Clipboard.current` rather than the
+        first in the list.
 
         :return: A list of strings
         """
@@ -889,7 +903,7 @@ class Clipboard(object):
         """
         Copies a given static text into the clipboard. It is better in general
         to use :func:`GPS.EditorBuffer.copy`, but it might happen that you need
-        to append text that doesn't exist in the buffer.
+        to append text that do not exist in the buffer.
 
         :param text: A string
         :param append: A boolean
@@ -905,7 +919,7 @@ class Clipboard(object):
         the text that was last pasted by the user. If you were to select the
         menu /Edit/Paste, that would be the text pasted by GPS. If you select
         /Edit/Paste Previous, current will be incremented by 1, and the next
-        selection in the clipboard will be pasted
+        selection in the clipboard is pasted.
 
         :return: An integer
         """
@@ -931,12 +945,13 @@ class Clipboard(object):
 class CodeAnalysis(object):
 
     """
-    This class is a toolset that allows to handle CodeAnalysis instances.
+    This class is a toolset that allows handling :class:`CodeAnalysis`
+    instances.
     """
 
     def __del__(self):
         """
-        Called when a CodeAnalysis instance is deleted by python.
+        Called when a :class:`CodeAnalysis` instance is deleted by Python.
         """
         pass  # implemented in Ada
 
@@ -948,8 +963,8 @@ class CodeAnalysis(object):
 
     def add_all_gcov_project_info(self):
         """
-        Adds coverage information of every source files referenced in the
-        current project loaded in GPS, and every imported projects.
+        Adds coverage information for every source files referenced in the
+        current project loaded in GPS and every imported projects.
 
         .. seealso::
 
@@ -961,9 +976,9 @@ class CodeAnalysis(object):
 
     def add_gcov_file_info(self, src, cov):
         """
-        Adds coverage information provided by a .gcov file parsing. The data is
-        read from the cov parameter, that should have been created from the
-        specified src file.
+        Adds coverage information provided by parsing a :file:`.gcov`
+        file. The data is read from the cov parameter that should have been
+        created from the specified src file.
 
         :param src: A GPS.File instance
         :param cov: A GPS.File instance
@@ -984,10 +999,10 @@ class CodeAnalysis(object):
 
     def add_gcov_project_info(self, prj):
         """
-        Adds coverage information of every source files referenced in the given
-        'prj' gnat project file (.gpr).
+        Adds coverage information of every source files referenced in
+        the GNAT project file (:file:`.gpr`) for ``prj``.
 
-        :param prj: A GPS.File instance
+        :param prj: A :class:`GPS.File` instance
 
         .. seealso::
 
@@ -998,12 +1013,14 @@ class CodeAnalysis(object):
         pass  # implemented in Ada
 
     def clear(self):
-        """Removes all code analysis information from memory."""
+        """
+        Removes all code analysis information from memory.
+        """
         pass  # implemented in Ada
 
     def dump_to_file(self, xml):
         """
-        Create an xml-formated file that contains a representation of the given
+        Create an XML-formated file containing a representation of the given
         code analysis.
 
         :param xml: A GPS.File instance
@@ -1025,7 +1042,7 @@ class CodeAnalysis(object):
         structure by using one of the primitive operations.
 
         :param name: The name of the code analysis data structure to get or
-            create
+           create
         :return: An instance of :class:`GPS.CodeAnalysis` associated to a code
            analysis data structure in GPS.
 
@@ -1039,8 +1056,9 @@ class CodeAnalysis(object):
 
     def hide_coverage_information(self):
         """
-        Removes from the Locations view any listed coverage locations, and
-        remove from the source editors their annotation column if any.
+        Removes from the :guilabel:`Locations` view any listed coverage
+        locations, and remove from the source editors their annotation column
+        if any.
 
         .. seealso:: :func:`GPS.CodeAnalysis.show_coverage_information`
         """
@@ -1049,9 +1067,9 @@ class CodeAnalysis(object):
     def load_from_file(self, xml):
         """
         Replace the current coverage information in memory with the given
-        xml-formated file one.
+        XML-formated file one.
 
-        :param xml: A GPS.File instance
+        :param xml: A :class:`GPS.File` instance
 
         .. seealso:: :func:`GPS.CodeAnalysis.dump_to_file`
 
@@ -1067,19 +1085,19 @@ class CodeAnalysis(object):
 
     def show_analysis_report(self):
         """
-        Displays the data stored in the CodeAnalysis instance into a new MDI
-        window. This window contains a tree view that can be interactively
-        manipulated to analyze the results of the code analysis (Coverage,
-        ...).
+        Displays the data stored in the :class:`CodeAnalysis` instance into a
+        new MDI window. This window contains a tree view that can be
+        interactively manipulated to analyze the results of the code analysis.
         """
         pass  # implemented in Ada
 
     def show_coverage_information(self):
         """
-        Lists in the Locations view the lines that are not covered in the files
-        loaded in the CodeAnalysis instance. The lines are also highlighted in
-        the corresponding source file editors, and an annotation column is
-        added to the source editors.
+        Lists in the :guilabel:`Locations` view the lines that are not
+        covered in the files loaded in the :class:`CodeAnalysis`
+        instance. The lines are also highlighted in the corresponding source
+        file editors, and an annotation column is added to the source
+        editors.
 
         .. seealso:: :func:`GPS.CodeAnalysis.hide_coverage_information`
         """
@@ -1094,7 +1112,7 @@ class Codefix(object):
 
     """
     This class gives access to GPS's features for automatically fixing
-    compilation errors
+    compilation errors.
 
     .. seealso::
 
@@ -1105,7 +1123,7 @@ class Codefix(object):
 
     def __init__(self, category):
         """
-        Return the instance of codefix associated with the given category
+        Returns the instance of codefix associated with the given category.
 
         :param category: A string
         """
@@ -1113,7 +1131,7 @@ class Codefix(object):
 
     def error_at(self, file, line, column, message=''):
         """
-        Return a specific error at a given location. If message is null, then
+        Returns a specific error at a given location. If message is null, then
         the first matching error will be taken. None is returned if no such
         fixable error exists.
 
@@ -1127,7 +1145,7 @@ class Codefix(object):
 
     def errors(self):
         """
-        List the fixable errors in that session
+        Lists the fixable errors in the session.
 
         :return: A list of instances of :class:`GPS.CodefixError`
         """
@@ -1137,11 +1155,11 @@ class Codefix(object):
     def parse(category, output, regexp='', file_index=-1, line_index=-1,
               column_index=-1, style_index=-1, warning_index=-1):
         """
-        Parse the output of a tool, and suggests auto-fix possibilities
+        Parses the output of a tool and suggests auto-fix possibilities
         whenever possible. This adds small icons in the location window, so
         that the user can click on it to fix compilation errors. You should
-        call Locations.parse with the same output prior to calling this
-        command.
+        call :func:`Locations.parse` with the same output prior to calling
+        this command.
 
         The regular expression specifies how locations are recognized. By
         default, it matches file:line:column. The various indexes indicate the
@@ -1149,8 +1167,8 @@ class Codefix(object):
         in the regular expression. Set it to 0 if that information is not
         available.
 
-        Access the various suggested fixes through the methods of the Codefix
-        class
+        Access the various suggested fixes through the methods of the
+        :class:`Codefix` class.
 
         :param category: A string
         :param output: A string
@@ -1168,8 +1186,9 @@ class Codefix(object):
     @staticmethod
     def sessions():
         """
-        List all the existing Codefix sessions. The returned values can all be
-        used to create a new instance of Codefix through its constructor.
+        Lists all the existing :class:`Codefix` sessions. The returned values
+        can all be used to create a new instance of :class:`Codefix` through
+        its constructor.
 
         :return: A list of strings
 
@@ -1189,7 +1208,7 @@ class Codefix(object):
 class CodefixError(object):
 
     """
-    This class represents a fixable error in the compilation output
+    This class represents a fixable error in the compilation output.
 
     .. seealso::
 
@@ -1200,23 +1219,24 @@ class CodefixError(object):
 
     def __init__(self, codefix, file, message=''):
         """
-        Describe a new fixable error. If the message is not specified, the
-        first error at that location is returned
+        Describes a new fixable error. If the message is not specified, the
+        first error at that location is returned.
 
-        :param codefix: An instance of GPS.Codefix
-        :param file: An instance of GPS.FileLocation
+        :param codefix: An instance of :class:`GPS.Codefix`
+        :param file: An instance of :class:`GPS.FileLocation`
         :param message: A string
         """
         pass  # implemented in Ada
 
     def fix(self, choice='0'):
         """
-        Fix the error, using one of the possible fixes. The index given in
-        parameter is the index in the list returned by "possible_fixes. By
-        default, the first choice is taken. Choices start at index 0.
+        Fixes the error, using one of the possible fixes. The index given in
+        parameter is the index in the list returned by
+        :func:`possible_fixes`. By default, the first choice is
+        taken. Choices start at index 0.
 
-        :param choice: The index of the fix to apply, see output of
-        GPS.CodefixError.possible_fixes()
+        :param choice: Index of the fix to apply, see output of
+           :func:`GPS.CodefixError.possible_fixes`
 
         .. code-block:: python
 
@@ -1230,7 +1250,7 @@ class CodefixError(object):
 
     def location(self):
         """
-        Return the location of the error
+        Returns the location of the error.
 
         :return: An instance of :class:`GPS.FileLocation`
         """
@@ -1238,7 +1258,7 @@ class CodefixError(object):
 
     def message(self):
         """
-        Return the error message, as issues by the tool
+        Returns the error message, as issue by the tool.
 
         :return: A string
         """
@@ -1246,7 +1266,7 @@ class CodefixError(object):
 
     def possible_fixes(self):
         """
-        List the possible fixes for the specific error
+        Lists the possible fixes for the specific error.
 
         :return: A list of strings
 
@@ -1267,7 +1287,7 @@ class Combo(GUI):
     """
     This class represents a combo box, ie a text entry widget with a number of
     predefined possible values. The user can interactively select one of
-    multiple values through this widget
+    multiple values through this widget.
 
     .. seealso::
 
@@ -1278,18 +1298,18 @@ class Combo(GUI):
 
     def __init__(self, id, label='', on_changed=None):
         """
-Create a new combo. The combo will graphically be preceded by some text
-if label was specified. ``on_changed`` will be called every time the
-user selects a new value for the combo box. Its parameters are the
-following:
+        Creates a new combo. The combo will graphically be preceded by some
+        text if label was specified. :func`on_changed` is called every time the
+        user selects a new value for the combo box. Its parameters are the
+        following:
 
-- $1 = The instance of GPS.Combo (self)
-- $2 = The newly selected text (a string)
+        - $1 = The instance of GPS.Combo (self)
+        - $2 = The newly selected text (a string)
 
-:param id: A string, the name of the combo to create
-:param label: A string, the label to add next to the entry
-:param on_changed: A subprogram, see the GPS documentaion on Subprogram
-parameters
+        :param id: A string, the name of the combo to create
+        :param label: A string, the label to add next to the entry
+        :param on_changed: A subprogram, see the GPS documentaion on
+            Subprogram parameters.
 
         .. seealso::
 
@@ -1301,26 +1321,28 @@ parameters
 
     def add(self, choice, on_selected=None):
         """
-Add a choice to specified entry, ``on_selected`` will be executed
-whenever this choice is selected. It is called with the following
-parameters:
+        Adds a choice to specified entry, :func:`on_selected` is executed
+        whenever this choice is selected. It is called with the following
+        parameters:
 
-- $1 = The instance of GPS.Combo (self)
-- $2 = The newly selected text (a string)
+        - $1 = The instance of GPS.Combo (self)
+        - $2 = The newly selected text (a string)
 
-:param choice: A string
-:param on_selected: A subprogram, see the GPS documentation on Subprogram
-parameters
+        :param choice: A string
+        :param on_selected: A subprogram, see the GPS documentation on
+           Subprogram parameters
         """
         pass  # implemented in Ada
 
     def clear(self):
-        """Remove all choices from specified entry"""
+        """
+        Removes all choices from the specified entry.
+        """
         pass  # implemented in Ada
 
     def get_text(self):
         """
-        Return the current selection in specified entry
+        Returns the current selection in the specified entry.
 
         :return: A string
         """
@@ -1328,7 +1350,7 @@ parameters
 
     def remove(self, choice):
         """
-        Remove a choice from specified entry
+        Removes a choice from the specified entry.
 
         :param choice: A string
 
@@ -1338,7 +1360,7 @@ parameters
 
     def set_text(self, choice):
         """
-        Set the current selection in specified entry
+        Sets the current selection in the specified entry.
 
         :param choice: A string
         """
@@ -1352,7 +1374,7 @@ parameters
 class Command(object):
 
     """
-    Interface to GPS command. This class is abstract, and shall be subclassed.
+    Interface to GPS command. This class is abstract, and can be subclassed.
     """
 
     def __del__(self):
@@ -1365,30 +1387,33 @@ class Command(object):
     @staticmethod
     def get(name):
         """
-        Return the list of commands of the name given in parameter, scheduled
-        or running in the task manager
+        Returns the list of commands of the name given in the parameter,
+        scheduled or running in the task manager
 
         :param name: A string
-        :return: a list of :class:`GPS.Command`
+        :return: A list of :class:`GPS.Command`
         """
         pass  # implemented in Ada
 
     def get_result(self):
         """
-        Return the result of the command, if any. Must be overriden by children
+        Returns the result of the command, if any. Must be overriden by
+        children.
         """
         pass  # implemented in Ada
 
     def interrupt(self):
-        """Interrupt the current command"""
+        """
+        Interrupts the current command.
+        """
         pass  # implemented in Ada
 
     @staticmethod
     def list():
         """
-        Return the list of commands scheduled or running in the task manager
+        Returns the list of commands scheduled or running in the task manager.
 
-        :return: a list of :class:`GPS.Command`
+        :return: A list of :class:`GPS.Command`
         """
         pass  # implemented in Ada
 
@@ -1398,10 +1423,10 @@ class Command(object):
 
     def progress(self):
         """
-        Return a list representing the current progress of the command. If
-        current = total, then the command is finished.
+        Returns a list representing the current progress of the command. If
+        current = total, the command has completed.
 
-        :return: a list [current, total]
+        :return: A list [current, total]
         """
         pass  # implemented in Ada
 
@@ -1415,9 +1440,9 @@ class CommandWindow(GUI):
     """
     This class gives access to a command-line window that pops up on the
     screen. This window is short-lived (in fact there can be only one such
-    window at any given time), and any key press is redirected to that
-    window. As a result, it should be used to interactively query a parameter
-    for an action, for instance.
+    window at any given time) and any key press is redirected to that
+    window. It can be used to interactively query a parameter
+    for an action, for example.
 
     Among other things, it is used in the implementation of the interactive
     search facility, where each key pressed should be added to the search
@@ -1449,39 +1474,43 @@ class CommandWindow(GUI):
                  on_activate=None, on_cancel=None, on_key=None,
                  close_on_activate=True):
         """
-This function initializes an instance of a command window. An exception is
-raised if such a window is already active in GPS. Otherwise, the new window is
-popped up on the screen. Its location depends on the ``global_window``
-parameter: if true, the command window is displayed at the bottom of the GPS
-window and occupies its whole width. If false, it is displayed at the bottom of
-the currently selected window.
+        Initializes an instance of a command window. An exception is raised
+        if such a window is already active in GPS. Otherwise, the new window
+        is popped up on the screen. Its location depends on the
+        ``global_window`` parameter: if true, the command window is displayed
+        at the bottom of the GPS window and occupies its whole width. If
+        false, it is displayed at the bottom of the currently selected
+        window.
 
-The prompt is the short string displayed just before the command line
-itself. Its goal is to indicate to the user what he is entering.
+        The prompt is the short string displayed just before the command line
+        itself. Its goal is to indicate to the user what he is entering.
 
-The last four parameters are callbacks:
+        The last four parameters are callbacks:
 
-- ``on_changed`` is called when the user has entered one or more new characters
-  in the command line. This function is given two parameters: the current input
-  string, and the last cursor position in this string. See the example above on
-  how to get the part of the input before and after the cursor.
+        - :func:`on_changed` is called when the user has entered one or more
+          new characters in the command line. This function is given two
+          parameters: the current input string, and the last cursor position
+          in this string. See the example above on how to get the part of the
+          input before and after the cursor.
 
-- ``on_activate`` is called when the user has pressed enter. The command window
-  has already been closed at that point if close_on_activate is True, and the
-  focus given back to the initial MDI window that had it. This callback is
-  given a single parameter, the final input string
+        - :func:`on_activate` is called when the user pressed enter. The
+          command window has already been closed at that point if
+          close_on_activate is True and the focus given back to the initial
+          MDI window that had it. This callback is passed a single parameter,
+          the final input string.
 
-- ``on_cancel`` is called when the user has pressed a key that closed the
-  dialog, for instance Esc. It is given a single parameter, the final input
-  string. This callback is also called when you explicitly destroy the window
-  yourself by calling self.destroy().
+        - :func:`on_cancel` is called when the user pressed a key that closed
+          the dialog, for example :kbd:`Esc`. It is passed a single parameter,
+          the final input string. This callback is also called when you
+          explicitly destroy the window yourself by calling
+          :func:`self.destroy`.
 
-- ``on_key`` is called when the user has pressed a new key on his keyboard, but
-  before the corresponding character has been added to the command line. This
-  can be used to filter out some characters, or provide special behavior for
-  some key combination (see the example above). It is given three parameters,
-  the current input string, the key that was pressed, and the current cursor
-  position.
+        - :func:`on_key` is called when the user has pressed a new key on his
+          keyboard but before the corresponding character has been added to
+          the command line. This can be used to filter out some characters or
+          provide special behavior for some key combination (see the example
+          above). It is passed three parameters, the current input string, the
+          key that was pressed, and the current cursor position.
 
         :param prompt: A string
         :param global_window: A boolean
@@ -1495,7 +1524,7 @@ The last four parameters are callbacks:
 
     def read(self):
         """
-        This function returns the current contents of the command window
+        Returns the current contents of the command window.
 
         :return: A string
         """
@@ -1503,10 +1532,10 @@ The last four parameters are callbacks:
 
     def set_background(self, color=''):
         """
-        Change the background color of the command window. In most cases, this
-        can be used to make the command window more obvious, or to point out
-        errors by changing the color. If the color parameter is not specified,
-        the color reverts to its default
+        Changes the background color of the command window.  This can be used
+        to make the command window more obvious or to highlight errors by
+        changing the color. If the color parameter is not specified, the
+        color reverts to its default.
 
         :param color: A string
         """
@@ -1514,7 +1543,7 @@ The last four parameters are callbacks:
 
     def set_prompt(self, prompt):
         """
-        Changes the prompt that is displayed before the text field
+        Changes the prompt displayed before the text field.
 
         :param prompt: A string
         """
@@ -1522,14 +1551,15 @@ The last four parameters are callbacks:
 
     def write(self, text, cursor=-1):
         """
-This function replaces the current content of the command line. As a result,
-you should make sure to preserve the character you want, as in the on_key
-callback in the example above. Calling this function will also result in
-several calls to the on_changed callback, one of them with an empty string
-(since gtk first deletes the contents and then writes the new contents.
+        This function replaces the current content of the command line. As a
+        result, you should make sure to preserve the character you want, as
+        in the :func:`on_key` callback in the example above. Calling this
+        function also results in several calls to the :func:`on_changed`
+        callback, one of them with an empty string (since gtk first deletes
+        the contents and then writes the new contents).
 
-The cursor parameter can be used to specify where the cursor should be left
-after the insertion. -1 indicates the end of the string.
+        The cursor parameter can be used to specify where the cursor should
+        be left after the insertion. -1 indicates the end of the string.
 
         :param text: A string
         :param cursor: An integer
@@ -1562,7 +1592,7 @@ class Console(GUI):
         console = GPS.Console("My_Script")
         console.write("Hello world")  # Explicit redirection
 
-        # The usual python's standard output can also be redirected to this
+        # The usual Python's standard output can also be redirected to this
         # console:
 
         sys.stdout = GPS.Console("My_Script")
@@ -1616,123 +1646,141 @@ class Console(GUI):
                  on_completion=None, on_key='', manage_prompt=True,
                  ansi=False):
         """
-Create a new instance of GPS.Console. GPS will try to reuse any existing
-console with the same name. If none exists yet, or the parameter force is set
-to True, then GPS will create a new console.
+        Creates a new instance of :class:`GPS.Console`. GPS tries to reuse
+        any existing console with the same name. If none exists yet, or the
+        parameter force is set to True, GPS creates a new console.
 
-You cannot create the Python and Shell consoles through this call. If you do,
-an exception is raised. Instead, use GPS.execute_action
-("/Tools/Consoles/Python"), and then get a handle on the console through
-GPS.Console. This is because these two consoles are tightly associated with
-each of the scripting languages.
+        You cannot create the Python and Shell consoles through this call. If
+        you tryu, an exception is raised. Instead, use
+        :func:`GPS.execute_action` ("/Tools/Consoles/Python"), and then get a
+        handle on the console through :class:`GPS.Console`. This is because
+        these two consoles are tightly associated with each of the scripting
+        languages.
 
-If GPS reuses an existing console, on_input overrides the callback that was
-already set on the console, whereas on_destroy will be called in addition to
-the one that was already set on the console.
+        If GPS reuses an existing console, :func:`on_input` overrides the
+        callback that was already set on the console, while
+        :func:`on_destroy` is called in addition to the one that was
+        already set on the console.
 
-If this is not the desired behavior, you can also call destroy() on the
-console, and call the constructor again.
+        If this is not the desired behavior, you can also call
+        :func:`destroy` on the console and call the constructor again.
 
-- The subprogram ``on_input`` is called whenever the user has entered a new
-  command in the console and pressed <enter> to execute it. It is called with
-  the following parameters:
+        - The function :func:`on_input` is called whenever the user has
+          entered a new command in the console and pressed <enter> to execute
+          it. It is called with the following parameters:
 
-   - $1: The instance of the GPS.Console
-   - $2: The command to execute
+          - $1: The instance of :class:`GPS.Console`
+          - $2: The command to execute
 
-  See the subprogram GPS.Console.set_prompt_regexp for proper handling of input
-  in the console.
+          See the function :func:`GPS.Console.set_prompt_regexp` for proper
+          handling of input in the console.
 
-- The subprogram ``on_destroy`` is called whenever the user closes the
-  console. It is called with a single parameter:
+        - The subprogram :func:`on_destroy` is called whenever the user
+          closes the console. It is called with a single parameter:
 
-   - $1: The instance of the GPS.Console
+          - $1: The instance of :class:`GPS.Console`
 
-- The subprogram ``on_completion`` is called whenever the user presses tab in
-  the console. It is called with a single parameter:
+        - The subprogram :func:`on_completion` is called whenever the user
+          presses :kbd:`Tab` in the console. It is called with a single
+          parameter:
 
-   - $1: The instance of the GPS.Console
+          - $1: The instance of :class:`GPS.Console`
 
-  The default implementation is to insert a tab character, but you could choose
-  to add some user input through GPS.Console.add_input for instance.
+          The default implementation inserts a tab character, but you can to
+          add additional user input through :func:`GPS.Console.add_input` for
+          example.
 
-- The subprogram ``on_resize`` is called whenever the console is resized by the
-  user. It is passed three parameters:
+        - The subprogram :func:`on_resize` is called whenever the console is
+          resized by the user. It is passed three parameters:
 
-    - $1 is the instance of GPS.Console
-    - $2 is the number of visible rows in the console,
-    - and $3 is the number of visible columns.
+          - $1: the instance of :class:`GPS.Console`
+          - $2: the number of visible rows in the console,
+          - $3: the number of visible columns.
 
-  This is mostly useful when a process is running in the console, in which case
-  you can use GPS.Process.set_size to let the process know about the size. Note
-  that the size passed to this callback is conservative: since all characters
-  might not have the same size, GPS tries to compute the maximal number of
-  visible characters and pass this to the callback, but the exact number of
-  characters might depend on the font.
+          This is mostly useful when a process is running in the
+          console, in which case you can use
+          :func:`GPS.Process.set_size` to let the process know the
+          size. Note that the size passed to this callback is
+          conservative: since all characters might not have the same
+          size, GPS tries to compute the maximal number of visible
+          characters and pass this to the callback, but the exact
+          number of characters might depend on the font.
 
-- The subprogram ``on_interrupt`` is called when the user presses control-c in
-  the console. It receives a single parameter, which is the instance of
-  GPS.Console. By default a control-c is handled by GPS itself and will kill
-  the last process that was started.
+        - The subprogram :func:`on_interrupt` is called when the user
+          presses :kbd:`Ctrl-c` in the console. It receives a single
+          parameter, the instance of :class:`GPS.Console`. By default a
+          :kbd:`Ctrl-c` is handled by GPS itself by killing the last
+          process that was started.
 
-As described above, GPS provides a high-level handling of consoles, where it
-manages histories, completion, command line editing and execution on its own
-through the callbacks described above. This is in general a good thing and
-provides advanced functionalities to some programs that lack them. However,
-there are cases where this gets in the way. For instance, if you want to run a
-Unix shell or a program that manipulates the console by moving the cursor
-around on its own, the high-level handling of GPS gets in the way. In such a
-case, the following parameters can be used: on_key, manage_prompt and ansi.
+          As described above, GPS provides a high-level handling of
+          consoles, where it manages histories, completion, command
+          line editing and execution on its own through the callbacks
+          described above. This is usually a good thing and provides
+          advanced functionalities to some programs that lack
+          them. However, there are cases where this gets in the
+          way. For example, if you want to run a Unix shell or a
+          program that manipulates the console by moving the cursor
+          around on its own, the high-level handling of GPS gets in
+          the way. In such a case, the following parameters can be
+          used: on_key, manage_prompt and ansi.
 
-- ``ansi`` should be set to true if GPS should emulate an ANSI terminal. These
-  are terminals that understand certain escape sequences that applications sent
-  to move the cursor to specific positions on screen or to change the color and
-  attributes of text.
+        - ``ansi`` should be set to true if GPS should emulate an ANSI
+          terminal. These are terminals that understand certain escape
+          sequences that applications sent to move the cursor to
+          specific positions on screen or to change the color and
+          attributes of text.
 
-- ``manage_prompt`` should be set to False to disable GPS's handling of
-  prompt. In general, this is incompatible with using the on_input callback,
-  since GPS no longer distinguishes what was typed by the user and what was
-  written by the external application. This also means that the application is
-  free to write anywhere on the screen. This should in general be set to True
-  if you expect your application to send ANSI sequences.
+        - ``manage_prompt`` should be set to False to disable GPS's
+          handling of prompts. In general, this is incompatible with
+          using the :func:`on_input` callback, since GPS no longer
+          distinguishes what was typed by the user and what was
+          written by the external application. This also means that
+          the application is free to write anywhere on the
+          screen. This should in general be set to True if you expect
+          your application to send ANSI sequences.
 
-- ``on_key`` is a subprogram that is called every time the user presses a key
-  in the console. This is much lower-level than the other callbacks above, but
-  if you are driving external applications you might have a need to send the
-  keys as they happen, and not wait for a newline. on_key receives four
-  parameters:
+        - :func:`on_key` is a function called every time the user
+          presses a key in the console. This is much lower-level than
+          the other callbacks above, but if you are driving external
+          applications you might have a need to send the keys as they
+          happen, and not wait for a newline. :func:`on_key` receives
+          four parameters:
 
-    - $1: the instance of GPS.Console
-    - $2: "keycode": this is the internal keycode for the key that the user
-          pressed. All keys can be represented this way, but this will
-          occasionaly be left to 0 when the user input was simulated and no
-          real key was pressed.
-    - $3: "key": this is the unicode character that the user entered. This will
-          be 0 when the character is not printable (for instance return, tab,
-          key up,...). In python, you can manipulate it with code like
-          ``unichr(key).encode("utf8")`` to get a string representation that
-          can be sent to an external process
-    - $4: "modifier": these are the state of the control, shift, mod1 and lock
-          keys. This is a bitmask, where shift is 1, lock is 2, control is 4
-          and mod1 is 8.
+          - $1: the instance of :class:`GPS.Console`
 
-:param name: A string
-:param force: A boolean
-:param on_input: A subprogram, see the description below
-:param on_destroy: A subprogram
-:param accept_input: A boolean
-:param on_resize: A subprogram
-:param on_interrupt: A subprogram
-:param on_completion: A subprogram
-:param on_key: A subprogram
-:param manage_prompt: A boolean
-:param ansi: A boolean
+          - $2: "keycode": this is the internal keycode for the key
+            that the user pressed. All keys can be represented this
+            way, but this will occasionaly be left to 0 when the user
+            input was simulated and no real key was pressed.
+
+          - $3: "key": this is the unicode character that the user
+            entered. This will be 0 when the character is not
+            printable (for example return, tab, and key up). In
+            Python, you can manipulate it with code like
+            :command:`unichr(key).encode("utf8")` to get a string
+            representation that can be sent to an external process
+
+          - $4: "modifier": these are the state of the control, shift,
+            mod1 and lock keys. This is a bitmask, where shift is 1,
+            lock is 2, control is 4 and mod1 is 8.
+
+        :param name: A string
+        :param force: A boolean
+        :param on_input: A subprogram, see the description below
+        :param on_destroy: A subprogram
+        :param accept_input: A boolean
+        :param on_resize: A subprogram
+        :param on_interrupt: A subprogram
+        :param on_completion: A subprogram
+        :param on_key: A subprogram
+        :param manage_prompt: A boolean
+        :param ansi: A boolean
         """
         pass  # implemented in Ada
 
     def accept_input(self):
         """
-        Return True if the console accepts input, False otherwise
+        Returns True if the console accepts input, False otherwise.
 
         :return: A boolean
         """
@@ -1740,9 +1788,9 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
 
     def add_input(self, text):
         """
-        Add some extra text to the console as if the user had typed it. As
-        opposed to text inserted with GPS.Console.write, this text remains
-        editable by the user
+        Adds extra text to the console as if the user had typed it. As
+        opposed to text inserted using :func:`GPS.Console.write`, this text
+        remains editable by the user.
 
         :param text: A string
         """
@@ -1750,40 +1798,41 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
 
     def clear(self):
         """
-        Clear the current contents of the console
+        Clears the current contents of the console.
         """
         pass  # implemented in Ada
 
     def clear_input(self):
         """
-        Removes any user input that the user has started typing (ie since the
-        last output inserted through GPS.Console.write
+        Removes any user input that the user has started typing (i.e., since
+        the last output inserted through :func:`GPS.Console.write`).
         """
         pass  # implemented in Ada
 
     def copy_clipboard(self):
         """
-        Copy the selection to the clipboard
+        Copies the selection to the clipboard.
         """
         pass  # implemented in Ada
 
     def create_link(self, regexp, on_click, foreground="blue", background="",
                     underline=True):
         """
-        Register a regular expression that should be highlight in this console
-        to provide hyper links. These links are searched for when calling
-        GPS.Console.write_with_links. The part of the text that matches any of
-        the link registered in the console through GPS.Console.create_link gets
-        highlighted in blue and underlined, just like an hyper link in a web
-        browser. If the user clicks on that text, on_click gets called with one
-        parameter, the text that was clicked on. This can for instance be used
-        to jump to an editor, open a web browser,...
+        Registers a regular expression that should be highlighted in this
+        console to provide hyperlinks, which are searched for when calling
+        :func:`GPS.Console.write_with_links`. The part of the text that
+        matches any of the link registered in the console through
+        :func:`GPS.Console.create_link` is highlighted in blue and
+        underlined, just like a hyperlink in a web browser. If the user
+        clicks on that text, :func:`on_click` is called with one parameter,
+        the text that was clicked on. This can, for example, be used to jump
+        to an editor or open a web browser.
 
         If the regular expression does not contain any parenthesis, the text
-        that matches the whole regexp is highlighted as a link. Otherwise, only
-        the part of the text that matches the first parenthesis group is
-        highlighted (so that you can test for the presence of text before or
-        after the actual hyper link).
+        that matches the whole regexp is highlighted as a link. Otherwise,
+        only the part of the text that matches the first parenthesis group is
+        highlighted (so you can test for the presence of text before or after
+        the actual hyper link).
 
         Parameters foreground and background specify colors to visualize
         matched text, while underline turns underscore on.
@@ -1800,15 +1849,15 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
 
     def delete_links(self):
         """
-        Drop each regular expression registered with create_link.
+        Drops each regular expression registered with :func:`create_link`.
 
         """
         pass  # implemented in Ada
 
     def enable_input(self, enable):
         """
-        Make the console accept / reject input according to the value of
-        "enable"
+        Makes the console accept or reject input according to the value of
+        "enable".
 
         :param enable: A boolean
         """
@@ -1816,13 +1865,13 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
 
     def flush(self):
         """
-        Do nothing, needed for compatibility with Python's file class
+        Does nothing, needed for compatibility with Python's file class.
         """
         pass  # implemented in Ada
 
     def get_text(self):
         """
-        Return the content of the console
+        Returns the content of the console.
 
         :return: A string
         """
@@ -1830,8 +1879,8 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
 
     def isatty(self):
         """
-        Return True if the console behaves like a terminal. Mostly needed for
-        compatibility with Python's file class
+        Returns True if the console behaves like a terminal. Mostly needed for
+        compatibility with Python's file class.
 
         :return: A boolean
         """
@@ -1839,8 +1888,8 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
 
     def read(self):
         """
-        Read the available input in the console. Currently, this behaves
-        exactly like readline()
+        Reads the available input in the console. Currently, this behaves
+        exactly like :func:`readline`.
 
         :return: A String
         """
@@ -1848,22 +1897,24 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
 
     def readline(self):
         """
-        Ask the user to enter a new line in the console, and returns that
-        line. GPS is blocked until enter has been pressed in the console
+        Asks the user to enter a new line in the console, and returns that
+        line. GPS is blocked until enter has been pressed in the console.
 
         :return: A String
         """
         pass  # implemented in Ada
 
     def select_all(self):
-        """Select the complete contents of the console"""
+        """
+        Selects the complete contents of the console.
+        """
         pass  # implemented in Ada
 
     def write(self, text, mode='"text"'):
         """
-        Output some text on the console. This text is read-only. If the user
-        had started typing some text, that text is temporarily remove, the next
-        text is inserted (read-only), and the user text is put back afterward.
+        Outputs some text on the console. This text is read-only. If the user
+        started typing some text, that text is temporarily removed, the next
+        text is inserted (read-only), and the user text is put back.
 
         The optional parameter mode specifies the kind of the output text:
         "text" for ordinary messages (this is default), "log" for log messages,
@@ -1884,8 +1935,9 @@ case, the following parameters can be used: on_key, manage_prompt and ansi.
 
     def write_with_links(self, text):
         """
-        Output some text on the console, highlight the parts of it that matches
-        the regular expression registered by GPS.Console.create_link.
+        Outputs some text on the console, highlighting the parts of it that
+        match the regular expression registered by
+        :func:`GPS.Console.create_link`.
 
         :param text: A utf8 string
 
@@ -1916,27 +1968,27 @@ class Contextual(object):
     """
     This class is a general interface to the contextual menus in GPS. It gives
     you control over which menus should be displayed when the user right clicks
-    in parts of GPS
+    in parts of GPS.
 
     .. seealso:: :func:`GPS.Contextual.__init__`
     """
 
     def __init__(self, name):
         """
-        Initializes a new instance of GPS.Contextual. The name is the name that
-        was given to the contextual menu when it was created, and is a static
-        string independent of the actual label used when the menu is displayed
-        (and which is dynamic, depending on the context). You can get the list
-        of valid names by checking the list of names returned by
-        GPS.Contextual.list
+        Initializes a new instance of :class:`GPS.Contextual`. The name is
+        what was given to the contextual menu when it was created and is a
+        static string independent of the actual label used when the menu is
+        displayed (and which is dynamic, depending on the context). You can
+        get the list of valid names by checking the list of names returned by
+        :func:`GPS.Contextual.list`.
 
         :param name: A string
 
-        .. seealso:: :func:`GPS.Contextual.list()`
+        .. seealso:: :func:`GPS.Contextual.list`
 
         .. code-block:: python
 
-           # You could for instance decide to always hide the "Goto
+           # You could for example decide to always hide the "Goto
            # declaration" contextual menu with the following call:
 
            GPS.Contextual ('Goto declaration of entity').hide()
@@ -1948,168 +2000,173 @@ class Contextual(object):
     def create(self, on_activate, label=None, ref='', add_before=True,
                filter=None, group='0'):
         """
-Create a new contextual menu entry.  Whenever this menu entry is selected by
-the user, GPS will execute on_activate, passing one parameter which is the
-context for which the menu is displayed (this is generally the same as
-GPS.current_contextual()).
+        Creates a new contextual menu entry.  Whenever this menu entry is
+        selected by the user, GPS executes :func:`on_activate`, passing one
+        parameter which is the context for which the menu is displayed (this
+        is usually the same as :func:`GPS.current_contextual`).
 
-If ``on_activate`` is None, a separator will be created.
+        If ``on_activate`` is None, a separator is created.
 
-The ``filter`` parameter can be used to filter when the entry should be
-displayed in the menu. It is a subprogram that receives one parameter, an
-instance of GPS.Context, and returns a boolean. If it returns True, the entry
-will be displayed, otherwise it is hidden.
+        The ``filter`` parameter can be used to filter when the entry should
+        be displayed in the menu. It is a function that receives one
+        parameter, an instance of :class:`GPS.Context`, and returns a
+        boolean. If it returns True, the entry is displayed, otherwise it is
+        hidden.
 
-The ``label`` parameter can be used to control the text displayed in the
-contextual menu.  By default, it is the same as the contextual name (used in
-the constructor to GPS.Contextual.__init__).  If specified, it must be a
-subprogram that takes an instance of GPS.Context in parameter, and returns a
-string, which will be displayed in the menu.
+        The ``label`` parameter can be used to control the text displayed in
+        the contextual menu.  By default, it is the same as the contextual
+        name (used in the constructor to :func:`GPS.Contextual.__init__`).
+        If specified, it must be a subprogram that takes an instance of
+        :class:`GPS.Context` in a parameter and returns a string, which is
+        displayed in the menu.
 
-The parameters ``group``, ``ref`` and ``add_before`` can be used to control the
-location of the entry within the contextual menu.  group allows you to create
-groups of contextual menus that will be put together.  Items of the same group
-appear before all items with a greater group number.  ``ref`` is the name of
-another contextual menu entry, and add_before indicates whether the new entry
-is put before or after that second entry.
+        The parameters ``group``, ``ref`` and ``add_before`` can be used to
+        control the location of the entry within the contextual
+        menu. ``group`` allows you to create groups of contextual menus that
+        will be put together.  Items of the same group appear before all
+        items with a greater group number.  ``ref`` is the name of another
+        contextual menu entry, and add_before indicates whether the new entry
+        is put before or after that second entry.
 
-:param on_activate: A subprogram with one parameter context
-:param label: A subprogram
-:param ref: A string
-:param add_before: A boolean
-:param filter: A subprogram
-:param group: An integer
+        :param on_activate: A subprogram with one parameter context
+        :param label: A subprogram
+        :param ref: A string
+        :param add_before: A boolean
+        :param filter: A subprogram
+        :param group: An integer
 
-.. code-block:: python
+        .. code-block:: python
 
-   ## This example demonstrates how to create a contextual
-   ## menu with global functions
+           ## This example demonstrates how to create a contextual
+           ## menu with global functions
 
-   def on_contextual(context):
-      GPS.Console("Messages").write("You selected the custom entry")
+           def on_contextual(context):
+              GPS.Console("Messages").write("You selected the custom entry")
 
-   def on_filter(context):
-      return isinstance(context, GPS.EntityContext)
+           def on_filter(context):
+              return isinstance(context, GPS.EntityContext)
 
-   def on_label(context):
-      global count
-      count += 1
-      return "Custom " + count
+           def on_label(context):
+              global count
+              count += 1
+              return "Custom " + count
 
-   GPS.Contextual("Custom").create(
-      on_activate=on_contextual, filter=on_filter, label=on_label)
+           GPS.Contextual("Custom").create(
+           on_activate=on_contextual, filter=on_filter, label=on_label)
 
-.. code-block:: python
+           .. code-block:: python
 
-   ## This example is similar to the one above, but uses a python
-   ## class to encapsulate date.
-   ## Note how the extra parameter self can be passed to the callbacks
-   ## thanks to the call to self.create
+           ## This example is similar to the one above, but uses a python
+           ## class to encapsulate date.
+           ## Note how the extra parameter self can be passed to the callbacks
+           ## thanks to the call to self.create
 
-   class My_Context(GPS.Contextual):
-      def on_contextual(self, context):
-          GPS.Console("Messages").write(
-              "You selected the custom entry " + self.data)
+           class My_Context(GPS.Contextual):
+              def on_contextual(self, context):
+                 GPS.Console("Messages").write(
+                 "You selected the custom entry " + self.data)
 
-      def on_filter(self, context):
-          return isinstance(context, GPS.EntityContext)
+              def on_filter(self, context):
+                 return isinstance(context, GPS.EntityContext)
 
-      def on_label(self, context):
-          return self.data
+              def on_label(self, context):
+                 return self.data
 
-      def __init__(self):
-          GPS.Contextual.__init__(self, "Custom")
-          self.data = "Menu Name"
-          self.create(on_activate=self.on_contextual,
-                      filter=self.on_filter,
-                      label=self.label)
+              def __init__(self):
+                 GPS.Contextual.__init__(self, "Custom")
+                 self.data = "Menu Name"
+                 self.create(on_activate=self.on_contextual,
+                             filter=self.on_filter,
+                             label=self.label)
         """
         pass  # implemented in Ada
 
     def create_dynamic(self, factory, on_activate, label='', filter=None,
                        ref='', add_before=True, group='0'):
         """
-Create a new dynamic contextual menu.
+        Creates a new dynamic contextual menu.
 
-This is a submenu of a contextual menu, where the entries are generated by the
-factory parameter. This parameter should return a list of strings, which will
-be converted to menus by GPS. These strings can contain '/' characters to
-indicate submenus.
+        This is a submenu of a contextual menu, where the entries are
+        generated by the ``factory`` parameter. This parameter should return
+        a list of strings, which will be converted to menus by GPS. These
+        strings can contain '/' characters to indicate submenus.
 
-``filter`` is a subprogram that takes the GPS.Context as a parameter, and
-returns a boolean indicating whether the submenu should be displayed.
+        ``filter`` is a subprogram that takes the :class:`GPS.Context` as a
+        parameter and returns a boolean indicating whether the submenu
+        should be displayed.
 
-``label`` can be used to specify the label to use for the menu entry. It can
-include directory-like syntax to indicate submenus. This label can include
-standard macro substitution (see the GPS documentation), for instance %e for
-the current entity name.
+        ``label`` can be used to specify the label to use for the menu
+        entry. It can include directory-like syntax to indicate
+        submenus. This label can include standard macro substitution (see the
+        GPS documentation), for instance %e for the current entity name.
 
-``on_activate`` is called whenever any of the entry of the menu is selected,
-and is passed three parameters, the context in which the contextual menu was
-displayed, the string representing the selected entry and the index of the
-selected entry within the array returned by factory (index starts at 0).
+        ``on_activate`` is called whenever any of the entry of the menu is
+        selected, and is passed three parameters, the context in which the
+        contextual menu was displayed, the string representing the selected
+        entry and the index of the selected entry within the array returned
+        by factory (index starts at 0).
 
-The parameters ``ref`` and ``add_before`` can be used to control the location
-of the entry within the contextual menu. ref is the name of another contextual
-menu entry, and add_before indicates whether the new entry is put before or
-after that second entry.
+        The parameters ``ref`` and ``add_before`` can be used to control the
+        location of the entry within the contextual menu. ref is the name of
+        another contextual menu entry, and add_before indicates whether the
+        new entry is put before or after that second entry.
 
-:param factory: A subprogram
-:param on_activate: A subprogram
-:param label: A string
-:param filter: A subprogram
-:param ref: A string
-:param add_before: A boolean
-:param group: A integer
+        :param factory: A subprogram
+        :param on_activate: A subprogram
+        :param label: A string
+        :param filter: A subprogram
+        :param ref: A string
+        :param add_before: A boolean
+        :param group: A integer
 
-.. code-block:: python
+        .. code-block:: python
 
-   ## This example shows how to create a contextual menu
-   ## through global functions
+           ## This example shows how to create a contextual menu
+           ## through global functions
 
-   def build_contextual(context):
-      return ["Choice1", "Choice2"]
+           def build_contextual(context):
+              return ["Choice1", "Choice2"]
 
-   def on_activate(context, choice, choice_index):
-      GPS.Console("Messages").write("You selected " + choice)
+           def on_activate(context, choice, choice_index):
+              GPS.Console("Messages").write("You selected " + choice)
 
-   def filter(contextl):
-      return isinstance(context, GPS.EntityContext)
+           def filter(contextl):
+              return isinstance(context, GPS.EntityContext)
 
-   GPS.Contextual("My_Dynamic_Menu").create_dynamic(
-      on_activate=on_activate, factory=build_contextual, filter=filter)
+           GPS.Contextual("My_Dynamic_Menu").create_dynamic(
+              on_activate=on_activate, factory=build_contextual, filter=filter)
 
-.. code-block:: python
+        .. code-block:: python
 
-   ## This example is similar to the one above, but shows how
-   ## to create the menu through a python class.
-   ## Note how self can be passed to the callbacks thanks to the
-   ## call to self.create_dynamic.
+           ## This example is similar to the one above, but shows how
+           ## to create the menu through a python class.
+           ## Note how self can be passed to the callbacks thanks to the
+           ## call to self.create_dynamic.
 
-   class Dynamic(GPS.Contextual):
-      def __init__(self):
-         GPS.Contextual.__init__(self, "My Dynamic Menu")
-         self.create_dynamic(on_activate=self.on_activate,
-                             label="References/My menu",
-                             filter=self.filter,
-                             factory=self.factory)
+           class Dynamic(GPS.Contextual):
+              def __init__(self):
+                 GPS.Contextual.__init__(self, "My Dynamic Menu")
+                 self.create_dynamic(on_activate=self.on_activate,
+                                     label="References/My menu",
+                                     filter=self.filter,
+                                     factory=self.factory)
 
-      def filter(self, context):
-         return isinstance(context, GPS.EntityContext)
+               def filter(self, context):
+                  return isinstance(context, GPS.EntityContext)
 
-      def on_activate(self, context, choice, choice_index):
-         GPS.Console("Messages").write("You selected " + choice)
+               def on_activate(self, context, choice, choice_index):
+                  GPS.Console("Messages").write("You selected " + choice)
 
-      def factory(self, context):
-         return ["Choice1", "Choice2"]
+               def factory(self, context):
+                  return ["Choice1", "Choice2"]
         """
         pass  # implemented in Ada
 
     def hide(self):
         """
-        Make sure the contextual menu will never appear when the user right
-        clicks anywhere in GPS. This is the standard way to disable contextual
-        menus
+        Makes sure the contextual menu never appears when the user right
+        clicks anywhere in GPS. This is the standard way to disable
+        contextual menus.
 
         .. seealso:: :func:`GPS.Contextual.show`
         """
@@ -2118,21 +2175,21 @@ after that second entry.
     @staticmethod
     def list():
         """
-        Return the list of all registered contextual menus. This is a list of
-        strings which are valid names that can be passed to the constructor of
-        GPS.Contextual. These names were created when the contextual menu was
-        registered in GPS.
+        Returns the list of all registered contextual menus. This is a list
+        of strings which are valid names that can be passed to the
+        constructor of :class:`GPS.Contextual`. These names were created when
+        the contextual menu was registered in GPS.
 
-        :return: a list of strings
+        :return: A list of strings
 
-        .. seealso:: :func:`GPS.Contextual.__init__()`
+        .. seealso:: :func:`GPS.Contextual.__init__`
         """
         pass  # implemented in Ada
 
     def set_sensitive(self, Sensitivity):
         """
-        Control whether the contextual menu is grayed-out: False if it should
-        be grayed-out, True otherwise.
+        Controls whether the contextual menu is grayed-out: False if it
+        should be grayed-out, True otherwise.
 
         :param Sensitivity: Boolean value
         """
@@ -2140,9 +2197,9 @@ after that second entry.
 
     def show(self):
         """
-        Make sure the contextual menu will be shown when appropriate. The entry
+        Makes sure the contextual menu is shown when appropriate. The entry
         might still be invisible if you right clicked on a context where it
-        doesn't apply, but it will be checked
+        does not apply, but it will be checked.
 
         .. seealso:: :func:`GPS.Contextual.hide`
         """
@@ -2165,8 +2222,9 @@ class Debugger(object):
     console. This is a nice way to implement debugger macros.
 
     While developping such debugger interfaces, it might be useful to modify
-    the file $HOME/.gps/traces.cfg, and add a line "GVD.Out=yes" in it. This
-    will copy all input/output with the debuggers into the GPS log file.
+    the file :file:`$HOME/.gps/traces.cfg`, and add a line "GVD.Out=yes" in
+    it. This copies all input/output with the debuggers into the GPS log
+    file.
 
     .. seealso:: :func:`GPS.Debugger.__init__`
 
@@ -2191,8 +2249,9 @@ class Debugger(object):
 
     def __init__(self):
         """
-        It is an error to create a Debugger instance directly. Instead, use
-        GPS.Debugger.get() or GPS.Debugger.spawn()
+        It is an error to create a :class:`Debugger` instance
+        directly. Instead, use :func:`GPS.Debugger.get` or
+        :func:`GPS.Debugger.spawn`.
 
         .. seealso::
 
@@ -2205,15 +2264,15 @@ class Debugger(object):
     def close(self):
         """
         Closes the given debugger. This also closes all associated windows
-        (call stack, console,...)
+        (such as the call stack and console).
         """
         pass  # implemented in Ada
 
     def command(self):
         """
-        Return the command that is being executed in the debugger. This is
-        often only available when called from the debugger_state_changed hook,
-        where it might also indicate the command that just finished
+        Returns the command being executed in the debugger. This is often
+        only available when called from the "debugger_state_changed" hook,
+        where it might also indicate the command that just finished.
 
         :return: A string
         """
@@ -2222,12 +2281,12 @@ class Debugger(object):
     @staticmethod
     def get(id=None):
         """
-        This command gives access to an already running debugger, and will
-        return an instance of GPS.Debugger attached to it. The parameter can be
-        null, in which case the current debugger is returned; it can be an
-        integer, in which case the corresponding debugger is returned (starting
-        at 1); or it can be a file, in which case this function returns the
-        debugger currently debugging that file.
+        Gives access to an already running debugger, and returns an instance
+        of :class:`GPS.Debugger` attached to it. The parameter can be null,
+        in which case the current debugger is returned, it can be an integer,
+        in which case the corresponding debugger is returned (starting at 1),
+        or it can be a file, in which case this function returns the debugger
+        currently debugging that file.
 
         :param id: Either an integer or an instance of :class:`GPS.File`
         :return: An instance of :class:`GPS.Debugger`
@@ -2237,7 +2296,7 @@ class Debugger(object):
 
     def get_executable(self):
         """
-        Returns the name of the executable currently debugged in that debugger
+        Returns the name of the executable currently debugged in the debugger.
 
         :return: An instance of :class:`GPS.File`
 
@@ -2247,9 +2306,9 @@ class Debugger(object):
 
     def get_num(self):
         """
-        Returns the index of the debugger. This can be used later on to
-        retrieve the debugger from GPS.Debugger.get(), or to get access to
-        other windows associated with that debugger
+        Returns the index of the debugger. This can be used later to retrieve
+        the debugger from :func:`GPS.Debugger.get` or to get access to other
+        windows associated with that debugger.
 
         :return: An integer
 
@@ -2259,8 +2318,9 @@ class Debugger(object):
 
     def is_break_command(self):
         """
-        Return true if the command returned by GPS.Debugger.command is likely
-        to modify the list of breakpoints after it has finished executing
+        Returns true if the command returned by :func:`GPS.Debugger.command`
+        is likely to modify the list of breakpoints after it finishes
+        executing.
 
         :return: A boolean
         """
@@ -2269,7 +2329,7 @@ class Debugger(object):
     def is_busy(self):
         """
         Returns true if the debugger is currently executing a command. In this
-        case, it is an error to send a new command to it
+        case, it is an error to send a new command to it.
 
         :return: A boolean
         """
@@ -2277,9 +2337,9 @@ class Debugger(object):
 
     def is_context_command(self):
         """
-        Return true if the command returned by GPS.Debugger.command is likely
-        to modify the current context (current task, thread,...) after it has
-        finished executing
+        Returns true if the command returned by :func:`GPS.Debugger.command`
+        is likely to modify the current context (e.g., current task or
+        thread) after it finishes executing.
 
         :return: A boolean
         """
@@ -2287,8 +2347,9 @@ class Debugger(object):
 
     def is_exec_command(self):
         """
-        Return true if the command returned by GPS.Debugger.command is likely
-        to modify the stack trace in the debugger ("next", "cont", ...)
+        Returns true if the command returned by :func:`GPS.Debugger.command`
+        is likely to modify the stack trace in the debugger (e.g., "next" or
+        "cont").
 
         :return: A boolean
         """
@@ -2297,7 +2358,7 @@ class Debugger(object):
     @staticmethod
     def list():
         """
-        This command returns the list of currently running debuggers
+        Returns the list of currently running debuggers.
 
         :return: A list of :class:`GPS.Debugger` instances
         """
@@ -2305,8 +2366,7 @@ class Debugger(object):
 
     def non_blocking_send(self, cmd, output=True):
         """
-        This command works like send, but is not blocking, and does not return
-        the result.
+        Works like send, but is not blocking, and does not return the result.
 
         :param cmd: A string
         :param output: A boolean
@@ -2317,7 +2377,7 @@ class Debugger(object):
 
     def send(self, cmd, output=True, show_in_console=False):
         """
-        This command executes cmd in the debugger. GPS is blocked while cmd is
+        Executes ``cmd`` in the debugger. GPS is blocked while ``cmd`` is
         executing on the debugger. If output is true, the command is displayed
         in the console.
 
@@ -2338,8 +2398,8 @@ class Debugger(object):
     @staticmethod
     def spawn(executable, args=''):
         """
-        This command starts anew debugger. It will debug file. When file is
-        executed, the extra arguments args are passed
+        Starts a new debugger. It will debug ``executable``. When the program
+        is executed, the extra arguments args are passed.
 
         :param executable: An instance of GPS.File
         :param args: A string
@@ -2356,19 +2416,19 @@ class Docgen(object):
 
     """
     Interface for handling customized documentation generation. This class is
-    used in conjunction with GPS.DocgenTagHandler. You cannot create directly
-    this class, but use the ones furnished in GPS.DocgenTagHandler callbacks.
+    used in conjunction with GPS.DocgenTagHandler. You cannot directly create
+    this class.  Instead, use the ones furnished by
+    :func:`GPS.DocgenTagHandler` callbacks.
 
     .. seealso:: :func:`GPS.DocgenTagHandler`
     """
 
     def generate_index_file(self, name, filename, content):
         """
-        Create a new Index file. The file 'filename' will be titled 'name', and
-        will contain the general decoration along with 'content'.
-
-        All other generated documentation file will have a link to it for
-        convenience.
+        Creates a new Index file. The file ``filename`` will be titled
+        ``name`` and will contain the general decoration along with
+        `content``.  All other generated documentation files will have a link
+        to it, for convenience.
 
         :param name: The name of the new index file.
         :param filename: The created file name.
@@ -2378,8 +2438,8 @@ class Docgen(object):
 
     def get_current_file(self):
         """
-        Retrieves the current analysed source file. You should call this method
-        only from a GPS.DocgenTagHandler.on_match() callback.
+        Retrieves the current analysed source file. You should call this
+        method only from a :func:`GPS.DocgenTagHandler.on_match` callback.
 
         :return: A :class:`GPS.File` instance
         """
@@ -2387,8 +2447,9 @@ class Docgen(object):
 
     def get_doc_dir(self):
         """
-        Retrieves the directory that will contain the documentation. You should
-        call this method only from a GPS.DocgenTagHandler.on_match() callback.
+        Retrieves the directory that will contain the documentation. You
+        should call this method only from a
+        :func:`GPS.DocgenTagHandler.on_match` callback.
 
         :return: A :class:`GPS.File` instance
 
@@ -2399,8 +2460,8 @@ class Docgen(object):
     def register_css(filename):
         """
         Registers a new CSS file to use when generating the documentation. This
-        allows either to override a default style, or add new ones for custom
-        tags handling
+        allows to overriding a default style or adding new ones for custom
+        tag handling.
 
         :param filename: A file name
         """
@@ -2409,8 +2470,9 @@ class Docgen(object):
     @staticmethod
     def register_main_index(filename):
         """
-        Registers the file to be used as main page (e.g. index.html). By
-        default, the first page generated in the Table of Contents is used.
+        Registers the file to be used as main page
+        (e.g. :file:`index.html`). By default, the first page generated in
+        the Table of Contents is used.
 
         :param filename: A file name
         """
@@ -2420,7 +2482,7 @@ class Docgen(object):
     def register_tag_handler(handler):
         """
         Registers a new tag handler. This handler will be used each time a new
-        documentation is generated and the corresponding tag is found
+        documentation is generated and the corresponding tag is found.
 
         :param handler: The handler to register
 
@@ -2441,98 +2503,100 @@ class Docgen(object):
 class DocgenTagHandler(object):
 
     """
-This class is used to handle user-defined documentation tags. This allows
-custom handling of comments such as ::
+    This class is used to handle user-defined documentation tags. This allows
+    custom handling of comments such as ::
 
     -- <summary>This fn does something</summary>
 
-.. seealso:: :func:`GPS.Docgen`
+    .. seealso:: :func:`GPS.Docgen`
 
-.. code-block:: python
+    .. code-block:: python
 
-   import GPS
+      import GPS
 
-   class ScreenshotTagHandler(GPS.DocgenTagHandler):
-      "Handling for <screenshot>screen.jpg</screenshot>"
+      class ScreenshotTagHandler(GPS.DocgenTagHandler):
+         "Handling for <screenshot>screen.jpg</screenshot>"
 
-      def __init__(self):
-         GPS.DocgenTagHandler.__init__(
-             self, "screenshot",
-             on_match=self.on_match, on_start=self.on_start,
-             on_exit=self.on_exit
-         )
+         def __init__(self):
+            GPS.DocgenTagHandler.__init__(
+                self, "screenshot",
+                on_match=self.on_match, on_start=self.on_start,
+                on_exit=self.on_exit
+            )
 
-      def on_start(self, docgen):
-         self.list = {}
+         def on_start(self, docgen):
+            self.list = {}
 
-      def on_match(self, docgen, attrs, value, entity_name, entity_href):
-         # In this examples, images are in the directory
-         # _project_root_/doc/imgs/
+         def on_match(self, docgen, attrs, value, entity_name, entity_href):
+            # In this examples, images are in the directory
+            # _project_root_/doc/imgs/
 
-         dir = docgen.get_current_file().project().file().directory()
-         dir = dir + "doc/imgs/"
-         img = '<img src="%s%s" alt="%s"/>"' % (dir, value, value)
-         self.list[entity_name] = [entity_href, img]
-         return "<h3>Screenshot</h3><p>%s</p>" % (img)
+            dir = docgen.get_current_file().project().file().directory()
+            dir = dir + "doc/imgs/"
+            img = '<img src="%s%s" alt="%s"/>"' % (dir, value, value)
+            self.list[entity_name] = [entity_href, img]
+            return "<h3>Screenshot</h3><p>%s</p>" % (img)
 
-      def on_exit(self, docgen):
-         content=""
+         def on_exit(self, docgen):
+            content=""
 
-         for pict in sorted(self.list.keys()):
-            content += "<div class='subprograms'>"
-            content += "  <div class='class'>"
-            content += "    <h3>%s</h3>" % (pict)
-            content += "    <div class='comment'>"
-            content += "      <a href="%s">%s</a>" % (self.list[pict][0],
+            for pict in sorted(self.list.keys()):
+               content += "<div class='subprograms'>"
+               content += "  <div class='class'>"
+               content += "    <h3>%s</h3>" % (pict)
+               content += "    <div class='comment'>"
+               content += "      <a href="%s">%s</a>" % (self.list[pict][0],
                                                       self.list[pict][1])
-            content += "    </div>"
-            content += "  </div>"
-            content += "</div>"
+               content += "    </div>"
+               content += "  </div>"
+               content += "</div>"
 
-         if content != "":
-            docgen.generate_index_file("Screenshots",
-                                       "screenshots.html", content)
+            if content != "":
+               docgen.generate_index_file("Screenshots",
+                                          "screenshots.html", content)
 
-   def on_gps_start(hook):
-      GPS.Docgen.register_css(GPS.get_system_dir() +
-                              "share/mycustomfiles/custom.css")
-      GPS.Docgen.register_tag_handler(ScreenshotTagHandler())
+      def on_gps_start(hook):
+         GPS.Docgen.register_css(GPS.get_system_dir() +
+                                 "share/mycustomfiles/custom.css")
+         GPS.Docgen.register_tag_handler(ScreenshotTagHandler())
 
-   GPS.Hook("gps_started").add(on_gps_start)
+      GPS.Hook("gps_started").add(on_gps_start)
     """
 
     def __init__(self, tag, on_start=None, on_match=None, on_exit=None):
         """
-        Create a new GPS.DocgenTagHandler instance handling the tag "tag". You
-        need to register it afterwards using GPS.Docgen.register_tag_handler.
+        Create a new :func:`GPS.DocgenTagHandler` instance handling the tag
+        "tag". You need to register it afterwards using
+        :func:`GPS.Docgen.register_tag_handler`.
 
-``on_match`` is a callback that is called each time a tag corresponding to the
-GPS.DocgenTagHandler is analysed. It takes the following parameters:
+        ``on_match`` is a callback that is called each time a tag
+        corresponding to the GPS.DocgenTagHandler is analysed. It takes the
+        following parameters:
 
--  $1 = the instance of GPS.Docgen.
--  $2 = the eventual attributes of the tag.
--  $3 = the value of the tag.
--  $4 = the entity name linked to the analysed tag.
--  $5 = the href to the entity documentation location.
+        - $1 = the instance of :class:`GPS.Docgen`
+        - $2 = the eventual attributes of the tag
+        - $3 = the value of the tag
+        - $4 = the entity name linked to the analysed tag
+        - $5 = the href to the entity documentation location
 
-``on_start`` is a callback that is called each time a documentation generation
-starts. It takes the following parameters:
+        ``on_start`` is a callback that is called each time a documentation
+        generation starts. It takes the following parameters:
 
--  $1 = the instance of GPS.Docgen.
+        - $1 = the instance of :class:`GPS.Docgen`
 
-``on_exit`` is a callback that is called each time a documentation generation
-finishes. It takes the following parameters:
+        ``on_exit`` is a callback that is called each time a documentation
+        generation finishes. It takes the following parameters:
 
--   $1 = the instance of GPS.Docgen.
+        - $1 = the instance of :class:`GPS.Docgen`
 
-Using the default values of the callbacks (e.g. None), the GPS.DocgenTagHandler
-handler will translate comments of the form "-- <tag>value</tag>" by "<div
-class="tag">value</div>".
+        Using the default values of the callbacks (e.g. None), the
+        :func:`GPS.DocgenTagHandler` handler will translate comments of the
+        form "-- <tag>value</tag>" by "<div class="tag">value</div>".
 
-:param tag: The tag that is handled
-:param on_start: A subprogram
-:param on_match: A subprogram
-:param on_exit: A subprogram
+        :param tag: The tag that is handled
+        :param on_start: A subprogram
+        :param on_match: A subprogram
+        :param on_exit: A subprogram
         """
         pass  # implemented in Ada
 
@@ -2544,7 +2608,7 @@ class="tag">value</div>".
 class Editor(object):
 
     """
-    Deprecated interface to all editor-related commands
+    Deprecated interface to all editor-related commands.
     """
 
     @staticmethod
@@ -2554,7 +2618,7 @@ class Editor(object):
 
         Adds number_of_lines non-editable lines to the buffer editing file,
         starting at line start_line. If category is specified, use it for
-        highlighting. Create a mark at beginning of block and return its ID
+        highlighting. Create a mark at beginning of block and return its ID.
 
         :param file: A string
         :param start_line: An integer
@@ -2568,7 +2632,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Add name into the case exception dictionary
+        Adds name into the case exception dictionary.
 
         :param name: A string
         """
@@ -2579,7 +2643,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Fold the block around line. If line is not specified, fold all blocks
+        Folds the block around line. If line is not specified, fold all blocks
         in the file.
 
         :param file: A string
@@ -2592,7 +2656,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns ending line number for block enclosing line
+        Returns ending line number for block enclosing line.
 
         :param file: A string
         :param line: An integer
@@ -2605,7 +2669,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns nested level for block enclosing line
+        Returns nested level for block enclosing line.
 
         :param file: A string
         :param line: An integer
@@ -2632,7 +2696,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns ending line number for block enclosing line
+        Returns ending line number for block enclosing line.
 
         :param file: A string
         :param line: An integer
@@ -2645,7 +2709,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns type for block enclosing line
+        Returns type for block enclosing line.
 
         :param file: A string
         :param line: An integer
@@ -2658,7 +2722,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Unfold the block around line. If line is not specified, unfold all
+        Unfolds the block around line. If line is not specified, unfold all
         blocks in the file.
 
         :param file: A string
@@ -2671,7 +2735,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Close all file editors for file
+        Closes all file editors for file.
 
         :param file: A string
         """
@@ -2682,17 +2746,17 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Copy the selection in the current editor
+        Copies the selection in the current editor.
         """
         pass  # implemented in Ada
 
     @staticmethod
     def create_mark(filename, line=1, column=1, length=0):
         """
-        Create a mark for file_name, at position given by line and
+        Creates a mark for file_name, at position given by line and
         column. Length corresponds to the text length to highlight after the
-        mark. The identifier of the mark is returned. Use the command goto_mark
-        to jump to this mark
+        mark. The identifier of the mark is returned. Use the command
+        goto_mark to jump to this mark.
 
         :param filename: A string
         :param line: An integer
@@ -2713,7 +2777,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Scroll the view to center cursor
+        Scrolls the view to center cursor.
 
         :param file: A string
         """
@@ -2724,7 +2788,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns current cursor column number
+        Returns current cursor column number.
 
         :param file: A string
         :return: An integer
@@ -2736,7 +2800,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns current cursor line number
+        Returns current cursor line number.
 
         :param file: A string
         :return: An integer
@@ -2748,7 +2812,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Set cursor to position line/column in buffer file
+        Sets cursor to position line/column in buffer file.
 
         :param file: A string
         :param line: An integer
@@ -2762,7 +2826,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Cut the selection in the current editor
+        Cuts the selection in the current editor.
         """
         pass  # implemented in Ada
 
@@ -2771,7 +2835,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Delete the mark corresponding to identifier
+        Deletes the mark corresponding to identifier.
 
         :param identifier: A string
 
@@ -2784,12 +2848,12 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Open a file editor for file_name. Length is the number of characters to
-        select after the cursor. If line and column are set to 0, then the
-        location of the cursor is not changed if the file is already opened in
-        an editor. If force is set to true, a reload is forced in case the file
-        is already open. Position indicates the MDI position to open the child
-        in (5 for default, 1 for bottom).
+        Opens a file editor for file_name. Length is the number of characters
+        to select after the cursor. If line and column are set to 0, then the
+        location of the cursor is not changed if the file is already opened
+        in an editor. If force is set to true, a reload is forced in case the
+        file is already open. Position indicates the MDI position to open the
+        child in (5 for default, 1 for bottom).
 
         The filename can be a network file name, with the following general
         format::
@@ -2813,7 +2877,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns the text contained in the current buffer for file
+        Returns the text contained in the current buffer for file.
 
         :param file: A string
         """
@@ -2824,13 +2888,13 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Get the characters around a certain position. Returns string between
+        Gets the characters around a certain position. Returns string between
         "before" characters before the mark and "after" characters after the
         position. If "before" or "after" is omitted, the bounds will be at the
         beginning and/or the end of the line.
 
         If the line and column are not specified, then the current selection is
-        returned, or the empty string if there is no selection
+        returned, or the empty string if there is no selection.
 
         :param filename: A string
         :param line: An integer
@@ -2846,7 +2910,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns the current column of mark
+        Returns the current column of mark.
 
         :param mark: An identifier
         :return: An integer
@@ -2858,7 +2922,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns the current file of mark
+        Returns the current file of mark.
 
         :param mark: An identifier
         :return: A file
@@ -2870,7 +2934,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns the number of the last line in file
+        Returns the number of the last line in file.
 
         :param file: A string
         :return: An integer
@@ -2882,7 +2946,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns the current line of mark
+        Returns the current line of mark.
 
         :param mark: An identifier
         :return: An integer
@@ -2894,7 +2958,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Jump to the location of the mark corresponding to identifier
+        Jumps to the location of the mark corresponding to identifier.
 
         :param identifier: A string
 
@@ -2924,7 +2988,7 @@ class Editor(object):
         """
         OBSOLESCENT>
 
-        Highlights a portion of a line in a file with the given category
+        Highlights a portion of a line in a file with the given category.
 
         :param file: A string
         :param category: A string
@@ -2939,8 +3003,8 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Indent the selection (or the current line if requested) in current
-        editor. Do nothing if the current GPS window is not an editor
+        Indents the selection (or the current line if requested) in current
+        editor. Does nothing if the current GPS window is not an editor.
 
         :param current_line_only: A boolean
 
@@ -2952,8 +3016,8 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Indent the current editor. Do nothing if the current GPS window is not
-        an editor
+        Indents the current editor. Does nothing if the current GPS window is
+        not an editor.
         """
         pass  # implemented in Ada
 
@@ -2962,7 +3026,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Insert a text in the current editor at the cursor position
+        Inserts a text in the current editor at the cursor position.
 
         :param text: A string
         """
@@ -2973,10 +3037,10 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Push the location in the current editor in the history of locations.
-        This should be called before jumping to a new location on a user's
-        request, so that he can easily choose to go back to the previous
-        location.
+        Pushes the location in the current editor in the history of
+        locations.  This should be called before jumping to a new location on
+        a user's request, so that he can easily choose to go back to the
+        previous location.
         """
         pass  # implemented in Ada
 
@@ -2985,7 +3049,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Paste the selection in the current editor
+        Pastes the selection in the current editor.
         """
         pass  # implemented in Ada
 
@@ -2994,8 +3058,8 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Print the contents of the items attached to the side of a line. This is
-        used mainly for debugging and testing purposes.
+        Prints the contents of the items attached to the side of a line. This
+        is used mainly for debugging and testing purposes.
 
         :param file: A string
         :param line: An integer
@@ -3007,7 +3071,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Redo the last undone edition command for file
+        Redoes the last undone editing command for file.
 
         :param file: A string
         """
@@ -3018,8 +3082,8 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Refill selected (or current) editor lines. Do nothing if the current
-        GPS window is not an editor
+        Refills selected (or current) editor lines. Does nothing if the
+        current GPS window is not an editor.
         """
         pass  # implemented in Ada
 
@@ -3028,10 +3092,10 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Create a new highlighting category with the given color. The format for
-        color is "#RRGGBB". If speedbar is true, then a mark will be inserted
-        in the speedbar to the left of the editor to give a fast overview to
-        the user of where the highlighted lines are.
+        Creates a new highlighting category with the given color. The format
+        for color is "#RRGGBB". If speedbar is true, then a mark will be
+        inserted in the speedbar to the left of the editor to give a fast
+        overview to the user of where the highlighted lines are.
 
         :param category: A string
         :param color: A string
@@ -3044,8 +3108,8 @@ class Editor(object):
         """
         OBSOLESCENT
 
-        Remove blank lines located at mark. If number is specified, remove only
-        the number first lines
+        Removes blank lines located at mark. If number is specified, remove
+        only the number first lines.
 
         :param mark: A string
         :param number: An integer
@@ -3057,7 +3121,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Remove name from the case exception dictionary
+        Removes name from the case exception dictionary.
 
         :param name: A string
         """
@@ -3068,10 +3132,11 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Replace the characters around a certain position. "before" characters
-        before (line, column), and up to "after" characters after are removed,
-        and the new text is inserted instead. If "before" or "after" is
-        omitted, the bounds will be at the beginning and/or the end of the line
+        Replaces the characters around a certain position. "before"
+        characters before (line, column), and up to "after" characters after
+        are removed, and the new text is inserted instead. If "before" or
+        "after" is omitted, the bounds will be at the beginning and/or the
+        end of the line.
 
         :param file: A string
         :param line: An integer
@@ -3087,8 +3152,8 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Save current or all files. If interactive is true, then prompt before
-        each save. If all is true, then all files are saved
+        Saves current or all files. If interactive is true, then prompt before
+        each save. If all is true, then all files are saved.
 
         :param interactive: A boolean
         :param all: A boolean
@@ -3102,7 +3167,7 @@ class Editor(object):
 
         Saves the text contained in the current buffer for file. If to_file is
         specified, the file will be saved as to_file, and the buffer status
-        will not be modified
+        will not be modified.
 
         :param file: A string
         :param to_file: A string
@@ -3114,7 +3179,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Select the whole editor contents
+        Selects the whole editor contents.
         """
         pass  # implemented in Ada
 
@@ -3123,7 +3188,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Select a block in the current editor
+        Selects a block in the current editor.
 
         :param first_line: An integer
         :param last_line: An integer
@@ -3137,7 +3202,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Set the background color for the editors for file
+        Sets the background color for the editors for file.
 
         :param file: A string
         :param color: A string
@@ -3149,7 +3214,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Synchronize the scrolling between multiple editors
+        Synchronizes the scrolling between multiple editors.
 
         :param file1: A string
         :param file2: A string
@@ -3162,7 +3227,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Change the title of the buffer containing the given file
+        Changes the title of the buffer containing the given file.
 
         :param file: A string
         :param title: A string
@@ -3175,7 +3240,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Change the Writable status for the editors for file
+        Changes the Writable status for the editors for file.
 
         :param file: A string
         :param writable: A boolean
@@ -3187,7 +3252,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Returns the name of the subprogram enclosing line
+        Returns the name of the subprogram enclosing line.
 
         :param file: A string
         :param line: An integer
@@ -3200,7 +3265,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Undo the last edition command for file
+        Undoes the last editing command for file.
 
         :param file: A string
         """
@@ -3212,7 +3277,7 @@ class Editor(object):
         OBSOLESCENT.
 
         Unmarks the line for the specified category. If line is not specified,
-        unmark all lines in file
+        unmark all lines in file.
 
         :param file: A string
         :param category: A string
@@ -3228,7 +3293,7 @@ class Editor(object):
         """
         OBSOLESCENT.
 
-        Remove highlights for a portion of a line in a file
+        Removes highlights for a portion of a line in a file.
 
         :param file: A string
         :param category: A string
@@ -3247,30 +3312,31 @@ class EditorBuffer(object):
 
     """
     This class represents the physical contents of a file. It is always
-    associated with at least one view (a GPS.EditorView instance), which makes
-    it visible to the user. The contents of the file can be manipulated through
-    this class
+    associated with at least one view (a :class:`GPS.EditorView instance`),
+    which makes it visible to the user. The contents of the file can be
+    manipulated through this class.
     """
 
     def __init__(self):
         """
-        This function prevents the direct creation of instances of
-        EditorBuffer. Use :func:`GPS.EditorBuffer.get` instead
+        Prevents the direct creation of instances of
+        :class:`EditorBuffer`. Use :func:`GPS.EditorBuffer.get` instead
         """
         pass  # implemented in Ada
 
     def add_special_line(self, start_line, text, category='', name=''):
         """
-        Adds one non-editable line to the buffer, starting at line start_line
-        and contains string text. If category is specified, use it for
-        highlighting. Create a mark at beginning of block and return it. If
-        name is specified, retuned mark will have this name
+        Adds one non-editable line to the buffer, starting at line
+        ``start_line`` and containing the string ``text``. If ``category`` is
+        specified, use it for highlighting. Creates a mark at beginning of
+        block and return it. If ``name`` is specified, the returned mark has
+        this name.
 
         :param start_line: An integer
         :param text: A string
         :param category: A string
         :param name: A string
-        :return: An instance of GPS.EditorMark
+        :return: An instance of :class:`GPS.EditorMark`
 
         .. seealso:: :func:`GPS.EditorBuffer.get_mark`
         """
@@ -3281,7 +3347,7 @@ class EditorBuffer(object):
         """
         Applies the overlay to the given range of text. This immediately
         changes the rendering of the text based on the properties of the
-        overlay
+        overlay.
 
         :param overlay: An instance of :class:`GPS.EditorOverlay`
         :param frm: An instance of :class:`GPS.EditorLocation`
@@ -3293,14 +3359,15 @@ class EditorBuffer(object):
 
     def at(self, line, column):
         """
-        Returns a new location at the given line and column in the buffer
+        Returns a new location at the given line and column in the buffer.
+
         :return: A new instance of :class:`GPS.EditorLocation`
         """
         pass  # implemented in Ada
 
     def beginning_of_buffer(self):
         """
-        Returns a location pointing to the first character in the buffer
+        Returns a location pointing to the first character in the buffer.
 
         :return: An instance of :class:`GPS.EditorLocation`
         """
@@ -3308,12 +3375,12 @@ class EditorBuffer(object):
 
     def blocks_fold(self):
         """
-        Folds all the blocks in all the views of the buffer. Block folding is a
-        language-dependent feature, whereby one can hide part of the source
-        code temporarily, by keeping only the first line of the block (for
+        Folds all the blocks in all the views of the buffer. Block folding is
+        a language-dependent feature, where one can hide part of the source
+        code temporarily by keeping only the first line of the block (for
         instance the first line of a subprogram body, the rest is hidden). A
-        small icon is displayed to the left of the first line so that it can be
-        unfolded later on
+        small icon is displayed to the left of the first line so it can be
+        unfolded later.
 
         .. seealso::
 
@@ -3327,7 +3394,7 @@ class EditorBuffer(object):
         """
         Unfolds all the blocks that were previously folded in the buffer, ie
         make the whole source code visible. This is a language dependent
-        feature
+        feature.
 
         .. seealso::
 
@@ -3339,7 +3406,7 @@ class EditorBuffer(object):
 
     def characters_count(self):
         """
-        Returns the total number of characters in the buffer
+        Returns the total number of characters in the buffer.
 
         :return: An integer
         """
@@ -3350,7 +3417,7 @@ class EditorBuffer(object):
         Closes the editor and all its views. If the buffer has been modified
         and not saved, a dialog is open asking the user whether to save. If
         force is True, do not save and do not ask the user. All changes are
-        lost
+        lost.
 
         :param force: A boolean
         """
@@ -3359,10 +3426,10 @@ class EditorBuffer(object):
     def copy(self, frm='beginning of buffer', to='end of buffer',
              append=False):
         """
-        Copy the given range of text into the clipboard, so that it can be
-        further pasted into other applications or other parts of GPS. If append
-        is True, the text is appended to the last clipboard entry instead of
-        generating a new one
+        Copies the given range of text into the clipboard, so that it can be
+        further pasted into other applications or other parts of GPS. If
+        append is True, the text is appended to the last clipboard entry
+        instead of generating a new one.
 
         :param frm: An instance of :class:`GPS.EditorLocation`
         :param to: An instance of :class:`GPS.EditorLocation`
@@ -3374,19 +3441,19 @@ class EditorBuffer(object):
 
     def create_overlay(self, name=''):
         """
-        Create a new overlay. Properties can be set on this overlay, which can
-        then be applied to one or more ranges of text to changes its visual
-        rqendering or to associate user data with it. If name is specified,
-        this function will return an existing overlay with the same name in
-        this buffer if any can be found. If the name is not specified, a new
-        overlay is created. Changing the properties of an existing overlay
-        results in an immediate graphical update of the views associated with
-        the buffer.
+        Creates a new overlay. Properties can be set on this overlay, which
+        can then be applied to one or more ranges of text to changes its
+        visual rqendering or to associate user data with it. If name is
+        specified, this function will return an existing overlay with the
+        same name in this buffer if any can be found. If the name is not
+        specified, a new overlay is created. Changing the properties of an
+        existing overlay results in an immediate graphical update of the
+        views associated with the buffer.
 
-        A number of predefined overlay exits. Among these are the ones used for
-        syntax highlighting by GPS itself, which are "keyword", "comment",
-        "string", "character". You can use these to navigate from one comment
-        section to the next for instance.
+        A number of predefined overlays exit. Among these are the ones used
+        for syntax highlighting by GPS itself, which are "keyword",
+        "comment", "string", "character". You can use these to navigate from
+        one comment section to the next for example.
 
         :param name: A string
         :return: An instance of :class:`GPS.EditorOverlay`
@@ -3397,7 +3464,7 @@ class EditorBuffer(object):
         """
         Returns the last view used for this buffer, ie the last view that had
         the focus and through which the user might have edited the buffer's
-        contents
+        contents.
 
         :return: An instance of :class:`GPS.EditorView`
         """
@@ -3406,10 +3473,11 @@ class EditorBuffer(object):
     def cut(self, frm='beginning of buffer', to='end of buffer',
             append=False):
         """
-        Copy the given range of text into the clipboard, so that it can be
-        further pasted into other applications or other parts of GPS. The text
-        is removed from the edited buffer. If append is True, the text is
-        appended to the last clipboard entry instead of generating a new one
+        Copies the given range of text into the clipboard so that it can be
+        further pasted into other applications or other parts of GPS. The
+        text is removed from the edited buffer. If append is True, the text
+        is appended to the last clipboard entry instead of generating a new
+        one.
 
         :param frm: An instance of :class:`GPS.EditorLocation`
         :param to: An instance of :class:`GPS.EditorLocation`
@@ -3419,7 +3487,7 @@ class EditorBuffer(object):
 
     def delete(self, frm='beginning of buffer', to='end of buffer'):
         """
-        Delete the given range of text from the buffer
+        Deletes the given range of text from the buffer.
 
         :param frm: An instance of :class:`GPS.EditorLocation`
         :param to: An instance of :class:`GPS.EditorLocation`
@@ -3428,7 +3496,7 @@ class EditorBuffer(object):
 
     def end_of_buffer(self):
         """
-        Returns a location pointing to the last character in the buffer
+        Returns a location pointing to the last character in the buffer.
 
         :return: An instance of :class:`GPS.EditorLocation`
         """
@@ -3436,13 +3504,13 @@ class EditorBuffer(object):
 
     def expand_alias(alias):
         """
-        Expand given alias in the editor buffer at the point where the cursor
-        is.
+        Expands given alias in the editor buffer at the point where the
+        cursor is.
         """
 
     def file(self):
         """
-        Returns the name of the file edited in this buffer
+        Returns the name of the file edited in this buffer.
 
         :return: An instance of :class:`GPS.File`
         """
@@ -3451,32 +3519,33 @@ class EditorBuffer(object):
     def finish_undo_group(self):
         """
         Cancels the grouping of commands on the editor. See
-        GPS.EditorBuffer.start_undo_group
+        :func:`GPS.EditorBuffer.start_undo_group`.
         """
         pass  # implemented in Ada
 
     @staticmethod
     def get(file='current editor', force=False, open=True):
         """
-        If file is already opened in an editor, get a handle on its
-        buffer. This instance is then shared with all other buffers referencing
-        the same file. As a result, you can for instance associate your own
-        data with the buffer, and retrieve it at any time until the buffer is
-        closed. If the file is not opened yet, it is loaded in a new editor,
-        and a new view is opened at the same time (and thus the editor becomes
-        visible to the user).  If file is not specified, the current editor is
-        returned, ie the last one that had the keyboard focus.
+        If ``file`` is already opened in an editor, get a handle on its
+        buffer. This instance is then shared with all other buffers
+        referencing the same file. As a result, you can, for example,
+        associate your own data with the buffer, and retrieve it at any time
+        until the buffer is closed. If the file is not opened yet, it is
+        loaded in a new editor, and a new view is opened at the same time
+        (and thus the editor becomes visible to the user).  If the file is
+        not specified, the current editor is returned, which is the last one
+        that had the keyboard focus.
 
-        If the file is not currently open, the behavior depends on the open
-        parameter: if true, a new editor is created for that file, otherwise
-        None is returned.
+        If the file is not currently open, the behavior depends on ``open``:;
+        if true, a new editor is created for that file, otherwise None is
+        returned.
 
         When a new file is open, it has received the focus. But if the editor
         already existed, it is not raised explicitly, and you need to do it
-        yourself through a call to GPS.MDIWindow.raise_window (see the example
-        below).
+        yourself through a call to :func:`GPS.MDIWindow.raise_window` (see
+        the example below).
 
-        If force is set to true, a reload is forced in case the file is already
+        If ``force`` is true, a reload is forced in case the file is already
         open.
 
         :param file: An instance of :class:`GPS.File`
@@ -3500,7 +3569,7 @@ class EditorBuffer(object):
     def get_chars(self, frm='beginning of buffer', to='end of buffer'):
         """
         Returns the contents of the buffer between the two locations given in
-        parameter. Modifying the returned value has no effect on the buffer
+        parameter. Modifying the returned value has no effect on the buffer.
 
         :param frm: An instance of :class:`GPS.EditorLocation`
         :param to: An instance of :class:`GPS.EditorLocation`
@@ -3510,8 +3579,8 @@ class EditorBuffer(object):
 
     def get_mark(self, name):
         """
-        Check whether there is a mark with that name in the buffer, and return
-        it. An exception is raised if there is no such mark
+        Checks whether there is a mark with that name in the buffer, and return
+        it. An exception is raised if there is no such mark.
 
         :param name: A string
         :return: An instance of :class:`GPS.EditorMark`
@@ -3535,8 +3604,8 @@ class EditorBuffer(object):
     @staticmethod
     def get_new():
         """
-        Open a new editor on a blank file. This file has no name, and you'll
-        have to provide one when you save it
+        Opens a new editor on a blank file. This file has no name, and you will
+        have to provide one when you save it.
 
         :return: An instance of :class:`GPS.EditorBuffer`
         """
@@ -3544,8 +3613,8 @@ class EditorBuffer(object):
 
     def indent(self, frm='beginning of buffer', to='end of buffer'):
         """
-        Recompute the indentation of the given range of text. This feature is
-        language-dependent
+        Recomputes the indentation of the given range of text. This feature
+        is language-dependent.
 
         :param frm: An instance of :class:`GPS.EditorLocation`
         :param to: An instance of :class:`GPS.EditorLocation`
@@ -3554,7 +3623,7 @@ class EditorBuffer(object):
 
     def insert(self, location, text):
         """
-        Inserts some text in the buffer
+        Inserts some text in the buffer.
 
         :param location: An instance of :class:`GPS.EditorLocation`
         :param text: A string
@@ -3565,8 +3634,8 @@ class EditorBuffer(object):
 
     def is_modified(self):
         """
-        Tests whether the buffer has been modified since it was last open or
-        saved
+        Tests whether the buffer has been modified since it was last opened
+        or saved.
 
         :return: A boolean
         """
@@ -3584,7 +3653,7 @@ class EditorBuffer(object):
 
     def lines_count(self):
         """
-        Returns the total number of lines in the buffer
+        Returns the total number of lines in the buffer.
 
         :return: An integer
         """
@@ -3593,8 +3662,7 @@ class EditorBuffer(object):
     @staticmethod
     def list():
         """
-        This function returns the list of all editors that are currently open
-        in GPS.
+        Returns the list of all editors that are currently open in GPS.
 
         :return: A list of instances of :class:`GPS.EditorBuffer`
 
@@ -3609,20 +3677,23 @@ class EditorBuffer(object):
 
     def paste(self, location):
         """
-        Paste the contents of the clipboard at the given location in the buffer
+        Pastes the contents of the clipboard at the given location in the
+        buffer.
 
         :param location: An instance of :class:`GPS.EditorLocation`
         """
         pass  # implemented in Ada
 
     def redo(self):
-        """Redo the last undone command on the editor"""
+        """
+        Redoes the last undone command in the editor.
+        """
         pass  # implemented in Ada
 
     def refill(self, frm='beginning of buffer', to='end of buffer'):
         """
-        Refill the given range of text, ie cut long lines if necessary so that
-        they fit in the limit specified in the GPS preferences
+        Refills the given range of text, i.e., cuts long lines if necessary
+        so that they fit in the limit specified in the GPS preferences.
 
         :param frm: An instance of :class:`GPS.EditorLocation`
         :param to: An instance of :class:`GPS.EditorLocation`
@@ -3633,8 +3704,8 @@ class EditorBuffer(object):
     def remove_overlay(self, overlay, frm='begining of buffer',
                        to='end of buffer'):
         """
-        Removes all instances of the overlay in the given range of text. It
-        isn't an error if the overlay is not applied to any of the character in
+        Removes all instances of the overlay in the given range of text. It is
+        not an error if the overlay is not applied to any of the character in
         the range, it just has no effect in that case.
 
         :param overlay: An instance of :class:`GPS.EditorOverlay`
@@ -3649,7 +3720,7 @@ class EditorBuffer(object):
     def remove_special_lines(self, mark, lines):
         """
         Removes specified number of special lines at the specified mark. It
-        doesn't delete the mark
+        does not delete the mark.
 
         :param mark: An instance of :class:`GPS.EditorMark`
         :param lines: An integer
@@ -3658,10 +3729,10 @@ class EditorBuffer(object):
 
     def save(self, interactive=True, file='Same file as edited by the buffer'):
         """
-        Saves the buffer to the given file. If interactive is true, a dialog is
-        open to ask for confirmation from the user first, which gives him a
-        chance to cancel the saving. "interactive" is ignored if file is
-        specified.
+        Saves the buffer to the given file. If ``interactive`` is true, a
+        dialog is open to ask for confirmation from the user first, which
+        gives him a chance to cancel the saving. ``interactive`` is ignored if
+        ``file`` is specified.
 
         :param interactive: A boolean
         :param file: An instance of :class:`GPS.File`
@@ -3672,7 +3743,7 @@ class EditorBuffer(object):
         """
         Selects an area in the buffer. The boundaries are included in the
         selection. The order of the boundaries is irrelevant, but the cursor
-        will be left on to
+        is be left on ``to``.
 
         :param frm: An instance of :class:`GPS.EditorLocation`
         :param to: An instance of :class:`GPS.EditorLocation`
@@ -3682,11 +3753,11 @@ class EditorBuffer(object):
 
     def selection_end(self):
         """
-        Return the character after the end of the selection. This will always
-        be located after the start of the selection, no matter the order of
-        parameters given to GPS.EditorBuffer.select. If the selection is empty,
-        EditorBuffer.selection_start and EditorBuffer.selection_end will be
-        equal.
+        Returns the character after the end of the selection. This is always
+        located after the start of the selection, no matter what the order of
+        parameters given to :func:`GPS.EditorBuffer.select` is. If the
+        selection is empty, :func:`EditorBuffer.selection_start` and
+        :func:`EditorBuffer.selection_end` will be equal.
 
         :return: An instance of :class:`GPS.EditorLocation`
 
@@ -3703,9 +3774,9 @@ class EditorBuffer(object):
 
     def selection_start(self):
         """
-        Return the start of the selection. This will always be located before
-        the end of the selection, no matter the order of parameters given to
-        GPS.EditorBuffer.select
+        Returns the start of the selection. This is always located before the
+        end of the selection, no matter what the order of parameters passed
+        to :func:`GPS.EditorBuffer.select` is.
 
         :return: An instance of :class:`GPS.EditorLocation`
 
@@ -3726,25 +3797,29 @@ class EditorBuffer(object):
 
     def start_undo_group(self):
         """
-        Starts grouping commands on the editor. All future editions will be
-        considered as belonging to the same group. finish_undo_group should be
-        called once for every call to start_undo_group.
+        Starts grouping commands on the editor. All future editions are
+        considered as belonging to the same group. :func:`finish_undo_group`
+        should be called once for every call to :func:`start_undo_group`.
         """
         pass  # implemented in Ada
 
     def undo(self):
-        """Undo the last command on the editor"""
+        """
+        Undoes the last command in the editor.
+        """
         pass  # implemented in Ada
 
     def unselect(self):
-        """Cancel the current selection in the buffer"""
+        """
+        Cancels the current selection in the buffer.
+        """
         pass  # implemented in Ada
 
     def views(self):
         """
         Returns the list of all views currently editing the buffer. There is
         always at least one such view. When the last view is destroyed, the
-        buffer itself is destroyed
+        buffer itself is destroyed.
 
         :return: A list of :class:`GPS.EditorView` instances
 
@@ -3771,7 +3846,7 @@ class EditorBuffer(object):
         Returns the main cursor. Generally you should not use this method
         except if you have a really good reason to perform actions only on the
         main cursor. Instead, you should iterate on the result of
-        :meth:`EditorBuffer.cursors`
+        :meth:`EditorBuffer.cursors`.
 
         :return: A list of :class:`Cursor` instances
         """
@@ -3779,8 +3854,9 @@ class EditorBuffer(object):
     def cursors(self):
         """
         Returns a list of :class:`Cursor` instances. This method returns a
-        generator that will automatically handle the calls to set_manual_sync
-        for each cursor, and thue call to update_cursors_selection at the end.
+        generator that automatically handles the calls to
+        :func:`set_manual_sync` for each cursor and the call to
+        :func:`update_cursors_selection` at the end.
 
         :return: A list of :class:`Cursor` instances
 
@@ -3803,29 +3879,29 @@ class EditorBuffer(object):
         on the cursor's instance.  Also, if you move any selection
         mark, you should call update_cursors_selection afterwards.
 
-        There is a higher level method, :method:`EditorBuffer.cursors` that
-        will return a generator that will handle this manual work for you.
+        There is a higher level method, :meth:`EditorBuffer.cursors` that
+        returns a generator that will handle this manual work for you.
 
         :return: A list of :class:`Cursor` instances
         """
 
     def remove_all_slave_cursors(self):
         """
-        Removes all active slave cursors from the buffer
+        Removes all active slave cursors from the buffer.
         """
 
     def set_cursors_auto_sync(self):
         """
-        Set the buffer in auto sync mode regarding multi cursors.
-        This means that any insertion/deletion will be propagated
-        in a 'naive' way on all multi cursors. Cursor movements won't
-        be propagated.
+        Sets the buffer in auto sync mode regarding multi cursors.  This
+        means that any insertion/deletion will be propagated in a 'naive' way
+        on all multi cursors. Cursor movements will not be propagated.
         """
 
     def update_cursors_selection():
         """
-        Update the overlay used to show the multi cursor's current selection.
-        This must be called after any operation on multi cursor selection marks
+        Updates the overlay used to show the multi cursor's current
+        selection.  This must be called after any operation on multi cursor
+        selection marks
         """
 
 
@@ -3845,39 +3921,41 @@ class EditorHighlighter(object):
 
     def __init__(self, pattern, action, index=0, secondary_action=None):
         """
-Register a highlighter. The action is a Python function that takes a
-string as a parameter: the string being passed is the section of text
-which is highlighted.
+        Register a highlighter. The action is a Python function that takes a
+        string as a parameter: the string being passed is the section of text
+        which is highlighted.
 
-:param pattern: A regular expression representing the patterns on which
-    we want to create hyperlinks.
-:param action: The primary action for this hyperlink
-:param index: This indicate the number of the
-    parenthesized group in pattern that needs to be highlighted.
-:param secondary_action: The alternate action for this hyperlink
+        :param pattern: A regular expression representing the patterns on which
+           we want to create hyperlinks.
+        :param action: The primary action for this hyperlink
+        :param index: This indicate the number of the
+           parenthesized group in pattern that needs to be highlighted.
+        :param secondary_action: The alternate action for this hyperlink
 
-.. code-block:: python
+        .. code-block:: python
 
-     # Define an action
-     def view_html(url):
-         GPS.HTML.browse (url)
+           # Define an action
+           def view_html(url):
+              GPS.HTML.browse (url)
 
-     def wget_url(url):
-         def on_exit_cb(self, code, output):
-             GPS.Editor.edit (GPS.dump (output))
-         p=GPS.Process("wget %s -O -" % url, on_exit=on_exit_cb)
+           def wget_url(url):
+              def on_exit_cb(self, code, output):
+                 GPS.Editor.edit (GPS.dump (output))
+                 p=GPS.Process("wget %s -O -" % url, on_exit=on_exit_cb)
 
-     # Register a highlighter to launch a browser on any URL
-     #  left-clicking on an URL will open the default browser to this URL
-     #  middle-clicking will call "wget" to get the source of this URL and
-     #    open the output in a new editor
+           # Register a highlighter to launch a browser on any URL
+           #  left-clicking on an URL will open the default browser to
+           #  this URL middle-clicking will call "wget" to get the
+           #  source of this URL and open the output in a new editor
 
-     h=GPS.EditorHighlighter ("http(s)?://[^\s:,]*", view_html, 0, wget_url)
+           h=GPS.EditorHighlighter ("http(s)?://[^\s:,]*", view_html,
+                                    0, wget_url)
 
-     # Remove the highlighter
-     h.remove()
-        """
-        pass  # implemented in Ada
+           # Remove the highlighter
+           h.remove()
+
+    """
+    pass  # implemented in Ada
 
     def remove(self):
         """
@@ -3905,12 +3983,13 @@ class EditorLocation(object):
 
     def __add__(self, count):
         """
-        Return a new location located count characters after self. If count is
-        negative, this moves backward in the buffer. It is more conveniently
-        used through the standard + operator in python
+        Returns a new location located ``count`` characters after
+        self. If ``count`` is negative, this moves backward in the
+        buffer. It is more conveniently used through the standard +
+        operator in Python.
 
         :param count: An integer
-        :return: An instance of GPS.EditorLocation
+        :return: An instance of :class:`GPS.EditorLocation`
 
         .. seealso::
 
@@ -3932,7 +4011,7 @@ class EditorLocation(object):
         locations. It returns -1, 0, or 1 depending on whether the first
         location is before, equal or after the second one. This is more
         conveniently used through the usual <, == and > operators in most
-        languages
+        languages.
 
         :param location: An instance of :class:`GPS.EditorLocation`
         :return: An integer
@@ -3941,10 +4020,10 @@ class EditorLocation(object):
 
     def __init__(self, buffer, line, column):
         """
-        Initializes a new instance. Creating two instances at the same location
-        will not return the same instance of GPS.EditorLocation, and therefore
-        any user data you have stored in the location will not be available in
-        the second instance
+        Initializes a new instance. Creating two instances at the same
+        location will not return the same instance of
+        :class:`GPS.EditorLocation`, and therefore any user data you have
+        stored in the location will not be available in the second instance.
 
         :param buffer: The instance of GPS.EditorBuffer
         :param line: An integer
@@ -3963,14 +4042,15 @@ class EditorLocation(object):
 
     def __sub__(self, count):
         """
-        Return a new location located count characters before self, if count is
-        an integer. If count is negative, moves forward instead. If count is
-        another location, it returns the number of characters between the two
-        locations. This function is more conveniently used through the standard
-        "-" operator in python.
+        Returns a new location located ``count`` characters before ``self``,
+        if ``count`` is an integer. If ``count`` is negative, moves forward
+        instead. If ``count`` is another location, it returns the number of
+        characters between the two locations. This function is more
+        conveniently used through the standard "-" operator in Python.
 
-        :param count: An integer or another instance of GPS.EditorLocation
-        :return: A new instance of GPS.EditorLocation
+        :param count: An integer or another instance of
+           :class:`GPS.EditorLocation`
+        :return: A new instance of :class:`GPS.EditorLocation`
 
         .. seealso::
 
@@ -3982,19 +4062,18 @@ class EditorLocation(object):
 
     def backward_overlay(self, overlay=None):
         """
-        Same as GPS.EditorLocation.forward_overlay, but moves backward
-        instead. If there are no more changes, the location is left at the
-        beginning of the buffer.
+        Same as :func:`GPS.EditorLocation.forward_overlay`, but moves
+        backward instead. If there are no more changes, the location is left
+        at the beginning of the buffer.
 
         :param overlay: An instance of :class:`GPS.EditorOverlay`
-        :return: An instance of GPS.EditorLocation
+        :return: An instance of :class:`GPS.EditorLocation`
         """
         pass  # implemented in Ada
 
     def beginning_of_line(self):
         """
-        Return a location located at the beginning of the line on which self
-        is.
+        Returns a location at the beginning of the line on which ``self`` is.
 
         :return: A new instance of :class:`GPS.EditorLocation`
         """
@@ -4002,7 +4081,7 @@ class EditorLocation(object):
 
     def block_end(self):
         """
-        Return the location of the end of the current block
+        Returns the location of the end of the current block.
 
         :return: An instance of :class:`GPS.EditorLocation`
         """
@@ -4010,9 +4089,9 @@ class EditorLocation(object):
 
     def block_end_line(self):
         """
-        Return the last line of the block surrounding the location. The
+        Returns the last line of the block surrounding the location. The
         definition of a block depends on the specific language of the source
-        file
+        file.
 
         :return: An integer
         """
@@ -4020,9 +4099,9 @@ class EditorLocation(object):
 
     def block_fold(self):
         """
-        Fold the block containing the location, ie make it invisible on the
-        screen, except for its first line. Clicking on the icon next to this
-        first line will unfold the block and make it visible to the user
+        Folds the block containing the location, i.e., makes it invisible on
+        the screen, except for its first line. Clicking on the icon next to
+        this first line unfolds the block ands make it visible to the user.
 
         .. seealso:: :func:`GPS.EditorLocation.block_unfold`
         """
@@ -4030,8 +4109,8 @@ class EditorLocation(object):
 
     def block_level(self):
         """
-        Return the nesting level of the block surrounding the location. The
-        definition of a block depends on the specific programming language
+        Returns the nesting level of the block surrounding the location. The
+        definition of a block depends on the specific programming language.
 
         :return: An integer
         """
@@ -4039,8 +4118,8 @@ class EditorLocation(object):
 
     def block_name(self):
         """
-        Return the name of the bock surrounding the location. The definition of
-        a block depends on the specific language of the source file
+        Returns the name of the bock surrounding the location. The definition
+        of a block depends on the specific language of the source file.
 
         :return: A string
         """
@@ -4048,7 +4127,7 @@ class EditorLocation(object):
 
     def block_start(self):
         """
-        Return the location of the beginning of the current block
+        Returns the location of the beginning of the current block.
 
         :return: An instance of :class:`GPS.EditorLocation`
         """
@@ -4056,8 +4135,8 @@ class EditorLocation(object):
 
     def block_start_line(self):
         """
-        Return the first line of the block surrounding the location. The
-        definition of a block depends on the programming language
+        Returns the first line of the block surrounding the location. The
+        definition of a block depends on the programming language.
 
         :return: An integer
         """
@@ -4065,8 +4144,8 @@ class EditorLocation(object):
 
     def block_type(self):
         """
-        Return the type of the block surrounding the location. This type
-        indicates whether the block is a subprogram, an if statement,...
+        Returns the type of the block surrounding the location. This type
+        indicates whether the block is, e.g., subprogram, an if statement, etc.
 
         :return: A string
         """
@@ -4074,9 +4153,9 @@ class EditorLocation(object):
 
     def block_unfold(self):
         """
-        Unfold the block containing the location, ie make it visible any
+        Unfolds the block containing the location, i.e., makes visible any
         information that was hidden as a result of running
-        GPS.EditorLocation.block_fold
+        :func:`GPS.EditorLocation.block_fold`.
 
         .. seealso:: :func:`GPS.EditorLocation.block_fold`
         """
@@ -4084,7 +4163,7 @@ class EditorLocation(object):
 
     def buffer(self):
         """
-        Return the buffer in which the location is found
+        Returns the buffer in which the location is found.
 
         :return: An instance of :class:`GPS.EditorBuffer`
         """
@@ -4092,7 +4171,7 @@ class EditorLocation(object):
 
     def column(self):
         """
-        Return the column of the location
+        Returns the column of the location.
 
         :return: An integer
         """
@@ -4100,12 +4179,12 @@ class EditorLocation(object):
 
     def create_mark(self, name=''):
         """
-        Create a mark at that location in the buffer. The mark will stay
-        permanently at that location, and follows if the buffer is modified. If
-        the name is specified, this creates a named mark, which can be
-        retrieved through a call to GPS.EditorBuffer.get_mark. If a mark with
-        the same name already exists, it is moved to the new location, and then
-        returned
+        Creates a mark at that location in the buffer. The mark will stay
+        permanently at that location, and follows it if the buffer is
+        modified. If ``name`` is specified, this creates a named mark, which
+        can be retrieved through a call to
+        :func:`GPS.EditorBuffer.get_mark`. If a mark with the same name
+        already exists, it's moved to the new location and then returned.
 
         :param name: A string
         :return: An instance of :class:`GPS.EditorMark`
@@ -4125,7 +4204,7 @@ class EditorLocation(object):
 
     def end_of_line(self):
         """
-        Return a location located at the end of the line on which self is.
+        Returns a location located at the end of the line on which self is.
 
         :return: A new instance of :class:`GPS.EditorLocation`
         """
@@ -4133,8 +4212,8 @@ class EditorLocation(object):
 
     def ends_word(self):
         """
-        Return true if self is currently at the end of a word. The definition
-        of a word depends on the language used
+        Returns true if self is currently at the end of a word. The definition
+        of a word depends on the language used.
 
         :return: A boolean
         """
@@ -4142,8 +4221,8 @@ class EditorLocation(object):
 
     def forward_char(self, count):
         """
-        Return a new location located count characters after self. If count is
-        negative, the location is moved backward instead
+        Returns a new location located ``count`` characters after self. If
+        ``count`` is negative, the location is moved backward instead.
 
         :param count: An integer
         :return: A new instance of :class:`GPS.EditorLocation`
@@ -4152,9 +4231,9 @@ class EditorLocation(object):
 
     def forward_line(self, count):
         """
-        Return a new location located count lines after self. The location is
-        moved back to the beginning of the line. In case self is on the last
-        line, the beginning of the last line is returned.
+        Returns a new location located ``count`` lines after self. The
+        location is moved back to the beginning of the line. If self is on
+        the last line, the beginning of the last line is returned.
 
         :param count: An integer
         :return: A new instance of :class:`GPS.EditorLocation`
@@ -4164,10 +4243,10 @@ class EditorLocation(object):
     def forward_overlay(self, overlay=''):
         """
         Moves to the next change in the list of overlays applying to the
-        character. If overlay is specified, go to the next change for this
-        specific overlay (ie the next beginning or end of range where it
-        applies). If there are no more changes, the location is left at the end
-        of the buffer.
+        character. If ``overlay`` is specified, go to the next change for
+        this specific overlay (i.e., the next beginning or end of range where
+        it applies). If there are no more changes, the location is left at
+        the end of the buffer.
 
         :param overlay: An instance of :class:`GPS.EditorOverlay`
         :return: An instance of :class:`GPS.EditorLocation`
@@ -4178,9 +4257,9 @@ class EditorLocation(object):
 
     def forward_word(self, count):
         """
-        Return a new location located count words after self. If count is
-        negative, the location is moved backward instead. The definition of a
-        word depends on the language used
+        Returns a new location located ``count`` words after self. If
+        ``count`` is negative, the location is moved backward instead. The
+        definition of a word depends on the language.
 
         :param count: An integer
         :return: A new instance of :class:`GPS.EditorLocation`
@@ -4189,9 +4268,9 @@ class EditorLocation(object):
 
     def get_char(self):
         """
-        Return the character at that location in the buffer. An exception is
+        Returns the character at that location in the buffer. An exception is
         raised when trying to read past the end of the buffer. The character
-        might be encoded on several bytes, since it is a UTF8 string.
+        might be encoded in several bytes since it is a UTF8 string.
 
         :return: A UTF8 string
 
@@ -4206,9 +4285,9 @@ class EditorLocation(object):
 
     def get_overlays(self):
         """
-        This function returns the list of all the overlays that apply at this
-        specific location. The color and font of the text is composed through
-        the contents of these overlays.
+        Returns the list of all overlays that apply at this specific
+        location. The color and font of the text is composed through the
+        contents of these overlays.
 
         :return: A list of :class:`GPS.EditorOverlay` instances
 
@@ -4217,8 +4296,8 @@ class EditorLocation(object):
 
     def has_overlay(self, overlay):
         """
-        This function returns True if the given overlay applies to the
-        character at that location
+        Returns True if the given overlay applies to the character at that
+        location.
 
         :param overlay: An instance of :class:`GPS.EditorOverlay`
         :return: A boolean
@@ -4227,8 +4306,8 @@ class EditorLocation(object):
 
     def inside_word(self):
         """
-        Return true if self is currently inside a word. The definition of a
-        word depends on the language used
+        Returns true if self is currently inside a word. The definition of a
+        word depends on the language.
 
         :return: A boolean
         """
@@ -4236,7 +4315,7 @@ class EditorLocation(object):
 
     def line(self):
         """
-        Return the line of the location
+        Returns the line number of the location.
 
         :return: An integer
         """
@@ -4244,8 +4323,8 @@ class EditorLocation(object):
 
     def offset(self):
         """
-        Return the offset of the location in the buffer, ie the number of
-        characters from the beginning of the buffer to the location
+        Returns the offset of the location in the buffer, i.e., the number of
+        characters from the beginning of the buffer to the location.
 
         :return: An integer
         """
@@ -4255,15 +4334,16 @@ class EditorLocation(object):
                regexp=False, whole_word=False, scope='Whole',
                dialog_on_failure=True):
         """
-        This function searches for the next occurrence of Pattern in the
-        editor, starting at the given location. If there is such a match, this
+        Searches for the next occurrence of ``pattern`` in the editor,
+        starting at the given location. If there is such a match, this
         function returns the two locations for the beginning of the match and
         the end of the match. Typically, these would be used to highlight the
         match in the editor.
 
         When no match is found, this function returns null. Additionally, if
-        dialog_on_failure is true then a dialog is displayed to the user asking
-        whether the search should restart at the beginning of the buffer.
+        ``dialog_on_failure`` is true, a dialog is displayed to the user
+        asking whether the search should restart at the beginning of the
+        buffer.
 
         :param pattern: A string
         :param backward: A boolean
@@ -4280,8 +4360,8 @@ class EditorLocation(object):
 
     def starts_word(self):
         """
-        Return true if self is currently at the start of a word. The definition
-        of a word depends on the language used
+        Returns true if self is currently at the start of a word. The
+        definition of a word depends on the language.
 
         :return: A boolean
         """
@@ -4289,7 +4369,7 @@ class EditorLocation(object):
 
     def subprogram_name(self):
         """
-        Return the name of the subprogram enclosing the location
+        Returns the name of the subprogram containing the location.
 
         :return: A string
         """
@@ -4303,21 +4383,22 @@ class EditorLocation(object):
 class EditorMark(object):
 
     """
-    This class represents a specific location in an open editor. As opposed to
-    the GPS.EditorLocation class, the exact location is updated whenever the
-    buffer is modified. For instance, if you add a line before the mark, then
-    the mark is moved one line forward as well, so that it still points to the
-    same character in the buffer.
+    This class represents a specific location in an open editor. As opposed
+    to the :class:`GPS.EditorLocation` class, the exact location is updated
+    whenever the buffer is modified. For example, if you add a line before
+    the mark, then the mark is moved one line forward as well, so that it
+    still points to the same character in the buffer.
 
     The mark remains valid even if you close the buffer; or if you reopen it
     and modify it. It will always point to the same location in the file, while
-    you have kept the python object.
+    you have kept the Python object.
 
     :func:`GPS.EditorLocation.create_mark` allows you to create named marks
-    which you can then retrieve through GPS.EditorBuffer.get_mark. Such named
-    marks are only valid while the editor exists. As soon as you close the
-    editor, you can no longer use get_mark to retrieve it (but the mark is
-    still valid if you have kept a python object referencing it).
+    which you can then retrieve through
+    :func:`GPS.EditorBuffer.get_mark`. Such named marks are only valid while
+    the editor exists. As soon as you close the editor, you can no longer use
+    get_mark to retrieve it (but the mark is still valid if you have kept a
+    python object referencing it).
 
     .. seealso:: :func:`GPS.EditorLocation`
 
@@ -4326,38 +4407,40 @@ class EditorMark(object):
     def __del__(self):
         """
         This subprogram is automatically called whenever self is unreferenced
-        by Python, and will destroy the physical mark in the buffer if the mark
-        is unnamed, since there is no way to access it anyway afterward
+        by Python, and destroys the physical mark in the buffer if the mark
+        is unnamed, since there is no way to access it anyway afterward.
         """
         pass  # implemented in Ada
 
     def __init__(self):
         """
-        This subprogram will always raise an exception, thus preventing the
-        direct creation of a mark. Instead, you should use
-        :func:`GPS.EditorLocation.create_mark` to create such a mark
+        Always raises an exception, thus preventing the direct creation of a
+        mark. Instead, you should use :func:`GPS.EditorLocation.create_mark`
+        to create such a mark.
         """
         pass  # implemented in Ada
 
     def delete(self):
         """
-        Delets the physical mark from the buffer. All instances referencing the
-        same mark will no longer be valid. If you haven't given a name to the
-        mark in the call to GPS.EditorLocation.create_mark(), it will
-        automatically be destroyed when the last instance referencing it goes
-        out of scope. Therefore, calling delete() is not mandatory in the case
-        of unnamed marks, although it is still recommanded
+        Deletes the physical mark from the buffer. All instances referencing
+        the same mark will no longer be valid. If you have not given a name to
+        the mark in the call to :func:`GPS.EditorLocation.create_mark`, it
+        will automatically be destroyed when the last instance referencing it
+        goes out of scope. Therefore, calling :func:`delete` is not mandatory
+        in the case of unnamed marks, although it is still recommended.
         """
         pass  # implemented in Ada
 
     def is_present(self):
-        """Returns True if mark's location is still present in the buffer"""
+        """
+        Returns True if mark's location is still present in the buffer.
+        """
         pass  # implemented in Ada
 
     def location(self):
         """
         Returns the current location of the mark. This location will vary
-        depending on the changes that take place in the buffer
+        depending on the changes that take place in the buffer.
 
         :return: An instance of :class:`GPS.EditorLocation`
 
@@ -4374,8 +4457,9 @@ class EditorMark(object):
     def move(self, location):
         """
         Moves the mark to a new location in the buffer. This is slightly less
-        expensive that destroying the mark and creating a new one through
-        :func:`GPS.EditorLocation.create_mark`, although the result is the same
+        expensive than destroying the mark and creating a new one through
+        :func:`GPS.EditorLocation.create_mark`, although the result is the
+        same.
 
         :param location: An instance of :class:`GPS.EditorLocation`
 
@@ -4398,23 +4482,24 @@ class EditorOverlay(object):
     and fonts of the text depends on the priorities of these overlays and the
     order in which they were applied to the buffer.
 
-    This class is fairly low-level, and we recommend using the class
-    :py:func:`gps_utils.highlighter.OverlayStyle` instead. That class provides
-    similar support for specifying attributes, but makes it easier to highlight
-    sections of an editor with that style, or to remove the highlighting.
+    This class is fairly low-level; we recommend using the class
+    :py:class:`gps_utils.highlighter.OverlayStyle` instead. That class
+    provides similar support for specifying attributes, but makes it easier
+    to highlight sections of an editor with that style, or to remove the
+    highlighting.
 
-    In fact, if your goal is to highlight parts of editors, it might be simpler
-    to use :py:func:`gps_utils.highilghter.Background_Highlighter` or one of
-    the classes derived from it. These classes provide convenient support for
-    highlighting editors in the background, i.e. without interfering with the
-    user or slowing things down.
+    In fact, if your goal is to highlight parts of editors, it might be
+    simpler to use :py:class:`gps_utils.highilghter.Background_Highlighter`
+    or one of the classes derived from it. These classes provide convenient
+    support for highlighting editors in the background, i.e. without
+    interfering with the user or slowing things down.
     """
 
     def __init__(self):
         """
         This subprogram is used to prevent the direct creation of
         overlays. Overlays need to be created through
-        :func:`GPS.EditorBuffer.create_overlay`
+        :func:`GPS.EditorBuffer.create_overlay`.
 
         .. seealso:: :func:`GPS.EditorBuffer.create_overlay`
         """
@@ -4422,9 +4507,9 @@ class EditorOverlay(object):
 
     def get_property(self, name):
         """
-        This subprogram is used to retrieve one of the predefined properties of
-        the overlay. This list of these properties is described for
-        GPS.EditorOverlay.set_property
+        Retrieves one of the predefined properties of the overlay. This list
+        of these properties is described for
+        :func:`GPS.EditorOverlay.set_property`.
 
         :param name: A string
         :return: A string or a boolean, depending on the property
@@ -4433,8 +4518,8 @@ class EditorOverlay(object):
 
     def name(self):
         """
-        Return the name associated with this overlay, as given to
-        GPS.EditorBuffer.create_overlay()
+        Returns the name associated with this overlay, as given to
+        :func:`GPS.EditorBuffer.create_overlay`.
 
         :return: A string
 
@@ -4444,80 +4529,84 @@ class EditorOverlay(object):
 
     def set_property(self, name, value):
         """
-This function is used to change some of the predefined properties of the
-overlay. These are mostly used to change the visual rendering of the
-text,... The following attribute names are currently recognized:
+        Changes some of the predefined properties of the overlay. These are
+        mostly used to change the visual rendering of the text. The following
+        attribute names are currently recognized:
 
-- *foreground* (value is a string with the color name)
+        - *foreground* (value is a string with the color name)
 
-   Change the foreground color of the text.
+          Changes the foreground color of the text.
 
-- *background* (value is a string with the color name)
+        - *background* (value is a string with the color name)
 
-   Change the background color of the text.
+          Changes the background color of the text.
 
-- *paragraph-background* (value is a string with the color name)
+        - *paragraph-background* (value is a string with the color name)
 
-   Change the background color of the entire lines.  Contrary to the
-   "background" property, this highlights the entire line, including the
-   space after the end of the text, regardless of which characters are
-   actually covered by the overlay.
+          Changes the background color of entire lines.  Contrary to the
+          "background" property, this highlights the entire line, including the
+          space after the end of the text, regardless of which characters are
+          actually covered by the overlay.
 
-- *font* (value is a string with the font name)
+        - *font* (value is a string with the font name)
 
-   Changes the font of the text
+          Changes the text font.
 
-- *weight* (value is a string, one of "light", "normal" and "bold")
+        - *weight* (value is a string, one of "light", "normal" and "bold")
 
-- *style* (value is a string, one of "normal", "oblique" and "italic")
+        - *style* (value is a string, one of "normal", "oblique" and "italic")
 
-- *editable* (value is a boolean): Indicates whether this range of text is
-   editable or not
+        - *editable* (value is a boolean)
 
-- *variant* (one of 0 ("normal") or 1 ("small_caps"))
+          Indicates whether this range of text is editable.
 
-- *stretch* (from 0 ("ultra-condensed") to 8 ("ultra-expanded"))
+        - *variant* (one of 0 ("normal") or 1 ("small_caps"))
 
-- *underline* (one of 0 ("none"), 1 ("single"), 2 ("double"), 3 ("low"))
+        - *stretch* (from 0 ("ultra-condensed") to 8 ("ultra-expanded"))
 
-- *size-points* (an integer)
-  Font size in points
+        - *underline* (one of 0 ("none"), 1 ("single"), 2 ("double"), 3
+           ("low"))
 
-- *rise* (an integer)
+        - *size-points* (an integer)
 
-  Offset of text above the baseline (below the baseline if rise is negative,
-  in Pango units.
+          Font size in points.
 
-- *pixels-above-lines* (an integer)
+        - *rise* (an integer)
 
-  Pixels of blank space above paragraphs.
+          Offset of text above the baseline (below the baseline if rise is
+          negative, in Pango units.
 
-- *pixels-below-lines* (an integer)
+        - *pixels-above-lines* (an integer)
 
-  Pixels of blank space below paragraphs.
+          Pixels of blank space above paragraphs.
 
-- *pixels-inside-wrap* (an integer)
+        - *pixels-below-lines* (an integer)
 
-  Pixels of blank space between wrapped lines in a paragraph.
+          Pixels of blank space below paragraphs.
 
-- *invisible* (a boolean)
+        - *pixels-inside-wrap* (an integer)
 
-  Whether this text is hidden
+          Pixels of blank space between wrapped lines in a paragraph.
 
-- *strikethrough* (a boolean)
+        - *invisible* (a boolean)
 
-  Whether to strike through the text.
+          Whether this text is hidden.
 
-- *background-full-height* (a boolean)
+        - *strikethrough* (a boolean)
 
-  Whether the background color fills the entire line height or only the
-  height of the tagged characters.
+          Whether to strike through the text.
 
-The set of predefined attributes is fixed. However, overlays are especially
-useful to store your own user data in the usual python manner, which you can
-retrieve later. This can be used to mark specially specific ranges of text
-which you want to be able to find easily later on, even if the buffer has been
-modified since then (see GPS.EditorLocation.forward_overlay)
+        - *background-full-height* (a boolean)
+
+          Whether the background color fills the entire line height or only
+          the height of the tagged characters.
+
+          The set of predefined attributes is fixed. However, overlays are
+          especially useful to store your own user data in the usual Python
+          manner, which you can retrieve later. This can be used to mark
+          specially specific ranges of text which you want to be able to find
+          easily later on, even if the buffer has been modified since then
+          (see :func:`GPS.EditorLocation.forward_overlay`).
 
         :param name: A string
         :param value: A string or a boolean, depending on the property
@@ -4532,10 +4621,10 @@ modified since then (see GPS.EditorLocation.forward_overlay)
 class EditorView(GUI):
 
     """
-    One view of an editor, ie the visible part through which users can modify
-    text files. A given GPS.EditorBuffer can be associated with multiple
-    views. Closing the last view associated with a buffer will also close the
-    buffer
+    One view of an editor, i.e., the visible part through which users can
+    modify text files. A given :class:`GPS.EditorBuffer` can be associated
+    with multiple views. Closing the last view associated with a buffer will
+    also close the buffer.
 
     .. code-block:: python
 
@@ -4545,9 +4634,9 @@ class EditorView(GUI):
 
     def __init__(self, buffer):
         """
-        This constructor is called implicitly whenever you create a new
-        view. It creates a new view for the given buffer, and is automatically
-        inserted into the GPS MDI
+        Called implicitly whenever you create a new view. It creates a new
+        view for the given buffer, and is automatically inserted into the GPS
+        MDI.
 
         :param buffer: An instance of :class:`GPS.EditorBuffer`
         """
@@ -4556,7 +4645,7 @@ class EditorView(GUI):
     def buffer(self):
         """
         Returns the buffer to which the view is attached. Editing the text of
-        the file should be done through this instance
+        the file should be done through this instance.
 
         :return: An instance of :class:`GPS.EditorBuffer`
         """
@@ -4564,7 +4653,7 @@ class EditorView(GUI):
 
     def center(self, location='location of cursor'):
         """
-        Scrolls the view so that the location is centered
+        Scrolls the view so that the location is centered.
 
         :param location: An instance of :class:`GPS.EditorLocation`
         """
@@ -4572,7 +4661,7 @@ class EditorView(GUI):
 
     def cursor(self):
         """
-        Return the current location of the cursor in this view
+        Returns the current location of the cursor in this view.
 
         :return: An instance of :class:`GPS.EditorLocation`
         """
@@ -4588,9 +4677,9 @@ class EditorView(GUI):
 
     def goto(self, location, extend_selection):
         """
-        Moves the cursor at the given location. Each view of a particular
-        buffer has its own cursor position, which is where characters typed by
-        the user will be inserted. If extend_selection is True, extend the
+        Moves the cursor to the given location. Each view of a particular
+        buffer has its own cursor position, which is where characters typed
+        by the user will be inserted. If extend_selection is True, extend the
         selection from the current bound to the new location.
 
         :param location: An instance of :class:`GPS.EditorLocation`
@@ -4600,8 +4689,8 @@ class EditorView(GUI):
 
     def is_read_only(self):
         """
-        Whether the view is editable or not. This property is in fact shared by
-        all views of the same buffer.
+        Whether the view is editable or not. This property is shared by all
+        views of the same buffer.
 
         :return: A boolean
 
@@ -4624,7 +4713,7 @@ class EditorView(GUI):
         """
         Indicates whether the user should be able to edit interactively through
         this view. Setting a view Writable/Read Only will also modify the
-        status of the other views of the same buffer.xx
+        status of the other views of the same buffer.
 
         :param read_only: A boolean
 
@@ -4634,8 +4723,8 @@ class EditorView(GUI):
 
     def title(self, short=False):
         """
-        Returns the view's title, the short title is returned if short is set
-        to True
+        Returns the view's title; the short title is returned if ``short`` is
+        set to True.
 
         :param short: A boolean
         """
@@ -4650,24 +4739,24 @@ class Entity(object):
 
     """
     Represents an entity from the source, based on the location of its
-    declaration
+    declaration.
 
-    .. seealso:: :func:`GPS.Entity.__init__()`
+    .. seealso:: :func:`GPS.Entity.__init__`
     """
 
     def __cmp__(self, file):
         """
-        Compare two instances of GPS.Entity, and return -1, 0 or 1 depending on
-        their relative sort order
+        Compares two instances of :class:`GPS.Entity` and returns -1, 0 or 1
+        depending on their relative sort order.
 
-        :param file: An instance of GPS.Entity
+        :param file: An instance of :class:`GPS.Entity`
         :return: An integer
         """
         pass  # implemented in Ada
 
     def __hash__(self):
         """
-        Return a hash value suitable for storing self in a dictionary
+        Returns a hash value suitable for storing self in a dictionary.
 
         :return: An integer
         """
@@ -4676,13 +4765,14 @@ class Entity(object):
     def __init__(self, name, file=None, line=-1, column=-1,
                  approximate_search_fallback=True):
         """
-        Initializes a new instance of the Entity class, from any reference to
-        the entity. The file parameter should only be omitted for a predefined
-        entity of the language. This will only work for languages for which a
-        cross-reference engine has been defined
+        Initializes a new instance of the :class:`Entity` class from any
+        reference to the entity. The ``file`` parameter should only be
+        omitted for a predefined entity of the language. This will only work
+        for languages for which a cross-reference engine has been defined
 
         :param name: A string, the name of the entity
-        :param file: An instance of GPS.File, in which the entity is referenced
+        :param file: An instance of :class:`GPS.File` in which the entity
+           is referenced
         :param line: An integer, the line at which the entity is referenced
         :param column: An integer, the column at which the entity is referenced
         :param approximate_search_fallback: If True, when the line and column
@@ -4699,8 +4789,8 @@ class Entity(object):
 
     def __repr__(self):
         """
-        Return a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python
+        Returns a string suitable for the display of self on screen. This is
+        called implicitly by GPS and Python.
 
         :return: A string
         """
@@ -4708,8 +4798,8 @@ class Entity(object):
 
     def __str__(self):
         """
-        Return a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python
+        Returns a string suitable for the display of self on screen. This is
+        called implicitly by GPS and Python.
 
         :return: A string
         """
@@ -4717,8 +4807,8 @@ class Entity(object):
 
     def attributes(self):
         """
-        Return various boolean attributes of the entity: is the entity global,
-        static,...
+        Returns various boolean attributes of the entity: is the entity global,
+        static, etc.
 
         :return: A htable
         """
@@ -4726,7 +4816,7 @@ class Entity(object):
 
     def body(self, nth='1'):
         """
-        Return the location at which the implementation of the entity is
+        Returns the location at which the implementation of the entity is
         found. For Ada subprograms and packages, this corresponds to the body
         of the entity. For Ada private types, this is the location of the full
         declaration for the type. For entities which do not have a notion of
@@ -4752,13 +4842,14 @@ class Entity(object):
 
     def called_by(self, dispatching_calls=False):
         """
-        Display the list of entities that call the entity. The returned value
-        is a dictionary whose keys are instances of Entity calling this entity,
-        and whose value is a list of FileLocation instances where the entity is
-        referenced. This command might take a while to execute, since GPS needs
-        to get the cross-reference information for lots of source files.  If
-        dispatching_calls is true, then calls to self that might occur through
-        dispatching are also listed.
+        Displays the list of entities that call the entity. The returned
+        value is a dictionary whose keys are instances of :class:`Entity`
+        calling this entity, and whose value is a list of
+        :class:`FileLocation` instances where the entity is referenced. This
+        command might take a while to execute, since GPS needs to get the
+        cross-reference information for lots of source files.  If
+        dispatching_calls is true, then calls to self that might occur
+        through dispatching are also listed.
 
         :param dispatching_calls: A boolean
         :return: A dictionary, see below
@@ -4766,17 +4857,20 @@ class Entity(object):
         pass  # implemented in Ada
 
     def called_by_browser(self):
-        """Open the call graph browser to show what entities call self"""
+        """
+        Opens the call graph browser to show what entities call self.
+        """
         pass  # implemented in Ada
 
     def calls(self, dispatching_calls=False):
         """
-        Display the list of entities called by the entity. The returned value
-        is a dictionary whose keys are instances of Entity called by this
-        entity, and whose value is a list of FileLocation instances where the
-        entity is referenced.  If dispatching_calls is true, then calls done
-        through dispatching will result in multiple entities being listed (ie
-        all the possible subprograms that are called at that location)
+        Displays the list of entities called by the entity. The returned
+        value is a dictionary whose keys are instances of :class:`Entity`
+        called by this entity, and whose value is a list of
+        :class:`FileLocation` instances where the entity is referenced.  If
+        ``dispatching_calls`` is true, calls done through dispatching will
+        result in multiple entities being listed (i.e., all the possible
+        subprograms that are called at that location).
 
         :param dispatching_calls: A boolean
         :return: A dictionary, see below
@@ -4787,12 +4881,13 @@ class Entity(object):
 
     def category(self):
         """
-        Return the category of a given entity. Possible values include: label,
-        literal, object, subprogram, package, namespace, type, unknown.
-        The exact list of strings is not hard-coded in GPS and depends on the
-        programming language of the corresponding source.
+        Returns the category of a given entity. Possible values include:
+        label, literal, object, subprogram, package, namespace, type, and
+        unknown.  The exact list of strings is not hard-coded in GPS and
+        depends on the programming language of the corresponding source.
 
-        See instead is_access, is_array, is_subprogram,...
+        See instead :func:`is_access`, :func:`is_array`,
+        :func:`is_subprogram`, etc.
 
         :return: A string
         """
@@ -4801,6 +4896,7 @@ class Entity(object):
     def is_subprogram(self):
         """
         Whether the entity is a subprogram, procedure or function.
+
         :return: A boolean
         """
         pass
@@ -4808,6 +4904,7 @@ class Entity(object):
     def is_generic(self):
         """
         Whether the entity is a generic.
+
         :return: A boolean
         """
         pass
@@ -4815,6 +4912,7 @@ class Entity(object):
     def is_global(self):
         """
         Whether self is a global entity.
+
         :return: A boolean
         """
         pass
@@ -4822,6 +4920,7 @@ class Entity(object):
     def is_access(self):
         """
         Whether self is a pointer or access (variable or type)
+
         :return: A boolean
         """
         pass
@@ -4829,21 +4928,23 @@ class Entity(object):
     def is_array(self):
         """
         Whether self is an array type or variable.
+
         :return: A boolean
         """
         pass
 
     def is_type(self):
         """
-        Whether self is a type declaration (as opposed to a variable)
+        Whether self is a type declaration (as opposed to a variable).
+
         :return: A boolean
         """
         pass
 
     def is_container(self):
         """
-        Whether self contains other entities (like a package or a record
-        for instance).
+        Whether self contains other entities (such as a package or a record).
+
         :return: A boolean
         """
         pass
@@ -4851,7 +4952,7 @@ class Entity(object):
     def is_predefined(self):
         """
         Whether self is a predefined entity, i.e. an entity for which there
-        is no explicit declaration (like an 'int' in C or an 'Integer' in Ada)
+        is no explicit declaration (like an 'int' in C or an 'Integer' in Ada).
 
         :return: A boolean
         """
@@ -4859,10 +4960,10 @@ class Entity(object):
 
     def declaration(self):
         """
-        Return the location of the declaration for the entity. The file's name
-        is is "<predefined>" for predefined entities
+        Returns the location of the declaration for the entity. The file's name
+        is is "<predefined>" for predefined entities.
 
-        :return: An instance of :class:`GPS.FileLocation`, where the entity is
+        :return: An instance of :class:`GPS.FileLocation` where the entity is
            declared
 
         .. code-block:: python
@@ -4876,33 +4977,33 @@ class Entity(object):
 
     def derived_types(self):
         """
-        Return a list of all the entities that are derived from self. For
+        Returns a list of all the entities that are derived from self. For
         object-oriented languages, this includes types that extend self. In
         Ada, this also includes subtypes of self.
 
-        :return: List of :class:`GPS.Entity`
+        :return: A list of :class:`GPS.Entity`
         """
         pass  # implemented in Ada
 
     def discriminants(self):
         """
-        Return the list of discriminants for entity. This is a list of
+        Returns the list of discriminants for entity. This is a list of
         entities, empty if the type has no discriminant or if this notion
-        doesn't apply to that language
+        does not apply to the language.
 
-        :return: List of instances of :class:`GPS.Entity`
+        :return: A list of instances of :class:`GPS.Entity`
 
         """
         pass  # implemented in Ada
 
     def documentation(self, extended=False):
         """
-        Return the documentation for the entity. This is the comment block
+        Returns the documentation for the entity. This is the comment block
         found just before or just after the declaration of the entity (if any
-        such block exists). This is also the documentation string displayed in
-        the tooltips when you leave the mouse cursor over an entity for a
-        while. If extended is true, then the returned documentation will
-        include formatting and full entity description.
+        such block exists). This is also the documentation string displayed
+        in the tooltips when you leave the mouse cursor over an entity for a
+        while. If ``extended`` is true, the returned documentation includes
+        formatting and the full entity description.
 
         :param extended: A boolean
         :return: A string
@@ -4911,7 +5012,7 @@ class Entity(object):
 
     def end_of_scope(self):
         """
-        Return the location at which the end of the entity is found.
+        Returns the location at which the end of the entity is found.
 
         :return: An instance of :class:`GPS.FileLocation`
         """
@@ -4919,32 +5020,33 @@ class Entity(object):
 
     def fields(self):
         """
-        Return the list of fields for entity. This is a list of entities. This
-        applies to Ada record and tagged types, or C structs for instance.
+        Returns the list of fields for the entity. This is a list of
+        entities. This applies to Ada record and tagged types, or C structs
+        for instance.
 
         In older versions of GPS, this used to return the literals for
         enumeration types, but these should now be queried through
-        self.literals() instead.
+        :func:`self.literals` instead.
 
-        :return: List of instances of :class:`GPS.Entity`
+        :return: A list of instances of :class:`GPS.Entity`
 
         """
         pass  # implemented in Ada
 
     def literals(self):
         """
-        Return the list of literals for an enumeration type.
+        Returns the list of literals for an enumeration type.
 
-        :return: List of instances of :class:`GPS.Entity`
+        :return: A list of instances of :class:`GPS.Entity`
         """
         pass
 
     def find_all_refs(self, include_implicit=False):
         """
-        Display in the location window all the references to the entity. If
-        include_implicit is true, then implicit uses of the entity will also be
-        referenced, for instance when the entity appears as an implicit
-        parameter to a generic instantiation in Ada
+        Displays in the :guilabel:`Locations` view all the references to the
+        entity. If ``include_implicit`` is true, implicit uses of the entity
+        are also referenced, for example when the entity appears as an
+        implicit parameter to a generic instantiation in Ada.
 
         :param include_implicit: A boolean
 
@@ -4954,10 +5056,10 @@ class Entity(object):
 
     def full_name(self):
         """
-        Return the full name of the entity that it to say the name of the
-        entity prefixed with its callers and parent packages names. The casing
-        of the name has been normalized to lower-cases for case-insensitive
-        languages
+        Returns the full name of the entity that it to say the name of the
+        entity prefixed with its callers and parent packages names. The
+        casing of the name has been normalized to lower-cases for
+        case-insensitive languages.
 
         :return: A string, the full name of the entity
         """
@@ -4965,8 +5067,8 @@ class Entity(object):
 
     def methods(self, include_inherited=False):
         """
-        Return the list of primitive operations (aka methods) for self. This
-        list is not sorted
+        Returns the list of primitive operations (aka methods) for self. This
+        list is not sorted.
 
         :param include_inherited: A boolean
         :return: A list of instances of :class:`GPS.Entity`
@@ -4975,8 +5077,8 @@ class Entity(object):
 
     def name(self):
         """
-        Return the name of the entity. The casing of the name has been
-        normalized to lower-cases for case-insensitive languages
+        Returns the name of the entity. The casing of the name has been
+        normalized to lower-cases for case-insensitive languages.
 
         :return: A string, the name of the entity
         """
@@ -4984,9 +5086,9 @@ class Entity(object):
 
     def name_parameters(self, location):
         """
-        Refactor the code at the location, to add named parameters. This only
-        work if the language has support for such parameters, namely Ada for
-        the time being
+        Refactors the code at the location, to add named parameters. This
+        only work if the language has support for such parameters, namely Ada
+        for now.
 
         :param location: An instance of :class:`GPS.FileLocation`
 
@@ -4999,16 +5101,16 @@ class Entity(object):
 
     def parameters(self):
         """
-        Return the list of parameters for entity. This is a list of
+        Returns the list of parameters for entity. This is a list of
         entities. This applies to subprograms.
 
-        :return: List of instances of :class:`GPS.Entity`
+        :return: A list of instances of :class:`GPS.Entity`
         """
         pass  # implemented in Ada
 
     def parent_types(self):
         """
-        Return the list of parent types when self is a type. For instance,
+        Returns the list of parent types when self is a type. For example,
         if we have the following Ada code::
 
             type T is new Integer;
@@ -5016,14 +5118,14 @@ class Entity(object):
 
         then the list of parent types for T1 is [T].
 
-        :return: a list of :class:`GPS.Entity`
+        :return: A list of :class:`GPS.Entity`
         """
         pass  # implemented in Ada
 
     def pointed_type(self):
         """
-        Return the type pointed to by entity. If self is not a pointer (or an
-        Ada access type), None is returned. This function also applies to
+        Returns the type pointed to by entity. If self is not a pointer (or
+        an Ada access type), None is returned. This function also applies to
         variables, and returns the same information as their type would
 
         :return: An instance of :class:`GPS.Entity`
@@ -5045,8 +5147,8 @@ class Entity(object):
 
     def primitive_of(self):
         """
-        Return the list of type for which self is a primitive operation (or a
-        method, in other languages than Ada)
+        Returns the list of type for which self is a primitive operation (or a
+        method, in other languages than Ada).
 
         :return: A list of instances of :class:`GPS.Entity` or []
 
@@ -5056,28 +5158,28 @@ class Entity(object):
     def references(self, include_implicit=False, synchronous=True,
                    show_kind=False, in_file=None, kind_in=''):
         """
-        List all references to the entity in the project sources. If
-        include_implicit is true, then implicit uses of the entity will also be
-        referenced, for instance when the entity appears as an implicit
+        Lists all references to the entity in the project sources. If
+        ``include_implicit`` is true, implicit uses of the entity are also
+        referenced, for example when the entity appears as an implicit
         parameter to a generic instantiation in Ada.
 
-        If ``synchronous`` is True, then the result will be directly returned,
-        otherwise a command will be returned and its result will be accessible
-        with get_result(). The result, then, is either a list of locations (if
-        show_kind is False), or a htable indexed by location, and whose value
-        is a string indicating the kind of the reference (declaration, body,
-        label, end-of-spec,...).  The parameter ``in_file`` can be used to
-        limit the search to references in a particular file. This is a lot
-        faster.  The parameter ``kind_in`` is a list of comma-separated list of
-        reference kinds (as would be returned when show_kind is True). Only
-        such references are returned, as opposed to all references.
+        If ``synchronous`` is True, the result is returned directly,
+        otherwise a command is returned and its result is accessible with
+        :func:`get_result`. The result, in that case, is either a list of
+        locations (if show_kind is False) or a htable indexed by location,
+        and whose value is a string indicating the kind of the reference
+        (such as declaration, body, label, or end-of-spec).  ``in_file`` can
+        be used to limit the search to references in a particular file, which
+        is.  ``kind_in`` is a list of comma-separated list of reference kinds
+        (as would be returned when show_kind is True). Only such references
+        are returned, as opposed to all references.
 
         :param include_implicit: A boolean
         :param synchronous: A boolean
         :param show_kind: A boolean
         :param in_file: An instance of :class:`GPS.File`
         :param kind_in: A string
-        :return: List of :class:`GPS.FileLocation`, htable
+        :return: A list of :class:`GPS.FileLocation`, :class:`htable`,
            or :class:`GPS.Command`
 
         .. seealso:: :func:`GPS.Entity.find_all_refs()`
@@ -5092,22 +5194,22 @@ class Entity(object):
     def rename(self, name, include_overriding=True, make_writable=False,
                auto_save=False):
         """
-        Rename the entity every where in the application. The source files
+        Renames the entity everywhere in the application. The source files
         should have been compiled first, since this operation relies on the
         cross-reference information which have been generated by the
-        compiler. If include_overriding is true, then subprograms that override
-        or are overridden by self are also renamed. Likewise, if self is a
-        parameter to a subprogram then parameters with the same name in
-        overriding or overridden subprograms are also renamed.
+        compiler. If ``include_overriding`` is true, subprograms that
+        override or are overridden by self are also renamed. Likewise, if
+        self is a parameter to a subprogram then parameters with the same
+        name in overriding or overridden subprograms are also renamed.
 
-        If some renaming should be performed in a read-only file, the behavior
-        depends on the make_writable parameter: if true, the file is made
+        If some renaming should be performed in a read-only file, the
+        behavior depends on ``make_writable``: if true, the file is made
         writable and the renaming is performed; if false, no renaming is
         performed in that file, and a dialog is displayed asking whether you
         want to do the other renamings.
 
-        The files will be saved automatically if auto_save is true, otherwise
-        they are left edited.
+        The files will be saved automatically if auto_``save is true``,
+        otherwise they are left edited but unsaved.
 
         :param name: A string
         :param include_overriding: A boolean
@@ -5126,18 +5228,18 @@ class Entity(object):
 
     def show(self):
         """
-        Display in the type browser the informations known about the entity:
-        list of fields for records, list of primitive subprograms or methods,
-        list of parameters, ...
+        Displays in the type browser the informations known about the entity,
+        such as the list of fields for records, list of primitive subprograms
+        or methods, and list of parameters.
         """
         pass  # implemented in Ada
 
     def type(self):
         """
-        Return the type of the entity. For a variable, it is its type.
-        This function used to return the parent types when self is itself
-        a type, but this usage is deprecated and you should be using
-        self.parent_types() instead.
+        Returns the type of the entity. For a variable, this its type.  This
+        function used to return the parent types when self is itself a type,
+        but this usage is deprecated and you should be using
+        :func:`self.parent_types` instead.
 
         :return: An instance of :class:`GPS.Entity`
         """
@@ -5151,7 +5253,7 @@ class Entity(object):
 class EntityContext(FileContext):
 
     """
-    Represents a context that contains entity information
+    Represents a context that contains entity information.
 
     .. seealso:: :func:`GPS.EntityContext.__init__()`
     """
@@ -5159,14 +5261,14 @@ class EntityContext(FileContext):
     def __init__(self):
         """
         Dummy function, whose goal is to prevent user-creation of a
-        GPS.EntityContext instance. Such instances can only be created
-        internally by GPS
+        :func:`GPS.EntityContext` instance. Such instances can only be
+        created internally by GPS.
         """
         pass  # implemented in Ada
 
     def entity(self, approximate_search_fallback=True):
         """
-        Return the entity stored in the context
+        Returns the entity stored in the context.
 
         :param approximate_search_fallback: If True, when the line and column
            are not exact, this parameter will trigger approximate search in the
@@ -5197,15 +5299,15 @@ class Exception(exceptions.Exception):
 class File(object):
 
     """
-    Represents a source file of your application
+    Represents a source file of your application.
 
-    .. seealso:: :func:`GPS.File.__init__()`
+    .. seealso:: :func:`GPS.File.__init__`
     """
 
     def __cmp__(self, file):
         """
-        Compare two instances of GPS.File, and return -1, 0 or 1 depending on
-        their relative sort order
+        Compares two instances of :func:`GPS.File` and returns -1, 0 or 1
+        depending on their relative sort order.
 
         :param file: An instance of :class:`GPS.File`
         :return: An integer
@@ -5214,7 +5316,7 @@ class File(object):
 
     def __hash__(self):
         """
-        Return a hash value suitable for storing self in a dictionary
+        Returns a hash value suitable for storing self in a dictionary.
 
         :return: An integer
         """
@@ -5222,15 +5324,15 @@ class File(object):
 
     def __init__(self, name, local=False):
         """
-        Initializes a new instance of the class File. This doesn't need to be
-        called explicitly, since GPS will call it automatically when you create
-        such an instance. If name is a base file name (no directory is
-        specified), then GPS will attempt to search for this file in the list
-        of source directories of the project. If a directory is specified, or
-        the base file name wasn't found in the source directories, then the
-        file name is considered as relative to the current directory. If local
-        is "true" the specified file name is to be considered as local to the
-        current directory.
+        Initializes a new instance of the class :class:`File`. This does not
+        need to be called explicitly, since GPS calls it automatically when
+        you create such an instance. If name is a base file name (no
+        directory is specified), GPS attempts to search for this file in the
+        list of source directories of the project. If a directory is
+        specified, or the base file name was not found in the source
+        directories, then the file name is considered as relative to the
+        current directory. If ``local`` is "true", the specified file name is
+        to be considered as local to the current directory.
 
         :param name: Name of the file associated with this instance
         :param local: A boolean
@@ -5246,8 +5348,8 @@ class File(object):
 
     def __repr__(self):
         """
-        Return a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python
+        Returns a string suitable for the display of self on screen. This is
+        called implicitly by GPS and Python.
 
         :return: A string
         """
@@ -5255,8 +5357,8 @@ class File(object):
 
     def __str__(self):
         """
-        Return a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python
+        Returns a string suitable for the display of self on screen. This is
+        called implicitly by GPS and Python.
 
         :return: A string
         """
@@ -5264,42 +5366,43 @@ class File(object):
 
     def check_semantic(self):
         """
-        Check the semantic for current file. This call will return only once
-        the check is completed
+        Checks the semantic for current file. This call returns only after
+        the check is completed.
 
         .. seealso::
 
-             :func:`GPS.File.shadow_check_semantic()`
+             :func:`GPS.File.shadow_check_semantic`
 
-             :func:`GPS.File.check_syntax()`
+             :func:`GPS.File.check_syntax`
 
-             :func:`GPS.File.shadow_check_syntax()`
+             :func:`GPS.File.shadow_check_syntax`
         """
         pass  # implemented in Ada
 
     def check_syntax(self):
         """
-        Check the syntax for current file. This call will return only once the
-        check is completed
+        Checks the syntax for current file. This call returns only after the
+        check is completed.
 
         .. seealso::
 
-             :func:`GPS.File.shadow_check_syntax()`
+             :func:`GPS.File.shadow_check_syntax`
 
-             :func:`GPS.File.shadow_check_semantic()`
+             :func:`GPS.File.shadow_check_semantic`
 
-             :func:`GPS.File.check_semantic()`
+             :func:`GPS.File.check_semantic`
         """
         pass  # implemented in Ada
 
     def compile(self, extra_args=''):
         """
-        Compile current file. This call will return only once the compilation
-        is completed. Additional arguments can be added to the command line.
+        Compiles the current file. This call returns only after the
+        compilation is completed. Additional arguments can be added to the
+        command line.
 
         :param extra_args: A string
 
-        .. seealso:: :func:`GPS.File.make()`
+        .. seealso:: :func:`GPS.File.make`
 
         .. code-block:: python
 
@@ -5309,7 +5412,7 @@ class File(object):
 
     def directory(self):
         """
-        Return the directory in which the file is found
+        Returns the directory in which the file is found.
 
         :return: A string
 
@@ -5327,8 +5430,8 @@ class File(object):
 
     def entities(self, local=True):
         """
-        Return the list of entities that are either referenced (if local is
-        false) or declared (if local is true) in self.
+        Returns the list of entities that are either referenced (``local`` is
+        false) or declared (``local`` is true) in self.
 
         :param local: A boolean
         :return: A list of :class:`GPS.Entity`
@@ -5337,8 +5440,8 @@ class File(object):
 
     def generate_doc(self):
         """
-        Generate the documentation of the file, and display it with the default
-        browser
+        Generates the documentation of the file and displays it in the
+        default browser.
 
         .. seealso:: :func:`GPS.Project.generate_doc`
         """
@@ -5346,10 +5449,10 @@ class File(object):
 
     def get_property(self, name):
         """
-        Return the value of the property associated with the file. This
+        Returns the value of the property associated with the file. This
         property might have been set in a previous GPS session if it is
         persistent. An exception is raised if no such property already exists
-        for the file
+        for the file.
 
         :param name: A string
         :return: A string
@@ -5360,15 +5463,16 @@ class File(object):
 
     def imported_by(self, include_implicit=False, include_system=True):
         """
-        Return the list of files that depends on file_name. This command might
-        take some time to execute since GPS needs to parse the cross-reference
-        information for multiple source files. If include_implicit is true,
-        then implicit dependencies are also returned. If include_system is
-        true, then system files from the compiler runtime are also returned.
+        Returns the list of files that depends on file_name. This command
+        might take some time to execute since GPS needs to parse the
+        cross-reference information for multiple source files. If
+        ``include_implicit`` is true, implicit dependencies are also
+        returned. If ``include_system`` is true, dependent system files from
+        the compiler runtime are also returned.
 
         :param include_implicit: A boolean.
-             This is now ignored, and only explicit dependencies corresponding
-             to actual 'with' or '#include' lines will be returned.
+           This is now ignored, and only explicit dependencies corresponding
+           to actual 'with' or '#include' lines will be returned.
         :param include_system: A boolean
         :return: A list of files
 
@@ -5378,10 +5482,10 @@ class File(object):
 
     def imports(self, include_implicit=False, include_system=True):
         """
-        Return the the list of files that self depends on. If include_implicit
-        is true, then implicit dependencies are also returned. If
-        include_system is true, then system files from the compiler runtime are
-        also returned.
+        Returns the the list of files that self depends on. If
+        ``include_implicit`` is true, implicit dependencies are also
+        returned. If ``include_system`` is true, then system files from the
+        compiler runtime are also considered.
 
         :param include_implicit: A boolean
         :param include_system: A boolean
@@ -5393,10 +5497,10 @@ class File(object):
 
     def language(self):
         """
-        Return the name of the language this file is written in. This is based
-        on the file extension and the naming scheme defined in the project
-        files or the XML files. The empty string is returned when the language
-        is unknown
+        Returns the name of the language this file is written in. This is
+        based on the file extension and the naming scheme defined in the
+        project files or the XML files. The empty string is returned when the
+        language is unknown.
 
         :return: A string
         """
@@ -5404,9 +5508,9 @@ class File(object):
 
     def make(self, extra_args=''):
         """
-        Compile and link the file and all its dependencies. This call will
-        return only once the compilation is completed. Additional arguments can
-        be added to the command line.
+        Compiles and links the file and all its dependencies. This call
+        returns only after the compilation is completed. Additional arguments
+        can be added to the command line.
 
         :param extra_args: A string
 
@@ -5416,26 +5520,26 @@ class File(object):
 
     def name(self, remote_server='GPS_Server'):
         """
-        Return the name of the file associated with self. This is an absolute
+        Returns the name of the file associated with self. This is an absolute
         file name, including directories from the root of the filesystem.
 
-        If remote_server is set, then the function returns the equivalent path
+        If ``remote_server`` is set, the function returns the equivalent path
         on the specified server. GPS_Server (default) is always the local
         machine.
 
         :param remote_server: A string. Possible values are "GPS_Server"
-            (or empty string), "Build_Server", "Debug_Server",
-            "Execution_Server" and "Tools_Server".
+           (or empty string), "Build_Server", "Debug_Server",
+           "Execution_Server" and "Tools_Server".
         :return: A string, the name of the file
         """
         pass  # implemented in Ada
 
     def other_file(self):
         """
-        Return the name of the other file semantically associated with this
+        Returns the name of the other file semantically associated with this
         one. In Ada this is the spec or body of the same package depending on
-        the type of this file. In C, this will generally be the .c or .h file
-        with the same base name.
+        the type of this file. In C, this will generally be the :file:`.c` or
+        :file:`.h` file with the same base name.
 
         :return: An instance of :class:`GPS.File`
 
@@ -5449,9 +5553,10 @@ class File(object):
 
     def project(self, default_to_root=True):
         """
-        Return the project to which file belongs. If file is not one of the
-        souces of the project, the returned value depends on default_to_none:
-        if false, None is returned. Otherwise, the root project is returned.
+        Returns the project to which file belongs. If file is not one of the
+        souces of the project, the returned value depends on
+        ``default_to_root``: if false, None is returned. Otherwise, the root
+        project is returned.
 
         :param default_to_root: A boolean
         :return: An instance of :class:`GPS.Project`
@@ -5485,12 +5590,13 @@ class File(object):
            appear in the file; 1 indicates that they are sorted first by
            entity, and then in file order.
 
-        :return: a list of tuples (GPS.Entity, GPS.FileLocation)
+        :return: A list of tuples (:class:`GPS.Entity`,
+           :class:`GPS.FileLocation`)
         """
 
     def remove_property(self, name):
         """
-        Removes a property associated with a file
+        Removes a property associated with a file.
 
         :param name: A string
 
@@ -5501,16 +5607,16 @@ class File(object):
     def search(self, pattern, case_sensitive=False,
                regexp=False, scope='whole'):
         """
-        Return the list of matches for pattern in the file. Default values are
+        Returns the list of matches for pattern in the file. Default values are
         False for case_sensitive and regexp. Scope is a string, and should be
         any of 'whole', 'comments', 'strings', 'code'. The latter will match
-        only for text outside of comments
+        only for text outside of comments.
 
         :param pattern: A string
         :param case_sensitive: A boolean
         :param regexp: A boolean
         :param scope: One of ("whole", "comments", "strings", "code")
-        :return: List of :class:`GPS.FileLocation` instances
+        :return: A list of :class:`GPS.FileLocation` instances
 
         .. seealso::
 
@@ -5522,10 +5628,10 @@ class File(object):
 
     def search_next(self, pattern, case_sensitive=False, regexp=False):
         """
-        Return the next match for pattern in the file. Default values are False
-        for case_sensitive and regexp. Scope is a string, and should be any of
-        'whole', 'comments', 'strings', 'code'. The latter will match only for
-        text outside of comments
+        Returns the next match for pattern in the file. Default values are
+        False for case_sensitive and regexp. Scope is a string, and should be
+        any of 'whole', 'comments', 'strings', 'code'. The latter will match
+        only for text outside of comments.
 
         :param pattern: A string
         :param case_sensitive: A boolean
@@ -5543,10 +5649,10 @@ class File(object):
         persistent is set to True.
 
         This is different than setting instance properties through Python's
-        standard mechanism in that there is no garantee that the same instance
-        of GPS.File will be created for each physical file on the disk, and
-        therefore you would not be able to associate a property with the
-        physical file itself
+        standard mechanism in that there is no guarantee that the same
+        instance of :class:`GPS.File` will be created for each physical file
+        on the disk, and therefore you would not be able to associate a
+        property with the physical file itself.
 
         :param name: A string
         :param value: A string
@@ -5562,10 +5668,10 @@ class File(object):
 
     def shadow_check_semantic(self):
         """
-        Check the semantic for current file. The current file will not be
-        saved, but a temporary extending project will be created, and deleted
-        when the compilation ends. This call will launch a background process
-        and return immediately
+        Checks the semantic for current file. The current file is not saved,
+        but a temporary extension project is created and deleted when
+        the compilation ends. This call launches a background process and
+        immediately returns.
 
         .. seealso::
 
@@ -5579,10 +5685,10 @@ class File(object):
 
     def shadow_check_syntax(self):
         """
-        Check the syntax for current file. The current file will not be saved,
-        but a temporary extending project will be created, and deleted when the
-        compilation ends. This call will launch a background process and return
-        immediately
+        Checks the syntax for current file. The current file is not saved, but
+        a temporary extension project is created and deleted when the
+        compilation ends. This call launches a background process and
+        immediately returns.
 
         .. seealso::
 
@@ -5597,9 +5703,10 @@ class File(object):
 
     def used_by(self):
         """
-        Display in the dependency browser the list of files that depends on
-        file_name. This command might take some time to execute since GPS needs
-        to parse the cross-reference information for multiple source files
+        Displays in the dependency browser the list of files that depends on
+        file_name. This command might take some time to execute since GPS
+        needs.  to parse the cross-reference information for multiple source
+        files
 
         .. seealso:: :func:`GPS.File.uses`
         """
@@ -5607,7 +5714,7 @@ class File(object):
 
     def uses(self):
         """
-        Display in the dependency browser the list of files that file_name
+        Displays in the dependency browser the list of files that file_name
         depends on.
 
         .. seealso:: :func:`GPS.File.used_by`
@@ -5622,15 +5729,15 @@ class File(object):
 class FileLocation(object):
 
     """
-    Represents a location in a file
+    Represents a location in a file.
 
     .. seealso:: :func:`GPS.FileLocation.__init__`
     """
 
     def __cmp__(self, file):
         """
-        Compare two instances of GPS.FileLocation, and return -1, 0 or 1
-        depending on their relative sort order
+        Compares two instances of :class:`GPS.FileLocation` and returns -1, 0
+        or 1 depending on their relative sort order.
 
         :param file: An instance of :class:`GPS.FileLocation`
         :return: An integer
@@ -5639,7 +5746,7 @@ class FileLocation(object):
 
     def __hash__(self):
         """
-        Return a hash value suitable for storing self in a dictionary
+        Returns a hash value suitable for storing self in a dictionary.
 
         :return: An integer
         """
@@ -5647,7 +5754,7 @@ class FileLocation(object):
 
     def __init__(self, filename, line, column):
         """
-        Initializes a new instance of GPS.FileLocation.
+        Initializes a new instance of :class:`GPS.FileLocation`.
 
         :param filename: An instance of :class:`GPS.File`
         :param line: An integer
@@ -5661,8 +5768,8 @@ class FileLocation(object):
 
     def __repr__(self):
         """
-        Return a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python
+        Returns a string suitable for the display of self on screen. This is
+        called implicitly by GPS and Python.
 
         :return: A string
         """
@@ -5670,8 +5777,8 @@ class FileLocation(object):
 
     def __str__(self):
         """
-        Return a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python
+        Returns a string suitable for the display of self on screen. This is
+        called implicitly by GPS and Python.
 
         :return: A string
         """
@@ -5679,43 +5786,43 @@ class FileLocation(object):
 
     def column(self):
         """
-        Return the column of the location
+        Returns the column of the location.
 
         :return: An integer, the column of the location
 
         .. seealso::
 
-           :func:`GPS.FileLocation.file()`
+           :func:`GPS.FileLocation.file`
 
-           :func:`GPS.FileLocation.line()`
+           :func:`GPS.FileLocation.line`
         """
         pass  # implemented in Ada
 
     def file(self):
         """
-        Return the file of the location
+        Returns the file of the location.
 
-        :return: An instance of GPS.File, the file of the location
+        :return: An instance of :class:`GPS.File`, the file of the location
 
         .. seealso::
 
-           :func:`GPS.FileLocation.line()`
+           :func:`GPS.FileLocation.line`
 
-           :func:`GPS.FileLocation.column()`
+           :func:`GPS.FileLocation.column`
         """
         pass  # implemented in Ada
 
     def line(self):
         """
-        Return the line of the location
+        Returns the line number of the location.
 
-        :return: An integer, the line of the location
+        :return: An integer
 
         .. seealso::
 
-           :func:`GPS.FileLocation.file()`
+           :func:`GPS.FileLocation.file`
 
-           :func:`GPS.FileLocation.column()`
+           :func:`GPS.FileLocation.column`
         """
         pass  # implemented in Ada
 
@@ -5727,34 +5834,34 @@ class FileLocation(object):
 class HTML(object):
 
     """
-    This class gives access to the help system of GPS, as well as to the
-    integrated browser
+    This class gives access to the help system of GPS as well as the
+    integrated browser.
     """
 
     @staticmethod
     def add_doc_directory(directory):
         """
-        Add a new directory to the GPS_DOC_PATH environment variable. This
-        directory is searched for documentation files. If this directory
-        contains a gps_index.xml file, it is parsed to find the list of
-        documentation files to add to the Help menu. See the GPS documentation
-        for more information on the format of the gps_index.xml files
+        Adds a new directory to the :file:`GPS_DOC_PATH` environment
+        variable. This directory is searched for documentation files. If this
+        directory contains a :file:`gps_index.xml` file, it is parsed to find
+        the list of documentation files to add to the :guilabel:`Help`
+        menu. See the GPS documentation for more information on the format of
+        the :file:`gps_index.xml` files
 
-        :param directory: Directory that contains the documentation
+        :param directory: Directory containing the documentation
         """
         pass  # implemented in Ada
 
     @staticmethod
     def browse(URL, anchor='', navigation=True):
         """
-        Open the GPS html viewer, and load the given URL. If anchor matches a
-        <a> tag in this file, GPS will jump to it. If URL isn't an absolute
-        file name, it is searched in the path set by the environment variable
-        GPS_DOC_PATH.
+        Opens the GPS HTML viewer, and loads the given URL. If anchor matches
+        a <a> tag in this file, GPS jumps to it. If URL is not an absolute file
+        name, it is searched in the path set by the environment variable
+        :file:`GPS_DOC_PATH`.
 
-        If navigation is True, then the URL is saved in the navigation list, so
-        that users can move back and forward from and to this location later
-        on.
+        If ``navigation`` is True, the URL is saved in the navigation list, so
+         users can move back and forward from and to this location later on.
 
         The URL can be a network file name, with the following general format::
 
@@ -5789,8 +5896,8 @@ class Help(object):
     """
     This class gives access to the external documentation for shell
     commands. This external documentation is stored in the file
-    shell_commands.xml, part of the GPS installation, and is what you are
-    currently seeing.
+    :file:`shell_commands.xml`, part of the GPS installation, and is what you
+    are currently seeing.
 
     You almost never need to use this class yourself, since it is used
     implicitly by Python when you call the help(object) command at the GPS
@@ -5811,15 +5918,16 @@ class Help(object):
     The first word after '%' is the language of the shell command, the rest of
     the text is the command to execute
 
-    .. seealso:: :func:`GPS.Help.__init__()`
+    .. seealso:: :func:`GPS.Help.__init__`
     """
 
     def __init__(self):
         """
-        Initializes the instance of the Help class. This parses the XML file
-        that contains the description of all the commands. With python, the
-        memory occupied by this XML tree will be automatically freed. However,
-        with the GPS shell you need to explicitly call GPS.Help.reset()
+        Initializes the instance of the :class:`Help` class. This parses the
+        XML file that contains the description of all the commands. With
+        python, the memory occupied by this XML tree will be automatically
+        freed. However, with the GPS shell you need to explicitly call
+        :func:`GPS.Help.reset`.
 
         .. seealso:: :func:`GPS.Help.reset`
         """
@@ -5827,9 +5935,9 @@ class Help(object):
 
     def file(self):
         """
-        Return the name of the file that contains the description of the shell
-        commands. You shouldn't have to access it yourself, since you can do so
-        through GPS.Help().getdoc() instead
+        Returns the name of the file that contains the description of the
+        shell commands. You should not have to access it yourself, since you
+        can do so using :func:`GPS.Help().getdoc` instead.
 
         :return: A string
 
@@ -5839,9 +5947,10 @@ class Help(object):
 
     def getdoc(self, name, html=False):
         """
-        Search, into the XML file shell_commands.xml, the documentation for
-        this specific command or entity. If no documentation is found, an error
-        is raised. If html is true, the documentation is formated in HTML
+        Searches in the XML file :file`shell_commands.xml` for the
+        documentation for this specific command or entity. If no documentation
+        is found, an error is raised. If ``html`` is true, the documentation is
+        formated in HTML
 
         :param name: The fully qualified name of the command
         :param html: A boolean
@@ -5862,9 +5971,9 @@ class Help(object):
 
     def reset(self):
         """
-        Free the memory occupied by this instance. This frees the XML tree that
-        is kept in memory. As a result, you can no longer call
-        GPS.Help.getdoc() afterward.
+        Frees the memory occupied by this instance. This frees the XML tree
+        that is kept in memory. As a result, you can no longer call
+        :func:`GPS.Help.getdoc`.
         """
         pass  # implemented in Ada
 
@@ -5876,688 +5985,700 @@ class Help(object):
 class Hook(object):
 
     """
-General interface to hooks. Hooks are commands executed when some specific
-events occur in GPS, and allow you to customize some of the aspects of GPS
+    General interface to hooks. Hooks are commands executed when some specific
+    events occur in GPS, and allow you to customize some of the aspects of GPS
 
-.. seealso:: :func:`GPS.Hook.__init__`
+    .. seealso:: :func:`GPS.Hook.__init__`
 
-The available hooks are:
+    The available hooks are:
 
-- activity_checked_hook(hookname)
+    - :command:`activity_checked_hook(hookname)`
 
-  Hook called when an activity has been checked, this is the last step done
-  after the activity has been committed. It is at this point that the activity
-  closed status is updated.
+      Called when an activity has been checked, the last step done after the
+      activity has been committed. It is at this point that the activity
+      closed status is updated.
 
-- after_character_added(hookname, file, character)
+    - :command:`after_character_added(hookname, file, character)`
 
-  Hook called when a character has been added in the editor. This hook is also
-  called for the backspace key.
+      Called when a character has been added in the editor. This hook is also
+      called for the backspace key.
 
-  :param file: An instance of GPS.File
-  :param character: A character
+      :param file: An instance of GPS.File
+      :param character: A character
 
-  .. seealso::
+      .. seealso::
 
-     Hook: character_added
+      Hook :command:`character_added`
 
-     Hook: word_added
+      Hook :command:`word_added`
 
-- annotation_parsed_hook(hookname)
+    - :command:`annotation_parsed_hook(hookname)`
 
-    Hook called when the last file annotation has been parsed after the
-    corresponding VCS action.
+      Called when the last file annotation has been parsed after the
+      corresponding VCS action.
 
-- before_exit_action_hook(hookname)
+    - :command:`before_exit_action_hook(hookname)`
 
-  This hook is called when GPS is about to exit. If it returns 0, this exit
-  will be prevented (it is recommended that you display a dialog to explain
-  why, in such a case)
+      Called when GPS is about to exit. If it returns 0, the exit is abort
+      (you should display a dialog to explain why, in such a case)
 
-  :return: A boolean
+      :return: A boolean
 
-- before_file_saved(hookname, file)
+    - :command:`before_file_saved(hookname, file)`
 
-  Hook called right before a file is saved
+      Called immediately before a file is saved.
 
-  :param file: An instance of GPS.File
+      :param file: An instance of :class:`GPS.File`
 
-- bookmark_added(hookname, bookmark_name)
+    - :command:`bookmark_added(hookname, bookmark_name)`
 
-  Hook called when a new bookmark has been created by the user
+      Called when a new bookmark has been created by the user.
 
-   :param bookmark_name: A string, the name of the bookmark that has been added
+      :param bookmark_name: A string, the name of the bookmark that has been
+         added
 
-- bookmark_removed(hookname, bookmark_name)
+    - :command:`bookmark_removed(hookname, bookmark_name)`
 
-  Hook called when a new bookmark has been removed by the user
+      :command:`Called when a new bookmark has been removed by the user.`
 
-  :param bookmark_name: A string, the name of the bookmark that has been
-      removed
+      :param bookmark_name: A string, the name of the bookmark that has been
+          removed
 
-- buffer_edited(hookname, file)
+    - :command:`buffer_edited(hookname, file)`
 
-  Hook called after the user has stopped modifying the contents of an editor
+      Called after the user has stopped modifying the contents of an editor.
 
-  :param file: An instance of GPS.File
+      :param file: An instance of :class:`GPS.File`
 
-- build_server_connected_hook(hookname)
+    - :command:`build_server_connected_hook(hookname)`
 
-  Hook called when GPS connects to the build server in remote mode
+      Called when GPS connects to the build server in remote mode.
 
-- character_added(hookname, file, character)
+    - :command:`character_added(hookname, file, character)`
 
-  Hook called when a character is going to be added in the editor. It is also
-  called when a character is going to be removed, in which case the last
-  parameter is 8 (control-h)
+      Called when a character is going to be added in the editor. It is also
+      called when a character is going to be removed, in which case the last
+      parameter is 8 (control-h).
 
-   :param file: An instance of GPS.File
-   :param character: A character
+      :param file: An instance of :class:`GPS.File`
+      :param character: A character
 
-   .. seealso::
+      .. seealso::
 
-      Hook after_character_added
+          Hook :command:`after_character_added`
 
-      Hook word_added
+          Hook :command:`word_added`
 
-- clipboard_changed(hookname)
+    - :command:`clipboard_changed(hookname)`
 
-  Hook called when the contents of the clipboard has changed, either because
-  the user has done a Copy or Cut operation, or because he called Paste
-  Previous which changes the current entry in the multi-level clipboard.
+      Called when the contents of the clipboard has changed, either because
+      the user has done a Copy or Cut operation, or because he called Paste
+      Previous which changes the current entry in the multi-level clipboard.
 
-- commit_done_hook(hookname)
+    - :command:`commit_done_hook(hookname)`
 
-  Hook called when a commit has been done.
+      Called when a commit has been done.
 
-- compilation_finished(hookname, category, target_name, mode_name, status)
+    - :command:`compilation_finished(hookname, category, target_name,
+      mode_name, status)`
 
-  Hook called when a compile operation has finished.
+      Called when a compile operation has finished.
 
-  Among the various tasks that GPS connects to this hook are the automatic
-  reparsing of all xref information, and the activation of the automatic-error
-  fixes
+      Among the various tasks that GPS connects to this hook are the automatic
+      reparsing of all xref information, and the activation of the
+      automatic-error fixes
 
-  See also the hook "xref_updated".
+      See also the hook "xref_updated".
 
-  :param category: A string, the location/highlighting category that contains
-    the compilation output.
-  :param target_name: A string, name of the executed build target.
-  :param mode_name: A string, name of the executed build mode.
-  :param status: An integer, exit status of the execuded program.
+      :param category: A string, the location/highlighting category that
+         contains the compilation output.
+      :param target_name: A string, name of the executed build target.
+      :param mode_name: A string, name of the executed build mode.
+      :param status: An integer, exit status of the execuded program.
 
-- compilation_starting(hookname, category, quiet, shadow)
+    - :command:`compilation_starting(hookname, category, quiet, shadow)`
 
-  Hook called when a compile operation is about to start.
+      Called when a compile operation is about to start.
 
-  Among the various tasks that GPS connects to this hook are: check whether
-  unsaved editors should be saved (asking the user), and stop the background
-  task that parses all xref info. If quiet is True, then no visible
-  modification should be done in the MDI, like raising consoles, clearing their
-  content,..., since the compilation should happen in background mode.
+      Among the various tasks that GPS connects to this hook are: check
+      whether unsaved editors should be saved (asking the user), and stop the
+      background task that parses all xref info. If ``quiet`` is True, no
+      visible modification should be done in the MDI, such as raising consoles
+      or clearing their content, since the compilation should happen in
+      background mode.
 
-  Funtions connected to this hook should return False if the compilation should
-  not occur for some reason, True if it is OK to start the
-  compilation. Typically, the reason to reject a compilation would be because
-  the user has explicitly cancelled it through a graphical dialog, or because
-  running a background compilation is not suitable at this time.
+      Funtions connected to this hook should return False if the compilation
+      should not occur for some reason, True if it is OK to start the
+      compilation. Typically, the reason to reject a compilation would be
+      because the user has explicitly cancelled it through a graphical dialog,
+      or because running a background compilation is not suitable at this
+      time.
 
-  :param category: A string, the location/highlighting category that contains
-     the compilation output.
+      :param category: A string, the location/highlighting category that
+         contains the compilation output.
 
-  :param quiet: A boolean, if True then the GUI should advertise the
-     compilation, otherwise nothing should be reported to the user, unless
-     there is an error.
+      :param quiet: A boolean, if True then the GUI should advertise the
+         compilation, otherwise nothing should be reported to the user, unless
+         there is an error.
 
-  :param shadow: A boolean, indicates whether the build launched was a Shadow
-     builds, ie a "secondary" build launched automatically by GPS after a
-     "real" build.
-     For instance, when the multiple toolchains mode is activated, the builds
-     generating cross-references are Shadow builds.
+      :param shadow: A boolean, indicates whether the build launched was a
+         Shadow builds, ie a "secondary" build launched automatically by GPS
+         after a "real" build.  For instance, when the multiple toolchains
+         mode is activated, the builds generating cross-references are Shadow
+         builds.
 
-  :return: A boolean
+      :return: A boolean
 
-  .. code-block:: python
+      .. code-block:: python
 
-     # The following code adds a confirmation dialog to all
-     # compilation commands.
-     def on_compilation_started(hook, category, quiet, shadow):
-        if not quiet:
-           return MDI.yes_no_dialog("Confirm compilation ?")
-        else:
-           return True
+         # The following code adds a confirmation dialog to all
+         # compilation commands.
+         def on_compilation_started(hook, category, quiet, shadow):
+            if not quiet:
+               return MDI.yes_no_dialog("Confirm compilation ?")
+            else:
+               return True
 
-     Hook("compilation_starting").add(on_compilation_started)
+         Hook("compilation_starting").add(on_compilation_started)
 
-  .. code-block:: python
+      .. code-block:: python
 
-     # If you create a script to execute your own build script, you
-     # should always do the following as part of your script. This
-     # ensures a better integration in GPS (saving unsaved editors,
-     # reloading xref information automatically in the end, raising
-     # the GPS console, parsing error messages for automatically
-     # fixable errors,...)
+         # If you create a script to execute your own build script, you
+         # should always do the following as part of your script. This
+         # ensures a better integration in GPS (saving unsaved editors,
+         # reloading xref information automatically in the end, raising
+         # the GPS console, parsing error messages for automatically
+         # fixable errors,...)
 
-     if notHook ("compilation_starting").run_until_failure(
-          "Builder results", False, False):
-        return
+         if notHook ("compilation_starting").run_until_failure(
+              "Builder results", False, False):
+            return
 
-     # ... spawn your command
+         # ... spawn your command
 
-     Hook("compilation_finished").run("Builder results")
+         Hook("compilation_finished").run("Builder results")
 
-- compute_build_targets(hookname, name)
+    - :command:`compute_build_targets(hookname, name)`
 
-  Hook called whenever GPS needs to compute a list of subtargets for a given
-  build target. The handler should check whether name is a known build target,
-  and if so, return a list of tuples, where each tuple corresponds to one
-  target and contains a display name (used in the menus, for instance) and the
-  name of the target. If name is not known, it should return an empty list.
+      Called whenever GPS needs to compute a list of subtargets for a given
+      build target. The handler should check whether name is a known build
+      target, and if so, return a list of tuples, where each tuple corresponds
+      to one target and contains a display name (used in the menus, for
+      instance) and the name of the target. If name is not known, it should
+      return an empty list.
 
-  :param name: A string, the target type
-  :return: A string
+      :param name: A string, the target type
+      :return: A string
 
-  .. code-block:: python
+      .. code-block:: python
 
-     def compute_targets(hook, name):
-        if name == "my_target":
-          return [(display_name_1, target_1),
-                  (display_name_2, target_2)]
-        return ""
-     GPS.Hook("compute_build_targets").add(compute_targets)
-
-- context_changed(hookname, context)
-
-  Hook called when the current context changes in GPS, ie a new file is
-  selected, or a new entity, or a new window,...
-
-  :param context: An instance of GPS.Context
-
-- contextual_menu_close(hookname)
-
-  Hook called just before a contextual menu is destroyed. At this time, the
-  value returned by GPS.contextual_context() is still the one used in the hook
-  contextual_menu_open, and therefore you can still reference the data you
-  stored in the context. This hook is called even if no action was selected by
-  the user. However, it is always called before the action is executed, since
-  the menu itself is closed first.
-
-   .. seealso:: :func:`contextual_menu_open hook`
-
-- contextual_menu_open(hookname)
-
-  Hook called just before a contextual menu is created. It is called before any
-  of the filters is evaluated, and can be used to precomputed data shared by
-  multiple filters to speed up the computation. Use GPS.contextual_context() to
-  get the context of the contextual menu and store precomputed data in it.
-
-  .. seealso:: :func:`contextual_menu_close hook`
-
-- debugger_breakpoints_changed(hookname, debugger)
-
-  Hook called when the list of breakpoints has been refreshed. This might occur
-  whether or not the list has changed, but is a good time to refresh any view
-  that might depend on an up-to-date list
-
-  :param debugger: An instance of :class:`GPS.Debugger`
-
-- debugger_command_action_hook(hookname, debugger, command)
-
-  This hook is emitted when the user types a command in the debugger console,
-  or emits the console through the GPS.Debugger API. It gives you a chance to
-  override the behavior for the command, or even define your own commands. Note
-  that you must ensure that any debugger command you execute this way does
-  finish with a prompt. The function should return the output of your custom
-  command
-
-  :param debugger: An instance of :class:`GPS.Debugger`
-  :param command: A string, the command the user wants to execute
-  :return: A boolean
-
-  .. code-block:: python
-
-      ## The following example implements a new gdb command, "hello". When the
-      ## user types this command in the console, we end up executing "print A"
-      ## instead. This can be used for instance to implement convenient
-      ## macros
-
-      def debugger_commands(hook, debugger, command):
-         if command == "hello":
-            return 'A=' + debugger.send("print A", False)
-         else:
+         def compute_targets(hook, name):
+            if name == "my_target":
+              return [(display_name_1, target_1),
+                      (display_name_2, target_2)]
             return ""
+         GPS.Hook("compute_build_targets").add(compute_targets)
 
-      GPS.Hook("debugger_command_action_hook").add(debugger_commands)
+    - :command:`context_changed(hookname, context)`
 
-- debugger_context_changed(hookname, debugger)
+      Called when the current context changes in GPS, such a new file is
+      selected or a new entity or window are created.
 
-  Called when the debugger context has changed, for instance after the user has
-  switched the current thread, has selected a new frame,...
+      :param context: An instance of :class:`GPS.Context`
 
-  :param debugger: An instance of :class:`GPS.Debugger`
+    - :command:`contextual_menu_close(hookname)`
 
-- debugger_executable_changed(hookname, debugger)
+      Called just before a contextual menu is destroyed. At this time, the
+      value returned by :func:`GPS.contextual_context` is still the one used
+      in the hook contextual_menu_open and you can still reference the data
+      you stored in the context. This hook is called even if no action was
+      selected by the user. However, it is always called before the action is
+      executed, since the menu itself is closed first.
 
-  Called when the file being debugged has changed
+       .. seealso:: :func:`contextual_menu_open hook`
 
-  :param debugger: An instance of :class:`GPS.Debugger`
+    - :command:`contextual_menu_open(hookname)`
 
-- debugger_process_stopped(hookname, debugger)
+      Called just before a contextual menu is created. It is called before any
+      of the filters is evaluated, and can be used to precomputed data shared
+      by multiple filters to speed up the computation. Use
+      :func:`GPS.contextual_context` to get the context of the contextual menu
+      and store precomputed data in it.
 
-  Called when the debugger ran and has stopped, for instance when hitting a
-  breakpoint, or after a next command. If you need to know when the debugger
-  just started processing a command, you can connect to the
-  debugger_state_changed hook instead. Conceptually, you could connect to
-  debugger_state_changed at all times instead of debugger_process_stopped and
-  check when the state is now "idle"
+      .. seealso:: :func:`contextual_menu_close hook`
 
-  :param debugger: An instance of :class:`GPS.Debugger`
+    - :command:`debugger_breakpoints_changed(hookname, debugger)`
 
-  .. seealso:: Hook debugger_state_changed
+      Called when the list of breakpoints has been refreshed. This might occur
+      whether or not the list has changed, but is a good time to refresh any
+      view that might depend on an up-to-date list
 
-- debugger_process_terminated(hookname, debugger)
+      :param debugger: An instance of :class:`GPS.Debugger`
 
-  Called when the program being debugged has terminated
+    - :command:`debugger_command_action_hook(hookname, debugger, command)`
 
-  :param debugger: An instance of :class:`GPS.Debugger`
+      Called when the user types a command in the debugger console, or emits
+      the console through the GPS.Debugger API. It gives you a chance to
+      override the behavior for the command, or even define your own
+      commands. Note that you must ensure that any debugger command you
+      execute this way does finish with a prompt. The function should return
+      the output of your custom command
 
-- debugger_question_action_hook(hookname, debugger, question)
+      :param debugger: An instance of :class:`GPS.Debugger`
+      :param command: A string, the command the user wants to execute
+      :return: A boolean
 
-  Action hook called just before displaying an interactive dialog, when the
-  debugger is asking a question to the user. This hook can be used to disable
-  the dialog (and send the rreply directly to the debugger instead). It should
-  return a non-empty string to pass to the debugger if the dialog should not be
-  displayed. You cannot send commands to the debugger when inside this hook,
-  since the debugger is blocked waiting for an answer
+      .. code-block:: python
 
-  :param debugger: An instance of GPS.Debugger
-  :param question: A string
-  :return: A string
+          ## The following example implements a new gdb command, "hello". When
+          ## the user types this command in the console, we end up executing
+          ## "print A" instead. This can be used for instance to implement
+          ## convenient macros
 
-  .. code-block:: python
+          def debugger_commands(hook, debugger, command):
+             if command == "hello":
+                return 'A=' + debugger.send("print A", False)
+             else:
+                return ""
 
-     def gps_question(hook, debugger, str):
-        return "1"   ## Always choose choice 1
+          GPS.Hook("debugger_command_action_hook").add(debugger_commands)
 
-     GPS.Hook("debugger_question_action_hook").add(gps_question)
+    - :command:`debugger_context_changed(hookname, debugger)`
 
-     debug=GPS.Debugger.get()
-     deubg.send("print &foo")
+      Called when the debugger context has changed, for example after the user
+      has switched the current thread or selected a new frame.
 
-- debugger_started(hookname, debugger)
+      :param debugger: An instance of :class:`GPS.Debugger`
 
-   Hook called when a new debugger has been started
+    - :command:`debugger_executable_changed(hookname, debugger)`
 
-   :param debugger: An instance of GPS.Debugger
+      Called when the file being debugged has changed
 
-   .. seealso:: Hook debugger_state_changed
+      :param debugger: An instance of :class:`GPS.Debugger`
 
-- debugger_state_changed(hookname, debugger, new_state)
+    - :command:`debugger_process_stopped(hookname, debugger)`
 
-  Indicates a change in the status of the debugger: new_state can be one of
-  "none" (the debugger is now terminated), "idle" (the debugger is now waiting
-  for user input) or "busy" (the debugger is now processing a command, and the
-  process is running). As opposed to debugger_process_stopped, this hook is
-  called when the command is just starting its executing (hence the debugger is
-  busy while this hook is called, unless the process immediately stopped).
+      Called when the debugger has ran and has stopped, for example when
+      hitting a breakpoint, or after a next command. If you need to know when
+      the debugger just started processing a command, you can connect to the
+      debugger_state_changed hook instead. Conceptually, you could connect to
+      debugger_state_changed at all times instead of debugger_process_stopped
+      and check when the state is now "idle".
 
-  This hook is in fact emitted also when internal commands are sent to the
-  debugger, and thus much more often than if it was just reacting to user
-  input. It is therefore recommended that the callback does the minimal amount
-  of work, possibly doing the rest of the work in an idle callback to be
-  executed when GPS is no longer busy.
+      :param debugger: An instance of :class:`GPS.Debugger`
 
-  If the new state is "busy", you cannot send additional commands to the
-  debugger.
+      .. seealso:: Hook :command:`debugger_state_changed`
 
-  When the state is either "busy" or "idle", GPS.Debugger.command will return
-  the command that is about to be executed or the command that was just
-  executed and just completed.
+    - :command:`debugger_process_terminated(hookname, debugger)`
 
-  :param debugger: An instance of :class:`GPS.Debugger`
-  :param new_state: A string
+      Called when the program being debugged has terminated.
 
-- debugger_terminated(hookname, debugger)
+      :param debugger: An instance of :class:`GPS.Debugger`
 
+    - :command:`debugger_question_action_hook(hookname, debugger, question)`
 
-  Hook called when the debugger session has been terminated. It is now
-  recommended that you connect to the debugger_state_changed hook and test
-  whether the new state is "none".
+      Action hook called just before displaying an interactive dialog, when
+      the debugger is asking a question to the user. This hook can be used to
+      disable the dialog (and send the rreply directly to the debugger
+      instead). It should return a non-empty string to pass to the debugger if
+      the dialog should not be displayed. You cannot send commands to the
+      debugger when inside this hook, since the debugger is blocked waiting
+      for an answer.
 
-  :param debugger: An instance of :class:`GPS.Debugger`
+      :param debugger: An instance of :class:`GPS.Debugger`
+      :param question: A string
+      :return: A string
 
-  .. seealso:: Hook debugger_state_changed
+      .. code-block:: python
 
-- diff_action_hook(hookname, vcs_file, orig_file, ref_file, diff_file, title)
+         def gps_question(hook, debugger, str):
+            return "1"   ## Always choose choice 1
 
-  Hook called to request the display of the comparison window
+         GPS.Hook("debugger_question_action_hook").add(gps_question)
 
-  :param vcs_file: An instance of :class:`GPS.File`
-  :param orig_file: An instance of :class:`GPS.File`
-  :param ref_file: An instance of :class:`GPS.File`
-  :param diff_file: An instance of :class:`GPS.File`
-  :param title: Buffer title
-  :return: A boolean
+         debug=GPS.Debugger.get()
+         debug.send("print &foo")
 
-- file_changed_detected(hookname, file)
+    - :command:`debugger_started(hookname, debugger)`
 
-  Hook called whenever GPS detects that an opened file changed on the disk. You
-  can connect to this hook if you want to change the default behavior, which is
-  asking if the user wants to reload the file. Your function should return 1 if
-  the action is handled by the function, and return 0 if the default behavior
-  is desired.
+       Called when a new debugger has been started.
 
-  :param file: An instance of :class:`GPS.File`
-  :return: A boolean
+       :param debugger: An instance of :class:`GPS.Debugger`
 
-  .. code-block:: python
+       .. seealso:: Hook :command:`debugger_state_changed`
 
-        import GPS
+    - :command:`debugger_state_changed(hookname, debugger, new_state)`
 
-        def on_file_changed(hook, file):
-            # automatically reload the file without prompting the user
-            ed = GPS.EditorBuffer.get(file, force = 1)
-            return 1
+      Indicates a change in the status of the debugger: ``new_state`` can be
+      one of "none" (the debugger is now terminated), "idle" (the debugger is
+      now waiting for user input) or "busy" (the debugger is now processing a
+      command, and the process is running). As opposed to
+      debugger_process_stopped, this hook is called when the command is just
+      starting its executing (hence the debugger is busy while this hook is
+      called, unless the process immediately stopped).
 
-        # install a handler on "file_changed_detected" hook
-        GPS.Hook("file_changed_detected").add(on_file_changed)
+      This hook is also called when internal commands are sent to the
+      debugger, and thus much more often than if it was just reacting to user
+      input. It is therefore recommended that the callback does the minimal
+      amount of work, possibly doing the rest of the work in an idle callback
+      to be executed when GPS is no longer busy.
 
+      If the new state is "busy", you cannot send additional commands to the
+      debugger.
 
-- file_changed_on_disk(hookname, file)
+      When the state is either "busy" or "idle", GPS.Debugger.command will
+      return the command that is about to be executed or the command that was
+      just executed and just completed.
 
-  Hook called when some external action has changed the contents of a file on
-  the disk, such as a VCS operation. The parameter might be a directory instead
-  of a file, indicating that any file in that directory might have changed
+      :param debugger: An instance of :class:`GPS.Debugger`
+      :param new_state: A string
 
-  :param file: An instance of :class:`GPS.File`
+    - :command:`debugger_terminated(hookname, debugger)`
 
+      Called when the debugger session has been terminated. It is now
+      recommended that you connect to the debugger_state_changed hook and test
+      whether the new state is "none".
 
-- file_closed(hookname, file)
+      :param debugger: An instance of :class:`GPS.Debugger`
 
-  Hook called just before the last editor for a file is closed. You can still
-  use EditorBuffer.get() and current_view() to access the last editor for file.
+      .. seealso:: Hook :command:`debugger_state_changed`
 
-  :param file: An instance of :class:`GPS.File`
+    - :command:`diff_action_hook(hookname, vcs_file, orig_file, ref_file,
+      diff_file, title)`
 
+      Called to request the display of the comparison window.
 
-- file_deleted(hookname, file)
+      :param vcs_file: An instance of :class:`GPS.File`
+      :param orig_file: An instance of :class:`GPS.File`
+      :param ref_file: An instance of :class:`GPS.File`
+      :param diff_file: An instance of :class:`GPS.File`
+      :param title: Buffer title
+      :return: A boolean
 
-  Hook called whenever GPS detects that a file was deleted on the disk. The
-  parameter might be a directory instead of a file, indicating that any file
-  within that directory has been deleted.
+    - :command:`file_changed_detected(hookname, file)`
 
-  :param file: An instance of :class:`GPS.File`
+      Called whenever GPS detects that an opened file changed on the
+      disk. You can connect to this hook if you want to change the default
+      behavior, which is asking if the user wants to reload the file. Your
+      function should return 1 if the action is handled by the function, and
+      return 0 if the default behavior is desired.
 
+      :param file: An instance of :class:`GPS.File`
+      :return: A boolean
 
-- file_edited(hookname, file)
+      .. code-block:: python
 
-  Hook called when a file editor has been opened for a file that wasn't already
-  opened before. Do not confuse with the hook open_file_action, which is used
-  to request the opening of a file.
+            import GPS
 
-  :param file: An instance of :class:`GPS.File`
+            def on_file_changed(hook, file):
+                # automatically reload the file without prompting the user
+                ed = GPS.EditorBuffer.get(file, force = 1)
+                return 1
 
-  .. seealso:: :func:`open_file_action hook`
+            # install a handler on "file_changed_detected" hook
+            GPS.Hook("file_changed_detected").add(on_file_changed)
 
-- file_line_action_hook(hookname, identifier, file, every_line, normalize)
 
-  Hook called to request the display of new information on the side of the
-  editors. It isn't expected that you connect to this hook, but you might want
-  to run it yourself to ask GPS to display some information on the side of its
-  editors
+    - :command:`file_changed_on_disk(hookname, file)`
 
-  :param identifier: A string
-  :param file: An instance of :class:`GPS.File`
-  :param every_line: A boolean
-  :param normalize: A boolean
-  :return: A boolean
+      Called when some external action has changed the contents of a file on
+      the disk, such as a VCS operation. The parameter might be a directory
+      instead of a file, indicating that any file in that directory might have
+      changed.
 
-- file_renamed(hookname, file, renamed)
+      :param file: An instance of :class:`GPS.File`
 
-  Hook called whenever a GPS action renamed a file on the disk. The file
-  parameter indicates the initial location of the file, while the renamed
-  parameter indicates the new location. The parameters might be directories
-  instead of files, indicating that the directory has been renamed, and thus
-  any file within that directory have their path changed.
+    - :command:`file_closed(hookname, file)`
 
-  :param file: An instance of :class:`GPS.File`
-  :param renamed: An instance of :class:`GPS.File`
+      Called just before the last editor for a file is closed. You can still
+      use :func:`EditorBuffer.get` and :func:`current_view` to access the last
+      editor for ``file``.
 
-- file_saved(hookname, file)
+      :param file: An instance of :class:`GPS.File`
 
-  Hook called whenever a file has been saved
+    - :command:`file_deleted(hookname, file)`
 
-  :param file: An instance of :class:`GPS.File`
+      Called whenever GPS detects that a file was deleted on the disk. The
+      parameter might be a directory instead of a file, indicating that any
+      file within that directory has been deleted.
 
-- file_status_changed_action_hook(hookname, file, status)
+      :param file: An instance of :class:`GPS.File`
 
-  Hook called when a file status has changed
+    - :command:`file_edited(hookname, file)`
 
-  :param file: An instance of GPS.File
-  :param status: A string, the new status for the file. This is the status has
-     displyed into the GPS status line. The value is either Unmodified,
-     Modified or Saved.
-  :return: A boolean
+      Called when a file editor has been opened for a file that was not already
+      opened before. Do not confuse with the hook open_file_action, which is
+      used to request the opening of a file.
 
-- gps_started(hookname)
+      :param file: An instance of :class:`GPS.File`
 
-  Hook called when GPS is fully loaded, and its window is visible to the user.
+      .. seealso:: :func:`open_file_action hook`
 
-  It isn't recommended to do any direct graphical action before this hook has
-  been called, so it is recommended that in most cases your start scripts
-  connect to this hook.
+    - :command:`file_line_action_hook(hookname, identifier, file,
+      every_line, normalize)`
 
-- html_action_hook(hookname, url_or_file, enable_navigation, anchor)
+      Called to request the display of new information on the side of the
+      editors. You usually will not connect to this hook, but you might want to
+      run it yourself to ask GPS to display some information on the side of
+      its editors.
 
-  Hook called to request the display of HTML files. It is generally useful if
-  you want to open an HTML file, and let GPS handle it in the usual manner
+      :param identifier: A string
+      :param file: An instance of :class:`GPS.File`
+      :param every_line: A boolean
+      :param normalize: A boolean
+      :return: A boolean
 
-  :param url_or_file: A string
-  :param enable_navigation: A boolean
-  :param anchor: A string
-  :return: A boolean
+    - :command:`file_renamed(hookname, file, renamed)`
 
-- location_action_hook(hookname, identifier, category,
-                       file, line, column, message)
+      Called whenever a GPS action renamed a file on the disk. ``file``
+      indicates the initial location of the file, while ``renamed`` indicates
+      the new location. The parameters might be directories instead of files,
+      indicating that the directory has been renamed, and thus any file within
+      that directory have their path changed.
 
-  Hook called to request the display of new information on the side of the
-  location window
+      :param file: An instance of :class:`GPS.File`
+      :param renamed: An instance of :class:`GPS.File`
 
-  :param identifier: A string
-  :param category: A string
-  :param file: An instance of :class:`GPS.File`
-  :param line: An integer
-  :param column: An integer
-  :param message: A string
-  :return: A boolean
+    - :command:`file_saved(hookname, file)`
 
-- location_changed(hookname, file, line, column)
+      Called whenever a file has been saved.
 
-  Hook called when the location in the current editor has changed, and the
-  cursor has stopped moving.
+      :param file: An instance of :class:`GPS.File`
 
-  :param file: An instance of :class:`GPS.File`
-  :param line: An integer
-  :param column: An integer
+    - :command:`file_status_changed_action_hook(hookname, file, status)`
 
-- log_parsed_hook(hookname)
+      Called when a file status has changed.
 
-  Hook called when the last file log has been parsed after the corresponding
-  VCS action.
+      :param file: An instance of :class:`GPS.File`
+      :param status: A string, the new status for the file. This is the
+        status displayed in the GPS status line. The value is either
+        Unmodified, Modified or Saved.
+      :return: A boolean
 
-- marker_added_to_history(hookname)
+    - :command:`gps_started(hookname)`
 
-  Hook called when a new marker is added to the history list of previous
-  locations, where the user can navigate back and forward
+      Called when GPS is fully loaded and its window is visible to the user.
 
-- open_file_action_hook(hookname, file, line, column, column_end,
-                        enable_navigation, new_file, force_reload,
-                        focus=False)
+      You should not do any direct graphical action before this hook has been
+      called, so it is recommended that in most cases your start scripts
+      connect to this hook.
 
-  This hook is called when GPS needs to open a file. You can connect to this
-  hook if you want to have your own editor open, instead of the internal editor
-  of GPS. Your function should return 1 if it did open the file, 0 if the next
-  function connected to this hook should be called.
+    - :command:`html_action_hook(hookname, url_or_file, enable_navigation,
+      anchor)`
 
-  The file should be opened directly at line and column. If column_end is not
-  0, the given range should be highlighted if possible. The enable_navigation
-  parameter is set to True if the new location should be added to the history
-  list, so that the user can navigate forward and backward across previous
-  locations. new_file is set to True if a new file should be created when file
-  is not found. If set to False, nothing should be done. force_reload is set to
-  true if the file should be reloaded from the disk, discarding any change the
-  user might have done. focus is set to true if the open editor should be given
-  the keyboard focus
+      Called to request the display of HTML files. It is generally useful
+      if you want to open an HTML file and let GPS handle it in the usual
+      manner.
 
-  :param file: An instance of :class:`GPS.File`
-  :param line: An integer
-  :param column: An integer
-  :param column_end: An integer
-  :param enable_navigation: A boolean
-  :param new_file: A boolean
-  :param force_reload: A boolean
-  :param focus: A boolean
-  :return: A boolean
+      :param url_or_file: A string
+      :param enable_navigation: A boolean
+      :param anchor: A string
+      :return: A boolean
 
-  .. seealso:: :func:`file_edited hook`
+    - :command:`location_action_hook(hookname, identifier, category,`
+                           file, line, column, message)
 
-  .. code-block:: python
+      Called to request the display of new information on the side of the
+      :guilabel:`Locations` view.
 
-      GPS.Hook('open_file_action_hook').run(
-                GPS.File("gps-kernel.ads"),
-                322, # line
-                5,   # column
-                9,   # column_end
-                1,   # enable_navigation
-                1,   # new_file
-                0)   # force_reload
+      :param identifier: A string
+      :param category: A string
+      :param file: An instance of :class:`GPS.File`
+      :param line: An integer
+      :param column: An integer
+      :param message: A string
+      :return: A boolean
 
-- preferences_changed(hookname)
+    - :command:`location_changed(hookname, file, line, column)`
 
-  Hook called when the value of some of the preferences changes. Modules should
-  refresh themselves dynamically
+      Called when the location in the current editor has changed, and the
+      cursor has stopped moving.
 
-- project_changed(hookname)
+      :param file: An instance of :class:`GPS.File`
+      :param line: An integer
+      :param column: An integer
 
-  Hook called when the project has changed. A new project has been loaded, and
-  all previous settings and caches are now obsolete. In the callbacks for this
-  hook, the attribute values have not been computed from the project yet, and
-  will only return the default values. Connect to the project_view_changed hook
-  instead to query the actual values
+    - :command:`log_parsed_hook(hookname)`
 
-  .. seealso:: Hook project_view_changed
+      Called when the last file log has been parsed after the corresponding
+      VCS action.
 
-- project_changing(hookname, file)
+    - :command:`marker_added_to_history(hookname)`
 
-  Hook called just before a new project is loaded.
+      Called when a new marker is added to the history list of previous
+      locations, where the user can navigate backwards and forwards.
 
-  :param file: An instance of :class:`GPS.File`
+    - :command:`open_file_action_hook(hookname, file, line, column,
+      column_end, enable_navigation, new_file, force_reload, focus=False)`
 
-- project_editor(hookname)
+      Called when GPS needs to open a file. You can connect to this hook if
+      you want to have your own editor open, instead of GPS's internal
+      editor. Your function should return 1 if it did open the file or 0 if
+      the next function connected to this hook should be called.
 
-  Hook called before the Project Editor is opened. This allows a custom module
-  to perform specific actions before the actual creation of this dialog.
+      The file should be opened directly at ``line`` and ``column``. If
+      ``column_end`` is not 0, the given range should be highlighted if
+      possible.  ``enable_navigation`` is set to True if the new location
+      should be added to the history list, so that the user can navigate
+      forward and backward across previous locations. ``new_file`` is set to
+      True if a new file should be created when file is not found. If set to
+      False, nothing should be done. ``force_reload`` is set to true if the
+      file should be reloaded from the disk, discarding any change the user
+      might have done. focus is set to true if the open editor should be given
+      the keyboard focus
 
-- project_saved(hookname, project)
+      :param file: An instance of :class:`GPS.File`
+      :param line: An integer
+      :param column: An integer
+      :param column_end: An integer
+      :param enable_navigation: A boolean
+      :param new_file: A boolean
+      :param force_reload: A boolean
+      :param focus: A boolean
+      :return: A boolean
 
-  Hook called when a project is saved to disk. It is called for each project in
-  the hierarchy
+      .. seealso:: Hook :command:`file_edited hook`
 
-  :param project: An instance of GPS.Project
+      .. code-block:: python
 
-- project_view_changed(hookname)
+          GPS.Hook('open_file_action_hook').run(
+                    GPS.File("gps-kernel.ads"),
+                    322, # line
+                    5,   # column
+                    9,   # column_end
+                    1,   # enable_navigation
+                    1,   # new_file
+                    0)   # force_reload
 
-  Hook called when the project view has been changed, for instance because one
-  of the environment variables has changed. This means that the list of
-  directories, files or switches might now be different. In the callbacks for
-  this hook, you can safely query the new attribute values.
+    - :command:`preferences_changed(hookname)`
 
-- revision_parsed_hook(hookname)
+      Called when the value of some of the preferences changes. Modules should
+      refresh themselves dynamically.
 
-  Hook called when the last file revision has been parsed after the
-  corresponding VCS action.
+    - :command:`project_changed(hookname)`
 
-- rsync_action_hook(hookname)
+      Called when the project has changed. A new project has been loaded, and
+      all previous settings and caches are now obsolete. In the callbacks for
+      this hook, the attribute values have not been computed from the project
+      yet, and will only return the default values. Connect to the
+      project_view_changed hook instead to query the actual values
 
-  For internal use only
+      .. seealso:: Hook :command:`project_view_changed`
 
-- search_functions_changed(hookname)
+    - :command:`project_changing(hookname, file)`
 
-  Hook called when the list of registered search functions changes.
+      Called just before a new project is loaded.
 
-- search_regexps_changed(hookname)
+      :param file: An instance of :class:`GPS.File`
 
-  Hook called when a new regexp has been added to the list of predefined search
-  patterns
+    - :command:`project_editor(hookname)`
 
-- search_reset(hookname)
+      Called before the :guilabel:`Project Editor` is opened. This allows a
+      custom module to perform specific actions before the actual creation of
+      this dialog.
 
-  Hook called when the current search pattern is reset or changed by the user,
-  or when the current search is no longer possible because the setup of GPS has
-  changed.
+    - :command:`project_saved(hookname, project)`
 
-- server_config_hook(hookname, server_type, nickname)
+      Called when a project is saved to disk. It is called for each
+      project in the hierarchy.
 
-  Hook called when a server is assigned to a server operations category.
+      :param project: An instance of :class:`GPS.Project`
 
-  :param server_type: A string, the server operations category. Can take the
-     values "BUILD_SERVER", "EXECUTION_SERVER" or "DEBUG_SERVER"
-  :param nickname: A string, the server's nickname
+    - :command:`project_view_changed(hookname)`
 
-- server_list_hook(hookname)
+      Called when the project view has been changed, for instance because one
+      of the environment variables has changed. This means that the list of
+      directories, files or switches might now be different. In the callbacks
+      for this hook, you can safely query the new attribute values.
 
-  Hook called when the list of configured servers changed.
+    - :command:`revision_parsed_hook(hookname)`
 
-- source_lines_revealed(hookname, context)
+      Called when the last file revision has been parsed after the
+      corresponding VCS action.
 
-  Hook called when a range of line becomes visible on the screen
+    - :command:`rsync_action_hook(hookname)`
 
-  :param context: An instance of :class:`GPS.Context`
+      For internal use only.
 
-- status_parsed_hook(hookname)
+    - :command:`search_functions_changed(hookname)`
 
-  Hook called when the last file status has been parsed after the corresponding
-  VCS action.
+      Called when the list of registered search functions changes.
 
-- stop_macro_action_hook(hookname)
+    - :command:`search_regexps_changed(hookname)`
 
-  You should run this hook to request that the macro currently being replayed
-  be stopped. No more events should be processed as part of this macro
+      Called when a new regexp has been added to the list of predefined search
+      patterns.
 
-- task_started(task)
-- task_changed(task)
-- task_terminated(task)
+    - :command:`search_reset(hookname)`
 
-  These hooks are called when a new background task is started, when an
-  existing task's status is changed (either it has made progressed, was
-  paused,...), or when a task is terminated. task_changed might be called
-  asynchronously; for efficiency, GPS will not necessary emit it for every
-  progress made by the task when this progress is fast.
+      Called when the current search pattern is reset or changed by the
+      user or when the current search is no longer possible because the setup
+      of GPS has changed.
 
-  Each of these hooks receives an instance of :class:`GPS.Task` as parameter.
+    - :command:`server_config_hook(hookname, server_type, nickname)`
 
-- variable_changed(hookname)
+      Called when a server is assigned to a server operations category.
 
-  Hook called when one of the scenario variables has been renamed, removed or
-  when one of its possible values has changed.
+      :param server_type: A string, the server operations category. Can take
+         the values "BUILD_SERVER", "EXECUTION_SERVER" or "DEBUG_SERVER"
+      :param nickname: A string, the server's nickname
 
-- xref_updated(hookname)
+    - :command:`server_list_hook(hookname)`
 
-  Hook called when the cross-reference information have been updated.
+      Called when the list of configured servers has changed.
 
-- word_added(hookname, file)
+    - :command:`source_lines_revealed(hookname, context)`
 
-  Hook called when a word has been added in the editor
+      Called when a range of lines becomes visible on the screen.
 
-  :param file: An instance of :class:`GPS.File`
+      :param context: An instance of :class:`GPS.Context`
 
-  .. seealso:: Hook character_added
+    - :command:`status_parsed_hook(hookname)`
+
+      Called when the last file status has been parsed after the
+      corresponding VCS action.
+
+    - :command:`stop_macro_action_hook(hookname)`
+
+      You should run this hook to request that the macro currently being
+      replayed be stopped. No more events should be processed as part of this
+      macro.
+
+    - :command:`task_started(task)`
+    - :command:`task_changed(task)`
+    - :command:`task_terminated(task)
+
+      Called when a new background task is started, when an existing task's
+      status is changed (such as making progressed or paused) or when a task
+      is terminated. task_changed might be called asynchronously; for
+      efficiency, GPS will not necessary call it for each progress made by
+      the task when this progress is frequent.
+
+      Each of these hooks receives an instance of :class:`GPS.Task` as
+      parameter.
+
+    - :command:`variable_changed(hookname)`
+
+      Called when one of the scenario variables has been renamed, removed or
+      when one of its possible values has changed.
+
+    - :command:`xref_updated(hookname)`
+
+      Called when the cross-reference information has been updated.
+
+    - :command:`word_added(hookname, file)`
+
+      Called when a word has been added in an editor.
+
+      :param file: An instance of :class:`GPS.File`
+
+      .. seealso:: Hook :command:`character_added`
     """
 
     def __init__(self, name):
         """
-        Create a new hook instance, which refers to one of the already defined
-        hooks
+        Creates a new hook instance, referring to one of the already defined
+        hooks.
 
         :param name: A string, the name of the hook
         """
@@ -6565,32 +6686,32 @@ The available hooks are:
 
     def add(self, function_name, last=True):
         """
-Connect a new function to a specific hook. Any time this hook is run
-through run_hook, this function will be called with the same parameters
-passed to run_hook. If Last is True, then this function will be called
-after all functions currently added to this hook. If Last is False, it
-will be called before.
+        Connects a new function to a specific hook. Any time this hook is run
+        through :func:`run_hook`, this function is called with the same
+        parameters passed to :func:`run_hook`. If ``last`` is True, this
+        function is called after all functions currently added to this
+        hook. If false, it is called before.
 
-:param function_name: A subprogram, see the "Subprogram Parameters"
-    section in the GPS documentation
-:param last: A boolean
+        :param function_name: A subprogram, see the "Subprogram Parameters"
+           section in the GPS documentation
+        :param last: A boolean
 
-.. seealso:: :func:`GPS.Hook.remove`
+        .. seealso:: :func:`GPS.Hook.remove`
 
-.. code-block:: python
+        .. code-block:: python
 
-   def filed_edited(hook_name, file):
-       print "File edited (hook=" + hook_name + " file=" + file.name()
-   GPS.Hook("file_edited").add(file_edited)
+           def filed_edited(hook_name, file):
+              print "File edited (hook=" + hook_name + " file=" + file.name()
+              GPS.Hook("file_edited").add(file_edited)
 
-"""
+              """
         pass  # implemented in Ada
 
     def describe_functions(self):
         """
-        List all the functions that are executed when the hook is executed. The
+        Lists all the functions executed when the hook is executed. The
         returned list might contain <<internal> strings, which indicate that
-        some Ada function is connected to this hook
+        an Ada function is connected to this hook.
 
         :return: A list of strings
 
@@ -6600,7 +6721,8 @@ will be called before.
     @staticmethod
     def list():
         """
-        List all defined hooks. See also run_hook, register_hook and add_hook
+        Lists all defined hooks. See also :func:`run_hook`,
+        :func:`register_hook` and :func:`add_hook`.
 
         :return: A list of strings
 
@@ -6611,7 +6733,7 @@ will be called before.
     @staticmethod
     def list_types():
         """
-        List all defined type hooks
+        Lists all defined hook types.
 
         :return: A list of strings
 
@@ -6622,27 +6744,28 @@ will be called before.
     @staticmethod
     def register(name, type=''):
         """
-        Defines a new hook. This hook can take any number of parameters, the
+        Definess a new hook. This hook can take any number of parameters: the
         default is none. The type and number of parameters is called the type
-        of the hook, and this is described by the" optional second
-        parameter. The value of this parameter should be either the empty
-        string for a hook that doesn't take any parameter. Or it could be one
-        of the predefined types exported by GPS itself (see
-        list_hook_types). Finally, it could be the word ""generic"" if this is
-        a new type of hook purely defined for this scripting language
+        of the hook and is described by the optional second parameter. The
+        value of this parameter should be either the empty string for a hook
+        that does not take any parameter. Or it could be one of the predefined
+        types exported by GPS itself (see :func:`list_hook_types`). Finally,
+        it could be the word ""generic"" if this is a new type of hook purely
+        defined for this scripting language
 
         :param name: A string, the name of the hook to create
-        :param type: A string, the type of the hook. See GPS.Hook.list_types()
+        :param type: A string, the type of the hook.
+           See :func:`GPS.Hook.list_types`
         """
         pass  # implemented in Ada
 
     def remove(self, function_name):
         """
-        Remove function_name from the list of functions executed when the hook
-        is run. This is the reverse of GPS.Hook.add
+        Removes ``function_name`` from the list of functions executed when the
+        hook is run. This is the reverse of :func:`GPS.Hook.add`.
 
         :param function_name: A subprogram, see the "Subprogram Parameters"
-            section in the GPS documentation
+           section in the GPS documentation
 
         .. seealso:: :func:`GPS.Hook.add`
         """
@@ -6650,11 +6773,11 @@ will be called before.
 
     def run(self, *args):
         """
-        Run the hook. This will call all the functions that attached to that
-        hook, and return the return value of the last callback (this depends on
-        the type of the hook, most often this is always None). When the
-        callbacks for this hook are expected to return a boolean, this command
-        stops as soon as one the callbacks returns True
+        Runs the hook. Calls all the functions that attached to that hook, and
+        returns the return value of the last callback (this depends on the
+        type of the hook, most often this is always None). When the callbacks
+        for this hook are expected to return a boolean, this command stops as
+        soon as one the callbacks returns True.
 
         :param args: Any number of parameters to pass to the hook.
 
@@ -6668,10 +6791,10 @@ will be called before.
 
     def run_until_failure(self, *args):
         """
-        This only applies to hooks returning a boolean. This executes all
-        functions attached to this hook, until one returns False, in which case
-        no further function is called. This returns the returned value of the
-        last executed function.
+        Applies to hooks returning a boolean. Executes all functions attached
+        to this hook until one returns False, in which case no further
+        function is called. Returns the returned value of the last executed
+        function.
 
         :param args: Any number of parameters to pass to the hook.
         :return: A boolean
@@ -6686,11 +6809,11 @@ will be called before.
 
     def run_until_success(self, *args):
         """
-        This only applies to hooks returning a boolean. This executes all
-        functions attached to this hook, until one returns True, in which case
-        no further function is called. This returns the returned value of the
-        last executed function. This is mostly the same as GPS.Hook.run, but
-        makes the halt condition more explicit.
+        Applies to hooks returning a boolean. Executes all functions attached
+        to this hook until one returns True, in which case no further function
+        is called. This returns the returned value of the last executed
+        function. This is mostly the same as :func:`GPS.Hook.run`, but makes
+        the halt condition more explicit.
 
         :param args: Any number of parameters to pass to the hook.
         :return: A boolean
@@ -6713,7 +6836,7 @@ class Invalid_Argument(Exception):
     """
     An exception raised by GPS. Raised when calling a subprogram from the GPS
     module with an invalid argument type (passing an integer when a string is
-    expected, for instance)
+    expected, for example).
     """
     pass  # implemented in Ada
 
@@ -6725,19 +6848,20 @@ class Invalid_Argument(Exception):
 class Locations(object):
 
     """
-    General interface to the locations window
+    General interface to the :guilabel:`Locations` view.
     """
 
     @staticmethod
     def add(category, file, line, column, message,
             highlight='', length='0', look_for_secondary=False):
         """
-        Add a new entry in the location window. Nodes are created as needed for
-        the category or file. If Highlight is specified to a non-empty string,
-        the whole line is highlighted in the file, with a color given by that
-        highlight category (see register_highlighting for more
-        information). Length is the length of the highlighting. The default
-        value of 0 indicates that the whole line should be highlighted
+        Adds a new entry to the :guilabel:`Locations` view. Nodes are created
+        as needed for ``category`` or ``file``. If ``highlight`` is specified
+        as a non-empty string, the enter line is highlighted in the file with
+        a color determined by that highlight category (see
+        :func:`register_highlighting` for more information). ``length`` is
+        the length of the highlighting; the default of 0 indicates the whole
+        line should be highlighted
 
         :param category: A string
         :param file: An instance of :class:`GPS.File`
@@ -6763,8 +6887,8 @@ class Locations(object):
     @staticmethod
     def dump(file):
         """
-        Dump the contents of the Locations View to the specified file, in XML
-        format.
+        Dumps the contents of the :guilabel:`Locations` view to the specified
+        file, in XML format.
 
         :param file: A string
         """
@@ -6773,9 +6897,10 @@ class Locations(object):
     @staticmethod
     def list_categories():
         """
-        Return the list of all categories currently displayed in the Locations
-        window. These are the top-level nodes used to group information
-        generally related to one command, like the result of a compilation.
+        Returns the list of all categories currently displayed in the
+        :guilabel:`Locations` view. These are the top-level nodes used to
+        group information generally related to one command, such as the
+        result of a compilation.
 
         :return: A list of strings
 
@@ -6786,7 +6911,7 @@ class Locations(object):
     @staticmethod
     def list_locations(category, file):
         """
-        Return the list of all file locations currently listed in the given
+        Returns the list of all file locations currently listed in the given
         category and file.
 
         :param category: A string
@@ -6805,25 +6930,25 @@ class Locations(object):
               style_category='Style errors',
               warning_category='Builder warnings'):
         """
-        Parse the contents of the string, which is supposedly the output of
-        some tool, and add the errors and warnings to the locations window. A
-        new category is created in the locations window if it doesn't
-        exist. Preexisting contents for that category is not removed, see
-        locations_remove_category.
+        Parses the contents of the string, which is supposedly the output of
+        some tool, and adds the errors and warnings to the
+        :guilabel:`Locations` view. A new category is created in the
+        locations window if it does not exist. Preexisting contents for that
+        category are not removed, see :func:`locations_remove_category`.
 
         The regular expression specifies how locations are recognized. By
-        default, it matches file:line:column. The various indexes indicate the
-        index of the opening parenthesis that contains the relevant information
-        in the regular expression. Set it to 0 if that information is not
-        available. ``style_index`` and ``warning_index``, if they match, force
-        the error message in a specific category.
+        default, it matches file:line:column. The various indexes indicate
+        the index of the opening parenthesis that contains the relevant
+        information in the regular expression. Set it to 0 if that
+        information is not available. ``style_index`` and ``warning_index``,
+        if they match, force the error message in a specific category.
 
         ``highlight_category``, ``style_category`` and ``warning_category``
         reference the colors to use in the editor to highlight the messages
         when the regexp has matched. If they are set to the empty string, no
         highlighting is done in the editor. The default values match those by
         GPS itself to highlight the error messages. Create these categories
-        with GPS.Editor.register_highlighting().
+        with :func:`GPS.Editor.register_highlighting`.
 
         :param output: A string
         :param category: A string
@@ -6845,8 +6970,8 @@ class Locations(object):
     @staticmethod
     def remove_category(category):
         """
-        Remove a category from the location window. This removes all associated
-        files
+        Removes a category from the :guilabel:`Locations` view. This removes
+        all associated files.
 
         :param category: A string
 
@@ -6873,22 +6998,22 @@ class Locations(object):
 class Logger(object):
 
     """
-    This class provides an interface to the GPS logging mechanism. This can be
-    used when debugging scripts, or even be left in production scripts for
-    post-mortem analysis for instance. All output through this class is done in
-    the GPS log file, in $HOME/.gps/log.
+    This class provides an interface to the GPS logging mechanism. This can
+    be used when debugging scripts, or even be left in production scripts for
+    post-mortem analysis for instance. All output through this class is done
+    in the GPS log file, :file:`$HOME/.gps/log`.
 
     GPS comes with some predefined logging streams, which can be used to
     configure the format of the log file, such as whether colors should be
-    used, whether timestamps should be logged with each message,...
+    used or whether timestamps should be logged with each message.
     """
 
     def __init__(self, name):
         """
-        Create a new logging stream. Each stream is associated with a name,
-        which is displayed before each line in the GPS log file, and is used to
-        distinguish between various parts of GPS. Calling this constructor with
-        the same name multiple times will create a new class instance.
+        Creates a new logging stream. Each stream is associated with a name,
+        which is displayed before each line in the GPS log file, and is used
+        to distinguish between various parts of GPS. Calling this constructor
+        with the same name multiple times creates a new class instance.
 
         :param name: A string
 
@@ -6901,9 +7026,8 @@ class Logger(object):
 
     def check(self, condition, error_message, success_message=''):
         """
-        If condition evaluates to False, then error_message will be logged in
-        the log file. If the condition evaluates to True, then success_message
-        is logged if it was specified
+        If ``condition`` is False, ``error_message`` is logged in the log
+        file. If True, ``success_message`` is logged if present.
 
         :param condition: A boolean
         :param error_message: A string
@@ -6912,7 +7036,7 @@ class Logger(object):
         .. code-block:: python
 
            log=GPS.Logger("my_script")
-           log.check(1 == 2, "Invalid addition")
+           log.check(1 == 2, "Invalid operation")
 
         """
 
@@ -6923,7 +7047,7 @@ class Logger(object):
 
     def log(self, message):
         """
-        Logs a message in the GPS log file
+        Logs a message in the GPS log file.
 
         :param message: A string
         """
@@ -6931,9 +7055,10 @@ class Logger(object):
 
     def set_active(self, active):
         """
-        Activate or deactivate a logging stream. The default for a sttream
-        depends on the file $HOME/.gps/traces.cfg, and will generally be
-        active. When a stream is inactive, no message is sent to the log file
+        Activates or deactivates a logging stream. The default for a sttream
+        depends on the file :file:`$HOME/.gps/traces.cfg`, and will generally
+        be active. When a stream is inactive, no message is sent to the log
+        file.
 
         Use self.active to test whether a log stream is active.
 
@@ -6955,11 +7080,11 @@ class MDI(object):
 
     .. seealso:: :class:`GPS.MDIWindow`
 
-    If you have installed the pygobject package (see GPS's documentation}, GPS
-    will export a few more functions to python so that it is easier to interact
-    with GPS itself. In particular, the GPS.MDI.add function allows you to put
-    a widget created by pygobject under control of GPS's MDI, so that users can
-    interact with it as with all other GPS windows.
+    If you have installed the pygobject package (see GPS's documentation},
+    GPS will export a few more functions to Python so that it is easier to
+    interact with GPS itself. In particular, the :func:`GPS.MDI.add` function
+    allows you to put a widget created by pygobject under control of GPS's
+    MDI, so users can interact with it as with all other GPS windows.
 
     .. code-block:: python
 
@@ -7006,12 +7131,12 @@ class MDI(object):
         python shell. You must install this library first, see the
         documentation for GPS.MDI itself.
 
-        This function adds a widget inside the MDI of GPS. The resulting window
-        can then be manipulated by the user like any other standard GPS
-        window. It can be split, floated, resized,... Title is the string used
-        in the title bar of the window, short is the string used in the
-        notebook tabs. You can immediately retrieve a handle to the created
-        window by calling GPS.MDI.get (short).
+        This function adds a widget inside the MDI of GPS. The resulting
+        window can be manipulated by the user like any other standard GPS
+        window. For example, it can be split, floated, or resized. ``title``
+        is the string used in the title bar of the window, ``short`` is the
+        string used in the notebook tabs. You can immediately retrieve a
+        handle to the created window by calling GPS.MDI.get (short).
 
         :param widget: A widget, created by pygobject
         :param title: A string
@@ -7026,16 +7151,16 @@ class MDI(object):
             When other widgets of the same group exist, the widget is put
             on top of them.
         :param save_desktop: A function that should be called when GPS saves
-            the desktop into XML. This function receives the GPS.MDIWindow as a
-            parameter, and should return a tuple of two elements (name, data)
-            where name is a unique identifier for this window, and data is a
-            string containing additional data to be saved (and later restored).
-            One suggestion is to encode any python data through json and send
-            the resulting string as data.  An easier alternative is to use the
-            modules.py support script in GPS, which handles this parameter
-            automatically on your behalf.
-
-        :return: the instance of GPS.MDIWindow that was created
+            the desktop into XML. This function receives the
+            :class:`GPS.MDIWindow` as a parameter and should return a tuple
+            of two elements (name, data) where name is a unique identifier
+            for this window, and data is a string containing additional data
+            to be saved (and later restored).  One suggestion is to encode
+            any Python data through JSON and send the resulting string as
+            data.  An easier alternative is to use the :file:`modules.py`
+            support script in GPS, which handles this parameter automatically
+            on your behalf.
+        :return: The instance of :class:`GPS.MDIWindow` that was created
 
         .. code-block:: python
 
@@ -7056,7 +7181,7 @@ class MDI(object):
     @staticmethod
     def children():
         """
-        Return all the windows currently in the MDI
+        Returns all the windows currently in the MDI.
 
         :return: A list of :class:`GPS.MDIWindow`
         """
@@ -7065,8 +7190,8 @@ class MDI(object):
     @staticmethod
     def current():
         """
-        Return the window that currently has the focus, or raise an error if
-        there is none
+        Returns the window that currently has the focus, or raises an error if
+        there is none.
 
         :return: An instance of :class:`GPS.MDIWindow`
 
@@ -7076,8 +7201,8 @@ class MDI(object):
     @staticmethod
     def dialog(msg):
         """
-        Display a modal dialog to report information to a user. This blocks the
-        interpreter until the dialog is closed
+        Displays a modal dialog to report information to a user. This blocks
+        the interpreter until the dialog is closed.
 
         :param msg: A string
         """
@@ -7086,10 +7211,10 @@ class MDI(object):
     @staticmethod
     def exit(force=False):
         """
-        Exit GPS. If there are unsaved changes, a dialog is first displayed to
-        ask whether these should be saved. If the user cancels the operation
-        through the dialog, GPS will not exit. If force is true, then no dialog
-        is open, and nothing is saved
+        Exits GPS. If there are unsaved changes, a dialog is first displayed
+        to ask whether these should be saved. If the user cancels the
+        operation through the dialog, GPS will not exit. If ``force`` is
+        true, no dialog is opened and nothing is saved.
 
         :param force: A boolean
         """
@@ -7098,11 +7223,11 @@ class MDI(object):
     @staticmethod
     def file_selector(file_filter='empty'):
         """
-        Display a modal file selector. The user selected file is returned, or a
-        file with an empty name if 'Cancel' is pressed.
+        Displays a modal file selector. The user selected file is returned,
+        or a file with an empty name if :guilabel:`Cancel` is pressed.
 
-        A file filter can be defined (such as "\*.ads") to show only a category
-        of files.
+        A file filter can be defined (such as "\*.ads") to show only a
+        category of files.
 
         :param file_filter: A string
         :return: An instance of :class:`GPS.File`
@@ -7112,8 +7237,8 @@ class MDI(object):
     @staticmethod
     def get(name):
         """
-        Return the window whose name is name. If there is no such window, None
-        is returned
+        Returns the window whose name is ``name``. If there is no such
+        window, None is returned.
 
         :param name: A string
         :return: An instance of :class:`GPS.MDIWindow`
@@ -7123,10 +7248,10 @@ class MDI(object):
     @staticmethod
     def get_by_child(child):
         """
-        Return the window that contains child, or raise an error if there is
-        none
+        Returns the window that contains ``child`` or raises an error if
+        there is none.
 
-        :param child: An instance of GPS.GUI
+        :param child: An instance of :class:`GPS.GUI`
         :return: An instance of :class:`GPS.MDIWindow`
 
         """
@@ -7142,15 +7267,15 @@ class MDI(object):
     @staticmethod
     def input_dialog(msg, *args):
         """
-        Display a modal dialog and request some input from the user. The
-        message is displayed at the top, and one input field is displayed for
+        Displays a modal dialog and requests some input from the user. The
+        message is displayed at the top and one input field is displayed for
         each remaining argument. The arguments can take the form
         ""label=value"", in which case ""value"" is used as default for this
-        entry. If argument is prepend with 'multiline:' prefix field is edited
-        as multi-line text. The return value is the value that the user has
-        input for each of these parameters.
+        entry. If argument is prepend with 'multiline:' prefix field is
+        edited as multi-line text. The return value is the value that the
+        user has input for each of these parameters.
 
-        An empty list is returned if the user presses Cancel
+        An empty list is returned if the user presses :guilabel:`Cancel`.
 
         :param msg: A string
         :param args: Any number of strings
@@ -7167,11 +7292,12 @@ class MDI(object):
     @staticmethod
     def save_all(force=False):
         """
-        Save all currently unsaved windows. This includes open editors, the
-        project, and any other window that has registered some save callbacks.
+        Saves all currently unsaved windows. This includes open editors, the
+        project, and any other window that has registered some save
+        callbacks.
 
-        If the force parameter is false, then a confirmation dialog is
-        displayed so that the user can select which windows to save
+        If ``force`` is false, a confirmation dialog is displayed so the user
+        can select which windows to save.
 
         :param force: A boolean
         """
@@ -7187,9 +7313,10 @@ class MDI(object):
     @staticmethod
     def yes_no_dialog(msg):
         """
-        Display a modal dialog to ask a question to the user. This blocks the
-        interpreter until the dialog is closed. The dialog has two buttons Yes
-        and No, and the selected button is returned to the caller
+        Displays a modal dialog to ask a question to the user. This blocks
+        the interpreter until the dialog is closed. The dialog has two
+        buttons :guilabel:`Yes` and :guilabel:`No`, and the selected button
+        is returned to the caller.
 
         :param msg: A string
         :return: A boolean
@@ -7213,21 +7340,23 @@ class MDIWindow(GUI):
     This class represents one of the windows currently displayed in GPS. This
     includes both the windows currently visible to the user, and the ones that
     are temporarily hidden, for instance because they are displayed below
-    another window.  Windows acts as containers for other widgets
+    another window.  Windows acts as containers for other widgets.
     """
 
     def __init__(self):
         """
-        Prevents the creation of instances of GPS.MDIWindow. This is done by
-        calling the various subprograms in the GPS.MDI class
+        Prevents the creation of instances of :class:`GPS.MDIWindow`. This is
+        done by calling the various subprograms in the :class:`GPS.MDI`
+        class.
         """
         pass  # implemented in Ada
 
     def float(self, float=True):
         """
-        Float the window, ie create a new toplevel window to display it. It is
-        then under control of the user's operating system or window manager. If
-        float is False, the window is reintegrated within the GPS MDI instead
+        Floats the window, i.e., creates a new toplevel window to display
+        it. It is then under control of the user's operating system or window
+        manager. If ``float`` is False, the window is reintegrated within the
+        GPS MDI instead.
 
         :param float: A boolean
         """
@@ -7235,9 +7364,9 @@ class MDIWindow(GUI):
 
     def get_child(self):
         """
-        Return the child contained in the window. The returned value might be
-        an instance of a subclass of GPS.GUI, if that window was created from a
-        shell command
+        Returns the child contained in the window. The returned value might
+        be an instance of a subclass of :class:`GPS.GUI`, if that window was
+        created from a shell command.
 
         :return: An instance of :class:`GPS.GUI`
 
@@ -7251,8 +7380,9 @@ class MDIWindow(GUI):
 
     def is_floating(self):
         """
-        Return whether the window is currently floating (ie in its own toplevel
-        window), or False if the window is integrated into the main GPS window
+        Returns True if the window is currently floating (i.e., in its own
+        toplevel window) or False if the window is integrated into the main
+        GPS window.
 
         :return: A boolean
         """
@@ -7260,10 +7390,9 @@ class MDIWindow(GUI):
 
     def name(self, short=False):
         """
-        Return the name of the window. If short is False, the long name is
-        returned, ie the one that appears in the title bar. If short is True,
-        the short name is returned, ie the one that appears in the notebook
-        tabs.
+        Returns the name of the window. If ``short`` is False, the long name
+        is returned, the one that appears in the title bar. If True, the
+        short name is returned, the one that appears in notebook tabs.
 
         :param short: A boolean
         :return: A string
@@ -7272,29 +7401,30 @@ class MDIWindow(GUI):
 
     def next(self, visible_only=True):
         """
-        Return the next window in the MDI, or window itself if there is no
-        other window. If visible_only is true, then only the windows currently
-        visible to the user are visible. This always returns floating windows
+        Returns the next window in the MDI, or the current window if there is
+        no other window. If ``visible_only`` is True, only the windows
+        currently visible to the user can be returned. This always returns
+        floating windows.
 
         :param visible_only: A boolean
-        :return: An instance of GPS.MDIWindow
+        :return: An instance of :class:`GPS.MDIWindow`
         """
         pass  # implemented in Ada
 
     def raise_window(self):
         """
-        Raise the window so that it becomes visible to the user. The window
-        also gains the focus
+        Raises the window so that it becomes visible to the user. The window
+        also gains the focus.
         """
         pass  # implemented in Ada
 
     def rename(self, name, short=''):
         """
-        Change the title used for a window. Name is the long title, as it
-        appears in the title bar for instance, and short, if specified, is the
-        name that appears in the notebook tabs.
+        Changes the title used for a window.  ``name`` is the long title, as
+        it appears in the title bar, and ``short``, if specified, is the name
+        that appears in  notebook tabs.
 
-        Using this function might be dangereous in some contexts, since GPS
+        Using this function may be dangereous in some contexts, since GPS
         keeps track of editors through their name.
 
         :param name: A string
@@ -7304,10 +7434,10 @@ class MDIWindow(GUI):
 
     def split(self, vertically=True, reuse=False):
         """
-        Split the window in two parts, either horizontally (side by side), or
-        vertically (one below the other). If reuse is true, attempt to reuse an
-        existing space rather than splitting the current window. This should be
-        used to avoid ending up with too small windows
+        Splits the window in two parts, either horizontally (side by side),
+        or vertically (one below the other). If ``reuse`` is True, attempt to
+        reuse an existing space rather than splitting the current
+        window. This should be done to avoid ending up with too small windows.
 
         :param vertically: A boolean
         :param reuse: A boolean
@@ -7325,8 +7455,8 @@ class Menu(GUI):
 
     """
     This class is a general interface to the menu system in GPS. It gives you
-    control over which menus should be active, what should be executed when the
-    menu is selected by the user,...
+    control over such things as which menus should be active and what should
+    be executed when the menu is selected by the user.
 
     .. seealso:: :func:`GPS.Menu.__init__`
 
@@ -7335,10 +7465,10 @@ class Menu(GUI):
     def __init__(self):
         """
         Prevents the creation of a menu instance. Such instances can only be
-        created internally by GPS as a result of calling GPS.Menu.get or
-        GPS.Menu.create. This is so that you always get the same instance of
-        GPS.Menu when you are refering to a given menu in GPS, and so that you
-        can store your own specific data with the menu
+        created internally by GPS as a result of calling :func:`GPS.Menu.get`
+        or :func:`GPS.Menu.create`. This is so you always get the same
+        instance of :class:`GPS.Menu` when refering to a given menu in GPS
+        and so you can store your own specific data with the menu.
         """
         pass  # implemented in Ada
 
@@ -7346,32 +7476,34 @@ class Menu(GUI):
     def create(path, on_activate='', ref='', add_before=True,
                filter=None, group=''):
         """
-        Create a new menu in the GPS system. The menu is added at the given
-        location (see GPS.Menu.get for more information on the path
-        parameter). Submenus are created as necessary so that path is valid.
+        Creates a new menu in the GPS system. The menu is added at the given
+        location (see :func:`GPS.Menu.get` for more information on the
+        ``path`` parameter). Submenus are created as necessary so ``path``
+        is valid.
 
-        It is recommended, nowadays, to use gps_utils.interactive instead of
-        creating menus explicitly. The latter will create GPS actions, to which
-        keybindings can be associated with the user. They can also be executed
-        more conveniently using keyboard only with the omni-search.
+        It is recommended now to use :class:`gps_utils.interactive`
+        instead of creating menus explicitly. The latter creates GPS
+        actions, to which keybindings can be associated with the
+        user. They can also be executed more conveniently using
+        keyboard only with the omni-search.
 
-        If ``on_activate`` is specified, it will be executed every time the
-        user selects that menu. It is called with only one parameter, the
-        instance of GPS.Menu that was just created.
+        If ``on_activate`` is specified, it is executed every time the user
+        selects that menu. It is called with only one parameter, the instance
+        of :class:`GPS.Menu` that was just created.
 
         If ``ref`` and ``add_before`` are specified, they specify the name of
         another item in the parent menu (and not a full path) before or after
         which the new menu should be added.
 
-        If the name of the menu starts with a '-' sign, as in "/Edit/-", then a
+        If the name of the menu starts with a '-' sign, as in "/Edit/-", a
         menu separator is inserted instead. In this case, on_activate is
         ignored.
 
-        Underscore characters ('_') need to be duplicated in the path. A single
-        underscore indicates the mnemonic to be used for that menu. For
-        instance, if you create the menu "/_File", then the user can open the
-        menu by pressing alt-F. But the underscore itself will not be displayed
-        in the name of the menu.
+        Underscore characters ('_') need to be duplicated in the path. A
+        single underscore indicates the mnemonic to be used for that
+        menu. For example, if you create the menu "/_File", then the user can
+        open the menu by pressing :kbd:`Alt-f`. But the underscore itself
+        is not be displayed in the name of the menu.
 
         If ``group`` is specified, create a radio menu item in given group.
 
@@ -7398,14 +7530,14 @@ class Menu(GUI):
     @staticmethod
     def get(path):
         """
-        Return the menu found at the given path. Path is similar to what one
-        finds on a hard disk, starting with the main GPS menu ('/'), down to
-        each submenus. For instance, '/VCS/Directory/Update Directory' refers
-        to the submenu 'Update Directory' of the submenu 'Directory' of the
-        menu 'VCS'. Path is case-sensitive
+        Returns the menu found at the given path. ``path`` is similar to
+        file paths, starting with the main GPS menu ('/'), down to each
+        submenus. For example, '/VCS/Directory/Update Directory' refers to
+        the submenu 'Update Directory' of the submenu 'Directory' of the menu
+        'VCS'. Path is case-sensitive.
 
         :param path: A string
-        :return: The instance of GPS.Menu
+        :return: The instance of :class:`GPS.Menu`
 
         .. code-block:: python
 
@@ -7418,7 +7550,7 @@ class Menu(GUI):
 
     def get_active(self):
         """
-        Return True if the widget is a currently active radio menu item
+        Returns True if the widget is a currently active radio menu item.
 
         :return: A boolean
         """
@@ -7426,10 +7558,10 @@ class Menu(GUI):
 
     def rename(self, name):
         """
-        Change the name of a menu. The first underscore character seen in name
-        will be used as the keyboard shortcut to access this menu from now
-        on. If you actually want to insert an underscore in the name, you need
-        to double it
+        Changes the name of a menu. The first underscore character seen in
+        name will be used as the keyboard shortcut to access this menu from
+        now on. If you actually want to insert an underscore in the name, you
+        need to double it.
 
         :param name: A string
         """
@@ -7437,7 +7569,7 @@ class Menu(GUI):
 
     def set_active(self, is_active=True):
         """
-        Set the active state of a radio menu item
+        Sets the active state of a radio menu item.
 
         :param is_active: A boolean
         """
@@ -7460,7 +7592,7 @@ class Message(object):
     MESSAGE_IN_LOCATIONS = 2
     MESSAGE_IN_SIDEBAR_AND_LOCATIONS = 3
     """
-    The flags returned by GPS.Message.get_flags()
+    The flags returned by :func:`GPS.Message.get_flags`.
     """
 
     @staticmethod
@@ -7472,7 +7604,7 @@ class Message(object):
 
     def __init__(self, category, file, line, column, text, flags):
         """
-        Add a Message in GPS.
+        Adds a Message in GPS.
 
         :param category: A String indicating the message category
         :param file: A File indicating the file
@@ -7495,35 +7627,35 @@ class Message(object):
 
     def execute_action(self):
         """
-        If the message has an associated action, execute it.
+        If the message has an associated action, executesa it.
         """
         pass  # implemented in Ada
 
     def get_category(self):
         """
-        Return the message's category.
+        Returns the message's category.
         """
         pass  # implemented in Ada
 
     def get_column(self):
         """
-        Return the message's column.
+        Returns the message's column.
         """
         pass  # implemented in Ada
 
     def get_file(self):
         """
-        Return the message's file.
+        Returns the message's file.
         """
         pass  # implemented in Ada
 
     def get_flags(self):
         """
-        Return an integer which represents the location of the message: should
-        it be displayed in locations view and source editor's sidebar. Message
-        is displayed in source editor's sidebar when zero bit is set, and is
-        displayed in locations view when first bit is set, so here is possible
-        values:
+        Returns an integer representing the location of the message: should
+        it be displayed in locations view and source editor's
+        sidebar. Message is displayed in source editor's sidebar when zero
+        bit is set, and is displayed in locations view when first bit is set,
+        so here is possible values:
 
         * GPS.Message.MESSAGE_INVISIBLE:
           message is invisible
@@ -7537,34 +7669,34 @@ class Message(object):
         * GPS.Message.MESSAGE_IN_SIDEBAR_AND_LOCATIONS:
           message is visible in source editor and locations view
 
-        Note, set of flags can be extended in the future, thus it is better to
-        handle them as bit set.
+        Note, this set of flags can be extended in the future, so they should
+        be viewed as bits that are "or"ed together.
         """
         pass  # implemented in Ada
 
     def get_line(self):
         """
-        Return the message's line.
+        Returns the message's line.
         """
         pass  # implemented in Ada
 
     def get_mark(self):
         """
-        Return an EditorMark which was created with the message and keeps track
-        of the location when the file is edited.
+        Returns an :class:`EditorMark` which was created with the message and
+        keeps track of the location when the file is edited.
         """
         pass  # implemented in Ada
 
     def get_text(self):
         """
-        Return the message's text.
+        Returns the message's text.
         """
         pass  # implemented in Ada
 
     @staticmethod
     def list(file=None, category=None):
         """
-        Return a list of all messages currently stored in GPS.
+        Returns a list of all messages currently stored in GPS.
 
         :param file: a :class:`GPS File`.
             Specifying this parameter restricts the output to messages
@@ -7579,28 +7711,30 @@ class Message(object):
         pass  # implemented in Ada
 
     def remove(self):
-        """Remove the message from GPS."""
+        """
+        Removes the message from GPS.
+        """
         pass  # implemented in Ada
 
     def set_action(self, action, image, tooltip=None):
         """
-        Add an action item to the message. This will add an icon to the
-        message, and clicking on this icon will execute action.
+        Adds an action item to the message. This adds an icon to the message;
+        Clicking on the icon executes ``action``.
 
-        :param action: A String corresponding to a registered GPS action.
-
+        :param action: A String corresponding to a registered GPS action
         :param image: A String corresponding to the id of a registered GPS
-           image. See icons.xml for an example of how to register icons in GPS.
-
-        :param tooltip: A string which contains the tooltip to
-           display when the mouse is on the icon.
+           image. See :file:`icons.xml` for an example of how to register
+           icons in GPS
+        :param tooltip: A string containing the tooltip to
+           display when the mouse is on the icon
         """
         pass  # implemented in Ada
 
     @staticmethod
     def set_sort_order_hint(category, hint):
         """
-        Sets default sorting method for files in Locations view.
+        Sets default sorting method for files in the :guilabel:`Locations`
+        view.
 
         :param category: Name of messages category
         :param hint: Default sorting method ("chronological" or
@@ -7610,10 +7744,9 @@ class Message(object):
 
     def set_style(self, style, len):
         """
-        Set the style of the message. The second parameter indicates the length
-        in number of characters to highlight. If 0, then highlight the whole
-        line. If left out, this means the length of the message highlighting is
-        not modified.
+        Sets the style of the message. ``len`` is the length in number of
+        characters to highlight. If 0, highlight the whole line. If omitted,
+        the length of the message highlighting is not modified.
 
         :param style: An integer
         :param len: An integer
@@ -7622,18 +7755,17 @@ class Message(object):
 
     def set_subprogram(self, subprogram, image, tooltip=None):
         """
-        Add an action item to the message. This will add an icon to the
-        message, and clicking on this icon will execute the subprogram, with
-        the messaged passed as parameter of the subprogram.
+        Adds an action item to the message. This adds an icon to the message.
+        Clicking on this icon calls ``subprogram``, with the message passed
+        as its parameter.
 
         :param subprogram: A subprogram in the scripting language.
-            This subprogram takes as a parameter one message.
-
+            This subprogram takes on parameter, which is a message
         :param image: A String corresponding to the id of a registered GPS
-           image. See icons.xml for an example of how to register icons in GPS.
-
+           image. See :file:`icons.xml` for an example of how to register
+           icons in GPS
         :param tooltip: A string which contains the tooltip to
-           display when the mouse is on the icon.
+           display when the mouse is on the icon
 
         .. code-block:: python
 
@@ -7652,7 +7784,7 @@ class Missing_Arguments(Exception):
 
     """
     An exception raised by GPS. Raised when calling a subprogram from the GPS
-    module with missing arguments
+    module with missing arguments.
     """
     pass  # implemented in Ada
 
@@ -7664,32 +7796,32 @@ class Missing_Arguments(Exception):
 class Cursor(object):
 
     """
-    Interface to a cursor in a GPS EditorBuffer. Just gives access to the
-    insertion mark and to the selection mark of the cursor
+    Interface to a cursor in :class:`GPS.EditorBuffer`. Only gives access to
+    the insertion mark and to the selection mark of the cursor.
     """
 
     def move(self, loc, extend_selection=False):
         """
         Moves the cursor to the given location.
 
-        :param loc: A :class:`GPS.EditorLocation` that you wan't to move the
-            cursor to.
-        :param extend_selection: A boolean. If it is True, the selection mark
-            will not move, and so the selection will be extended. If it is
-            False, both marks will move simultaneously.
+        :param loc: A :class:`GPS.EditorLocation` that you want to move the
+            cursor to
+        :param extend_selection: A boolean. If True, the selection mark will
+            not move so the selection is extended. If False, both marks move
+            simultaneously
         """
 
     def set_manual_sync(self):
         """
-        Set the buffer in manual sync mode regarding this cursor. This will set
-        sync to be manual and all insertions/deletions will be considered as
-        originating from this cursor instance. If you don't do that, an action
-        on the buffer (like an insertion) will be repercuted on every alive
+        Sets the buffer in manual sync mode regarding this cursor. This set
+        sync to be manual and all insertions/deletions are considered as
+        originating from this cursor instance. If you do not do this, an
+        action on the buffer (like an insertion) is repercuted on every alive
         cursor instance.
 
-        NOTE: Don't call this manually. Prefer to iterate on the results of
-        :meth:`EditorBuffer.cursors` so that this method is called for you
-        automatically
+        NOTE: Do not call this manually. Instead, iterate on the results of
+        :meth:`EditorBuffer.cursors` so this method is called for you
+        automatically.
         """
 
     def sel_mark(self):
@@ -7697,10 +7829,10 @@ class Cursor(object):
         Returns the cursor's selection mark.
 
         NOTE: If you can interact with your cursor via :meth:`Cursor.move`
-        rather than via manually moving marks, you should prefer this method
+        rather than via manually moving marks, you should prefer that method.
 
         :return: The :class:`GPS.EditorMark` instance corresponding to the
-        cursor's selection mark
+           cursor's selection mark
         """
         pass
 
@@ -7709,10 +7841,10 @@ class Cursor(object):
         Returns the cursor's main mark.
 
         NOTE: If you can interact with your cursor via :meth:`Cursor.move`
-        rather than via manually moving marks, you should prefer this method
+        rather than via manually moving marks, you should prefer that method.
 
         :return: The :class:`GPS.EditorMark` instance corresponding to the
-        cursor's insert mark
+           cursor's insert mark
         """
         pass
 
@@ -7723,9 +7855,10 @@ class Cursor(object):
 class Preference(object):
 
     """
-    Interface to the GPS preferences, as set in the Edit/Preferences
-    dialog. New preferences are created through XML customization files (or
-    calls to GPS.parse_xml(), see the GPS documentation
+    Interface to the GPS preferences, as set in the :menuselection:`Edit -->
+    Preferences` dialog. New preferences are created through XML
+    customization files (or calls to :func:`GPS.parse_xml`, see the GPS
+    documentation).
 
     .. seealso:: :func:`GPS.Preference.__init__`
 
@@ -7742,15 +7875,16 @@ class Preference(object):
 
     def __init__(self, name):
         """
-        Initializes an instance of the GPS.Preference class, associating it
-        with the preference given in parameter. The name is the one that can be
-        found in the $HOME/.gps/preferences file. When you are creating a new
-        preference, this name can include '/' characters, which will result in
-        subpages created in the Preferences dialog. The name after the last '/'
-        should only include letters and '-' characters. If the name starts
-        with '/' and contains no other '/', then the preference will not be
-        visible in the Preferences dialog, although it can be manipulated as
-        usual and will be loaded automatically by GPS on startup.
+        Initializes an instance of the :class:`GPS.Preference` class,
+        associating it with the preference ``name``, which is the one that is
+        found in the :file:`$HOME/.gps/preferences` file. When you are
+        creating a new preference, this name can include '/' characters,
+        which results in subpages created in the :guilabel:`Preferences`
+        dialog. The name after the last '/' should only include letters and
+        '-' characters. If the name starts with '/' and contains no other
+        '/', the preference is not visible in the :guilabel:`Preferences`
+        dialog, though it can be manipulated as usual and is loaded
+        automatically by GPS on startup.
 
         :param name: A string
         """
@@ -7758,50 +7892,53 @@ class Preference(object):
 
     def create(self, label, type, doc='', default='', *args):
         """
-This function creates a new preference, and makes it visible in the preferences
-dialog. In the dialog, the preference appears in the page given by the name
-used when creating the instance of GPS.Preference. The label is used to qualify
-the preference, and doc will appear as a tooltip to explain the preference to
-users. The type describes the type of preference, and therefore how it should
-be edited by users.
+        Creates a new preference and makes it visible in the preferences
+        dialog. In the dialog, the preference appears in the page given by
+        the name used when creating the instance of
+        :class:`GPS.Preference`. ``label`` qualifies the preference and
+        ``doc`` appears as a tooltip to explain the preference to users.
+        ``type`` describes the type of preference and therefore how it should
+        be edited by users.
 
-The parameters to this function cannot be named (since it uses a variable
-number of parameters, see the documentation below).
+        The parameters to this function cannot be named (since it uses a
+        avariable number of parameters, see the documentation below).
 
-The additional parameters depend on the type of preference you are creating:
+        The additional parameters depend on the type of preference you are
+        creating:
 
-- For an "integer", the default value is 0, and the two additional parameters
-  are the minimum and maximum possible values. These are integers.
+        - For "integer", the default value is 0, and the two additional
+          parameters are the minimum and maximum possible values. These are
+          integers.
 
-- For a "boolean", the default is True.
+        - For a "boolean", the default is True.
 
-- For a "string", the default is the empty string.
+        - For a "string", the default is the empty string.
 
-- A "multiline" behaves the same as a string except it is edited on multiple
-  lines in the Preferences dialog.
+        - A "multiline" behaves the same as a string except it is edited on
+          multiple lines in the :guilabel:`Preferences` dialog.
 
-- For a "color", the default is "black".
+        - For a "color", the default is "black".
 
-- For a "font", the default is "sans 9".
+        - For a "font", the default is "sans 9".
 
-- For a "enum", any number of additional parameters can be specified. They are
-  all the possible values of the preference. The default is the index in the
-  list of possible values, starting at 0.
+        - For an "enum", any number of additional parameters can be
+          specified. They are all the possible values of the preference. The
+          default is the index in the list of possible values, starting at 0.
 
-:param label: A string
-:param type: A string, one of "integer", "boolean", "string",
-    "color", "font", "enum", "multiline"
-:param doc: A string
-:param default: Depends on the type
-:param args: Additional parameters depending on the type
+        :param label: A string
+        :param type: A string, one of "integer", "boolean", "string",
+           "color", "font", "enum", "multiline"
+        :param doc: A string
+        :param default: Depends on the type
+        :param args: Additional parameters depending on the type
         """
         pass  # implemented in Ada
 
     def get(self):
         """
-        Get value for the given preference. The exact returned type depends on
-        the type of the preference. Note that boolean values are returned as
-        integers, for compatibility with older versions of Pythons
+        Gets value of the given preference. The exact returned type depends
+        on the type of the preference. Note that boolean values are returned
+        as integers, for compatibility with older versions of Python.
 
         :return: A string or an integer
 
@@ -7814,8 +7951,8 @@ The additional parameters depend on the type of preference you are creating:
 
     def set(self, value, save=True):
         """
-        Set value for the given preference. The type of the parameter depends
-        on the type of the preference.
+        Sets ``value`` for the given preference. The type of the parameter
+        depends on the type of the preference.
 
         :param value: A string, boolean or integer
         :param save: no longer used, kept for backward compatibility only.
@@ -7830,23 +7967,24 @@ The additional parameters depend on the type of preference you are creating:
 class Process(Command):
 
     """
-    Interface to expect-related commands. This class can be used to spawn new
-    processes and communicate with them later on. It is similar to what GPS
-    uses to communicate with gdb. This class is a subclass of GPS.Command.
+    Interface to :program:`expect`-related commands. This class can be used
+    to spawn new processes and communicate with them later. It is similar to
+    what GPS uses to communicate with :program:`gdb`. This is a subclass of
+    :class:`GPS.Command`.
 
     .. seealso::
 
-       :func:`GPS.Process.__init__()`
+       :func:`GPS.Process.__init__`
 
        :func:`GPS.Command`
 
     .. code-block:: python
 
-       # The following example launches a gdb process, let it print its welcome
-       # message, and kills it as soon as a prompt is seen in the output.  In
-       # addition, it displays debugging messages in a new GPS window.  As you
-       # might note, some instance-specific data is stored in the instance of
-       # the process, and can be retrieve in each callback.
+       # The following example launches a gdb process, lets it print its
+       # welcome message, and kills it as soon as a prompt is seen in the
+       # output.  In addition, it displays debugging messages in a new GPS
+       # window.  As you might note, some instance-specific data is stored in
+       # the instance of the process, and can be retrieve in each callback.
 
        import GPS, sys
 
@@ -7872,7 +8010,7 @@ class Process(Command):
     .. code-block:: python
 
        # A similar example can be implemented by using a new class. This is
-       # slightly cleaner, since it doesn't pollute the global namespace.
+       # slightly cleaner, since it does not pollute the global namespace.
 
        class My_Gdb(GPS.Process):
           def matched(self, matched, unmatched):
@@ -7898,116 +8036,120 @@ class Process(Command):
                  show_command=False, single_line_regexp=False,
                  case_sensitive_regexp=True, strip_cr=True):
         """
-Spawn specified command. Command can include triple-quoted strings, similar to
-python, which will always be preserved as one argument.
+        Spawns ``command``, which can include triple-quoted strings, similar
+        to Python, which are always preserved as one argument.
 
-If ``regexp`` is not-empty and ``on_match_action`` is specified, launch
-``on_match_action`` when ``regexp`` is found in the process output. If
-``on_exit_action`` is specified, execute it when the process terminates. Return
-the ID of the spawned process.
+        If ``regexp`` is not-empty and ``on_match_action`` is specified,
+        launch ``on_match_action`` when ``regexp`` is found in the process
+        output. If ``on_exit_action`` is specified, execute it when the
+        process terminates. Return the ID of the spawned process.
 
-``regexp`` is always compiled with the multi_line option, so that "^" and "$"
-also match at the beginning and end of each line, not just the whole
-output. You can optionally compile it with the single_line option whereby "."
-also matches the newline character. Likewise you can set the regexp to be case
-insensitive by setting case_sensitive_regexp to False.
+        ``regexp`` is always compiled with the multi_line option, so "^" and
+        "$" also match at the beginning and end of each line, not just the
+        whole output. You can optionally compile it with the single_line
+        option whereby "."  also matches the newline character. Likewise you
+        can set the regexp to be case insensitive by setting
+        case_sensitive_regexp to False.
 
-``on_match`` is a subprogram called with the parameters:
+        ``on_match`` is a subprogram called with the parameters:
 
-  - $1 = the instance of GPS.Process
-  - $2 = the string which matched the regexp
-  - $3 = the string since the last match
+        - $1 = the instance of :class:`GPS.Process`
+        - $2 = the string which matched the regexp
+        - $3 = the string since the last match
 
-``before_kill`` is a subprogram called just before the process is about to be
-killed. It is called when the user is interrupting the process through the task
-manager, or when GPS exits. It is not called when the process terminates
-normally. When it is called, the process is still valid and can be send
-commands. Its parameters are:
+        ``before_kill`` is a subprogram called just before the process is
+        about to be killed. It is called when the user is interrupting the
+        process through the task manager, or when GPS exits. It is not called
+        when the process terminates normally. When it is called, the process
+        is still valid and can be send commands. Its parameters are:
 
-  - $1 = the instance of GPS.Process
-  - $2 = the entire output of the process
+        - $1 = the instance of :class:`GPS.Process`
+        - $2 = the entire output of the process
 
-``on_exit`` is a subprogram called when the process has exited. You can no
-longer send input to it at this stage. Its parameters are:
+        ``on_exit`` is a subprogram called when the process has exited. You
+        can no longer send input to it at this stage. Its parameters are:
 
-  - $1 = the instance of GPS.Process
-  - $2 = the exit status
-  - $3 = the output of the process since the last call to on_match
+        - $1 = the instance of :class:`GPS.Process`
+        - $2 = the exit status
+        - $3 = the output of the process since the last call to
+          :func:`on_match`
 
-If ``task_manager`` is set to True, the process will be visible in the GPS task
-manager, and can be interrupted or paused by users. Otherwise, it will simply
-be running in the background, and never visible to the user.  If
-``progress_regexp`` is specified, then the output of the process will be
-scanned for this regexp. The part that match will not be returned to
-``on_match``. Instead, they will be used to guess the current progress of the
-command. Two groups of parenthesis are parsed, the one at ``progress_current``,
-and the one at ``progress_total``. The number returned for each of these groups
-indicate the current progress of the command, and the total that must be
-reached for this command to complete. For instance, if your process outputs
-lines like "done 2 out of 5", you should create a regular expression that
-matches the 2 and the 5 to guess the current progress. As a result, a progress
-bar is displayed in the task manager of GPS, and will allow users to monitor
-commands.
+          If ``task_manager`` is True, the process will be visible in the GPS
+          task manager and can be interrupted or paused by users. Otherwise,
+          it is running in the background and never visible to the user.  If
+          ``progress_regexp`` is specified, the output of the process will be
+          scanned for this regexp. The part that matches will not be returned
+          to ``on_match``. Instead, they will be used to guess the current
+          progress of the command. Two groups of parenthesis are parsed, the
+          one at ``progress_current``, and the one at ``progress_total``. The
+          number returned for each of these groups indicate the current
+          progress of the command and the total that must be reached for this
+          command to complete. For example, if your process outputs lines like
+          "done 2 out of 5", you should create a regular expression that
+          matches the 2 and the 5 to guess the current progress. As a result,
+          a progress bar is displayed in the task manager of GPS, and will
+          allow users to monitor commands.
 
-``remote_server`` represents the server used to spawn the process. By default,
-the GPS_Server is used, which is always the local machine. See the section
-"Using GPS for Remote Development" in the GPS documentation for more
-information on this field.
+          ``remote_server`` represents the server used to spawn the
+          process. By default, the GPS_Server is used, which is always the
+          local machine. See the section "Using GPS for Remote Development"
+          in the GPS documentation for more information on this field.
 
-If ``show_command`` is set, then the command line used to spawn the new Process
-is displayed in the "Messages" console.
+          If ``show_command`` is set, the command line used to spawn the
+          new process is displayed in the :guilabel:`Messages` console.
 
-If ``strip_cr`` is true, the output of the process will have all its ASCII.CR
-removed before the string is passed on to GPS and your script. This in general
-provides better portability to Windows systems, but might not be suitable for
-applications for which CR is relevant (for instance those that drive an ANSI
-terminal).
+          If ``strip_cr`` is true, the output of the process will have all
+          its ASCII.CR removed before the string is passed to GPS and your
+          script. This, in general, provides better portability to Windows
+          systems, but might not be suitable for applications for which CR is
+          relevant (for example, those that drive an ANSI terminal).
 
-An exception is raised if the process could not be spawned.
+          An exception is raised if the process could not be spawned.
 
-:param command: A string
-:param regexp: A string
-:param on_match: A subprogram, see the section
-     "Subprogram parameters" in the GPS documentation
-:param on_exit: A subprogram
-:param task_manager: A boolean
-:param progress_regexp: A string
-:param progress_current: An integer
-:param progress_total: An integer
-:param before_kill: A subprogram
-:param remote_server: A string. Possible values are "GPS_Server",
-    the empty string (equivalent to "GPS_Server"), "Build_Server",
-    "Debug_Server", "Execution_Server" and "Tools_Server".
-:param show_command: A boolean
-:param single_line_regexp: A boolean
-:param case_sensitive_regexp: A boolean
-:param strip_cr: A boolean
+          :param command: A string
+          :param regexp: A string
+          :param on_match: A subprogram, see the section
+             "Subprogram parameters" in the GPS documentation
+          :param on_exit: A subprogram
+          :param task_manager: A boolean
+          :param progress_regexp: A string
+          :param progress_current: An integer
+          :param progress_total: An integer
+          :param before_kill: A subprogram
+          :param remote_server: A string. Possible values are "GPS_Server",
+             the empty string (equivalent to "GPS_Server"), "Build_Server",
+             "Debug_Server", "Execution_Server" and "Tools_Server".
+          :param show_command: A boolean
+          :param single_line_regexp: A boolean
+          :param case_sensitive_regexp: A boolean
+          :param strip_cr: A boolean
 
-.. seealso:: :func:`GPS.Process`
+          .. seealso:: :class:`GPS.Process`
         """
         pass  # implemented in Ada
 
     def expect(self, regexp, timeout=-1):
         """
-        Block the execution of the script until either regexp has been seen in
-        the output of the command, or the timeout has expired. If the timeout
-        is negative, wait forever until we see the regexp or the process
-        finishes its execution.
+        Blocks execution of the script until either ``regexp`` has been seen
+        in the output of the command or ``timeout`` has expired. If
+        ``timeout`` is negative, wait forever until we see ``regexp`` or the
+        process completes execution.
 
         While in such a call, the usual ``on_match`` callback is called as
         usual, so you might need to add an explicit test in your on_match
         callback not to do anything in this case.
 
         This command returns the output of the process since the start of the
-        call to expect and up to the end of the text that matched regexp. Note
-        that it will also include the output that was sent to the on_match
-        callback while expect was running. It will not however include output
-        already returned by a previous call to expect (nor does it guarantee
-        that two successive calls to expect will return the full output of the
-        process, since some output might have been matched by on_match between
-        the two calls, and would not be returned by the second expect).
+        call and up to the end of the text that matched regexp. Note that it
+        also includes the output sent to the on_match callback while it is
+        running. It does not, however, include output already returned by a
+        previous call to this function (nor does it guarantee that two
+        successive calls return the full output of the process, since some
+        output might have been matched by on_match between the two calls, and
+        would not be returned by the second call).
 
-        If a timeout occurred or the process terminated, an exception is raised
+        If a timeout occurred or the process terminated, an exception is
+        raised.
 
         :param regexp: A string
         :param timeout: An integer, in milliseconds
@@ -8023,28 +8165,32 @@ An exception is raised if the process could not be spawned.
 
     def get_result(self):
         """
-        Wait till the process terminates, and return its output. This is the
-        output since the call to get_result, ie if you call get_result after
-        performing some calls to expect, the returned string does not return
-        the output that was already returned by expect.
+        Waits untill the process terminates and returns its output. This is
+        the output since the last call to this function, so if you call it
+        after performing some calls to :func:`expect`, the returned string
+        does not contain the output already returned by :func:`expect`.
 
         :return: A string
         """
         pass  # implemented in Ada
 
     def interrupt(self):
-        """Interrupt a process controlled by GPS"""
+        """
+        Interrupts a process controlled by GPS.
+        """
         pass  # implemented in Ada
 
     def kill(self):
-        """Terminate a process controlled by GPS"""
+        """
+        Terminates a process controlled by GPS.
+        """
         pass  # implemented in Ada
 
     def send(self, command, add_lf=True):
         """
-        Send a line of text to the process. If you need to close the input
+        Sends a line of text to the process. If you need to close the input
         stream to an external process, it often works to send the character
-        ASCII 4, for instance through the python command chr(4).
+        ASCII 4, for example through the Python command chr(4).
 
         :param command: A string
         :param add_lf: A boolean
@@ -8053,9 +8199,9 @@ An exception is raised if the process could not be spawned.
 
     def set_size(self, rows, columns):
         """
-        Tells the process about the size of its terminal. Rows and columns
-        should (but need not) be the number of visible rows and columns of the
-        terminal in which the process is running.
+        Tells the process about the size of its terminal. ``rows`` and
+        ``columns`` should (but need not) be the number of visible rows and
+        columns of the terminal in which the process is running.
 
         :param rows: An integer
         :param columns: An integer
@@ -8064,7 +8210,7 @@ An exception is raised if the process could not be spawned.
 
     def wait(self):
         """
-        Block the execution of the script until the process has finished
+        Blocks the execution of the script until the process has finished
         executing. The exit callback registered when the process was started
         will be called before returning from this function.
 
@@ -8083,28 +8229,33 @@ An exception is raised if the process could not be spawned.
 class Project(object):
 
     """
-Represents a project file. See also the GPS documentation on how to create
-new project attributes.
+    Represents a project file. Also see the GPS documentation on how to
+    create new project attributes.
 
-.. seealso:: :func:`GPS.Project.__init__`
+    .. seealso:: :func:`GPS.Project.__init__`
 
-Related hooks:
+    Related hooks:
 
-- "project_view_changed": Called whenever the project is recomputed, ie one of
-  its attributes was changed by the user, the environment variables are
-  changed,...
+    - project_view_changed
 
-  Then is a good time to test the list of languages (GPS.Project.languages())
-  that the project supports, and do language-specific customizations
+      Called whenever the project is recomputed, such as when one of its
+      attributes was changed by the user or the environment variables are
+      changed.
 
-- "project_changed": A new project was loaded. The hook above will be called
-  after this one
+      This is a good time to test the list of languages
+      (:func:`GPS.Project.languages`) that the project supports and do
+      language-specific customizations
+
+   - project_changed
+
+      Called when a new project was loaded. The hook above is called after
+      this one.
     """
 
     def __cmp__(self, file):
         """
-        Compare two instances of GPS.Project, and return -1, 0 or 1 depending
-        on their relative sort order
+        Compares two instances of :class:`GPS.Project` and returns -1, 0 or 1
+        depending on their relative sort order.
 
         :param file: An instance of :class:`GPS.Project`
         :return: An integer
@@ -8113,7 +8264,7 @@ Related hooks:
 
     def __hash__(self):
         """
-        Return a hash value suitable for storing self in a dictionary
+        Returns a hash value suitable for storing self in a dictionary.
 
         :return: An integer
         """
@@ -8121,8 +8272,8 @@ Related hooks:
 
     def __init__(self, name):
         """
-        Initializes an instance of GPS.Project. The project must be currently
-        loaded in GPS
+        Initializes an instance of :class:`GPS.Project`. The project must be
+        currently loaded in GPS.
 
         :param name: The project name
 
@@ -8132,8 +8283,8 @@ Related hooks:
 
     def __repr__(self):
         """
-        Return a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python
+        Returns a string suitable for the display of self on screen. This is
+        called implicitly by GPS and Python.
 
         :return: A string
         """
@@ -8141,8 +8292,8 @@ Related hooks:
 
     def __str__(self):
         """
-        Return a string suitable for the display of self on screen. This is
-        called implicitly by GPS and Python
+        Returns a string suitable for the display of self on screen. This is
+        called implicitly by GPS and Python.
 
         :return: A string
         """
@@ -8150,15 +8301,15 @@ Related hooks:
 
     def add_attribute_values(self, attribute, package, index, value):
         """
-         Add some values to an attribute. You can add as much as many values
-         you need at the end of the param list.  If the package is not
-         specified, the attribute at the toplevel of the project is queried.
-         The index only needs to be specified if it applies to that attribute.
+         Adds some values to an attribute. You can add as many values you
+         need at the end of the param list.  If the package is not specified,
+         the attribute at the toplevel of the project is queried.  The index
+         only needs to be specified if it applies to that attribute.
 
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
-        :param index: A string, the name of the index for the specific value of
-            this attribute
+        :param index: A string, the name of the index for the specific value
+            of this attribute
         :param value: A string, the name of the first value to add
 
         .. seealso::
@@ -8168,6 +8319,8 @@ Related hooks:
            :func:`GPS.Project.remove_attribute_values`
 
            :func:`GPS.Project.clear_attribute_values`
+
+        For example:
 
         .. code-block:: python
 
@@ -8179,10 +8332,10 @@ Related hooks:
 
     def add_dependency(self, path):
         """
-        This commands adds a new dependency from self to the project file
-        pointed to by path. This is the equivalent of putting a with clause in
-        self, and means that the source files in self can depend on source
-        files from the imported project
+        Adds a new dependency from self to the project file pointed to by
+        ``path``. This is the equivalent of putting a with clause in self,
+        and means that the source files in self can depend on source files
+        from the imported project.
 
         :param path: The path to another project to depend on
 
@@ -8192,8 +8345,8 @@ Related hooks:
 
     def add_main_unit(self, *args):
         """
-        Add some main units to the current project, and for the current
-        scenario. The project is not saved automatically
+        Adds some main units to the current project for the current
+        scenario. The project is not saved automatically.
 
         :param args: Any number of arguments, at least one
 
@@ -8203,11 +8356,11 @@ Related hooks:
     @staticmethod
     def add_predefined_paths(sources='', objects=''):
         """
-        Add some predefined directories to the source path or the objects
-        path. These will be searched when GPS needs to open a file by its base
-        name, in particular from the File->Open From Project dialog.  The new
-        paths are added in front, so that they have priorities over previously
-        defined paths.
+        Adds some predefined directories to the source path or the objects
+        path. These are searched when GPS needs to open a file by its base
+        name, in particular from the :menuselection:`File --> Open From
+        Project` dialog.  The new paths are added in front, so they have
+        priorities over previously defined paths.
 
         :param sources: A list of directories separated by the appropriate
             separator (':' or ';' depending on the system
@@ -8221,14 +8374,15 @@ Related hooks:
 
     def add_source_dir(self, directory):
         """
-        Add a new source directory to the project. The new directory is added
-        in front of the source path. You should call recompute() after calling
-        this method, to recompute the list of source files. The directory is
-        added for the current value of the scenario variables only. Note that
-        if the current source directory for the project is not specified
-        explicitly in the .gpr file), it will be overriden by the new directory
-        you are adding. If the directory is already part of the source
-        directories for the project, it is not added a second time.
+        Adds a new source directory to the project. The new directory is
+        added in front of the source path. You should call
+        :func:`GPS.Project.recompute` after calling this method to recompute
+        the list of source files. The directory is added for the current
+        value of the scenario variables only. Note that if the current source
+        directory for the project is not specified explicitly in the .gpr
+        file), it is overriden by the new directory you are adding. If the
+        directory is already part of the source directories for the project,
+        it is not added a second time.
 
         :param directory: A string
 
@@ -8242,9 +8396,10 @@ Related hooks:
 
     def ancestor_deps(self):
         """
-        Return the list of projects that might contain sources that depend on
-        the project's sources. When doing extensive searches it isn't worth
-        checking other projects. Project itself is included in the list.
+        Returns the list of projects that might contain sources that depend
+        on the project's sources. When doing extensive searches it is not
+        worth checking other projects. Project itself is included in the
+        list.
 
         This is also the list of projects that import self.
 
@@ -8261,7 +8416,7 @@ Related hooks:
 
     def clear_attribute_values(self, attribute, package, index):
         """
-         Clear the values list of an attribute.
+         Clears the values list of an attribute.
 
          If the package is not specified, the attribute at the toplevel of the
          project is queried.
@@ -8270,15 +8425,15 @@ Related hooks:
 
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
-        :param index: A string, the name of the index for the specific value of
-           this attribute
+        :param index: A string, the name of the index for the specific value
+           of this attribute
         """
         pass  # implemented in Ada
 
     def dependencies(self, recursive=False):
         """
-        Return the list of projects on which self depends (either directly if
-        recursive is False, or including indirect dependencies if recursive is
+        Returns the list of projects on which self depends (either directly
+        if ``recursive`` is False, or including indirect dependencies if
         True).
 
         :param recursive: A boolean
@@ -8289,7 +8444,7 @@ Related hooks:
 
     def file(self):
         """
-        Return the project file
+        Returns the project file.
 
         :return: An instance of :class:`GPS.File`
         """
@@ -8297,8 +8452,8 @@ Related hooks:
 
     def generate_doc(self, recursive=False):
         """
-        Generate the documentation of the project and its subprojects if
-        recursive is True, and display it with the default browser
+        Generates the documentation for the project (and its subprojects if
+        ``recursive`` is True) and displays it in the default browser.
 
         :param recursive: A boolean
 
@@ -8308,12 +8463,12 @@ Related hooks:
 
     def get_attribute_as_list(self, attribute, package='', index=''):
         """
-        Fetch the value of the attribute in the project.
+        Fetches the value of the attribute in the project.
 
-        If the package is not specified, the attribute at the toplevel of the
+        If ``package`` is not specified, the attribute at the toplevel of the
         project is queried.
 
-        The index only needs to be specified if it applies to that attribute.
+        ``index`` only needs to be specified if it applies to that attribute.
 
         If the attribute value is stored as a simple string, a list with a
         single element is returned. This function always returns the value of
@@ -8321,8 +8476,8 @@ Related hooks:
 
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
-        :param index: A string, the name of the index for the specific value of
-            this attribute
+        :param index: A string, the name of the index for the specific value
+            of this attribute
         :return: A list of strings
 
         .. seealso::
@@ -8357,16 +8512,17 @@ Related hooks:
 
     def get_attribute_as_string(self, attribute, package='', index=''):
         """
-        Fetch the value of the attribute in the project.
+        Fetches the value of the attribute in the project.
 
-        If the package is not specified, the attribute at the toplevel of the
+        If ``package`` is not specified, the attribute at the toplevel of the
         project is queried.
 
-        The index only needs to be specified if it applies to that attribute.
+        ``index`` only needs to be specified if it applies to that attribute.
 
         If the attribute value is stored as a list, the result string is a
         concatenation of all the elements of the list. This function always
-        returns the value of the attribute in the currently selected scenario.
+        returns the value of the attribute in the currently selected
+        scenario.
 
         When the attribute is not explicitely overridden in the project, the
         default value is returned. This default value is the one described in
@@ -8377,8 +8533,8 @@ Related hooks:
 
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
-        :param index: A string, the name of the index for the specific value of
-            this attribute
+        :param index: A string, the name of the index for the specific value
+            of this attribute
         :return: A string, the value of this attribute
 
         .. seealso::
@@ -8410,8 +8566,8 @@ Related hooks:
 
     def get_executable_name(self, main):
         """
-        Return the name of the executable, either read from the project or
-        computed from main
+        Returns the name of the executable, either read from the project or
+        computed from ``main``.
 
         :param main: :class:`GPS.File`
         :return: A string
@@ -8421,10 +8577,10 @@ Related hooks:
 
     def get_property(self, name):
         """
-        Return the value of the property associated with the project. This
+        Returns the value of the property associated with the project. This
         property might have been set in a previous GPS session if it is
-        persistent. An exception is raised if no such property already exists
-        for the project
+        persistent. An exception is raised if no such property exists for the
+        project.
 
         :param name: A string
         :return: A string
@@ -8435,9 +8591,9 @@ Related hooks:
 
     def get_tool_switches_as_list(self, tool):
         """
-        Same as get_attribute_as_list, but specialized for the switches of a
-        specific tool. Tools are defined through XML customization files, see
-        the GPS documentation for more information
+        Like :func:`get_attribute_as_list`, but specialized for the switches
+        of ``tool``. Tools are defined through XML customization files, see
+        the GPS documentation for more information.
 
         :param tool: The name of the tool whose switches you want to get
         :return: A list of strings
@@ -8450,8 +8606,8 @@ Related hooks:
 
         .. code-block:: python
 
-           # If GPS has loaded a customization file that contains the following
-           # tags:
+           # If GPS has loaded a customization file that contains the
+           # following tags:
            #
            #    <?xml version="1.0" ?>
            #    <toolexample>
@@ -8462,10 +8618,10 @@ Related hooks:
            #       </tool>
            #    </toolexample>
 
-           # The user will as a result be able to edit the switches for Find in
-           # the standard Project Properties editor.
+           # The user will as a result be able to edit the switches for Find
+           # in the standard Project Properties editor.
 
-           # Then the python command
+           # Then the Python command
 
            GPS.Project("default").get_tool_switches_as_list("Find")
 
@@ -8477,8 +8633,8 @@ Related hooks:
 
     def get_tool_switches_as_string(self, tool):
         """
-        Same as GPS.Project.get_attribute_as_string, but specialized for a
-        specific tool.
+        Like :func:`GPS.Project.get_attribute_as_string`, but specialized for
+        a ``tool``.
 
         :param tool: The name of the tool whose switches you want to get
         :return: A string
@@ -8490,9 +8646,9 @@ Related hooks:
 
     def is_modified(self, recursive=False):
         """
-        Return True if the project has been modified but not saved yet. If
-        recursive is true, then the return value takes into account all
-        projects imported by self
+        Returns True if the project has been modified but not saved yet. If
+        ``recursive`` is true, the return value takes into account all
+        projects imported by self.
 
         :param recursive: A boolean
         :return: A boolean
@@ -8501,10 +8657,10 @@ Related hooks:
 
     def languages(self, recursive=False):
         """
-        Return the list of languages that are used for the sources of the
-        project (and its subprojects if recursive is True). This can be used to
-        detect whether some specific action in a module should be activated or
-        not. Language names are always lowercase
+        Returns the list of languages used for the sources of the project
+        (and its subprojects if ``recursive`` is True). This can be used to
+        detect whether some specific action in a module should be activated
+        or not. Language names are always lowercase.
 
         :param recursive: A boolean
         :return: A list of strings
@@ -8512,8 +8668,8 @@ Related hooks:
         .. code-block:: python
 
            # The following example adds a new menu only if the current project
-           # supports C. This is refreshed every time the project is changed by
-           # the user.
+           # supports C. This is refreshed every time the project is changed
+           # by the user.
 
            import GPS
            c_menu=None
@@ -8537,15 +8693,15 @@ Related hooks:
     @staticmethod
     def load(filename, force=False, keep_desktop=False):
         """
-        Load a new project, which replaces the current root project, and return
-        a handle to it. All imported projects are also loaded at the same
-        time. If the project is not found, a default project is loaded.
+        Loads a new project, which replaces the current root project, and
+        returns a handle to it. All imported projects are also loaded at the
+        same time. If the project is not found, a default project is loaded.
 
-        If ``force`` is True, then the user will not be asked whether to save
-        the current project, whether it was modified or not.
+        If ``force`` is True, the user will not be asked whether to save the
+        current project, whether it was modified or not.
 
-        If ``keep_desktop`` is False, then load saved desktop configuration,
-        keep current otherwise
+        If ``keep_desktop`` is False, load the saved desktop configuration,
+        otherwise keep the current one.
 
         :param filename: A string, the full path to a project file
         :param force: A boolean
@@ -8556,9 +8712,9 @@ Related hooks:
 
     def name(self):
         """
-        Return the name of the project. This doesn't include directory
-        information, see self.file().name() if you wish to access that
-        information
+        Returns the name of the project. This does not include directory
+        information; use :func:`self.file().name` if you want to access that
+        information.
 
         :return: A string, the name of the project
         """
@@ -8566,9 +8722,10 @@ Related hooks:
 
     def object_dirs(self, recursive=False):
         """
-        Return the list of object directories for this project. If Recursive is
-        True, the source directories of imported projects is also
-        returned. There might be duplicate directories in the returned list
+        Returns the list of object directories for this project. If
+        ``recursive`` is True, the source directories of imported projects is
+        also returned. There might be duplicate directories in the returned
+        list.
 
         :param recursive: A boolean
         :return: A list of strings
@@ -8576,16 +8733,18 @@ Related hooks:
         pass  # implemented in Ada
 
     def properties_editor(self):
-        """Launch a graphical properties editor for the project"""
+        """
+        Launches a graphical properties editor for the project.
+        """
         pass  # implemented in Ada
 
     @staticmethod
     def recompute():
         """
-        Recompute the contents of a project, including the list of source files
-        that are automatically loaded from the source directories. The project
-        file is not reloaded from the disk, and this should only be used if you
-        have created new source files outside of GPS for instance
+        Recomputes the contents of a project, including the list of source
+        files that are automatically loaded from the source directories. The
+        project file is not reloaded from the disk and this should only be
+        used if you have created new source files outside of GPS.
 
         .. code-block:: python
 
@@ -8595,18 +8754,18 @@ Related hooks:
 
     def remove_attribute_values(self, attribute, package, index, value):
         """
-         Removes some specific values from an attribute. You can set as much as
-         many values you need at the end of the param list.
+         Removes specific values from an attribute. You can specify as many
+         values you need at the end of the param list.
 
-         If the package is not specified, the attribute at the toplevel of the
+         If ``package`` is not specified, the attribute at the toplevel of the
          project is queried.
 
-         The index only needs to be specified if it applies to that attribute.
+         ``index`` only needs to be specified if it applies to that attribute.
 
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
-        :param index: A string, the name of the index for the specific value of
-            this attribute
+        :param index: A string, the name of the index for the specific value
+            of this attribute
         :param value: A string, the name of the first value to remove
 
         .. seealso::
@@ -8617,6 +8776,8 @@ Related hooks:
 
            :func:`GPS.Project.clear_attribute_values`
 
+        For example:
+
         .. code-block:: python
 
            GPS.Project.root().remove_attribute_values(
@@ -8626,9 +8787,9 @@ Related hooks:
 
     def remove_dependency(self, imported):
         """
-        Remove a dependency between two projects. You must call
-        GPS.Project.recompute() once you are done doing all the modifications
-        on the projects
+        Removes a dependency between two projects. You must call
+        :func:`GPS.Project.recompute` once you are done doing all the
+        modifications on the projects.
 
         :param imported: An instance of GPS.Project
 
@@ -8638,7 +8799,7 @@ Related hooks:
 
     def remove_property(self, name):
         """
-        Removes a property associated with a project
+        Removes a property associated with a project.
 
         :param name: A string
 
@@ -8648,9 +8809,10 @@ Related hooks:
 
     def remove_source_dir(self, directory):
         """
-        Remove a source directory from the project. You should call recompute()
-        after calling this method, to recompute the list of source files. The
-        directory is added for the current value of the scenario variables only
+        Removes a source directory from the project. You should call
+        :func:`GPS.Project.recompute` after calling this method to recompute
+        the list of source files. The directory is added only for the current
+        value of the scenario variables.
 
         :param directory: A string
 
@@ -8660,10 +8822,10 @@ Related hooks:
 
     def rename(self, name, path='<current path>'):
         """
-        Rename and move a project file (the project will only be put in the new
-        directory when it is saved, but will not be removed from its original
-        directory). You must call GPS.Project.recompute() sometime after
-        changing the name.
+        Renames and moves a project file (the project is only put in the new
+        directory when it is saved, but is not removed from its original
+        directory). You must call :func:`GPS.Project.recompute` at some point
+        after changing the name.
 
         :param name: A string
         :param path: A string
@@ -8673,7 +8835,7 @@ Related hooks:
     @staticmethod
     def root():
         """
-        Return the root project currently loaded in GPS
+        Returns the root project currently loaded in GPS.
 
         :return: An instance of GPS.Project
 
@@ -8686,16 +8848,19 @@ Related hooks:
     @staticmethod
     def scenario_variables():
         """
-        Return the list of scenario variables for the current project
-        hierarchy, and their current value. These variables are visible at the
-        top of the Project View in the GPS window. The initial value for these
-        variables is set from the environment variables' value when GPS is
-        started. However, changing the value of the environment variable later
-        on doesn't change the value of the scenario variable.
+        Returns the list of scenario variables for the current project
+        hierarchy and their current values. These variables are visible at
+        the top of the :guilabel:`Project` view in the GPS window. The
+        initial value for these variables is set from the environment
+        variables' value when GPS is started. However, changing the value of
+        the environment variable later does not change the value of the
+        scenario variable.
 
         :return: hash table associating variable names and values
 
         .. seealso:: :func:`GPS.Project.set_scenario_variable`
+
+        For example:
 
         .. code-block:: python
 
@@ -8708,9 +8873,9 @@ Related hooks:
     @staticmethod
     def scenario_variables_cmd_line(prefix=''):
         """
-        Return a concatenation of VARIABLE=VALUE, each preceded by the given
-        prefix. This string will generally be used when calling external tools,
-        for instance make or GNAT
+        Returns a concatenation of VARIABLE=VALUE, each preceded by
+        ``prefix``. This string is generally used when calling external
+        tools, for example, :program:`make` or GNAT.
 
         :param prefix: String to print before each variable in the output
         :return: a string
@@ -8721,9 +8886,9 @@ Related hooks:
            # launch the make command with the appropriate setup for the
            # environment
            # variables:
-           # <action name="launch make"> \
-           #   <shell lang="python">GPS.scenario_variables_cmd_line()</shell> \
-           #   <external>make %1</external> \
+           # <action name="launch make"> \\
+           #  <shell lang="python">GPS.scenario_variables_cmd_line()</shell> \\
+           #  <external>make %1</external> \\
            # </action>
         """
         pass  # implemented in Ada
@@ -8731,9 +8896,9 @@ Related hooks:
     @staticmethod
     def scenario_variables_values():
         """
-        Return a hash table where keys are the various scenario variables
+        Returns a hash table where keys are the various scenario variables
         defined in the current project and values the different values that
-        this variable can get.
+        this variable can accept.
 
         :return: A hash table of strings
         """
@@ -8742,11 +8907,11 @@ Related hooks:
     def search(self, pattern, case_sensitive=False, regexp=False,
                scope='whole', recursive=True):
         """
-        Return the list of matches for pattern in all the files belonging to
+        Returns the list of matches for pattern in all the files belonging to
         the project (and its imported projects if recursive is true
-        (default). Scope is a string, and should be any of 'whole', 'comments',
-        'strings', 'code'. The latter will match only for text outside of
-        comments
+        (default). ``scope`` is a string, and should be any of 'whole',
+        'comments', 'strings', 'code'. The latter will match only for text
+        outside of comments.
 
         :param pattern: A string
         :param case_sensitive: A boolean
@@ -8760,8 +8925,8 @@ Related hooks:
     def set_attribute_as_string(self, attribute, package, index, value):
         """
         Sets the value of an attribute. The attribute has to be stored as a
-        single value.  If the package is not specified, the attribute at the
-        toplevel of the project is queried.  The index only needs to be
+        single value.  If ``package`` is not specified, the attribute at the
+        toplevel of the project is queried.  ``index`` only needs to be
         specified if it applies to that attribute.
 
         :param attribute: A string, the name of the attribute
@@ -8787,10 +8952,10 @@ Related hooks:
         persistent is set to True.
 
         This is different than setting instance properties through Python's
-        standard mechanism in that there is no garantee that the same instance
-        of GPS.Project will be created for each physical project on the disk,
-        and therefore you would not be able to associate a property with the
-        physical project itself
+        standard mechanism in that there is no guarantee that the same
+        instance of :class:`GPS.Project` is created for each physical project
+        on the disk and therefore you would not be able to associate a
+        property with the physical project itself.
 
         :param name: A string
         :param value: A string
@@ -8809,9 +8974,9 @@ Related hooks:
     @staticmethod
     def set_scenario_variable(name, value):
         """
-        Change the value of a scenario variable. You need to call
-        GPS.Project.recompute() to activate this change (so that multiple
-        changes to the project can be grouped
+        Changes the value of a scenario variable. You need to call
+        :func:`GPS.Project.recompute` to activate this change (so that
+        multiple changes to the project can be grouped.
 
         :param name: A string
         :param value: A string
@@ -8822,9 +8987,10 @@ Related hooks:
 
     def source_dirs(self, recursive=False):
         """
-        Return the list of source directories for this project. If Recursive is
-        True, the source directories of imported projects is also
-        returned. There might be duplicate directories in the returned list
+        Returns the list of source directories for this project. If
+        ``recursive`` is True, the source directories of imported projects is
+        also returned. There might be duplicate directories in the returned
+        list.
 
         :param recursive: A boolean
         :return: A list of strings
@@ -8835,12 +9001,12 @@ Related hooks:
 
     def sources(self, recursive=False):
         """
-        Return the list of source files for this project. If recursive is true,
-        then all sources from imported projects are also returned. Otherwise,
-        only the direct sources are returned. The basenames of the returned
-        files are always unique: not two files with the same basenames are
-        returned, and the one returned is the first one see while traversing
-        the project hierarchy
+        Returns the list of source files for this project. If ``recursive``
+        is true, all sources from imported projects are also
+        returned. Otherwise, only the direct sources are returned. The
+        basenames of the returned files are always unique: not two files with
+        the same basenames are returned, and the one returned is the first
+        one see while traversing the project hierarchy.
 
         :param recursive: A boolean
         :return: A list of instances of :class:`GPS.File`
@@ -8849,11 +9015,12 @@ Related hooks:
 
     def update_xref(self, recursive=False):
         """
-        Updates the cross-reference information in memory for all files of the
-        project. This doesn't regenerate that information, just read all the
-        .ali files found in the object directory of the project (and all
-        imported projects if recursive is True). This should generally be
-        called before calling GPS.freeze_xref, for efficiency.
+        Updates the cross-reference information in memory for all files of
+        the project. This does not regenerate that information, just read all
+        the :file:`.ali` files found in the object directory of the project
+        (and all imported projects if recursive is True).  For efficiency
+        purpose, this should generally be called before calling
+        :func:`GPS.freeze_xref`.
 
         :param recursive: A boolean
         """
@@ -8873,8 +9040,8 @@ class ProjectTemplate(object):
     @staticmethod
     def add_templates_dir(noname):
         """
-        Add a directory to the path in which GPS looks for templates.  GPS will
-        look for project templates in immediate subdirectories of this
+        Adds a directory to the path in which GPS looks for templates.  GPS
+        will look for project templates in immediate subdirectories of this
         directory.
 
         :param noname: A :class:`GPS.File` pointing to a directory.
@@ -8917,13 +9084,14 @@ class ReferencesCommand(Command):
 class Revision(object):
 
     """
-    General interface to the revision browser
+    General interface to the revision browser.
     """
 
     @staticmethod
     def add_link(file, revision_1, revision_2):
         """
-        Create a link between revision_1 and revision_2 for the given file
+        Creates a link between ``revision_1`` and ``revision_2`` for
+        ``file``.
 
         :param file: A string
         :param revision_1: A string
@@ -8934,7 +9102,7 @@ class Revision(object):
     @staticmethod
     def add_log(file, revision, author, date, log):
         """
-        Add a new log entry into the revision browser
+        Adds a new log entry into the revision browser.
 
         :param file: A string
         :param revision: A string
@@ -8947,8 +9115,8 @@ class Revision(object):
     @staticmethod
     def add_revision(file, revision, symbolic_name):
         """
-        Register a new symbolic name (tag or branches) corresponding to the
-        specified revision of file
+        Registers a new symbolic name (tag or branches) corresponding to the
+        ``revision`` of ``file``.
 
         :param file: A string
         :param revision: A string
@@ -8959,7 +9127,7 @@ class Revision(object):
     @staticmethod
     def clear_view(file):
         """
-        Clear file's revision view
+        Clears the revision view of ``file``.
 
         :param file: A string
         """
@@ -8975,10 +9143,10 @@ class Search(object):
     """
     This class provides an interface to the search facilities used for the
     GPS omni-search. In particular, this allows you to search file names,
-    sources, actions,...
+    sources, and actions, etc.
 
-    This class provides facilities exported directly by Ada, so that you can
-    for instance look for file names by writting::
+    This class provides facilities exported directly by Ada, so you can
+    for example look for file names by writting::
 
         s = GPS.Search.lookup(GPS.Search.FILE_NAMES)
         s.set_pattern("search", flags=GPS.Search.FUZZY)
@@ -8990,7 +9158,7 @@ class Search(object):
                 break
 
     However, one of the mandatory GPS plugins augments this base class with
-    high-level constructs such as iterators, and now you can write code as::
+    high-level constructs such as iterators and now you can write code as::
 
         for result in GPS.Search.search(
            GPS.Search.FILE_NAMES, "search", GPS.Search.FUZZY):
@@ -9063,18 +9231,18 @@ class Search(object):
 
     def __init__(self):
         """
-        Always raises an exception, use GPS.Search.lookup to retrieve an
-        instance.
+        Always raises an exception; use :func:`GPS.Search.lookup` to retrieve
+        an instance.
         """
 
     def set_pattern(self, pattern, flags=0):
         """
-        Set the search pattern.
+        Sets the search pattern.
 
         :param pattern: a string
         :param flags: an integer, the combination of values such as
            GPS.Search.FUZZY, GPS.Search.REGEXP, GPS.Search.SUBSTRINGS,
-           GPS.Search.CASE_SENSITIVE, GPS.Search.WHOLE_WORD.
+           GPS.Search.CASE_SENSITIVE, GPS.Search.WHOLE_WORD
         """
 
     def get(self):
@@ -9091,62 +9259,62 @@ class Search(object):
            will be parsed independently. If a file does not contain a match,
            next() will return a tuple that contains True (there might be
            matches in other files) and None (there were no match found in the
-           current file).
+           current file)
         """
 
     @staticmethod
     def lookup(self, name):
         """
-        Lookup one of the existing search factories.
+        Looks up one of the existing search factories.
 
-        :param name: a string, one of GPS.Search.FILE_NAMES,
-            GPS.Search.SOURCES,...
+        :param name: a string, one of, e.g., GPS.Search.FILE_NAMES,
+            GPS.Search.SOURCES
         """
 
     @staticmethod
     def register(name, factory):
         """
-        Register a new custom search.
-        This will be available to users via the omni-search in GPS, or
-        of course via the GPS.Search class.
+        Registers a new custom search.  This will be available to users via
+        the omni-search in GPS, or via the :class:`GPS.Search` class.
 
         :param name: a string
-        :param factory: an instance of GPS.Search that will be reused
+        :param factory: an instance of :class:`GPS.Search` that will be reused
            every time the user starts a new search.
         """
 
     @staticmethod
     def search(context, pattern, flags=SUBSTRINGS):
         """
-        A high-level wrapper around lookup and set_pattern to make python
-        code more readable (see general documentation for GPS.Search).
+        A high-level wrapper around lookup and set_pattern to make Python
+        code more readable (see general documentation for
+        :class:`GPS.Search`).
 
-        :param context: a string, for instance GPS.Search.SOURCES
+        :param context: a string, for example GPS.Search.SOURCES
         :param pattern: a string
-        :param flags: an integer, see GPS.Search.set_pattern
+        :param flags: an integer, see :func:`GPS.Search.set_pattern`
         """
 
     def next(self):
         """
-        Results the next non-null result. This might take longer than get(),
-        since it will keep looking until it actually finds a new result.
-        It raises StopIteration when there are no more results.
+        Results the next non-null result. This might take longer than
+        :func:`get`, since it keeps looking until it actually finds a new
+        result.  It raises StopIteration when there are no more results.
         """
 
     def __iter__(self):
         """
-        Makes GPS.Search compatible with python iterators.
+        Makes :class:`GPS.Search` compatible with python iterators.
         """
-
 
 ###########################################################
 # Search
 ###########################################################
 
+
 class Search_Result(object):
 
     """
-    A class that represents the results found by GPS.Search.
+    A class that represents the results found by :class:`GPS.Search`.
     """
 
     short = ""
@@ -9158,11 +9326,11 @@ class Search_Result(object):
 
     def show(self):
         """
-        Execute the action associated with the result. This action
-        depends on where you were searching. For instance, search in
-        file names would as a result open the corresponding file;
-        searching in bookmarks would jump to the corresponding location;
-        search in actions would execute the corresponding action.
+        Executes the action associated with the result. This action depends
+        on where you were searching. For example, search in file names would
+        as a result open the corresponding file; searching in bookmarks would
+        jump to the corresponding location; search in actions would execute
+        the corresponding action.
         """
 
 
@@ -9173,22 +9341,23 @@ class Search_Result(object):
 class Style(object):
 
     """
-    This class is used to manipulate GPS Styles, which are used for instance to
-    represent graphical attributes given to Messages.
+    This class is used to manipulate GPS Styles, which are used, for example,
+    to represent graphical attributes given to Messages.
 
     This class is fairly low-level, and we recommend using the class
-    :py:func:`gps_utils.highlighter.OverlayStyle` instead. That class provides
-    similar support for specifying attributes, but makes it easier to highlight
-    sections of an editor with that style, or to remove the highlighting.
+    :py:func:`gps_utils.highlighter.OverlayStyle` instead. That class
+    provides similar support for specifying attributes, but makes it easier
+    to highlight sections of an editor with that style, or to remove the
+    highlighting.
 
     """
 
     def __init__(self, name, create):
         """
-        Create a Style
+        Creates a style.
 
-        :param name: A String indicating the name of the Style
-        :param create: A File indicating the file
+        :param name: A String indicating the name of the style
+        :param create: A :class:`File` indicating the file
 
         .. code-block:: python
 
@@ -9218,7 +9387,7 @@ class Style(object):
 
     def get_in_speedbar(self):
         """
-        Return a Boolean indicating whether this style is shown in
+        Returns a Boolean indicating whether this style is shown in
         the speedbar.
 
         :return: a boolean
@@ -9234,7 +9403,7 @@ class Style(object):
     @staticmethod
     def list():
         """
-        Return a list of all styles currently registered in GPS.
+        Returns a list of all styles currently registered in GPS.
 
         :return: a list of :class:`GPS.Style`
         """
@@ -9242,7 +9411,7 @@ class Style(object):
 
     def set_background(self, noname):
         """
-        Set the background of style to the given color.
+        Sets the background of style to the given color.
 
         :param noname: A string representing a color, for instance "blue" or
            "#0000ff"
@@ -9251,7 +9420,7 @@ class Style(object):
 
     def set_foreground(self, noname):
         """
-        Set the foreground of style to the given color.
+        Sets the foreground of style to the given color.
 
         :param noname: A string representing a color, for instance "blue" or
            "#0000ff"
@@ -9274,14 +9443,14 @@ class Style(object):
 class SwitchesChooser(GUI):
 
     """
-    This class represents a gtk widget that can be used to edit a tool's
+    This class represents a GTK widget that can be used to edit a tool's
     command line.
     """
 
     def __init__(self, name, xml):
         """
-        Creates a new SwitchesChooser widget from the tool's name and switch
-        description in xml format.
+        Creates a new :class:`SwitchesChooser` widget from the tool's name
+        and switch description in XML format.
 
         :param name: A string
         :param xml: A string
@@ -9290,7 +9459,7 @@ class SwitchesChooser(GUI):
 
     def get_cmd_line(self):
         """
-        Return the tool's command line parameter
+        Returns the tool's command line parameter.
 
         :return: A string
         """
@@ -9298,7 +9467,7 @@ class SwitchesChooser(GUI):
 
     def set_cmd_line(self, cmd_line):
         """
-        Modify the widget's aspect to reflect the command line.
+        Modifies the widget's aspect to reflect the command line.
 
         :param cmd_line: A string
         """
@@ -9313,8 +9482,9 @@ class Task(object):
 
     """
     This class provides an interface to the background tasks being handled by
-    GPS, such as the build commands, the query of cross references, etc. These
-    are the same tasks that are visible through the GPS Task Manager.
+    GPS, such as the build commands, the query of cross references,
+    etc. These are the same tasks that are visible through the GPS
+    :guilabel:`Task Manager`.
 
     Note that the classes represented with this class cannot be stored.
     """
@@ -9326,12 +9496,14 @@ class Task(object):
     """
 
     def interrupt(self):
-        """Interrupt the task"""
+        """
+        Interrupts the task.
+        """
         pass  # implemented in Ada
 
     def block_exit(self):
         """
-        Return True iff this task should block the exit of GPS
+        Returns True iff this task should block the exit of GPS.
 
         :return: A boolean
         """
@@ -9346,23 +9518,27 @@ class Task(object):
 
     def name(self):
         """
-        Return the name of the task
+        Returns the name of the task.
 
         :return: A string
         """
         pass  # implemented in Ada
 
     def pause(self):
-        """Pause the task"""
+        """
+        Pauses the task.
+        """
         pass  # implemented in Ada
 
     def resume(self):
-        """Resume the paused task"""
+        """
+        Resumes the paused task.
+        """
         pass  # implemented in Ada
 
     def progress(self):
         """
-        Return the current progress of the task
+        Returns the current progress of the task.
 
         :return: A list containing the current step and the total steps
         """
@@ -9370,7 +9546,7 @@ class Task(object):
 
     def status(self):
         """
-        Return the status of the task
+        Returns the status of the task.
 
         :return: A string
         """
@@ -9385,7 +9561,7 @@ class Timeout(object):
 
     """
     This class gives access to actions that must be executed regularly at
-    specific intervals
+    specific intervals.
 
     .. seealso:: :func:`GPS.Timeout.__init__`
 
@@ -9406,9 +9582,9 @@ class Timeout(object):
 
     def __init__(self, timeout, action):
         """
-        A timeout object executes a specific action repeatedly, at a specified
-        interval, as long as it is registered.  The action takes a single
-        argument, which is the instance of GPS.Timeout that called it.
+        A timeout object executes a specific action repeatedly, at a
+        specified interval, as long as it is registered.  The action takes a
+        single argument, the instance of :class:`GPS.Timeout` that called it.
 
         :param timeout: The timeout in milliseconds at which
            to execute the action
@@ -9417,7 +9593,9 @@ class Timeout(object):
         pass  # implemented in Ada
 
     def remove(self):
-        """Unregister a timeout"""
+        """
+        Unregisters a timeout.
+        """
         pass  # implemented in Ada
 
 
@@ -9428,7 +9606,7 @@ class Timeout(object):
 class ToolButton(GUI):
 
     """
-    This class represents a button that can be inserted in the toolbar
+    This class represents a button that can be inserted in the toolbar.
 
     .. seealso:: :func:`GPS.ToolButton.__init__`
 
@@ -9436,20 +9614,20 @@ class ToolButton(GUI):
 
     def __init__(self, stock_id, label, on_click):
         """
-Initializes a new button. When the button is pressed by the user, on_click is
-called with the following single parameter:
+        Initializes a new button. When the button is pressed by the user,
+        ``on_click`` is called with the following single parameter:
 
-   - $1 = The instance of GPS.Button
+        - $1 = The instance of :class:`GPS.Button`
 
-:param stock_id: A string identifying the icon
-:param label: A string, the text that appears on the button
-:param on_click: A subprogram, see the GPS documentation
+        :param stock_id: A string identifying the icon
+        :param label: A string, the text that appears on the button
+        :param on_click: A subprogram, see the GPS documentation
 
-.. code-block:: python
+        .. code-block:: python
 
-   b = GPS.ToolButton("gtk-new", "New File",
-        lambda x : GPS.execute_action("/File/New"))
-   GPS.Toolbar().insert(b, 0)
+           b = GPS.ToolButton("gtk-new", "New File",
+           lambda x : GPS.execute_action("/File/New"))
+           GPS.Toolbar().insert(b, 0)
 
         """
         pass  # implemented in Ada
@@ -9464,7 +9642,7 @@ class Toolbar(GUI):
     """
     Interface to commands related to the toolbar. This allows you to add new
     combo boxes to the GPS toolbars. Note that this can also be done through
-    XML files, see the GPS documentation
+    XML files, see the GPS documentation.
 
     .. seealso:: :func:`GPS.Toolbar.__init__`
 
@@ -9503,14 +9681,14 @@ class Toolbar(GUI):
     def __init__(self):
         """
         Initializes a new instance of the toolbar, associated with the default
-        toolbar of GPS. This is called implicitly from python
+        toolbar of GPS. This is called implicitly from Python.
         """
         pass  # implemented in Ada
 
     def append(self, widget, tooltip=''):
         """
-        Add a new widget in the toolbar. This can be an instance of GPS.Combo,
-        or a GPS.Button, or a GPS.ToolButton.
+        Adds a new widget in the toolbar. This can be an instance of
+        :class:`GPS.Combo`, :class:`GPS.Button`, or :class:`GPS.ToolButton`.
 
         :param widget: An instance of :class:`GPS.GUI`
         :param tooltip: A string
@@ -9519,9 +9697,9 @@ class Toolbar(GUI):
 
     def get(self, id):
         """
-        Return the toolbar entry matching the given id. An error is raised if
-        no such entry exists. The same instance of GPS.Combo is always returned
-        for each specific id, therefore you can store your own fields in this
+        Returns the toolbar entry matching ``id``. Raises an error if no such
+        entry exists. The same instance of :class:`GPS.Combo` is always
+        returned for each ``id``, so you can store your own fields in this
         instance and access it later.
 
         :param id: A string, the name of the entry to get
@@ -9540,13 +9718,14 @@ class Toolbar(GUI):
 
     def get_by_pos(self, position):
         """
-        Return the position-th widget in the toolbar. If the widget was created
-        from a scripting language, its instance is returned. Otherwise, a
-        generic instance of GPS.GUI is returned. This can be used to remove
-        some items from the toolbar for instance
+        Returns the ``position``-th widget in the toolbar. If the widget was
+        created from a scripting language, its instance is
+        returned. Otherwise, a generic instance of :class:`GPS.GUI` is
+        returned. This can be used to remove some items from the toolbar,
+        for example.
 
         :param position: An integer, starting at 0
-        :return: An instance of a child of GPS.GUI
+        :return: An instance of a child of :class:`GPS.GUI`
 
         .. code-block:: python
 
@@ -9558,8 +9737,8 @@ class Toolbar(GUI):
 
     def insert(self, widget, pos=-1, tooltip=''):
         """
-        Add a new widget in the toolbar. This can be an instance of GPS.Combo,
-        or a GPS.Button, or a GPS.ToolButton.
+        Adds a new widget in the toolbar. This can be an instance of
+        :class:`GPS.Combo`, :class:`GPS.Button`, or :class:`GPS.ToolButton`.
 
         :param widget: An instance of :class:`GPS.GUI`
         :param pos: The position at which to insert the widget
@@ -9577,9 +9756,9 @@ class Unexpected_Exception(Exception):
 
     """
     An exception raised by GPS. It indicates an internal error in GPS, raised
-    by the Ada code itself. This exception is unexpected and indicates a bug in
-    GPS itself, not in the python script, although it might be possible to
-    modify the latter to work around the issue
+    by the Ada code itself. This exception is unexpected and indicates a bug
+    in GPS itself, not in the Python script, although it might be possible to
+    modify the latter to work around the issue.
     """
     pass  # implemented in Ada
 
@@ -9591,13 +9770,13 @@ class Unexpected_Exception(Exception):
 class VCS(object):
 
     """
-    General interface to version control systems
+    General interface to version control systems.
     """
 
     @staticmethod
     def annotate(file):
         """
-        Display the annotations for file
+        Displays the annotations for ``file``.
 
         :param file: A string
         """
@@ -9606,9 +9785,9 @@ class VCS(object):
     @staticmethod
     def annotations_parse(vcs_identifier, file, output):
         """
-        Parses the output of the annotations command (cvs annotate for
-        instance), and add the corresponding information to the left of the
-        editor
+        Parses the output of the annotations command (cvs annotate, for
+        example), and adds the corresponding information to the left of the
+        editor.
 
         :param vcs_identifier: A string
         :param file: A string
@@ -9619,7 +9798,7 @@ class VCS(object):
     @staticmethod
     def commit(file):
         """
-        Commit file
+        Commits ``file``.
 
         :param file: A string
         """
@@ -9628,7 +9807,8 @@ class VCS(object):
     @staticmethod
     def diff_head(file):
         """
-        Show differences between local file and the head revision
+        Shows differences between the local copy of ``file`` and the head
+        revision.
 
         :param file: A string
         """
@@ -9637,7 +9817,8 @@ class VCS(object):
     @staticmethod
     def diff_working(file):
         """
-        Show differences between local file and the working revision
+        Shows differences between the local copy of ``file`` and the working
+        revision.
 
         :param file: A string
         """
@@ -9646,7 +9827,7 @@ class VCS(object):
     @staticmethod
     def get_current_vcs():
         """
-        Return the system supported for the current project
+        Returns the system supported for the current project.
 
         :return: A string
         """
@@ -9655,7 +9836,8 @@ class VCS(object):
     @staticmethod
     def get_log_file(file):
         """
-        Returns the GPS File corresponding to the log file for given file.
+        Returns the GPS :class:`File` corresponding to the log file for given
+        file.
 
         :param file: A string
         """
@@ -9664,7 +9846,7 @@ class VCS(object):
     @staticmethod
     def get_status(file):
         """
-        Query the status for file
+        Queries the status of ``file``.
 
         :param file: A string
         """
@@ -9673,9 +9855,9 @@ class VCS(object):
     @staticmethod
     def log(file, revision):
         """
-        Get the revision changelog for file. If revision is specified, query
-        the changelog for this specific revision, otherwise query the entire
-        changelog
+        Gets the revision changelog for ``file``. If ``revision`` is
+        specified, query the changelog for this specific revision, otherwise
+        query the entire changelog.
 
         :param file: A string
         :param revision: A string
@@ -9685,9 +9867,9 @@ class VCS(object):
     @staticmethod
     def log_parse(vcs_identifier, file, string):
         """
-        Parses string to find log entries for file. This command uses the
+        Parses ``string`` to find log entries for file. This command uses the
         parser in the XML description node for the VCS corresponding to
-        vcs_identifier.
+        ``vcs_identifier``.
 
         :param vcs_identifier: A string
         :param file: A string
@@ -9698,7 +9880,7 @@ class VCS(object):
     @staticmethod
     def remove_annotations(file):
         """
-        Remove the annotations for file
+        Removes the annotations for ``file``.
 
         :param file: A string
         """
@@ -9707,8 +9889,8 @@ class VCS(object):
     @staticmethod
     def repository_dir(tag_name=''):
         """
-        Returns the repository root directory, or if tag_name is specified the
-        repository directory for the given tag or branch.
+        Returns the repository root directory, (if ``tag_name`` is specified,
+        the repository directory for the given tag or branch).
 
         :param tag_name: A string
         """
@@ -9717,8 +9899,8 @@ class VCS(object):
     @staticmethod
     def repository_path(file, tag_name=''):
         """
-        Returns the trunk repository path for file or if tag_name is specified
-        the repository path on the given tag or branch path.
+        Returns the trunk repository path for ``file`` (if ``tag_name`` is
+        specified, the repository path on the given tag or branch path).
 
         :param file: A string
         :param tag_name: A string
@@ -9728,9 +9910,9 @@ class VCS(object):
     @staticmethod
     def revision_parse(vcs_identifier, file, string):
         """
-        Parses string to find revisions tags and branches information for
-        file. This command uses the parser in the XML description node for the
-        VCS corresponding to vcs_identifier.
+        Parses ``string`` to find revisions tags and branches information for
+        file. This command uses the parser in the XML description node for
+        the VCS corresponding to ``vcs_identifier``.
 
         :param vcs_identifier: A string
         :param file: A string
@@ -9741,8 +9923,8 @@ class VCS(object):
     @staticmethod
     def set_reference(file, reference):
         """
-        Record a reference file (the file on which a diff buffer is based for
-        example) for a given file
+        Records a reference file (the file on which a diff buffer is based,
+        for example) for ``file``.
 
         :param file: A string
         :param reference: A string
@@ -9754,17 +9936,17 @@ class VCS(object):
         """
         Parses a string for VCS status. This command uses the parsers defined
         in the XML description node for the VCS corresponding to
-        vcs_identifier.
+        ``vcs_identifier``.
 
-        - When local is FALSE, the parser defined by the node status_parser is
-          used.
+        - When ``local`` is False, the parser defined by the node
+          status_parser is used.
 
-        - When local is TRUE, the parser defined by the node
+        - When ``local`` is True, the parser defined by the node
           local_status_parser is used.
 
-        If clear_logs is TRUE, the revision logs editors are closed for files
-        that have the VCS status "up-to-date".  Parameter dir indicates the
-        directory in which the files matched in string are located.
+        If ``clear_logs`` is true, the revision logs editors are closed for
+        files that have the VCS status "up-to-date".  ``dir`` indicates
+        the directory in which the files matched in ``string`` are located.
 
         :param vcs_identifier: A string
         :param string: A string
@@ -9777,7 +9959,7 @@ class VCS(object):
     @staticmethod
     def supported_systems():
         """
-        Show the list of supported VCS systems
+        Shows the list of supported VCS systems.
 
         :return: List of strings
         """
@@ -9786,7 +9968,7 @@ class VCS(object):
     @staticmethod
     def update(file):
         """
-        Update file
+        Updates ``file``.
 
         :param file: A string
         """
@@ -9795,9 +9977,9 @@ class VCS(object):
     @staticmethod
     def update_parse(vcs_identifier, string, dir=''):
         """
-        Parses a string for VCS status. This command uses the parsers defined
-        in the XML description node for the VCS corresponding to
-        vcs_identifier.
+        Parses ``string`` for VCS status. This command uses the parsers
+        defined in the XML description node for the VCS corresponding to
+        ``vcs_identifier``.
 
         Parameter dir indicates the directory in which the files matched in
         string are located.
@@ -9816,17 +9998,18 @@ class VCS(object):
 class Vdiff(object):
 
     """
-    This class provides access to the graphical comparison between two or three
-    files or two versions of the same file within GPS. A visual diff is a group
-    of two or three editors with synchronized scrolling. Differences are
-    rendered using blank lines and color highlighting.
+    This class provides access to the graphical comparison between two or
+    three files or two versions of the same file within GPS. A visual diff is
+    a group of two or three editors with synchronized scrolling. Differences
+    are rendered using blank lines and color highlighting.
     """
 
     @staticmethod
     def __init__():
         """
         This function prevents the creation of a visual diff instance
-        directly. You must use GPS.Vdiff.create() or GPS.Vdiff.get() instead.
+        directly. You must use :func:`GPS.Vdiff.create` or
+        :func:`GPS.Vdiff.get` instead.
 
         .. seealso::
 
@@ -9838,7 +10021,7 @@ class Vdiff(object):
 
     def close_editors(self):
         """
-        Close all editors implied in a visual diff.
+        Closes all editors involved in a visual diff.
         """
         pass  # implemented in Ada
 
@@ -9846,8 +10029,8 @@ class Vdiff(object):
     def create(file1, file2, file3=''):
         """
         If none of the files given as parameter is already used in a visual
-        diff, this function creates a new visual diff and returns
-        it. Otherwise, None is returned.
+        diff, creates a new visual diff and returns it. Otherwise, None is
+        returned.
 
         :param file1: An instance of :class:`GPS.File`
         :param file2: An instance of :class:`GPS.File`
@@ -9858,7 +10041,7 @@ class Vdiff(object):
 
     def files(self):
         """
-        Return the list of files used in a visual diff.
+        Returns the list of files used in a visual diff.
 
         :return: A list of GPS.File
 
@@ -9868,13 +10051,13 @@ class Vdiff(object):
     @staticmethod
     def get(file1, file2='', file3=''):
         """
-        Return an instance of an already exisiting visual diff. If an instance
-        already exists for this visual diff, it is returned. All files passed
-        as parameters have to be part of the visual diff but not all files of
-        the visual diff have to be passed for the visual diff to be
-        returned. For example if only one file is passed the visual diff that
-        contains it, if any, will be returned no matter it is a two or three
-        files visual diff.
+        Returns an instance of an already exisiting visual diff. If an
+        instance already exists for this visual diff, it is returned. All
+        files passed as parameters must be part of the visual diff but not
+        all files of the visual diff must be passed for the visual diff to be
+        returned. For example if only one file is passed, the visual diff
+        that contains it, if any, is returned even if it is a two or three
+        file visual diff.
 
         :param file1: An instance of :class:`GPS.File`
         :param file2: An instance of :class:`GPS.File`
@@ -9885,7 +10068,7 @@ class Vdiff(object):
     @staticmethod
     def list():
         """
-        This function returns the list of visual diff currently opened in GPS.
+        Returns the list of visual diffs currently opened in GPS.
 
         :return: A list :class:`GPS.Vdiff`
 
@@ -9921,9 +10104,9 @@ class Vdiff(object):
 
     def recompute(self):
         """
-        Recompute a visual diff. The content of each editor used in the visual
-        diff is saved. The files are recompared and the display is redone
-        (blank lines and color highlighting).
+        Recomputes a visual diff. The content of each editor used in the
+        visual diff is saved. The files are recompared and the display is
+        redone (blank lines and color highlighting).
         """
         pass  # implemented in Ada
 
@@ -9935,80 +10118,83 @@ class Vdiff(object):
 class XMLViewer(object):
 
     """
-    This class represents Tree-based views for XML files
+    This class represents Tree-based views for XML files.
 
     """
 
     def __init__(self, name, columns=3, parser=None, on_click=None,
                  on_select=None, sorted=False):
         """
-Create a new XMLViewer, with the given name.
+        Creates a new XMLViewer, named ``name``.
 
-``columns`` is the number of columns that the table representation should
-have. The first column is always the one used for sorting the table.
+        ``columns`` is the number of columns that the table representation
+        should have. The first column is always the one used for sorting the
+        table.
 
-``parser`` is a subprogram called for each XML node that is parsed. It takes
-three arguments: the name of the XML node being visited, its attributes (in the
-form "attr='foo' attr="bar""), and the text value of that node. This subprogram
-should return a list of strings, one per visible column create for the
-table. Each element will be put in the corresponding column.
+        ``parser`` is a subprogram called for each XML node that is
+        parsed. It takes three arguments: the name of the XML node being
+        visited, its attributes (in the form "attr='foo' attr="bar""), and
+        the text value of that node. This subprogram should return a list of
+        strings, one per visible column create for the table. Each element
+        will be put in the corresponding column.
 
-If ``parser`` is unspecified, the default is to display in the first column the
-tag name, in the second column the list of attributes, and in the third column
-when it exists the textual contents of the node.
+        If ``parser`` is not specified, the default is to display in the
+        first column the tag name, in the second column the list of
+        attributes, and in the third column when it exists the textual
+        contents of the node.
 
-``on_click`` is an optional subprogram. It is called every time the user
-double-click on a line, and is passed the same arguments as Parser. It has no
-return value.
+        ``on_click`` is an optional subprogram called every time the user
+        double-clicks on a line, and is passed the same arguments as
+        ``parser``. It has no return value.
 
-``on_select`` has the same profile as ``on_click``, but is called when the user
-has selected a new line, not double-clicked on it.
+        ``on_select`` has the same profile as ``on_click``, but is called
+        when the user has selected a new line, not double-clicked on it.
 
-If ``sorted`` is True, then the resulting graphical list is sorted on the first
-column.
+        If ``sorted`` is True, the resulting graphical list is sorted on the
+        first column.
 
-:param name: A string
-:param columns: An integer
-:param parser: A subprogram
-:param on_click: A subprogram
-:param on_select: A subprogram
-:param sorted: A boolean
+        :param name: A string
+        :param columns: An integer
+        :param parser: A subprogram
+        :param on_click: A subprogram
+        :param on_select: A subprogram
+        :param sorted: A boolean
 
-.. code-block:: python
+        .. code-block:: python
 
 
-    # Display a very simply tree. If you click on the file name,
-    # the file will be edited.
-    import re
+            # Display a very simply tree. If you click on the file name,
+            # the file will be edited.
+            import re
 
-    xml = '''<project name='foo'>
-         <file>source.adb</file>
-      </project>'''
+            xml = '''<project name='foo'>
+                 <file>source.adb</file>
+              </project>'''
 
-    view = GPS.XMLViewer("Dummy", 1, parser, on_click)
-    view.parse_string(xml)
+            view = GPS.XMLViewer("Dummy", 1, parser, on_click)
+            view.parse_string(xml)
 
-    def parser(node_name, attrs, value):
-       attr = dict()
-       for a in re.findall('''(\\w+)=['"](.*?)['"]\B''', attrs):
-          attr[a[0]] = a[1]
+            def parser(node_name, attrs, value):
+               attr = dict()
+               for a in re.findall('''(\\w+)=['"](.*?)['"]\B''', attrs):
+                  attr[a[0]] = a[1]
 
-       if node_name == "project":
-           return [attr["name"]]
+               if node_name == "project":
+                  return [attr["name"]]
 
-       elif node_name == "file":
-           return [value]
+               elif node_name == "file":
+                  return [value]
 
-    def on_click(node_Name, attrs, value):
-       if node_name == "file":
-          GPS.EditorBuffer.get(GPS.File(value))
+            def on_click(node_Name, attrs, value):
+               if node_name == "file":
+                  GPS.EditorBuffer.get(GPS.File(value))
         """
         pass  # implemented in Ada
 
     def create_metric(self, name):
         """
-        Create a new XMLViewer for an XML file generated by gnatmetric.  Name
-        is used as the name for the window
+        Creates a new :class:`XMLViewer` for an XML file generated by
+        gnatmetric.  ``name`` is the name for the window.
 
         :param name: A string
 
@@ -10017,7 +10203,7 @@ column.
 
     def parse(self, filename):
         """
-        Replace the contents of self by that of the XML file
+        Replaces the contents of self by that of the XML file.
 
         :param filename: An XML file
         """
@@ -10025,7 +10211,7 @@ column.
 
     def parse_string(self, str):
         """
-        Replace the contents of self by that of the XML string
+        Replaces the contents of self by that of the XML string ``str``.
 
         :param str: A string
         """
@@ -10039,15 +10225,14 @@ column.
 class Alias(object):
 
     """
-    This class represents a GPS Alias, that is, a code template
-    to be expanded in an editor. This class allows you to manipulate
-    them programmatically.
+    This class represents a GPS Alias, a code template to be expanded in an
+    editor. This class allows you to manipulate them programmatically.
     """
 
     @staticmethod
     def get(name):
         """
-        Get the alias instance corresponding to name
+        Gets the alias instance corresponding to ``name``.
         """
 
 ###########################################################
@@ -10059,13 +10244,13 @@ class Completion(object):
 
     """
     This class is used to handle editor completion.
-    See the documentation in the completion.py plug-in.
+    See the documentation in the :file:`completion.py` plug-in.
     """
 
     @staticmethod
     def register(resolver):
         """
-        Registers a resolver, which inherits from CompletionResolver.
+        Registers a resolver, which inherits from :class:`CompletionResolver`.
         """
 
 ###########################################################
@@ -10076,12 +10261,12 @@ class Completion(object):
 class OutputParserWrapper(object):
 
     """
-    This class is used to handle user-defined tool output parsers.
-    Parsers are organized in chain. Output of one parser is passed as
-    input to next one. Chain of parser could be attached to a build target.
-    This class is for internal use only. Instead user should inherit custom
-    parser from OutputParser defined in tool_output.py, but their methods
-    are match.
+    This class is used to handle user-defined tool output parsers.  Parsers
+    are organized in chains. Output of one parser is passed as input to next
+    one. Chains of parser could be attached to a build target.  This class is
+    for internal use only. Instead users should inherit custom parser from
+    :class:`OutputParser` defined in :file:`tool_output.py`, but their
+    methods match.
 
     .. code-block:: python
 
@@ -10095,7 +10280,8 @@ class OutputParserWrapper(object):
            if self.child != None:
              self.child.on_stdout (text,command)
 
-    You can attach custom parser to a build target by specify it in XML file
+    You can attach custom parser to a build target by specifying it in an XML
+    file.
 
     .. code-block:: python
 
@@ -10108,28 +10294,28 @@ class OutputParserWrapper(object):
 
     def __init__(self, child=None):
         """
-        Create a new parser and initialize its child reference if provided.
+        Creates a new parser and initialize its child reference, if provided.
         """
         pass  # implemented in Ada
 
     def on_stdout(self, text, command):
         """
-        This method is called each time a portion of output text is ready to
-        parse. It takes the portion of text as parameter and pass filtered
-        portion to its child.
+        Called each time a portion of output text is ready to parse. Takes
+        the portion of ``text`` as a parameter and passes filtered portion to
+        its child.
         """
         pass  # implemented in Ada
 
     def on_stderr(self, text, command):
         """
-        This is like on_stdout, but concerns error stream.
+        Like :func:`on_stdout`, but for the error stream.
         """
         pass  # implemented in Ada
 
     def on_exit(self, status, command):
         """
-        This method is called when all output is parsed.
-        Its purpose is to flush any buffered data at end of stream.
+        Called when all output is parsed to flush any buffered data at end of
+        the stream.
         """
         pass  # implemented in Ada
 
@@ -10140,17 +10326,17 @@ class OutputParserWrapper(object):
 
 def __run_hook__():
     """
-    Internal function used for the support of hooks
+    Internal function used for the support of hooks.
     """
     pass  # implemented in Ada
 
 
 def add_location_command(command):
     """
-    Add a command to the navigation buttons in the toolbar. When the user
-    presses the back button, this command will be executed, and should put GPS
-    in a previous state. This is for instance used while navigating in the HTML
-    browsers to handle the back button
+    Adds a command to the navigation buttons in the toolbar. When the user
+    presses the :guilabel:`Back` button, this command is executed and puts GPS
+    in a previous state. This is, for example, used while navigating in the
+    HTML browsers to handle their :guilabel:`Back` button.
 
     :param command: A string
 
@@ -10160,7 +10346,7 @@ def add_location_command(command):
 
 def base_name(filename):
     """
-    Returns the base name for the given full path name
+    Returns the base name for the given full path name.
 
     :param filename: A string
 
@@ -10170,7 +10356,7 @@ def base_name(filename):
 
 def cd(dir):
     """
-    Change the current directory to dir
+    Changes the current directory to ``dir``.
 
     :param dir: A string
 
@@ -10180,19 +10366,19 @@ def cd(dir):
 
 def clear_cache():
     """
-    Free the internal cache used for return values. This function needs to be
-    called explicitly, or previously returned value are never freed. After
-    calling this function, you can no longer use %1, %2,... to refer to
-    previously returned values.
+    Frees the internal cache used for return values. This function needs to
+    be called explicitly.  If not, previously returned value are never
+    freed. After calling this function, you can no longer use %1, %2,... to
+    refer to previously returned values.
     """
     pass  # implemented in Ada
 
 
 def compute_xref():
     """
-    Update the cross-reference information stored in GPS. This needs to be
-    called after major changes to the sources only, since GPS itself is able to
-    work with partially up-to-date information
+    Updates the cross-reference information stored in GPS. This needs to be
+    called after major changes to the sources only, since GPS itself is able
+    to work with partially up-to-date information
 
     """
     pass  # implemented in Ada
@@ -10200,7 +10386,7 @@ def compute_xref():
 
 def compute_xref_bg():
     """
-    Update in the background cross-reference information stored in GPS.
+    Updates cross-reference information stored in GPS in the background.
 
     .. seealso:: :func:`GPS.compute_xref`
 
@@ -10212,14 +10398,16 @@ def contextual_context():
     """
     Returns the context at the time the contextual menu was open.
 
-    This function will only return a valid context while the menu is open, or
-    while an action executed from that menu is executed. You can store your own
-    data in the returned instance, so that for instance you can precompute some
-    internal data in the filters for the contextual actions (see <filter> in
-    the XML files), and reuse that precomputed data when the menu is executed.
-    See also the documentation for "contextual_menu_open" hook.
+    This function only returns a valid context while the menu is open or
+    while an action executed from that menu is being executed. You can store
+    your own data in the returned instance so that, for example, you can
+    precompute some internal data in the filters for the contextual actions
+    (see <filter> in the XML files) and reuse that precomputed data when the
+    menu is executed.  See also the documentation for the
+    "contextual_menu_open" hook.
 
-    :return: An instance of GPS.FileContext, GPS.AreaContext,...
+    :return: An instance of e.g., :class:`GPS.FileContext` or
+       :class:`GPS.AreaContext`
 
     .. seealso:: :func:`GPS.current_context`
 
@@ -10273,9 +10461,9 @@ def contextual_context():
     .. code-block:: python
 
        # The following example does almost the same thing as the above, but
-       # without relying on the hooks to initialize the value. We set the value
-       # in the context the first time we need it, instead of every time the
-       # menu is open.
+       # without relying on the hooks to initialize the value. We set the
+       # value in the context the first time we need it, instead of every
+       # time the menu is opened.
 
        import GPS
 
@@ -10315,12 +10503,13 @@ def contextual_context():
 def current_context():
     """
     Returns the current context in GPS. This is the currently selected file,
-    line, column, project,... depending on what window is currently
-    active. From one call of this function to the next, a different instance is
-    returned, and therefore you shouldn't store your own data in the instance,
-    since you will not be able to recover it later on
+    line, column, project, etc. depending on what window is currently
+    active. From one call of this function to the next, a different instance
+    is returned, so you should not store your own data in the
+    instance, since you will not be able to recover it later on
 
-    :return: An instance of GPS.FileContext, GPS.AreaContext,...
+    :return: An instance of, e.g., :class:`GPS.FileContext` or
+       :class:`GPS.AreaContext`
 
     .. seealso::
 
@@ -10335,8 +10524,8 @@ def current_context():
 
 def debug_memory_usage(size):
     """
-    Dumps on stdout the size biggest memory allocators in GPS. This is really
-    meant as a debug function for GPS developers
+    Dumps on stdout the largest (by size) memory allocators in GPS. This is
+    meant as a debug function for GPS developers.
 
     :param size: An integer
 
@@ -10346,7 +10535,7 @@ def debug_memory_usage(size):
 
 def delete(name):
     """
-    Delete file/directory name from the file system
+    Deletes the file or directory ``name`` from the file system.
 
     :param name: A string
     """
@@ -10355,7 +10544,7 @@ def delete(name):
 
 def dir(pattern=''):
     """
-    list files following pattern (all files by default)
+    Lists files matching ``pattern`` (all files by default).
 
     :param pattern: A string
     :return: A list of strings
@@ -10365,7 +10554,7 @@ def dir(pattern=''):
 
 def dir_name(filename):
     """
-    Returns the directory name for the given full path name
+    Returns the directory name for the given full path name.
 
     :param filename: A string
     """
@@ -10374,8 +10563,8 @@ def dir_name(filename):
 
 def dump(string, add_lf=False):
     """
-    Dump string to a temporary file. Return the name of the file. If add_lf is
-    TRUE, append a line feed at end of file
+    Dumps ``string`` to a temporary file. Return the name of the file. If
+    ``add_lf`` is True, appends a line feed at end of the name.
 
     :param string: A string
     :param add_lf: A boolean
@@ -10386,9 +10575,9 @@ def dump(string, add_lf=False):
 
 def dump_file(text, filename):
     """
-    Writes text to filename on the disk. This is mostly intended for poor
-    shells like the GPS shell which do not have better solutions. In python, it
-    is recommended to use python's own mechanisms
+    Writes text to the file specified by ``filename``. This is mostly
+    intended for poor shells like the GPS shell which do not have better
+    solutions. In Python, you should use its own mechanisms.
 
     :param text: A string
     :param filename: A string
@@ -10398,7 +10587,7 @@ def dump_file(text, filename):
 
 def echo(*args):
     """
-    Display a line of text. This command is specific to the GPS shell.
+    Displays a line of text. This command is specific to the GPS shell.
 
     :param args: Any number of parameters
     """
@@ -10407,9 +10596,9 @@ def echo(*args):
 
 def echo_error(*args):
     """
-    Display a line of text. This command is specific to the GPS shell. It is
-    designed to be used to output error messages. This command raises the shell
-    windows.
+    Displays a line of text. This command is specific to the GPS shell. It is
+    designed to be used to output error messages. This command raises the
+    shell window.
 
     :param args: Any number of parameters
     """
@@ -10418,10 +10607,10 @@ def echo_error(*args):
 
 def exec_in_console(noname):
     """
-    This function is specific to python. It executes the string given in
-    argument in the context of the GPS Python console. If you use the standard
-    python's exec() function instead, the latter will only modify the current
-    context, which generally will have no impact on the GPS console itself.
+    This function is specific to Python. It executes the string given in
+    argument in the context of the GPS Python console. If you use the
+    standard Python :func:`exec` function instead, it only modifies the
+    current context, which generally has no impact on the GPS console itself.
 
     :param noname: A string
 
@@ -10436,23 +10625,23 @@ def exec_in_console(noname):
 
 def execute_action(action, *args):
     """
-    Execute one of the actions defined in GPS. Such actions are either
-    predefined by GPS or defined by the users through customization files.  See
-    the GPS documentation for more information on how to create new actions.
-    GPS will wait until the command completes to return the control to the
-    caller, whether you execute a shell command, or an external process.
+    Executes one of the actions defined in GPS. Such actions are either
+    predefined by GPS or defined by the users through customization files.
+    See the GPS documentation for more information on how to create new
+    actions.  GPS waits until the command completes to return control to the
+    caller, whether you execute a shell command or an external process.
 
     The action's name can start with a '/', and be a full menu path. As a
     result, the menu itself will be executed, just as if the user had pressed
     it.
 
     The extra arguments must be strings, and are passed to the action, which
-    can use them through $1, $2,...
+    can use them through $1, $2, etc.
 
-    The list of existing actions can be found through the Edit->Actions menu.
+    The list of existing actions can be found using the
+    :menuselection:`Edit --> Actions` menu.
 
-    The action will not be executed if the current context is not appropriate
-    for this action.
+    The action is not executed if the current context is not appropriate for it
 
     :param action: Name of the action to execute
     :param args: Any number of string parameters
@@ -10469,10 +10658,10 @@ def execute_action(action, *args):
 
 def execute_asynchronous_action(action, *args):
     """
-    This command is similar to GPS.execute_action. However, commands that
-    execute external applications or menus are executed asynchronously:
-    GPS.execute_asynchronous_action will immediately return, although the
-    external application might not have completed its execution
+    Like :func:`GPS.execute_action`, but commands that execute external
+    applications or menus are executed asynchronously: this function
+    immediately returns even though external application may not have
+    completed its execution.
 
     :param action: Name of the action to execute
     :param args: Any number of string parameters
@@ -10484,11 +10673,11 @@ def execute_asynchronous_action(action, *args):
 
 def exit(force=False, status='0'):
     """
-    Exit GPS, asking for confirmation if any file is currently modified and
-    unsaved. If force is True, no check is done.
+    Exits GPS, asking for confirmation if any file is currently modified and
+    unsaved. If ``force`` is True, no check is done.
 
-    Status is the exit status to return to the calling shell. 0 will generally
-    mean success on all architectures.
+    ``status`` is the exit status to return to the calling shell. 0 means
+    success on most systems.
 
     :param force: A boolean
     :param status: An integer
@@ -10499,9 +10688,10 @@ def exit(force=False, status='0'):
 
 def extract_method(file, line_start, line_end, method_name='New_Method'):
     """
-    Extract the code from line_start to line_end in the specified file into a
-    new subprogram with the given name. All needed local variables are declared
-    properly in this new subprogram, and it is given parameters if needed
+    Extracts the code from ``line_start`` to ``line_end`` in ``file`` into a
+    new subprogram with the given name. All needed local variables are
+    declared properly in this new subprogram and parameters are created for
+    it, if needed.
 
     :param file: A string
     :param line_start: An integer
@@ -10514,17 +10704,18 @@ def extract_method(file, line_start, line_end, method_name='New_Method'):
 def freeze_xref():
     """
     Forces GPS to use the cross-reference information it already has in
-    memory. GPS will no longer check on the disk whether more recent
-    information is available. This can provide a significant speedup in complex
-    scripts or scripts that need to analyze the cross-reference information for
-    lots of files. In such cases, the script should generally call
-    GPS.Project.update_xref to first load all the required information in
-    memory.
+    memory. GPS no longer checks on the disk whether more recent information
+    is available. This can provide a significant speedup in complex scripts
+    or scripts that need to analyze the cross-reference information for lots
+    of files. In such cases, the script should generally call
+    :func:`GPS.Project.update_xref` to first load all the required
+    information in memory.
 
-    You need to explicitly call GPS.thaw_xref to go back to the default GPS
-    behavior. Note the use of the "finally" exception handling in the following
-    example, which ensures that even if there is some unexpected exception, the
-    script always restores properly the default behavior.
+    You need to explicitly call :func:`GPS.thaw_xref` to return to the
+    default GPS behavior. Note the use of the "finally" exception handling in
+    the following example, which ensures that even if there is some
+    unexpected exception, the script always restores properly the default
+    behavior.
 
     .. seealso::
 
@@ -10547,11 +10738,11 @@ def freeze_xref():
 
 def freeze_prefs():
     """
-    Prevents the signal "preferences_changed" from being emitted.
-    One call to thaw_prefs should be made to unfreeze.
+    Prevents the signal "preferences_changed" from being emitted.  Call
+    :func:`thaw_prefs` to unfreeze.
 
-    Freezing/thawing this signal is useful when about to modify a large
-    number of preferences in one batch.
+    Freezing/thawing this signal is useful when you are about to modify a
+    large number of preferences in one batch.
 
     .. seealso::
 
@@ -10562,7 +10753,7 @@ def freeze_prefs():
 
 def thaw_prefs():
     """
-    Re-enables the emission of the "preferences_changed"
+    Re-enables calling the "preferences_changed" hook.
 
     .. seealso::
 
@@ -10573,13 +10764,12 @@ def thaw_prefs():
 
 def xref_db():
     """
-    Returns the location of the xref database.
-    This is a sqlite database that is created by GPS when it parses the
-    .ali files generated by the compiler.
-    Its location depends on both the location of the root project (the
-    database is in its object directory by default), and its optional
-    IDE'Xref_Database attribute which can be used to specify an alternate
-    location.
+    Returns the location of the xref database.  This is an :program:`sqlite`
+    database created by GPS when it parses the :file:`.ali` files generated
+    by the compiler.  Its location depends on both the location of the root
+    project (the database is in its object directory by default), and its
+    optional IDE'Xref_Database attribute, which can be used to specify an
+    alternate location.
 
     :return: a string
     """
@@ -10587,7 +10777,7 @@ def xref_db():
 
 def get_build_mode():
     """
-    Return the name of the current build mode. Return an empty string if no
+    Returns the name of the current build mode. Returns an empty string if no
     mode is registered.
     """
     pass  # implemented in Ada
@@ -10595,22 +10785,18 @@ def get_build_mode():
 
 def get_build_output(target_name, shadow, background, as_string):
     """
-    Return the result of the last compilation command
+    Returns the result of the last compilation command.
 
     :param target_name: (optional) a string
-
     :param shadow: (optional) a Boolean, indicating whether we want the output
        of shadow builds
-
     :param background: (optional) a Boolean, indicating whether we want the
         output of background builds
-
     :param as_string: (optional) a Boolean, indicating whether the output
-       should be returned as a single string. By default the output is returned
-       as a list in script languages that support it.
-
+       should be returned as a single string. By default the output is
+       returned as a list in script languages that support it
     :return: A string or list, the output of the latest build for the
-        corresponding target.
+        corresponding target
 
     .. seealso::
 
@@ -10623,8 +10809,8 @@ def get_build_output(target_name, shadow, background, as_string):
 
 def get_home_dir():
     """
-    Return the directory that contains the user-specific files. This directory
-    always ends with a directory separator
+    Returns the directory that contains the user-specific files. This
+    string always ends with a directory separator.
 
     :return: The user's GPS directory
 
@@ -10641,8 +10827,8 @@ def get_home_dir():
 
 def get_system_dir():
     """
-    Return the installation directory for GPS.  This directory always ends with
-    a directory separator
+    Returns the installation directory for GPS.  This string always ends with
+    a directory separator.
 
     :return: The install directory for GPS
 
@@ -10658,8 +10844,8 @@ def get_system_dir():
 
 def get_tmp_dir():
     """
-    Return the directory where gps creates temporary files.  This directory
-    always ends with a directory separator
+    Returns the directory where gps creates temporary files.  This string
+    always ends with a directory separator.
 
     :return: The install directory for GPS
     """
@@ -10668,8 +10854,9 @@ def get_tmp_dir():
 
 def help(command=''):
     """
-    Return the description of the command given in parameter, or the list of
-    all commands exported by GPS. GPS.help is specific to the GPS shell
+    Returns the description of the command given in parameter or the list of
+    all commands exported by GPS. :func:`GPS.help` is specific to the GPS
+    shell.
 
     :param command: A string
     :return: A string
@@ -10679,31 +10866,32 @@ def help(command=''):
 
 def insmod(shared_lib, module):
     """
-Dynamically register a new module, reading its code from shared_lib.
+    Dynamically registers a new module, reading its code from ``shared_lib``.
 
-The library must define the following two symbols:
+    The library must define the following two symbols:
 
-- _init: This is called by GPS to initialize the library itself
+    - _init: This is called by GPS to initialize the library itself
 
-- __register_module: This is called to do the actual module registration, and
-  should call the Register_Module function in the GPS source code
+    - __register_module: This is called to do the actual module registration,
+      and should call the :func:`Register_Module` function in the GPS source
+      code.
 
-This is work in progress, and not fully supported on all systems.
+    This is work in progress, and not fully supported on all systems.
 
-:param shared_lib: Library containing the code of the module
-:param module: Name of the module
+    :param shared_lib: Library containing the code of the module
+    :param module: Name of the module
 
-.. seealso:: :func:`GPS.lsmod`
+    .. seealso:: :func:`GPS.lsmod`
     """
     pass  # implemented in Ada
 
 
 def is_server_local(server):
     """
-    Tell if the specified server is the local machine.
+    Indicates where the ``server`` is the local machine.
 
     :param server: The server. Possible values are "Build_Server",
-       "Debug_Server", "Execution_Server" and "Tools_Server".
+       "Debug_Server", "Execution_Server" and "Tools_Server"
     :return: A boolean
     """
     pass  # implemented in Ada
@@ -10711,12 +10899,12 @@ def is_server_local(server):
 
 def last_command():
     """
-    This function returns the name of the last action executed by GPS. This
-    name is not ultra-precise: it will be accurate only when the action is
-    executed through a key binding. Otherwise, an empty string is
-    returned. However, the intent here is for a command to be able to check
-    whether it is called multiple times in a row. For this, this command will
-    return the command set by GPS.set_last_command() if it was set.
+    Returns the name of the last action executed by GPS. This name is not
+    ultra-precise: it is accurate only when the action is executed through a
+    key binding. Otherwise, an empty string is returned. However, the intent
+    is for a command to be able to check whether it is called multiple times
+    consecutively. For this reason, this function returns the command set by
+    :func:`GPS.set_last_command`, if any.
 
     :return: A string
 
@@ -10729,10 +10917,10 @@ def last_command():
              must be appended to the previously cut one.'''
 
           # The name of the command below is unknown to GPS. This is just a
-          # string we use in this implementation to detect multiple consecutive
-          # calls to this function. Note that this works whether the function
-          # is called from the same key binding or not, and from the same GPS
-          # action or not
+          # string we use in this implementation to detect multiple
+          # consecutive calls to this function. Note that this works whether
+          # the function is called from the same key binding or not and from
+          # the same GPS action or not
 
           append = GPS.last_command() == "my-kill-line":
           GPS.set_last_command("my-kill-line")
@@ -10742,7 +10930,8 @@ def last_command():
 
 def load(filename):
     """
-    Load and execute a script file. This command is specific to the GPS shell.
+    Loads and executes a script file. This command is specific to the GPS
+    shell.
 
     :param filename: A string
     """
@@ -10751,9 +10940,8 @@ def load(filename):
 
 def lookup_actions():
     """
-    This command returns the list of all known GPS actions. This doesn't
-    include menu names. All actions are lower-cased, but the order in the list
-    is not significant.
+    Returns the list of all known GPS actions, not including menu names. All
+    actions are lower-cased, but the order of the list is not significant.
 
     :return: A list of strings
 
@@ -10764,10 +10952,10 @@ def lookup_actions():
 
 def lookup_actions_from_key(key):
     """
-    Given a key binding, for instance "control-x control-b", this function
-    returns the list of actions that could be executed. Not all actions would
-    be executed, though, since only the ones for which the filter matches are
-    executed. The name of the actions is always in lower cases.
+    Given a key binding, for example "control-x control-b", returns the list
+    of actions that could be executed. Not all actions would be executed,
+    however, since only the ones for which the filter matches are
+    executed. The names of the actions are always in lower case.
 
     :param key: A string
     :return: A list of strings
@@ -10779,7 +10967,7 @@ def lookup_actions_from_key(key):
 
 def ls(pattern=''):
     """
-    list files following pattern (all files by default)
+    Lists the files matching ``pattern`` (all files by default).
 
     :param pattern: A string
     :return: A list of strings
@@ -10789,10 +10977,10 @@ def ls(pattern=''):
 
 def lsmod():
     """
-    Return the list of modules that are currently registered in GPS. Each
-    facility in GPS is provided in a separate module, so that users can choose
-    whether to activate specific modules or not. Some modules can also be
-    dynamically loaded
+    Returns the list of modules currently registered in GPS. Each facility in
+    GPS is provided in a separate module so that users can choose whether to
+    activate specific modules or not. Some modules can also be dynamically
+    loaded.
 
     :return: List of strings
 
@@ -10803,7 +10991,7 @@ def lsmod():
 
 def macro_load(file):
     """
-    Load file containing a set of recorded events
+    Loads ``file``, containing a set of recorded events.
 
     :param file: A string
     """
@@ -10812,7 +11000,7 @@ def macro_load(file):
 
 def macro_play(speed='1.0'):
     """
-    Play current set of events
+    Plays the current set of events.
 
     :param speed: A string
     """
@@ -10821,19 +11009,19 @@ def macro_play(speed='1.0'):
 
 def macro_record():
     """
-    Start recording set of events
+    Starts recording a set of events.
     """
     pass  # implemented in Ada
 
 
 def parse_xml(xml):
     """
-    Load an XML customization string. This string should contain one or more
+    Loads an XML customization string. This string should contain one or more
     toplevel tags similar to what is normally found in custom files, such as
-    <key>, <alias>, <action>,..
+    <key>, <alias>, <action>.
 
     Optionally you can also pass the full contents of an XML file, starting
-    from the <?xml?> header.
+    with the <?xml?> header.
 
     :param xml: The XML string to parse
 
@@ -10849,20 +11037,20 @@ def parse_xml(xml):
 
 def pwd():
     """
-    Print name of current/working directory
+    Prints name of the current (working) directory.
 
     :return: A string
 
-    This command will have the same return value as the standard Python command
-    os.getcwd(). The current directory can also be changed through a call to
-    os.chdir("dir").
+    This function has the same return value as the standard Python function
+    :func:`os.getcwd`. The current directory can also be changed through a
+    call to os.chdir("dir").
     """
     pass  # implemented in Ada
 
 
 def repeat_next(count):
     """
-    This action will execute the next one <count> times.
+    Executes the next action ``count`` times.
 
     :param count: An integer
     """
@@ -10872,19 +11060,19 @@ def repeat_next(count):
 def save_persistent_properties():
     """
     Forces an immediate save of the persistent properties that GPS maintains
-    for files and projects (for instance the text encoding, the programming
-    language, the debugger breakpoints,...).
+    for files and projects (for example the text encoding, the programming
+    language, and the debugger breakpoints).
 
-    You do not have to call this subprogram explicitly in general, since this
-    is done automatically by GPS on exit.
+    This is done automatically by GPS on exit, so you normally do not have to
+    call this subprogram.
     """
     pass  # implemented in Ada
 
 
 def set_build_mode(mode=''):
     """
-    Set the current build mode. If specified mode is not a registered mode, do
-    nothing.
+    Sets the current build mode. If ``mode`` is not a registered mode,
+    does nothing.
 
     :param mode: Name of the mode to set
     """
@@ -10893,11 +11081,11 @@ def set_build_mode(mode=''):
 
 def set_last_command(command):
     """
-    This function overrides the name of the last command executed by GPS. This
-    new name will be the one returned by GPS.last_command() until the user
-    performs a different action. Thus, multiple calls of the same action in a
-    row will always return the value of the command parameter. See the example
-    in GPS.last_command()
+    Overrides the name of the last command executed by GPS. This new name is
+    the one returned by :func:`GPS.last_command` until the user performs a
+    different action. Thus, multiple consecutive calls of the same action
+    always return the value of the ``command`` parameter. See the example in
+    :func:`GPS.last_command`.
 
     :param command: A string
 
@@ -10908,15 +11096,15 @@ def set_last_command(command):
 
 def supported_languages():
     """
-    Return the list of languages for which GPS has special handling. Any file
-    can be open in GPS, but some extensions are recognized specially by GPS to
-    provide syntax highlighting, cross-references, or other special
-    handling. See the GPS documentation on how to add support for new languages
-    in GPS.
+    Returns the list of languages for which GPS has special handling. Any
+    file can be opened in GPS, but some extensions are recognized specially
+    by GPS to provide syntax highlighting, cross-references, or other special
+    handling. See the GPS documentation on how to add support for new
+    languages in GPS.
 
-    The returned list is sorted alphabetically, and the name of the language
-    has been normalized (start with an upper case, and use lowercases for the
-    rest except after an underscore character)
+    The returned list is sorted alphabetically and the name of the language
+    has been normalized (starts with an upper case character and is lowercase
+    for the rest except after an underscore character).
 
     :return: List of strings
 
@@ -10938,7 +11126,7 @@ def reset_xref_db():
 
 def thaw_xref():
     """
-    See GPS.freeze_xref for more information
+    See :func:`GPS.freeze_xref` for more information.
 
     .. seealso:: :func:`GPS.freeze_xref`
     """
@@ -10947,7 +11135,7 @@ def thaw_xref():
 
 def version():
     """
-    Return GPS version as a string.
+    Returns the GPS version as a string.
 
     :return: A string
     """
@@ -10956,7 +11144,8 @@ def version():
 
 def visual_diff(file1, file2, file3=''):
     """
-    Open a Visual Diff between file1, file2 and file3
+    Opens a Visual Diff between ``file1``, ``file2`` and (optionally)
+    ``file3``.
 
     :param file1: A string
     :param file2: A string
@@ -10967,7 +11156,7 @@ def visual_diff(file1, file2, file3=''):
 
 def xref_frozen():
     """
-    Return true if the xref database is frozen.
+    Return trues if the xref database is frozen.
 
     .. seealso:: :func:`GPS.freeze_xref`
     """
