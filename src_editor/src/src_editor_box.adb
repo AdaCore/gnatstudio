@@ -998,6 +998,7 @@ package body Src_Editor_Box is
                     Buffer_Line_Type (Get_Line (Entity_Start)) + 1));
             The_Line   : Editable_Line_Type;
             The_Column : Character_Offset_Type;
+            Success    : Boolean;
 
          begin
             Search_Entity_Bounds
@@ -1031,9 +1032,11 @@ package body Src_Editor_Box is
                end if;
 
                --  Do not consider the first line selected if only the last
-               --  character is selected.
+               --  character is selected. Also, move Start_Iter to skip end of
+               --  line characters in the buffer.
 
                if Ends_Line (Start_Iter) then
+                  Forward_Line (Start_Iter, Success);
                   Start_Line := Start_Line + 1;
                end if;
 
