@@ -49,6 +49,15 @@ KP-60-N214-038 GPS: background color for ispell.py not loaded properly
                   import GPS
                   GPS.Preference("Plugins/ispell/bgcolor").set("your_color")
 
+KP-60-N213-046 GPS: lockup on code block folding
+
+  Problem:    GPS can lockup on code block folding When user defined code
+              highlighter is used.
+
+  Status:     This was fixed in 6.1 on 2014-02-27
+
+  Workaround: Disable user defined code highlighter
+
 KP-60-N211-025 GPS: Issue with highlighters
 
   Problem:    In any python code using highlighter.OverlayStyle with
