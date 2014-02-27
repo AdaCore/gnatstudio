@@ -428,12 +428,14 @@ are not shown because they are not relevant to that context.
   Query the status of the selected item. Starts the :guilabel:`VCS Explorer`.
 
 .. _Update:
+
 * :guilabel:`Update`
 
 
   Update the currently selected item (file, directory or project).
 
 .. _Commit:
+
 * :guilabel:`Commit`
 
   Submits the changes made to the file to the repository and queries the
@@ -450,12 +452,14 @@ are not shown because they are not relevant to that context.
   in the same way as the :guilabel:`File checker` works on source files.
 
 .. _Open:
+
 * :guilabel:`Open`
 
   Open the currently selected file for writing.  With some VCS systems,
   this is a necessary operation, but not on all.
 
 .. _View_revision_history:
+
 * :guilabel:`View entire revision history`
 
   Show the revision logs for all previous revisions of this file.
@@ -465,6 +469,7 @@ are not shown because they are not relevant to that context.
   Show the revision logs for one previous revision of this file.
 
 .. _Compare_against_head:
+
 * :guilabel:`Compare against head revision`
 
   .. index:: compare
@@ -473,6 +478,7 @@ are not shown because they are not relevant to that context.
   version of that file in the repository.
 
 .. _Compare_against_working:
+
 * :guilabel:`Compare against other revision`
 
 
@@ -480,18 +486,21 @@ are not shown because they are not relevant to that context.
   version of that file in the repository.
 
 .. _Compare_against_revision:
+
 * :guilabel:`Compare two revisions`
 
   Display a visual comparison between two specified revisions of the file
   in the repository.
 
 .. _Compare_base_against_head:
+
 * :guilabel:`Compare base against head`
 
   Display a visual comparison between the current version of the file in
   the repository and the most recent version of that file.
 
 .. _Compare_base_against_tag/branch:
+
 * :guilabel:`Compare against tag/branch`
 
   Only available on a Revision View and over a tag or branch. Display a
@@ -499,6 +508,7 @@ are not shown because they are not relevant to that context.
   repository and the version of that file in the tag or branch.
 
 .. _Annotate:
+
 * :guilabel:`Annotate`
 
   Display the annotations for the file, i.e. the information for each line
