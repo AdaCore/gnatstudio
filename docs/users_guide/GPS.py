@@ -6646,7 +6646,7 @@ class Hook(object):
 
     - :command:`task_started(task)`
     - :command:`task_changed(task)`
-    - :command:`task_terminated(task)
+    - :command:`task_terminated(task)`
 
       Called when a new background task is started, when an existing task's
       status is changed (such as making progressed or paused) or when a task
