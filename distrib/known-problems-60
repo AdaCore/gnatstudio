@@ -34,6 +34,15 @@ KP-60-N224-023 GPS: case conversion inserts extra text
 
   Workaround: Start selection on first character of the next line instead.
 
+KP-60-N220-040 GPS: 'Close all other editors' does nothing
+
+  Problem:    Menu 'Close all other editors' does not work when activated
+              from contextual menu of source editor's tabs.
+
+  Status:     This was fixed in 6.1 on 2014-02-24
+
+  Workaround: Use global menu "/File/Close All Editors except Current".
+
 KP-60-N215-001 GPS: error when process lasts more than 24 hours
 
   Problem:    GPS displays the elapsed time for external processes. This
