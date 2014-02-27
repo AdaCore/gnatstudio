@@ -376,7 +376,7 @@ arrow, as seen in the screenshot above).
         show the current execution point or lines containing compilation
         errors. It disappears when no lines are highlighted.
 
-    * :guilabel`Use Windows ACL`
+    * :guilabel:`Use Windows ACL`
 
       A Windows-specific preference, disabled by default. When enabled, GPS
       uses the ACL to change the file's write permission. Note that ACL's

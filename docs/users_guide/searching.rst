@@ -76,7 +76,7 @@ This dialog contains three fields:
 Change the context to a different one by clicking on the arrow on the
 right, which displays the list of all possible contexts, inluding:
 
-  *Project View*
+  * :command:`Project View`
 
     Search the :guilabel:`Project` view. An extra :guilabel:`Scope` box is
     displayed where you can specify the scope of your search, a set of:
@@ -84,40 +84,40 @@ right, which displays the list of all possible contexts, inluding:
     :guilabel:`Entities`.  Searching entities can take a long time since
     GPS must parse every file during the search.
 
-  *Open Files*
+  * :command:`Open Files`
 
     Search all files currently open in the source editor.
 
-  *Files...*
+  * :command:`Files...`
 
-    Search a specified set of files. An extra :guilabel`files` box is
+    Search a specified set of files. An extra :guilabel:`Files` box is
     displayed where you specify the files using standard shell (Unix or
     Windows) regular expressions (such as :file:`*.ad?` for all files
     ending with .ad and any trailing character). The directory specifies
     where the search starts and the :guilabel:`Recursive search` button
     whether subdirectories are also searched.
 
-  *Files From Projects*
+  * :command:`Files From Projects`
 
     Search all files from the current project, including files from project
     dependencies.
 
-  *Files From Current Project*
+  * :command:`Files From Current Project`
 
     Search all files from the current project, defaulting to the root
     project if none. The currently selected project might be the one to
     which the source file belongs (if you are in an editor) or the selected
     project (if you are in the :guilabel:`Project` view).
 
-  *Files From Runtime*
+  * :command:`Files From Runtime`
 
     Search all specification files from GNAT runtime library
 
-  *Current File*
+  * :command:`Current File`
 
     Search the current source editor.
 
-  *Project Browser*
+  * :command:`Project Browser`
 
     Search the :guilabel:`Project` browser (see :ref:`The_Project_Browser`).
 
