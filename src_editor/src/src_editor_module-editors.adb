@@ -2823,6 +2823,9 @@ package body Src_Editor_Module.Editors is
                 Scope           => Search_Scope'Value (Scope)));
       Iter        : Gtk_Text_Iter := Null_Text_Iter;
       From, To    : Editor_Coordinates;
+      Aux_Starts  : Src_Editor_Location;
+      Aux_Ends    : Src_Editor_Location;
+
    begin
       Set_Context
         (Context,
@@ -2844,10 +2847,25 @@ package body Src_Editor_Module.Editors is
             Found             => Success);
 
          if Success then
-            Starts := Src_Editor_Location
+            Aux_Starts := Src_Editor_Location
               (Create_Editor_Location (This.Buffer, From.Line, From.Col));
-            Ends   := Src_Editor_Location
+            Aux_Ends   := Src_Editor_Location
               (Create_Editor_Location (This.Buffer, To.Line, To.Col));
+
+            if Aux_Starts.Line = From.Line
+              and Aux_Ends.Line = To.Line
+            then
+               Starts := Aux_Starts;
+               Ends := Aux_Ends;
+
+            else
+               --  When location is not present in editor view now (for
+               --  example, when it is inside folded code block) created
+               --  Editor_Location is not at the expected place. Search failure
+               --  is reported in this case.
+
+               Success := False;
+            end if;
          end if;
       end if;
 
