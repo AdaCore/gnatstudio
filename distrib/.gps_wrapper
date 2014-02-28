@@ -8,13 +8,13 @@ root=`dirname $0`
 
 ## Run with "gps debug ..." to run under the debugger
 debug=${1:-false}
-if [ $debug = debug ]; then
+if [ "$debug" = debug ]; then
    shift;
 fi
 
 # Get absolute directory and strip 'bin' directory to retrieve real root
 root=`cd $root/..; pwd`
-pixbuf_base=$root/lib/gps/gdk-pixbuf-2.0/2.10.0/
+pixbuf_base="$root/lib/gps/gdk-pixbuf-2.0/2.10.0/"
 
 #
 # For each arg - save old value as GPS_STARTUP_arg, then export new value
@@ -78,19 +78,19 @@ save_and_export ()
     done
 }
 
-if [ -d $root/lib/gps ]; then
+if [ -d "$root/lib/gps" ]; then
   save_and_export GTK2_RC_FILES
 fi
 
-if [ -f $root/etc/fonts/fonts.conf ]; then
+if [ -f "$root/etc/fonts/fonts.conf" ]; then
   save_and_export FONTCONFIG_FILE
 fi
 
-if [ -f $root/etc/pango/pangorc ]; then
+if [ -f "$root/etc/pango/pangorc" ]; then
   save_and_export PANGO_RC_FILE
 fi
 
-if [ -f $pixbuf_base/loaders.cache ]; then
+if [ -f "$pixbuf_base/loaders.cache" ]; then
   save_and_export GDK_PIXBUF_MODULE_FILE GDK_PIXBUF_MODULEDIR
 fi
 
@@ -102,8 +102,8 @@ save_and_export LD_LIBRARY_PATH DYLD_LIBRARY_PATH XDG_DATA_DIRS XDG_CONFIG_HOME 
 
 save_and_export GSETTINGS_BACKEND
 
-if [ $debug = debug ]; then
-   gdb -args $root/bin/${prog}_exe "$@"
+if [ "$debug" = debug ]; then
+   gdb -args "$root/bin/${prog}_exe" "$@"
 else
-   exec $root/bin/${prog}_exe "$@"
+   exec "$root/bin/${prog}_exe" "$@"
 fi
