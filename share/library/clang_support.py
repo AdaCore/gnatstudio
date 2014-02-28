@@ -15,6 +15,17 @@ import os
 style_warning = None
 style_error = None
 
+kind_name_to_category = {
+    ci.CursorKind.ENUM_CONSTANT_DECL: completion.Cat_Literal,
+    ci.CursorKind.FIELD_DECL: completion.Cat_Field,
+    ci.CursorKind.FUNCTION_DECL: completion.Cat_Function,
+    ci.CursorKind.NOT_IMPLEMENTED: completion.Cat_Unknown,
+    ci.CursorKind.PARM_DECL: completion.Cat_Parameter,
+    ci.CursorKind.TYPEDEF_DECL: completion.Cat_Type,
+    ci.CursorKind.VAR_DECL: completion.Cat_Variable,
+    }
+# translates cursor names to completion language categories
+
 
 def initialize_styles():
     global style_warning
@@ -266,11 +277,18 @@ class ClangCompletionResolver(CompletionResolver):
             if len >= 2:
                 label = s[1].spelling
                 if label.startswith(self.prefix):
+
+                    kind = cr.results[current_result].kind
+                    if kind in kind_name_to_category:
+                        language_category = kind_name_to_category[kind]
+                    else:
+                        language_category = completion.Cat_Unknown
+
                     yield CompletionProposal(
                         label,
                         label,
                         " ".join([s[n].spelling for n in range(0, len)]),
-                        language_category=completion.Cat_Unknown)
+                        language_category=language_category)
 
             current_result += 1
 
