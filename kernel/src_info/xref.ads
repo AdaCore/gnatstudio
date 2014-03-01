@@ -96,7 +96,11 @@ package Xref is
       --  Used to implement freeze of the DB
 
       Xref_Db : GNATCOLL.VFS.Virtual_File;
-      --  Location of the sqlite database
+      --  Location of the sqlite database which is cached between sessions
+
+      Working_Xref_Db : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      --  Location of the sqlite database on which GPS is currently working
+      --  Set to No_File if GPS is not working on a database at the moment.
 
       Xref_Db_Is_Temporary : Boolean := False;
       --  Whether we should remove the database from the disk when we close it
@@ -139,8 +143,14 @@ package Xref is
      (Self    : not null access General_Xref_Database_Record;
       Project : GNATCOLL.Projects.Project_Type)
       return GNATCOLL.VFS.Virtual_File;
-   --  Location of the sqlite file that contains the xref, or No_File.
-   --  Project should be the root project.
+   --  Location of the sqlite file that contains the xref database which is
+   --  cached between sessions.
+
+   function Working_Xref_Database_Location
+     (Self    : not null access General_Xref_Database_Record)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Location of the sqlite file that contains the xref database on which
+   --  GPS is currently working.
 
    -----------------------
    --  File location

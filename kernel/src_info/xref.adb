@@ -2633,25 +2633,85 @@ package body Xref is
 
    procedure Close_Database (Self   : General_Xref_Database) is
       Valgrind : GNAT.Strings.String_Access;
-      Success  : Boolean;
+
+      procedure Save_Current_Db;
+      --  Save the working db to the project-designated area, for safe-keeping
+      --  between sessions
+
+      ---------------------
+      -- Save_Current_Db --
+      ---------------------
+
+      procedure Save_Current_Db is
+         Success : Boolean;
+      begin
+         if Self.Xref_Db_Is_Temporary then
+            Trace (Me, "Database was temporary, not saving");
+            --  This database does not need saving
+            return;
+         end if;
+
+         if Self.Xref_Db /= No_File
+           and Self.Working_Xref_Db /= No_File
+         then
+            if not Self.Working_Xref_Db.Is_Regular_File then
+               --  The working file doesn't exist, nothing to do
+               return;
+            end if;
+
+            declare
+               Target_Name : constant String := +Self.Xref_Db.Full_Name;
+            begin
+               if Self.Xref_Db.Is_Regular_File then
+                  Delete (Self.Xref_Db, Success);
+
+                  if not Success then
+                     Trace
+                       (Me,
+                        "Could not delete existing database cache: " &
+                          Target_Name);
+                     return;
+                  end if;
+               end if;
+
+               Trace (Me, "Copying database to " & Target_Name);
+
+               if Self.Working_Xref_Db.Is_Regular_File then
+                  Copy (File        => Self.Working_Xref_Db,
+                        Target_Name => Self.Xref_Db.Full_Name,
+                        Success     => Success);
+
+                  if not Success then
+                     Trace
+                       (Me,
+                        "Could not copy " & (+Self.Working_Xref_Db.Full_Name) &
+                          " to " & Target_Name);
+                  end if;
+
+                  Self.Working_Xref_Db.Delete (Success);
+
+                  if not Success then
+                     Trace
+                       (Me,
+                        "Could not delete working database: " &
+                          (+Self.Working_Xref_Db.Full_Name));
+                     return;
+                  end if;
+               end if;
+            end;
+         end if;
+      end Save_Current_Db;
+
    begin
       if Active (SQLITE) then
          Trace (Me, "Closing xref database, temporary="
                 & Self.Xref_Db_Is_Temporary'Img);
          Self.Xref.Free;
 
-         --  Do not keep the database unless we loaded an explicit user project
-         if Self.Xref_Db_Is_Temporary
-           and then Self.Xref_Db /= No_File
-         then
-            Self.Xref_Db.Delete (Success => Success);
-            if not Success then
-               Trace (Me, "Could not delete database");
-            else
-               Trace
-                 (Me, "Deleted database " & Self.Xref_Db.Display_Full_Name);
-            end if;
-         end if;
+         --  If we were already working on a database, first copy the working
+         --  database to the database saved between sessions, for future use
+
+         Save_Current_Db;
 
       else
          --  Most of the rest is for the sake of memory leaks checkin, and
@@ -3965,12 +4025,37 @@ package body Xref is
             end if;
 
             Trace
-              (Me, "Set up xref database: " & Self.Xref_Db.Display_Full_Name);
+              (Me, "project db file: " & Self.Xref_Db.Display_Full_Name);
          end;
       end if;
 
       return Self.Xref_Db;
    end Xref_Database_Location;
+
+   ------------------------------------
+   -- Working_Xref_Database_Location --
+   ------------------------------------
+
+   function Working_Xref_Database_Location
+     (Self    : not null access General_Xref_Database_Record)
+      return GNATCOLL.VFS.Virtual_File is
+   begin
+      if Self.Working_Xref_Db = No_File then
+         declare
+            function Get_Process_Id return Integer;
+            --  Return the process ID of the current process
+
+            pragma Import (C, Get_Process_Id, "getpid");
+            Pid : constant String := Integer'Image (Get_Process_Id);
+         begin
+            Self.Working_Xref_Db := Create_From_Dir
+              (Get_Tmp_Directory,
+               +("gnatinspect-" & Pid (Pid'First + 1 .. Pid'Last) & ".db"));
+         end;
+      end if;
+
+      return Self.Working_Xref_Db;
+   end Working_Xref_Database_Location;
 
    --------------------------
    -- Project_View_Changed --
@@ -3998,18 +4083,66 @@ package body Xref is
          end if;
       end Reset_File_If_External;
 
-      File : Virtual_File;
+      Cache_Xref_File : Virtual_File;
+      Working_Xref_File : Virtual_File;
+
       Error : GNAT.Strings.String_Access;
+      Success : Boolean;
    begin
       if Active (SQLITE) then
          --  Self.Xref was initialized in Project_Changed.
          Self.Xref.Free;
 
          Self.Xref_Db := No_File;
-         File := Xref_Database_Location (Self, Tree.Root_Project);
+         Cache_Xref_File := Xref_Database_Location (Self, Tree.Root_Project);
+         Working_Xref_File := Working_Xref_Database_Location (Self);
+
+         --  Copy the database to the working location before connecting
+
+         if Cache_Xref_File /= No_File then
+            --  If there is a file already present, remove it.
+            --  (This shouldn't happen, but do this for safety).
+
+            if Working_Xref_File.Is_Regular_File then
+               Trace (Me, "Deleting previous work file: " &
+                      (+Working_Xref_File.Full_Name));
+               Working_Xref_File.Delete (Success);
+
+               if not Success then
+                  --  We could not delete the working xref file
+                  Trace (Me, "Could not remove xref database at " &
+                         (+Working_Xref_File.Full_Name));
+
+                  --  ??? should be a kernel error message
+               end if;
+            end if;
+
+            if Cache_Xref_File.Is_Regular_File then
+               Trace
+                 (Me, "Copying " & (+Cache_Xref_File.Full_Name)
+                  & " to " & (+Working_Xref_File.Full_Name));
+
+               Copy (Cache_Xref_File, Working_Xref_File.Full_Name, Success);
+
+               if not Success then
+                  Trace
+                    (Me, "Could not copy " &
+                     (+Cache_Xref_File.Full_Name)
+                     & " to " & (+Working_Xref_File.Full_Name));
+
+                  --  ??? should be a kernel error message
+               end if;
+            end if;
+         end if;
+
          Self.Xref_Db_Is_Temporary := Tree.Status /= From_File;
+
+         Trace (Me, "Set up xref database: " &
+                (+Working_Xref_File.Full_Name.all));
+
          Self.Xref.Setup_DB
-           (DB    => GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all),
+           (DB    => GNATCOLL.SQL.Sqlite.Setup
+              (+Working_Xref_File.Full_Name.all),
             Tree  => Tree,
             Error => Error);
 
