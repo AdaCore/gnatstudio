@@ -662,7 +662,12 @@ package body GNATdoc.Frontend.Builder is
                   Get_Unique_Entity
                     (Parent, Context, File, Parents (J), Forced => True);
 
-                  if not Has_Parent_Type (E, Parent) then
+                  --  Avoid adding a self reference as parent or progenitor
+
+                  if Parents (J) = LL.Get_Entity (E) then
+                     null;
+
+                  elsif not Has_Parent_Type (E, Parent) then
                      LL.Append_Parent_Type (E, Parent);
 
                      --  The list of parents returned by Xref is not ordered
@@ -941,11 +946,16 @@ package body GNATdoc.Frontend.Builder is
 
                   Loc := LL.Get_Location (Child);
 
+                  --  Avoid adding a self reference as a child type
+
+                  if Childs (J) = LL.Get_Entity (E) then
+                     null;
+
                   --  Avoid problems with wrong Xref decoration that I can
                   --  reproduce with gnatcoll-refcount-weakref.ads. To
                   --  be investigated???
 
-                  if not Is_Class_Or_Record_Type (Child) then
+                  elsif not Is_Class_Or_Record_Type (Child) then
                      null;  --  Free (Child) ???
 
                   --  Avoid adding to the tree entities defined in package

@@ -2511,6 +2511,12 @@ package body GNATdoc.Atree is
 
       procedure Append_Child_Type (E : Entity_Id; Value : Entity_Id) is
       begin
+         pragma Assert (Value /= E);
+         pragma Assert (not Is_Full_View (E)
+           or else Get_Partial_View (E) /= Value);
+         pragma Assert (not Is_Full_View (Value)
+           or else Get_Partial_View (Value) /= E);
+
          if not E.Xref.Child_Types.Contains (Value) then
             E.Xref.Child_Types.Append (Value);
          end if;
@@ -2518,6 +2524,11 @@ package body GNATdoc.Atree is
 
       procedure Append_Parent_Type (E : Entity_Id; Value : Entity_Id) is
       begin
+         pragma Assert (Value /= E);
+         pragma Assert (not Is_Full_View (E)
+           or else Get_Partial_View (E) /= Value);
+         pragma Assert (not Is_Full_View (Value)
+           or else Get_Partial_View (Value) /= E);
          pragma Assert (not Has_Parent_Type (E, Value));
          pragma Assert (not E.Xref.Parent_Types.Contains (Value));
 
