@@ -407,7 +407,7 @@ package body GPS.Search is
       R : constant Integer :=
         (if Ref_Index = -1 then Buffer'First else Ref_Index);
       Start : Natural := Natural'Last;
-      Score : Natural;
+      Score : Integer;
 
       T : Natural := Self.Text'First;
       Context : Search_Context;
