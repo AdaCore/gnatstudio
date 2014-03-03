@@ -500,6 +500,11 @@ package body GPS.Search is
       else
          return GPS.Search.No_Match;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return GPS.Search.No_Match;
    end Start;
 
    -----------
