@@ -925,6 +925,7 @@ package body Build_Command_Utils is
          declare
             File : constant Virtual_File :=
                Get_Context_File_Information (Adapter.all);
+            Set  : File_Info_Set;
          begin
             if File = No_File then
                if Simulate then
@@ -936,10 +937,11 @@ package body Build_Command_Utils is
                     (Adapter.all, -"No file selected", Mode => Error);
                   raise Invalid_Argument;
                end if;
+            end if;
 
-            elsif Get_Kernel_Registry
-              (Adapter.all).Tree.Info_Set (File).Is_Empty
-            then
+            Set := Get_Kernel_Registry (Adapter.all).Tree.Info_Set (File);
+
+            if Set.Is_Empty then
                if Simulate then
                   Result.Args := Create ("<current-file>");
                   return Result;
