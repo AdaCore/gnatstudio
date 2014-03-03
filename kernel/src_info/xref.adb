@@ -4083,6 +4083,12 @@ package body Xref is
       Error : GNAT.Strings.String_Access;
    begin
       if Active (SQLITE) then
+
+         if Self.Xref /= null then
+            Trace (Me, "Closing previous version of the database");
+            Close_Database (Self);
+         end if;
+
          --  Self.Xref was initialized in Project_Changed.
          Self.Xref.Free;
 
