@@ -112,6 +112,63 @@ package body Xref is
    --  Close the database connection (and perhaps remove the sqlite database
    --  if we were using a temporary project).
 
+   procedure Move_Or_Copy (Src, Tgt : Virtual_File);
+   --  Delete Tgt, then attempt to move Src if it exist to Tgt. Then delete
+   --  Src. Do nothing if Src is not a regular file.
+
+   function Persistent_Xref_Database_Location
+     (Self    : not null access General_Xref_Database_Record'Class;
+      Project : GNATCOLL.Projects.Project_Type)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Location of the sqlite file that contains the xref database which is
+   --  cached between sessions.
+
+   ------------------
+   -- Move_Or_Copy --
+   ------------------
+
+   procedure Move_Or_Copy (Src, Tgt : Virtual_File) is
+      Success : Boolean;
+      Src_Name : constant String := +Src.Full_Name;
+      Tgt_Name : constant String := +Tgt.Full_Name;
+   begin
+      if not Src.Is_Regular_File then
+         --  Nothing to do.
+         return;
+      end if;
+
+      if Tgt.Is_Regular_File then
+         --  Delete is needed before rename on Windows. Do it in any case.
+         Delete (Tgt, Success);
+
+         if not Success then
+            Trace (Me, "Could not delete " & Tgt_Name);
+         end if;
+      end if;
+
+      --  Attempt a move
+
+      Trace (Me, "Moving " & Src_Name & " to " & Tgt_Name);
+
+      Rename (Src, Tgt, Success);
+
+      if not Success then
+         Trace (Me, "Move failed, attempting copy");
+
+         Copy (Src, +Tgt_Name, Success);
+
+         if not Success then
+            Trace (Me, "Copy failed");
+         end if;
+
+         Delete (Src, Success);
+
+         if not Success then
+            Trace (Me, "Could not remove " & Src_Name);
+         end if;
+      end if;
+   end Move_Or_Copy;
+
    ----------------
    -- Assistants --
    ----------------
@@ -2633,75 +2690,6 @@ package body Xref is
 
    procedure Close_Database (Self   : General_Xref_Database) is
       Valgrind : GNAT.Strings.String_Access;
-
-      procedure Save_Current_Db;
-      --  Save the working db to the project-designated area, for safe-keeping
-      --  between sessions
-
-      ---------------------
-      -- Save_Current_Db --
-      ---------------------
-
-      procedure Save_Current_Db is
-         Success : Boolean;
-      begin
-         if Self.Xref_Db_Is_Temporary then
-            Trace (Me, "Database was temporary, not saving");
-            --  This database does not need saving
-            return;
-         end if;
-
-         if Self.Xref_Db /= No_File
-           and Self.Working_Xref_Db /= No_File
-         then
-            if not Self.Working_Xref_Db.Is_Regular_File then
-               --  The working file doesn't exist, nothing to do
-               return;
-            end if;
-
-            declare
-               Target_Name : constant String := +Self.Xref_Db.Full_Name;
-            begin
-               if Self.Xref_Db.Is_Regular_File then
-                  Delete (Self.Xref_Db, Success);
-
-                  if not Success then
-                     Trace
-                       (Me,
-                        "Could not delete existing database cache: " &
-                          Target_Name);
-                     return;
-                  end if;
-               end if;
-
-               Trace (Me, "Copying database to " & Target_Name);
-
-               if Self.Working_Xref_Db.Is_Regular_File then
-                  Copy (File        => Self.Working_Xref_Db,
-                        Target_Name => Self.Xref_Db.Full_Name,
-                        Success     => Success);
-
-                  if not Success then
-                     Trace
-                       (Me,
-                        "Could not copy " & (+Self.Working_Xref_Db.Full_Name) &
-                          " to " & Target_Name);
-                  end if;
-
-                  Self.Working_Xref_Db.Delete (Success);
-
-                  if not Success then
-                     Trace
-                       (Me,
-                        "Could not delete working database: " &
-                          (+Self.Working_Xref_Db.Full_Name));
-                     return;
-                  end if;
-               end if;
-            end;
-         end if;
-      end Save_Current_Db;
-
    begin
       if Active (SQLITE) then
          Trace (Me, "Closing xref database, temporary="
@@ -2711,7 +2699,12 @@ package body Xref is
          --  If we were already working on a database, first copy the working
          --  database to the database saved between sessions, for future use
 
-         Save_Current_Db;
+         if Self.Xref_Db_Is_Temporary then
+            Trace (Me, "Database was temporary, not saving");
+            --  This database does not need saving
+         else
+            Move_Or_Copy (Self.Working_Xref_Db, Self.Persistent_Xref_Db_Cache);
+         end if;
 
       else
          --  Most of the rest is for the sake of memory leaks checkin, and
@@ -3963,7 +3956,7 @@ package body Xref is
          end if;
 
          Trace (Me, "Set up xref database: :memory:");
-         Self.Xref_Db := GNATCOLL.VFS.No_File;
+         Self.Persistent_Xref_Db_Cache := GNATCOLL.VFS.No_File;
          Self.Xref_Db_Is_Temporary := True;
          Self.Xref.Setup_DB
            (DB    => GNATCOLL.SQL.Sqlite.Setup (":memory:"),
@@ -3989,15 +3982,15 @@ package body Xref is
    -- Xref_Database_Location --
    ----------------------------
 
-   function Xref_Database_Location
-     (Self    : not null access General_Xref_Database_Record;
+   function Persistent_Xref_Database_Location
+     (Self    : not null access General_Xref_Database_Record'Class;
       Project : Project_Type)
       return GNATCOLL.VFS.Virtual_File
    is
       Dir  : Virtual_File;
    begin
       if Active (SQLITE)
-        and then Self.Xref_Db = GNATCOLL.VFS.No_File
+        and then Self.Persistent_Xref_Db_Cache = GNATCOLL.VFS.No_File
       then
          declare
             Attr : constant String :=
@@ -4015,28 +4008,29 @@ package body Xref is
                   Dir := GNATCOLL.VFS.Get_Current_Dir;
                end if;
 
-               Self.Xref_Db := Create_From_Base
+               Self.Persistent_Xref_Db_Cache := Create_From_Base
                  (Base_Dir  => Dir.Full_Name.all,
                   Base_Name => "gnatinspect.db");
             else
-               Self.Xref_Db := Create_From_Base
+               Self.Persistent_Xref_Db_Cache := Create_From_Base
                  (Base_Name => +Attr,
                   Base_Dir  => Project.Project_Path.Dir_Name);
             end if;
 
             Trace
-              (Me, "project db file: " & Self.Xref_Db.Display_Full_Name);
+              (Me, "project db file: " &
+                 Self.Persistent_Xref_Db_Cache.Display_Full_Name);
          end;
       end if;
 
-      return Self.Xref_Db;
-   end Xref_Database_Location;
+      return Self.Persistent_Xref_Db_Cache;
+   end Persistent_Xref_Database_Location;
 
    ------------------------------------
    -- Working_Xref_Database_Location --
    ------------------------------------
 
-   function Working_Xref_Database_Location
+   function Xref_Database_Location
      (Self    : not null access General_Xref_Database_Record)
       return GNATCOLL.VFS.Virtual_File is
    begin
@@ -4055,7 +4049,7 @@ package body Xref is
       end if;
 
       return Self.Working_Xref_Db;
-   end Working_Xref_Database_Location;
+   end Xref_Database_Location;
 
    --------------------------
    -- Project_View_Changed --
@@ -4087,53 +4081,19 @@ package body Xref is
       Working_Xref_File : Virtual_File;
 
       Error : GNAT.Strings.String_Access;
-      Success : Boolean;
    begin
       if Active (SQLITE) then
          --  Self.Xref was initialized in Project_Changed.
          Self.Xref.Free;
 
-         Self.Xref_Db := No_File;
-         Cache_Xref_File := Xref_Database_Location (Self, Tree.Root_Project);
-         Working_Xref_File := Working_Xref_Database_Location (Self);
+         Self.Persistent_Xref_Db_Cache := No_File;
+         Cache_Xref_File := Persistent_Xref_Database_Location
+           (Self, Tree.Root_Project);
+         Working_Xref_File := Xref_Database_Location (Self);
 
          --  Copy the database to the working location before connecting
 
-         if Cache_Xref_File /= No_File then
-            --  If there is a file already present, remove it.
-            --  (This shouldn't happen, but do this for safety).
-
-            if Working_Xref_File.Is_Regular_File then
-               Trace (Me, "Deleting previous work file: " &
-                      (+Working_Xref_File.Full_Name));
-               Working_Xref_File.Delete (Success);
-
-               if not Success then
-                  --  We could not delete the working xref file
-                  Trace (Me, "Could not remove xref database at " &
-                         (+Working_Xref_File.Full_Name));
-
-                  --  ??? should be a kernel error message
-               end if;
-            end if;
-
-            if Cache_Xref_File.Is_Regular_File then
-               Trace
-                 (Me, "Copying " & (+Cache_Xref_File.Full_Name)
-                  & " to " & (+Working_Xref_File.Full_Name));
-
-               Copy (Cache_Xref_File, Working_Xref_File.Full_Name, Success);
-
-               if not Success then
-                  Trace
-                    (Me, "Could not copy " &
-                     (+Cache_Xref_File.Full_Name)
-                     & " to " & (+Working_Xref_File.Full_Name));
-
-                  --  ??? should be a kernel error message
-               end if;
-            end if;
-         end if;
+         Move_Or_Copy (Cache_Xref_File, Working_Xref_File);
 
          Self.Xref_Db_Is_Temporary := Tree.Status /= From_File;
 

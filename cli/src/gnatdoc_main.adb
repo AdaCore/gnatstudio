@@ -107,7 +107,7 @@ procedure GNATdoc_Main is
       Add_Arg ("-P" & (+Project_File.Full_Name.all));
       Add_Arg
         ("--db=" &
-         (+Kernel.Databases.Working_Xref_Database_Location.Full_Name.all));
+         (+Kernel.Databases.Xref_Database_Location.Full_Name.all));
 
       for J in Vars'Range loop
          Add_Arg ("-X" & External_Name (Vars (J))
