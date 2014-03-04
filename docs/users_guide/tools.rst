@@ -306,7 +306,7 @@ Editors involved in a visual comparison have a contextual menu
   the files in an editor by hand while it is involved in a visual
   comparison.
 
-* :guilabe:`Hide`
+* :guilabel:`Hide`
 
   Remove the highlighting corresponding to the visual comparison from all
   involved editors.
