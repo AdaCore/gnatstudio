@@ -44,5 +44,19 @@ project CLI is
       --  for Default_Switches ("Ada") use ("-pg");
    end Linker;
 
+   package Documentation is
+      for Ignored_Subprojects use (
+         "gnatcoll",
+         "gnatcoll_shared",
+         "gnatcoll_iconv", 
+         "gnatcoll_python",
+         "gnatcoll_sqlite",
+         "templates_parser",
+         "xmlada",
+         "xmlada_sax",
+         "xmlada_shared",
+         "xmlada_input",
+         "xmlada_unicode");
+   end Documentation;
 
 end CLI;
