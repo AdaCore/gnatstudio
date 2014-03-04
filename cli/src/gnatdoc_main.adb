@@ -245,6 +245,23 @@ begin
 
    Project_File := Create (+Project_Name.all);
 
+   --  Register the package and attribute that can be used in the project
+   --  files to specify a list of subprojects ignored by GNATdoc
+
+   declare
+      Result : constant String :=
+        GNATCOLL.Projects.Register_New_Attribute
+          (Name    => Attr_Name,
+           Pkg     => Pkg_Name,
+           Is_List => True);
+   begin
+      --  Log the reported error (if any)
+
+      if Result /= "" then
+         Trace (DOCGEN_V31, Result);
+      end if;
+   end;
+
    --  Load project
    Kernel.Registry.Tree.Load
      (Root_Project_Path => Project_File,

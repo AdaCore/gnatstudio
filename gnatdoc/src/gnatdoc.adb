@@ -1486,6 +1486,45 @@ package body GNATdoc is
       Prj_Files : Project_Files_List.Vector;
       Prj_Srcs  : Project_Files;
 
+      procedure Init_Ignored_Subprojects_Table;
+      --  Initialize the list of ignored subprojects
+
+      function Is_Ignored_Subproject (Prj_Name : String) return Boolean;
+      --  True if Name is one of the ignored subprojects
+
+      -----------------------------
+      -- Init_Ignore_Subprojects --
+      -----------------------------
+
+      Ign_Prjs  : GNAT.Strings.String_List_Access;
+
+      procedure Init_Ignored_Subprojects_Table is
+         Ign_Attr  : constant Attribute_Pkg_List :=
+                       Build (Package_Name => Pkg_Name,
+                              Attribute_Name => Attr_Name);
+      begin
+         Ign_Prjs :=
+           Kernel.Registry.Tree.Root_Project.Attribute_Value (Ign_Attr);
+      end Init_Ignored_Subprojects_Table;
+
+      ----------------------------
+      -- In_Ignored_Subprojects --
+      ----------------------------
+
+      function Is_Ignored_Subproject (Prj_Name : String) return Boolean is
+         use type GNAT.Strings.String_List_Access;
+      begin
+         if Ign_Prjs /= null then
+            for J in Ign_Prjs'Range loop
+               if To_Lower (Ign_Prjs (J).all) = To_Lower (Prj_Name) then
+                  return True;
+               end if;
+            end loop;
+         end if;
+
+         return False;
+      end Is_Ignored_Subproject;
+
    begin
       Trace (Me, "Process_Project_Files");
 
@@ -1497,7 +1536,7 @@ package body GNATdoc is
 
       if not Recursive then
          declare
-            Source_Files  : File_Array_Access := P.Source_Files;
+            Source_Files : File_Array_Access := P.Source_Files;
          begin
             Prj_Srcs.Project := P;
 
@@ -1510,24 +1549,34 @@ package body GNATdoc is
          end;
       else
          declare
-            Prj_Iter : Project_Iterator := P.Start_Reversed;
+            Prj_Iter : Project_Iterator;
 
          begin
+            Init_Ignored_Subprojects_Table;
+
+            Prj_Iter := P.Start_Reversed;
             while Current (Prj_Iter) /= No_Project loop
                Prj_Srcs.Project := Current (Prj_Iter);
 
-               declare
-                  Source_Files : File_Array_Access :=
-                                   Prj_Srcs.Project.Source_Files;
-               begin
-                  for J in Source_Files'Range loop
-                     Prj_Srcs.Src_Files.Append (Source_Files (J));
-                  end loop;
+               if Is_Ignored_Subproject (Prj_Srcs.Project.Name) then
+                  if not Options.Quiet_Mode then
+                     GNAT.IO.Put_Line
+                       ("- Project: " & Prj_Srcs.Project.Name & " ignored");
+                  end if;
+               else
+                  declare
+                     Source_Files : File_Array_Access :=
+                       Prj_Srcs.Project.Source_Files;
+                  begin
+                     for J in Source_Files'Range loop
+                        Prj_Srcs.Src_Files.Append (Source_Files (J));
+                     end loop;
 
-                  Unchecked_Free (Source_Files);
-               end;
+                     Unchecked_Free (Source_Files);
+                  end;
 
-               Prj_Files.Append (Prj_Srcs);
+                  Prj_Files.Append (Prj_Srcs);
+               end if;
 
                Next (Prj_Iter);
             end loop;

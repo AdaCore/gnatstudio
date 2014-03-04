@@ -31,6 +31,12 @@ package GNATdoc is
    DOCGEN_V31 : constant GNATCOLL.Traces.Trace_Handle :=
      GNATCOLL.Traces.Create ("Docgen.V3.1", GNATCOLL.Traces.Off);
 
+   --  Name of the package and attribute supported by GNATdoc to ignore
+   --  subprojects
+
+   Attr_Name : constant String := "Ignored_Subprojects";
+   Pkg_Name  : constant String := "Documentation";
+
    type Report_Errors_Kind is (None, Errors_Only, Errors_And_Warnings);
 
    type Tree_Output_Kind is (None, Short, Full);
