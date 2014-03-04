@@ -1812,23 +1812,6 @@ package body GNATdoc.Frontend is
                         begin
                            Decorate_Scope (E);
 
-                           --  For backward compatibility we copy the list of
-                           --  inherited methods visible in the full view to
-                           --  the partial view.
-
-                           if Is_Partial_View (E)
-                             and then not Enhancements
-                           then
-                              for M of Get_Inherited_Methods
-                                         (Get_Full_View (E)).all loop
-                                 if not
-                                   Get_Inherited_Methods (E).Contains (M)
-                                 then
-                                    Append_Inherited_Method (E, M);
-                                 end if;
-                              end loop;
-                           end if;
-
                            if In_Private_Part (Current_Context)
                              and then Get_Kind (E) /= E_Formal
                            then
@@ -2361,6 +2344,146 @@ package body GNATdoc.Frontend is
 
                procedure Do_Exit;
                procedure Do_Exit is
+
+                  procedure Complete_Tagged_Types_Decoration;
+                  --  At this stage we have all the information what we can
+                  --  collect about tagged types defined in this scope but
+                  --  their decoration may be still incomplete. This routine
+                  --  is responsible of:
+                  --   1) Identifying primitives defined in external libraries.
+                  --      They are moved to the list of inherited primitives.
+                  --   2) For private types, leave visible in the partial view
+                  --      their visible primitives
+
+                  procedure Complete_Tagged_Types_Decoration is
+
+                     function Has_Parent_In_External_Library
+                       (Typ : Entity_Id) return Boolean;
+                     --  True if tagged type Typ has some parent defined in an
+                     --  external library (relies on In_External_Library)
+
+                     function In_External_Library
+                       (E : Entity_Id) return Boolean;
+                     --  If at this stage we still don't know the scope of an
+                     --  entity then we assume that it is defined in a file
+                     --  which is not directly part of this project (that is,
+                     --  an entity defined in the runtime of the compiler or
+                     --  in a library).
+
+                     ------------------------------------
+                     -- Has_Parent_In_External_Library --
+                     ------------------------------------
+
+                     function Has_Parent_In_External_Library
+                       (Typ : Entity_Id) return Boolean
+                     is
+                        Parent : Entity_Id := Get_Parent (Typ);
+                     begin
+                        while Present (Parent) loop
+                           if In_External_Library (Parent) then
+                              return True;
+                           end if;
+
+                           Parent := Get_Parent (Parent);
+                        end loop;
+
+                        return False;
+                     end Has_Parent_In_External_Library;
+
+                     -------------------------
+                     -- In_External_Library --
+                     -------------------------
+
+                     function In_External_Library
+                       (E : Entity_Id) return Boolean is
+                     begin
+                        return No (Get_Scope (E));
+                     end In_External_Library;
+
+                  --  Start of processing for Complete_Tagged_Types_Decoration
+
+                  begin
+                     for E of Get_Entities (Get_Scope (Current_Context)).all
+                     loop
+                        if LL.Is_Type (E)
+                          and then Is_Tagged (E)
+                          and then (not Is_Partial_View (E)
+                                    or else Is_Full_View (E))
+                        then
+                           declare
+                              In_External_Libraries : EInfo_List.Vector;
+                           begin
+                              --  Collect methods without scope
+
+                              for M of Get_Methods (E).all loop
+                                 if In_External_Library (M) then
+                                    In_External_Libraries.Append (M);
+                                 end if;
+                              end loop;
+
+                              --  Append them to the list of inherited prims
+
+                              for M of In_External_Libraries loop
+                                 Append_Inherited_Method (E, M);
+                              end loop;
+
+                              --  Remove the from the list of new methods
+
+                              for M of In_External_Libraries loop
+                                 Remove_From_List (Get_Methods (E), M);
+                              end loop;
+
+                              In_External_Libraries.Clear;
+                           end;
+                        end if;
+                     end loop;
+
+                     --  Complete the decoration of tagged private types
+                     --  leaving visible in the partial view their visible
+                     --  primitives.
+
+                     for E of Get_Entities (Get_Scope (Current_Context)).all
+                     loop
+                        if LL.Is_Type (E)
+                          and then Is_Tagged (E)
+                          and then Is_Partial_View (E)
+                        then
+                           --  Handle case in which this partial view has a
+                           --  parent defined in some external library.
+
+                           if Present (Get_Parent (E))
+                             and then Has_Parent_In_External_Library (E)
+                           then
+                              --  In this case, given that we don't have
+                              --  available their sources, we assume that
+                              --  inherited primitives defined in external
+                              --  libraries are visible
+
+                              for M of Get_Inherited_Methods
+                                         (Get_Full_View (E)).all
+                              loop
+                                 if In_External_Library (M) then
+                                    Append_Inherited_Method (E, M);
+                                 end if;
+                              end loop;
+                           end if;
+
+                           for M of Get_Methods (Get_Full_View (E)).all loop
+
+                              --  Public primitive
+
+                              if not In_Private_Part (M)
+                                and then not Get_Methods (E).Contains (M)
+                              then
+                                 Append_Method (E, M);
+                              end if;
+                           end loop;
+                        end if;
+                     end loop;
+                  end Complete_Tagged_Types_Decoration;
+
+               --  Start of processing of Do_Exit
+
                begin
                   if In_Debug_File then
                      GNAT.IO.Put_Line
@@ -2383,25 +2506,8 @@ package body GNATdoc.Frontend is
                      Disable_Enter_Scope;
                   end if;
 
-                  --  Complete the decoration of tagged private types leaving
-                  --  visible in the partial view the visible primitives.
-
                   if Is_Package (Get_Scope (Current_Context)) then
-                     for E of Get_Entities (Get_Scope (Current_Context)).all
-                     loop
-                        if LL.Is_Type (E)
-                          and then Is_Tagged (E)
-                          and then Is_Partial_View (E)
-                        then
-                           for M of Get_Methods (Get_Full_View (E)).all loop
-                              if not In_Private_Part (M)
-                                and then not Get_Methods (E).Contains (M)
-                              then
-                                 Append_Method (E, M);
-                              end if;
-                           end loop;
-                        end if;
-                     end loop;
+                     Complete_Tagged_Types_Decoration;
                   end if;
 
                   Exit_Scope;

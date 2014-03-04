@@ -997,44 +997,19 @@ package body GNATdoc.Frontend.Builder is
                         end if;
 
                      else
-                        --  If Xref does not have available the scope of this
-                        --  method it means that it is a primitive defined in
-                        --  a file which is not directly part of this project
-                        --  (that is, an entity defined in the runtime of the
-                        --  compiler or in a library). In such case we assume
-                        --  that it is an inherited primitive.
+                        Append_To_File_Entities (Method);
 
-                        if No (LL.Get_Scope (Method))
-                          or else LL.Get_Scope (Method) /= LL.Get_Scope (E)
-                        then
-                           --  For inherited primitives defined in other
-                           --  files/scopes we cannot set their scope.
+                        Decorate_Subprogram_Formals (Method);
 
-                           Decorate_Subprogram_Formals (Method);
-
-                           if not Is_Partial_View (E) then
-                              Append_Inherited_Method (E, Method);
-                           else
-                              Append_Inherited_Method
-                                (Get_Full_View (E), Method);
+                        if not Is_Partial_View (E) then
+                           if not Get_Methods (E).Contains (Method) then
+                              Append_Method (E, Method);
                            end if;
-
                         else
-                           Append_To_File_Entities (Method);
-
-                           Decorate_Subprogram_Formals (Method);
-
-                           if not Is_Partial_View (E) then
-                              if not Get_Methods (E).Contains (Method) then
-                                 Append_Method (E, Method);
-                              end if;
-                           else
-                              Append_Method
-                                (Get_Full_View (E), Method);
-                           end if;
-
-                           Set_Is_Decorated (Method);
+                           Append_Method (Get_Full_View (E), Method);
                         end if;
+
+                        Set_Is_Decorated (Method);
                      end if;
                   end loop;
                end;

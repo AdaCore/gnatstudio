@@ -1980,6 +1980,22 @@ package body GNATdoc.Atree is
       end if;
    end Remove_Full_View;
 
+   ----------------------
+   -- Remove_From_List --
+   ----------------------
+
+   procedure Remove_From_List
+     (List : access EInfo_List.Vector;
+      E    : Entity_Id)
+   is
+      Cursor : EInfo_List.Cursor;
+   begin
+      pragma Assert (List.Contains (E));
+
+      Cursor := List.Find (E);
+      List.Delete (Cursor);
+   end Remove_From_List;
+
    -----------------------
    -- Remove_From_Scope --
    -----------------------

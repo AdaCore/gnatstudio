@@ -440,6 +440,9 @@
 --    Remove_Full_View
 --       Remove the full view of an entity (if available)
 
+--    Remove_From_List
+--       Remove an entity from a given list.
+
 --    Remove_From_Scope
 --       Remove an entity from its current scope list.
 
@@ -823,8 +826,13 @@ private package GNATdoc.Atree is
       V3 : Entity_Kind;
       V4 : Entity_Kind) return Boolean;
 
-   procedure Remove_Full_View  (E : Entity_Id);
-   procedure Remove_From_Scope (E : Entity_Id);
+   procedure Remove_Full_View
+     (E : Entity_Id);
+   procedure Remove_From_List
+     (List : access EInfo_List.Vector;
+      E : Entity_Id);
+   procedure Remove_From_Scope
+     (E : Entity_Id);
 
    procedure Set_Alias
      (E : Entity_Id; Value : Entity_Id);
