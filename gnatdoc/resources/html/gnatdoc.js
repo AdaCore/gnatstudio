@@ -369,12 +369,7 @@ function buildDocumentationPage() {
  */
 
 function buildPackagesIndex(toc) {
-    var header = document.createElement('h1');
-    var text = document.createTextNode('Packages and Classes');
     var list = document.createElement('ul');
-
-    header.appendChild(text);
-    toc.appendChild(header);
 
     toc.appendChild(list);
 
@@ -391,6 +386,9 @@ function buildPackagesIndex(toc) {
         item.appendChild(href);
         list.appendChild(item);
     }
+
+    list.style.display = 'none';
+    list.id = 'packagesAndClasses';
 }
 
 /**
@@ -399,11 +397,7 @@ function buildPackagesIndex(toc) {
  */
 
 function buildEntitiesCategoriesIndex(toc) {
-    var header = document.createElement('h1');
     var list = document.createElement('ul');
-
-    header.appendChild(document.createTextNode('Entities Index'));
-    toc.appendChild(header);
 
     for (var idx = 0; idx < GNATdoc.EntitiesCategoriesIndex.length; idx++) {
         var item = document.createElement('li');
@@ -418,6 +412,9 @@ function buildEntitiesCategoriesIndex(toc) {
     }
 
     toc.appendChild(list);
+
+    list.style.display = 'none';
+    list.id = 'entities';
 }
 
 /**
@@ -426,13 +423,7 @@ function buildEntitiesCategoriesIndex(toc) {
  */
 
 function buildSourcesIndex(toc) {
-    var header = document.createElement('h1');
-    var text = document.createTextNode('Source Files');
     var list = document.createElement('ul');
-
-    header.appendChild(text);
-    toc.appendChild(header);
-    toc.appendChild(list);
 
     for (var idx = 0; idx < GNATdoc.SourceFileIndex.length; idx++) {
         var source = GNATdoc.SourceFileIndex[idx];
@@ -446,6 +437,11 @@ function buildSourcesIndex(toc) {
         item.appendChild(href);
         list.appendChild(item);
     }
+
+    toc.appendChild(list);
+
+    list.style.display = 'none';
+    list.id = 'sources';
 }
 
 /**
@@ -556,8 +552,93 @@ function onDocumentationLoad() {
  * ???
  */
 
+function displayPackagesAndClasses() {
+    var toc = document.getElementById('tocView');
+
+    for (var index = 0; index < toc.children.length; index++)
+    {
+        toc.children[index].style.display = 'none';
+    }
+
+    var list = document.getElementById('packagesAndClasses');
+    list.style.display = 'block';
+}
+
+/**
+ * Displays list of entities' categories
+ */
+
+function displayEntities() {
+    var toc = document.getElementById('tocView');
+
+    for (var index = 0; index < toc.children.length; index++)
+    {
+        toc.children[index].style.display = 'none';
+    }
+
+    var list = document.getElementById('entities');
+    list.style.display = 'block';
+}
+
+/**
+ * Displays list of source files
+ */
+
+function displaySources() {
+    var toc = document.getElementById('tocView');
+
+    for (var index = 0; index < toc.children.length; index++)
+    {
+        toc.children[index].style.display = 'none';
+    }
+
+    var list = document.getElementById('sources');
+    list.style.display = 'block';
+}
+
+/**
+ * ???
+ */
+
 function onLoad() {
     var toc = document.getElementById('tocView');
+    var menu = document.getElementById('tocMenu');
+
+    /* Build main menu */
+
+    var ul = document.createElement('ul');
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.appendChild(document.createTextNode('Packages and Classes'));
+    a.href = 'javascript:displayPackagesAndClasses();';
+    li.appendChild(a);
+    ul.appendChild(li);
+
+    li = document.createElement('li');
+    a = document.createElement('a');
+    a.appendChild(document.createTextNode('Entities Index'));
+    a.href = 'javascript:displayEntities();';
+    li.appendChild(a);
+    ul.appendChild(li);
+
+    li = document.createElement('li');
+    a = document.createElement('a');
+    a.appendChild(document.createTextNode('Inheritance Tree'));
+    a.href = 'inheritance_index.html';
+    a.target = 'contentView';
+    li.appendChild(a);
+    ul.appendChild(li);
+
+    li = document.createElement('li');
+    a = document.createElement('a');
+    a.appendChild(document.createTextNode('Source Files'));
+    a.href = 'javascript:displaySources();';
+    li.appendChild(a);
+    ul.appendChild(li);
+
+    menu.appendChild(ul);
+
+    /* Build page content */
 
     buildPackagesIndex(toc);
     buildEntitiesCategoriesIndex(toc);
@@ -571,6 +652,10 @@ function onLoad() {
     toc.appendChild(header);
 
     buildSourcesIndex(toc);
+
+    /* Display list of packages and classes */
+
+    displayPackagesAndClasses();
 }
 
 /**

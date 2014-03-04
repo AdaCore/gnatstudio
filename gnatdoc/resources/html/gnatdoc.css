@@ -49,6 +49,30 @@ td {
     background-color: #222;
 }
 
+#tocMenu {
+    float: left;
+    width: 50px;
+}
+
+#tocMenu li {
+    list-style: none;
+    margin-top: 50px;
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+}
+
+#tocMenu a {
+    color: white;
+}
+
+#tocView {
+    margin-left: 50px;
+}
+
 #tocView {
     color: #bbb;
     font-weight: 300;
