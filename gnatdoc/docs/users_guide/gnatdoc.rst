@@ -154,6 +154,23 @@ package IDE of your root project::
      end IDE;
   end P;
 
+Ignore subprojects
+------------------
+
+By default GNATdoc recursively processes all the projects on which your root
+project depends. This behavior can be modified by specifying the attribute
+Ignored_Subprojects in the package Documentation of your root project::
+
+  with "prj_1";
+  with "prj_2";
+  with "prj_3";
+  project Default is
+     package Documentation is
+        for Ignored_Subprojects use ("prj_1", "prj_3");
+     end Documentation;
+  end Default;
+
+
 HTML templates
 --------------
 
