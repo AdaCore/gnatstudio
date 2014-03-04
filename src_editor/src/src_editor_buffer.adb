@@ -6292,7 +6292,7 @@ package body Src_Editor_Buffer is
       --  computation, which does not need xref information
 
       Set := Get_Project_Tree (Editor.Kernel).Info_Set (Editor.Filename);
-      if Set.Is_Empty then
+      if Set.First_Element.Project = No_Project then
          return New_Block;
       else
          File := Get_Or_Create

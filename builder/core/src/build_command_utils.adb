@@ -941,7 +941,7 @@ package body Build_Command_Utils is
 
             Set := Get_Kernel_Registry (Adapter.all).Tree.Info_Set (File);
 
-            if Set.Is_Empty then
+            if Set.First_Element.Project = No_Project then
                if Simulate then
                   Result.Args := Create ("<current-file>");
                   return Result;

@@ -399,8 +399,20 @@ package body GPS.Kernel.Scripts is
                  (Data, -"No current context, can't execute action");
 
             elsif not Filter_Matches (Action.Filter, Context) then
-               Set_Error_Msg
-                  (Data, -"Invalid context for action """ & Action_Name & '"');
+               declare
+                  M : constant String :=
+                    Get_Error_Message (Action.Filter);
+               begin
+                  if M /= "" then
+                     Set_Error_Msg
+                       (Data, M & " when executing """ & Action_Name & '"');
+
+                  else
+                     Set_Error_Msg
+                       (Data,
+                        -"Invalid context for action """ & Action_Name & '"');
+                  end if;
+               end;
 
             else
                Args := new String_List (1 .. Number_Of_Arguments (Data) - 1);
