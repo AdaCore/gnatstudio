@@ -138,7 +138,8 @@ package body GPS.CLI_Utils is
       Kernel.Registry.Environment.Register_Default_Language_Extension
         (Language_Name       => "Ada",
          Default_Spec_Suffix => ".ads",
-         Default_Body_Suffix => ".adb");
+         Default_Body_Suffix => ".adb",
+         Obj_Suffix          => ".o");
 
       Kernel.Lang_Handler.Register_Language
         (Lang      => Language.C.C_Lang,
@@ -147,7 +148,8 @@ package body GPS.CLI_Utils is
       Kernel.Registry.Environment.Register_Default_Language_Extension
         (Language_Name       => "c",
          Default_Spec_Suffix => ".h",
-         Default_Body_Suffix => ".c");
+         Default_Body_Suffix => ".c",
+         Obj_Suffix          => ".o");
 
       Kernel.Lang_Handler.Register_Language
         (Lang      => Language.Cpp.Cpp_Lang,
@@ -156,7 +158,8 @@ package body GPS.CLI_Utils is
       Kernel.Registry.Environment.Register_Default_Language_Extension
         (Language_Name       => "c++",
          Default_Spec_Suffix => ".hh",
-         Default_Body_Suffix => ".cpp");
+         Default_Body_Suffix => ".cpp",
+         Obj_Suffix          => ".o");
 
       --  Set GNAT version
       Kernel.Registry.Environment.Set_Path_From_Gnatls

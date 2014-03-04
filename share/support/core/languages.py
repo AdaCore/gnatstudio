@@ -37,6 +37,11 @@ XML = r"""<?xml version="1.0" ?>
   </Language>
 
   <Language>
+    <Name>rest</Name>
+    <Body_Suffix>.rst</Body_Suffix>
+  </Language>
+
+  <Language>
     <Name>Autoconf</Name>
     <Body_Suffix>configure.in</Body_Suffix>
     <Keywords>^(AC_(SUBST|DEFINE(_UNQUOTED)?)\((\w+)|A[CM]_\w+)\b</Keywords>

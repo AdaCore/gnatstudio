@@ -127,13 +127,15 @@ package body Cpp_Module is
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension
         (Language_Name       => "c",
          Default_Spec_Suffix => ".h",
-         Default_Body_Suffix => ".c");
+         Default_Body_Suffix => ".c",
+         Obj_Suffix          => ".o");
 
       Register_Language (Handler, Cpp_Lang, null);
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension
         (Language_Name       => "c++",
          Default_Spec_Suffix => ".hh",
-         Default_Body_Suffix => ".cpp");
+         Default_Body_Suffix => ".cpp",
+         Obj_Suffix          => ".o");
 
       C_Automatic_Indentation := Indentation_Kind_Preferences.Create
         (Get_Preferences (Kernel),

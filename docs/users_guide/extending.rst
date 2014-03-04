@@ -3365,6 +3365,13 @@ The following child tags are available:
   String identifying the filetype of body (implementation) files for this
   language.  Only one such tag is permitted for each language.
 
+* :file:`<Obj_Suffix>`
+
+  String identifying the extension for object files for this language.
+  For instance, it is ".o" for C or Ada or ".pyc" for python.
+  The default is to set it to "-", which indicates that there are no object
+  files.
+
 * :file:`<Extension>`
 
   String identifying one of the valid filetypes for this

@@ -133,7 +133,8 @@ package body Ada_Module is
         (Get_Registry (Kernel).Environment.all,
          Language_Name       => "Ada",
          Default_Spec_Suffix => ".ads",
-         Default_Body_Suffix => ".adb");
+         Default_Body_Suffix => ".adb",
+         Obj_Suffix          => ".o");
 
       Ada_Automatic_Indentation := Indentation_Kind_Preferences.Create
         (Get_Preferences (Kernel),

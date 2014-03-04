@@ -14,6 +14,8 @@ project Docs is
    package Compiler is
       for Driver ("rest") use "";
       for Driver ("python") use "";
+      for Object_File_Suffix ("python") use ".pyc";
+      for Object_File_Suffix ("rest") use "-";
    end Compiler;
 
    package IDE renames Shared.IDE;

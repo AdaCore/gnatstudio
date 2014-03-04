@@ -487,7 +487,7 @@ begin
 
    Register_Language (Handler, C_Lang, null);
    New_Registry.Environment.Register_Default_Language_Extension
-     ("c", ".h", ".c");
+     ("c", ".h", ".c", ".o");
 
    Set_Registry (Handler, New_Registry);
 

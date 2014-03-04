@@ -16,6 +16,9 @@ project Plugins is
       for Driver ("Python") use "";
       for Driver ("XML") use "";
       for Driver ("CSS") use "";
+      for Object_File_Suffix ("python") use ".pyc";
+      for Object_File_Suffix ("xml") use "-";
+      for Object_File_Suffix ("css") use "-";
    end Compiler;
 
    package IDE renames Shared.IDE;

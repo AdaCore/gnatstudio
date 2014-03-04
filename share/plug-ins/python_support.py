@@ -48,6 +48,7 @@ documentation for the standard python library. It is accessed through the
   <Language>
     <Name>Python</Name>
     <Body_Suffix>.py</Body_Suffix>
+    <Obj_Suffix>.pyc</Obj_Suffix>
     <Keywords>(a(nd|ssert|s)|break|c(lass|ontinue)|de[fl]|e(l(if|se)|x(cept|ec))|f(inally|or|rom)|global|i(mport|[fns])|lambda|not|or|p(ass|rint)|r(aise|eturn)|try|while|yield)\\b</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
