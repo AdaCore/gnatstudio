@@ -3950,7 +3950,8 @@ declaration of the program unit. See E.3.
       <DOC>
 `Standard'Wchar_T_Size' (`Standard' is the only permissible prefix)
 provides the size in bits of the C `wchar_t' type primarily for
-constructing the definition of this type in package `Interfaces.C'.
+constructing the definition of this type in package `Interfaces.C'. The
+result is a static constant.
       </DOC>
    </ATTRIBUTE>
 
@@ -4066,7 +4067,7 @@ universal_integer. See 3.5.
    <ATTRIBUTE id = "0" name = "Word_Size" origin = "GNAT RM" category = "variable">
       <DOC>
 `Standard'Word_Size' (`Standard' is the only permissible prefix)
-provides the value `System.Word_Size'.
+provides the value `System.Word_Size'. The result is a static constant.
       </DOC>
    </ATTRIBUTE>
 
