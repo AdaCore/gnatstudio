@@ -3268,18 +3268,29 @@ package body GNATdoc.Atree is
             & "]");
       end if;
 
-      if Present (LL.Get_Scope (E)) then
-         Append_Line
-           (LL_Prefix
-            & "Scope: "
-            & Get_Name (Db, LL.Get_Scope (E))
-            & " ["
-            & Image (Get_Location (Db, LL.Get_Scope (E)))
-            & "]");
-      else
-         Append_Line
-           (LL_Prefix
-            & "Scope: Unknown");
+      --  The service Xref.Caller_At_Declaration is not reliable. We remove
+      --  it from the reliable output of Ada entities to avoid spurious output
+      --  differences in the continuous builder. For entities defined in C or
+      --  C++ we leave it in the output to identify that this may be the source
+      --  of other regressions since in this case the frontend of GNATdoc
+      --  relies on this service.
+
+      if not Reliable_Mode
+        or else In_C_Or_CPP_Language (E)
+      then
+         if Present (LL.Get_Scope (E)) then
+            Append_Line
+              (LL_Prefix
+               & "Scope: "
+               & Get_Name (Db, LL.Get_Scope (E))
+               & " ["
+               & Image (Get_Location (Db, LL.Get_Scope (E)))
+               & "]");
+         else
+            Append_Line
+              (LL_Prefix
+               & "Scope: Unknown");
+         end if;
       end if;
 
       if Present (E.Xref.Etype) then
