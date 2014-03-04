@@ -42,7 +42,7 @@ To launch gnatdoc, execute::
       gnatdoc -P<your_project>
 
 where :file:`<your_project>` is the .gpr file at the root of your project
-hierarchy.
+hierarchy (your root project).
 
 GNATdoc generates an HTML report in the :file:`gnatdoc` directory of the object
 directory of the main project.
@@ -62,6 +62,7 @@ switch --help::
   -X ARG            Specify an external reference in the project
   -R, --regexp=ARG  Regular expression to select documentation comments
   -b                Process bodies
+ --ignore-files=ARG List of files ignored by GNATdoc
   -p                Process private part of packages
   -q                Be quiet/terse
   -ws               Suppress all warnings
@@ -103,6 +104,14 @@ switch --help::
   specification; if no documentation is found in the spec and this
   switch is enable then searchs for the documentation in the
   body of the subprogram.
+
+*Ignore files (--ignore-files)*
+
+  This switch allows to specify a list of source files ignored by GNATdoc.
+  The names of the files can be separated by spaces or commas. For example::
+
+  gnatdoc -P default.gpr --ignore-files="file_1.ads,file_2.ads"
+  gnatdoc -P default.gpr --ignore-files="file_1.ads file_2.ads"
 
 *Process private part of packages (-p)*
 
