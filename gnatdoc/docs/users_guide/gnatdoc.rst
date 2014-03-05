@@ -63,6 +63,7 @@ switch --help::
   -R, --regexp=ARG  Regular expression to select documentation comments
   -b                Process bodies
  --ignore-files=ARG List of files ignored by GNATdoc
+  -l                 Leading documentation
   -p                Process private part of packages
   -q                Be quiet/terse
   -ws               Suppress all warnings
@@ -105,13 +106,20 @@ switch --help::
   switch is enable then searchs for the documentation in the
   body of the subprogram.
 
+*Leading documentation (-l)*
+
+  By default GNATdoc extracts the documentation by first looking at the
+  comments located after the entity declaration and fallback to the
+  comments located before the entity if not found. This switch reverts
+  such behavior, thus extracting first leading comments.
+
 *Ignore files (--ignore-files)*
 
   This switch allows to specify a list of source files ignored by GNATdoc.
   The names of the files can be separated by spaces or commas. For example::
 
-  gnatdoc -P default.gpr --ignore-files="file_1.ads,file_2.ads"
-  gnatdoc -P default.gpr --ignore-files="file_1.ads file_2.ads"
+   gnatdoc -P default.gpr --ignore-files="file_1.ads,file_2.ads"
+   gnatdoc -P default.gpr --ignore-files="file_1.ads file_2.ads"
 
 *Process private part of packages (-p)*
 
