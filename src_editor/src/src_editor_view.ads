@@ -33,6 +33,7 @@ with Gtk.Handlers;
 with Gtkada.Style;
 with Gtkada.Text_View;       use Gtkada.Text_View;
 
+with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GPS.Editors;            use GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.MDI;
@@ -71,6 +72,14 @@ package Src_Editor_View is
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
+
+   function Get_Project
+     (Self : not null access Source_View_Record'Class)
+      return GNATCOLL.Projects.Project_Type;
+   --  Return the project for this editor.
+   --  When using aggregate projects, this can be ambiguous since a given file
+   --  can be associated with multiple projects. But this information is also
+   --  necessary in a number of contexts like cross-references and completion.
 
    procedure Set_Background_Color
      (Self : not null access Source_View_Record'Class);
@@ -198,6 +207,9 @@ private
    type As_Is_Status is (Disabled, Enabled, Sticky_Enabled);
 
    type Source_View_Record is new Gtkada_Text_View_Record with record
+      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
+      --  The project that this file is from
+
       Scroll              : Gtk.Scrolled_Window.Gtk_Scrolled_Window := null;
       --  The Gtk_Scrolled_Window that contains the source view
 

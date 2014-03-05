@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
-with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
@@ -715,8 +714,8 @@ package body GPS.Kernel.Modules.UI is
          Destroy_On_Exit => True);
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception while executing "
-                & Action.Name.all & " " & Exception_Information (E));
+         Trace (Me, "Unexpected exception while executing " & Action.Name.all);
+         Trace (Me, E);
    end Contextual_Action;
 
    -------------------------------

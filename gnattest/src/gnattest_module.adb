@@ -478,8 +478,12 @@ package body GNATTest_Module is
          File := File_Information (Context);
 
          if File.Is_Regular_File then
+            --  Safe to use the first matching info, since the language will
+            --  most likely be the same in all projects anyway.
+
             Info := GPS.Kernel.Project.Get_Registry
-              (GPS.Kernel.Get_Kernel (Context)).Tree.Info (File);
+              (GPS.Kernel.Get_Kernel (Context)).Tree.Info_Set (File)
+              .First_Element.all;
 
             return Info.Language = "ada" and then
               Info.Unit_Part = GNATCOLL.Projects.Unit_Spec;

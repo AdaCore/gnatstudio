@@ -674,11 +674,19 @@ package body Creation_Wizard.Extending is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context);
       File    : constant Virtual_File := File_Information (Context);
       Project : Project_Type;
+      Set     : File_Info_Set;
    begin
       if File /= GNATCOLL.VFS.No_File then
-         Project := Get_Registry (Kernel).Tree.Info (File).Project;
-         return Project /= No_Project
-           and then Extended_Project (Project) /= No_Project;
+         Set := Get_Registry (Kernel).Tree.Info_Set (File);
+
+         for Info of Set loop
+            Project := Info.Project;
+            if Project /= No_Project
+              and then Extended_Project (Project) /= No_Project
+            then
+               return True;
+            end if;
+         end loop;
       end if;
       return False;
    end Filter_Matches_Primitive;

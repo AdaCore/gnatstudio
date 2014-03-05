@@ -428,8 +428,12 @@ package body VCS_View.Explorer is
             return R_Iter;
          end Get_Or_Create_Name;
 
-         Project : constant Project_Type :=
-           Get_Registry (Kernel).Tree.Info (File).Project;
+         --  Take the first possible project, since for a given physical
+         --  file the VCS will be the same
+         Sets : constant File_Info_Set :=
+           Get_Registry (Kernel).Tree.Info_Set (File);
+         Project : constant Project_Type := Sets.First_Element.Project;
+
       begin
          if Project = No_Project then
             return Get_Or_Create_Name

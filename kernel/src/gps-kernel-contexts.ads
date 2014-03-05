@@ -41,6 +41,7 @@ package GPS.Kernel.Contexts is
         GNATCOLL.Projects.No_Project;
       Importing_Project : GNATCOLL.Projects.Project_Type :=
         GNATCOLL.Projects.No_Project;
+      Publish_Project   : Boolean := True;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
       Revision          : String := "";
@@ -48,6 +49,12 @@ package GPS.Kernel.Contexts is
       Tag               : String := "");
    --  Set the information in this context.
    --  ??? We should use non-ambiguous types for Line and Column
+   --
+   --  The context information should be provided when available, so that we
+   --  can resolve the ambiguities when using aggregate projects. However, it
+   --  is possible to set Publish_Project to False if Has_Project_Information
+   --  should return True, which will have the result of removing some
+   --  contextual menu entries that need an explicit project.
 
    function Has_Directory_Information
      (Context : Selection_Context) return Boolean;
@@ -97,6 +104,11 @@ package GPS.Kernel.Contexts is
    --  is computed automatically and cached otherwise.
    --  This function will return No_Project if the file stored in the context
    --  doesn't belong to any project.
+   --  Has_Project_Information will return False if the context creator
+   --  decided not to publish project information. It is still possible that
+   --  Project_Information return an actual project in this case.
+   --  When no project information was provided via Set_File_Information, this
+   --  function will try to guess which project should be used.
 
    function Has_Importing_Project_Information
      (Context : Selection_Context) return Boolean;

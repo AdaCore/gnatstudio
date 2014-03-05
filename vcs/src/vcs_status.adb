@@ -314,8 +314,12 @@ package body VCS_Status is
                   end if;
                end Add_Attribute;
 
-               Project : constant Project_Type :=
-                           Get_Registry (Kernel).Tree.Info (File).Project;
+               --  Take the first possible project, since for a given physical
+               --  file the VCS will be the same
+               Sets : constant File_Info_Set :=
+                 Get_Registry (Kernel).Tree.Info_Set (File);
+               Project : constant Project_Type := Sets.First_Element.Project;
+
                VCS     : constant VCS_Access :=
                            Get_Current_Ref (Kernel, Project);
                Status  : constant Status_Id :=

@@ -250,18 +250,9 @@ package body GPS.Kernel.Macros is
    begin
       if Param (Param'First) in 'O' .. 'P' then
          return Get_Project (Get_Kernel (Context));
-
-      elsif Has_Project_Information (Context) then
+      else
          return Project_Information (Context);
-
-      elsif Has_File_Information (Context) then
-         --  Since the editor doesn't provide the project, we emulate it
-         --  here
-         return Get_Registry (Get_Kernel (Context)).Tree.Info
-           (File_Information (Context)).Project;
       end if;
-
-      return No_Project;
    end Project_From_Param;
 
    ------------------------------

@@ -5771,6 +5771,7 @@ package body Src_Editor_Buffer is
 
    procedure Source_Lines_Revealed
      (Buffer     : access Source_Buffer_Record;
+      Project    : GNATCOLL.Projects.Project_Type;
       Start_Line : Buffer_Line_Type;
       End_Line   : Buffer_Line_Type)
    is
@@ -5783,10 +5784,18 @@ package body Src_Editor_Buffer is
          Abstract_Module_ID (Src_Editor_Module_Id));
 
       if Buffer.Filename /= GNATCOLL.VFS.No_File then
-         Set_File_Information (Context, (1 => Buffer.Filename));
+         Set_File_Information
+           (Context,
+            Files           => (1 => Buffer.Filename),
+            Project         => Project,
+            Publish_Project => False);
 
       elsif Buffer.File_Identifier /= GNATCOLL.VFS.No_File then
-         Set_File_Information (Context, (1 => Buffer.File_Identifier));
+         Set_File_Information
+           (Context,
+            Files           => (1 => Buffer.File_Identifier),
+            Project         => Project,
+            Publish_Project => False);
       end if;
 
       First := 0;

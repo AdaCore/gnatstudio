@@ -915,9 +915,11 @@ package body Src_Editor_Box is
 
                Set_File_Information
                  (Context,
-                  Files  => (1 => Filename),
+                  Files           => (1 => Filename),
+                  Project         => Get_Project (Editor.Source_View),
+                  Publish_Project => False,
                   Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-                  Column => 0);
+                  Column          => 0);
                return;
 
             else
@@ -939,7 +941,11 @@ package body Src_Editor_Box is
               (V, Mouse_X, Mouse_Y, Line, Column, Out_Of_Bounds);
 
             if Out_Of_Bounds then
-               Set_File_Information (Context, Files  => (1 => Filename));
+               Set_File_Information
+                 (Context,
+                  Files  => (1 => Filename),
+                  Project         => Get_Project (Editor.Source_View),
+                  Publish_Project => False);
                return;
             end if;
       end case;
@@ -966,7 +972,9 @@ package body Src_Editor_Box is
 
          Set_File_Information
            (Context,
-            Files  => (1 => Filename),
+            Files           => (1 => Filename),
+            Project         => Get_Project (Editor.Source_View),
+            Publish_Project => False,
             Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
             Column => Expand_Tabs
               (Get_Buffer (Editor),
@@ -1046,7 +1054,9 @@ package body Src_Editor_Box is
 
                Set_File_Information
                  (Context,
-                  Files  => (1 => Filename),
+                  Files           => (1 => Filename),
+                  Project         => Get_Project (Editor.Source_View),
+                  Publish_Project => False,
                   Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
                   Column => Expand_Tabs
                     (Get_Buffer (Editor),
@@ -1066,7 +1076,9 @@ package body Src_Editor_Box is
 
                Set_File_Information
                  (Context,
-                  Files  => (1 => Filename),
+                  Files           => (1 => Filename),
+                  Project         => Get_Project (Editor.Source_View),
+                  Publish_Project => False,
                   Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
                   Column => Expand_Tabs
                     (Get_Buffer (Editor),

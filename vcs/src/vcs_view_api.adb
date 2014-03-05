@@ -981,7 +981,8 @@ package body VCS_View_API is
                     (L_Context,
                      Files   => (1 => Original),
                      Project =>
-                       Get_Registry (Kernel).Tree.Info (Original).Project);
+                       Get_Registry (Kernel).Tree.Info_Set (Original)
+                       .First_Element.Project);
 
                   Gtk_New (Item, Label => Actions (Log_Action).all & " ("
                            & Krunch (+Base_Name (Original)) & ")");
@@ -1534,11 +1535,8 @@ package body VCS_View_API is
          return Get_Current_Ref (Kernel, Project_Information (Context));
 
       elsif Has_File_Information (Context) then
-         --  If the context has a file information, try to find the project
-         --  for this file.
-
-         Prj := Get_Registry (Kernel)
-           .Tree.Info (File_Information (Context)).Project;
+         --  let the context guess the best project to use
+         Prj := Project_Information (Context);
 
          if Prj /= No_Project then
             return Get_Current_Ref (Kernel, Prj);

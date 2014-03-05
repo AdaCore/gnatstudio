@@ -62,13 +62,6 @@ package body GPS.Kernel.Contexts is
       return Boolean;
    --  See inherited documentation
 
-   type Filter_In_Project is new GPS.Kernel.Action_Filter_Record
-   with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Filter_In_Project;
-      Context : Selection_Context) return Boolean;
-   --  True if the current file belongs to an opened project
-
    function Has_Directory_Information (File : Virtual_File) return Boolean;
    --  Returns true if file has directory information
 
@@ -136,22 +129,6 @@ package body GPS.Kernel.Contexts is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Filter_In_Project;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-   begin
-      return Has_File_Information (Context)
-        and then Get_Registry (Kernel).Tree.Info
-          (File_Information (Context)).Project /= No_Project;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
      (Filter  : access Filter_Entity;
       Context : Selection_Context) return Boolean
    is
@@ -195,6 +172,7 @@ package body GPS.Kernel.Contexts is
       Files             : GNATCOLL.VFS.File_Array := Empty_File_Array;
       Project           : Project_Type := No_Project;
       Importing_Project : Project_Type := No_Project;
+      Publish_Project   : Boolean := True;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
       Revision          : String := "";
@@ -210,7 +188,8 @@ package body GPS.Kernel.Contexts is
       Context.Data.Data.File_Checked             := False;
       Context.Data.Data.Line                     := Line;
       Context.Data.Data.Column                   := Column;
-      Context.Data.Data.Creator_Provided_Project := Project /= No_Project;
+      Context.Data.Data.Creator_Provided_Project :=
+        Project /= No_Project and then Publish_Project;
       Context.Data.Data.Project                  := Project;
       Context.Data.Data.Importing_Project        := Importing_Project;
 
@@ -248,9 +227,12 @@ package body GPS.Kernel.Contexts is
       if Context.Data.Data.Project = No_Project
         and then Has_File_Information (Context)
       then
+         --  Tries to guess which project is the correct one. Since we do not
+         --  have any information, we just chose the first matching one.
+
          Context.Data.Data.Project :=
            Get_Registry (Get_Kernel (Context)).Tree
-           .Info (File_Information (Context)).Project;
+           .Info_Set (File_Information (Context)).First_Element.Project;
       end if;
       return Context.Data.Data.Project;
    end Project_Information;
@@ -898,7 +880,6 @@ package body GPS.Kernel.Contexts is
       Entity_Filter       : constant Action_Filter := new Filter_Entity;
       Project_File_Filter : constant Action_Filter := new Filter_Project_File;
       Project_Only_Filter : constant Action_Filter := new Filter_Project_Only;
-      In_Project_Filter   : constant Action_Filter := new Filter_In_Project;
       Editable_Project    : constant Action_Filter :=
                               new Filter_Editable_Project;
    begin
@@ -908,7 +889,6 @@ package body GPS.Kernel.Contexts is
       Register_Filter (Kernel, Project_Only_Filter, "Project only");
       Register_Filter (Kernel, Editable_Project, "Editable Project");
       Register_Filter (Kernel, Project_File_Filter, "Project and file");
-      Register_Filter (Kernel, In_Project_Filter, "In project");
    end Register_Default_Filters;
 
 end GPS.Kernel.Contexts;

@@ -28,6 +28,7 @@ with Ada.Unchecked_Deallocation;
 with System;
 
 with GNAT.Strings;
+with GNATCOLL.Projects;
 with GNATCOLL.Symbols;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;
@@ -623,10 +624,13 @@ package Src_Editor_Buffer is
 
    procedure Source_Lines_Revealed
      (Buffer     : access Source_Buffer_Record;
+      Project    : GNATCOLL.Projects.Project_Type;
       Start_Line : Buffer_Line_Type;
       End_Line   : Buffer_Line_Type);
    --  Emit the signal to the kernel saying that an area in the source
    --  has been revealed.
+   --  Project is the project from which the file is viewed (used for
+   --  aggregate projects)
 
    function Check_Timestamp_And_Diff
      (Buffer : access Source_Buffer_Record'Class;

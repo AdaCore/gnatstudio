@@ -67,23 +67,24 @@ with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with Language;                   use Language;
 with Language.Tree;              use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
-with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
+with Src_Editor_Buffer.Cursors;  use Src_Editor_Buffer.Cursors;
 
 with Src_Editor_View.Hyper_Mode; use Src_Editor_View.Hyper_Mode;
-with Gdk.Drag_Contexts; use Gdk.Drag_Contexts;
+with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;
 with Gtk.Selection_Data;
-with Gtk.Dnd; use Gtk.Dnd;
+with Gtk.Dnd;                    use Gtk.Dnd;
 with Gdk.Dnd;
-with Gtk.Target_List; use Gtk.Target_List;
-with Gdk.Property; use Gdk.Property;
+with Gtk.Target_List;            use Gtk.Target_List;
+with Gdk.Property;               use Gdk.Property;
 with GNAT.Strings;
-with Glib.Convert; use Glib.Convert;
+with Glib.Convert;               use Glib.Convert;
 
 --  Drawing the side info is organized this way:
 --
@@ -963,7 +964,8 @@ package body Src_Editor_View is
       --  If necessary, emit the Source_Lines_Revealed signal
 
       if Bottom_Line >= Top_Line then
-         Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
+         Buffer.Source_Lines_Revealed
+           (View.Get_Project, Top_Line, Bottom_Line);
       end if;
    end Recompute_Visible_Area;
 
@@ -1421,6 +1423,12 @@ package body Src_Editor_View is
       View.Kernel := Kernel_Handle (Kernel);
       View.Scroll := Gtk_Scrolled_Window (Scroll);
       View.Area   := Area;
+
+      --  ??? This is temporary code, we need to set the project explicitly
+      --  depending on how the view is opened
+      View.Project :=
+        Get_Registry (Kernel).Tree.Info_Set
+           (Buffer.Get_Filename).First_Element.Project;
 
       Register_View (Buffer, Add => True);
 
@@ -2697,5 +2705,17 @@ package body Src_Editor_View is
    begin
       Self.Extend_Selection := Extend_Selection;
    end Set_Extend_Selection;
+
+   -----------------
+   -- Get_Project --
+   -----------------
+
+   function Get_Project
+     (Self : not null access Source_View_Record'Class)
+      return GNATCOLL.Projects.Project_Type
+   is
+   begin
+      return Self.Project;
+   end Get_Project;
 
 end Src_Editor_View;

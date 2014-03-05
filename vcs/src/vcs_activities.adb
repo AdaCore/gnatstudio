@@ -350,8 +350,13 @@ package body VCS_Activities is
          if Files /= null and then Files'Length > 0 then
             declare
                File    : Virtual_File renames Files (Files'First);
+
+               --  Take the first possible project, since for a given physical
+               --  file the VCS will be the same
+               Sets : constant File_Info_Set :=
+                 Get_Registry (Kernel).Tree.Info_Set (File);
                Project : constant Project_Type :=
-                           Get_Registry (Kernel).Tree.Info (File).Project;
+                 Sets.First_Element.Project;
             begin
                if Project /= No_Project then
                   VCS := Get_Current_Ref (Kernel, Project);
@@ -599,9 +604,13 @@ package body VCS_Activities is
       Activity : Activity_Id;
       File     : Virtual_File)
    is
+      --  Take the first possible project, since for a given physical
+      --  file the VCS will be the same
+      Sets : constant File_Info_Set :=
+        Get_Registry (Kernel).Tree.Info_Set (File);
+      Project    : constant Project_Type := Sets.First_Element.Project (True);
+
       F_Activity : constant Activity_Id := Get_File_Activity (File);
-      Project    : constant Project_Type :=
-                     Get_Registry (Kernel).Tree.Info (File).Project (True);
       VCS        : constant VCS_Access := Get_Current_Ref (Kernel, Project);
       Item       : Activity_Record := Get (Activity);
 

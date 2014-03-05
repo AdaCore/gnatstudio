@@ -991,10 +991,14 @@ package body VCS_Module is
       Data   : access Hooks_Data'Class)
    is
       D      : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+
+      --  Choose the first possible project, since for the same physical file,
+      --  the VCS will be the same anyway
       Ref    : constant VCS_Access :=
-                 Get_Current_Ref
-                   (Kernel,
-                    Get_Registry (Kernel).Tree.Info (D.File).Project (True));
+        Get_Current_Ref
+          (Kernel,
+           Get_Registry (Kernel).Tree.Info_Set (D.File)
+           .First_Element.Project (True));
       Status : File_Status_Record;
    begin
       if Ref = null then
@@ -1037,9 +1041,12 @@ package body VCS_Module is
       Data   : access Hooks_Data'Class)
    is
       D        : constant File_Status_Changed_Hooks_Args :=
-                   File_Status_Changed_Hooks_Args (Data.all);
+        File_Status_Changed_Hooks_Args (Data.all);
+
+      --  At random chose the first possible project. If this is the same
+      --  physicial source file, the VCS system will be the same anyway
       Project  : constant Project_Type :=
-                   Get_Registry (Kernel).Tree.Info (D.File).Project;
+        Get_Registry (Kernel).Tree.Info_Set (D.File).First_Element.Project;
       Ref      : VCS_Access;
       Status   : Line_Record;
       F_Status : File_Status_List.List;
