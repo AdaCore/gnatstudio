@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers;            use Ada.Containers;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
 with Ada.Strings.Fixed;
@@ -545,6 +546,7 @@ package body Xref is
       is
          Entity  : General_Entity := No_General_Entity;
          Project : Project_Type;
+         Set     : File_Info_Set;
       begin
          if Active (SQLITE) then
             if Loc = No_Location then
@@ -555,9 +557,11 @@ package body Xref is
                   Project => No_Project,
                   Approximate_Search_Fallback => Approximate_Search_Fallback);
             else
-               --  ??? Should pass the project as argument, the code below does
-               --  not support aggregates
-               Project := Self.Registry.Tree.Info (Loc.File).Project;
+               --  ??? Should pass the project as argument if we need to solve
+               --  ambiguities
+
+               Set := Self.Registry.Tree.Info_Set (Loc.File);
+               Project := Set.First_Element.Project;
 
                --  Already handles the operators
                Closest_Ref.Ref := Self.Xref.Get_Entity
@@ -570,10 +574,15 @@ package body Xref is
             end if;
 
             Entity.Entity := Closest_Ref.Ref.Entity;
-            Fuzzy := Entity.Entity /= No_Entity and then
-              (Is_Fuzzy_Match (Entity.Entity)
-                  --  or else not Self.Xref.Is_Up_To_Date (Loc.File)
-              );
+            Fuzzy :=
+              --  Multiple possible files ?
+              Set.Length > 1
+
+              or else
+                (Entity.Entity /= No_Entity and then
+                   (Is_Fuzzy_Match (Entity.Entity)
+                        --  or else not Self.Xref.Is_Up_To_Date (Loc.File)
+                   ));
 
             declare
                ELoc : constant Entity_Reference
