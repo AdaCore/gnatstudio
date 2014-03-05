@@ -25,6 +25,7 @@
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Basic_Types;            use Basic_Types;
 with GNATCOLL.Projects;
+with GNATCOLL.SQL.Exec;
 with GNATCOLL.Symbols;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
@@ -104,6 +105,8 @@ package Xref is
 
       Xref_Db_Is_Temporary : Boolean := False;
       --  Whether we should remove the database from the disk when we close it
+
+      Errors : access GNATCOLL.SQL.Exec.Error_Reporter'Class;
    end record;
    type General_Xref_Database is access all General_Xref_Database_Record'Class;
 
@@ -113,13 +116,21 @@ package Xref is
    procedure Reset (Self : access General_Xref_Database_Record);
    --  Empty the contents of the xref database.
 
+   function Persistent_Xref_Database_Location
+     (Self    : not null access General_Xref_Database_Record'Class;
+      Project : GNATCOLL.Projects.Project_Type)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Location of the sqlite file that contains the xref database which is
+   --  cached between sessions.
+
    procedure Initialize
      (Self         : access General_Xref_Database_Record;
       Lang_Handler :
          access Language.Tree.Database.Abstract_Language_Handler_Record'Class;
       Symbols      : GNATCOLL.Symbols.Symbol_Table_Access;
       Registry     : Projects.Project_Registry_Access;
-      Subprogram_Ref_Is_Call : Boolean := False);
+      Subprogram_Ref_Is_Call : Boolean := False;
+      Errors       : access GNATCOLL.SQL.Exec.Error_Reporter'Class := null);
    --  Initialize various internal fields for the constructs. It is assumed
    --  that the xref and LI databases have already been initialized.
    --  It is possible to pre-allocate Xref and/or Entities database if you want
@@ -127,6 +138,9 @@ package Xref is
    --
    --  Subprogram_Ref_Is_Call should be True for old GNAT versions, which were
    --  using 'r' for subprogram calls, instead of 's' in more recent versions.
+   --
+   --  Errors is never freed, and is used to report errors when executing
+   --  SQL queries.
 
    function Select_Entity_Declaration
      (Self   : access General_Xref_Database_Record;

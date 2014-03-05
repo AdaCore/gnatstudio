@@ -116,13 +116,6 @@ package body Xref is
    --  Delete Tgt, then attempt to move Src if it exist to Tgt. Then delete
    --  Src. Do nothing if Src is not a regular file.
 
-   function Persistent_Xref_Database_Location
-     (Self    : not null access General_Xref_Database_Record'Class;
-      Project : GNATCOLL.Projects.Project_Type)
-      return GNATCOLL.VFS.Virtual_File;
-   --  Location of the sqlite file that contains the xref database which is
-   --  cached between sessions.
-
    ------------------
    -- Move_Or_Copy --
    ------------------
@@ -2840,7 +2833,8 @@ package body Xref is
          access Language.Tree.Database.Abstract_Language_Handler_Record'Class;
       Symbols      : GNATCOLL.Symbols.Symbol_Table_Access;
       Registry     : Projects.Project_Registry_Access;
-      Subprogram_Ref_Is_Call : Boolean := False)
+      Subprogram_Ref_Is_Call : Boolean := False;
+      Errors       : access GNATCOLL.SQL.Exec.Error_Reporter'Class := null)
    is
       use Construct_Annotations_Pckg;
       LI_Entity_Key : Construct_Annotations_Pckg.Annotation_Key;
@@ -2851,6 +2845,7 @@ package body Xref is
 
       Self.Symbols := Symbols;
       Self.Registry := Registry;
+      Self.Errors := Errors;
 
       Language.Tree.Database.Initialize
         (Db         => Self.Constructs,
@@ -3959,7 +3954,9 @@ package body Xref is
          Self.Persistent_Xref_Db_Cache := GNATCOLL.VFS.No_File;
          Self.Xref_Db_Is_Temporary := True;
          Self.Xref.Setup_DB
-           (DB    => GNATCOLL.SQL.Sqlite.Setup (":memory:"),
+           (DB    => GNATCOLL.SQL.Sqlite.Setup
+              (Database => ":memory:",
+               Errors   => Self.Errors),
             Tree  => Self.Registry.Tree,
             Error => Error);
 
@@ -4108,7 +4105,8 @@ package body Xref is
 
          Self.Xref.Setup_DB
            (DB    => GNATCOLL.SQL.Sqlite.Setup
-              (+Working_Xref_File.Full_Name.all),
+              (Database => +Working_Xref_File.Full_Name.all,
+               Errors   => Self.Errors),
             Tree  => Tree,
             Error => Error);
 

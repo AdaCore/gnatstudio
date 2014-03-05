@@ -20,6 +20,7 @@ with Ada.Unchecked_Deallocation;
 with Commands.Generic_Asynchronous;  use Commands;
 with Commands;                       use Commands;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
+with GNATCOLL.SQL.Exec;              use GNATCOLL.SQL.Exec;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
@@ -108,6 +109,16 @@ package body GPS.Kernel.Xref is
    procedure Row_Activated (Widget : access Gtk_Widget_Record'Class);
    --  Called when a specific entity declaration has been selected in the
    --  overloaded entities dialog.
+
+   type SQL_Error_Reporter is new GNATCOLL.SQL.Exec.Error_Reporter with record
+      Kernel : access Kernel_Handle_Record'Class;
+
+      Warned_About_Corruption : Boolean := False;
+      --  Used to avoid duplicate messages about corrupted database
+   end record;
+   overriding procedure On_Database_Corrupted
+     (Self       : in out SQL_Error_Reporter;
+      Connection : access Database_Connection_Record'Class);
 
    ----------
    -- Name --
@@ -680,13 +691,39 @@ package body GPS.Kernel.Xref is
       end if;
    end Get_Entity_Information_Type;
 
+   ---------------------------
+   -- On_Database_Corrupted --
+   ---------------------------
+
+   overriding procedure On_Database_Corrupted
+     (Self       : in out SQL_Error_Reporter;
+      Connection : access Database_Connection_Record'Class)
+   is
+      pragma Unreferenced (Connection);
+   begin
+      if not Self.Warned_About_Corruption then
+         Self.Warned_About_Corruption := True;
+         Insert
+           (Self.Kernel,
+            "Cross-reference database appears to be corrupted." & ASCII.LF
+            & "Please exit GPS, delete the file '"
+            & Persistent_Xref_Database_Location
+              (Self.Kernel.Databases, Self.Kernel.Registry.Tree.Root_Project)
+              .Display_Full_Name
+            & "' and restart GPS",
+            Mode => Error);
+      end if;
+   end On_Database_Corrupted;
+
    ---------------------
    -- Create_Database --
    ---------------------
 
    procedure Create_Database
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Result : out Standard.Xref.General_Xref_Database) is
+      Result : out Standard.Xref.General_Xref_Database)
+   is
+      Errors : access SQL_Error_Reporter'Class;
    begin
       if Kernel.Databases = null then
          Result := new GPS_General_Xref_Database_Record;
@@ -704,10 +741,14 @@ package body GPS.Kernel.Xref is
          end if;
       end if;
 
+      Errors := new SQL_Error_Reporter;   --  never freed
+      Errors.Kernel := Kernel;
+
       Result.Initialize
         (Lang_Handler => Kernel.Lang_Handler,
          Symbols      => Kernel.Symbols,
          Registry     => Kernel.Registry,
+         Errors       => Errors,
          Subprogram_Ref_Is_Call =>
             not Require_GNAT_Date
               (Kernel, Old_Entities.Advanced_Ref_In_Call_Graph_Date));
