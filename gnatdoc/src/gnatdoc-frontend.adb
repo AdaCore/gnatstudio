@@ -1432,12 +1432,357 @@ package body GNATdoc.Frontend is
                   end if;
                end Do_Breakpoint;
 
+               procedure Decorate_Entity (E : Entity_Id);
+               --  Complete the decoration of entity E
+
+               procedure Decorate_Parent_And_Progenitors (E : Entity_Id);
+               --  Complete the decoration of entity E
+
+               procedure Decorate_Renaming (E : Entity_Id);
+               --  Complete the decoration of a renaming entity
+
                procedure Decorate_Scope (E : Entity_Id);
                --  Workaround missing decoration of the Scope
 
-               procedure Fix_Wrong_Xref_Decoration (E : Entity_Id);
-               --  Add minimum correct decoration to an entity which is
-               --  erroneously decorated by Xref
+               ---------------------
+               -- Decorate_Entity --
+               ---------------------
+
+               procedure Decorate_Entity (E : Entity_Id) is
+
+                  procedure Fix_Wrong_Xref_Decoration (E : Entity_Id);
+                  --  Add minimum correct decoration to an entity which is
+                  --  erroneously decorated by Xref
+
+                  -------------------------------
+                  -- Fix_Wrong_Xref_Decoration --
+                  -------------------------------
+
+                  procedure Fix_Wrong_Xref_Decoration (E : Entity_Id) is
+                  begin
+                     Set_Has_Incomplete_Decoration (E);
+
+                     if Prev_Token = Tok_Function then
+                        Set_Kind (E, E_Function);
+                     else
+                        Set_Kind (E, E_Procedure);
+                     end if;
+
+                     if Get_Short_Name (E) = "" then
+                        --  For consistency we remove the string
+                        --  terminator to the name of operators
+
+                        declare
+                           From : Natural := S'First;
+                           To   : Natural := S'Last;
+                        begin
+                           while From <= To
+                             and then S (From) = '"'
+                           loop
+                              From := From + 1;
+                           end loop;
+
+                           while From <= To
+                             and then S (To) = '"'
+                           loop
+                              To := To - 1;
+                           end loop;
+
+                           Set_Short_Name
+                             (Context, E, S (From .. To));
+                        end;
+                     end if;
+                  end Fix_Wrong_Xref_Decoration;
+
+               begin
+                  Decorate_Scope (E);
+
+                  if In_Private_Part (Current_Context)
+                    and then Get_Kind (E) /= E_Formal
+                  then
+                     Set_In_Private_Part (E);
+
+                     if No (Get_First_Private_Entity_Loc
+                             (Get_Scope (Current_Context)))
+                     then
+                        Set_First_Private_Entity_Loc
+                          (Get_Scope (Current_Context),
+                           General_Location'
+                             (File   => File,
+                              Line   => Sloc_Start.Line,
+                              Column => Visible_Column (Sloc_Start.Column)));
+                     end if;
+                  end if;
+
+                  if (Prev_Token = Tok_Function
+                        or else Prev_Token = Tok_Procedure)
+                    and then Get_Kind (E) = E_Variable
+                  then
+                     Fix_Wrong_Xref_Decoration (E);
+                  end if;
+
+                  if not In_Generic_Formals
+                    and then Is_Compilation_Unit (E)
+                  then
+                     In_Compilation_Unit := True;
+                  end if;
+
+                  if Is_Package (E)
+                    and then Is_Expanded_Name (S)
+                  then
+                     declare
+                        Last_Dot_Index : Natural := 0;
+                        Parent         : Entity_Id;
+                     begin
+                        for J in reverse S'Range loop
+                           if S (J) = '.' then
+                              Last_Dot_Index := J;
+                              exit;
+                           end if;
+                        end loop;
+
+                        Parent :=
+                          Builder.Find_Unique_Entity
+                            (S (S'First .. Last_Dot_Index - 1),
+                             Must_Be_Package => True);
+
+                        if Present (Parent) then
+                           pragma Assert (Is_Package (Parent));
+                           Set_Parent_Package (E, Parent);
+                        end if;
+                     end;
+                  end if;
+
+                  if Is_Generic (E) then
+                     pragma Assert (Present (Generic_Formals_Loc));
+                     Set_Generic_Formals_Loc (E, Generic_Formals_Loc);
+                     Generic_Formals_Loc := No_Location;
+                     In_Generic_Formals := False;
+                     In_Generic_Decl := False;
+
+                     --  For subprograms found in generic formals this code
+                     --  is erroneously decorating their formals as generic
+                     --  formals???
+
+                     for Formal of Generic_Formals loop
+                        Set_Is_Generic_Formal (Formal);
+
+                        --  Adding minimum decoration to undecorated generic
+                        --  formals
+
+                        pragma Assert (Get_Kind (E) /= E_Unknown);
+                        if Get_Kind (E) = E_Unknown then
+                           Set_Kind (E, E_Generic_Formal);
+                        end if;
+
+                        if Get_Scope (Formal) /= E
+                          or else not Get_Generic_Formals (E).Contains (Formal)
+                        then
+                           Remove_From_Scope (Formal);
+                           Append_Generic_Formal (E, Formal);
+                           Set_Scope (Formal, E);
+                        end if;
+                     end loop;
+
+                     Generic_Formals.Clear;
+
+                  elsif In_Generic_Formals then
+                     Generic_Formals.Append (E);
+
+                  else
+                     case Prev_Token is
+                        when Tok_Subtype =>
+                           pragma Assert (LL.Is_Type (E));
+                           Set_Is_Subtype (E);
+
+                        when Tok_Protected =>
+                           Set_Kind (E, E_Single_Protected);
+                           Set_Is_Incomplete (E, False);
+                           Remove_Full_View (E);
+
+                        when others =>
+                           null;
+                     end case;
+                  end if;
+               end Decorate_Entity;
+
+               -------------------------------------
+               -- Decorate_Parent_And_Progenitors --
+               -------------------------------------
+
+               procedure Decorate_Parent_And_Progenitors (E : Entity_Id) is
+               begin
+                  pragma Assert (Is_Record_Type (E));
+
+                  if Present (Get_Parent (E)) then
+
+                     if Is_Full_View (E)
+                       and then Is_Private (Get_Partial_View (E))
+                       and then No (Get_Parent (Get_Partial_View (E)))
+                     then
+                        Set_Has_Private_Parent (Get_Partial_View (E));
+                     end if;
+
+                  else
+                     --  In the partial view Xref returns the parent in the
+                     --  list of parents (and hence, at current stage it is
+                     --  stored in the list of progenitors). We localize it
+                     --  and remove it from the list of progenitors.
+
+                     if Is_Partial_View (E) then
+
+                        if Present (Get_Parent (Get_Full_View (E))) then
+                           Set_Parent (E, Get_Parent (Get_Full_View (E)));
+
+                        elsif Present (Get_Progenitors (E)) then
+                           declare
+                              Parent : Entity_Id;
+                           begin
+                              Parent :=
+                                Find_Entity
+                                  (Get_Progenitors (E).all,
+                                   Name => S);
+                              pragma Assert (Present (Parent));
+
+                              Set_Parent (E, Parent);
+                              Delete_Entity (Get_Progenitors (E).all, Parent);
+                           end;
+                        end if;
+                     end if;
+
+                     --  We don't know the exact location associated with
+                     --  the entity in the database. Hence for now we take a
+                     --  conservative approach and we first retry the entity
+                     --  from the database and use its location to retry its
+                     --  associated unique high-level entity.
+
+                     if No (Get_Parent (E)) then
+                        declare
+                           Tok_Loc   : General_Location;
+                           LL_Parent : General_Entity;
+                           Parent    : Entity_Id := Atree.No_Entity;
+                           Dot_Pos   : Natural   := 0;
+
+                        begin
+                           if Is_Expanded_Name (S) then
+                              declare
+                                 Idx : Natural;
+                              begin
+                                 Parent  := Find_Unique_Entity (S);
+                                 Idx     := Index (S, ".", Going => Backward);
+                                 Dot_Pos := Idx - S'First + 1;
+                              end;
+                           end if;
+
+                           if No (Parent) then
+                              Tok_Loc :=
+                                General_Location'
+                                  (File   => File,
+                                   Line   => Sloc_Start.Line,
+                                   Column => Visible_Column_Type
+                                               (Sloc_Start.Column + Dot_Pos));
+
+                              LL_Parent :=
+                                Xref.Get_Entity
+                                  (Db   => Context.Database,
+                                   Name => Get_Short_Name (S),
+                                   Loc  => Tok_Loc);
+
+                              --  Tolerate the case in which the package
+                              --  containing the parent type is not available.
+
+                              if Present (LL_Parent)
+                                and then not Is_Fuzzy (LL_Parent)
+                              then
+                                 Parent :=
+                                   Builder.Get_Unique_Entity
+                                     (Context, File, LL_Parent);
+                              end if;
+                           end if;
+
+                           if Present (Parent) then
+                              pragma Assert (LL.Is_Type (Parent));
+                              Set_Parent (E, Parent);
+
+                              if Get_Progenitors (E) .Contains (Parent) then
+                                 Delete_Entity
+                                   (Get_Progenitors (E).all, Parent);
+                              end if;
+
+                              --  Complete the decoration of E
+
+                              if Is_Tagged (Parent) then
+                                 Set_Is_Tagged (E);
+                              end if;
+
+                              if Present (Get_Partial_View (E))
+                                and then Is_Private (Get_Partial_View (E))
+                                and then No (Get_Parent (Get_Partial_View (E)))
+                              then
+                                 Set_Has_Private_Parent (Get_Partial_View (E));
+                              end if;
+                           end if;
+                        end;
+                     end if;
+                  end if;
+               end Decorate_Parent_And_Progenitors;
+
+               -----------------------
+               -- Decorate_Renaming --
+               -----------------------
+
+               procedure Decorate_Renaming (E : Entity_Id) is
+               begin
+                  --  No action needed if already decorated
+
+                  if Present (Get_Alias (E)) then
+                     return;
+                  end if;
+
+                  --  First try: if the Xref entity of the renaming is
+                  --  available then use it to search for the alias in the
+                  --  hash table
+
+                  if Present (LL.Get_Alias (E)) then
+                     declare
+                        Alias : constant Entity_Id :=
+                          Find_Unique_Entity
+                           (Get_Location (Context.Database, LL.Get_Alias (E)));
+                     begin
+                        if Present (Alias) then
+                           Set_Alias (E, Alias);
+                        end if;
+                     end;
+                  end if;
+
+                  --  Second try: search for it in the xref database using the
+                  --  name of the renamed entity and the current location.
+
+                  if No (Get_Alias (E)) then
+                     declare
+                        Alias : constant Entity_Id :=
+                          Get_Entity
+                            (Context => Context,
+                             Name => S,
+                             Loc  => General_Location'
+                                      (File   => File,
+                                       Line   => Sloc_Start.Line,
+                                       Column =>
+                                         Visible_Column (Sloc_Start.Column)));
+                     begin
+                        if Present (Alias) then
+                           Set_Alias (E, Alias);
+                        end if;
+                     end;
+                  end if;
+
+                  --  If the renamed entity cannot be located we add a minimum
+                  --  decoration which will be used to handle the scopes.
+
+                  if No (Get_Alias (E)) then
+                     Set_Is_Alias (E);
+                  end if;
+               end Decorate_Renaming;
 
                --------------------
                -- Decorate_Scope --
@@ -1514,46 +1859,6 @@ package body GNATdoc.Frontend is
                      Update_Scope;
                   end if;
                end Decorate_Scope;
-
-               -------------------------------
-               -- Fix_Wrong_Xref_Decoration --
-               -------------------------------
-
-               procedure Fix_Wrong_Xref_Decoration (E : Entity_Id) is
-               begin
-                  Set_Has_Incomplete_Decoration (E);
-
-                  if Prev_Token = Tok_Function then
-                     Set_Kind (E, E_Function);
-                  else
-                     Set_Kind (E, E_Procedure);
-                  end if;
-
-                  if Get_Short_Name (E) = "" then
-                     --  For consistency we remove the string
-                     --  terminator to the name of operators
-
-                     declare
-                        From : Natural := S'First;
-                        To   : Natural := S'Last;
-                     begin
-                        while From <= To
-                          and then S (From) = '"'
-                        loop
-                           From := From + 1;
-                        end loop;
-
-                        while From <= To
-                          and then S (To) = '"'
-                        loop
-                           To := To - 1;
-                        end loop;
-
-                        Set_Short_Name
-                          (Context, E, S (From .. To));
-                     end;
-                  end if;
-               end Fix_Wrong_Xref_Decoration;
 
             --  Start of processing for Complete_Decoration
 
@@ -1666,269 +1971,12 @@ package body GNATdoc.Frontend is
                      Do_Breakpoint;
 
                      if In_Parent_Part then
-                        declare
-                           E : constant Entity_Id :=
-                             Get_Scope (Current_Context);
-                        begin
-                           pragma Assert (Is_Record_Type (E));
-
-                           if Present (Get_Parent (E)) then
-
-                              if Is_Full_View (E)
-                                and then Is_Private (Get_Partial_View (E))
-                                and then
-                                  No (Get_Parent (Get_Partial_View (E)))
-                              then
-                                 Set_Has_Private_Parent (Get_Partial_View (E));
-                              end if;
-
-                           else
-                              --  In the partial view Xref returns the parent
-                              --  in the list of parents (and hence, at
-                              --  current stage it is stored in the list of
-                              --  progenitors). We localize it and remove it
-                              --  from the list of progenitors.
-
-                              if Is_Partial_View (E) then
-
-                                 if Present
-                                      (Get_Parent (Get_Full_View (E)))
-                                 then
-                                    Set_Parent (E,
-                                      Get_Parent (Get_Full_View (E)));
-
-                                 elsif Present (Get_Progenitors (E)) then
-                                    declare
-                                       Parent : Entity_Id;
-                                    begin
-                                       Parent :=
-                                         Find_Entity
-                                           (Get_Progenitors (E).all,
-                                            Name => S);
-                                       pragma Assert (Present (Parent));
-
-                                       Set_Parent (E, Parent);
-                                       Delete_Entity
-                                         (Get_Progenitors (E).all, Parent);
-                                    end;
-                                 end if;
-                              end if;
-
-                              --  We don't know the exact location associated
-                              --  with the entity in the database. Hence for
-                              --  now we take a conservative approach and we
-                              --  first retry the entity from the database
-                              --  and use its location to retry its associated
-                              --  unique high-level entity.
-
-                              if No (Get_Parent (E)) then
-                                 declare
-                                    Tok_Loc   : General_Location;
-                                    LL_Parent : General_Entity;
-                                    Parent    : Entity_Id := Atree.No_Entity;
-                                    Dot_Pos   : Natural   := 0;
-
-                                 begin
-                                    if Is_Expanded_Name (S) then
-                                       declare
-                                          Idx : Natural;
-                                       begin
-                                          Parent := Find_Unique_Entity (S);
-                                          Idx :=
-                                            Index (S, ".", Going => Backward);
-                                          Dot_Pos := Idx - S'First + 1;
-                                       end;
-                                    end if;
-
-                                    if No (Parent) then
-                                       Tok_Loc :=
-                                         General_Location'
-                                           (File   => File,
-                                            Line   => Sloc_Start.Line,
-                                            Column =>
-                                              Visible_Column_Type
-                                                (Sloc_Start.Column + Dot_Pos));
-
-                                       LL_Parent :=
-                                         Xref.Get_Entity
-                                           (Db   => Context.Database,
-                                            Name => Get_Short_Name (S),
-                                            Loc  => Tok_Loc);
-
-                                       --  Tolerate the case in which the
-                                       --  package containing the parent
-                                       --  type is not available.
-
-                                       if Present (LL_Parent)
-                                         and then not Is_Fuzzy (LL_Parent)
-                                       then
-                                          Parent :=
-                                            Builder.Get_Unique_Entity
-                                              (Context, File, LL_Parent);
-                                       end if;
-                                    end if;
-
-                                    if Present (Parent) then
-                                       pragma Assert (LL.Is_Type (Parent));
-                                       Set_Parent (E, Parent);
-
-                                       if Get_Progenitors (E)
-                                         .Contains (Parent)
-                                       then
-                                          Delete_Entity
-                                            (Get_Progenitors (E).all, Parent);
-                                       end if;
-
-                                       --  Complete the decoration of E
-
-                                       if Is_Tagged (Parent) then
-                                          Set_Is_Tagged (E);
-                                       end if;
-
-                                       if Present (Get_Partial_View (E))
-                                         and then
-                                           Is_Private (Get_Partial_View (E))
-                                         and then
-                                           No (Get_Parent
-                                                 (Get_Partial_View (E)))
-                                       then
-                                          Set_Has_Private_Parent
-                                            (Get_Partial_View (E));
-                                       end if;
-
-                                    end if;
-                                 end;
-                              end if;
-                           end if;
-
-                           In_Parent_Part := False;
-                        end;
+                        Decorate_Parent_And_Progenitors
+                          (Get_Scope (Current_Context));
+                        In_Parent_Part := False;
 
                      elsif In_Next_Entity then
-                        declare
-                           E : constant Entity_Id :=
-                             Extended_Cursor.Entity (Cursor);
-
-                        begin
-                           Decorate_Scope (E);
-
-                           if In_Private_Part (Current_Context)
-                             and then Get_Kind (E) /= E_Formal
-                           then
-                              Set_In_Private_Part (E);
-
-                              if No (Get_First_Private_Entity_Loc
-                                      (Get_Scope (Current_Context)))
-                              then
-                                 Set_First_Private_Entity_Loc
-                                   (Get_Scope (Current_Context),
-                                    General_Location'
-                                     (File   => File,
-                                      Line   => Sloc_Start.Line,
-                                      Column => Visible_Column
-                                                  (Sloc_Start.Column)));
-                              end if;
-                           end if;
-
-                           if (Prev_Token = Tok_Function
-                               or else Prev_Token = Tok_Procedure)
-                             and then Get_Kind (E) = E_Variable
-                           then
-                              Fix_Wrong_Xref_Decoration (E);
-                           end if;
-
-                           if not In_Generic_Formals
-                             and then Is_Compilation_Unit (E)
-                           then
-                              --  Given that the scope available at current
-                              --  stage is not reliable this assertion is
-                              --  not reliable and must be disabled???
-
-                              --  pragma Assert (not In_Compilation_Unit);
-
-                              In_Compilation_Unit := True;
-                           end if;
-
-                           if Is_Package (E)
-                             and then Is_Expanded_Name (S)
-                           then
-                              declare
-                                 Last_Dot_Index : Natural := 0;
-                                 Parent         : Entity_Id;
-                              begin
-                                 for J in reverse S'Range loop
-                                    if S (J) = '.' then
-                                       Last_Dot_Index := J;
-                                       exit;
-                                    end if;
-                                 end loop;
-
-                                 Parent :=
-                                   Builder.Find_Unique_Entity
-                                     (S (S'First .. Last_Dot_Index - 1),
-                                      Must_Be_Package => True);
-
-                                 if Present (Parent) then
-                                    pragma Assert (Is_Package (Parent));
-                                    Set_Parent_Package (E, Parent);
-                                 end if;
-                              end;
-                           end if;
-
-                           if Is_Generic (E) then
-                              pragma Assert (Present (Generic_Formals_Loc));
-                              Set_Generic_Formals_Loc (E, Generic_Formals_Loc);
-                              Generic_Formals_Loc := No_Location;
-                              In_Generic_Formals := False;
-                              In_Generic_Decl := False;
-
-                              --  For subprograms found in generic formals
-                              --  this code is erroneously decorating their
-                              --  formals as generic formals???
-
-                              for Formal of Generic_Formals loop
-                                 Set_Is_Generic_Formal (Formal);
-
-                                 --  Adding minimum decoration to
-                                 --  undecorated generic formals
-
-                                 pragma Assert (Get_Kind (E) /= E_Unknown);
-                                 if Get_Kind (E) = E_Unknown then
-                                    Set_Kind (E, E_Generic_Formal);
-                                 end if;
-
-                                 if Get_Scope (Formal) /= E
-                                   or else not
-                                     Get_Generic_Formals
-                                       (E).Contains (Formal)
-                                 then
-                                    Remove_From_Scope (Formal);
-                                    Append_Generic_Formal (E, Formal);
-                                    Set_Scope (Formal, E);
-                                 end if;
-                              end loop;
-
-                              Generic_Formals.Clear;
-
-                           elsif In_Generic_Formals then
-                              Generic_Formals.Append (E);
-
-                           else
-                              case Prev_Token is
-                              when Tok_Subtype =>
-                                 pragma Assert (LL.Is_Type (E));
-                                 Set_Is_Subtype (E);
-
-                              when Tok_Protected =>
-                                 Set_Kind (E, E_Single_Protected);
-                                 Set_Is_Incomplete (E, False);
-                                 Remove_Full_View (E);
-
-                              when others =>
-                                 null;
-                              end case;
-                           end if;
-                        end;
+                        Decorate_Entity (Extended_Cursor.Entity (Cursor));
 
                      elsif Prev_Token = Tok_Renames then
                         declare
@@ -1945,57 +1993,7 @@ package body GNATdoc.Frontend is
                               E := Get_Scope (Current_Context);
                            end if;
 
-                           if No (Get_Alias (E)) then
-
-                              --  First try: if the Xref entity of the
-                              --  renaming is available then use it to
-                              --  search for the alias in the hash table
-
-                              if Present (LL.Get_Alias (E)) then
-                                 declare
-                                    Alias : constant Entity_Id :=
-                                      Find_Unique_Entity
-                                        (Get_Location
-                                          (Context.Database,
-                                           LL.Get_Alias (E)));
-                                 begin
-                                    if Present (Alias) then
-                                       Set_Alias (E, Alias);
-                                    end if;
-                                 end;
-                              end if;
-
-                              --  Second try: search for it in the xref
-                              --  database using the name of the renamed
-                              --  entity and the current location.
-
-                              if No (Get_Alias (E)) then
-                                 declare
-                                    Alias : constant Entity_Id :=
-                                      Get_Entity
-                                        (Context => Context,
-                                         Name    => S,
-                                         Loc =>
-                                           General_Location'
-                                             (File   => File,
-                                              Line   => Sloc_Start.Line,
-                                              Column => Visible_Column
-                                                (Sloc_Start.Column)));
-                                 begin
-                                    if Present (Alias) then
-                                       Set_Alias (E, Alias);
-                                    end if;
-                                 end;
-                              end if;
-
-                              --  If the renamed entity cannot be located we
-                              --  add a minimum decoration which will be used
-                              --  to handle the scopes.
-
-                              if No (Get_Alias (E)) then
-                                 Set_Is_Alias (E);
-                              end if;
-                           end if;
+                           Decorate_Renaming (E);
                         end;
                      end if;
 
