@@ -59,6 +59,15 @@ KP-60-N224-023 GPS: case conversion inserts extra text
 
   Workaround: Start selection on first character of the next line instead.
 
+KP-60-N224-019 GPS: error creating call graph recursively
+
+  Problem:    Contextual menu "Browsers/[Method Name] calls (recursively)"
+              does not work.
+
+  Status:     This is fixed in 6.1 on 2014-03-06
+
+  Workaround: Use "Browsers/[Method Name] calls" menu instead.
+
 KP-60-N220-040 GPS: 'Close all other editors' does nothing
 
   Problem:    Menu 'Close all other editors' does not work when activated
