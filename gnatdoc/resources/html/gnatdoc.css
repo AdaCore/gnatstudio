@@ -50,27 +50,20 @@ td {
 }
 
 #tocMenu {
-    float: left;
     width: 50px;
+    vertical-align: top;
+    background-color: #111;
 }
 
 #tocMenu li {
     list-style: none;
-    margin-top: 50px;
-    -webkit-transform: rotate(-90deg);
-    -moz-transform: rotate(-90deg);
-    -ms-transform: rotate(-90deg);
-    -o-transform: rotate(-90deg);
-    transform: rotate(-90deg);
-    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+    padding: 10px;
+    background-color: #111;
+    text-align: center;
 }
 
 #tocMenu a {
     color: white;
-}
-
-#tocView {
-    margin-left: 50px;
 }
 
 #tocView {
