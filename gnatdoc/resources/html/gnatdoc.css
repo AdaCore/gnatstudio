@@ -54,12 +54,13 @@ td {
 }
 
 #tocMenu {
-    width: 50px;
+    position: fixed;
+    width: 90px;
     vertical-align: top;
 }
 
 #tocMenu ul {
-	padding: 0;
+    padding-left: 5px;
 }
 
 #tocMenu li {
@@ -79,6 +80,7 @@ td {
 }
 
 #tocView {
+    margin-left: 90px;
     width: 100%;
     color: #bbb;
     font-weight: 300;
