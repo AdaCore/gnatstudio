@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar.Formatting;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.Strings;                       use Ada.Strings;
 with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
@@ -35,7 +36,8 @@ package body GNATdoc.Backend.HTML is
    Me : constant Trace_Handle := Create ("GNATdoc.1-HTML_Backend");
 
    type Template_Kinds is
-     (Tmpl_Documentation_HTML,      --  Documentation (HTML page)
+     (Tmpl_Index_JS,                --  Main page data
+      Tmpl_Documentation_HTML,      --  Documentation (HTML page)
       Tmpl_Documentation_JS,        --  Documentation (JS data)
       Tmpl_Documentation_Index_JS,  --  Index of documentation (JS data)
       Tmpl_Entities_Category_HTML,  --  Entities' category (HTML page)
@@ -506,6 +508,29 @@ package body GNATdoc.Backend.HTML is
       end Callback;
 
    begin
+      --  Generate general information JSON data file.
+
+      declare
+         Object      : GNATCOLL.JSON.JSON_Value;
+         Translation : Translate_Set;
+
+      begin
+         Object := GNATCOLL.JSON.Create_Object;
+         Object.Set_Field
+           ("project", Self.Context.Kernel.Registry.Tree.Root_Project.Name);
+         Object.Set_Field
+           ("timestamp", Ada.Calendar.Formatting.Image (Ada.Calendar.Clock));
+
+         Insert
+           (Translation,
+            Assoc ("INDEX_DATA", String'(Write (Object, False))));
+         Write_To_File
+           (Self.Context,
+            Get_Doc_Directory (Self.Context.Kernel),
+            "index.js",
+            Parse (+Self.Get_Template (Tmpl_Index_JS).Full_Name, Translation));
+      end;
+
       --  Generate annotated sources and compute index of source files.
 
       for File of Self.Src_Files loop
@@ -1200,6 +1225,8 @@ package body GNATdoc.Backend.HTML is
       Kind : Template_Kinds) return GNATCOLL.VFS.Virtual_File is
    begin
       case Kind is
+         when Tmpl_Index_JS =>
+            return Self.Get_Resource_File ("index.js.tmpl");
          when Tmpl_Documentation_HTML =>
             return Self.Get_Resource_File ("documentation.html.tmpl");
          when Tmpl_Documentation_JS =>

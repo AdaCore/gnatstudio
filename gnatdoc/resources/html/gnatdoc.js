@@ -20,6 +20,12 @@ GNATdoc.EntityKind = {
 };
 
 /**
+ * The data for main page
+ * @typedef {{project:string, timestamp:string}}
+ */
+GNATdoc.Index;
+
+/**
  * The data that describes an entity
  * @typedef {{line: {number:Number},
  *            column: {number:Number},
@@ -605,6 +611,13 @@ function displaySources() {
 function onLoad() {
     var toc = document.getElementById('tocView');
     var menu = document.getElementById('tocMenu');
+
+    /* Build generic project informtion pane */
+
+    document.getElementById('projectName').appendChild(
+        document.createTextNode(GNATdoc.Index.project));
+    document.getElementById('documentationTimestamp').appendChild(
+        document.createTextNode(GNATdoc.Index.timestamp));
 
     /* Build main menu */
 

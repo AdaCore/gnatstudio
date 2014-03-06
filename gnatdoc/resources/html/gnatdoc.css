@@ -49,6 +49,21 @@ td {
     background-color: #111;
 }
 
+#toc p.projectName {
+    margin-top: 20px;
+    margin-left: 20px;
+    margin-bottom: 0;
+    color: #bbb;
+    font-size: 150%;
+}
+
+#toc p.documentationTimestamp {
+    margin-left: 20px;
+    margin-bottom: 20px;
+    color: #bbb;
+    font-size: 80%;
+}
+
 #toc table {
     width: 100%;
 }
