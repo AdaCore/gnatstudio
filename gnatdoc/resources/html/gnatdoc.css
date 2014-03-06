@@ -46,30 +46,44 @@ td {
     width: 30%;
 
     overflow: auto;
-    background-color: #222;
+    background-color: #111;
+}
+
+#toc table {
+    width: 100%;
 }
 
 #tocMenu {
     width: 50px;
     vertical-align: top;
-    background-color: #111;
+}
+
+#tocMenu ul {
+	padding: 0;
 }
 
 #tocMenu li {
     list-style: none;
     padding: 10px;
-    background-color: #111;
     text-align: center;
+}
+
+#tocMenu li.current {
+    background-color: #222;
 }
 
 #tocMenu a {
     color: white;
+    text-decoration: none;
+    outline: 0;
 }
 
 #tocView {
+    width: 100%;
     color: #bbb;
     font-weight: 300;
     display: inline-block;
+    background-color: #222;
 }
 
 #tocView ul {

@@ -549,19 +549,33 @@ function onDocumentationLoad() {
 }
 
 /**
+ * Hides TOC and deselect all items of its menu.
+ */
+
+function hideTOC() {
+    var items = document.getElementById('tocView').children;
+
+    for (var index = 0; index < items.length; index++)
+    {
+        items[index].style.display = 'none';
+    }
+
+    items = document.getElementById('tocMenu').children[0].children;
+
+    for (var index = 0; index < items.length; index++)
+    {
+        items[index].className = '';
+    }
+}
+
+/**
  * ???
  */
 
 function displayPackagesAndClasses() {
-    var toc = document.getElementById('tocView');
-
-    for (var index = 0; index < toc.children.length; index++)
-    {
-        toc.children[index].style.display = 'none';
-    }
-
-    var list = document.getElementById('packagesAndClasses');
-    list.style.display = 'block';
+    hideTOC();
+    document.getElementById('packagesAndClasses').style.display = 'block';
+    document.getElementById('packagesAndClassesMenu').className = 'current';
 }
 
 /**
@@ -569,15 +583,9 @@ function displayPackagesAndClasses() {
  */
 
 function displayEntities() {
-    var toc = document.getElementById('tocView');
-
-    for (var index = 0; index < toc.children.length; index++)
-    {
-        toc.children[index].style.display = 'none';
-    }
-
-    var list = document.getElementById('entities');
-    list.style.display = 'block';
+    hideTOC();
+    document.getElementById('entities').style.display = 'block';
+    document.getElementById('entitiesMenu').className = 'current';
 }
 
 /**
@@ -585,15 +593,9 @@ function displayEntities() {
  */
 
 function displaySources() {
-    var toc = document.getElementById('tocView');
-
-    for (var index = 0; index < toc.children.length; index++)
-    {
-        toc.children[index].style.display = 'none';
-    }
-
-    var list = document.getElementById('sources');
-    list.style.display = 'block';
+    hideTOC();
+    document.getElementById('sources').style.display = 'block';
+    document.getElementById('sourcesMenu').className = 'current';
 }
 
 /**
@@ -612,6 +614,7 @@ function onLoad() {
     a.appendChild(document.createTextNode('Packages and Classes'));
     a.href = 'javascript:displayPackagesAndClasses();';
     li.appendChild(a);
+    li.id = 'packagesAndClassesMenu';
     ul.appendChild(li);
 
     li = document.createElement('li');
@@ -619,6 +622,7 @@ function onLoad() {
     a.appendChild(document.createTextNode('Entities Index'));
     a.href = 'javascript:displayEntities();';
     li.appendChild(a);
+    li.id = 'entitiesMenu';
     ul.appendChild(li);
 
     li = document.createElement('li');
@@ -634,6 +638,7 @@ function onLoad() {
     a.appendChild(document.createTextNode('Source Files'));
     a.href = 'javascript:displaySources();';
     li.appendChild(a);
+    li.id = 'sourcesMenu';
     ul.appendChild(li);
 
     menu.appendChild(ul);
