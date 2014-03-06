@@ -31,14 +31,14 @@ NF-60-MA02-018 GPS: change current line color in debugger (2013-10-03)
 NF-60-M926-036 GPS: filter in Locations matches on file names (2013-09-26)
 
   The filter in the Locations window now matches the location of the messages,
-  not just their text. It is also possible to force the alphabetical sorting
+  not just their text. It is also possible to force alphabetical sorting
   of file names.
 
 NF-60-M923-010 GPS: Searching for documentation after declaration (2013-09-23)
 
-  A new preference Documentation/Leading Comments was added to control the
-  order in which GPS looks at the comments (before or after the declaration)
-  to retrieve the documentation for an entity.
+  A new preference "Documentation/Leading Comments" has been added to
+  control the order in which GPS looks at the comments (before or
+  after the declaration) to retrieve the documentation for an entity.
 
 NF-60-M919-026 GPS: Find All References displays context (2013-09-19)
 
@@ -49,12 +49,12 @@ NF-60-M919-026 GPS: Find All References displays context (2013-09-19)
 NF-60-M918-040 GPS: safer saving of files (2013-09-19)
 
   Saving files is now done via a temporary file which is later renamed.
-  This is safer, and protects against temporary disk issues that could happen
+  This is safer, and protects against temporary disk issues that could occur
   during the actual save operation.
 
 NF-60-M916-026 GPS: support for retina displays in browsers (2013-09-17)
 
-  The display in the various browsers (call graph, entity, debugger,...)
+  The display in the various browsers (e.g., call graph, entity, and debugger)
   is now sharper on retina displays.
 
 NF-60-M913-030 GPS: align end-of-line comments (2013-09-13)
@@ -64,8 +64,8 @@ NF-60-M913-030 GPS: align end-of-line comments (2013-09-13)
 NF-60-M913-009 GPS: persistent contents of Debug/Connect To Board (2013-09-13)
 
   The contents of the dialog to connect to a board (target name and protocol)
-  is now restored every time the dialog is displayed, avoiding the need to
-  enter the same information every time the dialog is used.
+  is now restored each time the dialog is displayed, avoiding the need to
+  enter the same information each time the dialog is used.
 
 NF-60-M913-008 GPS: Build/Settings/Target window now resizable (2013-09-13)
 
@@ -74,9 +74,9 @@ NF-60-M913-008 GPS: Build/Settings/Target window now resizable (2013-09-13)
 
 NF-60-M904-022 GPS: search dialog shows name of current project (2013-09-10)
 
-  The search dialog provides a 'Scope' to search only in the source files of
+  The search dialog provides a "Scope" to only search in the source files of
   the current project. The dialog was improved to show exactly which project
-  is considered as current. Also, /Navigate/Search from an editor will set the
+  is considered current. Also, "/Navigate/Search" from an editor will set the
   current project to be that of the editor.
 
 NF-60-M902-008 GPS: better error for invalid project names (2013-09-02)
@@ -97,9 +97,9 @@ NF-60-M816-002 GPS: display text only in the toolbar (2013-08-19)
 
 NF-60-M814-011 GPS: Enhanced Edit/Selection/Refill behavior (2013-10-07)
 
-  When refilling a comment block with the Refill command, the cursor will now
-  be placed at the end of the last word of the comment, so as to enable the
-  user to keep editing his comment seamlessly.
+  When refilling a comment block with the "Refill" command, the cursor
+  will now be placed at the end of the last word of the comment to
+  allow the user to keep editing his comment seamlessly.
 
 NF-60-M808-017 GPS: New menu CodePeer>Generate CSV Report (2013-09-22)
 
@@ -127,14 +127,13 @@ NF-60-M806-016 GPS: reorganize editor status bars (2013-08-06)
 NF-60-M731-021 GPS: prevent possible locations for views (2013-07-31)
 
   GPS now adds a restriction as to where editors and views can be put.
-  For instance, editors can only be part of the perspective-independent
-  part of the desktop, so that they always remain visible when switching
-  perspectives.
+  Editors can only be part of the perspective-independent part of the
+  desktop so they always remain visible when switching perspectives.
 
 NF-60-M716-040 GPS: new preference to override tooltip colors (2013-07-31)
 
-  A new preference was added in the Windows page to override the background
-  of tooltips as set by the gtk+ theme.
+  A new preference was added in the "Windows" page to override the
+  background of tooltips as set by the gtk+ theme.
 
 NF-60-M712-005 GPS: support for displays with 16 bpp (2013-07-12)
 
@@ -148,17 +147,18 @@ NF-60-M712-004 GPS: syntax highlighting of aspects (2013-07-29)
 
 NF-60-M711-059 GPS: do not save Locations by default (2013-09-06)
 
-  By default, the contents of the Locations window is no longer saved when
-  GPS exits (and restored when it restarts), because it sometimes
-  resulted in very long loading times. The saving can be reactivated by
-  using the local configuration menu in the toolbar of the Locations window.
+  By default, the contents of the Locations window is no longer saved
+  when GPS exits (and restored when it restarts), because it sometimes
+  resulted in very long loading times. The previous behavior can be
+  reactivated by using the local configuration menu in the toolbar of
+  the Locations window.
 
 NF-60-M711-042 GPS: <tab> also aligns selected lines (2013-09-12)
 
   By default, if multiple lines are selected and you press <tab>, GPS
   will also align the colons (:), use clauses (use), arrows (=>) and
   assignments (:=) in these lines. This behavior can be deactivated
-  by a new preference in the Editors section.
+  by a new preference in the "Editors" section.
 
 NF-60-M711-028 GPS: tooltip while scrolling in editors (2013-07-11)
 
@@ -172,9 +172,10 @@ NF-60-M710-029 GPS: display size of selection in editors (2013-07-10)
 
 NF-60-M710-025 GPS: display build progress when build completes (2013-07-10)
 
-  When a build terminates on failure, GPS now displays the total progress
-  (as displayed by the task manager) in the console. This makes it easier to
-  know how many files were compiled up to the first compilation error.
+  When a build terminates with a failure, GPS now displays the total
+  progress (as displayed by the task manager) in the console. This
+  makes it easier to know how many files were compiled before the
+  first compilation error.
 
 NF-60-M710-010 GPS: highlighting of numeric values (2013-07-29)
 
@@ -193,8 +194,9 @@ NF-60-M709-011 GPS: update default color scheme (2013-07-10)
 
 NF-60-M708-023 GPS: middle-click on tab closes the window (2013-07-08)
 
-  This is close to the behavior most web browsers implement and is a
-  convenient way to quickly close a number of tabs.
+  A middle-click on a tab closes the window.  This is close to the
+  behavior most web browsers implement and is a convenient way to
+  quickly close a number of tabs.
 
 NF-60-M705-044 GPS: vertical tabs (2013-07-08)
 
@@ -205,15 +207,15 @@ NF-60-M705-044 GPS: vertical tabs (2013-07-08)
 NF-60-M705-018 GPS: clean up Plug-ins dialog (2013-07-05)
 
   The plug-ins dialog has been simplified. It no longer shows the Python
-  files that are mandatory for GPS. It no longer supports custom
+  files that are mandatory for GPS and no longer supports custom
   initialization commands for the modules (since standard Python can be
-  used for this). The implementations of the plug-ins are now accessible via
+  used for this). The implementation of the plug-ins is now accessible via
   hyperlinks, instead of being directly displayed in this dialog.
 
 NF-60-M625-035 GPS: style for build buttons in the toolbar (2013-07-01)
 
   The rendering has been modified for the build buttons in the toolbar
-  so that they occupy less space, while making it clearer that they have
+  so that they occupy less space while making it clearer that they have
   a popdown menu to select their build target.
 
 NF-60-M625-005 GPS: approximate search (2013-06-25)
@@ -223,31 +225,31 @@ NF-60-M625-005 GPS: approximate search (2013-06-25)
 
 NF-60-M621-005 GPS: new plugin formatfile.py (2013-06-21)
 
-  This plugin, when loaded, adds a new menu /Edit/Format Whole File
+  This plugin, when loaded, adds a new menu "/Edit/Format Whole File",
   which reformats the whole file while preserving the current cursor
   location.
 
 NF-60-M620-018 GPS: color schemes (2013-06-20)
 
-  A new preference is available to select color schemes. This effects other
+  A new preference is available to select color schemes. This affects other
   preferences and can be used to set dark colors for the background of
   editors and windows.
 
 NF-60-M617-030 GPS: apply preferences on the fly (2013-06-17)
 
-  The Apply button has been removed from the preferences dialog.
+  The "Apply" button has been removed from the preferences dialog.
   Changes are now applied on the fly as settings are modified.
 
 NF-60-M606-028 GPS: remove Open From Project dialog (2013-06-07)
 
-  The menu /Files/Open From Project no longer opens up a dialog. Instead,
+  The menu "/Files/Open From Project" no longer opens a dialog. Instead,
   it moves the focus to the global search field. The global search field
   offers many additional features.
 
 NF-60-M603-060 GPS: remove Goto Entity dialog (2013-06-07)
 
-  The menu /Navigate/Goto Entity no longer opens up a dialog. Instead it
-  moves the focus to the global search field. The /Tools/Views/Entity
+  The menu "/Navigate/Goto Entity" no longer opens up a dialog. Instead it
+  moves the focus to the global search field. The "/Tools/Views/Entity"
   view was also removed since its features are now available through the
   global search field.
 
@@ -257,37 +259,37 @@ NF-60-M531-036 GPS: tooltips for SPARK 2014 and Ada 2012 aspects (2013-08-03)
 
 NF-60-M531-032 SPARK 2014 support (2013-07-30)
 
-  The SPARK 2014 toolset is now supported from both GPS and GNATbench.
-  A Prove menu will be available if the SPARK 2014 toolset is installed
-  and found on the PATH at start up.
+  The SPARK 2014 toolset is now supported by both GPS and GNATbench.  A
+  Prove menu will be available if the SPARK 2014 toolset is installed and
+  found on the PATH at start up.
 
 NF-60-M530-024 GPS: only save changed preferences (2013-07-04)
 
-  GPS will now only save those preferences that have been modified into
+  GPS will now only save those preferences that have been modified in
   its HOME/.gps/preferences.xml file. This change should be mostly invisible
   to users, except when changing versions of GPS where the new default
   will be picked up automatically.
 
 NF-60-M529-012 GPS: execute_extended.py plugin removed (2013-05-29)
 
-  This plugin allowed the ability to execute any of the GPS commands via the
-  keyboard. This behavior is now directly available via the new global search
-  box in the GPS toolbar.
+  This plugin allowed executing any of the GPS commands via the
+  keyboard. This behavior is now directly available via the new global
+  search box in the GPS toolbar.
 
 NF-60-M524-041 Improved indentation of parenthesized expressions (2013-06-20)
 
-  Extra spaces following an open parenthesis is now taken into account
+  Extra spaces following an open parenthesis are now taken into account
   when indenting Ada code.
 
 NF-60-M523-031 GPS: add search field in the global toolbar (2013-05-27)
 
-  A search field is now provided, which will display search results from
-  a variety of contexts (source file names, entities, GPS actions, build
-  targets, and open windows).
+  A search field is now provided, which will display search results from a
+  variety of contexts (e.g., source file names, entities, GPS actions,
+  build targets, and open windows).
 
 NF-60-M424-019 Improved indentation of conditional expressions (2013-05-17)
 
-  Ada 2012 if-expressions and case-expressions are better handled by the
+  Ada 2012 if-expressions and case-expressions are handled better by the
   indentation engine. Extra indentation levels are used for each case branch.
 
 NF-60-M411-022 GPS: Aliases expansion directly in editor (2013-06-01)
@@ -333,11 +335,11 @@ NF-60-M307-008 GPS: refactoring of highlighter.py (2013-03-27)
 
 NF-60-M301-031 New review classification of CodePeer messages (2013-06-13)
 
-  When doing a manual review of a CodePeer message, the user can
-  no longer change the message ranking, but instead specify a review
-  classification and the name of the reviewer. New message review dialog is
-  added and new filter was added for CodePeer Report view to manage visibility
-  of messages by review status.
+  When doing a manual review of a CodePeer message, the user can no longer
+  change the message ranking, but instead can specify a review
+  classification and the name of the reviewer. A new message review dialog
+  is added and a new filter was added for CodePeer Report view to manage
+  visibility of messages by review status.
 
 NF-60-M218-036 GPS: GPS.MDI.add to put on top of consoles (2013-06-07)
 
@@ -367,12 +369,11 @@ NF-60-M129-023 GPS: simplified CodePeer report window (2013-03-11)
 
 NF-60-M129-002 GPS: return block completion (2013-02-04)
 
-  Add "return ... end return;" statement support for complete block
-  completion.
+  Add "return ... end return;" statement support for block completion.
 
 NF-60-M124-022 GPS: preserve location in new views (2013-06-06)
 
-  When creating a new view for an editor (for instance through drag-and-drop)
+  When creating a new view for an editor (for instance through drag-and-drop),
   the new view is now displayed at the same location as the original editor,
   rather than on the first line.
 
@@ -389,42 +390,42 @@ NF-60-M121-011 GPS: Outline has a flat view mode (2013-01-21)
 
 NF-60-M111-033 GPS: Refill automatically computes paragraph (2013-01-11)
 
-  The menu /Edit/Selection/Refill will now either apply to the current
-  selection if it exists (as before), or automatically compute the extents
+  The menu "/Edit/Selection/Refill" will now either apply to the current
+  selection if it exists (as before) or automatically compute the extent
   of the current paragraph to reformat (instead of only applying to the
   current line).
 
 NF-60-M110-025 GPS: group spec and body in Outline view (2013-01-10)
 
-  It is now possible to group the spec and body (or spec and full view) for an
-  entity on the same row in the Outline view, to reduce the total height of
-  the Outline view. Clicking on the name of the entity will jump to its spec,
-  but if this is already the current location in the editor will jump to its
-  body instead.
+  It is now possible to group the spec and body (or spec and full view) for
+  an entity on the same row in the Outline view to reduce the total height
+  of the Outline view. Clicking on the name of the entity will jump to its
+  spec, but if this is already the current location, the editor will jump
+  to its body instead.
 
 NF-60-M109-036 GPS: autofix on missing constant with preferences (2013-01-21)
 
   Autofix has always done fixes using lower-cased letters. This enhancement
   performs the fixes on missing constants following the user defined
-  preferences specified in Preferences/Editor/Ada/Reserved word casing.
+  preferences specified in "Preferences/Editor/Ada/Reserved word casing".
 
 NF-60-M108-041 GPS: line wrapping in Messages window (2013-01-09)
 
   It is now possible to configure whether the Messages window should wrap
-  lines, or require horizontal scrolling.
+  lines or require horizontal scrolling.
 
 NF-60-M102-006 GPS: move Serialize to /Edit/Rectangle/ (2013-01-11)
 
-  This menu was previously in /Edit/Selection, but is more logical in the
-  Rectangle submenu since it conceptually applies to a rectangle.
+  This menu was previously in "/Edit/Selection", but is more logically in
+  the Rectangle submenu since it conceptually applies to a rectangle.
 
 NF-60-LC21-017 GPS: Update to Scenario View (2013-01-08)
 
-  The Scenario view has been updated to a more usable tree rendering.
+  The Scenario view has been updated to a better looking tree rendering.
 
 NF-60-LC17-029 GPS: use separate file for CodePeer's audit data (2013-09-16)
 
-  CodePeer's audit data for messages is stored in a separate file, to improve
+  CodePeer's audit data for messages is stored in a separate file to improve
   performance on subsequent GPS invocations.
 
 NF-60-LC06-024 GPS: Locations view has a toolbar (2012-12-06)
@@ -454,10 +455,10 @@ NF-60-LB29-021 GPS: remove status bar (2012-11-29)
 NF-60-LB29-006 GPS: use ellipsis in window titles (2012-11-28)
 
   The text in title bars and in the notebook tabs will now use ellipsis
-  ("...") when the window is too small to accomodate the whole text. The size
-  of notebook tabs is also limited so that we do not end up with a single tab
-  using most of the notebook width, thus hiding the others. This behavior
-  is controlled by a new preference Window/Homogeneous Tabs.
+  ("...") when the window is too small to accomodate the entire text. The
+  size of notebook tabs is also limited so we do not end up with a single
+  tab using most of the notebook width, thus hiding the others. This
+  behavior is controlled by a new preference "Window/Homogeneous Tabs".
 
 NF-60-LB28-008 GPS: progress bar when running gps_codepeer_bridge (2013-08-08)
 
@@ -502,8 +503,8 @@ NF-60-LB04-004 GB: Export GNATbench preferences like CDT (2013-01-22)
 
 NF-60-LA05-038 GPS: Key shortcut for "Locate in Project View" (2013-10-01)
 
-  A new action "Locate file in explorer" is available for key shortcuts and
-  scripting.
+  A new action, "Locate file in explorer", is available for key shortcuts
+  and scripting.
 
 NF-60-L926-027 GPS: Project, File, and Window view tooltips (2012-11-13)
 
@@ -525,10 +526,10 @@ NF-60-L530-025 New cross reference engine (2013-01-24)
 
 NF-60-L510-040 GPS: search in the current selection (2013-01-31)
 
-   GPS can now limit Find and Replace operations to the currently selected
-   text. This is done by selecting the scope "Current Selection" in the
-   Search dialog; this scope is automatically selected when launching the
-   dialog while a selection exists in the current editor.
+  GPS can now limit Find and Replace operations to the currently selected
+  text. This is done by selecting the scope "Current Selection" in the
+  Search dialog; this scope is automatically selected when launching the
+  dialog while a selection exists in the current editor.
 
 NF-60-J728-022 GPS: the Project Wizard takes advantage of gnatname (2012-11-08)
 
@@ -567,6 +568,7 @@ NF-60-H603-006 GPS: Aliases auto completion (2013-04-11)
 
 NF-60-G104-002 WB: Debug tooltip (2013-05-16)
 
-  When debugging an Ada application, if the mouse cursor is over a variable
-  that can be printed by the debugger, the tooltip displays the variable
-  current value. This feature requires Wind River Workbench 3.3 or later.
+  When debugging an Ada application, if the mouse cursor hoveers over a
+  variable that can be printed by the debugger, the tooltip displays the
+  variable's current value. This feature requires Wind River Workbench 3.3 or
+  later.

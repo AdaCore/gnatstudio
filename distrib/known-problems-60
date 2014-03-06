@@ -27,24 +27,24 @@ Known problems fixed in GPS 6.1 / GNATbench 2.9
 
 KP-60-N305-041 GPS: overwriting symbolic links
 
-  Problem:    When the preference fast project loading is enabled, symbolic
-              links are never resolved. As a result, saving a file that is in
-              fact referenced through a symbolic link replaces the link with
+  Problem:    When the preference "fast project loading" is enabled, symbolic
+              links are never resolved. As a result, saving a file that is
+              referenced through a symbolic link replaces the link with
               a regular file, but does not modify the linked file.
-              This breaks support for IBM Synergy
+              This breaks support for IBM Synergy.
 
-  Status:     This is fixed in 6.1 on 2014-03-06
+  Status:     This was fixed in 6.1 on 2014-03-06
 
-  Workaround: From Synergy, use 'sync with work area' before checking changes
-              in.
+  Workaround: From Synergy, use 'sync with work area" before checking in
+              changes.
 
 KP-60-N226-028 GPS: crash when omni-search preview displays a binary file
 
-  Problem:    When using the omni-search, and it matches binary files (either
-              object files, executables, images,...) the preview will be slow,
-              and might even crash GPS in some cases.
+  Problem:    When using the omni-search and it matches binary files (e.g.,
+              either object files, executables, or images) the preview is
+              slow and might even crash GPS in some cases.
 
-  Status:     This is fixed in 6.1 on 2014-03-06
+  Status:     This was fixed in 6.1 on 2014-03-06
 
   Workaround: Edit the settings for the omni-search and disable the preview.
               An alternative is to make sure the object files and executables
@@ -52,30 +52,31 @@ KP-60-N226-028 GPS: crash when omni-search preview displays a binary file
 
 KP-60-N224-023 GPS: case conversion inserts extra text
 
-  Problem:    GPS inserts case converted text into incorrect position when
-              selection starts after last character of the line.
+  Problem:    GPS inserts text whose case has been converted at the incorrect
+              position when the selection starts after last character of the
+              line.
 
-  Status:     This is fixed in 6.1 on 2014-02-27
+  Status:     This was fixed in 6.1 on 2014-02-27
 
-  Workaround: Start selection on first character of the next line instead.
+  Workaround: Start the selection on the first character of the next line.
 
 KP-60-N224-019 GPS: error creating call graph recursively
 
-  Problem:    Contextual menu "Browsers/[Method Name] calls (recursively)"
+  Problem:    The contextual menu "Browsers/[Method Name] calls (recursively)"
               does not work.
 
-  Status:     This is fixed in 6.1 on 2014-03-06
+  Status:     This was fixed in 6.1 on 2014-03-06
 
-  Workaround: Use "Browsers/[Method Name] calls" menu instead.
+  Workaround: Use the "Browsers/[Method Name] calls" menu instead.
 
-KP-60-N220-040 GPS: 'Close all other editors' does nothing
+KP-60-N220-040 GPS: "Close all other editors" does nothing
 
-  Problem:    Menu 'Close all other editors' does not work when activated
+  Problem:    The "Close all other editors" menu does not work when activated
               from contextual menu of source editor's tabs.
 
   Status:     This was fixed in 6.1 on 2014-02-24
 
-  Workaround: Use global menu "/File/Close All Editors except Current".
+  Workaround: Use the global menu "/File/Close All Editors except Current".
 
 KP-60-N215-001 GPS: error when process lasts more than 24 hours
 
@@ -84,8 +85,8 @@ KP-60-N215-001 GPS: error when process lasts more than 24 hours
 
   Status:     This was fixed in 6.1 on 2014-02-17
 
-  Workaround: This only impacts the display, the process itself has correctly
-              finished executing at that time.
+  Workaround: This only impacts the display; the process itself has correctly
+              finished executing.
 
 KP-60-N214-038 GPS: background color for ispell.py not loaded properly
 
@@ -103,12 +104,12 @@ KP-60-N214-038 GPS: background color for ispell.py not loaded properly
 
 KP-60-N213-046 GPS: lockup on code block folding
 
-  Problem:    GPS can lockup on code block folding When user defined code
-              highlighter is used.
+  Problem:    GPS can lock up when folding code blocks when a user defined code
+              highlight color is used.
 
   Status:     This was fixed in 6.1 on 2014-02-27
 
-  Workaround: Disable user defined code highlighter
+  Workaround: Disable user defined code highlight colors.
 
 KP-60-N211-025 GPS: Issue with highlighters
 
@@ -120,23 +121,25 @@ KP-60-N211-025 GPS: Issue with highlighters
 
   Status:     This was fixed in 6.1 on 2014-02-12
 
-  Workaround: Use auto_highlight_occurences without the "Show in speedbar"
-              option activated
+  Workaround: Use auto_highlight_occurences without the "show in speedbar"
+              option activated.
 
 KP-60-N210-037 GB: Eclipse/Workbench load hangs during 90 seconds
 
-  Problem:    When starting GNATbench, the plugins loading progress stops for
-              90 seconds. The error log contains multiple time out errors
+  Problem:    When starting GNATbench, the plugin loading progress stops for
+              90 seconds. The error log contains multiple timeout errors
               while loading class.
 
   Status:     This was fixed in 2.9 on 2014-02-10
 
-  Workaround: Close all Ada projects, restart GNATbench, open used projects.
+  Workaround: Close all Ada projects, restart GNATbench, and open
+              needed projects.
 
 KP-60-N207-040 GB: Eclipse UI freeze just after starting to use GNATbench.
 
-  Problem:    When Eclipse help subsystem is accessed before GNATbench UI
-              plugin initialization was started, the UI may randomly freeze.
+  Problem:    When the Eclipse help subsystem is accessed before the
+              GNATbench UI plugin initialization was started, the UI may
+              randomly freeze.
 
   Status:     This was fixed in 2.9 on 2014-02-10
 
@@ -144,7 +147,7 @@ KP-60-N207-040 GB: Eclipse UI freeze just after starting to use GNATbench.
 
 KP-60-N205-040 Wrong indentation of separate protected
 
-  Problem:    Indentation of 'protected xxx is separate' constructs is not
+  Problem:    The indentation of "protected xxx is separate" constructs is not
               handled properly, causing an exra indentation level.
 
   Status:     This was fixed in 6.1 on 2014-02-06
@@ -154,13 +157,13 @@ KP-60-N205-040 Wrong indentation of separate protected
 KP-60-N205-018 GPS: get_executable_name is case sensitive
 
   Problem:    The python function get_executable_name does not work on Windows
-              when a file has an upper-case name (because that names is lower
-              cased internally by GPS, which therefore does not find the
-              Main'Executable attribute for it in the project file)
+              when a file has an upper-case name (because the name is
+              lower-cased internally by GPS, so it does not find the
+              Main'Executable attribute for it in the project file).
 
   Status:     This was fixed in 6.1 on 2014-02-06
 
-  Workaround: Rename the file with lower cases.
+  Workaround: Rename the file into all lower-case.
 
 KP-60-N131-001 GPS crashes on completion
 
@@ -170,7 +173,7 @@ KP-60-N131-001 GPS crashes on completion
 
   Status:     This was fixed in 6.1 on 2014-02-07
 
-  Workaround: Deactivate dynamic completion
+  Workaround: Deactivate dynamic completion.
 
 KP-60-N129-024 GPS: memory leak when folding/unfolding code blocks
 
@@ -178,25 +181,25 @@ KP-60-N129-024 GPS: memory leak when folding/unfolding code blocks
 
   Status:     This was fixed in 6.1 on 2014-02-10
 
-  Workaround: Avoid use of folding/unfolding code blocks actions or restart GPS
-              from time to time.
+  Workaround: Avoid use of folding/unfolding code block actions or restart GPS
+              periodically.
 
 KP-60-N129-021 WB: "Toggle Breakpoint" not working in Workbench-3.3.5
 
-  Problem:    Double clicking in the Ada Editor ruler does nothing. "Toggle
-              Breakpoint" contextual menu only display "The chosen operation is
-              not currently available" information message.
+  Problem:    Double clicking in the Ada Editor ruler does nothing. The
+              "Toggle Breakpoint" contextual menu only displays "The chosen
+              operation is not currently available" information message.
 
   Status:     This was fixed in 2.9 on 2014-02-11
 
-  Workaround: Use "Breakpoints > Add Breakpoint..." contextual menu or in the
-              Debug perspective use the "Run > Toggle Breakpoint Ctrl+Shift+B)"
-              menu.
+  Workaround: Use the "Breakpoints > Add Breakpoint..." contextual menu or,
+              in the Debug perspective, use the "Run > Toggle Breakpoint
+              Ctrl+Shift+B)" menu.
 
 KP-60-N127-011 GPS: Builder switch "--RTS=.../path/to/runtime_dir"
 
-  Problem:    When in the main project the Builder switches include --RTS=
-              with a relative path, GPS fails to load successfully the
+  Problem:    When in the main project and the Builder switches include --RTS=
+              with a relative path, GPS fails to successfully load the
               project.
 
   Status:     This was fixed in 6.1 on 2014-01-28
@@ -205,33 +208,33 @@ KP-60-N127-011 GPS: Builder switch "--RTS=.../path/to/runtime_dir"
 
 KP-60-N116-040 GPS: Completion mechanism crashes GPS
 
-  Problem:    When using dynamic completion, in some specific scenario, the
+  Problem:    When using dynamic completion in some specific scenarios, the
               completion resolver for ada constructs would make GPS crash.
 
   Status:     This was fixed in 6.1 on 2014-01-17
 
-  Workaround: Deactivate dynamic completion/don't use completion in that
-              scenario.
+  Workaround: Deactivate dynamic completion or don't use completion in those
+              scenarios.
 
 KP-60-N109-027 GPS: incorrect display of abstract entities in entities browser
 
   Problem:    When an entity is an abstract record, its display in the
-              browser duplicates all its fields, and does not list its
+              browser duplicates all its fields and does not list its
               methods.
 
   Status:     This was fixed in 6.1 on 2014-01-30
 
-  Workaround: If you can edit sqlite database, you can do the following
+  Workaround: If you can edit the sqlite database, execute the following
               command on it (only needed the first time it is created, not
               every time it is updated):
                  sqlite3 root_object_dir/gnatinspect.db
-                 > update entity_kinds set has_methods='t' where id='H';
+                 > update entity_kinds set has_methods="t" where id="H";
 
 KP-60-MC16-032 GPS: Source window not scrolling after auto complete
 
-  Problem:    When auto-completing manually (via Ctrl+Space for example), if
+  Problem:    When auto-completing manually (via Ctrl+Space, for example), if
               the cursor location after the completion is outside of the
-              screen, then the source editor won't scroll to show the cursor.
+              screen, the source editor won't scroll to show the cursor.
 
   Status:     This was fixed in 6.1 on 2014-01-17
 
@@ -239,19 +242,17 @@ KP-60-MC16-032 GPS: Source window not scrolling after auto complete
 
 KP-60-MC13-038 GPS: MDI child "flicker" while being moved
 
-  Problem:    When moving MDI childs between notebooks, some visual flickering
-              was occuring.
+  Problem:    When moving MDI children between notebooks, some visual
+              flickering was occuring.
 
   Status:     This was fixed in 6.1 on 2014-01-07
 
-  Workaround: Keep using the drag&drop with the flickering, which is only a
-              visual side effect.
+  Workaround: Ignore the flickering, which is only a visual side effect.
 
 KP-60-MC12-058 GPS: Inconsistent behavior of Previous/Next Location buttons
 
   Problem:    Navigation from Location View, Outline View and some others
-              are not saved in navigation history. Navigation missed in
-              history in some rare conditions.
+              are not saved in the navigation history.
 
   Status:     This was fixed in 6.1 on 2014-02-04
 
@@ -274,51 +275,51 @@ KP-60-MC09-035 GPS: Color problems with Open Text Exceed 14 X server
 
   Status:     This was fixed in 6.1 on 2014-01-30
 
-  Workaround: Use another X Server (Cygwin's for example)
+  Workaround: Use another X Server (Cygwin's for example).
 
 KP-60-MC05-046 GB: Highlight space in GB editor
 
-  Problem:    When a text is highlighted and the space bar is pressed, the
-              GB Ada editor doesn't replace the highlighted text with space.
-              It inserts the space in front of the highlighted text.
+  Problem:    When text is highlighted and the space bar is pressed, the
+              GB Ada editor doesn't replace the highlighted text with space,
+              instead, it inserts the space in front of the highlighted text.
 
   Status:     This was fixed in 2.9 on 2014-02-10
 
-  Workaround: No workaround needed
+  Workaround: No workaround needed.
 
 KP-60-MC05-001 GPS: Keyboard not working in editor's contextual menus
 
-  Problem:    When in a contextual menu in the editor, keys would be grabbed by
-              the editor rather than by the menu
+  Problem:    When in a contextual menu in the editor, keys are grabbed by
+              the editor instead of the menu.
 
   Status:     This was fixed in 6.1 on 2013-12-09
 
-  Workaround: Use the mouse to navigate the contextual menus
+  Workaround: Use the mouse to navigate the contextual menus.
 
 KP-60-MC04-015 GPS: doesn't launch after opening non-ASCII named file
 
-  Problem:    When history of recently open files contains names with
-              non-ASCII characters GPS sometime fails to start.
+  Problem:    When the history of recently open files contains names with
+              non-ASCII characters, GPS sometime fails to start.
 
   Status:     This was fixed in 6.1 on 2013-12-05
 
-  Workaround: Set UTF-8 locale before launching GPS.
+  Workaround: Set the locale to UTF-8 before launching GPS.
 
 KP-60-MB29-031 GPS: rsync failures in remote mode
 
-  Problem:    When syncing remote and local directories using rsync, and a
-              password is requested, then the rsync fails and GPS is not
-              asking any password to the user.
+  Problem:    When syncing remote and local directories using rsync and a
+              password is requested, the rsync fails and GPS is not
+              asking the use for a password.
 
   Status:     This was fixed in 6.1 on 2014-02-11
 
-  Workaround: Use a passwordless connection via an ssh agent for example, or
+  Workaround: Use a passwordless connection via an ssh agent, for example, or
               use network directories.
 
 KP-60-MB26-015 GB: Show complete command line in command line editor
 
   Problem:    When editing the command line before launching the action
-              (ex: SPARK2014 > Prove Subprogram) the command line displayed at
+              (ex: SPARK2014 > Prove Subprogram), the command line displayed at
               the bottom is incomplete.
 
   Status:     This was fixed in 2.9 on 2013-11-27
@@ -328,64 +329,63 @@ KP-60-MB26-015 GB: Show complete command line in command line editor
 KP-60-MB22-035 GPS: cannot launch browswer from GPS
 
   Problem:    Sometimes environment variables exported by GPS wrapper
-              prevent the launch of browser.
+              prevent the launch of a browser.
 
   Status:     This was fixed in 6.1 on 2014-01-30
 
-  Workaround: Write shell wrapper to launch browser in corrected environment.
-              Then specify wrapper as browser command in GPS preferences.
+  Workaround: Write a shell wrapper to launch the browser in a corrected
+              environment. Then specify the wrapper as the browser command
+              in GPS preferences.
 
 KP-60-MB20-048 GB: code assist enable not applied to open editors
 
   Problem:    Enabling or disabling code assist from the preferences
-              is not applied to open editors.
+              does not apply it to open editors.
 
   Status:     This was fixed in 2.9 on 2013-11-25
 
   Workaround: Close and reopen the editor(s).
 
-KP-60-MB15-050 GPS: Color Theme preference always says 'Custom'
+KP-60-MB15-050 GPS: Color Theme preference always says "Custom"
 
-  Problem:    If one changes color theme in GPS preferences the combobox
-              display 'Custom' value.
+  Problem:    If the color scheme is changed in GPS preferences, the combobox
+              displays the "Custom" value.
 
   Status:     This was fixed in 6.1 on 2014-02-04
 
-  Workaround: Just ignore combobox value.
+  Workaround: Ignore the displayed value.
 
-KP-60-MB14-058 GPS: the 'next tag' action does not select the first item
+KP-60-MB14-058 GPS: the "next tag" action does not select the first item
 
   Problem:    In the Locations view, if the currently selected node is
-              a file node, then using the 'next tag' action or the
-              menu Navigate->Next Locations message will cause the
-              second message node to be highlighted.
+              a file node, using the "next tag" action or the "Navigate->Next
+              Locations" menu, the second message node is highlighted.
 
   Status:     This was fixed in 6.1 on 2013-11-14
 
-  Workaround: Use the 'previous tag' action to visit the first node.
+  Workaround: Use the "previous tag" action to visit the first node.
 
 KP-60-MB13-062 GPS: key shortcuts not displayed in some Build menus
 
-  Problem:    The key shortcuts are not displayed in some menus that
+  Problem:    Key shortcuts are not displayed in some menus that
               are present under the Build toplevel menu.
 
   Status:     This was fixed in 6.1 on 2013-11-13
 
   Workaround: Use the key shortcut editor to see the corresponding shortcuts.
 
-KP-60-MB06-009 GPS: 'add to extending project' hides existing files
+KP-60-MB06-009 GPS: "add to extending project" hides existing files
 
   Problem:    If you load an extending project in GPS, there is a new
-              contextual menu 'Add to extending project' which can be
+              contextual menu "Add to extending project" which can be
               used to conveniently copy files from the extended project
               into the extending one. However, if the extending project
               was created manually and is not using the Source_Files
-              attribute, the result is that the files that were visible
-              before are no longer visible.
+              attribute, the files that were visible are no longer visible.
 
   Status:     This was fixed in 6.1 on 2013-11-18
 
-  Workaround: edit the extending project and remove the Source_Files
+  Workaround: Edit the extending project and remove the Source_Files
               attribute.
 
 KP-60-MB01-006 GPS: create_missing_dirs not working with trailing separators
@@ -395,13 +395,13 @@ KP-60-MB01-006 GPS: create_missing_dirs not working with trailing separators
 
   Status:     This was fixed in 6.1 on 2013-11-01
 
-  Workaround: Create the directories manually, or remove the directory
+  Workaround: Create the directories manually or remove the directory
               separator at the end of the directory specification.
 
 KP-60-MA29-025 GPS: Search in a floating window
 
-  Problem:    When having a floating window source editor open, as well as a
-              non floating one, focusing on the floating and then using the
+  Problem:    When a floating window source editor is open as well as a
+              non floating one, focusing on the floating window and using the
               search window to search into it would search in the non floating
               window.
 
@@ -412,46 +412,45 @@ KP-60-MA29-025 GPS: Search in a floating window
 
 KP-60-MA29-023 GPS: Goto declaration/body with a floating window
 
-  Problem:    When having a spec (ads) file open in a non floating window, and
-              the corresponding body open in a floating window, using go-to
-              body in the spec does not scroll to the corresponding location in
-              the body.
+  Problem:    When a spec (ads) file is open in a non floating window and
+              the corresponding body is open in a floating window, using
+              "go-to body" in the spec does not scroll to the corresponding
+              location in the body.
 
   Status:     This was fixed in 6.1 on 2013-11-04
 
-  Workaround: Use goto declaration/body with non floating windows.
+  Workaround: Use "goto declaration/body" with non floating windows.
 
 KP-60-MA24-011 GB: UI freeze importing existing GNAT project
 
-  Problem:    Sometimes when running menu "File => Import... => Ada => Existing
-              GNAT Project" and when an imported folder already exists in the
-              workspace's file system, the UI stops to respond.
+  Problem:    When running menu "File => Import... => Ada => Existing GNAT
+              Project" and an imported folder already exists in the
+              workspace's file system, the UI sometimes stops responding.
 
   Status:     This was fixed in 2.9 on 2014-01-14
 
-  Workaround: Kill GNATbench process and retry the operation. Before retrying
-              the import operation, you may have to delete manually in the
-              workspace's file system, the folders you want to import.
+  Workaround: Kill the GNATbench process and retry the operation. Before
+              retrying the import operation, you may have to manually delete
+              the folders you want to import.
 
 KP-60-M918-001 Wrong indentation of complex entry
 
-  Problem:    When indenting entries with parametrized conditions as in
+  Problem:    When indenting entries with parametrized conditions such as
                 entry Received when Arrived (From) is
               the indentation gets confused for the rest of the file.
 
   Status:     This was fixed in 6.1 on 2014-02-06
 
-  Workaround: Fix the indentation manually, or avoid this construct.
+  Workaround: Fix the indentation manually or avoid this construct.
 
 KP-60-JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
 
-  Problem:    When using GPS remote mode with rsh, it may happen that spawned
-              remote processes are not properly terminated before the rsh
-              connection is closed.
-              This may lead to zombie processes remaining on the remote host.
-              rsh support by GPS has now been deprecated, as rsh is not an
-              active development anymore, and has been replaced by secure and
-              more robust solutions such as ssh.
+  Problem:    When using GPS remote mode with rsh, spawned remote processes
+              may not be properly terminated before the rsh connection is
+              closed. This may lead to zombie processes remaining on the
+              remote host.  Note that rsh support by GPS has now been
+              deprecated, as rsh is not in active development anymore and has
+              been replaced by secure and more robust solutions such as ssh.
 
   Status:     This was fixed in 6.1 on 2013-10-31
 
@@ -474,13 +473,13 @@ Known problems fixed in GPS 6.0.2 / GNATbench 2.8.2
 KP-60-N218-041 GPS: cannot install from directory with spaces under unix
 
   Problem:    When running the doinstall installer under unix systems, the
-              installation will fail if doinstall is under a pathname
+              installation fails if doinstall is in a pathname
               containing spaces.
 
   Status:     This was fixed in 6.1 on 2014-02-20
               This was fixed in 6.0.2 on 2014-02-20
 
-  Workaround: Extract the gps archive under a directory with no spaces.
+  Workaround: Extract the gps archive into a directory with no spaces.
 
 KP-60-N116-013 GPS: custom VCS action "diff_working" is not supported
 
