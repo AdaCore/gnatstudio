@@ -768,7 +768,7 @@ package body Browsers.Call_Graph is
         Callgraph_Views.Get_Or_Create_View (Kernel, Focus => True);
       Item          : constant Entity_Item :=
                         Add_Entity_If_Not_Present (Browser, Entity);
-      Canvas        : Interactive_Canvas;
+      Canvas        : constant Interactive_Canvas := Get_Canvas (Browser);
 
    begin
       if not Children_Shown (Item) then
@@ -798,7 +798,6 @@ package body Browsers.Call_Graph is
          --  We need to do a layout, so that the newly added item is put at a
          --  correct place.
          Layout (Browser, Force => False);
-         Canvas := Get_Canvas (Browser);
          Align_Item (Canvas, Item, 0.4, 0.4);
       end if;
 
