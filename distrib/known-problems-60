@@ -38,6 +38,18 @@ KP-60-N305-041 GPS: overwriting symbolic links
   Workaround: From Synergy, use 'sync with work area' before checking changes
               in.
 
+KP-60-N226-028 GPS: crash when omni-search preview displays a binary file
+
+  Problem:    When using the omni-search, and it matches binary files (either
+              object files, executables, images,...) the preview will be slow,
+              and might even crash GPS in some cases.
+
+  Status:     This is fixed in 6.1 on 2014-03-06
+
+  Workaround: Edit the settings for the omni-search and disable the preview.
+              An alternative is to make sure the object files and executables
+              do not go in the project's source directories.
+
 KP-60-N224-023 GPS: case conversion inserts extra text
 
   Problem:    GPS inserts case converted text into incorrect position when

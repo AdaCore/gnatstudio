@@ -525,6 +525,17 @@ package body GPS.Kernel.Search.Filenames is
       Props  : File_Props;
       pragma Unreferenced (Props);
    begin
+      --  Only display a preview when the file has a known language. This
+      --  should filter out binary files (executables, images,...) which will
+      --  either be very slow to load and display, or will simply crash gtk
+      --  and GPS
+
+      if Get_Registry (Self.Kernel).Tree.Info_Set (Self.File)
+           .First_Element.Language = ""
+      then
+         return null;
+      end if;
+
       Read_File_With_Charset
         (Self.File,
          UTF8     => UTF8,
