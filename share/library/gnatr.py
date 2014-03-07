@@ -1,5 +1,5 @@
 """
-This file adds a new Build->Compile current with -gnatR menu.
+This file adds a new menu: Build->View types layout
 
 Selecting an opened source editor, and then clicking on this menu, will
 output the layout of all the records in the current file, by recompiling
@@ -7,7 +7,6 @@ the file with -gnatR.
 """
 
 
-
 import GPS
 import gps_utils
 from tool_output import OutputParser
@@ -34,11 +33,12 @@ class OutputStore(OutputParser):
         # ??? How to get access to the file name ?
         GPS.MDI.get_by_child(buffer.current_view()).rename('Type layout')
 
-
 XML = r"""<?xml version="1.0" ?>
 <GPS>
    <target-model name='gnatR' category='File'>
-      <description>Launches GNAT to generate information on the layout of types (using -gnatR)</description>
+      <description>
+Launches GNAT to generate information on the layout of types (using -gnatR)
+      </description>
       <icon>gps-custom-build</icon>
       <server>Tools_Server</server>
    </target-model>
