@@ -29,8 +29,6 @@ with GNATCOLL.SQL.Inspect;      use GNATCOLL.SQL.Inspect;
 with GNAT.Regpat;               use GNAT.Regpat;
 with Old_Entities;
 
-with Unchecked_Conversion;
-
 package body Xref.Docgen is
 
    -------------
