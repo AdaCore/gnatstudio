@@ -1681,7 +1681,7 @@ package body Code_Analysis_Module is
                Project  => Project_Information (Context),
                File     => File_Information (Context)));
 
-      else
+      elsif Has_Project_Information (Context) then
          Gtk_New (Item, -"Show coverage information");
          Append (Submenu, Item);
          Analysis_CB.Connect
@@ -2089,8 +2089,7 @@ package body Code_Analysis_Module is
       Register_Contextual_Submenu
         (Kernel      => Kernel,
          Name        => -"Coverage",
-         Filter      => Lookup_Filter (Kernel, "Project only")
-                          or Lookup_Filter (Kernel, "In project"),
+         Filter      => Lookup_Filter (Kernel, "Project only"),
          Submenu     => Submenu_Factory (Contextual_Menu));
 
       Register_Action
