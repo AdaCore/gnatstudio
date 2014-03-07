@@ -2089,7 +2089,8 @@ package body Code_Analysis_Module is
       Register_Contextual_Submenu
         (Kernel      => Kernel,
          Name        => -"Coverage",
-         Filter      => Lookup_Filter (Kernel, "Project only"),
+         Filter      => Lookup_Filter (Kernel, "Project only")
+         or Lookup_Filter (Kernel, "File"),
          Submenu     => Submenu_Factory (Contextual_Menu));
 
       Register_Action
