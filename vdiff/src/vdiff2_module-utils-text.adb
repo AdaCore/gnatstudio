@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2003-2013, AdaCore                     --
+--                     Copyright (C) 2003-2014, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -151,8 +151,8 @@ package body Vdiff2_Module.Utils.Text is
       First_Dest := Dest_Range.First;
       First_Source := Source_Range.First;
 
-      Trace (Me, "VALEUR DE FIRST DEST : "& Integer'Image (First_Dest));
-      Trace (Me, "VALEUR DE FIRST SOURCE : "& Integer'Image (First_Source));
+      Trace (Me, "VALEUR DE FIRST DEST : " & Integer'Image (First_Dest));
+      Trace (Me, "VALEUR DE FIRST SOURCE : " & Integer'Image (First_Source));
 
       if Offset_Source > Offset_Dest then
          Offset_Min := Offset_Dest;

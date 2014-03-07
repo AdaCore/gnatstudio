@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2004-2013, AdaCore                     --
+--                     Copyright (C) 2004-2014, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -948,7 +948,7 @@ package body Expect_Interface is
             end if;
 
             Trace (Me, "Spawning Show_Bar=" & Boolean'Image (Show_Bar) &
-                   ": "& Command_Line);
+                   ": " & Command_Line);
 
             D              := new Custom_Action_Record;
             D.Command      := Parse_String (Command_Line, Separate_Args);
