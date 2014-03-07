@@ -2080,20 +2080,18 @@ The valid children of :file:`<action>` are the following XML tags:
   The context in which the action can be executed. See
   :ref:`Filtering_actions`.
 
-.. highlight:: xml
-
 You can mix both shell commands and external commands. For example, the
 following command opens an :program`xterm` (on Unix systems only) in the
 current directory, which depends on the context::
 
   <?xml version="1.0" ?>
   <xterm_directory>
-    <action "xterm in current directory">
+    <action name="xterm in current directory">
       <shell lang="shell">cd %d</shell>
       <external>xterm</external>
     </action>
   </xterm_directory>
-
+  
 As you can see in some of the examples above, some special strings are
 expanded by GPS just prior to executing the command, for example "%f" and
 "%d".  See below for a full list.
@@ -4262,7 +4260,8 @@ default value::
         name="Compiler_Name"
         package="Test"
         editor_page="Tests indexed"
-        editor_section="Single"
+        editor_section="Single">
+
         <index attribute="languages" package="">
            <string default="" />
         </index>
@@ -4499,9 +4498,9 @@ here is an example::
       <icon id="myproject-multipurpose-image"
              label="do something"
              file="icons/icon_default.png">
-         <alternate file"icons/icon_16.png" size="Icon_Size_Menu" />
-         <alternate file"icons/icon_24.png" size="Icon_Size_Large_Toolbar" />
-         <alternate file"icons/icon_20.png" size="Icon_Size_Button" />
+         <alternate file="icons/icon_16.png" size="Icon_Size_Menu" />
+         <alternate file="icons/icon_24.png" size="Icon_Size_Large_Toolbar" />
+         <alternate file="icons/icon_20.png" size="Icon_Size_Button" />
       </icon>
 
     </stock>
@@ -5654,7 +5653,7 @@ external commands::
     <action name="test quotes">
       <shell lang="python">'-a -b -c'</shell>
       <external> echo with quotes: "%1"</external>
-      <external> echo without quotes: %2</external/>
+      <external> echo without quotes: %2</external>
     </action>
   </quotes>
 
@@ -6363,8 +6362,8 @@ This is handled in different ways depending on what language you are using:
 
     import GPS
     def on_editing(self, *arg):
-      print "File edited"
-    GPS.Hook ("file_edited").add (on_editing)
+        print "File edited"
+    GPS.Hook("file_edited").add(on_editing)
 
   The situation is slightly more complex if you want to pass methods as
   arguments. Python has three notions of callable subprograms, detailed
@@ -6393,13 +6392,13 @@ This is handled in different ways depending on what language you are using:
 
       my_var = "global data"
 
-      def on_changed (combo, choice):
+      def on_changed(combo, choice):
          global my_var
-         print "on_changed called: " + \\
-            my_var + " " + combo.data + " " + choice
+         print ("on_changed called: " +
+             my_var + " " + combo.data + " " + choice)
 
-      combo = GPS.Combo \\
-        ("name", label="name", on_changed=on_changed)
+      combo = GPS.Combo(
+         "name", label="name", on_changed=on_changed)
       GPS.Toolbar().append (combo)
       combo.data = "My own data"
 
@@ -6423,16 +6422,16 @@ This is handled in different ways depending on what language you are using:
       import GPS
       class MyClass:
          my_var = "global data"
-         def __init__ (self):
-            self.combo = GPS.Combo \\
-               ("name", label="name", on_changed=MyClass.on_changed)
+         def __init__(self):
+            self.combo = GPS.Combo(
+               "name", label="name", on_changed=MyClass.on_changed)
             GPS.Toolbar().append (self.combo)
             self.combo.data = "My own data"
 
-         def on_changed (combo, choice):
+         def on_changed(combo, choice):
             ## No direct access to the instance of MyClass.
-            print "on_changed called: " + \\
-               MyClass.my_var + " " + combo.data + " " + choice
+            print ("on_changed called: " +
+               MyClass.my_var + " " + combo.data + " " + choice)
 
       MyClass()
 
@@ -6444,17 +6443,17 @@ This is handled in different ways depending on what language you are using:
 
       import GPS
       class MyClass:
-         def __init__ (self):
-            self.combo = GPS.Combo \\
-               ("name", label="name", on_changed=MyClass.on_changed)
+         def __init__(self):
+            self.combo = GPS.Combo(
+                "name", label="name", on_changed=MyClass.on_changed)
             GPS.Toolbar().append (self.combo)
             self.combo.data = "My own data"
             self.combo.myclass = self   ## Save the instance
             self.my_var = "global data"
 
-         def on_changed (combo, choice):
-            print "on_changed called: " + \\
-               combo.myclass.my_var + " " + combo.data + " " + choice
+         def on_changed(combo, choice):
+            print ("on_changed called: " + 
+               combo.myclass.my_var + " " + combo.data + " " + choice)
 
       MyClass()
 
@@ -6471,17 +6470,17 @@ This is handled in different ways depending on what language you are using:
 
       import GPS
       class MyClass:
-         def __init__ (self):
-            self.combo = GPS.Combo \\
-               ("name", label="name", on_changed=self.on_changed)
+         def __init__(self):
+            self.combo = GPS.Combo(
+               "name", label="name", on_changed=self.on_changed)
             GPS.Toolbar().append (self.combo)
             self.combo.data = "My own data"
             self.my_var = "global data"
 
-         def on_changed (self, combo, choice):
+         def on_changed(self, combo, choice):
             # self is the instance of MyClass specified in call to append()
-            print "on_changed called: " + \\
-               self.my_var + " " + combo.data + " " + choice
+            print ("on_changed called: " + 
+               self.my_var + " " + combo.data + " " + choice)
 
       MyClass()
 
@@ -6493,24 +6492,24 @@ This is handled in different ways depending on what language you are using:
     something like::
 
       class MyClass:
-        def __init__ (self):
-           self.process = GPS.Process
-               ("command_line", on_match = self.on_match)
+        def __init__(self):
+           self.process = GPS.Process(
+              "command_line", on_match=self.on_match)
 
-        def on_match (self, process, matched, unmatched);
-           print "Process output: " + unmatched + matched + "\\n"
+        def on_match (self, process, matched, unmatched):
+           print ("Process output: " + unmatched + matched + "\n")
 
     A more natural approach, rather than having a class with a
     :func:`process` field, is to directly extend the :class:`GPS.Process`
     class, as in::
 
-      class MyClass (GPS.Process):
-        def __init__ (self):
-           GPS.Process.__init__ \\
-              (self, "command_line", on_match = self.on_match)
+      class MyClass(GPS.Process):
+        def __init__(self):
+           GPS.Process.__init__(
+              self, "command_line", on_match=self.on_match)
 
-        def on_match (self, matched, unmatched);
-           print "Process output: " + unmatched + matched + "\\n"
+        def on_match (self, matched, unmatched):
+           print ("Process output: " + unmatched + matched + "\n")
 
     Any command that can be used on a process (such as :func:`send`) can
     then directly be used on instances of :class:`MyClass`.
@@ -7116,8 +7115,8 @@ effect on the interface. The file is opened at line 100. See the
 description of the hook for more information on the other parameters::
 
   GPS.Hook ("project_changed").run()
-  GPS.Hook ("open_file_action_hook").run \\
-                (GPS.File ("test.adb"), 100, 1, 0, 1, 1, 1)
+  GPS.Hook ("open_file_action_hook").run(
+     GPS.File ("test.adb"), 100, 1, 0, 1, 1, 1)
 
 
 Creating new hooks
