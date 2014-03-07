@@ -470,6 +470,18 @@ KP-60-G928-018 GPS: "center cursor on screen" scrolls horizontally
 Known problems fixed in GPS 6.0.2 / GNATbench 2.8.2
 ---------------------------------------------------
 
+KP-60-N225-041 GPS: wrong color of documentation window in smart completion
+
+  Problem:    When using smart completion, with the default or Adwaita
+              themes, the background of the documentation window is black,
+              making contents hard to read.
+
+  Status:     This was fixed in 6.1 on 2014-02-25
+              This was fixed in 6.0.2 on 2014-03-07
+
+  Workaround: Switch to another theme, or edit the CSS file to change the
+              foreground color.
+
 KP-60-N218-041 GPS: cannot install from directory with spaces under unix
 
   Problem:    When running the doinstall installer under unix systems, the
