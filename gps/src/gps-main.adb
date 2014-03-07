@@ -300,6 +300,9 @@ procedure GPS.Main is
    procedure Set_Project_Name;
    --  Set the project name from the command line switch
 
+   procedure Load_CSS;
+   --  Load the GPS global and local CSS files
+
    function Finish_Setup (Data : Process_Data) return Boolean;
    --  Finish the set up of GPS, while the main loop is running
 
@@ -810,6 +813,12 @@ procedure GPS.Main is
          Title_Changed'Access, GPS_Main.Kernel);
 
       DDE.Register_DDE_Server (GPS_Main.Kernel);
+      --  Load CSS must be loaded *after* the call to GPS.Main_Window.Gtk_New
+      --  above, since that call loads the theme (Adwaita) and the CSS file
+      --  may refer to the theme, for instance for calls such as
+      --    @define-color my_color shade(@theme_bg_color, 1.10);
+      Load_CSS;
+
       Display_Splash_Screen;
 
       if Splash = null then
@@ -1156,6 +1165,31 @@ procedure GPS.Main is
          end if;
          Trace (Me, E);
    end Execute_Batch;
+
+   --------------
+   -- Load_CSS --
+   --------------
+
+   procedure Load_CSS is
+      Global : constant Virtual_File :=
+        Prefix_Dir.Create_From_Dir ("share/gps/gps.css");
+      Local  : constant Virtual_File :=
+        GPS_Home_Dir.Create_From_Dir ("gps.css");
+   begin
+      if Global.Is_Regular_File then
+         Trace (Me, "Loading " & Global.Display_Full_Name);
+         Gtkada.Style.Load_Css_File
+           (Global.Display_Full_Name, Put_Line'Access,
+            Priority_Settings);
+      end if;
+
+      if Local.Is_Regular_File then
+         Trace (Me, "Loading " & Local.Display_Full_Name);
+         Gtkada.Style.Load_Css_File
+           (Local.Display_Full_Name, Put_Line'Access,
+            Priority_User);
+      end if;
+   end Load_CSS;
 
    ------------------
    -- Finish_Setup --
