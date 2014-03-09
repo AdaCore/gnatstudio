@@ -9831,6 +9831,50 @@ section B.3.3.
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Unevaluated_Use_Of_Old" origin = "GNAT RM">
+      <DOC>
+Syntax:
+
+pragma Unevaluated_Use_Of_Old (Error | Warn | Allow);
+
+This pragma controls the processing of attributes Old and Loop_Entry.
+If either of these attributes is used in a potentially unevaluated
+expression  (e.g. the then or else parts of an if expression), then
+normally this usage is considered illegal if the prefix of the attribute
+is other than an entity name. The language requires this behavior for
+Old, and GNAT copies the same rule for Loop_Entry.
+
+The reason for this rule is that otherwise, we can have a situation
+where we save the Old value, and this results in an exception, even
+though we might not evaluate the attribute. Consider this example:
+
+package UnevalOld is
+K : Character;
+procedure U (A : String; C : Boolean)  -- ERROR
+with Post =&gt; (if C then A(1)'Old = K else True);
+end;
+
+If procedure U is called with a string with a lower bound of 2, and C
+false, then an exception would be raised trying to evaluate A(1) on
+entry even though the value would not be actually used.
+
+Although the rule guarantees against this possibility, it is
+sometimes too restrictive. For example if we know that the string has a
+lower bound of 1, then we will never raise an exception.  The pragma
+`Unevaluated_Use_Of_Old' can be used to modify this behavior. If the
+argument is `Error' then an error is given (this is the default RM
+behavior). If the argument is `Warn' then the usage is allowed as legal
+but with a warning that an exception might be raised. If the argument
+is `Allow' then the usage is allowed as legal without generating a
+warning.
+
+This pragma may appear as a configuration pragma, or in a declarative
+part or package specification. In the latter case it applies to uses up
+to the end of the corresponding statement sequence or sequence of
+package declarations.
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Unimplemented_Unit" origin = "GNAT RM">
       <DOC>
 Syntax:
