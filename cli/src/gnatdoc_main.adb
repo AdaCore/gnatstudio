@@ -50,16 +50,16 @@ procedure GNATdoc_Main is
    --  Switches
 
    Ignore_Files         : aliased GNAT.Strings.String_Access;
-   Leading_Doc          : aliased Boolean;
+   Leading_Doc          : aliased Boolean := False;
    Regular_Expr         : aliased GNAT.Strings.String_Access;
-   Process_C_Files      : aliased Boolean;
-   Process_Bodies       : aliased Boolean;
+   Process_C_Files      : aliased Boolean := False;
+   Process_Bodies       : aliased Boolean := False;
    Project_Name         : aliased GNAT.Strings.String_Access;
    Backend_Name         : aliased GNAT.Strings.String_Access :=
                             new String'("html");
-   Process_Private_Part : aliased Boolean;
-   Quiet_Mode           : aliased Boolean;
-   Suppress_Warnings    : aliased Boolean;
+   Process_Private_Part : aliased Boolean := False;
+   Quiet_Mode           : aliased Boolean := False;
+   Suppress_Warnings    : aliased Boolean := False;
 
    ------------------------
    -- Launch_Gnatinspect --
