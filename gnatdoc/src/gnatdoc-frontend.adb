@@ -1509,7 +1509,7 @@ package body GNATdoc.Frontend is
                           (Get_Scope (Current_Context),
                            General_Location'
                              (File    => File,
-                              Project => GNATCOLL.Projects.No_Project,
+                              Project => No_Project,  --  ??? unknown
                               Line    => Sloc_Start.Line,
                               Column  => Visible_Column (Sloc_Start.Column)));
                      end if;
@@ -1679,7 +1679,7 @@ package body GNATdoc.Frontend is
                               Tok_Loc :=
                                 General_Location'
                                   (File    => File,
-                                   Project => GNATCOLL.Projects.No_Project,
+                                   Project => No_Project, --  ??? unknown
                                    Line    => Sloc_Start.Line,
                                    Column  => Visible_Column_Type
                                                (Sloc_Start.Column + Dot_Pos));
@@ -1768,7 +1768,7 @@ package body GNATdoc.Frontend is
                              Name => S,
                              Loc  => General_Location'
                                (File    => File,
-                                Project => GNATCOLL.Projects.No_Project,
+                                Project => No_Project, --  ???
                                 Line    => Sloc_Start.Line,
                                 Column  =>
                                   Visible_Column (Sloc_Start.Column)));
@@ -1872,7 +1872,7 @@ package body GNATdoc.Frontend is
                      Generic_Formals_Loc :=
                        General_Location'
                          (File    => File,
-                          Project => GNATCOLL.Projects.No_Project,
+                          Project => GNATCOLL.Projects.No_Project, --  ???
                           Line    => Sloc_Start.Line,
                           Column  => Visible_Column (Sloc_Start.Column));
 
@@ -1896,7 +1896,7 @@ package body GNATdoc.Frontend is
                           (Get_Scope (Current_Context),
                            General_Location'
                              (File    => File,
-                              Project => GNATCOLL.Projects.No_Project,
+                              Project => GNATCOLL.Projects.No_Project, --  ???
                               Line    => Sloc_Start.Line,
                               Column  => Visible_Column (Sloc_Start.Column)));
                      end if;
@@ -2030,7 +2030,7 @@ package body GNATdoc.Frontend is
                                  Loc : constant General_Location :=
                                    General_Location'
                                      (File    => File,
-                                      Project => GNATCOLL.Projects.No_Project,
+                                      Project => No_Project, --  ???
                                       Line    => Sloc_Start.Line,
                                       Column  =>
                                         Visible_Column (Sloc_Start.Column));
@@ -3276,7 +3276,7 @@ package body GNATdoc.Frontend is
             procedure Build_Missing_Entity is
                Loc   : constant General_Location :=
                  (File,
-                  GNATCOLL.Projects.No_Project,
+                  GNATCOLL.Projects.No_Project,  --  ??? unknown
                   Sloc_Start.Line, Visible_Column (Sloc_Start.Column));
                Lang  : constant Language_Access :=
                         Get_Language_From_File (Context.Lang_Handler, File);
@@ -3310,7 +3310,7 @@ package body GNATdoc.Frontend is
             procedure Fix_Wrong_Location (E : Entity_Id) is
                Loc : constant General_Location :=
                  (File,
-                  GNATCOLL.Projects.No_Project,
+                  GNATCOLL.Projects.No_Project, --  ??? unknown
                   Sloc_Start.Line,
                   Visible_Column (Sloc_Start.Column));
             begin
@@ -3552,7 +3552,7 @@ package body GNATdoc.Frontend is
                                  Loc : constant General_Location :=
                                    General_Location'
                                      (File    => Current_Body_File,
-                                      Project => GNATCOLL.Projects.No_Project,
+                                      Project => No_Project,  --  ??? unknown
                                       Line    => Sloc_Start.Line,
                                       Column  =>
                                         Visible_Column (Sloc_Start.Column));

@@ -294,7 +294,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
         Find_Unique_Entity
           (Location      =>
              (Self.File,
-              GNATCOLL.Projects.No_Project,
+              GNATCOLL.Projects.No_Project,  --  ??? unknown
               First.Line, Visible_Column (Simple_Column)),
            In_References => True);
 
