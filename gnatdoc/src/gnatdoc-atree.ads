@@ -223,6 +223,9 @@
 --    Is_Generic_Formal
 --      Defined in all entities. True for generic formals.
 
+--    Is_Generic_Subprogram (synthesized)
+--       Defined in all entities. True for generic subprograms.
+
 --    Is_Incomplete
 --       Defined in types and subtypes. True for incomplete type declarations.
 
@@ -784,6 +787,8 @@ private package GNATdoc.Atree is
    function Is_Generic
      (E : Entity_Id) return Boolean;
    function Is_Generic_Formal
+     (E : Entity_Id) return Boolean;
+   function Is_Generic_Subprogram
      (E : Entity_Id) return Boolean;
    function Is_Incomplete
      (E : Entity_Id) return Boolean;

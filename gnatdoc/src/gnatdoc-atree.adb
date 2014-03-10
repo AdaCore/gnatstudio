@@ -1643,6 +1643,16 @@ package body GNATdoc.Atree is
                                        E_Generic_Procedure);
    end Is_Generic;
 
+   ---------------------------
+   -- Is_Generic_Subprogram --
+   ---------------------------
+
+   function Is_Generic_Subprogram (E : Entity_Id) return Boolean is
+   begin
+      return Kind_In (Get_Kind (E), E_Generic_Function,
+                                    E_Generic_Procedure);
+   end Is_Generic_Subprogram;
+
    -----------------------
    -- Is_Generic_Formal --
    -----------------------

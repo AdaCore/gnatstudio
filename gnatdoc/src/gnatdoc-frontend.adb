@@ -3085,6 +3085,7 @@ package body GNATdoc.Frontend is
             begin
                return Is_Package (E)
                  or else Is_Subprogram_Or_Entry (E)
+                 or else Is_Generic_Subprogram (E)
                  or else Is_Record_Type (E)
                  or else Is_Concurrent_Type_Or_Object (E)
                   --  Include access types to handle the formals of access to
