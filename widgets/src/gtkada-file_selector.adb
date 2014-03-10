@@ -295,7 +295,7 @@ package body Gtkada.File_Selector is
          end if;
       end loop;
 
-      return Create_From_UTF8 (Str);
+      return Create_From_UTF8 (Str, Normalize => True);
    end Get_Location;
 
    --------------
@@ -421,11 +421,10 @@ package body Gtkada.File_Selector is
             if Is_Absolute_Path (File) then
                return File;
             else
-               File := Create_From_Base
-                 (File.Full_Name,
-                  Dialog.Current_Directory.Full_Name,
+               return Create_From_Base
+                 (File.Full_Name (Normalize => True),
+                  Dialog.Current_Directory.Full_Name (Normalize => True),
                   Host => Get_Host (Dialog.Current_Directory));
-               return File;
             end if;
          end;
       end if;
@@ -1137,8 +1136,7 @@ package body Gtkada.File_Selector is
          Set_Sensitive (Win.Back_Button, True);
       end if;
 
-      Push (Win.Past_History,
-            Win.Current_Directory);
+      Push (Win.Past_History, Win.Current_Directory);
 
       Win.Moving_Through_History := True;
       Set_Location (Win.Location_Combo, S);

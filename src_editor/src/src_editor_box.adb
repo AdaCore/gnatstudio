@@ -183,9 +183,14 @@ package body Src_Editor_Box is
       Callback      : Entity_Callback.Simple_Handler);
    --  Create the submenus for dispatching calls
 
-   ----------------------------------
-   -- The contextual menu handling --
-   ----------------------------------
+   procedure Initialize
+     (Box         : access Source_Editor_Box_Record'Class;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Filename    : GNATCOLL.VFS.Virtual_File;
+      Force_Focus : Boolean := True;
+      Source      : access Source_Buffer_Record'Class);
+   --  Internal version of Initialize, which can create new views
 
    -----------------------------
    -- Add_Navigation_Location --
@@ -556,16 +561,20 @@ package body Src_Editor_Box is
    ----------------
 
    procedure Initialize
-     (Box     : access Source_Editor_Box_Record'Class;
-      Project : GNATCOLL.Projects.Project_Type;
-      Kernel  : GPS.Kernel.Kernel_Handle;
-      Source  : Source_Buffer := null;
-      Lang    : Language.Language_Access)
+     (Box         : access Source_Editor_Box_Record'Class;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Filename    : GNATCOLL.VFS.Virtual_File;
+      Force_Focus : Boolean := True;
+      Source      : access Source_Buffer_Record'Class)
    is
+      Lang_Autodetect : constant Boolean := True;
+
       Scrolling_Area : Tooltip_Scrolled_Window;
       Drawing_Area   : Gtk_Drawing_Area;
       Hbox           : Gtk_Hbox;
       Frame          : Gtk_Frame;
+      Success        : Boolean;
 
    begin
       Initialize_Vbox (Box, Homogeneous => False);
@@ -582,10 +591,40 @@ package body Src_Editor_Box is
       Gtk_New (Scrolling_Area);
       Hbox.Pack_End (Scrolling_Area, Expand => True, Fill => True);
 
-      if Source = null then
-         Gtk_New (Box.Source_Buffer, Kernel, Lang => Lang);
+      --  load the buffer first, so that we can find out the relevant project
+      --  automatically for the view.
+
+      if Source /= null then
+         Box.Source_Buffer := Source_Buffer (Source);
       else
-         Box.Source_Buffer := Source;
+         Gtk_New (Box.Source_Buffer, Kernel, Lang => null);
+
+         if Filename.Is_Regular_File then
+            Load_File (Box.Source_Buffer, Filename, Lang_Autodetect, Success);
+
+            if Success then
+               Box.Source_Buffer.Status_Changed;
+            end if;
+
+         else
+            if Lang_Autodetect then
+               Set_Language
+                 (Box.Source_Buffer,
+                  Get_Language_From_File
+                    (Get_Language_Handler (Kernel), Filename));
+            end if;
+
+            Set_Initial_Dir (Box.Source_Buffer, Create (Filename.Dir_Name));
+            Set_Charset (Box.Source_Buffer, Get_File_Charset (Filename));
+
+            Set_Writable
+              (Box.Source_Buffer, Writable => True, Explicit => False);
+            Load_Empty_File (Box.Source_Buffer);
+         end if;
+
+         Set_Filename (Box.Source_Buffer, Filename);
+         Trace (Me, "MANU setting filename="
+                & (+Filename.Unix_Style_Full_Name (Normalize => True)));
       end if;
 
       Gtk_New
@@ -596,9 +635,9 @@ package body Src_Editor_Box is
          Box.Source_Buffer, Kernel);
       Scrolling_Area.Add (Box.Source_View);
 
+      --  The newly created buffer is now under the responsability of the
+      --  view.
       if Source = null then
-         --  The newly created buffer is now under the responsability of the
-         --  view.
          Unref (Box.Source_Buffer);
       end if;
 
@@ -658,6 +697,26 @@ package body Src_Editor_Box is
          Object          => Box,
          ID              => Src_Editor_Module_Id,
          Context_Func    => Get_Contextual_Menu'Access);
+
+      Set_Cursor_Location (Box, 1, 1, Force_Focus);
+      Update_Status (Box.Status_Bar);
+   end Initialize;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Box         : access Source_Editor_Box_Record'Class;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Filename    : GNATCOLL.VFS.Virtual_File;
+      Force_Focus : Boolean := True)
+   is
+   begin
+      Initialize
+        (Box, Project, Kernel, Filename, Force_Focus,
+         Source => null);
    end Initialize;
 
    ---------------
@@ -1473,13 +1532,15 @@ package body Src_Editor_Box is
    -------------
 
    procedure Gtk_New
-     (Box     : out Source_Editor_Box;
-      Project : GNATCOLL.Projects.Project_Type;
-      Kernel  : GPS.Kernel.Kernel_Handle;
-      Lang    : Language.Language_Access := null) is
+     (Box         : out Source_Editor_Box;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Filename    : GNATCOLL.VFS.Virtual_File;
+      Force_Focus : Boolean := True)
+   is
    begin
       Box := new Source_Editor_Box_Record;
-      Initialize (Box, Project, Kernel, null, Lang);
+      Initialize (Box, Project, Kernel, Filename, Force_Focus);
    end Gtk_New;
 
    ---------------------
@@ -1497,8 +1558,10 @@ package body Src_Editor_Box is
    begin
       Box := new Source_Editor_Box_Record;
       Initialize
-        (Box, Project, Kernel_Handle (Kernel), Source.Source_Buffer,
-         Get_Language (Source.Source_Buffer));
+        (Box, Project, Kernel_Handle (Kernel),
+         Filename    => No_File,
+         Force_Focus => True,
+         Source      => Source.Source_Buffer);
 
       if not Get_Writable (Box.Source_Buffer) then
          Set_Editable (Box.Source_View, False);
@@ -1588,54 +1651,6 @@ package body Src_Editor_Box is
          Views (V).Source_View.Set_Background_Color;
       end loop;
    end Set_Writable;
-
-   ---------------
-   -- Load_File --
-   ---------------
-
-   procedure Load_File
-     (Editor          : access Source_Editor_Box_Record;
-      Filename        : GNATCOLL.VFS.Virtual_File;
-      Lang_Autodetect : Boolean := True;
-      Force_Focus     : Boolean := True;
-      Success         : out Boolean) is
-   begin
-      Load_File (Editor.Source_Buffer, Filename, Lang_Autodetect, Success);
-
-      if Success then
-         Set_Cursor_Location (Editor, 1, 1, Force_Focus);
-         Set_Filename (Editor.Source_Buffer, Filename);
-         Editor.Source_Buffer.Status_Changed;
-      end if;
-   end Load_File;
-
-   ---------------------
-   -- Load_Empty_File --
-   ---------------------
-
-   procedure Load_Empty_File
-     (Editor          : access Source_Editor_Box_Record;
-      Filename        : GNATCOLL.VFS.Virtual_File;
-      Initial_Dir     : GNATCOLL.VFS.Virtual_File;
-      Lang_Handler    : Language_Handlers.Language_Handler;
-      Lang_Autodetect : Boolean := True) is
-   begin
-      if Lang_Autodetect then
-         Set_Language
-           (Editor.Source_Buffer,
-            Get_Language_From_File (Lang_Handler, Filename));
-      end if;
-
-      Set_Cursor_Location (Editor, 1, 1);
-      Set_Filename (Editor.Source_Buffer, Filename);
-      Set_Initial_Dir (Editor.Source_Buffer, Initial_Dir);
-      Set_Charset (Editor.Source_Buffer, Get_File_Charset (Filename));
-
-      Set_Writable (Editor.Source_Buffer, Writable => True, Explicit => False);
-      Load_Empty_File (Editor.Source_Buffer);
-
-      Update_Status (Editor.Status_Bar);
-   end Load_Empty_File;
 
    ------------------
    -- Save_To_File --

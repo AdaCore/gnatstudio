@@ -23,10 +23,8 @@ with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with String_Utils;            use String_Utils;
 with GNATCOLL.Templates;      use GNATCOLL.Templates;
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 package body GPS.Shared_Macros is
-   Me : constant Trace_Handle := Create ("Macros");
 
    function Shared_Macros_Substitute
      (Project_From_Kernel : Project_Type;
@@ -49,7 +47,6 @@ package body GPS.Shared_Macros is
       --  backslashes at the start of the PATH is not recognized by Windows.
 
    begin
-      Trace (Me, "MANU Shared_Macros_Substitute " & Param);
       Done.all := True;
 
       if Param = "f" then

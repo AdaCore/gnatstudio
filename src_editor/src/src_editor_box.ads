@@ -35,8 +35,6 @@ with Gtk.Handlers;
 with Gtk.Text_Mark;
 
 with Basic_Types;           use Basic_Types;
-with Language;
-with Language_Handlers;
 with GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.Modules.UI;
@@ -56,26 +54,35 @@ package Src_Editor_Box is
    type Source_Editor_Box is access all Source_Editor_Box_Record;
 
    procedure Gtk_New
-     (Box     : out Source_Editor_Box;
-      Project : GNATCOLL.Projects.Project_Type;
-      Kernel  : GPS.Kernel.Kernel_Handle;
-      Lang    : Language.Language_Access := null);
-   --  Create a new Source_Editor_Box. It must be destroyed after use
-   --  (see procedure Destroy below).
-
+     (Box         : out Source_Editor_Box;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Filename    : GNATCOLL.VFS.Virtual_File;
+      Force_Focus : Boolean := True);
    procedure Initialize
-     (Box     : access Source_Editor_Box_Record'Class;
-      Project : GNATCOLL.Projects.Project_Type;
-      Kernel  : GPS.Kernel.Kernel_Handle;
-      Source  : Source_Buffer := null;
-      Lang    : Language.Language_Access);
-   --  Perform the initialization of the given editor box. If Source_Buffer
-   --  is null, then a new buffer will automatically be created. Otherwise,
-   --  the editor creates a new editor for the same Source_Buffer.
+     (Box         : access Source_Editor_Box_Record'Class;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Kernel      : GPS.Kernel.Kernel_Handle;
+      Filename    : GNATCOLL.VFS.Virtual_File;
+      Force_Focus : Boolean := True);
+   --  Perform the initialization of the given editor box.
    --
    --  Project is the one controlling the file. There might be several
    --  possibilities when using aggregate projects, and we need to know the
    --  exact project to resolve things like cross-references.
+   --
+   --  If Filename points to an existin file:
+   --    Load the file into the buffer. If Lang_Autodetect is set to True, then
+   --    the editor tries to automatically set the language based on the
+   --    Filename. Otherwise, the language remains unchanged. After the file is
+   --    loaded into the buffer, the buffer is syntax-highlighted if Lang is
+   --    set. Filename is also stored in the Editor.
+   --  Otherwise:
+   --     an empty file is loaded.
+   --
+   --  Note that if Lang_Autodetect is True, and the editor could not guess
+   --  the language from the filename, then Lang will be unset, and syntax
+   --  highlighting will be deactivated.
 
    procedure Create_New_View
      (Box     : out Source_Editor_Box;
@@ -127,31 +134,6 @@ package Src_Editor_Box is
       return GNATCOLL.Projects.Project_Type;
    --  Return the project for this view. This is used in the case of
    --  aggregate projects
-
-   procedure Load_File
-     (Editor          : access Source_Editor_Box_Record;
-      Filename        : GNATCOLL.VFS.Virtual_File;
-      Lang_Autodetect : Boolean := True;
-      Force_Focus     : Boolean := True;
-      Success         : out Boolean);
-   --  Load the file into the buffer. If Lang_Autodetect is set to True, then
-   --  the editor tries to automatically set the language based on the
-   --  Filename. Otherwise, the language remains unchanged. After the file is
-   --  loaded into the buffer, the buffer is syntax-highlighted if Lang is set.
-   --  Filename is also stored in the Editor.
-   --
-   --  Note that if Lang_Autodetect is True, and the editor could not guess
-   --  the language from the filename, then Lang will be unset, and syntax
-   --  highlighting will be deactivated.
-
-   procedure Load_Empty_File
-     (Editor          : access Source_Editor_Box_Record;
-      Filename        : GNATCOLL.VFS.Virtual_File;
-      Initial_Dir     : GNATCOLL.VFS.Virtual_File;
-      Lang_Handler    : Language_Handlers.Language_Handler;
-      Lang_Autodetect : Boolean := True);
-   --  Similar to Load_File, but assume that Filename is a new file that
-   --  is not present on the file system.
 
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;

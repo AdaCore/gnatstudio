@@ -1085,20 +1085,15 @@ package body Src_Editor_Module is
       File_Exists : constant Boolean := Is_Regular_File (File);
       Writable    : Writable_File;
       Is_Writable : Boolean;
+      F           : Virtual_File;
    begin
       --  Create a new editor only if the file exists or we are asked to
       --  create a new empty one anyway.
 
       if File_Exists then
-         Gtk_New (Editor, Project, Kernel_Handle (Kernel));
-         Load_File (Editor, File,
-                    Force_Focus => Focus,
-                    Success     => Success);
-
-         if not Success then
-            Destroy (Editor);
-            Editor := null;
-         end if;
+         Gtk_New (Editor, Project, Kernel_Handle (Kernel),
+                  Filename    => File,
+                  Force_Focus => Focus);
 
       elsif Create_New then
          --  Do not create the file if we know we won't be able to save it
@@ -1108,7 +1103,14 @@ package body Src_Editor_Module is
          if File = GNATCOLL.VFS.No_File or else File.Is_Directory then
             Is_Writable := True;
 
+            if Dir = GNATCOLL.VFS.No_File then
+               F := GNATCOLL.VFS.No_File;
+            else
+               F := Create_From_Dir (Dir, "new_file");
+            end if;
+
          else
+            F := File;
             Writable := Write_File (File);
             Is_Writable := Writable /= Invalid_File;
 
@@ -1127,8 +1129,9 @@ package body Src_Editor_Module is
          end if;
 
          if Is_Writable then
-            Gtk_New (Editor, Project, Kernel_Handle (Kernel));
-            Load_Empty_File (Editor, File, Dir, Get_Language_Handler (Kernel));
+            Gtk_New (Editor, Project, Kernel_Handle (Kernel),
+                     Filename    => F,
+                     Force_Focus => Focus);
          end if;
       end if;
 
@@ -1217,7 +1220,7 @@ package body Src_Editor_Module is
       Create_Files_Pixbufs_If_Needed (Kernel);
 
       if Active (Me) then
-         Trace (Me, "Open file " & Display_Full_Name (File)
+         Trace (Me, "Open file " & File.Display_Full_Name
                 & " Project=" & Project.Project_Path.Display_Full_Name
                 & " Focus=" & Focus'Img);
       end if;
@@ -1226,6 +1229,7 @@ package body Src_Editor_Module is
          Child2 := Find_Editor (Kernel, File, Project);
 
          if Child2 /= null then
+            Trace (Me, "Reusing existing editor for same project");
             Check_Timestamp_And_Reload
               (Source_Editor_Box (Get_Widget (Child2)),
                Interactive   => not Force,
@@ -1254,8 +1258,21 @@ package body Src_Editor_Module is
          end if;
       end if;
 
-      Editor := Create_File_Editor
-        (Kernel, File, Project, Initial_Dir, Create_New, Focus);
+      --  Do we have the file opened for another project ? If yes, create a new
+      --  view
+
+      Child2 := Find_Editor (Kernel, File, No_Project);
+      if Child2 /= null then
+         Trace (Me, "Create new view for existing file, wrong project");
+         Create_New_View
+           (Box     => Editor,
+            Project => Project,
+            Kernel  => Kernel,
+            Source  => Get_Source_Box_From_MDI (Child2));
+      else
+         Editor := Create_File_Editor
+           (Kernel, File, Project, Initial_Dir, Create_New, Focus);
+      end if;
 
       --  If we have created an editor, put it into a box, and give it
       --  to the MDI to handle
@@ -1314,16 +1331,17 @@ package body Src_Editor_Module is
 
          if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then
             declare
+               P : constant Project_Type := Get_Project (Editor);
                P_Name        : constant String :=
-                 (if Project /= No_Project and then
+                 (if P /= No_Project and then
                   Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
-                  then " (" & Project.Project_Path.Display_Base_Name & ')'
+                  then " (" & P.Project_Path.Display_Base_Name & ')'
                   else "");
                P_Full_Name   : constant String :=
-                 (if Project /= No_Project and then
+                 (if P /= No_Project and then
                   Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
                   then ASCII.LF
-                  & "Project : " & Project.Project_Path.Display_Full_Name
+                  & "Project : " & P.Project_Path.Display_Full_Name
                   else "");
             begin
                if Is_Local (File) then
