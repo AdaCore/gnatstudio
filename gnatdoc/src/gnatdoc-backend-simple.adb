@@ -951,24 +951,17 @@ package body GNATdoc.Backend.Simple is
       -----------------------
 
       function Get_Ada_Src_Files return Files_List.Vector is
-         File       : GNATCOLL.VFS.Virtual_File;
-         File_Index : Files_List.Cursor;
-         Lang       : Language_Access;
-         Result     : Files_List.Vector;
+         Lang   : Language_Access;
+         Result : Files_List.Vector;
 
       begin
-         File_Index := Backend.Src_Files.First;
-
-         while Files_List.Has_Element (File_Index) loop
-            File := Files_List.Element (File_Index);
+         for File of Backend.Src_Files loop
             Lang :=
               Backend.Context.Lang_Handler.Get_Language_From_File (File);
 
             if Lang.all in Language.Ada.Ada_Language'Class then
                Result.Append (File);
             end if;
-
-            Files_List.Next (File_Index);
          end loop;
 
          return Result;
@@ -1816,24 +1809,17 @@ package body GNATdoc.Backend.Simple is
          -----------------------------
 
          function Get_C_And_CPP_Src_Files return Files_List.Vector is
-            File       : GNATCOLL.VFS.Virtual_File;
-            File_Index : Files_List.Cursor;
-            Lang       : Language_Access;
-            Result     : Files_List.Vector;
+            Lang   : Language_Access;
+            Result : Files_List.Vector;
 
          begin
-            File_Index := Backend.Src_Files.First;
-
-            while Files_List.Has_Element (File_Index) loop
-               File := Files_List.Element (File_Index);
+            for File of Backend.Src_Files loop
                Lang :=
                  Backend.Context.Lang_Handler.Get_Language_From_File (File);
 
                if Lang.all in Language.C.C_Language'Class then
                   Result.Append (File);
                end if;
-
-               Files_List.Next (File_Index);
             end loop;
 
             return Result;
