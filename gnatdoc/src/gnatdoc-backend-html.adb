@@ -1277,6 +1277,7 @@ package body GNATdoc.Backend.HTML is
 
       procedure Generate_Support_Files is
          Index_HTML       : constant Filesystem_String := "index.html";
+         Blank_HTML       : constant Filesystem_String := "blank.html";
          Inheritance_HTML : constant Filesystem_String :=
                               "inheritance_index.html";
          GNATdoc_JS       : constant Filesystem_String := "gnatdoc.js";
@@ -1287,6 +1288,11 @@ package body GNATdoc.Backend.HTML is
          Index_HTML_Dst       : constant Virtual_File :=
            Get_Doc_Directory
              (Self.Context.Kernel).Create_From_Dir (Index_HTML);
+         Blank_HTML_Src       : constant Virtual_File :=
+           Self.Get_Resource_File (Blank_HTML);
+         Blank_HTML_Dst       : constant Virtual_File :=
+           Get_Doc_Directory
+             (Self.Context.Kernel).Create_From_Dir (Blank_HTML);
          Inheritance_HTML_Src : constant Virtual_File :=
            Self.Get_Resource_File (Inheritance_HTML);
          Inheritance_HTML_Dst : constant Virtual_File :=
@@ -1307,6 +1313,8 @@ package body GNATdoc.Backend.HTML is
 
       begin
          Index_HTML_Src.Copy (Index_HTML_Dst.Full_Name, Success);
+         pragma Assert (Success);
+         Blank_HTML_Src.Copy (Blank_HTML_Dst.Full_Name, Success);
          pragma Assert (Success);
          Inheritance_HTML_Src.Copy (Inheritance_HTML_Dst.Full_Name, Success);
          pragma Assert (Success);

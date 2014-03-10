@@ -580,6 +580,7 @@ function hideTOC() {
 
 function displayPackagesAndClasses() {
     hideTOC();
+    document.getElementById('contentView').src = 'blank.html';
     document.getElementById('packagesAndClasses').style.display = 'block';
     document.getElementById('packagesAndClassesMenu').className = 'current';
 }
@@ -590,6 +591,7 @@ function displayPackagesAndClasses() {
 
 function displayEntities() {
     hideTOC();
+    document.getElementById('contentView').src = 'blank.html';
     document.getElementById('entities').style.display = 'block';
     document.getElementById('entitiesMenu').className = 'current';
 }
@@ -600,6 +602,7 @@ function displayEntities() {
 
 function displaySources() {
     hideTOC();
+    document.getElementById('contentView').src = 'blank.html';
     document.getElementById('sources').style.display = 'block';
     document.getElementById('sourcesMenu').className = 'current';
 }
