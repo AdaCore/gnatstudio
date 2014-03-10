@@ -262,6 +262,9 @@ begin
       end if;
    end;
 
+   --  Support symbolic links
+   Kernel.Registry.Environment.Set_Trusted_Mode (False);
+
    --  Load project
    Kernel.Registry.Tree.Load
      (Root_Project_Path => Project_File,
