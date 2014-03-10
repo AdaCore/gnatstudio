@@ -88,7 +88,9 @@ package body Commands.Builder is
                Force_File,
 
                --  ??? any project, just checking syntax.
-               GNATCOLL.Projects.No_Project);
+               Builder.Kernel.Registry
+               .Tree.Info_Set (Force_File)
+               .First_Element.Project);
          end if;
 
          --  For background compilation synthetic messages category name is
