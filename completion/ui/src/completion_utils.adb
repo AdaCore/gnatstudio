@@ -25,6 +25,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Label;                 use Gtk.Label;
 
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -59,6 +60,7 @@ package body Completion_Utils is
       Open_File_Editor
         (User_Data.Kernel,
          User_Data.Location.File_Path,
+         No_Project,  --   ??? unknown
          User_Data.Location.Line,
          User_Data.Location.Column);
    end On_Location_Button_Clicked;

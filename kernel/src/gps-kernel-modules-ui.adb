@@ -1837,7 +1837,10 @@ package body GPS.Kernel.Modules.UI is
                   if File_Extension (File) = Project_File_Extension then
                      Load_Project (Kernel, File);
                   else
-                     Open_File_Editor (Kernel, File, New_File => False);
+                     Open_File_Editor
+                       (Kernel, File,
+                        Project  => No_Project,  --  will choose a random one
+                        New_File => False);
                   end if;
                end;
             end loop;

@@ -768,6 +768,7 @@ package body Src_Editor_Module.Shell is
                      Open_File_Editor
                        (Kernel,
                         File,
+                        No_Project,
                         Line,
                         Column,
                         Enable_Navigation => False,
@@ -777,6 +778,7 @@ package body Src_Editor_Module.Shell is
                      Open_File_Editor
                        (Kernel,
                         File,
+                        No_Project,
                         Line,
                         Column,
                         Column + Visible_Column_Type (Length),
@@ -789,6 +791,7 @@ package body Src_Editor_Module.Shell is
                   Marker := Create_File_Marker
                     (Kernel,
                      File,
+                     No_Project,
                      Editable_Line_Type (Line),
                      Column, Length);
                   Set_Return_Value (Data, Get_Id (Marker));
@@ -801,7 +804,8 @@ package body Src_Editor_Module.Shell is
             File  : constant Virtual_File :=
                       Create
                         (Nth_Arg (Data, 1), Kernel, Use_Source_Path => True);
-            Child : constant MDI_Child := Find_Editor (Kernel, File);
+            Child : constant MDI_Child :=
+              Find_Editor (Kernel, File, No_Project);
             Info  : Line_Info_Width_Array_Access;
             Box   : Source_Editor_Box;
 
@@ -1002,7 +1006,7 @@ package body Src_Editor_Module.Shell is
                   Child : MDI_Child;
                   Box   : Source_Editor_Box;
                begin
-                  Child := Find_Editor (Kernel, Filename);
+                  Child := Find_Editor (Kernel, Filename, No_Project);
 
                   if Child = null then
                      Set_Error_Msg (Data, -"file not open");
@@ -1044,7 +1048,7 @@ package body Src_Editor_Module.Shell is
             Before : constant Integer := Nth_Arg (Data, 4, Default => -1);
             After  : constant Integer := Nth_Arg (Data, 5, Default => -1);
             Child  : constant MDI_Child :=
-              Find_Editor (Kernel, Create (File, Kernel));
+              Find_Editor (Kernel, Create (File, Kernel), No_Project);
 
             Real_Col : Character_Offset_Type;
          begin
@@ -1070,7 +1074,7 @@ package body Src_Editor_Module.Shell is
             Before : constant Integer := Nth_Arg (Data, 5, Default => -1);
             After  : constant Integer := Nth_Arg (Data, 6, Default => -1);
             Editor : constant Source_Editor_Box := Open_File
-              (Kernel, Create (File, Kernel), Create_New => False,
+              (Kernel, Create (File, Kernel), No_Project, Create_New => False,
                Line => 0, Column => 0, Column_End => 0);
 
             Real_Col : Character_Offset_Type;
@@ -1130,7 +1134,8 @@ package body Src_Editor_Module.Shell is
          declare
             File  : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel);
-            Child : constant MDI_Child := Find_Editor (Kernel, File);
+            Child : constant MDI_Child :=
+              Find_Editor (Kernel, File, No_Project);
          begin
             if Child = null then
                declare
@@ -1172,7 +1177,8 @@ package body Src_Editor_Module.Shell is
          declare
             File   : constant Virtual_File :=
                        Create (Nth_Arg (Data, 1), Kernel);
-            Child  : constant MDI_Child := Find_Editor (Kernel, File);
+            Child  : constant MDI_Child :=
+              Find_Editor (Kernel, File, No_Project);
             Line   : constant Editable_Line_Type :=
                        Editable_Line_Type (Natural'(Nth_Arg (Data, 2)));
 
@@ -1224,7 +1230,8 @@ package body Src_Editor_Module.Shell is
          declare
             File  : constant Virtual_File :=
                       Create (Nth_Arg (Data, 1), Kernel);
-            Child : constant MDI_Child := Find_Editor (Kernel, File);
+            Child : constant MDI_Child :=
+              Find_Editor (Kernel, File, No_Project);
          begin
             if Child = null then
                Set_Error_Msg
@@ -1253,7 +1260,8 @@ package body Src_Editor_Module.Shell is
          declare
             File   : constant Virtual_File :=
                        Create (Nth_Arg (Data, 1), Kernel);
-            Child  : constant MDI_Child := Find_Editor (Kernel, File);
+            Child  : constant MDI_Child :=
+              Find_Editor (Kernel, File, No_Project);
             Line   : constant Editable_Line_Type :=
                        Editable_Line_Type (Integer'(Nth_Arg (Data, 2)));
             Column : Visible_Column_Type :=
@@ -1311,7 +1319,8 @@ package body Src_Editor_Module.Shell is
          declare
             File  : constant Virtual_File :=
                       Create (Nth_Arg (Data, 1), Kernel);
-            Child : constant MDI_Child := Find_Editor (Kernel, File);
+            Child : constant MDI_Child :=
+              Find_Editor (Kernel, File, No_Project);
          begin
             Scroll_To_Cursor_Location
               (Get_View (Source_Editor_Box (Get_Widget (Child))),
@@ -1322,7 +1331,8 @@ package body Src_Editor_Module.Shell is
          declare
             File  : constant Virtual_File :=
                       Create (Nth_Arg (Data, 1), Kernel);
-            Child : constant MDI_Child := Find_Editor (Kernel, File);
+            Child : constant MDI_Child :=
+              Find_Editor (Kernel, File, No_Project);
             A     : GNAT.Strings.String_Access;
             B     : GNAT.Strings.String_Access;
 
@@ -1370,7 +1380,8 @@ package body Src_Editor_Module.Shell is
          declare
             File    : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel);
-            Child   : constant MDI_Child := Find_Editor (Kernel, File);
+            Child   : constant MDI_Child :=
+              Find_Editor (Kernel, File, No_Project);
             To_File : Virtual_File := GNATCOLL.VFS.No_File;
             Result  : Boolean;
          begin
@@ -1433,7 +1444,7 @@ package body Src_Editor_Module.Shell is
             Highlight_Category : Natural := 0;
             Style       : Style_Access;
          begin
-            Child := Find_Editor (Kernel, Filename);
+            Child := Find_Editor (Kernel, Filename, No_Project);
 
             if Number_Of_Arguments (Data) >= 4 then
                Style := Get_Or_Create_Style
@@ -1453,7 +1464,7 @@ package body Src_Editor_Module.Shell is
 
                if Line >= 0 and then Number > 0 then
                   Marker := Create_File_Marker
-                    (Kernel, Filename,
+                    (Kernel, Filename, No_Project,
                      Add_Special_Blank_Lines
                        (Get_Buffer (Box),
                         Editable_Line_Type (Line),
@@ -1477,7 +1488,7 @@ package body Src_Editor_Module.Shell is
             end if;
 
             if Get_Mark (Marker) /= null then
-               Child := Find_Editor (Kernel, Get_File (Marker));
+               Child := Find_Editor (Kernel, Get_File (Marker), No_Project);
                Box := Source_Editor_Box (Get_Widget (Child));
                Src_Editor_Buffer.Line_Information.Remove_Blank_Lines
                  (Get_Buffer (Box), Get_Mark (Marker), Number);
@@ -1494,7 +1505,7 @@ package body Src_Editor_Module.Shell is
             Child       : MDI_Child;
             Box         : Source_Editor_Box;
          begin
-            Child := Find_Editor (Kernel, Filename);
+            Child := Find_Editor (Kernel, Filename, No_Project);
 
             if Child /= null then
                Box := Source_Editor_Box (Get_Widget (Child));
@@ -1520,7 +1531,7 @@ package body Src_Editor_Module.Shell is
             Child    : MDI_Child;
             Box      : Source_Editor_Box;
          begin
-            Child := Find_Editor (Kernel, Filename);
+            Child := Find_Editor (Kernel, Filename, No_Project);
 
             if Child /= null then
                Box := Source_Editor_Box (Get_Widget (Child));
@@ -1547,7 +1558,7 @@ package body Src_Editor_Module.Shell is
             Col      : Gdk_RGBA;
             Success  : Boolean;
          begin
-            Child := Find_Editor (Kernel, Filename);
+            Child := Find_Editor (Kernel, Filename, No_Project);
 
             if Child /= null then
                Box := Source_Editor_Box (Get_Widget (Child));
@@ -1567,8 +1578,8 @@ package body Src_Editor_Module.Shell is
             use Child_Triplet_Callback;
             Triplet    : Child_Triplet_Access;
          begin
-            Child_1 := Find_Editor (Kernel, Filename_1);
-            Child_2 := Find_Editor (Kernel, Filename_2);
+            Child_1 := Find_Editor (Kernel, Filename_1, No_Project);
+            Child_2 := Find_Editor (Kernel, Filename_2, No_Project);
 
             if Child_1 /= null and then Child_2 /= null then
                Triplet := new Child_Triplet'(Child_1, Child_2, null);
@@ -1582,7 +1593,7 @@ package body Src_Editor_Module.Shell is
                      Filename_3 : constant Virtual_File :=
                        Create (Nth_Arg (Data, 3), Kernel);
                      Child_3 : constant MDI_Child :=
-                       Find_Editor (Kernel, Filename_3);
+                       Find_Editor (Kernel, Filename_3, No_Project);
                   begin
                      if Child_3 /= null then
                         Set_Synchronized_Editor
@@ -1648,7 +1659,7 @@ package body Src_Editor_Module.Shell is
             Write : constant Boolean := Nth_Arg (Data, 2);
             Child : MDI_Child;
          begin
-            Child := Find_Editor (Kernel, File);
+            Child := Find_Editor (Kernel, File, No_Project);
 
             if Child /= null then
                Set_Writable
@@ -1669,7 +1680,7 @@ package body Src_Editor_Module.Shell is
             Filename : constant String := Nth_Arg (Data, 3, "");
             Child    : MDI_Child;
          begin
-            Child := Find_Editor (Kernel, File);
+            Child := Find_Editor (Kernel, File, No_Project);
 
             if Child /= null then
                if Filename = "" then

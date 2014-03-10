@@ -23,8 +23,10 @@ with Ada.Text_IO;             use Ada.Text_IO;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with String_Utils;            use String_Utils;
 with GNATCOLL.Templates;      use GNATCOLL.Templates;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 package body GPS.Shared_Macros is
+   Me : constant Trace_Handle := Create ("Macros");
 
    function Shared_Macros_Substitute
      (Project_From_Kernel : Project_Type;
@@ -34,7 +36,8 @@ package body GPS.Shared_Macros is
       Quoted              : Boolean;
       Done                : access Boolean;
       Server              : Server_Type := GPS_Server;
-      For_Shell           : Boolean := False) return String is
+      For_Shell           : Boolean := False) return String
+   is
       Project                          : Project_Type := No_Project;
       Recurse, List_Dirs, List_Sources : Boolean;
       Index                            : Integer;
@@ -46,6 +49,7 @@ package body GPS.Shared_Macros is
       --  backslashes at the start of the PATH is not recognized by Windows.
 
    begin
+      Trace (Me, "MANU Shared_Macros_Substitute " & Param);
       Done.all := True;
 
       if Param = "f" then
@@ -91,7 +95,7 @@ package body GPS.Shared_Macros is
             else
                return "-P" &
                String_Utils.Protect
-                 (+To_Remote (Project_Path (Project),
+                 (+To_Remote (Project.Project_Path,
                      Get_Nickname (Server)).Full_Name,
                   Protect_Quotes      => Quoted,
                   Protect_Backslashes => For_Shell);
@@ -128,7 +132,7 @@ package body GPS.Shared_Macros is
          elsif Param = "pp" or else Param = "PP" then
             return String_Utils.Protect
               (+To_Remote
-                 (Project_Path (Project),
+                 (Project.Project_Path,
                   Get_Nickname (Server)).Full_Name,
                Protect_Quotes      => Quoted,
                Protect_Backslashes => For_Shell);

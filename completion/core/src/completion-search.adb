@@ -23,6 +23,7 @@ with GPS.Kernel.Standard_Hooks;      use GPS.Kernel.Standard_Hooks;
 with GNAT.Strings;                   use GNAT.Strings;
 with Gtk.Label;                      use Gtk.Label;
 with Gtk.Widget;                     use Gtk.Widget;
+with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                 use GNATCOLL.Utils;
 with Language.Tree.Database;         use Language.Tree.Database;
@@ -71,6 +72,7 @@ package body Completion.Search is
       Open_File_Editor
         (Self.Kernel,
          Get_File_Path (File),
+         No_Project,   --  ??? unknown
          Construct.Sloc_Entity.Line,
          Visible_Column_Type (Construct.Sloc_Entity.Column),
          Focus => Give_Focus);
@@ -93,9 +95,10 @@ package body Completion.Search is
       Entity := Xref.Get_Entity
         (Self.Kernel.Databases,
          Name  => Get (Construct.Name).all,
-         Loc   => (File => Get_File_Path (File),
-                   Line => Construct.Sloc_Entity.Line,
-                   Column => Visible_Column_Type
+         Loc   => (File    => Get_File_Path (File),
+                   Project => No_Project,  --  ??? unknown
+                   Line    => Construct.Sloc_Entity.Line,
+                   Column  => Visible_Column_Type
                      (Construct.Sloc_Entity.Column)));
 
       Gtk_New (Label, Documentation

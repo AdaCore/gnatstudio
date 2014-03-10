@@ -545,7 +545,11 @@ package body Project_Explorers_Common is
             return Dnd_Data (C, Copy => True);
          else
             Open_File_Editor
-              (Child.Kernel, Child.Dnd_From_File, Line => 0, Column => 0);
+              (Child.Kernel,
+               Child.Dnd_From_File,
+               Project => Child.Dnd_From_Project,
+               Line    => 0,
+               Column  => 0);
          end if;
 
          return Get_Focus_Child (Get_MDI (Child.Kernel));
@@ -561,6 +565,7 @@ package body Project_Explorers_Common is
    begin
       --  So that we can also move the explorer itself
       Child.Dnd_From_File := GNATCOLL.VFS.No_File;
+      Child.Dnd_From_Project := GNATCOLL.Projects.No_Project;
    end Child_Drag_Finished;
 
    ---------------------
@@ -578,6 +583,8 @@ package body Project_Explorers_Common is
       Iter         : Gtk_Tree_Iter;
       Path         : Gtk_Tree_Path;
       Line, Column : Gint;
+      Project      : Project_Type;
+      File         : Virtual_File;
    begin
       if Event.Button = 1 then
          Iter := Find_Iter_For_Event (Tree, Event);
@@ -623,15 +630,20 @@ package body Project_Explorers_Common is
                   return False;
 
                when File_Node =>
+                  File    := Get_File (Model, Iter, File_Column);
+                  Project := Get_Project_From_Node
+                    (Model, Kernel, Iter, Importing => False);
+
                   if Event.The_Type = Gdk_2button_Press
                     or else Event.The_Type = Gdk_3button_Press
                   then
                      Cancel_Child_Drag (Child);
                      Open_File_Editor
                        (Kernel,
-                        Get_File (Model, Iter, File_Column),
-                        Line   => 0,
-                        Column => 0);
+                        File,
+                        Project => Project,
+                        Line    => 0,
+                        Column  => 0);
                      return True;
 
                   elsif Event.The_Type = Button_Press then
@@ -653,8 +665,8 @@ package body Project_Explorers_Common is
 
                      if Get_State (Child) /= Gtkada.MDI.Floating then
                         Child.Kernel        := Kernel;
-                        Child.Dnd_From_File :=
-                          Get_File (Model, Iter, File_Column);
+                        Child.Dnd_From_File := File;
+                        Child.Dnd_From_Project := Project;
 
                         Child_Drag_Begin
                           (Child, Event,
@@ -672,12 +684,16 @@ package body Project_Explorers_Common is
                   if Event.The_Type = Button_Release then
                      Line := Get_Int (Model, Iter, Line_Column);
                      Column := Get_Int (Model, Iter, Column_Column);
+                     File   := Get_File (Model, Iter, File_Column);
+                     Project := Get_Project_From_Node
+                       (Model, Kernel, Iter, Importing => False);
 
                      Open_File_Editor
                        (Kernel,
-                        Get_File (Model, Iter, File_Column),
-                        Line   => Natural (Line),
-                        Column => Visible_Column_Type (Column));
+                        File,
+                        Project => Project,
+                        Line    => Natural (Line),
+                        Column  => Visible_Column_Type (Column));
                   end if;
                   return False;
 
@@ -706,6 +722,8 @@ package body Project_Explorers_Common is
       Iter         : Gtk_Tree_Iter;
       Line, Column : Gint;
       Model        : Gtk_Tree_Model;
+      File         : Virtual_File;
+      Project      : Project_Type;
 
    begin
       Get_Selected (Get_Selection (Tree), Model, Iter);
@@ -719,21 +737,30 @@ package body Project_Explorers_Common is
            (Integer (Get_Int (Model, Iter, Node_Type_Column))) is
 
          when File_Node =>
+            File    := Get_File (Gtk_Tree_Store'(-Model), Iter, File_Column);
+            Project := Get_Project_From_Node
+              (Gtk_Tree_Store'(-Model), Kernel, Iter, Importing => False);
+
             Open_File_Editor
               (Kernel,
-               Get_File (Gtk_Tree_Store'(-Model), Iter, File_Column),
-               Line   => 0,
-               Column => 0);
+               File,
+               Project => Project,
+               Line    => 0,
+               Column  => 0);
 
          when Entity_Node =>
-            Line := Get_Int (Model, Iter, Line_Column);
+            Line   := Get_Int (Model, Iter, Line_Column);
             Column := Get_Int (Model, Iter, Column_Column);
+            File   := Get_File (Gtk_Tree_Store'(-Model), Iter, File_Column);
+            Project := Get_Project_From_Node
+              (Gtk_Tree_Store'(-Model), Kernel, Iter, Importing => False);
 
             Open_File_Editor
               (Kernel,
-               Get_File (Gtk_Tree_Store'(-Model), Iter, File_Column),
-               Line   => Natural (Line),
-               Column => Visible_Column_Type (Column));
+               File,
+               Project => Project,
+               Line    => Natural (Line),
+               Column  => Visible_Column_Type (Column));
 
          when others =>
             null;

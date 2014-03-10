@@ -20,6 +20,7 @@ with System;
 
 with Gtkada.MDI;
 
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 with Basic_Types;
 with Default_Preferences;
@@ -181,8 +182,9 @@ package GPS.Kernel.Standard_Hooks is
    File_Location_Hook_Type : constant Hook_Type := "file_location_hooks";
 
    type File_Location_Hooks_Args is new File_Hooks_Args with record
-      Line   : Natural;
-      Column : Natural;
+      Project : GNATCOLL.Projects.Project_Type;
+      Line    : Natural;
+      Column  : Natural;
       --  ??? What is the meaning of Column here, user column or char offset?
    end record;
    type File_Location_Hooks_Args_Access is access all
@@ -255,6 +257,7 @@ package GPS.Kernel.Standard_Hooks is
 
    type Source_File_Hooks_Args (Length : Natural) is new Hooks_Data with record
       File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Project           : GNATCOLL.Projects.Project_Type;
       Line              : Integer := 1;
       Column            : Basic_Types.Visible_Column_Type := 1;
       Column_End        : Basic_Types.Visible_Column_Type := 0;
@@ -281,6 +284,8 @@ package GPS.Kernel.Standard_Hooks is
    --  already an open editor for it.
    --  Focus indicates whether the MDI child containing the editor should be
    --  given the focus.
+   --  Project should be specified to indicate the view for the file when
+   --  aggregate projects are being used.
 
    Open_File_Action_Hook : constant Hook_Name :=
                              To_Hook_Name ("open_file_action_hook");
@@ -290,6 +295,7 @@ package GPS.Kernel.Standard_Hooks is
    procedure Open_File_Editor
      (Kernel            : access Kernel_Handle_Record'Class;
       Filename          : GNATCOLL.VFS.Virtual_File;
+      Project           : GNATCOLL.Projects.Project_Type;
       Line              : Natural := 1;
       Column            : Basic_Types.Visible_Column_Type := 1;
       Column_End        : Basic_Types.Visible_Column_Type := 0;

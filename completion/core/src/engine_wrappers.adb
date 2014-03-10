@@ -14,7 +14,9 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
+with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with Xref;                    use Xref;
 with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
@@ -346,9 +348,10 @@ package body Engine_Wrappers is
       Entity := Xref.Get_Entity
         (Kernel.Databases,
          Name  => Proposal.Get_Label (Kernel.Databases),
-         Loc   => (File   => Loc.File_Path,
-                   Line   => Loc.Line,
-                   Column => Loc.Column));
+         Loc   => (File    => Loc.File_Path,
+                   Project => No_Project,  --  ??? unknown
+                   Line    => Loc.Line,
+                   Column  => Loc.Column));
       return Documentation
         (Kernel.Databases,
          Kernel.Get_Language_Handler,
@@ -386,9 +389,10 @@ package body Engine_Wrappers is
       Entity := Xref.Get_Entity
         (Kernel.Databases,
          Name  => Get (Proposal.Construct.Name).all,
-         Loc   => (File   => Proposal.File,
-                   Line   => Proposal.Construct.Sloc_Start.Line,
-                   Column => Visible_Column_Type
+         Loc   => (File    => Proposal.File,
+                   Project => No_Project,  --  ??? unknown
+                   Line    => Proposal.Construct.Sloc_Start.Line,
+                   Column  => Visible_Column_Type
                      (Proposal.Construct.Sloc_Start.Column)));
       return Documentation
         (Kernel.Databases,

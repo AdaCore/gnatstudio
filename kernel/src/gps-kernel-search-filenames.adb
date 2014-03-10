@@ -65,7 +65,8 @@ package body GPS.Kernel.Search.Filenames is
       Callback : not null access function
         (Text    : String;
          Context : Search_Context;
-         File    : Virtual_File) return Boolean);
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean);
    --  Search for the next possible match. When a match is found, calls
    --  Callback. Stops iterating when the callback returns False.
 
@@ -84,7 +85,7 @@ package body GPS.Kernel.Search.Filenames is
    is
       pragma Unreferenced (Kernel);
    begin
-      Unchecked_Free (Hook.Provider.Files);
+      Free (Hook.Provider.Files);
       Unchecked_Free (Hook.Provider.Runtime);
       Unchecked_Free (Hook.Provider.Source_Dirs);
    end Execute;
@@ -95,7 +96,7 @@ package body GPS.Kernel.Search.Filenames is
 
    overriding procedure Free (Self : in out Filenames_Search_Provider) is
    begin
-      Unchecked_Free (Self.Files);
+      Free (Self.Files);
       Unchecked_Free (Self.Runtime);
       Unchecked_Free (Self.Source_Dirs);
 
@@ -275,18 +276,19 @@ package body GPS.Kernel.Search.Filenames is
       Callback : not null access function
         (Text    : String;
          Context : Search_Context;
-         File    : Virtual_File) return Boolean)
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean)
    is
       Continue : Boolean := True;
 
-      procedure Check (F : Virtual_File);
+      procedure Check (F : Virtual_File; Project : Project_Type);
       --  Sets Result to non-null if F matches
 
       -----------
       -- Check --
       -----------
 
-      procedure Check (F : Virtual_File) is
+      procedure Check (F : Virtual_File; Project : Project_Type) is
          Text : constant String :=
             (if Self.Match_Directory then +F.Full_Name.all else +F.Base_Name);
          C : Search_Context;
@@ -294,13 +296,18 @@ package body GPS.Kernel.Search.Filenames is
          --  As a special case, we systematically omit .o files, in case the
          --  object_dir is part of the source_dirs. Such files will make the
          --  overview very slow, and are of little interest in editors...
+         --
+         --  We do not want to return the same file twice, unless we are using
+         --  aggregate projects and this is a duplication in the project itself
 
          if F.File_Extension /= ".o"
-           and then not Self.Seen.Contains (F)
+           and then
+             (Self.Data.Step = Project_Sources
+              or else not Self.Seen.Contains (F))
          then
             C := Self.Pattern.Start (Text);
             if C /= GPS.Search.No_Match then
-               Continue := Callback (Text, C, F);
+               Continue := Callback (Text, C, F, Project);
                Self.Seen.Include (F);
             end if;
          end if;
@@ -325,7 +332,8 @@ package body GPS.Kernel.Search.Filenames is
                Continue := Callback
                  (Text    => +F.Base_Name,
                   Context => GPS.Search.No_Match,
-                  File    => F);
+                  File    => F,
+                  Project => No_Project);
 
                exit For_Each_Step when not Continue;
             end if;
@@ -335,7 +343,8 @@ package body GPS.Kernel.Search.Filenames is
                exit For_Each_Step when Clock - Start >
                  Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.Index := Self.Data.Index + 1;
-               Check (Self.Files (Self.Data.Index));
+               Check (Self.Files (Self.Data.Index).File,
+                      Self.Files (Self.Data.Index).Project);
                exit For_Each_Step when not Continue;
             end loop;
             Set_Step (Self, Search_Step'Succ (Self.Data.Step));
@@ -345,7 +354,7 @@ package body GPS.Kernel.Search.Filenames is
                exit For_Each_Step when Clock - Start >
                  Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.Runtime_Index := Self.Data.Runtime_Index + 1;
-               Check (Self.Runtime (Self.Data.Runtime_Index));
+               Check (Self.Runtime (Self.Data.Runtime_Index), No_Project);
                exit For_Each_Step when not Continue;
             end loop;
             Set_Step (Self, Search_Step'Succ (Self.Data.Step));
@@ -354,7 +363,7 @@ package body GPS.Kernel.Search.Filenames is
             loop
                Prj := Current (Self.Data.Iter);
                exit when Prj = No_Project;
-               Check (Prj.Project_Path);
+               Check (Prj.Project_Path, Prj);
                Next (Self.Data.Iter);
                exit For_Each_Step when not Continue;
             end loop;
@@ -368,7 +377,8 @@ package body GPS.Kernel.Search.Filenames is
                exit For_Each_Step when Clock - Start >
                  Gtkada.Entry_Completion.Max_Idle_Duration;
                Self.Data.File_Index := Self.Data.File_Index + 1;
-               Check (Self.Data.Files_In_Dir (Self.Data.File_Index));
+               Check (Self.Data.Files_In_Dir (Self.Data.File_Index),
+                      No_Project);
                exit For_Each_Step when not Continue;
             end loop;
 
@@ -401,41 +411,63 @@ package body GPS.Kernel.Search.Filenames is
       Result   : out Search_Result_Access;
       Has_Next : out Boolean)
    is
-      function Callback
-        (Text    : String;
-         Context : Search_Context;
-         File    : Virtual_File) return Boolean;
+      Is_Aggregate : constant Boolean :=
+        Get_Registry (Self.Kernel).Tree.Root_Project.Is_Aggregate_Project;
+
+      function Highlight_Runtime (Str : String) return String;
+      --  For runtime files, highlight them specially
 
       function Callback
         (Text    : String;
          Context : Search_Context;
-         File    : Virtual_File) return Boolean
-      is
-         function Highlight_Runtime (Str : String) return String;
-         --  For runtime files, highlight them specially
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean;
 
-         function Highlight_Runtime (Str : String) return String is
-         begin
-            if Self.Pattern.Get_Allow_Highlights then
-               return (if Self.Data.Step = Runtime_Sources
-                       then "<i>" & Str & "</i>" else Str);
-            else
-               return Str;
-            end if;
-         end Highlight_Runtime;
+      -----------------------
+      -- Highlight_Runtime --
+      -----------------------
 
-         L : GNAT.Strings.String_Access;
+      function Highlight_Runtime (Str : String) return String is
       begin
+         if Self.Pattern.Get_Allow_Highlights then
+            return (if Self.Data.Step = Runtime_Sources
+                    then "<i>" & Str & "</i>" else Str);
+         else
+            return Str;
+         end if;
+      end Highlight_Runtime;
+
+      --------------
+      -- Callback --
+      --------------
+
+      function Callback
+        (Text    : String;
+         Context : Search_Context;
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean
+      is
+         L : GNAT.Strings.String_Access;
+         P_Name : constant String :=
+           (if Project = No_Project or else not Is_Aggregate
+            then ""
+            else ASCII.LF
+            & "(" & Project.Project_Path.Display_Base_Name & " -- "
+            & (+Project.Project_Path.Dir_Name) & ')');
+      begin
+         L := new String'(+File.Full_Name & P_Name);
+
          if Context = GPS.Search.No_Match then
             Result := new Filenames_Search_Result'
               (Kernel   => Self.Kernel,
                Provider => Self,
                Score    => 100 * 100,
                Short    => new String'(+File.Base_Name),
-               Long     => new String'(+File.Full_Name),
-               Id       => new String'(+File.Full_Name),
+               Long     => L,
+               Id       => L,
                Line     => Self.Line,
                Column   => Self.Column,
+               Project  => Project,
                File     => File);
 
          elsif Self.Match_Directory then
@@ -447,13 +479,13 @@ package body GPS.Kernel.Search.Filenames is
                  (Highlight_Runtime (+File.Base_Name)),
                Long     => new String'
                  (Self.Pattern.Highlight_Match
-                      (Buffer => Text, Context => Context)),
-               Id       => new String'(+File.Full_Name),
+                      (Buffer => Text, Context => Context) & P_Name),
+               Id       => L,
                Line     => Self.Line,
                Column   => Self.Column,
+               Project  => Project,
                File     => File);
          else
-            L := new String'(+File.Full_Name);
             Result := new Filenames_Search_Result'
               (Kernel   => Self.Kernel,
                Provider => Self,
@@ -466,6 +498,7 @@ package body GPS.Kernel.Search.Filenames is
                Id       => L,
                Line     => Self.Line,
                Column   => Self.Column,
+               Project  => Project,
                File     => File);
          end if;
 
@@ -503,6 +536,7 @@ package body GPS.Kernel.Search.Filenames is
    begin
       Open_File_Editor
         (Self.Kernel, Self.File,
+         Project           => Self.Project,
          Enable_Navigation => True,
          New_File          => False,
          Focus             => Give_Focus,
@@ -572,14 +606,16 @@ package body GPS.Kernel.Search.Filenames is
       function Callback
         (Text    : String;
          Context : Search_Context;
-         File    : Virtual_File) return Boolean;
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean;
 
       function Callback
         (Text    : String;
          Context : Search_Context;
-         File    : Virtual_File) return Boolean
+         File    : Virtual_File;
+         Project : Project_Type) return Boolean
       is
-         pragma Unreferenced (File);
+         pragma Unreferenced (File, Project);
       begin
          Self.Pattern.Compute_Suffix (Context, Text, Suffix, Suffix_Last);
          return True;  --  keep looking

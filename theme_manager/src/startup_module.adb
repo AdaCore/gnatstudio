@@ -54,6 +54,7 @@ with Pango.Enums;              use Pango.Enums;
 with Pango.Font;               use Pango.Font;
 with String_Utils;             use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNATCOLL.Projects;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
@@ -126,6 +127,7 @@ package body Startup_Module is
    begin
       Open_File_Editor
         (Kernel_Link_Button (Self).Kernel,
+         Project  => GNATCOLL.Projects.No_Project,
          Filename => Create (+Self.Get_Label));
       return True;
    end On_File_Clicked;

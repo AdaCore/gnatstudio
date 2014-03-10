@@ -24,6 +24,7 @@ with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with Commands.Interactive;  use Commands, Commands.Interactive;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with String_Utils;          use String_Utils;
@@ -64,12 +65,15 @@ package body Refactoring.Parameters is
 
    function Name_Parameters
      (Context : not null access Factory_Context_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class;
-      Entity : General_Entity;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Integer;
-      Column : Visible_Column_Type) return Command_Return_Type;
-   --  Name the parameters for the call to Entity at the given location
+      Kernel  : access Kernel_Handle_Record'Class;
+      Entity  : General_Entity;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
+      Line    : Integer;
+      Column  : Visible_Column_Type) return Command_Return_Type;
+   --  Name the parameters for the call to Entity at the given location.
+   --  Project is used in the case of aggregate projects to identify the
+   --  context for File.
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -92,11 +96,12 @@ package body Refactoring.Parameters is
 
    function Name_Parameters
      (Context : not null access Factory_Context_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class;
-      Entity : General_Entity;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Integer;
-      Column : Visible_Column_Type) return Command_Return_Type
+      Kernel  : access Kernel_Handle_Record'Class;
+      Entity  : General_Entity;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
+      Line    : Integer;
+      Column  : Visible_Column_Type) return Command_Return_Type
    is
       --  File needs to be open for get_chars to work, unfortunately
       View  : constant Editor_View'Class :=
@@ -222,9 +227,10 @@ package body Refactoring.Parameters is
 
             Entity_Before := Kernel.Databases.Get_Entity
               (Name => Get_Name (Expression, Entity_Token),
-               Loc  => (File   => File,
-                        Line   => Tok_Line,
-                        Column => Tok_Column));
+               Loc  => (File    => File,
+                        Project => Project,
+                        Line    => Tok_Line,
+                        Column  => Tok_Column));
 
             --  The following will not handle correctly where the primitive
             --  operation is declared inside a subprogram, and we use the fully
@@ -318,10 +324,11 @@ package body Refactoring.Parameters is
       return Name_Parameters
         (Kernel  => Get_Kernel (Context.Context),
          Context => Get_Kernel (Context.Context).Refactoring_Context,
-         Entity => Get_Entity (Context.Context),
-         File   => File_Information (Context.Context),
-         Line   => Line_Information (Context.Context),
-         Column => Column_Information (Context.Context));
+         Entity  => Get_Entity (Context.Context),
+         File    => File_Information (Context.Context),
+         Project => Project_Information (Context.Context),
+         Line    => Line_Information (Context.Context),
+         Column  => Column_Information (Context.Context));
    end Execute;
 
    ----------------------------
@@ -339,12 +346,13 @@ package body Refactoring.Parameters is
             File     : constant Virtual_File := Get_Data (Get_File (Location));
          begin
             if Name_Parameters
-              (Kernel => Get_Kernel (Data),
+              (Kernel  => Get_Kernel (Data),
                Context => Get_Kernel (Data).Refactoring_Context,
-               Entity => Entity,
-               File   => File,
-               Line   => Get_Line (Location),
-               Column => Get_Column (Location)) /= Success
+               Entity  => Entity,
+               File    => File,
+               Project => No_Project,  --  ??? unknown
+               Line    => Get_Line (Location),
+               Column  => Get_Column (Location)) /= Success
             then
                Set_Error_Msg (Data, -"Couldn't name parameters");
             end if;

@@ -27,6 +27,7 @@ with Gtk.Text_Mark;             use Gtk.Text_Mark;
 
 with GNATCOLL.Xref;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer.Line_Information;
@@ -316,7 +317,8 @@ package body Src_Editor_Module.Markers is
      (Kernel : access Kernel_Handle_Record'Class;
       Marker : access File_Marker_Record'Class)
    is
-      Child  : constant MDI_Child := Find_Editor (Kernel, Marker.File);
+      Child  : constant MDI_Child :=
+        Find_Editor (Kernel, Marker.File, Marker.Project);
       Source : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
       if Source /= null then
@@ -421,11 +423,12 @@ package body Src_Editor_Module.Markers is
    ------------------------
 
    function Create_File_Marker
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Editable_Line_Type;
-      Column : Visible_Column_Type;
-      Length : Natural := 0) return File_Marker
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
+      Line    : Editable_Line_Type;
+      Column  : Visible_Column_Type;
+      Length  : Natural := 0) return File_Marker
    is
       Marker : File_Marker;
    begin
@@ -433,6 +436,7 @@ package body Src_Editor_Module.Markers is
         (Location_Marker_Record with
          Id      => Natural'Last,
          File    => File,
+         Project => Project,
          Line    => Line,
          Column  => Column,
          Length  => Length,
@@ -450,9 +454,10 @@ package body Src_Editor_Module.Markers is
    ------------------------
 
    function Create_File_Marker
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
+      Mark    : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker
    is
       Marker : File_Marker;
    begin
@@ -460,6 +465,7 @@ package body Src_Editor_Module.Markers is
         (Location_Marker_Record with
          Id      => Natural'Last,
          File    => File,
+         Project => Project,
          Line    => 0,
          Column  => 1,
          Length  => 0,
@@ -530,10 +536,11 @@ package body Src_Editor_Module.Markers is
          Push_Marker_In_History
            (Kernel  => Kernel,
             Marker  => Create_File_Marker
-              (Kernel => Kernel,
-               File   => Get_Filename (Box),
-               Line   => Line,
-               Column => Column));
+              (Kernel  => Kernel,
+               File    => Get_Filename (Box),
+               Project => Get_Project (Box),
+               Line    => Line,
+               Column  => Column));
       end if;
    end Push_Current_Editor_Location_In_History;
 
@@ -545,7 +552,8 @@ package body Src_Editor_Module.Markers is
      (Marker : access File_Marker_Record;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean
    is
-      Child : constant MDI_Child := Find_Editor (Kernel, Marker.File);
+      Child : constant MDI_Child := Find_Editor
+        (Kernel, Marker.File, Marker.Project);
       Box   : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
       if Marker.Mark /= null then
@@ -558,6 +566,7 @@ package body Src_Editor_Module.Markers is
          Open_File_Editor
            (Kernel,
             Marker.File,
+            Marker.Project,
             Integer (Marker.Line),
             Marker.Column,
             Marker.Column + Visible_Column_Type (Marker.Length),
@@ -608,7 +617,7 @@ package body Src_Editor_Module.Markers is
       function Get_Subprogram_Name return String is
          Box : constant Source_Editor_Box :=
                  Get_Source_Box_From_MDI
-                   (Find_Editor (Marker.Kernel, Marker.File));
+                   (Find_Editor (Marker.Kernel, Marker.File, Marker.Project));
       begin
          if Box /= null then
             return Get_Subprogram_Name (Box, Marker.Line);
@@ -645,8 +654,11 @@ package body Src_Editor_Module.Markers is
    begin
       return Location_Marker
         (Create_File_Marker
-           (Marker.Kernel, Marker.File,
-            Marker.Get_Line, Marker.Get_Column));
+           (Marker.Kernel,
+            Marker.File,
+            Marker.Project,
+            Marker.Get_Line,
+            Marker.Get_Column));
 
    end Clone;
 
@@ -662,6 +674,7 @@ package body Src_Editor_Module.Markers is
       Update_Marker_Location (Marker);
       Node.Tag := new String'("file_marker");
       Add_File_Child (Node, "file", Marker.File);
+      Add_File_Child (Node, "project", Marker.Project.Project_Path);
       Set_Attribute (Node, "line", Editable_Line_Type'Image (Marker.Line));
       Set_Attribute (Node, "column", Visible_Column_Type'Image
                      (Marker.Column));
@@ -684,11 +697,13 @@ package body Src_Editor_Module.Markers is
          if From_XML.Tag.all = "file_marker" then
             return Location_Marker
               (Create_File_Marker
-                 (Kernel => Kernel,
-                  File   => Get_File_Child (From_XML, "file"),
-                  Line   => Editable_Line_Type'Value
+                 (Kernel  => Kernel,
+                  File    => Get_File_Child (From_XML, "file"),
+                  Project => Get_Registry (Kernel).Tree.Project_From_Path
+                      (Get_File_Child (From_XML, "project")),
+                  Line    => Editable_Line_Type'Value
                    (Get_Attribute (From_XML, "line")),
-                  Column =>
+                  Column  =>
                     Visible_Column_Type'Value
                       (Get_Attribute (From_XML, "column"))));
          end if;
@@ -699,10 +714,11 @@ package body Src_Editor_Module.Markers is
             Get_Cursor_Position (Get_Buffer (Source), Line, Column);
             return Location_Marker
               (Create_File_Marker
-                 (Kernel => Kernel,
-                  File   => Get_Filename (Source),
-                  Line   => Line,
-                  Column => Column));
+                 (Kernel  => Kernel,
+                  File    => Get_Filename (Source),
+                  Project => Get_Project (Source),
+                  Line    => Line,
+                  Column  => Column));
          end if;
       end if;
       return null;

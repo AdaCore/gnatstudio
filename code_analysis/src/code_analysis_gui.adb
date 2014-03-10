@@ -35,6 +35,7 @@ with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Basic_Types;                use Basic_Types;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
@@ -380,7 +381,9 @@ package body Code_Analysis_GUI is
       Push_Marker_In_History (Kernel, Marker);
 
       Open_File_Editor
-        (Kernel, File_Node.Name, Line,
+        (Kernel, File_Node.Name,
+         GNATCOLL.Projects.No_Project,
+         Line,
          Basic_Types.Visible_Column_Type (Column));
       Add_File_Coverage_Annotations (Kernel, File_Node);
    end Open_File_Editor;

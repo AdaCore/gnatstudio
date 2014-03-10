@@ -19,6 +19,7 @@ with GPS.Core_Kernels;                 use GPS.Core_Kernels;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Scripts.Files;
 with GPS.Scripts.File_Locations;
+with GNATCOLL.Projects;
 with Xref;                             use Xref;
 with Basic_Types;                      use Basic_Types;
 
@@ -100,10 +101,12 @@ package body GPS.Scripts.Entities is
                --  Looking for a predefined entity
                Loc := No_Location;
             else
-               Loc := (File => GPS.Scripts.Files.Get_Data (File),
-                       Line => Nth_Arg (Data, 4, Default => -1),
-                       Column => Visible_Column_Type
-                         (Nth_Arg (Data, 5, Default => -1)));
+               Loc :=
+                 (File    => GPS.Scripts.Files.Get_Data (File),
+                  Project => GNATCOLL.Projects.No_Project,  --  ??? unknown
+                  Line    => Nth_Arg (Data, 4, Default => -1),
+                  Column  => Visible_Column_Type
+                    (Nth_Arg (Data, 5, Default => -1)));
             end if;
 
             Kernel.Databases.Find_Declaration_Or_Overloaded

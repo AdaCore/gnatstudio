@@ -545,8 +545,8 @@ package body Xref is
         (Name : String; Loc : General_Location) return General_Entity
       is
          Entity  : General_Entity := No_General_Entity;
-         Project : Project_Type;
          Set     : File_Info_Set;
+         P       : Project_Type;
       begin
          if Active (SQLITE) then
             if Loc = No_Location then
@@ -560,15 +560,19 @@ package body Xref is
                --  ??? Should pass the project as argument if we need to solve
                --  ambiguities
 
-               Set := Self.Registry.Tree.Info_Set (Loc.File);
-               Project := Set.First_Element.Project;
+               if Loc.Project = No_Project then
+                  Set := Self.Registry.Tree.Info_Set (Loc.File);
+                  P := Set.First_Element.Project;
+               else
+                  P := Loc.Project;
+               end if;
 
                --  Already handles the operators
                Closest_Ref.Ref := Self.Xref.Get_Entity
                  (Name    => Name,
                   File    => Loc.File,
                   Line    => Loc.Line,
-                  Project => Project,
+                  Project => P,
                   Column  => Loc.Column,
                   Approximate_Search_Fallback => Approximate_Search_Fallback);
             end if;
@@ -576,7 +580,7 @@ package body Xref is
             Entity.Entity := Closest_Ref.Ref.Entity;
             Fuzzy :=
               --  Multiple possible files ?
-              Set.Length > 1
+              (Loc.Project = No_Project and then Set.Length > 1)
 
               or else
                 (Entity.Entity /= No_Entity and then
@@ -585,13 +589,14 @@ package body Xref is
                    ));
 
             declare
-               ELoc : constant Entity_Reference
-                 := Self.Xref.Declaration (Entity.Entity).Location;
+               ELoc : constant Entity_Reference :=
+                 Self.Xref.Declaration (Entity.Entity).Location;
             begin
                if ELoc /= No_Entity_Reference then
-                  Entity.Loc := (Line => ELoc.Line,
-                                 Column => ELoc.Column,
-                                 File => ELoc.File);
+                  Entity.Loc := (Line    => ELoc.Line,
+                                 Project => ELoc.Project,
+                                 Column  => ELoc.Column,
+                                 File    => ELoc.File);
                else
                   Entity.Loc := No_Location;
                end if;
@@ -672,6 +677,7 @@ package body Xref is
       if Active (Me) then
          Increase_Indent (Me, "Find_Declaration of " & Entity_Name
                           & " file=" & Loc.File.Display_Base_Name
+                          & " project=" & Loc.Project.Name
                           & " line=" & Loc.Line'Img
                           & " col=" & Loc.Column'Img);
       end if;
@@ -726,18 +732,22 @@ package body Xref is
 
                if Result_Loc.Line > 0 then
                   New_Location :=
-                    (File   => Get_File_Path (Get_File (Result)),
-                     Line   => Result_Loc.Line,
-                     Column => To_Visible_Column
+                    (File    => Get_File_Path (Get_File (Result)),
+                     Project => Loc.Project.Create_From_Project
+                       (Get_File_Path (Get_File (Result)).Full_Name.all)
+                       .Project,
+                     Line    => Result_Loc.Line,
+                     Column  => To_Visible_Column
                        (Get_File (Result),
                         Result_Loc.Line,
                         String_Index_Type (Result_Loc.Column)));
 
                   New_Entity := Internal_No_Constructs
                     (Name  => Get (Get_Construct (Result).Name).all,
-                     Loc   => (File   => New_Location.File,
-                               Line   => New_Location.Line,
-                               Column => New_Location.Column));
+                     Loc   => (File    => New_Location.File,
+                               Project => New_Location.Project,
+                               Line    => New_Location.Line,
+                               Column  => New_Location.Column));
                end if;
 
                if New_Entity /= No_General_Entity
@@ -838,9 +848,10 @@ package body Xref is
               Old_Entities.Get_Location (Ref.Old_Ref);
          begin
             if Loc.File /= null then
-               return (File => Old_Entities.Get_Filename (Loc.File),
-                       Line => Loc.Line,
-                       Column => Loc.Column);
+               return (File    => Old_Entities.Get_Filename (Loc.File),
+                       Project => No_Project,  --  unknown
+                       Line    => Loc.Line,
+                       Column  => Loc.Column);
             end if;
          end;
       end if;
@@ -858,9 +869,10 @@ package body Xref is
          return No_Location;
       else
          return
-           (File => Ref.File,
-            Line => Ref.Line,
-            Column => Visible_Column_Type (Ref.Column));
+           (File    => Ref.File,
+            Project => Ref.Project,
+            Line    => Ref.Line,
+            Column  => Visible_Column_Type (Ref.Column));
       end if;
    end Get_Location;
 
@@ -900,6 +912,7 @@ package body Xref is
             Decl      : Entity_Access;
             Node      : Construct_Tree_Iterator;
             Cat       : Language_Category;
+            Project   : Project_Type;
          begin
             Node_From_Entity
                (Db, Db.Lang_Handler, Entity.Loc, Result, Tree_Lang);
@@ -909,7 +922,15 @@ package body Xref is
                   (Get_Tree_Language (Get_File (Result)), Result);
                Node := To_Construct_Tree_Iterator (Decl);
                Cat := Get_Construct (Node).Category;
-               return (Loc => (File   => Get_File_Path (Get_File (Decl)),
+
+               --  Find the project that controls the file (in the case of
+               --  aggregate projects)
+               Project := Entity.Loc.Project.Create_From_Project
+                 (Get_File_Path (Get_File (Decl)).Full_Name.all)
+                 .Project;
+
+               return (Loc => (File    => Get_File_Path (Get_File (Decl)),
+                               Project => Project,
                                Line   => Get_Construct (Node).Sloc_Entity.Line,
                                Column => Visible_Column_Type
                                  (Get_Construct (Node).Sloc_Entity.Column)),
@@ -929,9 +950,10 @@ package body Xref is
                  Db.Xref.Declaration (Entity.Entity);
             begin
                if Ref /= No_Entity_Declaration then
-                  return (Loc    => (File => Ref.Location.File,
-                                     Line => Ref.Location.Line,
-                                     Column => Ref.Location.Column),
+                  return (Loc    => (File    => Ref.Location.File,
+                                     Project => Ref.Location.Project,
+                                     Line    => Ref.Location.Line,
+                                     Column  => Ref.Location.Column),
                           Body_Is_Full_Declaration =>
                             Ref.Flags.Body_Is_Full_Declaration,
                           Name   => Ref.Name);
@@ -946,6 +968,7 @@ package body Xref is
                  Old_Entities.Get_Declaration_Of (Entity.Old_Entity);
             begin
                return (Loc => (File   => Old_Entities.Get_Filename (Loc.File),
+                               Project => No_Project,  --  ??? unknown
                                Line   => Loc.Line,
                                Column => Loc.Column),
                        Body_Is_Full_Declaration =>
@@ -1048,6 +1071,7 @@ package body Xref is
       function Extract_Next_By_Heuristics return General_Location is
          C_Entity, New_Entity : Entity_Access := Null_Entity_Access;
          Loc : General_Location;
+         P   : Project_Type;
 
       begin
          --  In order to locate the reference to look from, we check if there
@@ -1099,10 +1123,15 @@ package body Xref is
                   end if;
 
                   if New_Entity /= C_Entity then
+                     P := Loc.Project.Create_From_Project
+                       (Get_File_Path (Get_File (New_Entity)).Full_Name.all)
+                       .Project;
+
                      return
-                       (File   => Get_File_Path (Get_File (New_Entity)),
-                        Line   => Get_Construct (New_Entity).Sloc_Entity.Line,
-                        Column =>
+                       (File    => Get_File_Path (Get_File (New_Entity)),
+                        Project => P,
+                        Line    => Get_Construct (New_Entity).Sloc_Entity.Line,
+                        Column  =>
                           To_Visible_Column
                             (Get_File (New_Entity),
                              Get_Construct (New_Entity).Sloc_Entity.Line,
@@ -1187,16 +1216,18 @@ package body Xref is
                   if Ref /= No_Entity_Reference then
                      if Is_First then
                         Is_First := False;
-                        First := (File => Ref.File,
-                                  Line => Ref.Line,
-                                  Column => Visible_Column_Type (Ref.Column));
+                        First := (File    => Ref.File,
+                                  Project => Ref.Project,
+                                  Line    => Ref.Line,
+                                  Column  => Visible_Column_Type (Ref.Column));
                      end if;
 
                      if Matches then
                         Candidate :=
-                          (File => Ref.File,
-                           Line => Ref.Line,
-                           Column => Visible_Column_Type (Ref.Column));
+                          (File    => Ref.File,
+                           Project => Ref.Project,
+                           Line    => Ref.Line,
+                           Column  => Visible_Column_Type (Ref.Column));
                         exit;
                      else
                         Matches := Ref.Line = After.Line
@@ -1242,9 +1273,10 @@ package body Xref is
                   end if;
 
                   Candidate :=
-                    (File => Old_Entities.Get_Filename (Loc.File),
-                     Line => Loc.Line,
-                     Column => Loc.Column);
+                    (File    => Old_Entities.Get_Filename (Loc.File),
+                     Project => No_Project,  --  unknown
+                     Line    => Loc.Line,
+                     Column  => Loc.Column);
                else
                   Trace (Me, "No body found");
                end if;
@@ -1432,9 +1464,10 @@ package body Xref is
       pragma Assert (Active (SQLITE));
 
       Loc :=
-        (File   => Decl.Location.File,
-         Line   => Decl.Location.Line,
-         Column => Visible_Column_Type (Decl.Location.Column));
+        (File    => Decl.Location.File,
+         Project => Decl.Location.Project,
+         Line    => Decl.Location.Line,
+         Column  => Visible_Column_Type (Decl.Location.Column));
 
       return Get_Entity
         (Db   => Db,
@@ -2807,9 +2840,10 @@ package body Xref is
          while Has_Element (Iter) loop
             Ref := Element (Iter);
             if Ref.Is_End_Of_Scope then
-               return (File   => Ref.File,
-                       Line   => Ref.Line,
-                       Column => Ref.Column);
+               return (File    => Ref.File,
+                       Project => Ref.Project,
+                       Line    => Ref.Line,
+                       Column  => Ref.Column);
             end if;
 
             Next (Iter);
@@ -2823,9 +2857,10 @@ package body Xref is
          begin
             Old_Entities.Get_End_Of_Scope (Entity.Old_Entity, Loc, Kind);
             if Loc /= Old_Entities.No_File_Location then
-               return (File => Get_Filename (Loc.File),
-                       Line => Get_Line (Loc),
-                       Column => Get_Column (Loc));
+               return (File    => Get_Filename (Loc.File),
+                       Project => No_Project,  --  unknown
+                       Line    => Get_Line (Loc),
+                       Column  => Get_Column (Loc));
             end if;
          end;
       end if;
@@ -2916,9 +2951,10 @@ package body Xref is
          Construct_Annotation);
 
       if Construct_Annotation = Construct_Annotations_Pckg.Null_Annotation then
-         Loc := (File => Get_File_Path (Get_File (E)),
-                 Line => Get_Construct (E).Sloc_Entity.Line,
-                 Column => To_Visible_Column
+         Loc := (File    => Get_File_Path (Get_File (E)),
+                 Project => No_Project,   --  ??? unknown
+                 Line    => Get_Construct (E).Sloc_Entity.Line,
+                 Column  => To_Visible_Column
                   (Get_File (E),
                    Get_Construct (E).Sloc_Entity.Line,
                    String_Index_Type (Get_Construct (E).Sloc_Entity.Column)));
@@ -3360,9 +3396,10 @@ package body Xref is
       Loc : General_Location;
    begin
       Loc :=
-         (File => Get_File_Path (Get_File (Entity)),
-          Line => Get_Construct (Entity).Sloc_Entity.Line,
-          Column => To_Visible_Column
+        (File    => Get_File_Path (Get_File (Entity)),
+         Project => No_Project,  --  ambiguous
+         Line    => Get_Construct (Entity).Sloc_Entity.Line,
+         Column  => To_Visible_Column
             (Get_File (Entity),
              Get_Construct (Entity).Sloc_Entity.Line,
              String_Index_Type (Get_Construct (Entity).Sloc_Entity.Column)));

@@ -591,6 +591,7 @@ package body VCS_Activities_View_API is
          Open_File_Editor
            (Kernel,
             Get_Log_File (Kernel, Activity),
+            Project          => No_Project,
             Group            => Group_Consoles,
             Initial_Position => Position_Bottom);
       end if;
@@ -662,6 +663,7 @@ package body VCS_Activities_View_API is
       Open_File_Editor
         (Kernel,
          Get_Log_File (Kernel, Activity),
+         Project          => No_Project,
          Group            => Group_Consoles,
          Initial_Position => Position_Bottom,
          Title            => Get_Name (Activity) & " [activity log]");
@@ -695,6 +697,7 @@ package body VCS_Activities_View_API is
                   Open_File_Editor
                     (Kernel,
                      Get_Log_From_File (Kernel, File, True),
+                     Project          => No_Project,
                      Group            => Group_Consoles,
                      Initial_Position => Position_Bottom);
                end;

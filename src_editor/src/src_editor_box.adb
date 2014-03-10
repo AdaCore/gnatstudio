@@ -206,10 +206,11 @@ package body Src_Editor_Box is
       Push_Marker_In_History
         (Kernel => Source.Kernel,
          Marker => Create_File_Marker
-           (Kernel => Source.Kernel,
-            File   => File,
-            Line   => Line,
-            Column => Column));
+           (Kernel  => Source.Kernel,
+            File    => File,
+            Project => Get_Project (Source),
+            Line    => Line,
+            Column  => Column));
    end Add_Navigation_Location;
 
    -----------
@@ -280,9 +281,10 @@ package body Src_Editor_Box is
       --  Get the declaration/body
 
       if To_Body then
-         Current := (File => File_Information (Context),
-                     Line => GPS.Kernel.Contexts.Line_Information (Context),
-                     Column => Entity_Column_Information (Context));
+         Current := (File    => File_Information (Context),
+                     Project => Project_Information (Context),
+                     Line    => GPS.Kernel.Contexts.Line_Information (Context),
+                     Column  => Entity_Column_Information (Context));
          Location := Get_Body (Kernel.Databases, Entity, After => Current);
       else
          Location := Kernel.Databases.Get_Declaration (Entity).Loc;
@@ -294,6 +296,7 @@ package body Src_Editor_Box is
          Go_To_Closest_Match
            (Kernel      => Kernel,
             Filename    => Location.File,
+            Project     => Location.Project,
             Line        => Convert (Location.Line),
             Column      => Location.Column,
             Entity_Name => Kernel.Databases.Get_Name (Entity));
@@ -309,6 +312,7 @@ package body Src_Editor_Box is
    procedure Go_To_Closest_Match
      (Kernel   : access Kernel_Handle_Record'Class;
       Filename : Virtual_File;
+      Project  : GNATCOLL.Projects.Project_Type;
       Line     : Editable_Line_Type;
       Column   : Visible_Column_Type;
       Entity   : General_Entity)
@@ -316,7 +320,7 @@ package body Src_Editor_Box is
       Db : constant General_Xref_Database := Kernel.Databases;
    begin
       Go_To_Closest_Match
-        (Kernel, Filename, Line, Column, Get_Name (Db, Entity));
+        (Kernel, Filename, Project, Line, Column, Get_Name (Db, Entity));
    end Go_To_Closest_Match;
 
    -------------------------
@@ -326,6 +330,7 @@ package body Src_Editor_Box is
    procedure Go_To_Closest_Match
      (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename    : GNATCOLL.VFS.Virtual_File;
+      Project     : GNATCOLL.Projects.Project_Type;
       Line        : Editable_Line_Type;
       Column      : Visible_Column_Type;
       Entity_Name : String)
@@ -351,7 +356,7 @@ package body Src_Editor_Box is
       end if;
 
       Open_File_Editor
-        (Kernel, Filename, Natural (Line), Column,
+        (Kernel, Filename, Project, Natural (Line), Column,
          Column + Visible_Column_Type (Length),
          Enable_Navigation => True);
 
@@ -433,7 +438,7 @@ package body Src_Editor_Box is
                end if;
 
                Open_File_Editor
-                 (Kernel, Filename, L, Col, Col_End, False);
+                 (Kernel, Filename, Project, L, Col, Col_End, False);
             end;
          end if;
       end if;
@@ -551,10 +556,11 @@ package body Src_Editor_Box is
    ----------------
 
    procedure Initialize
-     (Box    : access Source_Editor_Box_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Source : Source_Buffer := null;
-      Lang   : Language.Language_Access)
+     (Box     : access Source_Editor_Box_Record'Class;
+      Project : GNATCOLL.Projects.Project_Type;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Source  : Source_Buffer := null;
+      Lang    : Language.Language_Access)
    is
       Scrolling_Area : Tooltip_Scrolled_Window;
       Drawing_Area   : Gtk_Drawing_Area;
@@ -582,10 +588,12 @@ package body Src_Editor_Box is
          Box.Source_Buffer := Source;
       end if;
 
-      Gtk_New (Box.Source_View,
-               Scrolling_Area,
-               Drawing_Area,
-               Box.Source_Buffer, Kernel);
+      Gtk_New
+        (Box.Source_View,
+         Project,
+         Scrolling_Area,
+         Drawing_Area,
+         Box.Source_Buffer, Kernel);
       Scrolling_Area.Add (Box.Source_View);
 
       if Source = null then
@@ -1202,6 +1210,7 @@ package body Src_Editor_Box is
       Go_To_Closest_Match
         (Kernel   => K,
          Filename => Location.File,
+         Project  => Location.Project,
          Line     => Convert (Location.Line),
          Column   => Location.Column,
          Entity   => Data.Entity);
@@ -1225,6 +1234,7 @@ package body Src_Editor_Box is
       Go_To_Closest_Match
         (Kernel   => K,
          Filename => Loc.File,
+         Project  => Loc.Project,
          Line     => Convert (Loc.Line),
          Column   => Loc.Column,
          Entity   => Data.Entity);
@@ -1463,12 +1473,13 @@ package body Src_Editor_Box is
    -------------
 
    procedure Gtk_New
-     (Box    : out Source_Editor_Box;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Lang   : Language.Language_Access := null) is
+     (Box     : out Source_Editor_Box;
+      Project : GNATCOLL.Projects.Project_Type;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Lang    : Language.Language_Access := null) is
    begin
       Box := new Source_Editor_Box_Record;
-      Initialize (Box, Kernel, null, Lang);
+      Initialize (Box, Project, Kernel, null, Lang);
    end Gtk_New;
 
    ---------------------
@@ -1476,16 +1487,17 @@ package body Src_Editor_Box is
    ---------------------
 
    procedure Create_New_View
-     (Box    : out Source_Editor_Box;
-      Kernel : access Kernel_Handle_Record'Class;
-      Source : access Source_Editor_Box_Record)
+     (Box     : out Source_Editor_Box;
+      Project : GNATCOLL.Projects.Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Source  : access Source_Editor_Box_Record)
    is
       Line : Editable_Line_Type;
       Col  : Character_Offset_Type;
    begin
       Box := new Source_Editor_Box_Record;
       Initialize
-        (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
+        (Box, Project, Kernel_Handle (Kernel), Source.Source_Buffer,
          Get_Language (Source.Source_Buffer));
 
       if not Get_Writable (Box.Source_Buffer) then
@@ -1521,6 +1533,17 @@ package body Src_Editor_Box is
    begin
       return Get_Filename (Editor.Source_Buffer);
    end Get_Filename;
+
+   -----------------
+   -- Get_Project --
+   -----------------
+
+   function Get_Project
+     (Editor : access Source_Editor_Box_Record)
+      return GNATCOLL.Projects.Project_Type is
+   begin
+      return Get_Project (Editor.Source_View);
+   end Get_Project;
 
    --------------------
    -- Check_Writable --

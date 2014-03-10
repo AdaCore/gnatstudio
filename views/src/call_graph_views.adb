@@ -20,6 +20,7 @@ with Ada.Unchecked_Conversion;
 with System;
 
 with GNAT.Strings;                use GNAT.Strings;
+with GNATCOLL.Projects;           use GNATCOLL.Projects;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
@@ -61,6 +62,7 @@ with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Xref;             use GPS.Kernel.Xref;
 with GPS.Intl;                    use GPS.Intl;
@@ -87,15 +89,17 @@ package body Call_Graph_Views is
    File_Column    : constant := 3;  --  Entity declaration file
    Line_Column    : constant := 4;  --  Entity declaration line
    Column_Column  : constant := 5;  --  Entity declaration column
-   List_Column    : constant := 6;
-   Kind_Column    : constant := 7;
-   Sort_Column    : constant := 8;
+   Project_Column : constant := 6;  --  Entity declaration project
+   List_Column    : constant := 7;
+   Kind_Column    : constant := 8;
+   Sort_Column    : constant := 9;
 
    Location_Line_Column      : constant := 0;
    Location_Column_Column    : constant := 1;
    Location_Character_Column : constant := 2;
    Location_String_Column    : constant := 3;
    Location_File_Column      : constant := 4;
+   Location_Project_Column   : constant := 5;
 
    History_Show_Locations : constant History_Key :=
                               "Call_Graph_Show_Locations";
@@ -349,6 +353,9 @@ package body Call_Graph_Views is
         (Name => Get_String (Model, Iter, Entity_Name_Column),
          Loc  =>
            (File => Get_File (Model, Iter, File_Column),
+            Project =>
+              Get_Registry (View.Kernel).Tree.Project_From_Path
+                (Get_File (Model, Iter, Project_Column)),
             Line => Integer (Get_Int (Model, Iter, Line_Column)),
             Column  => Visible_Column_Type
               (Get_Int (Model, Iter, Column_Column))));
@@ -361,10 +368,11 @@ package body Call_Graph_Views is
    procedure Select_Current_Location
      (View : access Callgraph_View_Record'Class)
    is
-      Iter, It   : Gtk_Tree_Iter;
-      Model  : Gtk_Tree_Model;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Entity : General_Entity;
+      Iter, It : Gtk_Tree_Iter;
+      Model    : Gtk_Tree_Model;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Entity   : General_Entity;
+      Project  : Project_Type;
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
 
@@ -384,12 +392,15 @@ package body Call_Graph_Views is
 
             if Iter /= Null_Iter then
                File := Get_File (Model, Iter, Location_File_Column);
+               Project := Get_Registry (View.Kernel).Tree.Project_From_Path
+                 (Get_File (Model, Iter, Project_Column));
 
                --  Give the focus to the editor, to match the behavior of the
                --  Locations view.
                Open_File_Editor
                  (View.Kernel,
                   Filename   => File,
+                  Project    => Project,
                   Line       => Natural
                     (Get_Int (Model, Iter, Location_Line_Column)),
                   Column     => Visible_Column_Type
@@ -641,6 +652,7 @@ package body Call_Graph_Views is
          Open_File_Editor
            (View.Kernel,
             Filename   => Decl.Loc.File,
+            Project    => Decl.Loc.Project,
             Line       => Decl.Loc.Line,
             Column     => Decl.Loc.Column,
             Column_End => Decl.Loc.Column
@@ -745,6 +757,9 @@ package body Call_Graph_Views is
          Set (V.Locations_Model, T, Location_Character_Column, ":");
          Set_File
            (V.Locations_Model, T, Location_File_Column, Decl.Loc.File);
+         Set_File
+           (V.Locations_Model, T, Location_Project_Column,
+            Decl.Loc.Project.Project_Path);
          Set (V.Locations_Model, T, Location_String_Column,
               Decl.Loc.File.Display_Base_Name & " (declaration)");
 
@@ -770,6 +785,9 @@ package body Call_Graph_Views is
                     Gint (R.Column));
                Set (V.Locations_Model, T, Location_Character_Column, ":");
                Set_File (V.Locations_Model, T, Location_File_Column, R.File);
+               Set_File
+                 (V.Locations_Model, T, Location_Project_Column,
+                  Decl.Loc.Project.Project_Path);
 
                if R.Through_Dispatching then
                   Set (V.Locations_Model, T, Location_String_Column,
@@ -1147,6 +1165,9 @@ package body Call_Graph_Views is
                Set_Attribute
                  (N, "entity_column",
                   Image (Integer (Get_Int (Model, Iter, Column_Column))));
+               Set_Attribute
+                 (N, "entity_project",
+                  Get_File (Model, Iter, Project_Column).Display_Full_Name);
 
                L := Get_Locations_List (View, Iter, False);
 
@@ -1261,6 +1282,10 @@ package body Call_Graph_Views is
                Set_File
                  (Model, Iter, File_Column,
                   Create (+Get_Attribute (N, "entity_decl")));
+               Set_File
+                 (Model, Iter, Project_Column,
+                  Create (+Get_Attribute (N, "entity_project")));
+
                Set
                  (Model, Iter, Line_Column,
                   Gint'Value (Get_Attribute (N, "entity_line")));
@@ -1333,6 +1358,7 @@ package body Call_Graph_Views is
                                 Line_Column   => GType_Int,
                                 Column_Column => GType_Int,
                                 List_Column   => GType_Pointer,
+                                Project_Column => Get_Virtual_File_Type,
                                 Kind_Column   => GType_Int,
                                 Sort_Column   => GType_String),
          Column_Names       => Names,
@@ -1356,6 +1382,7 @@ package body Call_Graph_Views is
                 Location_Column_Column    => GType_Int,
                 Location_Character_Column => GType_String,
                 Location_String_Column    => GType_String,
+                Location_Project_Column   => Get_Virtual_File_Type,
                 Location_File_Column      => Get_Virtual_File_Type));
       Gtk_New (View.Locations_Tree, View.Locations_Model);
       Set_Headers_Visible (View.Locations_Tree, False);
@@ -1505,6 +1532,7 @@ package body Call_Graph_Views is
               & ':' & Image (Decl.Loc.Line)
               & ':' & Image (Integer (Decl.Loc.Column)));
          Set_File (Model, Iter, File_Column, Decl.Loc.File);
+         Set_File (Model, Iter, Project_Column, Decl.Loc.Project.Project_Path);
          Set (Model, Iter, Line_Column, Gint (Decl.Loc.Line));
          Set (Model, Iter, Column_Column, Gint (Decl.Loc.Column));
          Set (Model, Iter, Entity_Name_Column,

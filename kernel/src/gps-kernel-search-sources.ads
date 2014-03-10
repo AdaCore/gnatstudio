@@ -60,8 +60,9 @@ package GPS.Kernel.Search.Sources is
    --  Searches in a specific source file
 
    procedure Set_File
-     (Self : in out Single_Source_Search_Provider;
-      File : GNATCOLL.VFS.Virtual_File);
+     (Self    : in out Single_Source_Search_Provider;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type);
    --  Set the file to search
 
 private
@@ -70,6 +71,7 @@ private
       Pattern_Needs_Free : Boolean := False;
 
       File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
       Text    : GNAT.Strings.String_Access;
       Restart : Boolean := False;
       Context : GPS.Search.Search_Context;
@@ -79,7 +81,7 @@ private
       Pattern : GPS.Search.Search_Pattern_Access;
       Pattern_Needs_Free : Boolean := False;
 
-      Files   : GNATCOLL.VFS.File_Array_Access;
+      Files   : GNATCOLL.Projects.File_And_Project_Array_Access;
       Index   : Integer;  --  next to process
       Current : aliased Single_Source_Search_Provider;
    end record;

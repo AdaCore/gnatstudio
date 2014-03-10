@@ -857,15 +857,15 @@ package body Project_Viewers is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Project : Project_Type;
    begin
       if Has_Project_Information (Context.Context) then
-         Open_File_Editor
-           (Kernel, Project_Path (Project_Information (Context.Context)));
+         Project := Project_Information (Context.Context);
       else
-         Open_File_Editor
-           (Kernel, Kernel.Registry.Tree.Root_Project.Project_Path);
+         Project := Kernel.Registry.Tree.Root_Project;
       end if;
+      Open_File_Editor (Kernel, Project.Project_Path, Project);
       return Success;
    end Execute;
 

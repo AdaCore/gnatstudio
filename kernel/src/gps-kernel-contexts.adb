@@ -738,10 +738,11 @@ package body GPS.Kernel.Contexts is
          then
             Db.Find_Declaration_Or_Overloaded
               (Loc  =>
-                 (File   => Context.Data.Data.Files
-                    (Context.Data.Data.Files'First),
-                  Line   => Context.Data.Data.Line,
-                  Column => Context.Data.Data.Entity_Column),
+                 (File    => Context.Data.Data.Files
+                      (Context.Data.Data.Files'First),
+                  Project => Context.Data.Data.Project,
+                  Line    => Context.Data.Data.Line,
+                  Column  => Context.Data.Data.Entity_Column),
                Entity_Name => Context.Data.Data.Entity_Name.all,
                Entity      => Context.Data.Data.Xref_Entity,
                Closest_Ref => Context.Data.Data.Xref_Closest_Ref,

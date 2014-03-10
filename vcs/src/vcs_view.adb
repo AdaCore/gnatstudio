@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Strings;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 with Gdk;                       use Gdk;
@@ -229,6 +230,7 @@ package body VCS_View is
                Open_File_Editor
                  (Kernel,
                   Get_File (Explorer.Model, Iter, File_Column),
+                  Project => No_Project,  --  any project will do
                   Line   => 0,
                   Column => 0);
                Emit_Stop_By_Name (Explorer.Tree, "button_press_event");

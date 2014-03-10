@@ -48,10 +48,11 @@ package body Commands.GNATTest is
 
       GNATTest_Module.Open_File
         (Kernel,
-         Ada.Strings.Unbounded.To_String (Unit_Name),
-         Line,
-         Column,
-         Ada.Strings.Unbounded.To_String (Subprogram_Name));
+         Project  => GPS.Kernel.Contexts.Project_Information (Context.Context),
+         Unit_Name => Ada.Strings.Unbounded.To_String (Unit_Name),
+         Line      => Line,
+         Column    => Column,
+         Subprogram_Name => Ada.Strings.Unbounded.To_String (Subprogram_Name));
 
       Command.Command_Finished (True);
 

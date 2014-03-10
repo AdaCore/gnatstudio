@@ -84,7 +84,7 @@ private
 
       Line, Column : Natural := 0;  --  from pattern
       Match_Directory : Boolean;  --  whether to match directory part
-      Files       : GNATCOLL.VFS.File_Array_Access;
+      Files       : GNATCOLL.Projects.File_And_Project_Array_Access;
       Runtime     : GNATCOLL.VFS.File_Array_Access;
       Source_Dirs : GNATCOLL.VFS.File_Array_Access;
 
@@ -96,7 +96,8 @@ private
    end record;
 
    type Filenames_Search_Result is new Kernel_Search_Result with record
-      File : GNATCOLL.VFS.Virtual_File;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Project      : GNATCOLL.Projects.Project_Type;
       Line, Column : Natural := 0;
    end record;
    overriding procedure Execute

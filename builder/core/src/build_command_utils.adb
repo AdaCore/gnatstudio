@@ -1158,8 +1158,7 @@ package body Build_Command_Utils is
    -- Get_Background_Project_Full_Name --
    --------------------------------------
 
-   overriding
-   function Get_Background_Project_Full_Name
+   overriding function Get_Background_Project_Full_Name
      (Adapter : Build_Command_Adapter) return Filesystem_String is
    begin
       return Adapter.Project_File.Full_Name.all;
@@ -1169,8 +1168,7 @@ package body Build_Command_Utils is
    -- Get_Scenario_Variables --
    ----------------------------
 
-   overriding
-   function Get_Scenario_Variables
+   overriding function Get_Scenario_Variables
      (Adapter : Build_Command_Adapter) return Scenario_Variable_Array is
    begin
       return Adapter.Kernel_Registry.Tree.Scenario_Variables;
@@ -1180,8 +1178,7 @@ package body Build_Command_Utils is
    -- Substitute --
    ----------------
 
-   overriding
-   function Substitute
+   overriding function Substitute
      (Adapter   : Build_Command_Adapter;
       Param     : String;
       Quoted    : Boolean;
@@ -1190,15 +1187,15 @@ package body Build_Command_Utils is
       For_Shell : Boolean := False) return String
    is
    begin
-      return Shared_Macros_Substitute (
-         Get_Context_Project (Adapter),
-         Get_Context_Project (Adapter),
-         Get_Context_File_Information (Adapter),
-         Param,
-         Quoted,
-         Done,
-         Server,
-         For_Shell);
+      return Shared_Macros_Substitute
+        (Project_From_Kernel => Get_Context_Project (Adapter),
+         Project_From_Param  => Get_Context_Project (Adapter),
+         File_Information    => Get_Context_File_Information (Adapter),
+         Param               => Param,
+         Quoted              => Quoted,
+         Done                => Done,
+         Server              => Server,
+         For_Shell           => For_Shell);
    end Substitute;
 
    --------------------

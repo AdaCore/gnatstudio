@@ -1040,7 +1040,7 @@ package body Builder_Facility_Module is
       declare
          P : Project_Type;
       begin
-         P := Get_Registry (Kernel).Tree.Info (File).Project;
+         P := Get_Registry (Kernel).Tree.Info_Set (File).First_Element.Project;
 
          --  No project was found for the file: this is not a source file, so
          --  return now.

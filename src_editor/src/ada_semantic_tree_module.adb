@@ -15,9 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;          use Ada.Calendar;
+with Ada.Calendar;                 use Ada.Calendar;
 
 with GNAT.Strings;                 use GNAT.Strings;
+with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 
 with Language.Tree.Database;       use Language.Tree.Database;
@@ -69,7 +70,8 @@ package body Ada_Semantic_Tree_Module is
       S     : Day_Duration;
    begin
       if Is_Open (Provider.Kernel, File) then
-         Editor := Find_Editor (Provider.Kernel, File);
+         Editor := Find_Editor
+           (Provider.Kernel, File, No_Project);  --   ??? any project
 
          if Editor /= null then
             return
@@ -101,7 +103,8 @@ package body Ada_Semantic_Tree_Module is
 
    begin
       if Is_Open (Provider.Kernel, File) then
-         Editor := Find_Editor (Provider.Kernel, File);
+         Editor := Find_Editor
+           (Provider.Kernel, File, No_Project); --  ??? any project
 
          if Editor /= null then
             return new String'

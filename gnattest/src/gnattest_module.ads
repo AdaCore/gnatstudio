@@ -18,6 +18,7 @@
 --  This package defines the module for GNATTest integration.
 
 with Basic_Types;
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with GPS.Kernel;
 
@@ -39,10 +40,13 @@ package GNATTest_Module is
 
    procedure Open_File
      (Kernel          : GPS.Kernel.Kernel_Handle;
+      Project         : GNATCOLL.Projects.Project_Type;
       Unit_Name       : String;
       Line            : Natural;
       Column          : Basic_Types.Visible_Column_Type;
       Subprogram_Name : String := "");
-   --  Open unit in editor and place cursor to given Line and Column
+   --  Open unit in editor and place cursor to given Line and Column.
+   --  Project is recommended for cross-references in the case of aggregate
+   --  projects.
 
 end GNATTest_Module;

@@ -18,13 +18,14 @@
 with Ada.Unchecked_Conversion;
 with Ada.Strings.Hash;
 
-with GPS.Editors; use GPS.Editors;
+with GPS.Editors;       use GPS.Editors;
 
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks;
-with GNATCOLL.Traces;  use GNATCOLL.Traces;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
-with Src_Editor_Box; use Src_Editor_Box;
+with Src_Editor_Box;    use Src_Editor_Box;
 
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
@@ -65,7 +66,9 @@ package body Src_Editor_Module.Messages is
       Box   : Source_Editor_Box;
    begin
       if File /= GNATCOLL.VFS.No_File then
-         Child := Find_Editor (Kernel, File);
+         Child := Find_Editor
+           (Kernel, File,
+            GNATCOLL.Projects.No_Project);  --  ??? any project
       end if;
 
       if Child /= null then

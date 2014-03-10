@@ -1098,7 +1098,10 @@ package body Navigation_Module is
               Get_Registry (Kernel).Tree.Other_File (File);
          begin
             if Dir_Name (Other_File) /= "" then
-               Open_File_Editor (Kernel, Other_File, Line => 0);
+               Open_File_Editor
+                 (Kernel, Other_File,
+                  Project_Information (Context.Context),
+                  Line => 0);
             else
                Trace (Me, "Other file not found for "
                       & File.Display_Full_Name);

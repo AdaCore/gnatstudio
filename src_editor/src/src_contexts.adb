@@ -784,6 +784,7 @@ package body Src_Contexts is
             Open_File_Editor
               (Kernel,
                File_Name,
+               GNATCOLL.Projects.No_Project,   --   ??? any project will do
                Match.Begin_Line,
                Match.Visible_Begin_Column,
                Match.Visible_End_Column,
@@ -821,6 +822,7 @@ package body Src_Contexts is
             Open_File_Editor
               (Kernel,
                File_Name,
+               GNATCOLL.Projects.No_Project,  --  ??? any project will do
                Match.Begin_Line,
                Match.Visible_Begin_Column,
                Match.Visible_Begin_Column
@@ -2472,7 +2474,7 @@ package body Src_Contexts is
       --  If the file is loaded in an editor, do the replacement directly
       --  there.
 
-      Child := Find_Editor (Kernel, File);
+      Child := Find_Editor (Kernel, File, No_Project);  --  any project
 
       if Child /= null then
          return Replace_From_Editor
@@ -2946,7 +2948,8 @@ package body Src_Contexts is
          if Context.Begin_Line /= 0
            and then Is_Open (Kernel, Current_File (C))
          then
-            Child := Find_Editor (Kernel, Current_File (C));
+            Child := Find_Editor
+              (Kernel, Current_File (C), No_Project);  --  any project
 
             if Child /= null then
                return Replace_From_Editor

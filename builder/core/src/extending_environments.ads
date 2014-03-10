@@ -35,12 +35,14 @@ package Extending_Environments is
    --  Return the project file in Env
 
    function Create_Extending_Environment
-     (Kernel : access Core_Kernel_Record'Class;
-      Source : Virtual_File) return Extending_Environment;
+     (Kernel  : access Core_Kernel_Record'Class;
+      Source  : Virtual_File;
+      Project : Project_Type) return Extending_Environment;
    --  Create an extending environment needed to build Source.
    --  The current Source is copied as-is from the current buffer into the
    --  extending environment.
    --  This environment should be Destroyed when no longer needed.
+   --  Project is used with aggregate projects to remove ambiguities.
 
    procedure Destroy (Env : Extending_Environment);
    --  Remove files created for Env

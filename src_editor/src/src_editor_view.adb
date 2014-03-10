@@ -127,6 +127,10 @@ package body Src_Editor_View is
    package Source_View_Timeout is new Glib.Main.Generic_Sources (Source_View);
    package Source_View_Idle renames Source_View_Timeout;
 
+   Target_Table : constant Target_Entry_Array :=
+     ((Interfaces.C.Strings.New_String ("text/uri-list"), 0, 0),
+      (Interfaces.C.Strings.New_String ("text/plain"), 0, 1));
+
    --------------------------
    -- Forward declarations --
    --------------------------
@@ -1324,6 +1328,7 @@ package body Src_Editor_View is
    --------------------------------
    -- View_On_Drag_Data_Received --
    --------------------------------
+
    procedure View_On_Drag_Data_Received
      (Self    : access Gtk_Widget_Record'Class;
       Context : not null access Gdk.Drag_Contexts.Drag_Context_Record'Class;
@@ -1356,6 +1361,7 @@ package body Src_Editor_View is
                Open_File_Editor
                  (View.Kernel,
                   Create (+Filename_From_URI (Url.all, null)),
+                  Project  => No_Project,  --  will choose one at random
                   New_File => False);
             end loop;
          end;
@@ -1378,30 +1384,28 @@ package body Src_Editor_View is
    -------------
 
    procedure Gtk_New
-     (View   : out Source_View;
-      Scroll : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
-      Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
-      Buffer : Src_Editor_Buffer.Source_Buffer;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (View    : out Source_View;
+      Project : GNATCOLL.Projects.Project_Type;
+      Scroll  : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
+      Area    : Gtk.Drawing_Area.Gtk_Drawing_Area;
+      Buffer  : Src_Editor_Buffer.Source_Buffer;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       View := new Source_View_Record;
-      Initialize (View, Scroll, Area, Buffer, Kernel);
+      Initialize (View, Project, Scroll, Area, Buffer, Kernel);
    end Gtk_New;
 
    ----------------
    -- Initialize --
    ----------------
 
-   Target_Table : constant Target_Entry_Array :=
-     ((Interfaces.C.Strings.New_String ("text/uri-list"), 0, 0),
-      (Interfaces.C.Strings.New_String ("text/plain"), 0, 1));
-
    procedure Initialize
-     (View   : access Source_View_Record;
-      Scroll : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
-      Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
-      Buffer : Src_Editor_Buffer.Source_Buffer;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (View    : access Source_View_Record;
+      Project : GNATCOLL.Projects.Project_Type;
+      Scroll  : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
+      Area    : Gtk.Drawing_Area.Gtk_Drawing_Area;
+      Buffer  : Src_Editor_Buffer.Source_Buffer;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
       Hook        : Preferences_Hook;
@@ -1420,15 +1424,17 @@ package body Src_Editor_View is
          Target_Table,
          Gdk.Dnd.Action_Any);
 
-      View.Kernel := Kernel_Handle (Kernel);
-      View.Scroll := Gtk_Scrolled_Window (Scroll);
-      View.Area   := Area;
+      View.Kernel  := Kernel_Handle (Kernel);
+      View.Scroll  := Gtk_Scrolled_Window (Scroll);
+      View.Area    := Area;
 
-      --  ??? This is temporary code, we need to set the project explicitly
-      --  depending on how the view is opened
-      View.Project :=
-        Get_Registry (Kernel).Tree.Info_Set
+      if Project = No_Project then
+         --  Pick a project at random
+         View.Project := Get_Registry (Kernel).Tree.Info_Set
            (Buffer.Get_Filename).First_Element.Project;
+      else
+         View.Project := Project;
+      end if;
 
       Register_View (Buffer, Add => True);
 
@@ -2617,6 +2623,17 @@ package body Src_Editor_View is
    begin
       View.Child := Child;
    end Set_Child;
+
+   ---------------
+   -- Get_Child --
+   ---------------
+
+   function Get_Child
+     (View  : access Source_View_Record)
+      return GPS.Kernel.MDI.GPS_MDI_Child is
+   begin
+      return View.Child;
+   end Get_Child;
 
    ----------------------
    -- Start_Completion --

@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Projects;           use Projects;
 with GPS.Editors; use GPS.Editors;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 
@@ -44,8 +43,9 @@ package body Extending_Environments is
    ----------------------------------
 
    function Create_Extending_Environment
-     (Kernel : access Core_Kernel_Record'Class;
-      Source : Virtual_File) return Extending_Environment
+     (Kernel  : access Core_Kernel_Record'Class;
+      Source  : Virtual_File;
+      Project : Project_Type) return Extending_Environment
    is
       Env : Extending_Environment;
 
@@ -100,10 +100,7 @@ package body Extending_Environments is
          Close (W);
       end Write_Extending_Project;
 
-      P : Project_Type;
    begin
-      P := Kernel.Registry.Tree.Info (Source).Project;
-
       --  Create the temporary directory in the object dir of the projet
 
       declare
@@ -112,7 +109,7 @@ package body Extending_Environments is
            BN (BN'First .. Find_Char (String (BN), '.') - 1) & "_Tmp";
       begin
          Env.Temporary_Dir := Create_From_Dir
-           (P.Object_Dir,
+           (Project.Object_Dir,
             Base_Name => Tmp_Dir_Name);
       end;
 
@@ -120,7 +117,7 @@ package body Extending_Environments is
          Make_Dir (Env.Temporary_Dir);
       end if;
 
-      Env.Project := P;
+      Env.Project := Project;
 
       --  Create the extending project file. This project is a simple extension
       --  of the source's project file which source dir is the current
@@ -129,7 +126,7 @@ package body Extending_Environments is
 
       Write_Extending_Project
         (File   => Env.Project_File,
-         P      => P,
+         P      => Project,
          E_All  => "",
          Body_S => "for Source_Dirs use (""."");",
          With_S => "");

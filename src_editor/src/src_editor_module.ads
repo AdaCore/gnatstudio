@@ -21,6 +21,7 @@ with Basic_Types;                 use Basic_Types;
 with Commands.Controls;
 with GNAT.Expect;
 with GNAT.Strings;
+with GNATCOLL.Projects;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
@@ -79,13 +80,19 @@ package Src_Editor_Module is
    --  editor is returned.
 
    function Find_Editor
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File) return Gtkada.MDI.MDI_Child;
-   --  Return the first child that contains an editor that edits file. This is
-   --  the view that last had the focus, in case multiple views exist for this
-   --  file.
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type) return Gtkada.MDI.MDI_Child;
+   --  Return the first child that contains an editor that edits file in
+   --  the given project. This is the view that last had the focus, in
+   --  case multiple views exist for this file.
+   --  When using aggregate projects, we can end up with multiple views of the
+   --  same file, each associated with a different project.
    --  null is returned if there are no such editor
    --  File can either be a file name or a buffer identifier.
+   --  Project is used to deambiguate the view of the file, when using
+   --  aggregate projects. It can be left to No_Project if you want to get any
+   --  editor opening the file, whatever the project
 
    function Find_Other_Editor
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -111,10 +118,14 @@ package Src_Editor_Module is
 
    function New_View
      (Kernel  : access Kernel_Handle_Record'Class;
-      Current : Src_Editor_Box.Source_Editor_Box)
+      Current : Src_Editor_Box.Source_Editor_Box;
+      Project : GNATCOLL.Projects.Project_Type)
       return Src_Editor_Box.Source_Editor_Box;
    --  Create a new view for Current and add it in the MDI.
    --  The current editor is the focus child in the MDI.
+   --  The new_view will use the same project if Project is set to No_Project,
+   --  or a specific project otherwise. This is useful in the context of
+   --  aggregate projects.
 
    procedure Change_Undo_Redo_Queue (Queue : Standard.Commands.Command_Queue);
    --  Change the queue to which undo/redo apply.
@@ -144,6 +155,7 @@ package Src_Editor_Module is
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
+      Project    : GNATCOLL.Projects.Project_Type;
       Dir        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True) return Src_Editor_Box.Source_Editor_Box;
@@ -336,6 +348,7 @@ private
    function Open_File
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Project    : GNATCOLL.Projects.Project_Type;
       Create_New : Boolean := True;
       Focus      : Boolean := True;
       Force      : Boolean := False;

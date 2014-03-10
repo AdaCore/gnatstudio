@@ -82,9 +82,10 @@ package body CodePeer.Module.Filters is
 
       Entity := Kernel.Databases.Get_Entity
         (Name => "",
-         Loc  => (File   => File_Name,
-                  Line   => Unit.Sloc_Entity.Line,
-                  Column => Basic_Types.Visible_Column_Type
+         Loc  => (File    => File_Name,
+                  Project => GPS.Kernel.Contexts.Project_Information (Context),
+                  Line    => Unit.Sloc_Entity.Line,
+                  Column  => Basic_Types.Visible_Column_Type
                     (Unit.Sloc_Entity.Column
                      + GNATCOLL.Symbols.Get (Unit.Name)'Length - 1)));
 

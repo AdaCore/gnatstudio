@@ -37,8 +37,8 @@ package body Src_Editor_Buffer.Hyper_Mode is
    -----------------------------
 
    procedure Hyper_Mode_Highlight_On
-     (Buffer : Source_Buffer;
-      Iter   : Gtk_Text_Iter)
+     (Buffer  : Source_Buffer;
+      Iter    : Gtk_Text_Iter)
    is
       Entity_Start, Entity_End : Gtk_Text_Iter;
       Line_Start, Line_End     : Gtk_Text_Iter;
@@ -277,6 +277,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
    procedure Hyper_Mode_Click_On
      (Buffer    : Source_Buffer;
+      Project   : Project_Type;
       Alternate : Boolean := False)
    is
       Entity_Start,
@@ -352,9 +353,10 @@ package body Src_Editor_Buffer.Hyper_Mode is
          Extend_Selection => False);
 
       Buffer.Kernel.Databases.Find_Declaration_Or_Overloaded
-        (Loc         => (File   => Buffer.Filename,
-                         Line   => Integer (Line),
-                         Column => Column),
+        (Loc         => (File    => Buffer.Filename,
+                         Project => Project,
+                         Line    => Integer (Line),
+                         Column  => Column),
          Entity_Name => Get_Slice (Buffer, Entity_Start, Entity_End),
          Ask_If_Overloaded => False,
          Entity            => Entity,
@@ -376,7 +378,8 @@ package body Src_Editor_Buffer.Hyper_Mode is
          --  We asked for the alternate behavior, or we are already on
          --  the spec: in this case, go to the body
          Current :=
-            (File   => Buffer.Filename,
+           (File    => Buffer.Filename,
+            Project => Project,
              Line   => Integer (Line),
              Column => Column);
          Location := Buffer.Kernel.Databases.Get_Body
@@ -389,6 +392,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Go_To_Closest_Match
         (Buffer.Kernel,
          Location.File,
+         Location.Project,
          Editable_Line_Type (Location.Line),
          Location.Column, Entity);
    end Hyper_Mode_Click_On;

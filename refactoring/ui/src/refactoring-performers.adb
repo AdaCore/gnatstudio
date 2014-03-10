@@ -234,17 +234,19 @@ package body Refactoring.Performers is
 
          if Data.Kernel.Databases.Is_Up_To_Date (Loc.File) then
             Append (Data.Refs,
-                    (File   => Loc.File,
-                     Line   => Loc.Line,
-                     Column => Loc.Column));
+                    (File    => Loc.File,
+                     Project => Loc.Project,
+                     Line    => Loc.Line,
+                     Column  => Loc.Column));
 
          --  If we have duplicates, they will always come one after the
          --  other. So we just have to check the previous one.
          else
             Append (Data.Refs,
-                    (File   => Loc.File,
-                     Line   => Loc.Line,
-                     Column => Loc.Column));
+                    (File    => Loc.File,
+                     Project => Loc.Project,
+                     Line    => Loc.Line,
+                     Column  => Loc.Column));
             Data.Stale_LI_List.Include (Loc.File);
          end if;
 

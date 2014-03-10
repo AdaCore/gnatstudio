@@ -840,6 +840,7 @@ package body CodePeer.Module is
          Open_File_Editor
            (Self.Kernel,
             File,
+            Project      => No_Project,
             New_File     => False,
             Force_Reload => True);
       else
@@ -864,11 +865,13 @@ package body CodePeer.Module is
       pragma Unreferenced (Item);
 
       --  use type Code_Analysis.File_Access;
-      --  ??? Uncomment this line after I120-013 will be fixed
+      --  ??? Uncomment this line after I120-013 is be fixed
       use type Code_Analysis.Subprogram_Access;
 
       File       : constant Code_Analysis.File_Access :=
-                     Context.Module.Report.Messages_Report.Get_Selected_File;
+        Context.Module.Report.Messages_Report.Get_Selected_File;
+      Project    : constant Code_Analysis.Project_Access :=
+        Context.Module.Report.Messages_Report.Get_Selected_Project;
       Subprogram : constant Code_Analysis.Subprogram_Access :=
                      Context.Module.Report.
                        Messages_Report.Get_Selected_Subprogram;
@@ -878,13 +881,15 @@ package body CodePeer.Module is
          GPS.Kernel.Standard_Hooks.Open_File_Editor
            (Context.Module.Kernel,
             File.Name,
+            Project.Name,
             Subprogram.Line,
             Basic_Types.Visible_Column_Type (Subprogram.Column));
 
       elsif File /= null then
          GPS.Kernel.Standard_Hooks.Open_File_Editor
            (Context.Module.Kernel,
-            File.Name);
+            File.Name,
+            Project.Name);
       end if;
 
       Context.Module.Filter_Criteria.Files.Include (File);
@@ -1037,6 +1042,7 @@ package body CodePeer.Module is
          Open_File_Editor
            (Kernel,
             Text_File,
+            Project      => Project_Information (Context.Context),
             New_File     => False,
             Force_Reload => True);
          return Commands.Success;
@@ -1070,6 +1076,7 @@ package body CodePeer.Module is
             Open_File_Editor
               (Kernel,
                Text_File,
+               Project      => Project_Information (Context.Context),
                New_File     => False,
                Force_Reload => True);
          else
@@ -1101,6 +1108,7 @@ package body CodePeer.Module is
          Open_File_Editor
            (Kernel,
             Log_File,
+            Project      => Project_Information (Context.Context),
             New_File     => False,
             Force_Reload => True);
          return Commands.Success;

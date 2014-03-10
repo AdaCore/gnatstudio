@@ -22,6 +22,7 @@ with Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
 with GNAT.Regpat;                  use GNAT.Regpat;
 with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;       use GNATCOLL.Scripts.Utils;
 
@@ -1946,9 +1947,9 @@ package body VCS.Generic_VCS is
       end if;
 
       if Is_Open (Kernel, File) then
-         Open_File_Editor (Kernel, File, Line => 0);
+         Open_File_Editor (Kernel, File, No_Project, Line => 0);
       else
-         Open_File_Editor (Kernel, File);
+         Open_File_Editor (Kernel, File, No_Project);
       end if;
 
       Script := Lookup_Scripting_Language

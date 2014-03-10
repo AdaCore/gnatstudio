@@ -252,7 +252,7 @@ package body GPS.Kernel.Standard_Hooks is
       if Is_Open (Kernel, Filename) then
          Open_File_Editor
            (Kernel,
-            Filename,
+            Filename, No_Project,
             0, 0,
             Enable_Navigation => False);
       end if;
@@ -265,6 +265,7 @@ package body GPS.Kernel.Standard_Hooks is
    procedure Open_File_Editor
      (Kernel            : access Kernel_Handle_Record'Class;
       Filename          : GNATCOLL.VFS.Virtual_File;
+      Project           : GNATCOLL.Projects.Project_Type;
       Line              : Natural := 1;
       Column            : Basic_Types.Visible_Column_Type := 1;
       Column_End        : Basic_Types.Visible_Column_Type := 0;
@@ -282,6 +283,7 @@ package body GPS.Kernel.Standard_Hooks is
                (Hooks_Data with
                 Length            => Title'Length,
                 File              => Filename,
+                Project           => Project,
                 Line              => Line,
                 Column            => Column,
                 Column_End        => Column_End,
@@ -313,6 +315,7 @@ package body GPS.Kernel.Standard_Hooks is
                (Hooks_Data with
                 Length            => 0,
                 File              => Filename,
+                Project           => No_Project,
                 Line              => -1,
                 Column            => 0,
                 Column_End        => 0,
@@ -639,6 +642,7 @@ package body GPS.Kernel.Standard_Hooks is
       return File_Location_Hooks_Args'
         (Hooks_Data with
          File   => Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True)),
+         Project => No_Project,  --  will use random one
          Line   => Nth_Arg (Data, 3),
          Column => Nth_Arg (Data, 4));
    end From_Callback_Data_File_Location;
@@ -863,7 +867,7 @@ package body GPS.Kernel.Standard_Hooks is
    is
       F : constant Class_Instance := Create_File (Script, Data.File);
       D : constant Callback_Data_Access :=
-            new Callback_Data'Class'(Create (Script, 9));
+            new Callback_Data'Class'(Create (Script, 10));
    begin
       Set_Nth_Arg (D.all, 1, To_String (Hook));
       Set_Nth_Arg (D.all, 2, F);
@@ -874,6 +878,7 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D.all, 7, Data.New_File);
       Set_Nth_Arg (D.all, 8, Data.Force_Reload);
       Set_Nth_Arg (D.all, 9, Data.Focus);
+      Set_Nth_Arg (D.all, 10, Create_Project (Script, Data.Project));
       return D;
    end Create_Callback_Data;
 
@@ -891,6 +896,7 @@ package body GPS.Kernel.Standard_Hooks is
          Length            => 0,
          File              => Get_Data
            (Nth_Arg (Data, 2, Get_File_Class (Kernel))),
+         Project           => Project_Type'(Get_Data (Data, 10)),
          Line              => Nth_Arg (Data, 3),
          Column            => Basic_Types.Visible_Column_Type
            (Nth_Arg (Data, 4, Default => 1)),

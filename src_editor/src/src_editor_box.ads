@@ -44,6 +44,7 @@ with GPS.Kernel.Messages;   use GPS.Kernel.Messages;
 
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_Status_Bar; use Src_Editor_Status_Bar;
+with GNATCOLL.Projects;
 with Src_Editor_View;
 with GNATCOLL.VFS;
 with Xref;
@@ -55,25 +56,32 @@ package Src_Editor_Box is
    type Source_Editor_Box is access all Source_Editor_Box_Record;
 
    procedure Gtk_New
-     (Box    : out Source_Editor_Box;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Lang   : Language.Language_Access := null);
+     (Box     : out Source_Editor_Box;
+      Project : GNATCOLL.Projects.Project_Type;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Lang    : Language.Language_Access := null);
    --  Create a new Source_Editor_Box. It must be destroyed after use
    --  (see procedure Destroy below).
 
    procedure Initialize
-     (Box    : access Source_Editor_Box_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Source : Source_Buffer := null;
-      Lang   : Language.Language_Access);
+     (Box     : access Source_Editor_Box_Record'Class;
+      Project : GNATCOLL.Projects.Project_Type;
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Source  : Source_Buffer := null;
+      Lang    : Language.Language_Access);
    --  Perform the initialization of the given editor box. If Source_Buffer
    --  is null, then a new buffer will automatically be created. Otherwise,
    --  the editor creates a new editor for the same Source_Buffer.
+   --
+   --  Project is the one controlling the file. There might be several
+   --  possibilities when using aggregate projects, and we need to know the
+   --  exact project to resolve things like cross-references.
 
    procedure Create_New_View
-     (Box    : out Source_Editor_Box;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Source : access Source_Editor_Box_Record);
+     (Box     : out Source_Editor_Box;
+      Project : GNATCOLL.Projects.Project_Type;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Source  : access Source_Editor_Box_Record);
    --  Create a new view of the given box.
    --  ??? Do we want to copy the font attributes as well, or do we want
    --  to add another parameter?
@@ -113,6 +121,12 @@ package Src_Editor_Box is
       return GNATCOLL.VFS.Virtual_File;
    --  Return the filename associated the given Editor. Return the empty
    --  string if Editor does not have any filename.
+
+   function Get_Project
+     (Editor : access Source_Editor_Box_Record)
+      return GNATCOLL.Projects.Project_Type;
+   --  Return the project for this view. This is used in the case of
+   --  aggregate projects
 
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
@@ -332,6 +346,7 @@ package Src_Editor_Box is
    procedure Go_To_Closest_Match
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename : GNATCOLL.VFS.Virtual_File;
+      Project  : GNATCOLL.Projects.Project_Type;
       Line     : Editable_Line_Type;
       Column   : Visible_Column_Type;
       Entity   : Xref.General_Entity);
@@ -341,6 +356,7 @@ package Src_Editor_Box is
    procedure Go_To_Closest_Match
      (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
       Filename    : GNATCOLL.VFS.Virtual_File;
+      Project     : GNATCOLL.Projects.Project_Type;
       Line        : Editable_Line_Type;
       Column      : Visible_Column_Type;
       Entity_Name : String);

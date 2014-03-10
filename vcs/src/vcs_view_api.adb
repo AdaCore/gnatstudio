@@ -1384,7 +1384,7 @@ package body VCS_View_API is
             Line, Column   : Natural;
          begin
             Already_Open := Is_Open (Kernel, ChangeLog_File);
-            Open_File_Editor (Kernel, ChangeLog_File);
+            Open_File_Editor (Kernel, ChangeLog_File, No_Project);
 
             --  At this point we know that there is an entry for the current
             --  file for the current data into the ChangeLog file. Set the
@@ -1438,6 +1438,7 @@ package body VCS_View_API is
             Open_File_Editor
               (Kernel,
                Get_Log_From_File (Kernel, File, True),
+               Project          => No_Project,
                Group            => Group_Consoles,
                Initial_Position => Position_Bottom,
                Title            => +Base_Name (File) & " [log]",
@@ -1692,6 +1693,7 @@ package body VCS_View_API is
                Open_File_Editor
                  (Kernel,
                   Get_Log_From_File (Kernel, File, True, Suffix),
+                  Project          => No_Project,
                   Group            => Group_Consoles,
                   Initial_Position => Position_Bottom,
                   Title            => +Base_Name (File) & " [log]");
@@ -1955,7 +1957,7 @@ package body VCS_View_API is
 
       for J in Files'Range loop
          if not Is_Open (Get_Kernel (Context), Files (J)) then
-            Open_File_Editor (Get_Kernel (Context), Files (J));
+            Open_File_Editor (Get_Kernel (Context), Files (J), No_Project);
          end if;
 
          Annotate (Get_Current_Ref (Context), Files (J));

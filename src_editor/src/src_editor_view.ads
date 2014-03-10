@@ -48,11 +48,12 @@ package Src_Editor_View is
    type Source_View is access all Source_View_Record'Class;
 
    procedure Gtk_New
-     (View   : out Source_View;
-      Scroll : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
-      Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
-      Buffer : Src_Editor_Buffer.Source_Buffer;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (View    : out Source_View;
+      Project : GNATCOLL.Projects.Project_Type;
+      Scroll  : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
+      Area    : Gtk.Drawing_Area.Gtk_Drawing_Area;
+      Buffer  : Src_Editor_Buffer.Source_Buffer;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create a new Source_View from the given parameters.
    --  If no Buffer is given, then a new one will be created. For tasks such
    --  as source code edition, it is recommended to specify a fixed-width font,
@@ -63,13 +64,20 @@ package Src_Editor_View is
    --
    --  If requested, the line numbers are displayed in a small area on
    --  the left of the text view.
+   --
+   --  Project is the one controlling the file. There might be several
+   --  possibilities when using aggregate projects, and we need to know the
+   --  exact project to resolve things like cross-references.
+   --  If left to No_Project, this function will attempt to compute it directly
+   --  from the loaded project.
 
    procedure Initialize
-     (View   : access Source_View_Record;
-      Scroll : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
-      Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
-      Buffer : Src_Editor_Buffer.Source_Buffer;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+     (View    : access Source_View_Record;
+      Project : GNATCOLL.Projects.Project_Type;
+      Scroll  : access Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record'Class;
+      Area    : Gtk.Drawing_Area.Gtk_Drawing_Area;
+      Buffer  : Src_Editor_Buffer.Source_Buffer;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
 
@@ -140,7 +148,10 @@ package Src_Editor_View is
    procedure Set_Child
      (View  : access Source_View_Record;
       Child : GPS.Kernel.MDI.GPS_MDI_Child);
-   --  Inform View that it is being contained in Child
+   function Get_Child
+     (View  : access Source_View_Record)
+      return GPS.Kernel.MDI.GPS_MDI_Child;
+      --  Inform View that it is being contained in Child
 
    procedure Acquire_Focus (View : access Source_View_Record);
    --  Get the MDI focus on the view

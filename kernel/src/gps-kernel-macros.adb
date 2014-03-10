@@ -224,15 +224,15 @@ package body GPS.Kernel.Macros is
          return String_Utils.Protect
            (Krunch (Entity_Name_Information (Context)));
       else
-         return Shared_Macros_Substitute (
-                                Get_Project (Get_Kernel (Context)),
-                                Project_From_Param (Param, Context),
-                                File_Information (Context),
-                                Param,
-                                Quoted,
-                                Done,
-                                Server,
-                                For_Shell);
+         return Shared_Macros_Substitute
+           (Project_From_Kernel => Get_Project (Get_Kernel (Context)),
+            Project_From_Param  => Project_From_Param (Param, Context),
+            File_Information    => File_Information (Context),
+            Param               => Param,
+            Quoted              => Quoted,
+            Done                => Done,
+            Server              => Server,
+            For_Shell           => For_Shell);
       end if;
 
       --  No substitution

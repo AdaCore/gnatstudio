@@ -1443,7 +1443,11 @@ package body Code_Analysis_Module is
 
       --  Call Open_File_Editor with Line = 0 so that, if the editor is already
       --  open, we do not jump to line 1.
-      Open_File_Editor (CB_Data.Kernel, File_Node.Name, Line => 0);
+      Open_File_Editor
+        (CB_Data.Kernel,
+         File_Node.Name,
+         Project => No_Project,   --  any project
+         Line    => 0);
       List_File_Uncovered_Lines
         (CB_Data.Kernel, File_Node, False, Allow_Auto_Jump_To_First => False);
       Add_File_Coverage_Annotations (CB_Data.Kernel, File_Node);

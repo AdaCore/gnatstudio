@@ -503,6 +503,7 @@ package body Docgen2.Comments is
             Warning
               (Get_Kernel (Docgen),
                (File => File,
+                Project => GNATCOLL.Projects.No_Project,
                 Line => Comment.Sloc_Stop.Line,
                 Column =>
                   GNATCOLL.Xref.Visible_Column (Comment.Sloc_Stop.Column)),

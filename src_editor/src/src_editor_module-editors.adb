@@ -18,6 +18,7 @@ with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 with System;
 
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
@@ -749,7 +750,10 @@ package body Src_Editor_Module.Editors is
       New_Ref : constant Mark_Reference_Access :=
         new Mark_Reference'
           (Mark => Create_File_Marker
-               (Buffer.Contents.Kernel, Buffer.Contents.File, Mark),
+             (Buffer.Contents.Kernel,
+              Buffer.Contents.File,
+              No_Project,   --  any project
+              Mark),
            Refs => 1);
    begin
       pragma Assert (Mark /= null);
@@ -807,11 +811,14 @@ package body Src_Editor_Module.Editors is
       Open_Buffer : Boolean := False;
       Open_View   : Boolean := True) return Editor_Buffer'Class
    is
+      --  Search the view from any project, we do not have more information
+      Project : constant Project_Type := No_Project;
+
       Child : MDI_Child;
       Box   : Source_Editor_Box;
    begin
       if File /= GNATCOLL.VFS.No_File then
-         Child := Find_Editor (This.Kernel, File);
+         Child := Find_Editor (This.Kernel, File, Project);
       else
          Child := Find_Current_Editor (This.Kernel);
       end if;
@@ -819,13 +826,14 @@ package body Src_Editor_Module.Editors is
       if Child = null then
          if Open_View then
             Box := Open_File
-              (This.Kernel, File, Line => 0, Column => 0, Column_End => 0);
+              (This.Kernel, File, Project,
+               Line => 0, Column => 0, Column_End => 0);
          else
             Box := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Box;
             if Box = null then
                if Open_Buffer then
                   Box := Create_File_Editor
-                    (This.Kernel, File, No_File, False);
+                    (This.Kernel, File, Project, No_File, False);
                   Pure_Editors_Hash.Set
                     (This.Pure_Buffers.all, File, (Box => Box));
                end if;
@@ -856,7 +864,8 @@ package body Src_Editor_Module.Editors is
       Box : Source_Editor_Box;
    begin
       Box := Open_File
-        (This.Kernel, No_File, Line => 1, Column => 1, Column_End => 1);
+        (This.Kernel, No_File, No_Project,
+         Line => 1, Column => 1, Column_End => 1);
       return Get (This, Get_Buffer (Box));
    end Get_New;
 
@@ -931,6 +940,7 @@ package body Src_Editor_Module.Editors is
           (Mark => Create_File_Marker
                (This.Kernel,
                 File,
+                No_Project,
                 Editable_Line_Type (Line),
                 Visible_Column_Type (Column)),
            Refs => 1);
@@ -1675,7 +1685,10 @@ package body Src_Editor_Module.Editors is
             Views : constant Views_Array := Get_Views (This.Contents.Buffer);
          begin
             return Get
-              (This, New_View (This.Contents.Kernel, Views (Views'First)));
+              (This, New_View
+                 (This.Contents.Kernel,
+                  Views (Views'First),
+                  Get_Project (Views (Views'First))));
          end;
       end if;
 
@@ -1801,7 +1814,8 @@ package body Src_Editor_Module.Editors is
                File := Get_File_Identifier (This.Contents.Buffer);
             end if;
 
-            Child := Find_Editor (This.Contents.Kernel, File);
+            Child := Find_Editor
+              (This.Contents.Kernel, File, No_Project); --  most recent project
          end;
 
          if Child = null then
@@ -2158,7 +2172,8 @@ package body Src_Editor_Module.Editors is
                Children =>
                  (1 => Find_Editor
                     (This.Contents.Kernel,
-                     Get_Filename (This.Contents.Buffer))),
+                     Get_Filename (This.Contents.Buffer),
+                     No_Project)),
                Force    => not Interactive);
          else
             Save_To_File

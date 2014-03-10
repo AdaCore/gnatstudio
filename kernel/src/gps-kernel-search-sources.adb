@@ -49,8 +49,9 @@ with GPS.Search;                 use GPS.Search;
 package body GPS.Kernel.Search.Sources is
 
    type Source_Search_Result is new Kernel_Search_Result with record
-      File : GNATCOLL.VFS.Virtual_File;
-      Line, Column : Natural;
+      File                 : GNATCOLL.VFS.Virtual_File;
+      Project              : GNATCOLL.Projects.Project_Type;
+      Line, Column         : Natural;
       Line_End, Column_End : Natural;
    end record;
    type Source_Search_Result_Access is access all Source_Search_Result'Class;
@@ -92,7 +93,7 @@ package body GPS.Kernel.Search.Sources is
      (Hook : Hook_Project_View_Changed;
       Kernel : access Kernel_Handle_Record'Class) is
    begin
-      Unchecked_Free (Hook.Provider.Files);
+      Free (Hook.Provider.Files);
       Hook.Provider.Files :=
          Get_Project (Kernel).Source_Files (Recursive => True);
       Hook.Provider.Index := Hook.Provider.Files'First;
@@ -104,7 +105,7 @@ package body GPS.Kernel.Search.Sources is
 
    overriding procedure Free (Self : in out Sources_Search_Provider) is
    begin
-      Unchecked_Free (Self.Files);
+      Free (Self.Files);
       Free (Self.Current);
 
       if Self.Pattern_Needs_Free then
@@ -158,17 +159,21 @@ package body GPS.Kernel.Search.Sources is
    --------------
 
    procedure Set_File
-     (Self : in out Single_Source_Search_Provider;
-      File : GNATCOLL.VFS.Virtual_File)
+     (Self    : in out Single_Source_Search_Provider;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type)
    is
       UTF8   : Gtkada.Types.Chars_Ptr;
       Length : Natural;
       Props  : File_Props;
       pragma Unreferenced (Props);
    begin
-      if File /= Self.File then
+      if File /= Self.File
+        or else Project /= Self.Project
+      then
          Free (Self.Text);
          Self.File    := File;
+         Self.Project := Project;
 
          --  ??? This requires a lot of copies of the file text, but
          --  unfortunately the conversion-to-utf8 routines are written in C.
@@ -207,7 +212,7 @@ package body GPS.Kernel.Search.Sources is
             Self.Pattern_Needs_Free := True;
       end case;
 
-      Self.Set_File (Self.File);  --  reset search
+      Self.Set_File (Self.File, Self.Project);  --  reset search
    end Set_Pattern;
 
    -----------------
@@ -245,7 +250,9 @@ package body GPS.Kernel.Search.Sources is
 
       Self.Index := Self.Files'First;
       if Self.Files'Length > 0 then
-         Self.Current.Set_File (Self.Files (Self.Index));
+         Self.Current.Set_File
+           (Self.Files (Self.Index).File,
+            Self.Files (Self.Index).Project);
       end if;
 
       Self.Current.Kernel := Self.Kernel;
@@ -307,28 +314,41 @@ package body GPS.Kernel.Search.Sources is
             Finish := Finish + 1;
          end loop;
 
-         L := new String'
+         declare
+            P_Name : constant String :=
+              (if Self.Project = No_Project
+               or else not Get_Registry
+                 (Self.Kernel).Tree.Root_Project.Is_Aggregate_Project
+               then ""
+               else ASCII.LF
+               & "(" & Self.Project.Project_Path.Display_Base_Name & " -- "
+               & (+Self.Project.Project_Path.Dir_Name) & ')');
+         begin
+            L := new String'
               (Self.File.Display_Full_Name
                & ":" & Image (Self.Context.Line_Start, Min_Width => 0)
                & ":"
-               & Image (Integer (Self.Context.Col_Start), Min_Width => 0));
+               & Image (Integer (Self.Context.Col_Start), Min_Width => 0)
+               & P_Name);
 
-         Result := new Source_Search_Result'
-           (Kernel     => Self.Kernel,
-            Provider   => Self,
-            Score      => Self.Context.Score,
-            Short      => new String'
-              (Self.Pattern.Highlight_Match
-                 (Self.Text (Start .. Finish - 1), Self.Context)),
-            Long       => L,
-            Id         => L,
-            File       => Self.File,
-            Line       => Self.Context.Line_Start,
-            Column     => Integer (Self.Context.Col_Start),
-            Line_End   => Self.Context.Line_End,
-            Column_End => Integer (Self.Context.Col_End));
-         Self.Adjust_Score (Result);
-         Has_Next := True;
+            Result   := new Source_Search_Result'
+              (Kernel     => Self.Kernel,
+               Provider   => Self,
+               Score      => Self.Context.Score,
+               Short      => new String'
+                 (Self.Pattern.Highlight_Match
+                      (Self.Text (Start .. Finish - 1), Self.Context)),
+               Long       => L,
+               Id         => L,
+               File       => Self.File,
+               Project    => Self.Project,
+               Line       => Self.Context.Line_Start,
+               Column     => Integer (Self.Context.Col_Start),
+               Line_End   => Self.Context.Line_End,
+               Column_End => Integer (Self.Context.Col_End));
+            Self.Adjust_Score (Result);
+            Has_Next := True;
+         end;
       end if;
    end Next;
 
@@ -370,7 +390,9 @@ package body GPS.Kernel.Search.Sources is
          return;
       end if;
 
-      Self.Current.Set_File (Self.Files (Self.Index));
+      Self.Current.Set_File
+        (Self.Files (Self.Index).File,
+         Self.Files (Self.Index).Project);
       Has_Next := True;
    end Next;
 
@@ -383,7 +405,9 @@ package body GPS.Kernel.Search.Sources is
        Give_Focus : Boolean) is
    begin
       Open_File_Editor
-        (Self.Kernel, Self.File,
+        (Self.Kernel,
+         Filename          => Self.File,
+         Project           => Self.Project,
          Enable_Navigation => True,
          New_File          => False,
          Focus             => Give_Focus,

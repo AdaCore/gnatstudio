@@ -18,6 +18,7 @@
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 
 package body Src_Editor_Buffer.Hooks is
 
@@ -40,13 +41,17 @@ package body Src_Editor_Buffer.Hooks is
    ----------------------
 
    procedure Location_Changed (Buffer : Source_Buffer) is
+      --  Should let all views known, whichever project
+      Project : constant Project_Type := No_Project;
+
       Data : aliased Src_File_Location_Hooks_Args :=
                (Hooks_Data with
                 File          => Buffer.Filename,
+                Project       => Project,
                 Line          => 0,
                 Column        => 0);
       Box : constant Source_Editor_Box := Get_Source_Box_From_MDI
-        (Find_Editor (Get_Kernel (Buffer), Buffer.Filename));
+        (Find_Editor (Get_Kernel (Buffer), Buffer.Filename, Project));
    begin
       if Box /= null then
          Get_Cursor_Position

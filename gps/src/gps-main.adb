@@ -1413,7 +1413,10 @@ procedure GPS.Main is
                       Line         => 1,
                       From_Project => False));
                else
-                  Open_File_Editor (GPS_Main.Kernel, File, New_File => False);
+                  Open_File_Editor
+                    (GPS_Main.Kernel, File,
+                     Project  => No_Project,  --  will choose most appropriate
+                     New_File => False);
                end if;
             end if;
          end;
@@ -1854,7 +1857,8 @@ procedure GPS.Main is
                      GPS_Main.Kernel,
                      Use_Source_Path => File_Item.From_Project,
                      Use_Object_Path => False),
-                  File_Item.Line);
+                  Project => No_Project,  --  will choose most appropriate
+                  Line    => File_Item.Line);
                File_Opened := True;
             end loop;
 

@@ -158,11 +158,13 @@ package body Docgen2 is
       procedure Generate_Annotated_Source
         (Command     : Docgen_Object;
          File        : Virtual_File;
+         Project     : Project_Type;
          Buffer      : GNAT.Strings.String_Access;
          Lang        : Language_Access;
          Db          : General_Xref_Database;
          Xrefs       : Entity_Info_Map.Map);
       --  Generate hrefs and pretty print on a source file.
+      --  Project is used in the case of aggregate projects to disambiguate
 
       procedure Generate_Comments (Cmd : Docgen_Object);
       --  Generate structured comments from the raw data
@@ -722,6 +724,7 @@ package body Docgen2 is
                Local.Generate_Annotated_Source
                  (Command     => Docgen_Object (Command),
                   File        => File,
+                  Project     => No_Project,  --  ??? unknown
                   Buffer      => Buffer,
                   Lang        => Language,
                   Db          => Database,
@@ -1329,18 +1332,20 @@ package body Docgen2 is
             Entity := Docgen2.Utils.Get_Entity
               (Cmd.Kernel,
                Get (Construct.Name).all,
-               (File => Get_File (Context),
-                Line => Construct.Sloc_Entity.Line,
-                Column => GNATCOLL.Xref.Visible_Column
+               (File    => Get_File (Context),
+                Project => No_Project,  --  ??? unknown
+                Line    => Construct.Sloc_Entity.Line,
+                Column  => GNATCOLL.Xref.Visible_Column
                   (Construct.Sloc_Entity.Column)),
                Lang);
 
             if Entity = No_General_Entity then
                Entity := Docgen2.Utils.Get_Declaration_Entity
                  (Get (Construct.Name).all,
-                  (File   => Get_File (Context),
-                   Line   => Construct.Sloc_Entity.Line,
-                   Column => GNATCOLL.Xref.Visible_Column
+                  (File    => Get_File (Context),
+                   Project => No_Project,  --  ??? unknown
+                   Line    => Construct.Sloc_Entity.Line,
+                   Column  => GNATCOLL.Xref.Visible_Column
                      (Construct.Sloc_Entity.Column)),
                   Db, Lang);
 
@@ -1353,9 +1358,10 @@ package body Docgen2 is
                      --  ??? In what occasions do we have this happening ?
                      E_Info := Create_EInfo
                        (Construct.Category,
-                        (File   => Get_File (Context),
-                         Line   => Construct.Sloc_Entity.Line,
-                         Column => Basic_Types.Visible_Column_Type
+                        (File    => Get_File (Context),
+                         Project => No_Project,  --   ??? unknown
+                         Line    => Construct.Sloc_Entity.Line,
+                         Column  => Basic_Types.Visible_Column_Type
                            (Construct.Sloc_Entity.Column)),
                         Db.Get_Name (Entity));
                      E_Info.Name := Construct.Name;
@@ -2011,6 +2017,7 @@ package body Docgen2 is
       procedure Generate_Annotated_Source
         (Command     : Docgen_Object;
          File        : Virtual_File;
+         Project     : Project_Type;
          Buffer      : GNAT.Strings.String_Access;
          Lang        : Language_Access;
          Db          : General_Xref_Database;
@@ -2098,8 +2105,9 @@ package body Docgen2 is
                --  Find the entity declaration
                Decl_Entity := Get_Declaration_Entity
                  (Buffer (Sloc_Start.Index .. Sloc_End.Index),
-                  (File   => File,
-                   Line   => Sloc_Start.Line,
+                  (File    => File,
+                   Project => Project, --  ??? unknown
+                   Line    => Sloc_Start.Line,
                    Column => GNATCOLL.Xref.Visible_Column (Sloc_Start.Column)),
                   Db, Lang);
 
@@ -2747,9 +2755,10 @@ package body Docgen2 is
                   else
                      Decl_Entity := Get_Declaration_Entity
                        (Extract (Sloc_Start.Index, Sloc_End.Index),
-                        (File   => File,
-                         Line   => Start_Loc.Line,
-                         Column =>
+                        (File    => File,
+                         Project => No_Project,    --   ??? unknown
+                         Line    => Start_Loc.Line,
+                         Column  =>
                            GNATCOLL.Xref.Visible_Column (Start_Loc.Column)),
                         Db, Lang);
 

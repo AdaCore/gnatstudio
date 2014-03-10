@@ -1618,6 +1618,7 @@ package body Browsers.Entities is
       Open_File_Editor
         (Kernel     => Get_Kernel (B),
          Filename   => Loc.File,
+         Project    => Loc.Project,
          Line       => Loc.Line,
          Column     => Loc.Column,
          Column_End => Loc.Column + Basic_Types.Visible_Column_Type

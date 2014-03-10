@@ -19,6 +19,7 @@ with Ada.Strings;                      use Ada.Strings;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 
 with GPS.Intl;                         use GPS.Intl;
@@ -83,7 +84,11 @@ package body Commands.Builder is
          --  Get the unexpanded command line from the target
          if Background then
             Background_Env := Create_Extending_Environment
-              (Builder.Kernel, Force_File);
+              (Builder.Kernel,
+               Force_File,
+
+               --  ??? any project, just checking syntax.
+               GNATCOLL.Projects.No_Project);
          end if;
 
          --  For background compilation synthetic messages category name is

@@ -435,7 +435,10 @@ package body Src_Editor_Status_Bar is
       --  changing the current line from the "Go to line" dialog, the latter
       --  still has the focus at this point.
 
-      Child := Find_Editor (Get_Kernel (Bar.Buffer), File);
+      Child := Find_Editor
+        (Get_Kernel (Bar.Buffer),
+         File,
+         Get_Project (Bar.View));
 
       if Child /= null and then Get_Widget (Child) = Gtk_Widget (Bar.Box) then
          Show_Cursor_Position

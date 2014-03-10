@@ -205,6 +205,7 @@ package body Src_Editor_View.Hyper_Mode is
 
       Hyper_Mode_Click_On
         (Source_Buffer (Get_Buffer (View)),
+         Project   => Get_Project (View),
          Alternate => Button = 2);
 
       return True;

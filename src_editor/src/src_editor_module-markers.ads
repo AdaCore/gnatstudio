@@ -20,6 +20,7 @@ with Gtk.Handlers;
 with Gtk.Text_Mark;
 
 with GPS.Kernel;
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
 package Src_Editor_Module.Markers is
@@ -30,19 +31,21 @@ package Src_Editor_Module.Markers is
    pragma No_Strict_Aliasing (File_Marker);
 
    function Create_File_Marker
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Editable_Line_Type;
-      Column : Visible_Column_Type;
-      Length : Natural := 0) return File_Marker;
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
+      Line    : Editable_Line_Type;
+      Column  : Visible_Column_Type;
+      Length  : Natural := 0) return File_Marker;
    --  Create a new marker that represents a position inside a file. It isn't
    --  related to a specific editor. The mark will always indicate the same
    --  position in the file, even if the file is closed, reopened or modified.
 
    function Create_File_Marker
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker;
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
+      Mark    : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker;
    --  Create a new marker from an existing text mark. The mark will always
    --  indicate the same position in the file.
 
@@ -97,6 +100,7 @@ private
       record
          Id     : Natural;   --  Needed only for the shell API
          File   : GNATCOLL.VFS.Virtual_File;
+         Project : GNATCOLL.Projects.Project_Type;
          Line   : Editable_Line_Type;
          Column : Visible_Column_Type;
          Length : Natural := 1;

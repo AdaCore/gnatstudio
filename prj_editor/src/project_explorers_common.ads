@@ -268,6 +268,8 @@ private
       record
          Kernel        : GPS.Kernel.Kernel_Handle;
          Dnd_From_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+         Dnd_From_Project : GNATCOLL.Projects.Project_Type :=
+           GNATCOLL.Projects.No_Project;
          --  The file from which we started a Dnd operation
       end record;
 

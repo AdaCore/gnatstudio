@@ -18,13 +18,14 @@
 --  This package describes the behavior of the Hyper Mode on source editor
 --  buffers.
 
-with Gtk.Text_Iter; use Gtk.Text_Iter;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
 
 package Src_Editor_Buffer.Hyper_Mode is
 
    procedure Hyper_Mode_Highlight_On
-     (Buffer : Source_Buffer;
-      Iter   : Gtk_Text_Iter);
+     (Buffer  : Source_Buffer;
+      Iter    : Gtk_Text_Iter);
    --  Tell the source buffer that the hyper mode is being requested at the
    --  coordinates given by Iter.
 
@@ -33,10 +34,12 @@ package Src_Editor_Buffer.Hyper_Mode is
 
    procedure Hyper_Mode_Click_On
      (Buffer    : Source_Buffer;
+      Project   : Project_Type;
       Alternate : Boolean := False);
    --  React to a click on Iter while in hyper Mode.
    --  If Alternate is False, do the default behavior, otherwise do the
    --  alternate behavior.
+   --  Project is used to disambiguate xref in case of aggregate projects.
 
    procedure Hyper_Mode_Enter (Buffer : Source_Buffer);
    --  Tell the source buffer that Hyper Mode is being activated

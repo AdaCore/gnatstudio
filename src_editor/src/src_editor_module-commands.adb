@@ -243,7 +243,9 @@ package body Src_Editor_Module.Commands is
              & " Other_File=" & Display_Full_Name (Other_File));
 
       if Other_File /= GNATCOLL.VFS.No_File then
-         Open_File_Editor (Kernel, Other_File, Line => 0);
+         Open_File_Editor
+           (Kernel, Other_File, Project_Information (Context.Context),
+            Line => 0);
          return Standard.Commands.Success;
       else
          return Standard.Commands.Failure;
@@ -389,6 +391,7 @@ package body Src_Editor_Module.Commands is
                Go_To_Closest_Match
                  (Kernel,
                   Filename => Location.File,
+                  Project  => Location.Project,
                   Line     => Editable_Line_Type (Location.Line),
                   Column   => Location.Column,
                   Entity   => Entity_Type);
@@ -541,7 +544,9 @@ package body Src_Editor_Module.Commands is
             History           => Get_History (Kernel));
       begin
          if Filename /= GNATCOLL.VFS.No_File then
-            Open_File_Editor (Kernel, Filename);
+            --  Open with the first possible project, the user cannot choose
+            --  which specific project to use (in the case of aggregates)
+            Open_File_Editor (Kernel, Filename, No_Project);
          end if;
       end;
       return Standard.Commands.Success;
@@ -571,7 +576,7 @@ package body Src_Editor_Module.Commands is
 
       begin
          if Filename /= GNATCOLL.VFS.No_File then
-            Open_File_Editor (Kernel, Filename);
+            Open_File_Editor (Kernel, Filename, No_Project);
          end if;
       end;
       return Standard.Commands.Success;
@@ -597,8 +602,11 @@ package body Src_Editor_Module.Commands is
 
       Ignore := Open_File
         (Kernel,
-         File => GNATCOLL.VFS.No_File,
-         Line => 1, Column => 1, Column_End => 1,
+         File    => GNATCOLL.VFS.No_File,
+         Project => GNATCOLL.Projects.No_Project,
+         Line    => 1,
+         Column  => 1,
+         Column_End => 1,
          Initial_Dir => Dir);
       return Standard.Commands.Success;
    end Execute;
@@ -921,6 +929,7 @@ package body Src_Editor_Module.Commands is
       Open_File_Editor
         (Get_Kernel (Context.Context),
          Filename  => File_Information (Context.Context),
+         Project   => Project_Information (Context.Context),
          Line      => Line,
          Column    => Column_Information (Context.Context));
       return Success;
@@ -1113,7 +1122,7 @@ package body Src_Editor_Module.Commands is
 
    begin
       if Current /= null then
-         Ignore := New_View (Kernel, Current);
+         Ignore := New_View (Kernel, Current, Get_Project (Current));
       end if;
    end New_View;
 
@@ -1139,7 +1148,8 @@ package body Src_Editor_Module.Commands is
             Block : Unbounded_String := Null_Unbounded_String;
          begin
             Buffer := Get_Buffer
-              (Get_Source_Box_From_MDI (Find_Editor (Kernel, File)));
+              (Get_Source_Box_From_MDI
+                 (Find_Editor (Kernel, File, Project_Information (Context))));
 
             if not Get_Writable (Buffer) then
                return;

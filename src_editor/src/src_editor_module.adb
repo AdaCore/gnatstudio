@@ -207,7 +207,8 @@ package body Src_Editor_Module is
    --  Add an entry for File to the Recent menu, if needed
 
    function Get_Filename (Child : MDI_Child) return GNATCOLL.VFS.Virtual_File;
-   --  If Child is a file editor, return the corresponding filename,
+   function Get_Project (Child : MDI_Child) return Project_Type;
+      --  If Child is a file editor, return the corresponding filename,
    --  otherwise return an empty string.
 
    function Get_File_Identifier (Child  : MDI_Child) return Virtual_File;
@@ -403,7 +404,9 @@ package body Src_Editor_Module is
          Editor := Get_Source_Box_From_MDI (MDI_Child (Child));
          Kernel := Get_Kernel (Editor);
          return Find_MDI_Child
-           (Get_MDI (Kernel), New_View (Kernel, Editor));
+           (Get_MDI (Kernel),
+            New_View
+              (Kernel, Editor, Get_Project (Editor))); --  for same project
       else
          return MDI_Child (Child);
       end if;
@@ -441,6 +444,22 @@ package body Src_Editor_Module is
          return GNATCOLL.VFS.No_File;
       end if;
    end Get_Filename;
+
+   -----------------
+   -- Get_Project --
+   -----------------
+
+   function Get_Project (Child : MDI_Child) return Project_Type is
+   begin
+      if Child /= null
+        and then Get_Widget (Child) /= null
+        and then Get_Widget (Child).all in Source_Editor_Box_Record'Class
+      then
+         return Get_Project (Source_Editor_Box (Get_Widget (Child)).Get_View);
+      else
+         return No_Project;
+      end if;
+   end Get_Project;
 
    --------------------
    -- File_Edited_Cb --
@@ -586,7 +605,7 @@ package body Src_Editor_Module is
               File_Location_Hooks_Args_Access (Data);
       Id  : constant Source_Editor_Module :=
               Source_Editor_Module (Src_Editor_Module_Id);
-      C   : constant MDI_Child := Find_Editor (Kernel, D.File);
+      C   : constant MDI_Child := Find_Editor (Kernel, D.File, D.Project);
       Box : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (C);
    begin
@@ -672,6 +691,7 @@ package body Src_Editor_Module is
       Column      : Visible_Column_Type := 1;
       Real_Column : Character_Offset_Type;
       Child       : MDI_Child;
+      Project     : Project_Type;
       pragma Unreferenced (MDI);
 
       Dummy  : Boolean;
@@ -694,27 +714,32 @@ package body Src_Editor_Module is
                Column := Visible_Column_Type'Value (Str.all);
             end if;
 
-            if not Is_Open (User, F) then
-               --  If the file no longer exists on the disk, we still want to
-               --  create an empty editor: this preserves the user's desktop
-               --  and points out possible disk issues...
+            Str := Get_Field (Node, "project");
+            if Str /= null then
+               Project := Get_Registry (User).Tree.Project_From_Path
+                 (Create (+Str.all));
+            end if;
+
+            Child := Find_Editor (User, F, No_Project);  --  any project
+            if Child = null then
+               --  If the file no longer exists on the disk, we still want
+               --  to create an empty editor : this preserves the user's
+               --  desktop and points out possible disk issues...
 
                Src := Open_File
                  (User, F,
-                  Focus  => False,
-                  Line   => Line,
+                  Project    => Project,
+                  Focus      => False,
+                  Line       => Line,
                   Create_New => True,
-                  Column => Column,
+                  Column     => Column,
                   Column_End => Column);
-               Child := Find_Editor (User, F);
+               Child := Find_Child (User, Src);
+
             else
-               Child := Find_Editor (User, F);
-               declare
-                  Edit  : constant Source_Editor_Box :=
-                    Get_Source_Box_From_MDI (Child);
-               begin
-                  Src := New_View (User, Edit);
-               end;
+               Src := New_View
+                 (User, Get_Source_Box_From_MDI (Child), Project);
+               Child := Find_Child (User, Src);
             end if;
 
             if Src /= null then
@@ -852,6 +877,12 @@ package body Src_Editor_Module is
       Child.Value := new String'(Image (Integer (Column)));
       Add_Child (N, Child);
 
+      Child := new Node;
+      Child.Tag := new String'("project");
+      Child.Value := new String'
+        (Editor.Get_View.Get_Project.Project_Path.Display_Full_Name);
+      Add_Child (N, Child);
+
       return N;
    end Save_Desktop;
 
@@ -922,11 +953,17 @@ package body Src_Editor_Module is
 
    function New_View
      (Kernel  : access Kernel_Handle_Record'Class;
-      Current : Source_Editor_Box) return Source_Editor_Box
+      Current : Source_Editor_Box;
+      Project : GNATCOLL.Projects.Project_Type) return Source_Editor_Box
    is
       Editor : Source_Editor_Box;
       Child  : GPS_MDI_Child;
       Num    : Natural;
+      P      : constant Project_Type :=
+        (if Project = No_Project
+         then Current.Get_View.Get_Project
+         else Project);
+
    begin
       if Current = null then
          return null;
@@ -934,8 +971,22 @@ package body Src_Editor_Module is
 
       declare
          Title : constant Virtual_File := Get_Filename (Current);
+         P_Name : constant String :=
+           (if P /= No_Project and then
+               Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
+            then " (" & P.Project_Path.Display_Base_Name & ')'
+            else "");
+         P_Full_Name : constant String :=
+           (if P /= No_Project and then
+               Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
+            then ASCII.LF & "Project: " & P.Project_Path.Display_Full_Name
+            else "");
       begin
-         Create_New_View (Editor, Kernel, Current);
+         Create_New_View
+           (Editor,
+            P,
+            Kernel,
+            Current);
 
          Child := new Editor_Child_Record;
          Initialize
@@ -949,7 +1000,7 @@ package body Src_Editor_Module is
          Num := 2;
          while Find_MDI_Child_By_Name
            (Get_MDI (Kernel),
-            Display_Base_Name (Title) & " <" & Image (Num) & ">") /=
+            Display_Base_Name (Title) & P_Name & " <" & Image (Num) & ">") /=
            null
          loop
             Num := Num + 1;
@@ -964,8 +1015,8 @@ package body Src_Editor_Module is
          begin
             Set_Title
               (Child,
-               Display_Full_Name (Title) & " <" & Im & ">",
-               Display_Base_Name (Title) & " <" & Im & ">");
+               Display_Full_Name (Title) & " <" & Im & ">" & P_Full_Name,
+               Display_Base_Name (Title) & P_Name & " <" & Im & ">");
          end;
 
          Set_Child (Get_View (Editor), Child);
@@ -1024,6 +1075,7 @@ package body Src_Editor_Module is
    function Create_File_Editor
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
+      Project    : GNATCOLL.Projects.Project_Type;
       Dir        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Create_New : Boolean := True;
       Focus      : Boolean := True) return Source_Editor_Box
@@ -1038,7 +1090,7 @@ package body Src_Editor_Module is
       --  create a new empty one anyway.
 
       if File_Exists then
-         Gtk_New (Editor, Kernel_Handle (Kernel));
+         Gtk_New (Editor, Project, Kernel_Handle (Kernel));
          Load_File (Editor, File,
                     Force_Focus => Focus,
                     Success     => Success);
@@ -1075,7 +1127,7 @@ package body Src_Editor_Module is
          end if;
 
          if Is_Writable then
-            Gtk_New (Editor, Kernel_Handle (Kernel));
+            Gtk_New (Editor, Project, Kernel_Handle (Kernel));
             Load_Empty_File (Editor, File, Dir, Get_Language_Handler (Kernel));
          end if;
       end if;
@@ -1100,6 +1152,7 @@ package body Src_Editor_Module is
    function Open_File
      (Kernel           : access Kernel_Handle_Record'Class;
       File             : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Project          : GNATCOLL.Projects.Project_Type;
       Create_New       : Boolean := True;
       Focus            : Boolean := True;
       Force            : Boolean := False;
@@ -1165,11 +1218,12 @@ package body Src_Editor_Module is
 
       if Active (Me) then
          Trace (Me, "Open file " & Display_Full_Name (File)
+                & " Project=" & Project.Project_Path.Display_Full_Name
                 & " Focus=" & Focus'Img);
       end if;
 
       if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then
-         Child2 := Find_Editor (Kernel, File);
+         Child2 := Find_Editor (Kernel, File, Project);
 
          if Child2 /= null then
             Check_Timestamp_And_Reload
@@ -1201,7 +1255,7 @@ package body Src_Editor_Module is
       end if;
 
       Editor := Create_File_Editor
-        (Kernel, File, Initial_Dir, Create_New, Focus);
+        (Kernel, File, Project, Initial_Dir, Create_New, Focus);
 
       --  If we have created an editor, put it into a box, and give it
       --  to the MDI to handle
@@ -1259,17 +1313,34 @@ package body Src_Editor_Module is
          Jump_To_Location;
 
          if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then
-            if Is_Local (File) then
-               Set_Title
-                 (Child, Display_Full_Name (File), Display_Base_Name (File));
-            else
-               Set_Title
-                 (Child,
-                  Get_Host (File) & ":|" & Display_Full_Name (File),
-                  Display_Base_Name (File));
-            end if;
+            declare
+               P_Name        : constant String :=
+                 (if Project /= No_Project and then
+                  Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
+                  then " (" & Project.Project_Path.Display_Base_Name & ')'
+                  else "");
+               P_Full_Name   : constant String :=
+                 (if Project /= No_Project and then
+                  Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
+                  then ASCII.LF
+                  & "Project : " & Project.Project_Path.Display_Full_Name
+                  else "");
+            begin
+               if Is_Local (File) then
+                  Set_Title
+                    (Child,
+                     Display_Full_Name (File) & P_Full_Name,
+                     Display_Base_Name (File) & P_Name);
+               else
+                  Set_Title
+                    (Child,
+                     Get_Host (File) & ":|" & Display_Full_Name (File)
+                       & P_Full_Name,
+                     Display_Base_Name (File) & P_Name);
+               end if;
 
-            File_Edited (Kernel, Get_Filename (MDI_Child (Child)));
+               File_Edited (Kernel, Get_Filename (MDI_Child (Child)));
+            end;
 
          else
             --  Determine the number of "Untitled" files open
@@ -1361,7 +1432,10 @@ package body Src_Editor_Module is
    overriding procedure Activate
      (Callback : access On_Recent; Item : String) is
    begin
-      Open_File_Editor (Callback.Kernel, Create (Full_Filename => +Item));
+      Open_File_Editor
+        (Callback.Kernel,
+         Create (Full_Filename => +Item),
+         Project => No_Project);  --  will choose one at random ???
    end Activate;
 
    -------------
@@ -1444,10 +1518,8 @@ package body Src_Editor_Module is
          --  Close all file editors corresponding to File
 
          loop
-            Child := Find_Editor (Kernel, D.File);
-
+            Child := Find_Editor (Kernel, D.File, D.Project);
             exit when Child = null;
-
             Close_Child (Child);
          end loop;
 
@@ -1456,6 +1528,7 @@ package body Src_Editor_Module is
       else
          Source := Open_File
            (Kernel, D.File,
+            Project          => D.Project,
             Create_New       => D.New_File,
             Focus            => D.Focus,
             Force            => D.Force_Reload,
@@ -1474,10 +1547,11 @@ package body Src_Editor_Module is
             Push_Marker_In_History
               (Kernel => Kernel,
                Marker => Create_File_Marker
-                 (Kernel => Kernel,
-                  File   => D.File,
-                  Line   => Convert (D.Line),
-                  Column => D.Column));
+                 (Kernel  => Kernel,
+                  File    => D.File,
+                  Project => D.Project,
+                  Line    => Convert (D.Line),
+                  Column  => D.Column));
          end if;
 
          if Source /= null then
@@ -1485,7 +1559,7 @@ package body Src_Editor_Module is
          end if;
 
          if D.Title /= "" then
-            Child := Find_Editor (Kernel, D.File);
+            Child := Find_Editor (Kernel, D.File, D.Project);
             Set_Title (Child, Title => D.Title, Short_Title => D.Title);
          end if;
 
@@ -1502,7 +1576,8 @@ package body Src_Editor_Module is
       Data   : access Hooks_Data'Class) return Boolean
    is
       D     : constant File_Line_Hooks_Args := File_Line_Hooks_Args (Data.all);
-      Child : constant MDI_Child := Find_Editor (Kernel, D.File);
+      Child : constant MDI_Child :=
+        Find_Editor (Kernel, D.File, No_Project);  --  any project ???
 
       function Get_Tooltip return String;
       function Get_Icon return String;
@@ -1592,14 +1667,14 @@ package body Src_Editor_Module is
         or else File_Data.Character = Backspace
       then
          declare
+            --  get the most recent editor for this file, for any project
             Box    : constant Source_Editor_Box :=
-                       Get_Source_Box_From_MDI
-                (Find_Editor (Kernel, File_Data.File));
-            Buffer : constant Source_Buffer
---                := (if Box /= null then Get_Buffer (Box) else null);
-              := Get_Buffer (Box);
-         begin
+              Get_Source_Box_From_MDI
+                (Find_Editor (Kernel, File_Data.File,
+                 No_Project));  -- any project
+            Buffer : constant Source_Buffer := Get_Buffer (Box);
 
+         begin
             if Is_Alnum (File_Data.Character) then
                Add_Typed_Char (Buffer, File_Data.Character);
             elsif File_Data.Character = Backspace then
@@ -1616,7 +1691,8 @@ package body Src_Editor_Module is
       elsif File_Data.Character = Space then
          Get_View
            (Get_Source_Box_From_MDI
-              (Find_Editor (Kernel, File_Data.File))).Reset_As_Is_Mode;
+              (Find_Editor
+                   (Kernel, File_Data.File, No_Project))).Reset_As_Is_Mode;
       end if;
    end User_Character_Added_Hook;
 
@@ -1635,8 +1711,10 @@ package body Src_Editor_Module is
          return;
       end if;
 
+      --  Get the most recent editor for this file, for any project
       Buffer := Get_Buffer
-        (Get_Source_Box_From_MDI (Find_Editor (Kernel, File_Data.File)));
+        (Get_Source_Box_From_MDI
+           (Find_Editor (Kernel, File_Data.File, No_Project)));
       Autocase_Text (Buffer, Casing => End_Of_Word);
    end Word_Added_Hook;
 
@@ -2295,14 +2373,19 @@ package body Src_Editor_Module is
          --  The preference for showing the subprogram name has changed:
          --  we need either to show or to hide the name on all open editors.
 
-         declare
-            Files : constant GNATCOLL.VFS.File_Array := Open_Files (Kernel);
-         begin
-            for Node in Files'Range loop
-               Get_Source_Box_From_MDI
-                 (Find_Editor (Kernel, Files (Node))).Update_Subprogram_Name;
-            end loop;
-         end;
+         Iter := First_Child (Get_MDI (Kernel));
+         loop
+            Child := Get (Iter);
+            exit when Child = null;
+
+            if Get_Widget (Child) /= null
+              and then Get_Widget (Child).all in Source_Editor_Box_Record'Class
+            then
+               Source_Editor_Box (Get_Widget (Child)).Update_Subprogram_Name;
+            end if;
+
+            Next (Iter);
+         end loop;
 
          Id.Show_Subprogram_Names := Pref_Display_Subprogram_Names;
       end if;
@@ -2447,8 +2530,9 @@ package body Src_Editor_Module is
    -----------------
 
    function Find_Editor
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File) return Gtkada.MDI.MDI_Child
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type) return Gtkada.MDI.MDI_Child
    is
       Id    : constant Source_Editor_Module :=
                 Source_Editor_Module (Src_Editor_Module_Id);
@@ -2467,7 +2551,9 @@ package body Src_Editor_Module is
 
       Child := Get_Focus_Child (Get_MDI (Kernel));
 
-      if Get_Filename (Child) = File then
+      if Get_Filename (Child) = File
+        and then (Project = No_Project or else Get_Project (Child) = Project)
+      then
          return Child;
       end if;
 
@@ -2479,7 +2565,10 @@ package body Src_Editor_Module is
       --  (It could have changed, for example if "save as..." was used)
 
       if Child /= null then
-         if Get_Filename (Child) = File then
+         if Get_Filename (Child) = File
+           and then (Project = No_Project
+                     or else Get_Project (Child) = Project)
+         then
             return Child;
          else
             Editors_Hash.Remove (Id.Editors, File);
@@ -2505,11 +2594,13 @@ package body Src_Editor_Module is
          Child := Get (Iter);
 
          exit when Child = null
-           or else Get_Filename (Child) = Full
-           or else Get_File_Identifier (Child) = Full
-
-            --  Handling of file identifiers
-           or else Get_Title (Child) = Display_Full_Name (File);
+           or else
+             ((Get_Filename (Child) = Full
+               or else Get_File_Identifier (Child) = Full
+               --  Handling of file identifiers
+               or else Get_Title (Child) = Display_Full_Name (File))
+              and then
+                (Project = No_Project or else Get_Project (Child) = Project));
 
          Next (Iter);
       end loop;
@@ -2563,21 +2654,9 @@ package body Src_Editor_Module is
       Editor : access Src_Editor_Box.Source_Editor_Box_Record'Class)
       return Gtkada.MDI.MDI_Child
    is
-      Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
-      Child : MDI_Child;
-
+      pragma Unreferenced (Kernel);
    begin
-      loop
-         Child := Get (Iter);
-
-         exit when Child = null
-           or else (Get_Widget (Child).all in Source_Editor_Box_Record'Class
-                    and then Source_Editor_Box (Get_Widget (Child)) =
-                      Source_Editor_Box (Editor));
-         Next (Iter);
-      end loop;
-
-      return Child;
+      return MDI_Child (Get_View (Editor).Get_Child);
    end Find_Child;
 
    ----------

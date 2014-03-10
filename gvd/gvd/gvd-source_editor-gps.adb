@@ -26,6 +26,7 @@ with GVD.Types;                 use GVD.Types;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with String_List_Utils;         use String_List_Utils;
 
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Commands;                  use Commands;
@@ -174,6 +175,7 @@ package body GVD.Source_Editor.GPS is
 
          Open_File_Editor
            (Kernel, File,
+            Project           => GNATCOLL.Projects.No_Project, --   ??? unknown
             New_File          => False,
             Enable_Navigation => False,
             Focus             => False);
@@ -225,8 +227,9 @@ package body GVD.Source_Editor.GPS is
       Open_File_Editor
         (Kernel,
          Editor.Current_File,
-         Editor.Line,
-         1,
+         Project  => GNATCOLL.Projects.No_Project,  --   ??? unknown
+         Line     => Editor.Line,
+         Column   => 1,
          New_File => False,
          Focus    => False);
       Append (Editor.Highlighted_Files,

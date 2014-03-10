@@ -24,7 +24,6 @@ with Commands.Interactive;
 with Glib.Object;                       use Glib.Object;
 
 with GNAT.Calendar.Time_IO;
-with GNATCOLL.Projects;
 
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;
@@ -576,6 +575,7 @@ package body GNATTest_Module is
 
    procedure Open_File
      (Kernel          : GPS.Kernel.Kernel_Handle;
+      Project         : GNATCOLL.Projects.Project_Type;
       Unit_Name       : String;
       Line            : Natural;
       Column          : Basic_Types.Visible_Column_Type;
@@ -586,8 +586,9 @@ package body GNATTest_Module is
 
    begin
       Src_Editor_Box.Go_To_Closest_Match
-        (Kernel      =>  Kernel,
+        (Kernel      => Kernel,
          Filename    => File,
+         Project     => Project,
          Line        => Src_Editor_Buffer.Editable_Line_Type (Line),
          Column      => Column,
          Entity_Name => Subprogram_Name);
@@ -816,9 +817,10 @@ package body GNATTest_Module is
    begin
       Open_File
         (User_Data.Kernel,
-         To_String (User_Data.Entity.File_Name),
-         User_Data.Entity.Line,
-         Basic_Types.Visible_Column_Type (User_Data.Entity.Column));
+         Project   => GNATCOLL.Projects.No_Project,  --  will use any project
+         Unit_Name => To_String (User_Data.Entity.File_Name),
+         Line   => User_Data.Entity.Line,
+         Column => Basic_Types.Visible_Column_Type (User_Data.Entity.Column));
    end Test_Entity_Callback;
 
    ----------------------------

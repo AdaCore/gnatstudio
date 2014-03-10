@@ -4252,7 +4252,7 @@ package body Project_Properties is
                null;
 
             when Edit_File =>
-               Open_File_Editor (Kernel, Project_Path (Project));
+               Open_File_Editor (Kernel, Project.Project_Path, Project);
          end case;
 
          return;
@@ -4266,7 +4266,7 @@ package body Project_Properties is
                return;
 
             when Edit_File =>
-               Open_File_Editor (Kernel, Project_Path (Project));
+               Open_File_Editor (Kernel, Project.Project_Path, Project);
                return;
 
             when Edit_Properties =>

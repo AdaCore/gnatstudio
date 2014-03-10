@@ -995,15 +995,17 @@ package body Browsers.Call_Graph is
          Open_File_Editor
            (Get_Kernel (Context.Context),
             Filename => Location.File,
+            Project  => Location.Project,
             Line     => Location.Line,
             Column   => Location.Column);
       else
          --  If the body wasn't found then display the specs
          Open_File_Editor
            (Get_Kernel (Context.Context),
-            File_Information (Context.Context),
-            Line   => Line_Information (Context.Context),
-            Column => Entity_Column_Information (Context.Context));
+            Filename => File_Information (Context.Context),
+            Project  => Project_Information (Context.Context),
+            Line     => Line_Information (Context.Context),
+            Column   => Entity_Column_Information (Context.Context));
       end if;
       return Commands.Success;
    end Execute;
@@ -1031,9 +1033,10 @@ package body Browsers.Call_Graph is
 
          Open_File_Editor
            (Get_Kernel (Context.Context),
-            Loc.File,
-            Line   => Loc.Line,
-            Column => Loc.Column);
+            Filename => Loc.File,
+            Project  => Loc.Project,
+            Line     => Loc.Line,
+            Column   => Loc.Column);
       end if;
       return Commands.Success;
    end Execute;
@@ -2417,6 +2420,7 @@ package body Browsers.Call_Graph is
       Open_File_Editor
         (Callback.Kernel,
          Filename => Callback.Location.File,
+         Project  => Callback.Location.Project,
          Line     => Callback.Location.Line,
          Column   => Callback.Location.Column);
       return True;

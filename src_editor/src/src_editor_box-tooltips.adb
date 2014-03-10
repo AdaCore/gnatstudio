@@ -104,9 +104,10 @@ package body Src_Editor_Box.Tooltips is
       end if;
 
       Editor.Kernel.Databases.Find_Declaration_Or_Overloaded
-        (Loc => (File   => Get_Filename (Editor),
-                 Line   => Contexts.Line_Information (Context),
-                 Column => Entity_Column_Information (Context)),
+        (Loc => (File    => Get_Filename (Editor),
+                 Project => Contexts.Project_Information (Context),
+                 Line    => Contexts.Line_Information (Context),
+                 Column  => Entity_Column_Information (Context)),
          Entity_Name => Entity_Name_Information (Context),
          Entity      => Entity,
          Closest_Ref => Ref);
