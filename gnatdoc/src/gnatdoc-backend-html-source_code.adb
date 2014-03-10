@@ -293,7 +293,9 @@ package body GNATdoc.Backend.HTML.Source_Code is
       Entity :=
         Find_Unique_Entity
           (Location      =>
-             (Self.File, First.Line, Visible_Column (Simple_Column)),
+             (Self.File,
+              GNATCOLL.Projects.No_Project,
+              First.Line, Visible_Column (Simple_Column)),
            In_References => True);
 
       --  Detect whether current entity can start scope with private part:

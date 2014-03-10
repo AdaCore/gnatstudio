@@ -1056,9 +1056,10 @@ package body GNATdoc.Backend.Simple is
                   declare
                      Str_Quote : constant String := """";
                      Loc : constant General_Location :=
-                       (File   => File,
-                        Line   => Sloc_Start.Line,
-                        Column => Visible_Column_Type (Sloc_Start.Column));
+                       (File    => File,
+                        Project => GNATCOLL.Projects.No_Project,
+                        Line    => Sloc_Start.Line,
+                        Column  => Visible_Column_Type (Sloc_Start.Column));
                      E   : Entity_Id;
                   begin
                      E := Find_Unique_Entity (Loc, In_References => True);

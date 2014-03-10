@@ -1508,9 +1508,10 @@ package body GNATdoc.Frontend is
                         Set_First_Private_Entity_Loc
                           (Get_Scope (Current_Context),
                            General_Location'
-                             (File   => File,
-                              Line   => Sloc_Start.Line,
-                              Column => Visible_Column (Sloc_Start.Column)));
+                             (File    => File,
+                              Project => GNATCOLL.Projects.No_Project,
+                              Line    => Sloc_Start.Line,
+                              Column  => Visible_Column (Sloc_Start.Column)));
                      end if;
                   end if;
 
@@ -1677,9 +1678,10 @@ package body GNATdoc.Frontend is
                            if No (Parent) then
                               Tok_Loc :=
                                 General_Location'
-                                  (File   => File,
-                                   Line   => Sloc_Start.Line,
-                                   Column => Visible_Column_Type
+                                  (File    => File,
+                                   Project => GNATCOLL.Projects.No_Project,
+                                   Line    => Sloc_Start.Line,
+                                   Column  => Visible_Column_Type
                                                (Sloc_Start.Column + Dot_Pos));
 
                               LL_Parent :=
@@ -1765,10 +1767,11 @@ package body GNATdoc.Frontend is
                             (Context => Context,
                              Name => S,
                              Loc  => General_Location'
-                                      (File   => File,
-                                       Line   => Sloc_Start.Line,
-                                       Column =>
-                                         Visible_Column (Sloc_Start.Column)));
+                               (File    => File,
+                                Project => GNATCOLL.Projects.No_Project,
+                                Line    => Sloc_Start.Line,
+                                Column  =>
+                                  Visible_Column (Sloc_Start.Column)));
                      begin
                         if Present (Alias) then
                            Set_Alias (E, Alias);
@@ -1868,9 +1871,10 @@ package body GNATdoc.Frontend is
                      In_Generic_Formals := True;
                      Generic_Formals_Loc :=
                        General_Location'
-                         (File   => File,
-                          Line   => Sloc_Start.Line,
-                          Column => Visible_Column (Sloc_Start.Column));
+                         (File    => File,
+                          Project => GNATCOLL.Projects.No_Project,
+                          Line    => Sloc_Start.Line,
+                          Column  => Visible_Column (Sloc_Start.Column));
 
                   when Tok_Package |
                        Tok_Procedure |
@@ -1891,9 +1895,10 @@ package body GNATdoc.Frontend is
                         Set_First_Private_Entity_Loc
                           (Get_Scope (Current_Context),
                            General_Location'
-                             (File   => File,
-                              Line   => Sloc_Start.Line,
-                              Column => Visible_Column (Sloc_Start.Column)));
+                             (File    => File,
+                              Project => GNATCOLL.Projects.No_Project,
+                              Line    => Sloc_Start.Line,
+                              Column  => Visible_Column (Sloc_Start.Column)));
                      end if;
 
                   when Tok_New =>
@@ -2024,9 +2029,10 @@ package body GNATdoc.Frontend is
                               declare
                                  Loc : constant General_Location :=
                                    General_Location'
-                                     (File => File,
-                                      Line => Sloc_Start.Line,
-                                      Column =>
+                                     (File    => File,
+                                      Project => GNATCOLL.Projects.No_Project,
+                                      Line    => Sloc_Start.Line,
+                                      Column  =>
                                         Visible_Column (Sloc_Start.Column));
                                  Current_Entity : constant Entity_Id :=
                                    Get_Current_Entity (Current_Context);
@@ -3268,7 +3274,9 @@ package body GNATdoc.Frontend is
             procedure Build_Missing_Entity;
             procedure Build_Missing_Entity is
                Loc   : constant General_Location :=
-                 (File, Sloc_Start.Line, Visible_Column (Sloc_Start.Column));
+                 (File,
+                  GNATCOLL.Projects.No_Project,
+                  Sloc_Start.Line, Visible_Column (Sloc_Start.Column));
                Lang  : constant Language_Access :=
                         Get_Language_From_File (Context.Lang_Handler, File);
                New_E : constant Entity_Id :=
@@ -3300,7 +3308,9 @@ package body GNATdoc.Frontend is
             procedure Fix_Wrong_Location (E : Entity_Id);
             procedure Fix_Wrong_Location (E : Entity_Id) is
                Loc : constant General_Location :=
-                 (File, Sloc_Start.Line,
+                 (File,
+                  GNATCOLL.Projects.No_Project,
+                  Sloc_Start.Line,
                   Visible_Column (Sloc_Start.Column));
             begin
                LL.Set_Location (E, Loc);
@@ -3540,9 +3550,10 @@ package body GNATdoc.Frontend is
                               declare
                                  Loc : constant General_Location :=
                                    General_Location'
-                                     (File => Current_Body_File,
-                                      Line => Sloc_Start.Line,
-                                      Column =>
+                                     (File    => Current_Body_File,
+                                      Project => GNATCOLL.Projects.No_Project,
+                                      Line    => Sloc_Start.Line,
+                                      Column  =>
                                         Visible_Column (Sloc_Start.Column));
                               begin
                                  Set_End_Of_Profile_Location_In_Body (E, Loc);
