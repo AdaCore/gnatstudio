@@ -507,6 +507,8 @@ package body GNATdoc.Backend.HTML is
          return not Continue;
       end Callback;
 
+      Src_Files : GNATdoc.Files.Files_List.Vector;
+
    begin
       --  Generate general information JSON data file.
 
@@ -533,7 +535,10 @@ package body GNATdoc.Backend.HTML is
 
       --  Generate annotated sources and compute index of source files.
 
-      for File of Self.Src_Files loop
+      Src_Files := Self.Src_Files;
+      Files_Vector_Sort.Sort (Src_Files);
+
+      for File of Src_Files loop
          Trace
            (Me, "generate annotated source for " & String (File.Base_Name));
 
