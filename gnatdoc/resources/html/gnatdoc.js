@@ -597,6 +597,16 @@ function displayEntities() {
 }
 
 /**
+ * Displays inheritance tree of tagged types and classes
+ */
+
+function displayInheritance() {
+    hideTOC();
+    document.getElementById('contentView').src = 'inheritance_index.html';
+    document.getElementById('inheritanceMenu').className = 'current';
+}
+
+/**
  * Displays list of source files
  */
 
@@ -644,9 +654,9 @@ function onLoad() {
     li = document.createElement('li');
     a = document.createElement('a');
     a.appendChild(document.createTextNode('Inheritance Tree'));
-    a.href = 'inheritance_index.html';
-    a.target = 'contentView';
+    a.href = 'javascript:displayInheritance();';
     li.appendChild(a);
+    li.id = 'inheritanceMenu';
     ul.appendChild(li);
 
     li = document.createElement('li');
