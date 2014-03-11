@@ -650,7 +650,7 @@ package body GNATdoc is
             Loc    : General_Location;
 
          begin
-            Cursor := Database.Entities_In_File (File);
+            Cursor := Database.Entities_In_File (File, No_Project);
             while not At_End (Cursor) loop
                E   := Cursor.Get;
                Loc := Get_Location (Database, E);
@@ -796,7 +796,7 @@ package body GNATdoc is
 
             Result.File := File;
 
-            It := Find_Dependencies (Database, File);
+            It := Find_Dependencies (Database, File, No_Project);
             while It.Has_Element loop
                Dep_File := It.Element;
 
@@ -906,7 +906,7 @@ package body GNATdoc is
 
             Result.File := File;
 
-            It := Find_Dependencies (Database, File);
+            It := Find_Dependencies (Database, File, No_Project);
             while It.Has_Element loop
                Dep_File := It.Element;
 

@@ -1135,7 +1135,8 @@ package body GNATdoc.Frontend.Builder is
       Set_Kind (Std_Entity, E_Package);
       Append_To_List (File_Entities.All_Entities'Access, Std_Entity);
 
-      File_Entities_Cursor := Context.Database.Entities_In_File (File);
+      File_Entities_Cursor := Context.Database.Entities_In_File
+         (File, No_Project);
       while not At_End (File_Entities_Cursor) loop
          Entities_Count := Entities_Count + 1;
 
@@ -1557,7 +1558,8 @@ package body GNATdoc.Frontend.Builder is
       Set_Kind (Std_Entity, E_Package);
       Enter_Scope (Std_Entity);
 
-      File_Entities_Cursor := Context.Database.Entities_In_File (File);
+      File_Entities_Cursor := Context.Database.Entities_In_File
+         (File, No_Project);
 
       --  Process all its entities
 
