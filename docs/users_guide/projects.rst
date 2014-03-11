@@ -452,6 +452,61 @@ they were, so you should open the new file in them if needed.
 .. index:: project; editing
 .. _Disabling_Project_Edition_Features:
 
+Aggregate projects
+==================
+
+Aggregate projects are a convenient way to group several independent
+projects into a single project that can be loaded in GPS. Using an
+aggregate project has several advantages:
+
+* There is no restriction regarding the aggregate sources and projects.  There
+  can be duplicate file names between the aggregate projects, or duplicate
+  projects altogether. For instance, if you have a project :file:`liba.gpr`
+  which contains a library used by both :file:`projectA.gpr` and
+  :file:`projectB.gpr`, it is still possible to aggregate the latter two
+  projects. It is also possible that a common source :file:`common.ads` belongs
+  to both :file:`projectA.gpr` and :file:`projectB.gpr`.
+
+* Building with gprbuild and the aggregated project will build the main units
+  of all aggregate projects with a single command.
+
+* The aggregated project can contain attributes to setup your environment,
+  in particular `External` can be used to set the value of the scenario
+  variables, or `Project_Path` can be used to set the project path that will
+  be used to load the aggregated projects.
+
+Here is a short example of an aggregate project::
+
+   aggregate project BuildAll is
+       --  "liba.gpr" as described above, is automatically imported, but
+       --  not aggregated so its main units are not build
+       for Project_Files use ("projecta/projecta.gpr",
+                              "projectb/projectb.gpr");
+
+       --  Set environment variables
+       for External ("BUILD") use "Debug";
+   end BuildAll;
+
+Loading an aggregate project in GPS has a few impacts on the interface:
+
+* Since a source file can now belong to several projects, each editor is
+  associated with a specific project. So if you work on the :file:`common.ads`
+  file, you might end up with two editors, one for :file:`common.ads` in the
+  context of :file:`projectA.gpr`, and the other in the context of
+  :file:`projectB.gpr`. The project is used in particular when doing
+  cross-reference queries, since a "with C;" in :file:`common.ads` could point
+  to different files depending on which project owns that editor.
+
+  To help with this, GPS will show the name of the project in the notebook
+  tabs.
+
+* The omni-search (at the top-right corner of the GPS window) might list the
+  files several times, once per project that owns it. So you should be select
+  the right one.
+
+* After you do a cross-reference (like "goto declaration"), the newly opened
+  editor will have automatically selected the right project.
+
 Disabling Editing of the Project File
 =====================================
 
