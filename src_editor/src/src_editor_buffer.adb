@@ -6301,14 +6301,10 @@ package body Src_Editor_Buffer is
       --  computation, which does not need xref information
 
       Set := Get_Project_Tree (Editor.Kernel).Info_Set (Editor.Filename);
-      if Set.First_Element.Project = No_Project then
-         return New_Block;
-      else
-         File := Get_Or_Create
-           (Db      => Editor.Kernel.Get_Construct_Database,
-            File    => Editor.Filename,
-            Project => Set.First_Element.Project);
-      end if;
+      File := Get_Or_Create
+        (Db      => Editor.Kernel.Get_Construct_Database,
+         File    => Editor.Filename,
+         Project => Set.First_Element.Project);
 
       Tree := Get_Tree (File);
 
