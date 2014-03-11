@@ -103,21 +103,20 @@ package body CodePeer.Module.Editors is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
-
       use type Code_Analysis.Code_Analysis_Tree;
 
       D            : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Project_Node : Code_Analysis.Project_Access;
+      Project      : Project_Type;
 
    begin
+      Project := Get_Registry (Kernel).Tree.Info_Set
+        (D.File).First_Element.Project;
+
       if Module.Tree /= null
-        and then Module.Tree.Contains
-          (Get_Registry (Module.Kernel).Tree.Info (D.File).Project)
+        and then Module.Tree.Contains (Project)
       then
-         Project_Node :=
-           Module.Tree.Element
-             (Get_Registry (Module.Kernel).Tree.Info (D.File).Project);
+         Project_Node := Module.Tree.Element (Project);
 
          if Project_Node.Files.Contains (D.File) then
             Hide_Annotations (Module, Project_Node.Files.Element (D.File));
@@ -133,21 +132,20 @@ package body CodePeer.Module.Editors is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
-
       use type Code_Analysis.Code_Analysis_Tree;
 
       D            : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Project_Node : Code_Analysis.Project_Access;
+      Project      : Project_Type;
 
    begin
+      Project := Get_Registry (Kernel).Tree.Info_Set
+        (D.File).First_Element.Project;
+
       if Module.Tree /= null
-        and then Module.Tree.Contains
-          (Get_Registry (Module.Kernel).Tree.Info (D.File).Project)
+        and then Module.Tree.Contains (Project)
       then
-         Project_Node :=
-           Module.Tree.Element
-             (Get_Registry (Module.Kernel).Tree.Info (D.File).Project);
+         Project_Node := Module.Tree.Element (Project);
 
          if Project_Node.Files.Contains (D.File) then
             Show_Annotations (Module, Project_Node.Files.Element (D.File));

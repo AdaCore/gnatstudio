@@ -206,7 +206,10 @@ package body GPS.Scripts.Files is
       elsif Command = "project" then
          Name_Parameters (Data, File_Project_Parameters);
          Info := Nth_Arg (Data, 1);
-         Project := Kernel.Registry.Tree.Info (Info).Project;
+
+         --  Return the first possible project, we have nothing else to base
+         --  our guess on.
+         Project := Kernel.Registry.Tree.Info_Set (Info).First_Element.Project;
 
          if Project = No_Project and then Nth_Arg (Data, 2, True) then
             Project := Kernel.Registry.Tree.Root_Project;
@@ -265,8 +268,10 @@ package body GPS.Scripts.Files is
          begin
             Set_Return_Value_As_List (Data);
             Iter := Kernel.Databases.Entities_In_File
-              (File => Info,
-               Name => "");
+              (File    => Info,
+               Project => Kernel.Registry
+                 .Tree.Info_Set (Info).First_Element.Project,
+               Name    => "");
 
             while not At_End (Iter) loop
                Ent := Get (Iter);

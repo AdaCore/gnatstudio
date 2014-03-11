@@ -2674,12 +2674,12 @@ package body Project_Properties is
                    (Kernel, Project, Description, Index => Attribute_Index);
                Files : File_Array_Access :=
                  Project.Source_Files (Recursive => False);
-               Info  : File_Info;
+               Info  : File_Info_Set;
                Found : Boolean;
             begin
                for F in Files'Range loop
-                  Info := Tree.Info (Files (F));
-                  if Info.Unit_Part = Unit_Spec then
+                  Info := Tree.Info_Set (Files (F));
+                  if Info.First_Element.Unit_Part = Unit_Spec then
                      --  This is the <<add>> dialog, so we only want to show
                      --  those units that are not already in the list.
                      --  ??? Not very efficient
@@ -2687,7 +2687,7 @@ package body Project_Properties is
                      Found := False;
 
                      for C in Current'Range loop
-                        if Current (C).all = Info.Unit_Name then
+                        if Current (C).all = Info.First_Element.Unit_Name then
                            Found := True;
                            exit;
                         end if;
@@ -2695,7 +2695,7 @@ package body Project_Properties is
 
                      if not Found then
                         Model.Append (Iter, Null_Iter);
-                        Model.Set (Iter, 0, Info.Unit_Name);
+                        Model.Set (Iter, 0, Info.First_Element.Unit_Name);
                      end if;
                   end if;
                end loop;

@@ -20,6 +20,7 @@ with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Basic_Types;            use Basic_Types;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 with Glib;                   use Glib;
+with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GNATCOLL.Xref;          use GNATCOLL.Xref;
 with GPS.Editors;            use GPS.Editors;
@@ -825,6 +826,7 @@ package body Refactoring.Subprograms is
       Extract := (Code => Create_Range
                   (Context => Get_Kernel (Context.Context).Refactoring_Context,
                    File    => File_Information (Context.Context),
+                   Project => Project_Information (Context.Context),
                    From_Line => From_Line,
                    To_Line   => To_Line),
                   Source         => No_File,
@@ -879,10 +881,19 @@ package body Refactoring.Subprograms is
    is
       pragma Unreferenced (Command);
       Context : Extract_Context;
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
+      File    : Virtual_File;
+      Project : Project_Type;
+
    begin
+      --  Use the first possible project, since we have no other context
+      File := Create (Nth_Arg (Data, 1));
+      Project := Kernel.Registry.Tree.Info_Set (File).First_Element.Project;
+
       Context := (Code       => Create_Range
-                  (Context   => Get_Kernel (Data).Refactoring_Context,
-                   File      => Create (Nth_Arg (Data, 1)),
+                  (Context   => Kernel.Refactoring_Context,
+                   File      => File,
+                   Project   => Project,
                    From_Line => Nth_Arg (Data, 2),
                    To_Line   => Nth_Arg (Data, 3)),
                   Source         => No_File,

@@ -143,9 +143,10 @@ package Xref is
    --  SQL queries.
 
    function Select_Entity_Declaration
-     (Self   : access General_Xref_Database_Record;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Entity : General_Entity) return General_Entity;
+     (Self    : access General_Xref_Database_Record;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
+      Entity  : General_Entity) return General_Entity;
    --  The user has requested a xref, but the information is not up-to-date and
    --  there is an ambiguity. This function is responsible for asking the user
    --  to chose among all the homonym entities in File.
@@ -217,18 +218,27 @@ package Xref is
    procedure Next (Iter : in out File_Iterator);
    function Element (Iter : File_Iterator) return GNATCOLL.VFS.Virtual_File;
 
+   function Project
+     (Iter : File_Iterator;
+      Tree : GNATCOLL.Projects.Project_Tree'Class)
+      return GNATCOLL.Projects.Project_Type;
+   --  The project to which the current element belongs, or No_Project if
+   --  unknown (using the old xref engine)
+
    procedure Destroy (Iter : in out File_Iterator_Access);
    procedure Destroy (Iter : in out File_Iterator);
    --  ??? Only because of the old LI database
 
    function Find_Dependencies
-     (Self : access General_Xref_Database_Record'Class;
-      File : GNATCOLL.VFS.Virtual_File) return File_Iterator;
+     (Self    : access General_Xref_Database_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type) return File_Iterator;
    --  Return the list of files that File depends on.
 
    function Find_Ancestor_Dependencies
-     (Self                  : access General_Xref_Database_Record'Class;
-      File                  : GNATCOLL.VFS.Virtual_File) return File_Iterator;
+     (Self    : access General_Xref_Database_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type) return File_Iterator;
    --  Return the list of files that depend on File. The rule is the following:
    --    - bodies, specs and separates always depend on each other
 
@@ -658,9 +668,10 @@ package Xref is
    type Entities_In_File_Cursor is new Base_Entities_Cursor with private;
 
    function Entities_In_File
-     (Self   : access General_Xref_Database_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Name   : String := "") return Entities_In_File_Cursor;
+     (Self    : access General_Xref_Database_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
+      Name    : String := "") return Entities_In_File_Cursor;
    --  Return all entities referenced or declared in file.
 
    overriding function At_End (Iter : Entities_In_File_Cursor) return Boolean;
@@ -925,6 +936,8 @@ private
    end record;
 
    type File_Iterator is tagged record
+      Tree : GNATCOLL.Projects.Project_Tree_Access;
+
       --  Old LI database
       Old_Iter : Old_Entities.Queries.File_Dependency_Iterator;
       Old_Ancestor_Iter : Old_Entities.Queries.Dependency_Iterator;

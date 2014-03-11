@@ -39,6 +39,7 @@ with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
@@ -229,8 +230,9 @@ package body Docgen2_Module is
      (Command : access Generate_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File   : Virtual_File;
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File    : Virtual_File;
+      Project : Project_Type;
    begin
       if Command.Interactive then
          File := Select_File
@@ -241,8 +243,11 @@ package body Docgen2_Module is
             File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
             Pattern_Name      => -"All files;Ada files;C/C++ files",
             History           => Get_History (Kernel));
+         Project := Get_Registry
+           (Kernel).Tree.Info_Set (File).First_Element.Project;
       else
          File := File_Information (Context.Context);
+         Project := Project_Information (Context.Context);
       end if;
 
       if File /= GNATCOLL.VFS.No_File then
@@ -250,6 +255,7 @@ package body Docgen2_Module is
            (Kernel,
             Docgen_Module (Docgen_Module_Id).Backend,
             File,
+            Project,
             Docgen_Module (Docgen_Module_Id).Options);
       end if;
       return Commands.Success;
@@ -261,7 +267,9 @@ package body Docgen2_Module is
 
    procedure File_Commands_Handler
      (Data    : in out Callback_Data'Class;
-      Command : String) is
+      Command : String)
+   is
+      Project : Project_Type;
    begin
       if Command = "generate_doc" then
          Name_Parameters (Data, Generate_For_File_Parameters);
@@ -271,10 +279,13 @@ package body Docgen2_Module is
          begin
             Trace (Me, "Generating doc for file " &
                    Display_Full_Name (File));
+            Project := Get_Registry
+              (Get_Kernel (Data)).Tree.Info_Set (File).First_Element.Project;
             Generate
               (Get_Kernel (Data),
                Docgen_Module (Docgen_Module_Id).Backend,
                File,
+               Project,
                Docgen_Module (Docgen_Module_Id).Options);
          end;
       end if;

@@ -557,9 +557,6 @@ package body Xref is
                   Project => No_Project,
                   Approximate_Search_Fallback => Approximate_Search_Fallback);
             else
-               --  ??? Should pass the project as argument if we need to solve
-               --  ambiguities
-
                if Loc.Project = No_Project then
                   Set := Self.Registry.Tree.Info_Set (Loc.File);
                   P := Set.First_Element.Project;
@@ -686,9 +683,10 @@ package body Xref is
 
       if Fuzzy and then Ask_If_Overloaded then
          Entity := Select_Entity_Declaration
-           (Self   => General_Xref_Database_Record'Class (Self.all)'Access,
-            File   => Loc.File,
-            Entity => Entity);
+           (Self    => General_Xref_Database_Record'Class (Self.all)'Access,
+            File    => Loc.File,
+            Project => Loc.Project,
+            Entity  => Entity);
 
          if Active (Me) then
             Decrease_Indent (Me);
@@ -2041,19 +2039,15 @@ package body Xref is
    ----------------------
 
    function Entities_In_File
-     (Self   : access General_Xref_Database_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Name   : String := "") return Entities_In_File_Cursor
+     (Self    : access General_Xref_Database_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
+      Name    : String := "") return Entities_In_File_Cursor
    is
       Result  : Entities_In_File_Cursor;
       F       : Old_Entities.Source_File;
-      Project : Project_Type;
    begin
       if Active (SQLITE) then
-         --  ??? Should pass the project as argument, the code below does
-         --  not support aggregates
-         Project := Self.Registry.Tree.Info (File).Project;
-
          if Name = "" then
             Self.Xref.Referenced_In (File, Project, Cursor => Result.Iter);
          else
@@ -3234,6 +3228,23 @@ package body Xref is
    end Element;
 
    -------------
+   -- Project --
+   -------------
+
+   function Project
+     (Iter : File_Iterator;
+      Tree : GNATCOLL.Projects.Project_Tree'Class)
+      return GNATCOLL.Projects.Project_Type is
+   begin
+      if Active (SQLITE) then
+         return Project (Iter.Iter, Tree);
+      else
+         --  aggregate projects not supported anyway
+         return GNATCOLL.Projects.No_Project;
+      end if;
+   end Project;
+
+   -------------
    -- Destroy --
    -------------
 
@@ -3265,20 +3276,16 @@ package body Xref is
    -----------------------
 
    function Find_Dependencies
-     (Self : access General_Xref_Database_Record'Class;
-      File : GNATCOLL.VFS.Virtual_File) return File_Iterator
+     (Self    : access General_Xref_Database_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type) return File_Iterator
    is
       use Old_Entities;
       Iter    : File_Iterator;
-      Project : Project_Type;
    begin
       Iter.Is_Ancestor := False;
 
       if Active (SQLITE) then
-         --  ??? Should pass the project as argument, the code below does
-         --  not support aggregates
-         Project := Self.Registry.Tree.Info (File).Project;
-
          Iter.Iter := Self.Xref.Imports (File, Project);
       else
          Old_Entities.Queries.Find_Dependencies
@@ -3302,20 +3309,16 @@ package body Xref is
    --------------------------------
 
    function Find_Ancestor_Dependencies
-     (Self : access General_Xref_Database_Record'Class;
-      File : GNATCOLL.VFS.Virtual_File) return File_Iterator
+     (Self    : access General_Xref_Database_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type) return File_Iterator
    is
       use Old_Entities;
       Iter    : File_Iterator;
-      Project : Project_Type;
    begin
       Iter.Is_Ancestor := True;
 
       if Active (SQLITE) then
-         --  ??? Should pass the project as argument, the code below does
-         --  not support aggregates
-         Project := Self.Registry.Tree.Info (File).Project;
-
          Iter.Iter := Self.Xref.Imported_By (File, Project);
       else
          Old_Entities.Queries.Find_Ancestor_Dependencies
@@ -3943,9 +3946,10 @@ package body Xref is
    function Select_Entity_Declaration
      (Self   : access General_Xref_Database_Record;
       File   : GNATCOLL.VFS.Virtual_File;
+      Project : Project_Type;
       Entity : General_Entity) return General_Entity
    is
-      pragma Unreferenced (Self, File);
+      pragma Unreferenced (Self, File, Project);
    begin
       return Entity;
    end Select_Entity_Declaration;
@@ -4112,8 +4116,10 @@ package body Xref is
       ----------------------------
 
       procedure Reset_File_If_External (S : in out Old_Entities.Source_File) is
+         --  old xref engine does not support aggregate project, so take the
+         --  first possible match
          Info : constant File_Info :=
-           Tree.Info (Old_Entities.Get_Filename (S));
+           Tree.Info_Set (Old_Entities.Get_Filename (S)).First_Element.all;
       begin
          if Info.Project = No_Project then
             Old_Entities.Reset (S);

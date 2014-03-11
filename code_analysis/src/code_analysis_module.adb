@@ -643,7 +643,8 @@ package body Code_Analysis_Module is
       end if;
 
       Prj_Name  :=
-        Get_Registry (Get_Kernel (Data)).Tree.Info (Src_File).Project;
+        Get_Registry (Get_Kernel (Data)).Tree.Info_Set (Src_File)
+        .First_Element.Project;
       Prj_Node  := Get_Or_Create (Analysis.Projects, Prj_Name);
 
       if not Is_Regular_File (Cov_File) then

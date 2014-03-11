@@ -1174,8 +1174,7 @@ package body VCS_View_API is
          Query_Project_Files
            (Explorer,
             Get_Kernel (Context),
-            Get_Registry (Get_Kernel (Context)).Tree.Info
-              (File_Information (Context)).Project (True),
+            Project_Information (Context), --  will compute as needed
             False, False);
 
       else
@@ -2616,7 +2615,8 @@ package body VCS_View_API is
 
          Kernel        : constant Kernel_Handle := Get_Kernel (Context);
          Project       : constant Project_Type :=
-                           Get_Registry (Kernel).Tree.Info (Filename).Project;
+           Get_Registry (Kernel).Tree.Info_Set
+           (Filename).First_Element.Project;
          Root_Branches : constant Filesystem_String :=
            Get_Branches_Root (Project);
          Root_Tags     : constant Filesystem_String := Get_Tags_Root (Project);
@@ -3117,7 +3117,8 @@ package body VCS_View_API is
 
       --  At this point Full must not be null
 
-      Prj := Get_Registry (Kernel).Tree.Info (Full).Project (True);
+      Prj := Get_Registry (Kernel).Tree.Info_Set (Full)
+        .First_Element.Project (True);
 
       if Prj = No_Project then
          Insert

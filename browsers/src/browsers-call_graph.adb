@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with GNATCOLL.Projects;             use GNATCOLL.Projects;
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Utils;
@@ -1889,13 +1890,32 @@ package body Browsers.Call_Graph is
       Iter2       : Entities_In_File_Cursor;
       Entity2     : General_Entity;
       Message     : Simple_Message_Access;
+      Project     : Project_Type := No_Project;
+      Set         : File_Info_Set;
+      Imports     : Boolean;
+      Is_Limited_With : Boolean;
 
    begin
       if All_From_Same_File then
          Get_Messages_Container (Kernel).Remove_Category
            (Title, Call_Graph_Message_Flags);
 
-         Iter2 := Kernel.Databases.Entities_In_File (Local_File);
+         --  We use a project that is in the same tree as the entity.
+
+         Set := Get_Registry (Kernel).Tree.Info_Set (Local_File);
+         for S of Set loop
+            S.Project.Project_Imports
+              (Decl.Project,
+               Include_Extended => True,
+               Imports          => Imports,
+               Is_Limited_With  => Is_Limited_With);
+            if Imports then
+               Project := S.Project;
+               exit;
+            end if;
+         end loop;
+
+         Iter2 := Kernel.Databases.Entities_In_File (Local_File, Project);
          while not At_End (Iter2) loop
             Entity2 := Get (Iter2);
 

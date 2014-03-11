@@ -1789,8 +1789,7 @@ package body Src_Editor_Module is
                return Expansion & (+Dir_Name (Get_Filename (Box)));
 
             when 'p' =>
-               Prj := Get_Registry (Kernel).Tree.Info
-                 (Get_Filename (Box)).Project;
+               Prj := Get_Project (Box);
                if Prj = No_Project then
                   Prj := Get_Registry (Kernel).Tree.Root_Project;
                end if;
@@ -1798,8 +1797,7 @@ package body Src_Editor_Module is
                return Expansion & Prj.Name;
 
             when 'P' =>
-               Prj := Get_Registry (Kernel).Tree.Info
-                 (Get_Filename (Box)).Project;
+               Prj := Get_Project (Box);
                if Prj = No_Project then
                   Prj := Get_Registry (Kernel).Tree.Root_Project;
                end if;

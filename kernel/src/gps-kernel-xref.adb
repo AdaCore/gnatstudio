@@ -19,7 +19,6 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Commands.Generic_Asynchronous;  use Commands;
 with Commands;                       use Commands;
-with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.SQL.Exec;              use GNATCOLL.SQL.Exec;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;
@@ -813,9 +812,10 @@ package body GPS.Kernel.Xref is
    -------------------------------
 
    overriding function Select_Entity_Declaration
-     (Self   : access GPS_General_Xref_Database_Record;
-      File   : Virtual_File;
-      Entity : General_Entity) return General_Entity
+     (Self    : access GPS_General_Xref_Database_Record;
+      File    : Virtual_File;
+      Project : Project_Type;
+      Entity  : General_Entity) return General_Entity
    is
       procedure Set
         (Tree : System.Address;
@@ -859,8 +859,9 @@ package body GPS.Kernel.Xref is
 
    begin
       Iter := Self.Entities_In_File
-        (File   => File,
-         Name   => Name);
+        (File    => File,
+         Project => Project,
+         Name    => Name);
 
       while not At_End (Iter) loop
          Count := Count + 1;

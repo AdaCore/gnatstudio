@@ -25,6 +25,7 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;
 with Basic_Types;
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with GNATCOLL.Xref;
 with GNAT.Strings;
@@ -217,6 +218,7 @@ package Refactoring.Services is
    function Create_Range
      (Context     : not null access Factory_Context_Record'Class;
       File        : GNATCOLL.VFS.Virtual_File;
+      Project     : GNATCOLL.Projects.Project_Type;
       From_Line   : Integer;
       To_Line     : Integer) return Range_Of_Code;
    --  Create a range of code (ie the part of the code delimited by two lines).
@@ -370,10 +372,11 @@ private
 
    type Range_Of_Code is new With_Factory with record
       File        : GNATCOLL.VFS.Virtual_File;
+      Project     : GNATCOLL.Projects.Project_Type;
       From_Line   : Integer;
       To_Line     : Integer;
    end record;
 
    Empty_Range_Of_Code : constant Range_Of_Code :=
-     (null, GNATCOLL.VFS.No_File, -1, -1);
+     (null, GNATCOLL.VFS.No_File, GNATCOLL.Projects.No_Project, -1, -1);
 end Refactoring.Services;

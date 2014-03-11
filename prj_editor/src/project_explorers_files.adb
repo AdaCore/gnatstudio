@@ -571,9 +571,13 @@ package body Project_Explorers_Files is
                declare
                   File : constant Virtual_File :=
                     Get_Registry (D.Explorer.Kernel).Tree.Create
-                       (Name => D.Files (D.File_Index).Base_Dir_Name);
+                    (Name => D.Files (D.File_Index).Base_Dir_Name);
+
+                  --  First matching project, since we have nothing else to
+                  --  base our guess on
                   P    : constant Project_Type :=
-                    Get_Registry (D.Explorer.Kernel).Tree.Info (File).Project;
+                    Get_Registry (D.Explorer.Kernel).Tree
+                    .Info_Set (File).First_Element.Project;
                begin
                   --  If not part of a project, then we remove the file
                   if P = No_Project

@@ -346,7 +346,8 @@ package body CodePeer.Bridge.Inspection_Readers is
          Project_Node :=
            Code_Analysis.Get_Or_Create
              (Self.Projects,
-              Get_Registry (Self.Kernel).Tree.Info (File_Name).Project);
+              Get_Registry (Self.Kernel).Tree.Info_Set (File_Name)
+              .First_Element.Project);
          Self.File_Node :=
            Code_Analysis.Get_Or_Create (Project_Node, File_Name);
          Self.File_Node.Analysis_Data.CodePeer_Data :=

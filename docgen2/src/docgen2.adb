@@ -849,15 +849,14 @@ package body Docgen2 is
      (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend : Docgen2_Backend.Backend_Handle;
       File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
       Options : Docgen_Options)
    is
-      P          : constant Project_Type :=
-                     Get_Registry (Kernel).Tree.Info (File).Project (True);
       Other_File : constant Virtual_File :=
                      Get_Registry (Kernel).Tree.Other_File (File);
       C          : Docgen_Object;
    begin
-      Parse_All_LI_Information (Kernel, P, Recursive => False);
+      Parse_All_LI_Information (Kernel, Project, Recursive => False);
 
       C := new Docgen_Command;
 
@@ -869,7 +868,7 @@ package body Docgen2 is
       C.State   := Analysis_Setup;
       C.Kernel  := Kernel_Handle (Kernel);
       C.Backend := Backend;
-      C.Project := P;
+      C.Project := Project;
       C.Options := Options;
 
       Launch_Background_Command

@@ -17,6 +17,7 @@
 
 with Ada.Containers.Vectors;
 with Language.Cpp;     use Language.Cpp;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Traces;  use GNATCOLL.Traces;
 with Xref;             use Xref;
 
@@ -256,13 +257,19 @@ package body Completion.C.Constructs_Extractor is
          Db     : constant General_Xref_Database :=
                     Wrapper.Resolver.Kernel.Databases;
          Result : Construct_Iterator_Wrapper;
+         Project : Project_Type;
+         File : constant Virtual_File := Get_File (Wrapper.Context);
       begin
          Result.Stage    := Stage_1;
          Result.Resolver := Wrapper.Resolver;
          Result.Prefix   := Wrapper.Prefix;
 
-         Result.Processed_Files.Append (Get_File (Wrapper.Context));
-         Result.Cursor := Db.Entities_In_File (Get_File (Wrapper.Context));
+         Result.Processed_Files.Append (File);
+
+         --  ??? Should get the project from elsewhere
+         Project := Wrapper.Resolver.Kernel.Registry.Tree.Info_Set
+           (File).First_Element.Project;
+         Result.Cursor := Db.Entities_In_File (File, Project);
          Result.In_First_Entity := True;
          Result.Is_Valid_Proposal := True;
 
@@ -372,6 +379,7 @@ package body Completion.C.Constructs_Extractor is
          Db   : constant General_Xref_Database := It.Resolver.Kernel.Databases;
          Decl : General_Entity_Declaration;
          E    : General_Entity;
+         Project : Project_Type;
 
          use type Files_List.Cursor;
 
@@ -433,8 +441,12 @@ package body Completion.C.Constructs_Extractor is
                      return;
                   end if;
 
-                  It.Cursor :=
-                    Db.Entities_In_File (It.Queued_Files.First_Element);
+                  --  ??? Should get the project from elsewhere
+                  Project := It.Resolver.Kernel.Registry.Tree.Info_Set
+                    (It.Queued_Files.First_Element)
+                    .First_Element.Project;
+                  It.Cursor := Db.Entities_In_File
+                    (It.Queued_Files.First_Element, Project);
 
                   --  Move the file to the list of processed files
 

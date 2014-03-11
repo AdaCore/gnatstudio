@@ -2208,7 +2208,9 @@ package body ALI_Parser is
       --  Start of processing for LI_Filename_From_Source
 
       begin
-         Info := Handler.Registry.Tree.Info (Source_Filename);
+         --  No support for aggregate projects, so we take the first one
+         Info := Handler.Registry.Tree.Info_Set
+           (Source_Filename).First_Element.all;
 
          if Active (Me) then
             Trace (Me, "LI_Filename_From_Source "
@@ -2337,7 +2339,8 @@ package body ALI_Parser is
          Predefined : Boolean;
       begin
          --  The call below might result in No_Project for runtime files
-         Project := Handler.Registry.Tree.Info (Source_Filename).Project;
+         Project := Handler.Registry.Tree.Info_Set
+           (Source_Filename).First_Element.Project;
 
          LI_Filename_From_Source (Project, LI_Name, Predefined);
 

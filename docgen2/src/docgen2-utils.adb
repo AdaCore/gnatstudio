@@ -52,7 +52,9 @@ package body Docgen2.Utils is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File) return Boolean is
    begin
-      return Get_Registry (Kernel).Tree.Info (File).Unit_Part = Unit_Spec;
+      --  Likely the same unit_part in all projects, so use the first one
+      return Get_Registry
+        (Kernel).Tree.Info_Set (File).First_Element.Unit_Part = Unit_Spec;
    end Is_Spec_File;
 
    ----------------

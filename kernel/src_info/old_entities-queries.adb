@@ -1482,7 +1482,9 @@ package body Old_Entities.Queries is
                   File                  => File);
 
       else
-         Project := File.Db.Registry.Tree.Info (Get_Filename (File)).Project;
+         --  No support for aggregate projects, so we take the first one.
+         Project := File.Db.Registry.Tree.Info_Set (Get_Filename (File))
+           .First_Element.Project;
 
          if Project = No_Project then
             --  Project not found ? We'll have to parse all projects, since

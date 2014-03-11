@@ -18,11 +18,12 @@
 --  This package provides utilities for creating and maintaining
 --  a GNATCOLL Xref database for the kernel.
 
-with Glib.Values;   use Glib.Values;
-with GNATCOLL.VFS;  use GNATCOLL.VFS;
-with GNATCOLL.Xref; use GNATCOLL.Xref;
+with Glib.Values;       use Glib.Values;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Xref;     use GNATCOLL.Xref;
 with Gtk.Widget;
-with Xref;          use Xref;
+with Xref;              use Xref;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
 
 package GPS.Kernel.Xref is
@@ -47,9 +48,10 @@ package GPS.Kernel.Xref is
        with private;
 
    overriding function Select_Entity_Declaration
-     (Self   : access GPS_General_Xref_Database_Record;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Entity : General_Entity) return General_Entity;
+     (Self    : access GPS_General_Xref_Database_Record;
+      File    : Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
+      Entity  : General_Entity) return General_Entity;
    --  see inherited documentation
 
    procedure Create_Database

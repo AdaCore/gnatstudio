@@ -466,7 +466,7 @@ package body Creation_Wizard.Extending is
       File     : constant GNATCOLL.VFS.Virtual_File :=
         File_Information (Context.Context);
       Project  : constant Project_Type :=
-        Get_Registry (Kernel).Tree.Info (File).Project;
+        Project_Information (Context.Context);
       Dialog : Gtk_Dialog;
       Label  : Gtk_Label;
       Ignore : Gtk_Widget;
@@ -607,7 +607,7 @@ package body Creation_Wizard.Extending is
          end if;
       end if;
 
-      Project := Get_Registry (Kernel).Tree.Info (File).Project;
+      Project := Project_Information (Context.Context);
       if Project.Has_Attribute (Source_Files_Attribute) then
          List := Project.Attribute_Value (Source_Files_Attribute);
          for L in List'Range loop
@@ -654,7 +654,7 @@ package body Creation_Wizard.Extending is
          if File /= GNATCOLL.VFS.No_File then
             --  If the file doesn't already belong to an extending project
 
-            Project := Get_Registry (Kernel).Tree.Info (File).Project;
+            Project := Project_Information (Context);
             return Project /= No_Project
               and then Extended_Project (Project) = No_Project;
          end if;

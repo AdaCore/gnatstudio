@@ -637,6 +637,7 @@ package body GPS.Kernel.Scripts is
       Menu    : Gtk.Menu.Gtk_Menu;
       L, C    : Integer := -1;
       Inst    : Class_Instance;
+      Project : Project_Type;
 
       procedure Recursive_Analyze_Menu
         (Depth : Natural;
@@ -758,22 +759,11 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "project" then
          Context := Get_Data (Data, 1);
-         if Has_Project_Information (Context) then
-            Set_Return_Value
-              (Data,
-               Create_Project (Get_Script (Data),
-                 Project_Information (Context)));
+         Project := Project_Information (Context);  --  wil compute if needed
 
-         elsif Has_File_Information (Context) then
-            --  Since the editor doesn't provide the project, we emulate it
-            --  here
+         if Project /= No_Project then
             Set_Return_Value
-              (Data,
-               Create_Project
-                 (Get_Script (Data),
-                  Get_Registry (Kernel).Tree.Info
-                     (File_Information (Context)).Project));
-
+              (Data, Create_Project (Get_Script (Data), Project));
          else
             Set_Error_Msg (Data, -"No project stored in the context");
          end if;

@@ -77,6 +77,7 @@ package Docgen2 is
      (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Backend : Docgen2_Backend.Backend_Handle;
       File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type;
       Options : Docgen_Options);
    --  <summary>
    --  Generate documentation for a single file using Backend.
