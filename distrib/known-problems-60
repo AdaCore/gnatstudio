@@ -38,6 +38,15 @@ KP-60-N305-041 GPS: overwriting symbolic links
   Workaround: From Synergy, use 'sync with work area" before checking in
               changes.
 
+KP-60-N304-024 GPS: Search in GPS does not find next character
+
+  Problem:    Sometimes search in GPS editor gets stuck on non-Latin1
+              characters.
+
+  Status:     This was fixed in 6.1 on 2014-03-11
+
+  Workaround: Shift cursor manually when search stucks.
+
 KP-60-N226-028 GPS: crash when omni-search preview displays a binary file
 
   Problem:    When using the omni-search and it matches binary files (e.g.,
