@@ -113,55 +113,9 @@ package body Xref is
    --  Close the database connection (and perhaps remove the sqlite database
    --  if we were using a temporary project).
 
-   procedure Move_Or_Copy (Src, Tgt : Virtual_File);
-   --  Delete Tgt, then attempt to move Src if it exist to Tgt. Then delete
-   --  Src. Do nothing if Src is not a regular file.
-
-   ------------------
-   -- Move_Or_Copy --
-   ------------------
-
-   procedure Move_Or_Copy (Src, Tgt : Virtual_File) is
-      Success : Boolean;
-      Src_Name : constant String := +Src.Full_Name;
-      Tgt_Name : constant String := +Tgt.Full_Name;
-   begin
-      if not Src.Is_Regular_File then
-         --  Nothing to do.
-         return;
-      end if;
-
-      if Tgt.Is_Regular_File then
-         --  Delete is needed before rename on Windows. Do it in any case.
-         Delete (Tgt, Success);
-
-         if not Success then
-            Trace (Me, "Could not delete " & Tgt_Name);
-         end if;
-      end if;
-
-      --  Attempt a move
-
-      Trace (Me, "Moving " & Src_Name & " to " & Tgt_Name);
-
-      Rename (Src, Tgt, Success);
-
-      if not Success then
-         Trace (Me, "Move failed, attempting copy");
-
-         Copy (Src, +Tgt_Name, Success);
-
-         if not Success then
-            Trace (Me, "Copy failed");
-         end if;
-
-         Delete (Src, Success);
-
-         if not Success then
-            Trace (Me, "Could not remove " & Src_Name);
-         end if;
-      end if;
-   end Move_Or_Copy;
+   procedure Open_Database (Self   : General_Xref_Database;
+                            Tree   : Project_Tree_Access);
+   --  Open the database connection
 
    ----------------
    -- Assistants --
@@ -2713,12 +2667,43 @@ package body Xref is
       end if;
    end Is_Read_Or_Write_Reference;
 
+   -------------------
+   -- Open_Database --
+   -------------------
+
+   procedure Open_Database (Self   : General_Xref_Database;
+                            Tree   : Project_Tree_Access)
+   is
+      Working_Xref_File : Virtual_File;
+
+      Error : GNAT.Strings.String_Access;
+   begin
+      Working_Xref_File := Xref_Database_Location (Self, Tree.Root_Project);
+
+      Self.Xref_Db_Is_Temporary := Tree.Status /= From_File;
+
+      Trace (Me, "Set up xref database: " &
+             (+Working_Xref_File.Full_Name.all));
+
+      Self.Xref.Setup_DB
+        (DB    => GNATCOLL.SQL.Sqlite.Setup
+           (Database => +Working_Xref_File.Full_Name.all,
+            Errors   => Self.Errors),
+         Tree  => Tree,
+         Error => Error);
+
+      --  Not interested in schema version errors, gnatinspect already
+      --  displays them on the console
+      Free (Error);
+   end Open_Database;
+
    --------------------
    -- Close_Database --
    --------------------
 
    procedure Close_Database (Self   : General_Xref_Database) is
       Valgrind : GNAT.Strings.String_Access;
+      Success : Boolean;
    begin
       if Active (SQLITE) then
          Trace (Me, "Closing xref database, temporary="
@@ -2729,10 +2714,17 @@ package body Xref is
          --  database to the database saved between sessions, for future use
 
          if Self.Xref_Db_Is_Temporary then
+            --  This database does not need saving, so we are deleting it
             Trace (Me, "Database was temporary, not saving");
-            --  This database does not need saving
-         else
-            Move_Or_Copy (Self.Working_Xref_Db, Self.Persistent_Xref_Db_Cache);
+
+            if Self.Working_Xref_Db /= No_File then
+               Self.Working_Xref_Db.Delete (Success);
+
+               if not Success then
+                  Trace
+                    (Me, "Warning: could not delete temporary database file");
+               end if;
+            end if;
          end if;
 
       else
@@ -4001,7 +3993,7 @@ package body Xref is
          end if;
 
          Trace (Me, "Set up xref database: :memory:");
-         Self.Persistent_Xref_Db_Cache := GNATCOLL.VFS.No_File;
+         Self.Working_Xref_Db := GNATCOLL.VFS.No_File;
          Self.Xref_Db_Is_Temporary := True;
          Self.Xref.Setup_DB
            (DB    => GNATCOLL.SQL.Sqlite.Setup
@@ -4029,15 +4021,15 @@ package body Xref is
    -- Xref_Database_Location --
    ----------------------------
 
-   function Persistent_Xref_Database_Location
-     (Self    : not null access General_Xref_Database_Record'Class;
-      Project : Project_Type)
+   function Xref_Database_Location
+     (Self    : not null access General_Xref_Database_Record;
+      Project : GNATCOLL.Projects.Project_Type)
       return GNATCOLL.VFS.Virtual_File
    is
       Dir  : Virtual_File;
    begin
       if Active (SQLITE)
-        and then Self.Persistent_Xref_Db_Cache = GNATCOLL.VFS.No_File
+        and then Self.Working_Xref_Db = GNATCOLL.VFS.No_File
       then
          declare
             Attr : constant String :=
@@ -4047,51 +4039,35 @@ package body Xref is
                  Use_Extended => True);
          begin
             if Attr = "" then
-               Dir    := Project.Object_Dir;
+               declare
+                  Hash : constant Ada.Containers.Hash_Type :=
+                    Project.Project_Path.Full_Name_Hash;
+                  Hash_Img : constant String := Hash'Img;
+               begin
+                  Dir    := Project.Object_Dir;
 
-               if Dir = No_File then
-                  Trace (Me, "Object_Dir is unknown for the root project "
-                         & Project.Project_Path.Display_Full_Name);
-                  Dir := GNATCOLL.VFS.Get_Current_Dir;
-               end if;
+                  if Dir = No_File then
+                     Trace (Me, "Object_Dir is unknown for the root project "
+                            & Project.Project_Path.Display_Full_Name);
+                     Dir := GNATCOLL.VFS.Get_Current_Dir;
+                  end if;
 
-               Self.Persistent_Xref_Db_Cache := Create_From_Base
-                 (Base_Dir  => Dir.Full_Name.all,
-                  Base_Name => "gnatinspect.db");
+                  Self.Working_Xref_Db := Create_From_Dir
+                    (Dir  => Get_Tmp_Directory,
+                     Base_Name => +("gnatinspect-"
+                     & Hash_Img (Hash_Img'First + 1 .. Hash_Img'Last)
+                     & ".db"));
+
+               end;
             else
-               Self.Persistent_Xref_Db_Cache := Create_From_Base
+               Self.Working_Xref_Db := Create_From_Base
                  (Base_Name => +Attr,
                   Base_Dir  => Project.Project_Path.Dir_Name);
             end if;
 
             Trace
               (Me, "project db file: " &
-                 Self.Persistent_Xref_Db_Cache.Display_Full_Name);
-         end;
-      end if;
-
-      return Self.Persistent_Xref_Db_Cache;
-   end Persistent_Xref_Database_Location;
-
-   ------------------------------------
-   -- Working_Xref_Database_Location --
-   ------------------------------------
-
-   function Xref_Database_Location
-     (Self    : not null access General_Xref_Database_Record)
-      return GNATCOLL.VFS.Virtual_File is
-   begin
-      if Self.Working_Xref_Db = No_File then
-         declare
-            function Get_Process_Id return Integer;
-            --  Return the process ID of the current process
-
-            pragma Import (C, Get_Process_Id, "getpid");
-            Pid : constant String := Integer'Image (Get_Process_Id);
-         begin
-            Self.Working_Xref_Db := Create_From_Dir
-              (Get_Tmp_Directory,
-               +("gnatinspect-" & Pid (Pid'First + 1 .. Pid'Last) & ".db"));
+                 Self.Working_Xref_Db.Display_Full_Name);
          end;
       end if;
 
@@ -4126,10 +4102,6 @@ package body Xref is
          end if;
       end Reset_File_If_External;
 
-      Cache_Xref_File : Virtual_File;
-      Working_Xref_File : Virtual_File;
-
-      Error : GNAT.Strings.String_Access;
    begin
       if Active (SQLITE) then
 
@@ -4141,30 +4113,7 @@ package body Xref is
          --  Self.Xref was initialized in Project_Changed.
          Self.Xref.Free;
 
-         Self.Persistent_Xref_Db_Cache := No_File;
-         Cache_Xref_File := Persistent_Xref_Database_Location
-           (Self, Tree.Root_Project);
-         Working_Xref_File := Xref_Database_Location (Self);
-
-         --  Copy the database to the working location before connecting
-
-         Move_Or_Copy (Cache_Xref_File, Working_Xref_File);
-
-         Self.Xref_Db_Is_Temporary := Tree.Status /= From_File;
-
-         Trace (Me, "Set up xref database: " &
-                (+Working_Xref_File.Full_Name.all));
-
-         Self.Xref.Setup_DB
-           (DB    => GNATCOLL.SQL.Sqlite.Setup
-              (Database => +Working_Xref_File.Full_Name.all,
-               Errors   => Self.Errors),
-            Tree  => Tree,
-            Error => Error);
-
-         --  Not interested in schema version errors, gnatinspect already
-         --  displays them on the console
-         Free (Error);
+         Open_Database (Self, Tree);
 
          --  ??? Now would be a good opportunity to update the cross-references
          --  rather than wait for the next compilation.

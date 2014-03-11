@@ -507,7 +507,7 @@ package body GPS.Kernel.Scripts is
       elsif Command = "xref_db" then
          declare
             F : constant Virtual_File :=
-              Kernel.Databases.Xref_Database_Location;
+              Kernel.Databases.Xref_Database_Location (Get_Project (Kernel));
          begin
             if F /= No_File then
                Set_Return_Value (Data, F.Display_Full_Name);
