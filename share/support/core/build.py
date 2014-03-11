@@ -425,7 +425,7 @@ XML = r"""<?xml version="1.0" ?>
        <arg>-f</arg>
        <arg>-u</arg>
        <arg>%eL</arg>
-       <arg>-P%pp</arg>
+       <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%fp</arg>
     </command-line>
