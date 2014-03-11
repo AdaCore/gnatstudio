@@ -3042,7 +3042,9 @@ universal_real. See A.5.3.
       <DOC>
 For every array or record type S, the representation attribute
 `Scalar_Storage_Order' denotes the order in which storage elements that
-make up scalar components are ordered within S:
+make up scalar components are ordered within S. The value given must be
+a static expression of type System.Bit_Order. The following is an
+example of the use of this feature:
 
 --  Component type definitions
 
@@ -3084,11 +3086,14 @@ if a `Scalar_Storage_Order' attribute definition clause is not
 confirming, then the type's `Bit_Order' shall be specified explicitly
 and set to the same value.
 
-For a record extension, the derived type shall have the same scalar
-storage order as the parent type.
+Derived types inherit an explicitly set scalar storage order from
+their parent types. This may be overridden for the derived type by
+giving an explicit scalar storage order for the derived type. For a
+record extension, the derived type must have the same scalar storage
+order as the parent type.
 
-If a component of S is of a record or array type, then that type
-shall also have a `Scalar_Storage_Order' attribute definition clause.
+If a component of S is of a record or array type, then that type must
+also have a `Scalar_Storage_Order' attribute definition clause.
 
 A component of a record or array type that is a packed array, or that
 does not start on a byte boundary, must have the same scalar storage
@@ -3126,6 +3131,12 @@ storage_element_size - 1) / storage_element_size'
 
 * the position of the component is interpreted relative to that
 machine  scalar.
+
+
+If no scalar storage order is specified for a type (either directly,
+or by inheritance in the case of a derived type), then the default is
+normally the native ordering of the target, but this default can be
+overridden using pragma `Default_Scalar_Storage_Order'.
       </DOC>
    </ATTRIBUTE>
 
@@ -5300,6 +5311,68 @@ pragma Debug_Policy (CHECK | DISABLE | IGNORE | ON | OFF);
 This pragma is equivalent to a corresponding `Check_Policy' pragma with
 a first argument of `Debug'. It is retained for historical
 compatibility reasons.
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Default_Scalar_Storage_Order" origin = "GNAT RM">
+      <DOC>
+Syntax:
+
+pragma Default_Scalar_Storage_Order (High_Order_First | Low_Order_First);
+
+Normally if no explicit `Scalar_Storage_Order' is given for a record
+type or array type, then the scalar storage order defaults to the
+ordinary default for the target. But this default may be overridden
+using this pragma.  The pragma may appear as a configuration pragma, or
+locally within a package spec or declarative part. In the latter case,
+it applies to all subsequent types declared within that package spec or
+declarative part.
+
+If this pragma is used as a configuration pragma which appears
+within a configuration pragma file (as opposed to appearing explicitly
+at the start of a single unit), then the binder will require that all
+units in a partition be compiled in a similar manner, including all
+units in the run-time that are included in the partition.
+
+The following example shows the use of this pragma:
+
+pragma Default_Scalar_Storage_Order (High_Order_First);
+with System; use System;
+package DSSO1 is
+type H1 is record
+a : Integer;
+end record;
+
+type L2 is record
+a : Integer;
+end record;
+for L2'Scalar_Storage_Order use Low_Order_First;
+
+type L2a is new L2;
+
+package Inner is
+type H3 is record
+a : Integer;
+end record;
+
+pragma Default_Scalar_Storage_Order (Low_Order_First);
+
+type L4 is record
+a : Integer;
+end record;
+end Inner;
+
+type H4a is new Inner.L4;
+
+type H5 is record
+a : Integer;
+end record;
+end DSSO1;
+
+In this example record types L.. have `Low_Order_First' scalar storage
+order, and record types H.. have `High_Order_First'.  Note that in the
+case of `H4a', the order is not inherited from the parent type. Only an
+explicitly set `Scalar_Storage_Order' gets inherited on type derivation.
       </DOC>
    </PRAGMA>
 
