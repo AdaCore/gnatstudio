@@ -19,6 +19,9 @@ endif
 
 default: all
 
+gps_and_cli: all
+	$(MAKE) -C ../cli all
+
 include ../Makefile.gnat
 
 # NOTE: we need to build gnatcoll separately, since we cannot use
