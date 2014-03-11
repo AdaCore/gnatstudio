@@ -79,4 +79,9 @@ package UTF8_Utils is
    function Latin_1_To_UTF8 (Input : String) return UTF8_String;
    --  Convert Latin_1 string to UTF-8.
 
+   function Column_To_Index
+     (Buffer : UTF8_String; Column : Character_Offset_Type) return Natural;
+   --  Return index of first byte of UTF8 character in given Column
+   --  Return 0 in Column <= 0. Return Buffer'First when Column = 1
+
 end UTF8_Utils;

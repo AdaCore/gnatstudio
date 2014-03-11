@@ -96,7 +96,7 @@ package body Src_Contexts is
 
    procedure Scan_Buffer
      (Buffer        : String;
-      Buffer_First  : Natural;
+      From          : Character_Offset_Type;
       Context       : access Search_Context'Class;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
@@ -105,7 +105,7 @@ package body Src_Contexts is
       Ref_Line      : Editable_Line_Type := 1;
       Ref_Column    : Character_Offset_Type := 1;
       Was_Partial   : out Boolean);
-   --  Search Context in buffer (Buffer_First .. Buffer'Last), searching only
+   --  Search Context in buffer starting from From character, searching only
    --  in the appropriate scope.
    --  Buffer is assumed to contain complete contexts (e.g the contents of
    --  a whole file).
@@ -332,7 +332,7 @@ package body Src_Contexts is
 
    procedure Scan_Buffer
      (Buffer        : String;
-      Buffer_First  : Natural;
+      From          : Character_Offset_Type;
       Context       : access Search_Context'Class;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
@@ -350,6 +350,9 @@ package body Src_Contexts is
             Multi_Comments => Scope in Whole .. Comments_And_Strings);
       --  Indicates what lexical states are valid, depending on the current
       --  scope.
+
+      Buffer_First  : Natural;
+      --  Index of From character in Buffer
 
       procedure Next_Scope_Transition
         (Buffer      : String;
@@ -513,12 +516,12 @@ package body Src_Contexts is
          end if;
       end Next_Scope_Transition;
 
-      Pos           : Positive := Buffer_First;
+      Pos           : Positive;
       Line_Start    : Positive;
       Line          : Editable_Line_Type := Ref_Line;
       Column        : Character_Offset_Type := Ref_Column;
       Dummy         : Visible_Column_Type := 1;
-      Last_Index    : Positive := Buffer_First;
+      Last_Index    : Positive;
       Section_End   : Integer;
       Old_State     : Recognized_Lexical_States;
       Language      : Language_Context_Access;
@@ -528,6 +531,14 @@ package body Src_Contexts is
       Was_Partial := False;
 
       if Buffer'Length = 0 then
+         return;
+      end if;
+
+      Buffer_First := UTF8_Utils.Column_To_Index (Buffer, From);
+      Pos := Buffer_First;
+      Last_Index := Buffer_First;
+
+      if Buffer_First > Buffer'Last then
          return;
       end if;
 
@@ -657,24 +668,27 @@ package body Src_Contexts is
             end if;
          end loop;
 
-         Start := Start + Natural (Start_Column) - 1;
+         Start := Start + 1;
 
          declare
             UTF8  : GNAT.Strings.String_Access;
             Valid : Boolean;
          begin
-            UTF8_Utils.Unknown_To_UTF8 (Buffer.all, UTF8, Valid);
+            UTF8_Utils.Unknown_To_UTF8
+              (Buffer (Start .. Buffer'Last), UTF8, Valid);
+
             if Valid then
                if UTF8 = null then
                   --  This means that Buffer is already UTF8: use it
                   Scan_Buffer
-                    (Buffer.all, Start, Context, Callback, Scope,
+                    (Buffer (Start .. Buffer'Last),
+                     Start_Column, Context, Callback, Scope,
                      Lexical_State, Lang, Start_Line, Start_Column,
                      Was_Partial);
                else
                   --  Use UTF8
                   Scan_Buffer
-                    (UTF8.all, Start, Context, Callback, Scope,
+                    (UTF8.all, Start_Column, Context, Callback, Scope,
                      Lexical_State, Lang, Start_Line, Start_Column,
                      Was_Partial);
                   Free (UTF8);
@@ -707,7 +721,6 @@ package body Src_Contexts is
    is
       Lang   : Language_Access;
       Buffer : GNAT.Strings.String_Access;
-      Start  : Natural;
       Box    : Source_Editor_Box;
    begin
       --  ??? Would be nice to handle backward search, which is extremely hard
@@ -727,13 +740,9 @@ package body Src_Contexts is
       Buffer := new String'
         (Get_Text (Get_Buffer (Box), Start_Line, 1));
 
-      Start := Natural (Start_Column);
-
-      if Start <= Buffer'Last then
-         Scan_Buffer
-           (Buffer.all, Start, Context, Callback, Scope,
-            Lexical_State, Lang, Start_Line, Start_Column, Was_Partial);
-      end if;
+      Scan_Buffer
+        (Buffer.all, Start_Column, Context, Callback, Scope,
+         Lexical_State, Lang, Start_Line, Start_Column, Was_Partial);
 
       Free (Buffer);
    exception
@@ -960,7 +969,7 @@ package body Src_Contexts is
       if Backward then
          Scan_Buffer
            (Get_Text (Editor, Start_Line, 1, End_Line, End_Column),
-            Natural (Start_Column), Context,
+            Start_Column, Context,
             Backward_Callback'Unrestricted_Access, Scope,
             Lexical_State, Lang,
             Was_Partial => Was_Partial,
@@ -989,7 +998,7 @@ package body Src_Contexts is
          Scan_Buffer
            (Buffer        => Get_Text
               (Editor, Begin_Line, 1, End_Line, End_Column),
-            Buffer_First  => Natural (Begin_Column),
+            From          => Begin_Column,
             Context       => Context,
             Callback      => Stop_At_First_Callback'Unrestricted_Access,
             Scope         => Scope,
@@ -1018,7 +1027,7 @@ package body Src_Contexts is
             Lexical_State := Statements;
             Scan_Buffer
               (Get_Text (Editor, Start_Line, 1, End_Line, End_Column),
-               Natural (Start_Column),
+               Start_Column,
                Context,
                Stop_At_First_Callback'Unrestricted_Access, Scope,
                Lexical_State, Lang,
@@ -1073,7 +1082,7 @@ package body Src_Contexts is
       Was_Partial : Boolean;
    begin
       if Str /= "" then
-         Scan_Buffer (Str, Str'First, Context,
+         Scan_Buffer (Str, 1, Context,
                       Callback'Unrestricted_Access, Scope,
                       Lexical_State => State,
                       Lang          => Lang,

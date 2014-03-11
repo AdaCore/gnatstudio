@@ -240,4 +240,24 @@ package body UTF8_Utils is
       end loop;
    end Validate;
 
+   ---------------------
+   -- Column_To_Index --
+   ---------------------
+
+   function Column_To_Index
+     (Buffer : UTF8_String; Column : Character_Offset_Type) return Natural
+   is
+      Result : Positive := Buffer'First;
+   begin
+      if Column <= 0 then
+         return 0;
+      end if;
+
+      for J in 2 .. Column  loop
+         Result := UTF8_Next_Char (Buffer, Result);
+      end loop;
+
+      return Result;
+   end Column_To_Index;
+
 end UTF8_Utils;
