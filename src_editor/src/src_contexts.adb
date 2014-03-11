@@ -665,10 +665,9 @@ package body Src_Contexts is
 
             if Buffer (Start) = ASCII.LF then
                Line := Line + 1;
+               Start := Start + 1;
             end if;
          end loop;
-
-         Start := Start + 1;
 
          declare
             UTF8  : GNAT.Strings.String_Access;
