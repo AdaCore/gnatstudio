@@ -17,10 +17,10 @@ we recommend you look at the
 which provides the underlying framework.
 
 A similar plug-in which you might find useful is in the
-:py:class:`gps_utils.highlighter.Regexp_Highlighter` class. By creating a simple
-python file in your gps directory, you are able to highlight any regular
-expression in the editor, which is useful for highlighting text like "TODO", or
-special comments for instance.
+:py:class:`gps_utils.highlighter.Regexp_Highlighter` class. By creating
+a simple python file in your gps directory, you are able to highlight any
+regular expression in the editor, which is useful for highlighting text
+like "TODO", or special comments for instance.
 
 """
 
@@ -35,18 +35,18 @@ from gps_utils.highlighter import Location_Highlighter, OverlayStyle
 import traceback
 
 default_colors = {
-  "object"            : "rgba(255, 190, 238, 0.7)",
-  "subprogram"        : "rgba(252, 175, 62, 0.5)",
-  "package/namespace" : "rgba(144, 238, 144, 0.5)",
-  "type"              : "rgba(144, 238, 144, 0.5)",
-  "unknown"           : "#d7d7d7"}
+    "object":            "rgba(255, 190, 238, 0.7)",
+    "subprogram":        "rgba(252, 175, 62, 0.5)",
+    "package/namespace": "rgba(144, 238, 144, 0.5)",
+    "type":              "rgba(144, 238, 144, 0.5)",
+    "unknown":           "#d7d7d7"}
 
 # Whether to display occurrences in the speed bar
 GPS.Preference("Plugins/auto_highlight_occurrences/speedbar").create(
-      "Show in speedbar", "boolean",
-      "Whether to display the matches in the speed bar in editors."
-      " You must restart gps to take changes into account.",
-      False)
+    "Show in speedbar", "boolean",
+    "Whether to display the matches in the speed bar in editors."
+    " You must restart gps to take changes into account.",
+    False)
 
 GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlight_entities").create(
@@ -68,13 +68,14 @@ GPS.Preference(
 
 # The default colors
 for k in default_colors:
-    pref_name = ("Plugins/auto_highlight_occurrences/color_" +
-                  k.replace("/", "_"))
-    GPS.Preference (pref_name).create(
-          "Highlight color for " + k, "color",
-          "color used to highlight matching occurrences."
-          " You must restart gps to take changes into account",
-          default_colors[k])
+    pref_name = \
+        ("Plugins/auto_highlight_occurrences/color_" + k.replace("/", "_"))
+
+    GPS.Preference(pref_name).create(
+        "Highlight color for " + k, "color",
+        "color used to highlight matching occurrences."
+        " You must restart gps to take changes into account",
+        default_colors[k])
 
 
 class Current_Entity_Highlighter(Location_Highlighter):
@@ -94,7 +95,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
         self.highlight_word = None
         self.entity = None
         self.word = None
-        self.styles = {} # dict of OverlayStyle
+        self.styles = {}  # dict of OverlayStyle
         self.speedbar = None
         self.pref_cache = {}
 
@@ -122,11 +123,12 @@ class Current_Entity_Highlighter(Location_Highlighter):
             changed = True
 
         for k in default_colors:
-            pref_name = "Plugins/auto_highlight_occurrences/color_" + k.replace("/", "_")
+            pref_name = "Plugins/auto_highlight_occurrences/color_" + \
+                k.replace("/", "_")
             v = GPS.Preference(pref_name).get()
             if (pref_name not in self.pref_cache
-                or self.pref_cache[pref_name] != v
-                or changed):   # take speedbar changes into account
+                    or self.pref_cache[pref_name] != v
+                    or changed):   # take speedbar changes into account
 
                 self.pref_cache[pref_name] = v
                 changed = True
@@ -173,7 +175,6 @@ class Current_Entity_Highlighter(Location_Highlighter):
         else:
             return []   # irrelevant
 
-
     def process(self, start, end):
         """Called by Background_Highlighter"""
 
@@ -186,35 +187,33 @@ class Current_Entity_Highlighter(Location_Highlighter):
                 # Get the string on the line
                 end_loc = start.end_of_line()
                 s = buffer.get_chars(start, end_loc)  # byte-sequence
-                u = s.decode("utf8") # unicode-string
+                s = s.decode("utf8")  # make unicode-string
                 s_len = len(s)
 
                 # Find the tokens on the current line
                 index = 0
-                tab_expanded_index = 0
 
                 while index < s_len:
                     if s[index].isalpha():
                         end_index = index + 1
+
                         while end_index < s_len and (
-                            s[end_index].isalnum() or s[end_index] == '_'):
+                                s[end_index].isalnum() or s[end_index] == '_'):
                             end_index += 1
                         if s[index:end_index] == self.word:
                             self.style.apply(
                                 start=GPS.EditorLocation(
-                                    buffer, start.line(), index + 1),
+                                    buffer,
+                                    start.line(),
+                                    start.column() + index),
                                 end=GPS.EditorLocation(
-                                    buffer, start.line(), end_index))
+                                    buffer,
+                                    start.line(),
+                                    start.column() + end_index - 1))
 
-                        tab_expanded_index += end_index - index
                         index = end_index
 
                     else:
-                        if s[index] == '\t':
-                            # snap to the next multiple of 8
-                            tab_expanded_index += 8 - (tab_expanded_index) % 8
-                        else:
-                            tab_expanded_index += 1
                         index += 1
 
                 start = end_loc + 1
@@ -230,11 +229,11 @@ class Current_Entity_Highlighter(Location_Highlighter):
             # preferences_changed has not yet been called
             return
 
-        entity  = None
-        word    = None
+        entity = None
+        word = None
         context = GPS.current_context()
         start_loc = None
-        end_loc   = None
+        end_loc = None
 
         try:
             location = context.location()
@@ -252,6 +251,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
                 if start_loc != end_loc:
                     end_loc = end_loc.forward_char(-1)
                     word = buffer.get_chars(start_loc, end_loc).strip()
+                    word = word.decode("utf8")  # make unicode-string
 
         # Attempt entity highlighting if no word was found.
 
@@ -283,6 +283,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
                         end_loc = end_loc.forward_char()
 
                     word = buffer.get_chars(start_loc, end_loc).strip()
+                    word = word.decode("utf8")  # make unicode-string
 
         if (entity and self.entity == entity) \
            or (word and self.word == word):
