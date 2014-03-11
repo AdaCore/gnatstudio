@@ -1762,18 +1762,18 @@ def initialize_spark():
 
 def finalize_spark():
     "Finalize this module"
-    GPS.Menu.get("/Spark").destroy()
-    GPS.Contextual('SPARK/SPARKSimp').hide()
-    GPS.Contextual('SPARK/POGS').hide()
-    GPS.Contextual('SPARK/Examine File').hide()
-    GPS.Contextual('SPARK/SPARKFormat File').hide()
-    GPS.Contextual('SPARK/SPARKFormat Selection').hide()
-    GPS.Contextual('SPARK/SPARKMake').hide()
-    GPS.Contextual('SPARK/SPARKClean (all)').hide()
-    GPS.Contextual('SPARK/SPARKClean (custom)').hide()
-
     global initialized
-    initialized = False
+    if initialized:
+        GPS.Menu.get("/Spark").destroy()
+        GPS.Contextual('SPARK/SPARKSimp').hide()
+        GPS.Contextual('SPARK/POGS').hide()
+        GPS.Contextual('SPARK/Examine File').hide()
+        GPS.Contextual('SPARK/SPARKFormat File').hide()
+        GPS.Contextual('SPARK/SPARKFormat Selection').hide()
+        GPS.Contextual('SPARK/SPARKMake').hide()
+        GPS.Contextual('SPARK/SPARKClean (all)').hide()
+        GPS.Contextual('SPARK/SPARKClean (custom)').hide()
+        initialized = False
 
 
 spark = os_utils.locate_exec_on_path('spark')
