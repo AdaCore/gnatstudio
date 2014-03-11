@@ -4245,8 +4245,19 @@ package body Project_Properties is
         & ASCII.LF
         & "which GPS cannot edit graphically, such as ""Var := ..."""));
 
+      Aggregate : constant String := -"The project """
+        & Project.Name
+        & (-(""" is an aggregate project." & ASCII.LF
+             & "These are not editable graphically."));
+
    begin
-      if not Is_Editable (Project) then
+      if Project.Is_Aggregate_Project then
+         if Warning_Cannot_Edit (Kernel, Aggregate, True) = Edit_File then
+            Open_File_Editor (Kernel, Project.Project_Path, Project);
+         end if;
+         return;
+
+      elsif not Is_Editable (Project) then
          case Warning_Cannot_Edit (Kernel, Had_Errors, True) is
             when Do_Not_Edit | Edit_Properties =>
                null;
