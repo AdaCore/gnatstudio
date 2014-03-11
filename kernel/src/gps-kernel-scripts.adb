@@ -759,7 +759,12 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "project" then
          Context := Get_Data (Data, 1);
-         Project := Project_Information (Context);  --  wil compute if needed
+         Project := Project_Information (Context);  --  will compute if needed
+
+         if Project = No_Project then
+            Project := Get_Registry (Kernel).Tree.Info
+              (File_Information (Context)).Project;
+         end if;
 
          if Project /= No_Project then
             Set_Return_Value
