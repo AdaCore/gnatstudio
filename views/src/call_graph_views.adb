@@ -89,10 +89,10 @@ package body Call_Graph_Views is
    File_Column    : constant := 3;  --  Entity declaration file
    Line_Column    : constant := 4;  --  Entity declaration line
    Column_Column  : constant := 5;  --  Entity declaration column
-   Project_Column : constant := 6;  --  Entity declaration project
-   List_Column    : constant := 7;
-   Kind_Column    : constant := 8;
-   Sort_Column    : constant := 9;
+   List_Column    : constant := 6;
+   Kind_Column    : constant := 7;
+   Sort_Column    : constant := 8;
+   Project_Column : constant := 9;  --  Entity declaration project
 
    Location_Line_Column      : constant := 0;
    Location_Column_Column    : constant := 1;
@@ -393,7 +393,7 @@ package body Call_Graph_Views is
             if Iter /= Null_Iter then
                File := Get_File (Model, Iter, Location_File_Column);
                Project := Get_Registry (View.Kernel).Tree.Project_From_Path
-                 (Get_File (Model, Iter, Project_Column));
+                 (Get_File (Model, Iter, Location_Project_Column));
 
                --  Give the focus to the editor, to match the behavior of the
                --  Locations view.
