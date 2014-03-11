@@ -2094,7 +2094,7 @@ package body Code_Analysis_Module is
         (Kernel      => Kernel,
          Name        => -"Coverage",
          Filter      => Lookup_Filter (Kernel, "Project only")
-         or Lookup_Filter (Kernel, "File"),
+            or Lookup_Filter (Kernel, "In project"),
          Submenu     => Submenu_Factory (Contextual_Menu));
 
       Register_Action

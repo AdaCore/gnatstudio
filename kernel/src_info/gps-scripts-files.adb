@@ -126,9 +126,7 @@ package body GPS.Scripts.Files is
             if Is_Absolute_Path (Name) then
                if Is_Cygwin_Path (Name) then
                   --  This is a cygwing PATH style, convert to standard DOS
-                  Set_Data
-                    (Instance,
-                     Create (Format_Pathname (Name, DOS)));
+                  Set_Data (Instance, Create (Format_Pathname (Name, DOS)));
                else
                   Set_Data (Instance, Create (Name));
                end if;

@@ -1724,11 +1724,21 @@ b = """<?xml version="1.0"?>
   </target>
 
 </GPS>
-
 """
 
-spark = os_utils.locate_exec_on_path('spark')
-if spark != '':
+
+initialized = False
+
+
+def initialize_spark():
+    "Initialize support for SPARK, if not done yet"
+
+    global initialized, b
+
+    if initialized:
+        return
+    initialized = True
+
     GPS.parse_xml(xml_spark)
     GPS.parse_xml(xml_sparkclean)
     sparkdocdir = os.path.dirname(spark) + os.sep + os.pardir + os.sep \
@@ -1749,5 +1759,25 @@ if spark != '':
     GPS.Contextual('SPARK/Show ZLG').create(
         on_activate=pogs_zlg_xref, filter=sum_file_current_line_has_dpc)
 
-else:
+
+def finalize_spark():
+    "Finalize this module"
     GPS.Menu.get("/Spark").destroy()
+    GPS.Contextual('SPARK/SPARKSimp').hide()
+    GPS.Contextual('SPARK/POGS').hide()
+    GPS.Contextual('SPARK/Examine File').hide()
+    GPS.Contextual('SPARK/SPARKFormat File').hide()
+    GPS.Contextual('SPARK/SPARKFormat Selection').hide()
+    GPS.Contextual('SPARK/SPARKMake').hide()
+    GPS.Contextual('SPARK/SPARKClean (all)').hide()
+    GPS.Contextual('SPARK/SPARKClean (custom)').hide()
+
+    global initialized
+    initialized = False
+
+
+spark = os_utils.locate_exec_on_path('spark')
+if spark != '':
+    initialize_spark()
+else:
+    finalize_spark()

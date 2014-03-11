@@ -623,8 +623,6 @@ package body Src_Editor_Box is
          end if;
 
          Set_Filename (Box.Source_Buffer, Filename);
-         Trace (Me, "MANU setting filename="
-                & (+Filename.Unix_Style_Full_Name (Normalize => True)));
       end if;
 
       Gtk_New
