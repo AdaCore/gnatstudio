@@ -33,7 +33,7 @@ package Entities_Tooltips_Utility is
 
    function Get_Tooltip_Information
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : General_Entity) return Tooltip_Information;
+      Entity : Root_Entity'Class) return Tooltip_Information;
    --  Return information to be able to display the right icon
    --  depending on category and visibility.
 
@@ -44,7 +44,7 @@ package Entities_Tooltips_Utility is
 
    function Get_Tooltip_Header
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : General_Entity) return String;
+      Entity : Root_Entity'Class) return String;
    --  Return the header of the tooltip
 
    function Get_Tooltip_Header
@@ -53,7 +53,7 @@ package Entities_Tooltips_Utility is
 
    function Get_Tooltip_Documentation
      (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : General_Entity;
+      Entity        : Root_Entity'Class;
       Ref           : General_Entity_Reference) return String;
    --  Return the documentation of the tooltip
 
@@ -63,7 +63,7 @@ package Entities_Tooltips_Utility is
    --  Return the documentation of the tooltip
 
    function Is_Guess
-     (Entity : General_Entity) return Boolean;
+     (Entity : Root_Entity'Class) return Boolean;
    --  return true if entity information is a guess
 
    function Tooltip_Guess_Message return String;

@@ -87,24 +87,21 @@ package body Completion.Search is
      return Gtk.Widget.Gtk_Widget
    is
       Label : Gtk_Label;
-      Entity : General_Entity;
       Construct : constant Simple_Construct_Information :=
         Get_Construct (Self.Entity);
       File : constant Structured_File_Access := Get_File (Self.Entity);
    begin
-      Entity := Xref.Get_Entity
-        (Self.Kernel.Databases,
-         Name  => Get (Construct.Name).all,
-         Loc   => (File    => Get_File_Path (File),
-                   Project => No_Project,  --  ??? unknown
-                   Line    => Construct.Sloc_Entity.Line,
-                   Column  => Visible_Column_Type
-                     (Construct.Sloc_Entity.Column)));
-
       Gtk_New (Label, Documentation
                  (Self.Kernel.Databases,
                   Self.Kernel.Get_Language_Handler,
-                  Entity));
+                  Xref.Get_Entity
+                    (Self.Kernel.Databases,
+                     Name  => Get (Construct.Name).all,
+                     Loc   => (File => Get_File_Path (File),
+                               Project => No_Project,  --  ??? unknown
+                               Line => Construct.Sloc_Entity.Line,
+                               Column => Visible_Column_Type
+                                 (Construct.Sloc_Entity.Column)))));
       Label.Set_Use_Markup (True);
       Label.Modify_Font (View_Fixed_Font.Get_Pref);
       return Gtk_Widget (Label);

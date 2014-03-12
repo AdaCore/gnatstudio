@@ -331,7 +331,7 @@ package Src_Editor_Box is
       Project  : GNATCOLL.Projects.Project_Type;
       Line     : Editable_Line_Type;
       Column   : Visible_Column_Type;
-      Entity   : Xref.General_Entity);
+      Entity   : Xref.Root_Entity'Class);
    --  Open an editor for Filename. Go to Line, Column, or the nearest
    --  occurrence of Entity close by.
 

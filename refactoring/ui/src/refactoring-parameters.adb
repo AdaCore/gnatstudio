@@ -66,7 +66,7 @@ package body Refactoring.Parameters is
    function Name_Parameters
      (Context : not null access Factory_Context_Record'Class;
       Kernel  : access Kernel_Handle_Record'Class;
-      Entity  : General_Entity;
+      Entity  : Root_Entity'Class;
       File    : GNATCOLL.VFS.Virtual_File;
       Project : GNATCOLL.Projects.Project_Type;
       Line    : Integer;
@@ -84,10 +84,10 @@ package body Refactoring.Parameters is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : constant General_Entity := Get_Entity (Context);
+      Entity : constant Root_Entity'Class := Get_Entity (Context);
    begin
-      return Entity /= No_General_Entity
-        and then Get_Kernel (Context).Databases.Is_Subprogram (Entity);
+      return Entity /= No_Root_Entity
+        and then Is_Subprogram (Entity);
    end Filter_Matches_Primitive;
 
    ---------------------
@@ -97,7 +97,7 @@ package body Refactoring.Parameters is
    function Name_Parameters
      (Context : not null access Factory_Context_Record'Class;
       Kernel  : access Kernel_Handle_Record'Class;
-      Entity  : General_Entity;
+      Entity  : Root_Entity'Class;
       File    : GNATCOLL.VFS.Virtual_File;
       Project : GNATCOLL.Projects.Project_Type;
       Line    : Integer;
@@ -114,8 +114,7 @@ package body Refactoring.Parameters is
       Nest_Count  : Integer := 1;
       Result : Unbounded_String;
 
-      Params : constant Parameter_Array :=
-        Kernel.Databases.Parameters (Entity);
+      Params : constant Parameter_Array := Xref.Parameters (Entity);
       Iter   : Integer := Params'First;
 
       procedure Add_Parameter_Name;
@@ -159,7 +158,7 @@ package body Refactoring.Parameters is
             end if;
 
             Append (Result,
-                    Kernel.Databases.Get_Name (Params (Iter).Parameter)
+                    Xref.Get_Name (Root_Entity'Class (Params (Iter).Parameter))
                     & " => ");
 
             Iter := Iter + 1;
@@ -183,7 +182,6 @@ package body Refactoring.Parameters is
              (Buffer       => Get_Buffer (S_File),
               Start_Offset => Offset);
 
-         Entity_Before : General_Entity;
          Entity_Token : Token_Record;
 
          Tok_Line   : Integer;
@@ -221,16 +219,9 @@ package body Refactoring.Parameters is
             return False;
          end if;
 
-         if Kernel.Databases.Is_Primitive_Of (Entity)'Length /= 0 then
+         if Is_Primitive_Of (Entity)'Length /= 0 then
             To_Line_Column
               (S_File, Entity_Token.Token_First, Tok_Line, Tok_Column);
-
-            Entity_Before := Kernel.Databases.Get_Entity
-              (Name => Get_Name (Expression, Entity_Token),
-               Loc  => (File    => File,
-                        Project => Project,
-                        Line    => Tok_Line,
-                        Column  => Tok_Column));
 
             --  The following will not handle correctly where the primitive
             --  operation is declared inside a subprogram, and we use the fully
@@ -240,17 +231,24 @@ package body Refactoring.Parameters is
             --  But we want to handle the case of factories (ie subprograms)
             --  that return an access type and we use the dotted notation to
             --  call a primitive op on the result.
-
-            if Entity_Before /= No_General_Entity
-              and then
-                (Kernel.Databases.Has_Methods (Entity_Before)
-
-                 --  A subprogram that returns a primitive
-                 or else Kernel.Databases.Is_Subprogram (Entity_Before))
-            then
-               Free (Expression);
-               return True;
-            end if;
+            declare
+               Entity_Before : constant Root_Entity'Class
+                 := Kernel.Databases.Get_Entity
+                   (Name => Get_Name (Expression, Entity_Token),
+                    Loc  => (File   => File,
+                             Project => Project,
+                             Line   => Tok_Line,
+                             Column => Tok_Column));
+            begin
+               if Entity_Before /= No_Root_Entity
+                 and then (Has_Methods (Entity_Before)
+                           --  A subprogram that returns a primitive
+                           or else Is_Subprogram (Entity_Before))
+               then
+                  Free (Expression);
+                  return True;
+               end if;
+            end;
          end if;
 
          Free (Expression);
@@ -341,7 +339,7 @@ package body Refactoring.Parameters is
       if Command = "name_parameters" then
          Name_Parameters (Data, (1 => Location_Cst'Access));
          declare
-            Entity   : constant General_Entity := Get_Data (Data, 1);
+            Entity   : constant Root_Entity'Class := Get_Data (Data, 1);
             Location : constant File_Location_Info := Get_Data (Data, 2);
             File     : constant Virtual_File := Get_Data (Get_File (Location));
          begin

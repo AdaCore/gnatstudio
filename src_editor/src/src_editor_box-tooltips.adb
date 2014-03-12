@@ -59,11 +59,10 @@ package body Src_Editor_Box.Tooltips is
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation
 
-   procedure Get_Declaration_Info
+   function Get_Declaration_Info
      (Editor  : access Source_Editor_Box_Record;
       Context : Selection_Context;
-      Entity  : out General_Entity;
-      Ref     : out General_Entity_Reference);
+      Ref     : out General_Entity_Reference) return Root_Entity'Class;
    --  Perform a cross-reference to the declaration of the entity located at
    --  (Line, Column) in Editor. Fail silently when no declaration or no
    --  entity can be located, and set File_Decl to null.
@@ -88,33 +87,32 @@ package body Src_Editor_Box.Tooltips is
    -- Get_Declaration_Info --
    --------------------------
 
-   procedure Get_Declaration_Info
+   function Get_Declaration_Info
      (Editor  : access Source_Editor_Box_Record;
       Context : Selection_Context;
-      Entity  : out General_Entity;
-      Ref     : out General_Entity_Reference)
+      Ref     : out General_Entity_Reference) return Root_Entity'Class
    is
       Filename : constant Virtual_File := Get_Filename (Editor);
    begin
       Ref := No_General_Entity_Reference;
-      Entity := No_General_Entity;
 
       if Filename = GNATCOLL.VFS.No_File then
-         return;
+         return No_Root_Entity;
       end if;
 
-      Editor.Kernel.Databases.Find_Declaration_Or_Overloaded
-        (Loc => (File    => Get_Filename (Editor),
-                 Project => Contexts.Project_Information (Context),
-                 Line    => Contexts.Line_Information (Context),
-                 Column  => Entity_Column_Information (Context)),
-         Entity_Name => Entity_Name_Information (Context),
-         Entity      => Entity,
-         Closest_Ref => Ref);
+      return
+        Editor.Kernel.Databases.Find_Declaration_Or_Overloaded
+          (Loc => (File   => Get_Filename (Editor),
+                   Project => Contexts.Project_Information (Context),
+                   Line   => Contexts.Line_Information (Context),
+                   Column => Entity_Column_Information (Context)),
+           Entity_Name => Entity_Name_Information (Context),
+           Closest_Ref => Ref);
 
    exception
       when E : others =>
          Trace (Me, E);
+         return No_Root_Entity;
    end Get_Declaration_Info;
 
    ---------------------
@@ -260,7 +258,6 @@ package body Src_Editor_Box.Tooltips is
       Tooltip.Set_Tip_Area (Area);
 
       declare
-         Entity     : General_Entity;
          Entity_Ref : General_Entity_Reference;
          Context    : Selection_Context := New_Context;
          W          : Gtk_Widget;
@@ -350,26 +347,29 @@ package body Src_Editor_Box.Tooltips is
          --  No module wants to handle this tooltip. Default to built-in
          --  tooltip, based on cross references.
 
-         Get_Declaration_Info (Box, Context, Entity, Entity_Ref);
-
-         if Entity = No_General_Entity then
-            return Gtk_Widget (Vbox);
-         end if;
-
-         --  Ref the entity, so that if Draw_Tooltip regenerates the xref info,
-         --  we are sure to always have a valid entity reference.
-         Ref (Entity);
-
-         W := Entities_Tooltips.Draw_Tooltip
-           (Box.Kernel, Entity, Entity_Ref, Draw_Border => False);
-         if W /= null then
-            if Vbox = null then
-               Gtk_New_Vbox (Vbox, Homogeneous => False);
+         declare
+            Entity : Root_Entity'Class := Get_Declaration_Info
+              (Box, Context, Entity_Ref);
+         begin
+            if Entity = No_Root_Entity then
+               return Gtk_Widget (Vbox);
             end if;
-            Vbox.Pack_Start (W, Expand => False, Fill => True);
-         end if;
 
-         Unref (Entity);
+            --  Ref the entity, so that if Draw_Tooltip regenerates the xref
+            --  info, we are sure to always have a valid entity reference.
+            Ref (Entity);
+
+            W := Entities_Tooltips.Draw_Tooltip
+              (Box.Kernel, Entity, Entity_Ref, Draw_Border => False);
+            if W /= null then
+               if Vbox = null then
+                  Gtk_New_Vbox (Vbox, Homogeneous => False);
+               end if;
+               Vbox.Pack_Start (W, Expand => False, Fill => True);
+            end if;
+
+            Unref (Entity);
+         end;
 
          return Gtk_Widget (Vbox);
       end;

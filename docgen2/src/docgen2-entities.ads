@@ -250,8 +250,7 @@ package Docgen2.Entities is
 
    procedure Set_Pkg_Printout
      (Construct   : Simple_Construct_Information;
-      Db          : access Xref.General_Xref_Database_Record'Class;
-      Entity      : Xref.General_Entity;
+      Entity      : Xref.Root_Entity'Class;
       File_Buffer : GNAT.Strings.String_Access;
       E_Info      : Entity_Info);
    --  Retrieve the Source extract representing the header of the package, or

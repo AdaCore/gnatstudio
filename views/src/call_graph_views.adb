@@ -230,8 +230,8 @@ package body Call_Graph_Views is
      (Data : in out Ancestors_User_Data; Cancelled : Boolean);
    overriding function On_Entity_Found
      (Data                : access Ancestors_User_Data;
-      Entity              : General_Entity;
-      Parent              : General_Entity;
+      Entity              : Root_Entity'Class;
+      Parent              : Root_Entity'Class;
       Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean;
@@ -239,13 +239,13 @@ package body Call_Graph_Views is
 
    function Get_Entity
      (View : access Callgraph_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return General_Entity;
+      Iter : Gtk_Tree_Iter) return Root_Entity'Class;
    --  Retrieve the entity at the given location
 
    function Insert_Entity
      (View                : access Callgraph_View_Record'Class;
-      Parent              : General_Entity;
-      Entity              : General_Entity;
+      Parent              : Root_Entity'Class;
+      Entity              : Root_Entity'Class;
       Ref                 : General_Entity_Reference;
       Suffix              : String := "";
       Kind                : View_Type;
@@ -344,7 +344,7 @@ package body Call_Graph_Views is
 
    function Get_Entity
      (View : access Callgraph_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return General_Entity
+      Iter : Gtk_Tree_Iter) return Root_Entity'Class
    is
       Model    : constant Gtk_Tree_Store :=
                    Gtk_Tree_Store (Gtk.Tree_Store."-"(Get_Model (View.Tree)));
@@ -368,10 +368,9 @@ package body Call_Graph_Views is
    procedure Select_Current_Location
      (View : access Callgraph_View_Record'Class)
    is
-      Iter, It : Gtk_Tree_Iter;
-      Model    : Gtk_Tree_Model;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Entity   : General_Entity;
+      Iter, It   : Gtk_Tree_Iter;
+      Model  : Gtk_Tree_Model;
+      File   : GNATCOLL.VFS.Virtual_File;
       Project  : Project_Type;
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
@@ -387,7 +386,6 @@ package body Call_Graph_Views is
                when View_Called_By => It := Parent (Model, Iter);
             end case;
 
-            Entity := Get_Entity (View, It);
             Get_Selected (Get_Selection (View.Locations_Tree), Model, Iter);
 
             if Iter /= Null_Iter then
@@ -407,7 +405,7 @@ package body Call_Graph_Views is
                     (Get_Int (Model, Iter, Location_Column_Column)),
                   Column_End => Visible_Column_Type
                     (Get_Int (Model, Iter, Location_Column_Column))
-                    + View.Kernel.Databases.Get_Name (Entity)'Length,
+                    + Get_Name (Get_Entity (View, It))'Length,
                   New_File   => False,
                   Focus      => True);
             end if;
@@ -640,14 +638,13 @@ package body Call_Graph_Views is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
 
-      Entity : General_Entity;
       Decl   : General_Entity_Declaration;
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
 
       if Iter /= Null_Iter then
-         Entity := Get_Entity (View, Iter);
-         Decl := View.Kernel.Databases.Get_Declaration (Entity);
+         Decl := Get_Declaration
+           (Get_Entity (View, Iter));
 
          Open_File_Editor
            (View.Kernel,
@@ -716,7 +713,6 @@ package body Call_Graph_Views is
       L             : List_Access;
       Iter          : Gtk_Tree_Iter;
       Model         : Gtk_Tree_Model;
-      Entity        : General_Entity;
       Decl          : General_Entity_Declaration;
 
       Value         : GValue;
@@ -740,13 +736,14 @@ package body Call_Graph_Views is
          --  overloaded entities (even though the user can double-click on the
          --  entity name, it might not be visible enough)
 
-         Entity := Get_Entity (V, Iter);
-
-         if Entity = No_General_Entity then
-            return;
-         end if;
-
-         Decl := V.Kernel.Databases.Get_Declaration (Entity);
+         declare
+            Entity : constant Root_Entity'Class := Get_Entity (V, Iter);
+         begin
+            if Entity = No_Root_Entity then
+               return;
+            end if;
+            Decl := Get_Declaration (Entity);
+         end;
 
          Append (V.Locations_Model, T);
          Appended := True;
@@ -846,7 +843,6 @@ package body Call_Graph_Views is
       M      : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Child  : Gtk_Tree_Iter := Null_Iter;
       Dummy  : Gtk_Tree_Iter;
-      Entity : General_Entity;
       Column : Gint;
       Data   : Ancestors_User_Data_Access;
       Computing_Iter : Gtk_Tree_Iter := Null_Iter;
@@ -859,48 +855,49 @@ package body Call_Graph_Views is
          return;
       end if;
 
-      Entity := Get_Entity (V, Iter);
+      declare
+         Entity : constant Root_Entity'Class := Get_Entity (V, Iter);
+      begin
 
-      --  If we have the locations node, do nothing
-      if Entity = No_General_Entity then
-         return;
-      end if;
+         --  If we have the locations node, do nothing
+         if Entity = No_Root_Entity then
+            return;
+         end if;
 
-      Column := Freeze_Sort (M);
+         Column := Freeze_Sort (M);
 
-      --  We always recompute the call graph. gtk+ would lose the expanded
-      --  status of children anyway, so we might as well recompute everything.
-      --  It is also more logical from the user's point of view that this would
-      --  act as a refresh.
-      --  Keep one child (the computing node), or the expanded status is lost
-      --  by gtk+.
+         --  We always recompute the call graph. gtk+ would lose the expanded
+         --  status of children anyway, so we might as well recompute
+         --  everything. It is also more logical from the user's point of view
+         --  that this would act as a refresh. Keep one child (the computing
+         --  node), or the expanded status is lost by gtk+.
 
-      Local_Path := Get_Path (Model, Iter);
-      Gtk_New (Row, Model, Local_Path);
-      Data := new Ancestors_User_Data'
-        (Commands_User_Data_Record with
-           View        => V,
-         Computing_Ref => Null_Gtk_Tree_Row_Reference,
-         Entity_Ref    => Row);
-      Path_Free (Local_Path);
+         Local_Path := Get_Path (Model, Iter);
+         Gtk_New (Row, Model, Local_Path);
+         Data := new Ancestors_User_Data'
+           (Commands_User_Data_Record with
+            View        => V,
+            Computing_Ref => Null_Gtk_Tree_Row_Reference,
+            Entity_Ref    => Row);
+         Path_Free (Local_Path);
 
-      Prepend (M, Computing_Iter, Iter);
-      Set (M, Computing_Iter, Name_Column, Computing_Label);
+         Prepend (M, Computing_Iter, Iter);
+         Set (M, Computing_Iter, Name_Column, Computing_Label);
 
-      Child := Computing_Iter;
-      Next (M, Child);
-
-      Local_Path := Get_Path (Model, Computing_Iter);
-      Gtk_New (Data.Computing_Ref, Model, Local_Path);
-      Path_Free (Local_Path);
-
-      while Child /= Null_Iter loop
-         Dummy := Child;
+         Child := Computing_Iter;
          Next (M, Child);
-         Remove (M, Dummy);
-      end loop;
 
-      case Get_View_Type (Get_Model (V.Tree), Iter) is
+         Local_Path := Get_Path (Model, Computing_Iter);
+         Gtk_New (Data.Computing_Ref, Model, Local_Path);
+         Path_Free (Local_Path);
+
+         while Child /= Null_Iter loop
+            Dummy := Child;
+            Next (M, Child);
+            Remove (M, Dummy);
+         end loop;
+
+         case Get_View_Type (Get_Model (V.Tree), Iter) is
          when View_Calls     =>
             Examine_Entity_Call_Graph
               (Kernel            => V.Kernel,
@@ -917,7 +914,8 @@ package body Call_Graph_Views is
                Watch             => Gtk_Widget (V),
                Dispatching_Calls => True,
                Background_Mode   => True);
-      end case;
+         end case;
+      end;
 
       Thaw_Sort (M, Column);
    exception
@@ -1003,7 +1001,6 @@ package body Call_Graph_Views is
       V      : constant Callgraph_View_Access :=
                  Callgraph_View_Access (Object);
       Iter   : Gtk_Tree_Iter;
-      Entity : General_Entity;
 
    begin
       Iter := Find_Iter_For_Event (V.Tree, Event);
@@ -1011,12 +1008,14 @@ package body Call_Graph_Views is
       if Iter /= Null_Iter then
          Select_Iter (Get_Selection (V.Tree), Iter);
 
-         Entity := Get_Entity (V, Iter);
-
-         if Entity /= No_General_Entity then
-            Set_File_Information   (Context, Files  => Empty_File_Array);
-            Set_Entity_Information (Context, Entity => Entity);
-         end if;
+         declare
+            Entity : constant Root_Entity'Class := Get_Entity (V, Iter);
+         begin
+            if Entity /= No_Root_Entity then
+               Set_File_Information   (Context, Files  => Empty_File_Array);
+               Set_Entity_Information (Context, Entity => Entity);
+            end if;
+         end;
       else
          Unselect_All (Get_Selection (V.Tree));
       end if;
@@ -1489,8 +1488,8 @@ package body Call_Graph_Views is
 
    function Insert_Entity
      (View                : access Callgraph_View_Record'Class;
-      Parent              : General_Entity;
-      Entity              : General_Entity;
+      Parent              : Root_Entity'Class;
+      Entity              : Root_Entity'Class;
       Ref                 : General_Entity_Reference;
       Suffix              : String := "";
       Kind                : View_Type;
@@ -1500,10 +1499,9 @@ package body Call_Graph_Views is
       pragma Unreferenced (Parent);
       Model     : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Decl      : constant General_Entity_Declaration :=
-        View.Kernel.Databases.Get_Declaration (Entity);
+        Get_Declaration (Entity);
       Iter      : Gtk_Tree_Iter;
       Locations : Gtk_Tree_Iter := Null_Iter;
-      Ent       : General_Entity;
    begin
       if Parent_Iter = Null_Iter then
          Iter := Get_Iter_First (Model);
@@ -1514,8 +1512,7 @@ package body Call_Graph_Views is
       --  Check whether the entity already exists in the call graph
 
       while Iter /= Null_Iter loop
-         Ent := Get_Entity (View, Iter);
-         exit when Ent = Entity
+         exit when Get_Entity (View, Iter) = Entity
            and then Get_Int (Model, Iter, Kind_Column) = View_Type'Pos (Kind);
 
          Next (Model, Iter);
@@ -1535,8 +1532,7 @@ package body Call_Graph_Views is
          Set_File (Model, Iter, Project_Column, Decl.Loc.Project.Project_Path);
          Set (Model, Iter, Line_Column, Gint (Decl.Loc.Line));
          Set (Model, Iter, Column_Column, Gint (Decl.Loc.Column));
-         Set (Model, Iter, Entity_Name_Column,
-              View.Kernel.Databases.Get_Name (Entity));
+         Set (Model, Iter, Entity_Name_Column, Get_Name (Entity));
          Set (Model, Iter, Kind_Column, View_Type'Pos (Kind));
          Set (Model, Iter, Sort_Column,
               Get_String (Model, Iter, Name_Column) & " "
@@ -1639,8 +1635,8 @@ package body Call_Graph_Views is
 
    overriding function On_Entity_Found
      (Data                : access Ancestors_User_Data;
-      Entity              : General_Entity;
-      Parent              : General_Entity;
+      Entity              : Root_Entity'Class;
+      Parent              : Root_Entity'Class;
       Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean
@@ -1696,18 +1692,18 @@ package body Call_Graph_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Entity : constant General_Entity :=
+      Entity : constant Root_Entity'Class :=
                  Get_Entity (Context.Context);
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
    begin
-      if Entity /= No_General_Entity then
+      if Entity /= No_Root_Entity then
          View := Generic_View.Get_Or_Create_View (Kernel);
          Expand_Row
            (View.Tree,
             Insert_Entity
-              (View, No_General_Entity, Entity,
+              (View, No_Root_Entity, Entity,
                No_General_Entity_Reference, -" calls ",
               Kind                => View_Calls,
               Through_Dispatching => False));
@@ -1725,17 +1721,17 @@ package body Call_Graph_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Entity : constant General_Entity := Get_Entity (Context.Context);
+      Entity : constant Root_Entity'Class := Get_Entity (Context.Context);
       pragma Unreferenced (Command);
 
       View   : Callgraph_View_Access;
    begin
-      if Entity /= No_General_Entity then
+      if Entity /= No_Root_Entity then
          View := Generic_View.Get_Or_Create_View (Kernel);
          Expand_Row
            (View.Tree,
             Insert_Entity
-              (View, No_General_Entity, Entity,
+              (View, No_Root_Entity, Entity,
                No_General_Entity_Reference, -" is called by ",
                Kind                => View_Called_By,
                Through_Dispatching => False));

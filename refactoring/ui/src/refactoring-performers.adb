@@ -27,6 +27,7 @@ with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with Ada.Containers.Indefinite_Holders;
 
 package body Refactoring.Performers is
    Me : constant Trace_Handle := Create ("REFACTORING.PERFORMERS");
@@ -40,13 +41,16 @@ package body Refactoring.Performers is
    overriding procedure Error
      (Report : in out Renaming_Error_Record; File : Virtual_File);
 
+   package Holder is new Ada.Containers.Indefinite_Holders
+     (Root_Entity'Class);
+
    type Get_Locations_Data is record
       Refs                : Location_Arrays.List;
       Stale_LI_List       : Source_File_Set;
       Read_Only_Files     : Source_File_Set;
       On_Completion       : Refactor_Performer;
       Kernel              : Kernel_Handle;
-      Entity              : General_Entity;
+      Entity              : Holder.Holder;
       Iter                : Entity_Reference_Iterator;
       Errors              : Renaming_Error;
       Make_Writable       : Boolean;
@@ -117,7 +121,7 @@ package body Refactoring.Performers is
 
    procedure Get_All_Locations
      (Kernel          : access Kernel_Handle_Record'Class;
-      Entity          : General_Entity;
+      Entity          : Root_Entity'Class;
       On_Completion   : access Refactor_Performer_Record'Class;
       Auto_Compile    : Boolean := False;
       Overridden      : Boolean := True;
@@ -134,8 +138,8 @@ package body Refactoring.Performers is
       Data.Errors        := new Renaming_Error_Record;
       Data.Make_Writable := Make_Writable;
 
-      Data.Entity            := Entity;
-      Kernel.Databases.Find_All_References
+      Data.Entity.Replace_Element (Entity);
+      Find_All_References
         (Iter                  => Data.Iter,
          Entity                => Entity,
          File_Has_No_LI_Report => File_Error_Reporter (Data.Errors),
@@ -202,7 +206,7 @@ package body Refactoring.Performers is
          Execute
            (Data.On_Completion,
             Data.Kernel,
-            Data.Entity,
+            Data.Entity.Element,
             Data.Refs,
             Data.Errors.No_LI_List,
             Data.Stale_LI_List);

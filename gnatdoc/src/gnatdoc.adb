@@ -646,20 +646,22 @@ package body GNATdoc is
             Result : access Files_List.Vector)
          is
             Cursor : Xref.Entities_In_File_Cursor;
-            E      : General_Entity;
             Loc    : General_Location;
 
          begin
             Cursor := Database.Entities_In_File (File, No_Project);
             while not At_End (Cursor) loop
-               E   := Cursor.Get;
-               Loc := Get_Location (Database, E);
-
-               if Xref.Get_Display_Kind (Database, E) = "include file"
-                 and then not Result.Contains (Loc.File)
-               then
-                  Result.Append (Loc.File);
-               end if;
+               declare
+                  E : Root_Entity'Class := Cursor.Get;
+               begin
+                  E   := Cursor.Get;
+                  Loc := Get_Location (E);
+                  if Xref.Get_Display_Kind (E) = "include file"
+                    and then not Result.Contains (Loc.File)
+                  then
+                     Result.Append (Loc.File);
+                  end if;
+               end;
 
                Cursor.Next;
             end loop;

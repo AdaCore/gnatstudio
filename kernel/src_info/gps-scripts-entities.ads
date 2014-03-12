@@ -33,17 +33,17 @@ package GPS.Scripts.Entities is
    --  Entity_Information.
 
    procedure Set_Data
-     (Instance : Class_Instance; Entity : Xref.General_Entity);
+     (Instance : Class_Instance; Entity : Xref.Root_Entity'Class);
    function Get_Data
      (Data : Callback_Data'Class; N : Positive)
-      return Xref.General_Entity;
+      return Xref.Root_Entity'Class;
    --  The Entity class stores some Entity_Information data in Instance
    --  You should destroy the entity passed to Set_Data, but not the value
    --  returned by Get_Data
 
    function Create_Entity
      (Script : access Scripting_Language_Record'Class;
-      Entity : Xref.General_Entity) return Class_Instance;
+      Entity : Xref.Root_Entity'Class) return Class_Instance;
    --  Return a new entity. Entity parameter should be freed by the caller
 
 end GPS.Scripts.Entities;

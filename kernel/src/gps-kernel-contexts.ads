@@ -225,7 +225,7 @@ package GPS.Kernel.Contexts is
 
    procedure Set_Entity_Information
      (Context         : in out Selection_Context;
-      Entity          : Xref.General_Entity;
+      Entity          : Xref.Root_Entity'Class;
       From_Expression : String := "");
    --  Same as above, but we provide directly the entity itself. This is more
    --  efficient when you already know the entity.
@@ -259,13 +259,13 @@ package GPS.Kernel.Contexts is
    function Get_Entity
      (Context           : Selection_Context;
       Approximate_Search_Fallback : Boolean := True)
-      return Xref.General_Entity;
+      return Xref.Root_Entity'Class;
    pragma Inline (Get_Entity);
    --  Return the xref entity stored in the context.
 
    function Get_Entity_Type_Of
      (Context           : Selection_Context)
-      return Xref.General_Entity;
+      return Xref.Root_Entity'Class;
    --  Return the type of the xref entity stored in the context.
 
    function Has_Parent_Types

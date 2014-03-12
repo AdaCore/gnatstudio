@@ -898,8 +898,7 @@ package body GNATdoc.Backend.HTML is
 
                      if Tag.Tag = "param" then
                         Declaration :=
-                          Xref.Get_Declaration
-                            (Self.Context.Database, Tag.Entity);
+                          Xref.Get_Declaration (Tag.Entity.Element);
                         Parameter := Create_Object;
                         Parameter.Set_Field ("label", Declaration.Name);
                         Parameter.Set_Field ("line", Declaration.Loc.Line);

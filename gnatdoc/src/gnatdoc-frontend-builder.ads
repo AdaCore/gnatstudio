@@ -53,7 +53,7 @@ private package GNATdoc.Frontend.Builder is
    function Get_Unique_Entity
      (Context : access constant Docgen_Context;
       File    : Virtual_File;
-      E       : General_Entity) return Entity_Id;
+      E       : Root_Entity'Class) return Entity_Id;
    --  Search for E in a hash table containing all the project entities.
    --  If found then return such entity; if not found then allocate a new
    --  unique entity for E, append it to the hash table and return it.

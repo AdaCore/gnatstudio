@@ -26,6 +26,7 @@ with Projects;           use Projects;
 with Xref;               use Xref;
 
 package body GPS.Kernel.Contexts is
+
    type Filter_File is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter : access Filter_File; Context : Selection_Context)
@@ -604,19 +605,16 @@ package body GPS.Kernel.Contexts is
 
    procedure Set_Entity_Information
      (Context : in out Selection_Context;
-      Entity  : Xref.General_Entity;
+      Entity  : Xref.Root_Entity'Class;
       From_Expression : String := "")
    is
-      Kernel : constant Kernel_Handle := Context.Data.Data.Kernel;
-      Decl : constant General_Location :=
-        Kernel.Databases.Get_Declaration (Entity).Loc;
+      Decl   : constant General_Location := Entity.Get_Declaration.Loc;
    begin
       Ref (Entity);
-      Context.Data.Data.Entity_Name   := new String'
-        (Kernel.Databases.Get_Name (Entity));
+      Context.Data.Data.Entity_Name   := new String'(Entity.Get_Name);
 
       Context.Data.Data.Entity_Column := Decl.Column;
-      Context.Data.Data.Xref_Entity   := Entity;
+      Context.Data.Data.Xref_Entity.Replace_Element (Entity);
 
       if From_Expression /= "" then
          Context.Data.Data.Expression := new String'(From_Expression);
@@ -741,7 +739,7 @@ package body GPS.Kernel.Contexts is
    function Get_Entity
      (Context           : Selection_Context;
       Approximate_Search_Fallback : Boolean := True)
-      return Xref.General_Entity
+      return Xref.Root_Entity'Class
    is
       Db : constant General_Xref_Database :=
         Context.Data.Data.Kernel.Databases;
@@ -757,23 +755,27 @@ package body GPS.Kernel.Contexts is
            and then Has_Line_Information (Context)
            and then Context.Data.Data.Entity_Name /= null
          then
-            Db.Find_Declaration_Or_Overloaded
-              (Loc  =>
-                 (File    => Context.Data.Data.Files
-                      (Context.Data.Data.Files'First),
-                  Project => Context.Data.Data.Project,
-                  Line    => Context.Data.Data.Line,
-                  Column  => Context.Data.Data.Entity_Column),
-               Entity_Name => Context.Data.Data.Entity_Name.all,
-               Entity      => Context.Data.Data.Xref_Entity,
-               Closest_Ref => Context.Data.Data.Xref_Closest_Ref,
-               Approximate_Search_Fallback => Approximate_Search_Fallback);
+            Context.Data.Data.Xref_Entity.Replace_Element
+              (Db.Find_Declaration_Or_Overloaded
+                 (Loc  =>
+                      (File   => Context.Data.Data.Files
+                           (Context.Data.Data.Files'First),
+                       Project => Context.Data.Data.Project,
+                       Line   => Context.Data.Data.Line,
+                       Column => Context.Data.Data.Entity_Column),
+                  Entity_Name => Context.Data.Data.Entity_Name.all,
+                  Closest_Ref => Context.Data.Data.Xref_Closest_Ref,
+                  Approximate_Search_Fallback => Approximate_Search_Fallback));
 
-            Ref (Context.Data.Data.Xref_Entity);
+            Ref (Context.Data.Data.Xref_Entity.Element);
          end if;
       end if;
 
-      return Context.Data.Data.Xref_Entity;
+      if Context.Data.Data.Xref_Entity.Is_Empty then
+         return No_Root_Entity;
+      else
+         return Context.Data.Data.Xref_Entity.Element;
+      end if;
    end Get_Entity;
 
    ------------------------
@@ -782,21 +784,19 @@ package body GPS.Kernel.Contexts is
 
    function Get_Entity_Type_Of
      (Context           : Selection_Context)
-      return Xref.General_Entity
+      return Xref.Root_Entity'Class
    is
    begin
-      if Context.Data.Data.Xref_Entity_Type_Of = No_General_Entity then
-         if Get_Entity (Context) = No_General_Entity then
-            return No_General_Entity;
+      if Context.Data.Data.Xref_Entity_Type_Of.Is_Empty then
+         if Get_Entity (Context) = No_Root_Entity then
+            return No_Root_Entity;
          end if;
 
-         Context.Data.Data.Xref_Entity_Type_Of :=
-           Get_Type_Of
-             (Context.Data.Data.Kernel.Databases,
-              Get_Entity (Context));
+         Context.Data.Data.Xref_Entity_Type_Of.Replace_Element
+           (Get_Type_Of (Get_Entity (Context)));
       end if;
 
-      return Context.Data.Data.Xref_Entity_Type_Of;
+      return Context.Data.Data.Xref_Entity_Type_Of.Element;
    end Get_Entity_Type_Of;
 
    ----------------------
@@ -810,12 +810,11 @@ package body GPS.Kernel.Contexts is
       use GNATCOLL.Tribooleans;
    begin
       if Context.Data.Data.Xref_Entity_Has_Parent_Types = Indeterminate
-        and then Get_Entity (Context) /= No_General_Entity
+        and then Get_Entity (Context) /= No_Root_Entity
       then
          declare
             Parents : constant Xref.Entity_Array :=
-              Context.Data.Data.Kernel.Databases.Parent_Types
-              (Get_Entity (Context), Recursive => False);
+              Parent_Types (Get_Entity (Context), Recursive => False);
          begin
             Context.Data.Data.Xref_Entity_Has_Parent_Types :=
               To_TriBoolean (Parents'Length /= 0);

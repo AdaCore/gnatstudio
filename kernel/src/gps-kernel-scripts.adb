@@ -85,6 +85,9 @@ package body GPS.Kernel.Scripts is
    type GPS_Properties_Type is
      (Files, Contexts, Entities, Projects, File_Locations);
 
+   package Holder is new Ada.Containers.Indefinite_Holders
+     (Root_Entity'Class);
+
    type GPS_Properties_Record (Typ : GPS_Properties_Type)
      is new Instance_Property_Record
    with record
@@ -94,7 +97,7 @@ package body GPS.Kernel.Scripts is
          when Contexts =>
             Context : Selection_Context := No_Context;
          when Entities =>
-            Entity  : General_Entity;
+            Entity  : Holder.Holder;
          when Projects =>
             Project : Project_Type;
          when File_Locations =>
@@ -546,14 +549,10 @@ package body GPS.Kernel.Scripts is
    -----------------------------------
 
    procedure Create_Entity_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Entity : General_Entity;
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = "category" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Get_Display_Kind (Entity));
+         Set_Return_Value (Data, Get_Data (Data, 1).Get_Display_Kind);
       end if;
    end Create_Entity_Command_Handler;
 
@@ -1960,7 +1959,11 @@ package body GPS.Kernel.Scripts is
             null;
 
          when Entities =>
-            Unref (Prop.Entity);
+            declare
+               V : Root_Entity'Class := Prop.Entity.Element;
+            begin
+               Unref (V);
+            end;
 
          when File_Locations =>
             Prop.Location := No_File_Location;

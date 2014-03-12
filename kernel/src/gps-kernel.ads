@@ -64,6 +64,7 @@ with GPS.Messages_Windows;
 with GPS.Process_Launchers;
 with GPS.Process_Launchers.Implementation;
 use GPS.Process_Launchers.Implementation;
+with Ada.Containers.Indefinite_Holders;
 
 package GPS.Kernel is
 
@@ -937,6 +938,9 @@ private
       Element_Type => Boolean,
       "<"          => System."<");
 
+   package Holder is new Ada.Containers.Indefinite_Holders
+     (Xref.Root_Entity'Class, "=" => Xref."=");
+
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
       Creator   : Abstract_Module;
@@ -990,18 +994,18 @@ private
         GNATCOLL.Tribooleans.Indeterminate;
       --  Whether we clicked on a dispatching call.
 
-      Xref_Entity : Xref.General_Entity := Xref.No_General_Entity;
+      Xref_Entity : Holder.Holder;
       --  The Entity for xref purposes. This is computed when the context
       --  is created. When the source location only results in a possible
       --  candidate (overloaded entities and not up-to-date ALI files), the
       --  xref engines are responsible for making a best guess, or setting
-      --  this to null.
+      --  this to empty.
 
       Xref_Entity_Resolution_Attempted : Boolean := False;
       --  Whether we have already attempted to get the Xref_Entity for this
       --  context.
 
-      Xref_Entity_Type_Of : Xref.General_Entity := Xref.No_General_Entity;
+      Xref_Entity_Type_Of : Holder.Holder;
       --  The type of Xref_Entity, cached.
       --  No_General_Entity indicates that the entity hasn't been computed.
 

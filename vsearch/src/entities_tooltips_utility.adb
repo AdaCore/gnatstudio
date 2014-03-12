@@ -44,24 +44,25 @@ package body Entities_Tooltips_Utility is
 
    function Get_Tooltip_Header
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : General_Entity) return String
+      Entity : Root_Entity'Class) return String
    is
+      pragma Unreferenced (Kernel);
       Decl : General_Entity_Declaration;
       Attrs : Unbounded_String;
    begin
-      Decl := Kernel.Databases.Get_Declaration (Entity);
+      Decl := Get_Declaration (Entity);
 
-         if Kernel.Databases.Is_Global (Entity) then
+         if Is_Global (Entity) then
             Append (Attrs, "global ");
-         elsif Kernel.Databases.Is_Static_Local (Entity) then
+         elsif Is_Static_Local (Entity) then
             Append (Attrs, "static ");
          end if;
 
          return  "<b>"
-           & Escape_Text (Kernel.Databases.Qualified_Name (Entity))
+           & Escape_Text (Qualified_Name (Entity))
            & "</b>" & ASCII.LF
            & To_String (Attrs)
-           & Kernel.Databases.Get_Display_Kind (Entity)
+           & Get_Display_Kind (Entity)
            & (-" declared at ")
            & Decl.Loc.File.Display_Base_Name & ':'
            & Image (Decl.Loc.Line);
@@ -77,39 +78,40 @@ package body Entities_Tooltips_Utility is
    is
       use Ada.Strings.Unbounded;
       Result  : Unbounded_String;
-      Inst_E  : General_Entity;
-      Inst_Of : General_Entity;
       Loc     : General_Location;
 
    begin
       if Entity_Ref /= No_General_Entity_Reference then
          declare
-            Insts : constant Xref.Entity_Array :=
-              Db.From_Instances (Entity_Ref);
+            Insts : Xref.Entity_Array := Db.From_Instances (Entity_Ref);
          begin
             for Inst in Insts'Range loop
-               Inst_E := Insts (Inst);
-               Inst_Of := Db.Instance_Of (Inst_E);
+               declare
+                  Inst_E  : constant Root_Entity'Class := Insts (Inst).all;
+                  Inst_Of : constant Root_Entity'Class := Instance_Of (Inst_E);
+               begin
+                  if Inst_Of = No_Root_Entity then
+                     Append (Result,  -"from instance at ");
+                  else
+                     Loc := Get_Declaration (Inst_Of).Loc;
+                     Append
+                       (Result,
+                        (-"from instance of ")
+                        & Get_Name (Inst_Of) & ':'
+                        & Loc.File.Display_Base_Name & ':'
+                        & Image (Loc.Line) & ASCII.LF & "  at ");
+                  end if;
 
-               if Inst_Of = No_General_Entity then
-                  Append (Result,  -"from instance at ");
-               else
-                  Loc := Db.Get_Declaration (Inst_Of).Loc;
+                  Loc    := Get_Declaration (Inst_E).Loc;
                   Append
                     (Result,
-                     (-"from instance of ")
-                     & Db.Get_Name (Inst_Of) & ':'
+                     Get_Name (Inst_E) & ':'
                      & Loc.File.Display_Base_Name & ':'
-                     & Image (Loc.Line) & ASCII.LF & "  at ");
-               end if;
-
-               Loc := Db.Get_Declaration (Inst_E).Loc;
-               Append
-                 (Result,
-                  Db.Get_Name (Inst_E) & ':'
-                  & Loc.File.Display_Base_Name & ':'
-                  & Image (Loc.Line) & ASCII.LF & ASCII.LF);
+                     & Image (Loc.Line) & ASCII.LF & ASCII.LF);
+               end;
             end loop;
+
+            Free (Insts);
          end;
       end if;
 
@@ -133,7 +135,7 @@ package body Entities_Tooltips_Utility is
 
    function Get_Tooltip_Documentation
      (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : General_Entity;
+      Entity        : Root_Entity'Class;
       Ref           : General_Entity_Reference) return String
    is
    begin
@@ -160,7 +162,7 @@ package body Entities_Tooltips_Utility is
          Handler => Kernel.Get_Language_Handler,
          Color_For_Optional_Param =>
            To_Hex (Shade_Or_Lighten (Tooltips.Tooltips_Foreground_Color)),
-         Entity  => From_Constructs (Entity));
+         Entity  => From_Constructs (Kernel.Databases, Entity));
    end Get_Tooltip_Documentation;
 
    -----------------------------
@@ -187,8 +189,9 @@ package body Entities_Tooltips_Utility is
 
    function Get_Tooltip_Information
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : General_Entity) return Tooltip_Information
+      Entity : Root_Entity'Class) return Tooltip_Information
    is
+      pragma Unreferenced (Kernel);
       Tooltip_Info : Tooltip_Information;
 
    begin
@@ -196,11 +199,11 @@ package body Entities_Tooltips_Utility is
       Tooltip_Info.Category := Cat_Variable;
       Tooltip_Info.Is_Spec := False;
 
-      if Kernel.Databases.Is_Subprogram (Entity) then
+      if Is_Subprogram (Entity) then
          Tooltip_Info.Category := Cat_Function;
-      elsif Kernel.Databases.Is_Type (Entity) then
+      elsif Is_Type (Entity) then
          Tooltip_Info.Category := Cat_Type;
-      elsif Kernel.Databases.Is_Container (Entity) then
+      elsif Is_Container (Entity) then
          Tooltip_Info.Category := Cat_Package;
       end if;
 
@@ -215,7 +218,7 @@ package body Entities_Tooltips_Utility is
    --------------
 
    function Is_Guess
-     (Entity : General_Entity) return Boolean
+     (Entity : Root_Entity'Class) return Boolean
    is
    begin
       return Is_Fuzzy (Entity);

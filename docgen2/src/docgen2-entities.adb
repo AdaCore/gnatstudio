@@ -366,8 +366,7 @@ package body Docgen2.Entities is
 
    procedure Set_Pkg_Printout
      (Construct   : Simple_Construct_Information;
-      Db          : access Xref.General_Xref_Database_Record'Class;
-      Entity      : General_Entity;
+      Entity      : Root_Entity'Class;
       File_Buffer : GNAT.Strings.String_Access;
       E_Info      : Entity_Info)
    is
@@ -404,8 +403,8 @@ package body Docgen2.Entities is
 
       --  If we have an instantiation or a renaming, then output the full
       --  printout
-      if Db.Instance_Of (Entity) /= No_General_Entity
-        or else Db.Renaming_Of (Entity) /= No_General_Entity
+      if Instance_Of (Entity) /= No_Root_Entity
+        or else Renaming_Of (Entity) /= No_Root_Entity
       then
          End_Index := Construct.Sloc_End.Index;
 

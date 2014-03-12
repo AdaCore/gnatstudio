@@ -63,11 +63,10 @@ package body GNATdoc.Utils is
    -----------
 
    function Image
-     (Db     : General_Xref_Database;
-      Entity : General_Entity) return String
+     (Entity : Root_Entity'Class) return String
    is
       Decl : constant General_Entity_Declaration :=
-               Get_Declaration (Db, Entity);
+               Get_Declaration (Entity);
    begin
       return Image (Decl.Loc);
    end Image;
@@ -155,9 +154,9 @@ package body GNATdoc.Utils is
    -- No --
    --------
 
-   function No (E : General_Entity) return Boolean is
+   function No (E : Root_Entity'Class) return Boolean is
    begin
-      return E = No_General_Entity;
+      return E = No_Root_Entity;
    end No;
 
    function No (L : General_Location) return Boolean is
@@ -174,9 +173,9 @@ package body GNATdoc.Utils is
    -- Present --
    -------------
 
-   function Present (E : General_Entity) return Boolean is
+   function Present (E : Root_Entity'Class) return Boolean is
    begin
-      return E /= No_General_Entity;
+      return E /= No_Root_Entity;
    end Present;
 
    function Present (L : General_Location) return Boolean is

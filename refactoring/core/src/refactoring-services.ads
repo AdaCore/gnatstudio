@@ -33,6 +33,8 @@ with Language;
 with Language.Tree;
 with Language.Tree.Database;
 with Xref;
+use Xref;
+with Ada.Containers.Indefinite_Holders;
 
 package Refactoring.Services is
 
@@ -44,7 +46,7 @@ package Refactoring.Services is
 
    function Get_Entity_Access
      (Context : not null access Factory_Context_Record'Class;
-      Entity  : Xref.General_Entity)
+      Entity  : Xref.Root_Entity'Class)
       return Language.Tree.Database.Entity_Access;
    --  Return a pointer to the declaration of Entity. This pointer can be used
    --  to retrieve additional data about the entity (read directly from the
@@ -57,14 +59,14 @@ package Refactoring.Services is
 
    function Accepts_Primitive_Ops
      (Context        : not null access Factory_Context_Record'Class;
-      Entity         : Xref.General_Entity;
+      Entity         : Xref.Root_Entity'Class;
       Current_Offset : Basic_Types.String_Index_Type) return Boolean;
    --  Whether the entity is an instance of a class or interface.
    --  This returns null for a "'Class".
 
    procedure Is_Parameter_Of
      (Db           : access Xref.General_Xref_Database_Record'Class;
-      Entity       : Xref.General_Entity;
+      Entity       : Xref.Root_Entity'Class;
       Is_Parameter : out Boolean;
       PType        : out GNATCOLL.Xref.Parameter_Kind);
    --  Whether Entity is a parameter for a subprogram, and if it is which type
@@ -170,7 +172,7 @@ package Refactoring.Services is
 
    function Get_Declaration
      (Context : not null access Factory_Context_Record'Class;
-      Entity  : Xref.General_Entity) return Entity_Declaration;
+      Entity  : Xref.Root_Entity'Class) return Entity_Declaration;
    --  Return the declaration of the entity. From this, one can extract the
    --  initial value,  the type (as set by the user, whether it is a constant,
    --  and other attributes).
@@ -252,7 +254,7 @@ package Refactoring.Services is
      (Self               : in out Range_Of_Code;
       Db                 : access Xref.General_Xref_Database_Record'Class;
       Callback           : not null access procedure
-        (Entity : Xref.General_Entity;
+        (Entity : Xref.Root_Entity'Class;
          Flags  : Entity_References_Flags);
       Success            : out Boolean;
       Omit_Library_Level : Boolean := False);
@@ -341,10 +343,13 @@ private
       Sloc_Column   : aliased Universal_Location := Null_Universal_Location;
    end record;
 
+   package Holder is new Ada.Containers.Indefinite_Holders
+     (Root_Entity'Class);
+
    type Entity_Declaration is tagged record
       Db     : Xref.General_Xref_Database;
       File   : Language.Tree.Database.Structured_File_Access;
-      Entity : Xref.General_Entity;
+      Entity : Holder.Holder;
       Decl   : Ada.Strings.Unbounded.Unbounded_String;
 
       SFirst, SLast : Language.Source_Location;
@@ -361,7 +366,7 @@ private
    No_Entity_Declaration : constant Entity_Declaration :=
      (File      => null,
       Db        => null,
-      Entity    => Xref.No_General_Entity,
+      Entity    => <>,
       Equal_Loc => -1,
       SFirst    => <>,
       SLast     => <>,

@@ -129,8 +129,6 @@ package body GPS.Kernel.Macros is
       Server    : Server_Type := GPS_Server;
       For_Shell : Boolean := False) return String
    is
-      Entity : General_Entity;
-
       --  In this routine it is important to *not* quote backslahes on paths.
       --  This is important because on Windows a backslash is the directory
       --  separator and we do not want to escape it. Doing so will work in most
@@ -158,17 +156,15 @@ package body GPS.Kernel.Macros is
             Protect_Backslashes => For_Shell);
 
       elsif Param = "e" then
-         Entity := Get_Entity (Context);
-         if Entity /= No_General_Entity then
+         if Get_Entity (Context) /= No_Root_Entity then
             --  Get the name from the context, to have the proper casing
             return Entity_Name_Information (Context);
          end if;
 
       elsif Param = "ef" then
-         Entity := Get_Entity (Context);
-         if Entity /= No_General_Entity then
+         if Get_Entity (Context) /= No_Root_Entity then
             --  Get the name from the context, to have the proper casing
-            if Xref.Is_Fuzzy (Entity) then
+            if Is_Fuzzy (Get_Entity (Context)) then
                return Entity_Name_Information (Context)
                  & " (best guess)";
             else
@@ -177,8 +173,7 @@ package body GPS.Kernel.Macros is
          end if;
 
       elsif Param = "ek" then
-         Entity := Get_Entity (Context);
-         if Entity /= No_General_Entity then
+         if Get_Entity (Context) /= No_Root_Entity then
             --  Get the name from the context, to have the proper casing
             return Krunch (Entity_Name_Information (Context));
          end if;
@@ -267,7 +262,6 @@ package body GPS.Kernel.Macros is
                             Has_Entity_Name_Information (Context);
       Is_Area_Context   : constant Boolean := Has_Area_Information (Context);
       Project           : Project_Type;
-      Entity            : General_Entity;
       Start, Last       : Integer;
    begin
       if Filter.Requires.Project = 'p'
@@ -309,8 +303,7 @@ package body GPS.Kernel.Macros is
          end if;
 
          --  Avoid cases where we click on a keyword
-         Entity := Get_Entity (Context);
-         if Entity = No_General_Entity then
+         if Get_Entity (Context) = No_Root_Entity then
             return False;
          end if;
       end if;

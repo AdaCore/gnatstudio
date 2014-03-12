@@ -285,7 +285,6 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Line           : Editable_Line_Type;
       Column         : Visible_Column_Type;
 
-      Entity         : General_Entity;
       Closest        : General_Entity_Reference;
 
       Location       : General_Location;
@@ -352,49 +351,50 @@ package body Src_Editor_Buffer.Hyper_Mode is
          Internal         => False,
          Extend_Selection => False);
 
-      Buffer.Kernel.Databases.Find_Declaration_Or_Overloaded
-        (Loc         => (File    => Buffer.Filename,
-                         Project => Project,
-                         Line    => Integer (Line),
-                         Column  => Column),
-         Entity_Name => Get_Slice (Buffer, Entity_Start, Entity_End),
-         Ask_If_Overloaded => False,
-         Entity            => Entity,
-         Closest_Ref       => Closest);
-
-      if Entity = No_General_Entity then
-         return;
-      end if;
-
-      Decl := Buffer.Kernel.Databases.Get_Declaration (Entity);
-      Location := Decl.Loc;
-
-      if Alternate
-        or else
-          (Location.Line = Natural (Line)
-           and then Column = Location.Column
-           and then Location.File = Buffer.Filename)
-      then
-         --  We asked for the alternate behavior, or we are already on
-         --  the spec: in this case, go to the body
-         Current :=
-           (File    => Buffer.Filename,
-            Project => Project,
-             Line   => Integer (Line),
-             Column => Column);
-         Location := Buffer.Kernel.Databases.Get_Body
-            (Entity, After => Current);
-         if Location = No_Location then
-            Location := Decl.Loc;
+      declare
+         Entity : constant Root_Entity'Class :=
+           Buffer.Kernel.Databases.Find_Declaration_Or_Overloaded
+             (Loc         => (File   => Buffer.Filename,
+                              Project => Project,
+                              Line   => Integer (Line),
+                              Column => Column),
+              Entity_Name => Get_Slice (Buffer, Entity_Start, Entity_End),
+              Ask_If_Overloaded => False,
+              Closest_Ref       => Closest);
+      begin
+         if Entity = No_Root_Entity then
+            return;
          end if;
-      end if;
 
-      Go_To_Closest_Match
-        (Buffer.Kernel,
-         Location.File,
-         Location.Project,
-         Editable_Line_Type (Location.Line),
-         Location.Column, Entity);
+         Decl := Get_Declaration (Entity);
+         Location := Decl.Loc;
+
+         if Alternate
+           or else
+             (Location.Line = Natural (Line)
+              and then Column = Location.Column
+              and then Location.File = Buffer.Filename)
+         then
+            --  We asked for the alternate behavior, or we are already on
+            --  the spec: in this case, go to the body
+            Current :=
+              (File   => Buffer.Filename,
+               Project => Project,
+               Line   => Integer (Line),
+               Column => Column);
+            Location := Get_Body (Entity, After => Current);
+            if Location = No_Location then
+               Location := Decl.Loc;
+            end if;
+         end if;
+
+         Go_To_Closest_Match
+           (Buffer.Kernel,
+            Location.File,
+            Location.Project,
+            Editable_Line_Type (Location.Line),
+            Location.Column, Entity);
+      end;
    end Hyper_Mode_Click_On;
 
    ----------------------

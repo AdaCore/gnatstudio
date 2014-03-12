@@ -54,11 +54,10 @@ package body Xref.Docgen is
    ------------------
 
    function Get_Location
-     (Db     : General_Xref_Database;
-      Entity : General_Entity) return General_Location
+     (Entity : Root_Entity'Class) return General_Location
    is
       Decl : constant General_Entity_Declaration :=
-               Get_Declaration (Db, Entity);
+               Get_Declaration (Entity);
    begin
       return Decl.Loc;
    end Get_Location;

@@ -29,7 +29,7 @@ package Refactoring.Performers is
    procedure Execute
      (Factory       : access Refactor_Performer_Record;
       Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity        : General_Entity;
+      Entity        : Root_Entity'Class;
       Refs          : Location_Arrays.List;
       No_LI_List    : Source_File_Set;
       Stale_LI_List : Source_File_Set) is abstract;
@@ -48,7 +48,7 @@ package Refactoring.Performers is
 
    procedure Get_All_Locations
      (Kernel                : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity                : General_Entity;
+      Entity                : Root_Entity'Class;
       On_Completion         : access Refactor_Performer_Record'Class;
       Auto_Compile          : Boolean := False;
       Overridden            : Boolean := True;

@@ -38,7 +38,7 @@ package Docgen2.Utils is
       Construct : String;
       Loc       : Xref.General_Location;
       Lang      : Language.Language_Access)
-      return Xref.General_Entity;
+      return Xref.Root_Entity'Class;
    --  Retrieve the entity corresponding to construct at location Loc/File.
 
    function Get_Declaration_Entity
@@ -46,7 +46,7 @@ package Docgen2.Utils is
       Loc       : Xref.General_Location;
       Db        : access Xref.General_Xref_Database_Record'Class;
       Lang      : Language.Language_Access)
-      return Xref.General_Entity;
+      return Xref.Root_Entity'Class;
    --  Retrieve the entity declaration corresponding to construct.
 
    function Filter (S : String) return String;

@@ -258,8 +258,7 @@ package body GNATStack.Module is
       if Has_Entity_Name_Information (Context)
         and then Has_Entity_Column_Information (Context)
       then
-         Decl := Get_Kernel (Context).Databases.Get_Declaration
-           (Get_Entity (Context));
+         Decl := Get_Declaration (Get_Entity (Context));
 
          Module.Subprogram :=
            Lookup

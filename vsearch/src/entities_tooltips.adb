@@ -38,7 +38,7 @@ with Entities_Tooltips_Utility; use Entities_Tooltips_Utility;
 package body Entities_Tooltips is
    function Get_Pixbuf
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : General_Entity) return Gdk_Pixbuf;
+      Entity : Root_Entity'Class) return Gdk_Pixbuf;
    --  Return the image associated to an entity
 
    function Draw_Tooltip
@@ -55,7 +55,7 @@ package body Entities_Tooltips is
 
    function Get_Pixbuf
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : General_Entity) return Gdk_Pixbuf
+      Entity : Root_Entity'Class) return Gdk_Pixbuf
    is
       Info : constant Tooltip_Information :=
         Get_Tooltip_Information (Kernel, Entity);
@@ -69,7 +69,7 @@ package body Entities_Tooltips is
 
    function Draw_Tooltip
      (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : General_Entity;
+      Entity        : Root_Entity'Class;
       Ref           : General_Entity_Reference;
       Draw_Border   : Boolean) return Gtk_Widget is
    begin

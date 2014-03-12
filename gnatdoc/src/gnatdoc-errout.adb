@@ -48,11 +48,10 @@ package body GNATdoc.Errout is
 
    procedure Error
      (Context : access constant Docgen_Context;
-      Entity  : General_Entity;
+      Entity  : Root_Entity'Class;
       Msg     : String)
    is
-      Decl : constant General_Entity_Declaration :=
-               Get_Declaration (Context.Database, Entity);
+      Decl : constant General_Entity_Declaration := Get_Declaration (Entity);
    begin
       Error (Context, Decl.Loc, Msg);
    end Error;
@@ -96,11 +95,11 @@ package body GNATdoc.Errout is
 
    procedure Warning
      (Context : access constant Docgen_Context;
-      Entity  : General_Entity;
+      Entity  : Root_Entity'Class;
       Msg     : String)
    is
       Decl : constant General_Entity_Declaration :=
-               Get_Declaration (Context.Database, Entity);
+               Get_Declaration (Entity);
    begin
       Warning (Context, Decl.Loc, Msg);
    end Warning;

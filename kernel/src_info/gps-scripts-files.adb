@@ -264,7 +264,6 @@ package body GPS.Scripts.Files is
          declare
             Iter   : Entities_In_File_Cursor;
             Defined_In_File : constant Boolean := Nth_Arg (Data, 2, True);
-            Ent    : General_Entity;
          begin
             Set_Return_Value_As_List (Data);
             Iter := Kernel.Databases.Entities_In_File
@@ -274,14 +273,17 @@ package body GPS.Scripts.Files is
                Name    => "");
 
             while not At_End (Iter) loop
-               Ent := Get (Iter);
-               if not Defined_In_File
-                 or else Kernel.Databases.Get_Declaration (Ent).Loc.File = Info
-               then
-                  Set_Return_Value
-                    (Data, GPS.Scripts.Entities.Create_Entity
-                             (Get_Script (Data), Ent));
-               end if;
+               declare
+                  Ent : constant Root_Entity'Class := Get (Iter);
+               begin
+                  if not Defined_In_File
+                    or else Get_Declaration (Ent).Loc.File = Info
+                  then
+                     Set_Return_Value
+                       (Data, GPS.Scripts.Entities.Create_Entity
+                          (Get_Script (Data), Ent));
+                  end if;
+               end;
                Next (Iter);
             end loop;
          end;

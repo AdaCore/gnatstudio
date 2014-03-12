@@ -31,8 +31,7 @@ private package GNATdoc.Utils is
    --  (for example, for "C" returns "C");
 
    function Image
-     (Db     : General_Xref_Database;
-      Entity : General_Entity) return String;
+     (Entity : Root_Entity'Class) return String;
    --  Return the location formated the gnat way: "file:line:col"
 
    function Image
@@ -54,8 +53,8 @@ private package GNATdoc.Utils is
       File   : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Whether File is a spec file
 
-   function No (E : General_Entity) return Boolean;
-   --  Return true if E = No_General_Entity
+   function No (E : Root_Entity'Class) return Boolean;
+   --  Return true if E = No_Root_Entity
 
    function No (L : General_Location) return Boolean;
    --  Return true if L = No_Location
@@ -63,8 +62,8 @@ private package GNATdoc.Utils is
    function No (Text : Unbounded_String) return Boolean;
    --  Return true if Text = Null_Unbounded_String
 
-   function Present (E : General_Entity) return Boolean;
-   --  Return true if E /= No_General_Entity
+   function Present (E : Root_Entity'Class) return Boolean;
+   --  Return true if E /= No_Root_Entity
 
    function Present (L : General_Location) return Boolean;
    --  Return true if L /= No_Location

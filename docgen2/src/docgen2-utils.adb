@@ -65,17 +65,16 @@ package body Docgen2.Utils is
      (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
       Construct : String;
       Loc       : General_Location;
-      Lang      : Language_Access) return General_Entity
+      Lang      : Language_Access) return Root_Entity'Class
    is
-      Entity        : General_Entity;
+      Entity        : Root_Entity'Class :=
+        Kernel.Databases.Get_Entity
+        (Name => Construct,
+         Loc  => Loc);
       Current_Loc   : General_Location := Loc;
 
    begin
-      Entity := Kernel.Databases.Get_Entity
-        (Name => Construct,
-         Loc  => Loc);
-
-      if Entity = No_General_Entity and then Get_Name (Lang) = "Ada" then
+      if Entity = No_Root_Entity and then Get_Name (Lang) = "Ada" then
          for J in reverse Construct'Range loop
             --  ??? Ada Specific ... should use language service
             --  Need to define it !
@@ -103,15 +102,13 @@ package body Docgen2.Utils is
      (Construct : String;
       Loc       : General_Location;
       Db        : access Xref.General_Xref_Database_Record'Class;
-      Lang      : Language_Access) return General_Entity
+      Lang      : Language_Access) return Root_Entity'Class
    is
-      Entity        : General_Entity;
+      Entity        : Root_Entity'Class := Db.Get_Entity (Construct, Loc);
       Current_Loc   : General_Location := Loc;
 
    begin
-      Entity := Db.Get_Entity (Construct, Loc);
-
-      if Entity = No_General_Entity and then Get_Name (Lang) = "Ada" then
+      if Entity = No_Root_Entity and then Get_Name (Lang) = "Ada" then
          for J in Construct'Range loop
             --  ??? Ada Specific ... should use language service
             --  Need to define it !
@@ -122,7 +119,7 @@ package body Docgen2.Utils is
 
                Entity := Db.Get_Entity
                  (Construct (J + 1 .. Construct'Last), Current_Loc);
-               exit when Entity /= No_General_Entity;
+               exit when Entity /= No_Root_Entity;
             end if;
          end loop;
       end if;

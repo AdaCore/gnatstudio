@@ -76,7 +76,7 @@ package body Refactoring.Rename is
    overriding procedure Execute
      (Factory       : access Renaming_Performer_Record;
       Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : General_Entity;
+      Entity        : Root_Entity'Class;
       Refs          : Location_Arrays.List;
       No_LI_List    : Source_File_Set;
       Stale_LI_List : Source_File_Set);
@@ -95,7 +95,7 @@ package body Refactoring.Rename is
    procedure Gtk_New
      (Dialog : out Entity_Renaming_Dialog;
       Kernel : access Kernel_Handle_Record'Class;
-      Entity : General_Entity);
+      Entity : Root_Entity'Class);
    --  Create a new dialog for renaming entities
 
    procedure Entity_Command_Handler
@@ -109,7 +109,7 @@ package body Refactoring.Rename is
    procedure Gtk_New
      (Dialog : out Entity_Renaming_Dialog;
       Kernel : access Kernel_Handle_Record'Class;
-      Entity : General_Entity)
+      Entity : Root_Entity'Class)
    is
       Label  : Gtk_Label;
       Box    : Gtk_Box;
@@ -129,8 +129,7 @@ package body Refactoring.Rename is
          Parent => Get_Current_Window (Kernel),
          Flags  => Destroy_With_Parent);
 
-      Gtk_New (Label, -"Renaming "
-               & Kernel.Databases.Qualified_Name (Entity));
+      Gtk_New (Label, -"Renaming " & Qualified_Name (Entity));
       Set_Alignment (Label, 0.0, 0.0);
       Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
 
@@ -141,7 +140,7 @@ package body Refactoring.Rename is
       Pack_Start (Box, Label, Expand => False);
 
       Gtk_New (Dialog.New_Name);
-      Set_Text (Dialog.New_Name, Kernel.Databases.Get_Name (Entity));
+      Set_Text (Dialog.New_Name, Get_Name (Entity));
       Select_Region (Dialog.New_Name, 0, -1);
       Set_Activates_Default (Dialog.New_Name, True);
       Pack_Start (Box, Dialog.New_Name);
@@ -205,13 +204,13 @@ package body Refactoring.Rename is
    overriding procedure Execute
      (Factory       : access Renaming_Performer_Record;
       Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : General_Entity;
+      Entity        : Root_Entity'Class;
       Refs          : Location_Arrays.List;
       No_LI_List    : Source_File_Set;
       Stale_LI_List : Source_File_Set)
    is
       pragma Unreferenced (No_LI_List, Stale_LI_List);
-      Name : constant String := Kernel.Databases.Get_Name (Entity);
+      Name : constant String := Get_Name (Entity);
       Errors : Source_File_Set;
       Was_Open : Boolean;
       C : Location_Arrays.Cursor;
@@ -374,9 +373,9 @@ package body Refactoring.Rename is
    is
       pragma Unreferenced (Command);
       Dialog  : Entity_Renaming_Dialog;
-      Entity  : constant General_Entity := Get_Entity (Context.Context);
+      Entity  : constant Root_Entity'Class := Get_Entity (Context.Context);
    begin
-      if Entity /= No_General_Entity then
+      if Entity /= No_Root_Entity then
          Gtk_New (Dialog, Get_Kernel (Context.Context), Entity);
          if Dialog = null then
             return Failure;
@@ -386,12 +385,11 @@ package body Refactoring.Rename is
 
          if Run (Dialog) = Gtk_Response_OK then
             declare
-               Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
                Refactor : constant Renaming_Performer :=
                             new Renaming_Performer_Record'
                               (Refactor_Performer_Record with
                                Old_Name        => To_Unbounded_String
-                                  (Kernel.Databases.Get_Name (Entity)),
+                                  (Get_Name (Entity)),
                                New_Name        => To_Unbounded_String
                                   (Get_Text (Dialog.New_Name)),
                                Auto_Save       =>
@@ -431,8 +429,7 @@ package body Refactoring.Rename is
                                  3 => Make_Writable_Cst'Access,
                                  4 => Auto_Save_Cst'Access));
          declare
-            Entity         : constant General_Entity := Get_Data (Data, 1);
-            Kernel         : constant Kernel_Handle := Get_Kernel (Data);
+            Entity         : constant Root_Entity'Class := Get_Data (Data, 1);
             Include_Overridding : constant Boolean := Nth_Arg (Data, 3, True);
             Make_Writable       : constant Boolean := Nth_Arg (Data, 4, False);
             Auto_Save           : constant Boolean := Nth_Arg (Data, 5, False);
@@ -442,7 +439,7 @@ package body Refactoring.Rename is
                  New_Name        => To_Unbounded_String
                    (String'(Nth_Arg (Data, 2))),
                  Old_Name        => To_Unbounded_String
-                   (Kernel.Databases.Get_Name (Entity)),
+                   (Get_Name (Entity)),
                  Auto_Save       => Auto_Save);
          begin
             Get_All_Locations

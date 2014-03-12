@@ -330,7 +330,6 @@ package body Engine_Wrappers is
    is
       Loc : constant Completion.File_Location :=
         Proposal.Get_Location (Kernel.Databases);
-      Entity : General_Entity;
       Doc : constant String := Proposal.P.Get_Documentation;
    begin
       if Doc /= "" then
@@ -345,17 +344,16 @@ package body Engine_Wrappers is
          return "Predefined entity.";
       end if;
 
-      Entity := Xref.Get_Entity
-        (Kernel.Databases,
-         Name  => Proposal.Get_Label (Kernel.Databases),
-         Loc   => (File    => Loc.File_Path,
-                   Project => No_Project,  --  ??? unknown
-                   Line    => Loc.Line,
-                   Column  => Loc.Column));
       return Documentation
         (Kernel.Databases,
          Kernel.Get_Language_Handler,
-         Entity);
+         Get_Entity
+           (Kernel.Databases,
+            Name  => Proposal.Get_Label (Kernel.Databases),
+            Loc   => (File   => Loc.File_Path,
+                      Project => No_Project,  --  ??? unknown
+                      Line   => Loc.Line,
+                      Column => Loc.Column)));
    end Get_Documentation;
 
    --------------------------
@@ -384,20 +382,18 @@ package body Engine_Wrappers is
       Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
       return String
    is
-      Entity : General_Entity;
    begin
-      Entity := Xref.Get_Entity
-        (Kernel.Databases,
-         Name  => Get (Proposal.Construct.Name).all,
-         Loc   => (File    => Proposal.File,
-                   Project => No_Project,  --  ??? unknown
-                   Line    => Proposal.Construct.Sloc_Start.Line,
-                   Column  => Visible_Column_Type
-                     (Proposal.Construct.Sloc_Start.Column)));
       return Documentation
         (Kernel.Databases,
          Kernel.Get_Language_Handler,
-         Entity);
+         Xref.Get_Entity
+           (Kernel.Databases,
+            Name  => Get (Proposal.Construct.Name).all,
+            Loc   => (File   => Proposal.File,
+                      Project => No_Project,  --  ??? unknown
+                      Line   => Proposal.Construct.Sloc_Start.Line,
+                      Column => Visible_Column_Type
+                        (Proposal.Construct.Sloc_Start.Column))));
    end Get_Documentation;
 
 end Engine_Wrappers;

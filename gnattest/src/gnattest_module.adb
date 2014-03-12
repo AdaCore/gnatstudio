@@ -224,10 +224,10 @@ package body GNATTest_Module is
 
       Item : Gtk.Menu_Item.Gtk_Menu_Item;
 
-      Entity : constant General_Entity := Get_Entity (Context);
+      Entity : constant Root_Entity'Class := Get_Entity (Context);
 
       Declaration : constant General_Entity_Declaration :=
-        Get_Kernel (Context).Databases.Get_Declaration (Entity);
+        Get_Declaration (Entity);
 
       Lookup : Source_Entity;
       Cursor : Source_Entity_Maps.Cursor;

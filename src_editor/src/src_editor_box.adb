@@ -89,6 +89,7 @@ with String_Utils;               use String_Utils;
 with Tooltips;                   use Tooltips;
 
 with Xref; use Xref;
+with Ada.Containers.Indefinite_Holders;
 
 package body Src_Editor_Box is
    use type GNATCOLL.Xref.Visible_Column;
@@ -101,9 +102,12 @@ package body Src_Editor_Box is
       User_Type   => Source_Editor_Box,
       Setup       => Setup);
 
+   package Holder is new Ada.Containers.Indefinite_Holders
+     (Root_Entity'Class);
+
    type Entity_And_Kernel is record
       Kernel : Kernel_Handle;
-      Entity : General_Entity;
+      Entity : Holder.Holder;
    end record;
 
    package Entity_Callback is new Gtk.Handlers.User_Callback
@@ -248,7 +252,6 @@ package body Src_Editor_Box is
       Editor  : access Source_Editor_Box_Record'Class;
       Context : Selection_Context)
    is
-      Entity   : General_Entity;
       Location : General_Location;
       Current  : General_Location;
 
@@ -266,48 +269,48 @@ package body Src_Editor_Box is
       Ensure_Context_Up_To_Date (Context);
 
       --  Query the entity
+      declare
+         Entity   : Root_Entity'Class := Get_Entity (Context);
+      begin
 
-      Entity := Get_Entity (Context);
+         if Entity = No_Root_Entity then
+            --  Probably means that we either could not locate the ALI file,
+            --  or it could also be that we failed to parse it. Either way,
+            --  a message should have already been printed. So, just abort.
 
-      if Entity = No_General_Entity then
-         --  Probably means that we either could not locate the ALI file,
-         --  or it could also be that we failed to parse it. Either way,
-         --  a message should have already been printed. So, just abort.
+            Kernel.Insert
+              (-"No cross-reference information found for "
+               & Entity_Name_Information (Context) & ASCII.LF,
+               Mode => Error);
+            return;
+         end if;
 
-         Kernel.Insert
-           (-"No cross-reference information found for "
-            & Entity_Name_Information (Context) & ASCII.LF,
-            Mode => Error);
-         return;
-      end if;
+         Ref (Entity);
 
-      Ref (Entity);
+         --  Get the declaration/body
 
-      --  Get the declaration/body
+         if To_Body then
+            Current := (File => File_Information (Context),
+                        Line => GPS.Kernel.Contexts.Line_Information (Context),
+                        Project => Project_Information (Context),
+                        Column => Entity_Column_Information (Context));
+            Location := Get_Body (Entity, After => Current);
+         else
+            Location := Get_Declaration (Entity).Loc;
+         end if;
 
-      if To_Body then
-         Current := (File    => File_Information (Context),
-                     Project => Project_Information (Context),
-                     Line    => GPS.Kernel.Contexts.Line_Information (Context),
-                     Column  => Entity_Column_Information (Context));
-         Location := Get_Body (Kernel.Databases, Entity, After => Current);
-      else
-         Location := Kernel.Databases.Get_Declaration (Entity).Loc;
-      end if;
+         if Location /= No_Location then
+            Go_To_Closest_Match
+              (Kernel      => Kernel,
+               Filename    => Location.File,
+               Project     => Location.Project,
+               Line        => Convert (Location.Line),
+               Column      => Location.Column,
+               Entity_Name => Get_Name (Entity));
+         end if;
 
-      --  Open a file editor at the location found
-
-      if Location /= No_Location then
-         Go_To_Closest_Match
-           (Kernel      => Kernel,
-            Filename    => Location.File,
-            Project     => Location.Project,
-            Line        => Convert (Location.Line),
-            Column      => Location.Column,
-            Entity_Name => Kernel.Databases.Get_Name (Entity));
-      end if;
-
-      Unref (Entity);
+         Unref (Entity);
+      end;
    end Goto_Declaration_Or_Body;
 
    -------------------------
@@ -320,12 +323,10 @@ package body Src_Editor_Box is
       Project  : GNATCOLL.Projects.Project_Type;
       Line     : Editable_Line_Type;
       Column   : Visible_Column_Type;
-      Entity   : General_Entity)
-   is
-      Db : constant General_Xref_Database := Kernel.Databases;
+      Entity   : Root_Entity'Class) is
    begin
       Go_To_Closest_Match
-        (Kernel, Filename, Project, Line, Column, Get_Name (Db, Entity));
+        (Kernel, Filename, Project, Line, Column, Get_Name (Entity));
    end Go_To_Closest_Match;
 
    -------------------------
@@ -1231,13 +1232,12 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Creator);
 
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      Entity : constant General_Entity := Get_Entity (Context);
+      Entity : constant Root_Entity'Class := Get_Entity (Context);
       Decl   : General_Entity_Declaration;
 
    begin
-      if Entity /= No_General_Entity then
-         Decl := Kernel.Databases.Get_Declaration (Entity);
+      if Entity /= No_Root_Entity then
+         Decl := Get_Declaration (Entity);
 
          if Decl.Body_Is_Full_Declaration then
             return Substitute_Label
@@ -1260,9 +1260,8 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Object);
       K        : constant Kernel_Handle := Data.Kernel;
-      Db       : constant General_Xref_Database := K.Databases;
       Location : constant General_Location :=
-        Get_Declaration (Db, Data.Entity).Loc;
+        Get_Declaration (Data.Entity.Element).Loc;
    begin
       Go_To_Closest_Match
         (Kernel   => K,
@@ -1270,7 +1269,7 @@ package body Src_Editor_Box is
          Project  => Location.Project,
          Line     => Convert (Location.Line),
          Column   => Location.Column,
-         Entity   => Data.Entity);
+         Entity   => Data.Entity.Element);
    end On_Goto_Declaration_Of;
 
    ---------------------
@@ -1283,18 +1282,17 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Object);
       K   : constant Kernel_Handle := Data.Kernel;
-      Db  : constant General_Xref_Database := K.Databases;
       Loc : General_Location;
 
    begin
-      Loc := Db.Get_Body (Data.Entity);
+      Loc := Get_Body (Data.Entity.Element);
       Go_To_Closest_Match
         (Kernel   => K,
          Filename => Loc.File,
          Project  => Loc.Project,
          Line     => Convert (Loc.Line),
          Column   => Loc.Column,
-         Entity   => Data.Entity);
+         Entity   => Data.Entity.Element);
    end On_Goto_Body_Of;
 
    --------------------------------
@@ -1313,14 +1311,13 @@ package body Src_Editor_Box is
       Label  : Gtk_Label;
       Count  : Natural := 0;
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      Xref_Db : constant General_Xref_Database := Kernel.Databases;
 
-      function On_Callee (Callee : General_Entity) return Boolean;
+      function On_Callee (Callee : Root_Entity'Class) return Boolean;
 
       --  CP record is used to sort the menu entries by means of an ordered set
 
       type CP is record
-         Callee, Primitive_Of : General_Entity;
+         Callee, Primitive_Of : Holder.Holder;
       end record;
 
       function "<" (Left, Right : CP) return Boolean;
@@ -1332,8 +1329,8 @@ package body Src_Editor_Box is
 
       function "<" (Left, Right : CP) return Boolean is
       begin
-         return Get_Name (Xref_Db, Left.Primitive_Of)
-           < Get_Name (Xref_Db, Right.Primitive_Of);
+         return Get_Name (Left.Primitive_Of.Element)
+           < Get_Name (Right.Primitive_Of.Element);
       end "<";
 
       ---------
@@ -1342,8 +1339,8 @@ package body Src_Editor_Box is
 
       overriding function "=" (Left, Right : CP) return Boolean is
       begin
-         return Get_Name (Xref_Db, Left.Primitive_Of)
-           = Get_Name (Xref_Db, Right.Primitive_Of);
+         return Get_Name (Left.Primitive_Of.Element)
+           = Get_Name (Right.Primitive_Of.Element);
       end "=";
 
       package CP_Set is new Ordered_Sets (CP);
@@ -1360,7 +1357,7 @@ package body Src_Editor_Box is
       begin
          Gtk_New (Label,
                   "Primitive of: "
-                  & Emphasize (Get_Name (Xref_Db, E.Primitive_Of)));
+                  & Emphasize (Get_Name (E.Primitive_Of.Element)));
          Set_Use_Markup (Label, True);
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
@@ -1378,14 +1375,17 @@ package body Src_Editor_Box is
       -- On_Callee --
       ---------------
 
-      function On_Callee (Callee : General_Entity) return Boolean is
+      function On_Callee (Callee : Root_Entity'Class) return Boolean is
          --  We chose, at random, the first tagged type returned by
          --  Is_Primitive_Of
-         Primitive_Of : constant Entity_Array :=
-           Xref_Db.Is_Primitive_Of (Callee);
-         New_Elem : constant CP := (Callee, Primitive_Of (Primitive_Of'First));
+         Primitive_Of : Entity_Array := Is_Primitive_Of (Callee);
+         New_Elem : CP;
       begin
+         New_Elem.Callee.Replace_Element (Callee);
+         New_Elem.Primitive_Of.Replace_Element
+           (Primitive_Of (Primitive_Of'First).all);
          E_Set.Include (New_Elem);
+         Free (Primitive_Of);
          return True;
       end On_Callee;
 
@@ -1401,8 +1401,7 @@ package body Src_Editor_Box is
       Ensure_Context_Up_To_Date (Context);
 
       Xref.For_Each_Dispatching_Call
-        (Dbase     => Xref_Db,
-         Entity    => Get_Entity (Context),
+        (Entity    => Get_Entity (Context),
          Ref       => Get_Closest_Ref (Context),
          On_Callee => On_Callee'Access,
          Filter    => Filter);
@@ -1423,9 +1422,15 @@ package body Src_Editor_Box is
          Set_Alignment (Label, 0.0, 0.5);
          Gtk_New (Item);
          Add (Item, Label);
-         Entity_Callback.Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Callback, (Kernel => Kernel, Entity => Get_Entity (Context)));
+         declare
+            O : Entity_And_Kernel;
+         begin
+            O.Kernel := Kernel;
+            O.Entity.Replace_Element (Get_Entity (Context));
+            Entity_Callback.Connect
+              (Item, Gtk.Menu_Item.Signal_Activate,
+               Callback, O);
+         end;
          Add (Menu, Item);
       end if;
 
@@ -1479,18 +1484,17 @@ package body Src_Editor_Box is
    --------------
 
    function Has_Body (Context : GPS.Kernel.Selection_Context) return Boolean is
-      Kernel : constant Kernel_Handle  := Get_Kernel (Context);
-      Entity : constant General_Entity := Get_Entity (Context);
+      Entity : constant Root_Entity'Class := Get_Entity (Context);
       Location         : General_Location;
       Spec_Location : General_Location;
    begin
-      if Entity = No_General_Entity then
+      if Entity = No_Root_Entity then
          return False;
       end if;
 
-      Spec_Location := Kernel.Databases.Get_Declaration (Entity).Loc;
+      Spec_Location := Get_Declaration (Entity).Loc;
 
-      Location := Kernel.Databases.Get_Body (Entity);
+      Location := Get_Body (Entity);
 
       return Location /= No_Location
         and then Location /= Spec_Location;

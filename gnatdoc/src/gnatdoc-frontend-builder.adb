@@ -60,7 +60,7 @@ package body GNATdoc.Frontend.Builder is
         (Entity  : out Entity_Id;
          Context : access constant Docgen_Context;
          File    : Virtual_File;
-         E       : General_Entity;
+         E       : Root_Entity'Class;
          Forced  : Boolean := False);
       --  Search for E in a hash table containing all the project entities.
       --  If found then return such entity; if not found then allocate a new
@@ -218,12 +218,11 @@ package body GNATdoc.Frontend.Builder is
         (Entity  : out Entity_Id;
          Context : access constant Docgen_Context;
          File    : Virtual_File;
-         E       : General_Entity;
+         E       : Root_Entity'Class;
          Forced  : Boolean := False)
 
       is
-         Db    : General_Xref_Database renames Context.Database;
-         E_Loc : constant General_Location := Get_Location (Db, E);
+         E_Loc : constant General_Location := Get_Location (E);
 
          Lang        : constant Language_Access :=
                          Get_Language_From_File (Context.Lang_Handler, File);
@@ -369,7 +368,7 @@ package body GNATdoc.Frontend.Builder is
 
          --  Local variables
 
-         Is_Prim : constant Boolean := Is_Primitive_Of (Db, E)'Length /= 0;
+         Is_Prim : constant Boolean := Is_Primitive_Of (E)'Length /= 0;
          --  Avoid calling twice this service???
 
       begin
@@ -412,7 +411,7 @@ package body GNATdoc.Frontend.Builder is
 
             declare
                Kind   : constant Entity_Kind :=
-                          LL.Get_Ekind (Db, E, In_Ada_Lang => False);
+                          LL.Get_Ekind (E, In_Ada_Lang => False);
                Prev_E : Entity_Id;
 
             begin
@@ -600,8 +599,8 @@ package body GNATdoc.Frontend.Builder is
          ------------------------------
 
          procedure Decorate_Generic_Formals (E : Entity_Id) is
-            Formals : constant Xref.Entity_Array :=
-                       Formal_Parameters (Context.Database, LL.Get_Entity (E));
+            Formals : Xref.Entity_Array :=
+                       Formal_Parameters (LL.Get_Entity (E));
             Formal  : Entity_Id;
 
          begin
@@ -609,7 +608,7 @@ package body GNATdoc.Frontend.Builder is
 
             for J in Formals'Range loop
                Get_Unique_Entity
-                 (Formal, Context, File, Formals (J),
+                 (Formal, Context, File, Formals (J).all,
                   Forced => True);
 
                --  Adding minimum decoration to undecorated generic formals
@@ -626,6 +625,8 @@ package body GNATdoc.Frontend.Builder is
                Set_Is_Decorated (Formal);
             end loop;
 
+            Free (Formals);
+
             Exit_Scope;
          end Decorate_Generic_Formals;
 
@@ -640,7 +641,7 @@ package body GNATdoc.Frontend.Builder is
 
             function Is_Inherited_Primitive
               (Typ  : Entity_Id;
-               Prim : General_Entity) return Boolean;
+               Prim : Root_Entity'Class) return Boolean;
             --  Return true if primitive Prim of tagged type Typ has been
             --  inherited from some parent or progenitor type
 
@@ -660,11 +661,11 @@ package body GNATdoc.Frontend.Builder is
 
                for J in Parents'Range loop
                   Get_Unique_Entity
-                    (Parent, Context, File, Parents (J), Forced => True);
+                    (Parent, Context, File, Parents (J).all, Forced => True);
 
                   --  Avoid adding a self reference as parent or progenitor
 
-                  if Parents (J) = LL.Get_Entity (E) then
+                  if Parents (J).all = LL.Get_Entity (E) then
                      null;
 
                   elsif not Has_Parent_Type (E, Parent) then
@@ -699,7 +700,7 @@ package body GNATdoc.Frontend.Builder is
 
             function Is_Inherited_Primitive
               (Typ  : Entity_Id;
-               Prim : General_Entity) return Boolean
+               Prim : Root_Entity'Class) return Boolean
             is
                function Check_Primitives
                  (Typ : Entity_Id) return Boolean;
@@ -771,13 +772,13 @@ package body GNATdoc.Frontend.Builder is
          begin
             if Get_Kind (E) /= E_Interface then
                declare
-                  Discrim : constant Xref.Entity_Array :=
-                              Discriminants
-                                (Context.Database, LL.Get_Entity (E));
+                  Discrim : Xref.Entity_Array := Discriminants
+                    (LL.Get_Entity (E));
                   Entity  : Entity_Id;
                begin
                   for J in Discrim'Range loop
-                     Get_Unique_Entity (Entity, Context, File, Discrim (J));
+                     Get_Unique_Entity
+                       (Entity, Context, File, Discrim (J).all);
 
                      --  If the entity is not available that means that
                      --  this is an incomplete type whose discriminants
@@ -851,6 +852,8 @@ package body GNATdoc.Frontend.Builder is
                         end if;
                      end if;
                   end loop;
+
+                  Free (Discrim);
                end;
             end if;
 
@@ -858,8 +861,7 @@ package body GNATdoc.Frontend.Builder is
 
             if Get_Kind (E) /= E_Interface then
                declare
-                  Components : constant Xref.Entity_Array :=
-                                 Fields (Context.Database, LL.Get_Entity (E));
+                  Components : Xref.Entity_Array := Fields (LL.Get_Entity (E));
                   Entity     : Entity_Id;
 
                begin
@@ -878,7 +880,7 @@ package body GNATdoc.Frontend.Builder is
                   else
                      for J in Components'Range loop
                         Get_Unique_Entity
-                          (Entity, Context, File, Components (J));
+                          (Entity, Context, File, Components (J).all);
 
                         --  If the entity is not available that means that
                         --  this is an incomplete type whose components are
@@ -903,6 +905,8 @@ package body GNATdoc.Frontend.Builder is
                         end if;
                      end loop;
                   end if;
+
+                  Free (Components);
                end;
 
                pragma Assert
@@ -916,8 +920,7 @@ package body GNATdoc.Frontend.Builder is
 
             Append_Parent_And_Progenitors
               (Xref.Parent_Types
-                 (Self      => Context.Database,
-                  Entity    => LL.Get_Entity (E),
+                 (Entity    => LL.Get_Entity (E),
                   Recursive => False));
 
             if No (Get_Parent (E))
@@ -927,9 +930,9 @@ package body GNATdoc.Frontend.Builder is
             end if;
 
             declare
-               Childs : constant Xref.Entity_Array :=
+               Childs : Xref.Entity_Array :=
                           Child_Types
-                           (Context.Database, LL.Get_Entity (E),
+                           (LL.Get_Entity (E),
                             Recursive => False);
                Child  : Entity_Id;
                Loc    : General_Location;
@@ -942,13 +945,13 @@ package body GNATdoc.Frontend.Builder is
                   --  generates two entites in the LI file with the same name)
 
                   Get_Unique_Entity
-                    (Child, Context, File, Childs (J), Forced => True);
+                    (Child, Context, File, Childs (J).all, Forced => True);
 
                   Loc := LL.Get_Location (Child);
 
                   --  Avoid adding a self reference as a child type
 
-                  if Childs (J) = LL.Get_Entity (E) then
+                  if Childs (J).all = LL.Get_Entity (E) then
                      null;
 
                   --  Avoid problems with wrong Xref decoration that I can
@@ -970,25 +973,27 @@ package body GNATdoc.Frontend.Builder is
                      LL.Append_Child_Type (E, Child);
                   end if;
                end loop;
+
+               Free (Childs);
             end;
 
             if Is_Tagged (E)
               or else Get_Kind (E) = E_Class
             then
                declare
-                  All_Methods : constant Xref.Entity_Array :=
+                  All_Methods : Xref.Entity_Array :=
                                   Methods
-                                    (Context.Database, LL.Get_Entity (E),
+                                    (LL.Get_Entity (E),
                                      Include_Inherited => True);
 
                   Method : Entity_Id;
                begin
                   for J in All_Methods'Range loop
                      Get_Unique_Entity
-                       (Method, Context, File, All_Methods (J),
+                       (Method, Context, File, All_Methods (J).all,
                         Forced => True);
 
-                     if Is_Inherited_Primitive (E, All_Methods (J)) then
+                     if Is_Inherited_Primitive (E, All_Methods (J).all) then
                         if not Is_Partial_View (E) then
                            Append_Inherited_Method (E, Method);
                         else
@@ -1012,6 +1017,8 @@ package body GNATdoc.Frontend.Builder is
                         Set_Is_Decorated (Method);
                      end if;
                   end loop;
+
+                  Free (All_Methods);
                end;
             end if;
          end Decorate_Record_Type;
@@ -1032,7 +1039,7 @@ package body GNATdoc.Frontend.Builder is
 
             declare
                Formals : constant Xref.Parameter_Array :=
-                           Parameters (Context.Database, LL.Get_Entity (E));
+                           Parameters (LL.Get_Entity (E));
                Formal  : Entity_Id;
 
             begin
@@ -1043,7 +1050,9 @@ package body GNATdoc.Frontend.Builder is
                   --  also associated with one of its formals. It seems a bug
                   --  in the generated LI file. To be investigated???
 
-                  if LL.Get_Entity (E) = Formals (J).Parameter then
+                  if General_Entity (LL.Get_Entity (E))
+                    = Formals (J).Parameter
+                  then
                      null;
 
                   else
@@ -1053,7 +1062,7 @@ package body GNATdoc.Frontend.Builder is
 
                      if Present (Formal) then
                         pragma Assert
-                          (LL.Get_Entity (Formal)
+                          (General_Entity (LL.Get_Entity (Formal))
                            = Formals (J).Parameter);
 
                         --  Correct previous wrong decoration (done by
@@ -1244,7 +1253,7 @@ package body GNATdoc.Frontend.Builder is
 
             function Is_Inherited_Primitive
               (Typ  : Entity_Id;
-               Prim : General_Entity) return Boolean;
+               Prim : Root_Entity'Class) return Boolean;
             --  Return true if primitive Prim of tagged type Typ has been
             --  inherited from some parent or progenitor type
 
@@ -1260,7 +1269,7 @@ package body GNATdoc.Frontend.Builder is
             begin
                for J in Parents'Range loop
                   Get_Unique_Entity
-                    (Parent, Context, File, Parents (J), Forced => True);
+                    (Parent, Context, File, Parents (J).all, Forced => True);
 
                   if not Has_Parent_Type (E, Parent) then
                      LL.Append_Parent_Type (E, Parent);
@@ -1274,7 +1283,7 @@ package body GNATdoc.Frontend.Builder is
 
             function Is_Inherited_Primitive
               (Typ  : Entity_Id;
-               Prim : General_Entity) return Boolean
+               Prim : Root_Entity'Class) return Boolean
             is
                function Check_Primitives
                  (Typ : Entity_Id) return Boolean;
@@ -1320,14 +1329,13 @@ package body GNATdoc.Frontend.Builder is
             --  Check components
 
             declare
-               Components : constant Xref.Entity_Array :=
-                              Fields (Context.Database, LL.Get_Entity (E));
+               Components : Xref.Entity_Array := Fields (LL.Get_Entity (E));
                Entity     : Entity_Id;
 
             begin
                for J in Components'Range loop
                   Get_Unique_Entity
-                    (Entity, Context, File, Components (J));
+                    (Entity, Context, File, Components (J).all);
 
                   --  If the entity is not available that means that
                   --  this is an incomplete type whose components are
@@ -1352,6 +1360,8 @@ package body GNATdoc.Frontend.Builder is
                      Set_Is_Decorated (Entity);
                   end if;
                end loop;
+
+               Free (Components);
             end;
 
             pragma Assert
@@ -1364,14 +1374,13 @@ package body GNATdoc.Frontend.Builder is
 
             Append_Parents
               (Xref.Parent_Types
-                 (Self      => Context.Database,
-                  Entity    => LL.Get_Entity (E),
+                 (Entity    => LL.Get_Entity (E),
                   Recursive => False));
 
             declare
-               Childs : constant Xref.Entity_Array :=
+               Childs : Xref.Entity_Array :=
                           Child_Types
-                           (Context.Database, LL.Get_Entity (E),
+                           (LL.Get_Entity (E),
                             Recursive => False);
                Child  : Entity_Id;
                Loc    : General_Location;
@@ -1384,12 +1393,11 @@ package body GNATdoc.Frontend.Builder is
                   --  generates two entites in the LI file with the same name)
 
                   if not LL.Is_Self_Referenced_Type
-                           (Db   => Context.Database,
-                            E    => Childs (J),
+                           (E    => Childs (J).all,
                             Lang => Get_Language (E))
                   then
                      Get_Unique_Entity
-                       (Child, Context, File, Childs (J), Forced => True);
+                       (Child, Context, File, Childs (J).all, Forced => True);
 
                      Loc := LL.Get_Location (Child);
 
@@ -1413,25 +1421,27 @@ package body GNATdoc.Frontend.Builder is
                      end if;
                   end if;
                end loop;
+
+               Free (Childs);
             end;
 
             if Is_Tagged (E)
               or else Get_Kind (E) = E_Class
             then
                declare
-                  All_Methods : constant Xref.Entity_Array :=
+                  All_Methods : Xref.Entity_Array :=
                                   Methods
-                                    (Context.Database, LL.Get_Entity (E),
+                                    (LL.Get_Entity (E),
                                      Include_Inherited => True);
 
                   Method : Entity_Id;
                begin
                   for J in All_Methods'Range loop
                      Get_Unique_Entity
-                       (Method, Context, File, All_Methods (J),
+                       (Method, Context, File, All_Methods (J).all,
                         Forced => True);
 
-                     if Is_Inherited_Primitive (E, All_Methods (J)) then
+                     if Is_Inherited_Primitive (E, All_Methods (J).all) then
                         if not Is_Partial_View (E) then
                            Append_Inherited_Method (E, Method);
                         else
@@ -1456,6 +1466,8 @@ package body GNATdoc.Frontend.Builder is
                         end if;
                      end if;
                   end loop;
+
+                  Free (All_Methods);
                end;
             end if;
          end Decorate_Struct_Or_Class_Type;
@@ -1476,7 +1488,7 @@ package body GNATdoc.Frontend.Builder is
 
             declare
                Formals : constant Xref.Parameter_Array :=
-                           Parameters (Context.Database, LL.Get_Entity (E));
+                           Parameters (LL.Get_Entity (E));
                Formal  : Entity_Id;
 
             begin
@@ -1487,7 +1499,9 @@ package body GNATdoc.Frontend.Builder is
                   --  also associated with one of its formals. It seems a bug
                   --  in the generated LI file. To be investigated???
 
-                  if LL.Get_Entity (E) = Formals (J).Parameter then
+                  if General_Entity (LL.Get_Entity (E)) =
+                    Formals (J).Parameter
+                  then
                      null;
 
                   else
@@ -1497,7 +1511,7 @@ package body GNATdoc.Frontend.Builder is
 
                      if Present (Formal) then
                         pragma Assert
-                          (LL.Get_Entity (Formal)
+                          (General_Entity (LL.Get_Entity (Formal))
                            = Formals (J).Parameter);
 
                         --  Correct previous wrong decoration (done by
@@ -1611,16 +1625,16 @@ package body GNATdoc.Frontend.Builder is
                  and then Get_Kind (New_E) /= E_Class
                then
                   declare
-                     Scope_Id : constant General_Entity :=
+                     Scope_Id : constant Root_Entity'Class :=
                                   LL.Get_Scope (New_E);
                   begin
-                     if Context.Database.Get_Name (LL.Get_Entity (New_E))
-                       = Context.Database.Get_Name (Scope_Id)
+                     if Get_Name (LL.Get_Entity (New_E))
+                       = Get_Name (Scope_Id)
                      then
                         declare
                            Prev_E : constant Entity_Id :=
                              Find_Unique_Entity
-                               (Get_Location (Context.Database, Scope_Id));
+                               (Get_Location (Scope_Id));
                         begin
                            pragma Assert (Present (Prev_E));
                            Set_Alias (New_E, Prev_E);
@@ -1630,7 +1644,7 @@ package body GNATdoc.Frontend.Builder is
 
                elsif Get_Kind (New_E) = E_Variable then
                   declare
-                     Scope_Id : constant General_Entity :=
+                     Scope_Id : constant Root_Entity'Class :=
                                   LL.Get_Scope (New_E);
                      use type EInfo_Map.Cursor;
                   begin
@@ -1638,11 +1652,10 @@ package body GNATdoc.Frontend.Builder is
                      --  directly since we may have not seen yet the full
                      --  declaration of the struct.
 
-                     if Context.Database.Is_Type (Scope_Id) then
+                     if Is_Type (Scope_Id) then
                         declare
                            Kind : constant Entity_Kind :=
-                             LL.Get_Ekind (Context.Database,
-                                           Scope_Id,
+                             LL.Get_Ekind (Scope_Id,
                                            In_Ada_Lang => False);
                         begin
                            pragma Assert (Kind_In (Kind, E_Record_Type,
@@ -1804,9 +1817,9 @@ package body GNATdoc.Frontend.Builder is
    function Get_Unique_Entity
      (Context : access constant Docgen_Context;
       File    : Virtual_File;
-      E       : General_Entity) return Entity_Id
+      E       : Root_Entity'Class) return Entity_Id
    is
-      Loc    : constant General_Location := Get_Location (Context.Database, E);
+      Loc    : constant General_Location := Get_Location (E);
       New_E  : Entity_Id;
       Result : Entity_Id;
    begin

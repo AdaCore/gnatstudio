@@ -31,7 +31,7 @@ package body GNATdoc.Comment is
 
    procedure Append_Param_Tag
      (Comment    : Structured_Comment;
-      Entity     : General_Entity;
+      Entity     : Root_Entity'Class;
       Param_Name : Unbounded_String;
       Text       : Unbounded_String)
    is
@@ -59,7 +59,7 @@ package body GNATdoc.Comment is
    function Append_Tag
      (Comment   : Structured_Comment;
       Tag       : Unbounded_String;
-      Entity    : General_Entity;
+      Entity    : Root_Entity'Class;
       Attribute : Unbounded_String;
       Text      : Unbounded_String := Null_Unbounded_String)
          return Tag_Cursor
@@ -67,7 +67,7 @@ package body GNATdoc.Comment is
       New_Tag_Info : constant Tag_Info_Ptr :=
                        new Tag_Info'
                          (Tag    => Tag,
-                          Entity => Entity,
+                          Entity => <>,
                           Attr   => Attribute,
                           Text   => Text);
       New_Node     : constant Node_Ptr :=
@@ -76,6 +76,8 @@ package body GNATdoc.Comment is
                          Next     => null);
 
    begin
+      New_Tag_Info.Entity.Replace_Element (Entity);
+
       if Comment.First_Tag = null then
          Comment.First_Tag := New_Node;
       else
@@ -186,19 +188,25 @@ package body GNATdoc.Comment is
    ----------------------------
 
    function New_Structured_Comment return Structured_Comment is
-      New_Info : constant Tag_Info_Ptr :=
+      H : Holder.Holder;
+      New_Info : Tag_Info_Ptr;
+      New_Node : Node_Ptr;
+
+   begin
+      H.Replace_Element (No_Root_Entity);
+
+      New_Info :=
         new Tag_Info'
           (Tag    => Null_Unbounded_String,
-           Entity => No_General_Entity,
+           Entity => H,
            Attr   => Null_Unbounded_String,
            Text   => Null_Unbounded_String);
 
-      New_Node : constant Node_Ptr :=
+      New_Node :=
         new Node'
           (Tag_Info => New_Info,
            Next     => null);
 
-   begin
       return new Structured_Comment_Record'
         (First_Tag   => New_Node,
          First_Param => No_Cursor,

@@ -1506,12 +1506,14 @@ package body GVD_Module is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : General_Entity;
    begin
       if Has_Entity_Name_Information (Context) then
-         Entity := Get_Entity (Context);
-         return Entity = No_General_Entity
-           or else Get_Kernel (Context).Databases.Is_Subprogram (Entity);
+         declare
+            Entity : constant Root_Entity'Class := Get_Entity (Context);
+         begin
+            return Entity = No_Root_Entity
+              or else Is_Subprogram (Entity);
+         end;
       end if;
       return False;
    end Filter_Matches_Primitive;
@@ -1525,14 +1527,14 @@ package body GVD_Module is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : General_Entity;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       if Has_Entity_Name_Information (Context) then
-         Entity := Get_Entity (Context);
-
-         return Entity = No_General_Entity
-           or else Kernel.Databases.Is_Printable_In_Debugger (Entity);
+         declare
+            Entity : constant Root_Entity'Class := Get_Entity (Context);
+         begin
+            return Entity = No_Root_Entity
+              or else Is_Printable_In_Debugger (Entity);
+         end;
 
       elsif Has_Area_Information (Context) then
          --  We assume the user knows best
@@ -1550,16 +1552,17 @@ package body GVD_Module is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : General_Entity;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
    begin
       if Has_Entity_Name_Information (Context) then
-         Entity := Get_Entity (Context);
-         return Entity = No_General_Entity
+         declare
+            Entity : constant Root_Entity'Class := Get_Entity (Context);
+         begin
+            return Entity = No_Root_Entity
 
-           --  ??? Should also include array variables
-           or else (not Kernel.Databases.Is_Type (Entity)
-                    and then Kernel.Databases.Is_Access (Entity));
+            --  ??? Should also include array variables
+              or else (not Is_Type (Entity)
+                       and then Is_Access (Entity));
+         end;
 
       elsif Has_Area_Information (Context) then
          return True;

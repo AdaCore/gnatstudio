@@ -32,7 +32,6 @@ with String_Utils;            use String_Utils;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Xref;           use GNATCOLL.Xref;
-with Xref;                    use Xref;
 
 package body Refactoring.Services is
    Me : constant Trace_Handle := Create ("Refactoring");
@@ -56,6 +55,9 @@ package body Refactoring.Services is
    function Default_Insertion_Line (Tree : Construct_Tree) return Integer;
    --  A line where we could insert code (preferably before the "end pkg" line,
    --  or if there is no package default to the first line in the file
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Root_Entity'Class, Root_Entity_Access);
 
    ----------
    -- Free --
@@ -572,13 +574,13 @@ package body Refactoring.Services is
 
    function Get_Declaration
      (Context : not null access Factory_Context_Record'Class;
-      Entity  : General_Entity) return Entity_Declaration
+      Entity  : Root_Entity'Class) return Entity_Declaration
    is
       Equal : Integer;
       EA    : Entity_Access;
 
    begin
-      if Context.Db.Is_Type (Entity) then
+      if Is_Type (Entity) then
          return No_Entity_Declaration;
       end if;
 
@@ -596,6 +598,7 @@ package body Refactoring.Services is
          Shared : Boolean := False;
          Iter   : Construct_Tree_Iterator;
          Tree   : Construct_Tree;
+         H      : Holder.Holder;
       begin
          Skip_To_Char (Buffer (Index .. Last), Index, ':');
          Equal := Index;
@@ -609,9 +612,10 @@ package body Refactoring.Services is
          Shared := Get_Construct (Prev (Tree, Iter)).Sloc_End.Index = Last
            or else Get_Construct (Next (Tree, Iter)).Sloc_End.Index = Last;
 
+         H.Replace_Element (Entity);
          return (File      => Get_File (EA),
                  Db        => Context.Db,
-                 Entity    => Entity,
+                 Entity    => H,
                  First     => null,
                  Last      => null,
                  SFirst    => Get_Construct (EA).Sloc_Entity,
@@ -633,7 +637,10 @@ package body Refactoring.Services is
       First_Line, Last_Line     : Integer;
       First_Column, Last_Column : Visible_Column_Type;
    begin
-      if Self.First = null and then Self.Entity /= No_General_Entity then
+      if Self.First = null
+        and then (not Self.Entity.Is_Empty)
+        and then Self.Entity.Element /= No_Root_Entity
+      then
          To_Line_Column
            (Self.File,
             String_Index_Type (Self.SFirst.Index),
@@ -668,7 +675,7 @@ package body Refactoring.Services is
    begin
       --  These cannot have an initial value, so we save time
       if Self = No_Entity_Declaration
-        or else Self.Db.Is_Container (Self.Entity)
+        or else Is_Container (Self.Entity.Element)
       then
          return "";
       end if;
@@ -733,7 +740,7 @@ package body Refactoring.Services is
       Index  : Natural := Decl'First;
       Last   : Integer := Self.Equal_Loc - 1;
    begin
-      Append (Result, String'(Self.Db.Get_Name (Self.Entity) & " : "));
+      Append (Result, String'(Get_Name (Self.Entity.Element) & " : "));
 
       case PType is
          when Out_Parameter =>
@@ -782,7 +789,7 @@ package body Refactoring.Services is
    function Display_As_Variable
      (Self  : Entity_Declaration) return String is
    begin
-      return Self.Db.Get_Name (Self.Entity) & " " & To_String (Self.Decl);
+      return Get_Name (Self.Entity.Element) & " " & To_String (Self.Decl);
    end Display_As_Variable;
 
    -----------------------
@@ -791,14 +798,14 @@ package body Refactoring.Services is
 
    function Get_Entity_Access
      (Context : not null access Factory_Context_Record'Class;
-      Entity  : General_Entity)
+      Entity  : Xref.Root_Entity'Class)
       return Language.Tree.Database.Entity_Access
    is
       EDecl  : General_Entity_Declaration;
       Struct : Structured_File_Access;
    begin
-      if Entity /= No_General_Entity then
-         EDecl  := Context.Db.Get_Declaration (Entity);
+      if Entity /= No_Root_Entity then
+         EDecl  := Get_Declaration (Entity);
 
          Struct := Get_Or_Create
            (Db   => Context.Db.Constructs,
@@ -876,7 +883,7 @@ package body Refactoring.Services is
 
                From.Buffer.Delete
                  (From, From.Forward_Char
-                    (Self.Db.Get_Name (Self.Entity)'Length - 1));
+                    (Get_Name (Self.Entity.Element)'Length - 1));
                Remove_Blanks (From);
 
                if From.Get_Char = Character'Pos (',') then
@@ -952,12 +959,12 @@ package body Refactoring.Services is
 
    function Accepts_Primitive_Ops
      (Context        : not null access Factory_Context_Record'Class;
-      Entity         : General_Entity;
+      Entity         : Root_Entity'Class;
       Current_Offset : String_Index_Type) return Boolean
    is
-      pragma Unreferenced (Current_Offset);
+      pragma Unreferenced (Current_Offset, Context);
    begin
-      return Context.Db.Has_Methods (Entity);
+      return Has_Methods (Entity);
    end Accepts_Primitive_Ops;
 
    ---------------------
@@ -966,18 +973,19 @@ package body Refactoring.Services is
 
    procedure Is_Parameter_Of
      (Db           : access General_Xref_Database_Record'Class;
-      Entity       : General_Entity;
+      Entity       : Root_Entity'Class;
       Is_Parameter : out Boolean;
       PType        : out Parameter_Kind)
    is
-      Sub   : constant General_Entity := Db.Is_Parameter_Of (Entity);
+      pragma Unreferenced (Db);
+      Sub   : constant Root_Entity'Class := Is_Parameter_Of (Entity);
    begin
-      if Sub /= No_General_Entity then
+      if Sub /= No_Root_Entity then
          declare
-            Params : constant Xref.Parameter_Array := Db.Parameters (Sub);
+            Params : constant Xref.Parameter_Array := Parameters (Sub);
          begin
             for P in Params'Range loop
-               if Params (P).Parameter = Entity then
+               if Params (P).Parameter = General_Entity (Entity) then
                   Is_Parameter := True;
                   PType        := Params (P).Kind;
                   return;
@@ -1017,18 +1025,18 @@ package body Refactoring.Services is
      (Self        : in out Range_Of_Code;
       Db          : access Xref.General_Xref_Database_Record'Class;
       Callback    : not null access procedure
-        (Entity : General_Entity;
+        (Entity : Root_Entity'Class;
          Flags  : Entity_References_Flags);
       Success            : out Boolean;
       Omit_Library_Level : Boolean := False)
    is
       Ref_Iter                 : Entity_Reference_Iterator;
       Iter                     : Entities_In_File_Cursor;
-      Caller                   : General_Entity;
+      Caller                   : Root_Entity_Access;
       Ref                      : General_Entity_Reference;
       Decl                     : General_Entity_Declaration;
       Location, Body_Loc       : General_Location := No_Location;
-      Entity                   : General_Entity;
+      Entity                   : Root_Entity_Access;
       Flags                    : Entity_References_Flags;
       Is_Global                : Boolean;
       Is_Param                 : Boolean;
@@ -1037,7 +1045,7 @@ package body Refactoring.Services is
       ERef                     : Entity_Reference_Details;
       Lock                     : Database_Lock;
 
-      Parent                   : General_Entity;
+      Parent                   : Root_Entity_Access;
       --  The entity that contains the code to extract. This is set lazily.
 
    begin
@@ -1051,12 +1059,17 @@ package body Refactoring.Services is
       Struct := Get_Or_Create (Self.Context.Db.Constructs, File => Self.File);
       Update_Contents (Struct);
 
+      Parent := new Root_Entity'Class'(No_Root_Entity);
+      Caller := new Root_Entity'Class'(No_Root_Entity);
+      Entity := new Root_Entity'Class'(No_Root_Entity);
+
       while not At_End (Iter) loop
-         Entity := Get (Iter);
+         Unchecked_Free (Entity);
+         Entity := new Root_Entity'Class'(Get (Iter));
          Flags  := (others => False);
 
-         Decl := Db.Get_Declaration (Entity);
-         Body_Loc := Db.Get_Body (Entity);
+         Decl := Get_Declaration (Entity.all);
+         Body_Loc := Get_Body (Entity.all);
 
          --  An entity is "global" (ie does not need an entry in the parameter
          --  list) if it is defined in another file, or in the current file at
@@ -1066,22 +1079,23 @@ package body Refactoring.Services is
 
          Is_Global := Omit_Library_Level
            and then ( --  Get_LI (Decl.File) /= Get_LI (Self.Source) or else
-                     not Db.Is_Subprogram (Db.Caller_At_Declaration (Entity)));
+                     not Is_Subprogram (Caller_At_Declaration (Entity.all)));
 
          if not Is_Global then
-            Db.Find_All_References
+            Find_All_References
               (Iter    => Ref_Iter,
-               Entity  => Entity,
+               Entity  => Entity.all,
                In_File => Self.File);
 
             For_Each_Ref :
             while not At_End (Ref_Iter) loop
                Ref      := Get (Ref_Iter);
                Location := Get_Location (Ref);
-               Caller   := Get_Caller (Ref);
+               Unchecked_Free (Caller);
+               Caller   := new Root_Entity'Class'(Get_Caller (Ref));
 
-               if Parent /= No_General_Entity
-                 and then Parent /= Caller
+               if Parent.all /= No_Root_Entity
+                 and then Parent.all /= Caller.all
                  and then not Reference_Is_Declaration (Db, Ref)
                then
                   --  A reference outside of the current subprogram
@@ -1096,12 +1110,13 @@ package body Refactoring.Services is
                else
                   if Self.From_Line <= Location.Line
                     and then Location.Line <= Self.To_Line
-                    and then Parent = No_General_Entity
+                    and then Parent.all = No_Root_Entity
                   then
-                     Parent := Caller;
+                     Unchecked_Free (Parent);
+                     Parent := new Root_Entity'Class'(Caller.all);
                   end if;
 
-                  if Parent = No_General_Entity
+                  if Parent.all = No_Root_Entity
                     and then not Reference_Is_Declaration (Db, Ref)
                   then
                      --  We haven't computed the parent yet, so we are still
@@ -1126,7 +1141,7 @@ package body Refactoring.Services is
                         end if;
 
                      else
-                        Is_Parameter_Of (Db, Entity, Is_Param, PType);
+                        Is_Parameter_Of (Db, Entity.all, Is_Param, PType);
                         if Is_Param then
                            case PType is
                            when Out_Parameter =>
@@ -1145,7 +1160,7 @@ package body Refactoring.Services is
                         else
                            declare
                               Entity_Decl : constant Entity_Declaration :=
-                                Get_Declaration (Self.Context, Entity);
+                                Get_Declaration (Self.Context, Entity.all);
                            begin
                               if Entity_Decl.Initial_Value /= "" then
                                  Flags (Flag_Modified_Before) := True;
@@ -1189,20 +1204,25 @@ package body Refactoring.Services is
                         --  nested is within the extracted code, in which
                         --  case we should extract the subprogram too
 
-                        if Db.Is_Subprogram (Entity) then
-                           Caller := Db.Caller_At_Declaration (Entity);
+                        if Is_Subprogram (Entity.all) then
+                           Unchecked_Free (Caller);
+                           Caller := new Root_Entity'Class'
+                             (Caller_At_Declaration (Entity.all));
 
                            --  ??? We should test if it is nested within
                            --  Context.Parent, when that is set
-                           if Caller /= No_General_Entity
-                             and then Db.Is_Subprogram (Caller)
+                           if Caller.all /= No_Root_Entity
+                             and then Is_Subprogram (Caller.all)
                            then
                               Self.Context.Report_Error
                                 ("A call to the nested subprogram "
-                                 & Db.Get_Name (Entity)
+                                 & Get_Name (Entity.all)
                                  & " prevents the refactoring");
                               Success := False;
                               Thaw (Db, Lock);
+                              Unchecked_Free (Parent);
+                              Unchecked_Free (Caller);
+                              Unchecked_Free (Entity);
                               return;
                            end if;
                         end if;
@@ -1222,7 +1242,7 @@ package body Refactoring.Services is
             Destroy (Ref_Iter);
 
             if Flags (Flag_Modified) or else Flags (Flag_Read) then
-               Callback (Entity => Entity, Flags => Flags);
+               Callback (Entity => Entity.all, Flags => Flags);
             end if;
          end if;
 
@@ -1231,6 +1251,10 @@ package body Refactoring.Services is
 
       Thaw (Db, Lock);
       Success := True;
+
+      Unchecked_Free (Parent);
+      Unchecked_Free (Caller);
+      Unchecked_Free (Entity);
 
    exception
       when E : others =>

@@ -309,7 +309,7 @@ package body GNATdoc.Frontend is
                end if;
             end Entity_Name;
 
-            Entity : constant General_Entity :=
+            Entity : constant Root_Entity'Class :=
                        Xref.Get_Entity
                          (Db   => Context.Database,
                           Name => Entity_Name (Name),
@@ -1660,7 +1660,6 @@ package body GNATdoc.Frontend is
                      if No (Get_Parent (E)) then
                         declare
                            Tok_Loc   : General_Location;
-                           LL_Parent : General_Entity;
                            Parent    : Entity_Id := Atree.No_Entity;
                            Dot_Pos   : Natural   := 0;
 
@@ -1682,24 +1681,27 @@ package body GNATdoc.Frontend is
                                    Project => No_Project, --  ??? unknown
                                    Line    => Sloc_Start.Line,
                                    Column  => Visible_Column_Type
-                                               (Sloc_Start.Column + Dot_Pos));
+                                     (Sloc_Start.Column + Dot_Pos));
 
-                              LL_Parent :=
-                                Xref.Get_Entity
-                                  (Db   => Context.Database,
-                                   Name => Get_Short_Name (S),
-                                   Loc  => Tok_Loc);
+                              declare
+                                 LL_Parent : constant Root_Entity'Class :=
+                                   Xref.Get_Entity
+                                     (Db   => Context.Database,
+                                      Name => Get_Short_Name (S),
+                                      Loc  => Tok_Loc);
+                              begin
+                                 --  Tolerate the case in which the package
+                                 --  containing the parent type is not
+                                 --  available.
 
-                              --  Tolerate the case in which the package
-                              --  containing the parent type is not available.
-
-                              if Present (LL_Parent)
-                                and then not Is_Fuzzy (LL_Parent)
-                              then
-                                 Parent :=
-                                   Builder.Get_Unique_Entity
-                                     (Context, File, LL_Parent);
-                              end if;
+                                 if Present (LL_Parent)
+                                   and then not Is_Fuzzy (LL_Parent)
+                                 then
+                                    Parent :=
+                                      Builder.Get_Unique_Entity
+                                        (Context, File, LL_Parent);
+                                 end if;
+                              end;
                            end if;
 
                            if Present (Parent) then
@@ -1749,7 +1751,7 @@ package body GNATdoc.Frontend is
                      declare
                         Alias : constant Entity_Id :=
                           Find_Unique_Entity
-                           (Get_Location (Context.Database, LL.Get_Alias (E)));
+                           (Get_Location (LL.Get_Alias (E)));
                      begin
                         if Present (Alias) then
                            Set_Alias (E, Alias);
@@ -4962,7 +4964,7 @@ package body GNATdoc.Frontend is
                            elsif Present (Get (Cursor).Text) then
                               Error
                                 (Context,
-                                 Get (Cursor).Entity,
+                                 Get (Cursor).Entity.Element,
                                  "parameter '"
                                  & Param_Name & "' documented twice");
 
@@ -4994,14 +4996,14 @@ package body GNATdoc.Frontend is
                                 Append_Tag
                                   (Comment,
                                    Tag       => To_Unbounded_String (Tag_Text),
-                                   Entity    => No_General_Entity,
+                                   Entity    => No_Root_Entity,
                                    Attribute => To_Unbounded_String (Text));
                            else
                               Current :=
                                 Append_Tag
                                   (Comment,
                                    Tag       => To_Unbounded_String (Tag_Text),
-                                   Entity    => No_General_Entity,
+                                   Entity    => No_Root_Entity,
                                    Attribute => Null_Unbounded_String);
                               Append_Text (Current, Text);
                            end if;
@@ -5011,7 +5013,7 @@ package body GNATdoc.Frontend is
                           Append_Tag
                             (Comment,
                              Tag       => To_Unbounded_String (Tag_Text),
-                             Entity    => No_General_Entity,
+                             Entity    => No_Root_Entity,
                              Attribute => Null_Unbounded_String);
                      end if;
 
@@ -5097,7 +5099,7 @@ package body GNATdoc.Frontend is
                   if No (Tag_Info.Text) then
                      Warning
                        (Context,
-                        Tag_Info.Entity, --  LL.Get_Entity (Subp),
+                        Tag_Info.Entity.Element, --  LL.Get_Entity (Subp),
                         "undocumented parameter ("
                         & To_String (Tag_Info.Attr)
                         & ")");
@@ -5226,7 +5228,7 @@ package body GNATdoc.Frontend is
                        Append_Tag
                          (Comment,
                           Tag       => Tag_Text,
-                          Entity    => No_General_Entity,
+                          Entity    => No_Root_Entity,
                           Attribute => To_Unbounded_String (Param_Name));
                   end;
 
@@ -5257,7 +5259,7 @@ package body GNATdoc.Frontend is
                        Append_Tag
                          (Comment,
                           Tag       => Tag_Text,
-                          Entity    => No_General_Entity,
+                          Entity    => No_Root_Entity,
                           Attribute => Attribute);
                   end;
                end if;

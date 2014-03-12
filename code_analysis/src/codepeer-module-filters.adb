@@ -47,7 +47,6 @@ package body CodePeer.Module.Filters is
         GPS.Kernel.Get_Language_Handler (Kernel);
       Constructs : Language.Construct_List;
       Unit       : Language.Construct_Access;
-      Entity     : General_Entity;
 
    begin
       Parse_File_Constructs
@@ -80,22 +79,26 @@ package body CodePeer.Module.Filters is
 
       --  Lookup for declaration of compilation unit.
 
-      Entity := Kernel.Databases.Get_Entity
-        (Name => "",
-         Loc  => (File    => File_Name,
-                  Project => GPS.Kernel.Contexts.Project_Information (Context),
-                  Line    => Unit.Sloc_Entity.Line,
-                  Column  => Basic_Types.Visible_Column_Type
-                    (Unit.Sloc_Entity.Column
-                     + GNATCOLL.Symbols.Get (Unit.Name)'Length - 1)));
+      declare
+         Entity : constant Root_Entity'Class := Kernel.Databases.Get_Entity
+           (Name => "",
+            Loc  => (File   => File_Name,
+                     Project =>
+                        GPS.Kernel.Contexts.Project_Information (Context),
+                     Line   => Unit.Sloc_Entity.Line,
+                     Column => Basic_Types.Visible_Column_Type
+                       (Unit.Sloc_Entity.Column
+                        + GNATCOLL.Symbols.Get (Unit.Name)'Length - 1)));
+      begin
+         Language.Free (Constructs);
 
-      Language.Free (Constructs);
+         if Entity = No_Root_Entity then
+            return False;
+         end if;
 
-      if Entity = No_General_Entity then
-         return False;
-      end if;
+         return Is_Generic (Entity);
+      end;
 
-      return Kernel.Databases.Is_Generic (Entity);
    end Filter_Matches_Primitive;
 
 end CodePeer.Module.Filters;

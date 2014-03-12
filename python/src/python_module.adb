@@ -631,33 +631,31 @@ package body Python_Module is
    procedure Python_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
-      Entity  : constant General_Entity := Get_Data (Data, 1);
-      Entity2 : General_Entity;
+      Entity  : constant Root_Entity'Class := Get_Data (Data, 1);
       Decl    : General_Entity_Declaration;
    begin
       if Command = "__str__"
         or else Command = "__repr__"
       then
-         if Kernel.Databases.Is_Predefined_Entity (Entity) then
-            Set_Return_Value (Data, Kernel.Databases.Get_Name (Entity));
+         if Is_Predefined_Entity (Entity) then
+            Set_Return_Value (Data, Get_Name (Entity));
          else
-            Decl := Kernel.Databases.Get_Declaration (Entity);
+            Decl := Get_Declaration (Entity);
 
             Set_Return_Value
               (Data,
-               Kernel.Databases.Get_Name (Entity) & ':'
+               Get_Name (Entity) & ':'
                & (+Decl.Loc.File.Base_Name) & ':'
                & Image (Decl.Loc.Line) & ':'
                & Image (Integer (Decl.Loc.Column)));
          end if;
 
       elsif Command = "__hash__" then
-         Set_Return_Value (Data, Kernel.Databases.Hash (Entity));
+         Set_Return_Value (Data, Hash (Entity));
 
       elsif Command = "__cmp__" then
-         Entity2 := Get_Data (Data, 2);
-         Set_Return_Value (Data, Kernel.Databases.Cmp (Entity, Entity2));
+         Set_Return_Value
+           (Data, Cmp (Entity, Get_Data (Data, 2)));
       end if;
 
    exception

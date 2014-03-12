@@ -27,7 +27,7 @@ private package GNATdoc.Errout is
 
    procedure Error
      (Context : access constant Docgen_Context;
-      Entity  : General_Entity;
+      Entity  : Root_Entity'Class;
       Msg     : String);
    --  Report the warning message Msg on the location of Entity
 
@@ -39,7 +39,7 @@ private package GNATdoc.Errout is
 
    procedure Warning
      (Context : access constant Docgen_Context;
-      Entity  : General_Entity;
+      Entity  : Root_Entity'Class;
       Msg     : String);
    --  Report the warning message Msg on the location of Entity
 

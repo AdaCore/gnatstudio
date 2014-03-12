@@ -66,6 +66,9 @@ package body Src_Editor_Module.Commands is
 
    Me : constant Trace_Handle := Create ("Source_Editor_Module.Commands");
 
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Root_Entity'Class, Root_Entity_Access);
+
    procedure Comment_Uncomment
      (Kernel  : Kernel_Handle;
       Comment : Boolean;
@@ -96,16 +99,14 @@ package body Src_Editor_Module.Commands is
    is
       pragma Unreferenced (Filter);
       Count  : Integer := 0;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      Db     : constant General_Xref_Database := Kernel.Databases;
 
-      function On_Callee (Callee : General_Entity) return Boolean;
+      function On_Callee (Callee : Root_Entity'Class) return Boolean;
 
       ---------------
       -- On_Callee --
       ---------------
 
-      function On_Callee (Callee : General_Entity) return Boolean is
+      function On_Callee (Callee : Root_Entity'Class) return Boolean is
          pragma Unreferenced (Callee);
       begin
          --  Consider dispatching calls only if we find more than one
@@ -121,8 +122,7 @@ package body Src_Editor_Module.Commands is
 
       if Is_Dispatching_Call (Context) = Indeterminate then
          Xref.For_Each_Dispatching_Call
-           (Dbase     => Db,
-            Entity    => Get_Entity (Context),
+           (Entity    => Get_Entity (Context),
             Ref       => Get_Closest_Ref (Context),
             On_Callee => On_Callee'Access);
 
@@ -145,7 +145,7 @@ package body Src_Editor_Module.Commands is
    is
       pragma Unreferenced (Filter);
    begin
-      return Get_Entity_Type_Of (Context) /= No_General_Entity;
+      return Get_Entity_Type_Of (Context) /= No_Root_Entity;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -170,13 +170,12 @@ package body Src_Editor_Module.Commands is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Entity : constant General_Entity := Get_Entity (Context);
-      Kernel : constant Kernel_Handle  := Get_Kernel (Context);
+      Entity : constant Root_Entity'Class := Get_Entity (Context);
 
    begin
-      return Entity /= No_General_Entity
-        and then Kernel.Databases.Is_Access (Entity)
-        and then Kernel.Databases.Is_Type (Entity);
+      return Entity /= No_Root_Entity
+        and then Is_Access (Entity)
+        and then Is_Type (Entity);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -356,11 +355,10 @@ package body Src_Editor_Module.Commands is
    is
       pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Db      : constant General_Xref_Database := Kernel.Databases;
-      Entity  : constant General_Entity := Get_Entity (Context.Context);
+      Entity  : constant Root_Entity'Class := Get_Entity (Context.Context);
 
    begin
-      if Entity = No_General_Entity then
+      if Entity = No_Root_Entity then
          --  Probably means that we either could not locate the ALI file,
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
@@ -373,21 +371,19 @@ package body Src_Editor_Module.Commands is
 
       else
          declare
-            Entity_Type : General_Entity;
+            Entity_Type : constant Root_Entity'Class := Get_Type_Of (Entity);
             Location    : General_Location;
 
          begin
-            Entity_Type := Get_Type_Of (Db, Entity);
-
-            if Is_Predefined_Entity (Db, Entity_Type) then
+            if Is_Predefined_Entity (Entity_Type) then
                Kernel.Insert
-                 (Get_Name (Db, Entity)
+                 (Get_Name (Entity)
                   & " is of predefined type "
-                  & Get_Name (Db, Entity_Type));
+                  & Get_Name (Entity_Type));
                return Standard.Commands.Failure;
 
             else
-               Location := Db.Get_Declaration (Entity_Type).Loc;
+               Location := Get_Declaration (Entity_Type).Loc;
                Go_To_Closest_Match
                  (Kernel,
                   Filename => Location.File,
@@ -413,13 +409,12 @@ package body Src_Editor_Module.Commands is
       pragma Unreferenced (Command);
 
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Db     : constant General_Xref_Database := Kernel.Databases;
 
-      procedure Insert (Name : String; Entity : General_Entity);
+      procedure Insert (Name : String; Entity : Root_Entity'Class);
       --  Add entry for Entity into the location view
 
       function Get_Type_Or_Ref
-        (Entity : General_Entity) return General_Entity;
+        (Entity : Root_Entity'Class) return Root_Entity'Class;
       pragma Inline (Get_Type_Or_Ref);
       --  Retruns the type of Entity (handle case where entity is an access
       --  type, in this case we returned the pointed entity).
@@ -429,23 +424,30 @@ package body Src_Editor_Module.Commands is
       ---------------------
 
       function Get_Type_Or_Ref
-        (Entity : General_Entity) return General_Entity is
+        (Entity : Root_Entity'Class) return Root_Entity'Class is
       begin
-         if Db.Is_Access (Entity) then
-            return Db.Pointed_Type (Entity);
-         elsif Db.Is_Type (Entity) then
+         if Is_Access (Entity) then
+            return Pointed_Type (Entity);
+         elsif Is_Type (Entity) then
             declare
-               Parents : constant Entity_Array :=
-                 Db.Parent_Types (Entity, Recursive => False);
+               Parents : Entity_Array :=
+                 Parent_Types (Entity, Recursive => False);
             begin
                if Parents'Length /= 0 then
-                  return Parents (Parents'First);
+                  declare
+                     Res : constant Root_Entity'Class :=
+                       Parents (Parents'First).all;
+                  begin
+                     Free (Parents);
+                     return Res;
+                  end;
                else
-                  return No_General_Entity;
+                  Free (Parents);
+                  return No_Root_Entity;
                end if;
             end;
          else
-            return Get_Type_Of (Db, Entity);
+            return Get_Type_Of (Entity);
          end if;
       end Get_Type_Or_Ref;
 
@@ -453,10 +455,9 @@ package body Src_Editor_Module.Commands is
       -- Insert --
       ------------
 
-      procedure Insert (Name : String; Entity : General_Entity) is
-         Kind : constant String := Db.Get_Display_Kind (Entity);
-         Loc  : constant General_Location :=
-           Db.Get_Declaration (Entity).Loc;
+      procedure Insert (Name : String; Entity : Root_Entity'Class) is
+         Kind : constant String := Get_Display_Kind (Entity);
+         Loc  : constant General_Location := Get_Declaration (Entity).Loc;
       begin
          Create_Simple_Message
            (Get_Messages_Container (Kernel),
@@ -464,17 +465,17 @@ package body Src_Editor_Module.Commands is
             Loc.File,
             Loc.Line,
             Loc.Column,
-            Get_Name (Db, Entity) & " (" & Kind & ')',
+            Get_Name (Entity) & " (" & Kind & ')',
             0,
             (Editor_Side => True,
              Locations   => True));
       end Insert;
 
-      Entity      : constant General_Entity := Get_Entity (Context.Context);
-      Entity_Type : General_Entity;
+      Entity      : constant Root_Entity'Class := Get_Entity (Context.Context);
+      Entity_Type : Root_Entity_Access;
 
    begin
-      if Entity = No_General_Entity then
+      if Entity = No_Root_Entity then
          --  Probably means that we either could not locate the ALI file,
          --  or it could also be that we failed to parse it. Either way,
          --  a message should have already been printed. So, just abort.
@@ -487,31 +488,40 @@ package body Src_Editor_Module.Commands is
 
       else
          declare
-            Name : constant String := Db.Get_Name (Entity);
+            Name : constant String := Get_Name (Entity);
          begin
-            if Db.Is_Type (Entity) then
+            if Is_Type (Entity) then
                Insert (Name, Entity);
-               Entity_Type := Get_Type_Or_Ref (Entity);
+               Entity_Type := new Root_Entity'Class'(Get_Type_Or_Ref (Entity));
             else
-               Entity_Type := Db.Get_Type_Of (Entity);
+               Entity_Type := new Root_Entity'Class'(Get_Type_Of (Entity));
             end if;
 
-            if Is_Predefined_Entity (Db, Entity_Type) then
+            if Is_Predefined_Entity (Entity_Type.all) then
                Kernel.Insert
                  (Name & (-" is of predefined type ")
-                  & Get_Name (Db, Entity_Type));
+                  & Get_Name (Entity_Type.all));
+               Unchecked_Free (Entity_Type);
                return Standard.Commands.Failure;
             end if;
 
             loop
-               exit when Entity_Type = No_General_Entity
-                 or else Db.Is_Predefined_Entity (Entity_Type);
+               exit when Entity_Type.all = No_Root_Entity
+                 or else Is_Predefined_Entity (Entity_Type.all);
 
-               Insert (Name, Entity_Type);
-               Entity_Type := Get_Type_Or_Ref (Entity_Type);
+               Insert (Name, Entity_Type.all);
+
+               declare
+                  N : constant Root_Entity'Class :=
+                    Get_Type_Or_Ref (Entity_Type.all);
+               begin
+                  Unchecked_Free (Entity_Type);
+                  Entity_Type := new Root_Entity'Class'(N);
+               end;
             end loop;
          end;
 
+         Unchecked_Free (Entity_Type);
          return Standard.Commands.Success;
       end if;
    end Execute;

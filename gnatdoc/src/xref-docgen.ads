@@ -37,8 +37,7 @@ package Xref.Docgen is
    --  Return true if Comment /= No_Comment_Result
 
    function Get_Location
-     (Db     : General_Xref_Database;
-      Entity : General_Entity) return General_Location;
+     (Entity : Root_Entity'Class) return General_Location;
    --  Return the location of Entity
 
    function Get_Docgen_Documentation

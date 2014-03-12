@@ -48,6 +48,7 @@ with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Xref;                   use Xref;
+with Ada.Containers.Indefinite_Holders;
 
 package body Refactoring.Subprograms is
 
@@ -60,8 +61,11 @@ package body Refactoring.Subprograms is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called for "Extract Method" menu
 
+   package Holder is new Ada.Containers.Indefinite_Holders
+     (Root_Entity'Class);
+
    type Extracted_Entity is record
-      Entity : General_Entity;
+      Entity : Holder.Holder;
       Decl   : Refactoring.Services.Entity_Declaration;
       Flags  : Entity_References_Flags;
    end record;
@@ -78,7 +82,7 @@ package body Refactoring.Subprograms is
       Source   : Virtual_File;
       --  The file in which the extracted code is at the start
 
-      Parent   : General_Entity;
+      Parent   : Holder.Holder;
       --  The subprogram that contained the extracted code before the
       --  refactoring
 
@@ -86,7 +90,7 @@ package body Refactoring.Subprograms is
       --  The entities referenced in the extracted code
    end record;
    Invalid_Context : constant Extract_Context :=
-     (Empty_Range_Of_Code, No_File, No_General_Entity, Entities => <>);
+     (Empty_Range_Of_Code, No_File, Parent => <>, Entities => <>);
 
    procedure Free (Context : in out Extract_Context);
    --  Free the memory used by the context
@@ -112,7 +116,7 @@ package body Refactoring.Subprograms is
 
    type Parameters is tagged record
       List           : Parameter_Lists.List;
-      Last_Out_Param : General_Entity;
+      Last_Out_Param : Holder.Holder;
       Count          : Natural;
       Is_Function    : Boolean;
    end record;
@@ -297,7 +301,6 @@ package body Refactoring.Subprograms is
    is
       type Parameter_Count is array (Parameter_Kind) of Natural;
       Count  : Parameter_Count := (others => 0);
-      Entity : General_Entity;
       Flags  : Entity_References_Flags;
       E      : Extracted_Entity;
       P      : Extracted_Entity_Lists.Cursor := Context.Entities.First;
@@ -309,16 +312,15 @@ package body Refactoring.Subprograms is
       Offset := To_String_Index (Struct, Context.Code.From_Line, 1);
 
       Count := (others => 0);
-      Params.Last_Out_Param := No_General_Entity;
+      Params.Last_Out_Param.Replace_Element (No_Root_Entity);
 
       while Has_Element (P) loop
          E := Element (P);
 
-         Entity := E.Entity;
          Flags  := E.Flags;
 
          Trace (Me, "Compute Params: Entity="
-                & Context.Code.Context.Db.Get_Name (Entity)
+                & Get_Name (E.Entity.Element)
                 & " Flags: read=" & Flags (Flag_Read)'Img
                 & " modified=" & Flags (Flag_Modified)'Img
                 & " modified_before=" & Flags (Flag_Modified_Before)'Img
@@ -332,7 +334,7 @@ package body Refactoring.Subprograms is
                Params.List.Append
                  ((Parameter => E,
                    Is_Tagged => Accepts_Primitive_Ops
-                     (Context.Code.Context, Entity, Offset),
+                     (Context.Code.Context, E.Entity.Element, Offset),
                    PType     => In_Parameter));
                Count (In_Parameter) := Count (In_Parameter) + 1;
 
@@ -364,7 +366,7 @@ package body Refactoring.Subprograms is
                     ((Parameter => E,
                       Is_Tagged =>
                         Accepts_Primitive_Ops
-                          (Context.Code.Context, Entity, Offset),
+                          (Context.Code.Context, E.Entity.Element, Offset),
                       PType     => In_Out_Parameter));
                   Count (In_Out_Parameter) := Count (In_Out_Parameter) + 1;
 
@@ -378,7 +380,7 @@ package body Refactoring.Subprograms is
                     ((Parameter => E,
                       Is_Tagged =>
                         Accepts_Primitive_Ops
-                          (Context.Code.Context, Entity, Offset),
+                          (Context.Code.Context, E.Entity.Element, Offset),
                       PType     => In_Out_Parameter));
                   Count (In_Out_Parameter) := Count (In_Out_Parameter) + 1;
                end if;
@@ -390,10 +392,10 @@ package body Refactoring.Subprograms is
                Params.List.Append
                  ((Parameter => E,
                    Is_Tagged => Accepts_Primitive_Ops
-                     (Context.Code.Context, Entity, Offset),
+                     (Context.Code.Context, E.Entity.Element, Offset),
                    PType     => Out_Parameter));
                Count (Out_Parameter) := Count (Out_Parameter) + 1;
-               Params.Last_Out_Param := Entity;
+               Params.Last_Out_Param.Replace_Element (E.Entity.Element);
 
             else
                --  Not set before the call, and not needed after
@@ -412,7 +414,7 @@ package body Refactoring.Subprograms is
       else
          Params.Is_Function := False;
          Params.Count := Integer (Params.List.Length);
-         Params.Last_Out_Param := No_General_Entity;
+         Params.Last_Out_Param.Replace_Element (No_Root_Entity);
       end if;
    end Compute_Params_And_Vars;
 
@@ -448,8 +450,8 @@ package body Refactoring.Subprograms is
                end if;
 
                if Param /= Self.List.Last
-                 and then Element (Next (Param)).Parameter.Entity /=
-                 Self.Last_Out_Param
+                 and then Element (Next (Param)).Parameter.Entity.Element /=
+                 Self.Last_Out_Param.Element
                then
                   Append (Decl, ";" & ASCII.LF & "    ");
                end if;
@@ -471,12 +473,13 @@ package body Refactoring.Subprograms is
       Name : String;
       Db   : General_Xref_Database) return Unbounded_String
    is
+      pragma Unreferenced (Db);
       Param : Parameter_Lists.Cursor;
       Method_Call : Unbounded_String;
    begin
       if Self.Is_Function then
          Method_Call := To_Unbounded_String
-           (Db.Get_Name (Self.Last_Out_Param) & " := ");
+           (Get_Name (Self.Last_Out_Param.Element) & " := ");
       end if;
 
       Append (Method_Call, Name);
@@ -490,11 +493,11 @@ package body Refactoring.Subprograms is
               or else not Self.Is_Function
             then
                Append (Method_Call,
-                       Db.Get_Name (Element (Param).Parameter.Entity));
+                       Get_Name (Element (Param).Parameter.Entity.Element));
 
                if Param /= Self.List.Last
-                 and then Element (Next (Param)).Parameter.Entity /=
-                 Self.Last_Out_Param
+                 and then Element (Next (Param)).Parameter.Entity.Element /=
+                 Self.Last_Out_Param.Element
                then
                   Append (Method_Call, ", ");
                end if;
@@ -553,7 +556,6 @@ package body Refactoring.Subprograms is
            Editor.New_Location (Context.Code.To_Line, 1).End_Of_Line);
 
       Params               : Parameters;
-      Typ                  : General_Entity;
       Code_Start, Code_End : Integer;
       Comment_Start, Comment_End : Integer;
       PList, Local, Returns : Unbounded_String;
@@ -565,8 +567,9 @@ package body Refactoring.Subprograms is
       PList := Params.Generate (Context);
 
       if Params.Is_Function then
-         Typ := Db.Get_Type_Of (Params.Last_Out_Param);
-         Returns := To_Unbounded_String (" return " & Db.Get_Name (Typ));
+         Returns := To_Unbounded_String
+           (" return " & Get_Name
+              (Get_Type_Of (Params.Last_Out_Param.Element)));
       end if;
 
       if Params.Is_Function then
@@ -611,10 +614,11 @@ package body Refactoring.Subprograms is
       Append (Method_Body, Local);
 
       if Params.Is_Function then
-         Typ := Db.Get_Type_Of (Params.Last_Out_Param);
-         Append (Method_Body,
-                 "   " & Db.Get_Name (Params.Last_Out_Param)
-                 & " : " & Db.Get_Name (Typ) & ";" & ASCII.LF);
+         Append
+           (Method_Body,
+            "   " & Get_Name (Params.Last_Out_Param.Element)
+            & " : " & Get_Name (Get_Type_Of (Params.Last_Out_Param.Element))
+            & ";" & ASCII.LF);
       end if;
 
       Append (Method_Body, "begin" & ASCII.LF & "   ");
@@ -623,7 +627,7 @@ package body Refactoring.Subprograms is
 
       if Params.Is_Function then
          Append (Method_Body, "   return "
-                 & Db.Get_Name (Params.Last_Out_Param) & ";" & ASCII.LF);
+                 & Get_Name (Params.Last_Out_Param.Element) & ";" & ASCII.LF);
       end if;
 
       Append (Method_Body, "end " & Name & ";" & ASCII.LF);
@@ -643,27 +647,30 @@ package body Refactoring.Subprograms is
         Context.Code.Context.Buffer_Factory.Get (Context.Code.File);
 
       procedure Callback
-        (Entity : General_Entity; Flags : Entity_References_Flags);
+        (Entity : Root_Entity'Class; Flags : Entity_References_Flags);
       --  Called when an entity used in the range of text has been found
 
       procedure Callback
-        (Entity : General_Entity;
+        (Entity : Root_Entity'Class;
          Flags  : Entity_References_Flags)
       is
          Decl : Refactoring.Services.Entity_Declaration;
+         H : Holder.Holder;
       begin
          Decl := Get_Declaration (Context.Code.Context, Entity);
 
          --  Marks are used to remove the declaration for the entity, which
          --  will not happen unless the entity is declared in the current
          --  file.
-         if Db.Get_Declaration (Entity).Loc.File = Context.Code.File then
+         if Get_Declaration (Entity).Loc.File = Context.Code.File then
             Create_Marks (Decl, Editor);
          end if;
 
+         H.Replace_Element (Entity);
+
          Context.Entities.Append
            (Extracted_Entity'
-              (Entity => Entity,
+              (Entity => H,
                Decl   => Decl,
                Flags  => Flags));
       end Callback;
@@ -731,9 +738,7 @@ package body Refactoring.Subprograms is
 
                while Has_Element (Iter) loop
                   E := Element (Iter);
-                  if Kernel.Databases.Is_Parameter_Of (E.Entity) =
-                    No_General_Entity
-                  then
+                  if Is_Parameter_Of (E.Entity.Element) = No_Root_Entity then
                      E.Decl.Remove;
                   end if;
                   Next (Iter);

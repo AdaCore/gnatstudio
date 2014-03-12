@@ -63,7 +63,7 @@ package body GNATdoc.Atree is
    function Internal_New_Entity
      (Context     : access constant Docgen_Context;
       Lang        : Language_Access;
-      E           : General_Entity;
+      E           : Root_Entity'Class;
       Loc         : General_Location;
       Name        : String := "";
       Is_Internal : Boolean := False) return Entity_Id;
@@ -292,7 +292,7 @@ package body GNATdoc.Atree is
 
    procedure Delete_Entity
      (List   : in out EInfo_List.Vector;
-      Entity : General_Entity)
+      Entity : Root_Entity'Class)
    is
       Cursor : EInfo_List.Cursor;
       E      : Entity_Id;
@@ -354,7 +354,7 @@ package body GNATdoc.Atree is
 
    function Find_Entity
      (List   : EInfo_List.Vector;
-      Entity : General_Entity) return Entity_Id
+      Entity : Root_Entity'Class) return Entity_Id
    is
    begin
       if not EInfo_List.Has_Element (List.First) then
@@ -1185,12 +1185,11 @@ package body GNATdoc.Atree is
    function Internal_New_Entity
      (Context : access constant Docgen_Context;
       Lang    : Language_Access;
-      E       : General_Entity;
+      E       : Root_Entity'Class;
       Loc     : General_Location;
       Name    : String := "";
       Is_Internal : Boolean := False) return Entity_Id
    is
-      Db : General_Xref_Database renames Context.Database;
 
       procedure Complete_Decoration (New_E : Entity_Id);
       --  Complete the decoration of the Xref components. The decoration of
@@ -1204,18 +1203,19 @@ package body GNATdoc.Atree is
       procedure Complete_Decoration
         (New_E : Entity_Id)
       is
-         E : General_Entity renames New_E.Xref.Entity;
+         E : constant Root_Entity'Class := New_E.Xref.Entity.Element;
 
       begin
          --  Stage 1: Complete decoration of low-level attributes.
 
-         New_E.Xref.Scope_E := Caller_At_Declaration (Db, E);
+         New_E.Xref.Scope_E.Replace_Element (Caller_At_Declaration (E));
 
          if Is_Package (New_E) then
-            New_E.Xref.Parent_Package := Xref.Parent_Package (Db, E);
+            New_E.Xref.Parent_Package.Replace_Element
+              (Xref.Parent_Package (E));
          end if;
 
-         New_E.Xref.Alias := Xref.Renaming_Of (Db, E);
+         New_E.Xref.Alias.Replace_Element (Xref.Renaming_Of (E));
 
          --  Protect GNATdoc against wrong information in the ALI file.
          --  We should investigate the compiler???
@@ -1224,18 +1224,18 @@ package body GNATdoc.Atree is
             declare
                Alias_Loc : General_Location;
             begin
-               Alias_Loc := Get_Location (Db, LL.Get_Alias (New_E));
+               Alias_Loc := Get_Location (LL.Get_Alias (New_E));
 
                if not Is_Spec_File (Context.Kernel, Alias_Loc.File) then
-                  New_E.Xref.Alias := No_General_Entity;
+                  New_E.Xref.Alias.Replace_Element (No_Root_Entity);
                end if;
             end;
          end if;
 
-         New_E.Xref.Etype    := Get_Type_Of (Db, E);
-         New_E.Xref.Body_Loc := Get_Body (Db, E);
+         New_E.Xref.Etype.Replace_Element (Get_Type_Of (E));
+         New_E.Xref.Body_Loc := Get_Body (E);
 
-         New_E.Xref.Is_Type  := Xref.Is_Type (Db, E);
+         New_E.Xref.Is_Type  := Xref.Is_Type (E);
 
          --  Ada single tasks are not types (they are objects) but we handle
          --  them as tasks for homogeneity in the gnatdoc frontend. We cannot
@@ -1249,31 +1249,31 @@ package body GNATdoc.Atree is
             New_E.Xref.Is_Type := True;
          end if;
 
-         New_E.Xref.Is_Global    := Xref.Is_Global (Db, E);
-         New_E.Xref.Is_Container := Xref.Is_Container (Db, E);
-         New_E.Xref.Is_Abstract  := Xref.Is_Abstract (Db, E);
+         New_E.Xref.Is_Global    := Xref.Is_Global (E);
+         New_E.Xref.Is_Container := Xref.Is_Container (E);
+         New_E.Xref.Is_Abstract  := Xref.Is_Abstract (E);
 
          if LL.Is_Type (New_E) then
-            New_E.Xref.Is_Array  := Xref.Is_Array (Db, E);
-            New_E.Xref.Is_Predef := Xref.Is_Predefined_Entity (Db, E);
-            New_E.Xref.Is_Access := Xref.Is_Access (Db, E);
+            New_E.Xref.Is_Array  := Xref.Is_Array (E);
+            New_E.Xref.Is_Predef := Xref.Is_Predefined_Entity (E);
+            New_E.Xref.Is_Access := Xref.Is_Access (E);
 
             if LL.Is_Access (New_E) then
-               New_E.Xref.Pointed_Type := Xref.Pointed_Type (Db, E);
+               New_E.Xref.Pointed_Type.Replace_Element (Xref.Pointed_Type (E));
 
                --  Xref does not provide the expected info???
                --  pragma Assert
                --    (New_E.Xref.Pointed_Type /= No_General_Type);
             end if;
          else
-            New_E.Xref.Is_Generic    := Is_Generic (Db, E);
-            New_E.Xref.Is_Subprogram := Is_Subprogram (Db, E);
-            New_E.Xref.Instance_Of   := Instance_Of (Db, E);
+            New_E.Xref.Is_Generic    := Is_Generic (E);
+            New_E.Xref.Is_Subprogram := Is_Subprogram (E);
+            New_E.Xref.Instance_Of.Replace_Element (Instance_Of (E));
 
             if New_E.Xref.Is_Subprogram then
-               New_E.Xref.Is_Abstract := Xref.Is_Abstract (Db, E);
+               New_E.Xref.Is_Abstract := Xref.Is_Abstract (E);
 
-               if Is_Primitive_Of (Db, E)'Length /= 0 then
+               if Is_Primitive_Of (E)'Length /= 0 then
                   New_E.Xref.Is_Primitive := True;
                end if;
             end if;
@@ -1287,7 +1287,7 @@ package body GNATdoc.Atree is
             if Is_Class_Or_Record_Type (New_E)
               or else Is_Concurrent_Type_Or_Object (New_E)
             then
-               New_E.Xref.Has_Methods := Db.Has_Methods (E);
+               New_E.Xref.Has_Methods := Has_Methods (E);
 
                if In_Ada_Language (New_E) then
 
@@ -1307,8 +1307,8 @@ package body GNATdoc.Atree is
                      --  it Xref.Has_Methods() returns False???
 
                      declare
-                        All_Methods : constant Xref.Entity_Array :=
-                          Methods (Db, E, Include_Inherited => True);
+                        All_Methods : Xref.Entity_Array :=
+                          Methods (E, Include_Inherited => True);
                      begin
                         if All_Methods'Length > 0 then
                            Set_Is_Tagged (New_E);
@@ -1319,7 +1319,7 @@ package body GNATdoc.Atree is
                         else
                            declare
                               Parents : constant Xref.Entity_Array :=
-                                Parent_Types (Db, E, Recursive => False);
+                                Parent_Types (E, Recursive => False);
                               Has_Progenitors : constant Boolean :=
                                 Parents'Length > 1;
                            begin
@@ -1329,6 +1329,8 @@ package body GNATdoc.Atree is
                               end if;
                            end;
                         end if;
+
+                        Free (All_Methods);
                      end;
                   end if;
                end if;
@@ -1339,7 +1341,7 @@ package body GNATdoc.Atree is
             --  (Xref): The value available through Xref.Get_Type is the same
             --  value returned by Xref.Returned_Type
 
-            if Present (New_E.Xref.Etype) then
+            if Present (New_E.Xref.Etype.Element) then
                Set_Kind (New_E, E_Function);
             end if;
          end if;
@@ -1355,7 +1357,7 @@ package body GNATdoc.Atree is
 
             begin
                Find_All_References
-                 (Db, Cursor, LL.Get_Entity (New_E), Include_All => True);
+                 (Cursor, LL.Get_Entity (New_E), Include_All => True);
                while not At_End (Cursor) loop
                   Ref  := Get (Cursor);
                   Info :=
@@ -1387,7 +1389,7 @@ package body GNATdoc.Atree is
                Ref    : General_Entity_Reference;
             begin
                Find_All_References
-                 (Db, Cursor, LL.Get_Entity (New_E), Include_All => True);
+                 (Cursor, LL.Get_Entity (New_E), Include_All => True);
                while not At_End (Cursor) loop
                   Ref := Get (Cursor);
 
@@ -1415,11 +1417,11 @@ package body GNATdoc.Atree is
       In_Ada_Lang : constant Boolean :=
                       Lang.all in Language.Ada.Ada_Language'Class;
       Q_Name : constant String :=
-                 (if Name /= "" then Name else Qualified_Name (Db, E));
+                 (if Name /= "" then Name else Qualified_Name (E));
       S_Name : constant String :=
-                 (if Name /= "" then Name else Get_Name (Db, E));
+                 (if Name /= "" then Name else Get_Name (E));
       Kind   : constant Entity_Kind :=
-                 (if Present (E) then LL.Get_Ekind (Db, E, In_Ada_Lang)
+                 (if Present (E) then LL.Get_Ekind (E, In_Ada_Lang)
                                  else E_Unknown);
       New_E  : Entity_Id;
 
@@ -1448,92 +1450,112 @@ package body GNATdoc.Atree is
       --  values. However, for C/C++ entities defined in header files, E.File
       --  is updated to reference the corresponding .c (or .cpp) file.
 
-      New_E :=
-        new Entity_Info_Record'
-          (Id       => Unique_Id,
-           Language => Lang,
-           Xref => Xref_Info'(
-             Alias            => No_General_Entity,
-             Body_Loc         => No_Location,
-             Ekind            => Kind,
-             Entity           => E,
-             Etype            => No_General_Entity,
+      declare
+         Alias            : Holder.Holder;
+         Entity           : Holder.Holder;
+         Etype            : Holder.Holder;
+         Instance_Of      : Holder.Holder;
+         Pointed_Type     : Holder.Holder;
+         Scope_E          : Holder.Holder;
+         Parent_Package   : Holder.Holder;
+      begin
+         Alias.Replace_Element (No_Root_Entity);
+         Etype.Replace_Element (No_Root_Entity);
+         Instance_Of.Replace_Element (No_Root_Entity);
+         Pointed_Type.Replace_Element (No_Root_Entity);
+         Scope_E.Replace_Element (No_Root_Entity);
+         Parent_Package.Replace_Element (No_Root_Entity);
 
-             First_Private_Entity_Loc  => No_Location,
+         Entity.Replace_Element (E);
 
-             Instance_Of      => No_General_Entity,
-             Loc              => Xref_Loc,
-             Pointed_Type     => No_General_Entity,
+         New_E :=
+           new Entity_Info_Record'
+             (Id       => Unique_Id,
+              Language => Lang,
+              Xref => Xref_Info'(
+                Alias            => Alias,
+                Body_Loc         => No_Location,
+                Ekind            => Kind,
+                Entity           => Entity,
+                Etype            => Etype,
 
-             Scope_E          => No_General_Entity,
-             Parent_Package   => No_General_Entity,
+                First_Private_Entity_Loc  => No_Location,
 
-             Has_Methods   => False,
+                Instance_Of      => Instance_Of,
+                Loc              => Xref_Loc,
+                Pointed_Type     => Pointed_Type,
 
-             Is_Abstract   => False,
-             Is_Access     => False,
-             Is_Array      => False,
-             Is_Container  => False,
-             Is_Global     => False,
-             Is_Predef     => False,
-             Is_Primitive  => False,
-             Is_Subprogram => False,
-             Is_Type       => False,
-             Is_Generic    => False,
+                Scope_E          => Scope_E,
+                Parent_Package   => Parent_Package,
 
-             Parent_Types  => <>,
-             Child_Types   => <>,
-             References    => <>),
+                Has_Methods   => False,
 
-           Full_Name       => Context.Kernel.Symbols.Find (Q_Name),
-           Short_Name      => Context.Kernel.Symbols.Find (S_Name),
-           Alias           => No_Entity,
-           Kind            => Kind,
+                Is_Abstract   => False,
+                Is_Access     => False,
+                Is_Array      => False,
+                Is_Container  => False,
+                Is_Global     => False,
+                Is_Predef     => False,
+                Is_Primitive  => False,
+                Is_Subprogram => False,
+                Is_Type       => False,
+                Is_Generic    => False,
 
-           Scope           => No_Entity,
-           Parent_Package  => No_Entity,
+                Parent_Types  => <>,
+                Child_Types   => <>,
+                References    => <>),
 
-           End_Of_Syntax_Scope_Loc => No_Location,
-           End_Of_Profile_Location_In_Body => No_Location,
-           Generic_Formals_Loc => No_Location,
-           First_Private_Entity_Loc => No_Location,
+              Full_Name       => Context.Kernel.Symbols.Find (Q_Name),
+              Short_Name      => Context.Kernel.Symbols.Find (S_Name),
+              Alias           => No_Entity,
+              Kind            => Kind,
 
-           Has_Private_Parent => False,
-           Has_Unknown_Discriminants => False,
+              Scope           => No_Entity,
+              Parent_Package  => No_Entity,
 
-           Has_Incomplete_Decoration => False,
-           Is_Decorated              => False,
+              End_Of_Syntax_Scope_Loc => No_Location,
+              End_Of_Profile_Location_In_Body => No_Location,
+              Generic_Formals_Loc => No_Location,
+              First_Private_Entity_Loc => No_Location,
 
-           In_Private_Part    => False,
+              Has_Private_Parent => False,
+              Has_Unknown_Discriminants => False,
 
-           Is_Alias          => False,
-           Is_Generic_Formal => False,
-           Is_Internal       => Is_Internal,
-           Is_Subtype        => False,
-           Is_Tagged_Type    => False,
-           Is_Incomplete     => False,
-           Is_Private        => False,
-           Idepth_Level      => 0,
+              Has_Incomplete_Decoration => False,
+              Is_Decorated              => False,
 
-           Doc_After         => No_Comment_Result,
-           Doc_Before        => No_Comment_Result,
+              In_Private_Part    => False,
 
-           Doc               => No_Comment_Result,
-           Comment           => No_Structured_Comment,
+              Is_Alias          => False,
+              Is_Generic_Formal => False,
+              Is_Internal       => Is_Internal,
+              Is_Subtype        => False,
+              Is_Tagged_Type    => False,
+              Is_Incomplete     => False,
+              Is_Private        => False,
+              Idepth_Level      => 0,
 
-           Full_View         => No_Entity,
-           Partial_View      => No_Entity,
+              Doc_After         => No_Comment_Result,
+              Doc_Before        => No_Comment_Result,
 
-           Src               => Null_Unbounded_String,
+              Doc               => No_Comment_Result,
+              Comment           => No_Structured_Comment,
 
-           Entities           => <>,
-           Generic_Formals    => <>,
-           Inherited_Methods  => <>,
-           Methods            => <>,
-           Parent             => null,
-           Progenitors        => <>,
-           Direct_Derivations => <>,
-           Error_Msg          => Null_Unbounded_String);
+              Full_View         => No_Entity,
+              Partial_View      => No_Entity,
+
+              Src               => Null_Unbounded_String,
+
+              Entities           => <>,
+              Generic_Formals    => <>,
+              Inherited_Methods  => <>,
+              Methods            => <>,
+              Parent             => null,
+              Progenitors        => <>,
+              Direct_Derivations => <>,
+              Error_Msg          => Null_Unbounded_String);
+
+      end;
 
       --  Do not perform the full decoration of the entity for auxiliary
       --  entities created by the frontend (for example, the "standard"
@@ -1916,7 +1938,7 @@ package body GNATdoc.Atree is
    function New_Entity
      (Context  : access constant Docgen_Context;
       Language : Language_Access;
-      E        : General_Entity;
+      E        : Root_Entity'Class;
       Loc      : General_Location) return Entity_Id is
    begin
       return
@@ -1941,7 +1963,7 @@ package body GNATdoc.Atree is
         Internal_New_Entity
           (Context     => Context,
            Lang        => Language,
-           E           => No_General_Entity,
+           E           => No_Root_Entity,
            Loc         => No_Location,
            Name        => Name,
            Is_Internal => True);
@@ -2561,9 +2583,9 @@ package body GNATdoc.Atree is
          E.Xref.Parent_Types.Append (Value);
       end Append_Parent_Type;
 
-      function Get_Alias (E : Entity_Id) return General_Entity is
+      function Get_Alias (E : Entity_Id) return Root_Entity'Class is
       begin
-         return E.Xref.Alias;
+         return E.Xref.Alias.Element;
       end Get_Alias;
 
       function Get_Body_Loc (E : Entity_Id) return General_Location is
@@ -2577,15 +2599,15 @@ package body GNATdoc.Atree is
          return E.Xref.Child_Types'Access;
       end Get_Child_Types;
 
-      function Get_Entity (E : Entity_Id) return General_Entity is
+      function Get_Entity (E : Entity_Id) return Root_Entity'Class is
       begin
-         return E.Xref.Entity;
+         return E.Xref.Entity.Element;
       end Get_Entity;
 
       function Get_Instance_Of
-        (E : Entity_Id) return General_Entity is
+        (E : Entity_Id) return Root_Entity'Class is
       begin
-         return E.Xref.Instance_Of;
+         return E.Xref.Instance_Of.Element;
       end Get_Instance_Of;
 
       function Get_Location (E : Entity_Id) return General_Location is
@@ -2593,9 +2615,9 @@ package body GNATdoc.Atree is
          return E.Xref.Loc;
       end Get_Location;
 
-      function Get_Parent_Package (E : Entity_Id) return General_Entity is
+      function Get_Parent_Package (E : Entity_Id) return Root_Entity'Class is
       begin
-         return E.Xref.Parent_Package;
+         return E.Xref.Parent_Package.Element;
       end Get_Parent_Package;
 
       function Get_Parent_Types
@@ -2604,14 +2626,14 @@ package body GNATdoc.Atree is
          return E.Xref.Parent_Types'Access;
       end Get_Parent_Types;
 
-      function Get_Pointed_Type (E : Entity_Id) return General_Entity is
+      function Get_Pointed_Type (E : Entity_Id) return Root_Entity'Class is
       begin
-         return E.Xref.Pointed_Type;
+         return E.Xref.Pointed_Type.Element;
       end Get_Pointed_Type;
 
-      function Get_Scope (E : Entity_Id) return General_Entity is
+      function Get_Scope (E : Entity_Id) return Root_Entity'Class is
       begin
-         return E.Xref.Scope_E;
+         return E.Xref.Scope_E.Element;
       end Get_Scope;
 
       function Has_Methods (E : Entity_Id) return Boolean is
@@ -2654,8 +2676,7 @@ package body GNATdoc.Atree is
       ------------------------
 
       function Is_Self_Referenced_Type
-        (Db   : General_Xref_Database;
-         E    : General_Entity;
+        (E    : Root_Entity'Class;
          Lang : Language_Access) return Boolean
       is
          In_C_Or_CPP_Lang : constant Boolean :=
@@ -2664,16 +2685,16 @@ package body GNATdoc.Atree is
          return
            In_C_Or_CPP_Lang
              and then Present (E)
-             and then Db.Is_Type (E)
-             and then Db.Is_Container (E)
+             and then Is_Type (E)
+             and then Is_Container (E)
               --  The value returned by Xref.Is_Container() is not
               --  fully reliable in Ada (for example, not set for
               --  e_class_wide_type???)
-             and then Db.Is_Global (E)
-             and then LL.Get_Ekind (Db, E, In_Ada_Lang => False)
+             and then Is_Global (E)
+             and then LL.Get_Ekind (E, In_Ada_Lang => False)
                         = E_Record_Type
-             and then Db.Get_Name (Db.Caller_At_Declaration (E))
-                        = Db.Get_Name (E);
+             and then Get_Name (Caller_At_Declaration (E))
+                        = Get_Name (E);
       end Is_Self_Referenced_Type;
 
       -------------
@@ -2692,11 +2713,10 @@ package body GNATdoc.Atree is
       --       at gnatlib/src/generated
 
       function Get_Ekind
-        (Db          : General_Xref_Database;
-         E           : General_Entity;
+        (E           : Root_Entity'Class;
          In_Ada_Lang : Boolean) return Entity_Kind
       is
-         Kind : constant String := Get_Display_Kind (Db, E);
+         Kind : constant String := Get_Display_Kind (E);
 
       begin
          --  Variables, fields and parameters
@@ -3256,7 +3276,7 @@ package body GNATdoc.Atree is
 
       declare
          End_Of_Scope_Loc : constant General_Location :=
-           End_Of_Scope (Db, LL.Get_Entity (E));
+           End_Of_Scope (LL.Get_Entity (E));
 
       begin
          if Present (End_Of_Scope_Loc) then
@@ -3272,9 +3292,9 @@ package body GNATdoc.Atree is
          Append_Line
            (LL_Prefix
             & "Parent_Package: "
-            & Get_Name (Db, LL.Get_Parent_Package (E))
+            & Get_Name (LL.Get_Parent_Package (E))
             & " ["
-            & Image (Get_Location (Db, LL.Get_Parent_Package (E)))
+            & Image (Get_Location (LL.Get_Parent_Package (E)))
             & "]");
       end if;
 
@@ -3292,9 +3312,9 @@ package body GNATdoc.Atree is
             Append_Line
               (LL_Prefix
                & "Scope: "
-               & Get_Name (Db, LL.Get_Scope (E))
+               & Get_Name (LL.Get_Scope (E))
                & " ["
-               & Image (Get_Location (Db, LL.Get_Scope (E)))
+               & Image (Get_Location (LL.Get_Scope (E)))
                & "]");
          else
             Append_Line
@@ -3303,11 +3323,11 @@ package body GNATdoc.Atree is
          end if;
       end if;
 
-      if Present (E.Xref.Etype) then
+      if Present (E.Xref.Etype.Element) then
          Append_Line
            (LL_Prefix
-            & "Etype: " & Get_Name (Db, E.Xref.Etype)
-            & " [" & Image (Db, E.Xref.Etype) & "]");
+            & "Etype: " & Get_Name (E.Xref.Etype.Element)
+            & " [" & Image (E.Xref.Etype.Element) & "]");
       end if;
 
       if LL.Is_Access (E)
@@ -3315,15 +3335,15 @@ package body GNATdoc.Atree is
       then
          Append_Line
            (LL_Prefix
-            & "Pointed type: " & Get_Name (Db, LL.Get_Pointed_Type (E))
-            & " [" & Image (Db, LL.Get_Pointed_Type (E)) & "]");
+            & "Pointed type: " & Get_Name (LL.Get_Pointed_Type (E))
+            & " [" & Image (LL.Get_Pointed_Type (E)) & "]");
       end if;
 
       if Present (LL.Get_Alias (E)) then
          Append_Line
            (LL_Prefix
-            & "Alias: " & Get_Name (Db, LL.Get_Alias (E))
-            & " [" & Image (Db, LL.Get_Alias (E)) & "]");
+            & "Alias: " & Get_Name (LL.Get_Alias (E))
+            & " [" & Image (LL.Get_Alias (E)) & "]");
       end if;
 
       if LL.Is_Abstract (E) then
@@ -3504,9 +3524,9 @@ package body GNATdoc.Atree is
          Append_Line
            (LL_Prefix
             & "Instance_Of: "
-            & Image (Get_Location (Db, LL.Get_Instance_Of (E)))
+            & Image (Get_Location (LL.Get_Instance_Of (E)))
             & ":"
-            & Get_Name (Db, LL.Get_Instance_Of (E)));
+            & Get_Name (LL.Get_Instance_Of (E)));
       end if;
 
       if not Reliable_Mode
@@ -3588,10 +3608,9 @@ package body GNATdoc.Atree is
    ----------
 
    function name
-     (Db : General_Xref_Database;
-      E  : General_Entity) return String is
+     (E  : Root_Entity'Class) return String is
    begin
-      return Get_Name (Db, E);
+      return Get_Name (E);
    end name;
 
    --------
@@ -3662,14 +3681,14 @@ package body GNATdoc.Atree is
       end if;
    end pns;
 
-   procedure pns (Db : General_Xref_Database; E : General_Entity) is
+   procedure pns (E : Root_Entity'Class) is
    begin
       if No (E) then
          GNAT.IO.Put_Line ("<No entity>");
       else
          declare
-            Loc  : constant General_Location := Get_Location (Db, E);
-            Name : constant String := Get_Name (Db, E);
+            Loc  : constant General_Location := Get_Location (E);
+            Name : constant String := Get_Name (E);
          begin
             GNAT.IO.Put_Line (Name & " " & Image (Loc));
          end;
@@ -3709,10 +3728,10 @@ package body GNATdoc.Atree is
       end loop;
    end pv;
 
-   procedure pv (Db : General_Xref_Database; V : Xref.Entity_Array) is
+   procedure pv (V : Xref.Entity_Array) is
    begin
       for J in V'Range loop
-         pns (Db, V (J));
+         pns (V (J).all);
       end loop;
    end pv;
 

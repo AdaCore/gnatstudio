@@ -23,10 +23,14 @@ with GNATCOLL.Projects;
 with Xref;                             use Xref;
 with Basic_Types;                      use Basic_Types;
 
+with Ada.Containers.Indefinite_Holders;
+
 package body GPS.Scripts.Entities is
 
+   package Holder is new Ada.Containers.Indefinite_Holders (Root_Entity'Class);
+
    type Entity_Properties_Record is new Instance_Property_Record with record
-      Entity  : General_Entity;
+      H : Holder.Holder;
    end record;
 
    Entity_Class_Name        : constant String := "Entity";
@@ -56,12 +60,12 @@ package body GPS.Scripts.Entities is
 
    function Create_Entity
      (Script : access Scripting_Language_Record'Class;
-      Entity : Xref.General_Entity)
+      Entity : Xref.Root_Entity'Class)
       return Class_Instance
    is
       Instance : Class_Instance;
    begin
-      if Entity = No_General_Entity then
+      if Entity = No_Root_Entity then
          return No_Class_Instance;
       else
          Instance := New_Instance
@@ -79,7 +83,6 @@ package body GPS.Scripts.Entities is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel  : constant Core_Kernel := Get_Kernel (Data);
-      Entity : General_Entity;
       Ref    : General_Entity_Reference;
 
    begin
@@ -109,79 +112,72 @@ package body GPS.Scripts.Entities is
                     (Nth_Arg (Data, 5, Default => -1)));
             end if;
 
-            Kernel.Databases.Find_Declaration_Or_Overloaded
-              (Loc               => Loc,
-               Entity_Name       => Name,
-               Ask_If_Overloaded => False,
-               Entity            => Entity,
-               Closest_Ref       => Ref,
-               Approximate_Search_Fallback => Approx_Search);
-
-            if Entity = No_General_Entity then
-               Set_Error_Msg (Data, -"Entity not found");
-            else
-               declare
-                  Instance : constant Class_Instance :=
-                    Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
-               begin
-                  Set_Data (Instance, Entity);
-               end;
-            end if;
+            declare
+               Entity : constant Root_Entity'Class :=
+                 Kernel.Databases.Find_Declaration_Or_Overloaded
+                   (Loc               => Loc,
+                    Entity_Name       => Name,
+                    Ask_If_Overloaded => False,
+                    Closest_Ref       => Ref,
+                    Approximate_Search_Fallback => Approx_Search);
+            begin
+               if Entity = No_Root_Entity then
+                  Set_Error_Msg (Data, -"Entity not found");
+               else
+                  declare
+                     Instance : constant Class_Instance :=
+                       Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
+                  begin
+                     Set_Data (Instance, Entity);
+                  end;
+               end if;
+            end;
          end;
 
       elsif Command = "full_name" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value
-           (Data, Kernel.Databases.Qualified_Name (Entity));
+         Set_Return_Value (Data, Get_Data (Data, 1).Qualified_Name);
 
       elsif Command = "name" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Get_Name (Entity));
+         Set_Return_Value (Data, Get_Data (Data, 1).Get_Name);
 
       elsif Command = "attributes" then
          --  ??? Should be made obsolete and replaced by separate functions.
-         Entity := Get_Data (Data, 1);
+         declare
+            Entity : constant Root_Entity'Class := Get_Data (Data, 1);
+         begin
+            Set_Return_Value (Data, Entity.Is_Global);
+            Set_Return_Value_Key (Data, "global");
 
-         Set_Return_Value (Data, Kernel.Databases.Is_Global (Entity));
-         Set_Return_Value_Key (Data, "global");
-
-         Set_Return_Value (Data, Kernel.Databases.Is_Static_Local (Entity));
-         Set_Return_Value_Key (Data, "static");
+            Set_Return_Value (Data, Entity.Is_Static_Local);
+            Set_Return_Value_Key (Data, "static");
+         end;
 
       elsif Command = "is_subprogram" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Subprogram (Entity));
+         Set_Return_Value (Data, Get_Data (Data, 1).Is_Subprogram);
 
       elsif Command = "is_generic" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Generic (Entity));
+         Set_Return_Value (Data, Get_Data (Data, 1).Is_Generic);
 
       elsif Command = "is_global" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Global (Entity));
+         Set_Return_Value (Data, Get_Data (Data, 1).Is_Global);
 
       elsif Command = "is_access" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Access (Entity));
+         Set_Return_Value (Data, Get_Data (Data, 1).Is_Access);
 
       elsif Command = "is_array" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Array (Entity));
+         Set_Return_Value (Data, Get_Data (Data, 1).Is_Array);
 
       elsif Command = "is_type" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Type (Entity));
+         Set_Return_Value (Data, Get_Data (Data, 1).Is_Type);
 
       elsif Command = "is_container" then
-         Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Kernel.Databases.Is_Container (Entity));
+         Set_Return_Value (Data, Get_Data (Data, 1).Is_Container);
 
       elsif Command = "declaration" then
          declare
             Location : General_Location;
          begin
-            Entity := Get_Data (Data, 1);
-            Location := Kernel.Databases.Get_Declaration (Entity).Loc;
+            Location := Get_Data (Data, 1).Get_Declaration.Loc;
 
             Set_Return_Value
               (Data, GPS.Scripts.File_Locations.Create_File_Location
@@ -198,11 +194,10 @@ package body GPS.Scripts.Entities is
             Location     : General_Location := No_Location;
             Cur_Location : General_Location := No_Location;
             Count        : Integer := Nth_Arg (Data, 2, 1);
+            Entity       : constant Root_Entity'Class := Get_Data (Data, 1);
          begin
-            Entity := Get_Data (Data, 1);
             while Count > 0 loop
-               Location := Kernel.Databases.Get_Body
-                 (Entity, After => Cur_Location);
+               Location := Entity.Get_Body (After => Cur_Location);
                Count := Count - 1;
                Cur_Location := Location;
             end loop;
@@ -225,8 +220,7 @@ package body GPS.Scripts.Entities is
          declare
             Location : General_Location := No_Location;
          begin
-            Entity := Get_Data (Data, 1);
-            Location := Kernel.Databases.End_Of_Scope (Entity);
+            Location := Get_Data (Data, 1).End_Of_Scope;
             if Location /= No_Location then
                Set_Return_Value
                  (Data, GPS.Scripts.File_Locations.Create_File_Location
@@ -250,7 +244,7 @@ package body GPS.Scripts.Entities is
    function Get_Data
      (Data : Callback_Data'Class;
       N : Positive)
-      return Xref.General_Entity
+      return Xref.Root_Entity'Class
    is
       Class : constant Class_Type := Get_Entity_Class (Get_Kernel (Data));
       Inst  : constant Class_Instance := Nth_Arg
@@ -265,7 +259,7 @@ package body GPS.Scripts.Entities is
       if Props = null then
          return No_General_Entity;
       else
-         return Entity_Properties_Record (Props.all).Entity;
+         return Entity_Properties_Record (Props.all).H.Element;
       end if;
    end Get_Data;
 
@@ -358,16 +352,18 @@ package body GPS.Scripts.Entities is
 
    procedure Set_Data
      (Instance : Class_Instance;
-      Entity : Xref.General_Entity) is
+      Entity : Xref.Root_Entity'Class)
+   is
+      R : Entity_Properties_Record;
    begin
       if not Is_Subclass (Instance, Entity_Class_Name) then
          raise Invalid_Data;
       end if;
 
       Ref (Entity);
-      Set_Data
-        (Instance, Entity_Class_Name,
-         Entity_Properties_Record'(Entity => Entity));
+
+      R.H.Replace_Element (Entity);
+      Set_Data (Instance, Entity_Class_Name, R);
    end Set_Data;
 
 end GPS.Scripts.Entities;

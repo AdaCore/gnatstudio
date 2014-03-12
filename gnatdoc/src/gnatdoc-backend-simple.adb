@@ -1457,7 +1457,8 @@ package body GNATdoc.Backend.Simple is
                   --  Append all its instantiations
 
                   declare
-                     LL_E1   : constant General_Entity := LL.Get_Entity (E1);
+                     LL_E1   : constant Root_Entity'Class :=
+                       LL.Get_Entity (E1);
                      Cursor2 : EInfo_List.Cursor := List.First;
                      E2      : Entity_Id;
                   begin
@@ -1528,7 +1529,7 @@ package body GNATdoc.Backend.Simple is
                   --  Append all its instantiations
 
                   declare
-                     LL_Generic_Entity : constant General_Entity :=
+                     LL_Generic_Entity : constant Root_Entity'Class :=
                        LL.Get_Entity (Generic_Entity);
 
                   begin

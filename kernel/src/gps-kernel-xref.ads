@@ -18,10 +18,9 @@
 --  This package provides utilities for creating and maintaining
 --  a GNATCOLL Xref database for the kernel.
 
-with Glib.Values;       use Glib.Values;
+with GNATCOLL.VFS;  use GNATCOLL.VFS;
+with GNATCOLL.Xref; use GNATCOLL.Xref;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
-with GNATCOLL.Xref;     use GNATCOLL.Xref;
 with Gtk.Widget;
 with Xref;              use Xref;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
@@ -51,7 +50,7 @@ package GPS.Kernel.Xref is
      (Self    : access GPS_General_Xref_Database_Record;
       File    : Virtual_File;
       Project : GNATCOLL.Projects.Project_Type;
-      Entity  : General_Entity) return General_Entity;
+      Entity  : Root_Entity'Class) return Root_Entity'Class;
    --  see inherited documentation
 
    procedure Create_Database
@@ -106,8 +105,8 @@ package GPS.Kernel.Xref is
 
    function On_Entity_Found
      (Data                : access Commands_User_Data_Record;
-      Entity              : General_Entity;
-      Parent              : General_Entity;
+      Entity              : Root_Entity'Class;
+      Parent              : Root_Entity'Class;
       Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean is abstract;
@@ -119,7 +118,7 @@ package GPS.Kernel.Xref is
 
    procedure Examine_Ancestors_Call_Graph
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity            : General_Entity;
+      Entity            : Root_Entity'Class;
       User_Data         : access Commands_User_Data_Record'Class;
       Background_Mode   : Boolean := True;
       Dispatching_Calls : Boolean := False;
@@ -140,7 +139,7 @@ package GPS.Kernel.Xref is
 
    procedure Examine_Entity_Call_Graph
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity            : General_Entity;
+      Entity            : Root_Entity'Class;
       User_Data         : access Commands_User_Data_Record'Class;
       Get_All_Refs      : Boolean;
       Dispatching_Calls : Boolean);
@@ -162,20 +161,6 @@ package GPS.Kernel.Xref is
    --  ??? This is needed only for the "old" database, and should be removed
    --  when switching to GNATCOLL.Xref.
 
-   -------------
-   -- GValues --
-   -------------
-   --  The following subprograms can be used to store an entity in a GValue,
-   --  for instance to store it in a tree view
-
-   function To_GValue (Entity : General_Entity) return Glib.Values.GValue;
-   function From_GValue (Value : Glib.Values.GValue) return General_Entity;
-   --  Store an entity in a GValue, or get its value back. This properly
-   --  handles reference counting, so that while the GValue is in use, the
-   --  entity remains valid. The returned entity has a borrow reference, and
-   --  thus needs to be Ref'ed if you want to keep it. Removing the row in the
-   --  tree for instance makes the entity invalid.
-
    function Get_Entity_Information_Type return Glib.GType;
    --  Return the type associated with an entity. This is the type that should
    --  be used when creating the tree model.
@@ -183,7 +168,7 @@ package GPS.Kernel.Xref is
    function Documentation
      (Self             : General_Xref_Database;
       Handler          : Language_Handlers.Language_Handler;
-      Entity           : General_Entity;
+      Entity           : Root_Entity'Class;
       Color_For_Optional_Param : String := "#555555";
       Raw_Format       : Boolean := False;
       Check_Constructs : Boolean := True) return String;
