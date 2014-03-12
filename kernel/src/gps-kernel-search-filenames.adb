@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2013, AdaCore                          --
+--                     Copyright (C) 2013-2014, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -525,6 +525,15 @@ package body GPS.Kernel.Search.Filenames is
       Props  : File_Props;
       pragma Unreferenced (Props);
    begin
+      --  Only display a preview when the file has a known language. This
+      --  should filter out binary files (executables, images,...) which will
+      --  either be very slow to load and display, or will simply crash gtk
+      --  and GPS
+
+      if Get_Registry (Self.Kernel).Tree.Info (Self.File).Language = "" then
+         return null;
+      end if;
+
       Read_File_With_Charset
         (Self.File,
          UTF8     => UTF8,
