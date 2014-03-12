@@ -706,9 +706,7 @@ package body GPS.Kernel.Xref is
            (Self.Kernel,
             "Cross-reference database appears to be corrupted." & ASCII.LF
             & "Please exit GPS, delete the file '"
-            & Xref_Database_Location
-              (Self.Kernel.Databases, Self.Kernel.Registry.Tree.Root_Project)
-              .Display_Full_Name
+            & Xref_Database_Location (Self.Kernel.Databases).Display_Full_Name
             & "' and restart GPS",
             Mode => Error);
       end if;

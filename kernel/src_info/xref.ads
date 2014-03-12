@@ -145,8 +145,7 @@ package Xref is
    --  Should return No_General_Entity if the user has cancelled the action.
 
    function Xref_Database_Location
-     (Self    : not null access General_Xref_Database_Record;
-      Project : GNATCOLL.Projects.Project_Type)
+     (Self    : not null access General_Xref_Database_Record)
       return GNATCOLL.VFS.Virtual_File;
    --  Location of the sqlite file that contains the xref database on which
    --  GPS is currently working.

@@ -27,6 +27,7 @@ with GNATCOLL.SQL.Sqlite;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.OS_Lib;
+with GNAT.SHA1;                 use GNAT.SHA1;
 with GNAT.Strings;              use GNAT.Strings;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree;             use Language.Tree;
@@ -2671,14 +2672,14 @@ package body Xref is
    -- Open_Database --
    -------------------
 
-   procedure Open_Database (Self   : General_Xref_Database;
-                            Tree   : Project_Tree_Access)
+   procedure Open_Database
+     (Self   : General_Xref_Database; Tree   : Project_Tree_Access)
    is
       Working_Xref_File : Virtual_File;
 
       Error : GNAT.Strings.String_Access;
    begin
-      Working_Xref_File := Xref_Database_Location (Self, Tree.Root_Project);
+      Working_Xref_File := Xref_Database_Location (Self);
 
       Self.Xref_Db_Is_Temporary := Tree.Status /= From_File;
 
@@ -4022,8 +4023,7 @@ package body Xref is
    ----------------------------
 
    function Xref_Database_Location
-     (Self    : not null access General_Xref_Database_Record;
-      Project : GNATCOLL.Projects.Project_Type)
+     (Self    : not null access General_Xref_Database_Record)
       return GNATCOLL.VFS.Virtual_File
    is
       Dir  : Virtual_File;
@@ -4032,6 +4032,7 @@ package body Xref is
         and then Self.Working_Xref_Db = GNATCOLL.VFS.No_File
       then
          declare
+            Project : constant Project_Type := Self.Registry.Tree.Root_Project;
             Attr : constant String :=
               Project.Attribute_Value
                 (Build ("IDE", "Xref_Database"),
@@ -4040,9 +4041,8 @@ package body Xref is
          begin
             if Attr = "" then
                declare
-                  Hash : constant Ada.Containers.Hash_Type :=
-                    Project.Project_Path.Full_Name_Hash;
-                  Hash_Img : constant String := Hash'Img;
+                  Hash : constant String := GNAT.SHA1.Digest
+                    (+Project.Project_Path.Full_Name (Normalize => True));
                begin
                   Dir    := Project.Object_Dir;
 
@@ -4054,10 +4054,7 @@ package body Xref is
 
                   Self.Working_Xref_Db := Create_From_Dir
                     (Dir  => Get_Tmp_Directory,
-                     Base_Name => +("gnatinspect-"
-                     & Hash_Img (Hash_Img'First + 1 .. Hash_Img'Last)
-                     & ".db"));
-
+                     Base_Name => +("gnatinspect-" & Hash & ".db"));
                end;
             else
                Self.Working_Xref_Db := Create_From_Base
