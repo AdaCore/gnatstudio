@@ -135,12 +135,17 @@ def show_gnatdg(for_subprogram = False, in_external_editor = False):
   file = context.file().name("Build_Server")
   line = context.location().line()
 
-  if context.project():
-    l = context.project().object_dirs (False)
-    prj = ' -P """' + GPS.Project.root().file().name("Build_Server") + '"""'
-  else:
-    l = GPS.Project.root().object_dirs (False)
-    prj = " -a"
+  try:
+    if context.project():
+      l = context.project().object_dirs (False)
+      prj = ' -P """' + GPS.Project.root().file().name("Build_Server") + '"""'
+    else:
+      l = GPS.Project.root().object_dirs (False)
+      prj = " -a"
+  except:
+    GPS.Console("Messages").write(
+        "Could not obtain project information for this file")
+    return
 
   if l:
     objdir = l[0]
