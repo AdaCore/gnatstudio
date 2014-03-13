@@ -4625,6 +4625,12 @@ package body GNATdoc.Frontend is
      (Context : access constant Docgen_Context;
       Root    : Entity_Id)
    is
+      procedure Error
+        (Entity  : Entity_Id;
+         Msg     : String);
+      --  Report the error message Msg on the location of Entity and store it
+      --  on the entity.
+
       function Is_Custom_Tag (Tag : String) return Boolean;
       --  Return True if Tag is a supported tag.
       --  ??? This info should be configurable in a separate file to allow
@@ -4660,6 +4666,21 @@ package body GNATdoc.Frontend is
          Scope_Level : Natural) return Traverse_Result;
       --  Dispatch a call to build an structured comment between routines
       --  Parse_Doc and Parse_Subprogram_Comments.
+
+      -----------
+      -- Error --
+      -----------
+
+      procedure Error
+        (Entity : Entity_Id;
+         Msg    : String) is
+      begin
+         Error (Context, LL.Get_Entity (Entity), Msg);
+
+         if No (Get_Error_Msg (Entity)) then
+            Set_Error_Msg (Entity, To_Unbounded_String (Msg));
+         end if;
+      end Error;
 
       -------------------
       -- Is_Custom_Tag --
@@ -4734,6 +4755,7 @@ package body GNATdoc.Frontend is
          E       : Entity_Id;
          S       : String)
       is
+         pragma Unreferenced (Context);
          Comment : constant Structured_Comment := Get_Comment (E);
          Current : Tag_Cursor := New_Cursor (Comment);
 
@@ -4931,18 +4953,12 @@ package body GNATdoc.Frontend is
                   if Tag_Text = "return"
                     and then Get_Kind (E) = E_Procedure
                   then
-                     Error
-                       (Context,
-                        LL.Get_Entity (E),
-                        "@return not applicable to procedures");
+                     Error (E, "@return not applicable to procedures");
                   end if;
 
                   if Tag_Text = "param" then
                      if No (Attr_Loc) then
-                        Error
-                          (Context,
-                           LL.Get_Entity (E),
-                           "missing parameter name");
+                        Error (E, "missing parameter name");
 
                      else
                         declare
@@ -4954,22 +4970,28 @@ package body GNATdoc.Frontend is
                              Search_Param (Comment, Param_Name);
 
                            if Cursor = No_Cursor then
-                              Error
-                                (Context,
-                                 LL.Get_Entity (E),
-                                 Msg =>
-                                   "wrong parameter name '"
-                                 & Param_Name & "'");
+                              Error (E,
+                                "wrong parameter name '" & Param_Name & "'");
 
                            elsif Present (Get (Cursor).Text) then
-                              Error
-                                (Context,
-                                 Get (Cursor).Entity.Element,
-                                 "parameter '"
-                                 & Param_Name & "' documented twice");
+                              declare
+                                 Entity : constant Root_Entity'Class :=
+                                   Get (Cursor).Entity.Element;
+                              begin
+                                 for Param of Get_Entities (E).all loop
+                                    if LL.Get_Entity (Param) = Entity then
+                                       Error
+                                         (Param,
+                                          "parameter '"
+                                            & Param_Name
+                                            & "' documented twice");
+                                       exit;
+                                    end if;
+                                 end loop;
+                              end;
 
                            elsif Present (Text_Loc) then
-                              Current := Cursor; -- needed???
+                              Current := Cursor;
 
                               declare
                                  Text : String renames
@@ -5099,7 +5121,7 @@ package body GNATdoc.Frontend is
                   if No (Tag_Info.Text) then
                      Warning
                        (Context,
-                        Tag_Info.Entity.Element, --  LL.Get_Entity (Subp),
+                        Tag_Info.Entity.Element,
                         "undocumented parameter ("
                         & To_String (Tag_Info.Attr)
                         & ")");

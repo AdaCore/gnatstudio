@@ -3593,7 +3593,7 @@ package body GNATdoc.Atree is
       if With_Errors
         and then Present (Get_Error_Msg (E))
       then
-         Append_Line (To_String (Get_Error_Msg (E)));
+         Append_Line ("error: " & To_String (Get_Error_Msg (E)));
       end if;
 
       return To_String (Printout);
