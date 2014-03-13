@@ -5,6 +5,7 @@ import GPS
 import os.path
 import tool_output
 
+
 class Sqlite_Cross_References(object):
     """
     A python class to support the xref engine in GPS.
@@ -17,7 +18,7 @@ class Sqlite_Cross_References(object):
     # testsuite in some cases, since this also breaks all cross-referenes.
 
     xml = """<?xml version="1.0" ?><GPS>
-<!-- This is an XML model for launching gnatinspect, the cross-references parser -->
+<!-- This is an XML model for launching gnatinspect -->
 <target-model name="gnatinspect" category="">
    <description>Launch cross-reference recompilation</description>
    <icon>gps-custom-build</icon>
@@ -87,8 +88,8 @@ class Sqlite_Cross_References(object):
         if not os.path.exists(GPS.Project.root().file().name()):
             return
 
-        # If we are already recomputing Xref info, do not launch another instance
-        # of gnatinspect, but register one to be launched
+        # If we are already recomputing Xref info, do not launch another
+        # instance of gnatinspect, but register one to be launched
 
         tasks = GPS.Task.list()
 
@@ -108,20 +109,22 @@ class Sqlite_Cross_References(object):
         if not self.trusted_mode:
             extra_args.append("--symlinks")
 
-        target.execute(synchronous=GPS.Logger("TESTSUITE").active, quiet=True, extra_args=extra_args)
+        target.execute(synchronous=GPS.Logger(
+            "TESTSUITE").active, quiet=True, extra_args=extra_args)
 
     def on_compilation_finished(self, hook, category,
-        target_name="", mode_name="", status=""):
+                                target_name="", mode_name="", status=""):
 
-
-        if (target_name in ["Compile File", "Build Main", "Build All", "Make",
-               "Compile All Sources", "Build <current file>", "Custom Build...",
-               "Check Semantic", "Update file XRef", "Update file XRef in background"]
-            or category in ["Makefile"]):
+        if (target_name in ["Compile File", "Build Main",
+                            "Build All", "Make", "Compile All Sources",
+                            "Build <current file>", "Custom Build...",
+                            "Check Semantic", "Update file XRef",
+                            "Update file XRef in background"]
+                or category in ["Makefile"]):
             self.recompute_xref()
 
         if (self.gnatinspect_launch_registered
-            and target_name == "Recompute Xref info"):
+                and target_name == "Recompute Xref info"):
             # A launch of gnatinspect was registered while this one was
             # running: relaunch one now.
 
@@ -138,6 +141,15 @@ class GnatInspect_OnExit_Hook(tool_output.OutputParser):
     name = "gnatinspect_onexit_hook"
 
     def on_exit(self, status, command):
+        if status != 0:
+            GPS.Logger("XREF").log(
+                "gnatinspect returned with status %s" % status)
+            GPS.Console("Messages").write(
+                ("gnatinspect returned with status %s,"
+                 "the database file (%s) might be corrupt.") %
+                (status, GPS.xref_db()),
+                mode="error")
+
         GPS.Hook("xref_updated").run()
 
 
