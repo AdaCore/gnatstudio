@@ -37,6 +37,11 @@ with Language; use Language;
 
 package body Xref is
    Me : constant Trace_Handle := Create ("Xref");
+
+   Force_Local_Database : constant Trace_Handle := Create
+     ("XREF.FORCE_LOCAL_DB", Off);
+   --  Whether to use a DB in the temporary directory
+
    Constructs_Heuristics : constant Trace_Handle :=
      Create ("Entities.Constructs", On);
 
@@ -2699,6 +2704,7 @@ package body Xref is
 
       Error : GNAT.Strings.String_Access;
    begin
+      Self.Working_Xref_Db := GNATCOLL.VFS.No_File;
       Working_Xref_File := Xref_Database_Location (Self);
 
       Self.Xref_Db_Is_Temporary := Tree.Status /= From_File;
@@ -4072,10 +4078,16 @@ package body Xref is
                  Use_Extended => True);
          begin
             if Attr = "" then
-               declare
-                  Hash : constant String := GNAT.SHA1.Digest
-                    (+Project.Project_Path.Full_Name (Normalize => True));
-               begin
+               if Active (Force_Local_Database) then
+                  declare
+                     Hash : constant String := GNAT.SHA1.Digest
+                       (+Project.Project_Path.Full_Name (Normalize => True));
+                  begin
+                     Self.Working_Xref_Db := Create_From_Dir
+                       (Dir  => Get_Tmp_Directory,
+                        Base_Name => +("gnatinspect-" & Hash & ".db"));
+                  end;
+               else
                   Dir    := Project.Object_Dir;
 
                   if Dir = No_File then
@@ -4085,9 +4097,9 @@ package body Xref is
                   end if;
 
                   Self.Working_Xref_Db := Create_From_Dir
-                    (Dir  => Get_Tmp_Directory,
-                     Base_Name => +("gnatinspect-" & Hash & ".db"));
-               end;
+                    (Dir        => Dir,
+                     Base_Name => +("gnatinspect.db"));
+               end if;
             else
                Self.Working_Xref_Db := Create_From_Base
                  (Base_Name => +Attr,
