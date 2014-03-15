@@ -211,7 +211,7 @@ package body GPS.Kernel.Timeout is
 
          Command.Data.Start_Time := Ada.Calendar.Clock;
 
-         Trace (Me, "Spawn the process");
+         Trace (Me, "Spawn the process " & Get_Command (Command.Data.CL));
 
          Spawn (Command.Data.D.Kernel,
                 Command.Data.CL,
@@ -236,7 +236,8 @@ package body GPS.Kernel.Timeout is
             return Execute_Again;
 
          else
-            Trace (Me, "Failure when spawning the process");
+            Trace (Me, "Failure when spawning the process "
+                   & Get_Command (Command.Data.CL));
 
             --  We could not launch the process: call the Exit_Cb nonetheless,
             --  as it may be used to keep count of executions, or to free
@@ -259,7 +260,7 @@ package body GPS.Kernel.Timeout is
       elsif Command.Data.D.Descriptor = null
         or else Command.Data.Died
       then
-         Trace (Me, "Process is finished");
+         Trace (Me, "Process finished: "  & Get_Command (Command.Data.CL));
          return Failure;
 
       else
