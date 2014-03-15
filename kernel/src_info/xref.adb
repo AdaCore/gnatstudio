@@ -39,7 +39,7 @@ package body Xref is
    Me : constant Trace_Handle := Create ("Xref");
 
    Force_Local_Database : constant Trace_Handle := Create
-     ("XREF.FORCE_LOCAL_DB", Off);
+     ("FORCE_LOCAL_DB", Off);
    --  Whether to use a DB in the temporary directory
 
    Constructs_Heuristics : constant Trace_Handle :=
@@ -4153,6 +4153,7 @@ package body Xref is
 
          --  Self.Xref was initialized in Project_Changed.
          Self.Xref.Free;
+         Self.Working_Xref_Db := No_File;
 
          Open_Database (Self, Tree);
 
