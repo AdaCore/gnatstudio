@@ -546,7 +546,7 @@ package body Interactive_Consoles is
         (Console, UTF8,
          Add_LF         => Add_LF,
          Highlight      => Highlight,
-         Highlight_Tag  => Console.Highlight_Tag,
+         Highlight_Tag  => Console.Tags (Highlight_Tag),
          Add_To_History => Add_To_History,
          Show_Prompt    => Show_Prompt,
          Text_Is_Input  => Text_Is_Input);
@@ -571,7 +571,7 @@ package body Interactive_Consoles is
          UTF8           => UTF8,
          Add_LF         => Add_LF,
          Highlight      => Highlight,
-         Highlight_Tag  => Console.Highlight_Tag,
+         Highlight_Tag  => Console.Tags (Highlight_Tag),
          Add_To_History => Add_To_History,
          Show_Prompt    => Show_Prompt,
          Text_Is_Input  => Text_Is_Input);
@@ -648,10 +648,11 @@ package body Interactive_Consoles is
          Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
          Get_End_Iter (Console.Buffer, Last_Iter);
          Apply_Tag
-           (Console.Buffer, Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
+           (Console.Buffer,
+            Console.Tags (Uneditable_Tag), Prompt_Iter, Last_Iter);
          Apply_Tag
            (Console.Buffer,
-            Console.External_Messages_Tag, Prompt_Iter, Last_Iter);
+            Console.Tags (External_Messages_Tag), Prompt_Iter, Last_Iter);
 
          --  Move the prompt mark at the end of the output, so that user input
          --  is only read from that point on.
@@ -1152,7 +1153,7 @@ package body Interactive_Consoles is
                     (View            => Console.View,
                      Completion      => Default_Completion_Handler'Access,
                      Prompt_End_Mark => Console.Prompt_Mark,
-                     Uneditable_Tag  => Console.Uneditable_Tag,
+                     Uneditable_Tag  => Console.Tags (Uneditable_Tag),
                      User_Data       => Console.Completion_User_Data);
 
                else
@@ -1160,7 +1161,7 @@ package body Interactive_Consoles is
                     (View            => Console.View,
                      Completion      => Console.Completion,
                      Prompt_End_Mark => Console.Prompt_Mark,
-                     Uneditable_Tag  => Console.Uneditable_Tag,
+                     Uneditable_Tag  => Console.Tags (Uneditable_Tag),
                      User_Data       => Console.Completion_User_Data);
                end if;
                Console.Internal_Insert := False;
@@ -1266,9 +1267,11 @@ package body Interactive_Consoles is
          Get_Iter_At_Offset (Console.Buffer, First_Iter, Offset);
 
          Apply_Tag
-           (Console.Buffer, Console.Uneditable_Tag, First_Iter, Prompt_Iter);
+           (Console.Buffer,
+            Console.Tags (Uneditable_Tag), First_Iter, Prompt_Iter);
          Apply_Tag
-           (Console.Buffer, Console.Prompt_Tag, First_Iter, Prompt_Iter);
+           (Console.Buffer,
+            Console.Tags (Prompt_Tag), First_Iter, Prompt_Iter);
       else
          Get_End_Iter (Console.Buffer, Prompt_Iter);
       end if;
@@ -1402,10 +1405,10 @@ package body Interactive_Consoles is
 
       Delete_Hyper_Links (C);
 
-      Unref (C.Uneditable_Tag);
-      Unref (C.Prompt_Tag);
-      Unref (C.Highlight_Tag);
-      Unref (C.External_Messages_Tag);
+      for J in C.Tags'Range loop
+         Unref (C.Tags (J));
+      end loop;
+
       Free (C.Key);
       Free (C.Prompt);
       Free (C.User_Input);
@@ -1506,31 +1509,24 @@ package body Interactive_Consoles is
       --  console without losing its contents.
       Unref (Console.Buffer);
 
-      Gtk_New (Console.Uneditable_Tag);
-      Set_Property
-        (Console.Uneditable_Tag, Gtk.Text_Tag.Editable_Property, False);
-      Add (Get_Tag_Table (Console.Buffer), Console.Uneditable_Tag);
+      for J in Console.Tags'Range loop
+         Gtk_New (Console.Tags (J));
+         Add (Get_Tag_Table (Console.Buffer), Console.Tags (J));
+      end loop;
 
-      Gtk_New (Console.External_Messages_Tag);
       Set_Property
-        (Console.External_Messages_Tag,
+        (Console.Tags (Uneditable_Tag), Gtk.Text_Tag.Editable_Property, False);
+
+      Set_Property
+        (Console.Tags (External_Messages_Tag),
          Gtk.Text_Tag.Style_Property,
          Pango_Style_Normal);
-      Add (Get_Tag_Table (Console.Buffer), Console.External_Messages_Tag);
-
-      Gtk_New (Console.Highlight_Tag);
 
       if Console.Highlight /= Null_RGBA then
          Set_Property
-           (Console.Highlight_Tag, Foreground_Rgba_Property,
+           (Console.Tags (Highlight_Tag), Foreground_Rgba_Property,
             Console.Highlight);
       end if;
-
-      Add (Get_Tag_Table (Console.Buffer), Console.Highlight_Tag);
-
-      Gtk_New (Console.Prompt_Tag);
-
-      Add (Get_Tag_Table (Console.Buffer), Console.Prompt_Tag);
 
       Console.Scrolled.Add (Console.View);
 
@@ -1668,7 +1664,8 @@ package body Interactive_Consoles is
       Color   : Gdk_RGBA) is
    begin
       Console.Highlight := Color;
-      Set_Property (Console.Highlight_Tag, Foreground_Rgba_Property, Color);
+      Set_Property
+        (Console.Tags (Highlight_Tag), Foreground_Rgba_Property, Color);
    end Set_Highlight_Color;
 
    ---------------
@@ -1829,7 +1826,7 @@ package body Interactive_Consoles is
 
       Apply_Tag
         (Console.Buffer,
-         Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
+         Console.Tags (Uneditable_Tag), Prompt_Iter, Last_Iter);
 
       if Console.Handler /= Default_Command_Handler'Access then
          Display_Prompt (Console);
@@ -1983,7 +1980,7 @@ package body Interactive_Consoles is
       Table : constant Gtk_Text_Tag_Table := Get_Tag_Table (Console.Buffer);
 
       Tags  : array (1 .. Table.Get_Size) of Gtk_Text_Tag;
-      Index : Gint := Tags'First;
+      Index : Gint := 0;
 
       -------------
       -- Get_Tag --
@@ -1995,8 +1992,15 @@ package body Interactive_Consoles is
       is
          pragma Unreferenced (Dummy);
       begin
-         Tags (Index) := Gtk_Text_Tag (Tag);
+         --  Dont delete reserved tags saved in Console.Tags
+         for J in Console.Tags'Range loop
+            if Console.Tags (J) = Tag then
+               return;
+            end if;
+         end loop;
+
          Index := Index + 1;
+         Tags (Index) := Gtk_Text_Tag (Tag);
       end Get_Tag;
 
       package Foreach_Tag is new Foreach_User_Data (Boolean);
@@ -2005,7 +2009,7 @@ package body Interactive_Consoles is
       Foreach_Tag.Foreach (Table, Get_Tag'Access, False);
 
       --  Destroy all tags in the table
-      for J in Tags'Range loop
+      for J in 1 .. Index loop
          Table.Remove (Tags (J));
       end loop;
 
@@ -2115,7 +2119,7 @@ package body Interactive_Consoles is
                      Iter   => Start_Iter,
                      Text   => Glib.Convert.Locale_To_UTF8
                        (Fixed (Index .. Min - 1)),
-                     Tag    => Console.Highlight_Tag);
+                     Tag    => Console.Tags (Highlight_Tag));
                else
                   Insert
                     (Buffer => Console.Buffer,
@@ -2154,7 +2158,7 @@ package body Interactive_Consoles is
                  (Buffer => Console.Buffer,
                   Iter   => Start_Iter,
                   Text   => Fixed (Index .. Fixed'Last),
-                  Tag    => Console.Highlight_Tag);
+                  Tag    => Console.Tags (Highlight_Tag));
             else
                Insert
                  (Buffer => Console.Buffer,
