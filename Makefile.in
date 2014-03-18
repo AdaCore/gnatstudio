@@ -98,12 +98,14 @@ install: install-common
 ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) gps/obj/gps.exe $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc.exe $(bindir)
+	$(INSTALL_PROGRAM) cli/obj/gps_cli.exe $(bindir)
 	$(INSTALL_PROGRAM) spark/obj/gnatspark.exe $(bindir)
 	$(INSTALL_PROGRAM) gnatlib/src/obj/gnatinspect.exe $(bindir)
 	$(MAKE) -C common/expect install
 else
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
+	$(INSTALL_PROGRAM) cli/obj/gps_cli $(bindir)
 	$(INSTALL_PROGRAM) spark/obj/gnatspark $(bindir)
 	$(INSTALL_PROGRAM) gnatlib/src/obj/gnatinspect $(bindir)
 endif
@@ -112,6 +114,7 @@ install-strip: install-common
 ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) -s gps/obj/gps.exe $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gnatdoc.exe $(bindir)
+	$(INSTALL_PROGRAM) -s cli/obj/gps_cli.exe $(bindir)
 	$(INSTALL_PROGRAM) -s spark/obj/gnatspark.exe $(bindir)
 	$(INSTALL_PROGRAM) -s gnatlib/src/obj/gnatinspect.exe $(bindir)
 	$(INSTALL_PROGRAM) distrib/gps_run.cmd $(bindir)
@@ -119,6 +122,7 @@ ifeq ($(OS),Windows_NT)
 else
 	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)/gps_exe
 	$(INSTALL_PROGRAM) -s cli/obj/gnatdoc $(bindir)
+	$(INSTALL_PROGRAM) -s cli/obj/gps_cli $(bindir)
 	$(INSTALL_PROGRAM) -s spark/obj/gnatspark $(bindir)
 	$(INSTALL_PROGRAM) -s gnatlib/src/obj/gnatinspect $(bindir)
 	$(INSTALL_PROGRAM) distrib/.gps_wrapper $(bindir)/gps
