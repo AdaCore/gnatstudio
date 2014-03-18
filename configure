@@ -4531,7 +4531,7 @@ case "${host}" in
       *win32* | *mingw32* | *cygwin* )
 	STRIP_CR=True
 	CAN_OUTPUT=False
-	TARGET_LFLAGS='("-luser32", "-lcomdlg32", "-mwindows", "-Wl,--stack=0x5000000")'
+	TARGET_LFLAGS='("-luser32", "-lcomdlg32", "-Wl,--stack=0x5000000")'
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c start gps_run.cmd"
 	DEFAULT_PS="winps"
