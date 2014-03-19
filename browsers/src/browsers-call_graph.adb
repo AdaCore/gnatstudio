@@ -1185,7 +1185,8 @@ package body Browsers.Call_Graph is
    is
       Count : Integer := 0;
       Ref   : General_Entity_Reference;
-      Name  : constant String := Get_Name (Data.Entity.Element);
+      Search_Entity : constant Root_Entity'Class := Data.Entity.Element;
+      Name  : constant String := Search_Entity.Get_Name;
    begin
       Result := Execute_Again;
 
@@ -1223,7 +1224,9 @@ package body Browsers.Call_Graph is
                Print_Ref
                  (Data.Kernel,
                   Ref,
-                  Name,
+                  (if Root_Entity'Class (Get_Entity (Ref)) = Search_Entity
+                   then Name
+                   else Get_Entity (Ref).Get_Name),
                   Data.Category.all,
                   Show_Caller  => Data.Show_Caller,
                   Sort_In_File => False);
@@ -1279,6 +1282,7 @@ package body Browsers.Call_Graph is
                      Count              => 0,
                      Entity             => H);
 
+            Trace (Me, "MAN Find_All_References_Internal, starting bg");
             Xref_Commands.Create  --  Will destroy Data when done
               (C, -"Find all refs", Data, Find_Next_Reference'Access);
             Launch_Background_Command

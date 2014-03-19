@@ -450,6 +450,7 @@ package body Xref is
         and then Ref.Ref /= No_Entity_Reference
       then
          E.Entity := Ref.Ref.Entity;
+         E.Db     := Ref.Db;
       end if;
 
       --  Fall back on the old system

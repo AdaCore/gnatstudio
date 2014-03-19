@@ -54,17 +54,6 @@ package Xref is
    procedure Free (X : in out Entity_Array);
    --  Free memory associated with X
 
-   ---------------
-   --  Entities
-   ---------------
-
-   type General_Entity is new Root_Entity with private;
-   No_General_Entity : aliased constant General_Entity;
-   --  aliased is added to let AJIS make it accessible to GNATbench
-
-   overriding function "=" (E1, E2 : General_Entity) return Boolean;
-   --  Whether the two entities are the same
-
    -----------
    --  The sqlite-based database
    -----------
@@ -200,151 +189,9 @@ package Xref is
      (Ref1, Ref2 : General_Entity_Reference) return Boolean;
    --  Whether the two references point to the same location.
 
-   -----------
-   -- Files --
-   -----------
-
-   function Is_Up_To_Date
-     (Self : access General_Xref_Database_Record;
-      File : Virtual_File) return Boolean;
-   --  Whether the xref information for this file is up-to-date in the
-   --  database.
-
-   type File_Iterator is tagged private;
-   type File_Iterator_Access is access File_Iterator'Class;
-   function Has_Element (Iter : File_Iterator) return Boolean;
-   procedure Next (Iter : in out File_Iterator);
-   function Element (Iter : File_Iterator) return GNATCOLL.VFS.Virtual_File;
-
-   function Project
-     (Iter : File_Iterator;
-      Tree : GNATCOLL.Projects.Project_Tree'Class)
-      return GNATCOLL.Projects.Project_Type;
-   --  The project to which the current element belongs, or No_Project if
-   --  unknown (using the old xref engine)
-
-   procedure Destroy (Iter : in out File_Iterator_Access);
-   procedure Destroy (Iter : in out File_Iterator);
-   --  ??? Only because of the old LI database
-
-   function Find_Dependencies
-     (Self    : access General_Xref_Database_Record'Class;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type) return File_Iterator;
-   --  Return the list of files that File depends on.
-
-   function Find_Ancestor_Dependencies
-     (Self    : access General_Xref_Database_Record'Class;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type) return File_Iterator;
-   --  Return the list of files that depend on File. The rule is the following:
-   --    - bodies, specs and separates always depend on each other
-
-   ---------------------------
-   -- High level operations --
-   ---------------------------
-   --  These functions provide high-level facilities not exposing the
-   --  entities backend, and are back-end independent.
-   --
-   --  Some operations might even query using one back-end, then fall back
-   --  on a less precise back-end if the first query is not precise enough.
-
-   type Reference_Kind_Filter is access function
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-
-   function Reference_Is_Body
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Reference_Is_Declaration
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Real_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Implicit_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Real_Or_Implicit_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Read_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Write_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Read_Or_Write_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Read_Or_Implicit_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Read_Or_Write_Or_Implicit_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   --  Various filters for references.
-   --  Some references kinds are special, and mark for instance the end of
-   --  scope. They should not in general be visible to users. One special kind
-   --  are implicit references.
-
-   procedure For_Each_Dispatching_Call
-     (Entity    : Root_Entity;
-      Ref       : General_Entity_Reference;
-      On_Callee : access function (Callee : Root_Entity'Class) return Boolean;
-      Filter    : Reference_Kind_Filter := null) is abstract;
-   --  If Ref references a dispatching call then call On_Callee with all the
-   --  overridding primitives (that is, all the primitives that might possibly
-   --  be called instead of Entity). For example, if you have:
-   --         procedure Dispatch (Self : Base'Class) is
-   --         begin
-   --            Proc (Self);
-   --         end Dispatch;
-   --  and call For_Each_Dispatching_Call on Proc, you will get the primitive
-   --  operation of Base and all the overriding primitive ops of its children.
-   --
-   --  Filter can be used to make sure the entity has some specific type of
-   --  reference. The most common use is to ensure that the entity does have
-   --  a body (ie is not abstract), in which case the filter is set to
-   --  Entity_Has_Body.
-   --
-   --  Search stops when On_Callee returns False
-   --
-   --  The Primitive_Of parameter
-   --
-   --  Nothing is done if Ref does not point to a dispatching call.
-   --  This procedure does not propagate any exception.
-
-   function Get_Entity
-     (Db   : access General_Xref_Database_Record;
-      Name : String;
-      Loc  : General_Location) return Root_Entity'Class;
-   --  Retrieve the entity referenced at the given location.
-   --  This also works for operators, whether they are quoted ("=") or
-   --  not (=).
-
-   function Find_Declaration_Or_Overloaded
-     (Self              : access General_Xref_Database_Record;
-      Loc               : General_Location;
-      Entity_Name       : String;
-      Ask_If_Overloaded : Boolean := False;
-      Closest_Ref       : out General_Entity_Reference;
-      Approximate_Search_Fallback : Boolean := True) return Root_Entity'Class;
-   --  Similar to Get_Entity, but also returns the closest reference, and
-   --  handles interaction with the user if possible
-   --
-   --  Find the declaration of the given entity in the file.
-   --  If Ask_If_Overloaded is True and there are several possible matches for
-   --  the entity (for instance because the xref info is not up-to-date), an
-   --  interactive dialog is opened.
-   --
-   --  This also works for operators, whether they are quoted ("=") or
-   --  not (=).
-   --
-   --  Passing No_Location for Loc will search for predefined entities.
-
-   function Get_Entity (Ref : General_Entity_Reference) return General_Entity;
-   --  Return the entity the reference is pointing to
+   -----------------
+   -- Root_Entity --
+   -----------------
 
    function Is_Fuzzy (Entity : Root_Entity) return Boolean is abstract;
    --  Whether the entity is just a guess (because the xref info generated by
@@ -372,10 +219,6 @@ package Xref is
    function Cmp
      (Entity1, Entity2 : Root_Entity'Class) return Integer;
    --  Return -1, 0 or 1 to sort the two entities
-
-   function Get_Location
-     (Ref : General_Entity_Reference) return General_Location;
-   --  Return the location of this reference
 
    function Get_Declaration
      (Entity : Root_Entity) return General_Entity_Declaration is abstract;
@@ -571,6 +414,17 @@ package Xref is
    --  When you retrieve BI or AI, you can use Instance_Of to get access to
    --  resp. B and A.
 
+   ---------------
+   --  Entities
+   ---------------
+
+   type General_Entity is new Root_Entity with private;
+   No_General_Entity : aliased constant General_Entity;
+   --  aliased is added to let AJIS make it accessible to GNATbench
+
+   overriding function "=" (E1, E2 : General_Entity) return Boolean;
+   --  Whether the two entities are the same
+
    type General_Parameter is record
       Parameter : General_Entity;
       Kind      : GNATCOLL.Xref.Parameter_Kind;
@@ -580,6 +434,156 @@ package Xref is
    function Parameters
      (Entity : Root_Entity) return Parameter_Array is abstract;
    --  Return the list of parameters for a given subprogram
+
+   -----------
+   -- Files --
+   -----------
+
+   function Is_Up_To_Date
+     (Self : access General_Xref_Database_Record;
+      File : Virtual_File) return Boolean;
+   --  Whether the xref information for this file is up-to-date in the
+   --  database.
+
+   type File_Iterator is tagged private;
+   type File_Iterator_Access is access File_Iterator'Class;
+   function Has_Element (Iter : File_Iterator) return Boolean;
+   procedure Next (Iter : in out File_Iterator);
+   function Element (Iter : File_Iterator) return GNATCOLL.VFS.Virtual_File;
+
+   function Project
+     (Iter : File_Iterator;
+      Tree : GNATCOLL.Projects.Project_Tree'Class)
+      return GNATCOLL.Projects.Project_Type;
+   --  The project to which the current element belongs, or No_Project if
+   --  unknown (using the old xref engine)
+
+   procedure Destroy (Iter : in out File_Iterator_Access);
+   procedure Destroy (Iter : in out File_Iterator);
+   --  ??? Only because of the old LI database
+
+   function Find_Dependencies
+     (Self    : access General_Xref_Database_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type) return File_Iterator;
+   --  Return the list of files that File depends on.
+
+   function Find_Ancestor_Dependencies
+     (Self    : access General_Xref_Database_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type) return File_Iterator;
+   --  Return the list of files that depend on File. The rule is the following:
+   --    - bodies, specs and separates always depend on each other
+
+   ---------------------------
+   -- High level operations --
+   ---------------------------
+   --  These functions provide high-level facilities not exposing the
+   --  entities backend, and are back-end independent.
+   --
+   --  Some operations might even query using one back-end, then fall back
+   --  on a less precise back-end if the first query is not precise enough.
+
+   type Reference_Kind_Filter is access function
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+
+   function Reference_Is_Body
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+   function Reference_Is_Declaration
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+   function Is_Real_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+   function Is_Implicit_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+   function Is_Real_Or_Implicit_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+   function Is_Read_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+   function Is_Write_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+   function Is_Read_Or_Write_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+   function Is_Read_Or_Implicit_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+   function Is_Read_Or_Write_Or_Implicit_Reference
+     (Db  : access General_Xref_Database_Record'Class;
+      Ref : General_Entity_Reference) return Boolean;
+   --  Various filters for references.
+   --  Some references kinds are special, and mark for instance the end of
+   --  scope. They should not in general be visible to users. One special kind
+   --  are implicit references.
+
+   procedure For_Each_Dispatching_Call
+     (Entity    : Root_Entity;
+      Ref       : General_Entity_Reference;
+      On_Callee : access function (Callee : Root_Entity'Class) return Boolean;
+      Filter    : Reference_Kind_Filter := null) is abstract;
+   --  If Ref references a dispatching call then call On_Callee with all the
+   --  overridding primitives (that is, all the primitives that might possibly
+   --  be called instead of Entity). For example, if you have:
+   --         procedure Dispatch (Self : Base'Class) is
+   --         begin
+   --            Proc (Self);
+   --         end Dispatch;
+   --  and call For_Each_Dispatching_Call on Proc, you will get the primitive
+   --  operation of Base and all the overriding primitive ops of its children.
+   --
+   --  Filter can be used to make sure the entity has some specific type of
+   --  reference. The most common use is to ensure that the entity does have
+   --  a body (ie is not abstract), in which case the filter is set to
+   --  Entity_Has_Body.
+   --
+   --  Search stops when On_Callee returns False
+   --
+   --  The Primitive_Of parameter
+   --
+   --  Nothing is done if Ref does not point to a dispatching call.
+   --  This procedure does not propagate any exception.
+
+   function Get_Entity
+     (Db   : access General_Xref_Database_Record;
+      Name : String;
+      Loc  : General_Location) return Root_Entity'Class;
+   --  Retrieve the entity referenced at the given location.
+   --  This also works for operators, whether they are quoted ("=") or
+   --  not (=).
+
+   function Find_Declaration_Or_Overloaded
+     (Self              : access General_Xref_Database_Record;
+      Loc               : General_Location;
+      Entity_Name       : String;
+      Ask_If_Overloaded : Boolean := False;
+      Closest_Ref       : out General_Entity_Reference;
+      Approximate_Search_Fallback : Boolean := True) return Root_Entity'Class;
+   --  Similar to Get_Entity, but also returns the closest reference, and
+   --  handles interaction with the user if possible
+   --
+   --  Find the declaration of the given entity in the file.
+   --  If Ask_If_Overloaded is True and there are several possible matches for
+   --  the entity (for instance because the xref info is not up-to-date), an
+   --  interactive dialog is opened.
+   --
+   --  This also works for operators, whether they are quoted ("=") or
+   --  not (=).
+   --
+   --  Passing No_Location for Loc will search for predefined entities.
+
+   function Get_Entity (Ref : General_Entity_Reference) return General_Entity;
+   --  Return the entity the reference is pointing to
+
+   function Get_Location
+     (Ref : General_Entity_Reference) return General_Location;
+   --  Return the location of this reference
 
    --------------------------------
    -- Entity and reference kinds --
