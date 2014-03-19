@@ -15,7 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Holders;
 with Ada.Unchecked_Deallocation;
+
 with GNATCOLL.Projects;             use GNATCOLL.Projects;
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
@@ -80,7 +82,7 @@ with Std_Dialogs;                   use Std_Dialogs;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with Generic_List;
 with Xref;                          use Xref;
-with Ada.Containers.Indefinite_Holders;
+with UTF8_Utils;
 
 package body Browsers.Call_Graph is
    Me : constant Trace_Handle := Create ("CALL_GRAPH");
@@ -1169,7 +1171,7 @@ package body Browsers.Call_Graph is
            (Kernel_Handle (Kernel),
             Get_Name (Search_Results_Style) & '/' & Category,
             Search_Results_Style),
-         Name'Length);
+         UTF8_Utils.UTF8_Length (Name));
    end Print_Ref;
 
    -------------------------

@@ -260,4 +260,21 @@ package body UTF8_Utils is
       return Result;
    end Column_To_Index;
 
+   -----------------
+   -- UTF8_Length --
+   -----------------
+
+   function UTF8_Length (Item : UTF8_String) return Natural is
+      Result : Natural := 0;
+      Index  : Positive := Item'First;
+
+   begin
+      while Index <= Item'Last loop
+         Result := Result + 1;
+         Index := UTF8_Next_Char (Item, Index);
+      end loop;
+
+      return Result;
+   end UTF8_Length;
+
 end UTF8_Utils;

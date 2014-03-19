@@ -84,4 +84,7 @@ package UTF8_Utils is
    --  Return index of first byte of UTF8 character in given Column
    --  Return 0 in Column <= 0. Return Buffer'First when Column = 1
 
+   function UTF8_Length (Item : UTF8_String) return Natural;
+   --  Returns number of user visible characters in UTF8 encoded string.
+
 end UTF8_Utils;
