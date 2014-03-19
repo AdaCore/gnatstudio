@@ -174,7 +174,7 @@ private
       External_Process_Console : Interactive_Consoles.Interactive_Console;
       --  Where the output of the current external command should be sent
 
-      External_Process_In_Progress : Boolean;
+      External_Process_In_Progress : Boolean := False;
       Process_Exit_Status : Integer;
       --  True if an external process is currently running
 
