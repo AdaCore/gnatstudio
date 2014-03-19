@@ -1,9 +1,9 @@
 """
-This file provides default build modes and targets (gnatmake and gprbuild) for GPS
+This file provides default build modes and targets (gnatmake and gprbuild) for
+GPS
 """
 
 
-
 XML = r"""<?xml version="1.0" ?>
 <GPS>
  <builder-mode name="default">
@@ -166,14 +166,17 @@ XML = r"""<?xml version="1.0" ?>
      <title column="2" line="1" >Compilation</title>
      <title column="2" line="2" >Project</title>
      <check label="Recompile if switches changed" switch="-s"
-            tip="Recompile if compiler switches have changed since last compilation" />
+            tip="Recompile if compiler switches have changed
+            since last compilation" />
      <check label="Keep going" switch="-k"
             tip="Continue as much as possible after a compilation error" />
      <spin label="Multiprocessing" switch="-j" min="0" max="100" default="1"
            column="2"
-           tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+           tip="Use N processes to carry out the compilations.
+           On a multiprocessor machine compilations will occur in parallel" />
      <check label="Progress bar" switch="-d" column="2"
-            tip="Display a progress bar with information about how many files are left to be compiled" />
+            tip="Display a progress bar with information about how many files
+            are left to be compiled" />
      <check label="Compile only" switch="-c" column="2"
             tip="Perform only compilation, no bind/link" />
      <check label="Quiet mode" switch="-q" column="2"
@@ -202,14 +205,17 @@ XML = r"""<?xml version="1.0" ?>
      <title column="2" line="1" >Compilation</title>
      <title column="2" line="2" >Project</title>
      <check label="Recompile if switches changed" switch="-s"
-            tip="Recompile if compiler switches have changed since last compilation" />
+            tip="Recompile if compiler switches have changed since last
+            compilation" />
      <check label="Keep going" switch="-k"
             tip="Continue as much as possible after a compilation error" />
      <spin label="Multiprocessing" switch="-j" min="0" max="100" default="1"
            column="2"
-           tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+           tip="Use N processes to carry out the compilations.
+           On a multiprocessor machine compilations will occur in parallel" />
      <check label="Progress bar" switch="-d" column="2"
-            tip="Display a progress bar with information about how many files are left to be compiled" />
+            tip="Display a progress bar with information about how many files
+            are left to be compiled" />
      <check label="Compile only" switch="-c" column="2"
             tip="Perform only compilation, no bind/link" />
      <check label="Quiet mode" switch="-q" column="2"
@@ -239,27 +245,36 @@ XML = r"""<?xml version="1.0" ?>
      <title column="2" line="1" >Compilation</title>
      <title column="2" line="2" >Project</title>
      <check label="Recompile if switches changed" switch="-s"
-            tip="Recompile if compiler switches have changed since last compilation" />
+            tip="Recompile if compiler switches have
+            changed since last compilation" />
      <check label="Minimal recompilation" switch="-m"
-            tip="Specifies that the minimum necessary amount of recompilation be performed. In this mode, gnatmake ignores time stamp differences when the only modification to a source file consist in adding or removing comments, empty lines, spaces or tabs" />
+            tip="Specifies that the minimum necessary amount of recompilation
+            be performed. In this mode, gnatmake ignores time
+            stamp differences when the only modification to a source
+            file consist in adding or removing comments,
+            empty lines, spaces or tabs" />
      <check label="Keep going" switch="-k"
             tip="Continue as much as possible after a compilation error" />
      <spin label="Multiprocessing" switch="-j" min="0" max="100" default="1"
            column="2"
-           tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+           tip="Use N processes to carry out the compilations. On a
+           multiprocessor machine compilations will occur in parallel" />
      <check label="Progress bar" switch="-d" column="2"
-            tip="Display a progress bar with information about how many files are left to be compiled" />
+            tip="Display a progress bar with information about how many
+            files are left to be compiled" />
      <check label="Compile only" switch="-c" column="2"
             tip="Perform only compilation, no bind/link" />
      <check label="Quiet mode" switch="-q" column="2"
             tip="Be quiet/terse in output messages" />
      <check label="Debug information" switch="-g" column="2"
-            tip="Add debugging information. This forces the corresponding switch for the compiler, binder and linker" />
+            tip="Add debugging information. This forces the corresponding
+            switch for the compiler, binder and linker" />
 
      <check label="Syntax check" switch="-gnats" line="2"
             tip="Perform syntax check, no compilation occurs" />
      <check label="Semantic check" switch="-gnatc" line="2"
-            tip="Perform syntax and semantic check only, no compilation occurs" />
+            tip="Perform syntax and semantic check only, no
+            compilation occurs" />
      <check label="Create object dirs" switch="-p" line="2" column="2"
             tip="Create missing object and library directories" />
      <spin label="Project verbosity" switch="-vP" min="0" max="2" default="1"
@@ -270,7 +285,8 @@ XML = r"""<?xml version="1.0" ?>
 
 <!-- This is an XML model for gnatclean/gprclean -->
 <target-model name="gprclean" category="">
-   <description>Clean compilation artefacts with gnatclean/gprclean</description>
+   <description>Clean compilation artefacts with gnatclean/gprclean
+   </description>
    <command-line>
       <arg>%gprclean</arg>
       <arg>%eL</arg>
@@ -280,7 +296,8 @@ XML = r"""<?xml version="1.0" ?>
    <icon>gps-clean</icon>
    <switches command="%(tool_name)s" columns="1">
      <check label="Only delete compiler generated files" switch="-c"
-            tip="Remove only the files generated by the compiler, not other files" />
+            tip="Remove only the files generated by the compiler,
+            not other files" />
      <check label="Force deletion" switch="-f"
             tip="Force deletions of unwritable files" />
      <check label="Clean recursively" switch="-r"
@@ -298,8 +315,10 @@ XML = r"""<?xml version="1.0" ?>
    <is-run>TRUE</is-run>
    <icon>gtk-media-play</icon>
    <switches command="%(tool_name)s" columns="1">
-     <check label="Run in executables directory" switch="[exec_dir]" before="true" />
-     <check label="Run in an external terminal" switch="%external" before="true" />
+     <check label="Run in executables directory" switch="[exec_dir]"
+     before="true" />
+     <check label="Run in an external terminal"
+    switch="%external" before="true" />
    </switches>
 </target-model>
 
@@ -359,7 +378,7 @@ XML = r"""<?xml version="1.0" ?>
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
     <icon>gps-semantic-check</icon>
-    <launch-mode>ON_FILE_SAVE</launch-mode>
+    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <server>Tools_Server</server>
     <always-clear-locations>FALSE</always-clear-locations>
@@ -382,11 +401,12 @@ XML = r"""<?xml version="1.0" ?>
     </output-parsers>
 </target>
 
-<target model="gnatmake" category="_File_" name="U_pdate file XRef in background">
+<target model="gnatmake" category="_File_"
+name="U_pdate file XRef in background">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
     <icon>gps-semantic-check</icon>
-    <launch-mode>IN_BACKGROUND</launch-mode>
+    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <server>Tools_Server</server>
     <always-clear-locations>FALSE</always-clear-locations>
