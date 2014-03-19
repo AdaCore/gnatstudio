@@ -70,6 +70,10 @@ package body GNATdoc.Atree is
    --  Internal subprogram which factorizes the code needed by routines
    --  New_Entity and New_Internal_Entity to create a new entity.
 
+   function LL_Get_Component_Type
+     (E : Entity_Id) return Root_Entity'Class;
+   pragma Inline (LL_Get_Component_Type);
+
    function LL_Get_Etype
      (E : Entity_Id) return Root_Entity'Class;
    pragma Inline (LL_Get_Etype);
@@ -88,7 +92,12 @@ package body GNATdoc.Atree is
    function LL_Is_Generic (E : Entity_Id) return Boolean;
    pragma Inline (LL_Is_Generic);
 
-   procedure LL_Set_Etype (E : Entity_Id; Etype : Root_Entity'Class);
+   procedure LL_Set_Component_Type
+     (E : Entity_Id; Value : Root_Entity'Class);
+   pragma Inline (LL_Set_Component_Type);
+
+   procedure LL_Set_Etype
+     (E : Entity_Id; Value : Root_Entity'Class);
    pragma Inline (LL_Set_Etype);
 
    package Hash_Table is
@@ -541,6 +550,16 @@ package body GNATdoc.Atree is
    begin
       return E.Comment;
    end Get_Comment;
+
+   ------------------------
+   -- Get_Component_Type --
+   ------------------------
+
+   function Get_Component_Type
+     (E : Entity_Id) return Entity_Id is
+   begin
+      return E.Component_Type;
+   end Get_Component_Type;
 
    --------------------
    -- Get_Components --
@@ -1271,8 +1290,13 @@ package body GNATdoc.Atree is
          New_E.Xref.Is_Abstract  := Xref.Is_Abstract (E);
 
          if LL.Is_Type (New_E) then
-            New_E.Xref.Is_Array  := Xref.Is_Array (E);
             New_E.Xref.Is_Predef := Xref.Is_Predefined_Entity (E);
+            New_E.Xref.Is_Array  := Xref.Is_Array (E);
+
+            if LL.Is_Array (New_E) then
+               LL_Set_Component_Type (New_E, Xref.Component_Type (E));
+            end if;
+
             New_E.Xref.Is_Access := Xref.Is_Access (E);
 
             if LL.Is_Access (New_E) then
@@ -1472,6 +1496,7 @@ package body GNATdoc.Atree is
          Entity           : Holder.Holder;
          Etype            : Holder.Holder;
          Instance_Of      : Holder.Holder;
+         Component_Type   : Holder.Holder;
          Pointed_Type     : Holder.Holder;
          Scope_E          : Holder.Holder;
          Parent_Package   : Holder.Holder;
@@ -1479,6 +1504,7 @@ package body GNATdoc.Atree is
          Alias.Replace_Element (No_Root_Entity);
          Etype.Replace_Element (No_Root_Entity);
          Instance_Of.Replace_Element (No_Root_Entity);
+         Component_Type.Replace_Element (No_Root_Entity);
          Pointed_Type.Replace_Element (No_Root_Entity);
          Scope_E.Replace_Element (No_Root_Entity);
          Parent_Package.Replace_Element (No_Root_Entity);
@@ -1501,6 +1527,7 @@ package body GNATdoc.Atree is
 
                 Instance_Of      => Instance_Of,
                 Loc              => Xref_Loc,
+                Component_Type   => Component_Type,
                 Pointed_Type     => Pointed_Type,
 
                 Scope_E          => Scope_E,
@@ -1531,6 +1558,8 @@ package body GNATdoc.Atree is
 
               Scope           => No_Entity,
               Parent_Package  => No_Entity,
+
+              Component_Type  => No_Entity,
 
               End_Of_Syntax_Scope_Loc => No_Location,
               End_Of_Profile_Location_In_Body => No_Location,
@@ -1913,6 +1942,15 @@ package body GNATdoc.Atree is
       end if;
    end Less_Than_Body_Loc;
 
+   ---------------------------
+   -- LL_Get_Component_Type --
+   ---------------------------
+
+   function LL_Get_Component_Type (E : Entity_Id) return Root_Entity'Class is
+   begin
+      return E.Xref.Component_Type.Element;
+   end LL_Get_Component_Type;
+
    ------------------
    -- LL_Get_Etype --
    ------------------
@@ -1959,17 +1997,36 @@ package body GNATdoc.Atree is
       return E.Xref.Is_Generic;
    end LL_Is_Generic;
 
+   ---------------------------
+   -- LL_Set_Component_Type --
+   ---------------------------
+
+   procedure LL_Set_Component_Type
+     (E : Entity_Id; Value : Root_Entity'Class) is
+   begin
+      E.Xref.Component_Type.Replace_Element (Value);
+
+      if LL_Get_Component_Type (E) = No_Root_Entity then
+         E.Component_Type := No_Entity;
+      else
+         E.Component_Type :=
+           Find_Entity
+             (Get_Declaration (LL_Get_Component_Type (E)).Loc);
+      end if;
+   end LL_Set_Component_Type;
+
    ------------------
    -- LL_Set_Etype --
    ------------------
 
-   procedure LL_Set_Etype (E : Entity_Id; Etype : Root_Entity'Class) is
+   procedure LL_Set_Etype (E : Entity_Id; Value : Root_Entity'Class) is
       use type Holder.Holder;
    begin
-      E.Xref.Etype.Replace_Element (Etype);
+      E.Xref.Etype.Replace_Element (Value);
 
       if LL_Get_Etype (E) = No_Root_Entity then
          E.Xref.Etype_Loc := No_Location;
+         E.Etype := No_Entity;
       else
          E.Xref.Etype_Loc := Get_Declaration (LL_Get_Etype (E)).Loc;
          E.Etype := Find_Entity (E.Xref.Etype_Loc);
@@ -3413,6 +3470,10 @@ package body GNATdoc.Atree is
          Append_Line
            (LL_Prefix
             & " Is_Array");
+
+         if not Reliable_Mode then
+            Append_Entity ("Component_Type: ", Get_Component_Type (E));
+         end if;
       end if;
 
       if E.Xref.Is_Container then

@@ -68,6 +68,10 @@
 --       Defined in all entities. Stores the structured comment parsed by
 --       the frontend.
 
+--    Component_Type
+--       Defined in array types. Represents the type of each array component,
+--       which is itself another entity.
+
 --    Components (synthesized)
 --       Defined in record types, concurrent types and concurrent objects.
 
@@ -661,6 +665,9 @@ private package GNATdoc.Atree is
    function Get_Comment
      (E : Entity_Id) return Structured_Comment;
 
+   function Get_Component_Type
+     (E : Entity_Id) return Entity_Id;
+
    function Get_Components
      (E : Entity_Id) return EInfo_List.Vector;
    --  Applicable to record types, concurrent types and concurrent objects
@@ -1115,6 +1122,8 @@ private
          Etype_Loc        : General_Location;
          Instance_Of      : Holder.Holder;
          Loc              : General_Location;
+
+         Component_Type   : Holder.Holder;
          Pointed_Type     : Holder.Holder;
 
          Scope_E          : Holder.Holder;
@@ -1167,6 +1176,9 @@ private
          Scope           : Entity_Id;
          Parent_Package  : Entity_Id;
          --  Present in packages
+
+         Component_Type  : Entity_Id;
+         --  Present in array types
 
          End_Of_Syntax_Scope_Loc         : General_Location;
          End_Of_Profile_Location_In_Body : General_Location;
@@ -1242,6 +1254,7 @@ private
 
    pragma Inline (Get_Alias);
    pragma Inline (Get_Comment);
+   pragma Inline (Get_Component_Type);
    pragma Inline (Get_Direct_Derivations);
    pragma Inline (Get_Doc);
    pragma Inline (Get_Doc_After);
