@@ -3080,8 +3080,8 @@ Other properties are as for standard representation attribute
 `Bit_Order', as defined by Ada RM 13.5.3(4). The default is
 `System.Default_Bit_Order'.
 
-For a record type S, if `S'Scalar_Storage_Order' is specified
-explicitly, it shall be equal to `S'Bit_Order'. Note: this means that
+For a record type T, if `T'Scalar_Storage_Order' is specified
+explicitly, it shall be equal to `T'Bit_Order'. Note: this means that
 if a `Scalar_Storage_Order' attribute definition clause is not
 confirming, then the type's `Bit_Order' shall be specified explicitly
 and set to the same value.
@@ -3092,7 +3092,7 @@ giving an explicit scalar storage order for the derived type. For a
 record extension, the derived type must have the same scalar storage
 order as the parent type.
 
-If a component of S is of a record or array type, then that type must
+If a component of T is of a record or array type, then that type must
 also have a `Scalar_Storage_Order' attribute definition clause.
 
 A component of a record or array type that is a packed array, or that
