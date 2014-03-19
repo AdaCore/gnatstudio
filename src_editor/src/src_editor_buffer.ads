@@ -132,10 +132,7 @@ package Src_Editor_Buffer is
    ------------------
 
    function Convert (L : Natural) return Editable_Line_Type;
-   function Convert (C : Natural) return Visible_Column_Type;
-   function Convert (C : Natural) return Character_Offset_Type;
    function Convert (L : Editable_Line_Type) return Natural;
-   function Convert (C : Character_Offset_Type) return Natural;
    --  ??? temporary ?
 
    overriding procedure Paste_Clipboard

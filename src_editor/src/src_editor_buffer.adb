@@ -8079,16 +8079,6 @@ package body Src_Editor_Buffer is
    -- Convert --
    -------------
 
-   function Convert (C : Natural) return Visible_Column_Type is
-   begin
-      return Visible_Column_Type (C);
-   end Convert;
-
-   function Convert (C : Natural) return Character_Offset_Type is
-   begin
-      return Character_Offset_Type (C);
-   end Convert;
-
    function Convert (L : Natural) return Editable_Line_Type is
    begin
       return Editable_Line_Type (L);
@@ -8097,11 +8087,6 @@ package body Src_Editor_Buffer is
    function Convert (L : Editable_Line_Type) return Natural is
    begin
       return Natural (L);
-   end Convert;
-
-   function Convert (C : Character_Offset_Type) return Natural is
-   begin
-      return Natural (C);
    end Convert;
 
    -----------------
