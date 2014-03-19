@@ -107,6 +107,10 @@
 --       Defined in all entities. If present it contains the text of the
 --       error reported by the frontend on this entity.
 
+--    Etype
+--       Defined in all entities. Represents the type of the entity, which
+--       is itself another entity.
+
 --    First_Private_Entity_Loc
 --       Location of the first private entity (if any). Internally we have two
 --       values associated with this attribute: 1) the value available in the
@@ -692,6 +696,8 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Error_Msg
      (E : Entity_Id) return Unbounded_String;
+   function Get_Etype
+     (E : Entity_Id) return Entity_Id;
    function Get_First_Private_Entity_Loc
      (E : Entity_Id) return General_Location;
    function Get_Full_Name
@@ -1106,6 +1112,7 @@ private
          Ekind            : Entity_Kind;
          Entity           : Holder.Holder;
          Etype            : Holder.Holder;
+         Etype_Loc        : General_Location;
          Instance_Of      : Holder.Holder;
          Loc              : General_Location;
          Pointed_Type     : Holder.Holder;
@@ -1155,6 +1162,7 @@ private
          --  context (for example, an E_Variable entity may be redecorated
          --  as E_Formal (see gnatdoc-frontend.adb)
 
+         Etype           : Entity_Id;
          Alias           : Entity_Id;
          Scope           : Entity_Id;
          Parent_Package  : Entity_Id;
@@ -1242,6 +1250,7 @@ private
    pragma Inline (Get_End_Of_Syntax_Scope_Loc);
    pragma Inline (Get_Entities);
    pragma Inline (Get_Error_Msg);
+   pragma Inline (Get_Etype);
    pragma Inline (Get_Full_Name);
    pragma Inline (Get_Full_View);
    pragma Inline (Get_Generic_Formals_Loc);

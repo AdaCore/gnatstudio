@@ -70,6 +70,10 @@ package body GNATdoc.Atree is
    --  Internal subprogram which factorizes the code needed by routines
    --  New_Entity and New_Internal_Entity to create a new entity.
 
+   function LL_Get_Etype
+     (E : Entity_Id) return Root_Entity'Class;
+   pragma Inline (LL_Get_Etype);
+
    function LL_Get_First_Private_Entity_Loc
      (E : Entity_Id) return General_Location;
    pragma Inline (LL_Get_First_Private_Entity_Loc);
@@ -83,6 +87,9 @@ package body GNATdoc.Atree is
 
    function LL_Is_Generic (E : Entity_Id) return Boolean;
    pragma Inline (LL_Is_Generic);
+
+   procedure LL_Set_Etype (E : Entity_Id; Etype : Root_Entity'Class);
+   pragma Inline (LL_Set_Etype);
 
    package Hash_Table is
       function Hash
@@ -697,6 +704,16 @@ package body GNATdoc.Atree is
       return E.Error_Msg;
    end Get_Error_Msg;
 
+   ---------------
+   -- Get_Etype --
+   ---------------
+
+   function Get_Etype
+     (E : Entity_Id) return Entity_Id is
+   begin
+      return E.Etype;
+   end Get_Etype;
+
    ----------------------------------
    -- Get_First_Private_Entity_Loc --
    ----------------------------------
@@ -1232,7 +1249,7 @@ package body GNATdoc.Atree is
             end;
          end if;
 
-         New_E.Xref.Etype.Replace_Element (Get_Type_Of (E));
+         LL_Set_Etype (New_E, Get_Type_Of (E));
          New_E.Xref.Body_Loc := Get_Body (E);
 
          New_E.Xref.Is_Type  := Xref.Is_Type (E);
@@ -1341,7 +1358,7 @@ package body GNATdoc.Atree is
             --  (Xref): The value available through Xref.Get_Type is the same
             --  value returned by Xref.Returned_Type
 
-            if Present (New_E.Xref.Etype.Element) then
+            if Present (LL_Get_Etype (New_E)) then
                Set_Kind (New_E, E_Function);
             end if;
          end if;
@@ -1478,6 +1495,7 @@ package body GNATdoc.Atree is
                 Ekind            => Kind,
                 Entity           => Entity,
                 Etype            => Etype,
+                Etype_Loc        => No_Location,
 
                 First_Private_Entity_Loc  => No_Location,
 
@@ -1508,6 +1526,7 @@ package body GNATdoc.Atree is
               Full_Name       => Context.Kernel.Symbols.Find (Q_Name),
               Short_Name      => Context.Kernel.Symbols.Find (S_Name),
               Alias           => No_Entity,
+              Etype           => No_Entity,
               Kind            => Kind,
 
               Scope           => No_Entity,
@@ -1894,6 +1913,15 @@ package body GNATdoc.Atree is
       end if;
    end Less_Than_Body_Loc;
 
+   ------------------
+   -- LL_Get_Etype --
+   ------------------
+
+   function LL_Get_Etype (E : Entity_Id) return Root_Entity'Class is
+   begin
+      return E.Xref.Etype.Element;
+   end LL_Get_Etype;
+
    -------------------------------------
    -- LL_Get_First_Private_Entity_Loc --
    -------------------------------------
@@ -1930,6 +1958,23 @@ package body GNATdoc.Atree is
    begin
       return E.Xref.Is_Generic;
    end LL_Is_Generic;
+
+   ------------------
+   -- LL_Set_Etype --
+   ------------------
+
+   procedure LL_Set_Etype (E : Entity_Id; Etype : Root_Entity'Class) is
+      use type Holder.Holder;
+   begin
+      E.Xref.Etype.Replace_Element (Etype);
+
+      if LL_Get_Etype (E) = No_Root_Entity then
+         E.Xref.Etype_Loc := No_Location;
+      else
+         E.Xref.Etype_Loc := Get_Declaration (LL_Get_Etype (E)).Loc;
+         E.Etype := Find_Entity (E.Xref.Etype_Loc);
+      end if;
+   end LL_Set_Etype;
 
    ----------------
    -- New_Entity --
@@ -3060,6 +3105,12 @@ package body GNATdoc.Atree is
          Append_Entity ("Scope: ", Get_Scope (E));
       end if;
 
+      if not Reliable_Mode
+        and then Present (Get_Etype (E))
+      then
+         Append_Entity ("Etype: ", Get_Etype (E));
+      end if;
+
       if Present (Get_End_Of_Syntax_Scope_Loc (E)) then
          if Reliable_Mode
            and then not Enhancements
@@ -3323,11 +3374,11 @@ package body GNATdoc.Atree is
          end if;
       end if;
 
-      if Present (E.Xref.Etype.Element) then
+      if Present (LL_Get_Etype (E)) then
          Append_Line
            (LL_Prefix
-            & "Etype: " & Get_Name (E.Xref.Etype.Element)
-            & " [" & Image (E.Xref.Etype.Element) & "]");
+            & "Etype: " & Get_Name (LL_Get_Etype (E))
+            & " [" & Image (LL_Get_Etype (E)) & "]");
       end if;
 
       if LL.Is_Access (E)
