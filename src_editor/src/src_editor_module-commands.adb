@@ -1193,7 +1193,7 @@ package body Src_Editor_Module.Commands is
                Line   => Start_Line,
                Column => 1,
                Before => 0,
-               After  => Length (Block));
+               After  => UTF8_Utils.UTF8_Length (To_String (Block)));
          end;
       end if;
    end Comment_Uncomment;
