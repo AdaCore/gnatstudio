@@ -98,7 +98,7 @@ documentation for the standard python library. It is accessed through the
      <descr>Python Library</descr>
      <menu>/Help/Python/Python Library</menu>
      <category>Scripts</category>
-  </documentation_file>"""
+  </documentation_file>""" % (regex)
 
         if has_pygtk:
             XML += """
@@ -113,7 +113,7 @@ documentation for the standard python library. It is accessed through the
      <descr>PyGTK Reference Manual</descr>
      <menu>/Help/Python/PyGTK Reference Manual</menu>
      <category>Scripts</category>
-  </documentation_file>""" % (regex)
+  </documentation_file>"""
 
         GPS.parse_xml(XML)
 
