@@ -40,15 +40,22 @@ with Wizards;                   use Wizards;
 package body Creation_Wizard.Selector is
    Me : constant Trace_Handle := Create ("WIZARD");
 
+   type Wizard_Kinds is
+     (From_Scratch,
+      From_Existing,
+      From_Library,
+      From_Adp,
+      Extending,
+      Gnatname);
+
+   type Wizard_Radio_Button_Array is
+     array (Wizard_Kinds) of Gtk_Radio_Button;
+
    type Wizard_Selector_Page is new Project_Wizard_Page_Record with record
-      Last_Selected : Integer := -1;
+      Has_Selection : Boolean := False;
+      Last_Selected : Wizard_Kinds;
       Name_And_Loc  : Name_And_Location_Page_Access;
-      From_Scratch  : Gtk_Radio_Button;
-      From_Existing : Gtk_Radio_Button;
-      From_Library  : Gtk_Radio_Button;
-      From_Adp      : Gtk_Radio_Button;
-      Extending     : Gtk_Radio_Button;
-      Gnatname      : Gtk_Radio_Button;
+      Buttons       : Wizard_Radio_Button_Array;
    end record;
    type Wizard_Selector_Page_Access is access all Wizard_Selector_Page'Class;
    overriding function Create_Content
@@ -73,37 +80,38 @@ package body Creation_Wizard.Selector is
      (Page : access Wizard_Selector_Page;
       Wiz  : access Wizard_Record'Class) return Wizard_Page
    is
-      Selected : Integer := 1;
+      Selection_Match : Boolean := False;
+      Selected        : Wizard_Kinds;
    begin
-      if Get_Active (Page.From_Existing) then
-         Selected := 1;
-      elsif Get_Active (Page.From_Adp) then
-         Selected := 2;
-      elsif Get_Active (Page.From_Scratch) then
-         Selected := 3;
-      elsif Get_Active (Page.From_Library) then
-         Selected := 4;
-      elsif Get_Active (Page.Extending) then
-         Selected := 5;
-      elsif Get_Active (Page.Gnatname) then
-         Selected := 6;
+      if Page.Has_Selection then
+         for J in Page.Buttons'Range loop
+            if Get_Active (Page.Buttons (J)) then
+               Selection_Match := (J = Page.Last_Selected);
+               Selected := J;
+               exit;
+            end if;
+         end loop;
       end if;
 
-      if Page.Last_Selected /= Selected then
+      if not Selection_Match then
          Page.Last_Selected := Selected;
          Remove_Pages (Wiz, After => Page.Name_And_Loc);
          case Selected is
-            when 1 => Add_Simple_Wizard_Pages (Project_Wizard (Wiz));
-            when 2 => Add_Adp_Wizard_Pages (Project_Wizard (Wiz));
-            when 3 => Add_Full_Wizard_Pages
+            when From_Scratch =>
+               Add_Full_Wizard_Pages
                  (Project_Wizard (Wiz), Page.Name_And_Loc, "wizard");
-            when 4 => Add_Full_Wizard_Pages
+            when From_Existing =>
+               Add_Simple_Wizard_Pages (Project_Wizard (Wiz));
+            when From_Library =>
+               Add_Full_Wizard_Pages
                  (Project_Wizard (Wiz), Page.Name_And_Loc, "library_wizard");
-            when 5 => Add_Extending_Wizard_Pages (Project_Wizard (Wiz));
-            when 6 => Add_GNATname_Wizard_Pages
+            when From_Adp =>
+               Add_Adp_Wizard_Pages (Project_Wizard (Wiz));
+            when Extending =>
+               Add_Extending_Wizard_Pages (Project_Wizard (Wiz));
+            when Gnatname =>
+               Add_GNATname_Wizard_Pages
                  (Project_Wizard (Wiz), Page.Name_And_Loc, "wizard");
-            when others =>
-               null;
          end case;
       end if;
 
@@ -170,103 +178,83 @@ package body Creation_Wizard.Selector is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Wiz);
-      Button    : Gtk_Widget;
+
+      procedure Add
+        (Kind       : Wizard_Kinds;
+         Short_Text : String;
+         Full_Text  : String);
+      --  Add choice wizard with given Kind and texts
+
       Box       : Gtk_Box;
-      Separator : Gtk_Separator;
-      Label     : Gtk_Label;
-      pragma Unreferenced (Button);
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add
+        (Kind       : Wizard_Kinds;
+         Short_Text : String;
+         Full_Text  : String)
+      is
+         Separator : Gtk_Separator;
+         Label     : Gtk_Label;
+      begin
+         if Kind = Wizard_Kinds'First then
+            Gtk_New (Page.Buttons (Kind), Label => -Short_Text);
+         else
+            Gtk_New (Page.Buttons (Kind),
+                     Get_Group (Page.Buttons (Wizard_Kinds'First)),
+                     Label => -Short_Text);
+         end if;
+         Pack_Start (Box, Page.Buttons (Kind), Expand => False);
+         Gtk_New (Label, -Full_Text);
+         Set_Padding (Label, 20, 5);
+         Set_Alignment (Label, 0.0, 0.5);
+         Pack_Start (Box, Label, Expand => False);
+         Gtk_New_Hseparator (Separator);
+         Pack_Start (Box, Separator, Expand => False);
+      end Add;
 
    begin
       Gtk_New_Vbox (Box, Homogeneous => False);
 
-      Gtk_New (Page.From_Scratch, Label => -"Single Project");
-      Pack_Start (Box, Page.From_Scratch, Expand => False);
-      Gtk_New
-        (Label,
-         -("Create a new project file, with full control of the properties"));
-      Set_Padding (Label, 20, 5);
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New_Hseparator (Separator);
-      Pack_Start (Box, Separator, Expand => False);
+      Add (From_Scratch,
+           "Single Project",
+           "Create a new project file, with full control of the properties");
 
-      Gtk_New
-        (Page.From_Existing, Get_Group (Page.From_Scratch), -"Project Tree");
-      Pack_Start (Box, Page.From_Existing, Expand => False);
-      Gtk_New
-        (Label,
-         -("Create a new set of projects given an existing build environment."
+      Add (From_Existing,
+           "Project Tree",
+           "Create a new set of projects given an existing build environment."
            & ASCII.LF
-           & "GPS will try to preserve the build structure you already have"));
-      Set_Padding (Label, 20, 5);
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New_Hseparator (Separator);
-      Pack_Start (Box, Separator, Expand => False);
+           & "GPS will try to preserve the build structure you already have");
 
-      Gtk_New
-        (Page.From_Adp,
-         Get_Group (Page.From_Scratch),
-         -"Convert GLIDE Project (.adp)");
-      Pack_Start (Box, Page.From_Adp, Expand => False);
-      Gtk_New
-        (Label,
-         -("Converts a .adp file into a project file. adp files are simple"
+      Add (From_Adp,
+           "Convert GLIDE Project (.adp)",
+           "Converts a .adp file into a project file. adp files are simple"
            & ASCII.LF
-           & "project files used in the Emacs based GLIDE environment"));
-      Set_Padding (Label, 20, 5);
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New_Hseparator (Separator);
-      Pack_Start (Box, Separator, Expand => False);
+           & "project files used in the Emacs based GLIDE environment");
 
-      Gtk_New (Page.From_Library, Get_Group (Page.From_Scratch),
-               Label => -"Library Project");
-      Pack_Start (Box, Page.From_Library, Expand => False);
-      Gtk_New
-        (Label,
-         -("Create a new project file, defining a library rather than an"
+      Add (From_Library,
+           "Library Project",
+           "Create a new project file, defining a library rather than an"
            & ASCII.LF
-           & "executable"));
-      Set_Padding (Label, 20, 5);
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New_Hseparator (Separator);
-      Pack_Start (Box, Separator, Expand => False);
+           & "executable");
 
-      Gtk_New
-        (Page.Extending, Get_Group (Page.From_Scratch), -"Extending Project");
-      Pack_Start (Box, Page.Extending, Expand => False);
-      Gtk_New
-        (Label,
-         -("Create an extending project that allows you to work on a copy of"
+      Add (Extending,
+           "Extending Project",
+           "Create an extending project that allows you to work on a copy of"
            & ASCII.LF
            & "some sources and recompile them locally without affecting the"
            & ASCII.LF
-           & "project's build"));
-      Set_Padding (Label, 20, 5);
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New_Hseparator (Separator);
-      Pack_Start (Box, Separator, Expand => False);
+           & "project's build");
 
-      Gtk_New
-        (Page.Gnatname,
-         Get_Group (Page.From_Scratch),
-         -"Single Project with complex naming scheme");
-      Pack_Start (Box, Page.Gnatname, Expand => False);
-      Gtk_New
-        (Label,
-         -("Create a new project for existing source code stored with"
+      Add (Gnatname,
+           "Single Project with complex naming scheme",
+           "Create a new project for existing source code stored with"
            & ASCII.LF
-           & "arbitrary file naming conventions using gnatname tool"));
-      Set_Padding (Label, 20, 5);
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-      Gtk_New_Hseparator (Separator);
-      Pack_Start (Box, Separator, Expand => False);
+           & "arbitrary file naming conventions using gnatname tool");
 
-      Set_Active (Page.From_Scratch, True);
+      Set_Active (Page.Buttons (From_Scratch), True);
       return Gtk_Widget (Box);
    end Create_Content;
 
