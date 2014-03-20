@@ -59,7 +59,7 @@ procedure GNATdoc_Main is
                             new String'("html");
    Process_Private_Part : aliased Boolean := False;
    Quiet_Mode           : aliased Boolean := False;
-   Suppress_Warnings    : aliased Boolean := False;
+   Enable_Warnings      : aliased Boolean := False;
 
    ------------------------
    -- Launch_Gnatinspect --
@@ -203,9 +203,9 @@ begin
       Help         => "Be quiet/terse");
    Define_Switch
      (Cmdline,
-      Output       => Suppress_Warnings'Access,
-      Switch       => "-ws",
-      Help         => "Suppress all warnings");
+      Output       => Enable_Warnings'Access,
+      Switch       => "-w",
+      Help         => "Enable warnings for missing documentation");
    Define_Switch
      (Cmdline,
       Output       => Backend_Name'Access,
@@ -295,8 +295,8 @@ begin
                              else new Pattern_Matcher'
                                         (Compile
                                           (Pattern, Single_Line))),
-         Report_Errors   => (if Suppress_Warnings then Errors_Only
-                                                  else Errors_And_Warnings),
+         Report_Errors   => (if Enable_Warnings then Errors_And_Warnings
+                                                else Errors_Only),
          Ignore_Files    => Ignore_Files,
          Leading_Doc     => Leading_Doc,
          Skip_C_Files    => not Process_C_Files,
