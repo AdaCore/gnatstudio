@@ -35,11 +35,11 @@ with GPS.CLI_Kernels;       use GPS.CLI_Kernels;
 
 with GNATdoc;               use GNATdoc;
 with Xref;                  use Xref;
+with String_List_Utils;     use String_List_Utils;
 
 procedure GNATdoc_Main is
 
-   procedure Launch_Gnatinspect;
-   --  Launch gnatinspect on the loaded project
+   use String_List_Utils.String_List;
 
    Kernel : constant GPS.CLI_Kernels.CLI_Kernel :=
               new GPS.CLI_Kernels.CLI_Kernel_Record;
@@ -60,6 +60,92 @@ procedure GNATdoc_Main is
    Process_Private_Part : aliased Boolean := False;
    Quiet_Mode           : aliased Boolean := False;
    Enable_Warnings      : aliased Boolean := False;
+   Disable_Build        : aliased Boolean := False;
+
+   procedure Launch_Gprbuild;
+   --  Launch gprbuild on the loaded project
+
+   procedure Launch_Gnatinspect;
+   --  Launch gnatinspect on the loaded project
+
+   procedure Add_X_Switches (Args : in out String_List_Utils.String_List.List);
+   --  Add the project "-Xvariable=value" to Args
+
+   --------------------
+   -- Add_X_Switches --
+   --------------------
+
+   procedure Add_X_Switches
+     (Args : in out String_List_Utils.String_List.List)
+   is
+      Vars : constant Scenario_Variable_Array :=
+        Kernel.Registry.Tree.Scenario_Variables;
+
+   begin
+      for J in Vars'Range loop
+         Append (Args,
+                 "-X" & External_Name (Vars (J)) & "=" & Value (Vars (J)));
+      end loop;
+   end Add_X_Switches;
+
+   ---------------------
+   -- Launch_Gprbuild --
+   ---------------------
+
+   procedure Launch_Gprbuild is
+      Result   : Integer;
+      Args     : String_List_Utils.String_List.List;
+      Gprbuild : GNAT.OS_Lib.String_Access;
+   begin
+      if not Quiet_Mode then
+         Put_Line ("Rebuilding project");
+      end if;
+
+      Gprbuild := GNAT.OS_Lib.Locate_Exec_On_Path ("gprbuild");
+      if Gprbuild = null then
+         Gprbuild := GNAT.OS_Lib.Locate_Exec_On_Path ("gprbuild.exe");
+      end if;
+
+      if Gprbuild = null then
+         Put_Line ("warning: could not find gprbuild");
+         return;
+      end if;
+
+      --  Compute the arguments to launch
+      Append (Args, "-U");
+      Append (Args, "-k");
+      Append (Args, "-q");
+      Append (Args, "-P" & (+Project_File.Full_Name.all));
+
+      Add_X_Switches (Args);
+
+      declare
+         A : GNAT.OS_Lib.Argument_List := List_To_Argument_List (Args);
+      begin
+         Result := GNAT.OS_Lib.Spawn
+           (Program_Name => Gprbuild.all,
+            Args         => A);
+
+         if Result /= 0 then
+            Put_Line ("warning: could not rebuild with:");
+            Put (Gprbuild.all & " ");
+
+            for J in A'Range loop
+               Put (A (J).all & " ");
+            end loop;
+
+            New_Line;
+            Put_Line ("exit code:" & Result'Img);
+         end if;
+
+         for J in A'Range loop
+            GNAT.OS_Lib.Free (A (J));
+         end loop;
+      end;
+
+      Free (Args);
+      GNAT.OS_Lib.Free (Gprbuild);
+   end Launch_Gprbuild;
 
    ------------------------
    -- Launch_Gnatinspect --
@@ -67,24 +153,7 @@ procedure GNATdoc_Main is
 
    procedure Launch_Gnatinspect is
       Result : Integer;
-
-      Vars : constant Scenario_Variable_Array :=
-        Kernel.Registry.Tree.Scenario_Variables;
-
-      Args   : GNAT.OS_Lib.Argument_List (1 .. Vars'Length + 4) :=
-        (others => null);
-
-      Index  : Positive := 1;  --  The index of the first available argument
-
-      procedure Add_Arg (Arg : String);
-      --  Add one argument to the command line
-
-      procedure Add_Arg (Arg : String) is
-      begin
-         Args (Index) := new String'(Arg);
-         Index := Index + 1;
-      end Add_Arg;
-
+      Args   : String_List_Utils.String_List.List;
       Gnatinspect : GNAT.OS_Lib.String_Access;
    begin
       if not Quiet_Mode then
@@ -102,36 +171,39 @@ procedure GNATdoc_Main is
       end if;
 
       --  Compute the arguments to launch
-      Add_Arg ("--exit");
-      Add_Arg ("--symlinks");
-      Add_Arg ("-P" & (+Project_File.Full_Name.all));
-      Add_Arg
-        ("--db=" &
+      Append (Args, "--exit");
+      Append (Args, "--symlinks");
+      Append (Args, "-P" & (+Project_File.Full_Name.all));
+      Append (Args, "--db=" &
          (+Kernel.Databases.Xref_Database_Location.Full_Name.all));
 
-      for J in Vars'Range loop
-         Add_Arg ("-X" & External_Name (Vars (J))
-                  & "=" & Value (Vars (J)));
-      end loop;
+      Add_X_Switches (Args);
 
-      Result := GNAT.OS_Lib.Spawn
-        (Program_Name => Gnatinspect.all,
-         Args         => Args (1 .. Index - 1));
+      declare
+         A : GNAT.OS_Lib.Argument_List := List_To_Argument_List (Args);
+      begin
+         Result := GNAT.OS_Lib.Spawn
+           (Program_Name => Gnatinspect.all,
+            Args         => A);
 
-      if Result /= 0 then
-         Put_Line ("warning: could not generate the database with:");
-         Put (Gnatinspect.all & " ");
-         for J in 1 .. Index - 1 loop
-            Put (Args (J).all & " ");
+         if Result /= 0 then
+            Put_Line ("warning: could not generate the database with:");
+            Put (Gnatinspect.all & " ");
+
+            for J in A'Range loop
+               Put (A (J).all & " ");
+            end loop;
+
+            New_Line;
+            Put_Line ("exit code:" & Result'Img);
+         end if;
+
+         for J in A'Range loop
+            GNAT.OS_Lib.Free (A (J));
          end loop;
-         New_Line;
-         Put_Line ("exit code:" & Result'Img);
-      end if;
+      end;
 
-      for J in 1 .. Index - 1 loop
-         GNAT.OS_Lib.Free (Args (J));
-      end loop;
-
+      Free (Args);
       GNAT.OS_Lib.Free (Gnatinspect);
    end Launch_Gnatinspect;
 
@@ -208,6 +280,11 @@ begin
       Help         => "Enable warnings for missing documentation");
    Define_Switch
      (Cmdline,
+      Output       => Disable_Build'Access,
+      Switch       => "--disable-build",
+      Help         => "Prevent rebuilding of the project");
+   Define_Switch
+     (Cmdline,
       Output       => Backend_Name'Access,
       Switch       => "--output=",
       Help         => "Format of generated documentation");
@@ -274,6 +351,12 @@ begin
 
    Project_Changed (Kernel.Databases);
    Project_View_Changed (Kernel.Databases, Kernel.Registry.Tree);
+
+   --  Run Gprbuild
+
+   if not Disable_Build then
+      Launch_Gprbuild;
+   end if;
 
    --  Run GNATinspect
 
