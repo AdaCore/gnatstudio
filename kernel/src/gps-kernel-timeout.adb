@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2013, AdaCore                     --
+--                     Copyright (C) 2001-2014, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -395,6 +395,7 @@ package body GPS.Kernel.Timeout is
                declare
                   Output : constant String :=
                              Conditional_Strip_CR (Expect_Out (Fd.all));
+                  Child  : MDI_Child;
                begin
                   if Data.Console /= null
                     and then Data.Show_Output
@@ -403,9 +404,12 @@ package body GPS.Kernel.Timeout is
 
                      --  ??? This might be costly, we could cache this MDI
                      --  Child.
-                     Highlight_Child
-                       (Find_MDI_Child
-                          (Get_MDI (Data.D.Kernel), Data.Console));
+                     Child :=
+                       Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console);
+
+                     if Child /= null then
+                        Highlight_Child (Child);
+                     end if;
                   end if;
 
                   if Data.D.Callback /= null then
