@@ -61,16 +61,19 @@
 --       Defined in renamings. References the renamed entity.
 --       See also Is_Alias.
 
+--    Array_Component_Type
+--       Defined in array types. Represents the type of the array components,
+--       which is itself another entity.
+
+--    Array_Index_Type
+--       Defined in array types. List of types of the indexes.
+
 --    Child_Types (LL)
 --       Defined in types. Contains all the derivations of a type
 
 --    Comment
 --       Defined in all entities. Stores the structured comment parsed by
 --       the frontend.
-
---    Component_Type
---       Defined in array types. Represents the type of each array component,
---       which is itself another entity.
 
 --    Components (synthesized)
 --       Defined in record types, concurrent types and concurrent objects.
@@ -282,6 +285,9 @@
 --    Location (LL)
 --       Defined in all entities.
 
+--    Methods
+--       Defined in types and subtypes. Set in tagged types. List of methods.
+
 --    Parent
 --       Defined in tagged types and subtypes.
 
@@ -388,8 +394,9 @@
 --       Value provided by Xref. Used by the frontend to identify library
 --       level declarations.
 
---    Is_Predef (LL)
---       Value provided by Xref. Currently unused???
+--    Is_Predefined_Entity (LL)
+--       Value provided by Xref. It can be used by the backend to avoid
+--       generating cross references to predefined types.
 
 --    Kind (LL)
 --       Value provided by Xref. Not reliable. Used as the initial value of
@@ -650,6 +657,8 @@ private package GNATdoc.Atree is
 
    procedure Append_Generic_Formal
      (E : Entity_Id; Value : Entity_Id);
+   procedure Append_Array_Index_Type
+     (E : Entity_Id; Value : Entity_Id);
    procedure Append_Inherited_Method
      (E : Entity_Id; Value : Entity_Id);
    procedure Append_Method
@@ -665,7 +674,7 @@ private package GNATdoc.Atree is
    function Get_Comment
      (E : Entity_Id) return Structured_Comment;
 
-   function Get_Component_Type
+   function Get_Array_Component_Type
      (E : Entity_Id) return Entity_Id;
 
    function Get_Components
@@ -716,6 +725,8 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return General_Location;
 
    function Get_Generic_Formals
+     (E : Entity_Id) return access EInfo_List.Vector;
+   function Get_Array_Index_Type
      (E : Entity_Id) return access EInfo_List.Vector;
    function Get_Inherited_Methods
      (E : Entity_Id) return access EInfo_List.Vector;
@@ -992,16 +1003,22 @@ private package GNATdoc.Atree is
       --  In_Ada_Lang is used to enable an assertion since in Ada we are not
       --  processing bodies yet???
 
-      function Has_Methods      (E : Entity_Id) return Boolean;
-
-      function Is_Abstract      (E : Entity_Id) return Boolean;
-      function Is_Access        (E : Entity_Id) return Boolean;
-      function Is_Array         (E : Entity_Id) return Boolean;
-
-      function Is_Global        (E : Entity_Id) return Boolean;
-      function Is_Predef        (E : Entity_Id) return Boolean;
-      function Is_Primitive     (E : Entity_Id) return Boolean;
-      function Is_Type          (E : Entity_Id) return Boolean;
+      function Has_Methods
+        (E : Entity_Id) return Boolean;
+      function Is_Abstract
+        (E : Entity_Id) return Boolean;
+      function Is_Access
+        (E : Entity_Id) return Boolean;
+      function Is_Array
+        (E : Entity_Id) return Boolean;
+      function Is_Global
+        (E : Entity_Id) return Boolean;
+      function Is_Predefined_Entity
+        (E : Entity_Id) return Boolean;
+      function Is_Primitive
+        (E : Entity_Id) return Boolean;
+      function Is_Type
+        (E : Entity_Id) return Boolean;
 
       function Is_Self_Referenced_Type
         (E    : Root_Entity'Class;
@@ -1032,7 +1049,7 @@ private package GNATdoc.Atree is
       pragma Inline (Is_Access);
       pragma Inline (Is_Array);
       pragma Inline (Is_Global);
-      pragma Inline (Is_Predef);
+      pragma Inline (Is_Predefined_Entity);
       pragma Inline (Is_Primitive);
       pragma Inline (Is_Type);
 
@@ -1123,7 +1140,8 @@ private
          Instance_Of      : Holder.Holder;
          Loc              : General_Location;
 
-         Component_Type   : Holder.Holder;
+         Array_Component_Type : Holder.Holder;
+
          Pointed_Type     : Holder.Holder;
 
          Scope_E          : Holder.Holder;
@@ -1177,9 +1195,6 @@ private
          Parent_Package  : Entity_Id;
          --  Present in packages
 
-         Component_Type  : Entity_Id;
-         --  Present in array types
-
          End_Of_Syntax_Scope_Loc         : General_Location;
          End_Of_Profile_Location_In_Body : General_Location;
          Generic_Formals_Loc             : General_Location;
@@ -1223,13 +1238,16 @@ private
          Full_View         : Entity_Id;
          Partial_View      : Entity_Id;
 
+         Array_Component_Type : Entity_Id;
+         Array_Index_Type     : aliased EInfo_List.Vector;
+         --  Present in array types
+
          Entities          : aliased EInfo_List.Vector;
          --  Entities defined in the scope of this entity. For example, all
          --  the entities defined in the scope of a package, all the components
          --  of a record, etc.
 
          Generic_Formals   : aliased EInfo_List.Vector;
-
          Methods           : aliased EInfo_List.Vector;
          Inherited_Methods : aliased EInfo_List.Vector;
          --  Primitives of tagged types (or methods of C++ classes)
@@ -1246,6 +1264,7 @@ private
 
       end record;
 
+   pragma Inline (Append_Array_Index_Type);
    pragma Inline (Append_Generic_Formal);
    pragma Inline (Append_Inherited_Method);
    pragma Inline (Append_Method);
@@ -1254,7 +1273,8 @@ private
 
    pragma Inline (Get_Alias);
    pragma Inline (Get_Comment);
-   pragma Inline (Get_Component_Type);
+   pragma Inline (Get_Array_Component_Type);
+   pragma Inline (Get_Array_Index_Type);
    pragma Inline (Get_Direct_Derivations);
    pragma Inline (Get_Doc);
    pragma Inline (Get_Doc_After);

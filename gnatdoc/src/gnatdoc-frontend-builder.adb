@@ -585,6 +585,9 @@ package body GNATdoc.Frontend.Builder is
 
       procedure Complete_Decoration (E : Entity_Id) is
 
+         procedure Decorate_Array_Type (E : Entity_Id);
+         --  Complete the decoration of an array type
+
          procedure Decorate_Generic_Formals (E : Entity_Id);
          --  Complete the decoration of a subprogram entity
 
@@ -593,6 +596,24 @@ package body GNATdoc.Frontend.Builder is
 
          procedure Decorate_Subprogram_Formals (E : Entity_Id);
          --  Complete the decoration of a subprogram entity
+
+         -------------------------
+         -- Decorate_Array_Type --
+         -------------------------
+
+         procedure Decorate_Array_Type (E : Entity_Id) is
+            Index_Types : Xref.Entity_Array :=
+                            Xref.Index_Types (LL.Get_Entity (E));
+            Etype : Entity_Id;
+         begin
+            for J in Index_Types'Range loop
+               Get_Unique_Entity
+                 (Etype, Context, File, Index_Types (J).all, Forced => True);
+               Append_Array_Index_Type (E, Etype);
+            end loop;
+
+            Free (Index_Types);
+         end Decorate_Array_Type;
 
          ------------------------------
          -- Decorate_Generic_Formals --
@@ -1114,6 +1135,9 @@ package body GNATdoc.Frontend.Builder is
 
          elsif Is_Access_Type (E) then
             Decorate_Subprogram_Formals (E);
+
+         elsif LL.Is_Array (E) then
+            Decorate_Array_Type (E);
          end if;
 
          if Is_Partial_View (E) then

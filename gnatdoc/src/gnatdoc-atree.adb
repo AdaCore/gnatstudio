@@ -70,9 +70,9 @@ package body GNATdoc.Atree is
    --  Internal subprogram which factorizes the code needed by routines
    --  New_Entity and New_Internal_Entity to create a new entity.
 
-   function LL_Get_Component_Type
+   function LL_Get_Array_Component_Type
      (E : Entity_Id) return Root_Entity'Class;
-   pragma Inline (LL_Get_Component_Type);
+   pragma Inline (LL_Get_Array_Component_Type);
 
    function LL_Get_Etype
      (E : Entity_Id) return Root_Entity'Class;
@@ -92,9 +92,9 @@ package body GNATdoc.Atree is
    function LL_Is_Generic (E : Entity_Id) return Boolean;
    pragma Inline (LL_Is_Generic);
 
-   procedure LL_Set_Component_Type
+   procedure LL_Set_Array_Component_Type
      (E : Entity_Id; Value : Root_Entity'Class);
-   pragma Inline (LL_Set_Component_Type);
+   pragma Inline (LL_Set_Array_Component_Type);
 
    procedure LL_Set_Etype
      (E : Entity_Id; Value : Root_Entity'Class);
@@ -164,6 +164,17 @@ package body GNATdoc.Atree is
       end Hash;
 
    end Hash_Table;
+
+   -----------------------------
+   -- Append_Array_Index_Type --
+   -----------------------------
+
+   procedure Append_Array_Index_Type (E : Entity_Id; Value : Entity_Id) is
+   begin
+      pragma Assert (LL.Is_Array (E));
+      pragma Assert (not Get_Array_Index_Type (E).Contains (Value));
+      Get_Array_Index_Type (E).Append (Value);
+   end Append_Array_Index_Type;
 
    -----------------------
    -- Append_Derivation --
@@ -542,6 +553,17 @@ package body GNATdoc.Atree is
       return E.Alias;
    end Get_Alias;
 
+   --------------------------
+   -- Get_Array_Index_Type --
+   --------------------------
+
+   function Get_Array_Index_Type
+     (E : Entity_Id) return access EInfo_List.Vector is
+   begin
+      pragma Assert (LL.Is_Array (E));
+      return E.Array_Index_Type'Access;
+   end Get_Array_Index_Type;
+
    -----------------
    -- Get_Comment --
    -----------------
@@ -555,11 +577,12 @@ package body GNATdoc.Atree is
    -- Get_Component_Type --
    ------------------------
 
-   function Get_Component_Type
+   function Get_Array_Component_Type
      (E : Entity_Id) return Entity_Id is
    begin
-      return E.Component_Type;
-   end Get_Component_Type;
+      pragma Assert (LL.Is_Array (E));
+      return E.Array_Component_Type;
+   end Get_Array_Component_Type;
 
    --------------------
    -- Get_Components --
@@ -1242,6 +1265,16 @@ package body GNATdoc.Atree is
          E : constant Root_Entity'Class := New_E.Xref.Entity.Element;
 
       begin
+         New_E.Xref.Is_Type := Xref.Is_Type (E);
+
+         if LL.Is_Type (New_E) then
+            New_E.Xref.Is_Predef := Xref.Is_Predefined_Entity (E);
+
+            if LL.Is_Predefined_Entity (New_E) then
+               return;
+            end if;
+         end if;
+
          --  Stage 1: Complete decoration of low-level attributes.
 
          New_E.Xref.Scope_E.Replace_Element (Caller_At_Declaration (E));
@@ -1294,7 +1327,7 @@ package body GNATdoc.Atree is
             New_E.Xref.Is_Array  := Xref.Is_Array (E);
 
             if LL.Is_Array (New_E) then
-               LL_Set_Component_Type (New_E, Xref.Component_Type (E));
+               LL_Set_Array_Component_Type (New_E, Xref.Component_Type (E));
             end if;
 
             New_E.Xref.Is_Access := Xref.Is_Access (E);
@@ -1525,10 +1558,10 @@ package body GNATdoc.Atree is
 
                 First_Private_Entity_Loc  => No_Location,
 
-                Instance_Of      => Instance_Of,
-                Loc              => Xref_Loc,
-                Component_Type   => Component_Type,
-                Pointed_Type     => Pointed_Type,
+                Instance_Of           => Instance_Of,
+                Loc                   => Xref_Loc,
+                Array_Component_Type  => Component_Type,
+                Pointed_Type          => Pointed_Type,
 
                 Scope_E          => Scope_E,
                 Parent_Package   => Parent_Package,
@@ -1558,8 +1591,6 @@ package body GNATdoc.Atree is
 
               Scope           => No_Entity,
               Parent_Package  => No_Entity,
-
-              Component_Type  => No_Entity,
 
               End_Of_Syntax_Scope_Loc => No_Location,
               End_Of_Profile_Location_In_Body => No_Location,
@@ -1593,6 +1624,9 @@ package body GNATdoc.Atree is
               Partial_View      => No_Entity,
 
               Src               => Null_Unbounded_String,
+
+              Array_Component_Type  => No_Entity,
+              Array_Index_Type      => <>,
 
               Entities           => <>,
               Generic_Formals    => <>,
@@ -1942,14 +1976,16 @@ package body GNATdoc.Atree is
       end if;
    end Less_Than_Body_Loc;
 
-   ---------------------------
-   -- LL_Get_Component_Type --
-   ---------------------------
+   ---------------------------------
+   -- LL_Get_Array_Component_Type --
+   ---------------------------------
 
-   function LL_Get_Component_Type (E : Entity_Id) return Root_Entity'Class is
+   function LL_Get_Array_Component_Type
+     (E : Entity_Id) return Root_Entity'Class is
    begin
-      return E.Xref.Component_Type.Element;
-   end LL_Get_Component_Type;
+      pragma Assert (LL.Is_Array (E));
+      return E.Xref.Array_Component_Type.Element;
+   end LL_Get_Array_Component_Type;
 
    ------------------
    -- LL_Get_Etype --
@@ -1997,23 +2033,24 @@ package body GNATdoc.Atree is
       return E.Xref.Is_Generic;
    end LL_Is_Generic;
 
-   ---------------------------
-   -- LL_Set_Component_Type --
-   ---------------------------
+   ---------------------------------
+   -- LL_Set_Array_Component_Type --
+   ---------------------------------
 
-   procedure LL_Set_Component_Type
+   procedure LL_Set_Array_Component_Type
      (E : Entity_Id; Value : Root_Entity'Class) is
    begin
-      E.Xref.Component_Type.Replace_Element (Value);
+      pragma Assert (LL.Is_Array (E));
+      E.Xref.Array_Component_Type.Replace_Element (Value);
 
-      if LL_Get_Component_Type (E) = No_Root_Entity then
-         E.Component_Type := No_Entity;
+      if LL_Get_Array_Component_Type (E) = No_Root_Entity then
+         E.Array_Component_Type := No_Entity;
       else
-         E.Component_Type :=
+         E.Array_Component_Type :=
            Find_Entity
-             (Get_Declaration (LL_Get_Component_Type (E)).Loc);
+             (Get_Declaration (LL_Get_Array_Component_Type (E)).Loc);
       end if;
-   end LL_Set_Component_Type;
+   end LL_Set_Array_Component_Type;
 
    ------------------
    -- LL_Set_Etype --
@@ -2763,10 +2800,10 @@ package body GNATdoc.Atree is
          return E.Xref.Is_Global;
       end Is_Global;
 
-      function Is_Predef (E : Entity_Id) return Boolean is
+      function Is_Predefined_Entity (E : Entity_Id) return Boolean is
       begin
          return E.Xref.Is_Predef;
-      end Is_Predef;
+      end Is_Predefined_Entity;
 
       function Is_Primitive (E : Entity_Id) return Boolean is
       begin
@@ -3339,6 +3376,17 @@ package body GNATdoc.Atree is
          end;
       end if;
 
+      if LL.Is_Array (E)
+        and then not Reliable_Mode
+      then
+         Append_Entities
+           (Vector => Get_Array_Index_Type (E),
+            Header => "Array_Index_Type:",
+            Prefix => " - ");
+         Append_Entity
+           ("Array_Component_Type: ", Get_Array_Component_Type (E));
+      end if;
+
       --  Output information retrieved from Xref
 
       if With_Full_Loc then
@@ -3470,10 +3518,6 @@ package body GNATdoc.Atree is
          Append_Line
            (LL_Prefix
             & " Is_Array");
-
-         if not Reliable_Mode then
-            Append_Entity ("Component_Type: ", Get_Component_Type (E));
-         end if;
       end if;
 
       if E.Xref.Is_Container then
@@ -3488,7 +3532,7 @@ package body GNATdoc.Atree is
             & " Is_Global");
       end if;
 
-      if LL.Is_Predef (E) then
+      if LL.Is_Predefined_Entity (E) then
          Append_Line
            (LL_Prefix
             & " Is_Predef");
