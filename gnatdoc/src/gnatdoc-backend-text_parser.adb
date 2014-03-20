@@ -80,6 +80,20 @@ package body GNATdoc.Backend.Text_Parser is
       LI_Matches  : Match_Array (0 .. 2);
       P_Matches   : Match_Array (0 .. 1);
 
+      procedure Parse_Line
+        (Line       : String;
+         Text_Line  : out Ada.Strings.Unbounded.Unbounded_String;
+         Emit_After : out Event_Vectors.Vector);
+      --  Parse tags in line and process them. Result line is returned in
+      --  Text_Line parameter, set of events to be emitted after close of
+      --  current event is returned in Emit_After parameter.
+
+      procedure Process_Image_Tag
+        (Line       : String;
+         First      : in out Positive;
+         Emit_After : out Event_Vectors.Vector);
+      --  Process 'image' tag.
+
       procedure Close_P_And_Pop;
 
       procedure Close_Pre_And_Pop;
@@ -134,75 +148,6 @@ package body GNATdoc.Backend.Text_Parser is
             State.Last_Para_Offset := Positive'Last;
          end if;
       end Close_Pre_And_Pop;
-
-      procedure Parse_Line
-        (Line       : String;
-         Text_Line  : out Ada.Strings.Unbounded.Unbounded_String;
-         Emit_After : out Event_Vectors.Vector);
-      --  Parse tags in line and process them. Result line is returned in
-      --  Text_Line parameter, set of events to be emitted after close of
-      --  current event is returned in Emit_After parameter.
-
-      ----------------
-      -- Parse_Line --
-      ----------------
-
-      procedure Parse_Line
-        (Line       : String;
-         Text_Line  : out Ada.Strings.Unbounded.Unbounded_String;
-         Emit_After : out Event_Vectors.Vector)
-      is
-         First            : Positive := Line'First;
-         Doc_Tag_Matches  : Match_Array (0 .. 0);
-         Tag_Name         : Ada.Strings.Unbounded.Unbounded_String;
-         Path_Matches     : Match_Array (0 .. 1);
-         Image_File_Name  : Ada.Strings.Unbounded.Unbounded_String;
-
-      begin
-         --  Parse line to extract embedded tags and process them
-
-         loop
-            Match
-              (Doc_Tag_Pattern, Line (First .. Line'Last), Doc_Tag_Matches);
-
-            if Doc_Tag_Matches (0) = No_Match then
-               Append (Text_Line, Line (First .. Line'Last));
-
-               exit;
-
-            else
-               Append
-                 (Text_Line, Line (First .. Doc_Tag_Matches (0).First - 1));
-               First := Doc_Tag_Matches (0).Last + 1;
-
-               Tag_Name :=
-                 To_Unbounded_String
-                   (Line
-                      (Doc_Tag_Matches (0).First .. Doc_Tag_Matches (0).Last));
-
-               if Tag_Name = "@image" then
-                  Match
-                    (Path_Pattern,
-                     Line (Doc_Tag_Matches (0).Last + 1 .. Line'Last),
-                     Path_Matches);
-
-                  if Path_Matches (0) /= No_Match then
-                     First := Path_Matches (0).Last + 1;
-                     Image_File_Name :=
-                       To_Unbounded_String
-                         (Line
-                            (Path_Matches (1).First .. Path_Matches (1).Last));
-                     Emit_After.Append
-                       ((Kind      => Start_Tag,
-                         Name      => To_Unbounded_String ("image"),
-                         Parameter => Image_File_Name));
-                     Emit_After.Append
-                       ((End_Tag, To_Unbounded_String ("image")));
-                  end if;
-               end if;
-            end if;
-         end loop;
-      end Parse_Line;
 
       ---------------------
       -- Open_P_And_Push --
@@ -260,6 +205,78 @@ package body GNATdoc.Backend.Text_Parser is
                State.Para_Offset,
                Length (Lines (Current)))));
       end Open_UL_LI_And_Push;
+
+      ----------------
+      -- Parse_Line --
+      ----------------
+
+      procedure Parse_Line
+        (Line       : String;
+         Text_Line  : out Ada.Strings.Unbounded.Unbounded_String;
+         Emit_After : out Event_Vectors.Vector)
+      is
+         First           : Positive := Line'First;
+         Doc_Tag_Matches : Match_Array (0 .. 0);
+         Tag_Name        : Ada.Strings.Unbounded.Unbounded_String;
+
+      begin
+         --  Parse line to extract embedded tags and process them
+
+         loop
+            Match
+              (Doc_Tag_Pattern, Line (First .. Line'Last), Doc_Tag_Matches);
+
+            if Doc_Tag_Matches (0) = No_Match then
+               Append (Text_Line, Line (First .. Line'Last));
+
+               exit;
+
+            else
+               Append
+                 (Text_Line, Line (First .. Doc_Tag_Matches (0).First - 1));
+               First := Doc_Tag_Matches (0).Last + 1;
+
+               Tag_Name :=
+                 To_Unbounded_String
+                   (Line
+                      (Doc_Tag_Matches (0).First .. Doc_Tag_Matches (0).Last));
+
+               if Tag_Name = "@image" then
+                  Process_Image_Tag (Line, First, Emit_After);
+               end if;
+            end if;
+         end loop;
+      end Parse_Line;
+
+      -----------------------
+      -- Process_Image_Tag --
+      -----------------------
+
+      procedure Process_Image_Tag
+        (Line       : String;
+         First      : in out Positive;
+         Emit_After : out Event_Vectors.Vector)
+      is
+         Path_Matches     : Match_Array (0 .. 1);
+         Image_File_Name  : Ada.Strings.Unbounded.Unbounded_String;
+
+      begin
+         Match (Path_Pattern, Line (First .. Line'Last), Path_Matches);
+
+         if Path_Matches (0) /= No_Match then
+            First := Path_Matches (0).Last + 1;
+            Image_File_Name :=
+              To_Unbounded_String
+                (Line
+                   (Path_Matches (1).First .. Path_Matches (1).Last));
+            Emit_After.Append
+              ((Kind      => Start_Tag,
+                Name      => To_Unbounded_String ("image"),
+                Parameter => Image_File_Name));
+            Emit_After.Append
+              ((End_Tag, To_Unbounded_String ("image")));
+         end if;
+      end Process_Image_Tag;
 
    begin
       while Current <= Lines.Last_Index loop
