@@ -19,11 +19,13 @@ package Creation_Wizard.Full is
    procedure Add_Full_Wizard_Pages
      (Wiz          : access Project_Wizard_Record'Class;
       Name_And_Loc : access Creation_Wizard.Name_And_Location_Page'Class;
-      Context      : String);
+      Context      : String;
+      Allow_Page   : access function (Page : String) return Boolean := null);
    --  Add the required pages to allow wizard to edit all the properties of
    --  a project.
    --  New pages can be registered through XML pages.
    --  Context indicates what project attributes should be included from the
    --  XML file describing projects (see the "hide_in" XML attribute)
+   --  If Allow_Page provided use it to filter pages out
 
 end Creation_Wizard.Full;

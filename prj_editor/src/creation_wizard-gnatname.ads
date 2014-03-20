@@ -16,7 +16,11 @@
 ------------------------------------------------------------------------------
 
 package Creation_Wizard.GNATname is
-   procedure Add_GNATname_Page
-     (Wiz : access Project_Wizard_Record'Class);
-   --  Add the required page to a wizard to customize gnatmake run.
+
+   procedure Add_GNATname_Wizard_Pages
+     (Wiz          : access Project_Wizard_Record'Class;
+      Name_And_Loc : access Creation_Wizard.Name_And_Location_Page'Class;
+      Context      : String);
+   --  Add the required pages to a wizard to gnatname wizard
+
 end Creation_Wizard.GNATname;

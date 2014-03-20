@@ -19,11 +19,9 @@ with Gtk.GEntry;         use Gtk.GEntry;
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with Wizards;            use Wizards;
-with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel;         use GPS.Kernel;
 with Project_Viewers;    use Project_Viewers;
 with Project_Properties; use Project_Properties;
-with Creation_Wizard.GNATname; use Creation_Wizard.GNATname;
 
 package body Creation_Wizard.Full is
 
@@ -123,7 +121,8 @@ package body Creation_Wizard.Full is
    procedure Add_Full_Wizard_Pages
      (Wiz          : access Project_Wizard_Record'Class;
       Name_And_Loc : access Creation_Wizard.Name_And_Location_Page'Class;
-      Context      : String)
+      Context      : String;
+      Allow_Page   : access function (Page : String) return Boolean := null)
    is
       P          : Project_Editor_Page;
       Attr_Count : constant Natural := Attribute_Editors_Page_Count;
@@ -143,7 +142,11 @@ package body Creation_Wizard.Full is
             Path_Widget => Get_Path_Widget (Name_And_Loc),
             Nth_Page    => E,
             Context     => Context);
-         if Page /= null then
+
+         if Page /= null
+           and then (Allow_Page = null
+                     or else Allow_Page (Attribute_Editors_Page_Name (E)))
+         then
             Add_Page (Wiz,
                       Page        => Page,
                       Description => Attribute_Editors_Page_Name (E),
@@ -154,20 +157,17 @@ package body Creation_Wizard.Full is
       for E in 1 .. Count loop
          P := Get_Nth_Project_Editor_Page (Get_Kernel (Wiz), E);
 
-         if P.Get_Toc = -"Naming scheme" then
-            --  Prepend gnatname page before naming page
-            Add_GNATname_Page (Wiz);
+         if Allow_Page = null or else Allow_Page (P.Get_Toc) then
+            Page := new Project_Editor_Page_Wrapper'
+              (Project_Wizard_Page_Record with
+               Page         => P,
+               Name_And_Loc => Name_And_Location_Page_Access (Name_And_Loc),
+               Wiz          => Wizard (Wiz));
+            Add_Page (Wiz,
+                      Page        => Page,
+                      Description => Get_Title (P),
+                      Toc         => Get_Toc (P));
          end if;
-
-         Page := new Project_Editor_Page_Wrapper'
-           (Project_Wizard_Page_Record with
-            Page         => P,
-            Name_And_Loc => Name_And_Location_Page_Access (Name_And_Loc),
-            Wiz          => Wizard (Wiz));
-         Add_Page (Wiz,
-                   Page        => Page,
-                   Description => Get_Title (P),
-                   Toc         => Get_Toc (P));
       end loop;
    end Add_Full_Wizard_Pages;
 

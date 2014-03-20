@@ -28,6 +28,7 @@ with Creation_Wizard.Adp;       use Creation_Wizard.Adp;
 with Creation_Wizard.Extending; use Creation_Wizard.Extending;
 with Creation_Wizard.Full;      use Creation_Wizard.Full;
 with Creation_Wizard.Simple;    use Creation_Wizard.Simple;
+with Creation_Wizard.GNATname;  use Creation_Wizard.GNATname;
 with Creation_Wizard;           use Creation_Wizard;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -47,6 +48,7 @@ package body Creation_Wizard.Selector is
       From_Library  : Gtk_Radio_Button;
       From_Adp      : Gtk_Radio_Button;
       Extending     : Gtk_Radio_Button;
+      Gnatname      : Gtk_Radio_Button;
    end record;
    type Wizard_Selector_Page_Access is access all Wizard_Selector_Page'Class;
    overriding function Create_Content
@@ -83,6 +85,8 @@ package body Creation_Wizard.Selector is
          Selected := 4;
       elsif Get_Active (Page.Extending) then
          Selected := 5;
+      elsif Get_Active (Page.Gnatname) then
+         Selected := 6;
       end if;
 
       if Page.Last_Selected /= Selected then
@@ -96,6 +100,8 @@ package body Creation_Wizard.Selector is
             when 4 => Add_Full_Wizard_Pages
                  (Project_Wizard (Wiz), Page.Name_And_Loc, "library_wizard");
             when 5 => Add_Extending_Wizard_Pages (Project_Wizard (Wiz));
+            when 6 => Add_GNATname_Wizard_Pages
+                 (Project_Wizard (Wiz), Page.Name_And_Loc, "wizard");
             when others =>
                null;
          end case;
@@ -238,6 +244,22 @@ package body Creation_Wizard.Selector is
            & "some sources and recompile them locally without affecting the"
            & ASCII.LF
            & "project's build"));
+      Set_Padding (Label, 20, 5);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New_Hseparator (Separator);
+      Pack_Start (Box, Separator, Expand => False);
+
+      Gtk_New
+        (Page.Gnatname,
+         Get_Group (Page.From_Scratch),
+         -"Single Project with complex naming scheme");
+      Pack_Start (Box, Page.Gnatname, Expand => False);
+      Gtk_New
+        (Label,
+         -("Create a new project for existing source code stored with"
+           & ASCII.LF
+           & "arbitrary file naming conventions using gnatname tool"));
       Set_Padding (Label, 20, 5);
       Set_Alignment (Label, 0.0, 0.5);
       Pack_Start (Box, Label, Expand => False);

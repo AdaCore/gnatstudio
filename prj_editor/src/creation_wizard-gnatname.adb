@@ -27,8 +27,8 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Button;                use Gtk.Button;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -46,12 +46,12 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 
 with GUI_Utils;
 with Wizards;                   use Wizards;
-with Project_Properties;
+with Project_Properties;        use Project_Properties;
+with Creation_Wizard.Full;      use Creation_Wizard.Full;
 
 package body Creation_Wizard.GNATname is
 
    type GNATname_Page_Record is new Project_Wizard_Page_Record with record
-      Check_Button : Gtk_Check_Button;
       Tree_View    : Gtk.Tree_View.Gtk_Tree_View;
       Hbox         : Gtk_Hbox;
    end record;
@@ -76,9 +76,6 @@ package body Creation_Wizard.GNATname is
       Wiz  : access Wizard_Record'Class) return Wizard_Page;
    --  See inherited documentation
 
-   procedure Toggle_Enabled (Widget : access Gtk_Widget_Record'Class);
-   --  Callback to toggle sensitivity on check box clicks
-
    procedure Add_Pattern (Widget : access Gtk_Widget_Record'Class);
    procedure Remove_Pattern (Widget : access Gtk_Widget_Record'Class);
    --  Callbacks on Add/Remove buttons click
@@ -101,6 +98,10 @@ package body Creation_Wizard.GNATname is
       Dir         : Virtual_File := GNATCOLL.VFS.No_File);
    --  Executes BuildTarget.execute function.
 
+   procedure Add_GNATname_Page
+     (Wiz : access Project_Wizard_Record'Class);
+   --  Add the required page to a wizard to customize gnatmake run.
+
    -----------------------
    -- Add_GNATname_Page --
    -----------------------
@@ -118,6 +119,38 @@ package body Creation_Wizard.GNATname is
          Description => Description,
          Toc         => -"GNATname");
    end Add_GNATname_Page;
+
+   -------------------------------
+   -- Add_GNATname_Wizard_Pages --
+   -------------------------------
+
+   procedure Add_GNATname_Wizard_Pages
+     (Wiz          : access Project_Wizard_Record'Class;
+      Name_And_Loc : access Creation_Wizard.Name_And_Location_Page'Class;
+      Context      : String)
+   is
+
+      function Allow_Page (Page : String) return Boolean;
+      --  Filter out extra pages from gnatname wizard
+
+      ----------------
+      -- Allow_Page --
+      ----------------
+
+      function Allow_Page (Page : String) return Boolean is
+      begin
+         return Page = -"Source dirs" or else Page = -"Objects";
+      end Allow_Page;
+
+   begin
+      Creation_Wizard.Full.Add_Full_Wizard_Pages
+        (Wiz          => Wiz,
+         Name_And_Loc => Name_And_Loc,
+         Context      => Context,
+         Allow_Page   => Allow_Page'Access);
+
+      Add_GNATname_Page (Wiz);
+   end Add_GNATname_Wizard_Pages;
 
    -----------------
    -- Add_Pattern --
@@ -220,6 +253,10 @@ package body Creation_Wizard.GNATname is
      (Page : access GNATname_Page_Record;
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
+      procedure Add_Pattern (Pattern : String);
+      --  Add predefined file name pattern to model
+
+      Label        : Gtk_Label;
       Frame        : Gtk_Frame;
       Box          : Gtk_Box;
       Vbox         : Gtk_Vbox;
@@ -228,16 +265,26 @@ package body Creation_Wizard.GNATname is
       Model        : Gtk_Tree_Store;
       Names  : constant GNAT.Strings.String_List :=
         (1 => new String'(-"File pattern"));
+
+      -----------------
+      -- Add_Pattern --
+      -----------------
+
+      procedure Add_Pattern (Pattern : String) is
+         Iter    : Gtk_Tree_Iter;
+      begin
+         Append (Model, Iter, Null_Iter);
+         Set (Model, Iter, 0, Pattern);
+      end Add_Pattern;
+
    begin
       Gtk_New_Vbox (Vbox);
 
       Gtk_New
-        (Page.Check_Button,
-         -"Skip unit search and use standard naming convention");
+        (Label,
+         -"Enter file patterns to search compilation units");
 
-      Page.Check_Button.Set_Active (True);
-
-      Pack_Start (Vbox, Page.Check_Button, Expand => False, Fill => True);
+      Pack_Start (Vbox, Label, Expand => False, Fill => True);
 
       Gtk_New (Frame, "Search in");
       Set_Border_Width (Frame, 5);
@@ -245,8 +292,6 @@ package body Creation_Wizard.GNATname is
 
       Gtk_New_Hbox (Page.Hbox);
       Add (Frame, Page.Hbox);
-
-      Page.Hbox.Set_Sensitive (False);
 
       Page.Tree_View := GUI_Utils.Create_Tree_View
         (Column_Types => (0 => GType_String),
@@ -276,15 +321,6 @@ package body Creation_Wizard.GNATname is
       Vbox.Show_All;
 
       Widget_Callback.Object_Connect
-        (Page.Check_Button, Signal_Clicked, Toggle_Enabled'Access, Page.Hbox);
-
-      Widget_Callback.Object_Connect
-        (Page.Check_Button,
-         Signal_Clicked,
-         Update_Buttons_Sensitivity'Access,
-         Wiz);
-
-      Widget_Callback.Object_Connect
         (Model,
          Signal_Row_Inserted,
          Update_Buttons_Sensitivity'Access,
@@ -295,6 +331,9 @@ package body Creation_Wizard.GNATname is
          Signal_Row_Deleted,
          Update_Buttons_Sensitivity'Access,
          Wiz);
+
+      Add_Pattern ("*.ad?");
+      Add_Pattern ("*.a");
 
       return Gtk.Widget.Gtk_Widget (Vbox);
    end Create_Content;
@@ -320,13 +359,9 @@ package body Creation_Wizard.GNATname is
    -----------------
 
    overriding function Is_Complete
-     (Page : access GNATname_Page_Record) return String
-   is
+     (Page : access GNATname_Page_Record) return String is
    begin
-      if Page.Check_Button = null
-        or else Page.Check_Button.Get_Active
-        or else Get_Iter_First (Page.Tree_View.Get_Model) /= Null_Iter
-      then
+      if Get_Iter_First (Page.Tree_View.Get_Model) /= Null_Iter then
          return "";
       else
          return -"List of file patterns is empty";
@@ -341,18 +376,9 @@ package body Creation_Wizard.GNATname is
      (Page : access GNATname_Page_Record;
       Wiz  : access Wizard_Record'Class) return Wizard_Page
    is
-      This  : constant Wizard_Page := Wizard_Page (Page);
-      Pages : constant Wizard_Pages_Array_Access := Wiz.Get_Pages;
+      pragma Unreferenced (Page);
+      pragma Unreferenced (Wiz);
    begin
-      if not Page.Check_Button.Get_Active then
-         for J in Pages'First .. Pages'Last - 2 loop
-            if Pages (J) = This then
-               --  Skip over next page ("Naming scheme")
-               return Pages (J + 2);
-            end if;
-         end loop;
-      end if;
-
       return null;
    end Next_Page;
 
@@ -370,10 +396,6 @@ package body Creation_Wizard.GNATname is
       Model : constant Gtk.Tree_Model.Gtk_Tree_Model :=
         Page.Tree_View.Get_Model;
    begin
-      if Page.Check_Button.Get_Active then
-         return;
-      end if;
-
       Append (Extra, "-P" & Project.Project_Path.Display_Full_Name);
 
       --  Append source directories
@@ -422,14 +444,5 @@ package body Creation_Wizard.GNATname is
          Tree_Store.Remove (Iter);
       end if;
    end Remove_Pattern;
-
-   --------------------
-   -- Toggle_Enabled --
-   --------------------
-
-   procedure Toggle_Enabled (Widget : access Gtk_Widget_Record'Class) is
-   begin
-      Widget.Set_Sensitive (not Widget.Is_Sensitive);
-   end Toggle_Enabled;
 
 end Creation_Wizard.GNATname;
