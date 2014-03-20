@@ -14,17 +14,21 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body GNATdoc.Backend.HTML.JSON_Builder is
 
    use GNATCOLL.JSON;
+
+   Me : constant Trace_Handle := Create ("GNATdoc.1-HTML_Backend");
 
    ----------------------------
    -- To_JSON_Representation --
    ----------------------------
 
    function To_JSON_Representation
-     (Stream : GNATdoc.Backend.Text_Parser.Event_Vectors.Vector)
+     (Stream : GNATdoc.Backend.Text_Parser.Event_Vectors.Vector;
+      Kernel : not null access GPS.Core_Kernels.Core_Kernel_Record'Class)
       return GNATCOLL.JSON.JSON_Array
    is
       type State_Type is record
@@ -40,6 +44,8 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
       Object      : GNATCOLL.JSON.JSON_Value;
       Aux         : GNATCOLL.JSON.JSON_Array;
       Number      : Positive;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Success     : Boolean;
 
    begin
       for Event of Stream loop
@@ -54,6 +60,26 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
                elsif Event.Name = "pre" then
                   State.Object.Set_Field ("kind", "code");
                   Number := 1;
+
+               elsif Event.Name = "image" then
+                  File :=
+                    GNATCOLL.VFS.Create_From_Base
+                      (Filesystem_String (To_String (Event.Parameter)),
+                       Kernel.Registry.Tree.Root_Project.Project_Path
+                       .Get_Parent.Full_Name.all);
+                  File.Copy
+                    (GNATdoc.Get_Doc_Directory (Kernel).Create_From_Dir
+                     ("images/").Full_Name.all,
+                     Success);
+
+                  if not Success then
+                     Trace
+                       (Me, "Unable to copy image " & File.Display_Full_Name);
+                  end if;
+
+                  State.Object.Set_Field ("kind", "image");
+                  State.Object.Set_Field
+                    ("src", "../images/" & String (File.Base_Name));
 
                else
                   State.Object.Set_Field ("kind", To_String (Event.Name));

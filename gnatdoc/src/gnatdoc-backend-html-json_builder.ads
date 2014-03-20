@@ -22,7 +22,8 @@ with GNATdoc.Backend.Text_Parser;
 private package GNATdoc.Backend.HTML.JSON_Builder is
 
    function To_JSON_Representation
-     (Stream : GNATdoc.Backend.Text_Parser.Event_Vectors.Vector)
+     (Stream : GNATdoc.Backend.Text_Parser.Event_Vectors.Vector;
+      Kernel : not null access GPS.Core_Kernels.Core_Kernel_Record'Class)
       return GNATCOLL.JSON.JSON_Array;
    --  Converts stream of markup events to JSON_Array to be used by JavaScript
    --  to render documentation page.

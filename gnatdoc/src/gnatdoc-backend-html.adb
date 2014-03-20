@@ -50,7 +50,8 @@ package body GNATdoc.Backend.HTML is
       Tmpl_Source_File_Index_JS);   --  Index of source files (JavaScript data)
 
    procedure Extract_Summary_And_Description
-     (Entity      : Entity_Id;
+     (Self        : HTML_Backend'Class;
+      Entity      : Entity_Id;
       Summary     : out JSON_Array;
       Description : out JSON_Array);
    --  Extracts summary and description of the specified entity
@@ -61,7 +62,8 @@ package body GNATdoc.Backend.HTML is
    --  Returns file name of the specified template.
 
    function To_JSON_Representation
-     (Text : Ada.Strings.Unbounded.Unbounded_String)
+     (Text   : Ada.Strings.Unbounded.Unbounded_String;
+      Kernel : not null access GPS.Core_Kernels.Core_Kernel_Record'Class)
       return GNATCOLL.JSON.JSON_Array;
    --  Parses Text and converts it into JSON representation.
 
@@ -133,7 +135,8 @@ package body GNATdoc.Backend.HTML is
    -------------------------------------
 
    procedure Extract_Summary_And_Description
-     (Entity      : Entity_Id;
+     (Self        : HTML_Backend'Class;
+      Entity      : Entity_Id;
       Summary     : out JSON_Array;
       Description : out JSON_Array) is
    begin
@@ -150,12 +153,14 @@ package body GNATdoc.Backend.HTML is
                Tag := Get (Cursor);
 
                if Tag.Tag = "summary" then
-                  Summary := To_JSON_Representation (Tag.Text);
+                  Summary :=
+                    To_JSON_Representation (Tag.Text, Self.Context.Kernel);
 
                elsif Tag.Tag = "description"
                  or Tag.Tag = ""
                then
-                  Description := To_JSON_Representation (Tag.Text);
+                  Description :=
+                    To_JSON_Representation (Tag.Text, Self.Context.Kernel);
                end if;
 
                Next (Cursor);
@@ -853,7 +858,7 @@ package body GNATdoc.Backend.HTML is
 
       begin
          for E of Entities loop
-            Extract_Summary_And_Description (E, Summary, Description);
+            Self.Extract_Summary_And_Description (E, Summary, Description);
 
             if Present (Get_Src (E)) then
                declare
@@ -905,7 +910,9 @@ package body GNATdoc.Backend.HTML is
                         Parameter.Set_Field
                           ("column", Natural (Declaration.Loc.Column));
                         Parameter.Set_Field
-                          ("description", To_JSON_Representation (Tag.Text));
+                          ("description",
+                           To_JSON_Representation
+                             (Tag.Text, Self.Context.Kernel));
                         Append (Parameters, Parameter);
                      end if;
 
@@ -931,7 +938,9 @@ package body GNATdoc.Backend.HTML is
                      if Tag.Tag = "return" then
                         Returns := Create_Object;
                         Returns.Set_Field
-                          ("description", To_JSON_Representation (Tag.Text));
+                          ("description",
+                           To_JSON_Representation
+                             (Tag.Text, Self.Context.Kernel));
                         Entity_Entry.Set_Field ("returns", Returns);
                      end if;
 
@@ -953,7 +962,9 @@ package body GNATdoc.Backend.HTML is
                      if Tag.Tag = "exception" then
                         Returns := Create_Object;
                         Returns.Set_Field
-                          ("description", To_JSON_Representation (Tag.Text));
+                          ("description",
+                           To_JSON_Representation
+                             (Tag.Text, Self.Context.Kernel));
                         Entity_Entry.Set_Field ("exceptions", Returns);
                      end if;
 
@@ -1031,7 +1042,7 @@ package body GNATdoc.Backend.HTML is
 
       --  Extract package's "summary" and "description".
 
-      Extract_Summary_And_Description (Entity, Summary, Description);
+      Self.Extract_Summary_And_Description (Entity, Summary, Description);
       Documentation.Set_Field ("summary", Summary);
       Documentation.Set_Field ("description", Description);
 
@@ -1095,7 +1106,7 @@ package body GNATdoc.Backend.HTML is
 
          begin
             for E of Entities.Pkgs loop
-               Extract_Summary_And_Description (E, Summary, Description);
+               Self.Extract_Summary_And_Description (E, Summary, Description);
                Entity_Entry := Create_Object;
                Entity_Entry.Set_Field ("label", Get_Short_Name (E));
                Entity_Entry.Set_Field ("href", "../" & Get_Docs_Href (E));
@@ -1334,6 +1345,8 @@ package body GNATdoc.Backend.HTML is
          Docs_Dir : constant Virtual_File := Root_Dir.Create_From_Dir ("docs");
          Ents_Dir : constant Virtual_File :=
            Root_Dir.Create_From_Dir ("entities");
+         Imgs_Dir : constant Virtual_File :=
+           Root_Dir.Create_From_Dir ("images");
 
          procedure Try_Mkdir (D : Virtual_File);
          --  Attempt to make the directory if it does not exist, and
@@ -1359,6 +1372,7 @@ package body GNATdoc.Backend.HTML is
          Try_Mkdir (Srcs_Dir);
          Try_Mkdir (Docs_Dir);
          Try_Mkdir (Ents_Dir);
+         Try_Mkdir (Imgs_Dir);
       end Create_Documentation_Directories;
 
    begin
@@ -1404,10 +1418,11 @@ package body GNATdoc.Backend.HTML is
    ----------------------------
 
    function To_JSON_Representation
-     (Text : Ada.Strings.Unbounded.Unbounded_String)
+     (Text   : Ada.Strings.Unbounded.Unbounded_String;
+      Kernel : not null access GPS.Core_Kernels.Core_Kernel_Record'Class)
       return GNATCOLL.JSON.JSON_Array is
    begin
-      return To_JSON_Representation (Parse_Text (To_String (Text)));
+      return To_JSON_Representation (Parse_Text (To_String (Text)), Kernel);
    end To_JSON_Representation;
 
 end GNATdoc.Backend.HTML;
