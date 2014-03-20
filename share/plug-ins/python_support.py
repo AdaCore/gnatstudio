@@ -23,14 +23,16 @@ following are provided:
 #   - "indent region", "dedent region", "check module", "run module"
 #   - "class browser" -> project view in GPS
 
-import GPS, sys, os.path
+import GPS
+import sys
+import os.path
 import gps_utils
 
 try:
-   from gi.repository import Gtk
-   has_pygtk=1
+    from gi.repository import Gtk
+    has_pygtk = 1
 except:
-   has_pygtk=0
+    has_pygtk = 0
 
 
 class Python_Support(object):
@@ -44,12 +46,17 @@ documentation for the standard python library. It is accessed through the
 /Python menu when editing a python file""",
             9432)
 
+        regex = ("(a(nd|ssert|s)|break|c(lass|ontinue)|de[fl]|e(l(if|se)"
+                 + "|x(cept|ec))|f(inally|or|rom)|global|i(mport|[fns])"
+                 + "|lambda|not|or|p(ass|rint)|r(aise|eturn)|try|while|yield)"
+                 + "\\b")
+
         XML = """
   <Language>
     <Name>Python</Name>
     <Body_Suffix>.py</Body_Suffix>
     <Obj_Suffix>.pyc</Obj_Suffix>
-    <Keywords>(a(nd|ssert|s)|break|c(lass|ontinue)|de[fl]|e(l(if|se)|x(cept|ec))|f(inally|or|rom)|global|i(mport|[fns])|lambda|not|or|p(ass|rint)|r(aise|eturn)|try|while|yield)\\b</Keywords>
+    <Keywords>%s</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
       <String_Delimiter>&quot;</String_Delimiter>
@@ -85,7 +92,9 @@ documentation for the standard python library. It is accessed through the
      <category>Scripts</category>
   </documentation_file>
   <documentation_file>
-     <shell lang="python">GPS.execute_action('display python library help')</shell>
+     <shell lang="python">
+        GPS.execute_action('display python library help')
+     </shell>
      <descr>Python Library</descr>
      <menu>/Help/Python/Python Library</menu>
      <category>Scripts</category>
@@ -104,7 +113,7 @@ documentation for the standard python library. It is accessed through the
      <descr>PyGTK Reference Manual</descr>
      <menu>/Help/Python/PyGTK Reference Manual</menu>
      <category>Scripts</category>
-  </documentation_file>"""
+  </documentation_file>""" % (regex)
 
         GPS.parse_xml(XML)
 
@@ -128,36 +137,37 @@ Reload the currently edited file in python.
 If the file has not been imported yet, import it initially.
 Otherwise, reload the current version of the file.
         """
-    
+
         try:
-           file = GPS.current_context().file()
-           module = os.path.splitext(os.path.basename(file.name()))[0]
-    
-           ## The actual import and reload must be done in the context of the
-           ## GPS console so that they are visible there. The current function
-           ## executes in a different context, and would not impact the GPS
-           ## console as a result otherwise.
-    
-           ## We cannot use  execfile(...), since that would be the equivalent
-           ## of "from ... import *", not of "import ..."
-    
-           if sys.modules.has_key(module):
-              GPS.exec_in_console("reload(sys.modules[\"" + module + "\"])")
-    
-           else:
-              try:
-                 sys.path.index(os.path.dirname(file.name()))
-              except:
-                 sys.path = [os.path.dirname(file.name())] + sys.path
-              mod = __import__(module)
-    
-              # This would import in the current context, not what we want
-              # exec (compile ("import " + module, "<cmdline>", "exec"))
-    
-              ## The proper solution is to execute in the context of the GPS console
-              GPS.exec_in_console("import " + module)
+            file = GPS.current_context().file()
+            module = os.path.splitext(os.path.basename(file.name()))[0]
+
+            ## The actual import and reload must be done in the context of the
+            ## GPS console so that they are visible there. The current function
+            ## executes in a different context, and would not impact the GPS
+            ## console as a result otherwise.
+
+            ## We cannot use  execfile(...), since that would be the equivalent
+            ## of "from ... import *", not of "import ..."
+
+            if module in sys.modules:
+                GPS.exec_in_console("reload(sys.modules[\"" + module + "\"])")
+
+            else:
+                try:
+                    sys.path.index(os.path.dirname(file.name()))
+                except:
+                    sys.path = [os.path.dirname(file.name())] + sys.path
+                mod = __import__(module)
+
+                # This would import in the current context, not what we want
+                # exec (compile ("import " + module, "<cmdline>", "exec"))
+
+                ## The proper solution is to execute in the context of the GPS
+                ## console
+                GPS.exec_in_console("import " + module)
         except:
-           pass   ## Current context is not a file
+            pass   # Current context is not a file
 
     def _project_recomputed(self, hook_name):
         """
@@ -165,8 +175,9 @@ if python is one of the supported language for the project, add various
 predefined directories that may contain python files, so that shift-F3
 works to open these files as it does for the Ada runtime
         """
-    
-        GPS.Project.add_predefined_paths(sources="%splug-ins" % GPS.get_home_dir())
+
+        GPS.Project.add_predefined_paths(
+            sources="%splug-ins" % GPS.get_home_dir())
         try:
             GPS.Project.root().languages(recursive=True).index("python")
             # The rest is done only if we support python
@@ -179,16 +190,16 @@ works to open these files as it does for the Ada runtime
         base = port = self.port_pref.get()
         if not self.pydoc_proc:
             while port - base < 10:
-               self.pydoc_proc = GPS.Process("pydoc -p %s" % port)
-               out = self.pydoc_proc.expect(
-                   "pydoc server ready|Address already in use", 10000)
-               try:
-                   out.rindex(   # raise exception if not found
-                       "Address already in use")
-                   port += 1
-               except:
-                   break
-    
+                self.pydoc_proc = GPS.Process("pydoc -p %s" % port)
+                out = self.pydoc_proc.expect(
+                    "pydoc server ready|Address already in use", 10000)
+                try:
+                    out.rindex(   # raise exception if not found
+                        "Address already in use")
+                    port += 1
+                except:
+                    break
+
         GPS.HTML.browse("http://localhost:%s/" % port)
 
     def _before_exit(self, hook_name):
@@ -198,6 +209,22 @@ works to open these files as it does for the Ada runtime
             self.pydoc_proc = None
         return 1
 
+
+class PythonTracer(object):
+    """ Basic python tracer, useful for GPS plugin development and debug.
+    """
+
+    def __init__(self):
+        self.logger = GPS.Logger("Python_Tracer")
+        self.prev_trace = sys.gettrace()
+        sys.settrace(self.trace)
+
+    def __del__(self):
+        sys.settrace(self.prev_trace)
+
+    def trace(self, frame, event, arg):
+        filename, lineno = frame.f_code.co_filename, frame.f_lineno
+        self.logger.log("%s:%s:%s:%s" % (filename, lineno, event, arg))
 
 # Create the class once GPS is started, so that the filter is created
 # immediately when parsing XML, and we can create our actions.
