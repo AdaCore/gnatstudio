@@ -486,7 +486,9 @@ def delete_line():
     end = location.end_of_line()
 
     # Do the deletion
+    buffer.start_undo_group()
     buffer.delete(start, end)
+    buffer.end_undo_group()
 
 
 def kill_line(location=None, count=1):
