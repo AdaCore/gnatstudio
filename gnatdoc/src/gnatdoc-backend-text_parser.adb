@@ -41,8 +41,13 @@ package body GNATdoc.Backend.Text_Parser is
             Para_Offset : Positive;
 
             case Kind is
-               when Initial | Paragraph | Code =>
+               when Initial | Code =>
                   null;
+
+               when Paragraph =>
+                  Emit_After  : Event_Vectors.Vector;
+                  --  Sequence of events which will be emitted into the result
+                  --  stream after close of paragraph.
 
                when Itemized_List =>
                   Item_Offset : Positive;
@@ -56,8 +61,10 @@ package body GNATdoc.Backend.Text_Parser is
    package State_Vectors is
      new Ada.Containers.Vectors (Positive, State_Type);
 
-   LI_Pattern : constant Pattern_Matcher := Compile ("^\s+([-*])\s*(\S)");
-   P_Pattern  : constant Pattern_Matcher := Compile ("\s*(\S)");
+   LI_Pattern      : constant Pattern_Matcher := Compile ("^\s+([-*])\s*(\S)");
+   P_Pattern       : constant Pattern_Matcher := Compile ("\s*(\S)");
+   Doc_Tag_Pattern : constant Pattern_Matcher := Compile ("@image");
+   Path_Pattern    : constant Pattern_Matcher := Compile ("\s*(\S*)");
 
    ----------------
    -- Parse_Text --
@@ -104,6 +111,7 @@ package body GNATdoc.Backend.Text_Parser is
 
       begin
          Result.Append ((End_Tag, To_Unbounded_String ("p")));
+         Result.Append (State.Emit_After);
          State := State_Stack.Last_Element;
          State_Stack.Delete_Last;
 
@@ -127,21 +135,103 @@ package body GNATdoc.Backend.Text_Parser is
          end if;
       end Close_Pre_And_Pop;
 
+      procedure Parse_Line
+        (Line       : String;
+         Text_Line  : out Ada.Strings.Unbounded.Unbounded_String;
+         Emit_After : out Event_Vectors.Vector);
+      --  Parse tags in line and process them. Result line is returned in
+      --  Text_Line parameter, set of events to be emitted after close of
+      --  current event is returned in Emit_After parameter.
+
+      ----------------
+      -- Parse_Line --
+      ----------------
+
+      procedure Parse_Line
+        (Line       : String;
+         Text_Line  : out Ada.Strings.Unbounded.Unbounded_String;
+         Emit_After : out Event_Vectors.Vector)
+      is
+         First            : Positive := Line'First;
+         Doc_Tag_Matches  : Match_Array (0 .. 0);
+         Tag_Name         : Ada.Strings.Unbounded.Unbounded_String;
+         Path_Matches     : Match_Array (0 .. 1);
+         Image_File_Name  : Ada.Strings.Unbounded.Unbounded_String;
+
+      begin
+         --  Parse line to extract embedded tags and process them
+
+         loop
+            Match
+              (Doc_Tag_Pattern, Line (First .. Line'Last), Doc_Tag_Matches);
+
+            if Doc_Tag_Matches (0) = No_Match then
+               Append (Text_Line, Line (First .. Line'Last));
+
+               exit;
+
+            else
+               Append
+                 (Text_Line, Line (First .. Doc_Tag_Matches (0).First - 1));
+               First := Doc_Tag_Matches (0).Last + 1;
+
+               Tag_Name :=
+                 To_Unbounded_String
+                   (Line
+                      (Doc_Tag_Matches (0).First .. Doc_Tag_Matches (0).Last));
+
+               if Tag_Name = "@image" then
+                  Match
+                    (Path_Pattern,
+                     Line (Doc_Tag_Matches (0).Last + 1 .. Line'Last),
+                     Path_Matches);
+
+                  if Path_Matches (0) /= No_Match then
+                     First := Path_Matches (0).Last + 1;
+                     Image_File_Name :=
+                       To_Unbounded_String
+                         (Line
+                            (Path_Matches (1).First .. Path_Matches (1).Last));
+                     Emit_After.Append
+                       ((Kind      => Start_Tag,
+                         Name      => To_Unbounded_String ("image"),
+                         Parameter => Image_File_Name));
+                     Emit_After.Append
+                       ((End_Tag, To_Unbounded_String ("image")));
+                  end if;
+               end if;
+            end if;
+         end loop;
+      end Parse_Line;
+
       ---------------------
       -- Open_P_And_Push --
       ---------------------
 
       procedure Open_P_And_Push is
+         Text_Line  : Ada.Strings.Unbounded.Unbounded_String;
+         Emit_After : Event_Vectors.Vector;
+
       begin
-         State_Stack.Append (State);
-         State := (Kind => Paragraph, Para_Offset => P_Matches (1).First);
-         Result.Append ((Start_Tag, To_Unbounded_String ("p")));
-         Result.Append
-           ((Text,
-            Unbounded_Slice
-              (Lines (Current),
-               P_Matches (1).First,
-               Length (Lines (Current)))));
+         Parse_Line
+           (Slice
+              (Lines (Current), P_Matches (1).First, Length (Lines (Current))),
+            Text_Line,
+            Emit_After);
+
+         if Length (Text_Line) /= 0 then
+            State_Stack.Append (State);
+            State :=
+              (Kind        => Paragraph,
+               Para_Offset => P_Matches (1).First,
+               Emit_After  => Emit_After);
+            Result.Append
+              ((Start_Tag, To_Unbounded_String ("p"), Null_Unbounded_String));
+            Result.Append ((Text, Text_Line));
+
+         else
+            Result.Append (Emit_After);
+         end if;
       end Open_P_And_Push;
 
       -------------------------
@@ -155,8 +245,14 @@ package body GNATdoc.Backend.Text_Parser is
            (Kind        => Itemized_List,
             Item_Offset => LI_Matches (1).First,
             Para_Offset => LI_Matches (2).First);
-         Result.Append ((Start_Tag, To_Unbounded_String ("ul")));
-         Result.Append ((Start_Tag, To_Unbounded_String ("li")));
+         Result.Append
+           ((Kind      => Start_Tag,
+             Name      => To_Unbounded_String ("ul"),
+             Parameter => Null_Unbounded_String));
+         Result.Append
+           ((Kind      => Start_Tag,
+             Name      => To_Unbounded_String ("li"),
+             Parameter => Null_Unbounded_String));
          Result.Append
            ((Text,
             Unbounded_Slice
@@ -182,7 +278,10 @@ package body GNATdoc.Backend.Text_Parser is
                   --  Check whether this is start of code block
 
                   if State.Last_Para_Offset <= P_Matches (1).First - 3 then
-                     Result.Append ((Start_Tag, To_Unbounded_String ("pre")));
+                     Result.Append
+                       ((Kind      => Start_Tag,
+                         Name      => To_Unbounded_String ("pre"),
+                         Parameter => Null_Unbounded_String));
                      Result.Append
                        ((Text,
                         Unbounded_Slice
@@ -220,12 +319,22 @@ package body GNATdoc.Backend.Text_Parser is
                      goto Restart;
 
                   else
-                     Result.Append
-                       ((Text,
-                        Unbounded_Slice
-                          (Lines (Current),
-                           P_Matches (1).First,
-                           Length (Lines (Current)))));
+                     declare
+                        Text_Line : Ada.Strings.Unbounded.Unbounded_String;
+
+                     begin
+                        Parse_Line
+                          (Slice
+                             (Lines (Current),
+                              P_Matches (1).First,
+                              Length (Lines (Current))),
+                           Text_Line,
+                           State.Emit_After);
+
+                        if Length (Text_Line) /= 0 then
+                           Result.Append ((Text, Text_Line));
+                        end if;
+                     end;
                   end if;
 
                else
@@ -260,7 +369,10 @@ package body GNATdoc.Backend.Text_Parser is
                      --  Continue previous itemized list
 
                      Result.Append ((End_Tag, To_Unbounded_String ("li")));
-                     Result.Append ((Start_Tag, To_Unbounded_String ("li")));
+                     Result.Append
+                       ((Kind      => Start_Tag,
+                         Name      => To_Unbounded_String ("li"),
+                         Parameter => Null_Unbounded_String));
                      Result.Append
                        ((Text,
                         Unbounded_Slice

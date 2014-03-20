@@ -27,6 +27,14 @@ package GNATdoc.Backend.Text_Parser is
          when Start_Tag | End_Tag =>
             Name : Ada.Strings.Unbounded.Unbounded_String;
 
+            case Kind is
+               when Start_Tag =>
+                  Parameter : Ada.Strings.Unbounded.Unbounded_String;
+
+               when others =>
+                  null;
+            end case;
+
          when Text =>
             Text : Ada.Strings.Unbounded.Unbounded_String;
       end case;
