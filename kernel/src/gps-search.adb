@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2013, AdaCore                          --
+--                     Copyright (C) 2013-2014, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -407,7 +407,7 @@ package body GPS.Search is
       R : constant Integer :=
         (if Ref_Index = -1 then Buffer'First else Ref_Index);
       Start : Natural := Natural'Last;
-      Score : Natural;
+      Score : Integer;
 
       T : Natural := Self.Text'First;
       Context : Search_Context;
@@ -500,6 +500,11 @@ package body GPS.Search is
       else
          return GPS.Search.No_Match;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return GPS.Search.No_Match;
    end Start;
 
    -----------
