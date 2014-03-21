@@ -3446,7 +3446,9 @@ package body Project_Properties is
       if not Attr.Indexed
         and then Attr.Non_Index_Type.Typ = Attribute_As_Filename
         and then Attr.Non_Index_Type.Filter = Filter_From_Extended
-        and then Extended_Project (Project) = GNATCOLL.Projects.No_Project
+        and then
+          (Project = No_Project
+           or else Extended_Project (Project) = GNATCOLL.Projects.No_Project)
       then
          Widget := null;
          Expandable := False;
