@@ -328,9 +328,25 @@ begin
    declare
       Result : constant String :=
         GNATCOLL.Projects.Register_New_Attribute
-          (Name    => Attr_Name,
+          (Name    => Ignored_Subprojects_Name,
            Pkg     => Pkg_Name,
            Is_List => True);
+   begin
+      --  Log the reported error (if any)
+
+      if Result /= "" then
+         Trace (DOCGEN_V31, Result);
+      end if;
+   end;
+
+   --  Register the package and attribute that can be used in project files to
+   --  specify directory to lookup image files.
+
+   declare
+      Result : constant String :=
+        GNATCOLL.Projects.Register_New_Attribute
+          (Name    => Image_Dir_Name,
+           Pkg     => Pkg_Name);
    begin
       --  Log the reported error (if any)
 

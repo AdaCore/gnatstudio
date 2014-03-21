@@ -44,6 +44,8 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
       Object      : GNATCOLL.JSON.JSON_Value;
       Aux         : GNATCOLL.JSON.JSON_Array;
       Number      : Positive;
+      Project     : GNATCOLL.Projects.Project_Type;
+      Dir         : GNATCOLL.VFS.Virtual_File;
       File        : GNATCOLL.VFS.Virtual_File;
       Success     : Boolean;
 
@@ -62,11 +64,22 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
                   Number := 1;
 
                elsif Event.Name = "image" then
+                  Project := Kernel.Registry.Tree.Root_Project;
+                  Dir :=
+                    GNATCOLL.VFS.Create
+                      (Filesystem_String
+                         (Project.Attribute_Value
+                            (Attribute =>
+                                 Attribute_Pkg_String'
+                               (Build (Pkg_Name, Image_Dir_Name)),
+                             Default   =>
+                               String
+                                 (Project.Project_Path.Get_Parent
+                                  .Full_Name.all))));
                   File :=
                     GNATCOLL.VFS.Create_From_Base
                       (Filesystem_String (To_String (Event.Parameter)),
-                       Kernel.Registry.Tree.Root_Project.Project_Path
-                       .Get_Parent.Full_Name.all);
+                       Dir.Full_Name.all);
                   File.Copy
                     (GNATdoc.Get_Doc_Directory (Kernel).Create_From_Dir
                      ("images/").Full_Name.all,

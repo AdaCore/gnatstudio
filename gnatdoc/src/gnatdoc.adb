@@ -1502,8 +1502,8 @@ package body GNATdoc is
 
       procedure Init_Ignored_Subprojects_Table is
          Ign_Attr  : constant Attribute_Pkg_List :=
-                       Build (Package_Name => Pkg_Name,
-                              Attribute_Name => Attr_Name);
+                       Build (Package_Name   => Pkg_Name,
+                              Attribute_Name => Ignored_Subprojects_Name);
       begin
          Ign_Prjs :=
            Kernel.Registry.Tree.Root_Project.Attribute_Value (Ign_Attr);

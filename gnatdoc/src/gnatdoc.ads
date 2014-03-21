@@ -34,8 +34,9 @@ package GNATdoc is
    --  Name of the package and attribute supported by GNATdoc to ignore
    --  subprojects
 
-   Attr_Name : constant String := "Ignored_Subprojects";
-   Pkg_Name  : constant String := "Documentation";
+   Pkg_Name                 : constant String := "documentation";
+   Image_Dir_Name           : constant String := "image_dir";
+   Ignored_Subprojects_Name : constant String := "ignored_subprojects";
 
    type Report_Errors_Kind is (None, Errors_Only, Errors_And_Warnings);
 
