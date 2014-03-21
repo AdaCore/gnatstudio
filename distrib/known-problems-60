@@ -59,6 +59,18 @@ KP-60-N226-028 GPS: crash when omni-search preview displays a binary file
               An alternative is to make sure the object files and executables
               do not go in the project's source directories.
 
+KP-60-N224-035 GPS: xref wrong on windows when file opened with /File/Open
+
+  Problem:    We have noticed from time to time that the xref queries could
+              fail on Windows, in particular when the file is opened via the
+              menu, because the casing of the file's full path is different
+              in this case, and the xref engine did not properly test in a
+              case insensitive manner.
+
+  Status:     This was fixed in 6.1 on 2014-03-10
+
+  Workaround: use the omni-search (shift-F3) to open files.
+
 KP-60-N224-023 GPS: case conversion inserts extra text
 
   Problem:    GPS inserts text whose case has been converted at the incorrect
@@ -68,6 +80,19 @@ KP-60-N224-023 GPS: case conversion inserts extra text
   Status:     This was fixed in 6.1 on 2014-02-27
 
   Workaround: Start the selection on the first character of the next line.
+
+KP-60-N224-020 GPS: display errors in the console when database is corrupted
+
+  Problem:    When the sqlite database used for cross-reference information
+              is corrupted (which so far we have only seen when it is stored
+              on a NFS drive) GPS will now display a proper error message in
+              the console.
+
+  Status:     This was fixed in 6.1 on 2014-03-05
+
+  Workaround: When the xref queries start failing, you could try to delete
+              the file gnatinspect.db in your project's object_dir, and
+              restart GPS.
 
 KP-60-N224-019 GPS: error creating call graph recursively
 
@@ -467,6 +492,19 @@ KP-60-G928-018 GPS: "center cursor on screen" scrolls horizontally
 
 Known problems fixed in GPS 6.0.2 / GNATbench 2.8.2
 ---------------------------------------------------
+
+KP-60-N227-046 GPS: error when omni-search matches long file names
+
+  Problem:    When using the omni-search in fuzzy-match mode, and the
+              characters you type are widely spaced apart (on long file paths
+              for instance), GPS might get an internal error and not display
+              any result.
+
+  Status:     This was fixed in 6.1 on 2014-03-03
+              This was fixed in 6.0.2 on 2014-03-21
+
+  Workaround: Typing fewer characters will often display a list again, and you
+              can select directly in the list.
 
 KP-60-N225-041 GPS: wrong color of documentation window in smart completion
 
