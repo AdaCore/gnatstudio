@@ -24,7 +24,6 @@ with Gtk.Radio_Button;          use Gtk.Radio_Button;
 with Gtk.Separator;             use Gtk.Separator;
 with Gtk.Widget;                use Gtk.Widget;
 
-with Creation_Wizard.Adp;       use Creation_Wizard.Adp;
 with Creation_Wizard.Extending; use Creation_Wizard.Extending;
 with Creation_Wizard.Full;      use Creation_Wizard.Full;
 with Creation_Wizard.Simple;    use Creation_Wizard.Simple;
@@ -42,18 +41,16 @@ package body Creation_Wizard.Selector is
 
    type Wizard_Kinds is
      (From_Scratch,
+      Gnatname,
       From_Existing,
       From_Library,
-      From_Adp,
-      Extending,
-      Gnatname);
+      Extending);
 
    type Wizard_Radio_Button_Array is
      array (Wizard_Kinds) of Gtk_Radio_Button;
 
    type Wizard_Selector_Page is new Project_Wizard_Page_Record with record
-      Has_Selection : Boolean := False;
-      Last_Selected : Wizard_Kinds;
+      Last_Selected : Wizard_Kinds := From_Scratch;
       Name_And_Loc  : Name_And_Location_Page_Access;
       Buttons       : Wizard_Radio_Button_Array;
    end record;
@@ -80,22 +77,19 @@ package body Creation_Wizard.Selector is
      (Page : access Wizard_Selector_Page;
       Wiz  : access Wizard_Record'Class) return Wizard_Page
    is
-      Selection_Match : Boolean := False;
-      Selected        : Wizard_Kinds;
+      Selected : Wizard_Kinds := From_Scratch;
    begin
-      if Page.Has_Selection then
-         for J in Page.Buttons'Range loop
-            if Get_Active (Page.Buttons (J)) then
-               Selection_Match := (J = Page.Last_Selected);
-               Selected := J;
-               exit;
-            end if;
-         end loop;
-      end if;
+      for J in Page.Buttons'Range loop
+         if Get_Active (Page.Buttons (J)) then
+            Selected := J;
+            exit;
+         end if;
+      end loop;
 
-      if not Selection_Match then
+      if Page.Last_Selected /= Selected then
          Page.Last_Selected := Selected;
          Remove_Pages (Wiz, After => Page.Name_And_Loc);
+
          case Selected is
             when From_Scratch =>
                Add_Full_Wizard_Pages
@@ -105,13 +99,11 @@ package body Creation_Wizard.Selector is
             when From_Library =>
                Add_Full_Wizard_Pages
                  (Project_Wizard (Wiz), Page.Name_And_Loc, "library_wizard");
-            when From_Adp =>
-               Add_Adp_Wizard_Pages (Project_Wizard (Wiz));
             when Extending =>
                Add_Extending_Wizard_Pages (Project_Wizard (Wiz));
             when Gnatname =>
                Add_GNATname_Wizard_Pages
-                 (Project_Wizard (Wiz), Page.Name_And_Loc, "wizard");
+                 (Project_Wizard (Wiz), Page.Name_And_Loc, "gnatname_wizard");
          end case;
       end if;
 
@@ -222,17 +214,17 @@ package body Creation_Wizard.Selector is
            "Single Project",
            "Create a new project file, with full control of the properties");
 
+      Add (Gnatname,
+           "Single Project with complex naming scheme",
+           "Create a new project for existing source code stored with"
+           & ASCII.LF
+           & "arbitrary file naming conventions using gnatname tool");
+
       Add (From_Existing,
            "Project Tree",
            "Create a new set of projects given an existing build environment."
            & ASCII.LF
            & "GPS will try to preserve the build structure you already have");
-
-      Add (From_Adp,
-           "Convert GLIDE Project (.adp)",
-           "Converts a .adp file into a project file. adp files are simple"
-           & ASCII.LF
-           & "project files used in the Emacs based GLIDE environment");
 
       Add (From_Library,
            "Library Project",
@@ -247,12 +239,6 @@ package body Creation_Wizard.Selector is
            & "some sources and recompile them locally without affecting the"
            & ASCII.LF
            & "project's build");
-
-      Add (Gnatname,
-           "Single Project with complex naming scheme",
-           "Create a new project for existing source code stored with"
-           & ASCII.LF
-           & "arbitrary file naming conventions using gnatname tool");
 
       Set_Active (Page.Buttons (From_Scratch), True);
       return Gtk_Widget (Box);
