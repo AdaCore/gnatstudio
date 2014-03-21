@@ -20,7 +20,7 @@ with Language.Cpp;     use Language.Cpp;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Traces;  use GNATCOLL.Traces;
 with Xref;             use Xref;
-with Ada.Unchecked_Deallocation;
+with Ada.Containers.Indefinite_Holders;
 
 package body Completion.C.Constructs_Extractor is
    Me : constant Trace_Handle := Create ("COMPLETION.C");
@@ -45,6 +45,8 @@ package body Completion.C.Constructs_Extractor is
       E  : Root_Entity'Class) return Language_Category;
    --  Make a simple association between entity categories and construct
    --  categories. This association is known to be inaccurate.
+
+   package Holder is new Ada.Containers.Indefinite_Holders (Root_Entity'Class);
 
    ---------------------------------
    -- Completion_Proposal_Handler --
@@ -103,7 +105,7 @@ package body Completion.C.Constructs_Extractor is
 
    private
       type C_Completion_Proposal is new Simple_Completion_Proposal with record
-         Entity_Info : Root_Entity_Access;
+         Entity_Info : Holder.Holder;
 
          With_Params : Boolean := False;
          --  Set to true if Entity_Info is a subprogram and we need to provide
@@ -114,14 +116,9 @@ package body Completion.C.Constructs_Extractor is
          --  call and we need to provide completion for this single parameter
       end record;
 
-      overriding procedure Free (Proposal : in out C_Completion_Proposal);
-
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Root_Entity'Class, Root_Entity_Access);
-
       Null_C_Completion_Proposal : constant C_Completion_Proposal :=
         (Simple_Completion_Proposal (Null_Completion_Proposal)
-            with Entity_Info => null,
+            with Entity_Info => <>,
                  With_Params => False,
                  Is_Param    => False);
 
@@ -184,7 +181,8 @@ package body Completion.C.Constructs_Extractor is
       end record;
 
       package Entities_List is new Ada.Containers.Vectors
-        (Index_Type => Natural, Element_Type => Root_Entity_Access);
+        (Index_Type => Natural, Element_Type => Holder.Holder,
+         "=" => Holder."=");
       package Files_List is new Ada.Containers.Vectors
         (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
 
@@ -360,7 +358,7 @@ package body Completion.C.Constructs_Extractor is
             Cursor : Entities_List.Cursor := It.Entities.First;
          begin
             while Entities_List.Has_Element (Cursor) loop
-               if Entities_List.Element (Cursor).all = E then
+               if Entities_List.Element (Cursor).Element = E then
                   return True;
                end if;
 
@@ -421,7 +419,12 @@ package body Completion.C.Constructs_Extractor is
                         end if;
 
                         if Has_Prefix (Get_Name (E)) then
-                           It.Entities.Append (new Root_Entity'Class'(E));
+                           declare
+                              H : Holder.Holder;
+                           begin
+                              H.Replace_Element (E);
+                              It.Entities.Append (H);
+                           end;
                            return;  --  Proposal found!
                         end if;
                      end;
@@ -540,7 +543,7 @@ package body Completion.C.Constructs_Extractor is
             Separator : constant String := "," & ASCII.LF;
             Spaces    : constant String := "  ";
             Params    : constant Xref.Parameter_Array :=
-              Parameters (Proposal.Entity_Info.all);
+              Parameters (Proposal.Entity_Info.Element);
 
             function Next_Params
               (P : Integer; Prev_Params : String) return String;
@@ -585,7 +588,7 @@ package body Completion.C.Constructs_Extractor is
             return All_Params_Text & ")";
 
          elsif Proposal.Is_Param then
-            return Single_Param_Text (Proposal.Entity_Info.all);
+            return Single_Param_Text (Proposal.Entity_Info.Element);
 
          else
             return Proposal.Name.all;
@@ -607,7 +610,7 @@ package body Completion.C.Constructs_Extractor is
          else
             declare
                Params : constant Parameter_Array :=
-                 Parameters (Proposal.Entity_Info.all);
+                 Parameters (Proposal.Entity_Info.Element);
             begin
                if Params'Length = 0 then
                   return Proposal.Name.all & " without params";
@@ -629,7 +632,7 @@ package body Completion.C.Constructs_Extractor is
       is
          pragma Unreferenced (Db);
          Loc : constant General_Location :=
-                 Get_Declaration (Proposal.Entity_Info.all).Loc;
+                 Get_Declaration (Proposal.Entity_Info.Element).Loc;
       begin
          return (Loc.File, Loc.Line, Loc.Column);
       end Get_Location;
@@ -666,13 +669,14 @@ package body Completion.C.Constructs_Extractor is
           Is_Param    : Boolean := False) return C_Completion_Proposal
       is
          Db : constant General_Xref_Database := Resolver.Kernel.Databases;
-
+         H  : Holder.Holder;
       begin
+         H.Replace_Element (Entity);
          return C_Completion_Proposal'
            (Resolver      => Resolver,
             Name          => new String'(Get_Name (Entity)),
             Category      => To_Language_Category (Db, Entity),
-            Entity_Info   => new Root_Entity'Class'(Entity),
+            Entity_Info   => H,
             With_Params   => With_Params,
             Is_Param      => Is_Param);
       end New_C_Completion_Proposal;
@@ -689,7 +693,7 @@ package body Completion.C.Constructs_Extractor is
          pragma Unreferenced (Db);
          Id  : constant String := Proposal.Name.all;
          Loc : constant General_Location :=
-           Get_Declaration (Proposal.Entity_Info.all).Loc;
+           Get_Declaration (Proposal.Entity_Info.Element).Loc;
 
       begin
          return (Id_Length   => Id'Length,
@@ -699,17 +703,6 @@ package body Completion.C.Constructs_Extractor is
                  Line        => Loc.Line,
                  Column      => Integer (Loc.Column));
       end To_Completion_Id;
-
-      ----------
-      -- Free --
-      ----------
-
-      overriding procedure Free
-        (Proposal : in out C_Completion_Proposal) is
-      begin
-         Unchecked_Free (Proposal.Entity_Info);
-      end Free;
-
    end Completion_Proposal_Handler;
 
    -----------------------------------------
