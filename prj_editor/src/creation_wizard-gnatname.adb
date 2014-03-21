@@ -100,7 +100,7 @@ package body Creation_Wizard.GNATname is
 
    procedure Add_GNATname_Page
      (Wiz : access Project_Wizard_Record'Class);
-   --  Add the required page to a wizard to customize gnatmake run.
+   --  Add the required page to a wizard to customize gnatname run.
 
    -----------------------
    -- Add_GNATname_Page --
@@ -117,7 +117,7 @@ package body Creation_Wizard.GNATname is
         (Wiz,
          Page        => P,
          Description => Description,
-         Toc         => -"GNATname");
+         Toc         => -"File patterns");
    end Add_GNATname_Page;
 
    -------------------------------
@@ -332,7 +332,9 @@ package body Creation_Wizard.GNATname is
          Update_Buttons_Sensitivity'Access,
          Wiz);
 
-      Add_Pattern ("*.ad?");
+      Add_Pattern ("*.ada");
+      Add_Pattern ("*.ads");
+      Add_Pattern ("*.adb");
       Add_Pattern ("*.a");
 
       return Gtk.Widget.Gtk_Widget (Vbox);
@@ -361,7 +363,9 @@ package body Creation_Wizard.GNATname is
    overriding function Is_Complete
      (Page : access GNATname_Page_Record) return String is
    begin
-      if Get_Iter_First (Page.Tree_View.Get_Model) /= Null_Iter then
+      if Page.Tree_View /= null
+        and then Get_Iter_First (Page.Tree_View.Get_Model) /= Null_Iter
+      then
          return "";
       else
          return -"List of file patterns is empty";
