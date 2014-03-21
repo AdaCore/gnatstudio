@@ -16,7 +16,8 @@ GNATdoc.EntityKind = {
    PARAGRAPH: 'paragraph',
    UL: 'ul',
    LI: 'li',
-   SPAN: 'span'
+   SPAN: 'span',
+   IMAGE: 'image'
 };
 
 /**
@@ -152,6 +153,13 @@ function buildText(root, data) {
                }
 
                break;
+
+           case GNATdoc.EntityKind.IMAGE:
+               element = document.createElement('img');
+               element.src = data[index].src;
+
+               break;
+
        }
        root.appendChild(element);
    }
