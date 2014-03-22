@@ -40,17 +40,19 @@ package body Creation_Wizard.Selector is
    Me : constant Trace_Handle := Create ("WIZARD");
 
    type Wizard_Kinds is
-     (From_Scratch,
+     (Unknown,
+      From_Scratch,
       Gnatname,
       From_Existing,
       From_Library,
       Extending);
 
+   subtype Valid_Wizard_Kinds is Wizard_Kinds range From_Scratch .. Extending;
    type Wizard_Radio_Button_Array is
-     array (Wizard_Kinds) of Gtk_Radio_Button;
+     array (Valid_Wizard_Kinds) of Gtk_Radio_Button;
 
    type Wizard_Selector_Page is new Project_Wizard_Page_Record with record
-      Last_Selected : Wizard_Kinds := From_Scratch;
+      Last_Selected : Wizard_Kinds := Unknown;
       Name_And_Loc  : Name_And_Location_Page_Access;
       Buttons       : Wizard_Radio_Button_Array;
    end record;
@@ -77,7 +79,7 @@ package body Creation_Wizard.Selector is
      (Page : access Wizard_Selector_Page;
       Wiz  : access Wizard_Record'Class) return Wizard_Page
    is
-      Selected : Wizard_Kinds := From_Scratch;
+      Selected : Wizard_Kinds := Unknown;
    begin
       for J in Page.Buttons'Range loop
          if Get_Active (Page.Buttons (J)) then
@@ -91,6 +93,9 @@ package body Creation_Wizard.Selector is
          Remove_Pages (Wiz, After => Page.Name_And_Loc);
 
          case Selected is
+            when Unknown =>
+               --  Should never happen
+               pragma Assert (False);
             when From_Scratch =>
                Add_Full_Wizard_Pages
                  (Project_Wizard (Wiz), Page.Name_And_Loc, "wizard");
@@ -172,7 +177,7 @@ package body Creation_Wizard.Selector is
       pragma Unreferenced (Wiz);
 
       procedure Add
-        (Kind       : Wizard_Kinds;
+        (Kind       : Valid_Wizard_Kinds;
          Short_Text : String;
          Full_Text  : String);
       --  Add choice wizard with given Kind and texts
@@ -184,20 +189,21 @@ package body Creation_Wizard.Selector is
       ---------
 
       procedure Add
-        (Kind       : Wizard_Kinds;
+        (Kind       : Valid_Wizard_Kinds;
          Short_Text : String;
          Full_Text  : String)
       is
          Separator : Gtk_Separator;
          Label     : Gtk_Label;
       begin
-         if Kind = Wizard_Kinds'First then
+         if Kind = Valid_Wizard_Kinds'First then
             Gtk_New (Page.Buttons (Kind), Label => -Short_Text);
          else
             Gtk_New (Page.Buttons (Kind),
-                     Get_Group (Page.Buttons (Wizard_Kinds'First)),
+                     Get_Group (Page.Buttons (Valid_Wizard_Kinds'First)),
                      Label => -Short_Text);
          end if;
+
          Pack_Start (Box, Page.Buttons (Kind), Expand => False);
          Gtk_New (Label, -Full_Text);
          Set_Padding (Label, 20, 5);
