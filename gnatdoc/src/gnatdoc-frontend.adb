@@ -5449,10 +5449,7 @@ package body GNATdoc.Frontend is
 
       if not Add_Documentation_From_Sources (Context, File, Tree'Access) then
          Stop (Doc_Time, GetDoc_Time);
-
-         if Context.Options.Report_Errors = Errors_And_Warnings then
-            Report_Skipped_File (Context.Kernel, File);
-         end if;
+         Report_Skipped_File (Context.Kernel, File);
 
          return No_Tree;
       end if;

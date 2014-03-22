@@ -505,7 +505,11 @@ package body GNATdoc is
                then
                   null;
 
-               elsif Options.Report_Errors = Errors_And_Warnings then
+               --  (Ada): We restrict the warning to specs since otherwise
+               --  it would be reported with all the separate Ada units. This
+               --  missing case is handled and reported by Build_Tree().
+
+               elsif Is_Spec_File (Kernel, File) then
                   Report_Skipped_File (Kernel, File);
                end if;
 
