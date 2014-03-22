@@ -3108,25 +3108,32 @@ package body GNATdoc.Atree is
          Entity         : Entity_Id;
          With_Full_Name : Boolean := False)
       is
-         Name : constant String :=
-                  (if With_Full_Name then Get_Full_Name (Entity)
-                                     else Get_Short_Name (Entity));
-         UID  : constant String :=
-                  (if not With_Unique_Id then ""
-                   else "[" & To_String (Get_Unique_Id (Entity)) & "] ");
-
-         In_Private : constant String :=
-                        (if not In_Private_Part (Entity) then ""
-                         else " (private)");
       begin
-         Append_Line
-           (Prefix
-            & UID
-            & Name
-            & " ["
-            & Image (LL.Get_Location (Entity))
-            & "]"
-            & In_Private);
+         if No (Entity) then
+            Append_Line (Prefix & "No_Entity");
+         else
+            declare
+               Name : constant String :=
+                 (if With_Full_Name then Get_Full_Name (Entity)
+                                    else Get_Short_Name (Entity));
+               UID  : constant String :=
+                 (if not With_Unique_Id then ""
+                  else "[" & To_String (Get_Unique_Id (Entity)) & "] ");
+
+               In_Private : constant String :=
+                 (if not In_Private_Part (Entity) then ""
+                  else " (private)");
+            begin
+               Append_Line
+                 (Prefix
+                  & UID
+                  & Name
+                  & " ["
+                  & Image (LL.Get_Location (Entity))
+                  & "]"
+                  & In_Private);
+            end;
+         end if;
       end Append_Entity;
 
       -----------------
