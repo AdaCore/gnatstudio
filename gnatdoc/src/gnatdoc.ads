@@ -215,4 +215,10 @@ private
    --  'doc' in the object directory, or in the project directory if no
    --  object dir is defined).
 
+   procedure Report_Skipped_File
+     (Kernel : Core_Kernel;
+      File   : Virtual_File);
+   --  Report a warning indicating that File is not processed because
+   --  cross references are not up-to-date.
+
 end GNATdoc;

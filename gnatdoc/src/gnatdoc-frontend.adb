@@ -99,11 +99,13 @@ package body GNATdoc.Frontend is
    -- Local_Subrograms --
    ----------------------
 
-   procedure Add_Documentation_From_Sources
+   function Add_Documentation_From_Sources
      (Context       : access constant Docgen_Context;
       File          : Virtual_File;
-      File_Entities : access Tree_Type);
-   --  Add to the nodes their blocks of documentation & sources
+      File_Entities : access Tree_Type) return Boolean;
+   --  Add to the nodes their blocks of documentation & sources. Returns false
+   --  if we found discrepancies between the contents of the database and the
+   --  parsed sources.
 
    procedure Build_Structured_Comments
      (Context : access constant Docgen_Context;
@@ -245,10 +247,10 @@ package body GNATdoc.Frontend is
    -- Append_Comments_And_Sources --
    ---------------------------------
 
-   procedure Add_Documentation_From_Sources
+   function Add_Documentation_From_Sources
      (Context       : access constant Docgen_Context;
       File          : Virtual_File;
-      File_Entities : access Tree_Type)
+      File_Entities : access Tree_Type) return Boolean
    is
       Lang          : constant Language_Access :=
                         Get_Language_From_File (Context.Lang_Handler, File);
@@ -261,6 +263,8 @@ package body GNATdoc.Frontend is
       Buffer_Body      : GNAT.Strings.String_Access;
       C_Headers_Buffer : GNAT.Strings.String_Access;
       Buffers_Swapped  : Boolean;
+
+      File_Successfully_Parsed : Boolean := True;
 
       package Compiler_Workaround is
 
@@ -1123,6 +1127,10 @@ package body GNATdoc.Frontend is
          Body_File_Entities : aliased EInfo_List.Vector;
          Current_Body_File  : Virtual_File;
 
+         Database_Not_Up_To_Date : exception;
+         --  Raised when the parser detects discrepancies between the contents
+         --  of the database and the sources.
+
          package Extended_Cursor is
             type Extended_Cursor is private;
             function Has_Entity  (Cursor : Extended_Cursor) return Boolean;
@@ -1130,21 +1138,31 @@ package body GNATdoc.Frontend is
             function Prev_Entity (Cursor : Extended_Cursor) return Entity_Id;
 
             procedure Next_Entity (Cursor : in out Extended_Cursor);
+
             procedure Initialize
-              (Cursor   : in out Extended_Cursor;
-               Entities : access EInfo_List.Vector);
+              (Cursor         : in out Extended_Cursor;
+               Entities       : access EInfo_List.Vector;
+               Marks_Required : Boolean);
+            --  If Marks_Required is True then Mark_Next_Entity_Seen() must be
+            --  called with the current entity before calling Next_Entity().
 
             procedure Set_Next_Entity
               (Cursor : in out Extended_Cursor;
                Entity : Entity_Id);
             --  This subprogram is used to workaround missing entities
 
+            procedure Mark_Next_Entity_Seen
+              (Cursor : in out Extended_Cursor);
+            --  Mark the next entity as seen
+
          private
             type Extended_Cursor is record
-               Entities     : access EInfo_List.Vector;
-               Cursor       : EInfo_List.Cursor;
-               Element      : Entity_Id := Atree.No_Entity;
-               Prev_Element : Entity_Id := Atree.No_Entity;
+               Entities       : access EInfo_List.Vector;
+               Cursor         : EInfo_List.Cursor;
+               Element        : Entity_Id := Atree.No_Entity;
+               Prev_Element   : Entity_Id := Atree.No_Entity;
+               Marks_Required : Boolean := False;
+               Element_Seen   : Boolean := False;
             end record;
          end Extended_Cursor;
 
@@ -2574,6 +2592,10 @@ package body GNATdoc.Frontend is
                   when Tok_Id =>
                      Do_Breakpoint;
 
+                     if In_Next_Entity then
+                        Extended_Cursor.Mark_Next_Entity_Seen (Cursor);
+                     end if;
+
                      if In_Pragma then
                         null;
 
@@ -3435,6 +3457,9 @@ package body GNATdoc.Frontend is
             end;
 
             return False; --  Continue
+         exception
+            when Database_Not_Up_To_Date =>
+               return True; --  Stop
          end CB;
 
          ------------------
@@ -4373,10 +4398,19 @@ package body GNATdoc.Frontend is
                   Cursor.Element := Saved_Next_Entity;
                   Saved_Next_Entity := Atree.No_Entity;
                else
+                  if Cursor.Marks_Required
+                    and then not Cursor.Element_Seen
+                  then
+                     File_Successfully_Parsed := False;
+                     raise Database_Not_Up_To_Date;
+                  end if;
+
                   Cursor.Prev_Element := Cursor.Element;
                   EInfo_List.Next (Cursor.Cursor);
                   Update_Entity (Cursor);
                end if;
+
+               Cursor.Element_Seen := False;
             end Next_Entity;
 
             procedure Set_Next_Entity
@@ -4384,19 +4418,29 @@ package body GNATdoc.Frontend is
                Entity : Entity_Id) is
             begin
                pragma Assert (No (Saved_Next_Entity));
+               pragma Assert (not Cursor.Element_Seen);
                Saved_Next_Entity := Cursor.Element;
                Cursor.Element := Entity;
             end Set_Next_Entity;
 
+            procedure Mark_Next_Entity_Seen
+              (Cursor : in out Extended_Cursor) is
+            begin
+               Cursor.Element_Seen := True;
+            end Mark_Next_Entity_Seen;
+
             procedure Initialize
-              (Cursor   : in out Extended_Cursor;
-               Entities : access EInfo_List.Vector) is
+              (Cursor         : in out Extended_Cursor;
+               Entities       : access EInfo_List.Vector;
+               Marks_Required : Boolean) is
             begin
                Cursor :=
-                 (Entities     => Entities,
-                  Cursor       => Entities.First,
-                  Element      => Atree.No_Entity,
-                  Prev_Element => Atree.No_Entity);
+                 (Entities       => Entities,
+                  Cursor         => Entities.First,
+                  Element        => Atree.No_Entity,
+                  Prev_Element   => Atree.No_Entity,
+                  Marks_Required => Marks_Required,
+                  Element_Seen   => False);
 
                Update_Entity (Cursor);
             end Initialize;
@@ -4411,7 +4455,7 @@ package body GNATdoc.Frontend is
 
       begin
          Extended_Cursor.Initialize
-           (Cursor, File_Entities.All_Entities'Access);
+           (Cursor, File_Entities.All_Entities'Access, Marks_Required => True);
 
          if Extended_Cursor.Has_Entity (Cursor) then
             declare
@@ -4422,12 +4466,17 @@ package body GNATdoc.Frontend is
                Std_Entity := E;
                Enable_Enter_Scope;
                Enter_Scope (Std_Entity);
+               Extended_Cursor.Mark_Next_Entity_Seen (Cursor);
 
                Extended_Cursor.Next_Entity (Cursor);
 
                Parse_Entities
                  (Lang, Buffer.all (Buffer'First .. Buffer'Last),
                   CB'Unrestricted_Access);
+
+               if not File_Successfully_Parsed then
+                  return;
+               end if;
 
                if Natural (New_Entities.Length) > 0 then
                   for E of New_Entities loop
@@ -4453,7 +4502,11 @@ package body GNATdoc.Frontend is
                   Enter_Scope (Std_Entity);
 
                   Extended_Cursor.Initialize
-                    (Cursor, File_Entities.All_Entities'Access);
+                    (Cursor         => Cursor,
+                     Entities       => File_Entities.All_Entities'Access,
+                     Marks_Required => False);
+                  Extended_Cursor.Mark_Next_Entity_Seen (Cursor);
+
                   while Extended_Cursor.Has_Entity (Cursor) loop
                      E := Extended_Cursor.Entity (Cursor);
 
@@ -4507,7 +4560,9 @@ package body GNATdoc.Frontend is
 
                      Clear_Doc;
                      Extended_Cursor.Initialize
-                       (Cursor, Body_File_Entities'Access);
+                       (Cursor         => Cursor,
+                        Entities       => Body_File_Entities'Access,
+                        Marks_Required => False);
 
                      Clear_Parser_State;
 
@@ -4602,9 +4657,11 @@ package body GNATdoc.Frontend is
       if In_Ada_Lang then
          Parse_Ada_File (Buffer);
 
-         Prev_Comment_Line := 0;
-         For_All (File_Entities.All_Entities, Ada_Set_Doc'Access);
-         For_All (File_Entities.All_Entities, Filter_Doc'Access);
+         if File_Successfully_Parsed then
+            Prev_Comment_Line := 0;
+            For_All (File_Entities.All_Entities, Ada_Set_Doc'Access);
+            For_All (File_Entities.All_Entities, Filter_Doc'Access);
+         end if;
 
       else pragma Assert (In_C_Lang);
          For_All (File_Entities.All_Entities, CPP_Get_Source'Access);
@@ -4615,6 +4672,8 @@ package body GNATdoc.Frontend is
 
       Free (Buffer_Body);
       Free (Buffer);
+
+      return File_Successfully_Parsed;
    end Add_Documentation_From_Sources;
 
    -------------------------------
@@ -5383,10 +5442,17 @@ package body GNATdoc.Frontend is
       Tree.File      := File;
 
       Stop (Tree_Time, Build_Tree_Time);
+
       --  Step 2: Add documentation from sources
 
       Start (Doc_Time);
-      Add_Documentation_From_Sources (Context, File, Tree'Access);
+
+      if not Add_Documentation_From_Sources (Context, File, Tree'Access) then
+         Stop (Doc_Time, GetDoc_Time);
+         Report_Skipped_File (Context.Kernel, File);
+         return No_Tree;
+      end if;
+
       Stop (Doc_Time, GetDoc_Time);
 
       --  Step 3: Convert blocks of comments into structured comments

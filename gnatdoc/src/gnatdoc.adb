@@ -506,11 +506,7 @@ package body GNATdoc is
                   null;
 
                elsif Options.Report_Errors = Errors_And_Warnings then
-                  Kernel.Messages_Window.Insert
-                    (-("warning: cross references for file ") &
-                       Display_Base_Name (File) &
-                     (-" are not up-to-date. Documentation not generated."),
-                     Mode => GPS.Messages_Windows.Error);
+                  Report_Skipped_File (Kernel, File);
                end if;
 
                return True;
@@ -1829,5 +1825,20 @@ package body GNATdoc is
 
       return Create_From_Dir (Base_Dir, +"gnatdoc/");
    end Get_Doc_Directory;
+
+   -------------------------
+   -- Report_Skipped_File --
+   -------------------------
+
+   procedure Report_Skipped_File
+     (Kernel : Core_Kernel;
+      File   : Virtual_File) is
+   begin
+      Kernel.Messages_Window.Insert
+        (-("warning: cross references for file ") &
+           Display_Base_Name (File) &
+        (-" are not up-to-date. Documentation not generated."),
+        Mode => GPS.Messages_Windows.Error);
+   end Report_Skipped_File;
 
 end GNATdoc;
