@@ -60,6 +60,9 @@ private package GNATdoc.Comment is
    function First_Param (Comment : Structured_Comment) return Tag_Cursor;
    function Last_Param (Comment : Structured_Comment) return Tag_Cursor;
 
+   function First_Field (Comment : Structured_Comment) return Tag_Cursor;
+   function Last_Field (Comment : Structured_Comment) return Tag_Cursor;
+
    function Search_Param
      (Comment : Structured_Comment;
       Name    : String) return Tag_Cursor;
@@ -78,13 +81,21 @@ private package GNATdoc.Comment is
    function New_Structured_Comment return Structured_Comment;
    --  Constructor
 
+   procedure Append_Field_Tag
+     (Comment    : Structured_Comment;
+      Entity     : Root_Entity'Class;
+      Field_Name : Unbounded_String;
+      Text       : Unbounded_String);
+   --  Append "@field Param_Name Text" to the comment. Entity is the entity
+   --  associated with Field_Name.
+
    procedure Append_Param_Tag
      (Comment    : Structured_Comment;
       Entity     : Root_Entity'Class;
       Param_Name : Unbounded_String;
       Text       : Unbounded_String);
    --  Append "@param Param_Name Text" to the comment. Entity is the entity
-   --  associated with ParamName.
+   --  associated with Param_Name.
 
    function Append_Tag
      (Comment   : Structured_Comment;

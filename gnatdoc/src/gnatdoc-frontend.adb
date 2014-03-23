@@ -4695,6 +4695,11 @@ package body GNATdoc.Frontend is
       --  ??? This info should be configurable in a separate file to allow
       --  customers to define their own tags
 
+      procedure Parse_Record_Comments (Rec : Entity_Id);
+      --  Initialize the structured comment associated with Entity, parse the
+      --  block of comments retrieved from sources (and clean it), and report
+      --  errors/warnings on missing documentation.
+
       procedure Parse_Subprogram_Comments (Subp : Entity_Id);
       --  Initialize the structured comment associated with Subp, parse the
       --  block of comments retrieved from sources (and clean it), and report
@@ -4724,7 +4729,7 @@ package body GNATdoc.Frontend is
         (Entity      : Entity_Id;
          Scope_Level : Natural) return Traverse_Result;
       --  Dispatch a call to build an structured comment between routines
-      --  Parse_Doc and Parse_Subprogram_Comments.
+      --  Parse_Doc, Parse_Record_Comments, and Parse_Subprogram_Comments.
 
       -----------
       -- Error --
@@ -4770,13 +4775,13 @@ package body GNATdoc.Frontend is
             --  JavaDoc possible additional tags???
             --  or else Tag = "author"
             --  or else Tag = "deprecated"
-           or else Tag = "return";
+           or else Tag = "return"
             --  or else Tag = "serial"
             --  or else Tag = "since"
             --  or else Tag = "version"
 
-            --  Proposed enhancements
-            --  or else Tag = "field";
+            --  GNATdoc enhancements
+           or else Tag = "field";
       end Is_Custom_Tag;
 
       -----------------------
@@ -4980,6 +4985,8 @@ package body GNATdoc.Frontend is
             end if;
 
             declare
+               Param_Tag : constant String := "param";
+               Field_Tag : constant String := "field";
                Tag_Text  : constant String :=
                              To_Lower (S (Tag_Loc.First + 1 .. Tag_Loc.Last));
                Attr_Loc  : Location;
@@ -5015,35 +5022,57 @@ package body GNATdoc.Frontend is
                      Error (E, "@return not applicable to procedures");
                   end if;
 
-                  if Tag_Text = "param" then
+                  if Tag_Text = Param_Tag
+                    or else Tag_Text = Field_Tag
+                  then
                      if No (Attr_Loc) then
-                        Error (E, "missing parameter name");
+                        if Tag_Text = Param_Tag then
+                           Error (E, "missing parameter name");
+                        else
+                           Error (E, "missing field name");
+                        end if;
 
                      else
                         declare
-                           Param_Name : String renames
+                           Attr_Name : String renames
                              S (Attr_Loc.First .. Attr_Loc.Last);
                            Cursor : Tag_Cursor;
                         begin
                            Cursor :=
-                             Search_Param (Comment, Param_Name);
+                             Search_Param (Comment, Attr_Name);
 
                            if Cursor = No_Cursor then
-                              Error (E,
-                                "wrong parameter name '" & Param_Name & "'");
+                              if Tag_Text = Param_Tag then
+                                 Error (E,
+                                   "wrong parameter name '"
+                                   & Attr_Name & "'");
+                              else
+                                 Error (E,
+                                   "wrong field name '"
+                                   & Attr_Name & "'");
+                              end if;
 
                            elsif Present (Get (Cursor).Text) then
                               declare
                                  Entity : constant Root_Entity'Class :=
                                    Get (Cursor).Entity.Element;
                               begin
-                                 for Param of Get_Entities (E).all loop
-                                    if LL.Get_Entity (Param) = Entity then
-                                       Error
-                                         (Param,
-                                          "parameter '"
-                                            & Param_Name
-                                            & "' documented twice");
+                                 for Ent of Get_Entities (E).all loop
+                                    if LL.Get_Entity (Ent) = Entity then
+                                       if Tag_Text = Param_Tag then
+                                          Error
+                                            (Ent,
+                                             "parameter '"
+                                               & Attr_Name
+                                               & "' documented twice");
+                                       else
+                                          Error
+                                            (Ent,
+                                             "field '"
+                                               & Attr_Name
+                                               & "' documented twice");
+                                       end if;
+
                                        exit;
                                     end if;
                                  end loop;
@@ -5127,6 +5156,64 @@ package body GNATdoc.Frontend is
          Parse (S);
          Set_Comment (E, Comment);
       end Parse_Doc;
+
+      ---------------------------
+      -- Parse_Record_Comments --
+      ---------------------------
+
+      procedure Parse_Record_Comments (Rec : Entity_Id) is
+         Has_Components : constant Boolean := Present (Get_Entities (Rec));
+      begin
+         --  Initialize the structured comment associated with this entity
+
+         Set_Comment (Rec, New_Structured_Comment);
+
+         --  Search for documentation located in the subprogram profile
+         --  (that is, comments located close to the parameter declarations)
+
+         for Comp of Get_Entities (Rec).all loop
+            pragma Assert (Get_Kind (Comp) = E_Discriminant
+              or else Get_Kind (Comp) = E_Component);
+
+            Append_Field_Tag
+              (Comment    => Get_Comment (Rec),
+               Entity     => LL.Get_Entity (Comp),
+               Field_Name => To_Unbounded_String (Get_Short_Name (Comp)),
+               Text       => Get_Doc (Comp).Text);
+         end loop;
+
+         --  Parse the documentation of the record
+
+         if Get_Doc (Rec) /= No_Comment_Result then
+            Parse_Doc_Wrapper (Context, Rec, To_String (Get_Doc (Rec).Text));
+            Set_Doc (Rec, No_Comment_Result);
+         end if;
+
+         --  Report warning on undocumented parameters
+
+         if Has_Components then
+            declare
+               C        : Tag_Cursor := First_Field (Get_Comment (Rec));
+               Tag_Info : Tag_Info_Ptr;
+            begin
+               loop
+                  Tag_Info := Get (C);
+
+                  if No (Tag_Info.Text) then
+                     Warning
+                       (Context,
+                        Tag_Info.Entity.Element,
+                        "undocumented field ("
+                        & To_String (Tag_Info.Attr)
+                        & ")");
+                  end if;
+
+                  exit when C = Last_Param (Get_Comment (Rec));
+                  Next (C);
+               end loop;
+            end;
+         end if;
+      end Parse_Record_Comments;
 
       -------------------------------
       -- Parse_Subprogram_Comments --
@@ -5389,6 +5476,10 @@ package body GNATdoc.Frontend is
 
          if Is_Subprogram_Or_Entry (Entity) then
             Parse_Subprogram_Comments (Entity);
+            return Skip;
+
+         elsif Is_Record_Type (Entity) then
+            Parse_Record_Comments (Entity);
             return Skip;
 
          elsif Present (Get_Doc (Entity).Text) then

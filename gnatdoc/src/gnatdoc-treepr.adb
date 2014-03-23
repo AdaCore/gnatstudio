@@ -173,14 +173,28 @@ package body GNATdoc.Treepr is
          end if;
 
          if Get_Comment (Entity) /= No_Structured_Comment then
-            Append_Line ("--- Structured Comment:");
+            declare
+               Comment : constant String :=
+                 Ada.Strings.Unbounded.To_String
+                   (To_Unbounded_String (Get_Comment (Entity), Prefix => ""));
+            begin
+               --  For backward compatibility (that is, temporarily to avoid
+               --  spurious regressions) we don't avoid generating the header
+               --  when we have no comment available for this entity???
 
-            --  Append the comment avoiding the duplicate addition of the
-            --  prefix to the output
+               if (not Is_Record_Type (Entity)
+                    and then Get_Kind (Entity) /= E_Component)
+                 or else
+                  (Comment /= "" and then not Spaces_Only (Comment))
+               then
+                  Append_Line ("--- Structured Comment:");
 
-            Append_Line
-              (Ada.Strings.Unbounded.To_String
-                 (To_Unbounded_String (Get_Comment (Entity), Prefix => "")));
+                  --  Append the comment avoiding the duplicate addition of the
+                  --  prefix to the output
+
+                  Append_Line (Comment);
+               end if;
+            end;
          end if;
 
          if Is_Partial_View (Entity) then

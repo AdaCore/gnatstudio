@@ -26,6 +26,33 @@ with String_Utils;                use String_Utils;
 package body GNATdoc.Comment is
 
    ----------------------
+   -- Append_Field_Tag --
+   ----------------------
+
+   procedure Append_Field_Tag
+     (Comment    : Structured_Comment;
+      Entity     : Root_Entity'Class;
+      Field_Name : Unbounded_String;
+      Text       : Unbounded_String)
+   is
+      C : Tag_Cursor;
+   begin
+      C :=
+        Append_Tag
+          (Comment   => Comment,
+           Tag       => To_Unbounded_String ("field"),
+           Entity    => Entity,
+           Attribute => Field_Name,
+           Text      => Text);
+
+      if Comment.First_Param = null then
+         Comment.First_Param := C;
+      end if;
+
+      Comment.Last_Param := C;
+   end Append_Field_Tag;
+
+   ----------------------
    -- Append_Param_Tag --
    ----------------------
 
@@ -109,6 +136,13 @@ package body GNATdoc.Comment is
    end At_End;
 
    -----------------
+   -- First_Field --
+   -----------------
+
+   function First_Field (Comment : Structured_Comment) return Tag_Cursor
+     renames First_Param;
+
+   -----------------
    -- First_Param --
    -----------------
 
@@ -164,6 +198,13 @@ package body GNATdoc.Comment is
    begin
       return Node_Ptr (C).Tag_Info;
    end Get;
+
+   ----------------
+   -- Last_Field --
+   ----------------
+
+   function Last_Field (Comment : Structured_Comment) return Tag_Cursor
+     renames Last_Param;
 
    ----------------
    -- Last_Param --
