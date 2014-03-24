@@ -282,7 +282,7 @@ begin
      (Cmdline,
       Output       => Enable_Build'Access,
       Switch       => "--enable-build",
-      Help         => "Rebuilding the project before processing it");
+      Help         => "Rebuild the project before processing it");
    Define_Switch
      (Cmdline,
       Output       => Backend_Name'Access,
