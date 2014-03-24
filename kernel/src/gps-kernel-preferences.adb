@@ -499,6 +499,16 @@ package body GPS.Kernel.Preferences is
          Label   => -"Display subprogram names",
          Page    => -"Editor");
 
+      Auto_Indent_On_Paste := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Indent-On-Paste",
+         Default => False,
+         Doc     =>
+           -"Whether content pasted in the source editors "
+           & "should be auto indented",
+         Label   => -"Auto indent on paste",
+         Page    => -"Editor");
+
       Display_Tooltip := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Display-Tooltip",

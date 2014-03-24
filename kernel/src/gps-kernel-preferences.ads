@@ -213,6 +213,7 @@ package GPS.Kernel.Preferences is
    Line_Terminator           : Line_Terminators_Prefs.Preference;
    Display_Line_Numbers      : Line_Number_Policy_Prefs.Preference;
    Display_Subprogram_Names  : Boolean_Preference;
+   Auto_Indent_On_Paste      : Boolean_Preference;
    Display_Tooltip           : Boolean_Preference;
    Highlight_Delimiters      : Boolean_Preference;
    Periodic_Save             : Integer_Preference;

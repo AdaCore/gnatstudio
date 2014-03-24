@@ -617,7 +617,10 @@ package body Src_Editor_Buffer is
       Buffer.Get_Iter_At_Mark (To, Buffer.Get_Insert);
 
       Set_Manual_Sync (Get_Main_Cursor (+Buffer));
-      if Get_Line (From) /= Get_Line (To) then
+
+      if Get_Line (From) /= Get_Line (To)
+        and then Auto_Indent_On_Paste.Get_Pref
+      then
          Success := Do_Indentation (Source_Buffer (Buffer), From, To);
       end if;
 
