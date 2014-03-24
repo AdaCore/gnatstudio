@@ -362,6 +362,7 @@ package body GPS.Tree_View is
 
       subtype New_Order_Array is Gint_Array (0 .. Length - 1);
       New_Order : New_Order_Array;
+      pragma Import (Ada, New_Order); --  avoid default initialization
       for New_Order'Address use Address;
 
       Aux : Node_Vectors.Vector;
