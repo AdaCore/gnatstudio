@@ -301,6 +301,12 @@ arrow, as seen in the screenshot above).
 
       Whether editors display line numbers.
 
+    * :guilabel:`Auto indent on paste`
+
+      .. index:: Auto indent on paste
+
+      Whether content pasted in the source editors should be auto indented
+
     * :guilabel:`Display subprogram names`
 
       .. index:: Display subprogram names
