@@ -60,7 +60,7 @@ procedure GNATdoc_Main is
    Process_Private_Part : aliased Boolean := False;
    Quiet_Mode           : aliased Boolean := False;
    Enable_Warnings      : aliased Boolean := False;
-   Disable_Build        : aliased Boolean := False;
+   Enable_Build         : aliased Boolean := False;
 
    procedure Launch_Gprbuild;
    --  Launch gprbuild on the loaded project
@@ -280,9 +280,9 @@ begin
       Help         => "Enable warnings for missing documentation");
    Define_Switch
      (Cmdline,
-      Output       => Disable_Build'Access,
-      Switch       => "--disable-build",
-      Help         => "Prevent rebuilding of the project");
+      Output       => Enable_Build'Access,
+      Switch       => "--enable-build",
+      Help         => "Rebuilding the project before processing it");
    Define_Switch
      (Cmdline,
       Output       => Backend_Name'Access,
@@ -370,7 +370,7 @@ begin
 
    --  Run Gprbuild
 
-   if not Disable_Build then
+   if Enable_Build then
       Launch_Gprbuild;
    end if;
 
