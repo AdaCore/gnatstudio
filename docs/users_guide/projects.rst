@@ -664,7 +664,6 @@ The wizard has the following pages:
 * :ref:`Build Directory <Build_Directory_Page>`
 * :ref:`Main Units <Main_Units_Page>`
 * :ref:`Library <Library_Page>`
-* :ref:`GNATname <GNATname_Page>`
 * :ref:`Naming Scheme <Naming_Scheme_Page>`
 * :ref:`Switches <Switches>`
 
@@ -682,6 +681,15 @@ Several types of project wizards are provided in GPS:
   the object directory.  The rest of this chapter describes this wizard in
   more detail.
 
+* :guilabel:`Single Project with complex naming scheme`
+
+  Use this wizard to create project for existing Ada units stored in files
+  with irregular or arbitrary naming conventions. To do this, specify
+  file name patterns on page 'File patterns'. GPS uses these patterns to
+  search for Ada units in each of source directories specified in the
+  :ref:`Source_Directory_Selection` page using the :program:`gnatname` tool
+  and generates the required pragmas for the set of files.
+
 * :guilabel:`Project Tree`
 
   This wizard attempts to create a set of one or more project files to
@@ -692,13 +700,6 @@ Several types of project wizards are provided in GPS:
 
   This wizard may not succeed in all cases, but is worth trying if you
   already have an existing set of sources
-
-* :guilabel:`Convert GLIDE Project (.adp)`
-
-  This wizard helps you convert a :file:`.adp` project file used by the
-  GLIDE environment. The same restrictions apply as above, except that the
-  list of source directories, object directories and tool switches are read
-  directly from that file.
 
 * :guilabel:`Library Project`
 
@@ -873,22 +874,6 @@ does its own elaboration instead of relying on its caller to elaborate it
 as is standard in Ada. You also have more control over which files make up
 the public interface to the library and which files are private to the
 library and invisible from the outside.
-
-
-.. index:: gnatname
-.. _GNATname_Page:
-
-GNATname
---------
-
-Use this page to add Ada units stored in files with irregular or arbitrary
-naming conventions into your project.  To do this, specify file name
-patterns.  GPS uses these patterns to search for Ada units in each of
-source directories specified in the :ref:`Source_Directory_Selection`
-page using the :program:`gnatname` tool to generate the required pragmas
-for the set of files. Files with arbitrary naming convention are not
-compatible with naming scheme customization, so the next page will be
-skipped.
 
 
 .. index:: project; naming scheme
