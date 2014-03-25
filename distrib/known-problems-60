@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N313-003 GPS: display unchecked unions in debugger
+
+  Problem:    Graphical representation of Ada unchecked unions is broken
+              in GPS debug Data Window.
+
+  Status:     This was fixed in 6.1 on 2014-03-25
+
+  Workaround: Use textual view through 'Print ...' contextual menu or 'print'
+              command in gdb console instead of graph display.
+
 KP-60-N305-041 GPS: overwriting symbolic links
 
   Problem:    When the preference "fast project loading" is enabled, symbolic
