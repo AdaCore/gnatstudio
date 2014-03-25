@@ -25,6 +25,15 @@ with String_Utils;                use String_Utils;
 
 package body GNATdoc.Comment is
 
+   --  Local subprograms
+
+   procedure Internal_Append_Tag
+     (Comment   : Structured_Comment;
+      Tag_Name  : Unbounded_String;
+      Entity    : Root_Entity'Class;
+      Attr_Name : Unbounded_String;
+      Text      : Unbounded_String);
+
    ----------------------
    -- Append_Field_Tag --
    ----------------------
@@ -33,23 +42,14 @@ package body GNATdoc.Comment is
      (Comment    : Structured_Comment;
       Entity     : Root_Entity'Class;
       Field_Name : Unbounded_String;
-      Text       : Unbounded_String)
-   is
-      C : Tag_Cursor;
+      Text       : Unbounded_String) is
    begin
-      C :=
-        Append_Tag
-          (Comment   => Comment,
-           Tag       => To_Unbounded_String ("field"),
-           Entity    => Entity,
-           Attribute => Field_Name,
-           Text      => Text);
-
-      if Comment.First_Param = null then
-         Comment.First_Param := C;
-      end if;
-
-      Comment.Last_Param := C;
+      Internal_Append_Tag
+        (Comment   => Comment,
+         Tag_Name  => To_Unbounded_String ("field"),
+         Entity    => Entity,
+         Attr_Name => Field_Name,
+         Text      => Text);
    end Append_Field_Tag;
 
    ----------------------
@@ -60,23 +60,14 @@ package body GNATdoc.Comment is
      (Comment    : Structured_Comment;
       Entity     : Root_Entity'Class;
       Param_Name : Unbounded_String;
-      Text       : Unbounded_String)
-   is
-      C : Tag_Cursor;
+      Text       : Unbounded_String) is
    begin
-      C :=
-        Append_Tag
-          (Comment   => Comment,
-           Tag       => To_Unbounded_String ("param"),
-           Entity    => Entity,
-           Attribute => Param_Name,
-           Text      => Text);
-
-      if Comment.First_Param = null then
-         Comment.First_Param := C;
-      end if;
-
-      Comment.Last_Param := C;
+      Internal_Append_Tag
+        (Comment   => Comment,
+         Tag_Name  => To_Unbounded_String ("param"),
+         Entity    => Entity,
+         Attr_Name => Param_Name,
+         Text      => Text);
    end Append_Param_Tag;
 
    ----------------
@@ -198,6 +189,34 @@ package body GNATdoc.Comment is
    begin
       return Node_Ptr (C).Tag_Info;
    end Get;
+
+   -------------------------
+   -- Internal_Append_Tag --
+   -------------------------
+
+   procedure Internal_Append_Tag
+     (Comment   : Structured_Comment;
+      Tag_Name  : Unbounded_String;
+      Entity    : Root_Entity'Class;
+      Attr_Name : Unbounded_String;
+      Text      : Unbounded_String)
+   is
+      C : Tag_Cursor;
+   begin
+      C :=
+        Append_Tag
+          (Comment   => Comment,
+           Tag       => Tag_Name,
+           Entity    => Entity,
+           Attribute => Attr_Name,
+           Text      => Text);
+
+      if Comment.First_Param = null then
+         Comment.First_Param := C;
+      end if;
+
+      Comment.Last_Param := C;
+   end Internal_Append_Tag;
 
    ----------------
    -- Last_Field --
