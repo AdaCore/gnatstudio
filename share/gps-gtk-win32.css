@@ -2,6 +2,7 @@
 @define-color gps_active_tab green;
 @define-color borders #777777;
 @define-color theme_base_color white;
+@define-color theme_fg_color black;
 
 @define-color completion-selected-color #888;
 @define-color completions-notes-text-color #444;
