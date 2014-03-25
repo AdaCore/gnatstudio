@@ -23,7 +23,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 6.0.2 / GNATbench 2.8.2
 -------------------------------------------
 
-NF-60-N320-060 GPS: support for Android/Linux (2014-03-20)
+NF-60-N320-060 GPS: support for Android/Linux (2014-03-25)
 
   GPS now supports the arm-linux-androideabi toolchain.
 
