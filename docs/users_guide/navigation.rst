@@ -154,6 +154,26 @@ file, this changes the declaration line for all entities declared later
 on, and those will lose their references in other source files.
 
 
+.. index:: cross-references; runtime files
+
+xref and GNAT runtime
+---------------------
+
+The GNAT runtime files are not parsed by default, because there is a large
+number of them and that would significantly slow down the parsing for a
+minimal gain for most users.
+
+This means that from your own sources you could navigate to one of the
+runtime files (for instance if you have a reference to `Put_Line` you
+will jump to its declaration in :file:`a-textio.ads`). But from a runtime
+file, you can no longer perform cross-reference queries.
+
+If you need this capability, the solution currently involves modifying one
+of the GPS plug-ins, named :file:`support/core/cross-references.py`, and
+add the :program:`--runtime` switch to the list of switches for
+gnatinspect.
+
+
 .. _The_Navigate_Menu:
 
 The Navigate Menu
