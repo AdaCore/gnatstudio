@@ -5172,8 +5172,11 @@ package body GNATdoc.Frontend is
          --  (that is, comments located close to the parameter declarations)
 
          for Comp of Get_Entities (Rec).all loop
-            pragma Assert (Get_Kind (Comp) = E_Discriminant
-              or else Get_Kind (Comp) = E_Component);
+            --  Disabling temporarily this assertion since Xref has problems in
+            --  service Xref.Fields() with records defined in generic units???
+
+            --  pragma Assert (Get_Kind (Comp) = E_Discriminant
+            --    or else Get_Kind (Comp) = E_Component);
 
             Append_Field_Tag
               (Comment    => Get_Comment (Rec),
