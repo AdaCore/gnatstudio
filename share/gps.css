@@ -59,7 +59,7 @@
 
 /* Let's condense things in the local toolbars of the views */
 .gps-local-toolbar {
-   background: shade(@theme_bg_color, 0.9);
+   background: shade(@theme_base_color, 0.9);
    padding: 0px;
 }
 
@@ -89,11 +89,10 @@ GtkEntry.search {
    /* The list of possible completions, in a completion entry */
 }
 @define-color middle-gray #888888;
-@define-color completion-border-color shade (@theme_bg_color, 0.7);
-/*mix(@theme_bg_color, @middle-gray, 0.5);*/
-@define-color completion-selected-color mix(@theme_bg_color, @middle-gray, 0.5);
-@define-color completion-background-color shade(@theme_bg_color, 1.10);
-@define-color completion-notes-color mix(shade(@theme_bg_color, 1.40), @middle-gray, 0.2);
+@define-color completion-border-color shade (@theme_base_color, 0.7);
+@define-color completion-selected-color mix(@theme_base_color, @middle-gray, 0.5);
+@define-color completion-background-color shade(@theme_base_color, 1.10);
+@define-color completion-notes-color mix(shade(@theme_base_color, 1.40), @middle-gray, 0.2);
 @define-color completions-notes-text-color mix(@theme_fg_color, @middle-gray, 0.2);
 
 #completion-frame {
