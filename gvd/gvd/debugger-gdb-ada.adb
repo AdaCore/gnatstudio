@@ -642,6 +642,8 @@ package body Debugger.Gdb.Ada is
       G         : Generic_Type_Access;
       Part      : Generic_Type_Access;
 
+      Unchecked_Union : Boolean := False;
+
    begin
       Trace (Me, "Parse_Record_Type: " & Type_Str (Index .. Type_Str'Last));
       Skip_Blanks (Type_Str, Index);
@@ -672,7 +674,28 @@ package body Debugger.Gdb.Ada is
             Tmp_Index := Tmp_Index + 9;
             Fields := Fields + 1;
 
-         --  Else a standard field
+            --  In record with a variant part and pragma Unchecked_Union
+            --  Skip "record (?) is" then count total fields in all parts
+
+         elsif Looking_At (Type_Str, Tmp_Index, "(?) is") then
+
+            Skip_To_String (Type_Str, Tmp_Index, "case ? is");
+            Tmp_Index := Tmp_Index + 9;
+            Unchecked_Union := True;
+
+            --  In record with a variant part and pragma Unchecked_Union
+            --  Skip "when ? =>" then count total fields
+         elsif Looking_At (Type_Str, Tmp_Index, "when ? =>") then
+
+            Tmp_Index := Tmp_Index + 9;
+
+            --  In record with a variant part and pragma Unchecked_Union
+            --  Skip "end case;"
+         elsif Looking_At (Type_Str, Tmp_Index, "end case;") then
+
+            Tmp_Index := Tmp_Index + 9;
+
+            --  Else a standard field
 
          else
             Skip_To_Char (Type_Str, Tmp_Index, ':');
@@ -701,7 +724,7 @@ package body Debugger.Gdb.Ada is
          Skip_Blanks (Type_Str, Tmp_Index);
       end loop;
 
-      if Is_Union then
+      if Is_Union or Unchecked_Union then
          Result := New_Union_Type (Fields);
       else
          Result := New_Record_Type (Fields);
@@ -778,7 +801,17 @@ package body Debugger.Gdb.Ada is
             Index := Index + 9;
             Fields := Fields + 1;
 
-         --  Else a standard field
+            --  Skip syntax elements of Unchecked_Union
+         elsif Looking_At (Type_Str, Index, "(?) is") then
+
+            Skip_To_String (Type_Str, Index, "case ? is");
+            Index := Index + 9;
+
+         elsif Looking_At (Type_Str, Index, "when ? =>") then
+
+            Index := Index + 9;
+
+            --  Else a standard field
 
          else
             --  Get the name of the field
@@ -863,6 +896,13 @@ package body Debugger.Gdb.Ada is
          end if;
 
          Skip_Blanks (Type_Str, Index);
+
+         --  Skip "end case;" of Unchecked_Union
+         if Unchecked_Union and Looking_At (Type_Str, Index, "end case;") then
+            Index := Index + 9;
+            Skip_Blanks (Type_Str, Index);
+         end if;
+
       end loop;
    end Parse_Record_Type;
 
