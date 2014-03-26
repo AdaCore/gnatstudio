@@ -1014,6 +1014,46 @@ package body GNATdoc.Backend.HTML is
                end;
             end if;
 
+            if Is_Record_Type (E)
+              and then Present (Get_Comment (E))
+            then
+               --  Extract fields
+
+               declare
+                  Cursor      : Tag_Cursor := New_Cursor (Get_Comment (E));
+                  Tag         : Tag_Info_Ptr;
+                  Field       : JSON_Value;
+                  Fields      : JSON_Array;
+                  Declaration : Xref.General_Entity_Declaration;
+
+               begin
+                  while not At_End (Cursor) loop
+                     Tag := Get (Cursor);
+
+                     if Tag.Tag = "field" then
+                        Declaration :=
+                          Xref.Get_Declaration (Tag.Entity.Element);
+                        Field := Create_Object;
+                        Field.Set_Field ("label", Declaration.Name);
+                        Field.Set_Field ("line", Declaration.Loc.Line);
+                        Field.Set_Field
+                          ("column", Natural (Declaration.Loc.Column));
+                        Field.Set_Field
+                          ("description",
+                           To_JSON_Representation
+                             (Tag.Text, Self.Context.Kernel));
+                        Append (Fields, Field);
+                     end if;
+
+                     Next (Cursor);
+                  end loop;
+
+                  if Length (Fields) /= 0 then
+                     Entity_Entry.Set_Field ("fields", Fields);
+                  end if;
+               end;
+            end if;
+
             Append (Aux, Entity_Entry);
          end loop;
 

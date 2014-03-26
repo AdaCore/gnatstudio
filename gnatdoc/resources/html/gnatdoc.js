@@ -369,6 +369,27 @@ function buildDocumentationPage() {
                    list.appendChild(description);
                 }
 
+                if (entity.fields !== undefined) {
+                    list = document.createElement('dl');
+
+                    for (var findex = 0;
+                         findex < entity.fields.length;
+                         findex++)
+                    {
+                        var field = entity.fields[findex];
+                        var term = document.createElement('dt');
+                        term.id = 'L' + field.line.toString() +
+                            'C' + field.column.toString();
+                        term.appendChild(
+                          document.createTextNode(field.label));
+                        var description = document.createElement('dd');
+                        buildText(description, field.description);
+
+                        list.appendChild(term);
+                        list.appendChild(description);
+                    }
+                }
+
                 if (list != null) {
                    pane.appendChild(list);
                 }
