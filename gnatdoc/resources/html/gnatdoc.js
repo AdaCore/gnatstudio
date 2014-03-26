@@ -337,6 +337,15 @@ function buildDocumentationPage() {
                             'C' + parameter.column.toString();
                         term.appendChild(
                           document.createTextNode(parameter.label));
+                        term.appendChild(
+                          document.createTextNode(' of type '));
+                        href = document.createElement('a');
+                        href.href = '../' + parameter.type.docHref;
+                        href.target = 'contentView';
+                        href.appendChild(
+                          document.createTextNode(parameter.type.label));
+                        term.appendChild(href);
+
                         var description = document.createElement('dd');
                         buildText(description, parameter.description);
 
@@ -349,7 +358,15 @@ function buildDocumentationPage() {
                     list = list || document.createElement('dl');
 
                     var term = document.createElement('dt');
-                    term.appendChild(document.createTextNode('Return value'));
+                    term.appendChild(
+                      document.createTextNode('Return value of type '));
+                    href = document.createElement('a');
+                    href.href = '../' + entity.returns.type.docHref;
+                    href.target = 'contentView';
+                    href.appendChild(
+                      document.createTextNode(entity.returns.type.label));
+                    term.appendChild(href);
+
                     var description = document.createElement('dd');
                     buildText(description, entity.returns.description);
 
@@ -382,6 +399,15 @@ function buildDocumentationPage() {
                             'C' + field.column.toString();
                         term.appendChild(
                           document.createTextNode(field.label));
+                        term.appendChild(
+                          document.createTextNode(' of type '));
+                        href = document.createElement('a');
+                        href.href = '../' + field.type.docHref;
+                        href.target = 'contentView';
+                        href.appendChild(
+                          document.createTextNode(field.type.label));
+                        term.appendChild(href);
+
                         var description = document.createElement('dd');
                         buildText(description, field.description);
 

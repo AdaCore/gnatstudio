@@ -891,11 +891,13 @@ package body GNATdoc.Backend.HTML is
                --  Extract parameters
 
                declare
-                  Cursor      : Tag_Cursor := New_Cursor (Get_Comment (E));
-                  Tag         : Tag_Info_Ptr;
-                  Parameter   : JSON_Value;
-                  Parameters  : JSON_Array;
-                  Declaration : Xref.General_Entity_Declaration;
+                  Cursor         : Tag_Cursor := New_Cursor (Get_Comment (E));
+                  Tag            : Tag_Info_Ptr;
+                  Parameter      : JSON_Value;
+                  Parameters     : JSON_Array;
+                  Declaration    : Xref.General_Entity_Declaration;
+                  Parameter_Type : JSON_Value;
+                  P_Type         : Entity_Id;
 
                begin
                   while not At_End (Cursor) loop
@@ -913,6 +915,28 @@ package body GNATdoc.Backend.HTML is
                           ("description",
                            To_JSON_Representation
                              (Tag.Text, Self.Context.Kernel));
+
+                        --  Construct reference information to parameter's type
+
+                        Declaration := Xref.Get_Declaration
+                          (Xref.Get_Type_Of (Tag.Entity.Element));
+                        P_Type := Find_Unique_Entity (Declaration.Loc);
+
+                        Parameter_Type := Create_Object;
+
+                        if Present (P_Type) then
+                           Parameter_Type.Set_Field
+                             ("label", Get_Full_Name (P_Type));
+                           Parameter_Type.Set_Field
+                             ("docHref", Get_Docs_Href (P_Type));
+
+                        else
+                           Parameter_Type.Set_Field
+                             ("label", Declaration.Name);
+                        end if;
+
+                        Parameter.Set_Field ("type", Parameter_Type);
+
                         Append (Parameters, Parameter);
                      end if;
 
@@ -927,9 +951,12 @@ package body GNATdoc.Backend.HTML is
                --  Extract return value
 
                declare
-                  Cursor  : Tag_Cursor := New_Cursor (Get_Comment (E));
-                  Tag     : Tag_Info_Ptr;
-                  Returns : JSON_Value;
+                  Cursor      : Tag_Cursor := New_Cursor (Get_Comment (E));
+                  Tag         : Tag_Info_Ptr;
+                  Returns     : JSON_Value;
+                  Declaration : Xref.General_Entity_Declaration;
+                  R_Type      : Entity_Id;
+                  Return_Type : JSON_Value;
 
                begin
                   while not At_End (Cursor) loop
@@ -941,6 +968,27 @@ package body GNATdoc.Backend.HTML is
                           ("description",
                            To_JSON_Representation
                              (Tag.Text, Self.Context.Kernel));
+
+                        --  Construct reference information to return's type
+
+                        Declaration := Xref.Get_Declaration
+                          (Xref.Get_Type_Of (Tag.Entity.Element));
+                        R_Type := Find_Unique_Entity (Declaration.Loc);
+
+                        Return_Type := Create_Object;
+
+                        if Present (R_Type) then
+                           Return_Type.Set_Field
+                             ("label", Get_Full_Name (R_Type));
+                           Return_Type.Set_Field
+                             ("docHref", Get_Docs_Href (R_Type));
+
+                        else
+                           Return_Type.Set_Field ("label", Declaration.Name);
+                        end if;
+
+                        Returns.Set_Field ("type", Return_Type);
+
                         Entity_Entry.Set_Field ("returns", Returns);
                      end if;
 
@@ -1025,6 +1073,8 @@ package body GNATdoc.Backend.HTML is
                   Field       : JSON_Value;
                   Fields      : JSON_Array;
                   Declaration : Xref.General_Entity_Declaration;
+                  F_Type      : Entity_Id;
+                  Field_Type  : JSON_Value;
 
                begin
                   while not At_End (Cursor) loop
@@ -1042,6 +1092,27 @@ package body GNATdoc.Backend.HTML is
                           ("description",
                            To_JSON_Representation
                              (Tag.Text, Self.Context.Kernel));
+
+                        --  Construct reference information to field's type
+
+                        Declaration := Xref.Get_Declaration
+                          (Xref.Get_Type_Of (Tag.Entity.Element));
+                        F_Type := Find_Unique_Entity (Declaration.Loc);
+
+                        Field_Type := Create_Object;
+
+                        if Present (F_Type) then
+                           Field_Type.Set_Field
+                             ("label", Get_Full_Name (F_Type));
+                           Field_Type.Set_Field
+                             ("docHref", Get_Docs_Href (F_Type));
+
+                        else
+                           Field_Type.Set_Field ("label", Declaration.Name);
+                        end if;
+
+                        Field.Set_Field ("type", Field_Type);
+
                         Append (Fields, Field);
                      end if;
 
