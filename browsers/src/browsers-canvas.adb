@@ -401,7 +401,8 @@ package body Browsers.Canvas is
                       Item.Title_Layout;
          begin
             if Layout /= null then
-               Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
+               Set_Font_Description
+                 (Layout, Preferences.Default_Font.Get_Pref_Font);
             end if;
          end;
 
@@ -935,7 +936,7 @@ package body Browsers.Canvas is
       Grid            : Guint := Gtkada.Canvas.Default_Grid_Size;
       Annotation_Font : Pango_Font_Description;
    begin
-      Annotation_Font := Copy (Default_Font.Get_Pref_Font);
+      Annotation_Font := Copy (Preferences.Default_Font.Get_Pref_Font);
       Set_Size
         (Annotation_Font,
          Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
@@ -1096,7 +1097,7 @@ package body Browsers.Canvas is
          if Item.Title_Layout = null then
             Item.Title_Layout := Create_Pango_Layout (Item.Browser, Title);
             Set_Font_Description
-              (Item.Title_Layout, Default_Font.Get_Pref_Font);
+              (Item.Title_Layout, Preferences.Default_Font.Get_Pref_Font);
          else
             Set_Text (Item.Title_Layout, Title);
          end if;
@@ -1788,7 +1789,7 @@ package body Browsers.Canvas is
       Reset_Active_Areas (Item.all, Title_Bar_Areas => False);
 
       Layout := Create_Pango_Layout (Get_Browser (Item), "");
-      Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
+      Set_Font_Description (Layout, Preferences.Default_Font.Get_Pref_Font);
 
       Get_Style_Context (Get_Browser (Item)).Get_Border
         (Gtk_State_Flag_Normal, Border);
@@ -1828,7 +1829,7 @@ package body Browsers.Canvas is
       Layout           : Pango_Layout;
    begin
       Layout := Create_Pango_Layout (Get_Browser (Item), "");
-      Set_Font_Description (Layout, Default_Font.Get_Pref_Font);
+      Set_Font_Description (Layout, Preferences.Default_Font.Get_Pref_Font);
 
       Resize_And_Draw
         (Browser_Item_Record'Class (Item.all)'Access,
