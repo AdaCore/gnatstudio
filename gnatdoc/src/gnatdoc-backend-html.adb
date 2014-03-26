@@ -971,20 +971,23 @@ package body GNATdoc.Backend.HTML is
 
                         --  Construct reference information to return's type
 
-                        Declaration := Xref.Get_Declaration
-                          (Xref.Get_Type_Of (Tag.Entity.Element));
-                        R_Type := Find_Unique_Entity (Declaration.Loc);
+                        if Tag.Entity.Element /= No_Root_Entity then
+                           Declaration := Xref.Get_Declaration
+                             (Xref.Get_Type_Of (Tag.Entity.Element));
+                           R_Type := Find_Unique_Entity (Declaration.Loc);
 
-                        Return_Type := Create_Object;
+                           Return_Type := Create_Object;
 
-                        if Present (R_Type) then
-                           Return_Type.Set_Field
-                             ("label", Get_Full_Name (R_Type));
-                           Return_Type.Set_Field
-                             ("docHref", Get_Docs_Href (R_Type));
+                           if Present (R_Type) then
+                              Return_Type.Set_Field
+                                ("label", Get_Full_Name (R_Type));
+                              Return_Type.Set_Field
+                                ("docHref", Get_Docs_Href (R_Type));
 
-                        else
-                           Return_Type.Set_Field ("label", Declaration.Name);
+                           else
+                              Return_Type.Set_Field
+                                ("label", Declaration.Name);
+                           end if;
                         end if;
 
                         Returns.Set_Field ("type", Return_Type);
