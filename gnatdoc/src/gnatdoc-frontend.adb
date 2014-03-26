@@ -2136,10 +2136,9 @@ package body GNATdoc.Frontend is
                             (Text       => Doc,
                              Start_Line => Doc_Start_Line));
 
-                     elsif Get_Kind (E) = E_Formal then
-                        null;
-
-                     elsif Doc_End_Line = LL.Get_Location (E).Line - 1 then
+                     elsif Get_Kind (E) = E_Formal
+                       or else Doc_End_Line = LL.Get_Location (E).Line - 1
+                     then
                         Set_Doc_Before (E,
                           Comment_Result'
                             (Text       => Doc,
@@ -2192,7 +2191,10 @@ package body GNATdoc.Frontend is
                                  Scope : constant Entity_Id :=
                                    Get_Scope (Current_Context);
                               begin
-                                 if Is_Concurrent_Type_Or_Object (Scope)
+                                 if Get_Kind (E) = E_Formal then
+                                    Set_Doc_Before (E);
+
+                                 elsif Is_Concurrent_Type_Or_Object (Scope)
                                    or else
                                      (Is_Package (Scope)
                                         and then not
