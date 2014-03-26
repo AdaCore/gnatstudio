@@ -161,15 +161,17 @@ GtkEntry.search {
 GtkTextView:selected { background : pink ; color : black }
 */
 
-
 /**
  * An example on how to redefine left and right keys so that they navigate
  * up and down in the tree views (instead of just left and right between
  * columns). The best here is to use the default up and down keys though.
+ * See also the treemove.py plug-in.
  */
 
+/*
 @binding-set gtk-gps-tree-view {
    bind "Right" { "move-cursor" (display-lines, 1) };
    bind "Left" { "move-cursor" (display-lines, -1) };
 }
 GtkTreeView { gtk-key-bindings: gtk-gps-tree-view; }
+*/
