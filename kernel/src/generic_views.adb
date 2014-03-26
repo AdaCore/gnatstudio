@@ -76,7 +76,7 @@ package body Generic_Views is
    package View_Sources is new Glib.Main.Generic_Sources
      (Abstract_View_Access);
 
-   Filter_Class_Record : aliased Glib.Object.Ada_GObject_Class :=
+   Filter_Class_Record : Glib.Object.Ada_GObject_Class :=
      Glib.Object.Uninitialized_Class;
 
    procedure On_Pattern_Config_Menu
@@ -87,6 +87,10 @@ package body Generic_Views is
 
    procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
    --  Called when a filter panel is destroyed
+
+   procedure Filter_Panel_Class_Init (Self : GObject_Class);
+   pragma Convention (C, Filter_Panel_Class_Init);
+   --  Initialize the gtk+ classs
 
    ----------------
    -- On_Destroy --
@@ -240,6 +244,16 @@ package body Generic_Views is
       end if;
    end Report_Filter_Changed;
 
+   -----------------------------
+   -- Filter_Panel_Class_Init --
+   -----------------------------
+
+   procedure Filter_Panel_Class_Init (Self : GObject_Class) is
+   begin
+      Set_Default_Get_Preferred_Width_Handler
+        (Self, Get_Filter_Preferred_Width'Access);
+   end Filter_Panel_Class_Init;
+
    ------------------
    -- Build_Filter --
    ------------------
@@ -267,15 +281,11 @@ package body Generic_Views is
       Self.Filter := new Filter_Panel_Record;
       F := Self.Filter;
 
-      if Glib.Object.Initialize_Class_Record
+      Glib.Object.Initialize_Class_Record
         (Ancestor     => Gtk.Tool_Item.Get_Type,
-         Class_Record => Filter_Class_Record'Access,
-         Type_Name    => "FilterPanel")
-      then
-         Set_Default_Get_Preferred_Width_Handler
-           (Filter_Class_Record,
-            Get_Filter_Preferred_Width'Access);
-      end if;
+         Class_Record => Filter_Class_Record,
+         Type_Name    => "FilterPanel",
+         Class_Init   => Filter_Panel_Class_Init'Access);
 
       G_New (F, Filter_Class_Record.The_Type);
       Self.Append_Toolbar (Toolbar, F, Is_Filter => True);
