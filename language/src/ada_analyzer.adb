@@ -2296,8 +2296,8 @@ package body Ada_Analyzer is
             --  Exclude Tok_Raise: raise CE with "string";
             --  Ditto for Tok_Left_Paren: X := (Parent with Field => null);
               and then
-                ((Top_Token.Token in Tok_Type | Tok_Function | Tok_Procedure
-                    | Tok_Colon
+                ((Top_Token.Token in Tok_Type | Tok_Subtype
+                    | Tok_Function | Tok_Procedure | Tok_Colon
                   and then Num_Parens = 0)
                  or else (Top_Token.Token in Tok_Task | Tok_Protected
                           and then Prev_Prev_Token
