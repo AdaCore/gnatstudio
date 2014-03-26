@@ -171,6 +171,34 @@ GNATdoc extracts documentation directly from the comments present in source
 files for your project. Special tags present in the comments are interpreted
 by GNATdoc.
 
+
+Documenting packages
+--------------------
+
+The documentation attached to each package is the block of comment
+directly preceding the package declaration.
+
+The following tags are supported in package comments:
+
+*@summary*
+
+   a summary of the package
+
+*@description*
+
+   a detailed description of the package
+
+For example::
+
+  --  @summary
+  --  Drawing routines.
+  --
+  --  @description
+  --  This package provides routines for drawing basic shapes and Bézier curves.
+  --
+  package Drawing is
+
+
 Documenting subprograms
 -----------------------
 
