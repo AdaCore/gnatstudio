@@ -243,16 +243,19 @@ similar packages for cgs units or British units, and define conversion
 factors between values in different systems. The MKS system is
 characterized by the following aspect:
 
-type Mks_Type is new Long_Long_Float
-with
+type Mks_Type is new Long_Long_Float with
 Dimension_System =&gt; (
 (Unit_Name =&gt; Meter,    Unit_Symbol =&gt; 'm',   Dim_Symbol =&gt; 'L'),
 (Unit_Name =&gt; Kilogram, Unit_Symbol =&gt; "kg",  Dim_Symbol =&gt; 'M'),
 (Unit_Name =&gt; Second,   Unit_Symbol =&gt; 's',   Dim_Symbol =&gt; 'T'),
 (Unit_Name =&gt; Ampere,   Unit_Symbol =&gt; 'A',   Dim_Symbol =&gt; 'I'),
-(Unit_Name =&gt; Kelvin,   Unit_Symbol =&gt; 'K',   Dim_Symbol =&gt; "Theta"),
+(Unit_Name =&gt; Kelvin,   Unit_Symbol =&gt; 'K',   Dim_Symbol =&gt; ')',
 (Unit_Name =&gt; Mole,     Unit_Symbol =&gt; "mol", Dim_Symbol =&gt; 'N'),
 (Unit_Name =&gt; Candela,  Unit_Symbol =&gt; "cd",  Dim_Symbol =&gt; 'J'));
+
+Note that in the above type definition, we use the symbol `@' to
+represent a theta character (avoiding the use of extended Latin-1
+characters in this context).
 
 See section "Performing Dimensionality Analysis in GNAT" in the GNAT
 Users Guide for detailed examples of use of the dimension system.
@@ -400,6 +403,12 @@ D.1.
 This aspect is equivalent to pragma `Invariant'. It is a synonym for
 the language defined aspect `Type_Invariant' except that it is
 separately controllable using pragma `Assertion_Policy'.
+      </DOC>
+   </ASPECT>
+
+   <ASPECT id = "0" name = "Iterable" origin = "GNAT RM" category = "unknown">
+      <DOC>
+PLEASE ADD DOCUMENTATION HERE???
       </DOC>
    </ASPECT>
 
@@ -1013,6 +1022,12 @@ Code Insertions::
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "0" name = "Atomic_Always_Lock_Free" origin = "GNAT RM" category = "unknown">
+      <DOC>
+PLEASE ADD DOCUMENTATION HERE???
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "17" name = "Base" origin = "Ada RM" category = "type">
       <DOC>
 For every scalar subtype S:
@@ -1335,6 +1350,12 @@ True. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "0" name = "Constant_Indexing" origin = "GNAT RM" category = "unknown">
+      <DOC>
+PLEASE ADD DOCUMENTATION HERE???
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "42" name = "Constrained" origin = "Ada RM" category = "variable">
       <DOC>
 For a prefix A that is of a discriminated type (after any
@@ -1387,6 +1408,12 @@ is of the type universal_integer. See 9.9.
 prefix), provides the value `System.Default_Bit_Order' as a `Pos' value
 (0 for `High_Order_First', 1 for `Low_Order_First').  This is used to
 construct the definition of `Default_Bit_Order' in package `System'.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "0" name = "Default_Iterator" origin = "GNAT RM" category = "unknown">
+      <DOC>
+PLEASE ADD DOCUMENTATION HERE???
       </DOC>
    </ATTRIBUTE>
 
@@ -1634,6 +1661,12 @@ implementation defined. See 13.13.2. See 13.3.
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "0" name = "Fast_Math" origin = "GNAT RM" category = "unknown">
+      <DOC>
+PLEASE ADD DOCUMENTATION HERE???
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "66/1" name = "First" origin = "Ada RM" category = "variable">
       <DOC>
 For a prefix A that is of an array type (after any implicit
@@ -1770,6 +1803,13 @@ occur when X is zero, has the sign of X. See A.5.3.
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "0" name = "From_Any" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This internal attribute is used for the generation of remote subprogram
+stubs in the context of the Distributed Systems Annex.
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "0" name = "Has_Access_Values" origin = "GNAT RM" category = "variable">
       <DOC>
 The prefix of the `Has_Access_Values' attribute is a type.  The result
@@ -1894,6 +1934,12 @@ or used in an instantiation as a function parameter.
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "0" name = "Implicit_Dereference" origin = "GNAT RM" category = "unknown">
+      <DOC>
+PLEASE ADD DOCUMENTATION HERE???
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "96" name = "Input" origin = "Ada RM" category = "function">
       <DOC>
 For every subtype S of a specific type T:
@@ -1944,6 +1990,18 @@ an otherwise uninitialized value of the type if pragma
 Initialize_Scalars is used, including the ability to modify the value
 with the binder -Sxx flag and relevant environment variables at run
 time.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "0" name = "Iterable" origin = "GNAT RM" category = "unknown">
+      <DOC>
+PLEASE ADD DOCUMENTATION HERE???
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "0" name = "Iterator_Element" origin = "GNAT RM" category = "unknown">
+      <DOC>
+PLEASE ADD DOCUMENTATION HERE???
       </DOC>
    </ATTRIBUTE>
 
@@ -2088,6 +2146,12 @@ pragma Compile_Time_Error
 "Gen can only be instantiated at library level");
 
 end Gen;
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "0" name = "Lock_Free" origin = "GNAT RM" category = "unknown">
+      <DOC>
+PLEASE ADD DOCUMENTATION HERE???
       </DOC>
    </ATTRIBUTE>
 
@@ -2577,44 +2641,12 @@ statically matching subtypes.
 
    <ATTRIBUTE id = "0" name = "Old" origin = "GNAT RM" category = "variable">
       <DOC>
-The attribute Prefix'Old can be used within a subprogram body or within
-a precondition or postcondition pragma. The effect is to refer to the
-value of the prefix on entry. So for example if you have an argument of
-a record type X called Arg1, you can refer to Arg1.Field'Old which
-yields the value of Arg1.Field on entry. The implementation simply
-involves generating an object declaration which captures the value on
-entry. Any prefix is allowed except one of a limited type (since limited
-types cannot be copied to capture their values) or an expression which
-references a local variable (since local variables do not exist at
-subprogram entry time).
-
-The following example shows the use of 'Old to implement a test of a
-postcondition:
-
-with Old_Pkg;
-procedure Old is
-begin
-Old_Pkg.Incr;
-end Old;
-
-package Old_Pkg is
-procedure Incr;
-end Old_Pkg;
-
-package body Old_Pkg is
-Count : Natural := 0;
-
-procedure Incr is
-begin
-code manipulating the value of Count
-
-pragma Assert (Count = Count'Old + 1);
-end Incr;
-end Old_Pkg;
-
-Note that it is allowed to apply 'Old to a constant entity, but this
-will result in a warning, since the old and new values will always be
-the same.
+In addition to the usage of `Old' defined in the Ada 2012 RM (usage
+within `Post' aspect), GNAT also permits the use of this attribute in
+implementation defined pragmas `Postcondition', `Contract_Cases' and
+`Test_Case'. Also usages of `Old' which would be illegal according to
+the Ada 2012 RM definition are allowed under control of implementation
+defined pragma `Unevaluated_Use_Of_Old'.
       </DOC>
    </ATTRIBUTE>
 
@@ -3035,6 +3067,14 @@ this attribute is implementation defined; see G.2.2 for the
 definition that applies to implementations supporting the
 Numerics Annex. The value of this attribute is of the type
 universal_real. See A.5.3.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "0" name = "Safe_Small" origin = "GNAT RM" category = "unknown">
+      <DOC>
+The `Safe_Small' attribute is provided for compatibility with Ada 83.
+See the Ada 83 reference manual for an exact description of the
+semantics of this attribute.
       </DOC>
    </ATTRIBUTE>
 
@@ -3503,6 +3543,13 @@ manner (e.g. -1 means the same as 16#FFFF_FFFF# on a 32 bits machine).
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "0" name = "To_Any" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This internal attribute is used for the generation of remote subprogram
+stubs in the context of the Distributed Systems Annex.
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "248" name = "Truncation" origin = "Ada RM" category = "function">
       <DOC>
 For every subtype S of a floating point type T:
@@ -3519,6 +3566,13 @@ return T
 The function yields the value Ceiling(X) when X is negative,
 and Floor(X) otherwise. A zero result has the sign of X when
 S'Signed_Zeros is True. See A.5.3.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "0" name = "TypeCode" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This internal attribute is used for the generation of remote subprogram
+stubs in the context of the Distributed Systems Annex.
       </DOC>
    </ATTRIBUTE>
 
@@ -3544,6 +3598,15 @@ Type_Class_Address);
 Protected types yield the value `Type_Class_Task', which thus applies
 to all concurrent types.  This attribute is designed to be compatible
 with the DEC Ada 83 attribute of the same name.
+      </DOC>
+   </ATTRIBUTE>
+
+   <ATTRIBUTE id = "0" name = "Type_Key" origin = "GNAT RM" category = "unknown">
+      <DOC>
+The `Type_Key' attribute is applicable to a type or subtype and yields
+a value of type Standard.String containing encoded information about
+the type or subtype. This provides improved compatibility with other
+implementations that support this attribute.
       </DOC>
    </ATTRIBUTE>
 
@@ -4098,6 +4161,24 @@ Item : in T)
 S'Write writes the value of Item to Stream. See 13.13.2.
       </DOC>
    </ATTRIBUTE>
+
+   <PRAGMA id = "0" name = "AST_Entry" origin = "GNAT RM">
+      <DOC>
+Syntax:
+pragma AST_Entry (entry_IDENTIFIER);
+
+This pragma is implemented only in the OpenVMS implementation of GNAT.
+The argument is the simple name of a single entry; at most one
+`AST_Entry' pragma is allowed for any given entry.  This pragma must be
+used in conjunction with the `AST_Entry' attribute, and is only allowed
+after the entry declaration and in the same task type specification or
+single task as the entry to which it applies.  This pragma specifies
+that the given entry may be used to handle an OpenVMS asynchronous
+system trap (`AST') resulting from an OpenVMS system service call.  The
+pragma does not affect normal use of the entry.  For further details on
+this pragma, see the DEC Ada Language Reference Manual, section 9.12a.
+      </DOC>
+   </PRAGMA>
 
    <PRAGMA id = "0" name = "Abort_Defer" origin = "GNAT RM">
       <DOC>
@@ -7131,6 +7212,12 @@ pragma Locking_Policy (policy_identifier);
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Locl_Free" origin = "GNAT RM">
+      <DOC>
+Syntax: PLEASE ADD DOCUMENTATION HERE???
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Long_Float" origin = "GNAT RM">
       <DOC>
 Syntax:
@@ -8816,6 +8903,19 @@ example, a function thus marked is free to `with' non-pure units.
 Syntax:
 
 pragma Queuing_Policy (policy_identifier);
+      </DOC>
+   </PRAGMA>
+
+   <PRAGMA id = "0" name = "Rational" origin = "GNAT RM">
+      <DOC>
+Syntax:
+
+pragma Rational;
+
+This pragma is considered obsolescent, but is retained for
+compatibility purposes. It is equivalent to:
+
+pragma Profile (Rational);
       </DOC>
    </PRAGMA>
 
