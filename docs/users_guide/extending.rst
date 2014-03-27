@@ -3405,63 +3405,6 @@ The following child tags are available:
   that may be present in keywords. You need not include letters, digits or
   underscores.
 
-* :file:`<Engine>`
-
-  Name of a dynamic library providing one or several of the functions
-  lisyted below.
-
-  The name can be a full or short name. For example, in most Unix systems,
-  if you specify the name :file:`custom`, GPS looks for
-  :file:`libcustom.so` in the :file:`LD_LIBRARY_PATH` search path. You can
-  also specify explicitly the full name, either absolute or relative.  For
-  example, :file:`libcustom.so` or :file:`/usr/lib/libcustom.so`.
-
-  For each of the following five items, GPS looks for the corresponding
-  symbol in the file specified by :file:`<Engine>` and if found, calls this
-  symbol when needed.  Otherwise, it defaults to static behavior, as
-  defined by the other items describing a language.
-
-  You can find the specification for C and Ada to implement the functions
-  below in the directory :file:`<prefix>/share/examples/gps/language` of
-  your GPS installation.  :file:`language_custom.ads` is the Ada spec file,
-  :file:`language_custom.h` is the C spec file and :file:`gpr_custom.ad?`
-  are example files showing a possible Ada implementation of the function
-  :command:`Comment_Line` for the GPS project files (:file:`.gpr` files),
-  or any other Ada-like language. :file:`gprcustom.c` is the C version of
-  :file:`gpr_custom.adb`.
-
-  * :file:`<Comment_Line>`
-
-    Name of symbol in the shared library corresponding to a function that
-    comments or uncomments a line (used to implement the
-    :menuselection:`Edit --> Un/Comment Lines` menu).
-
-  * :file:`<Parse_Constructs>`
-
-    Name of symbol in the shared library corresponding to a function that
-    parses the language constructs in a specified buffer.
-
-    GPS uses this procedure to implement several capabilities such as
-    listing language constructs in the :guilabel:`Project` view,
-    highlighting the current block of code, and going to the next or previous
-    procedure.
-
-  * :file:`<Format_Buffer>`
-
-    Name of symbol in the shared library corresponding to a function that
-    indents and formats a given specified.
-
-    GPS uses this procedure to implement auto indentation done when
-    pressing the :kbd:`enter` key or using the format key on the current
-    selection or line.
-
-  * :file:`<Parse_Entities>`
-
-    Name of symbol in the shared library corresponding to a function that
-    parses entities (such as comments and keywords) of a specified buffer.
-    GPS uses this procedure to highlight the syntax of a file.  It
-    overrides the :file:`<Context>` tag described below.
-
 * :file:`<Context>`
 
   Information that GPS uses to determine the syntax of a file for
@@ -3639,9 +3582,6 @@ here is an example of a language definition for the GPS project files::
           <Index>1</Index>
         </Category>
       </Categories>
-
-      <Engine>gpr</Engine>
-      <Comment_Line>gpr_comment_line</Comment_Line>
     </Language>
   </Custom>
 
