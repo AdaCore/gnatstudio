@@ -1304,8 +1304,6 @@ package body GNATdoc.Atree is
          LL_Set_Etype (New_E, Get_Type_Of (E));
          New_E.Xref.Body_Loc := Get_Body (E);
 
-         New_E.Xref.Is_Type  := Xref.Is_Type (E);
-
          --  Ada single tasks are not types (they are objects) but we handle
          --  them as tasks for homogeneity in the gnatdoc frontend. We cannot
          --  do the same here for single protected objects because they are
