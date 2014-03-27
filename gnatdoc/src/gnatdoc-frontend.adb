@@ -4866,6 +4866,9 @@ package body GNATdoc.Frontend is
             end record;
             No_Location : constant Location := (0, 0);
 
+            procedure Check_Tag (Tag_Name : String);
+            --  Check if this tag is applicable to entity E
+
             function No (Loc : Location) return Boolean;
             --  True if Loc = No_Location
 
@@ -4884,6 +4887,96 @@ package body GNATdoc.Frontend is
               (J   : in out Natural;
                Loc : out Location);
             --  Scan S searching for the next end of line
+
+            ---------------
+            -- Check_Tag --
+            ---------------
+
+            procedure Check_Tag (Tag_Name : String) is
+
+               function KindToText return String;
+               --  Convert the kind of E into a lower-case text replacing
+               --  underscores by spaces (for example, E_Record_Type is
+               --  returned as "record type").
+
+               procedure Report_Error;
+               --  Report the error
+
+               ----------------
+               -- KindToText --
+               ----------------
+
+               function KindToText return String is
+                  Low_Ekind_Img : constant String :=
+                                    To_Lower (Get_Kind (E)'Img);
+                  Ekind_Img     : constant String :=
+                                    Low_Ekind_Img (Low_Ekind_Img'First + 2
+                                                     .. Low_Ekind_Img'Last);
+                  Result : String (Ekind_Img'Range);
+               begin
+                  for J in Ekind_Img'Range loop
+                     if Ekind_Img (J) = '_' then
+                        Result (J) := ' ';
+                     else
+                        Result (J) := Ekind_Img (J);
+                     end if;
+                  end loop;
+
+                  return Result;
+               end KindToText;
+
+               ------------------
+               -- Report_Error --
+               ------------------
+
+               procedure Report_Error is
+               begin
+                  Error (E,
+                    "@" & Tag_Name & " not applicable to " & KindToText);
+               end Report_Error;
+
+               --  Report the error
+
+            begin
+               if Tag_Name = "description"
+                 or else Tag_Name = "summary"
+               then
+                  if not Is_Package (E)
+                    and then not Is_Subprogram_Or_Entry (E)
+                  then
+                     Report_Error;
+                  end if;
+
+               elsif Tag_Name = "exception" then
+                  if not Is_Subprogram_Or_Entry (E) then
+                     Report_Error;
+                  end if;
+
+               elsif Tag_Name = "field" then
+                  if not Is_Record_Type (E) then
+                     Report_Error;
+                  end if;
+
+               elsif Tag_Name = "param" then
+                  if not Is_Subprogram_Or_Entry (E) then
+                     Report_Error;
+                  end if;
+
+               elsif Tag_Name = "return" then
+                  if Get_Kind (E) /= E_Function then
+                     Report_Error;
+                  end if;
+
+               elsif Tag_Name = "description"
+                 or else Tag_Name = "summary"
+               then
+                  if not Is_Package (E)
+                    and then not Is_Subprogram_Or_Entry (E)
+                  then
+                     Report_Error;
+                  end if;
+               end if;
+            end Check_Tag;
 
             --------
             -- No --
@@ -5047,11 +5140,7 @@ package body GNATdoc.Frontend is
                   Line_Last := J;
                   pragma Assert (J > S'Last or else S (J) = ASCII.LF);
 
-                  if Tag_Text = "return"
-                    and then Get_Kind (E) = E_Procedure
-                  then
-                     Error (E, "@return not applicable to procedures");
-                  end if;
+                  Check_Tag (Tag_Text);
 
                   if Tag_Text = Param_Tag
                     or else Tag_Text = Field_Tag
