@@ -408,7 +408,31 @@ separately controllable using pragma `Assertion_Policy'.
 
    <ASPECT id = "0" name = "Iterable" origin = "GNAT RM" category = "unknown">
       <DOC>
-PLEASE ADD DOCUMENTATION HERE???
+This aspect is used in the GNAT-defined formal container packages, to
+provide a light-weight mechanism for loops over such containers,
+without the overhead imposed by the tampering checks of standard
+Ada2012 iterators. The value of the aspect is a aggregate with four
+named  components: First, Next, Has_Element, and Element. The following
+is a typical example of use:
+
+type List is private with
+Iterable =&gt; (First        =&gt; First_Element,
+Next         =&gt; Advance,
+Has_Element  =&gt; Get_Element,
+Element      =&gt; List_Element);
+
+* The value denoted by `First' must denote a primitive operation of
+the  container type that returns a Cursor, which must a be a type
+declared in the container package.
+
+* The value of `Next' is a primitive operation of the container type
+that takes a cursor and yields a cursor.
+
+* `Has_Element' is an operation that applies to a cursor a yields an
+element of the container.
+
+* `Element' is the type of the elements of the container type, and
+thus the result of the function denoted by Has_Element.
       </DOC>
    </ASPECT>
 
@@ -1024,7 +1048,10 @@ Code Insertions::
 
    <ATTRIBUTE id = "0" name = "Atomic_Always_Lock_Free" origin = "GNAT RM" category = "unknown">
       <DOC>
-PLEASE ADD DOCUMENTATION HERE???
+The prefix of the `Atomic_Always_Lock_Free' attribute is a type.  The
+result is a Boolean value which is True if the type has discriminants,
+and False otherwise.  The result indicate whether atomic operations are
+supported by the target for the given type.
       </DOC>
    </ATTRIBUTE>
 
@@ -1995,7 +2022,7 @@ time.
 
    <ATTRIBUTE id = "0" name = "Iterable" origin = "GNAT RM" category = "unknown">
       <DOC>
-PLEASE ADD DOCUMENTATION HERE???
+Equivalent to Aspect Iterable.
       </DOC>
    </ATTRIBUTE>
 
@@ -7204,6 +7231,12 @@ pragma List (identifier);
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Lock_Free" origin = "GNAT RM">
+      <DOC>
+Syntax: PLEASE ADD DOCUMENTATION HERE???
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Locking_Policy" origin = "Ada RM">
       <DOC>
 Syntax:
@@ -7270,14 +7303,21 @@ Syntax:
 
 pragma Loop_Optimize (OPTIMIZATION_HINT {, OPTIMIZATION_HINT});
 
-OPTIMIZATION_HINT ::= No_Unroll | Unroll | No_Vector | Vector
+OPTIMIZATION_HINT ::= Ivdep | No_Unroll | Unroll | No_Vector | Vector
 
 This pragma must appear immediately within a loop statement.  It allows
 the programmer to specify optimization hints for the enclosing loop.
 The hints are not mutually exclusive and can be freely mixed, but not
 all combinations will yield a sensible outcome.
 
-There are four supported optimization hints for a loop:
+There are five supported optimization hints for a loop:
+
+* Ivdep
+
+The programmer asserts that there are no loop-carried dependencies
+which would prevent consecutive iterations of the loop from being
+executed simultaneously.
+
 * No_Unroll
 
 The loop must not be unrolled.  This is a strong hint: the
@@ -7303,9 +7343,9 @@ optimizations, notably unrolling, but there is no guarantee that
 the loop will be vectorized.
 
 
-These hints do not void the need to pass the appropriate switches to
-the compiler in order to enable the relevant optimizations, that is to
-say `-funroll-loops' for unrolling and `-ftree-vectorize' for
+These hints do not remove the need to pass the appropriate switches
+to the compiler in order to enable the relevant optimizations, that is
+to say `-funroll-loops' for unrolling and `-ftree-vectorize' for
 vectorization.
       </DOC>
    </PRAGMA>
