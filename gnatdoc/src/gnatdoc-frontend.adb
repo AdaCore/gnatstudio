@@ -2705,6 +2705,21 @@ package body GNATdoc.Frontend is
                                       and then Prev_Token = Tok_Null
                                     then
                                        null;
+
+                                    --  Don't leave the scope of full record
+                                    --  type declaration until we process "end
+                                    --  record" (see management of Tok_End).
+                                    --  The exception to this rule are tagged
+                                    --  null record declarations. That is:
+                                    --
+                                    --    type T is tagged null record;
+
+                                    elsif Is_Record_Type (Scope)
+                                      and then Is_Full_View (Scope)
+                                      and then Prev_Token /= Tok_Record
+                                    then
+                                       null;
+
                                     else
                                        Do_Exit;
                                     end if;
