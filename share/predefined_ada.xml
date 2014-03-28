@@ -1690,7 +1690,9 @@ implementation defined. See 13.13.2. See 13.3.
 
    <ATTRIBUTE id = "0" name = "Fast_Math" origin = "GNAT RM" category = "unknown">
       <DOC>
-PLEASE ADD DOCUMENTATION HERE???
+`Standard'Fast_Math' (`Standard' is the only allowed prefix) yields a
+static Boolean value that is True if pragma `Fast_Math' is active, and
+False otherwise.
       </DOC>
    </ATTRIBUTE>
 
@@ -2178,7 +2180,8 @@ end Gen;
 
    <ATTRIBUTE id = "0" name = "Lock_Free" origin = "GNAT RM" category = "unknown">
       <DOC>
-PLEASE ADD DOCUMENTATION HERE???
+`P'Lock_Free', where P is a protected object, returns True if a pragma
+`Lock_Free' applies to P.
       </DOC>
    </ATTRIBUTE>
 
@@ -7233,7 +7236,10 @@ pragma List (identifier);
 
    <PRAGMA id = "0" name = "Lock_Free" origin = "GNAT RM">
       <DOC>
-Syntax: PLEASE ADD DOCUMENTATION HERE???
+Syntax: This pragma may be specified for protected types or objects. It
+specifies that the implementation of protected operations must be
+implemented without locks.  Compilation fails if the compiler cannot
+generate lock-free code for the operations.
       </DOC>
    </PRAGMA>
 
