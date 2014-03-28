@@ -165,6 +165,7 @@ package body GNATdoc is
 
             procedure Error_Msg (Msg : String);
             procedure Error_Msg (Msg : String) is
+               Debug : constant Boolean := False;
             begin
                Serious_Errors := Serious_Errors + 1;
 
@@ -174,10 +175,13 @@ package body GNATdoc is
                   & Get_Short_Name (Entity)
                   & ":"
                   & Msg);
-               Atree.pn (Entity);
 
-               if Present (Get_Full_View (Entity)) then
-                  Atree.pn (Get_Full_View (Entity));
+               if Debug then
+                  Atree.pns (Entity);
+
+                  if Present (Get_Full_View (Entity)) then
+                     Atree.pn (Get_Full_View (Entity));
+                  end if;
                end if;
             end Error_Msg;
 
