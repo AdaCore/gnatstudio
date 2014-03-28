@@ -25,6 +25,23 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N325-035 ECL: event breakpoint on specific exception cannot be created.
+
+  Problem:    Cannot create with the UI Ada Event Breakpoint on specific
+              exception raised condition.
+
+  Status:     This was fixed in 2.9 on 2014-03-27
+
+  Workaround: Create and export an "Ada assertion failed" ada event breakpoint.
+              Change the following attributes in the "bkpt" exported file.
+              - message
+                 Event Breakpoint: org.eclipse.cdt.debug.gdb.exception.specific
+              - org.eclipse.cdt.debug.core.eventbreakpoint_event_id
+                 org.eclipse.cdt.debug.gdb.exception.specific
+              - org.eclipse.cdt.debug.core.eventbreakpoint_event_arg
+                 the exception name for the breakpoint ex: constraint_error
+              Import the modified "bkpt" file.
+
 KP-60-N313-003 GPS: display unchecked unions in debugger
 
   Problem:    Graphical representation of Ada unchecked unions is broken
