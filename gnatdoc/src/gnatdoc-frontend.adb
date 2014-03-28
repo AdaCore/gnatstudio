@@ -173,6 +173,9 @@ package body GNATdoc.Frontend is
       function In_Private_Part
         (Context : Context_Id) return Boolean;
 
+      function Tok_Record_Seen
+        (Context : Context_Id) return Boolean;
+
       function Tok_Subprogram_Seen
         (Context : Context_Id) return Boolean;
 
@@ -229,6 +232,7 @@ package body GNATdoc.Frontend is
       pragma Inline (In_Private_Part);
       pragma Inline (Get_Prev_Entity_In_Scope);
       pragma Inline (Get_Scope);
+      pragma Inline (Tok_Record_Seen);
       pragma Inline (Tok_Subprogram_Seen);
 
       pragma Inline (Replace_Current_Entity);
@@ -2716,6 +2720,8 @@ package body GNATdoc.Frontend is
 
                                     elsif Is_Record_Type (Scope)
                                       and then Is_Full_View (Scope)
+                                      and then
+                                        Tok_Record_Seen (Current_Context)
                                       and then Prev_Token /= Tok_Record
                                     then
                                        null;
@@ -5935,6 +5941,11 @@ package body GNATdoc.Frontend is
       begin
          return Context.Scope;
       end Get_Scope;
+
+      function Tok_Record_Seen (Context : Context_Id) return Boolean is
+      begin
+         return Context.Token_Seen (Tok_Record);
+      end Tok_Record_Seen;
 
       function Tok_Subprogram_Seen (Context : Context_Id) return Boolean is
       begin
