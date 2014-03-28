@@ -358,14 +358,17 @@ function buildDocumentationPage() {
                     list = list || document.createElement('dl');
 
                     var term = document.createElement('dt');
-                    term.appendChild(
-                      document.createTextNode('Return value of type '));
-                    href = document.createElement('a');
-                    href.href = '../' + entity.returns.type.docHref;
-                    href.target = 'contentView';
-                    href.appendChild(
-                      document.createTextNode(entity.returns.type.label));
-                    term.appendChild(href);
+                    term.appendChild(document.createTextNode('Return value'));
+
+                    if (entity.returns.type !== undefined) {
+                        term.appendChild(document.createTextNode(' of type '));
+                        href = document.createElement('a');
+                        href.href = '../' + entity.returns.type.docHref;
+                        href.target = 'contentView';
+                        href.appendChild(
+                          document.createTextNode(entity.returns.type.label));
+                        term.appendChild(href);
+                    }
 
                     var description = document.createElement('dd');
                     buildText(description, entity.returns.description);

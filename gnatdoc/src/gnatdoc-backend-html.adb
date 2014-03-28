@@ -857,42 +857,42 @@ package body GNATdoc.Backend.HTML is
          -----------------
 
          function Entity_Data (Tag : Tag_Info_Ptr) return JSON_Value is
-            Result         : JSON_Value;
-            Declaration    : Xref.General_Entity_Declaration;
-            Parameter_Type : JSON_Value;
-            P_Type         : Entity_Id;
+            Result      : JSON_Value;
+            Declaration : Xref.General_Entity_Declaration;
+            Type_Data   : JSON_Value;
+            Entity_Type : Entity_Id;
 
          begin
-            Declaration := Xref.Get_Declaration (Tag.Entity.Element);
             Result := Create_Object;
 
             if Tag.Tag /= "return" then
+               Declaration := Xref.Get_Declaration (Tag.Entity.Element);
                Result.Set_Field ("label", Declaration.Name);
                Result.Set_Field ("line", Declaration.Loc.Line);
                Result.Set_Field ("column", Natural (Declaration.Loc.Column));
+
+               --  Construct reference information to entity's type
+
+               Declaration := Xref.Get_Declaration
+                 (Xref.Get_Type_Of (Tag.Entity.Element));
+               Entity_Type := Find_Unique_Entity (Declaration.Loc);
+
+               Type_Data := Create_Object;
+
+               if Present (Entity_Type) then
+                  Type_Data.Set_Field ("label", Get_Full_Name (Entity_Type));
+                  Type_Data.Set_Field ("docHref", Get_Docs_Href (Entity_Type));
+
+               else
+                  Type_Data.Set_Field ("label", Declaration.Name);
+               end if;
+
+               Result.Set_Field ("type", Type_Data);
             end if;
 
             Result.Set_Field
               ("description",
                To_JSON_Representation (Tag.Text, Self.Context.Kernel));
-
-            --  Construct reference information to entity's type
-
-            Declaration := Xref.Get_Declaration
-              (Xref.Get_Type_Of (Tag.Entity.Element));
-            P_Type := Find_Unique_Entity (Declaration.Loc);
-
-            Parameter_Type := Create_Object;
-
-            if Present (P_Type) then
-               Parameter_Type.Set_Field ("label", Get_Full_Name (P_Type));
-               Parameter_Type.Set_Field ("docHref", Get_Docs_Href (P_Type));
-
-            else
-               Parameter_Type.Set_Field ("label", Declaration.Name);
-            end if;
-
-            Result.Set_Field ("type", Parameter_Type);
 
             return Result;
          end Entity_Data;
