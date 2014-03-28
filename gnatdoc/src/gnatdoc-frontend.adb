@@ -1938,8 +1938,6 @@ package body GNATdoc.Frontend is
                              Get_Scope (Current_Context);
                         begin
                            if Is_Record_Type (Scope) then
-                              Set_Is_Tagged (Scope);
-                              Set_Kind (Scope, E_Tagged_Record_Type);
                               In_Parent_Part := True;
                            end if;
                         end;
