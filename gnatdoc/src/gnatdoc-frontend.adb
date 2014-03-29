@@ -3422,7 +3422,16 @@ package body GNATdoc.Frontend is
                             Sloc_Start.Column
                                > Natural (LL.Get_Location (E).Column)))
                   loop
-                     Extended_Cursor.Next_Entity (Cursor);
+                     --  Disable the check in case of generic packages since
+                     --  the compiler may have generated a wrong column
+                     --  for its entity (wrong decoration that is fixed
+                     --  by this parser at later stages by routine
+                     --  Fix_Wrong_Location()). This issue is reproducible
+                     --  processing the file s-htable.ads. More work needed
+                     --  in this area???
+
+                     Extended_Cursor.Next_Entity (Cursor,
+                       Check_Disabled => Get_Kind (E) = E_Generic_Package);
                      E := Extended_Cursor.Entity (Cursor);
                   end loop;
 
