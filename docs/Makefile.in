@@ -50,8 +50,8 @@ install:
 	-${INSTALL_DATA} help_index.html ${docdir}/html
 
 	${MKDIR} $(docdir)/html/gnatdoc/
-	-${CP} -r ../gnatdoc/users_guide/_build/html/* $(docdir)/html/gnatdoc/
-	-${CP} ../gnatdoc/users_guide/_build/latex/gnatdoc.pdf $(docdir)/pdf/
+	-${CP} -r ../gnatdoc/docs/users_guide/_build/html/* $(docdir)/html/gnatdoc/
+	-${CP} ../gnatdoc/docs/users_guide/_build/latex/gnatdoc.pdf $(docdir)/pdf/
 
 clean:
 	-${RM} -rf */_build/
