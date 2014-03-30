@@ -355,6 +355,22 @@ begin
       end if;
    end;
 
+   --  Register the package and attribute that can be used in project files to
+   --  specify the documentation pattern
+
+   declare
+      Result : constant String :=
+        GNATCOLL.Projects.Register_New_Attribute
+          (Name    => Doc_Pattern_Name,
+           Pkg     => Pkg_Name);
+   begin
+      --  Log the reported error (if any)
+
+      if Result /= "" then
+         Trace (DOCGEN_V31, Result);
+      end if;
+   end;
+
    --  Support symbolic links
    Kernel.Registry.Environment.Set_Trusted_Mode (False);
 
@@ -380,8 +396,13 @@ begin
 
    --  Run GNATdoc
    declare
+      Doc_Pattern_In_Project : constant String :=
+        Kernel.Registry.Tree.Root_Project.Attribute_Value
+          (Attribute =>
+             Attribute_Pkg_String'(Build (Pkg_Name, Doc_Pattern_Name)),
+           Default => "");
       Pattern : constant String :=
-        (if Regular_Expr.all = "" then ""
+        (if Regular_Expr.all = "" then Doc_Pattern_In_Project
          else Regular_Expr.all
                 (Regular_Expr.all'First + 1 .. Regular_Expr.all'Last));
 
@@ -390,7 +411,7 @@ begin
       Internal_Output : constant Boolean := Backend_Name.all = "test";
 
       Options : constant GNATdoc.Docgen_Options :=
-        (Comments_Filter => (if Regular_Expr.all = "" then null
+        (Comments_Filter => (if Pattern = "" then null
                              else new Pattern_Matcher'
                                         (Compile
                                           (Pattern, Single_Line))),
