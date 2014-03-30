@@ -288,6 +288,19 @@ this case, the tag *@param@* is not required::
    --     if Minutes = 0 or Minutes > 300 if Minutes = 0
    --  @return True iff the alarm was successfully registered
 
+Adding images
+-------------
+
+Documentation for packages and subprograms may include images.
+
+This is done via the attribute:
+
+@image@
+
+    where the first parameter is the name of an image file.
+    This file is expected in the images directory, as specified in the project
+    file: see section Images directory below.
+
 *************
 Configuration
 *************
@@ -322,6 +335,16 @@ Ignored_Subprojects in the package Documentation of your root project::
      end Documentation;
   end Default;
 
+
+Images directory
+----------------
+
+The directory containing images is specified by the string attribute 
+Image_Dir of the Documentation package::
+
+   package Documentation is
+      for Image_Dir use "image_files";
+   end Documentation;
 
 HTML templates
 --------------
