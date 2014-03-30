@@ -346,6 +346,22 @@ Image_Dir of the Documentation package::
       for Image_Dir use "image_files";
    end Documentation;
 
+Documentation pattern
+---------------------
+
+The pattern for recognizing doc comments can be specified via the string
+attribute Doc_Pattern of the Documentation package::
+
+   package Documentation is
+      for Doc_Pattern use "^<";
+      --  This considers comments beginning with "--<" to be documentation
+   end Documentation;
+
+If this attribute is not specified, all comments are considered to be doc.
+
+This has the same semantics as the *-R* command-line switch. The command-line
+switch has precedence over the project attribute.
+
 HTML templates
 --------------
 
