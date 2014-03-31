@@ -33,8 +33,8 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
   <substitutions>
-    <substitute src="%builder" dest="gprbuild"/>
-    <substitute src="%gnatmake" dest="gprbuild"/>
+    <substitute src="%builder" dest="%gprbuild"/>
+    <substitute src="%gnatmake" dest="%gprbuild"/>
   </substitutions>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
@@ -63,8 +63,8 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
   <substitutions>
-    <substitute src="%builder" dest="gprbuild"/>
-    <substitute src="%gnatmake" dest="gprbuild"/>
+    <substitute src="%builder" dest="%gprbuild"/>
+    <substitute src="%gnatmake" dest="%gprbuild"/>
   </substitutions>
   <extra-args>
      <arg>--subdirs=%subdir</arg>
@@ -123,8 +123,8 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model filter="--subdirs=">gprclean</supported-model>
   <server>Tools_Server</server>
   <substitutions>
-    <substitute src="%builder" dest="gprbuild"/>
-    <substitute src="%gnatmake" dest="gprbuild"/>
+    <substitute src="%builder" dest="%gprbuild"/>
+    <substitute src="%gnatmake" dest="%gprbuild"/>
   </substitutions>
   <extra-args>
     <arg>-margs</arg>
