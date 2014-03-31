@@ -256,6 +256,7 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
+          <arg>-gnatcC</arg>
           <arg>%X</arg>
        </command-line>
        <icon>gps-build-all</icon>
@@ -383,6 +384,7 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
+          <arg>-gnatcC</arg>
           <arg>%X</arg>
        </command-line>
     </target>
