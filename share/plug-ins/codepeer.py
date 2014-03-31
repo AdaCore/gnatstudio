@@ -12,7 +12,9 @@ See menu Tools->CodePeer.
 ## No user customization below this line
 ############################################################################
 
-import GPS, os_utils, os.path
+import GPS
+import os_utils
+import os.path
 
 xml_codepeer = """<?xml version="1.0"?>
   <CODEPEER>
@@ -542,7 +544,7 @@ xml_codepeer = """<?xml version="1.0"?>
 codepeer = os_utils.locate_exec_on_path("codepeer")
 
 if codepeer:
-  example_root=os.path.dirname (os.path.dirname(codepeer)).replace('\\', '/')+\
+  example_root=os.path.dirname(os.path.dirname(codepeer)).replace('\\', '/')+\
     '/share/examples/codepeer'
   xml_codepeer = xml_codepeer.replace('@EXAMPLE@', example_root)
   GPS.parse_xml(xml_codepeer)
