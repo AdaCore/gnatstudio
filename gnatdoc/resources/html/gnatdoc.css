@@ -69,7 +69,7 @@ td {
 }
 
 #tocMenu {
-    position: fixed;
+/*    position: fixed; */
     width: 90px;
     vertical-align: top;
 }
@@ -95,7 +95,7 @@ td {
 }
 
 #tocView {
-    margin-left: 90px;
+/*    margin-left: 90px; */
     width: 100%;
     color: #bbb;
     font-weight: 300;
@@ -204,6 +204,7 @@ table.code td {
 table.entities tr, table.entities td, table.entities th {
     text-align: left;
 }
+
 
 table#frameSet {
     width: 100%;
