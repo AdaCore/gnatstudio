@@ -40,7 +40,7 @@ this purpose, before launching the tool compile your project.
 GNATdoc requires your project hierarchy to be described via GNAT project 
 files (.gpr).
 
-To launch gnatdoc, execute::
+To launch GNATdoc, execute::
 
       gnatdoc -P<your_project>
 
@@ -107,7 +107,7 @@ switch --help::
   enables retrieving documentation of subprograms from the body of
   packages. GNATdoc first looks for the documentation in the package
   specification; if no documentation is found in the spec and this
-  switch is enable then searchs for the documentation in the
+  switch is enabled then searchs for the documentation in the
   body of the subprogram.
 
 *Ignore files (--ignore-files)*
@@ -198,6 +198,62 @@ For example::
   --
   package Drawing is
 
+Documenting record types
+------------------------
+
+The documentation attached to each record type is the block of comment directly
+following the record type declaration, or directly preceding it if the option
+*-l* was specified.
+
+The following tags are supported when annotating subprograms:
+
+*@field*
+
+   document a record component, with the following syntax:
+
+      *@field <component_name> <description>*
+
+   where:
+
+      *<component_name>*
+
+        is the name of the component as it appears in the subprogram.
+
+      *<description>*
+
+        the documentation for the component; all following text
+        is considered for inclusion, until a blank comment line or
+        another tag is encountered.
+
+For example::
+
+  --  A point representing a location in integer precision.
+  --  @field X Horizontal coordinate
+  --  @field Y Vertical coordinate
+  type Point is
+   record
+      X : Integer;
+      Y : Integer;
+   end record;
+
+Record components can also be documented in line, with the documentation for
+each component directly following its declaration (or directly preceding the
+component declaration, if the option  *-l* was specified). In this case, the
+tag *@field* is not required::
+
+  --  A point representing a location in integer precision.
+  type Point is
+   record
+      X : Integer;
+      --  Horizontal coordinate
+      Y : Integer;
+      --  Vertical coordinate
+   end record;
+
+As shown above, a combined approach of documentation is also supported (see
+that the general description of the record type *Point* is located before
+its declaration and the documentation of its components *X* and *Y* is
+located after their declaration).
 
 Documenting subprograms
 -----------------------
@@ -274,7 +330,7 @@ For example::
 The parameters can also be documented in line, with the documentation for
 each parameter directly following the parameter type declaration (or directly
 preceding the parameter declaration, if the option  *-l* was specified). In
-this case, the tag *@param@* is not required::
+this case, the tag *@param* is not required::
 
    function Set_Alarm
      (Message : String;
@@ -295,7 +351,7 @@ Documentation for packages and subprograms may include images.
 
 This is done via the attribute:
 
-@image@
+*@image*
 
     where the first parameter is the name of an image file.
     This file is expected in the images directory, as specified in the project
