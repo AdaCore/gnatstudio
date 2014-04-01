@@ -52,19 +52,6 @@ KP-60-N313-003 GPS: display unchecked unions in debugger
   Workaround: Use textual view through 'Print ...' contextual menu or 'print'
               command in gdb console instead of graph display.
 
-KP-60-N305-041 GPS: overwriting symbolic links
-
-  Problem:    When the preference "fast project loading" is enabled, symbolic
-              links are never resolved. As a result, saving a file that is
-              referenced through a symbolic link replaces the link with
-              a regular file, but does not modify the linked file.
-              This breaks support for IBM Synergy.
-
-  Status:     This was fixed in 6.1 on 2014-03-06
-
-  Workaround: From Synergy, use 'sync with work area" before checking in
-              changes.
-
 KP-60-N304-024 GPS: Search in GPS does not find next character
 
   Problem:    Sometimes search in GPS editor gets stuck on non-Latin1
@@ -519,6 +506,20 @@ KP-60-G928-018 GPS: "center cursor on screen" scrolls horizontally
 
 Known problems fixed in GPS 6.0.2 / GNATbench 2.8.2
 ---------------------------------------------------
+
+KP-60-N305-041 GPS: overwriting symbolic links
+
+  Problem:    When the preference "fast project loading" is enabled, symbolic
+              links are never resolved. As a result, saving a file that is
+              referenced through a symbolic link replaces the link with
+              a regular file, but does not modify the linked file.
+              This breaks support for IBM Synergy.
+
+  Status:     This was fixed in 6.1 on 2014-03-06
+              This was fixed in 6.0.2 on 2014-04-01
+
+  Workaround: From Synergy, use 'sync with work area" before checking in
+              changes.
 
 KP-60-N227-046 GPS: error when omni-search matches long file names
 
