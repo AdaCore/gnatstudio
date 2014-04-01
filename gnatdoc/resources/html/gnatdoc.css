@@ -69,7 +69,7 @@ td {
 }
 
 #tocMenu {
-/*    position: fixed; */
+    position: fixed;
     width: 90px;
     vertical-align: top;
 }
@@ -95,7 +95,8 @@ td {
 }
 
 #tocView {
-/*    margin-left: 90px; */
+/*  margin-left can't be used here due to bug in IE8, so we use padding-left instead */
+    padding-left: 90px;
     width: 100%;
     color: #bbb;
     font-weight: 300;
