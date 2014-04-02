@@ -967,6 +967,7 @@ package body GVD.Memory_View is
          View.New_Values := new String'(Values);
 
          if View.Starting_Address /= Address or else
+           View.Old_Values = null or else
            View.Old_Values'Length /= View.Number_Of_Bytes * 2 or else
            View.Edit_Mode
          then
