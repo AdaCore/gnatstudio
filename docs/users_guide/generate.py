@@ -85,8 +85,7 @@ Exceptions
         for name, kind, defined, obj in inspect.classify_class_attrs(cls):
             if defined != cls:
                 pass  # Inherited method
-            elif name.startswith("__") \
-               and name not in ["__init__"]:
+            elif name.startswith("__") and name not in ["__init__"]:
                 pass
             elif kind in ["method", "static method", "class method"]:
                 methods.append(name)
@@ -125,15 +124,15 @@ Exceptions
                 # than just "object"
 
                 inheritance = ""
-                mro = inspect.getmro(c) # first member is always c
+                mro = inspect.getmro(c)  # first member is always c
                 if len(mro) > 2 \
                    or (len(mro) == 2
                        and mro[1].__name__ != "object"):
                     inheritance = \
                         ".. inheritance-diagram:: %s.%s" % (n, name)
 
-                fd.write(Inspect.class_stub %
-                   {"name": name,
+                fd.write(Inspect.class_stub % {
+                    "name": name,
                     "inheritance": inheritance,
                     "underscore": "^" * (len(name) + len(n) + 10),
                     "module": n})
@@ -142,31 +141,31 @@ Exceptions
 
                 for d in data:
                     mname = "%s.%s.%s" % (n, name, d)
-                    fd.write(Inspect.data_stub %
-                        {"name": mname,
-                         "base_name": d,
-                         "underscore": "*" * (len(d) + 8)})
+                    fd.write(Inspect.data_stub % {
+                        "name": mname,
+                        "base_name": d,
+                        "underscore": "*" * (len(d) + 8)})
 
                 for m in methods:
                     mname = "%s.%s.%s" % (n, name, m)
-                    fd.write(Inspect.method_stub %
-                        {"name": mname,
-                         "base_name": m,
-                         "inheritance":
-                            ".. inheritance-diagram:: %s.%s" % (n, c),
-                         "underscore": "*" * (len(m) + 8)})
+                    fd.write(Inspect.method_stub % {
+                        "name": mname,
+                        "base_name": m,
+                        "inheritance":
+                        ".. inheritance-diagram:: %s.%s" % (n, c),
+                        "underscore": "*" * (len(m) + 8)})
 
         if self.excepts:
             fd.write(Inspect.exceptions_header)
             for c in self.excepts:
-                fd.write(Inspect.class_stub %
-                   {"name": c,
-                    "inheritance":
-                        ".. inheritance-diagram:: %s.%s" % (n, c),
+                fd.write(Inspect.class_stub % {
+                    "name": c,
+                    "inheritance": ".. inheritance-diagram:: %s.%s" % (n, c),
                     "underscore": "^" * (len(c) + len(n) + 10),
                     "module": n})
 
 
 import GPS
 Inspect(GPS).generate_rest()
+Inspect(GPS.Browsers).generate_rest()
 GPS.exit()

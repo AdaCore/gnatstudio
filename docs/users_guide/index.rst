@@ -21,6 +21,7 @@
    extending
    environment
    GPS
+   GPS.Browsers
    plugins
    license
 

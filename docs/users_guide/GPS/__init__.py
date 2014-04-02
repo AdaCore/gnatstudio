@@ -5988,7 +5988,8 @@ class Hook(object):
     General interface to hooks. Hooks are commands executed when some specific
     events occur in GPS, and allow you to customize some of the aspects of GPS
 
-    .. seealso:: :func:`GPS.Hook.__init__`
+    .. seealso::
+        :func:`GPS.Hook.__init__`
 
     The available hooks are:
 
@@ -6007,10 +6008,8 @@ class Hook(object):
       :param character: A character
 
       .. seealso::
-
-      Hook :command:`character_added`
-
-      Hook :command:`word_added`
+         Hook :command:`character_added`
+         Hook :command:`word_added`
 
     - :command:`annotation_parsed_hook(hookname)`
 
@@ -7138,7 +7137,8 @@ class MDI(object):
         string used in the notebook tabs. You can immediately retrieve a
         handle to the created window by calling GPS.MDI.get (short).
 
-        :param widget: A widget, created by pygobject
+        :param widget: A widget, created by pygobject, or an instance of
+            GPS.GUI or one of the derived classes.
         :param title: A string
         :param short: A string
         :param group: An integer, see the constants MDI.GROUP_*

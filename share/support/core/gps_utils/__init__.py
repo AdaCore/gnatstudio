@@ -10,6 +10,10 @@ try:
 except:
     pass
 
+
+def enum(**enums):
+    return type('Enum', (), enums)
+
 import GPS
 GPS.MDI.GROUP_DEFAULT = 0
 GPS.MDI.GROUP_GRAPHS = 101
@@ -32,6 +36,25 @@ GPS.Message.MESSAGE_INVISIBLE = 0
 GPS.Message.MESSAGE_IN_SIDEBAR = 1
 GPS.Message.MESSAGE_IN_LOCATIONS = 2
 GPS.Message.MESSAGE_IN_SIDEBAR_AND_LOCATIONS = 3
+
+
+import GPS.Browsers
+GPS.Browsers.Style.Arrow = enum(NONE=0, OPEN=1, SOLID=2, DIAMOND=3)
+GPS.Browsers.Style.Symbol = enum(NONE=0, CROSS=1, STRIKE=2, DOUBLE_STRIKE=3)
+GPS.Browsers.Style.Underline = enum(NONE=0, SINGLE=1, DOUBLE=2, LOW=3)
+GPS.Browsers.Style.Align = enum(LEFT=0, MIDDLE=1, RIGHT=2)
+# Keep in sync with docs/users_guide/GPS/Browsers.py
+
+GPS.Browsers.Item.Float = enum(NONE=0, START=1, END=2)
+GPS.Browsers.Item.Align = enum(START=0, MIDDLE=1, END=2)
+GPS.Browsers.Item.Overflow = enum(PREVENT=0, HIDE=1)
+
+GPS.Browsers.TextItem.Text_Arrow = enum(NONE=0, UP=1, DOWN=2, LEFT=3, RIGHT=4)
+
+GPS.Browsers.Link.Routing = enum(
+    ORTHOGONAL=0, STRAIGHT=1, CURVE=2, ORTHOCURVE=3)
+GPS.Browsers.Link.Side = enum(
+    AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
 
 
 def get_focused_widget():

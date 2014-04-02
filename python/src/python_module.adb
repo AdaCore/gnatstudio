@@ -21,6 +21,7 @@ with Ada.Unchecked_Conversion;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.Python;                use GNATCOLL.Python;
 with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Gtkada;        use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
@@ -549,9 +550,17 @@ package body Python_Module is
       Child  : Python_MDI_Child;
       Group  : Child_Group;
       Position : Child_Position;
+      Inst     : Class_Instance;
    begin
       if Command = "add" then
-         Widget := From_PyGtk (Data, 1);
+         begin
+            Inst := Nth_Arg (Data, 1, Get_GUI_Class (Get_Kernel (Data)));
+            Widget := Get_Data (Inst);
+         exception
+            when Invalid_Parameter =>
+               Widget := From_PyGtk (Data, 1);
+         end;
+
          if Widget /= null then
             Group := Child_Group (Nth_Arg (Data, 4, Integer (Group_Default)));
             Position := Child_Position'Val

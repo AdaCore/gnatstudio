@@ -115,6 +115,7 @@ with Browsers.Call_Graph;
 with Browsers.Dependency_Items;
 with Browsers.Elaborations;
 with Browsers.Entities;
+with Browsers.Scripts;
 with Browsers.Projects;
 with Revision_Views;
 with Buffer_Views;
@@ -183,6 +184,8 @@ procedure GPS.Main is
                               Create ("MODULE.Dependency", GNATCOLL.Traces.On);
    Project_Browser_Trace  : constant Trace_Handle :=
                         Create ("MODULE.Project_Browser", GNATCOLL.Traces.On);
+   Browsers_Trace         : constant Trace_Handle :=
+                        Create ("MODULE.Browsers", GNATCOLL.Traces.On);
    Entities_Browser_Trace : constant Trace_Handle :=
                         Create ("MODULE.Entities_Browser", GNATCOLL.Traces.On);
    Revision_Views_Trace   : constant Trace_Handle :=
@@ -1983,6 +1986,10 @@ procedure GPS.Main is
 
       if Active (Project_Browser_Trace) then
          Browsers.Projects.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Browsers_Trace) then
+         Browsers.Scripts.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Entities_Browser_Trace) then
