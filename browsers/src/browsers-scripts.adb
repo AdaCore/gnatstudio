@@ -377,8 +377,7 @@ package body Browsers.Scripts is
             Align => Alignment_Style'Val
               (Nth_Arg (Data, PA_Align, Alignment_Style'Pos (Align_Start))),
             Margin => M,
-            Float  => Float_Style'Val
-              (Nth_Arg (Data, PA_Float, Float_Style'Pos (Float_None))),
+            Float  => Nth_Arg (Data, PA_Float, False),
             Overflow => Overflow_Style'Val
               (Nth_Arg
                    (Data, PA_Overflow,

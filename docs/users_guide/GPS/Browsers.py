@@ -163,7 +163,6 @@ class Item(object):
     Extra margins can be specified to force extra space.
     """
 
-    Float = enum('Item.Float', NONE=0, START=1, END=2)
     Align = enum('Item.Align', START=0, MIDDLE=1, END=2)
     Overflow = enum('Item.Overflow', PREVENT=0, HIDE=1)
     Layout = enum('Item.Layout', HORIZONTAL=0, VERTICAL=1)
@@ -200,7 +199,7 @@ class Item(object):
             item,
             align=Align.START,
             margin=(0, 0, 0, 0),
-            float=Float.NONE,
+            float=False,
             overflow=Overflow.PREVENT):
         """
         Add a child item.
