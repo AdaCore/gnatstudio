@@ -383,6 +383,12 @@ package body Browsers.Scripts is
               (Nth_Arg
                    (Data, PA_Overflow,
                     Overflow_Style'Pos (Overflow_Prevent))));
+
+      elsif Command = "set_child_layout" then
+         Inst := Nth_Arg (Data, 1);
+         Container_Item (Get_Item (Inst)).Set_Child_Layout
+           (Child_Layout_Strategy'Val
+              (Nth_Arg (Data, 2, Child_Layout_Strategy'Pos (Vertical_Stack))));
       end if;
    end Item_Handler;
 
@@ -807,6 +813,12 @@ package body Browsers.Scripts is
          "set_position",
          Params  => (Param ("x"),
                      Param ("y")),
+         Class   => Module.Item_Class,
+         Handler => Item_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "set_child_layout",
+         Params  => (1 => Param ("layout")),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
       Register_Command

@@ -5,8 +5,20 @@ Interface to the graph drawing API in GPS.
 import GPS
 
 
-def enum(**enums):
-    return type('Enum', (), enums)
+def enum(name, **enums):
+    """
+    A dummy implementation of enumerations only suitable for documentation.
+    Each of the individual enum value is accessible as an attribute, but
+    printing the enum itself results in a printable string, not <type Enum>.
+    The enum values are transformed into strings, since otherwise sphinx
+    will print their integer value, not the enumeration name.
+    """
+    d = dict()
+    for key, val in enums.items():
+        d[key] = "%s.%s" % (name, key)
+    e = type('Enum', (str, ), d)
+    sorteditems = sorted(enums.iteritems(), key=lambda x: x[1])
+    return e('Enumeration %s' % ','.join("%s=%s" % s for s in sorteditems))
 
 
 class Style(object):
@@ -17,10 +29,10 @@ class Style(object):
     Very often, such a style will be reused for multiple objects.
     """
 
-    Arrow = enum(NONE=0, OPEN=1, SOLID=2, DIAMOND=3)
-    Symbol = enum(NONE=0, CROSS=1, STRIKE=2, DOUBLE_STRIKE=3)
-    Underline = enum(NONE=0, SINGLE=1, DOUBLE=2, LOW=3)
-    Align = enum(LEFT=0, MIDDLE=1, RIGHT=2)
+    Arrow = enum('Style.Arrow', NONE=0, OPEN=1, SOLID=2, DIAMOND=3)
+    Symbol = enum('Style.Symbol', NONE=0, CROSS=1, STRIKE=2, DOUBLE_STRIKE=3)
+    Underline = enum('Style.Underline', NONE=0, SINGLE=1, DOUBLE=2, LOW=3)
+    Align = enum('Style.Align', LEFT=0, MIDDLE=1, RIGHT=2)
     # Keep in sync with gps_utils/__init__.py
 
     def __init__(
@@ -151,9 +163,10 @@ class Item(object):
     Extra margins can be specified to force extra space.
     """
 
-    Float = enum(NONE=0, START=1, END=2)
-    Align = enum(START=0, MIDDLE=1, END=2)
-    Overflow = enum(PREVENT=0, HIDE=1)
+    Float = enum('Item.Float', NONE=0, START=1, END=2)
+    Align = enum('Item.Align', START=0, MIDDLE=1, END=2)
+    Overflow = enum('Item.Overflow', PREVENT=0, HIDE=1)
+    Layout = enum('Item.Layout', HORIZONTAL=0, VERTICAL=1)
 
     def __init__(self):
         """
@@ -172,6 +185,15 @@ class Item(object):
 
         :param x: a float
         :param y: a float
+        """
+
+    def set_child_layout(self, layout=Layout.VERTICAL):
+        """
+        Choose how children are organized within this item.
+
+        :param layout: if set to GPS.Browsers.Item.Layout.VERTICAL, then
+           the child items are put below one another, otherwise they are
+           put next to one another.
         """
 
     def add(self,
@@ -295,7 +317,8 @@ class TextItem(Item):
     An item that displays text (optionaly within a rectangular box).
     """
 
-    Text_Arrow = enum(NONE=0, UP=1, DOWN=2, LEFT=3, RIGHT=4)
+    Text_Arrow = enum(
+        'TextItem.Text_Arrow', NONE=0, UP=1, DOWN=2, LEFT=3, RIGHT=4)
 
     def __init__(self, style, text, directed=Text_Arrow.NONE):
         """
@@ -334,8 +357,10 @@ class Link(object):
     stay connected to those items.
     """
 
-    Routing = enum(ORTHOGONAL=0, STRAIGHT=1, CURVE=2, ORTHOCURVE=3)
-    Side = enum(AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
+    Routing = enum('Link.Routing',
+                   ORTHOGONAL=0, STRAIGHT=1, CURVE=2, ORTHOCURVE=3)
+    Side = enum('Link.Side',
+                AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
 
     def __init__(
         self,

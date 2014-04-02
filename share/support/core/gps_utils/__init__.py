@@ -48,6 +48,7 @@ GPS.Browsers.Style.Align = enum(LEFT=0, MIDDLE=1, RIGHT=2)
 GPS.Browsers.Item.Float = enum(NONE=0, START=1, END=2)
 GPS.Browsers.Item.Align = enum(START=0, MIDDLE=1, END=2)
 GPS.Browsers.Item.Overflow = enum(PREVENT=0, HIDE=1)
+GPS.Browsers.Item.Layout = enum(HORIZONTAL=0, VERTICAL=1)
 
 GPS.Browsers.TextItem.Text_Arrow = enum(NONE=0, UP=1, DOWN=2, LEFT=3, RIGHT=4)
 
