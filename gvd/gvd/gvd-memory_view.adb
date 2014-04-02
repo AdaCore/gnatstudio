@@ -111,13 +111,20 @@ package body GVD.Memory_View is
          Label_Length      : Natural;
          --  Length of labels printed after address
 
-         Values            : GNAT.Strings.String_Access;
-         --  The values that are to be shown in the window.
+         Old_Values        : GNAT.Strings.String_Access;
+         --  The data used to set markers on the values.
          --  This is a string of hexadecimal digits.
 
-         Flags             : GNAT.Strings.String_Access;
-         --  A string of the same size as Values used to set markers on the
-         --  values.
+         New_Values        : GNAT.Strings.String_Access;
+         --  The values that are to be shown in the window.
+         --  A string of the same size as Old_Values.
+
+         Edit_Mode         : Boolean := False;
+         --  Edit_Mode is False till user starts to edit memory.
+         --  If Edit_Mode then Old_Values represent actual values in memory,
+         --  and New_Values includes user input not applied to memory yet.
+         --  If Edit_Mode = False then Old_Values holds previous value
+         --  and New_Values has actual values in memory.
 
          Number_Of_Bytes   : Integer := 256;
          --  The size of the pages that are currently stored.
@@ -220,6 +227,12 @@ package body GVD.Memory_View is
      (View : access GVD_Memory_View_Record'Class;
       Char : String);
    --  Inserts string at the current location.
+
+   procedure Start_Editing (View : access GVD_Memory_View_Record'Class);
+   --  Move View to Edit_Mode
+
+   procedure Stop_Editing (View : access GVD_Memory_View_Record'Class);
+   --  Leave View from Edit_Mode
 
    procedure Watch_Cursor_Location
      (View : access GVD_Memory_View_Record'Class);
@@ -365,7 +378,7 @@ package body GVD.Memory_View is
       Unit_Size : Integer;
 
    begin
-      if View.Values = null or else View.Flags = null then
+      if View.Old_Values = null or else View.New_Values = null then
          return;
       end if;
 
@@ -383,27 +396,27 @@ package body GVD.Memory_View is
       begin
          while Index <= View.Number_Of_Bytes * 2 - Unit_Size loop
             Buffer (1 .. Unit_Size) :=
-              View.Values
-                (View.Values'First + Index ..
-                     View.Values'First + Index + Unit_Size - 1);
+              View.Old_Values
+                (View.Old_Values'First + Index ..
+                     View.Old_Values'First + Index + Unit_Size - 1);
 
             for J in 1 .. Unit_Size / 2 loop
-               View.Values
-                 (View.Values'First + Index + (J - 1) * 2
-                    .. View.Values'First + Index + (J - 1) * 2 + 1) :=
+               View.Old_Values
+                 (View.Old_Values'First + Index + (J - 1) * 2
+                    .. View.Old_Values'First + Index + (J - 1) * 2 + 1) :=
                  Buffer (Buffer'Last - (J - 1) * 2 - 1
                            .. Buffer'Last - (J - 1) * 2);
             end loop;
 
             Buffer (1 .. Unit_Size) :=
-              View.Flags
-                (View.Flags'First + Index ..
-                     View.Flags'First + Index + Unit_Size - 1);
+              View.New_Values
+                (View.New_Values'First + Index ..
+                     View.New_Values'First + Index + Unit_Size - 1);
 
             for J in 1 .. Unit_Size / 2 loop
-               View.Flags
-                 (View.Flags'First + Index + (J - 1) * 2
-                    .. View.Flags'First + Index + (J - 1) * 2 + 1) :=
+               View.New_Values
+                 (View.New_Values'First + Index + (J - 1) * 2
+                    .. View.New_Values'First + Index + (J - 1) * 2 + 1) :=
                  Buffer (Buffer'Last - (J - 1) * 2 - 1
                            .. Buffer'Last - (J - 1) * 2);
             end loop;
@@ -577,6 +590,7 @@ package body GVD.Memory_View is
    begin
       Get_Bounds (Buffer, Start_Iter, End_Iter);
       Delete (Buffer, Start_Iter, End_Iter);
+      Stop_Editing (View);
    end Clear_View;
 
    ---------------------------
@@ -681,6 +695,12 @@ package body GVD.Memory_View is
    overriding procedure Update (View   : access GVD_Memory_View_Record) is
    begin
       if Memory_Auto_Refresh.Get_Pref then
+         if View.Edit_Mode then
+            Stop_Editing (View);  --  no editing survive auto-refresh
+         elsif View.Old_Values /= null and View.New_Values /= null then
+            View.Old_Values.all := View.New_Values.all;
+         end if;
+
          Display_Memory (View, Get_Text (View.Editor.Address_Entry));
       end if;
    end Update;
@@ -700,13 +720,12 @@ package body GVD.Memory_View is
       Old_Size        : constant Data_Size := View.Data;
       Index           : Integer;
       Tag             : Gtk_Text_Tag;
-      Current         : String_Access;
       Start_Mark      : Gtk_Text_Mark;
       Start_Iter      : Gtk_Text_Iter;
       End_Iter        : Gtk_Text_Iter;
 
    begin
-      if View.Values = null then
+      if View.Old_Values = null then
          return;
       end if;
 
@@ -776,7 +795,7 @@ package body GVD.Memory_View is
       View.Number_Of_Columns := Line_Base_Size * 2 / View.Unit_Size;
 
       if Number_Of_Lines * View.Number_Of_Columns * View.Unit_Size >
-        View.Values'Length
+        View.Old_Values'Length
       then
          Display_Memory (View, View.Starting_Address);
          return;
@@ -815,14 +834,12 @@ package body GVD.Memory_View is
               View.Number_Of_Columns * View.Unit_Size
               + (Column_Index - 1) * View.Unit_Size + 1;
 
-            if View.Values (Index .. Index + View.Unit_Size - 1) /=
-              View.Flags (Index .. Index + View.Unit_Size - 1)
+            if View.Old_Values (Index .. Index + View.Unit_Size - 1) /=
+              View.New_Values (Index .. Index + View.Unit_Size - 1)
             then
                Tag := View.Modified_Tag;
-               Current := View.Flags;
             else
                Tag := View.Default_Tag;
-               Current := View.Values;
             end if;
 
             Get_Iter_At_Mark (Buffer, End_Iter, Get_Insert (Buffer));
@@ -832,7 +849,7 @@ package body GVD.Memory_View is
               (Buffer,
                End_Iter,
                Conversion
-                 (Current (Index .. Index + View.Unit_Size - 1),
+                 (View.New_Values (Index .. Index + View.Unit_Size - 1),
                   View.Unit_Size,
                   View.Display,
                   View.Trunc));
@@ -901,9 +918,9 @@ package body GVD.Memory_View is
    begin
       View.Number_Of_Columns := Line_Base_Size * 2 / View.Unit_Size;
 
-      if View.Values = null
+      if View.Old_Values = null
         or else Number_Of_Lines * View.Number_Of_Columns * View.Unit_Size
-          /= View.Values'Length
+          /= View.Old_Values'Length
       then
          View.Number_Of_Bytes := Number_Of_Lines * View.Number_Of_Columns
            * View.Unit_Size / 2;
@@ -919,10 +936,6 @@ package body GVD.Memory_View is
            (Process.Debugger,
             View.Number_Of_Bytes,
             "0x" & To_Standard_Base (Address, 16));
-
-         View.Starting_Address := Address;
-         Free (View.Values);
-         Free (View.Flags);
 
          if View.Dump /= null then
             declare
@@ -950,8 +963,20 @@ package body GVD.Memory_View is
             Values := (others => '.');
          end if;
 
-         View.Values := new String'(Values);
-         View.Flags  := new String'(Values);
+         Free (View.New_Values);
+         View.New_Values := new String'(Values);
+
+         if View.Starting_Address /= Address or else
+           View.Old_Values'Length /= View.Number_Of_Bytes * 2 or else
+           View.Edit_Mode
+         then
+            --  Clear original data if Address or Number_Of_Bytes changed
+            Free (View.Old_Values);
+            View.Old_Values := new String'(Values);
+            View.Edit_Mode := False;
+         end if;
+
+         View.Starting_Address := Address;
          View.Data   := Byte;
          Update_Display (View);
          Set_Text (View.Editor.Address_Entry,
@@ -1024,8 +1049,8 @@ package body GVD.Memory_View is
       end if;
 
       for J in 1 .. View.Number_Of_Bytes loop
-         if View.Flags (J * 2 - 1 .. J * 2) /=
-           View.Values (J * 2 - 1 .. J * 2)
+         if View.New_Values (J * 2 - 1 .. J * 2) /=
+           View.Old_Values (J * 2 - 1 .. J * 2)
          then
             Put_Memory_Byte
               (Process.Debugger,
@@ -1033,10 +1058,14 @@ package body GVD.Memory_View is
                To_Standard_Base
                  (View.Starting_Address + Long_Long_Integer (J - 1),
                   16),
-               View.Flags (J * 2 - 1 .. J * 2));
+               View.New_Values (J * 2 - 1 .. J * 2));
+
+            View.Old_Values (J * 2 - 1 .. J * 2) :=
+              View.New_Values (J * 2 - 1 .. J * 2);
          end if;
       end loop;
 
+      Stop_Editing (View);
       Display_Memory (View, View.Starting_Address);
       Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
    end Apply_Changes;
@@ -1264,6 +1293,8 @@ package body GVD.Memory_View is
          return;
       end if;
 
+      Start_Editing (View);
+
       Get_Start_Iter (Buffer, Start_Iter);
       Get_End_Iter (Buffer, End_Iter);
 
@@ -1386,7 +1417,7 @@ package body GVD.Memory_View is
                - 1 - View.Label_Length
                - (Column - 1) * (Data_Separator'Length)) * 2 - 1;
 
-            View.Flags (Value_Index .. Value_Index + 1) :=
+            View.New_Values (Value_Index .. Value_Index + 1) :=
               To_Standard_Base
                 (Long_Long_Integer (Character'Pos (Char (Char'First))),
                  16, 2);
@@ -1404,14 +1435,15 @@ package body GVD.Memory_View is
          declare
             S : constant String := Get_Text (Buffer, Start_Iter, End_Iter);
          begin
-            if View.Flags (Value_Index .. Value_Index) /=
+            if View.New_Values (Value_Index .. Value_Index) /=
               Non_Valid_Character
             then
-               View.Flags (Value_Index .. Value_Index + View.Unit_Size - 1) :=
-                 To_Standard_Base
-                   (Long_Long_Integer'Value (Prefix & S & Hex_Footer),
-                    16,
-                    View.Unit_Size);
+               View.New_Values
+                 (Value_Index .. Value_Index + View.Unit_Size - 1) :=
+                   To_Standard_Base
+                     (Long_Long_Integer'Value (Prefix & S & Hex_Footer),
+                      16,
+                      View.Unit_Size);
             end if;
 
          end;
@@ -1471,7 +1503,6 @@ package body GVD.Memory_View is
       Tag         : Gtk_Text_Tag;
       Index       : Natural;
       Line_Index  : Natural;
-      Current     : String_Access;
    begin
       Get_Iter_At_Mark (Buffer, Start_Iter, Get_Insert (Buffer));
       Line_Index := Natural (Get_Line (Start_Iter)) + 1;
@@ -1482,14 +1513,12 @@ package body GVD.Memory_View is
            (View.Number_Of_Columns * View.Unit_Size)
            + (Column_Index - 1) * View.Unit_Size + 1;
 
-         if View.Values (Index .. Index + View.Unit_Size - 1) /=
-           View.Flags (Index .. Index + View.Unit_Size - 1)
+         if View.Old_Values (Index .. Index + View.Unit_Size - 1) /=
+           View.New_Values (Index .. Index + View.Unit_Size - 1)
          then
             Tag := View.Modified_Tag;
-            Current := View.Flags;
          else
             Tag := View.Default_Tag;
-            Current := View.Values;
          end if;
 
          declare
@@ -1498,7 +1527,7 @@ package body GVD.Memory_View is
             if Endianness = Little_Endian then
                declare
                   B : constant String (1 .. View.Unit_Size) :=
-                        Current (Index .. Index + View.Unit_Size - 1);
+                        View.New_Values (Index .. Index + View.Unit_Size - 1);
                begin
                   for J in 0 .. View.Unit_Size / 2 - 1 loop
                      S (S'First + J * 2 .. S'First + J * 2 + 1) :=
@@ -1506,7 +1535,7 @@ package body GVD.Memory_View is
                   end loop;
                end;
             else
-               S := Current (Index .. Index + View.Unit_Size - 1);
+               S := View.New_Values (Index .. Index + View.Unit_Size - 1);
             end if;
 
             Get_Iter_At_Mark (Buffer, End_Iter, Get_Insert (Buffer));
@@ -1543,6 +1572,69 @@ package body GVD.Memory_View is
       View := GVD_Memory_View (Get_View (Process));
       Display_Memory (View, Address);
    end Display_Memory;
+
+   -------------------
+   -- Start_Editing --
+   -------------------
+
+   procedure Start_Editing (View : access GVD_Memory_View_Record'Class) is
+      Update : Boolean := False;
+   begin
+      if not View.Edit_Mode then
+         --  Check if view has bytes marked as changed
+         Update := View.Old_Values /= null
+           and then View.New_Values /= null
+           and then View.Old_Values.all /= View.New_Values.all;
+
+         Free (View.Old_Values);
+
+         if View.New_Values /= null then
+            View.Old_Values := new String'(View.New_Values.all);
+         end if;
+
+         if Update then
+            declare
+               Iter   : Gtk_Text_Iter;
+               Cursor : Gint;
+               Buffer : constant Gtk_Text_Buffer :=
+                 Get_Buffer (View.Editor.View);
+            begin
+               --  Remember cursor position
+               Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
+               Cursor := Get_Offset (Iter);
+
+               Update_Display (View);  --  Cleanup change markers before edit
+
+               --  Restore cursor position
+               Get_Iter_At_Offset (Buffer, Iter, Cursor);
+               Place_Cursor (Buffer, Iter);
+            end;
+         end if;
+
+         View.Edit_Mode := True;
+         Set_Sensitive (View.Editor.Submit, True);
+         Set_Sensitive (View.Editor.Reset, True);
+      end if;
+   end Start_Editing;
+
+   ------------------
+   -- Stop_Editing --
+   ------------------
+
+   procedure Stop_Editing (View : access GVD_Memory_View_Record'Class) is
+   begin
+      if View.Edit_Mode then
+         Free (View.New_Values);
+
+         if View.Old_Values /= null then
+            View.New_Values := new String'(View.Old_Values.all);
+         end if;
+
+         View.Edit_Mode := False;
+         Set_Sensitive (View.Editor.Submit, False);
+         Set_Sensitive (View.Editor.Reset, False);
+      end if;
+   end Stop_Editing;
 
    -------------
    -- Execute --
@@ -1760,7 +1852,7 @@ package body GVD.Memory_View is
       End_Iter   : Gtk_Text_Iter;
       Result     : Boolean;
    begin
-      if View.Values = null then
+      if View.Old_Values = null then
          return False;
       end if;
 
@@ -1793,10 +1885,11 @@ package body GVD.Memory_View is
    is
       View : constant GVD_Memory_View := GVD_Memory_View (Object);
    begin
-      GNAT.Strings.Free (View.Flags);
+      Stop_Editing (View);
+      GNAT.Strings.Free (View.New_Values);
 
-      if View.Values /= null then
-         View.Flags := new String'(View.Values.all);
+      if View.Old_Values /= null then
+         View.New_Values := new String'(View.Old_Values.all);
       end if;
 
       Update_Display (View);

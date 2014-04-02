@@ -209,10 +209,12 @@ package body Memory_View_Pkg is
       Gtk_New (Memory_View.Reset, -"Undo changes");
       Set_Relief (Memory_View.Reset, Relief_Normal);
       Add (Hbuttonbox11, Memory_View.Reset);
+      Set_Sensitive (Memory_View.Reset, False);
 
       Gtk_New (Memory_View.Submit, -"Submit changes");
       Set_Relief (Memory_View.Submit, Relief_Normal);
       Add (Hbuttonbox11, Memory_View.Submit);
+      Set_Sensitive (Memory_View.Submit, False);
 
       Set_Wrap_Mode (Memory_View.View, Wrap_None);
    end Initialize;
