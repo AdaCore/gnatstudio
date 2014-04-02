@@ -570,3 +570,14 @@ installing GPS.
   Options`. Then click twice on :guilabel:`Using space key to input
   non-breakable space character`, select :guilabel:`Usual space at any
   level`, and then close the dialogs.
+
+*File associations or icons disappear or misbehave under Windows*
+
+  Sometimes file associations can get redefined under Windows and no longer
+  behave as a GPS user expects (e.g. Ada source files become associated with
+  a stock file icon, double-clicking on a project file opens it like a
+  regular text file, etc.) It might be possible to restore the expected
+  behavior by reapplying the associations performed during GPS installation.
+  To do this, locate the file "registry-gps-<version>.reg" in the root of your
+  GPS installation, double-click it, and confirm that you want to apply it in
+  the dialog that appears.
