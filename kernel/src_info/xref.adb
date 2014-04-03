@@ -1841,15 +1841,18 @@ package body Xref is
       if Active (SQLITE) then
          if E.Entity /= No_Entity then
             return E.Db.Xref.Declaration (E.Entity).Flags.Is_Subprogram;
+
          elsif E.Loc /= No_Location then
             declare
                C : constant access Simple_Construct_Information :=
                  Construct_From_Entity (E.Db, E);
+
             begin
                return
-                 C.Category = Cat_Function or else C.Category = Cat_Procedure;
+                 C /= null and then C.Category in Cat_Function | Cat_Procedure;
             end;
          end if;
+
          return False;
       else
          return Old_Entities.Is_Subprogram (E.Old_Entity);
