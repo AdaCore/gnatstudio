@@ -79,7 +79,7 @@ package body Xref is
    --  If the result is unique, then it will return it.
 
    function Construct_From_Entity
-     (Self : access General_Xref_Database_Record'Class;
+     (Self   : access General_Xref_Database_Record'Class;
       Entity : General_Entity) return access Simple_Construct_Information;
    --  Returns Construct_Information from an Entity. This access shouldn't be
    --  kept because it will be invalid next time the constructs database is
@@ -1366,7 +1366,7 @@ package body Xref is
    ---------------------------
 
    function Construct_From_Entity
-     (Self : access General_Xref_Database_Record'Class;
+     (Self   : access General_Xref_Database_Record'Class;
       Entity : General_Entity) return access Simple_Construct_Information is
    begin
       declare
