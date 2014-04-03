@@ -1383,6 +1383,17 @@ PLEASE ADD DOCUMENTATION HERE???
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "0" name = "Constrained" origin = "GNAT RM" category = "unknown">
+      <DOC>
+In addition to the usage of this attribute in the Ada RM, `GNAT' also
+permits the use of the `'Constrained' attribute in a generic template
+for any type, including types without discriminants. The value of this
+attribute in the generic instance when applied to a scalar type or a
+record type without discriminants is always `True'. This usage is
+compatible with older Ada compilers, including notably DEC Ada.
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "42" name = "Constrained" origin = "Ada RM" category = "variable">
       <DOC>
 For a prefix A that is of a discriminated type (after any
