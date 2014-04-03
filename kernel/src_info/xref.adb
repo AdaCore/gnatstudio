@@ -1367,25 +1367,26 @@ package body Xref is
 
    function Construct_From_Entity
      (Self   : access General_Xref_Database_Record'Class;
-      Entity : General_Entity) return access Simple_Construct_Information is
-   begin
-      declare
-         Result    : Entity_Access;
-         Tree_Lang : Tree_Language_Access;
-         Decl      : Entity_Access;
-         Node      : Construct_Tree_Iterator;
-      begin
-         Node_From_Entity
-           (Self, Self.Lang_Handler, Entity.Loc, Result, Tree_Lang);
+      Entity : General_Entity) return access Simple_Construct_Information
+   is
+      Result    : Entity_Access;
+      Tree_Lang : Tree_Language_Access;
+      Decl      : Entity_Access;
+      Node      : Construct_Tree_Iterator;
 
-         if Result /= Null_Entity_Access then
-            Decl := Get_Declaration
-              (Get_Tree_Language (Get_File (Result)), Result);
-            Node := To_Construct_Tree_Iterator (Decl);
-            return Get_Construct (Node);
-         end if;
-         return null;
-      end;
+   begin
+      Node_From_Entity
+        (Self, Self.Lang_Handler, Entity.Loc, Result, Tree_Lang);
+
+      if Result /= Null_Entity_Access then
+         Decl := Get_Declaration
+           (Get_Tree_Language (Get_File (Result)), Result);
+         Node := To_Construct_Tree_Iterator (Decl);
+
+         return Get_Construct (Node);
+      end if;
+
+      return null;
    end Construct_From_Entity;
 
    ------------------
