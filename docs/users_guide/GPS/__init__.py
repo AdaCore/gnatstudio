@@ -6508,7 +6508,8 @@ class Hook(object):
       locations, where the user can navigate backwards and forwards.
 
     - :command:`open_file_action_hook(hookname, file, line, column,
-      column_end, enable_navigation, new_file, force_reload, focus=False)`
+      column_end, enable_navigation, new_file, force_reload, focus,
+      project)`
 
       Called when GPS needs to open a file. You can connect to this hook if
       you want to have your own editor open, instead of GPS's internal
@@ -6534,6 +6535,7 @@ class Hook(object):
       :param new_file: A boolean
       :param force_reload: A boolean
       :param focus: A boolean
+      :param GPS.Project project: the project to which the file belongs
       :return: A boolean
 
       .. seealso:: Hook :command:`file_edited hook`
