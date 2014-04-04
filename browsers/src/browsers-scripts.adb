@@ -65,17 +65,21 @@ package body Browsers.Scripts is
    P_Arrow_From_Angle   : constant := 16;
    P_Arrow_From_Stroke  : constant := 17;
    P_Arrow_From_Fill    : constant := 18;
-   P_Arrow_To_Head      : constant := 19;
-   P_Arrow_To_Length    : constant := 20;
-   P_Arrow_To_Angle     : constant := 21;
-   P_Arrow_To_Stroke    : constant := 22;
-   P_Arrow_To_Fill      : constant := 23;
-   P_Symbol_From_Name   : constant := 24;
-   P_Symbol_From_Stroke : constant := 25;
-   P_Symbol_From_Dist   : constant := 26;
-   P_Symbol_To_Name     : constant := 27;
-   P_Symbol_To_Stroke   : constant := 28;
-   P_Symbol_To_Dist     : constant := 29;
+   P_Arrow_From_Width   : constant := 19;
+   P_Arrow_To_Head      : constant := 20;
+   P_Arrow_To_Length    : constant := 21;
+   P_Arrow_To_Angle     : constant := 22;
+   P_Arrow_To_Stroke    : constant := 23;
+   P_Arrow_To_Fill      : constant := 24;
+   P_Arrow_To_Width     : constant := 25;
+   P_Symbol_From_Name   : constant := 26;
+   P_Symbol_From_Stroke : constant := 27;
+   P_Symbol_From_Dist   : constant := 28;
+   P_Symbol_From_Width  : constant := 29;
+   P_Symbol_To_Name     : constant := 30;
+   P_Symbol_To_Stroke   : constant := 31;
+   P_Symbol_To_Dist     : constant := 32;
+   P_Symbol_To_Width    : constant := 33;
    --  All the parameters to GPS.Browsers.Style.__init__
 
    PA_Item              : constant := 2;
@@ -171,6 +175,11 @@ package body Browsers.Scripts is
       Commands_Category  => "Browsers");
    use Browser_Views;
    subtype Browser_View is Browser_Views.View_Access;
+
+   function Points_From_Param
+     (Data : Callback_Data'Class;
+      N    : Positive) return Item_Point_Array;
+   --  Extract a list of point from a parameter to a python function
 
    ---------------
    -- Set_Style --
@@ -332,15 +341,30 @@ package body Browsers.Scripts is
       Inst : Class_Instance;
       M    : Margins := No_Margins;
       Item : Container_Item;
+      X, Y : Gdouble := Gdouble'First;
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, "GPS.Browsers.Item is an abstract class");
 
       elsif Command = "set_position" then
          Inst := Nth_Arg (Data, 1);
-         Canvas_Item (Get_Item (Inst)).Set_Position
-           ((X => Gdouble (Float'(Nth_Arg (Data, 2))),
-             Y => Gdouble (Float'(Nth_Arg (Data, 3)))));
+
+         if Nth_Arg (Data, 2, Float'First) /= Float'First then
+            X := Gdouble (Nth_Arg (Data, 2, Float'First));
+         end if;
+
+         if Nth_Arg (Data, 3, Float'First) /= Float'First then
+            Y := Gdouble (Nth_Arg (Data, 3, Float'First));
+         end if;
+
+         Canvas_Item (Get_Item (Inst)).Set_Position ((X, Y));
+
+      elsif Command = "set_min_size" then
+         Inst := Nth_Arg (Data, 1);
+
+         Container_Item (Get_Item (Inst)).Set_Min_Size
+           (Min_Width  => Gdouble (Nth_Arg (Data, 2, 1.0)),
+            Min_Height => Gdouble (Nth_Arg (Data, 3, 1.0)));
 
       elsif Command = "add" then
          Inst := Nth_Arg (Data, 1);
@@ -352,15 +376,15 @@ package body Browsers.Scripts is
                C : constant Integer := Number_Of_Arguments (L);
             begin
                if C >= 1 then
-                  M.Top := Gdouble (Float'(Nth_Arg (L, 1)));
+                  M.Top := Gdouble (Float'(Nth_Arg (L, 1, 1.0)));
                end if;
 
                if C >= 2 then
-                  M.Right := Gdouble (Float'(Nth_Arg (L, 2)));
+                  M.Right := Gdouble (Float'(Nth_Arg (L, 2, 1.0)));
                end if;
 
                if C >= 3 then
-                  M.Bottom := Gdouble (Float'(Nth_Arg (L, 3)));
+                  M.Bottom := Gdouble (Float'(Nth_Arg (L, 3, 1.0)));
                end if;
 
                if C >= 4 then
@@ -406,6 +430,16 @@ package body Browsers.Scripts is
       function Pattern_From_Param (N : Positive) return Cairo_Pattern;
       function List_From_Param (N : Positive) return Dash_Array;
 
+      function Val (S : String) return Gdouble;
+
+      function Val (S : String) return Gdouble is
+      begin
+         return Gdouble'Value (S);
+      exception
+         when Constraint_Error =>
+            return 0.0;
+      end Val;
+
       function Color_From_Param
         (N : Positive; Default : Gdk_RGBA := Null_RGBA) return Gdk_RGBA
       is
@@ -436,14 +470,16 @@ package body Browsers.Scripts is
       begin
          if V = "" then
             return Cairo.Null_Pattern;
-         elsif Starts_With (V, "linear ") then
+         end if;
+
+         if Starts_With (V, "linear ") then
             Str := Split (V, ' ');
             if Str'Length >= 5 then
                P := Create_Linear
-                 (X0  => Gdouble'Value (Str (Str'First + 1).all),
-                  Y0  => Gdouble'Value (Str (Str'First + 2).all),
-                  X1  => Gdouble'Value (Str (Str'First + 3).all),
-                  Y1  => Gdouble'Value (Str (Str'First + 4).all));
+                 (X0  => Val (Str (Str'First + 1).all),
+                  Y0  => Val (Str (Str'First + 2).all),
+                  X1  => Val (Str (Str'First + 3).all),
+                  Y1  => Val (Str (Str'First + 4).all));
 
                S := Str'First + 5;
                while S < Str'Length loop
@@ -451,7 +487,7 @@ package body Browsers.Scripts is
                   if Success then
                      Add_Color_Stop_Rgba
                        (P,
-                        Offset => Gdouble'Value (Str (S).all),
+                        Offset => Val (Str (S).all),
                         Red    => C.Red,
                         Green  => C.Green,
                         Blue   => C.Blue,
@@ -525,6 +561,7 @@ package body Browsers.Scripts is
                Length => Gdouble (Nth_Arg (Data, P_Arrow_From_Length, 8.0)),
                Angle => Gdouble (Nth_Arg (Data, P_Arrow_From_Angle, 0.4)),
                Stroke => Color_From_Param (P_Arrow_From_Stroke, Black_RGBA),
+               Line_Width => Gdouble (Nth_Arg (Data, P_Arrow_From_Width, 1.0)),
                Fill   => Color_From_Param (P_Arrow_From_Fill)),
 
             Arrow_To =>
@@ -533,18 +570,22 @@ package body Browsers.Scripts is
                Length => Gdouble (Nth_Arg (Data, P_Arrow_To_Length, 8.0)),
                Angle => Gdouble (Nth_Arg (Data, P_Arrow_To_Angle, 0.4)),
                Stroke => Color_From_Param (P_Arrow_To_Stroke, Black_RGBA),
+               Line_Width => Gdouble (Nth_Arg (Data, P_Arrow_To_Width, 1.0)),
                Fill   => Color_From_Param (P_Arrow_To_Fill)),
 
             Symbol_From =>
               (Name  => Symbol_Name'Val
                   (Nth_Arg (Data, P_Symbol_From_Name, Symbol_Name'Pos (None))),
                Stroke => Color_From_Param (P_Symbol_From_Stroke, Black_RGBA),
+               Line_Width =>
+                 Gdouble (Nth_Arg (Data, P_Symbol_From_Width, 1.0)),
                Distance => Gdouble (Nth_Arg (Data, P_Symbol_From_Dist, 16.0))),
 
             Symbol_To =>
               (Name  => Symbol_Name'Val
                   (Nth_Arg (Data, P_Symbol_To_Name, Symbol_Name'Pos (None))),
                Stroke => Color_From_Param (P_Symbol_To_Stroke, Black_RGBA),
+               Line_Width => Gdouble (Nth_Arg (Data, P_Symbol_To_Width, 1.0)),
                Distance => Gdouble (Nth_Arg (Data, P_Symbol_To_Dist, 16.0)))
            );
 
@@ -597,6 +638,26 @@ package body Browsers.Scripts is
       end if;
    end Ellipse_Handler;
 
+   -----------------------
+   -- Points_From_Param --
+   -----------------------
+
+   function Points_From_Param
+     (Data : Callback_Data'Class;
+      N    : Positive) return Item_Point_Array
+   is
+      L : constant List_Instance'Class := Nth_Arg (Data, N);
+      Points : Item_Point_Array (1 .. Number_Of_Arguments (L) / 2);
+      Index  : Integer := Points'First;
+   begin
+      for P in Points'Range loop
+         Points (P) := (X => Gdouble (Float'(Nth_Arg (L, Index))),
+                        Y => Gdouble (Float'(Nth_Arg (L, Index + 1))));
+         Index := Index + 2;
+      end loop;
+      return Points;
+   end Points_From_Param;
+
    ----------------------
    -- Polyline_Handler --
    ----------------------
@@ -608,24 +669,12 @@ package body Browsers.Scripts is
       Item : Polyline_Item;
    begin
       if Command = Constructor_Method then
-         declare
-            L : constant List_Instance'Class := Nth_Arg (Data, 3);
-            Points : Item_Point_Array (1 .. Number_Of_Arguments (L) / 2);
-            Index  : Integer := Points'First;
-         begin
-            for P in Points'Range loop
-               Points (P) := (X => Gdouble (Float'(Nth_Arg (L, Index))),
-                              Y => Gdouble (Float'(Nth_Arg (L, Index + 1))));
-               Index := Index + 2;
-            end loop;
-
-            Inst := Nth_Arg (Data, 1);
-            Item := Gtk_New_Polyline
-              (Style  => Get_Style (Nth_Arg (Data, 2)),
-               Points => Points,
-               Close  => Nth_Arg (Data, 4, False));
-            Set_Item (Inst, Item);
-         end;
+         Inst := Nth_Arg (Data, 1);
+         Item := Gtk_New_Polyline
+           (Style  => Get_Style (Nth_Arg (Data, 2)),
+            Points => Points_From_Param (Data, 3),
+            Close  => Nth_Arg (Data, 4, False));
+         Set_Item (Inst, Item);
       end if;
    end Polyline_Handler;
 
@@ -700,6 +749,12 @@ package body Browsers.Scripts is
 
          Inst := Nth_Arg (Data, 1);
          Set_Item (Inst, Link);
+
+      elsif Command = "set_waypoints" then
+         Inst := Nth_Arg (Data, 1);
+         Canvas_Link (Get_Item (Inst)).Set_Waypoints
+           (Points   => Points_From_Param (Data, 2),
+            Relative => Nth_Arg (Data, 3, False));
       end if;
    end Link_Handler;
 
@@ -757,22 +812,26 @@ package body Browsers.Scripts is
             P_Font_LS            => Param ("fontLineSpacing", True),
             P_Font_Halign        => Param ("fontHalign", True),
             P_Font_Valign        => Param ("fontValign", True),
-            P_Arrow_From_Head    => Param ("arrowFromHead", True),
+            P_Arrow_From_Head    => Param ("arrowFrom", True),
             P_Arrow_From_Length  => Param ("arrowFromLength", True),
             P_Arrow_From_Angle   => Param ("arrowFromAngle", True),
             P_Arrow_From_Stroke  => Param ("arrowFromStroke", True),
             P_Arrow_From_Fill    => Param ("arrowFromFill", True),
-            P_Arrow_To_Head      => Param ("arrowToHead", True),
+            P_Arrow_From_Width   => Param ("arrowFromWidth", True),
+            P_Arrow_To_Head      => Param ("arrowTo", True),
             P_Arrow_To_Length    => Param ("arrowToLength", True),
             P_Arrow_To_Angle     => Param ("arrowToAngle", True),
             P_Arrow_To_Stroke    => Param ("arrowToStroke", True),
             P_Arrow_To_Fill      => Param ("arrowToFill",  True),
-            P_Symbol_From_Name   => Param ("symbolFromName", True),
+            P_Arrow_To_Width     => Param ("arrowToWidth", True),
+            P_Symbol_From_Name   => Param ("symbolFrom", True),
             P_Symbol_From_Stroke => Param ("symbolFromStroke", True),
             P_Symbol_From_Dist   => Param ("symbolFromDist", True),
-            P_Symbol_To_Name     => Param ("symbolToName", True),
+            P_Symbol_From_Width  => Param ("symbolFromWidth", True),
+            P_Symbol_To_Name     => Param ("symbolTo", True),
             P_Symbol_To_Stroke   => Param ("symbolToStroke", True),
-            P_Symbol_To_Dist     => Param ("symbolToDist", True)),
+            P_Symbol_To_Dist     => Param ("symbolToDist", True),
+            P_Symbol_To_Width    => Param ("symbolToWidth", True)),
          Class   => Style_Class,
          Handler => Style_Handler'Access);
 
@@ -810,14 +869,21 @@ package body Browsers.Scripts is
       Register_Command
         (Kernel.Scripts,
          "set_position",
-         Params  => (Param ("x"),
-                     Param ("y")),
+         Params  => (Param ("x", Optional => True),
+                     Param ("y", Optional => True)),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
       Register_Command
         (Kernel.Scripts,
          "set_child_layout",
          Params  => (1 => Param ("layout")),
+         Class   => Module.Item_Class,
+         Handler => Item_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "set_min_size",
+         Params  => (1 => Param ("width", Optional => True),
+                     2 => Param ("height", Optional => True)),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
       Register_Command
@@ -889,6 +955,13 @@ package body Browsers.Scripts is
                      L_To_X      => Param ("toX",      Optional => True),
                      L_To_Y      => Param ("toY",      Optional => True),
                      L_To_Side   => Param ("toSide",   Optional => True)),
+         Class   => Link,
+         Handler => Link_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "set_waypoints",
+         Params  => (Param ("points"),
+                     Param ("relative", Optional => True)),
          Class   => Link,
          Handler => Link_Handler'Access);
 

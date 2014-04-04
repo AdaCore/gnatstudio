@@ -23,6 +23,8 @@ Classes
 
    .. automethod:: GPS.Browsers.Diagram.add
 
+   .. automethod:: GPS.Browsers.Diagram.load_json
+
 :class:`GPS.Browsers.EllipseItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -53,7 +55,7 @@ Classes
 
 
 
-   .. autoattribute:: GPS.Browsers.Item.Float
+   .. autoattribute:: GPS.Browsers.Item.Layout
 
 
 
@@ -63,6 +65,10 @@ Classes
    .. automethod:: GPS.Browsers.Item.__init__
 
    .. automethod:: GPS.Browsers.Item.add
+
+   .. automethod:: GPS.Browsers.Item.set_child_layout
+
+   .. automethod:: GPS.Browsers.Item.set_min_size
 
    .. automethod:: GPS.Browsers.Item.set_position
 
@@ -82,6 +88,8 @@ Classes
 
 
    .. automethod:: GPS.Browsers.Link.__init__
+
+   .. automethod:: GPS.Browsers.Link.set_waypoints
 
 :class:`GPS.Browsers.PolylineItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -134,7 +142,7 @@ Classes
    .. inheritance-diagram:: GPS.Browsers.TextItem
 
 
-   .. autoattribute:: GPS.Browsers.TextItem.Text_Arrow
+   .. autoattribute:: GPS.Browsers.TextItem.TextArrow
 
 
    .. automethod:: GPS.Browsers.TextItem.__init__
