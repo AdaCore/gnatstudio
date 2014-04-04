@@ -423,7 +423,7 @@ xml_codepeer = """<?xml version="1.0"?>
        </command-line>
     </target>
 
-    <target model="codepeer" category="CodePeer" name="Run CodePeer Only"
+    <target model="codepeer" category="CodePeer" name="Run CodePeer..."
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -434,30 +434,13 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>codepeer</arg>
           <arg>-dbg-on</arg>
           <arg>ide_progress_bar</arg>
-          <arg>-P%PP</arg>
-          <arg>%X</arg>
-       </command-line>
-    </target>
-
-    <target model="codepeer" category="CodePeer" name="Run CodePeer Root"
-            messages_category="CodePeer">
-       <in-toolbar>FALSE</in-toolbar>
-       <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
-       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
-       <read-only>TRUE</read-only>
-       <command-line>
-          <arg>codepeer</arg>
-          <arg>-dbg-on</arg>
-          <arg>ide_progress_bar</arg>
-          <arg>-root-only</arg>
           <arg>-P%PP</arg>
           <arg>-update-scil</arg>
           <arg>%X</arg>
        </command-line>
     </target>
 
-    <target model="codepeer" category="CodePeer" name="Run CodePeer File"
+    <target model="generate_scil" category="CodePeer" name="Run CodePeer File"
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -465,32 +448,34 @@ xml_codepeer = """<?xml version="1.0"?>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>codepeer</arg>
-          <arg>-dbg-on</arg>
-          <arg>ide_progress_bar</arg>
+          <arg>codepeer-gnatmake</arg>
+          <arg>-c</arg>
+          <arg>-f</arg>
+          <arg>-u</arg>
+          <arg>%eL</arg>
           <arg>-P%PP</arg>
-          <arg>-file</arg>
-          <arg>%F</arg>
-          <arg>-update-scil</arg>
           <arg>%X</arg>
+          <arg>-gnatcC</arg>
+          <arg>-gnateC</arg>
+          <arg>%fp</arg>
        </command-line>
     </target>
 
-    <target model="codepeer" category="CodePeer" name="Run CodePeer Quickly"
-            messages_category="CodePeer">
+    <target model="generate_scil" category="CodePeer"
+            name="Run CodePeer File By File" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>codepeer</arg>
-          <arg>-quick</arg>
-          <arg>-dbg-on</arg>
-          <arg>ide_progress_bar</arg>
+          <arg>codepeer-gnatmake</arg>
+          <arg>-d</arg>
+          <arg>%eL</arg>
           <arg>-P%PP</arg>
-          <arg>-update-scil</arg>
           <arg>%X</arg>
+          <arg>-gnatcC</arg>
+          <arg>-gnateC</arg>
        </command-line>
     </target>
 

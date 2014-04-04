@@ -383,14 +383,11 @@
 
       <menu label='_CodePeer' optional='true'>
          <menu label='_Analyze All'          action='codepeer analyze all' optional='true'/>
-         <menu label='Analyze _Root Project' action='codepeer analyze root' optional='true'/>
+         <menu label='Analy_ze...'           action='codepeer analyze...' optional='true'/>
          <menu label='Analyze _File'         action='codepeer analyze file' optional='true'/>
+         <separator/>
          <menu label='_Display Code Review'  action='codepeer display code review'
                optional='true'/>
-         <separator/>
-         <menu label='_Quick Analyze All' action='codepeer quick analyze all' optional='true'/>
-         <menu label='_Generate SCIL'     action='codepeer generate scil' optional='true'/>
-         <menu label='Run _CodePeer'      action='codepeer run' optional='true'/>
          <menu label='_Regenerate Report' action='codepeer regenerate report' optional='true'/>
          <menu label='Display _HTML Report' action='codepeer display html' optional='true'/>
          <menu label='Generate CS_V Report' action='codepeer generate csv' optional='true'/>
@@ -405,6 +402,8 @@
             <menu label='_Remove SCIL'   action='codepeer remove scil'   optional='true'/>
             <menu label='Remove _SCIL &amp; DB' action='codepeer remove scil and db'
                   optional='true'/>
+            <separator/>
+            <menu label='_Generate SCIL...'  action='codepeer generate scil' optional='true'/>
          </menu>
       </menu>
 

@@ -120,23 +120,18 @@ package body CodePeer.Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Analyze All" menu item is activated
 
-   type Analyze_Root_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Analyze_Root_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Analyze Root Project" menu item is activated
-
    type Analyze_File_Command is new Interactive_Command with null record;
    overriding function Execute
      (Self : access Analyze_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called when "Analyze File" menu item is activated
 
-   type Quick_Analyze_All_Command is new Interactive_Command with null record;
+   type Analyze_File_By_File_Command is new
+     Interactive_Command with null record;
    overriding function Execute
-     (Self : access Quick_Analyze_All_Command;
+     (Self : access Analyze_File_By_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Quick Analyze All" menu item is activated
+   --  Called when "Analyze File By File" menu item is activated
 
    type Generate_SCIL_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -161,11 +156,11 @@ package body CodePeer.Module is
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
    --  Callback for the "compilation_finished" hook, to schedule other tasks
 
-   type Run_Codepeer_Command is new Interactive_Command with null record;
+   type Analyze_Command is new Interactive_Command with null record;
    overriding function Execute
-     (Self : access Run_Codepeer_Command;
+     (Self : access Analyze_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Run CodePeer" menu item is activated
+   --  Called when "Analyze..." menu item is activated
 
    type Display_Code_Review_Command
       is new Interactive_Command with null record;
@@ -1162,14 +1157,14 @@ package body CodePeer.Module is
    -------------
 
    overriding function Execute
-     (Self : access Run_Codepeer_Command;
+     (Self : access Analyze_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
       pragma Unreferenced (Self, Ensure_Build_Mode);
    begin
-      Review (Module, Force => False, Build_Target => "Run CodePeer Only");
+      Review (Module, Force => False, Build_Target => "Run CodePeer...");
       return Commands.Success;
    end Execute;
 
@@ -1194,30 +1189,19 @@ package body CodePeer.Module is
    -------------
 
    overriding function Execute
-     (Self : access Analyze_Root_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      Review (Module, Force => True, Build_Target => "Run CodePeer Root");
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
      (Self : access Analyze_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
+      pragma Unreferenced (Self);
    begin
-      Review (Module, Force => True, Build_Target => "Run CodePeer File");
+      CodePeer.Shell_Commands.Build_Target_Execute
+        (Kernel,
+         CodePeer.Shell_Commands.Build_Target
+           (Kernel, "Run CodePeer File"),
+         Force       => True,
+         Build_Mode  => "codepeer",
+         Synchronous => False);
       return Commands.Success;
    end Execute;
 
@@ -1226,14 +1210,19 @@ package body CodePeer.Module is
    -------------
 
    overriding function Execute
-     (Self : access Quick_Analyze_All_Command;
+     (Self : access Analyze_File_By_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
+      pragma Unreferenced (Self);
    begin
-      Review (Module, Force => True, Build_Target => "Run CodePeer Quickly");
+      CodePeer.Shell_Commands.Build_Target_Execute
+        (Kernel,
+         CodePeer.Shell_Commands.Build_Target
+           (Kernel, "Run CodePeer File By File"),
+         Force       => False,
+         Build_Mode  => "codepeer",
+         Synchronous => False);
       return Commands.Success;
    end Execute;
 
@@ -1813,7 +1802,7 @@ package body CodePeer.Module is
             Message : constant CodePeer.Message_Access :=
               CodePeer.Message_Vectors.Element (Position);
 
-            function Probability_Image
+            function Ranking_Image
               (Message : CodePeer.Message_Access) return String;
             --  Return an suitable Image corresponding to Message's ranking
 
@@ -1936,22 +1925,22 @@ package body CodePeer.Module is
                  or else Message.Text (Message.Text'First) = ':'
                then
                   return
-                    Probability_Image (Message) & ": "
+                    Ranking_Image (Message) & ": "
                     & Message.Category.Name.all
                     & Message.Text.all;
                else
                   return
-                    Probability_Image (Message) & ": "
+                    Ranking_Image (Message) & ": "
                     & Message.Category.Name.all & " "
                     & Message.Text.all;
                end if;
             end Image;
 
-            -----------------------
-            -- Probability_Image --
-            -----------------------
+            -------------------
+            -- Ranking_Image --
+            -------------------
 
-            function Probability_Image
+            function Ranking_Image
               (Message : CodePeer.Message_Access) return String
             is
                function Decorate (S : String) return String;
@@ -1983,7 +1972,7 @@ package body CodePeer.Module is
                   when CodePeer.Suppressed =>
                      return "suppressed";
                end case;
-            end Probability_Image;
+            end Ranking_Image;
 
          begin
             if Self.Filter_Criteria.Lineages (Message.Lifeage)
@@ -2103,8 +2092,6 @@ package body CodePeer.Module is
       Register_Action
         (Kernel, "codepeer analyze all", new Analyze_All_Command);
       Register_Action
-        (Kernel, "codepeer analyze root", new Analyze_Root_Command);
-      Register_Action
          (Kernel, "codepeer analyze file", new Analyze_File_Command,
           Filter     => Lookup_Filter (Kernel, "File")
                         and not Filter
@@ -2113,10 +2100,12 @@ package body CodePeer.Module is
         (Kernel, "codepeer display code review",
          new Display_Code_Review_Command);
       Register_Action
-        (Kernel, "codepeer quick analyze all", new Quick_Analyze_All_Command);
+        (Kernel, "codepeer analyze file by file",
+         new Analyze_File_By_File_Command);
       Register_Action
         (Kernel, "codepeer generate scil", new Generate_SCIL_Command);
-      Register_Action (Kernel, "codepeer run", new Run_Codepeer_Command);
+      Register_Action
+        (Kernel, "codepeer analyze...", new Analyze_Command);
       Register_Action
         (Kernel, "codepeer regenerate report", new Regenerate_Report_Command);
       Register_Action
