@@ -159,6 +159,16 @@ KP-60-N213-046 GPS: lockup on code block folding
 
   Workaround: Disable user defined code highlight colors.
 
+KP-60-N211-041 GPS: Debugger stalls when passing '\' as last argument
+
+  Problem:    When running a program under the debugger with an argument
+              line ending with the character '\', the debugger will
+              not give the prompt back.
+
+  Status:     This was fixed in 6.1 on 2014-02-18
+
+  Workaround: Use quotes around the argument line.
+
 KP-60-N211-025 GPS: Issue with highlighters
 
   Problem:    In any python code using highlighter.OverlayStyle with
