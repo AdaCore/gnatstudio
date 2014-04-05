@@ -52,6 +52,15 @@ KP-60-N313-003 GPS: display unchecked unions in debugger
   Workaround: Use textual view through 'Print ...' contextual menu or 'print'
               command in gdb console instead of graph display.
 
+KP-60-N305-008 GPS: characters can be inserted in read-only editors
+
+  Problem:    It is possible to insert characters in some regions of
+              the read-only editors.
+
+  Status:     This was fixed in 6.1 on 2014-03-07
+
+  Workaround: Close and reopen the editor.
+
 KP-60-N304-024 GPS: Search in GPS does not find next character
 
   Problem:    Sometimes search in GPS editor gets stuck on non-Latin1
