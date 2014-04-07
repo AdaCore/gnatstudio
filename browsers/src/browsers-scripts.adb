@@ -15,29 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Cairo.Pattern;           use Cairo, Cairo.Pattern;
-with Glib;                    use Glib;
-with Glib.Object;             use Glib.Object;
-with Gdk.RGBA;                use Gdk.RGBA;
+with Cairo.Pattern;             use Cairo, Cairo.Pattern;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Gdk.RGBA;                  use Gdk.RGBA;
 with Generic_Views;
-with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
-with GNATCOLL.Utils;          use GNATCOLL.Utils;
-with GNAT.Strings;            use GNAT.Strings;
-with Gtkada.Canvas_View;      use Gtkada.Canvas_View;
-with Gtkada.MDI;              use Gtkada.MDI;
-with Gtkada.Style;            use Gtkada.Style;
-with Gtk.Box;                 use Gtk.Box;
-with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
-with Gtk.Widget;              use Gtk.Widget;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with Pango.Enums;             use Pango.Enums;
-with Pango.Font;              use Pango.Font;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNAT.Strings;              use GNAT.Strings;
+with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Style;              use Gtkada.Style;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Widget;                use Gtk.Widget;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with Pango.Enums;               use Pango.Enums;
+with Pango.Font;                use Pango.Font;
 
 package body Browsers.Scripts is
    Me : constant Trace_Handle := Create ("BROWSERS");
@@ -158,8 +159,18 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all commands for the python classes in this package.
 
+   type GPS_Canvas_View_Record is new Canvas_View_Record with record
+      Grid_Size  : Gdouble := 20.0;
+      Grid_Style : Drawing_Style;
+   end record;
+   type GPS_Canvas_View is access all GPS_Canvas_View_Record'Class;
+   overriding procedure Draw_Internal
+     (Self    : not null access GPS_Canvas_View_Record;
+      Context : Draw_Context;
+      Area    : Model_Rectangle);
+
    type Browser_View_Record is new Generic_Views.View_Record with record
-      View : Canvas_View;
+      View : GPS_Canvas_View;
    end record;
 
    function Initialize
@@ -282,6 +293,24 @@ package body Browsers.Scripts is
       end if;
    end Diagram_Handler;
 
+   -------------------
+   -- Draw_Internal --
+   -------------------
+
+   overriding procedure Draw_Internal
+     (Self    : not null access GPS_Canvas_View_Record;
+      Context : Draw_Context;
+      Area    : Model_Rectangle)
+   is
+   begin
+      Draw_Grid_Lines
+        (Style   => Self.Grid_Style,
+         Context => Context,
+         Area    => Area,
+         Size    => Self.Grid_Size);
+      Canvas_View_Record (Self.all).Draw_Internal (Context, Area);
+   end Draw_Internal;
+
    ----------------
    -- Initialize --
    ----------------
@@ -298,8 +327,11 @@ package body Browsers.Scripts is
 
       Self.Pack_Start (Scrolled);
 
-      Gtk_New (Self.View);
+      Self.View := new GPS_Canvas_View_Record;
+      Gtkada.Canvas_View.Initialize (Self.View);
       Scrolled.Add (Self.View);
+
+      Self.View.Grid_Style := Gtk_New (Stroke => (0.8, 0.8, 0.8, 0.8));
 
       return Gtk_Widget (Self.View);
    end Initialize;
