@@ -144,11 +144,6 @@ class GnatInspect_OnExit_Hook(tool_output.OutputParser):
         if status != 0:
             GPS.Logger("XREF").log(
                 "gnatinspect returned with status %s" % status)
-            GPS.Console("Messages").write(
-                ("gnatinspect returned with status %s,"
-                 "the database file (%s) might be corrupt.") %
-                (status, GPS.xref_db()),
-                mode="error")
 
         GPS.Hook("xref_updated").run()
 
