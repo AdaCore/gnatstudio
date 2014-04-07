@@ -61,7 +61,7 @@ documentation for the standard python library. It is accessed through the
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
       <String_Delimiter>&quot;</String_Delimiter>
       <Can_Indent>True</Can_Indent>
-      <Syntax_Highlighting>False</Syntax_Highlighting>
+      <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>True</Case_Sensitive>
     </Context>
     <Categories>

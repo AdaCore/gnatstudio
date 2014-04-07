@@ -258,10 +258,6 @@ try:
         return [x for x in WidgetTree(list) if isinstance(x, type)]
 
     def get_gtk_buffer(ed_buf):
-        """
-        @type ed_buf: GPS.EditorBuffer
-        @rtype: Gtk.TextBuffer
-        """
         gtk_tv = get_widgets_by_type(Gtk.TextView,
                                      ed_buf.current_view().pywidget())[0]
         return gtk_tv.get_buffer()
