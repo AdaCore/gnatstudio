@@ -55,6 +55,8 @@ GPS.Browsers.Link.Routing = enum(
 GPS.Browsers.Link.Side = enum(
     AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
 
+GPS.Browsers.View.Background = enum(NONE=0, COLOR=1, GRID=2, DOTS=3)
+
 
 def get_focused_widget():
     return GPS.MDI.current().get_child().pywidget().get_toplevel().get_focus()

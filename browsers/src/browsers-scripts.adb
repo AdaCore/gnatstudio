@@ -159,7 +159,13 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all commands for the python classes in this package.
 
+   type Background_Type is (Background_None,
+                            Background_Color,
+                            Background_Grid_Lines,
+                            Background_Grid_Dots);
+
    type GPS_Canvas_View_Record is new Canvas_View_Record with record
+      Background : Background_Type := Background_None;
       Grid_Size  : Gdouble := 20.0;
       Grid_Style : Drawing_Style;
    end record;
@@ -303,11 +309,29 @@ package body Browsers.Scripts is
       Area    : Model_Rectangle)
    is
    begin
-      Draw_Grid_Lines
-        (Style   => Self.Grid_Style,
-         Context => Context,
-         Area    => Area,
-         Size    => Self.Grid_Size);
+      case Self.Background is
+         when Background_None =>
+            null;
+
+         when Background_Color =>
+            Set_Source (Context.Cr, Self.Grid_Style.Get_Fill);
+            Paint (Context.Cr);
+
+         when Background_Grid_Lines =>
+            Draw_Grid_Lines
+              (Style   => Self.Grid_Style,
+               Context => Context,
+               Area    => Area,
+               Size    => Self.Grid_Size);
+
+         when Background_Grid_Dots =>
+            Draw_Grid_Lines
+              (Style   => Self.Grid_Style,
+               Context => Context,
+               Area    => Area,
+               Size    => Self.Grid_Size);
+      end case;
+
       Canvas_View_Record (Self.all).Draw_Internal (Context, Area);
    end Draw_Internal;
 
@@ -330,8 +354,6 @@ package body Browsers.Scripts is
       Self.View := new GPS_Canvas_View_Record;
       Gtkada.Canvas_View.Initialize (Self.View);
       Scrolled.Add (Self.View);
-
-      Self.View.Grid_Style := Gtk_New (Stroke => (0.8, 0.8, 0.8, 0.8));
 
       return Gtk_Widget (Self.View);
    end Initialize;
@@ -363,6 +385,16 @@ package body Browsers.Scripts is
          Inst := New_Instance (Script, Module.View_Class);
          Set_Data (Inst, Widget => GObject (View));
          Set_Return_Value (Data, Inst);
+
+      elsif Command = "set_background" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+         View.View.Background := Background_Type'Val
+           (Nth_Arg (Data, 2, Background_Type'Pos (Background_None)));
+         View.View.Grid_Style :=
+           Get_Style (Nth_Arg (Data, 3, Allow_Null => True));
+         View.View.Grid_Size := Gdouble (Nth_Arg (Data, 4, 20.0));
+         View.Queue_Draw;
       end if;
    end View_Handler;
 
@@ -913,6 +945,14 @@ package body Browsers.Scripts is
          Static_Method => True,
          Params  => (1 => Param ("diagram"),
                      2 => Param ("title")),
+         Handler => View_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "set_background",
+         Params  => (Param ("type"),
+                     Param ("style", Optional => True),
+                     Param ("size", Optional => True)),
+         Class   => Module.View_Class,
          Handler => View_Handler'Access);
 
       Register_Command

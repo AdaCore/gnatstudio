@@ -29,6 +29,11 @@ class GMC_Module(modules.Module):
         if file.language() == 'simulink':
             diagrams = GPS.Browsers.Diagram.load_json(file.name())
             v = GPS.Browsers.View.create(diagrams[0], title='Simulink')
+            v.set_background(
+                GPS.Browsers.View.Background.GRID,
+                GPS.Browsers.Style(
+                    stroke="rgba(200,200,200,0.8)"))
+
             return True
 
         return False

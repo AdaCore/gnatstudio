@@ -154,6 +154,12 @@ Classes
 
    .. inheritance-diagram:: GPS.Browsers.View
 
+
+   .. autoattribute:: GPS.Browsers.View.Background
+
+
    .. automethod:: GPS.Browsers.View.__init__
 
    .. automethod:: GPS.Browsers.View.create
+
+   .. automethod:: GPS.Browsers.View.set_background
