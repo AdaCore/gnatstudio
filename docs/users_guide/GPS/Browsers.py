@@ -382,12 +382,15 @@ class Link(object):
         to,
         style,
         routing=Routing.STRAIGHT,
+        label=None,
         fromX=0.5,
         fromY=0.5,
         fromSide=Side.AUTO,
+        fromLabel=None,
         toX=0.5,
         toY=0.5,
-        toSide=Side.AUTO
+        toSide=Side.AUTO,
+        toLabel=None
     ):
         """
         Creates a new link attached to the two items FROM and TO.
@@ -419,6 +422,12 @@ class Link(object):
            in the container item. Setting fromSide to
            GPS.Browsers.Link.Side.LEFT will make sure the link exits from
            the left side of the parent item too.
+        :param GPS.Browsers.Item label: a label (in general a TextItem) to
+           display in the middle of the link.
+        :param GPS.Browsers.Item fromLabel: a label (in general a TextItem) to
+           display next to the origin of the link.
+        :param GPS.Browsers.Item toLabel: a label (in general a TextItem) to
+           display next to the target of the link.
         """
 
     def set_waypoints(self, points, relative=False):
@@ -558,6 +567,13 @@ class Diagram(object):
 
             - `text`: the text to display.
 
+            - `directed`: one of the values from
+              :class:`GPS.Browsers.TextItem.Text_Arrow`, which indicates that
+              an extra arrow should be displayed next to the text. This is
+              mostly relevant when the text is used as a label on a link, in
+              which case the actual arrow will be computed automatically from
+              the orientation of the link.
+
         Hr objects (corresponding to :class:`GPS.Browsers.HrItem`) have the
         following additional attributes:
 
@@ -607,6 +623,14 @@ class Diagram(object):
                    - `side` takes its value from GPS.Browsers.Link.Side, and
                      is used to force the link to emerge from one specific
                      side of the item.
+
+                   - `label` is a JSON object describing an item, as described
+                     earlier. This will generally be a text item.
+
+            - `label`: one of :class:`GPS.Browsers.Item`, to display in the
+              middle of the link. This will generally be a text item. If it
+              is directed, the arrow will be computed from the orientation of
+              the link.
 
             - `route`: one of :class:`GPS.Browsers.Link.Routing` (as integer)
               to indicate how the link is displayed.

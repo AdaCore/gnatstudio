@@ -99,6 +99,9 @@ package body Browsers.Scripts is
    L_To_X               : constant := 9;
    L_To_Y               : constant := 10;
    L_To_Side            : constant := 11;
+   L_Label              : constant := 12;
+   L_From_Label         : constant := 13;
+   L_To_Label           : constant := 14;
    --  All the parameters for GPS.Browsers.Link
 
    type Style_Properties_Record is new Instance_Property_Record with record
@@ -726,14 +729,33 @@ package body Browsers.Scripts is
    procedure Link_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst : Class_Instance;
-      Link : Canvas_Link;
+      Inst, Inst2  : Class_Instance;
+      Link  : Canvas_Link;
+      Label, Label_From, Label_To : Container_Item;
    begin
       if Command = Constructor_Method then
+         Inst2 := Nth_Arg (Data, L_Label, Allow_Null => True);
+         if Inst2 /= No_Class_Instance then
+            Label := Container_Item (Get_Item (Inst2));
+         end if;
+
+         Inst2 := Nth_Arg (Data, L_From_Label, Allow_Null => True);
+         if Inst2 /= No_Class_Instance then
+            Label_From := Container_Item (Get_Item (Inst2));
+         end if;
+
+         Inst2 := Nth_Arg (Data, L_To_Label, Allow_Null => True);
+         if Inst2 /= No_Class_Instance then
+            Label_To := Container_Item (Get_Item (Inst2));
+         end if;
+
          Link := Gtk_New
            (From        => Get_Item (Nth_Arg (Data, L_From)),
             To          => Get_Item (Nth_Arg (Data, L_To)),
             Style       => Get_Style (Nth_Arg (Data, L_Style)),
+            Label       => Label,
+            Label_From  => Label_From,
+            Label_To    => Label_To,
             Routing     => Route_Style'Val
               (Nth_Arg (Data, L_Routing, Route_Style'Pos (Straight))),
             Anchor_From =>
@@ -945,16 +967,19 @@ package body Browsers.Scripts is
       Register_Command
         (Kernel.Scripts,
          Constructor_Method,
-         Params  => (L_From      => Param ("origin"),
-                     L_To        => Param ("to"),
-                     L_Style     => Param ("style"),
-                     L_Routing   => Param ("routing",  Optional => True),
-                     L_From_X    => Param ("fromX",    Optional => True),
-                     L_From_Y    => Param ("fromY",    Optional => True),
-                     L_From_Side => Param ("fromSide", Optional => True),
-                     L_To_X      => Param ("toX",      Optional => True),
-                     L_To_Y      => Param ("toY",      Optional => True),
-                     L_To_Side   => Param ("toSide",   Optional => True)),
+         Params  => (L_From       => Param ("origin"),
+                     L_To         => Param ("to"),
+                     L_Style      => Param ("style"),
+                     L_Routing    => Param ("routing",   Optional => True),
+                     L_Label      => Param ("label",     Optional => True),
+                     L_From_X     => Param ("fromX",     Optional => True),
+                     L_From_Y     => Param ("fromY",     Optional => True),
+                     L_From_Side  => Param ("fromSide",  Optional => True),
+                     L_From_Label => Param ("fromLabel", Optional => True),
+                     L_To_X       => Param ("toX",       Optional => True),
+                     L_To_Y       => Param ("toY",       Optional => True),
+                     L_To_Label   => Param ("toLabel",   Optional => True),
+                     L_To_Side    => Param ("toSide",    Optional => True)),
          Class   => Link,
          Handler => Link_Handler'Access);
       Register_Command

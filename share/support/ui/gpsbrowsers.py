@@ -153,7 +153,7 @@ def parse_item(items, json, styles):
         it = B.TextItem(
             style=st,
             text=json.get('text', it_default.get('text', '')),
-            directed=B.TextItem.TextArrow.NONE)
+            directed=json.get('directed'))
     elif t == 'hr':
         it = B.HrItem(
             style=st,
@@ -266,16 +266,31 @@ def load_json_data(data):
                     "Object not found (id '%s')\n" % t.get('ref'))
                 continue
 
+            label = None
+            if l.get('label'):
+                label = parse_item(items, l.get('label'), styles)
+
+            fromLabel = None
+            if f.get('label'):
+                fromLabel = parse_item(items, f.get('label'), styles)
+
+            toLabel = None
+            if t.get('label'):
+                toLabel = parse_item(items, t.get('label'), styles)
+
             link = B.Link(
                 origin=fitem,
                 to=titem,
                 style=styles.parse(l.get('style'), 'link'),
                 routing=l.get('route'),
+                label=label,
                 fromX=f.get('anchorx'),
                 fromY=f.get('anchory'),
                 fromSide=f.get("side", B.Link.Side.AUTO),
+                fromLabel=fromLabel,
                 toX=t.get('anchorx'),
                 toY=t.get('anchory'),
+                toLabel=toLabel,
                 toSide=f.get("side", B.Link.Side.AUTO))
             link.id = l.get('id')
 
