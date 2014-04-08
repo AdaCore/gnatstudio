@@ -16,6 +16,7 @@ you open a .mdl file, for instance from the Project view.
 import modules
 import GPS
 import GPS.Browsers
+import os.path
 
 
 class GMC_Module(modules.Module):
@@ -28,7 +29,8 @@ class GMC_Module(modules.Module):
 
         if file.language() == 'simulink':
             diagrams = GPS.Browsers.Diagram.load_json(file.name())
-            v = GPS.Browsers.View.create(diagrams[0], title='Simulink')
+            v = GPS.Browsers.View.create(
+                diagrams[0], title=os.path.basename(file.name()))
             v.set_background(
                 GPS.Browsers.View.Background.GRID,
                 GPS.Browsers.Style(
