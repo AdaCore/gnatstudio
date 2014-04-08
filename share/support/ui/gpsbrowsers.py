@@ -73,7 +73,6 @@ class Styles(object):
            applies. Should be None when defining a style.
         :return: an instance of GPS.Browsers.Style
         """
-
         if json is None:
             # Apply the default style, and use shared instances when possible
             st = self.default_styles.get(itemType)
@@ -107,7 +106,10 @@ class Styles(object):
             if key in json:
                 # JSON 'null' gives a Python None, but we still want to use
                 # the non-default value for the parameter in this case
-                props[key] = json[key] or ''
+                val = json[key]
+                if val is None:
+                    val = ""
+                props[key] = val
             elif default and key in default:
                 props[key] = default[key]
 
