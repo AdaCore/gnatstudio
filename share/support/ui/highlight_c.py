@@ -1,5 +1,9 @@
 from highlight_framework import *
 
+############
+# Literals #
+############
+
 string_literal = region(
     r'"', r'"|$', matchall=False, tag="string",
     highlighter=(
@@ -9,16 +13,20 @@ string_literal = region(
 )
 character_literal = simple(r"'(?:\\.|.)?'", matchall=False, tag="character")
 number_literal = simple(r"\b[0-9]*\.?[0-9]+\b", tag="number")
-comment = region(
-    r"/\*", r"\*/", multiline=True, tag="comment",
-    name="comment",
-    highlighter=(
-        words(
-            ["TODO", "NOTE"],
-            tag=newtag("comment_notes", foreground_rgba="red")
-        ),
-    )
-)
+
+############
+# Comments #
+############
+
+comments_subhl = (words(["TODO", "NOTE"],
+                  tag=newtag("comment_notes", foreground_rgba="red")),)
+
+c99_comment = region(r"//", r"$", tag="comment", name="comment",
+                     highlighter=comments_subhl)
+
+multiline_comment = region(r"/\*", r"\*/", tag="comment",
+                           name="ml_comment", highlighter=comments_subhl)
+
 preprocessor_comment = region(
     r"#if 0", "#endif", multiline=True,
     name="preprocessor_comment", tag="comment",
@@ -39,7 +47,8 @@ preprocessor_directive = region(
         simple(r'\<.*?\>', tag="string", matchall=False),
         character_literal,
         number_literal,
-        comment
+        c99_comment,
+        multiline_comment
     )
 )
 
@@ -49,7 +58,8 @@ register_highlighter(
         string_literal,
         character_literal,
         number_literal,
-        comment,
+        c99_comment,
+        multiline_comment,
         preprocessor_comment,
         preprocessor_directive,
         # Match keywords
