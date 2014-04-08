@@ -162,4 +162,6 @@ Classes
 
    .. automethod:: GPS.Browsers.View.create
 
+   .. automethod:: GPS.Browsers.View.scale_to_fit
+
    .. automethod:: GPS.Browsers.View.set_background

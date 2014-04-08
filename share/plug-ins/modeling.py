@@ -33,6 +33,7 @@ class GMC_Module(modules.Module):
                 GPS.Browsers.View.Background.GRID,
                 GPS.Browsers.Style(
                     stroke="rgba(200,200,200,0.8)"))
+            v.scale_to_fit(max_scale=2.0)
 
             return True
 

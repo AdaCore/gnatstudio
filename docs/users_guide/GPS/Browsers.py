@@ -692,7 +692,7 @@ class View(GPS.GUI):
     Multiple views can be associated with the same diagram.
     """
 
-    Background = enum(NONE=0, COLOR=1, GRID=2, LINES=3)
+    Background = enum('View.Background', NONE=0, COLOR=1, GRID=2, LINES=3)
 
     def __init__(self):
         """
@@ -709,6 +709,14 @@ class View(GPS.GUI):
         :param str title: the title used for the notebook tab.
         """
 
+    def scale_to_fit(self, max_scale=4.0):
+        """
+        Scale and scroll the view so that all the items in the model are
+        visible.
+
+        :param float max_scale: maximum scaling factor to allow.
+        """
+
     def set_background(self, type, style=None, size=20.0):
         """
         Set the type of background to display in the view.
@@ -722,7 +730,9 @@ class View(GPS.GUI):
            fill should be unset, but the stroke should be set.
            When using a gradient, it is not resized to the size of the view
            (as opposed to what is done for items for instance), so it should
-           be something like:
+           be something like::
+
                 linear 0 0 1000 1000 0 black 1 yellow
+
         :param float size: the size of the grid, when using GRID or DOTS.
         """

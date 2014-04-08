@@ -395,6 +395,12 @@ package body Browsers.Scripts is
            Get_Style (Nth_Arg (Data, 3, Allow_Null => True));
          View.View.Grid_Size := Gdouble (Nth_Arg (Data, 4, 20.0));
          View.Queue_Draw;
+
+      elsif Command = "scale_to_fit" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+         View.View.Scale_To_Fit
+           (Max_Scale => Gdouble (Nth_Arg (Data, 2, 4.0)));
       end if;
    end View_Handler;
 
@@ -953,6 +959,12 @@ package body Browsers.Scripts is
          Params  => (Param ("type"),
                      Param ("style", Optional => True),
                      Param ("size", Optional => True)),
+         Class   => Module.View_Class,
+         Handler => View_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "scale_to_fit",
+         Params  => (1 => Param ("max_scale", Optional => True)),
          Class   => Module.View_Class,
          Handler => View_Handler'Access);
 
