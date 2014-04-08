@@ -1230,7 +1230,21 @@ package body Outline_View.Model is
          Node := Get_Node_Next_Part (Model, E);
          exit when Node /= null;
 
-         It := Get_Parent_Scope (Tree, It);
+         --  When there are several constructs on the same line Get_Iterator_At
+         --  returns last one. Here we iterate over others on the same line
+         --  before search for enclosing constructs.
+         declare
+            Try_Prev : constant Construct_Tree_Iterator :=
+              Prev (Tree, It, Jump_Over);
+         begin
+            if Try_Prev /= Null_Construct_Tree_Iterator
+              and then Get_Construct (Try_Prev).Sloc_Start.Line = Line
+            then
+               It := Try_Prev;
+            else
+               It := Get_Parent_Scope (Tree, It);
+            end if;
+         end;
       end loop;
 
       if Node = null then
