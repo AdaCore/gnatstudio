@@ -521,6 +521,11 @@ class Diagram(object):
               as an id attribute in the instance of :class:`GPS.Browsers.Item`
               that is created.
 
+            - `data`: this field is stored as is in the generated instance
+              of GPS.Browsers.Item. It can be used to store any application
+              specific data, in particular since the instance will be passed
+              to the callbacks to handle click events.
+
             - `x`, `y`: optional float attributes. See the description of
               :func:`GPS.Browsers.Item.set_position()`.
 
@@ -588,6 +593,10 @@ class Diagram(object):
 
             - `close`: whether the last point should automatically be linked
               to the first.
+
+            - `relative`: an optional boolean (defaults to false) that
+              indicates whether the points are coordinates relative to the
+              item's topleft corner, or are relative to the previous point.
 
         Ellipse items (corresponding to :class:`GPS.Browsers.EllipseItem`)
         have the following additional attributes:

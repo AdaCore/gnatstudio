@@ -162,6 +162,7 @@ def parse_item(items, json, styles):
         it = B.PolylineItem(
             style=st,
             points=json.get('points', []),
+            relative=json.get('relative', False),
             close=json.get('close', it_default.get('close', False)))
     elif t == 'ellipse':
         it = B.EllipseItem(
@@ -201,6 +202,10 @@ def parse_item(items, json, styles):
     it.set_position(
         x=json.get('x'),
         y=json.get('y'))
+
+    data = json.get('data')
+    if data is not None:
+        it.data = data
 
     id = json.get('id')
     if id is not None:

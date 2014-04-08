@@ -738,9 +738,10 @@ package body Browsers.Scripts is
       if Command = Constructor_Method then
          Inst := Nth_Arg (Data, 1);
          Item := Gtk_New_Polyline
-           (Style  => Get_Style (Nth_Arg (Data, 2)),
-            Points => Points_From_Param (Data, 3),
-            Close  => Nth_Arg (Data, 4, False));
+           (Style    => Get_Style (Nth_Arg (Data, 2)),
+            Points   => Points_From_Param (Data, 3),
+            Close    => Nth_Arg (Data, 4, False),
+            Relative => Nth_Arg (Data, 5, False));
          Set_Item (Inst, Item);
       end if;
    end Polyline_Handler;
@@ -1015,7 +1016,8 @@ package body Browsers.Scripts is
          Constructor_Method,
          Params  => (Param ("style"),
                      Param ("points"),
-                     Param ("close", Optional => True)),
+                     Param ("close", Optional => True),
+                     Param ("relative", Optional => True)),
          Class   => Polyline,
          Handler => Polyline_Handler'Access);
 
