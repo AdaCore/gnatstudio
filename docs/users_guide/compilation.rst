@@ -6,7 +6,7 @@
 Compilation/Build
 *****************
 
-This chapter describes how to compile files, build executables and run
+This chapter describes how to compile files, build executables, and run
 them.  Most capabilities can be accessed through the :menuselection:`Build`
 top-level menu or through the :menuselection:`Build` and
 :menuselection:`Run` contextual menu items, as described below.
@@ -28,7 +28,7 @@ removed from :ref:`The_Locations_View`.
 The Build Menu
 ==============
 
-Use the build menu to access capabilities related to checking, parsing
+Use the build menu to access capabilities related to checking, parsing,
 and compiling files as well as creating and running executables.  This
 menu is fully configurable via the :guilabel:`Targets` settings;
 what is documented here are the default menus (see
@@ -205,9 +205,9 @@ what is documented here are the default menus (see
 
     Opens a dialog allowing GPS to work with two compilation
     toolchains. This is particulary useful when you need to compile a
-    project with an old compiler but want up-to-date functionality from
-    the associated tools (for example, gnatmetric and gnatcheck).  See
-    :ref:`Working_with_two_compilers`.
+    project with an old compiler but want up-to-date functionality from the
+    associated tools (for example, :program:`gnatmetric` and
+    :program:`gnatcheck`).  See :ref:`Working_with_two_compilers`.
 
 .. index:: menu; tools --> interrupt
 

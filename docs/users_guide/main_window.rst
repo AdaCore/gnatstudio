@@ -142,7 +142,7 @@ Browsers provide the following additional capabilities:
 * Zooming
 
   GPS provides several different zoom levels.  Use the
-  :guilabel:`zoom in`, :guilabel:`zoom out` and :guilabel:`zoom` buttons in
+  :guilabel:`zoom in`, :guilabel:`zoom out`, and :guilabel:`zoom` buttons in
   the local toolbar to change the level and use the latter to explicitly
   select the level you want.
 
@@ -435,7 +435,7 @@ The tool bar provides shortcuts to some common actions:
 
 * Multiple customizable
   :index:`buttons <single: build; toolbar buttons>`
-  to build, clean or run your project
+  to build, clean, or run your project
 
 * multiple
   :index:`buttons <single: debugger; toolbar buttons>` to stop and continue
@@ -1085,7 +1085,7 @@ how the outline view is displayed:
   of entities.
 
 * :guilabel:`Show types`, :guilabel:`Show objects`, :guilabel:`Show tasks,
-  entries and protected types`
+  entries, and protected types`
 
   Controls the display of the specified categories of entities.
 
@@ -1228,10 +1228,10 @@ Call Trees
 
 .. image:: calltree.png
 
-The :guilabel:`Call trees` are displayed when you select one of the contextual
-menus :menuselection:`<entity> calls` and :menuselection:`<entity> is called
-by`. Every time you select one of these menus, a new view is opened to display
-that entity.
+The :guilabel:`Call trees` are displayed when you select one of the
+contextual menus :menuselection:`<entity> calls` and
+:menuselection:`<entity> is called by`. Every time you select one of
+these menus, a new view is opened to display that entity.
 
 Expand a node from the tree by clicking on the small expander arrow on the
 left of the line.  Further callgraph information is computed for the
@@ -1296,7 +1296,7 @@ displays all the entities that call the selected item (i.e. its callers).
 Open this browser by right-clicking on the name of an entity in a source
 editor or :guilabel:`Project` view and selecting one of the
 :menuselection:`Browsers --> <entity> calls`, :menuselection:`Browsers -->
-<entity> calls (recursive)` or :menuselection:`Browsers --> <entity> is
+<entity> calls (recursive)`, or :menuselection:`Browsers --> <entity> is
 called by` menus.
 
 All boxes in this browser display the location of their declaration and the
@@ -1465,7 +1465,7 @@ The :guilabel:`Task Manager`
 
 The :guilabel:`Task Manager` window displays all running GPS
 operations currently running in the background, such as builds,
-searches or VCS commands.
+searches, or VCS commands.
 
 For each task, the :guilabel:`Task Manager` displays its status and current
 progress.  Suspend the execution of a task by clicking the small
@@ -1728,13 +1728,14 @@ the file selector provides the following contents:
   :kbd:`Enter` or by clicking on the right arrow and choosing a previous
   directory in the pop down list displayed.
 
-* A directory tree.  Open or close directories by clicking on the `+` and
-  `-` icons on the left of the directories or navigate using the keyboard
-  keys: :kbd:`up` and :kbd:`down` to select the previous or next directory,
-  :kbd:`+` and :kbd:`-` to expand and collapse the current directory, and
-  :kbd:`backspace` to select the parent directory.
+* A directory tree.  Open or close directories by clicking on the
+  :guilabel:`+` and :guilabel:`-` icons on the left of the directories or
+  navigate using the keyboard keys: :kbd:`up` and :kbd:`down` to select the
+  previous or next directory, :kbd:`+` and :kbd:`-` to expand and collapse
+  the current directory, and :kbd:`backspace` to select the parent
+  directory.
 
-* A filter area. Depending on the context, one or several filters are
+* A filter area. Depending on the context, one of several filters are
   available to select only a subset of files to display. The filter
   :guilabel:`All files` is always available and displays all files in the
   selected directory.

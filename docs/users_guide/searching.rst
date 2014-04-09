@@ -67,7 +67,7 @@ This dialog contains three fields:
   search dialog by looking at the component that currently has the
   focus. If several contexts are possible for one component (for example,
   the editor has :guilabel:`Current_File`, :guilabel:`Files from Project`,
-  :guilabel:`Files...` and :guilabel:`Open Files`), the last one you used
+  :guilabel:`Files...`, and :guilabel:`Open Files`), the last one you used
   is selected.  In most contexts, the :guilabel:`Scope` option restricts
   the search to a set of language constructs.  For example, use this to to
   avoid matching comments when you are only interested in actual code or to
@@ -93,9 +93,9 @@ right, which displays the list of all possible contexts, including:
     Search a specified set of files. An extra :guilabel:`Files` box is
     displayed where you specify the files using standard shell (Unix or
     Windows) regular expressions (such as :file:`*.ad?` for all files
-    ending with .ad and any trailing character). The directory specifies
-    where the search starts and the :guilabel:`Recursive search` button
-    whether subdirectories are also searched.
+    ending with :samp:`.ad` and any trailing character). The directory
+    specifies where the search starts and the :guilabel:`Recursive search`
+    button whether subdirectories are also searched.
 
   * :command:`Files From Projects`
 
@@ -216,9 +216,9 @@ occurence, jump to the next one by pressing :guilabel:`Next`.
 
 The :guilabel:`Repl all` button replaces all occurences found. By default,
 a popup is displayed asking for confirmation. You can disable this popup by
-either checking the box "Do not ask this question again" or going to the
-Search pannel of the preferences pages and unchecking "Confirmation for
-'Replace all'".
+either checking the box :guilabel:`Do not ask this question again` or going
+to the :guilabel:`Search` panel of the preferences pages and unchecking
+:guilabel:`Confirmation` for :guilabel:`Replace all`.
 
 .. index:: Multiple Document Interface
 

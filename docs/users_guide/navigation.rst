@@ -76,7 +76,7 @@ Here is language specific information about source navigation:
 Ada cross-reference heuristics
 ------------------------------
 
-GPS provides basic navigation support for Ada, C and C++ sources even in
+GPS provides basic navigation support for Ada, C, and C++ sources even in
 the absence of information coming from the compiler by using a built-in
 parser, parsing the files both at startup and when they are modified.  This
 provides basic navigation in simple cases.
@@ -300,7 +300,7 @@ The Navigate Menu
 * :menuselection:`Navigate --> Next subprogram`
 
   Move the cursor to the start of the next procedure, function, task,
-  protected record or entry.
+  protected record, or entry.
 
 
 .. index:: menu; navigate --> previous tag

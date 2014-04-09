@@ -848,7 +848,7 @@ Access all the stack analysis operations via the
 The Contextual Menu
 -------------------
 
-The contextual menu for a project, file or subprogram entity (including the
+The contextual menu for a project, file, or subprogram entity (including the
 entities listed in the coverage report) has a :guilabel:`Stack Analysis`
 submenu containing the following options, dependong on the type of entity
 selected:

@@ -654,7 +654,7 @@ arrow, as seen in the screenshot above).
 
         Auto-casing is done character-by-character while typing.
 
-      For the :guilabel:`End_Of_Line`, :guilabel:`End_Of_Word` and
+      For the :guilabel:`End_Of_Line`, :guilabel:`End_Of_Word`, and
       :guilabel:`On_The_Fly` policies you can force auto-casing of the
       current line by pressing the indentation key (by default,
       :kbd:`Tab`).
@@ -1920,9 +1920,10 @@ The valid children of :file:`<action>` are the following XML tags:
   * :file:`server` (optional)
 
     Execute the external command on a remote server. The values are
-    "gps_server" (default), "build_server", "execution_server",
-    "debug_server" and "tools_server".  See :ref:`Remote_operations` for
-    information on what each of these servers are.
+    :command:`gps_server` (default), :command:`build_server`,
+    :command:`execution_server`, :command:`debug_server`, and
+    :command:`tools_server`.  See :ref:`Remote_operations` for information
+    on what each of these servers are.
 
   * :file:`check-password` (optional)
 
@@ -2216,7 +2217,7 @@ arguments.  This code is useful when you are writing a full python script.
   Base name of the currently selected file. If the file is not part of
   the project tree or no file is selected, generate an error in the
   :guilabel:`Messages` view.  This macro is only available in commands
-  defined in the :guilabel:`Build Manager` and the :guilabel:`Build
+  defined in the :guilabel:`Build Manager` and :guilabel:`Build
   Launcher` dialogs.
 
 * :file:`%gnatmake`
@@ -2230,9 +2231,9 @@ arguments.  This code is useful when you are writing a full python script.
 * :file:`%gprclean`
 
   Default cleaner configured in GPS.  This can be, for example,
-  :command:`gnat clean`, or :command:`gprclean`.  This macro is only
+  :command:`gnat clean` or :command:`gprclean`.  This macro is only
   available in commands defined in the :guilabel:`Build Manager` and
-  the :guilabel:`Build Launcher` dialogs.
+  :guilabel:`Build Launcher` dialogs.
 
 * :file:`%GPS`
 
@@ -2363,7 +2364,7 @@ arguments.  This code is useful when you are writing a full python script.
 
   * :file:`%prs`
 
-    List of files in the current project, and all imported sub projects,
+    List of files in the current project and all imported sub projects,
     recursively.
 
   * :file:`%prdf`
@@ -2398,7 +2399,7 @@ arguments.  This code is useful when you are writing a full python script.
   Subtarget being considered for building.  Depending on the context, this
   can correspond to such things as the base filename of a main source or
   :file:`makefile` targets.  This macro is only available in the commands
-  defined in the :guilabel:`Build Manager` and the :guilabel:`Build
+  defined in the :guilabel:`Build Manager` and :guilabel:`Build
   Launcher` dialogs.
 
 * :file:`%TT`
@@ -2436,7 +2437,7 @@ arguments.  This code is useful when you are writing a full python script.
   project tree are listed.  You can also use :file:`%vars(-D)` to generate
   a list of switches of the form :file:`-D{variable}={value}`.  This macro
   is only available in the commands defined in the :guilabel:`Build
-  Manager` and the :guilabel:`Build Launcher` dialogs.
+  Manager` and :guilabel:`Build Launcher` dialogs.
 
 * :file:`%X`
 
@@ -2445,8 +2446,8 @@ arguments.  This code is useful when you are writing a full python script.
   :command:`value` its current value, as configured in the
   :guilabel:`Scenario` view. All the scenario variables defined in the
   current project tree are listed.  This macro is only available in the
-  commands defined in the :guilabel:`Build Manager` and the
-  :guilabel:`Build Launcher` dialogs.
+  commands defined in the :guilabel:`Build Manager` and :guilabel:`Build
+  Launcher` dialogs.
 
 * :file:`%target`
 
@@ -2591,7 +2592,7 @@ There are three different kinds of tags representing filters:
 If several filter tags are found under an :file:`<action>` tag, they act
 as if they were all under a single :file:`<filter_or>` tag.
 
-The :file:`<filter>`, :file:`<filter_and>` and :file:`<filter_or>` tags
+The :file:`<filter>`, :file:`<filter_and>`, and :file:`<filter_or>` tags
 all accept the following common attributes:
 
 * :file:`name` (optional)
@@ -2731,7 +2732,7 @@ Adding new menus
 .. index:: <submenu>
 .. index:: <title>
 
-Actions can be associated with menus, tool bar buttons and keys, all
+Actions can be associated with menus, tool bar buttons, and keys, all
 using similar syntax.
 
 Each menu item has an associated path, which it behaves like a UNIX path,
@@ -3290,7 +3291,7 @@ Defining new search patterns
 .. index:: predefined patterns
 
 The search dialog contains a number of predefined search patterns for Ada,
-C and C++. These are generally complex regular expressions, presented in
+C, and C++. These are generally complex regular expressions, presented in
 the dialog with a more descriptive name. For example, :guilabel:`Ada
 assignment`.
 
@@ -3399,7 +3400,7 @@ The following child tags are available:
 
 * :file:`<Wordchars>`
 
-  Most languages have keywords that only contain letters, digits and
+  Most languages have keywords that only contain letters, digits, and
   underscore characters.  If you want to also include other special
   characters (for example :kbd:`<` and :kbd:`>` in XML), use this tag.  The
   value of this tag is a string consisting of all the special characters
@@ -3642,7 +3643,7 @@ The alias editor supports the following macros:
 
 * :file:`%H`
 
-  Current time (hour, minutes and seconds).
+  Current time (hour, minutes, and seconds).
 
 * :file:`%O`
 
@@ -3898,7 +3899,7 @@ The :file:`<project_attribute>` tag accepts the following attributes:
   example, should only contain base names. This also increases the
   portability of project files.
 
-* :file:`case_sensitive_index` (:command:`true`, :command:`false` (default)
+* :file:`case_sensitive_index` (:command:`true`, :command:`false` (default),
   or :command:`file`)
 
   Only relevant for project attributes that are indexed on another
@@ -3915,11 +3916,11 @@ The :file:`<project_attribute>` tag accepts the following attributes:
 * :file:`hide_in` (string)
 
   Context in which GPS will not allow graphical editing of this attribute.
-  GPS provides three such contexts (:command:`wizard`, :command:`library_wizard` 
-  and :command:`properties` corresponding to the project creation wizards and
-  the project properties editor). If any of those contexs are specified, GPS 
-  will not display the widget to edit this attribute.  Use this to keep the 
-  graphical interface simple.
+  GPS provides three such contexts (:command:`wizard`,
+  :command:`library_wizard`, and :command:`properties` corresponding to the
+  project creation wizards and the project properties editor). If any of
+  those contexs are specified, GPS will not display the widget to edit this
+  attribute.  Use this to keep the graphical interface simple.
 
 * :file:`disable_if_not_set` (boolean, default :command:`false`)
 
@@ -4043,7 +4044,7 @@ You can also declare such attributes in XML files. In such cases, the
 :file:`<project_attribute>` tag should have one :file:`<index>` child, and
 zero or more :file:`<specialized_index>` children.  Each of these two tags
 in turn accepts one of the already mentioned :file:`<string>`,
-:file:`<choice>` or :file:`<shell>` tags as children.
+:file:`<choice>`, or :file:`<shell>` tags as children.
 
 The :file:`<index>` tag specifies what other project attribute is used to
 index the current one. In the example given above for the executable names,
@@ -4468,7 +4469,7 @@ functionality: the configuration of the tools (remote connection tools,
 shells, and rsync parameters) and the servers.
 
 The first part (see :ref:`Defining_a_remote_connection_tool`,
-:ref:`Defining_a_shell` and :ref:`Configuring_rsync_usage`) is performed by
+:ref:`Defining_a_shell`, and :ref:`Configuring_rsync_usage`) is performed by
 a pre-installed file in the plug-ins directory called
 :file:`protocols.xml`.
 
@@ -4487,7 +4488,7 @@ Defining a remote connection tool
 
 A remote connection tool is responsible for making a connection to a remote
 machine.  GPS already defines several remote access tools: :program:`ssh`,
-:program:`rsh`, :program:`telnet` and :program:`plink`. You can add support
+:program:`rsh`, :program:`telnet`, and :program:`plink`. You can add support
 other tools using the tag :file:`<remote_connection_config>`, which
 requires a :file:`name` attribute giving the name of the tool. This name
 need not necessarilly correspond to the command used to launch the tool.
@@ -4564,7 +4565,7 @@ Defining a shell
 .. index:: shell
 
 GPS already defines several shells: :program:`sh`, :program:`bash`,
-:program:`csh`, :program:`tcsh` and, on Windows, :file:`cmd.exe`). You can
+:program:`csh`, :program:`tcsh`, and, on Windows, :file:`cmd.exe`). You can
 add other shells by using the :file:`<remote_shell_config>` tag which has
 one required attribute, :file:`name`, denoting the name of the shell. This
 name need not be same as the command used to launch the shell.
@@ -4726,7 +4727,7 @@ the following required attributes:
 
   Synchronization mechanism used for the paths (see
   :ref:`Path_settings`). Must be one of :command:`NEVER`,
-  :command:`ONCE_TO_LOCAL`, :command:`ONCE_TO_REMOTE` or :command:`ALWAYS`.
+  :command:`ONCE_TO_LOCAL`, :command:`ONCE_TO_REMOTE`, or :command:`ALWAYS`.
 
 .. _Customizing_build_Targets_and_Models:
 
@@ -4819,7 +4820,7 @@ Define targets with a :file:`<target>` tag, which has three attributes:
 * :file:`category`
 
   Category containing the target for purposes of ordering the tree in the
-  :guilabel:`Target Configuration Dialog` and the :guilabel:`Build` menu.
+  :guilabel:`Target Configuration Dialog` and :guilabel:`Build` menus.
   Underscores are interpreted as menu mnemonics. If you want an actual
   underscore, use a double underscore.  If the string begins and ends with
   an underscore, GPS places the menu for the target in the toplevel
@@ -4876,7 +4877,7 @@ This tag accepts the following child tags:
 
   How GPS should launch the target. Possible values are
   :command:`MANUALLY`, :command:`MANUALLY_WITH_DIALOG`,
-  :command:`MANUALLY_WITH_NO_DIALOG` and :command:`ON_FILE_SAVE`.
+  :command:`MANUALLY_WITH_NO_DIALOG`, and :command:`ON_FILE_SAVE`.
 
 * :file:`<server>` (default :command:`Build_Server`)
 
@@ -4922,7 +4923,6 @@ is executed during each run of a target.
 
   Breaks output stream to pieces. Each of the piece contains one or more
   line of output and an end of line.
-  easier.
 
 * :file:`utf_converter`
 
@@ -5083,11 +5083,11 @@ in GPS, check the latest GPS version available.
 You can use this feature to support additional tools (in particular,
 different compilers). You need to do following to successfully use a tool:
 
-* Specify its command line switches
+* Specify its command line switches.
 * Pass it the appropriate arguments depending on the current context and
-  on user input
-* Spawn the tool
-* Optionally parse its result and act accordingly
+  on user input.
+* Spawn the tool.
+* Optionally parse its result and act accordingly.
 
 Each of these is discussed below. In all cases most of the work can be done
 statically through XML customization files.  These files have the same
@@ -5109,7 +5109,7 @@ found in :file:`<tool>` tags, which accept the following attributes:
 
   See also :ref:`Defining_project_attributes` for more information on
   defining your own project attributes. Using the XML :file:`package`,
-  :file:`attribute` or :file:`index` attributes of :file:`<tool>`
+  :file:`attribute`, or :file:`index` attributes of :file:`<tool>`
   implicitly creates new project attributes as needed.
 
   If :command:`ide` is specified, switches cannot be set for a specific
@@ -5197,7 +5197,7 @@ the tool is only called through custom menus, you can hardcode some or all
 of the switches. However, it is usually better to use the project properties
 editor so the user can specify project-specific switches.
 
-This is what GPS does by default for Ada, C and C++. Look at the GPS
+This is what GPS does by default for Ada, C, and C++. Look at the GPS
 installation directory to see how the switches for these languages are
 defined in an XML file. These provide extended examples of the use of
 customization files.
@@ -5361,7 +5361,7 @@ Here are the valid children for :file:`<switches>`:
 
   This tag accepts the :file:`line`, :file:`column`, :file:`label`,
   :file:`switch`, :file:`section`, :file:`tip`, :file:`min`, :file:`max`,
-  :file:`separator` and :file:`default` attributes and you can specify an
+  :file:`separator`, and :file:`default` attributes and you can specify an
   optional :file:`<tip>` child.
 
 * :file:`<radio>`
@@ -5373,7 +5373,7 @@ Here are the valid children for :file:`<switches>`:
   given time. 
 
   This tag accepts the :file:`line`, :file:`column` , :file:`label`,
-  :file:`switch`, :file:`section`, :file:`before` and :file:`tip`
+  :file:`switch`, :file:`section`, :file:`before`, and :file:`tip`
   attributes.  Specify an empty value for the :file:`switch` attribute to
   indicate the default switch to use in this group of radio buttons.  Each
   child must have the tag :file:`radio-entry` or :file:`<tip>`.
@@ -5389,7 +5389,7 @@ Here are the valid children for :file:`<switches>`:
 
   You can specify an optional :file:`<tip>` child tag.  This tag accepts
   the :file:`line`, :file:`column`, :file:`label`, :file:`switch`,
-  :file:`section`, :file:`separator`, :file:`before` and :file:`tip`
+  :file:`section`, :file:`separator`, :file:`before`, and :file:`tip`
   attributes, and the following additional attributes:
 
   * :file:`as-directory`
@@ -5424,7 +5424,7 @@ Here are the valid children for :file:`<switches>`:
 
   This tag accepts the :file:`line`, :file:`column`, :file:`label`,
   :file:`switch`, :file:`section`, :file:`before`, :file:`tip`,
-  :file:`noswitch`, :file:`separator` and :file:`nodigit` attributes
+  :file:`noswitch`, :file:`separator`, and :file:`nodigit` attributes
   and any number of :file:`combo-entry` child tags, each of which
   accepts the :file:`label` and :file:`value` attribute.  You can also
   include an optional :file:`<tip>` child.
@@ -5492,7 +5492,7 @@ Here are the valid children for :file:`<switches>`:
   switch is selected for the Ada compiler, other switches, such as
   :command:`-gnatwc` and :command:`-gnatwd`, are enabled by default. But
   the user can disable them by specifying, e,g., :command:`-gnatwC` and
-  "-gnatwD".
+  :command:`-gnatwD`.
 
   It supports the following additional attributes:
 
@@ -5703,7 +5703,7 @@ GPS commands:
 
   This function is more general. It takes a minimum of two arguments. The
   first argument is a message describing what input is expected from the
-  user. The second, third and following arguments each correspond to an
+  user. The second, third, and following arguments each correspond to an
   entry line in the dialog, each querying one specific value (as a
   string). The result of this function is a list of strings, each
   corresponding to these arguments.
@@ -5894,7 +5894,7 @@ Tool example
 ------------
 
 This section provides an example of how you can define a new tool. This is
-only a short example, since Ada, C and C++ support themselves are provided
+only a short example, since Ada, C, and C++ support themselves are provided
 through such a file, available in the GPS installation.
 
 This example adds support for the :program:`find` Unix utility, with a few

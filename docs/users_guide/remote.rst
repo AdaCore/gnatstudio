@@ -36,10 +36,10 @@ configuration must meet the following conditions:
 
   .. index:: password
 
-* Have a remote connection to the host using :program:`rsh`, :program:`ssh`
+* Have a remote connection to the host using :program:`rsh`, :program:`ssh`,
   or :program:`telnet`.  GPS can handle passwords for such connections.
 
-* Have either a Network Filesystem (i.e. NFS, SMB or equivalent) sharing
+* Have either a Network Filesystem (i.e. NFS, SMB, or equivalent) sharing
   the project files between the host and the target or have
   :program:`rsync` installed on both client and server.  (:program:`rsync`
   can be found at `http://www.samba.org/rsync/
@@ -83,7 +83,7 @@ Once you have opened the :guilabel:`Remote` view, click on
 This dialog consists of two parts:
 
 * The left part dialog contains the list of configured servers, each
-  identified by a nickname. Three buttons allow you to create, reinitialize
+  identified by a nickname. Three buttons allow you to create, reinitialize,
   or delete a server.
 
 * The right part contains the selected server's configuration.
@@ -114,10 +114,11 @@ asterisk:
   A drop-down list specifying the tool used to connect to the server.  GPS
   contains built in support for the following tools
 
-  * ssh
-  * rsh
-  * telnet
-  * plink (Windows tool) in ssh, rsh or telnet mode
+  * :program:`ssh`
+  * :program:`rsh`
+  * :program:`telnet`
+  * :program:`plink` (Windows tool) in :program:`ssh`, :program:`rsh`,
+    or :program:`telnet` mode
 
   See :ref:`Defining_a_remote_connection_tool` if you need to add a
   different tool.  If a tool is not in your path (for example, because it

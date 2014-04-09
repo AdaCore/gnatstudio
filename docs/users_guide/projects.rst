@@ -154,7 +154,7 @@ User's Guide for the full list):
 
   Each project is responsible for managing its set of source files. These
   files can be written in any programming language, but the graphical
-  interface supports only Ada, C and C++.
+  interface supports only Ada, C, and C++.
 
   By default, these source files are found by taking all the files in the
   source directories that follow the naming scheme (see below) for each
@@ -223,7 +223,7 @@ Supported Languages
 
 Other information stored in the project file is the list of languages used
 by the project. GPS supports any language, each with a name you choose, but
-advanced support is only provided by default for some languages (Ada, C and
+advanced support is only provided by default for some languages (Ada, C, and
 C++).  You can specify other properties of the languages through
 customization files (see :ref:`Adding_support_for_new_languages`).
 
@@ -289,7 +289,7 @@ the switches for the appropriate scenario (see
 :ref:`The_Project_Properties_Editor`).
 
 There is one limitation on what GPS can do with scenario variables:
-although :program`gnatmake` and :program:`gprbuild` can use scenario
+although :program:`gnatmake` and :program:`gprbuild` can use scenario
 variables whose default value is something other than static string (for
 example, a concatenation or the value of another scenario variable), GPS
 cannot edit such a project graphically, though such projects load

@@ -63,7 +63,7 @@ The source editor provides an extensive set of features, including:
 
   - The left part of the status bar shows the current :index:`subprogram
     <single: preferences; editor --> display subprogram names>` name for
-    languages that support this capability. Currently Ada, C and C++
+    languages that support this capability. Currently Ada, C, and C++
     have this ability. The :menuselection:`Editor --> Display subprogram
     names` preference controls this display.
 
@@ -207,7 +207,7 @@ The source editor provides an extensive set of features, including:
   this block are hidden except the first.  Like block highlighting, these
   icons are recomputed automatically when you modify your sources.
 
-  This capability is currently implemented for Ada, C and C++ languages.
+  This capability is currently implemented for Ada, C, and C++ languages.
 
 *Auto save*
 
@@ -471,7 +471,7 @@ The :menuselection:`File` Menu
 
 * :menuselection:`File --> Exit`
 
-  Exit GPS after confirmation and if needed, confirmation about saving
+  Exit GPS after confirmation and, if needed, confirmation about saving
   modified windows and editors.
 
 .. _The_Edit_Menu:
@@ -646,7 +646,7 @@ The :menuselection:`Edit` Menu
   smart completion preference and build your C/C++ application with
   :command:`-fdump-xref`.
 
-  In order to use this feature, open any Ada, C or C++ file and start
+  In order to use this feature, open any Ada, C, or C++ file and start
   typing an identifier, which must be declared either in the current file
   (and accessible from the cursor location) or in one of the packages of
   the loaded project.  Move the cursor after the last character of the
@@ -710,7 +710,7 @@ The :menuselection:`Edit` Menu
 
   Limitations:
 
-  * This feature is currently only available for Ada, C and C++. Using
+  * This feature is currently only available for Ada, C, and C++. Using
     the smart completion on sources of other languages behaves as the
     :ref:`identifier completion <Complete_Identifier>` does.
 

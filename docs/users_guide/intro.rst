@@ -26,10 +26,11 @@ Here is a summary of the features of the GNAT Programming Studio:
 * Support for compile/build/run cycle (:ref:`Compilation/Build`)
 
   Any compiler called by a command line can be integrated in GPS, with
-  built in support for GNAT, :program:`gcc` and :program:`make`.  You can
-  easily navigate through error messages, and automatic code fixing is provided for
-  many common errors.  GPS includes support for cross-compilers (running
-  compilers on a different machine than the one on which GPS is running).
+  built in support for GNAT, :program:`gcc`, and :program:`make`.  You can
+  easily navigate through error messages, and automatic code fixing is
+  provided for many common errors.  GPS includes support for
+  cross-compilers (running compilers on a different machine than the one on
+  which GPS is running).
 
 * Project management (:ref:`Project_Handling`)
 
@@ -41,8 +42,8 @@ Here is a summary of the features of the GNAT Programming Studio:
 
 * Integration with various :ref:`Version_Control_System`
 
-  CVS, subversion, git and ClearCase are supported out of the box.  You can
-  add support for others by customizing some XML plug-ins.
+  CVS, subversion, :program:`git`, and ClearCase are supported out of the
+  box.  You can add support for others by customizing some XML plug-ins.
 
 * Intelligent :ref:`Source_Navigation`
 

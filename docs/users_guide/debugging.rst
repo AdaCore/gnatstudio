@@ -153,7 +153,7 @@ This menu contains one item per main unit defined in your project.
 Selecting that item starts a debug session and loads the executable
 associated with the main unit selected and, if relevant, all corresponding
 settings: a debug session opens the debug perspective and associated debug
-properties (e.g.  saved breakpoints, and data display).
+properties (e.g. saved breakpoints and data display).
 
 .. index:: menu; debug --> initialize --> no main file
 
@@ -264,7 +264,7 @@ items. Failure to do so will result in empty windows.
   Opens a new window containing the list of threads currently present in
   the executable as reported by the underlying debugger. For each thread,
   it gives language- and debugger-dependent information such as the internal
-  identifier, name and status.  Refer to the underlying debugger's
+  identifier, name, and status.  Refer to the underlying debugger's
   documentation for more details.  Like other similar commands, the process
   being debugged needs to be stopped before using this.  If not, GPS will
   display an empty list.
@@ -777,7 +777,7 @@ addresses in the bottom text area.
 
 Specify the unit size (:guilabel:`Byte`, :guilabel:`Halfword` or
 :guilabel:`Word`) and the format (:guilabel:`Hexadecimal`,
-:guilabel:`Decimal`, :guilabel:`Octal` or :guilabel:`ASCII`) and you can
+:guilabel:`Decimal`, :guilabel:`Octal`, or :guilabel:`ASCII`) and you can
 display the corresponding ASCII value at the same time.
 
 The :kbd:`up` and :kbd:`down` arrows as well as the :kbd:`Page up` and
