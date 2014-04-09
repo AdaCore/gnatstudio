@@ -31,8 +31,12 @@ c99_comment = region(r"//", r"$", tag="comment", name="comment",
 multiline_comment = region(r"/\*", r"\*/", tag="comment", name="ml_comment",
                            highlighter=comments_subhl)
 
+ws = r"[^\S\n]*?"
+
 preprocessor_comment = region(
-    r"#if 0", "#endif", name="preprocessor_comment", tag="comment",
+    r"^{0}#{1}if{2}0".format(ws, ws, ws), r"^{0}#{1}endif".format(ws, ws),
+    name="preprocessor_comment",
+    tag="comment",
     highlighter=(region_ref("preprocessor_comment"),))
 
 pp_words = "|".join(["define", "if", "elif", "else", "endif", "ifndef",
@@ -44,7 +48,7 @@ pp_words = "|".join(["define", "if", "elif", "else", "endif", "ifndef",
 ################
 
 preprocessor_directive = region(
-    r"^\s*?#\s*?(?:{0})".format(pp_words), r'$',
+    r"^{0}#{1}(?:{2})".format(ws, ws, pp_words), r'$',
     tag=new_style("C", "preprocessor", "yellow", prio=1),
     highlighter=(
         simple(r"\\\n", tag="type"),

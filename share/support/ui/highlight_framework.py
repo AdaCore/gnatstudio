@@ -33,7 +33,8 @@ class HighlighterModule(Module):
 
     def preferences_changed(self):
         for pref in self.preferences.values():
-            pref.propagate_change()
+            if pref.tag:
+                pref.propagate_change()
 
     def file_edited(self, f):
         """
@@ -221,6 +222,7 @@ def new_style(lang, name, foreground_color, prio=20):
     pref = GPS.Preference("Editor/{0}/{1}".format(lang, name))
     doc = "Color for '{0}'".format(name)
     pref.create(doc, "color", doc, foreground_color)
+    pref.tag = None
     HighlighterModule.preferences[style_id] = pref
 
     return Struct(
