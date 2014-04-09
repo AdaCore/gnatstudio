@@ -15,7 +15,7 @@ GPS does not come with any version control system.  Instead, it provides a
 high level user interface to a command-line system such as Subversion or
 ClearCase that you may already have on your system.
 
-GPS has builtin support for the following VCS systems:
+GPS has built in support for the following VCS systems:
 
 * :guilabel:`Auto`
 
@@ -83,7 +83,7 @@ GPS has builtin support for the following VCS systems:
   you must have the :program:`patch` and :program:`diff` tools that usually
   come with Subversion.
 
-By default, GPS uses "Auto" for a VCS.  You can configured this through the
+By default, GPS uses "Auto" for a VCS.  You can configure this through the
 :ref:`The_Preferences_Dialog`.
 
 You can also add support for other version control systems or modify one of
@@ -275,7 +275,7 @@ screen.
 
   * :guilabel:`Create new activity`
 
-    Create a new activity.   Edit the name by double clicking on it.
+    Create a new activity.  Edit the name by double clicking on it.
 
 * On an activity line, the contextual menu contains:
 
@@ -605,7 +605,8 @@ are not shown because they are not relevant to that context.
 
 * :guilabel:`Directory`
 
-  Only available when the current context contains directory information
+  Only available when the current context contains directory information.
+  This menu contains the following options, each applying to the directory:
 
   * :guilabel:`Add/No commit`
 
@@ -677,7 +678,7 @@ are not shown because they are not relevant to that context.
 
 * :guilabel:`Select files same status`
 
-  Select the files having the same status as the current file.
+  Select the files with the same status as the current file.
 
 * :guilabel:`Filters`
 
@@ -689,6 +690,7 @@ are not shown because they are not relevant to that context.
     Do not exclude any file from the list.
 
   * :guilabel:`Hide all status`
+  
     Remove all files from the list.
 
   * :guilabel:`Show <status>`
@@ -730,7 +732,7 @@ where:
   Horizontal tab (or 8 spaces)
 
 You can supply the *name* and *<e-mail>* items automatically by setting the
-:command;`GPS_CHANGELOG_USER` environment variable. There are two spaces
+:command:`GPS_CHANGELOG_USER` environment variable. There are two spaces
 between the *name* and the *<e-mail>*:
 
 On :program:`sh` or :program:`bash` shell::

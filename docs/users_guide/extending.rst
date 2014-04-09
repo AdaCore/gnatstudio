@@ -21,15 +21,15 @@ The Preferences Dialog
 
 .. image:: preferences-general.png
 
-This dialog, available through the :menuselection:`Edit-->Preferences...`
-menu, allows you to modify GPS's global preferences GPS.  Changes are
+This dialog, available through the :menuselection:`Edit --> Preferences...`
+menu, allows you to modify GPS's global preferences.  Changes are
 applied as soon as you modify a setting.  Confirm your changes by pressing
 the :guilabel:`OK` button or press the :guilabel:`Cancel` button to undo
 them.
 
 A label displays the name of each preference and an editing area to modify
-its value. If hover over the label, a tool tip is displayed giving on-line
-help for the preference.
+its value. If you hover the mouse over the label, a tool tip is displayed 
+giving on-line help for the preference.
 
 The preferences dialog is composed of several areas, accessible through the
 tabs at the left.  Each page contains a set of preferences.  Some pages are
@@ -77,7 +77,7 @@ arrow, as seen in the screenshot above).
     file system encoding to Unicode.
 
     This preference indicates the file system encoding in use. It defaults
-    to ISO-8859-1, which corresponds to western european characters.
+    to ISO-8859-1, which corresponds to Western European characters.
 
   * :guilabel:`Display splash screen`
 
@@ -164,7 +164,7 @@ arrow, as seen in the screenshot above).
     You can hide this status bar to save vertical screen space. The
     progress bars will no longer be visible. Instead, you can display the
     :guilabel:`Task Manager` through the :menuselection:`Tools --> Views
-    --> Tasks` menu, to get similar information.  You can put the manager
+    --> Tasks` menu to get similar information.  You can put the manager
     on the right or left side of the GPS window, for example just below
     the :guilabel:`Project` view.
 
@@ -202,14 +202,14 @@ arrow, as seen in the screenshot above).
     .. index:: float
 
     If false, closing the window associated with a floating item puts the
-    item back in the main GPS window, but does not destroy it. If True, the
+    item back in the main GPS window, but does not destroy it. If true, the
     window is destroyed.
 
   * :guilabel:`All floating`
 
     .. index:: float
 
-    All windows are floating by default, i.e. be under the control of your
+    All windows are floating by default and are under the control of your
     system (on Windows) or window manager (on Unix machines). This replaces
     the MDI.
 
@@ -249,11 +249,11 @@ arrow, as seen in the screenshot above).
     screen.  Instead, the tabs of notebooks are highlighted.
 
     If :samp:`Central Only`, only the windows in the central area (i.e.,
-    the part that gets preserved when switching perspective, which are
+    the part that gets preserved when switching perspectives, which are
     mostly editors) have a title bar.  This is often a good way to save
-    space on the screen: the title bar is useful for editors since it gives
-    the full name of the file as well as provide an easy handle for drag
-    operations, but the other views do not change position often much and
+    space on the screen; the title bar is useful for editors since it gives
+    the full name of the file as well as providing an easy handle for drag
+    operations, but the other views do not change position often and
     it may be better to save space on the screen by not displaying their
     title bars.
 
@@ -330,7 +330,7 @@ arrow, as seen in the screenshot above).
       .. index:: highlight delimiter
 
       Whether the delimiter matching the character following the cursor is
-      highlighted. The list of delimiters includes: `{}[]()`
+      highlighted. The list of delimiters includes: `{}[]()`.
 
     .. _autosave_delay:
 
@@ -374,7 +374,7 @@ arrow, as seen in the screenshot above).
 
       * :samp:`Never`
 
-      * :samp`Always`
+      * :samp:`Always`
 
       * :samp:`Automatic`
 
@@ -402,7 +402,7 @@ arrow, as seen in the screenshot above).
       command creates a new window or terminal as needed.  If the editor
       itself does not provide this capability (such as :program:`vi` or
       :program:`pico` on Unix systems), you can use an external terminal
-      command, e.g::
+      command such as::
 
         xterm -geo 80x50 -exe vi +%l %f
 
@@ -430,7 +430,7 @@ arrow, as seen in the screenshot above).
 
       True if all editing is done with the external editor, which
       completely deactivates the internal editor. False if the external
-      editor needs is only explicitly called by the user.
+      editor is only explicitly called by the user.
 
     * :guilabel:`Smart completion`
 
@@ -443,7 +443,7 @@ arrow, as seen in the screenshot above).
 
       The timeout, milliseconds, after which the :guilabel:`Smart
       Completion` window appears automatically after entering a triggering
-      character, such as '.'
+      character, such as ".".
 
   * :guilabel:`Fonts & Colors`
 
@@ -629,7 +629,7 @@ arrow, as seen in the screenshot above).
            null;
         end case;
 
-      By default (:guilabel:`Automatic`), GPS decides whether indent an
+      By default (:guilabel:`Automatic`), GPS decides whether to indent an
       extra level based on the first :command:`when` construct: if that
       construct is indented an extra level, the whole case statement is
       indented following the RM style.
@@ -847,16 +847,16 @@ arrow, as seen in the screenshot above).
 
    * :guilabel:`Keep Windows`
 
-      The windows are cleared, but kept on the desktop. When you start a
+      The windows are cleared but kept on the desktop. When you start a
       new debugger session, the windows are automatically reused.  This
-      ensures you will not have to reopen and reposition them, but takes up
+      ensures you will not have to reopen and reposition them but takes up
       space on your screen.
 
    * :guilabel:`Hide Windows`
 
       The windows are cleared and hidden. When you start a new debugger
       session, they are automatically reused and made visible again. This
-      option also ensures you will not have to reopen and reposition them, but
+      option also ensures you will not have to reopen and reposition them but
       requires some memory.  Note that if you move other windows around
       while these are hidden, they might reappear in unexpected locations.
 
@@ -1304,7 +1304,7 @@ arrow, as seen in the screenshot above).
     .. index:: file pattern
     .. index:: location
 
-    Pattern used to parse file locations and message type from lines output
+    Pattern used to parse file locations and message type from lines outputed
     to the :guilabel:`Messages` view.  This is particularly useful when
     using an external tool such as a compiler or a search tool so GPS
     highlights and allows navigation through source locations.  The pattern
@@ -1345,7 +1345,6 @@ arrow, as seen in the screenshot above).
 
     Index of the style error identifier in the expressions in the
     :guilabel:`File pattern`.
-  * :guilabel:`Info index`
 
   * :guilabel:`Info index`
 
@@ -1414,14 +1413,14 @@ arrow, as seen in the screenshot above).
 
     .. index:: fast project loading
 
-    If the project contains a number of restrictions, this preference
-    provides major speed up when GPS parses the project. This is especially
-    noticeable if the source files are on a network drive.
+    If the project contains a number of restrictions, this preference 
+    significantly speeds up loading time when GPS parses the project. 
+    This is especially noticeable if the source files are on a network drive.
 
     GPS assumes the following restrictions are true when this preference is
     enabled. If any are false, no error is reported and there be only minor
-    effects in GPS.  For example, if will not be able to detect that two files
-    are the same if one of them is a symbolic link, although GPS stills
+    effects in GPS.  For example, it will not be able to detect that two files
+    are the same if one of them is a symbolic link, although GPS still
     warns if you are trying to overwrite a file modified on the disk.
 
     The restrictions are the following:
@@ -1487,7 +1486,7 @@ arrow, as seen in the screenshot above).
 
   * :guilabel:`Find xrefs in comments`
 
-    Try to find references to entities in comments and generate links to
+    Tries to find references to entities in comments and generate links to
     them when generating the documentation.
 
 .. _Coverage_Analysis_Preferences:
@@ -1512,8 +1511,8 @@ GPS.
 
 For example, color themes are a convenient way to change all colors in GPS
 simultaneously to predefined choices such as strongly contrasted colors or
-monochrome.  You can also have key themes, defining a set of key bindings,
-for example to emulate other editors.
+monochrome.  You can also have key themes defining a set of key bindings
+that, for example, emulate other editors.
 
 You can activate any number of themes simultaneously via the preferences
 dialog (:menuselection:`Edit --> Preferences`), which contains a list of
@@ -1524,7 +1523,7 @@ theme you selected changes the colors in the editor, these are changed
 immediately in the :menuselection:`Editor --> Fonts & Colors` menu.  Press
 :guilabel:`Cancel` to return to your previous settings
 
-If multiple themes are active and try to set the same preference, the last
+If multiple themes are active and you try to set the same preference, the last
 theme loaded by GPS overrides all previously loaded themes. However, there
 is no predefined order in which the themes are loaded, so you should not
 depend on this behavior.
@@ -1554,7 +1553,7 @@ As an example, you can use the key manager to define key bindings similar
 to what Emacs uses (such as :kbd:`Ctrl-x` followed by
 :kbd:`Ctrl-k`). To register such key bindings, press the
 :guilabel:`Grab` button and type the shortcut.  Recording of the key
-binding stops shortly after you pressed the last key.
+binding stops shortly after you press the last key.
 
 If you define complex shortcuts for menus, they will not appear next to the
 menu name when you select it with the mouse due to technical limitations in
@@ -1562,7 +1561,7 @@ the graphical toolkit that GPS uses.
 
 Assigning a new shortcut to an action causes the following:
 
-* All actions and menus currently associated with key aree no longer be
+* All actions and menus currently associated with key are no longer
   executed when the key is pressed.
 
 * All key shortcuts defined for this action are replaced by the new one;
@@ -1664,12 +1663,12 @@ own tools into the GPS platform.
 
 GPS searches for these customization files at startup in several different
 directories. Depending on where they are found, they are either
-automatically loaded by GPS (and thus can immediately modify things in
-GPS), or only be made visible in the Plug-ins Editor (see
+automatically loaded by GPS (and thus can immediately modify things in GPS)
+or may only be made visible in the :guilabel:`Plug-ins` editor (see
 :ref:`The_Plug-ins_Editor`).
 
 GPS searches these directories in the order given below. Any script loaded
-latter can override operations performed by previously loaded scripts. For
+later can override operations performed by previously loaded scripts. For
 example, they can override a key shortcut, remove a menu, or redefine a GPS
 action.
 
@@ -1691,28 +1690,30 @@ versions of GPS you should not have keep other files in these directories.
 * Not automatically-loaded, global modules
 
   The :file:`INSTALL/share/gps/library` directory contain files GPS
-  displays in the Plug-ins Editor, but does not load automatically.
-  Typically, these files add optional capabilities to GPS, for example an
-  :program:`emacs` emulation mode or additional editor capabilities that
-  many of users generally will not use.
+  displays in the :guilabel:`Plug-ins` editor but does not load
+  automatically.  Typically, these files add optional capabilities to GPS,
+  for example an :program:`emacs` emulation mode or additional editor
+  capabilities that many of users generally will not use.
 
 * :file:`GPS_CUSTOM_PATH`
 
-  Set this environment variable before launching GPS to contain a list of
+  Set this environment variable before launching GPS to be a list of
   directories, separated by semicolons (';') on Windows systems and colons
   (':') on Unix systems. All files in these directories with the
   appropriate extensions are automatically loaded by default by GPS, unless
-  overriden by the user through the Plug-ins Editor.
+  overriden by the user through the :guilabel:`Plug-ins` editor.
 
-  This is a convenient way to have project-specific customization files. You
-  can for instance create scripts, or icons, that set the appropriate value for
-  the variable and then start GPS. Depending on your project, this allows you
-  to load specific aliases which do not make sense for other projects.
+  This is a convenient way to have project-specific customization
+  files. You can, for example, create scripts or icons that set the
+  appropriate value for the variable and then start GPS. Depending on your
+  project, this allows you to load specific aliases which do not make sense
+  for other projects.
 
 * Automatically loaded user directory
 
   The directory :file:`HOME/.gps/plug-ins` is searched last. Any script in
-  it is loaded automatically unless overriden in the Plug-ins Editor.
+  it is loaded automatically unless overriden in the :guilabel:`Plug-ins`
+  editor.
 
   This is a convenient way for you to create your own plug-ins or test them
   before you make them available to all GPS users by copying them to one of
@@ -1726,8 +1727,9 @@ Python files
 
 You can format the Python plug-in in any way you want (as long as it can be
 executed by Python, of course), the following formatting is
-suggested. These plug-ins are visible in the Plug-ins Editor, so having a
-common format makes it easier for users to understand each plug-in:
+suggested. These plug-ins are visible in the :guilabel:`Plug-ins` editor,
+so having a common format makes it easier for users to understand each
+plug-in:
 
 * Comment
 
@@ -1794,8 +1796,8 @@ format is therefore::
 
 The first line after the `<?xml?>` tag should contain a comment describing
 the purpose and usage of the script.  This comment is made visible in the
-Plug-ins editor.  The list of valid XML nodes that you can specify under
-:file:`<root>` is described in later sections. It includes:
+:guilabel:`Plug-ins` editor.  The list of valid XML nodes that you can
+specify under :file:`<root>` is described in later sections. It includes:
 
 * :ref:`\<action>\ <Defining_Actions>`
 
@@ -1948,7 +1950,7 @@ The valid children of :file:`<action>` are the following XML tags:
     current and total number of steps to perform, which are used to display
     the progress indicators at the bottom-right corner of the GPS window.
     :file:`progress-current` is the ordinal of the subexpression containing
-    the current step and :file:`progress-final` is the ordinal of the
+    the current step, and :file:`progress-final` is the ordinal of the
     subexpression containing the total number of steps, which grows as
     needed. For example, :program:`gnatmake` outputs the number of the file
     it is currently compiling and the total number of files to be
@@ -2005,9 +2007,9 @@ The valid children of :file:`<action>` are the following XML tags:
 
 * :file:`on-failure`
 
-  Specifies a group of command to be executed if the previous external
-  command fails. Typically, this is used to parse the output of the command
-  and fill the :guilabel:`Locations` view appropriately
+  Specifies a command or group of commands to be executed if the previous
+  external command fails. Typically, this is used to parse the output of the 
+  command and fill the :guilabel:`Locations` view appropriately
   (see :ref:`Processing_the_tool_output`).
 
   For example, the following action spawns an external tool and parses its
@@ -2104,10 +2106,10 @@ expanded by GPS just prior to executing the command, for example "%f" and
 
 More information on chaining commands is provided in :ref:`Chaining_commands`.
 
-Some actions are also predefined in GPS itself. This include, for example,
+Some actions are also predefined in GPS itself. This includes, for example,
 aliases expansion and manipulating MDI windows. You can display all known
 actions (both predefined and the ones you defined in your own customization
-files) opening the key shortcut editor using the :menuselection:`Edit -->
+files) by opening the key shortcut editor using the :menuselection:`Edit -->
 Key shortcuts` menu.
 
 .. _Macro_arguments:
@@ -2120,7 +2122,7 @@ Macro arguments
 .. index:: substitution
 
 You use macro arguments to pass parameters to shell or external commands in
-a actions you define. Macro arguments are special parameters that are
+any actions you define. Macro arguments are special parameters that are
 transformed every time the command is executed.  The macro arguments below
 are provided by GPS.  The equivalent Python code is given for some
 arguments.  This code is useful when you are writing a full python script.
@@ -2135,7 +2137,7 @@ arguments.  This code is useful when you are writing a full python script.
 * :file:`%builder`
 
   Replaced by the default builder configured in GPS.  This can be
-  :program:`gnatmake` if your project contains only Ada code or
+  :program:`gnatmake` if your project contains only Ada code, or
   :program:`gprbuild` for non-Ada or multi-language projects.  This macro
   is only available in commands defined in the :guilabel:`Build Manager`
   and :guilabel:`Build Launcher` dialogs.
@@ -2165,8 +2167,8 @@ arguments.  This code is useful when you are writing a full python script.
 * :file:`%ef`
 
   Name of the entity the user clicked on, possibly followed by "(best
-  guess)" if there is an ambiguity, for example because cross-reference
-  information is not up-to-date.
+  guess)" if there is an ambiguity, which may, for example, be due to
+  cross-reference information not being up-to-date.
 
 * :file:`%E`
 
@@ -2311,7 +2313,7 @@ arguments.  This code is useful when you are writing a full python script.
 * :file:`%PPs`
 
   Similar to :;file:`%PP`, except it returns the project name
-  prepended with :command:`-P` or an empty string if the root project
+  prepended with :command:`-P`, or an empty string if the root project
   is the default project.  This is intended mostly for use with the
   GNAT command line tools.
 
@@ -2383,8 +2385,8 @@ arguments.  This code is useful when you are writing a full python script.
 * :file:`%switches(tool)`
 
   Value of :command:`IDE'Default_Switches (tool)`.  If you have a tool
-  whose switches are defined via an xml file in GPS, they are stored as
-  :guilabel:`Default_Switches (xxx)` in the :guilabel:`IDE` package and you
+  whose switches are defined via an XML file in GPS, they are stored as
+  :guilabel:`Default_Switches (xxx)` in the :guilabel:`IDE` package, and you
   can retrieve them using this macro. The result is a list of switches, or
   an empty list if none.
 
@@ -2455,9 +2457,9 @@ arguments.  This code is useful when you are writing a full python script.
 
   The literal :kbd:`%` character.
 
-Another type of macros is expanded before commands are executed: They start
+Another type of macros are expanded before commands are executed: they start
 with the :kbd:`$` character and represent parameters passed to the action
-by its caller. Depending on the context, GPS passes zero, one, or many
+by its caller. Depending on the context, GPS passes zero, one or many
 arguments to a action. You will commonly use these macros when you define
 your own VCS system.  Also see the shell function :file:`execute_action`,
 which executes an action and passes it arguments.
@@ -2549,7 +2551,7 @@ You can use one of several types of restrictions:
   using the :file:`<filter>`, :file:`<filter_and>` and :file:`<filter_or>`
   tags.  Use these tags to further restrict when the command is valid. For
   example, you can use them to specify that the command only applies to
-  Ada files or only if a source editor is currently selected.
+  Ada files, or only if a source editor is currently selected.
 
 The filters tags
 ^^^^^^^^^^^^^^^^
@@ -2896,7 +2898,7 @@ attributes:
   console. The name of your contextual menu item is the value of the
   :file:`<title>` child.
 
-  there is no guarantee the new menu item will appear just before the
+  There is no guarantee the new menu item will appear just before the
   specified item. For example, it will not if the new item is created before
   the specified menu item or if a later contextual menu item also specified
   it must be displayed before the same item.
@@ -2915,10 +2917,10 @@ attributes:
   other. Items with the same group number appear before all items with a
   larger group number.
 
-The :file:`<contextual>` tag accepts one child tag, :file:`<Title>` which
+The :file:`<contextual>` tag accepts one child tag, :file:`<Title>`, which
 specifies the name of the menu item. If not specified, the menu item uses
 the name of the action. The title is the full path to the new menu item,
-like in the :file:`<menu>` tag.  Can create submenus by using a title of
+like in the :file:`<menu>` tag.  You can create submenus by using a title of
 the form :command:`Parent1/Parent2/Menu`.  You can use macro arguments in
 the title, which are expended based on the current context. See
 :ref:`Macro_arguments`.
@@ -2994,11 +2996,11 @@ attributes:
 * :file:`on-changed` (default)
 
   Name of a GPS action to execute whenever the user selects a new value in
-  the combo box. This action is called with two parameters, the unique id
+  the combo box. This action is called with two parameters: the unique id
   of the combo box and the newly selected text.
 
 It also accepts any number of `<choice>` tags, each of which defines one
-values the user can choose from. These tags accepts one optional attribute,
+value the user can choose from. These tags accept one optional attribute,
 :file:`on-selected`, which is the name of a GPS action to call when that
 value is selected::
 
@@ -3013,10 +3015,10 @@ value is selected::
         <choice on-selected="gnu-selected">Gnu</choice>
      </entry>
 
-GPS provides a more convenient interface exists for Python, the
+GPS provides a more convenient interface for Python, the
 :file:`GPS.Toolbar` class, which provides the same flexibility as above,
 but also gives you dynamic control over the entry and allows placement of
-buttons at arbitrary positions in the toolbar. See the python
+buttons at arbitrary positions in the toolbar. See the Python
 documentation.
 
 .. _Binding_actions_to_keys:
@@ -3031,7 +3033,7 @@ All actions can be bound to specific key shortcuts through the
 :file:`<key>` tag.  It requires one :file:`action` attribute to specify
 what to do when the key is pressed. The name of the action can start with a
 '/' to indicate that a menu should be executed instead of a user-defined
-action.  If the action is the empty string, then instead the key is no
+action.  If the action is specified as an empty string, the key is no
 longer bound to any action.
 
 This tag does not contain any child tags. Instead, its text contents
@@ -3039,11 +3041,11 @@ specifies the keyboard shortcut. The name of the key can be prefixed by
 :command:`control-`, :command:`alt-`, :command:`shift-` or any combination
 of these to specify the key modifiers to apply.
 
-You can also define multiple key bindings similar to Emacs's by separating
+You can also define multiple key bindings similar to Emacs' by separating
 them by a space. For example, :command:`control-x control-k` means the user
 should press :kbd:`Ctrl-x`, followed by a :kbd:`Ctrl-k` to activate
 the corresponding action. This only works if the first key is not already
-bound to an action. If it is, you first unbind it by passing an empty
+bound to an action. If it is, you must first unbind it by passing an empty
 action to :file:`<key>`.
 
 Use an empty string as the key binding if you wish to deactivate a
@@ -3067,7 +3069,7 @@ When GPS processes a :file:`<key>` tag, it does the following:
 
 * Removes all actions bound to that key.  This ensures that any action
   previously associated with it, either by default in GPS or in some other
-  XML file, is no longer be executed.
+  XML file, is no longer executed.
 * Adds the new key to the list of shortcuts that can execute the
   action. Any existing shortcut for the action is preserved, allowing
   multiple shortcuts for the action.
@@ -3086,7 +3088,7 @@ GPS contains a number of predefined preferences to configure its
 behavior and appearance, which are all customizable through the
 :menuselection:`Edit --> Preferences` menu.
 
-You can add of preferences for your extension modules through the usual GPS
+You can add preferences for your extension modules through the usual GPS
 customization files.  Preferences are different from project attributes
 (see :ref:`Defining_project_attributes`); the latter varies depending on
 which project is loaded by the user, while preferences are always set to
@@ -3155,7 +3157,7 @@ accepts the following attributes:
     possible values, each of which is defined in by a :file:`<choice>`
     child of the :file:`<preference>` node.
 
-here is an example that defines a few new preferences::
+Here is an example that defines a few new preferences::
 
   <?xml version="1.0"?>
   <custom>
@@ -3203,8 +3205,8 @@ customization files through the :file:`<pref>` tag. This is the same tag
 used by GPS itself when it saves the preferences edited via the preferences
 dialog.
 
-This tag requires one attribute, :file:`name`, which is the name of the
-preference of which you are setting a default value.  These names are
+This tag requires one attribute, :file:`name`, the name of the
+preference for which you are setting a default value.  These names are
 defined when the preference is registered in GPS.  You can find them by
 looking at the :file:`$HOME/.gps/preferences` file for each user or by
 looking at one of the predefined GPS themes.
@@ -3214,7 +3216,7 @@ the default value of the preference, which is used unless the user has
 overridden it in his own preferences file.
 
 Any setting you defined in the customization files is overridden by a
-specification of that preference in the user's preferences file
+specification of that preference in the user's preferences file.
 
 The :file:`<pref>` tag is mostly intended for use in themes (see
 :ref:`Creating_themes`).
@@ -3249,7 +3251,7 @@ This tag accepts the following attributes:
 
   Name of the category in which the theme should be presented in the
   preferences dialog. Categories are currently only used to organize
-  themes graphically. GPS creates a categories automatically if you
+  themes graphically. GPS creates a category automatically if you
   choose one that has not previously been created.
 
 This tag accepts any other customization tags including setting preferences
@@ -3264,13 +3266,13 @@ description and category for the theme.
 .. highlight:: xml
 
 All child tags of the theme are executed when the user activates the theme
-in the preferences dialog. there is no strict ordering of the child tags.
+in the preferences dialog. There is no strict ordering of the child tags.
 The default order is the same as for the customization files themselves:
 first the predefined themes of GPS, then the ones defined in customization
 files found through the :file:`GPS_CUSTOM_PATH` directories, and finally
 the ones defined in files found in the user's own GPS directory.
 
-here is an example of a theme::
+Here is an example of a theme::
 
   <?xml version="1.0" ?>
   <my-plug-in>
@@ -3292,7 +3294,7 @@ C and C++. These are generally complex regular expressions, presented in
 the dialog with a more descriptive name. For example, :guilabel:`Ada
 assignment`.
 
-Define your own search patterns in the customization files usin the
+Define your own search patterns in the customization files using the
 :file:`<vsearch-pattern>` tag. This tag can have the following child tags:
 
 * :file:`<name>`
@@ -3304,14 +3306,13 @@ Define your own search patterns in the customization files usin the
 * :file:`<regexp>`
 
   Regular expression to use when the pattern is selected by the user. Be
-  careful to must protect reserved XML characters such as :kbd:`<` and
+  careful to protect reserved XML characters such as :kbd:`<` and
   replace them by their equivalent expansion (:command:`&lt;` in that
   case).
 
-  This tags accepts one optional attribute, :file:`case-sensitive`, which
-  contains one of two possible values (:command:`true` or :command:`false`)
-  to specify whether the search should distinguish lower case and upper
-  case letters.  The default is :command:`false`.
+  This tag accepts one optional attribute, :file:`case-sensitive` a
+  boolean that specifies whether the search should distinguish lower
+  case and upper case letters.  The default is :command:`false`.
 
 * :file:`<string>`
 
@@ -3322,7 +3323,7 @@ Define your own search patterns in the customization files usin the
 
 .. highlight:: xml
 
-here is a small example, showing how the :guilabel:`Ada assignment` pattern is
+Here is a short example, showing how the :guilabel:`Ada assignment` pattern is
 defined::
 
   <?xml version="1.0" ?>
@@ -3378,8 +3379,8 @@ The following child tags are available:
 
 * :file:`<Extension>`
 
-  String identifying one of the valid filetypes for this
-  language.  You can specify several such children.
+  String identifying one of the valid filetypes for this language.
+  You can specify several such children.
 
 * :file:`<Keywords>`
 
@@ -3391,7 +3392,7 @@ The following child tags are available:
   append to the parent :file:`<Keywords>` by providing a :file:`mode`
   attribute set to :command:`append` (the default for :file:`mode` is
   :command:`override`, where the :file:`<Keywords>` definition replaces the
-  one from the parent.
+  one from the parent).
 
   You can find the full grammar for regular expression in the spec of the
   file :file:`g-regpat.ads` in the GNAT run time.
@@ -3419,12 +3420,12 @@ The following child tags are available:
     A regular expression defining the beginning of a single line comment
     that ends at the next end of line. This regular expression may contain
     multiple possibilities, such as :command:`;|#` for comments starting
-    after a semicolon or after the pound sign.  You you specified a parent
+    after a semicolon or after the pound sign. If you specified a parent
     language, you can append to the parent's
     :file:`<New_Line_Comment_Start>` by including a :file:`mode` attribute
     with a value of :command:`append` (the default is :command:`override`,
     meaning the :file:`<New_Line_Comment_Start>` definition replaces the
-    parent's one.
+    one in the parent).
 
   * :file:`<String_Delimiter>`
 
@@ -3604,9 +3605,9 @@ preference), GPS replaces the string by the text you have associated with it.
 
 Alias names can contain any character except newline but must start with a
 letter. GPS looks backward to the start of the word before the current
-cursor position and if the characters between there and the cursor position
-is an alias name (using a case insensitive comparison), it expands the
-alias.
+cursor position, and if the characters between there and the cursor
+position is an alias name (using a case insensitive comparison), it expands
+the alias.
 
 .. index:: screen shot
 .. image:: aliases.jpg
@@ -3619,7 +3620,7 @@ whether the editor displays read-only aliases (i.e., system-wide aliases).
 
 The second part displays the expansion text for the alias, at the bottom
 right corner. This text can span multiple lines and contain macros, which
-are displayed in a different color. You can insert these macro either by
+are displayed in a different color. You can insert these macros either by
 typing their symbols (as shown below) or by right-clicking in the editor
 and selecting the entity in the contextual menu.
 
@@ -3690,7 +3691,7 @@ GPS preserves the indentation of the alias when it is expanded. All lines
 are indented the same as the alias name. You can override this default
 behavior by selecting the checkbox :guilabel:`Indent source editor after
 expansion`.  In that case, GPS replaces the name of the alias by its
-expansion and then recompute the position of each line with its internal
+expansion and then recomputes the position of each line with its internal
 indentation engine as if the text had been inserted manually.
 
 The third part of the alias editor, the top right corner, lists the
@@ -3699,7 +3700,7 @@ parameters for the currently selected alias.  Whenever you insert a
 deleted parameter references and updates the list of parameters to show the
 current list.
 
-Each parameters has three attributes:
+Each parameter has three attributes:
 
 * :file:`name`
 
@@ -3732,11 +3733,10 @@ to look for aliases definitions.  All customization files are treated as
 read-only by GPS and therefore cannot be edited through its graphical
 interface.  You can override some of the aliases in your own custom files.
 The system files are loaded first and aliases defined there can be
-overridden by the user-defined file.  there is one specific files which must
-contain only aliases definition. This is the file
-:file:`$HOME/.gps/aliases`. Whenever you edit aliases graphically, or
-create new ones, they are stored in this file, which is the only one GPS
-ever modifies automatically.
+overridden by the user-defined file.  There is one specific files which must
+contain only aliases definitions: :file:`$HOME/.gps/aliases`. Whenever you 
+edit aliases graphically or create new ones, they are stored in this file, 
+which is the only one GPS ever modifies automatically.
 
 These files are standard XML customization files.  The XML tag to use is
 :file:`<alias>`, one per new alias.  The following example contains a
@@ -3748,9 +3748,9 @@ The following child tags are supported:
 * :file:`<alias>`
 
   Indicates the start of a new alias. It has one mandatory attribute,
-  :file:`name`, the text to type editor before pressing :kbd:`Ctrl-o`, and
-  one optional attribute, :file:`indent`, which, if set to :command:`true`,
-  tell GPS to recompute the indentation of the newly inserted paragraph
+  :file:`name`, the text to type before pressing :kbd:`Ctrl-o`, and
+  one optional attribute, :file:`indent`, which, if set to :command:`true`
+  tells GPS to recompute the indentation of the newly inserted paragraph
   after the expansion.
 
 * :file:`<param>`
@@ -3766,7 +3766,7 @@ The following child tags are supported:
 
 .. highlight:: xml
 
-here is an example of an alias definition in a configuration file::
+Here is an example of an alias definition in a configuration file::
 
   <?xml version="1.0"?>
   <Aliases>
@@ -3878,13 +3878,13 @@ The :file:`<project_attribute>` tag accepts the following attributes:
   Only relevant if the project attribute contains a list of values, when it
   indicates whether the order of the values is relevant.  In most cases,
   it is not.  However, the order of source directories, for example,
-  matters, since it also indicates where GPS searches for the source files
+  matters since it also indicates where GPS searches for the source files,
   and it stops at the first match.
 
 * :file:`omit_if_default` (boolean, default :command:`true`)
 
   Whether the project attribute should be set explicitly in the project if
-  the user left it to its default value.  Enable this to keep the project
+  the user left it with its default value.  Enable this to keep the project
   files as simple as possible if all the tools using this attribute know
   about the default value. Otherwise, set it :command:`false` to always
   emit the definition of the project attribute.
@@ -3914,12 +3914,12 @@ The :file:`<project_attribute>` tag accepts the following attributes:
 
 * :file:`hide_in` (string)
 
-  Context in which this attribute GPS will not allow graphical editing of this
-  attribute.  GPS provides three such contexts (:command:`wizard`,
-  :command:`library_wizard`, and :command:`properties`, corresponding to
-  the project creation wizards and the project properties editor). If any
-  of those context is specified, GPS will not display the widget to edit this
-  attribute.  Use this to keep the graphical interface simple.
+  Context in which GPS will not allow graphical editing of this attribute.
+  GPS provides three such contexts (:command:`wizard`, :command:`library_wizard` 
+  and :command:`properties` corresponding to the project creation wizards and
+  the project properties editor). If any of those contexs are specified, GPS 
+  will not display the widget to edit this attribute.  Use this to keep the 
+  graphical interface simple.
 
 * :file:`disable_if_not_set` (boolean, default :command:`false`)
 
@@ -3928,7 +3928,7 @@ The :file:`<project_attribute>` tag accepts the following attributes:
   specify this, since the default value of the attribute can populate that
   field.  However, when the value of the attribute is automatically
   computed depending on other attributes, you cannot specify the default
-  value in the XML file and it might be simpler to grey out the field. A
+  value in the XML file, and it might be simpler to grey out the field. A
   checkbox is displayed next to the attribute so the user can choose to
   enable the field and add the attribute to the project.
 
@@ -4032,12 +4032,12 @@ The type of the project attribute is specified by child tags of
 .. index:: <index>
 .. index:: <specialized_index>
 
-Sometimes the type of the project attribute or its default value, depends
-on what the attribute applies to. The project file support this in the form
-of indexed project attributes. This, for example, is used to specify the
-name of the executable generated when compiling each of the main files in
-the project (e.g., the executable for :file:`gps.adb` is :file:`gps.exe`
-and the one for :file:`main.c` is :file:`myapp.exe`).
+Sometimes either the type of the project attribute or its default value
+depends on what the attribute applies to. The project file supports this in
+the form of indexed project attributes. This, for example, is used to
+specify the name of the executable generated when compiling each of the
+main files in the project (e.g., the executable for :file:`gps.adb` is
+:file:`gps.exe` and the one for :file:`main.c` is :file:`myapp.exe`).
 
 You can also declare such attributes in XML files. In such cases, the
 :file:`<project_attribute>` tag should have one :file:`<index>` child, and
@@ -4066,7 +4066,7 @@ Use the :file:`<specialized_index>` tag to override the default type of the
 attribute for specific values of the index. For example, project files
 contain an attribute specifying the name of the compiler for each language,
 which is indexed on the project attribute specifying the language used for
-each source files. Its default value depends on the language
+each source file. Its default value depends on the language
 (:program:`gnatmake` for Ada, :program:`gcc` for C, etc.). This attribute
 requires one XML attribute, :file:`value`, which is the value of the
 attribute for which the type is overriden.
@@ -4253,7 +4253,7 @@ using the :file:`<case_exceptions>` tag.  Put each exception in child tag
 of :file:`<word>` or :file:`<substring>`.  GPS uses these exceptions to
 determine the case of identifiers and keywords when editing case
 insensitive languages (except if corresponding case is set to
-:command:`Unchanged`). See :ref:`The_Preferences_Dialog`.  here is an
+:command:`Unchanged`). See :ref:`The_Preferences_Dialog`.  Here is an
 example::
 
   <?xml version="1.0" ?>
@@ -4273,7 +4273,7 @@ Adding documentation
 .. index:: <documentation_file>
 
 You can add new documentation to GPS in various ways.  You can create
-a new menu, through a :file:`<menu>` tag in configuration file,
+a new menu, through a :file:`<menu>` tag in a configuration file,
 associated with an action that either spawns an external web browser
 or calls the function :func:`GPS.Help.browse`.  However, this will not
 show the documentation in the :menuselection:`Help --> Contents` menu,
@@ -4284,7 +4284,7 @@ file.
 
 Your documentation files can contain the usual HTML links.  In addition,
 GPS treats links starting with '%' specially and considers them as script
-commands to execute instead of file to display. The following examples show
+commands to execute instead of files to display. The following examples show
 how to insert a link that, which clicked by the user, opens a file in GPS::
 
   <a href="%shell:Editor.editor g-os_lib.ads">Open runtime file</a>
@@ -4327,7 +4327,7 @@ The :file:`<documentation_file>` tag accepts the following child tags:
   does not display a menu item for this file, although it still appears
   in the :menuselection:`Help->Contents` menu
 
-  This tag accepts two attributes, :file:`before` and :file:`after` that
+  This tag accepts two attributes, :file:`before` and :file:`after`, that
   control the position of the menu item.  If the new menu is inserted in a
   submenu, the attribute controls the deeper nesting.  Parent menus are
   created as needed, but if you wish to control their display order, create
@@ -4351,7 +4351,7 @@ The following example creates a new entry :guilabel:`item` in the
 
 The directories given by the :file:`GPS_DOC_PATH` environment variable are
 searched for the HTML documentation files. However, you can also use the
-:file:`<doc_path>` XML node to define additional directories to search..
+:file:`<doc_path>` XML node to define additional directories to search.
 Such a directory is relative to the installation directory of GPS.  For
 example::
 
@@ -4379,14 +4379,14 @@ Adding stock icons
 
 You can also define 'stock icons' in an XML configuration file. Stock icons
 are pictures that are identified by their label and are used throughout GPS
-in places such as buttons, menus, and toolbars.
+in places such as buttons, menus and toolbars.
 
 You must declare stock icons using the tag :file:`<icon>` within the global
 tag :file:`<stock>`. The attribute :file:`id` is the label used to identify
 the stock icon and the attribute :file:`file` is the filename (either
 absolute or relative to the GPS icons directory) containing the actual
 picture.  If you need to read the icons from a directory relative to the
-location of the plug-in, you should use a python script like::
+location of the plug-in, you should use a Python script like::
 
     XML = r"""<GPS><stock>
         <icon id="gtk-new" file="${icons}/file.svg"/>
@@ -4435,7 +4435,7 @@ Possible values for the :file:`size` attribute are:
 
 .. highlight:: xml
 
-here is an example::
+Here is an example::
 
   <?xml version="1.0"?>
   <my_visual_preferences>
@@ -4506,7 +4506,7 @@ The following child tags are defined:
 
   * :command:`false` (default)
 
-    Use a tty emulation, a bit slower but which allows password prompts
+    Use a tty emulation, a bit slower but allows password prompt
     retrieval with some tools.
 
 * :file:`<start_command_common_arg>`
@@ -4536,7 +4536,7 @@ The following child tags are defined:
 * :file:`<send_interrupt>`
 
   Character sequence to send to the connection tool to interrupt the remote
-  application. If no specified, an Interrupt signal is sent directly to the
+  application. If not specified, an Interrupt signal is sent directly to the
   tool.
 
 * :file:`<user_prompt_ptrn>`, :file:`<password_prompt_ptrn>`,
@@ -4549,9 +4549,9 @@ The following child tags are defined:
 * :file:`<extra_ptrn>`
 
   Used to handle prompts from the connection tool other than for username,
-  password, or passphrase.  The :file:`auto_answer` attribute selects
+  password or passphrase.  The :file:`auto_answer` attribute selects
   whether GPS provides an answer to this prompt or asks the user. If
-  :command:`true`, an :file:`<answer>` child is required.  Its value is the
+  :command:`true`, a :file:`<answer>` child is required.  Its value is the
   answer to be supplied by GPS. If :command:`false`, a :file:`<question>`
   child is required.  Its value is used by GPS to ask the user a question.
   Provide this child once for every prompt that must be handled.
@@ -4566,7 +4566,7 @@ Defining a shell
 GPS already defines several shells: :program:`sh`, :program:`bash`,
 :program:`csh`, :program:`tcsh` and, on Windows, :file:`cmd.exe`). You can
 add other shells by using the :file:`<remote_shell_config>` tag which has
-one require attribute, :file:`name`, denoting the name of the shell. This
+one required attribute, :file:`name`, denoting the name of the shell. This
 name need not be same as the command used to launch the shell.
 
 The following child tags are defined:
@@ -4634,7 +4634,7 @@ By default, GPS uses the :command:`--rsh=ssh` option if :program:`ssh` is
 the connection tool used for the server. It also uses the :command:`-L`
 switch when transfering files to a Windows local host.
 
-You can possible to define additional arguments to rsync by using the
+You can define additional arguments to rsync by using the
 :file:`<rsync_configuration>` tag, which accepts :file:`<arguments>` tags
 as children, each containing additional arguments to pass to
 :program:`rsync`.
@@ -4721,7 +4721,6 @@ the following required attributes:
 * :file:`remote_path`
 
   Absolute remote path, written using remote filesystem syntax.
-  standards.
 
 * :file:`sync`
 
@@ -4756,7 +4755,7 @@ following child tags:
 
 * :file:`<description>` (required)
 
-  One-line description of what the model supports
+  One-line description of what the model supports.
 
 * :file:`<server>` (default :command:`Build Server`)
 
@@ -4877,7 +4876,7 @@ This tag accepts the following child tags:
 
   How GPS should launch the target. Possible values are
   :command:`MANUALLY`, :command:`MANUALLY_WITH_DIALOG`,
-  :command:`MANUALLY_WITH_NO_DIALOG`, and :command:`ON_FILE_SAVE`.
+  :command:`MANUALLY_WITH_NO_DIALOG` and :command:`ON_FILE_SAVE`.
 
 * :file:`<server>` (default :command:`Build_Server`)
 
@@ -4915,7 +4914,7 @@ This tag accepts the following child tags:
 Processing Target's Output
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can filter output produced by target's run using by custom code.  The
+You can filter output produced by a target's run by using custom code.  The
 list of filters already provided by GPS is shown below.  By default, each
 is executed during each run of a target.
 
@@ -4964,7 +4963,7 @@ is executed during each run of a target.
 
 * :file:`end_of_build`
 
-  cleans up internal data after a build run.
+  Cleans up internal data after a build run.
 
 See :class:`GPS.OutputParserWrapper` for examples of writing custom filter.
 
@@ -5025,7 +5024,7 @@ child tags:
 Customizing Toolchains
 ----------------------
 
-Yuo can customize the list of toolchains and their values presented in the
+You can customize the list of toolchains and their values presented in the
 project editor (see :ref:`The_Project_Wizard`) with the XML configuration
 files.  GPS's default list is contained in :file:`toolchains.xml`. You can
 add your own toolchain by providing an XML description with the
@@ -5077,11 +5076,11 @@ Adding support for new tools
 .. index:: external tool
 .. index:: <tool>
 
-GPS has built-in support for many external tools.  This of tools is
+GPS has built-in support for many external tools.  This list of tools is
 frequently enhanced, so if you are planning to use the external tool support
 in GPS, check the latest GPS version available.
 
-You can use this feature to support a additional tools (in particular,
+You can use this feature to support additional tools (in particular,
 different compilers). You need to do following to successfully use a tool:
 
 * Specify its command line switches
@@ -5198,13 +5197,13 @@ the tool is only called through custom menus, you can hardcode some or all
 of the switches. However, it is usually better to use the project properties
 editor so the user can specify project-specific switches.
 
-This is what GPS does by default for Ada, C and C++. Look the GPS
+This is what GPS does by default for Ada, C and C++. Look at the GPS
 installation directory to see how the switches for these languages are
 defined in an XML file. These provide extended examples of the use of
 customization files.
 
 The switches editor in the project properties editor provides a powerful
-interface to the command line, allowing the user can edit the command line
+interface to the command line, allowing the user to edit the command line
 both as text and through GUI widgets.
 
 In customization files, the switches are declared with the
@@ -5277,7 +5276,7 @@ consistency, most of these child tags accept the following attributes:
 
   Defined in `<check>` tags, where it specified the switch used for
   deactivating the relevant feature. Use this for features that are enabled
-  by default, but can be disabled.
+  by default but can be disabled.
 
 * :file:`section`
 
@@ -5300,7 +5299,7 @@ consistency, most of these child tags accept the following attributes:
 * :file:`min` (default :command:`1`), :file:`max` (default :command:`1`)
 
   Only supported for :file:`<spin>` tags.  Specifies the minimum or
-  maximum (respectively)value allowed for the switch.
+  maximum (respectively) value allowed for the switch.
 
 * :file:`default` (default :command:`1`)
 
@@ -5313,7 +5312,7 @@ consistency, most of these child tags accept the following attributes:
 
 * :file:`value` (required)
 
-  Only valid for `<combo-entry>` tags and documentd there.
+  Only valid for `<combo-entry>` tags and documented there.
 
 * :file:`separator`
 
@@ -5347,8 +5346,8 @@ Here are the valid children for :file:`<switches>`:
   of :file:`switch-off` to the command line.
 
   Accepts the :file:`line`, :file:`column`, :file:`label`, :file:`switch`,
-  :file:`switch-off`, :file:`section`, :file:`default`, :file:`before` and
-  :file:`tip` attributes and you can specify an optional :file:`<tip>`
+  :file:`switch-off`, :file:`section`, :file:`default`, :file:`before`, and
+  :file:`tip` attributes, and you can specify an optional :file:`<tip>`
   child.
 
 * :file:`<spin>`
@@ -5390,8 +5389,8 @@ Here are the valid children for :file:`<switches>`:
 
   You can specify an optional :file:`<tip>` child tag.  This tag accepts
   the :file:`line`, :file:`column`, :file:`label`, :file:`switch`,
-  :file:`section`, :file:`separator`, :file:`before`, and :file:`tip`
-  attributes and the following additional attributes:
+  :file:`section`, :file:`separator`, :file:`before` and :file:`tip`
+  attributes, and the following additional attributes:
 
   * :file:`as-directory`
 
@@ -5436,7 +5435,7 @@ Here are the valid children for :file:`<switches>`:
 
   Displays a button that, when clicked, displays a dialog with some
   additional switches. This dialog, like the switches editor itself,
-  is organizes into lines and columns of frames, the number of which
+  is organized into lines and columns of frames, the number of which
   is provided by the :file:`lines` and :file:`columns` attributes.
 
   This tag accepts those attributes as well as the :file:`label` attribute and
@@ -5450,7 +5449,7 @@ Here are the valid children for :file:`<switches>`:
   the :guilabel:`Debug Information` switch is selected for
   :guilabel:`Make`, we need to force it for the compiler as well.
 
-  This tag supports the followin additional attributes:
+  This tag supports the following additional attributes:
 
   * :file:`master-page`, :file:`master-switch`, :file:`master-section`
 
@@ -5459,7 +5458,7 @@ Here are the valid children for :file:`<switches>`:
     :command:`-g`.  The switch referenced by these attributes must be
     of type :file:`<check>` or :file:`<field>`. If it is part of a
     section, you must also specify the :file:`master-section`
-    attribute. If the uses selects the check button of the this
+    attribute. If the user selects the check button of the this
     switch, GPS forces the selection of the check button for the slave
     switch. Likewise, if user sets the field to any value, GPS sets
     the slave switch to that same value. 
@@ -5480,7 +5479,7 @@ Here are the valid children for :file:`<switches>`:
     does not enable debug information for :program:`make`, nothing is
     changed for the compiler debug information.  If you specify
     :command:`off` for :file:`master-status` and the master switch is
-    a field, GPS changs the status of the slave when the users does not
+    a field, GPS changes the status of the slave when the user does not
     specify any value in the master switch's field.
 
 * :file:`<default-value-dependency>`
@@ -5518,7 +5517,7 @@ Here are the valid children for :file:`<switches>`:
   Describe how switches are grouped together on the command line to keep it
   shorter. It also defines aliases between switches.
 
-  it is easier to explain the functioning of this tag with an
+  It is easier to explain the functioning of this tag with an
   example. Specifying the GNAT switch :command:`-gnatyy` is equivalent to
   specifying :command:`-gnaty3abcefhiklmnprst`. This is a style check
   switch with a number of default values.  But it can also be decomposed it
@@ -5789,8 +5788,8 @@ output, for further integration of the tool in GPS.
   Please refer to the online help for this command to get more information (by
   typing `help Locations.parse` in the GPS Shell).
 
-  here is a small example showing how to run a make command and send the
-  errors to the :guilabel:`Locations` view..
+  Here is a short example showing how to run a make command and send the
+  errors to the :guilabel:`Locations` view.
 
   For languages that support it, it is recommended that you quote the
   argument with triple quotes (see :ref:`The_GPS_Shell`), so that any
@@ -5957,7 +5956,7 @@ number is increasing daily. These commands are similar to what is available
 to those who extend GPS directly in Ada, but with major advantages: they
 do not require recompilation of the GPS core and can be tested and executed
 interactively.  The goal of such scripts is to help automate processes such
-as builds, and automatic generation of graphs.
+as builds and generation of graphs.
 
 These languages all have a separate console associated with them, which you
 can open from the :guilabel:`Tools` menu. In each of these console, GPS
@@ -6013,7 +6012,7 @@ Scripts and GPS actions
 
 .. index:: execute_action
 
-there is a strong relationship between GPS actions, as defined in the
+There is a strong relationship between GPS actions, as defined in the
 customization files (:ref:`Defining_Actions`), and scripting languages.
 You can bind actions to menus and keys through the customization files or
 the :menuselection:`Edit --> Key shortcuts` dialog.  These actions can
@@ -6047,9 +6046,9 @@ The GPS Shell
 
 .. index:: gps shell
 
-The GPS shell is a very simple-minded, line-oriented language. it is
+The GPS shell is a very simple-minded, line-oriented language. It is
 accessible through the :guilabel:`Shell` window at the bottom of the GPS
-window and is similar to a Unix shell or a command window on Windows
+window and similar to a Unix shell or a command window on Windows
 systems.
 
 Type :command:`help` at the prompt to get the list of available commands,
@@ -6098,14 +6097,14 @@ for command-line scripts (see the descriptions of :command:`--eval` and
 :ref:`Customizing_through_XML_and_Python_files`).
 
 Arguments to commands can, but need not, be quoted. If they do not contain
-any space, double-quote, or newline characters, you need not quote them.
+any space, double-quote or newline characters you need not quote them.
 Otherwise, you should surround them with double-quotes and protect any
 double-quotes in the argument by preceding it with a backslash.
 
 Another way to quote a command is to use three double-quotes characters in
-a row. Any character loses its special meaning until the next three
-double-quotes characters set. This is useful if you do not know in advance
-the contents of the string you are quoting::
+a row. Any character loses its special meaning until the next set of three
+double-quote characters. This is useful if you do not know in advance the
+contents of the string you are quoting::
 
   Locations.parse """%1 """ category_name
 
@@ -6125,14 +6124,14 @@ the current version of python.
 
 If Python support has been enabled, the Python shell is accessible through
 the :guilabel:`Python` window at the bottom of the GPS window. You can also
-also display it by using the :menuselection:`Tools --> Consoles --> Python`
-menu.  The full documentation on what GPS makes visible through python is
-available using the :menuselection:`Help --> Python extensions` menu.
+display it by using the :menuselection:`Tools --> Consoles --> Python` menu.
+The full documentation on what GPS makes visible through Python is available
+from the :menuselection:`Help --> Python extensions` menu.
 
 The same example as shown for the GPS shell follows, now using Python.  As
 you notice, the name of the commands is similar, although they are not run
 exactly in the same way. Specifically, GPS uses the object-oriented aspects
-of python to create classes and instances of these classes.
+of Python to create classes and instances of these classes.
 
 In the first line, a new instance of the class Entity is created through
 the :func:`create_entity` function. Various methods can then be applied to
@@ -6143,7 +6142,7 @@ to that entity in the :guilabel:`Locations` view::
   >>> e.find_all_refs()
 
 The screen representation of the classes exported by GPS to Python has been
-modified, so most GPS functions return an instance of a class, but still
+modified, so most GPS functions return an instance of a class but still
 display their output in a user-readable manner.
 
 Python has extensive introspection capabilities. Continuing the
@@ -6212,7 +6211,7 @@ available and thus any script that depends on that module will fail to load
 correctly. Instead, copy your script to one of the plug-in directories, as
 documented above.
 
-If you are writing a set of python scripts for other people to use, you need
+If you are writing a set of Python scripts for other people to use, you need
 to provide the Python files themselves. This is a set of :file:`.py` files,
 which the user should install in the :file:`plug-ins` directory.
 
@@ -6233,7 +6232,7 @@ To make the Python functions accessible through GPS, you can:
 
 The following example defines a Python command that inserts a line full of
 dashes ('-') at the current cursor location. This command is associated with
-the key binding :kbd:`Ctrl-c n`, and can be distributed as a single Python
+the key binding :kbd:`Ctrl-c n` and can be distributed as a single Python
 file::
 
   # This code can be stored in a file test.py in $HOME/.gps/plug-ins
@@ -6405,7 +6404,7 @@ This is handled in different ways depending on what language you are using:
 
   * Bound methods
 
-    The last example works as expected, but is not convenient use. You can
+    The last example works as expected, but is not convenient to use. You can
     make it more convenient by using a bound method, which is a method for
     a specific instance of a class. Such a method always has an extra first
     parameter, set implicitly by Python or GPS, which is the instance of
@@ -6460,7 +6459,7 @@ This is handled in different ways depending on what language you are using:
     Any command that can be used on a process (such as :func:`send`) can
     then directly be used on instances of :class:`MyClass`.
 
-    there is one non-obvious improvement possible in the code above: the
+    There is one non-obvious improvement possible in the code above: the
     :func:`on_match` callback has one less parameter. What happens is the
     following: as per the documentation of :func:`GPS.Process.__init__`,
     GPS gives three arguments to its :func:`on_match` callback: the
@@ -6495,11 +6494,11 @@ Python inside GPS. This is not a general Python discussion.
 Hello World! in python
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Writing a python script to interact with GPS is very simple. Here we show how
+Writing a Python script to interact with GPS is very simple. Here we show how
 to create a new menu in GPS that when clicked, diplays a dialog saying the
 famous 'Hello World!'.
 
-here is the code that you need to put in :file:`hello_world.py`::
+Here is the code that you need to put in :file:`hello_world.py`::
 
   import GPS
 
@@ -6532,7 +6531,7 @@ There are various mechanisms to spawn external processes from a script:
 * Execute a GPS action through :func:`GPS.execute_action`.
 
   The action should have an :file:`<external>` XML node indicating how to
-  launch the process
+  launch the process.
 
 * Create a pipe and execute the process with :func:`os.popen()` calls.
 
@@ -6555,10 +6554,9 @@ There are various mechanisms to spawn external processes from a script:
 Redirecting the output of spawned processes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In general, you can to redirect the output of any Python script to any GPS
-window (either an already existing one or having GPS create one
-automatically) using the :file:`output` attribute of XML configuration
-files.
+In general, you can redirect the output of any Python script to any GPS
+window (either an already existing one or one GPS creates automatically) 
+using the :file:`output` attribute of XML configuration files.
 
 However, there is a limitation in Python that the output of processes
 spawned through :func:`os.exec` or :func:`os.spawn` is redirected to the
@@ -6628,14 +6626,14 @@ directory. The contextual menu entry is not visible in other contexts::
 Another example is a filter so that the contextual menu only appears when
 on a project node in the :guilabel:`Project` view. Using :command:`%P` in
 your command is not enough since the current context when you click on a
-file or directory also contain information about the project the file or
+file or directory also contains information about the project the file or
 directory belongs to.  Thus this implicit filter is not sufficient to hide
 your contextual menu.
 
 As a result, you need to do a slightly more complex test, where you check
 that the current context does not contains information on directories (which
 will disable the contextual menu for directories, files and
-entities). Since the command uses :command:`%P`, GPS garantees that a
+entities). Since the command uses :command:`%P`, GPS guarantees that a
 project is available.
 
 .. highlight:: python
@@ -6664,11 +6662,10 @@ We will implement this contextual menu in a Python file, called
 
 .. highlight:: xml
 
-The example above shows the flexibility of filters, since you can pretty
+The example above shows the flexibility of filters since you can pretty
 much do anything you wish through the shell commands. However, it is complex
-to write the above for such a simple filter. However, GPS provides a
-predefined filter for just that purpose, so you can write instead, in an
-XML file::
+to write the above for such a simple filter. GPS provides a predefined 
+filter for just that purpose, so you can write instead, in an XML file::
 
   <action name="test_filter" >
   <filter id="Explorer_Project_Node" />
@@ -6741,12 +6738,12 @@ GPS for this output. This can be done in one of two ways:
 
 .. _Reloading_a_python_file_in_GPS:
 
-Reloading a python file in GPS
+Reloading a Python file in GPS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 After you have made modification to a Python file, you may want to reload
 it. This requires careful use of Python commands.  Let's assume you have a
-python file (:file:`"mymod.py"`) containing the following::
+Python file (:file:`"mymod.py"`) containing the following::
 
   GPS.parse_xml ("""
      <action name="my_action">
@@ -6822,8 +6819,8 @@ Automatically loading python files at startup
 
 At startup, GPS automatically loads all Python files found in the
 :file:`share/gps/plug-ins` and :file:`$HOME/.gps/plug-ins` directories.  In
-addition, python files located under :file:`<prefix>/share/gps/python` can
-be imported (using the `import` command) by any python script.  You can
+addition, Python files located under :file:`<prefix>/share/gps/python` can
+be imported (using the `import` command) by any Python script.  You can
 also set the :file:`PYTHONPATH` environment variable to add other
 directories to the Python search path.
 
@@ -6861,7 +6858,7 @@ want to control what is displayed in them. There are several ways to do that:
 
      GPS.Contextual ("name").hide()
 
-  in the Python console
+  in the Python console.
 
 .. _Creating_custom_graphical_interfaces:
 
@@ -7102,10 +7099,10 @@ The type of the hook must be one of the following:
 * :command:`general`
 
   Indicates that the hook is of the general type that allows any number of
-  parameter, of any type. Other scripts are able to connect to it, but
+  parameter, of any type. Other scripts are able to connect to it but
   will not be executed when the hook is run if they do not expect the same
   number of parameters passed to :func:`Hook.run`. Other scripts in other
-  language only receive the hook name as a parameter, not the full list of
+  languages only receive the hook name as a parameter, not the full list of
   parameters.
 
 * one of the values returned by :func:`Hook.list_types`
@@ -7256,7 +7253,7 @@ To support group commit with shared log, both :file:`absolute_name` and
 :file:`atomic_commands` must be true. This is the case for the Subversion
 VCS, for example.
 
-here is an example, adapted to the use of CVS::
+Here is an example, adapted to the use of CVS::
 
      <vcs name="Custom CVS" absolute_names="FALSE">
 
@@ -7687,7 +7684,7 @@ The relevant command line switches are :command:`--server` and
 :command:`--hide`.  :command:`--server` opens a socket on the specified
 port, allowing multiple clients to connect to a running GPS and send GPS
 shell or Python commands.  :command:`--hide` tells GPS not to display its
-main window when starting.  On unix systems, you still need to have access
+main window when starting.  On Unix systems, you still need to have access
 to the current screen (as determined by the :file:`DISPLAY` environment
 variable) in this mode.  Using both switches provides a way to launch GPS
 as a background process with no initial user interface.
@@ -7819,11 +7816,11 @@ Where the following are specified:
 When deploying templates, GPS copies all files and directories present in
 the directory containing the template description file (except the Python
 file indicated as :func:`post_hook` and the template description file
-itself into the destination directory chosen by the user.
+itself) into the destination directory chosen by the user.
 
 As it deploys templates, GPS replaces strings of the form
 :command:`<variable_name>` with the value of the variable.  If
-:command:`<variable_name>` is all lower case, the substitution is convert
+:command:`<variable_name>` is all lower case, the substitution is converted
 to lower-case. If :command:`<variable_name>` is in mixed case, the
-substitution is convert into mixed case as well. If it is in upper case, the
+substitution is converted into mixed case as well. If it is in upper case, the
 substitution contains the original value specified by the user.

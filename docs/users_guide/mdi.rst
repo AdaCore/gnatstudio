@@ -8,33 +8,34 @@ Multiple Document Interface
 
 All windows (whether editors or views) that are part of the GPS environment
 are under control of what is commonly called a multiple document interface
-(MDI for short). This is a common paradigm on windowing systems, where
-related windows are put into a larger window which is itself under control
-of the system or the windows manager.
+(MDI for short). This is a common paradigm where related windows are put
+into a larger window which is itself under control of the system or the
+windows manager.
 
 By default, no matter how many editors and views you opened, your system
 still sees only one window (on Windows systems, the task bar shows only one
 icon). You can organize the GPS windows in whatever way you want, all
-inside the GPS main window.  This section describes the capacities GPS
+inside the GPS main window.  This section describes the capabilities GPS
 provides to help you do this.
 
 
 Window layout
 =============
 
-The GPS main window is organized into various area.  The most important
+The GPS main window is organized into various areas.  The most important
 distinction is between the central area (which usually occupies the most
 space) and the side areas (which include the top and bottom areas).  Some
-windows in GPS area restricted to either the central or the side areas. You
-can split each area into smaller areas, as described below.  Each area can
-contain any number of windows, organized into notebooks with tabs, possibly
-displaying names.  Right-clicking on a tab displays a contextual menu
-providing capabilities showing the :guilabel:`Tabs location` and
-:guilabel:`Tabs rotation`, which allows you to display the tabs on any side
-of the notebook or make them vertical if you want to save screen space.
+windows in the GPS area are restricted to either the central or the side
+areas.  You can split each area into smaller areas, as described below.
+Each area can contain any number of windows, organized into notebooks with
+tabs, possibly displaying names.  Right-clicking on a tab displays a
+contextual menu providing capabilities showing the :guilabel:`Tabs
+location` and :guilabel:`Tabs rotation`, which allows you to display the
+tabs on any side of the notebook or make them vertical if you want to save
+screen space.
 
 The central area can contain the source editors (which can only go there)
-as well as larger views like browsers.  The contents of the central area is
+as well as larger views like browsers.  The contents of the central area are
 preserved when switching perspectives (see below).
 
 .. index:: MDI; selecting windows
@@ -53,7 +54,7 @@ Finally, you can select windows with the omni-search, the search field in
 the global toolbar. One of the contexts for the search is the list of
 opened windows. To make things more convenient, you can bind a key shortcut
 via the :menuselection:`Edit --> Key Shortcuts` menu (the name of the
-action is :menuselection:`Search --> Global Search in context: Opened`. If
+action is :menuselection:`Search --> Global Search in context: Opened`). If
 you load the :file:`emacs.py` plugin, a standard key binding is set for
 :kbd:`control-xb`.  Any window whose name contains the specified letter
 matches the search field. For example, if you are currently editing the
@@ -161,18 +162,18 @@ Floating`.
 
 .. index:: preferences; windows --> destroy floats
 
-The second method assumes you have set the preference :guilabel:`Destroy
-Floats` in the :menuselection:`Edit --> Preferences` menu to false.  If so,
-you can close the floating window by clicking the appropriate title bar
-button; the window is put back in GPS's main windows. If you want to close
-the window, you need to click the cross button in its title bar a second
-time.
+The second method assumes you have set the preference
+:guilabel:`Destroy Floats` in the :menuselection:`Edit -->
+Preferences` menu to false.  If so, you can close the floating window
+by clicking the close button in the title bar; the window is put back
+in GPS's main windows. If you want to close the window, you need to
+click the cross button in its title bar a second time.
 
 .. index:: preferences; windows --> all floating
 
 GPS provides a mode where all windows are floating and the MDI area in the
 main window is invisible.  You may want to use this if you rely on windows
-handling facilities supported by your system or window manager but not
+handling facilities supported by your system or window manager that are not
 available in GPS, for example if you want to have windows on various
 virtual desktops and your window manager supports this.
 
@@ -191,7 +192,7 @@ containing several editors or browsers and selecting one of the
 :menuselection:`Split` entries in the :menuselection:`Window` menu.
 
 You can also drag and drop the window anywhere inside GPS.  Select an item
-to dragged by left-clicking in its title bar.  If the window is inside a
+to drag by left-clicking in its title bar.  If the window is inside a
 notebook, you can also select the notebook.  In that case, you can also
 reorder the windows within the notebook: select the tab, then start moving
 left or right to the window's new position.  Your mouse must remain within
@@ -258,7 +259,7 @@ selecting the :menuselection:`Window --> Perspectives --> Create New` menu.
 GPS sometimes automatically changes perspectives. For example, if you start
 a debugger, it switches to the perspective called :guilabel:`Debug` if one
 exists. When the debugger terminates, you are switched back to the
-:guilabel:`Default` perspective, if one exists).
+:guilabel:`Default` perspective, if one exists.
 
 When you leave a perspective, GPS automatically saves its contents
 (including which windows are opened and their location) so when you return

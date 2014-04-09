@@ -42,7 +42,7 @@ After the debugger has been initialized, you have access to two new
 windows: the data browser (in the top of the working area) and the debugger
 console (in a new page, after the :guilabel:`Messages` and
 :guilabel:`Shell` windows).  You can now access any of the menus under
-:menuselection:`Debugger` and you also have access to additional contextual
+:menuselection:`Debugger`, and you also have access to additional contextual
 menus, in particular in the source editor where you can easily display
 variables, set breakpoints, and get automatic displays (via tooltips) of
 object values.
@@ -248,7 +248,7 @@ items. Failure to do so will result in empty windows.
 * :menuselection:`Debug --> Data --> Data Window`
 
   Displays the :guilabel:`Data` browser. If it already exists, it is raised
-  so it becomes visible
+  so it becomes visible.
 
 .. index:: menu; debug --> data --> call stack
 
@@ -263,7 +263,7 @@ items. Failure to do so will result in empty windows.
 
   Opens a new window containing the list of threads currently present in
   the executable as reported by the underlying debugger. For each thread,
-  it gives language- and debugger-dependent information such as internal
+  it gives language- and debugger-dependent information such as the internal
   identifier, name and status.  Refer to the underlying debugger's
   documentation for more details.  Like other similar commands, the process
   being debugged needs to be stopped before using this.  If not, GPS will
@@ -354,7 +354,7 @@ items. Failure to do so will result in empty windows.
 
   Opens a small dialog letting you specify an arbitrary expression in the
   :guilabel:`Data` browser. This expression can be a variable name or a
-  more complex expression, following the syntax of the underlying debugger.
+  more complex expression following the syntax of the underlying debugger.
   (See the debugger documentation for more details on the syntax.)  Enable
   the check button :guilabel:`Expression is a subprogram call` if the
   expression is actually a debugger command (e.g, :command:`p/x var`) or a
@@ -392,7 +392,7 @@ display in the call stack window (via check buttons):
 
 * :menuselection:`Frame number`:
 
-  The debugger frame number (usually starts at 0 or 1)
+  The debugger frame number (usually starts at 0 or 1).
 
 * :menuselection:`Program Counter`:
 
@@ -400,11 +400,11 @@ display in the call stack window (via check buttons):
 
 * :menuselection:`Subprogram Name`:
 
-  The name of the subprogram
+  The name of the subprogram.
 
 * :menuselection:`Parameters`:
 
-  The parameters to the subprogram
+  The parameters to the subprogram.
 
 * :menuselection:`File Location`:
 
@@ -462,7 +462,7 @@ following information:
   * The name of the expression: this is the expression or variable
     specified when creating the box.
 
-  * An icon representing either a flashlight, or a lock.
+  * An icon representing either a flashlight or a lock.
 
     This is a clickable icon that changes the state of the box from
     automatically updated (the flashlight icon) to frozen (the lock icon).
@@ -536,8 +536,8 @@ by the pointer, gives access to the following menus:
   Enables or disables the automatic refreshing of the item on program
   execution (e.g step, next).
 
-The :guilabel:`Data` browser has a local menu bar containing a number of
-useful buttons:
+The :guilabel:`Data` browser has a local menu bar containing a number
+of useful buttons:
 
 * :guilabel:`Align On Grid`
 
@@ -577,10 +577,10 @@ Manipulating items
 Moving items
 ^^^^^^^^^^^^
 
-You can manipulated all the items with your mouse.  You can move them
-anywhere within the browser.  If you try to move an item outside of the
-visible area of the browser, GPS scroll it to make the new position
-visible.
+You can manipulate all items with your mouse, and you can move them
+anywhere within the browser.  If you try to move an item outside of
+the visible area of the browser, GPS scrolls the browser to make the
+new position visible.
 
 GPS also provides automatic scrolling if you move the pointer while
 dragging an item near the borders of the browser.  While the pointer
@@ -592,7 +592,7 @@ Colors
 ^^^^^^
 
 Most of the items are displayed using several colors, each conveying a
-special meaning.  The default the meaning of each colors is as follows
+special meaning.  The default meaning of each colors is as follows
 (the colors can be changed through the preferences dialog):
 
 .. image:: colors.jpg
@@ -646,7 +646,7 @@ following special meanings:
   to visualize the interesting parts of these variables.
 
   Double-clicking on icon expands the hidden part and clicking on any
-  subrectangle in the display of the variable hides that part and replace
+  subrectangle in the display of the variable hides that part and replaces
   it with this icon.
 
   See also the description of the contextual menu to automatically show or
@@ -700,12 +700,12 @@ In VxWorks AE breakpoints have two extra properties:
 
     The breakpoint only affects the task that was active when the
     breakpoint was set. If the breakpoint is set before the program is run,
-    the breakpoint affects the environment task
+    the breakpoint affects the environment task.
 
   * pd:
     .. index:: protection domain
 
-    Any task in the current protection domain is affected by the breakpoint
+    Any task in the current protection domain is affected by the breakpoint.
 
   * any:
 
@@ -718,11 +718,11 @@ In VxWorks AE breakpoints have two extra properties:
 
   * task: only the task that hit the breakpoint.
 
-  * pd: all tasks in the current protection domain
+  * pd: all tasks in the current protection domain.
 
-  * all: all stoppable tasks in the system
+  * all: all stoppable tasks in the system.
 
-You set of change these properties through the advanced breakpoints
+You set and change these properties through the advanced breakpoints
 characteristics by clicking on the :guilabel:`Advanced` button. There are
 two ways of setting these properties:
 
@@ -786,7 +786,7 @@ memory in order of ascending or descending addresses respectively.
 
 Finally, modify a memory area by clicking on the location you want to
 modify and entering the new values. Modified values appear in a different
-color (red by default) and are only be written to the target when you click
+color (red by default) and are only written to the target when you click
 on the :guilabel:`Submit changes` button. Clicking on :guilabel:`Undo
 changes` or going up or down in the memory also undoes your editing.
 
@@ -806,7 +806,7 @@ information:
   Blue dots are shown next to lines for which the debugger has debug
   information, i.e., lines that have been compiled with debug information
   and for which the compiler has generated some code.  If you try to set a
-  breakpoint on lines not so marked, GPS send the breakpoint command to the
+  breakpoint on lines not so marked, GPS sends the breakpoint command to the
   underlying debugger, which usually (e.g in the case of :program:`gdb`)
   results in setting a breakpoint at the closest location to the file and
   line you specified.
@@ -876,7 +876,7 @@ debugger).
 
 * :menuselection:`Set Breakpoint on *selection*`
 
-  Sets a breakpoint at the beginning of the subprogram named *selection*
+  Sets a breakpoint at the beginning of the subprogram named *selection*.
 
 * :menuselection:`Continue Until Line *xx*`
 
@@ -959,10 +959,9 @@ available commands).
 If the underlying debugger allows it, pressing :kbd:`Tab` in this window
 provides completion for the command being typed (or its arguments).
 
-additional commands are defined here to provide a simple text interface to
-some graphical features.  Here is the complete list of such commands. The
-arguments between square brackets are optional and can be omitted.
-
+Additional commands are defined here to provide a simple text interface to
+some graphical features.  Here is the complete list of such commands (the
+arguments between square brackets are optional and can be omitted):
 
 *graph (print|display) expression [dependent on display_num] [link_name name] [at x, y] [num num]*
 
@@ -1018,15 +1017,15 @@ Customizing the Debugger
 ========================
 
 GPS is a high-level interface to several debugger backends, in particular
-:program:`gdb`.  Each back end has its own advantages, but you can enhance
+:program:`gdb`.  Each backend has its own advantages, but you can enhance
 the command line interface to these backends through GPS by using Python.
 
-This section provide a small such example whose goal is to provide the
-notion of "alias" in the debugger console. For example, this can be used so
-that you if type "foo", it executes a longer command, like displaying the
-value of a variable with a long name.  :program:`gdb` already provides this
-feature through the :command:`define` keywords, but here we implement that
-feature using python in GPS.
+This section provides a short such example whose goal is to demonstrate the
+notion of an "alias" in the debugger console. For example, if you type just
+"foo", it executes a longer command, such as one displaying the value of a
+variable with a long name. :program:`gdb` already provides this feature
+through the :command:`define` keywords, but here we implement that feature
+using Python in GPS.
 
 GPS provides an extensive Python API to interface with each of the running
 debuggers. In particular, it provides the function "send", used to send a
@@ -1035,7 +1034,7 @@ used when you implement your own functions.
 
 It also provides, through :samp:`hook`, the capability to monitor the state
 of the debugger back-end. In particular, one such hook,
-:samp:`debugger_command_action_hook` is called when the user typed a
+:samp:`debugger_command_action_hook` is called when the user types a
 command in the debugger console and before the command is executed. This
 can be used to add your own commands. The example below uses this hook.
 
@@ -1075,9 +1074,9 @@ which is modified by :command:`set_alias`. Whenever the user executes an
 alias, the real command is sent to the debugger through
 :command:`execute_alias`.
 
-The real work is done by `debugger_commands`. If the you execute the
+The real work is done by `debugger_commands`. If you execute the
 :command:`alias` command, it defines a new alias. Otherwise, if you type
-the name of an alias, we want to execute that alias.  Otherwise, we let the
+the name of an alias, we want to execute that alias.  And if not, we let the
 underlying debugger handle that command.
 
 After you copied this example in the :file:`$HOME/.gps/plug-ins` directory,
@@ -1094,8 +1093,8 @@ the value of the variable is displayed in the data window, for example::
 
      (gdb) graph display `foo`
 
-You can also program other examples. You could write complex python
+You can also program other examples. You could write complex Python
 functions, which would, for example, query the value of several variables
-and pretty-print the result.  You can call any of these complex python
+and pretty-print the result.  You can call any of these complex Python
 functions from the debugger console or have it called automatically every
 time the debugger stops via the :command:`graph display` command.

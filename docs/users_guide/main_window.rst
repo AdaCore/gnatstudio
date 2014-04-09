@@ -5,8 +5,8 @@ Description of the Main Window
 ******************************
 
 The GNAT Programming Studio has one main window, which is where you perform
-most of your work.  However, GPS is very flexible in the ways it lets you
-organize your desktop, as discussed in a later section
+most of your work.  However, GPS is very flexible and lets you
+organize your desktop many different ways, as discussed in a later section
 (:ref:`Multiple_Document_Interface`).
 
 There are also other windows that might pop up at various times, documented
@@ -60,7 +60,7 @@ displaying those lines matching the filter.
 If you click on the left icon of the filter, GPS brings up a popup menu to
 allow you to configure the filter:
 
-* Use the first three entries to chose the search algorith (full text
+* Use the first three entries to chose the search algorithm (full text
   match, regular expression, or fuzzy matching). These modes are similar to
   the ones used in the omni-search (see :ref:`omni_search`).
 
@@ -143,7 +143,7 @@ Browsers provide the following additional capabilities:
 
   GPS provides several different zoom levels.  Use the
   :guilabel:`zoom in`, :guilabel:`zoom out` and :guilabel:`zoom` buttons in
-  the local toolbar to change the level: use the latter to explicitly
+  the local toolbar to change the level and use the latter to explicitly
   select the level you want.
 
   This capability is generally useful when many boxes are displayed in the
@@ -287,9 +287,10 @@ dialog, giving you the following choices:
   and :file:`.adb`).
 
   If the current directory is not writable, GPS instead loads
-  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS run in a
-  degraded mode, where some capabilities (such as building and source
-  navigation) are not available. This project will not contain any sources.
+  :file:`<prefix>/share/gps/readonly.gpr`. In this case, GPS runs in a
+  limited mode, where some capabilities (such as building and source
+  navigation) are not available. This project will not contain any
+  sources.
 
 .. index:: project; wizard
 

@@ -5,10 +5,10 @@
 Project Handling
 ****************
 
-The discussion of the project view (see :ref:`The_Project_View`) gave a
-brief overview of what the projects are and the information they contain.
-This chapter provides more in-depth information and describes how you
-create and maintain projects.
+The discussion of the :guilabel:`Project` view (see
+:ref:`The_Project_View`) gave a brief overview of what the projects are and
+the information they contain.  This chapter provides more in-depth
+information and describes how you create and maintain projects.
 
 .. index:: project; description
 .. _Description_of_the_Projects:
@@ -173,7 +173,7 @@ User's Guide for the full list):
 
   A project file hierarchy can be used to compile and link several
   executables. GPS automatically updates the :guilabel:`Compile`,
-  :guilabel:`Run` and :guilabel:`Debug` menu with the list of executables,
+  :guilabel:`Run` and :guilabel:`Debug` menu with the list of executables
   based on this list.
 
 * :file:`Naming schemes`
@@ -235,7 +235,7 @@ cross-references facilities available.  You can edit the project files by
 hand to add support for any language.
 
 Languages are a very important part of the project definition. For each
-language, you should specify a naming scheme allow GPS to associate files
+language, you should specify a naming scheme to allow GPS to associate files
 with that language.  For example, you could specify that all :file:`.adb`
 files are Ada, all :file:`.txt` files are standard text files, etc.
 
@@ -249,7 +249,7 @@ properly set up your project to make these files conveniently available in
 GPS although you can still open any file through the :menuselection:`File
 --> Open` menu.
 
-If your project includes :file`README` files, or other text files, you
+If your project includes :file:`README` files, or other text files, you
 should add "txt" as a language (the name is arbitrary) and ensure these
 files are associated with that language in the :menuselection:`Project -->
 Edit project properties`.
@@ -267,12 +267,12 @@ You can further tailor the behavior of project by using scenarios.
 
 You can specify the value of all attributes of a project except its list of
 imported projects based on the value of external variables, each of which
-comes from either the host computer environment or specifically set in
+comes from either the host computer environment or is specifically set in
 GPS. The interface to manipulate these scenarios is the
 :guilabel:`Scenario` view, which you display by selecting the menu
 :menuselection:`Tools --> Views --> Scenario` (:ref:`The Scenario View
-<Scenario_View>`).  You may want to drop this window above the project view
-so you can see both at the same time.
+<Scenario_View>`).  You may want to drop this window above the
+:guilabel:`Project` view so you can see both at the same time.
 
 The :guilabel:`Scenario` view allows you to select new values for the
 scenario variables defined in your project and thus dynamically change the
@@ -288,11 +288,12 @@ it is much more efficient to create a new configuration variable and edit
 the switches for the appropriate scenario (see
 :ref:`The_Project_Properties_Editor`).
 
-There is one limitation on what GPS can do with scenario variables: although
-`gnatmake` and `gprbuild` can use scenario variables whose default value is
-other than static string (for example, a concatenation or the value of
-another scenario variable), GPS cannot edit such a project graphically,
-though such projects load correctly.
+There is one limitation on what GPS can do with scenario variables:
+although :program`gnatmake` and :program:`gprbuild` can use scenario
+variables whose default value is something other than static string (for
+example, a concatenation or the value of another scenario variable), GPS
+cannot edit such a project graphically, though such projects load
+correctly.
 
 .. index:: project; creating scenario variables
 
@@ -318,7 +319,7 @@ variable in the top line. This name is used for two purposes:
   change the value of the environment variable, which is only used to get
   the default initial value of the scenario variable.
 
-  When you spawn external tools like :program:`gnatmake`, you can also
+  When you spawn external tools like :program:`gnatmake` you can also
   specify the value they should use for the scenario variable by using a
   command line switch, typically :command:`-X`.
 
@@ -326,11 +327,11 @@ Click on the arrow on the right of the name area to display the list of all
 currently-defined environment variables. However, you can choose any
 variable; the environment variable need not exist when you start GPS.
 
-The second area in this dialog is the list of possible value for this
+The second area in this dialog is the list of possible values for this
 variable.  GPS generates an error and will not load the project if you specify
 any other value.  One of these values is the default (the one whose button
-in the :guilabel:`Default` column is selected): if the environment variable
-is not defined exist when GPS starts, it behaves as if had this default
+in the :guilabel:`Default` column is selected). If the environment variable
+is not defined when GPS starts, it behaves as if it had this default
 value.
 
 You can edit the list of possible values by right-clicking on the name of
@@ -349,27 +350,29 @@ If at least one configuration variable is defined in your project, the
 .. image:: scenario-view.png
 
 You can change the current value of any of these variables by clicking on
-it which displays a pop-up window with the list of possible values, from
-which you select the one you to use.
+one, which displays a pop-up window with the list of possible values, from
+which you select the one you want to use.
 
-As soon as a new value is selected, GPS recomputes the project view (in
-case source directories, object directories or list of source files have
-changed).  GPS also updates other items such as the list of executables in
-the :guilabel:`Compile`, :guilabel:`Run`, and :guilabel:`Debug` menus.
+As soon as a new value is selected, GPS recomputes the :guilabel:`Project`
+view (in case source directories, object directories or list of source
+files have changed).  GPS also updates other items such as the list of
+executables in the :guilabel:`Compile`, :guilabel:`Run`, and
+:guilabel:`Debug` menus.
 
 .. index:: browsers
 .. index:: call graph
 
-Because of the expense, GPS does not recompute the contents of the various
-browsers such as the call graph and dependencies for this updated project,
-so you need to explicitly request them to be updated.
+Because it can be time consuming and costly of system resources, GPS does 
+not recompute the contents of the various browsers, such as the call graph 
+and dependencies, for this updated project. You must explicitly request that 
+they be updated if you want them recomputed.
 
 Change the list of possible values for a configuration variable at any time
 by clicking on the :guilabel:`edit` button in the local toolbar. This pops
-up the same dialog used to create new variables and also allows you to
-change the name of the scenario variable, which is the same name as the
+up the same dialog used to create new variables, and also allows you to
+change the name of the scenario variable (the same name as the
 environment variable used to set the initial value of the scenario
-variable.
+variable).
 
 .. index:: removing variable
 
@@ -389,15 +392,15 @@ Extending Projects
 Description of project extensions
 ---------------------------------
 
-Project files were designed to support large projects, with several hundred
+Project files are designed to support large projects, with several hundred
 or even several thousand source files. In such contexts, one developer will
 generally work on a subset of the sources.  Such a project may often take
 several hours to be fully compiled.  Most developers do not need to have the
 full copy of the project compiled on their own machine.
 
 However, it can still be useful to access other source files from the
-application, for example to find out whether a subprogram can be changed
-and where it is currently called.
+application. For example, a developer may need to find out whether a 
+a subprogram can be changed, and where it is currently called.
 
 Such a setup can be achieved through project extensions. These are special
 types of projects that inherit most of their attributes and source files
@@ -414,8 +417,8 @@ Creating project extensions
 ---------------------------
 
 The project wizard allows you to create extension projects.  Select an
-empty directory (which is created if it does not exist) as well as a list of
-initial source files.  (New files can also be added later.)  GPS copies the
+empty directory (which is created if it does not exist), as well as a list of
+initial source files (new files can be added later).  GPS copies the
 selected source files to the directory and creates a number of project
 files there. It then loads a new project, with the same properties as the
 previous one, except that some files are found in the new directory and
@@ -442,11 +445,12 @@ original project can be shared among developers.  Do this by clicking the
 file in the :guilabel:`Project` view and selecting the :menuselection:`Add
 To Extending Project` menu.  You will see a dialog asking whether you want
 GPS to copy the file to the project extension's directory.  GPS may also
-create some new project files in that directory if necessary and
+create some new project files in that directory, if necessary, and
 automatically reload the project as needed. From that point on, if you use
 the menu :menuselection:`File --> Open From Project`, GPS uses the file
 from the project extension.  Open editors will still edit the same files
-they were, so you should open the new file in them if needed.
+they previously contained, so you should open the new file in them if
+needed.
 
 
 .. index:: project; editing
@@ -512,8 +516,8 @@ GPS helps you use aggregate projects in the following ways:
 Disabling Editing of the Project File
 =====================================
 
-You should generally consider project files part of the sources and them
-put under control of a version control system, so you might want to prevent
+You should generally consider project files part of the sources and put
+them under the control of a version control system.  This will prevent
 accidental editing of the project files, either by you or someone else
 using the same GPS installation.
 
@@ -525,8 +529,8 @@ changes at the GUI level, since the error message only occurs when trying
 to save the project (this is by design, so that temporary modification can
 be done in memory).
 
-You can disable all the project editing related menus in GPS by adding
-special startup switch, typically by creating a small script that spawns
+You can disable all the project editing related menus in GPS by adding a
+special startup switch, typically by creating a short script that spawns
 GPS with these switches.  Use the following command line::
 
    gps --traceoff=MODULE.PROJECT_VIEWER --traceoff=MODULE.PROJECT_PROPERTIES
@@ -534,11 +538,11 @@ GPS with these switches.  Use the following command line::
 
 .. highlight:: python
 
-This prevents the loading the two GPS modules responsible for editing
+This prevents the loading of the two GPS modules responsible for editing
 project files. However, this also has an impact on the Python functions
 that are exported by GPS and thus could break some plug-ins. Another
-possible solution is to hide the corresponding project-editing menus and
-contextual menus.  You could do this by creating a small python plugin for
+possible solution is to hide the corresponding project editing menus and
+contextual menus.  You could do this by creating a simple Python plug-in for
 GPS (see :ref:`Customizing_through_XML_and_Python_files`), which contains
 the following code::
 
@@ -556,7 +560,7 @@ The Project Menu
 
 The menu bar item :menuselection:`Project` contains several entries that
 act on the whole project hierarchy.  To act on only a single project, use
-the contextual menu in the project view.
+the contextual menu in the :guilabel:`Project` view.
 
 GPS loads a single project hierarchy at any one time.  Some of these
 entries apply to the currently selected project.  Which project is
@@ -629,15 +633,15 @@ These entries are:
 
   Reload the project to take into account modifications done outside of
   GPS. In particular, take into account new files added to the source
-  directories externally.  If all modifications were makde though GPS, you
-  need not use this entry.
+  directories externally.  If all modifications were made though GPS, you
+  do not need to do this.
 
 .. index:: menu; project --> project view
 
 * :menuselection:`Project --> Project View`
 
-  Open (or raise if it is already open) the project view on the left side
-  of the GPS window.
+  Open (or raise if it is already open) the :guilabel:`Project` view on the
+  left side of the GPS window.
 
 .. index:: ! project; wizard
 .. _The_Project_Wizard:
@@ -700,7 +704,7 @@ Several types of project wizards are provided in GPS:
   configuration for the project files (a given :file:`.gpr` project file
   can only be associated with a single object directory).
 
-  This wizard may not succeed in all cases, but is worth trying if you
+  This wizard may not succeed in all cases but is worth trying if you
   already have an existing set of sources
 
 * :guilabel:`Library Project`
@@ -725,14 +729,14 @@ Several types of project wizards are provided in GPS:
 Project Naming
 --------------
 
-This is the first page displayed by all the wizard and is where you enter
+This is the first page displayed by all the wizards and is where you enter
 the name and location of the project to create. The name must be a valid
 Ada identifier (starting with a letter, optionally followed by a series of
 digits, letters or underscores). Spaces and reserved Ada keywords are not
 allowed. If the name is invalid, GPS displays an error message when you
 press the :guilabel:`Forward` button.
 
-You can create child projects created from this dialog. These are projects
+You can create child projects from this dialog. These are projects
 whose name is of the form :samp:`Parent.Child`. GPS automatically generates
 the dependency on the parent project.
 
@@ -750,8 +754,8 @@ Language Selection
 
 Use this page to select the programming languages used for the sources of
 the project. By default, only Ada is selected.  You can add new languages
-to this list by using XML files, see the section on customizing GPS
-(:ref:`Adding_support_for_new_languages`).
+to this list by using XML files (see the section on customizing GPS:
+:ref:`Adding_support_for_new_languages`).
 
 This page allows you to select the toolchain used when working on your
 project.  You can select one of the pre-defined toolchains or scan your
@@ -771,7 +775,7 @@ VCS Selection
 -------------
 
 The second page in the project wizard allows you to select which Version
-Control system you want to use for the source files of this project.  GPS
+Control System you want to use for the source files of this project.  GPS
 does not attempt to automatically guess what it should use, so you must
 specify it if you want VCS operations to be available.
 
@@ -806,7 +810,7 @@ entry to create new directories, if needed.
 To remove source directories from the project, select the directory in the
 bottom frame and click on the up arrow or use the contextual menu.
 
-All files in these directories that match one of the language supported by
+All files in these directories that match one of the languages supported by
 the project are automatically associated with that project.
 
 
@@ -864,15 +868,15 @@ Library
 This page allows you to configure your project so the output of its
 compilation is a library (shared or static), as opposed to an executable or
 a set of objet files.  You can then link this library with other
-executables (it will automatically be if the project is imported by another
-project).
+executables (it will automatically be linked if the project is imported by 
+another project).
 
 Define the attributes in the top box to transform your project into a
 library project. See the tooltips that appear to the left of each field.
 
 If you define any of the attributes in the :guilabel:`Standalone Library`
 box, your project will create a standalone library, which is a library that
-does its own elaboration instead of relying on its caller to elaborate it
+does its own elaboration instead of relying on its caller to elaborate it,
 as is standard in Ada. You also have more control over which files make up
 the public interface to the library and which files are private to the
 library and invisible from the outside.
@@ -957,7 +961,7 @@ specific tool. All pages have the same structure:
 
 *Textual selection of switches*
 
-  The bottom is an editable entry field, where you can directly type the
+  The bottom is an editable entry field, where you can directly enter the
   switches you need. This makes it easier to move from an older setup
   (e.g. Makefile, script) to GPS by copying and pasting switches.
 
@@ -983,8 +987,8 @@ Edit the dependencies between projects through the contextual
 This view makes it easy to indicate that your project depends on external
 libraries or other modules in your source code. For example, you can get
 access to the GtkAda graphical library in your project by adding a project
-dependency to :file:`gtkada.gpr`, assuming GtkAda has been installed in
-your system.
+dependency to :file:`gtkada.gpr` (assuming GtkAda has been installed in
+your system).
 
 The dependencies also determine in what order your application is built.
 When you compile a project, the builder first makes sure the projects it
@@ -993,10 +997,10 @@ depends on are up-to-date.  If not, it recompiles them.
 .. image:: project-deps.jpg
 
 When you select that contextual menu, GPS opens a dialog allowing you to
-add to or remove dependencies from your project. You add a new dependency
+add or remove dependencies from your project. You add a new dependency
 by selecting a project file name from one of the following sources:
 
-* One of the loaded project from the current project tree
+* One of the loaded projects from the current project tree
 
 * One of the predefined projects
 
@@ -1010,12 +1014,13 @@ by selecting a project file name from one of the following sources:
 
 In all cases, you can choose whether this should be a simple dependency or
 a limited dependency. The latter allows you to have mutually dependent
-projects (A depends on B, which in turns depends on A even indirectly),
-although you cannot reference the attributes of such a project in the
-current project (for example, to indicate that the compiler switches to use
-for A are the same as for B: you need to duplicate that information).  In
-some cases, GPS forces a limited dependency to avoid loops in the
-dependencies that would make the project tree illegal.
+projects (:file:`A` depends on :file:`B`, which in turns depends on
+:file:`A` even indirectly), although you cannot reference the attributes of
+such a project in the current project (for example, to indicate that the
+compiler switches to use for :file:`A` are the same as for :file:`B` you
+need to duplicate that information).  In some cases, GPS forces a limited
+dependency to avoid loops in the dependencies that would make the project
+tree illegal.
 
 
 .. index:: project; editing
@@ -1025,11 +1030,11 @@ dependencies that would make the project tree illegal.
 The Project Properties Editor
 =============================
 
-Use ther project properties editor at any time to access the properties of
-your project through the :menuselection:`Project --> Edit Project
-Properties` menu or the contextual menu :menuselection:`Edit project
-properties` on any project item, e.g. from the :guilabel:`Project` views or
-the :guilabel:`Project` browser.
+Use the :guilabel:`Project Properties` editor at any time to access the
+properties of your project through the :menuselection:`Project --> Edit
+Project Properties` menu or the contextual menu :menuselection:`Edit
+project properties` on any project item, e.g. from the :guilabel:`Project`
+views or the :guilabel:`Project` browser.
 
 If there was an error loading the project (such as invalid syntax or
 non-existing directories), GPS displays a warning dialog when you select
@@ -1044,7 +1049,7 @@ Open...` or :menuselection:`Project --> Recent` menus).
 
 .. image:: project-properties.jpg
 
-The project properties editor is divided into three parts:
+The :guilabel:`Project Properties` editor is divided into three parts:
 
 *The attributes editor*
 
@@ -1058,7 +1063,7 @@ The project properties editor is divided into three parts:
 
 *The project selector*
 
-  This area, the top-right corner of the properties editor, display a list
+  This area, the top-right corner of the properties editor, displays a list
   of all projects in the hierarchy. The value in the attributes editor is
   applied to all the selected projects in this selector. You cannot unselect
   the project for which you activated the contextual menu.
@@ -1068,9 +1073,9 @@ The project properties editor is divided into three parts:
   left title bar (untitled) selects or deselect all the projects.
 
   This selector has two different possible presentations, chosen by the
-  toggle button on top: you can either get a sorted list of all the
-  projects, each appearing only once, or the same project hierarchy
-  displayed in the project view.
+  toggle button on top: either a sorted list of all the projects, each
+  appearing only once, or the same project hierarchy displayed in the 
+  :guilabel:`Project` view.
 
 *The scenario selector*
 

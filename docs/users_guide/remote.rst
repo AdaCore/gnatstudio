@@ -34,10 +34,9 @@ Requirements
 In order to compile, run, or debug on a host remote from GPS, your
 configuration must meet the following conditions:
 
-* 
   .. index:: password
 
-  Have a remote connection to the host using :program:`rsh`, :program:`ssh`
+* Have a remote connection to the host using :program:`rsh`, :program:`ssh`
   or :program:`telnet`.  GPS can handle passwords for such connections.
 
 * Have either a Network Filesystem (i.e. NFS, SMB or equivalent) sharing
@@ -121,8 +120,8 @@ asterisk:
   * plink (Windows tool) in ssh, rsh or telnet mode
 
   See :ref:`Defining_a_remote_connection_tool` if you need to add a
-  different tool.  If a tool is not in your path (for example, because it's
-  not installed), it won't appear in the tools list. Some tools
+  different tool.  If a tool is not in your path (for example, because it
+  is not installed), it won't appear in the tools list. Some tools
   incompatible with GPS are not displayed either, such as the Microsoft
   telnet client.
 
@@ -166,12 +165,12 @@ accessible through the advanced configuration pane.
 * The :guilabel:`Maximum Number of Connections` is the maximum number of
   simultaneous connections GPS is allowed to make to this server. If you
   want to compile, debug, and execute at the same time on the machine, GPS
-  needs more that one connection to do this. The default is 3.
+  needs more than one connection to do this. The default is 3.
 
 * Depending on the kind of server and the remote access tool used, commands
   sent to the server may require a specific line terminator, typically
   either the LF character or CR/LF characters. Usually GPS can
-  automatically detect which is needed (the 'auto' mode), you can force the
+  automatically detect which is needed (the 'auto' mode), but you can force the
   choice to CR/LF (cr/lf handling set to 'on') or LF (cr/lf handling set to
   'off').
 
@@ -187,7 +186,7 @@ Path settings
 The final section of the configuration defines the path translations
 between your local host and the remote server.
 
-The remote paths definitions allow GPS to translate your locally loaded
+The remote path definitions allow GPS to translate your locally loaded
 project (that resides in your local filesystem) to paths used on the remote
 server. This section also tells GPS how to keep those paths synchronized
 between the local machine and the remote server.
@@ -227,12 +226,12 @@ The way those paths need to be configured depends on your network architecture:
   remote host (using NFS or SMB filestems, for example), only the roots of
   those filesystems need to be specified, using each server's native paths
   (on Windows, the paths are specified using the
-  "X:\\my\\mounted\\directory\\" synax and on Unix, using the using the
-  "/mnt/path/" syntax).
+  "X:\\my\\mounted\\directory\\" syntax and on Unix, using the "/mnt/path/" 
+  syntax).
 
 * If the project's files are synchronized using :program:`rsync`, defining
   a too generic path translation leads to very slow synchronization. In
-  that case, define the paths as specifically as possible in order to speed
+  that is the case, define the paths as specifically as possible in order to speed
   up the synchronization process.
 
 .. _Setup_a_remote_project:
@@ -285,16 +284,16 @@ categories to a single server in one step if the you have left the
 When you select a server for a particular category, the change is not
 immediately effective, as indicated by the server's name appearing in
 red. This allows you to check the configuration before applying it, by
-pressing the :guilabel:`Check` button, which tests for a correct remote
-connection and verifies that the project path exists on the build server
-and has an equivalent on the local machine.
+pressing the :guilabel:`Check` button. This button tests for a correct 
+remote connection and verifies that the project path exists on the build 
+server and has an equivalent on the local machine.
 
 Clicking the :guilabel:`Apply` button performs the following actions:
 
 * Reads the default project paths on the Build_Server and translates them
   into local paths.
 * Synchronizes those paths marked as Sync :guilabel:`Always` or
-  :guilabel:`Once to local` from the build server
+  :guilabel:`Once to local` from the build server.
 * Loads the translated local project.
 * Assigns the Build, Execution and Debug servers.
 
@@ -341,7 +340,7 @@ The GPS remote mode imposes some limitations:
   Cygwin's mounted directories.  To use GPS with a remote Windows server
   using Cygwin's :program:`bash`, you must use directories that are the
   same on Windows and Cygwin (absolute paths). For example, a project using
-  "C:\\my_project" is accepted if Cygwin's path is :file`/my_project`, but
+  "C:\\my_project" is accepted if Cygwin's path is :file:`/my_project`, but
   not if :file:`/cygdrive/c/my_project` is specified.
 
   Even if you use Cygwin's :program:`sshd` on such a server, you can still

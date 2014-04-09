@@ -4,8 +4,8 @@ Welcome to the GNAT Programming Studio
 
 GPS is a complete integrated development environment.  It integrates with a
 wide range of tools, providing easy access to each. It integrates
-especially well with AdaCore's tools, but can easily be extended to work
-with other tools by writing small plug-ing in Python.
+especially well with AdaCore's tools but can easily be extended to work
+with other tools by writing small plug-ins in Python.
 
 Here is a summary of the features of the GNAT Programming Studio:
 
@@ -27,7 +27,7 @@ Here is a summary of the features of the GNAT Programming Studio:
 
   Any compiler called by a command line can be integrated in GPS, with
   built in support for GNAT, :program:`gcc` and :program:`make`.  You can
-  easily navigate error messages. Automatic code fixing is provided for
+  easily navigate through error messages, and automatic code fixing is provided for
   many common errors.  GPS includes support for cross-compilers (running
   compilers on a different machine than the one on which GPS is running).
 
@@ -46,10 +46,11 @@ Here is a summary of the features of the GNAT Programming Studio:
 
 * Intelligent :ref:`Source_Navigation`
 
-  By leveraging on information provided by the compilers and using its own
+  By leveraging information provided by the compilers and using its own
   parsers, GPS allows you to find program information such as the
-  declaration of entities and their references.  It also provides advanced
-  capabilities such as call graphs and UML-like entity browsers.
+  declaration of entities and their references, that would otherwise be
+  hard to locate.  It also provides advanced capabilities such as call
+  graphs and UML-like entity browsers.
 
 * Full debugger integration (:ref:`Debugging`)
 

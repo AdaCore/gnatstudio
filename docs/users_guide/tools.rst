@@ -18,7 +18,6 @@ The list of active entries includes:
 
 * :guilabel:`Views`
 
-
   * :guilabel:`Bookmarks`
 
     .. index:: bookmark
@@ -121,7 +120,7 @@ The list of active entries includes:
     .. index:: shell
 
     Open a shell console in the bottom area of the GPS window.  This
-    not an OS shell console, but a GPS shell console, where you can
+    is not an OS shell console, but a GPS shell console, where you can
     type GPS specific commands such as :command:`help`.  See
     :ref:`The_Shell_and_Python_Consoles`.
 
@@ -129,7 +128,7 @@ The list of active entries includes:
 
     .. index:: python
 
-    Open a python console to access the Python interpreter.  See
+    Open a Python console to access the Python interpreter.  See
     :ref:`The_Shell_and_Python_Consoles`.
 
   * :guilabel:`OS Shell`
@@ -143,7 +142,7 @@ The list of active entries includes:
     On Unix, this terminal behaves a lot like a standard Unix terminal, but
     you need to make sure your shell will output all necessary
     information. In some cases, the configuration of your shell
-    (:file:`.bashrc` if you are running :program:bash, for example)
+    (:file:`.bashrc` if you are running :program:`bash`, for example)
     deactivates echoing what you type. Since GPS is not writing anything on
     its own, but just showing what the shell is sending, you need to ensure
     your shell always echos what you type.  Do this by running the
@@ -156,9 +155,9 @@ The list of active entries includes:
 
   * :guilabel:`Auxiliary Builds`
 
-    Open the console containing auxiliary buils output. Only
-    cross-reference automated generation output is currently sent to this
-    console.  See :ref:`Working_with_two_compilers`.
+    Open the console containing auxiliary buils output. Only output from
+    automated cross-reference generation is currently sent to this console.
+    See :ref:`Working_with_two_compilers`.
 
 * :guilabel:`Coverage`
 
@@ -254,11 +253,11 @@ available on all Unix systems. Under Windows, this tool is not provided
 with GPS, but is available as part of Cygwin.
 
 GPS displays visual comparisons in either Side-by-Side or Unified mode.  In
-side-by-side mode, GPS displays editors for the files involved in the
+Side-by-Side mode, GPS displays editors for the files involved in the
 comparison side by side.  By default, GPS places the reference file on the
 left. In Unified mode, GPS does not open a new editor, but shows all the
 changes in the original editor.  Unified mode is used only when comparing
-two files; when comparing three files, only side-by-side mode is available.
+two files; when comparing three files, only Side-by-Side mode is available.
 
 Lines in the file editors are highlighted with various colors.  In
 side-by-side mode, only the right editor (for the modified file) has
@@ -317,7 +316,7 @@ Editors involved in a visual comparison have a contextual menu
 
 * :guilabel:`Use this editor as reference`
 
-  Make this editor the reference. (This is only present when displaying a
+  Make this editor the reference (this is only present when displaying a
   visual comparison involving 3 files).
 
 .. index:: screen shot
@@ -338,7 +337,7 @@ This capability is integrated with the :guilabel:`Locations` view (see
 adds an icon on the left of the line.
 
 If a wrench icon is displayed and you left-click on it, the code is fixed
-automatically and you will see the change in the corresponding source editor.
+automatically, and you will see the change in the corresponding source editor.
 This occurs when a simple fix, such as the addition of a missing semicolon,
 is sufficient to resolve the error.
 
@@ -353,7 +352,7 @@ errors`.  The latter option applies the same simple fix to all errors that
 are the same, based on parsing the error message.  The wrench icon is
 removed once the code change has been made.
 
-For more complex error, where more than one change is possible, GPS
+For more complex errors where more than one change is possible, GPS
 displays a wrench icon with a blue plus sign.  Clicking the icon displays a
 contextual menu listing the possible fixes. For example, this is displayed
 when an ambiguity in resolving an entity is reported by the compiler.
@@ -418,7 +417,7 @@ those files if you need a different layout from the default.
 
 You can also use user-defined structured comments to improve the generated
 documentation. These use XML-like tags. To define your own set of tags,
-refer to the GPS python extension documentation (:menuselection:`Help -->
+refer to the GPS Python extension documentation (:menuselection:`Help -->
 Python extensions`).  The string values inside those tags are handled
 similar to regular XML: extra whitespace is ignored. One exception is that
 layout is preserved in the following cases:
@@ -607,7 +606,7 @@ tested.
 Project Properties
 ------------------
 
-You configure gnattest's behavior through the GNATtest page in
+You configure GNATtest's behavior through the GNATtest page in
 :ref:`The_Project_Properties_Editor`.
 
 .. _Metrics:
@@ -673,8 +672,8 @@ for individual projects in a hierarchy, or for the entire project hierarchy
 currently loaded by GPS.
 
 Once computed and loaded, GPS summarizes the coverage information in a
-graphical report formatted as a tree-view with percentage bars for each
-item and uses it to decorate source code through line highlighting and
+graphical report, formatted as a tree-view with percentage bars for each
+item, and uses it to decorate source code through line highlighting and
 coverage annotations.
 
 You will find all coverage related operations in the :menuselection:`Tools
@@ -736,7 +735,7 @@ selected.  For example, if you click on a file, the options are:
 * :guilabel:`Show coverage information`
 
   Display an annotation column on the left side of the current source
-  editor to indicates which lines are covered and which are not.  Lines that
+  editor to indicate which lines are covered and which are not.  Lines that
   are not covered are also listed in the :guilabel:`Locations` view.  See
   :ref:`The_Locations_View`.
 
@@ -771,9 +770,9 @@ corresponding coverage information for each shown in a column on the side.
 .. index:: screen shot
 .. image:: report-of-analysis_tree.jpg
 
-The contextual menus generated on for this report contain, in addition to
+The contextual menus generated for this report contain, in addition to
 the regular entries, some specific Coverage Report options allowing you to
-expand or fold the tree or to display flat lists of files or subprograms
+expand or fold the tree, or to display flat lists of files or subprograms
 instead of a tree. A flat list of files looks like:
 
 .. index:: screen shot
@@ -889,7 +888,7 @@ future analysis.
 .. image:: stack-usage-editor.jpg
 
 The :guilabel:`Stack Usage Editor` contains two main areas. The notebook on
-the top allows selecting the file to edit. It displays the contents of the
+the top allows you to select the file to edit. It displays the contents of the
 file and allows you to enter or change the stack usage of subprograms in
 it. The table in the bottom area displays all subprograms whose stack usage
 information is not specified and allows you to set them.

@@ -166,8 +166,8 @@ subprograms in those runtime files is available from the :file:`.ali` files
 corresponding to the sources of your project.
 
 From your own sources, you can navigate to one of the runtime files (for
-example, if you have a reference to :function:`Put_Line`, you will jump to
-its declaration in :file:`a-textio.ads`). But you cannot perform
+example, if you have a reference to :func:`Put_Line`, you will jump to its
+declaration in :file:`a-textio.ads`). But you cannot perform
 cross-reference queries from a runtime file itself.
 
 If you need this capability, modify one of the GPS plug-ins, named
@@ -419,11 +419,11 @@ cross-references.
   .. index:: overriding operations
   .. index:: methods
 
-  The option :guilabel:`Include overriding and overriden operations`,
+  The option :guilabel:`Include overriding and overriden operations`
   includes references to overriden or overriding entities.  This is
   particularly useful if you need to know whether you can easily modify
   the profile of a primitive operation or method since you can see what
-  other entities would also be impacted. If you select only the
+  other entities would also be changed. If you select only the
   :guilabel:`declaration` check box, you see the list of all related
   primitive operations.
 

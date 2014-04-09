@@ -19,7 +19,7 @@ correct some errors or warnings (see :ref:`Code_Fixing`).
 In source editors, compiler messages also appear as icons on the side of
 each line that has a message. When the pointer is placed on these icons, a
 tooltip appears, listing the error messages posted on the corresponding
-line. When GPS can automatical correct the errors, clicking the icon
+line. When GPS can automatically correct the errors, clicking the icon
 applies the fix. These icons are removed when the corresponding entries are
 removed from :ref:`The_Locations_View`.
 
@@ -102,8 +102,8 @@ what is documented here are the default menus (see
 * :menuselection:`Build --> Project --> Custom build`
 
    Display a text entry allowing you to enter any external command. Use
-   this item useful when you already have existing build scripts, make
-   files, or similar and want to invoke them from GPS. If the :samp:`SHELL`
+   this item when you already have existing build scripts, make files or
+   similar and want to invoke them from GPS. If the :samp:`SHELL`
    environment variable is defined (to, e.g. :file:`/bin/sh`), the syntax
    used to execute the command is the one for that shell. Otherwise, GPS
    spawns the command without any shell interpretation.
@@ -122,7 +122,7 @@ what is documented here are the default menus (see
 * :menuselection:`Build --> Clean --> Clean root`
 
    Remove all object files and other compilation artifacts associated to
-   the root project.  But do not clean objects from other related projects.
+   the root project but do not clean objects from other related projects.
 
 .. index:: menu; build --> makefile
 .. index:: makefile
@@ -168,8 +168,8 @@ what is documented here are the default menus (see
 
    When using an external terminal, GPS launches an external terminal
    utility to perform your application's execution and input/output.
-   Configure this external utility configured in the
-   (:menuselection:`External Commands --> Execute command`) preferences
+   Configure this external utility in the 
+   :menuselection:`External Commands --> Execute command` preferences
    dialog.
 
    The GPS execution views have several limitations that external terminals
@@ -203,9 +203,9 @@ what is documented here are the default menus (see
 
 * :menuselection:`Build --> Settings --> Toolchains`
 
-    Opens a dialog allowing configurating GPS to work with two compilation
+    Opens a dialog allowing GPS to work with two compilation
     toolchains. This is particulary useful when you need to compile a
-    project with an old compiler but wantg up-to-date functionality from
+    project with an old compiler but want up-to-date functionality from
     the associated tools (for example, gnatmetric and gnatcheck).  See
     :ref:`Working_with_two_compilers`.
 
@@ -229,9 +229,9 @@ what is documented here are the default menus (see
 
 .. index:: plug-ins; makefile.py
 
-If your application is build through a Makefile, you should probably load
-the :file:`makefile.py` startup script (see the :menuselection:`Tools -->
-Plug-ins` menu).
+If your application is built through a :file:`Makefile`, you should
+probably load the :file:`makefile.py` startup script (see the
+:menuselection:`Tools --> Plug-ins` menu).
 
 .. index:: build targets
 .. _The_Target_Configuration_Dialog:
@@ -309,7 +309,7 @@ all Targets.
 * Icon:
 
   The icon to use for representing this target in the menus and in the
-  toolbar. To use one of your icons, register a icons using the
+  toolbar. To use one of your icons, register icons using the
   :samp:`<stock>` XML customization node. (See
   :ref:`Adding_stock_icons`). Then use the "custom" choice and enter the ID
   of the icon into the text field.
@@ -388,9 +388,9 @@ targets that operate on Mains, the last main used in a non-background is
 considered, defaulting to the first main defined in the project hierarchy.
 
 Background compilations are not launched while GPS is already listing
-results from non-background compilations, i.e. as long as there are entries
+results from non-background compilations (i.e. as long as there are entries
 in the :guilabel:`Locations` view showing entries in the :guilabel:`Builder
-results` category.
+results` category).
 
 
 .. index:: build modes
@@ -450,7 +450,7 @@ In this dialog, two paths need to be configured: the compiler path and the
 tools path. The first is used to compile the code, while the second is used
 to run up-to-date tools in order to get more functionality or more accurate
 results.  GPS only enables the :guilabel:`OK` button when the two paths are
-set to different location since that is the only case where it makes sense
+set to different locations, as that is the only case where it makes sense
 to enable the multiple toolchains mode.
 
 You can also activate an automated cross-reference generation from this
@@ -459,20 +459,20 @@ the GNAT compiler together with the compiled object files. The :file:`.ali`
 files are used by GPS for several purposes, such as cross-reference
 browsing and documentation generation. Having those :file:`.ali` files
 produced by a recent compiler provides more accurate results for those
-purposes but might cause problems badly if an old compiler were to also
+purposes but might cause serious problems if an old compiler were to also
 read those :file:`.ali` files when compiling a project.
 
 If you activate the automated cross-reference generation, GPS generates
 those :file:`.ali` files using the compiler found in the tools path and
 places them in a directory distinct from the one used by the actual
 compiler. This allows GPS to take full benefit of up-to-date
-cross-reference files, while keeping the ensure that the old toolchain's
-:file:`.ali` files remain untouched.
+cross-reference files, while the old toolchain's :file:`.ali` files
+remain untouched.
 
 .. index:: menu; tools --> consoles --> auxiliary builds
 
 Cross-reference files generation does not output anything in the
-:guilabel:`Messages` view so as to not be confused with the output of the
+:guilabel:`Messages` view so as to not to be confused with the output of the
 regular build process. If needed, you can see the output of the cross-ref
 generation command with the :menuselection:`Tools --> Consoles -->
 Auxiliary Builds` menu.
@@ -484,9 +484,9 @@ Interaction with the remote mode
 The ability to work with two compilers has impacts on the remote mode
 configuration: paths defined here are local paths so they have no meaning
 on the server side.  To handle the case of using a specific compiler
-version on the remote side while using wanting up-to-date tools, GPS does
-the following when both a remote compilation server is defined and the
-multiple toolchains mode is in use:
+version on the remote side while wanting up-to-date tools on the local
+side, GPS does the following when both a remote compilation server is
+defined and the multiple toolchains mode is in use:
 
 * The compiler path is ignored when a remote build server is defined. All
   compilation actions are performed normally on the build server.
@@ -494,5 +494,5 @@ multiple toolchains mode is in use:
   machine using this path.
 * The cross-reference files are handled :program:`rsync` so they do not get
   overwritten during local and remote host synchronizations.  Otherwise,
-  gthey would because build and cross-reference generation actions occur at
+  they would cause build and cross-reference generation actions to occur at
   the same time on the local machine and on remote server.

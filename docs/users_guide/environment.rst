@@ -156,7 +156,7 @@ settings in GPS:
 
   If set, GPS adds special code on every allocation and deallocation
   to make it possible to check where the largest amount of memory is
-  allocated using the :command:`GPS.debug_memory_usage` python
+  allocated using the :command:`GPS.debug_memory_usage` Python
   command.  Setting this variable will slow GPS down.
 
 .. _Files:
@@ -184,7 +184,7 @@ Files
   file :file:`log.<pid>`, where :file:`<pid>` is the GPS process id, so
   multiple GPS sessions do not clobber each other's log. In case of a
   successful session, this file is renamed to :file:`log` when exiting; in
-  case of an unexpected exit (when bug box is displayed), the log file
+  case of an unexpected exit (when bug box is displayed) the log file
   retains its original name.  The name of the log file is configured by the
   :file:`traces.cfg` file.
 
@@ -197,8 +197,8 @@ Files
 
 * :file:`$HOME/.gps/plug-ins`
 
-  Directory containing files with user-defined plug-ins.  GPS loads all xml
-  and python files found under this directory during start up.  Create or
+  Directory containing files with user-defined plug-ins.  GPS loads all XML
+  and Python files found under this directory during start up.  Create or
   edit these files to add your own menu and/or tool-bar entries in GPS or
   to define support for new languages.  See
   :ref:`Customizing_through_XML_and_Python_files` and
@@ -323,7 +323,7 @@ Files
 
 * :file:`prefix/share/gps/support`
 
-  Directoring containing required plug-ins for GPS that are automatically
+  Directory containing required plug-ins for GPS that are automatically
   loaded at startup.
 
 * :file:`prefix/share/gps/plug-ins`
@@ -357,7 +357,7 @@ Files
 
   .. index:: project; default project
 
-  Default project used by GPS. Can be modified after installation time to
+  Default project used by GPS, which can be modified after installation to
   provide defaults for a given system or project.
 
 * :file:`prefix/share/gps/readonly.gpr`
@@ -443,7 +443,7 @@ installing GPS.
   .. index:: debugger
 
   If GPS cannot properly initialize the debugger (using the
-  :menuselection:`Debug --> Initialize`menu), it is usually because the
+  :menuselection:`Debug --> Initialize` menu), it is usually because the
   underlying debugger (gdb) cannot be launched properly. To verify this is
   the problem, try to launch the :program:`gdb` command from a shell (i.e.,
   outside of GPS). If you cannot launch :program:`gdb` from a shell, it
@@ -461,15 +461,15 @@ installing GPS.
   by either typing :kbd:`Ctrl-C` in the shell where you have started GPS,
   which should unblock it. If that does not work, kill the :`program:`gdb`
   process launched by GPS using :program:`ps` and :program:`kill` or the
-  :program:`top` command under Unix,
+  :program:`top` command under Unix
 
   .. index:: Unix
   .. index:: Windows
 
-  and the Task Manager under Windows: this will terminate your debugging
-  session, and will unblock GPS.
+  and the Task Manager under Windows. This will terminate your debugging
+  session and will unblock GPS.
 
-*My Ada program fails during elaboration. How can I debug it ?*
+*My Ada program fails during elaboration. How can I debug it?*
 
   .. index:: GNAT; -g
   .. index:: gnatmake
@@ -488,7 +488,7 @@ installing GPS.
   routines of packages.  Debug these in the usual manner, just as if you
   were debugging code in your application.
 
-*How can I debug the Ada run-time library ?*
+*How can I debug the Ada run-time library?*
 
   The run time distributed in binary versions of GNAT has not been compiled
   with debug information, so it needs to be recompiled before you can debug
@@ -563,8 +563,8 @@ installing GPS.
 
   This is specific to the way GNOME is configured on Ubuntu distributions.
   To address this incompatibility, close GPS, then go to the GNOME menu
-  :menuselect`System->Preferences->Keyboard` (or launch
-  :program:`gnome-keyboard-properties`).
+  :menuselect`System->Preferences->Keyboard` (or launch :program:
+  `gnome-keyboard-properties`).
 
   Select the :guilabel:`Layout` tab and click on :guilabel:`Layout
   Options`. Then click twice on :guilabel:`Using space key to input

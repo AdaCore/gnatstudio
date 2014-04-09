@@ -21,7 +21,7 @@ Replace...` menu or the shortcut :kbd:`Ctrl-F`.
 By default, the search window is floating and appears as a dialog on top of
 GPS. Put it inside the multiple document interface for easier access by
 selecting the :menuselection:`Window --> Floating` menu and dropping the
-search window iton a new location (for example, above the
+search window into a new location (for example, above the
 :guilabel:`Project` view).  Selecting either option pops up a dialog on the
 screen similar to the following:
 
@@ -71,10 +71,10 @@ This dialog contains three fields:
   is selected.  In most contexts, the :guilabel:`Scope` option restricts
   the search to a set of language constructs.  For example, use this to to
   avoid matching comments when you are only interested in actual code or to
-  only search strings and comment, but not code.
+  only search strings and comments, but not code.
 
 Change the context to a different one by clicking on the arrow on the
-right, which displays the list of all possible contexts, inluding:
+right, which displays the list of all possible contexts, including:
 
   * :command:`Project View`
 
@@ -193,7 +193,7 @@ the search, or continue to the next occurrence, or set options:
   When this is checked, replacements preserve casing. Three casings are
   detected and preserved: all lower, all UPPER, and Mixed_Case (where the
   first character of each word is capitalized).  When the replacement
-  pattern is not all lower case, replacement is never case-preserving: the
+  pattern is not all lower case, replacement is never case-preserving; the
   original casing of the replacement pattern is used.
 
 Press the :guilabel:`Find` or :guilabel:`Previous` button to perform an
@@ -209,7 +209,7 @@ see :ref:`The_Locations_View`.
 The :guilabel:`Replace` and :guilabel:`Replace & Find` buttons are grayed
 out if no occurence of the pattern is found. To enable them, start a
 search, for example by pressing the :guilabel:`Find` button. Pressing
-:guilabel:`Replace` replaces the current occurrence (grayes out the two
+:guilabel:`Replace` replaces the current occurrence (grays out the two
 buttons) and :guilabel:`Replace & Find` replaces the occurrence and jumps
 to the next one, if any. If you do not want to replace the current
 occurence, jump to the next one by pressing :guilabel:`Next`.

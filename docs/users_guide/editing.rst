@@ -12,7 +12,7 @@ General Information
 
 Source editing is one of the central parts of GPS.  It allows access to
 many other functionalities, including extended source navigation and source
-analysis    tools.  You can have as many editor windows as you need.  Each
+analysis tools.  You can have as many editor windows as you need.  Each
 editor window receives annotations from other components in GPS, such as a
 debugger.
 
@@ -82,7 +82,7 @@ The source editor provides an extensive set of features, including:
       writability of the view in the source editor.
 
       When you try to save a readonly file, GPS asks for confirmation, and
-      if possible, saves the file, keeping its readnly state.
+      if possible, saves the file, keeping its readonly state.
 
     * If the file is maintained under version control and version control
       is supported and enabled in GPS, the next icon shows VCS information
@@ -142,7 +142,7 @@ The source editor provides an extensive set of features, including:
 
     C : Integer;
 
-    --  Not a comment for C, there is a blank linke
+    --  Not a comment for C, there is a blank line
 
   When comments appear both before and after the entity, GPS choses the one
   given by the :index:`preference <preferences; documentation --> leading
@@ -227,7 +227,7 @@ The source editor provides an extensive set of features, including:
   it can be deactivated by disabling the plugin (see
   :ref:`The_Plug-ins_Editor`).
 
-  Details such as presence of indications in the :guilabel:`Speed Column or
+  Details such as the presence of indications in the :guilabel:`Speed Column` or
   highlighting color can be customized in the :guilabel:`Plugins` section
   of :ref:`The_Preferences_Dialog`.
 
@@ -265,7 +265,7 @@ There are also several ways to define new key bindings, see
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Ctrl-Shift-u-2-0` | will insert a space character (ASCII 32, which is 20 in hexadecimal).    |
 +-------------------------+--------------------------------------------------------------------------+
-| :kbd:`Ctrl-x`           | Cut to clipboard                                                         |
+| :kbd:`Ctrl-x`           | Cut to clipboard.                                                        |
 | :kbd:`Shift-delete`     |                                                                          |
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Ctrl-c`           | Copy to clipboard.                                                       |
@@ -295,7 +295,7 @@ There are also several ways to define new key bindings, see
 | :kbd:`Ctrl-End`         | Go to the end of the file.                                               |
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Ctrl-up`          | Go to the beginning of the line or to the previous line if already at    |
-|                         | the beginning of the line                                                |
+|                         | the beginning of the line.                                               |
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Ctrl-down`        | Go to the end of the line or to the beginning of the next line if        |
 |                         | already at the end of the line.                                          |
@@ -413,7 +413,7 @@ The :menuselection:`File` Menu
      Save the desktop to a file. The desktop includes information about
      files and graphs and their window sizes and positions in GPS. One
      desktop is saved per top level project so that when you reload the
-     same project you get back to into the same state you were in when you
+     same project you get back to the same state you were in when you
      left GPS. If you load a different project, either another desktop or
      the default desktop is loaded.  Request GPS to automatically save this
      desktop when you quit with the :index:`preference <preferences;
@@ -618,7 +618,7 @@ The :menuselection:`Edit` Menu
 * :menuselection:`Edit --> Format selection`
 
   Indent and format the selection or the current line.  See
-  :ref:`The_Preferences_Dialog`, for preferences related to source
+  :ref:`The_Preferences_Dialog` for preferences related to source
   formatting.
 
 .. index:: menu; edit --> smart completion
@@ -784,8 +784,7 @@ The :menuselection:`Edit` Menu
 
      Rearrange line breaks in the selection or current line so that line
      lengths do not exceed the maximum length, as set in the
-     :guilabel:`Right margin` preference (see
-     :ref:`The_Preferences_Dialog`).
+     :guilabel:`Right margin` preference (see :ref:`The_Preferences_Dialog`).
 
   .. index:: menu; edit --> selection --> sort
 
@@ -806,7 +805,7 @@ The :menuselection:`Edit` Menu
   * :menuselection:`Edit --> Selection --> Pipe in external program...`
 
       Open an input window at the bottom of the GPS window where you can
-      specify any external command which are passed the current selection
+      specify any external command which is passed to the current selection
       as input. If the command succeeds, the selection is replaced by the
       output of the command.
 
@@ -1070,7 +1069,7 @@ GPS supports this with several different methods:
   For example, the sequence :kbd:`control-u 79 -` inserts 79 characters of
   '-' in the current editor.  This is often useful to insert separators.
 
-  If you are using the emacs mode (see :menuselection:`Tools --> Plug-ins`
+  If you are using the Emacs mode (see :menuselection:`Tools --> Plug-ins`
   menu), you can also use the sequence :kbd:`control-u 30 control-k` to
   delete 30 lines.
 
@@ -1231,8 +1230,8 @@ Refactoring
 ===========
 
 GPS includes basic facilities to refactor your code.  "Refactoring" is the
-term used to describe manipulation of source code that do not affect the
-behavior of the code but help reorganize it to make it more readable, more
+term used to describe manipulation of source code that does not affect the
+behavior of the code but helps reorganize it to make it more readable, more
 extendable, or make other similar improvements.  Refactoring techniques are
 generally things that programmers have done by hand, but which can be done
 faster and more securely when done automatically by a tool.
@@ -1376,8 +1375,8 @@ refactoring steps to extract the code and move it elsewhere.
 
 First, we move the code that prints the banner. Moving it is easy, since
 this code does not depend on any context. We could just do a copy-paste,
-but then would have to create the new subprogram. Instead, we select lines
-30 to 35 and then select the:menuselection:`Refactoring --> Extract
+but then we would have to create the new subprogram. Instead, we select lines
+30 to 35 and then select the :menuselection:`Refactoring --> Extract
 Subprogram` contextual menu.  GPS removes those lines from the subprogram
 :command:`Print_Owing` and creates a new procedure :command:`Print_Banner`
 (the name is specified by the user; GPS does not try to guess a name). Also,
@@ -1439,7 +1438,7 @@ GPS uses the same name for the local variable for the parameters. Often, it
 makes sense to recompile the new version of the source and apply the
 :menuselection:`Refactoring --> Rename Entity` refactoring to have more
 specific names for the parameters, or the :menuselection:`Refactoring -->
-Name Parameters` refactoring so that call to the new method uses named
+Name Parameters` refactoring so that calls to the new method uses named
 parameters to further clarify the code::
 
      ... code not shown
@@ -1590,7 +1589,7 @@ The following values are recognized:
 * :program:`vim`
 
   `Vim` is a vi-like editor that provides a number of enhancements, for
-  example syntax highlighting for all languages supported by GPS.
+  example, syntax highlighting for all languages supported by GPS.
   Selecting this external editor starts an :program:`xterm` (or command
   window, depending on your system) with a running :program:`vim` process
   editing the file.
@@ -1626,7 +1625,7 @@ project, you should kill any running Emacs, so a new one is spawned by GPS
 with the appropriate project.
 
 Alternatively, explicitly reload the project from Emacs itself by using the
-:menuselection:`Project --> Load` menu in :program:`emacs` (i
+:menuselection:`Project --> Load` menu in :program:`emacs` (if
 :command:`ada-mode` is correctly installed).
 
 .. index:: preferences; editor --> always use external editor
