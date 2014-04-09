@@ -381,6 +381,8 @@ package body Browsers.Scripts is
 
          C := Browser_Views.Child_From_View (View);
          C.Set_Title (Nth_Arg (Data, 2));
+         GPS_MDI_Child (C).Set_Save_Desktop_Callback
+           (Nth_Arg (Data, 3, Default => null));
 
          Inst := New_Instance (Script, Module.View_Class);
          Set_Data (Inst, Widget => GObject (View));
@@ -951,7 +953,8 @@ package body Browsers.Scripts is
          Class   => Module.View_Class,
          Static_Method => True,
          Params  => (1 => Param ("diagram"),
-                     2 => Param ("title")),
+                     2 => Param ("title"),
+                     3 => Param ("save_desktop", Optional => True)),
          Handler => View_Handler'Access);
       Register_Command
         (Kernel.Scripts,
@@ -1075,7 +1078,6 @@ package body Browsers.Scripts is
                      Param ("relative", Optional => True)),
          Class   => Link,
          Handler => Link_Handler'Access);
-
    end Register_Module;
 
 end Browsers.Scripts;

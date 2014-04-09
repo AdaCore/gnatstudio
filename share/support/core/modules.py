@@ -33,6 +33,14 @@ Here is an example of use for this package::
         button = Gtk.Button("Button")
         box.pack_start(button, False, False, 0)
         return box
+
+Sometimes, the module is wrapping an GPS.GUI object that has been created
+by GPS itself (for instance a :class:`GPS.Browsers.View`). Since
+:func:`GPS.Browsers.View.create` is putting the view directly in the MDI,
+the module does not get to call :func:`GPS.MDI.add`, and as such the modules
+:func:`save_desktop` function is never called by default. To work around this,
+you need to pass your module's :func:`_save_desktop` (not the leading
+underscore) as a parameter to :func:`GPS.Browsers.View.create`.
 """
 
 
@@ -158,15 +166,15 @@ class Module(object):
         """
         return None
 
-    def save_desktop(self, view):
+    def save_desktop(self, child):
         """
         Returns the data to use when saving a view in the desktop. The
         returned value will be passed to load_desktop the next time GPS is
         started.
 
-        :param view: an instance of GPS.MDIWindow matching the view you created
-           and put in the MDI. Use view.get_child to get access to the
-           actual widget.
+        :param GPS.MDIWindow view: the view you created and put in the MDI.
+           Use view.get_child to get access to the actual widget.
+        :return: A string, some additional data to save in the XML file.
         """
         return ""
 
@@ -176,9 +184,11 @@ class Module(object):
         receives a newly created widget, and the data returned by
         save_desktop() that can be used to initialize the widget.
 
-        :param child: a newly created instance of GPS.MDIWindow, that
+        :param GPS.MDIWindow child: a new instance, that
             contains the view created by self.create_view()
-        :param data: a string, as returned by save_desktop
+        :param str data: as returned by save_desktop
+        :return: the GPS.MDIWindow that was loaded. It defaults to the
+            child parameter, but the parameter might have been null
         """
         pass
 
@@ -279,8 +289,8 @@ class Module(object):
         if name == "%s.%s" % (self.__class__.__module__,
                               self.__class__.__name__):
             child = self.get_child(allow_create=True)
-            self.load_desktop(child, data)
-            return child
+            c = self.load_desktop(child, data)
+            return c or child
 
     def get_child(self, allow_create=True):
         """
@@ -290,8 +300,6 @@ class Module(object):
         :return: an instance of GPS.MDIWindow
         """
 
-        # ??? Should store the view directly in self, but we need to monitor
-        # its destruction.
         if self.view_title:
             child = GPS.MDI.get(self.view_title)
             if child:
@@ -300,6 +308,10 @@ class Module(object):
             elif allow_create:
                 view = self.create_view()
                 if view:
+                    # The following has no effect if create_view has already
+                    # put the view in the MDI. This means that save_desktop
+                    # will not be called unless create_view has done the
+                    # necessary setup.
                     child = GPS.MDI.add(
                         view,
                         position=self.mdi_position,

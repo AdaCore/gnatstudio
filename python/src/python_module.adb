@@ -106,15 +106,6 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the commands related to the various classes
 
-   type Python_MDI_Child_Record is new GPS_MDI_Child_Record with record
-      Save_Desktop : Subprogram_Type;
-   end record;
-   type Python_MDI_Child is access all Python_MDI_Child_Record'Class;
-   overriding function Save_Desktop
-     (Self : not null access Python_MDI_Child_Record)
-      return XML_Utils.Node_Ptr;
-   --  An Ada wrapper for a view created in Python
-
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -466,45 +457,6 @@ package body Python_Module is
    end Python_File_Command_Handler;
 
    ------------------
-   -- Save_Desktop --
-   ------------------
-
-   overriding function Save_Desktop
-     (Self : not null access Python_MDI_Child_Record)
-      return XML_Utils.Node_Ptr
-   is
-      N : Node_Ptr;
-   begin
-      if Self.Save_Desktop /= null then
-         declare
-            Args : Callback_Data'Class :=
-              Create (Get_Script (Self.Save_Desktop.all), 1);
-         begin
-            Set_Nth_Arg
-              (Args, 1, Create_MDI_Window_Instance
-                 (Get_Script (Self.Save_Desktop.all), Self.Kernel, Self));
-
-            declare
-               R : constant List_Instance'Class :=
-                 Execute (Self.Save_Desktop, Args);
-               Name : constant String := Nth_Arg (R, 1);
-               Data : constant String := Nth_Arg (R, 2);
-            begin
-               N := new Node;
-               N.Tag := new String'(Name);
-
-               if Data = "" then
-                  N.Value := new String'(Data);
-               end if;
-            end;
-
-            Free (Args);
-         end;
-      end if;
-      return N;
-   end Save_Desktop;
-
-   ------------------
    -- Load_Desktop --
    ------------------
 
@@ -546,9 +498,10 @@ package body Python_Module is
    procedure Python_GUI_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Widget : Glib.Object.GObject;
-      Child  : Python_MDI_Child;
-      Group  : Child_Group;
+      Widget   : Glib.Object.GObject;
+      Child    : GPS_MDI_Child;
+      C        : MDI_Child;
+      Group    : Child_Group;
       Position : Child_Position;
       Inst     : Class_Instance;
    begin
@@ -562,24 +515,30 @@ package body Python_Module is
          end;
 
          if Widget /= null then
-            Group := Child_Group (Nth_Arg (Data, 4, Integer (Group_Default)));
-            Position := Child_Position'Val
-              (Nth_Arg (Data, 5, Child_Position'Pos (Position_Automatic)));
+            C := Find_MDI_Child_From_Widget (Gtk_Widget (Widget));
 
-            Child := new Python_MDI_Child_Record;
-            Initialize (Child, Gtk_Widget (Widget), Group => Group,
-                        Module => Python_Views.Get_Module,
-                        Desktop_Independent => False);
-            Child.Save_Desktop := Nth_Arg (Data, 6, Default => null);
+            if C = null then
+               Group := Child_Group
+                 (Nth_Arg (Data, 4, Integer (Group_Default)));
+               Position := Child_Position'Val
+                 (Nth_Arg (Data, 5, Child_Position'Pos (Position_Automatic)));
 
-            Set_Title (Child, Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, ""));
-            Put (Get_MDI (Get_Kernel (Data)), Child, Position);
-            Set_Focus_Child (Child);
+               Gtk_New (Child, Gtk_Widget (Widget), Group => Group,
+                           Module => Python_Views.Get_Module,
+                           Desktop_Independent => False);
+               Child.Set_Save_Desktop_Callback
+                 (Nth_Arg (Data, 6, Default => null));
+
+               Set_Title (Child, Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, ""));
+               Put (Get_MDI (Get_Kernel (Data)), Child, Position);
+               Set_Focus_Child (Child);
+               C := MDI_Child (Child);
+            end if;
 
             Set_Return_Value
               (Data,
                Create_MDI_Window_Instance
-                 (Get_Script (Data), Get_Kernel (Data), Child));
+                 (Get_Script (Data), Get_Kernel (Data), C));
          end if;
       end if;
    end Python_GUI_Command_Handler;

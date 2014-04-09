@@ -718,6 +718,16 @@ package body Generic_Views is
          N : Node_Ptr;
          Tb : constant Boolean := Local_Toolbar or else Local_Config;
       begin
+         --  Test inherited first, in case the user has provided his own. This
+         --  is also needed when a module is written in python, since
+         --  python_module.adb in that case uses its own mdi_child to call the
+         --  python function
+
+         N := Formal_MDI_Child (Self.all).Save_Desktop;
+         if N /= null then
+            return N;
+         end if;
+
          if Tb and then Widget.all in Toplevel_Box'Class then
             N := new Node;
             N.Tag := new String'(Module_Name);

@@ -1614,4 +1614,54 @@ package body GPS.Kernel.MDI is
       return No_Class;
    end Get_Child_Class;
 
+   -------------------------------
+   -- Set_Save_Desktop_Callback --
+   -------------------------------
+
+   procedure Set_Save_Desktop_Callback
+     (Self     : not null access GPS_MDI_Child_Record;
+      Callback : GNATCOLL.Scripts.Subprogram_Type)
+   is
+   begin
+      Self.Save_Desktop := Callback;
+   end Set_Save_Desktop_Callback;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Self : not null access GPS_MDI_Child_Record) return XML_Utils.Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      if Self.Save_Desktop /= null then
+         declare
+            Args : Callback_Data'Class :=
+              Create (Get_Script (Self.Save_Desktop.all), 1);
+         begin
+            Set_Nth_Arg
+              (Args, 1, Create_MDI_Window_Instance
+                 (Get_Script (Self.Save_Desktop.all), Self.Kernel, Self));
+
+            declare
+               R : constant List_Instance'Class :=
+                 Execute (Self.Save_Desktop, Args);
+               Name : constant String := Nth_Arg (R, 1);
+               Data : constant String := Nth_Arg (R, 2);
+            begin
+               N := new Node;
+               N.Tag := new String'(Name);
+
+               if Data /= "" then
+                  N.Value := new String'(Data);
+               end if;
+            end;
+
+            Free (Args);
+         end;
+      end if;
+      return N;
+   end Save_Desktop;
+
 end GPS.Kernel.MDI;

@@ -701,12 +701,19 @@ class View(GPS.GUI):
         """
 
     @staticmethod
-    def create(diagram, title):
+    def create(diagram, title, save_desktop=None):
         """
         Creates a new view that shows the given diagram.
         This view is automatically made visible in GPS.
 
         :param str title: the title used for the notebook tab.
+        :param func(child) save_desktop: An optional callback when GPS is
+           saving the desktop. It is passed the MDIWindow in which the view
+           was put, and should return a string to store in the desktop (see
+           :func:`GPS.MDI.add` for more information). This is generally not
+           useful, unless you are writting a custom python module, in which
+           case the parameter should be set to "module._save_desktop". See
+           the documentation for :file:`modules.py` for more information.
         """
 
     def scale_to_fit(self, max_scale=4.0):

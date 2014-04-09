@@ -7139,6 +7139,10 @@ class MDI(object):
         string used in the notebook tabs. You can immediately retrieve a
         handle to the created window by calling GPS.MDI.get (short).
 
+        This function has no effect if the widget is already in the MDI.
+        In particular, the save_desktop parameter will not be taken into
+        account in such a case.
+
         :param widget: A widget, created by pygobject, or an instance of
             GPS.GUI or one of the derived classes.
         :param title: A string

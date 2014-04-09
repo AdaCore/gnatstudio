@@ -168,9 +168,15 @@ package GPS.Kernel.MDI is
      (Self : not null access GPS_MDI_Child_Record)
       return Glib.Xml_Int.Node_Ptr;
    function Save_Desktop
-     (Self : not null access GPS_MDI_Child_Record) return XML_Utils.Node_Ptr
-     is (null);
-   --  Replaces the version from GtkAda, since Node_Ptr is of a different type
+     (Self : not null access GPS_MDI_Child_Record) return XML_Utils.Node_Ptr;
+   --  Replaces the version from GtkAda, since Node_Ptr is of a different type.
+   --  By default, this calls the subprogram set via Set_Save_Desktop_Callback.
+
+   procedure Set_Save_Desktop_Callback
+     (Self     : not null access GPS_MDI_Child_Record;
+      Callback : GNATCOLL.Scripts.Subprogram_Type);
+   --  Set the subprogram to be called by the default Save_Desktop. This will
+   --  have no effect if you override Save_Desktop
 
    procedure Load_Perspective
      (Kernel : access Kernel_Handle_Record'Class;
@@ -397,6 +403,7 @@ private
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record
       Module              : Abstract_Module_ID;
       Desktop_Independent : Boolean;
+      Save_Desktop        : GNATCOLL.Scripts.Subprogram_Type;
    end record;
 
    type MDI_Location_Marker_Record
