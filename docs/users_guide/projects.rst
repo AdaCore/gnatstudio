@@ -456,24 +456,24 @@ Aggregate projects
 ==================
 
 Aggregate projects are a convenient way to group several independent
-projects into a single project that can be loaded in GPS. Using an
+projects into a single project that you can loaded in GPS. Using an
 aggregate project has several advantages:
 
-* There is no restriction regarding the aggregate sources and projects.  There
-  can be duplicate file names between the aggregate projects, or duplicate
-  projects altogether. For instance, if you have a project :file:`liba.gpr`
-  which contains a library used by both :file:`projectA.gpr` and
-  :file:`projectB.gpr`, it is still possible to aggregate the latter two
-  projects. It is also possible that a common source :file:`common.ads` belongs
-  to both :file:`projectA.gpr` and :file:`projectB.gpr`.
+* There is no restriction on duplicate names within aggregate sources and
+  projects.  There can be duplicate file names between the aggregate
+  projects or duplicate projects. For example, if you have a project
+  :file:`liba.gpr` containing a library used by both :file:`projectA.gpr`
+  and :file:`projectB.gpr`, you can still aggregate the latter two
+  projects. A source file is also permitted to belong to both
+  :file:`projectA.gpr` and :file:`projectB.gpr`.
 
-* Building with gprbuild and the aggregated project will build the main units
-  of all aggregate projects with a single command.
+* You can use :program:`gprbuild` to build the main units of all aggregate
+  projects with a single command.
 
 * The aggregated project can contain attributes to setup your environment,
-  in particular `External` can be used to set the value of the scenario
-  variables, or `Project_Path` can be used to set the project path that will
-  be used to load the aggregated projects.
+  in particular you can use :file:`External` to set the value of the
+  scenario variables and :file:`Project_Path` to set the project path to be
+  used to load the aggregated projects.
 
 Here is a short example of an aggregate project::
 
@@ -487,25 +487,27 @@ Here is a short example of an aggregate project::
        for External ("BUILD") use "Debug";
    end BuildAll;
 
-Loading an aggregate project in GPS has a few impacts on the interface:
+GPS helps you use aggregate projects in the following ways:
 
 * Since a source file can now belong to several projects, each editor is
-  associated with a specific project. So if you work on the :file:`common.ads`
-  file, you might end up with two editors, one for :file:`common.ads` in the
-  context of :file:`projectA.gpr`, and the other in the context of
-  :file:`projectB.gpr`. The project is used in particular when doing
-  cross-reference queries, since a "with C;" in :file:`common.ads` could point
-  to different files depending on which project owns that editor.
+  associated with a specific project.  If the :file:`common.ads` file is
+  part of multiple projects, you may end up with two editors, one for
+  :file:`common.ads` in the context of :file:`projectA.gpr`, and the other
+  in the context of :file:`projectB.gpr`. The project matters when doing
+  cross-reference queries, since a :code:`with C;` in :file:`common.ads`
+  could point to different files depending on which project owns that
+  editor.
 
-  To help with this, GPS will show the name of the project in the notebook
+  To help with this, GPS shows the name of the project in the notebook
   tabs.
 
-* The omni-search (at the top-right corner of the GPS window) might list the
-  files several times, once per project that owns it. So you should be select
-  the right one.
+* The omni-search (at the top-right corner of the GPS window) may list the
+  a file several times, once per each project that owns it. So you need to
+  select the one you are interested in.
 
-* After you do a cross-reference (like "goto declaration"), the newly opened
-  editor will have automatically selected the right project.
+* After you perform a cross-reference (:menuselection:`Navigate --> Goto
+  declaration`), the newly opened editor automatically selects the proper
+  project.
 
 Disabling Editing of the Project File
 =====================================
@@ -683,12 +685,12 @@ Several types of project wizards are provided in GPS:
 
 * :guilabel:`Single Project with complex naming scheme`
 
-  Use this wizard to create project for existing Ada units stored in files
-  with irregular or arbitrary naming conventions. To do this, specify
-  file name patterns on page 'File patterns'. GPS uses these patterns to
-  search for Ada units in each of source directories specified in the
-  :ref:`Source_Directory_Selection` page using the :program:`gnatname` tool
-  and generates the required pragmas for the set of files.
+  Use this wizard to create a project for existing Ada units stored in
+  files with irregular or arbitrary naming conventions. To do this, specify
+  file name patterns on page :guilabel:`File patterns`. GPS uses these
+  patterns to search for Ada units in each source directory specified in
+  the :ref:`Source_Directory_Selection` page using the :program:`gnatname`
+  tool and generates the required pragmas for the set of files.
 
 * :guilabel:`Project Tree`
 

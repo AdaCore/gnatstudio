@@ -305,7 +305,7 @@ arrow, as seen in the screenshot above).
 
       .. index:: Auto indent on paste
 
-      Whether content pasted in the source editors should be auto indented
+      Whether content pasted in the source editors should be auto indented.
 
     * :guilabel:`Display subprogram names`
 
@@ -3372,9 +3372,9 @@ The following child tags are available:
 * :file:`<Obj_Suffix>`
 
   String identifying the extension for object files for this language.
-  For instance, it is ".o" for C or Ada or ".pyc" for python.
-  The default is to set it to "-", which indicates that there are no object
-  files.
+  For example, it is :file:`.o` for C or Ada and :file:`.pyc` for
+  Python.  The default is :command:`-`, which indicates there are no
+  object files.
 
 * :file:`<Extension>`
 
