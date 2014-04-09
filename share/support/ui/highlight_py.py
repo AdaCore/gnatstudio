@@ -1,10 +1,7 @@
 from highlight_framework import *
 from keyword import kwlist
 
-strings_subhighlighter = (
-    simple(r"(?:\\.|\%.?)",
-           tag=newtag("string_escapes", foreground_rgba='green')),
-)
+strings_subhighlighter = (simple(r"(?:\\.|\%.?)", tag="string_escapes"), )
 
 register_highlighter(
     language="python",

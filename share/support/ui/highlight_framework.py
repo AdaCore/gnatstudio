@@ -10,6 +10,38 @@ logger = GPS.Logger("Lol")
 # rpdb2.start_embedded_debugger("lol")
 
 
+class HighlighterModule(Module):
+    highlighters = {}
+    preferences = {}
+
+    def setup(self):
+        pass
+
+    def init_highlighting(self, f):
+        highlighter = self.highlighters.get(f.language(), None)
+        if isinstance(highlighter, Highlighter):
+            ed = GPS.EditorBuffer.get(f)
+            gtk_ed = get_gtk_buffer(ed)
+            highlighter.init_highlighting(ed)
+            gen = highlighter.highlight_gen(gtk_ed)
+            highlighter.gtk_idle_highlight(gtk_ed, gen)
+
+    def gps_started(self):
+        ed = GPS.EditorBuffer.get(open=False)
+        if ed:
+            self.init_highlighting(ed.file())
+
+    def preferences_changed(self):
+        for pref in self.preferences.values():
+            pref.propagate_change()
+
+    def file_edited(self, f):
+        """
+        This hook is called when a new file editor is being opened
+        """
+        self.init_highlighting(f)
+
+
 #############
 # Utilities #
 #############
@@ -97,14 +129,26 @@ def make_wrapper(method_name):
     return wrapper
 
 
+def to_line_end(textiter):
+    """
+    @type textiter: Gtk.TextIter
+    @return: Gtk.TextIter
+    """
+    if textiter.get_char() == "\n":
+        return textiter
+    return textiter.forward_to_line_end_n()
+
+
 for name in dir(Gtk.TextIter):
     import re as r
+
     if r.match("(forward|set|backward).*$", name):
         setattr(Gtk.TextIter, name + "_n", make_wrapper(name))
 
 Gtk.TextIter.__str__ = iter_to_str
 Gtk.TextIter.__repr__ = iter_to_str
 Gtk.TextIter.__eq__ = iter_eq
+Gtk.TextIter.to_line_end = to_line_end
 Gtk.TextTag.__str__ = tag_to_str
 Gtk.TextTag.__repr__ = tag_to_str
 Gtk.TextIter.to_tuple = to_tuple
@@ -146,7 +190,7 @@ def words(words_list, **kwargs):
 
 
 def region(start_re, end_re,
-           name="", multiline=False, tag="", highlighter=(),
+           name="", tag="", highlighter=(),
            matchall=True, **kwargs):
     """
     Return a matcher for a region, which can contain a whole specific
@@ -154,31 +198,36 @@ def region(start_re, end_re,
     @type start_re: string
     @type end_re: string
     """
-    return Struct(
-        kind="region",
-        start_re=start_re,
-        end_re=end_re,
-        name=name,
-        multiline=multiline,
-        tag=tag,
-        highlighter_spec=highlighter,
-        matchall=matchall,
-        **kwargs
-    )
+    return Struct(kind="region", start_re=start_re, end_re=end_re,
+                  name=name, tag=tag, highlighter_spec=highlighter,
+                  matchall=matchall, **kwargs)
 
 
 def region_ref(name):
-    return Struct(
-        kind="region_ref",
-        region_ref_name=name
-    )
+    return Struct(kind="region_ref", region_ref_name=name)
 
 
-def newtag(name, prio=20, **props):
+def propagate_change(pref):
+    color = Gdk.RGBA()
+    color.parse(pref.get())
+    pref.tag.set_property("foreground_rgba", color)
+
+
+GPS.Preference.propagate_change = propagate_change
+
+
+def new_style(lang, name, foreground_color, prio=20):
+    style_id = "{0}_{1}".format(lang, name)
+    pref = GPS.Preference("Editor/{0}/{1}".format(lang, name))
+    doc = "Color for '{0}'".format(name)
+    pref.create(doc, "color", doc, foreground_color)
+    HighlighterModule.preferences[style_id] = pref
+
     return Struct(
+        style_id=style_id,
         name=name,
         prio=prio,
-        props=props
+        pref=pref
     )
 
 
@@ -188,7 +237,6 @@ def newtag(name, prio=20, **props):
 
 
 class HighlighterStacks(object):
-
     def __init__(self):
         # The stack of highlighter at (0, 0) is necessarily the empty stack,
         # so the stack list comes prepopulated with one empty stack
@@ -237,7 +285,7 @@ class HighlighterStacks(object):
         @param nb_deleted_lines: int
         @param at_line: int
         """
-        del self.stacks_list[at_line+1:at_line+nb_deleted_lines+1]
+        del self.stacks_list[at_line + 1:at_line + nb_deleted_lines + 1]
 
     def __str__(self):
         return "{0}".format(
@@ -245,11 +293,11 @@ class HighlighterStacks(object):
                        for num, stack in enumerate(self.stacks_list)])
         )
 
+
 region_cats = {}
 
 
 class SubHighlighter(object):
-
     def __init__(self, cats, matcher, gtk_tag=None, parent_cat=None):
         """
         @type cats: list
@@ -280,14 +328,12 @@ class SubHighlighter(object):
             if type(cat.tag) is str:
                 tags.append(gtk_ed.get_tag_table().lookup(cat.tag))
             else:
-                t = gtk_ed.get_tag_table().lookup(cat.tag.name)
+                t = gtk_ed.get_tag_table().lookup(cat.tag.style_id)
                 if not t:
-                    t = gtk_ed.create_tag(cat.tag.name)
+                    t = gtk_ed.create_tag(cat.tag.style_id)
                     t.set_priority(cat.tag.prio)
-                    for k, v in cat.tag.props.items():
-                        color = Gdk.RGBA()
-                        color.parse(v)
-                        t.set_property(k, color)
+                    cat.tag.pref.tag = t
+                    cat.tag.pref.propagate_change()
                 tags.append(t)
 
             cat.gtk_tag = tags[-1]
@@ -322,7 +368,6 @@ def gen_to_fn(gen, granularity, max_time):
 
 
 class Highlighter(object):
-
     def __init__(self, spec=()):
 
         def construct_subhighlighter(highlighter_spec, stop_pattern=None,
@@ -468,11 +513,13 @@ class Highlighter(object):
         @type start_line: int
         @type remove_tag_step: int
         """
+
         def get_action_list(sl, el=0):
             return sorted(
                 self.highlight_info_gen(gtk_ed, sl, sl + (el if el else 0)),
                 key=lambda (_, s, e): s.get_offset()
             )
+
         max_loc = None
 
         if start_line == -1:
@@ -481,19 +528,21 @@ class Highlighter(object):
                 gtk_ed.apply_tag(tag, start, end)
                 yield
         else:
+            st_iter = gtk_ed.get_iter_at_line(start_line)
+            insert_iter = gtk_ed.get_iter_at_mark(gtk_ed.get_insert())
+            gtk_ed.remove_all_tags(st_iter, insert_iter.to_line_end())
             is_end = (gtk_ed.get_iter_at_line(start_line + 100).get_line() ==
                       gtk_ed.get_end_iter().get_line())
 
-            actions_list = get_action_list(start_line, start_line+100)
+            actions_list = get_action_list(start_line, start_line + 100)
 
             if not self.sync_stop and not is_end:
-                actions_list += get_action_list(start_line+100)
+                actions_list += get_action_list(start_line + 100)
 
             all_actions = (a for a in actions_list)
 
             if actions_list:
-                gtk_ed.remove_all_tags(gtk_ed.get_iter_at_line(start_line),
-                                       actions_list[0][1])
+                gtk_ed.remove_all_tags(st_iter, actions_list[0][1])
 
             for actions in partition(all_actions, remove_tag_step):
                 max_loc = max(actions, key=lambda (_, s, e): e.get_offset())[2]
@@ -566,7 +615,6 @@ class Highlighter(object):
 
 
 def gps_fun(fun):
-
     def __gps_to_gtk_fun(start, end, *args, **kwargs):
         gtk_ed = get_gtk_buffer(start.buffer())
         gtk_start = gtk_ed.get_iter_at_offset(start.offset())
@@ -575,37 +623,10 @@ def gps_fun(fun):
 
     return __gps_to_gtk_fun
 
+
 Highlighter.idle_highlight = gps_fun(Highlighter.gtk_idle_highlight)
 
 
 def register_highlighter(language, *args, **kwargs):
     highlighter = Highlighter(*args, **kwargs)
     HighlighterModule.highlighters[language] = highlighter
-
-
-class HighlighterModule(Module):
-
-    highlighters = {}
-
-    def setup(self):
-        pass
-
-    def init_highlighting(self, f):
-        highlighter = self.highlighters.get(f.language(), None)
-        if isinstance(highlighter, Highlighter):
-            ed = GPS.EditorBuffer.get(f)
-            gtk_ed = get_gtk_buffer(ed)
-            highlighter.init_highlighting(ed)
-            gen = highlighter.highlight_gen(gtk_ed)
-            highlighter.gtk_idle_highlight(gtk_ed, gen)
-
-    def gps_started(self):
-        ed = GPS.EditorBuffer.get(open=False)
-        if ed:
-            self.init_highlighting(ed.file())
-
-    def file_edited(self, f):
-        """
-        This hook is called when a new file editor is being opened
-        """
-        self.init_highlighting(f)
