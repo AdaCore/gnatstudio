@@ -511,7 +511,7 @@ package body Xref is
                --  predefined entities
                Closest_Ref.Ref := Self.Xref.Get_Entity
                  (Name    => Name,
-                  File    => No_File,
+                  File    => Predefined_Entity,
                   Project => No_Project,
                   Approximate_Search_Fallback => Approximate_Search_Fallback);
             else
