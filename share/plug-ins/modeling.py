@@ -76,7 +76,7 @@ project_switches = """<?xml version='1.0' ?>
      package="GMC"
      index="Simulink">
       <language>Simulink</language>
-      <initial-cmd-line>-c -l ada</initial-cmd-line>
+      <initial-cmd-line>-i -l ada</initial-cmd-line>
       <switches lines="3">
         <title line="1">Output</title>
         <title line="2">Generation</title>
@@ -150,6 +150,28 @@ class GMC_Module(modules.Module):
 
         return False
 
+    def load_desktop(self, view, data):
+        v = self.open_file(GPS.File(data))
+        return GPS.MDI.get_by_child(v)
+
+    def open_file(self, file):
+        """
+        Open a .mdl file as a browser, and puts it in the MDI.
+        :param GPS.File file: the file to open
+        :return: The created GPS.Browsers.View
+        """
+        diagrams = GPS.Browsers.Diagram.load_json(file.name())
+        v = GPS.Browsers.View.create(
+            diagrams[0],
+            title=os.path.basename(file.name()),
+            save_desktop=self._save_desktop)
+        v.file = file
+        v.set_background(
+            GPS.Browsers.View.Background.GRID,
+            GPS.Browsers.Style(stroke="rgba(200,200,200,0.8)"))
+        v.scale_to_fit(max_scale=1.0)
+        return v
+
     # Setup the module only when the GMC executable is available on the path.
     # This action registeres the Matlab and Simulink languages along with the
     # various project attributes.
@@ -164,3 +186,8 @@ class GMC_Module(modules.Module):
 
             GPS.Hook('open_file_action_hook').add(
                 self.__on_open_file_action_hook, last=False)
+
+    def save_desktop(self, child):
+        # ??? Should save position and scaling factor too
+        view = child.get_child()
+        return view.file.name()
