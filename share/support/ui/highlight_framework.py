@@ -34,7 +34,7 @@ class HighlighterModule(Module):
     def preferences_changed(self):
         for pref in self.preferences.values():
             if pref.tag:
-                pref.propagate_change()
+                propagate_change(pref)
 
     def file_edited(self, f):
         """
@@ -214,9 +214,6 @@ def propagate_change(pref):
     pref.tag.set_property("foreground_rgba", color)
 
 
-GPS.Preference.propagate_change = propagate_change
-
-
 def new_style(lang, name, foreground_color, prio=20):
     style_id = "{0}_{1}".format(lang, name)
     pref = GPS.Preference("Editor/{0}/{1}".format(lang, name))
@@ -335,7 +332,7 @@ class SubHighlighter(object):
                     t = gtk_ed.create_tag(cat.tag.style_id)
                     t.set_priority(cat.tag.prio)
                     cat.tag.pref.tag = t
-                    cat.tag.pref.propagate_change()
+                    propagate_change(cat.tag.pref)
                 tags.append(t)
 
             cat.gtk_tag = tags[-1]
