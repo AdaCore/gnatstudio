@@ -126,33 +126,26 @@ project_switches = """<?xml version='1.0' ?>
          tip="Ask Matteo 6"/>
       </switches>
     </tool>
-  </GPS>"""
-
-# GMC plug-in module
+  </GPS>
+"""
 
 
 class GMC_Module(modules.Module):
 
-    # Handle an "open file" event
-
     def __on_open_file_action_hook(self, hook, file, *args):
+        """Handles "open file" events"""
         if file.language() == 'simulink':
-            diagrams = GPS.Browsers.Diagram.load_json(file.name())
-            v = GPS.Browsers.View.create(
-                diagrams[0], title=os.path.basename(file.name()))
-            v.set_background(
-                GPS.Browsers.View.Background.GRID,
-                GPS.Browsers.Style(
-                    stroke="rgba(200,200,200,0.8)"))
-            v.scale_to_fit(max_scale=2.0)
-
+            v = self.open_file(file)
             return True
-
         return False
 
     def load_desktop(self, view, data):
         v = self.open_file(GPS.File(data))
         return GPS.MDI.get_by_child(v)
+
+    def save_desktop(self, child):
+        # ??? Should save position and scaling factor too
+        return child.get_child().file.name()
 
     def open_file(self, file):
         """
@@ -178,16 +171,12 @@ class GMC_Module(modules.Module):
 
     def setup(self):
         if gmc_exec:
+            # ??? Multiple calls to parse_xml are less efficient, would be
+            # better to merge the XML strings into one.
             GPS.parse_xml(matlab_def)
             GPS.parse_xml(simulink_def)
-
             GPS.parse_xml(project_attributes)
             GPS.parse_xml(project_switches)
 
             GPS.Hook('open_file_action_hook').add(
                 self.__on_open_file_action_hook, last=False)
-
-    def save_desktop(self, child):
-        # ??? Should save position and scaling factor too
-        view = child.get_child()
-        return view.file.name()
