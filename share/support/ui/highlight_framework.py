@@ -489,7 +489,8 @@ class Highlighter(object):
             # so we can highlight to the end of the buffer with this region's
             # tag
             if len(subhl_stack) > 1 and not met_stop_pattern and pop_stack:
-                yield (hl.gtk_tag, hl.region_start, end)
+                rstart = hl.region_start or start
+                yield (hl.gtk_tag, rstart, end)
                 # We break out of the while loop to keep the stack intact
                 break
 

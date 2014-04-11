@@ -123,7 +123,7 @@ def mc_all_entity_references():
     try:
         entity = Entity(identifier, editor.file(),
                         loc_id_start.line(), loc_id_start.column())
-    except GPS.Exception, e:
+    except GPS.Exception:
         return
 
     overlay = editor.create_overlay("entityrefs_overlay")
@@ -132,7 +132,7 @@ def mc_all_entity_references():
     )
 
     def loc_tuple(loc):
-        return (loc.line(), loc.column())
+        return loc.line(), loc.column()
 
     mark_start = loc_id_start.create_mark()
     mark_end = loc_id_end.forward_char().create_mark(left_gravity=False)
@@ -147,6 +147,7 @@ def mc_all_entity_references():
         if lend >= lstart:
             editor.apply_overlay(overlay, lstart, lend)
 
+    # noinspection PyUnusedLocal
     def on_edit(hook_name, file_name):
         """
         Event handler on insert/delete. Mainly ensures that the current field
@@ -161,6 +162,7 @@ def mc_all_entity_references():
             for mark_start, mark_end in marks:
                 apply_overlay(editor, mark_start, mark_end, overlay)
 
+    # noinspection PyUnusedLocal
     def on_move(hook_name, file_name, line, column):
         """
         Event handler on cursor move. Gets out of alias expansion mode
@@ -170,9 +172,9 @@ def mc_all_entity_references():
         end_loc = mark_end.location()
         cursor_loc = editor.current_view().cursor()
         if not (start_loc <= cursor_loc <= end_loc):
-            exit()
+            exit_alias_expansion()
 
-    def exit():
+    def exit_alias_expansion():
         editor.remove_overlay(
             overlay,
             editor.beginning_of_buffer(),
