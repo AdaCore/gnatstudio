@@ -1756,27 +1756,33 @@ package body GPS.Kernel.Modules.UI is
       Toolbar.Set_Style (Toolbar_Icons);
       Toolbar.Set_Show_Arrow (True);
 
-      begin
-         N := Globals.Toolbar_Descriptions.Element (Id);
-         if N /= null then
-            Process_Toolbar (N);
+      if not Globals.Toolbar_Descriptions.Contains (Id) then
+         return Toolbar;
+      end if;
 
-            while N /= null loop
-               if Get_Attribute (N, "inherit") /= "" then
-                  N := Globals.Toolbar_Descriptions.Element
-                    (Get_Attribute (N, "inherit"));
+      N := Globals.Toolbar_Descriptions.Element (Id);
+      if N /= null then
+         Process_Toolbar (N);
+
+         while N /= null loop
+            declare
+               Inh : constant String := Get_Attribute (N, "inherit");
+            begin
+               if Inh /= ""
+                 and then Globals.Toolbar_Descriptions.Contains (Inh)
+               then
+                  N := Globals.Toolbar_Descriptions.Element (Inh);
+
                   if N /= null then
                      Process_Toolbar (N);
                   end if;
                else
                   N := null;
                end if;
-            end loop;
-         end if;
-      exception
-         when others =>
-            null;
-      end;
+            end;
+         end loop;
+      end if;
+
       return Toolbar;
    end Create_Toolbar;
 
