@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N407-001 GPS: GPS crashes on some completions involving generic packages
+
+  Problem:    On completing some generic packages with child packages, the
+              constructs engine would go into an infinite recursion loop and
+              make GPS crash on Windows.
+
+  Status:     Fixed in 6.1 on 2014-04-11.
+
+  Workaround: Deactivate dynamic smart completion/Don't trigger it on generic
+              packages with child packages.
+
 KP-60-N325-035 ECL: event breakpoint on specific exception cannot be created.
 
   Problem:    Cannot create with the UI Ada Event Breakpoint on specific
