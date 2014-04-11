@@ -1102,12 +1102,7 @@ package body Src_Editor_Module is
 
          if File = GNATCOLL.VFS.No_File or else File.Is_Directory then
             Is_Writable := True;
-
-            if Dir = GNATCOLL.VFS.No_File then
-               F := GNATCOLL.VFS.No_File;
-            else
-               F := Create_From_Dir (Dir, "new_file");
-            end if;
+            F := Dir;   --  a directory, not a file
 
          else
             F := File;
