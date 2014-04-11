@@ -306,6 +306,10 @@ package body Ada_Semantic_Tree is
       --  iterator
       E := Get (It.It);
 
+      if Is_Excluded (It.Excluded_List, E.Entity) then
+         return Null_Entity_View;
+      end if;
+
       Configure_View (E.all, It);
 
       return E;

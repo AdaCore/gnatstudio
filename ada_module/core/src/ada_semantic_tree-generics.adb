@@ -427,6 +427,7 @@ package body Ada_Semantic_Tree.Generics is
               ((1 => Get_Construct (Info).Category)));
 
          It := First (Generic_Resolution);
+         Excluded_Entities.Append (It.Excluded_List.Entities, Info);
 
          --  We only consider the first matching resolution, ignore the other
          --  potential ones.
