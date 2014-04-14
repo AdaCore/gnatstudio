@@ -519,6 +519,15 @@ KP-60-M918-001 Wrong indentation of complex entry
 
   Workaround: Fix the indentation manually or avoid this construct.
 
+KP-60-M724-025 GPS: no breakpoint marks on relocated project
+
+  Problem:    Breakpoint marks is not displayed when project was compiled and
+              moved to another path.
+
+  Status:     Fixed in 6.1 on 2013-09-11.
+
+  Workaround: Use breakpoint view to view list of breakpoints.
+
 KP-60-JC07-006 GPS: rsh leaving remote processes as zombies in remote mode.
 
   Problem:    When using GPS remote mode with rsh, spawned remote processes
