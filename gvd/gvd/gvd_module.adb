@@ -1511,7 +1511,7 @@ package body GVD_Module is
          declare
             Entity : constant Root_Entity'Class := Get_Entity (Context);
          begin
-            return Entity = No_Root_Entity
+            return Is_Fuzzy (Entity)
               or else Is_Subprogram (Entity);
          end;
       end if;
@@ -1532,7 +1532,7 @@ package body GVD_Module is
          declare
             Entity : constant Root_Entity'Class := Get_Entity (Context);
          begin
-            return Entity = No_Root_Entity
+            return Is_Fuzzy (Entity)
               or else Is_Printable_In_Debugger (Entity);
          end;
 
@@ -1557,7 +1557,7 @@ package body GVD_Module is
          declare
             Entity : constant Root_Entity'Class := Get_Entity (Context);
          begin
-            return Entity = No_Root_Entity
+            return Is_Fuzzy (Entity)
 
             --  ??? Should also include array variables
               or else (not Is_Type (Entity)
