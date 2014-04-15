@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2013, AdaCore                     --
+--                     Copyright (C) 2001-2014, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1599,7 +1599,7 @@ package body GVD_Module is
    begin
       if Has_Entity_Name_Information (Context) then
          Entity := Get_Entity (Context);
-         return Entity = No_General_Entity
+         return Is_Fuzzy (Entity)
            or else Get_Kernel (Context).Databases.Is_Subprogram (Entity);
       end if;
       return False;
@@ -1620,7 +1620,7 @@ package body GVD_Module is
       if Has_Entity_Name_Information (Context) then
          Entity := Get_Entity (Context);
 
-         return Entity = No_General_Entity
+         return Is_Fuzzy (Entity)
            or else Kernel.Databases.Is_Printable_In_Debugger (Entity);
 
       elsif Has_Area_Information (Context) then
@@ -1644,7 +1644,7 @@ package body GVD_Module is
    begin
       if Has_Entity_Name_Information (Context) then
          Entity := Get_Entity (Context);
-         return Entity = No_General_Entity
+         return Is_Fuzzy (Entity)
 
            --  ??? Should also include array variables
            or else (not Kernel.Databases.Is_Type (Entity)
