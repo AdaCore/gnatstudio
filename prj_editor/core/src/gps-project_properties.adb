@@ -1075,7 +1075,7 @@ package body GPS.Project_Properties is
 
       else
          Kernel.Messages_Window.Insert
-           (-"Invalid type description for the attribute" & Name,
+           (-"Invalid type description for the attribute " & Name,
             Mode => Error);
       end if;
    end Parse_Attribute_Type;
