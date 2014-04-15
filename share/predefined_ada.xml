@@ -9936,7 +9936,7 @@ The meaning of a test case is that there is at least one context where
 that context, then `Ensures' holds when the subprogram returns.  Mode
 `Nominal' indicates that the input context should also satisfy the
 precondition of the subprogram, and the output context should also
-satisfy its postcondition. More `Robustness' indicates that the
+satisfy its postcondition. Mode `Robustness' indicates that the
 precondition and postcondition of the subprogram should be ignored for
 this test case.
       </DOC>
