@@ -1,4 +1,6 @@
-from highlight_framework import *
+from highlight_common import *
+
+hl_cont_line = simple(r"\\\n", tag="type")
 
 ############
 # Literals #
@@ -6,11 +8,7 @@ from highlight_framework import *
 
 string_literal = region(
     r'"', r'"|[^\\]$', matchall=False, tag="string",
-    highlighter=(
-        simple(r"\\\n", tag="type"),
-        simple(r"(?:\\.|\%.)",
-               tag=new_style("General", "string_escapes", 'green'))
-    )
+    highlighter=(hl_cont_line, hl_inside_strings)
 )
 
 character_literal = simple(r"'(?:\\.|.)?'", matchall=False, tag="character")
@@ -20,18 +18,13 @@ number_literal = simple(r"\b[0-9]*\.?[0-9]+\b", tag="number")
 # Comments #
 ############
 
-comments_subhl = (
-    simple(r"\\\n", tag="type"),
-    words(["TODO", "NOTE"], tag=new_style("General", "comment_notes", "red"))
-)
+comments_subhl = (hl_cont_line, hl_comment_notes)
 
 c99_comment = region(r"//", r"$", tag="comment", name="comment",
                      highlighter=comments_subhl)
 
 multiline_comment = region(r"/\*", r"\*/", tag="comment", name="ml_comment",
                            highlighter=comments_subhl)
-
-ws = r"[^\S\n]*?"
 
 preprocessor_comment = region(
     r"^{0}#{1}if{2}0".format(ws, ws, ws), r"^{0}#{1}endif".format(ws, ws),
@@ -51,7 +44,7 @@ preprocessor_directive = region(
     r"^{0}#{1}(?:{2})".format(ws, ws, pp_words), r'$',
     tag=new_style("C", "preprocessor", "#606090", prio=1),
     highlighter=(
-        simple(r"\\\n", tag="type"),
+        hl_cont_line,
         string_literal,
         simple(r'\<.*?\>', tag="string", matchall=False),
         character_literal,
