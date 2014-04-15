@@ -252,6 +252,17 @@ KP-60-N205-018 GPS: get_executable_name is case sensitive
 
   Workaround: Rename the file into all lower-case.
 
+KP-60-N131-031 GPS: Some debugger menus missing when starting gps with --debug
+
+  Problem:    When starting GPS directly on an executable file with the --debug
+              option, GPS would be unable to create and query the XRef
+              database, which would cause some debugger menus to disappear.
+
+  Status:     This was fixed in 6.1 and 6.0.2 on 2014-04-15
+
+  Workaround: Debug the executable by launching GPS on the project file
+              directly, and start the debugging session from GPS.
+
 KP-60-N131-001 GPS crashes on completion
 
   Problem:    When creating a new default project in an empty directory,
