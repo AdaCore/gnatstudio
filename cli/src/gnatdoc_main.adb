@@ -78,14 +78,24 @@ procedure GNATdoc_Main is
    procedure Add_X_Switches
      (Args : in out String_List_Utils.String_List.List)
    is
-      Vars : constant Scenario_Variable_Array :=
-        Kernel.Registry.Tree.Scenario_Variables;
+      procedure Local_Parse_Command_Line (Switch, Parameter, Section : String);
+      --  Allow to manage every occurance of -X switch
 
+      ------------------------
+      -- Parse_Command_Line --
+      ------------------------
+
+      procedure Local_Parse_Command_Line
+        (Switch, Parameter, Section : String)
+      is
+         pragma Unreferenced (Section);
+      begin
+         if Switch = "-X" then
+            Append (Args, "-X" & Parameter);
+         end if;
+      end Local_Parse_Command_Line;
    begin
-      for J in Vars'Range loop
-         Append (Args,
-                 "-X" & External_Name (Vars (J)) & "=" & Value (Vars (J)));
-      end loop;
+      Getopt (Cmdline, Local_Parse_Command_Line'Unrestricted_Access);
    end Add_X_Switches;
 
    ---------------------
