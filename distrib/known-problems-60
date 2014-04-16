@@ -168,6 +168,16 @@ KP-60-N220-040 GPS: "Close all other editors" does nothing
 
   Workaround: Use the global menu "/File/Close All Editors except Current".
 
+KP-60-N217-012 GPS: display errors in text consoles after scrolling
+
+  Problem:    After scrolling in the consoles (such as the Messages window or
+              the Debugger console, for instance), the display might be
+              garbled.
+
+  Status:     This was fixed in 6.1 on 2014-04-16
+
+  Workaround: Manually trigger a refresh, for instance by resizing the window.
+
 KP-60-N215-001 GPS: error when process lasts more than 24 hours
 
   Problem:    GPS displays the elapsed time for external processes. This
