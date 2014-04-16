@@ -59,6 +59,7 @@ procedure GNATdoc_Main is
                             new String'("html");
    Process_Private_Part : aliased Boolean := False;
    Quiet_Mode           : aliased Boolean := False;
+   Skip_Subprojects     : aliased Boolean := False;
    Enable_Warnings      : aliased Boolean := False;
    Enable_Build         : aliased Boolean := False;
 
@@ -278,6 +279,11 @@ begin
       Help         => "Leading documentation");
    Define_Switch
      (Cmdline,
+      Output       => Skip_Subprojects'Access,
+      Switch       => "--no-subprojects",
+      Help         => "Do not process subprojects");
+   Define_Switch
+     (Cmdline,
       Output       => Process_Private_Part'Access,
       Switch       => "-p",
       Help         => "Process private part of packages");
@@ -448,7 +454,7 @@ begin
         (Kernel    => Kernel,
          Options   => Options,
          Project   => Kernel.Registry.Tree.Root_Project,
-         Recursive => True);
+         Recursive => not Skip_Subprojects);
    end;
 
    --  Destroy all
