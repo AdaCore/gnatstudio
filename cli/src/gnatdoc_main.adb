@@ -69,7 +69,7 @@ procedure GNATdoc_Main is
    --  Launch gnatinspect on the loaded project
 
    procedure Add_X_Switches (Args : in out String_List_Utils.String_List.List);
-   --  Add the project "-Xvariable=value" to Args
+   --  Copy "-Xvariable=value" from the command line to Args
 
    --------------------
    -- Add_X_Switches --
@@ -79,11 +79,11 @@ procedure GNATdoc_Main is
      (Args : in out String_List_Utils.String_List.List)
    is
       procedure Local_Parse_Command_Line (Switch, Parameter, Section : String);
-      --  Allow to manage every occurance of -X switch
+      --  If Switch is "-X", pass add it to Args
 
-      ------------------------
-      -- Parse_Command_Line --
-      ------------------------
+      ------------------------------
+      -- Local_Parse_Command_Line --
+      ------------------------------
 
       procedure Local_Parse_Command_Line
         (Switch, Parameter, Section : String)
@@ -94,6 +94,9 @@ procedure GNATdoc_Main is
             Append (Args, "-X" & Parameter);
          end if;
       end Local_Parse_Command_Line;
+
+   --  Start of processing for Add_X_Switches
+
    begin
       Getopt (Cmdline, Local_Parse_Command_Line'Unrestricted_Access);
    end Add_X_Switches;
