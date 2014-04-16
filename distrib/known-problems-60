@@ -72,6 +72,19 @@ KP-60-N313-003 GPS: display unchecked unions in debugger
   Workaround: Use textual view through 'Print ...' contextual menu or 'print'
               command in gdb console instead of graph display.
 
+KP-60-N312-023 GPS: Windows not remaining docked when using Aero "Snap"
+
+  Problem:    when the Messages windows is floating and then docked using the
+              Windows 7/8 "Snap" feature, initiating a compilation causes it
+              to go back to its original position and size. The same problem
+              occurs with the GPS main window, when clicking on an entry in
+              the Locations view.
+
+  Status:     This was fixed in 6.1 on 2014-04-16
+
+  Workaround: Do not use the "Snap" feature, but position the windows to the
+              same position and size manually.
+
 KP-60-N305-008 GPS: characters can be inserted in read-only editors
 
   Problem:    It is possible to insert characters in some regions of
