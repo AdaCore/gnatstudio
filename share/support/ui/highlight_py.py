@@ -13,8 +13,8 @@ register_highlighter(
         string_hl(r"'''", r"'''", name="multiline_string_dq"),
 
         # Match string literals
-        string_hl(r"'", r"'"),
-        string_hl(r'"', r'"'),
+        string_hl(r"'", r"'|$"),
+        string_hl(r'"', r'"|$'),
 
         # Match comments lines
         region(r"#", "\n", tag="comment", highlighter=(hl_comment_notes,)),

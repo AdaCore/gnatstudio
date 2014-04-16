@@ -23,9 +23,10 @@ class HighlighterModule(Module):
         if isinstance(highlighter, Highlighter):
             ed = GPS.EditorBuffer.get(f)
             gtk_ed = get_gtk_buffer(ed)
-            highlighter.init_highlighting(ed)
-            gen = highlighter.highlight_gen(gtk_ed)
-            highlighter.gtk_idle_highlight(gtk_ed, gen)
+            if not gtk_ed.highlighting_initialized:
+                highlighter.init_highlighting(ed)
+                gen = highlighter.highlight_gen(gtk_ed)
+                highlighter.gtk_idle_highlight(gtk_ed, gen)
 
     def gps_started(self):
         ed = GPS.EditorBuffer.get(open=False)
@@ -36,6 +37,11 @@ class HighlighterModule(Module):
         for pref in self.preferences.values():
             if pref.tag:
                 propagate_change(pref)
+
+    def context_changed(self, ctx):
+        if isinstance(ctx, GPS.FileContext):
+            ed = GPS.EditorBuffer.get()
+            self.init_highlighting(ed.file())
 
     def file_edited(self, f):
         """
@@ -155,6 +161,7 @@ Gtk.TextTag.__str__ = tag_to_str
 Gtk.TextTag.__repr__ = tag_to_str
 Gtk.TextIter.to_tuple = to_tuple
 Gtk.TextBuffer.iter_from_tuple = iter_from_tuple
+Gtk.TextBuffer.highlighting_initialized = False
 
 
 class Struct:
@@ -394,7 +401,11 @@ class Highlighter(object):
                     # We exit because the stack we're setting is == to the
                     # existing one, so the buffer is synced
                     if gtk_ed.stacks.set(current_line, subhl_stack):
+                        endi = gtk_ed.get_iter_at_line(current_line)\
+                            .backward_char_n()
+                        yield (subhl_stack[-1].gtk_tag, endi, endi)
                         self.sync_stop = True
+
                         return
 
                 # Stop pattern, this is the end of the region, we want to
@@ -448,6 +459,8 @@ class Highlighter(object):
         for l in range(current_line + 1, end.get_line()):
             gtk_ed.stacks.set(l, subhl_stack)
 
+        yield (None, end, end)
+
     def highlight_gen(self, gtk_ed, start_line=-1, remove_tag_step=100):
         """
         @type gtk_ed: Gtk.TextBuffer
@@ -461,17 +474,13 @@ class Highlighter(object):
                 key=lambda (_, s, e): s.get_offset()
             )
 
-        max_loc = None
-
         if start_line == -1:
             for tag, start, end in self.highlight_info_gen(gtk_ed, 0):
-                max_loc = end
-                gtk_ed.apply_tag(tag, start, end)
+                if tag:
+                    gtk_ed.apply_tag(tag, start, end)
                 yield
         else:
             st_iter = gtk_ed.get_iter_at_line(start_line)
-            insert_iter = gtk_ed.get_iter_at_mark(gtk_ed.get_insert())
-            gtk_ed.remove_all_tags(st_iter, insert_iter.to_line_end())
             is_end = (gtk_ed.get_iter_at_line(start_line + 100).get_line() ==
                       gtk_ed.get_end_iter().get_line())
 
@@ -480,11 +489,15 @@ class Highlighter(object):
             if not self.sync_stop and not is_end:
                 actions_list += get_action_list(start_line + 100)
 
-            all_actions = (a for a in actions_list)
+            gtk_ed.remove_all_tags(st_iter, actions_list[-1][1])
+            # Only one action means we only have the end marker in the
+            # action list -> no region change
+            if len(actions_list) == 1:
+                tag = gtk_ed.stacks.get(st_iter.get_line())[-1].gtk_tag
+                if tag:
+                    gtk_ed.apply_tag(tag, st_iter, actions_list[0][1])
 
-            if actions_list:
-                gtk_ed.remove_all_tags(st_iter, actions_list[0][1])
-
+            all_actions = (a for a in actions_list[:-1])
             for actions in partition(all_actions, remove_tag_step):
                 max_loc = max(actions, key=lambda (_, s, e): e.get_offset())[2]
                 gtk_ed.remove_all_tags(actions[0][1], max_loc)
@@ -492,9 +505,6 @@ class Highlighter(object):
                 for tag, start, end in actions:
                     gtk_ed.apply_tag(tag, start, end)
                     yield
-
-        if max_loc and not self.sync_stop:
-            gtk_ed.remove_all_tags(max_loc, gtk_ed.get_end_iter())
 
     def gtk_highlight(self, gtk_ed):
         for _ in self.highlight_gen(gtk_ed, -1):
@@ -511,8 +521,8 @@ class Highlighter(object):
             gtk_ed.idle_highlight_id = GLib.timeout_add(120, fn)
 
     def init_highlighting(self, ed):
-        ed.highlighting_initialized = True
         gtk_ed = get_gtk_buffer(ed)
+        gtk_ed.highlighting_initialized = True
         gtk_ed.stacks = HighlighterStacks()
 
         if not hasattr(gtk_ed, "idle_highlight_id"):
