@@ -56,9 +56,9 @@ null_span = (-1, -1)
 def take(gen, nb):
     """
     Consumes nb element from the generator gen, and returns them as a generator
-    @type gen: __generator[T]
-    @type nb: int
-    @rtype : __generator[T]
+    :type gen: __generator[T]
+    :type nb: int
+    :rtype : __generator[T]
     """
     for _ in range(nb):
         yield next(gen)
@@ -67,9 +67,9 @@ def take(gen, nb):
 def partition(gen, nb):
     """
     Returns a new generator where an element is a list of nb elements from gen
-    @type gen: __generator[T]
-    @type nb: int
-    @rtype : __generator[list[T]]
+    :type gen: __generator[T]
+    :type nb: int
+    :rtype : __generator[list[T]]
     """
     l = list(take(gen, nb))
     while l:
@@ -80,8 +80,8 @@ def partition(gen, nb):
 def to_tuple(gtk_iter):
     """
     Transform the gtk_iter passed as parameter into a tuple representation
-    @type gtk_iter: Gtk.TextIter
-    @rtype (int, int)
+    :type gtk_iter: Gtk.TextIter
+    :rtype (int, int)
     """
     return (
         gtk_iter.get_line(),
@@ -93,9 +93,9 @@ def iter_from_tuple(gtk_ed, tuple_instance):
     """
     Recreate a Gtk.TextIter from a tuple
 
-    @type gtk_ed: Gtk.TextBuffer
-    @type tuple_instance: (int, int)
-    @rtype Gtk.TextIter
+    :type gtk_ed: Gtk.TextBuffer
+    :type tuple_instance: (int, int)
+    :rtype Gtk.TextIter
     """
     return gtk_ed.get_iter_at_line_index(*tuple_instance)
 
@@ -103,7 +103,7 @@ def iter_from_tuple(gtk_ed, tuple_instance):
 def iter_to_str(gtk_iter):
     """
     Return a better string representation of a text iter
-    @type gtk_iter: Gtk.TextIter
+    :type gtk_iter: Gtk.TextIter
     """
     return "<TextIter {0} {1}>".format(*to_tuple(gtk_iter))
 
@@ -111,9 +111,9 @@ def iter_to_str(gtk_iter):
 def iter_eq(iter_1, iter_2):
     """
     Structural comparison for Gtk.TextIter
-    @type iter_1: Gtk.TextIter
-    @type iter_2: Gtk.TextIter
-    @rtype: bool
+    :type iter_1: Gtk.TextIter
+    :type iter_2: Gtk.TextIter
+    :rtype: bool
     """
     return iter_1.to_tuple() == iter_2.to_tuple()
 
@@ -135,8 +135,8 @@ def make_wrapper(method_name):
 
 def to_line_end(textiter):
     """
-    @type textiter: Gtk.TextIter
-    @return: Gtk.TextIter
+    :type textiter: Gtk.TextIter
+    :return: Gtk.TextIter
     """
     if textiter.get_char() == "\n":
         return textiter
@@ -296,8 +296,8 @@ class HighlighterStacks(object):
         Set the stack of highlighters for line index. Returns true if the
         previous stack is the same as the stack argument.
 
-        @type index: int
-        @type stack: tuple[Struct]
+        :type index: int
+        :type stack: tuple[Struct]
         @rtype:      bool
         """
         assert 0 <= index <= len(self.stacks_list)
@@ -313,7 +313,7 @@ class HighlighterStacks(object):
 
     def get(self, start_line):
         """
-        @type start_line: int
+        :type start_line: int
         @rtype:           tuple[Struct]|None
         """
         if start_line < len(self.stacks_list):
@@ -323,16 +323,16 @@ class HighlighterStacks(object):
 
     def insert_newlines(self, nb_lines, after_line):
         """
-        @type after_line: int
-        @type nb_lines:   int
+        :type after_line: int
+        :type nb_lines:   int
         """
         for _ in range(nb_lines):
             self.stacks_list.insert(after_line + 1, ())
 
     def delete_lines(self, nb_deleted_lines, at_line):
         """
-        @param nb_deleted_lines: int
-        @param at_line: int
+        :param nb_deleted_lines: int
+        :param at_line: int
         """
         del self.stacks_list[at_line + 1:at_line + nb_deleted_lines + 1]
 
@@ -367,7 +367,7 @@ class SubHighlighter(object):
 
     def get_tags_list(self, gtk_ed):
         """
-        @type gtk_ed: Gtk.TextBuffer
+        :type gtk_ed: Gtk.TextBuffer
         """
         return [m.init_tag(gtk_ed) if m else None for m in self.matchers]
 
@@ -411,8 +411,8 @@ class Highlighter(object):
         Returns a generator that will highlight the buffer, one token at a
         time, every time the generator is consumed.
 
-        @type gtk_ed: Gtk.TextBuffer
-        @type start_line: int
+        :type gtk_ed: Gtk.TextBuffer
+        :type start_line: int
         """
         self.sync_stop = False
         start = gtk_ed.get_iter_at_line(start_line)
@@ -515,9 +515,9 @@ class Highlighter(object):
 
     def highlight_gen(self, gtk_ed, start_line=-1, remove_tag_step=100):
         """
-        @type gtk_ed: Gtk.TextBuffer
-        @type start_line: int
-        @type remove_tag_step: int
+        :type gtk_ed: Gtk.TextBuffer
+        :type start_line: int
+        :type remove_tag_step: int
         """
 
         def get_action_list(sl, el=0):
@@ -582,7 +582,7 @@ class Highlighter(object):
             gtk_ed.idle_highlight_id = None
 
         def action_handler(loc):
-            """@type loc: Gtk.TextIter"""
+            """:type loc: Gtk.TextIter"""
             if gtk_ed.idle_highlight_id:
                 GLib.source_remove(gtk_ed.idle_highlight_id)
 
