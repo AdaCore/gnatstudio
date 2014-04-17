@@ -69,6 +69,7 @@ switch --help::
   -l                 Leading documentation
   -p                 Process private part of packages
   -q                 Be quiet/terse
+  --single-file=ARG  Single file processed by GNATdoc
   -w                 Enable warnings for missing documentation
   --enable-build     Rebuild the project before processing it
   --output=ARG       Format of generated documentation
@@ -134,6 +135,12 @@ switch --help::
 *Be quiet / terse (-q)*
 
   Do not display anything except errors.
+
+*Single file (--single-files)*
+
+  By default GNATdoc generates the documentation of all the files of
+  a project. This switch restricts the generation of documentation to
+  the specified file.
 
 *Enable warnings for missing documentation (-w)*
 
