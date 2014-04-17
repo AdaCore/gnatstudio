@@ -1,5 +1,7 @@
-from highlight_common import *
 from keyword import kwlist
+
+from highlighter.common import *
+
 
 hl_format_escapes = simple(r"\{\d+?\}", tag=tag_string_escapes)
 string_hl = region_template(tag=tag_string, highlighter=(hl_inside_strings,

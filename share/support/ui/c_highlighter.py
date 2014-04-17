@@ -1,4 +1,4 @@
-from highlight_common import *
+from highlighter.common import *
 
 hl_cont_line = simple(r"\\\n", tag=tag_type)
 

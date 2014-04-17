@@ -126,10 +126,12 @@ Here are the important points:
   matcher anymore.
 
 """
-from highlight_engine import Style, HighlighterModule, Highlighter, \
-    RegionMatcher, RegionRef, SimpleMatcher
 from functools import partial
+
+from highlighter.engine import Style, HighlighterModule, Highlighter, \
+    RegionMatcher, RegionRef, SimpleMatcher
 import GPS
+
 
 ##############################
 # Highlight classes creation #

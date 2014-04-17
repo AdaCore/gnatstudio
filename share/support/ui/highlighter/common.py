@@ -1,4 +1,4 @@
-from highlight_framework import *
+from highlighter.interface import *
 
 
 tag_string_escapes = new_style("General", "string_escapes", '#875162')
