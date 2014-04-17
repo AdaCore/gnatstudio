@@ -67,6 +67,7 @@ switch --help::
   -b                 Process bodies
   --ignore-files=ARG List of files ignored by GNATdoc
   -l                 Leading documentation
+  --no-subprojects   Do not process subprojects
   -p                 Process private part of packages
   -q                 Be quiet/terse
   --single-file=ARG  Single file processed by GNATdoc
@@ -125,6 +126,12 @@ switch --help::
   comments located after the entity declaration and fallback to the
   comments located before the entity if not found. This switch reverts
   such behavior, thus extracting first leading comments.
+
+*Do not process subprojects (--no-subprojects)*
+
+  By default GNATdoc generates the documentation of all the files of a
+  root project and its subprojects. This switch restricts the generation
+  of documentation to the root project.
 
 *Process private part of packages (-p)*
 
