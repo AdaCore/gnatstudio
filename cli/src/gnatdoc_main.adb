@@ -123,6 +123,7 @@ procedure GNATdoc_Main is
 
       if Gprbuild = null then
          Put_Line ("warning: could not find gprbuild");
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
       end if;
 
@@ -182,6 +183,7 @@ procedure GNATdoc_Main is
 
       if Gnatinspect = null then
          Put_Line ("warning: could not find gnatinspect");
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
       end if;
 
@@ -330,17 +332,19 @@ begin
       then
          Put_Line ("gnatdoc: invalid filename");
          Put_Line ("try ""gnatdoc --help"" for more information.");
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
       end if;
 
    exception
       when GNAT.Command_Line.Invalid_Switch =>
-         --  User provided some invalid switch. Just return
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
 
       when GNAT.Command_Line.Invalid_Parameter =>
          Put_Line ("gnatdoc: invalid parameter");
          Put_Line ("try ""gnatdoc --help"" for more information.");
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
 
       when GNAT.Command_Line.Exit_From_Command_Line =>

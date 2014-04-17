@@ -18,6 +18,7 @@
 with Ada.Unchecked_Deallocation;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Command_Line;
 with Config;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GPS.Intl;                use GPS.Intl;
@@ -1471,6 +1472,7 @@ package body GNATdoc is
 
    exception
       when E : others =>
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          if not Error_Reported then
             Report_Error (No_File, Unknown_Stage);
             Trace (Me, E);
@@ -1638,6 +1640,7 @@ package body GNATdoc is
    exception
       when GNATdoc.Backend.Unknown_Backend =>
          GNAT.IO.Put_Line ("wrong value for switch --output");
+         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
    end Process_Project_Files;
 
    -----------
