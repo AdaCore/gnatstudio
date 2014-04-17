@@ -2361,9 +2361,9 @@ package body Src_Editor_Module is
       Src_Editor_Module.Messages.Register (Kernel);
    end Register_Module;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   --------------------------
+   -- Project_View_Changed --
+   --------------------------
 
    procedure Project_View_Changed
      (Kernel : access Kernel_Handle_Record'Class)
