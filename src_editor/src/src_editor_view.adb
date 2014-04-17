@@ -1429,9 +1429,7 @@ package body Src_Editor_View is
       View.Area    := Area;
 
       if Project = No_Project then
-         --  Pick a project at random
-         View.Project := Get_Registry (Kernel).Tree.Info_Set
-           (Buffer.Get_Filename).First_Element.Project;
+         View.Update_Project;
       else
          View.Project := Project;
       end if;
@@ -2728,5 +2726,16 @@ package body Src_Editor_View is
    begin
       return Self.Project;
    end Get_Project;
+
+   --------------------
+   -- Update_Project --
+   --------------------
+
+   procedure Update_Project (Self : access Source_View_Record) is
+   begin
+      --  Pick a project at random
+      Self.Project := Get_Registry (Self.Kernel).Tree.Info_Set
+        (Source_Buffer (Self.Get_Buffer).Get_Filename).First_Element.Project;
+   end Update_Project;
 
 end Src_Editor_View;

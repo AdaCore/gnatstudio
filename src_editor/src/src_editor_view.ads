@@ -213,6 +213,9 @@ package Src_Editor_View is
    --  Set the value of the Extend_Selection property. Default value is False,
    --  which means, editor commands don't extend the user's selection.
 
+   procedure Update_Project (Self : access Source_View_Record);
+   --  Update the Project cache
+
 private
 
    type As_Is_Status is (Disabled, Enabled, Sticky_Enabled);
