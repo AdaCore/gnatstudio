@@ -1485,7 +1485,8 @@ package body GNATdoc is
      (Kernel    : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Options   : Docgen_Options;
       Project   : Project_Type;
-      Recursive : Boolean := False)
+      Recursive : Boolean := False;
+      Filename  : String := "")
    is
       P         : Project_Type := Project;
       Src_Files : Files_List.Vector;
@@ -1547,7 +1548,21 @@ package body GNATdoc is
             Prj_Srcs.Project := P;
 
             for J in Source_Files'Range loop
-               Prj_Srcs.Src_Files.Append (Source_Files (J));
+               if Filename = "" then
+                  Prj_Srcs.Src_Files.Append (Source_Files (J));
+               else
+                  if String (Source_Files (J).Base_Name) = Filename then
+                     declare
+                        Other_File : constant Virtual_File :=
+                          Kernel.Registry.Tree.Other_File (Source_Files (J));
+                     begin
+                        Prj_Srcs.Src_Files.Append (Source_Files (J));
+                        Prj_Srcs.Src_Files.Append (Other_File);
+                     end;
+
+                     exit;
+                  end if;
+               end if;
             end loop;
 
             Unchecked_Free (Source_Files);
@@ -1561,7 +1576,7 @@ package body GNATdoc is
             Init_Ignored_Subprojects_Table;
 
             Prj_Iter := P.Start_Reversed;
-            while Current (Prj_Iter) /= No_Project loop
+            Process_All_Projects : while Current (Prj_Iter) /= No_Project loop
                Prj_Srcs.Project := Current (Prj_Iter);
 
                if Is_Ignored_Subproject (Prj_Srcs.Project.Name) then
@@ -1575,7 +1590,27 @@ package body GNATdoc is
                        Prj_Srcs.Project.Source_Files;
                   begin
                      for J in Source_Files'Range loop
-                        Prj_Srcs.Src_Files.Append (Source_Files (J));
+                        if Filename = "" then
+                           Prj_Srcs.Src_Files.Append (Source_Files (J));
+                        else
+                           if String (Source_Files (J).Base_Name)
+                             = Filename
+                           then
+                              declare
+                                 Other_File : constant Virtual_File :=
+                                   Kernel.Registry.Tree.Other_File
+                                     (Source_Files (J));
+                              begin
+                                 Prj_Srcs.Src_Files.Append (Source_Files (J));
+                                 Prj_Srcs.Src_Files.Append (Other_File);
+                              end;
+
+                              Unchecked_Free (Source_Files);
+                              Prj_Files.Append (Prj_Srcs);
+
+                              exit Process_All_Projects;
+                           end if;
+                        end if;
                      end loop;
 
                      Unchecked_Free (Source_Files);
@@ -1585,7 +1620,7 @@ package body GNATdoc is
                end if;
 
                Next (Prj_Iter);
-            end loop;
+            end loop Process_All_Projects;
          end;
       end if;
 
@@ -1604,45 +1639,6 @@ package body GNATdoc is
       when GNATdoc.Backend.Unknown_Backend =>
          GNAT.IO.Put_Line ("wrong value for switch --output");
    end Process_Project_Files;
-
-   -------------------------
-   -- Process_Single_File --
-   -------------------------
-
-   procedure Process_Single_File
-     (Kernel  : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Options : Docgen_Options;
-      File    : GNATCOLL.VFS.Virtual_File)
-   is
-      Other_File : constant Virtual_File :=
-                     Kernel.Registry.Tree.Other_File (File);
-      Src_Files  : Files_List.Vector;
-      Prj_Files  : Project_Files_List.Vector;
-      Prj_Srcs   : Project_Files;
-
-   begin
-      Trace (Me, "Process_Single_File");
-
-      Prj_Srcs.Project := No_Project;
-      Prj_Srcs.Src_Files := new Files_List.Vector;
-      Prj_Srcs.Src_Files.Append (File);
-
-      if Other_File /= File
-        and then Is_Regular_File (Other_File)
-      then
-         Prj_Srcs.Src_Files.Append (Other_File);
-      end if;
-
-      Prj_Files.Append (Prj_Srcs);
-
-      Process_Files
-        (Kernel    => Core_Kernel (Kernel),
-         Options   => Options,
-         Prj_Files => Prj_Files,
-         Update_Global_Index => False);
-
-      Src_Files.Clear;
-   end Process_Single_File;
 
    -----------
    -- Files --

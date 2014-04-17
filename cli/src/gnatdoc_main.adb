@@ -49,6 +49,7 @@ procedure GNATdoc_Main is
 
    --  Switches
 
+   File_Name            : aliased GNAT.Strings.String_Access;
    Ignore_Files         : aliased GNAT.Strings.String_Access;
    Leading_Doc          : aliased Boolean := False;
    Regular_Expr         : aliased GNAT.Strings.String_Access;
@@ -294,6 +295,11 @@ begin
       Help         => "Be quiet/terse");
    Define_Switch
      (Cmdline,
+      Output       => File_Name'Access,
+      Switch       => "--single-file=",
+      Help         => "Single file processed by GNATdoc");
+   Define_Switch
+     (Cmdline,
       Output       => Enable_Warnings'Access,
       Switch       => "-w",
       Help         => "Enable warnings for missing documentation");
@@ -314,9 +320,27 @@ begin
    --  Retrieve command line option
    begin
       GPS.CLI_Utils.Parse_Command_Line (Cmdline, Kernel);
+
+      --  Handle wrong concatenation of switches. For example,
+      --    $ gnatdoc -P default.gpr --single-file -no-subprojects file.ads
+      --  In this case the contents of File_Name would be "-no-subprojects"
+
+      if File_Name.all /= ""
+        and then File_Name.all (1) = '-'
+      then
+         Put_Line ("gnatdoc: invalid filename");
+         Put_Line ("try ""gnatdoc --help"" for more information.");
+         return;
+      end if;
+
    exception
       when GNAT.Command_Line.Invalid_Switch =>
          --  User provided some invalid switch. Just return
+         return;
+
+      when GNAT.Command_Line.Invalid_Parameter =>
+         Put_Line ("gnatdoc: invalid parameter");
+         Put_Line ("try ""gnatdoc --help"" for more information.");
          return;
 
       when GNAT.Command_Line.Exit_From_Command_Line =>
@@ -454,7 +478,8 @@ begin
         (Kernel    => Kernel,
          Options   => Options,
          Project   => Kernel.Registry.Tree.Root_Project,
-         Recursive => not Skip_Subprojects);
+         Recursive => not Skip_Subprojects,
+         Filename  => File_Name.all);
    end;
 
    --  Destroy all

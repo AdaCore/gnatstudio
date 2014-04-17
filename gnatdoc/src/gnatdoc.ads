@@ -111,20 +111,16 @@ package GNATdoc is
 
    end record;
 
-   procedure Process_Single_File
-     (Kernel  : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
-      Options : Docgen_Options;
-      File    : GNATCOLL.VFS.Virtual_File);
-   --  Generate documentation for a single file
-
    procedure Process_Project_Files
      (Kernel    : not null access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Options   : Docgen_Options;
       Project   : Project_Type;
-      Recursive : Boolean := False);
+      Recursive : Boolean := False;
+      Filename  : String := "");
    --  Generate documentation for a project
    --  If Recursive is false then only the project's source files are
    --  documented; otherwise imported project's source files are also
+   --  documented. If Filename is specified then only this file is
    --  documented.
 
 private
