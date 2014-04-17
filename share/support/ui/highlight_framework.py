@@ -126,7 +126,8 @@ Here are the important points:
   matcher anymore.
 
 """
-from highlight_engine import Struct, HighlighterModule, Highlighter
+from highlight_engine import Style, HighlighterModule, Highlighter, \
+    RegionMatcher, RegionRef, SimpleMatcher
 from functools import partial
 import GPS
 
@@ -135,14 +136,13 @@ import GPS
 ##############################
 
 
-def simple(regexp_string, tag="", matchall=True, **kwargs):
+def simple(regexp_string, tag=None):
     """
     Return a simple matcher for a regexp string
-    @type regexp_string: str
-    @type tag: str
+    :type regexp_string: str
+    :type tag: Style
     """
-    return Struct(kind="simple", re=regexp_string, tag=tag,
-                  matchall=matchall, **kwargs)
+    return SimpleMatcher(tag, regexp_string)
 
 
 def words(words_list, **kwargs):
@@ -156,17 +156,16 @@ def words(words_list, **kwargs):
     return simple(r"\b(?:{0})\b".format(words_list), **kwargs)
 
 
-def region(start_re=None, end_re=None, name="", tag="", highlighter=(),
-           matchall=True, **kwargs):
+def region(start_re, end_re, tag=None, name="", highlighter=(),
+           matchall=True):
     """
     Return a matcher for a region, which can contain a whole specific
     highlighter
-    @type start_re: string
-    @type end_re: string
+    :type start_re: string
+    :type end_re: string
+    :type tag: Style
     """
-    return Struct(kind="region", start_re=start_re, end_re=end_re,
-                  name=name, tag=tag, highlighter_spec=highlighter,
-                  matchall=matchall, **kwargs)
+    return RegionMatcher(tag, start_re, end_re, highlighter, matchall, name)
 
 
 def region_template(*args, **kwargs):
@@ -174,7 +173,7 @@ def region_template(*args, **kwargs):
 
 
 def region_ref(name):
-    return Struct(kind="region_ref", region_ref_name=name)
+    return RegionRef(name)
 
 
 def new_style(lang, name, foreground_color, prio=20):
@@ -184,15 +183,22 @@ def new_style(lang, name, foreground_color, prio=20):
     pref.create(doc, "color", doc, foreground_color)
     pref.tag = None
     HighlighterModule.preferences[style_id] = pref
-    return Struct(style_id=style_id, prio=prio, pref=pref)
+    return Style(style_id, prio, pref)
 
 
-def existing_style(pref_name, prio=20):
-    style_id = "{0}_hl".format(pref_name)
+def existing_style(pref_name, name="", prio=20):
+    """
+    :param string pref_name: The name of the preference to bind to the style
+    :param string name: The name of the style, used for the underlying gtk tag
+    :param int prio: The priority of the style compared to others. Higher
+      priority styles will take precedence over lower priority ones.
+    :rtype: Style
+    """
+    style_id = "{0}_hl".format(name if name else pref_name)
     pref = GPS.Preference(pref_name)
     pref.tag = None
     HighlighterModule.preferences[style_id] = pref
-    return Struct(style_id=style_id, prio=prio, pref=pref)
+    return Style(style_id, prio, pref)
 
 
 def register_highlighter(language, *args, **kwargs):

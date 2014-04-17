@@ -4,6 +4,7 @@ from gi.repository import Gtk, GLib, Gdk
 from pygps import get_gtk_buffer
 import re
 from time import time
+from copy import copy
 
 
 class HighlighterModule(Module):
@@ -160,14 +161,6 @@ Gtk.TextBuffer.iter_from_tuple = iter_from_tuple
 Gtk.TextBuffer.highlighting_initialized = False
 
 
-class Struct:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
-    def __repr__(self):
-        return str(self.__dict__)
-
-
 def propagate_change(pref):
     color = Gdk.RGBA()
     color_string = pref.get()
@@ -175,6 +168,116 @@ def propagate_change(pref):
         color_string = color_string.split("@")[1]
     color.parse(color_string)
     pref.tag.set_property("foreground_rgba", color)
+
+# Data classes for highlighters
+
+
+class Style(object):
+    def __init__(self, style_id, prio, pref):
+        """
+        :type style_id: string
+        :type prio: int
+        :type pref: GPS.Preference
+        """
+        self.pref = pref
+        self.prio = prio
+        self.style_id = style_id
+
+
+class BaseMatcher(object):
+
+    def resolve(self):
+        """
+        :rtype: Matcher
+        """
+        raise NotImplemented
+
+
+class Matcher(BaseMatcher):
+
+    def resolve(self):
+        return self
+
+    @property
+    def pattern(self):
+        raise NotImplemented
+
+    def __init__(self, tag, name=""):
+        """
+            :type tag: Style
+            :type name: string
+        """
+        self.name = name
+        self.tag = tag
+        self.gtk_tag = None
+
+    def init_tag(self, gtk_ed):
+        self.gtk_tag = gtk_ed.get_tag_table().lookup(self.tag.style_id)
+        if not self.gtk_tag:
+            self.gtk_tag = gtk_ed.create_tag(self.tag.style_id)
+            self.gtk_tag.set_priority(self.tag.prio)
+            self.tag.pref.tag = self.gtk_tag
+            propagate_change(self.tag.pref)
+        return self.gtk_tag
+
+
+class SimpleMatcher(Matcher):
+    def __init__(self, tag, pattern, name=""):
+        """
+            :type tag: Style
+            :type pattern: string
+        """
+        super(SimpleMatcher, self).__init__(tag, name)
+        self._pattern = pattern
+
+    @property
+    def pattern(self):
+        return self._pattern
+
+
+class RegionMatcher(Matcher):
+
+    ":type: dict[string, RegionMatcher]"
+    region_matchers = {}
+
+    def __init__(self, tag, start_pattern, end_pattern, hl_spec, matchall,
+                 name=""):
+        """
+        :type tag: Style
+        :type start_pattern: string
+        :type end_pattern: string
+        :type hl_spec: Iterable[BaseMatcher]
+        :type matchall: boolean
+        :type name: string
+        """
+        Matcher.__init__(self, tag, name)
+        self.matchall = matchall
+        self.hl_spec = hl_spec
+        self.end_pattern = end_pattern
+        self.start_pattern = start_pattern
+
+        if self.name:
+            RegionMatcher.region_matchers[self.name] = self
+
+        self.subhighlighter = SubHighlighter(hl_spec, end_pattern, matchall)
+        self.subhighlighter.parent_cat = self
+
+    @property
+    def pattern(self):
+        return self.start_pattern
+
+    def init_tag(self, gtk_ed):
+        Matcher.init_tag(self, gtk_ed)
+        self.subhighlighter.gtk_tag = self.gtk_tag
+        return self.gtk_tag
+
+
+class RegionRef(BaseMatcher):
+    def __init__(self, region_name):
+        self.region_name = region_name
+
+    def resolve(self):
+        return RegionMatcher.region_matchers[self.region_name]
 
 
 ########################
@@ -240,55 +343,33 @@ class HighlighterStacks(object):
         )
 
 
-region_cats = {}
-
-
 class SubHighlighter(object):
-    def __init__(self, cats, matcher, gtk_tag=None, parent_cat=None):
+
+    def __init__(self, highlighter_spec, stop_pattern=None, matchall=True):
         """
-        @type cats: list
-        @type matcher: __Regex
-        @type gtk_tag: Gtk.TextTag|None
+        :type highlighter_spec: Iterable[BaseMatcher]
         """
 
-        self.cats = cats
-        self.matcher = matcher
-        self.gtk_tag = gtk_tag
+        self.matchers = [m.resolve() for m in highlighter_spec]
+        patterns = [m.pattern for m in self.matchers]
+
+        if stop_pattern:
+            patterns.append(stop_pattern)
+            self.matchers.append(None)
+
+        self.pattern = re.compile(
+            "|".join("({0})".format(pat) for pat in patterns),
+            flags=re.M + (re.S if matchall else 0)
+        )
+        self.gtk_tag = None
         self.region_start = None
-        self.parent_cat = parent_cat
-
-    def clone(self):
-        return SubHighlighter(self.cats, self.matcher, self.gtk_tag,
-                              self.parent_cat)
+        self.parent_cat = None
 
     def get_tags_list(self, gtk_ed):
         """
         @type gtk_ed: Gtk.TextBuffer
         """
-        # Cache or create tags before highlighting
-        tags = []
-        for cat in self.cats:
-
-            if not cat:
-                tags.append(None)
-                continue
-
-            if isinstance(cat.tag, str):
-                tags.append(gtk_ed.get_tag_table().lookup(cat.tag))
-            else:
-                t = gtk_ed.get_tag_table().lookup(cat.tag.style_id)
-                if not t:
-                    t = gtk_ed.create_tag(cat.tag.style_id)
-                    t.set_priority(cat.tag.prio)
-                    cat.tag.pref.tag = t
-                    propagate_change(cat.tag.pref)
-                tags.append(t)
-
-            cat.gtk_tag = tags[-1]
-            if cat.kind == "region":
-                cat.subhighlighter.gtk_tag = cat.gtk_tag
-
-        return tags
+        return [m.init_tag(gtk_ed) if m else None for m in self.matchers]
 
     def __str__(self):
         return "<{0}>".format((self.parent_cat.name if self.parent_cat.name
@@ -316,42 +397,13 @@ def gen_to_fn(gen, granularity, max_time):
 
 
 class Highlighter(object):
+
     def __init__(self, spec=()):
-
-        def construct_subhighlighter(highlighter_spec, stop_pattern=None,
-                                     matchall=True):
-            subhl_spec = list(highlighter_spec)
-            patterns = []
-            for i in range(len(subhl_spec)):
-                cat = subhl_spec[i]
-
-                if cat.kind == "simple":
-                    patterns.append(cat.re)
-                elif cat.kind == "region":
-                    if cat.name:
-                        region_cats[cat.name] = cat
-                    patterns.append(cat.start_re)
-                    highlighter_spec = cat.highlighter_spec
-                    cat.subhighlighter = construct_subhighlighter(
-                        highlighter_spec, stop_pattern=cat.end_re,
-                        matchall=cat.matchall
-                    )
-                    cat.subhighlighter.parent_cat = cat
-                elif cat.kind == "region_ref":
-                    subhl_spec[i] = region_cats[cat.region_ref_name]
-                    patterns.append(subhl_spec[i].start_re)
-
-            if stop_pattern:
-                patterns.append(stop_pattern)
-                subhl_spec.append(())
-
-            matcher = re.compile(
-                "|".join("({0})".format(pat) for pat in patterns),
-                flags=re.M + (re.S if matchall else 0)
-            )
-            return SubHighlighter(subhl_spec, matcher)
-
-        self.root_highlighter = construct_subhighlighter(spec)
+        """
+        :type spec: Iterable[BaseMatcher]
+        :return:
+        """
+        self.root_highlighter = SubHighlighter(spec)
         self.sync_stop = False
 
     def highlight_info_gen(self, gtk_ed, start_line, end_line=0):
@@ -379,7 +431,7 @@ class Highlighter(object):
 
         while subhl_stack:
             hl = subhl_stack[-1]
-            matches = hl.matcher.finditer(strn, match_offset)
+            matches = hl.pattern.finditer(strn, match_offset)
             tags = hl.get_tags_list(gtk_ed)
             pop_stack = True
             met_stop_pattern = False
@@ -387,10 +439,10 @@ class Highlighter(object):
             for m in matches:
 
                 # Get the index of the first matching category
-                i = [j for j in range(1, len(hl.cats) + 1)
+                i = [j for j in range(1, len(hl.matchers) + 1)
                      if m.span(j) != null_span][0]
 
-                cat, tag = hl.cats[i - 1], tags[i - 1]
+                matcher, tag = hl.matchers[i - 1], tags[i - 1]
                 tk_start = start.forward_chars_n(m.start(i))
                 tk_end = start.forward_chars_n(m.end(i))
 
@@ -411,7 +463,7 @@ class Highlighter(object):
                 # Stop pattern, this is the end of the region, we want to
                 # return to the parent highlighter after having yielded the
                 # location of the region stop-pattern.
-                if not cat:
+                if not matcher:
                     assert isinstance(hl.gtk_tag, Gtk.TextTag)
                     # If the region has no region start, we are
                     # rehighlighting a region that was previously created,
@@ -423,8 +475,8 @@ class Highlighter(object):
                     met_stop_pattern = True
                     break
 
-                if cat.kind == "region":
-                    subhl_stack.append(cat.subhighlighter.clone())
+                if isinstance(matcher, RegionMatcher):
+                    subhl_stack.append(copy(matcher.subhighlighter))
                     subhl_stack[-1].region_start = tk_start
                     match_offset = m.end(i)
                     pop_stack = False
