@@ -1991,11 +1991,13 @@ package body C_Analyzer is
 
       Free (Main_File);
       Clear (Tokens);
+      Clear (Indents);
 
    exception
       when others =>
          Free (Main_File);
          Clear (Tokens);
+         Clear (Indents);
    end Analyze_C_Source;
 
 end C_Analyzer;
