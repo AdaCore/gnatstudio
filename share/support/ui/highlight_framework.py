@@ -184,7 +184,15 @@ def new_style(lang, name, foreground_color, prio=20):
     pref.create(doc, "color", doc, foreground_color)
     pref.tag = None
     HighlighterModule.preferences[style_id] = pref
-    return Struct(style_id=style_id, name=name, prio=prio, pref=pref)
+    return Struct(style_id=style_id, prio=prio, pref=pref)
+
+
+def existing_style(pref_name, prio=20):
+    style_id = "{0}_hl".format(pref_name)
+    pref = GPS.Preference(pref_name)
+    pref.tag = None
+    HighlighterModule.preferences[style_id] = pref
+    return Struct(style_id=style_id, prio=prio, pref=pref)
 
 
 def register_highlighter(language, *args, **kwargs):

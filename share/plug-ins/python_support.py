@@ -46,17 +46,11 @@ documentation for the standard python library. It is accessed through the
 /Python menu when editing a python file""",
             9432)
 
-        regex = ("(a(nd|ssert|s)|break|c(lass|ontinue)|de[fl]|e(l(if|se)"
-                 + "|x(cept|ec))|f(inally|or|rom)|global|i(mport|[fns])"
-                 + "|lambda|not|or|p(ass|rint)|r(aise|eturn)|try|while|yield)"
-                 + "\\b")
-
         XML = """
   <Language>
     <Name>Python</Name>
     <Body_Suffix>.py</Body_Suffix>
     <Obj_Suffix>.pyc</Obj_Suffix>
-    <Keywords>%s</Keywords>
     <Context>
       <New_Line_Comment_Start>#</New_Line_Comment_Start>
       <String_Delimiter>&quot;</String_Delimiter>
@@ -98,7 +92,7 @@ documentation for the standard python library. It is accessed through the
      <descr>Python Library</descr>
      <menu>/Help/Python/Python Library</menu>
      <category>Scripts</category>
-  </documentation_file>""" % (regex)
+  </documentation_file>"""
 
         if has_pygtk:
             XML += """

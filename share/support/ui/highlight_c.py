@@ -46,12 +46,13 @@ preprocessor_directive = region(
     highlighter=(
         hl_cont_line,
         string_literal,
-        simple(r'\<.*?\>', tag="string", matchall=False),
+        simple(r'\<.*?\>', tag="string"),
         character_literal,
         number_literal,
         c99_comment,
         multiline_comment
-    )
+    ),
+    matchall=False
 )
 
 #######################

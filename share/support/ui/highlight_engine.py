@@ -4,11 +4,6 @@ from gi.repository import Gtk, GLib, Gdk
 from pygps import get_gtk_buffer
 import re
 from time import time
-from functools import partial
-
-logger = GPS.Logger("Lol")
-# import rpdb2
-# rpdb2.start_embedded_debugger("lol")
 
 
 class HighlighterModule(Module):
@@ -153,6 +148,7 @@ for name in dir(Gtk.TextIter):
     if r.match("(forward|set|backward).*$", name):
         setattr(Gtk.TextIter, name + "_n", make_wrapper(name))
 
+
 Gtk.TextIter.__str__ = iter_to_str
 Gtk.TextIter.__repr__ = iter_to_str
 Gtk.TextIter.__eq__ = iter_eq
@@ -174,7 +170,10 @@ class Struct:
 
 def propagate_change(pref):
     color = Gdk.RGBA()
-    color.parse(pref.get())
+    color_string = pref.get()
+    if "@" in color_string:
+        color_string = color_string.split("@")[1]
+    color.parse(color_string)
     pref.tag.set_property("foreground_rgba", color)
 
 
@@ -269,10 +268,12 @@ class SubHighlighter(object):
         # Cache or create tags before highlighting
         tags = []
         for cat in self.cats:
+
             if not cat:
                 tags.append(None)
                 continue
-            if type(cat.tag) is str:
+
+            if isinstance(cat.tag, str):
                 tags.append(gtk_ed.get_tag_table().lookup(cat.tag))
             else:
                 t = gtk_ed.get_tag_table().lookup(cat.tag.style_id)
@@ -405,7 +406,6 @@ class Highlighter(object):
                             .backward_char_n()
                         yield (subhl_stack[-1].gtk_tag, endi, endi)
                         self.sync_stop = True
-
                         return
 
                 # Stop pattern, this is the end of the region, we want to
@@ -456,7 +456,7 @@ class Highlighter(object):
         # of the buffer (didn't meet a stop pattern, or is the top level hl).
         #  In this case, we want to set the stack correctly for the remaining
         #  lines
-        for l in range(current_line + 1, end.get_line()):
+        for l in range(current_line + 1, end.get_line() + 1):
             gtk_ed.stacks.set(l, subhl_stack)
 
         yield (None, end, end)
@@ -493,7 +493,8 @@ class Highlighter(object):
             # Only one action means we only have the end marker in the
             # action list -> no region change
             if len(actions_list) == 1:
-                tag = gtk_ed.stacks.get(st_iter.get_line())[-1].gtk_tag
+                stacks = gtk_ed.stacks.get(st_iter.get_line())
+                tag = stacks[-1].gtk_tag
                 if tag:
                     gtk_ed.apply_tag(tag, st_iter, actions_list[0][1])
 
