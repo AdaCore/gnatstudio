@@ -1340,7 +1340,7 @@ package body Src_Editor_View is
    is
       use GNATCOLL.VFS;
       Result : Boolean;
-      pragma Unreferenced (Result, X, Y, Info, Context, Time);
+      pragma Unreferenced (Result, X, Y, Info, Time);
       View : constant Source_View   := Source_View (Self);
    begin
       --  Do not accept drag data if the view is not editable
@@ -1363,6 +1363,9 @@ package body Src_Editor_View is
                   Create (+Filename_From_URI (Url.all, null)),
                   Project  => No_Project,  --  will choose one at random
                   New_File => False);
+               Gtk.Dnd.Finish (Context => Drag_Context (Context),
+                               Success => True,
+                               Del     => True);
             end loop;
          end;
       end if;
