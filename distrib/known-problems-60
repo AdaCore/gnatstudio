@@ -168,6 +168,16 @@ KP-60-N220-040 GPS: "Close all other editors" does nothing
 
   Workaround: Use the global menu "/File/Close All Editors except Current".
 
+KP-60-N217-046 GPS: GPS asks for save confirmation with autognatpp plug-in
+
+  Problem:    When activating the autognatpp plug-in, which is supposed to
+              automatically pretty print your file everytime you save it, GPS
+              would ask for confirmation.
+
+  Status:     Fixed in 6.1 on 2014-03-24
+
+  Workaround: Don't use the plug-in, or deal with the dialog every time.
+
 KP-60-N217-012 GPS: display errors in text consoles after scrolling
 
   Problem:    After scrolling in the consoles (such as the Messages window or
