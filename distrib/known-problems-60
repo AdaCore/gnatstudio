@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N418-029 GPS: Size of line numbers area not following font size
+
+  Problem:    When changing the size of the default editor font
+              (for instance via the menu Edit/Text size), the size allocated
+              to line numbers is not resized, which can result in truncated
+              line numbers.
+
+  Status:     Fixed in 6.1 on 2014-04-18
+
+  Workaround: Restart GPS.
+
 KP-60-N407-001 GPS: GPS crashes on some completions involving generic packages
 
   Problem:    On completing some generic packages with child packages, the
@@ -493,6 +504,16 @@ KP-60-MB13-062 GPS: key shortcuts not displayed in some Build menus
   Status:     This was fixed in 6.1 on 2013-11-13
 
   Workaround: Use the key shortcut editor to see the corresponding shortcuts.
+
+KP-60-MB06-028 GPS: drag and drop of files opens extraneous editors
+
+  Problem:    When dragging/dropping files from the window manager to GPS
+              editors, drops subsequent to the first successful one will
+              cause the previous file to be opened as well.
+
+  Status:     This was fixed in 6.1 on 2014-04-18
+
+  Workaround: Manually close the extra editor.
 
 KP-60-MB06-009 GPS: "add to extending project" hides existing files
 
