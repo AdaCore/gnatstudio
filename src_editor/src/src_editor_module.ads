@@ -44,6 +44,7 @@ with Src_Editor_Box;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with System;
 with XML_Utils;                   use XML_Utils;
+with Pango.Font;
 
 package Src_Editor_Module is
 
@@ -288,6 +289,7 @@ private
    type Source_Editor_Module_Record is new Module_ID_Record with record
       Lines_Hook            : Lines_Revealed_Hook;
 
+      Font                  : Pango.Font.Pango_Font_Description;
       Display_Line_Numbers  : Boolean    := False;
       Character_Width       : Gint := 0;
 

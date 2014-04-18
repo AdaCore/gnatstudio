@@ -94,6 +94,7 @@ with Vsearch;                           use Vsearch;
 
 package body Src_Editor_Module is
    use type GNATCOLL.Xref.Visible_Column;
+   use type Pango.Font.Pango_Font_Description;
 
    Me : constant Trace_Handle := Create ("Src_Editor_Module");
 
@@ -2401,6 +2402,9 @@ package body Src_Editor_Module is
       Pref_Display_Subprogram_Names : constant Boolean :=
                                         Display_Subprogram_Names.Get_Pref;
 
+      Font_Has_Changed : Boolean := False;
+      Line_Display_Has_Changed : Boolean := False;
+
       Id : constant Source_Editor_Module :=
              Source_Editor_Module (Src_Editor_Module_Id);
 
@@ -2448,10 +2452,20 @@ package body Src_Editor_Module is
              (GPS_Unfold_Block, Icon_Size_Speedbar);
       end if;
 
+      if Id.Font /= Default_Style.Get_Pref_Font then
+         Id.Font := Default_Style.Get_Pref_Font;
+         Font_Has_Changed := True;
+      end if;
+
       if Pref_Display_Line_Numbers /= Id.Display_Line_Numbers then
          Id.Display_Line_Numbers := Pref_Display_Line_Numbers;
 
-         if Pref_Display_Line_Numbers then
+         Line_Display_Has_Changed := True;
+      end if;
+
+      if Font_Has_Changed or else Line_Display_Has_Changed then
+         if Id.Display_Line_Numbers then
+            --  Recompute the width of the character
             declare
                Layout : constant Pango_Layout := Create_Pango_Layout
                  (Get_Main_Window (Kernel));
@@ -2464,25 +2478,25 @@ package body Src_Editor_Module is
                Id.Character_Width := Width / 4;
                Unref (Layout);
             end;
+
+            --  Tell the editors to refresh their side columns
+            Iter  := First_Child (Get_MDI (Kernel));
+
+            loop
+               Child := Get (Iter);
+
+               exit when Child = null;
+
+               if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
+                  Refresh_Side_Column
+                    (Get_Buffer (Source_Editor_Box (Get_Widget (Child))));
+               end if;
+
+               Next (Iter);
+            end loop;
          else
             Id.Character_Width := 0;
          end if;
-
-         --  Tell the editors to refresh their side columns
-         Iter  := First_Child (Get_MDI (Kernel));
-
-         loop
-            Child := Get (Iter);
-
-            exit when Child = null;
-
-            if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
-               Refresh_Side_Column
-                 (Get_Buffer (Source_Editor_Box (Get_Widget (Child))));
-            end if;
-
-            Next (Iter);
-         end loop;
       end if;
 
       --  Set ACL usage
