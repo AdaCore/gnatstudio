@@ -4,7 +4,6 @@ from gi.repository import Gtk, GLib, Gdk
 from pygps import get_gtk_buffer
 import re
 from time import time
-from copy import copy
 
 
 class HighlighterModule(Module):
@@ -428,11 +427,19 @@ class Highlighter(object):
             subhl_stack = list(gtk_ed.stacks.get(start_line))
 
         match_offset = 0
+        hl_tags = {}
+        rstarts = []
 
         while subhl_stack:
             hl = subhl_stack[-1]
             matches = hl.pattern.finditer(strn, match_offset)
-            tags = hl.get_tags_list(gtk_ed)
+
+            # Cache tags
+            tags = hl_tags.get(hl, None)
+            if not tags:
+                tags = hl.get_tags_list(gtk_ed)
+                hl_tags[hl] = tags
+
             pop_stack = True
             met_stop_pattern = False
 
@@ -468,16 +475,15 @@ class Highlighter(object):
                     # If the region has no region start, we are
                     # rehighlighting a region that was previously created,
                     # and has no stored region start.
-                    rstart = hl.region_start or start
+                    rstart = rstarts.pop() if rstarts else start
                     yield (hl.gtk_tag, rstart, tk_end)
-                    hl.region_start = None
                     match_offset = m.end(i)
                     met_stop_pattern = True
                     break
 
                 if isinstance(matcher, RegionMatcher):
-                    subhl_stack.append(copy(matcher.subhighlighter))
-                    subhl_stack[-1].region_start = tk_start
+                    subhl_stack.append(matcher.subhighlighter)
+                    rstarts.append(tk_start)
                     match_offset = m.end(i)
                     pop_stack = False
                     break
@@ -493,7 +499,7 @@ class Highlighter(object):
             # so we can highlight to the end of the buffer with this region's
             # tag
             if len(subhl_stack) > 1 and not met_stop_pattern and pop_stack:
-                rstart = hl.region_start or start
+                rstart = rstarts.pop() if rstarts else start
                 yield (hl.gtk_tag, rstart, end)
                 # We break out of the while loop to keep the stack intact
                 break
@@ -523,7 +529,7 @@ class Highlighter(object):
         def get_action_list(sl, el=0):
             return sorted(
                 self.highlight_info_gen(gtk_ed, sl, sl + (el if el else 0)),
-                key=lambda (_, s, e): s.get_offset()
+                key=lambda t: t[1].get_offset()
             )
 
         if start_line == -1:
@@ -552,7 +558,7 @@ class Highlighter(object):
 
             all_actions = (a for a in actions_list[:-1])
             for actions in partition(all_actions, remove_tag_step):
-                max_loc = max(actions, key=lambda (_, s, e): e.get_offset())[2]
+                max_loc = max(actions, key=lambda t: t[2].get_offset())[2]
                 gtk_ed.remove_all_tags(actions[0][1], max_loc)
 
                 for tag, start, end in actions:
