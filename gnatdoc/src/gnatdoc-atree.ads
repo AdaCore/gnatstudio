@@ -982,6 +982,8 @@ private package GNATdoc.Atree is
         (E : Entity_Id) return General_Location;
       function Get_Child_Types
         (E : Entity_Id) return access EInfo_List.Vector;
+      function Get_End_Of_Scope_Loc
+        (E : Entity_Id) return General_Location;
       function Get_Entity
         (E : Entity_Id) return Root_Entity'Class;
       function Get_Instance_Of
@@ -1038,6 +1040,7 @@ private package GNATdoc.Atree is
       pragma Inline (Get_Alias);
       pragma Inline (Get_Body_Loc);
       pragma Inline (Get_Child_Types);
+      pragma Inline (Get_End_Of_Scope_Loc);
       pragma Inline (Get_Entity);
       pragma Inline (Get_Location);
       pragma Inline (Get_Parent_Package);
@@ -1134,6 +1137,7 @@ private
          Alias            : Holder.Holder;
          Body_Loc         : General_Location;
          Ekind            : Entity_Kind;
+         End_Of_Scope_Loc : General_Location;
          Entity           : Holder.Holder;
          Etype            : Holder.Holder;
          Etype_Loc        : General_Location;

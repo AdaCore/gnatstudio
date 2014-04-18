@@ -4578,6 +4578,8 @@ package body GNATdoc.Frontend is
                         declare
                            Body_File : constant Virtual_File :=
                              LL.Get_Body_Loc (E).File;
+                           End_Scope_File : constant Virtual_File :=
+                             LL.Get_End_Of_Scope_Loc (E).File;
                            Lang      : constant Language_Access :=
                              Get_Language_From_File
                                (Context.Lang_Handler, Body_File);
@@ -4591,6 +4593,11 @@ package body GNATdoc.Frontend is
                                   and then Is_Regular_File (Body_File)
                                   and then not
                                     Body_Files_List.Contains (Body_File)
+
+                                 --  Protect us against wrong info in the
+                                 --  database
+
+                                  and then Body_File = End_Scope_File
                               then
                                  Body_Files_List.Append (Body_File);
                               end if;

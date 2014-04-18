@@ -1303,6 +1303,7 @@ package body GNATdoc.Atree is
 
          LL_Set_Etype (New_E, Get_Type_Of (E));
          New_E.Xref.Body_Loc := Get_Body (E);
+         New_E.Xref.End_Of_Scope_Loc := End_Of_Scope (LL.Get_Entity (New_E));
 
          --  Ada single tasks are not types (they are objects) but we handle
          --  them as tasks for homogeneity in the gnatdoc frontend. We cannot
@@ -1550,6 +1551,7 @@ package body GNATdoc.Atree is
                 Alias            => Alias,
                 Body_Loc         => No_Location,
                 Ekind            => Kind,
+                End_Of_Scope_Loc => No_Location,
                 Entity           => Entity,
                 Etype            => Etype,
                 Etype_Loc        => No_Location,
@@ -2735,6 +2737,11 @@ package body GNATdoc.Atree is
       begin
          return E.Xref.Child_Types'Access;
       end Get_Child_Types;
+
+      function Get_End_Of_Scope_Loc (E : Entity_Id) return General_Location is
+      begin
+         return E.Xref.End_Of_Scope_Loc;
+      end Get_End_Of_Scope_Loc;
 
       function Get_Entity (E : Entity_Id) return Root_Entity'Class is
       begin
