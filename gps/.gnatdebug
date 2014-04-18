@@ -124,6 +124,4 @@ buffer_debug=no
 
 --  Active in development mode
 
-PREVENT_ALIGN_ON_TAB=no
-
 GPS.KERNEL.MODULES.UI=yes
