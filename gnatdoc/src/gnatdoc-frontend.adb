@@ -50,6 +50,7 @@ package body GNATdoc.Frontend is
 
    type Tokens is
      (Tok_Unknown,
+      Tok_Char_Literal,
       Tok_Id,          --  Expanded names & identifiers
       Tok_Number,
       Tok_Operator,
@@ -2548,6 +2549,8 @@ package body GNATdoc.Frontend is
                   Scope_Level := Scope_Level - 1;
                end Do_Exit;
 
+            --  Start of processing of Handle_Scopes
+
             begin
                case Token is
 
@@ -2595,6 +2598,17 @@ package body GNATdoc.Frontend is
                         Nested_Variants_Count := Nested_Variants_Count - 1;
                      else
                         Nested_Variants_Count := Nested_Variants_Count + 1;
+                     end if;
+
+                  when Tok_Char_Literal =>
+                     Do_Breakpoint;
+
+                     if In_Next_Entity then
+                        --  This is a character literal which defines a value
+                        --  of an enumeration type. For example:
+                        --    type Code is ('X', 'Y');
+
+                        Extended_Cursor.Mark_Next_Entity_Seen (Cursor);
                      end if;
 
                   --  Expanded names & identifiers
@@ -2998,7 +3012,6 @@ package body GNATdoc.Frontend is
 
                   when others =>
                      Append_Src (S);
-                     null;
                end case;
             end Handle_Sources;
 
@@ -3026,6 +3039,9 @@ package body GNATdoc.Frontend is
                   when Block_Text      |
                        Identifier_Text =>
                      Token := Tok_Id;
+
+                  when Character_Text =>
+                     Token := Tok_Char_Literal;
 
                   when Number_Text =>
                      Token := Tok_Number;
@@ -3118,7 +3134,6 @@ package body GNATdoc.Frontend is
                     Annotated_Comment_Text  |
                     Aspect_Keyword_Text     |
                     Aspect_Text             |
-                    Character_Text          |
                     String_Text             =>
                   Token := Tok_Unknown;
                end case;
@@ -3497,15 +3512,12 @@ package body GNATdoc.Frontend is
                      end if;
                   else
                      Handle_Doc;
-                     --  Processes: Tok_Id, Tok_End, Tok_Semicolon
-                     --    Tok_Is, Tok_Procedure, Tok_Function, Tok_Entry
                   end if;
 
                   Handle_Sources (End_Decl_Found);
                end if;
 
                Handle_Scopes (End_Decl_Found);
-               --  Processes: Tok_Id, Tok_Semicolon (End_Decl)
 
                if End_Decl_Found then
                   Reset_End_Decl_Found (Current_Context);
@@ -4510,7 +4522,7 @@ package body GNATdoc.Frontend is
 
          Std_Entity : Entity_Id;
 
-         --  Start of processing for Parse_Ada_File
+      --  Start of processing for Parse_Ada_File
 
       begin
          Extended_Cursor.Initialize
@@ -4564,7 +4576,6 @@ package body GNATdoc.Frontend is
                     (Cursor         => Cursor,
                      Entities       => File_Entities.All_Entities'Access,
                      Marks_Required => False);
-                  Extended_Cursor.Mark_Next_Entity_Seen (Cursor);
 
                   while Extended_Cursor.Has_Entity (Cursor) loop
                      E := Extended_Cursor.Entity (Cursor);
