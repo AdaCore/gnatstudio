@@ -20,8 +20,9 @@ class HighlighterModule(Module):
             gtk_ed = get_gtk_buffer(ed)
             if not gtk_ed.highlighting_initialized:
                 highlighter.init_highlighting(ed)
-                gen = highlighter.highlight_gen(gtk_ed)
-                highlighter.gtk_idle_highlight(gtk_ed, gen)
+                # gen = highlighter.highlight_gen(gtk_ed)
+                # highlighter.gtk_idle_highlight(gtk_ed, gen)
+                highlighter.gtk_highlight(gtk_ed)
 
     def gps_started(self):
         ed = GPS.EditorBuffer.get(open=False)
@@ -217,6 +218,7 @@ class Matcher(BaseMatcher):
             self.gtk_tag.set_priority(self.tag.prio)
             self.tag.pref.tag = self.gtk_tag
             propagate_change(self.tag.pref)
+
         return self.gtk_tag
 
 
@@ -414,10 +416,17 @@ class Highlighter(object):
         :type start_line: int
         """
         self.sync_stop = False
+
         start = gtk_ed.get_iter_at_line(start_line)
+        ":type: Gtk.TextIter"
+
         end = (gtk_ed.get_end_iter()
                if not end_line else gtk_ed.get_iter_at_line(end_line))
+        ":type: Gtk.TextIter"
+
         strn = gtk_ed.get_text(start, end, True).decode('utf-8')
+        ":type: unicode"
+
         current_line = start_line
 
         if start_line == 0:
@@ -427,8 +436,12 @@ class Highlighter(object):
             subhl_stack = list(gtk_ed.stacks.get(start_line))
 
         match_offset = 0
+        last_start_offset = 0
+        results = []
         hl_tags = {}
         rstarts = []
+        start_offset = start.get_offset()
+        end_offset = end.get_offset()
 
         while subhl_stack:
             hl = subhl_stack[-1]
@@ -450,22 +463,26 @@ class Highlighter(object):
                      if m.span(j) != null_span][0]
 
                 matcher, tag = hl.matchers[i - 1], tags[i - 1]
-                tk_start = start.forward_chars_n(m.start(i))
-                tk_end = start.forward_chars_n(m.end(i))
+                start_line += strn.count("\n",
+                                         last_start_offset, m.start(i))
+                last_start_offset = m.start(i)
+                tk_start_offset = start_offset + m.start(i)
+                tk_end_offset = start_offset + m.end(i)
 
-                if tk_start.get_line() > current_line:
-                    for l in range(current_line + 1, tk_start.get_line()):
+                if start_line > current_line:
+                    for l in range(current_line + 1, start_line):
                         gtk_ed.stacks.set(l, subhl_stack)
-                    current_line = tk_start.get_line()
+                    current_line = start_line
 
                     # We exit because the stack we're setting is == to the
                     # existing one, so the buffer is synced
                     if gtk_ed.stacks.set(current_line, subhl_stack):
-                        endi = gtk_ed.get_iter_at_line(current_line)\
-                            .backward_char_n()
-                        yield (subhl_stack[-1].gtk_tag, endi, endi)
+                        endi = gtk_ed.get_iter_at_line(current_line)
+                        endi.backward_char()
+                        endo = endi.get_offset()
+                        results.append((subhl_stack[-1].gtk_tag, endo, endo))
                         self.sync_stop = True
-                        return
+                        return results
 
                 # Stop pattern, this is the end of the region, we want to
                 # return to the parent highlighter after having yielded the
@@ -475,21 +492,22 @@ class Highlighter(object):
                     # If the region has no region start, we are
                     # rehighlighting a region that was previously created,
                     # and has no stored region start.
-                    rstart = rstarts.pop() if rstarts else start
-                    yield (hl.gtk_tag, rstart, tk_end)
+                    rstart = rstarts.pop() if rstarts else start_offset
+                    results.append((hl.gtk_tag, rstart, tk_end_offset))
                     match_offset = m.end(i)
                     met_stop_pattern = True
                     break
 
                 if isinstance(matcher, RegionMatcher):
                     subhl_stack.append(matcher.subhighlighter)
-                    rstarts.append(tk_start)
+                    rstarts.append(tk_start_offset)
+
                     match_offset = m.end(i)
                     pop_stack = False
                     break
 
                 if tag:
-                    yield (tag, tk_start, tk_end)
+                    results.append((tag, tk_start_offset, tk_end_offset))
                 else:
                     assert False
 
@@ -499,8 +517,8 @@ class Highlighter(object):
             # so we can highlight to the end of the buffer with this region's
             # tag
             if len(subhl_stack) > 1 and not met_stop_pattern and pop_stack:
-                rstart = rstarts.pop() if rstarts else start
-                yield (hl.gtk_tag, rstart, end)
+                rstart = rstarts.pop() if rstarts else start_offset
+                results.append((hl.gtk_tag, rstart, end_offset))
                 # We break out of the while loop to keep the stack intact
                 break
 
@@ -517,7 +535,8 @@ class Highlighter(object):
         for l in range(current_line + 1, end.get_line() + 1):
             gtk_ed.stacks.set(l, subhl_stack)
 
-        yield (None, end, end)
+        results.append((None, end_offset, end_offset))
+        return results
 
     def highlight_gen(self, gtk_ed, start_line=-1, remove_tag_step=100):
         """
@@ -526,55 +545,50 @@ class Highlighter(object):
         :type remove_tag_step: int
         """
         t = time()
+        start_it = gtk_ed.get_start_iter()
+        end_it = gtk_ed.get_start_iter()
 
-        def get_action_list(sl, el=0):
+        def get_action_list(sl):
             return sorted(
-                self.highlight_info_gen(gtk_ed, sl, sl + (el if el else 0)),
-                key=lambda t: t[1].get_offset()
+                self.highlight_info_gen(gtk_ed, sl),
+                key=lambda t: t[1]
             )
 
         if start_line == -1:
             for tag, start, end in self.highlight_info_gen(gtk_ed, 0):
                 if tag:
-                    gtk_ed.apply_tag(tag, start, end)
-                yield
+                    start_it.set_offset(start)
+                    end_it.set_offset(end)
+                    gtk_ed.apply_tag(tag, start_it, end_it)
         else:
             st_iter = gtk_ed.get_iter_at_line(start_line)
-            is_end = (gtk_ed.get_iter_at_line(start_line + 100).get_line() ==
-                      gtk_ed.get_end_iter().get_line())
+            actions_list = get_action_list(start_line)
 
-            actions_list = get_action_list(start_line, start_line + 100)
+            end_it.set_offset(actions_list[-1][1])
+            gtk_ed.remove_all_tags(st_iter, end_it)
 
-            if not self.sync_stop and not is_end:
-                actions_list += get_action_list(start_line + 100)
-
-            gtk_ed.remove_all_tags(st_iter, actions_list[-1][1])
             # Only one action means we only have the end marker in the
             # action list -> no region change
             if len(actions_list) == 1:
-                stacks = gtk_ed.stacks.get(st_iter.get_line())
-                tag = stacks[-1].gtk_tag
+                tag = actions_list[0][0]
                 if tag:
-                    gtk_ed.apply_tag(tag, st_iter, actions_list[0][1])
+                    end_it.set_offset(actions_list[0][1])
+                    gtk_ed.apply_tag(tag, st_iter, end_it)
 
             all_actions = (a for a in actions_list[:-1])
             for actions in partition(all_actions, remove_tag_step):
-                max_loc = max(actions, key=lambda t: t[2].get_offset())[2]
-                gtk_ed.remove_all_tags(actions[0][1], max_loc)
-
                 for tag, start, end in actions:
-                    gtk_ed.apply_tag(tag, start, end)
-                    yield
+                    start_it.set_offset(start)
+                    end_it.set_offset(end)
+                    gtk_ed.apply_tag(tag, start_it, end_it)
 
         print time() - t
 
     def gtk_highlight(self, gtk_ed):
-        for _ in self.highlight_gen(gtk_ed, -1):
-            pass
+        self.highlight_gen(gtk_ed, -1)
 
     def gtk_highlight_region(self, gtk_ed, start_line):
-        for _ in self.highlight_gen(gtk_ed, start_line):
-            pass
+        self.highlight_gen(gtk_ed, start_line)
 
     @staticmethod
     def gtk_idle_highlight(gtk_ed, gen, gran=1000, max_time=0.10):
