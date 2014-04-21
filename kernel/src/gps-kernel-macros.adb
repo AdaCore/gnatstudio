@@ -192,6 +192,10 @@ package body GPS.Kernel.Macros is
       elsif Param = "GPS" then
          return Get_Kernel (Context).Get_Home_Dir.Display_Full_Name;
 
+      elsif Param = "system_bin_dir" then
+         return Create_From_Dir
+           (Get_Kernel (Context).Get_System_Dir, "bin").Display_Full_Name;
+
       elsif Param = "s" then
          if Has_Entity_Name_Information (Context) then
             return Entity_Name_Information (Context);

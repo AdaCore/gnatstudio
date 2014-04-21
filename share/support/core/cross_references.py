@@ -47,7 +47,7 @@ class Sqlite_Cross_References(object):
         end_of_build
     </output-parsers>
     <command-line>
-       <arg>gnatinspect</arg>
+       <arg>%system_bin_dir/gnatinspect</arg>
        <arg>-d</arg>
        <arg>--exit</arg>
        <arg>--tracefile=%GPS/gnatinspect_traces.cfg</arg>

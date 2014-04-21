@@ -2262,6 +2262,10 @@ arguments.  This code is useful when you are writing a full python script.
 
   Object directory of the root project.
 
+* :file:`%system_bin_dir`
+
+  The directory containing the GPS executable.
+
 * :file:`%p`
 
   Name of the current projec (not the project file). The :file:`.gpr`
