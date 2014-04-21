@@ -38,6 +38,7 @@ class Sqlite_Cross_References(object):
     <icon>gps-compute-xref</icon>
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
+    <server>Tools_Server</server>
     <output-parsers>
         output_chopper
         utf_converter
