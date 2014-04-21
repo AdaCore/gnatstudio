@@ -110,6 +110,8 @@ package GPS.Kernel.Remote is
    Rsync_Action_Hook : constant Hook_Name :=
                          To_Hook_Name ("rsync_action_hook");
 
+   Rsync_Finished_Hook : constant Hook_Name := To_Hook_Name ("rsync_finished");
+
    Rsync_Hook_Type : constant Hook_Type := "rsync_action_hook_t";
 
    type Rsync_Hooks_Args

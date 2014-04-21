@@ -791,6 +791,8 @@ package body Remote.Rsync is
       Cb_Data.Ret_Data.Status := Status;
       Trace (Me, "rsync status is" & Integer'Image (Status));
 
+      Run_Hook (Data.Kernel, Rsync_Finished_Hook);
+
    exception
       when E : others => Trace (Me, E);
    end Rsync_Terminated;

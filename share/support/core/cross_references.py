@@ -22,6 +22,7 @@ class Sqlite_Cross_References(object):
 <target-model name="gnatinspect" category="">
    <description>Launch cross-reference recompilation</description>
    <icon>gps-custom-build</icon>
+   <server>GPS_Server</server>
    <output-parsers>
        console_writer
        gnatinspect_onexit_hook
@@ -70,6 +71,7 @@ class Sqlite_Cross_References(object):
         GPS.Hook("project_view_changed").add(self.on_project_view_changed)
         GPS.Hook("compilation_finished").add(self.on_compilation_finished)
         GPS.Hook("preferences_changed").add(self.on_preferences_changed)
+        GPS.Hook("rsync_finished").add(self.on_rsync_finished)
         self.gnatinspect_launch_registered = False
 
         # Initialize self.trusted_mode and other preferences
@@ -136,6 +138,9 @@ class Sqlite_Cross_References(object):
 
     def on_preferences_changed(self, hook_name):
         self.trusted_mode = GPS.Preference("Prj-Editor-Trusted-Mode").get()
+
+    def on_rsync_finished(self, hook):
+        self.recompute_xref()
 
 
 class GnatInspect_OnExit_Hook(tool_output.OutputParser):

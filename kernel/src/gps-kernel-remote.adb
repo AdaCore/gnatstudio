@@ -261,6 +261,8 @@ package body GPS.Kernel.Remote is
       Register_Hook_Return_Boolean
         (Kernel, Rsync_Action_Hook, Rsync_Hook_Type);
 
+      Register_Hook_No_Args (Kernel, Rsync_Finished_Hook);
+
       --  Register server config changed hook
       Register_Hook_Data_Type
         (Kernel, Server_Config_Changed_Hook_Type,
