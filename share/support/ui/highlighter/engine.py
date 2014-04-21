@@ -525,6 +525,7 @@ class Highlighter(object):
         :type start_line: int
         :type remove_tag_step: int
         """
+        t = time()
 
         def get_action_list(sl, el=0):
             return sorted(
@@ -564,6 +565,8 @@ class Highlighter(object):
                 for tag, start, end in actions:
                     gtk_ed.apply_tag(tag, start, end)
                     yield
+
+        print time() - t
 
     def gtk_highlight(self, gtk_ed):
         for _ in self.highlight_gen(gtk_ed, -1):
