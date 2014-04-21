@@ -27,7 +27,7 @@ light_common = {
     'Plugins/isearch/bgcolor': 'yellow',
     'Plugins/isearch/bgcolor': 'red',
 
-    "Search-Src-Highlight-Color": "rgb(162,182,255)",
+    "Search-Src-Highlight-Color": "rgb(189,215,255)",
     "Messages-Highlight-Color": "rgb(255,0,0)",
     "Errors-Src-Highlight-Color": "rgb(255,183,183)",
     "Warnings-Src-Highlight-Color": "rgb(255,204,156)",
@@ -55,7 +55,7 @@ dark_common = {
     'Plugins/isearch/bgcolor': 'rgb(74,43,75)',
     'Plugins/isearch/bgcolor': 'rgb(77,19,19)',
 
-    "Search-Src-Highlight-Color": "rgb(0,129,145)",
+    "Search-Src-Highlight-Color": "rgb(0,113,128)",
     "Messages-Highlight-Color": "rgb(84,42,42)",
     "Errors-Src-Highlight-Color": "rgb(75,34,34)",
     "Warnings-Src-Highlight-Color": "rgb(85,52,18)",

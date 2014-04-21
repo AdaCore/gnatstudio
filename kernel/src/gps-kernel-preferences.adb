@@ -985,7 +985,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Search highlighting",
          Doc     =>
              -"Color used to highlight search results in the source editors",
-         Default => "#A2B6FF",
+         Default => "#BDD7FF",
          Page    => -"Messages");
 
       File_Pattern := Create
