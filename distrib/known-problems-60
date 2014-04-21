@@ -687,7 +687,17 @@ KP-60-MB29-031 GPS: rsync failures in remote mode
               asking the use for a password.
 
   Status:     This was fixed in 6.1 on 2014-02-11
-  Status:     This was fixed in 6.0.2 on 2014-03-20
+              This was fixed in 6.0.2 on 2014-03-20
 
   Workaround: Use a passwordless connection via an ssh agent, for example, or
               use network directories.
+
+KP-60-M829-007 GPS: Navigation and remote mode
+
+  Problem:    When working in remote mode, navigation will not work if
+              the remote file system is not accessed directly.
+
+  Status:     This was fixed in 6.1 on 2014-04-21
+
+  Workaround: Launch manually (or via a plug-in) the gnatinspect command
+              after each build.
