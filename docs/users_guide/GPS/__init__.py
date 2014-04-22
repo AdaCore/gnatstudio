@@ -1997,8 +1997,9 @@ class Contextual(object):
         """
         pass  # implemented in Ada
 
-    def create(self, on_activate, label=None, ref='', add_before=True,
-               filter=None, group='0'):
+    def create(self, on_activate, label=None, filter=None,
+               ref='', add_before=True,
+               group='0', visibility_filter=None, action=None):
         """
         Creates a new contextual menu entry.  Whenever this menu entry is
         selected by the user, GPS executes :func:`on_activate`, passing one
