@@ -181,6 +181,9 @@ package body Ada_Analyzer is
 
       Tok_Pound,           -- # sign, used by the preprocessor
 
+      Tok_Left_Square_Bracket,  -- '[' used in wide character encoding
+      Tok_Right_Square_Bracket, -- ']' used in wide character encoding
+
       Tok_Colon,           -- :            Eterm, Sterm
 
       Tok_Arrow,           -- =>           Sterm, Cterm, Chtok
@@ -3710,6 +3713,14 @@ package body Ada_Analyzer is
                   then
                      Preprocessor_Directive;
                   end if;
+
+               when '[' =>
+                  First := P;
+                  Prev_Token := Tok_Left_Square_Bracket;
+
+               when ']' =>
+                  First := P;
+                  Prev_Token := Tok_Right_Square_Bracket;
 
                when '(' =>
                   First := P;

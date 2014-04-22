@@ -51,7 +51,8 @@ package body GNATdoc.Frontend is
    type Tokens is
      (Tok_Unknown,
       Tok_Char_Literal,
-      Tok_Id,          --  Expanded names & identifiers
+      Tok_String_Literal,
+      Tok_Id,                --  Expanded names & identifiers
       Tok_Number,
       Tok_Operator,
 
@@ -92,6 +93,8 @@ package body GNATdoc.Frontend is
       Tok_Assignment,
       Tok_Left_Paren,
       Tok_Right_Paren,
+      Tok_Left_Square_Bracket,
+      Tok_Right_Square_Bracket,
       Tok_Semicolon);
 
    subtype Reserved_Word_Kind is Tokens range Tok_Abstract .. Tok_With;
@@ -2600,13 +2603,20 @@ package body GNATdoc.Frontend is
                         Nested_Variants_Count := Nested_Variants_Count + 1;
                      end if;
 
-                  when Tok_Char_Literal =>
+                  when Tok_Char_Literal   |
+                       Tok_String_Literal =>
                      Do_Breakpoint;
 
                      if In_Next_Entity then
-                        --  This is a character literal which defines a value
-                        --  of an enumeration type. For example:
+                        --  For character literals this case occurs when a
+                        --  defining a value of an enumeration type. For
+                        --  example:
                         --    type Code is ('X', 'Y');
+
+                        --  For String_Literals this case occurs when the wide
+                        --  character encoding is used to name the identifier.
+                        --  For example:
+                        --    ["03C0"] : constant := Pi;
 
                         Extended_Cursor.Mark_Next_Entity_Seen (Cursor);
                      end if;
@@ -3046,6 +3056,9 @@ package body GNATdoc.Frontend is
                   when Number_Text =>
                      Token := Tok_Number;
 
+                  when String_Text =>
+                     Token := Tok_String_Literal;
+
                   when Keyword_Text =>
                      Token := Get_Token (S);
                      Set_Token_Seen (Current_Context, Token);
@@ -3104,6 +3117,12 @@ package body GNATdoc.Frontend is
                         Token := Tok_Right_Paren;
                         Par_Count := Par_Count - 1;
 
+                     elsif S = "[" then
+                        Token := Tok_Left_Square_Bracket;
+
+                     elsif S = "]" then
+                        Token := Tok_Right_Square_Bracket;
+
                      elsif S = ":=" then
                         Token := Tok_Assignment;
 
@@ -3133,8 +3152,7 @@ package body GNATdoc.Frontend is
                     Annotated_Keyword_Text  |
                     Annotated_Comment_Text  |
                     Aspect_Keyword_Text     |
-                    Aspect_Text             |
-                    String_Text             =>
+                    Aspect_Text             =>
                   Token := Tok_Unknown;
                end case;
 
@@ -3175,10 +3193,21 @@ package body GNATdoc.Frontend is
 
                Loc := LL.Get_Location (Extended_Cursor.Entity (Cursor));
 
-               return Sloc_Start.Line = Loc.Line
-                 and then Sloc_End.Line = Loc.Line
-                 and then Natural (Loc.Column) >= Sloc_Start.Column
-                 and then Natural (Loc.Column) <= Sloc_End.Column;
+               --  Handle wide character encoding in identifiers. For example:
+               --    ["03C0"] : constant := Pi;
+
+               if Prev_Token = Tok_Left_Square_Bracket
+                 and then Token = Tok_String_Literal
+               then
+                  return Sloc_Start.Line = Loc.Line
+                    and then Sloc_End.Line = Loc.Line
+                    and then Natural (Loc.Column) = Sloc_Start.Column - 1;
+               else
+                  return Sloc_Start.Line = Loc.Line
+                    and then Sloc_End.Line = Loc.Line
+                    and then Natural (Loc.Column) >= Sloc_Start.Column
+                    and then Natural (Loc.Column) <= Sloc_End.Column;
+               end if;
             end In_Next_Entity;
 
             -------------------
@@ -3437,6 +3466,19 @@ package body GNATdoc.Frontend is
                             Sloc_Start.Column
                                > Natural (LL.Get_Location (E).Column)))
                   loop
+                     --  Handle wide character encoding of identifiers. For
+                     --  example:
+                     --    ["03C0"] : constant := Pi;
+
+                     if Prev_Token = Tok_Left_Square_Bracket
+                       and then Token = Tok_String_Literal
+                       and then Sloc_Start.Line = LL.Get_Location (E).Line
+                       and then Sloc_Start.Column =
+                                  Natural (LL.Get_Location (E).Column + 1)
+                     then
+                        exit;
+                     end if;
+
                      --  Disable the check in case of generic packages since
                      --  the compiler may have generated a wrong column
                      --  for its entity (wrong decoration that is fixed
