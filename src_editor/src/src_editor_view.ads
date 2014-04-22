@@ -34,6 +34,7 @@ with Gtkada.Style;
 with Gtkada.Text_View;       use Gtkada.Text_View;
 
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GNATCOLL.VFS;
 with GPS.Editors;            use GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.MDI;
@@ -213,16 +214,17 @@ package Src_Editor_View is
    --  Set the value of the Extend_Selection property. Default value is False,
    --  which means, editor commands don't extend the user's selection.
 
-   procedure Update_Project (Self : access Source_View_Record);
-   --  Update the Project cache
-
 private
 
    type As_Is_Status is (Disabled, Enabled, Sticky_Enabled);
 
    type Source_View_Record is new Gtkada_Text_View_Record with record
-      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
-      --  The project that this file is from
+      Project_Path : GNATCOLL.VFS.Virtual_File;
+      --  The project that this file is from.
+      --  We do not cache the Project_Type itself, since that becomes invalid
+      --  when the project is recomputed, and we would then have to revert to
+      --  the first possible project for that file, which might not be the one
+      --  that was originally intended.
 
       Scroll              : Gtk.Scrolled_Window.Gtk_Scrolled_Window := null;
       --  The Gtk_Scrolled_Window that contains the source view

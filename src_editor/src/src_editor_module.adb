@@ -203,9 +203,6 @@ package body Src_Editor_Module is
       Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
 
-   procedure Project_View_Changed (Kernel : access Kernel_Handle_Record'Class);
-   --  Called when the project view has changed
-
    procedure Add_To_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Add an entry for File to the Recent menu, if needed
@@ -2260,9 +2257,6 @@ package body Src_Editor_Module is
       Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "src_editor.preferences_changed");
-      Add_Hook (Kernel, Project_View_Changed_Hook,
-                Wrapper (Project_View_Changed'Access),
-                Name => "src_editor.project_view_changed");
       Add_Hook (Kernel, File_Edited_Hook,
                 Wrapper (File_Edited_Cb'Access),
                 Name => "src_editor.file_edited");
@@ -2361,33 +2355,6 @@ package body Src_Editor_Module is
       --  Register the message listener for editors
       Src_Editor_Module.Messages.Register (Kernel);
    end Register_Module;
-
-   --------------------------
-   -- Project_View_Changed --
-   --------------------------
-
-   procedure Project_View_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Iter  : Child_Iterator;
-      Child : MDI_Child;
-   begin
-      --  The project view has changed: the "Project" cache in editor views
-      --  may dangle: update this now.
-      Iter := First_Child (Get_MDI (Kernel));
-      loop
-         Child := Get (Iter);
-         exit when Child = null;
-
-         if Get_Widget (Child) /= null
-           and then Get_Widget (Child).all in Source_Editor_Box_Record'Class
-         then
-            Source_Editor_Box (Get_Widget (Child)).Get_View.Update_Project;
-         end if;
-
-         Next (Iter);
-      end loop;
-   end Project_View_Changed;
 
    -------------------------
    -- Preferences_Changed --

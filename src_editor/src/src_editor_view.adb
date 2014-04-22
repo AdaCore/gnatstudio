@@ -1432,9 +1432,11 @@ package body Src_Editor_View is
       View.Area    := Area;
 
       if Project = No_Project then
-         View.Update_Project;
+         --  Pick a project at random
+         View.Project_Path := Get_Registry (Kernel).Tree.Info_Set
+           (Buffer.Get_Filename).First_Element.Project.Project_Path;
       else
-         View.Project := Project;
+         View.Project_Path := Project.Project_Path;
       end if;
 
       Register_View (Buffer, Add => True);
@@ -2727,18 +2729,7 @@ package body Src_Editor_View is
       return GNATCOLL.Projects.Project_Type
    is
    begin
-      return Self.Project;
+      return Self.Kernel.Registry.Tree.Project_From_Path (Self.Project_Path);
    end Get_Project;
-
-   --------------------
-   -- Update_Project --
-   --------------------
-
-   procedure Update_Project (Self : access Source_View_Record) is
-   begin
-      --  Pick a project at random
-      Self.Project := Get_Registry (Self.Kernel).Tree.Info_Set
-        (Source_Buffer (Self.Get_Buffer).Get_Filename).First_Element.Project;
-   end Update_Project;
 
 end Src_Editor_View;
