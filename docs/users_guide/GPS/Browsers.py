@@ -737,9 +737,7 @@ class View(GPS.GUI):
            fill should be unset, but the stroke should be set.
            When using a gradient, it is not resized to the size of the view
            (as opposed to what is done for items for instance), so it should
-           be something like::
-
-                linear 0 0 1000 1000 0 black 1 yellow
+           be something like `linear 0 0 1000 1000 0 black 1 yellow`
 
         :param float size: the size of the grid, when using GRID or DOTS.
         """

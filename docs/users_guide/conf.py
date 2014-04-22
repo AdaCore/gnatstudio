@@ -33,7 +33,7 @@ sys.path.insert(0, ".")   # access to GPS.py
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.pngmath',
               'sphinx.ext.ifconfig',
-              # 'sphinx.ext.inheritance_diagram'
+              'sphinx.ext.inheritance_diagram'
              ]
 
 # Add any paths that contain templates here, relative to this directory.

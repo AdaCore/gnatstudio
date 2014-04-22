@@ -498,7 +498,7 @@ GPS helps you use aggregate projects in the following ways:
   part of multiple projects, you may end up with two editors, one for
   :file:`common.ads` in the context of :file:`projectA.gpr`, and the other
   in the context of :file:`projectB.gpr`. The project matters when doing
-  cross-reference queries, since a :code:`with C;` in :file:`common.ads`
+  cross-reference queries, since a `with C;` in :file:`common.ads`
   could point to different files depending on which project owns that
   editor.
 
