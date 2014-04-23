@@ -18,6 +18,7 @@
 with Cairo.Pattern;             use Cairo, Cairo.Pattern;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Gdk.Event;                 use Gdk.Event;
 with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Types;                 use Gdk.Types;
 with Generic_Views;
@@ -32,11 +33,13 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Widget;                use Gtk.Widget;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
@@ -190,6 +193,24 @@ package body Browsers.Scripts is
       Commands_Category  => "Browsers");
    use Browser_Views;
    subtype Browser_View is Browser_Views.View_Access;
+
+   procedure Browser_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu);
+   --  Returns the context to use when clicking in a browser
+
+   function Call_Method
+     (Self    : not null access Browser_View_Record'Class;
+      Name    : String;
+      Event   : Event_Details_Access;
+      Context : Selection_Context := No_Context)
+      return Boolean;
+   --  Call a specific method of the view (if it exists).
+   --  Returns True if the method could be called successfully
 
    function Points_From_Param
      (Data : Callback_Data'Class;
@@ -495,6 +516,69 @@ package body Browsers.Scripts is
       Canvas_View_Record (Self.all).Draw_Internal (Context, Area);
    end Draw_Internal;
 
+   -----------------
+   -- Call_Method --
+   -----------------
+
+   function Call_Method
+     (Self    : not null access Browser_View_Record'Class;
+      Name    : String;
+      Event   : Event_Details_Access;
+      Context : Selection_Context := No_Context)
+      return Boolean
+   is
+      Inst    : Class_Instance := No_Class_Instance;
+      Scripts : constant Scripting_Language_Array :=
+        Self.Kernel.Scripts.Get_Scripting_Languages;
+      Point   : Item_Point;
+      Subp   : Subprogram_Type;
+      Dummy  : Boolean;
+      Count  : Integer;
+      First  : Integer;
+   begin
+      for S in Scripts'Range loop
+         Inst := Get_Instance (Scripts (S), Self);
+         exit when Inst /= No_Class_Instance;
+      end loop;
+
+      if Inst /= No_Class_Instance then
+         Subp := Get_Method (Inst, Name);
+         if Subp /= null then
+            if Context = No_Context then
+               Count := 3;
+               First := 1;
+            else
+               Count := 4;
+               First := 2;
+            end if;
+
+            declare
+               Args : Callback_Data'Class := Subp.Get_Script.Create (Count);
+            begin
+               Point := Event.Toplevel_Item.Model_To_Item (Event.M_Point);
+
+               if Count = 4 then
+                  Set_Nth_Arg
+                    (Args, 1, Create_Context (Subp.Get_Script, Context));
+               end if;
+
+               Set_Nth_Arg
+                 (Args, First,
+                  Get_Instance (Python_Item_Access (Event.Toplevel_Item),
+                    Subp.Get_Script));
+               Set_Nth_Arg (Args, First + 1, Float (Point.X));
+               Set_Nth_Arg (Args, First + 2, Float (Point.Y));
+
+               Dummy := Subp.Execute (Args);
+               Free (Args);
+               Free (Subp);
+               return True;
+            end;
+         end if;
+      end if;
+      return False;
+   end Call_Method;
+
    -------------------
    -- On_Item_Event --
    -------------------
@@ -505,58 +589,15 @@ package body Browsers.Scripts is
       return Boolean
    is
       Self   : constant Browser_View := Browser_View (View);
-
-      function Call_Method (Name : String) return Boolean;
-      --  Call a specific method of the view (if it exists).
-      --  Returns True if the method could be called successfully
-
-      function Call_Method (Name : String) return Boolean is
-         Inst    : Class_Instance := No_Class_Instance;
-         Scripts : constant Scripting_Language_Array :=
-           Self.Kernel.Scripts.Get_Scripting_Languages;
-         Point   : Item_Point;
-         Subp   : Subprogram_Type;
-         Dummy  : Boolean;
-      begin
-         for S in Scripts'Range loop
-            Inst := Get_Instance (Scripts (S), View);
-            exit when Inst /= No_Class_Instance;
-         end loop;
-
-         if Inst /= No_Class_Instance then
-            Subp := Get_Method (Inst, Name);
-            if Subp /= null then
-               declare
-                  Args : Callback_Data'Class := Subp.Get_Script.Create (4);
-               begin
-                  Point := Event.Toplevel_Item.Model_To_Item (Event.M_Point);
-
-                  Set_Nth_Arg
-                    (Args, 1,
-                     Get_Instance (Python_Item_Access (Event.Toplevel_Item),
-                       Subp.Get_Script));
-                  Set_Nth_Arg (Args, 2, Integer (Event.Button));
-                  Set_Nth_Arg (Args, 3, Float (Point.X));
-                  Set_Nth_Arg (Args, 4, Float (Point.Y));
-
-                  Dummy := Subp.Execute (Args);
-                  Free (Args);
-                  Free (Subp);
-                  return True;
-               end;
-            end if;
-         end if;
-         return False;
-      end Call_Method;
-
    begin
-      if Event.Toplevel_Item /= null
+      if Event.Button = 1
+        and then Event.Toplevel_Item /= null
         and then Event.Toplevel_Item.all in Python_Item'Class
       then
          if Event.Event_Type = Double_Click then
-            return Call_Method ("on_item_double_clicked");
+            return Call_Method (Self, "on_item_double_clicked", Event);
          elsif Event.Event_Type = Button_Release then
-            return Call_Method ("on_item_clicked");
+            return Call_Method (Self, "on_item_clicked", Event);
          end if;
       end if;
       return False;
@@ -587,8 +628,37 @@ package body Browsers.Scripts is
       Self.View.On_Item_Event (On_Item_Event_Zoom'Access);
       Self.View.On_Item_Event (On_Item_Event'Access, Self);
 
+      Register_Contextual_Menu
+        (Kernel          => Self.Kernel,
+         Event_On_Widget => Self.View,
+         Object          => Self,
+         ID              => Browser_Views.Get_Module,
+         Context_Func    => Browser_Context_Factory'Access);
+
       return Gtk_Widget (Self.View);
    end Initialize;
+
+   -----------------------------
+   -- Browser_Context_Factory --
+   -----------------------------
+
+   procedure Browser_Context_Factory
+     (Context      : in out Selection_Context;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu)
+   is
+      pragma Unreferenced (Menu, Event_Widget, Kernel);
+      View    : constant Browser_View := Browser_View (Object);
+      Details : aliased Canvas_Event_Details;
+      Dummy   : Boolean;
+   begin
+      View.View.Set_Details (Details, Event.Button);
+      Dummy := Call_Method
+        (View, "on_create_context", Details'Unchecked_Access, Context);
+   end Browser_Context_Factory;
 
    ------------------
    -- View_Handler --

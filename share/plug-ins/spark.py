@@ -919,12 +919,20 @@ xml_spark = """<?xml version="1.0"?>
   </action>
 
   <action name="Launch SPARKSimp" category="Spark" output="none">
+     <filter_and>
+        <filter language="Ada" />
+        <filter id="Source editor" />
+     </filter_and>
     <shell lang="python">""" \
     + spark_module \
     + """.sparksimp_project ()</shell>
   </action>
 
   <action name="Launch POGS" category="Spark" output="none">
+     <filter_and>
+        <filter language="Ada" />
+        <filter id="Source editor" />
+     </filter_and>
     <shell lang="python">""" \
     + spark_module \
     + """.show_pogs_file()</shell>

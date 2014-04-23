@@ -280,14 +280,17 @@ class Module(object):
             self.__disconnect_hook_with_no_hook_arg(h)
         self.teardown()
 
+    def name(self):
+        """
+        Return the name of the module
+        """
+        return "%s.%s" % (self.__class__.__module__, self.__class__.__name__)
+
     def _save_desktop(self, child):
-        return ("%s.%s" % (self.__class__.__module__,
-                           self.__class__.__name__),
-                self.save_desktop(child) or "")
+        return (self.name(), self.save_desktop(child) or "")
 
     def _load_desktop(self, name, data):
-        if name == "%s.%s" % (self.__class__.__module__,
-                              self.__class__.__name__):
+        if name == self.name():
             child = self.get_child(allow_create=True)
             c = self.load_desktop(child, data)
             return c or child

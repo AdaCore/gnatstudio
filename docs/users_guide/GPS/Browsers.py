@@ -696,7 +696,7 @@ class View(GPS.GUI):
 
         class My_View(GPS.Browsers.View):
 
-            def on_item_double_clicked(self, item, button, x, y, *args):
+            def on_item_double_clicked(self, item, x, y, *args):
                 '''
                 Called when the user double clicks on a specific item.
                 It is recommended to add "*args" in the list of parameters,
@@ -707,23 +707,31 @@ class View(GPS.GUI):
                    :func:`GPS.Browsers.Diagram.load_json`), it contains
                    additional fields like `data` and `id` that were extracted
                    from JSON.
-                :param int button: the button used. This is set to 1 for
-                   the left mouse button (in which case this function is
-                   called when the mouse button is released, i.e. after the
-                   item has been selected), or to 3 for the right mouse button,
-                   in which case this function is called when the mouse button
-                   is pressed, so that you can display a contextual menu.
                 :param float x: the coordinates of the mouse within the item.
                 :param float y: the coordinates of the mouse within the item.
                 '''
 
-            def on_item_clicked(self, item, button, x, y, *args):
+            def on_item_clicked(self, item, x, y, *args):
                 '''
                 Called when the user releases the mouse button on a specific
                 item.
                 This method is called twice for a double-click (once per
                 actual click).
                 The parameters are the same as above.
+                '''
+
+            def on_create_context(self, context, item, x, y, *args):
+                '''
+                Called when the user has right-clicked on an item.
+                This function should prepare the context for contextual menus,
+                although it does not directly add contextual menu entries.
+                Instead, declare those menus as usual with
+                :class:`GPS.Contextual` or :func:`gps_utils.make_interactive`.
+
+                :param GPS.Context context: the context.
+                   The function should add custom fields to this context.
+                   These fields can then be tested for the filter or the
+                   action associated with a :class:`GPS.Contextual`.
                 '''
 
     """

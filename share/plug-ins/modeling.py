@@ -18,6 +18,7 @@ import GPS.Browsers
 import modules
 import os.path
 import os_utils
+import gps_utils
 
 # Constants
 
@@ -144,13 +145,16 @@ class GMC_Canvas_View(GPS.Browsers.View):
             GPS.Browsers.Style(stroke="rgba(200,200,200,0.8)"))
         self.scale_to_fit(max_scale=1.0)
 
-    def on_item_clicked(self, item, button, x, y, *args):
-        GPS.Console().write("clicked on %s with %s, at %s,%s\n" %
-                            (item, button, x, y))
+    def on_item_clicked(self, item, x, y, *args):
+        GPS.Console().write("clicked on %s, at %s,%s\n" % (item, x, y))
 
-    def on_item_double_clicked(self, item, button, x, y, *args):
-        GPS.Console().write("double_clicked on %s with %s, at %s,%s\n" %
-                            (item, button, x, y))
+    def on_item_double_clicked(self, item, x, y, *args):
+        GPS.Console().write("double_clicked on %s, at %s,%s\n" % (item, x, y))
+
+    def on_create_context(self, context, item, x, y, *args):
+        GPS.Console().write("create_context on %s, at %s,%s\n" % (item, x, y))
+        context._simulink_item = item
+
 
 class GMC_Module(modules.Module):
 
@@ -169,11 +173,11 @@ class GMC_Module(modules.Module):
         # ??? Should save position and scaling factor too
         return child.get_child().file.name()
 
-    # Setup the module only when the GMC executable is available on the path.
-    # This action registeres the Matlab and Simulink languages along with the
-    # various project attributes.
-
     def setup(self):
+        """
+        Setup the module only when the GMC executable is available on the path.
+        """
+
         if gmc_exec:
             # ??? Multiple calls to parse_xml are less efficient, would be
             # better to merge the XML strings into one.
@@ -181,6 +185,27 @@ class GMC_Module(modules.Module):
             GPS.parse_xml(project_switches)
             GPS.Hook('open_file_action_hook').add(
                 self.__on_open_file_action_hook, last=False)
+
+            gps_utils.make_interactive(
+                callback=self.show_source_for_item,
+                filter=self.contextual_filter,
+                name='simulink show source for item',
+                contextual='Simulink/Show source')
+
+    def show_source_for_item(self):
+        """
+        A callback for a contextual menu
+        """
+        GPS.Console().write('Showing source code is not implemented yet\n')
+
+    def contextual_filter(self, context):
+        """
+        A filter that can be used to decide whether to display a contextual
+        menu entry. It only does so when the contextual menu is for a simulink
+        browser.
+        """
+        return context._simulink_item is not None
+
 
 # Need to load the new language definition right away, since GPS loads
 # the project before setting up the module, so the extensions would not
