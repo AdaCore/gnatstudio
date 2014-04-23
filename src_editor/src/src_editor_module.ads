@@ -132,6 +132,9 @@ package Src_Editor_Module is
    --  Change the queue to which undo/redo apply.
    --  Set Queue to Null_Command_Queue to unset
 
+   function Get_Undo_Redo_Queue return Standard.Commands.Command_Queue;
+   --  Return the current Undo/Redo queue
+
    ---------------------
    -- Automatic saves --
    ---------------------

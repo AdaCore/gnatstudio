@@ -1710,7 +1710,14 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
-      Remove_Controls (Buffer);
+      --  Remove the undo redo queue if it is indeed the currently registered
+      --  queue. It may happen that the focus is given to another editor
+      --  before closing this one, in which case we do not want to reset
+      --  the undo/redo here.
+
+      if Get_Undo_Redo_Queue = Buffer.Queue then
+         Remove_Controls (Buffer);
+      end if;
 
       Free_Queue (Buffer.Queue);
       Free_File_Information (Buffer);
