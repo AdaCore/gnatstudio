@@ -582,7 +582,7 @@ class Highlighter(object):
                     end_it.set_offset(end)
                     gtk_ed.apply_tag(tag, start_it, end_it)
 
-        print time() - t
+        # print time() - t
 
     def gtk_highlight(self, gtk_ed):
         self.highlight_gen(gtk_ed, -1)
