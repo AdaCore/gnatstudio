@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N423-019 GPS: dropping files does not work on a read-only editor
+
+  Problem:    When drag-and-dropping a file from the window manager on top
+              of a source editor, the file does not open in GPS if the source
+              editor was read-only.
+
+  Status:     This was fixed in 6.1 on 2014-04-23
+
+  Workaround: Open the file via the Open File dialog.
+
 KP-60-N423-018 GPS: Undo/Redo not functioning
 
   Problem:    In some circumstances, right after closing a source editor, the
