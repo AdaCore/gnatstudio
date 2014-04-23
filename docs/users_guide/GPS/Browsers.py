@@ -789,3 +789,12 @@ class View(GPS.GUI):
 
         :param float size: the size of the grid, when using GRID or DOTS.
         """
+
+    def set_read_only(self, readonly=True):
+        """
+        A read-only view does not allow users to move items.
+        It is still possible to click on items though, or zoom and scroll the
+        view.
+
+        :param bool readonly: whether the view is read-only.
+        """

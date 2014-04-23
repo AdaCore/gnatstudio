@@ -174,7 +174,8 @@ package body Browsers.Scripts is
       Area    : Model_Rectangle);
 
    type Browser_View_Record is new Generic_Views.View_Record with record
-      View : GPS_Canvas_View;
+      View      : GPS_Canvas_View;
+      Read_Only : Boolean := True;
    end record;
 
    function Initialize
@@ -590,6 +591,12 @@ package body Browsers.Scripts is
    is
       Self   : constant Browser_View := Browser_View (View);
    begin
+      if not Self.Read_Only
+        and then On_Item_Event_Move_Item (View, Event)
+      then
+         return True;
+      end if;
+
       if Event.Button = 1
         and then Event.Toplevel_Item /= null
         and then Event.Toplevel_Item.all in Python_Item'Class
@@ -623,7 +630,6 @@ package body Browsers.Scripts is
       Gtkada.Canvas_View.Initialize (Self.View);
       Scrolled.Add (Self.View);
 
-      --  Self.View.On_Item_Event (On_Item_Event_Move_Item'Access);
       Self.View.On_Item_Event (On_Item_Event_Scroll_Background'Access);
       Self.View.On_Item_Event (On_Item_Event_Zoom'Access);
       Self.View.On_Item_Event (On_Item_Event'Access, Self);
@@ -703,6 +709,11 @@ package body Browsers.Scripts is
          View := Browser_View (GObject'(Get_Data (Inst)));
          View.View.Scale_To_Fit
            (Max_Scale => Gdouble (Nth_Arg (Data, 2, 4.0)));
+
+      elsif Command = "set_read_only" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+         View.Read_Only := Nth_Arg (Data, 2, True);
       end if;
    end View_Handler;
 
@@ -1264,6 +1275,12 @@ package body Browsers.Scripts is
          "scale_to_fit",
          Params  => (1 => Param ("max_scale", Optional => True)),
          Class   => Module.View_Class,
+         Handler => View_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "set_read_only",
+         Class   => Module.View_Class,
+         Params  => (1 => Param ("readonly", Optional => True)),
          Handler => View_Handler'Access);
 
       Register_Command

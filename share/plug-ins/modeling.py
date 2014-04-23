@@ -140,6 +140,7 @@ class GMC_Canvas_View(GPS.Browsers.View):
             diagrams[0],
             title=os.path.basename(file.name()),
             save_desktop=module._save_desktop)
+        self.set_read_only(True)
         self.set_background(
             GPS.Browsers.View.Background.GRID,
             GPS.Browsers.Style(stroke="rgba(200,200,200,0.8)"))
