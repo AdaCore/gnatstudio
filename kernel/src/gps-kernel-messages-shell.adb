@@ -89,6 +89,21 @@ package body GPS.Kernel.Messages.Shell is
    --  Handler for the simple Message commands which simply access the fields
    --  of a message or run parameterless commands
 
+   -----------------------------
+   -- Create_Message_Instance --
+   -----------------------------
+
+   function Create_Message_Instance
+     (Script  : Scripting_Language;
+      Message : not null Message_Access) return Class_Instance is
+   begin
+      return Result : constant Class_Instance :=
+        New_Instance (Script, Message_Class)
+      do
+         Set_Data (Result, Message);
+      end return;
+   end Create_Message_Instance;
+
    -------------
    -- Execute --
    -------------
@@ -397,10 +412,10 @@ package body GPS.Kernel.Messages.Shell is
                  Get_Messages (Container, C, F);
             begin
                for J in Messages'Range loop
-                  Message_Inst := New_Instance
-                    (Get_Script (Data), Message_Class);
-                  Set_Data (Message_Inst, Messages (J));
-                  Set_Return_Value (Data, Message_Inst);
+                  Set_Return_Value
+                    (Data,
+                     Create_Message_Instance
+                       (Get_Script (Data), Messages (J)));
                end loop;
             end Add_Messages_For_Category_File;
 

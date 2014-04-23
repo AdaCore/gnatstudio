@@ -248,6 +248,11 @@ package GPS.Kernel.Scripts is
       return Class_Type;
    --  Return a class for an Entity_Selection_Context
 
+   function Get_Message_Context_Class
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return a class for an Message_Selection_Context
+
 private
    No_File_Location : constant File_Location_Info :=
      File_Location_Info (GPS.Scripts.File_Locations.No_File_Location);

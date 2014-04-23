@@ -51,6 +51,7 @@ with GPS.Kernel.Interactive;  use GPS.Kernel.Interactive;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;       use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages.Shell;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;
@@ -76,8 +77,9 @@ package body GPS.Kernel.Scripts is
    Ref_Me : constant Trace_Handle :=
               Create ("Scripts.Ref", GNATCOLL.Traces.Off);
 
-   Context_Class_Name       : constant String := "Context";
-   Hook_Class_Name          : constant String := "Hook";
+   Context_Class_Name         : constant String := "Context";
+   Hook_Class_Name            : constant String := "Hook";
+   Message_Context_Class_Name : constant String := "MessageContext";
 
    function To_Address is new Ada.Unchecked_Conversion
      (Selection_Context_Data, System.Address);
@@ -151,6 +153,10 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all entity_context-related commands
 
+   procedure Message_Context_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for all message_context-related commands
+
    procedure GUI_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all GUI class commands
@@ -198,6 +204,8 @@ package body GPS.Kernel.Scripts is
    function Get_Context_Class
      (Repo : Scripts_Repository) return Class_Type;
    function Get_Entity_Context_Class
+     (Repo : Scripts_Repository) return Class_Type;
+   function Get_Message_Context_Class
      (Repo : Scripts_Repository) return Class_Type;
    --  Create or return existing classes
 
@@ -607,6 +615,24 @@ package body GPS.Kernel.Scripts is
                (Entity, Approximate_Search_Fallback => Approx_Search)));
       end if;
    end Entity_Context_Command_Handler;
+
+   --------------------------------------
+   --  Message_Context_Command_Handler --
+   --------------------------------------
+
+   procedure Message_Context_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Context : constant Selection_Context := Get_Data (Data, 1);
+
+   begin
+      if Command = "message" then
+         Set_Return_Value
+           (Data,
+            GPS.Kernel.Messages.Shell.Create_Message_Instance
+              (Get_Script (Data), Message_Information (Context)));
+      end if;
+   end Message_Context_Command_Handler;
 
    ---------------------
    -- Context_Getters --
@@ -1530,9 +1556,18 @@ package body GPS.Kernel.Scripts is
          Class        => Get_Entity_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
-        (Kernel, "entity", 0, 1,
+        (Kernel, "entity",
          Class        => Get_Entity_Context_Class (Kernel),
          Handler      => Entity_Context_Command_Handler'Access);
+
+      Register_Command
+        (Kernel, Constructor_Method,
+         Class   => Get_Message_Context_Class (Kernel),
+         Handler => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel, "message",
+         Class   => Get_Message_Context_Class (Kernel),
+         Handler => Message_Context_Command_Handler'Access);
 
       Register_Command
         (Kernel, "current_context",
@@ -1709,6 +1744,12 @@ package body GPS.Kernel.Scripts is
             Get_Entity_Context_Class (Get_Repository (Script)),
             Context);
 
+      elsif Has_Message_Information (Context) then
+         return Get_Or_Create_Context
+           (Script,
+            Get_Message_Context_Class (Get_Repository (Script)),
+            Context);
+
       elsif Has_File_Information (Context)
         or else Has_Project_Information (Context)
         or else Has_Directory_Information (Context)
@@ -1791,6 +1832,26 @@ package body GPS.Kernel.Scripts is
       return New_Class
         (Repo, "EntityContext", Base => Get_File_Context_Class (Repo));
    end Get_Entity_Context_Class;
+
+   -------------------------------
+   -- Get_Message_Context_Class --
+   -------------------------------
+
+   function Get_Message_Context_Class
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      return Get_Message_Context_Class (Kernel.Scripts);
+   end Get_Message_Context_Class;
+
+   function Get_Message_Context_Class
+     (Repo : Scripts_Repository) return Class_Type is
+   begin
+      return New_Class
+        (Repo,
+         Message_Context_Class_Name,
+         Base => Get_File_Context_Class (Repo));
+   end Get_Message_Context_Class;
 
    --------------
    -- Set_Data --
