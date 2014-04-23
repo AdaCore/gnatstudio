@@ -346,9 +346,14 @@ package body Src_Editor_Module is
    -------------------------
 
    function Get_Undo_Redo_Queue return Standard.Commands.Command_Queue is
-      UR : constant Undo_Redo :=
-        Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
+      UR : Undo_Redo;
    begin
+      if Src_Editor_Module_Id = null then
+         return Null_Command_Queue;
+      end if;
+
+      UR := Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo;
+
       if UR = null then
          return Null_Command_Queue;
       end if;
