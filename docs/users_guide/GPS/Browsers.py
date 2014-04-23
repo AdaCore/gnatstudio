@@ -690,22 +690,62 @@ class View(GPS.GUI):
     """
     A view shows a part of a diagram and its objects.
     Multiple views can be associated with the same diagram.
+
+    Although this class can be instantiated as is, it is most useful, in
+    general, to extend it, in particular by adding a method on_item_clicked::
+
+        class My_View(GPS.Browsers.View):
+
+            def on_item_double_clicked(self, item, button, x, y, *args):
+                '''
+                Called when the user double clicks on a specific item.
+                It is recommended to add "*args" in the list of parameters,
+                since new parameters might be added in the future.
+
+                :param GPS.Browsers.Item item: the item clicked on.
+                   When the item was created from a JSON file (see
+                   :func:`GPS.Browsers.Diagram.load_json`), it contains
+                   additional fields like `data` and `id` that were extracted
+                   from JSON.
+                :param int button: the button used. This is set to 1 for
+                   the left mouse button (in which case this function is
+                   called when the mouse button is released, i.e. after the
+                   item has been selected), or to 3 for the right mouse button,
+                   in which case this function is called when the mouse button
+                   is pressed, so that you can display a contextual menu.
+                :param float x: the coordinates of the mouse within the item.
+                :param float y: the coordinates of the mouse within the item.
+                '''
+
+            def on_item_clicked(self, item, button, x, y, *args):
+                '''
+                Called when the user releases the mouse button on a specific
+                item.
+                This method is called twice for a double-click (once per
+                actual click).
+                The parameters are the same as above.
+                '''
+
     """
 
     Background = enum('View.Background', NONE=0, COLOR=1, GRID=2, LINES=3)
 
     def __init__(self):
         """
-        Always raise an exception, use create() to create a new
-        diagram instead.
+        Creates the python class instance, but does not associate it with any
+        window yet.
+        Before any of the other functions can be called, you first need to
+        call self.create() to create the actual window. This creation is done
+        in two steps, so that you can create your own class extending view.
+        This is in particular needed to provide support for user interaction.
         """
 
-    @staticmethod
-    def create(diagram, title, save_desktop=None):
+    def create(self, diagram, title, save_desktop=None):
         """
         Creates a new view that shows the given diagram.
         This view is automatically made visible in GPS.
 
+        :param GPS.Browsers.Diagram diagram: the diagram to display.
         :param str title: the title used for the notebook tab.
         :param func(child) save_desktop: An optional callback when GPS is
            saving the desktop. It is passed the MDIWindow in which the view

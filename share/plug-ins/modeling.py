@@ -26,17 +26,13 @@ gmc_exec = os_utils.locate_exec_on_path(gmc_name)
 
 # Language definitions
 
-matlab_def = """<?xml version='1.0' ?>
+language_def = r"""<?xml version='1.0' ?>
   <GPS>
     <Language>
       <Name>Matlab</Name>
       <Body_Suffix>.m</Body_Suffix>
       <Obj_Suffix>-</Obj_Suffix>
     </Language>
-  </GPS>"""
-
-simulink_def = """<?xml version='1.0' ?>
-  <GPS>
     <Language>
       <Name>Simulink</Name>
       <Body_Suffix>.mdl</Body_Suffix>
@@ -130,40 +126,48 @@ project_switches = """<?xml version='1.0' ?>
 """
 
 
+class GMC_Canvas_View(GPS.Browsers.View):
+    def __init__(self, file, module):
+        """
+        A browser that shows the contents of a simulink file.
+        :param GPS.File file: the file associated with the browser.
+        :param modules.Module module: the module
+        """
+        self.file = file
+        diagrams = GPS.Browsers.Diagram.load_json(file.name())
+        self.create(
+            diagrams[0],
+            title=os.path.basename(file.name()),
+            save_desktop=module._save_desktop)
+        self.set_background(
+            GPS.Browsers.View.Background.GRID,
+            GPS.Browsers.Style(stroke="rgba(200,200,200,0.8)"))
+        self.scale_to_fit(max_scale=1.0)
+
+    def on_item_clicked(self, item, button, x, y, *args):
+        GPS.Console().write("clicked on %s with %s, at %s,%s\n" %
+                            (item, button, x, y))
+
+    def on_item_double_clicked(self, item, button, x, y, *args):
+        GPS.Console().write("double_clicked on %s with %s, at %s,%s\n" %
+                            (item, button, x, y))
+
 class GMC_Module(modules.Module):
 
     def __on_open_file_action_hook(self, hook, file, *args):
         """Handles "open file" events"""
         if file.language() == 'simulink':
-            v = self.open_file(file)
+            v = GMC_Canvas_View(file=file, module=self)
             return True
         return False
 
     def load_desktop(self, view, data):
-        v = self.open_file(GPS.File(data))
+        v = GMC_Canvas_View(file=GPS.File(data), module=self)
         return GPS.MDI.get_by_child(v)
 
     def save_desktop(self, child):
         # ??? Should save position and scaling factor too
         return child.get_child().file.name()
-
-    def open_file(self, file):
-        """
-        Open a .mdl file as a browser, and puts it in the MDI.
-        :param GPS.File file: the file to open
-        :return: The created GPS.Browsers.View
-        """
-        diagrams = GPS.Browsers.Diagram.load_json(file.name())
-        v = GPS.Browsers.View.create(
-            diagrams[0],
-            title=os.path.basename(file.name()),
-            save_desktop=self._save_desktop)
-        v.file = file
-        v.set_background(
-            GPS.Browsers.View.Background.GRID,
-            GPS.Browsers.Style(stroke="rgba(200,200,200,0.8)"))
-        v.scale_to_fit(max_scale=1.0)
-        return v
 
     # Setup the module only when the GMC executable is available on the path.
     # This action registeres the Matlab and Simulink languages along with the
@@ -173,10 +177,13 @@ class GMC_Module(modules.Module):
         if gmc_exec:
             # ??? Multiple calls to parse_xml are less efficient, would be
             # better to merge the XML strings into one.
-            GPS.parse_xml(matlab_def)
-            GPS.parse_xml(simulink_def)
             GPS.parse_xml(project_attributes)
             GPS.parse_xml(project_switches)
-
             GPS.Hook('open_file_action_hook').add(
                 self.__on_open_file_action_hook, last=False)
+
+# Need to load the new language definition right away, since GPS loads
+# the project before setting up the module, so the extensions would not
+# be known otherwise
+
+GPS.parse_xml(language_def)

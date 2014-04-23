@@ -16,11 +16,19 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;
+with GNATCOLL.Scripts;
 
 package Browsers.Scripts is
 
    procedure Register_Module
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the script commands for custom browsers
+
+private
+   type Python_Item is interface;
+   type Python_Item_Access is access all Python_Item'Class;
+   function Inst_List
+     (Self : not null access Python_Item)
+      return GNATCOLL.Scripts.Instance_List_Access is abstract;
 
 end Browsers.Scripts;

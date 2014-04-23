@@ -19,6 +19,7 @@ with Cairo.Pattern;             use Cairo, Cairo.Pattern;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Gdk.RGBA;                  use Gdk.RGBA;
+with Gdk.Types;                 use Gdk.Types;
 with Generic_Views;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
@@ -131,12 +132,6 @@ package body Browsers.Scripts is
       --  canvas model ?
    end record;
 
-   procedure Set_Item
-     (Inst : Class_Instance;
-      Item : access Abstract_Item_Record'Class);
-   function Get_Item (Inst : Class_Instance) return Abstract_Item;
-   --  Set or get the style associated with an instance of GPS.Browsers.Item
-
    procedure Style_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure Rect_Item_Handler
@@ -201,6 +196,167 @@ package body Browsers.Scripts is
       N    : Positive) return Item_Point_Array;
    --  Extract a list of point from a parameter to a python function
 
+   function On_Item_Event
+     (View  : not null access GObject_Record'Class;
+      Event : Event_Details_Access)
+      return Boolean;
+   --  Called when an unhandled event occurs in the view
+
+   function On_Item_Event_Zoom is new On_Item_Event_Zoom_Generic
+     (Modifier => Mod1_Mask);
+
+   function Get_Item (Inst : Class_Instance) return Abstract_Item;
+   --  Set or get the style associated with an instance of GPS.Browsers.Item
+
+   procedure Set_Instance
+     (Self : not null access Python_Item'Class; Inst : Class_Instance);
+   function Get_Instance
+     (Item   : not null access Python_Item'Class;
+      Script : not null access Scripting_Language_Record'Class)
+      return Class_Instance;
+
+   procedure Destroy_Instances (Self : not null access Python_Item'Class);
+
+   type PRect_Record is new Rect_Item_Record and Python_Item with record
+      Inst : aliased Instance_List;
+   end record;
+   overriding function Inst_List
+     (Self : not null access PRect_Record)
+      return Instance_List_Access is (Self.Inst'Access);
+   overriding procedure Destroy (Self : not null access PRect_Record);
+
+   type PEllipse_Record is new Ellipse_Item_Record and Python_Item with record
+      Inst : aliased Instance_List;
+   end record;
+   overriding function Inst_List
+     (Self : not null access PEllipse_Record)
+      return Instance_List_Access is (Self.Inst'Access);
+   overriding procedure Destroy (Self : not null access PEllipse_Record);
+
+   type PText_Record is new Text_Item_Record and Python_Item with record
+      Inst : aliased Instance_List;
+   end record;
+   overriding function Inst_List
+     (Self : not null access PText_Record)
+      return Instance_List_Access is (Self.Inst'Access);
+   overriding procedure Destroy (Self : not null access PText_Record);
+
+   type PHr_Record is new Hr_Item_Record and Python_Item with record
+      Inst : aliased Instance_List;
+   end record;
+   overriding function Inst_List
+     (Self : not null access PHr_Record)
+      return Instance_List_Access is (Self.Inst'Access);
+   overriding procedure Destroy (Self : not null access PHr_Record);
+
+   type Pline_Record is new Polyline_Item_Record and Python_Item with record
+      Inst : aliased Instance_List;
+   end record;
+   overriding function Inst_List
+     (Self : not null access Pline_Record)
+      return Instance_List_Access is (Self.Inst'Access);
+   overriding procedure Destroy (Self : not null access Pline_Record);
+
+   type Plink_Record is new Canvas_Link_Record and Python_Item with record
+      Inst : aliased Instance_List;
+   end record;
+   overriding function Inst_List
+     (Self : not null access Plink_Record)
+      return Instance_List_Access is (Self.Inst'Access);
+   overriding procedure Destroy (Self : not null access Plink_Record);
+
+   ------------------
+   -- Set_Instance --
+   ------------------
+
+   procedure Set_Instance
+     (Self : not null access Python_Item'Class; Inst : Class_Instance)
+   is
+      List : constant Instance_List_Access := Self.Inst_List;
+   begin
+      --  The python instance outlives its Ada counterpart, so that we can
+      --  always get access to the python custom data in callbacks.
+      Set_Data (Inst, "Browsers.Item",
+                Item_Properties_Record'(Item => Abstract_Item (Self)));
+      Set (List.all, Get_Script (Inst), Inst);
+   end Set_Instance;
+
+   -----------------------
+   -- Destroy_Instances --
+   -----------------------
+
+   procedure Destroy_Instances (Self : not null access Python_Item'Class) is
+      List : Instance_List_Access := Self.Inst_List;
+      Arr  : constant Instance_Array := Get_Instances (List.all);
+   begin
+      for Inst in Arr'Range loop
+         Set_Data (Arr (Inst), "Browsers.Item",
+                   Item_Properties_Record'(Item => null));
+      end loop;
+
+      Free (List);
+   end Destroy_Instances;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : not null access PRect_Record) is
+   begin
+      Destroy_Instances (Self);
+      Rect_Item_Record (Self.all).Destroy;  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : not null access PEllipse_Record) is
+   begin
+      Destroy_Instances (Self);
+      Ellipse_Item_Record (Self.all).Destroy;  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : not null access PText_Record) is
+   begin
+      Destroy_Instances (Self);
+      Text_Item_Record (Self.all).Destroy;  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : not null access PHr_Record) is
+   begin
+      Destroy_Instances (Self);
+      Hr_Item_Record (Self.all).Destroy;  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : not null access Pline_Record) is
+   begin
+      Destroy_Instances (Self);
+      Polyline_Item_Record (Self.all).Destroy;  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : not null access Plink_Record) is
+   begin
+      Destroy_Instances (Self);
+      Canvas_Link_Record (Self.all).Destroy;  --  inherited
+   end Destroy;
+
    ---------------
    -- Set_Style --
    ---------------
@@ -227,19 +383,6 @@ package body Browsers.Scripts is
    end Get_Style;
 
    --------------
-   -- Set_Item --
-   --------------
-
-   procedure Set_Item
-     (Inst : Class_Instance;
-      Item : access Abstract_Item_Record'Class)
-   is
-   begin
-      Set_Data (Inst, "Browsers.Item",
-                Item_Properties_Record'(Item => Abstract_Item (Item)));
-   end Set_Item;
-
-   --------------
    -- Get_Item --
    --------------
 
@@ -252,6 +395,23 @@ package body Browsers.Scripts is
          return Item_Properties_Record (Data.all).Item;
       end if;
    end Get_Item;
+
+   ------------------
+   -- Get_Instance --
+   ------------------
+
+   function Get_Instance
+     (Item   : not null access Python_Item'Class;
+      Script : not null access Scripting_Language_Record'Class)
+      return Class_Instance
+   is
+   begin
+      if Item = null then
+         return No_Class_Instance;
+      else
+         return Get (Item.Inst_List.all, Script);
+      end if;
+   end Get_Instance;
 
    ---------------
    -- Set_Model --
@@ -335,6 +495,73 @@ package body Browsers.Scripts is
       Canvas_View_Record (Self.all).Draw_Internal (Context, Area);
    end Draw_Internal;
 
+   -------------------
+   -- On_Item_Event --
+   -------------------
+
+   function On_Item_Event
+     (View  : not null access GObject_Record'Class;
+      Event : Event_Details_Access)
+      return Boolean
+   is
+      Self   : constant Browser_View := Browser_View (View);
+
+      function Call_Method (Name : String) return Boolean;
+      --  Call a specific method of the view (if it exists).
+      --  Returns True if the method could be called successfully
+
+      function Call_Method (Name : String) return Boolean is
+         Inst    : Class_Instance := No_Class_Instance;
+         Scripts : constant Scripting_Language_Array :=
+           Self.Kernel.Scripts.Get_Scripting_Languages;
+         Point   : Item_Point;
+         Subp   : Subprogram_Type;
+         Dummy  : Boolean;
+      begin
+         for S in Scripts'Range loop
+            Inst := Get_Instance (Scripts (S), View);
+            exit when Inst /= No_Class_Instance;
+         end loop;
+
+         if Inst /= No_Class_Instance then
+            Subp := Get_Method (Inst, Name);
+            if Subp /= null then
+               declare
+                  Args : Callback_Data'Class := Subp.Get_Script.Create (4);
+               begin
+                  Point := Event.Toplevel_Item.Model_To_Item (Event.M_Point);
+
+                  Set_Nth_Arg
+                    (Args, 1,
+                     Get_Instance (Python_Item_Access (Event.Toplevel_Item),
+                       Subp.Get_Script));
+                  Set_Nth_Arg (Args, 2, Integer (Event.Button));
+                  Set_Nth_Arg (Args, 3, Float (Point.X));
+                  Set_Nth_Arg (Args, 4, Float (Point.Y));
+
+                  Dummy := Subp.Execute (Args);
+                  Free (Args);
+                  Free (Subp);
+                  return True;
+               end;
+            end if;
+         end if;
+         return False;
+      end Call_Method;
+
+   begin
+      if Event.Toplevel_Item /= null
+        and then Event.Toplevel_Item.all in Python_Item'Class
+      then
+         if Event.Event_Type = Double_Click then
+            return Call_Method ("on_item_double_clicked");
+         elsif Event.Event_Type = Button_Release then
+            return Call_Method ("on_item_clicked");
+         end if;
+      end if;
+      return False;
+   end On_Item_Event;
+
    ----------------
    -- Initialize --
    ----------------
@@ -355,6 +582,11 @@ package body Browsers.Scripts is
       Gtkada.Canvas_View.Initialize (Self.View);
       Scrolled.Add (Self.View);
 
+      --  Self.View.On_Item_Event (On_Item_Event_Move_Item'Access);
+      Self.View.On_Item_Event (On_Item_Event_Scroll_Background'Access);
+      Self.View.On_Item_Event (On_Item_Event_Zoom'Access);
+      Self.View.On_Item_Event (On_Item_Event'Access, Self);
+
       return Gtk_Widget (Self.View);
    end Initialize;
 
@@ -366,27 +598,25 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Inst   : Class_Instance;
-      Script : constant Scripting_Language := Get_Script (Data);
       View   : Browser_View;
       Model  : Model_Type;
       C      : MDI_Child;
    begin
       if Command = Constructor_Method then
-         Set_Error_Msg (Data, "Use GPS.Browsers.View.get to retrieve a view");
+         null;  --  nothing to do
 
       elsif Command = "create" then
-         Model := Get_Model (Nth_Arg (Data, 1));
+         Model := Get_Model (Nth_Arg (Data, 2));
          View := Browser_Views.Get_Or_Create_View (Get_Kernel (Data));
          View.View.Set_Model (Model);
 
          C := Browser_Views.Child_From_View (View);
-         C.Set_Title (Nth_Arg (Data, 2));
+         C.Set_Title (Nth_Arg (Data, 3));
          GPS_MDI_Child (C).Set_Save_Desktop_Callback
-           (Nth_Arg (Data, 3, Default => null));
+           (Nth_Arg (Data, 4, Default => null));
 
-         Inst := New_Instance (Script, Module.View_Class);
+         Inst := Nth_Arg (Data, 1);
          Set_Data (Inst, Widget => GObject (View));
-         Set_Return_Value (Data, Inst);
 
       elsif Command = "set_background" then
          Inst := Nth_Arg (Data, 1);
@@ -680,16 +910,17 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Inst : Class_Instance;
-      Item : Rect_Item;
+      Item : access PRect_Record;
    begin
       if Command = Constructor_Method then
          Inst := Nth_Arg (Data, 1);
-         Item := Gtk_New_Rect
+         Item := new PRect_Record;
+         Item.Initialize_Rect
            (Style  => Get_Style (Nth_Arg (Data, 2)),
             Width  => Gdouble (Nth_Arg (Data, 3, -1.0)),
             Height => Gdouble (Nth_Arg (Data, 4, -1.0)),
             Radius => Gdouble (Nth_Arg (Data, 5, 0.0)));
-         Set_Item (Inst, Item);
+         Item.Set_Instance (Inst);
       end if;
    end Rect_Item_Handler;
 
@@ -700,16 +931,15 @@ package body Browsers.Scripts is
    procedure Ellipse_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst : Class_Instance;
-      Item : Ellipse_Item;
+      Item : access PEllipse_Record;
    begin
       if Command = Constructor_Method then
-         Inst := Nth_Arg (Data, 1);
-         Item := Gtk_New_Ellipse
+         Item := new PEllipse_Record;
+         Item.Initialize_Ellipse
            (Style  => Get_Style (Nth_Arg (Data, 2)),
             Width  => Gdouble (Nth_Arg (Data, 3, -1.0)),
             Height => Gdouble (Nth_Arg (Data, 4, -1.0)));
-         Set_Item (Inst, Item);
+         Item.Set_Instance (Nth_Arg (Data, 1));
       end if;
    end Ellipse_Handler;
 
@@ -740,17 +970,16 @@ package body Browsers.Scripts is
    procedure Polyline_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst : Class_Instance;
-      Item : Polyline_Item;
+      Item : access Pline_Record;
    begin
       if Command = Constructor_Method then
-         Inst := Nth_Arg (Data, 1);
-         Item := Gtk_New_Polyline
+         Item := new Pline_Record;
+         Item.Initialize_Polyline
            (Style    => Get_Style (Nth_Arg (Data, 2)),
             Points   => Points_From_Param (Data, 3),
             Close    => Nth_Arg (Data, 4, False),
             Relative => Nth_Arg (Data, 5, False));
-         Set_Item (Inst, Item);
+         Item.Set_Instance (Nth_Arg (Data, 1));
       end if;
    end Polyline_Handler;
 
@@ -761,18 +990,16 @@ package body Browsers.Scripts is
    procedure Text_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst : Class_Instance;
-      Item : Text_Item;
+      Item : access PText_Record;
    begin
       if Command = Constructor_Method then
-         Item := Gtk_New_Text
+         Item := new PText_Record;
+         Item.Initialize_Text
            (Style    => Get_Style (Nth_Arg (Data, 2)),
             Text     => Nth_Arg (Data, 3),
             Directed => Text_Arrow_Direction'Val
               (Nth_Arg (Data, 4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
-
-         Inst := Nth_Arg (Data, 1);
-         Set_Item (Inst, Item);
+         Item.Set_Instance (Nth_Arg (Data, 1));
       end if;
    end Text_Handler;
 
@@ -783,15 +1010,14 @@ package body Browsers.Scripts is
    procedure Hr_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst : Class_Instance;
-      Item : Hr_Item;
+      Item : access PHr_Record;
    begin
       if Command = Constructor_Method then
-         Item := Gtk_New_Hr
+         Item := new PHr_Record;
+         Item.Initialize_Hr
            (Style    => Get_Style (Nth_Arg (Data, 2)),
             Text     => Nth_Arg (Data, 3, ""));
-         Inst := Nth_Arg (Data, 1);
-         Set_Item (Inst, Item);
+         Item.Set_Instance (Nth_Arg (Data, 1));
       end if;
    end Hr_Handler;
 
@@ -803,7 +1029,7 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Inst, Inst2  : Class_Instance;
-      Link  : Canvas_Link;
+      Link  : access Plink_Record;
       Label, Label_From, Label_To : Container_Item;
    begin
       if Command = Constructor_Method then
@@ -822,7 +1048,8 @@ package body Browsers.Scripts is
             Label_To := Container_Item (Get_Item (Inst2));
          end if;
 
-         Link := Gtk_New
+         Link := new Plink_Record;
+         Link.Initialize
            (From        => Get_Item (Nth_Arg (Data, L_From)),
             To          => Get_Item (Nth_Arg (Data, L_To)),
             Style       => Get_Style (Nth_Arg (Data, L_Style)),
@@ -842,8 +1069,7 @@ package body Browsers.Scripts is
                Toplevel_Side => Side_Attachment'Val
                  (Nth_Arg (Data, L_To_Side, Side_Attachment'Pos (Auto)))));
 
-         Inst := Nth_Arg (Data, 1);
-         Set_Item (Inst, Link);
+         Link.Set_Instance (Nth_Arg (Data, 1));
 
       elsif Command = "set_waypoints" then
          Inst := Nth_Arg (Data, 1);
@@ -951,7 +1177,6 @@ package body Browsers.Scripts is
         (Kernel.Scripts,
          "create",
          Class   => Module.View_Class,
-         Static_Method => True,
          Params  => (1 => Param ("diagram"),
                      2 => Param ("title"),
                      3 => Param ("save_desktop", Optional => True)),
