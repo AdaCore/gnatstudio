@@ -765,8 +765,6 @@ package body GPS.Kernel is
                    & System.Address_Image (Data'Address));
          end if;
 
-         Free (Data.Category_Name);
-         Free (Data.Message);
          Free (Data.Text);
          Free (Data.Expression);
          Free (Data.Entity_Name);

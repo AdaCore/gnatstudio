@@ -185,8 +185,8 @@ package body GPS.Kernel.Macros is
          return Image (Integer (Column_Information (Context)));
 
       elsif Param = "a" then
-         if Has_Category_Information (Context) then
-            return Category_Information (Context);
+         if Has_Message_Information (Context) then
+            return Message_Information (Context).Get_Category;
          end if;
 
       elsif Param = "GPS" then
@@ -325,7 +325,7 @@ package body GPS.Kernel.Macros is
       end if;
 
       if Filter.Requires.Category
-        and then not Has_Category_Information (Context)
+        and then not Has_Message_Information (Context)
       then
          return False;
       end if;

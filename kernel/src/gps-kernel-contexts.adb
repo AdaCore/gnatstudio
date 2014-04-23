@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with System.Address_To_Access_Conversions;
+
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
@@ -75,6 +77,10 @@ package body GPS.Kernel.Contexts is
 
    function Has_File_Information (File : Virtual_File) return Boolean;
    --  Idem for file information
+
+   package Message_Conversions is
+     new System.Address_To_Access_Conversions
+       (GPS.Kernel.Messages.Abstract_Message'Class);
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -481,19 +487,12 @@ package body GPS.Kernel.Contexts is
    -----------------------------
 
    procedure Set_Message_Information
-     (Context     : in out Selection_Context;
-      Category    : String := "";
-      Message     : String := "") is
+     (Context : in out Selection_Context;
+      Message : GPS.Kernel.Messages.Message_Access) is
    begin
-      Free (Context.Data.Data.Category_Name);
-      if Category /= "" then
-         Context.Data.Data.Category_Name := new String'(Category);
-      end if;
-
-      Free (Context.Data.Data.Message);
-      if Message /= "" then
-         Context.Data.Data.Message := new String'(Message);
-      end if;
+      Context.Data.Data.Message :=
+        Message_Conversions.To_Address
+          (Message_Conversions.Object_Pointer (Message));
    end Set_Message_Information;
 
    --------------------------
@@ -537,36 +536,16 @@ package body GPS.Kernel.Contexts is
       return Context.Data.Data.Column;
    end Column_Information;
 
-   ------------------------------
-   -- Has_Category_Information --
-   ------------------------------
-
-   function Has_Category_Information
-     (Context : Selection_Context) return Boolean is
-   begin
-      return Context.Data.Data /= null
-        and then Context.Data.Data.Category_Name /= null;
-   end Has_Category_Information;
-
-   --------------------------
-   -- Category_Information --
-   --------------------------
-
-   function Category_Information
-     (Context : Selection_Context) return String is
-   begin
-      return Context.Data.Data.Category_Name.all;
-   end Category_Information;
-
    -----------------------------
    -- Has_Message_Information --
    -----------------------------
 
    function Has_Message_Information
      (Context : Selection_Context) return Boolean is
+      use type System.Address;
    begin
       return Context.Data.Data /= null
-        and then Context.Data.Data.Message /= null;
+        and Context.Data.Data.Message /= System.Null_Address;
    end Has_Message_Information;
 
    -------------------------
@@ -574,9 +553,11 @@ package body GPS.Kernel.Contexts is
    -------------------------
 
    function Message_Information
-     (Context : Selection_Context) return String is
+     (Context : Selection_Context) return GPS.Kernel.Messages.Message_Access is
    begin
-      return Context.Data.Data.Message.all;
+      return
+        GPS.Kernel.Messages.Message_Access
+          (Message_Conversions.To_Pointer (Context.Data.Data.Message));
    end Message_Information;
 
    ----------------------------

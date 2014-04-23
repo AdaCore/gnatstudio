@@ -22,6 +22,7 @@ with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with Basic_Types;
 with String_List_Utils;
+with GPS.Kernel.Messages;
 
 package GPS.Kernel.Contexts is
 
@@ -184,23 +185,15 @@ package GPS.Kernel.Contexts is
    --  Line and columns are stored as Line_Information and Column_Information
 
    procedure Set_Message_Information
-     (Context  : in out Selection_Context;
-      Category : String := "";
-      Message  : String := "");
+     (Context : in out Selection_Context;
+      Message : GPS.Kernel.Messages.Message_Access);
    --  Set the information in the context
-
-   function Has_Category_Information
-     (Context : Selection_Context) return Boolean;
-   --  Return True if Context has category information
-   function Category_Information
-     (Context : Selection_Context) return String;
-   --  Return the category information associated with Context
 
    function Has_Message_Information
      (Context : Selection_Context) return Boolean;
    --  Return True if Context has message information
    function Message_Information
-     (Context : Selection_Context) return String;
+     (Context : Selection_Context) return GPS.Kernel.Messages.Message_Access;
    --  Return the message information associated with Context
 
    ---------------------

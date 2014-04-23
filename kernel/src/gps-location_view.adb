@@ -789,10 +789,12 @@ package body GPS.Location_View is
       Menu         : Gtk.Menu.Gtk_Menu)
    is
       pragma Unreferenced (Kernel, Event_Widget, Event, Menu);
+
       Explorer : constant Location_View := Location_View (Object);
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Model;
+
    begin
       Get_Selected (Get_Selection (Explorer.View), Model, Iter);
 
@@ -804,30 +806,21 @@ package body GPS.Location_View is
 
       if Get_Depth (Path) >= 3 then
          declare
-            File_Iter     : Gtk_Tree_Iter;
-            Category_Iter : Gtk_Tree_Iter;
+            Message : GPS.Kernel.Messages.Message_Access;
+            Value   : Glib.Values.GValue;
 
          begin
-            File_Iter := Parent (Model, Iter);
-            Category_Iter := Parent (Model, File_Iter);
-
-            --  Unwind secondary level messages
-
-            while Parent (Model, Category_Iter) /= Null_Iter loop
-               File_Iter := Category_Iter;
-               Category_Iter := Parent (Model, Category_Iter);
-            end loop;
+            Get_Value (Model, Iter, Message_Column, Value);
+            Message := Message_Access
+              (Message_Conversions.To_Pointer (Get_Address (Value)));
+            Glib.Values.Unset (Value);
 
             Set_File_Information
               (Context,
-               Files  => (1 => Get_File (Model, File_Iter, File_Column)),
-               Line   => Positive (Get_Int (Model, Iter, Line_Column)),
-               Column => Visible_Column_Type
-                 (Get_Int (Model, Iter, Column_Column)));
-            Set_Message_Information
-              (Context,
-               Category => Get_String (Model, Category_Iter, Category_Column),
-               Message => Get_String (Model, Iter, Text_Column));
+               Files  => (1 => Message.Get_File),
+               Line   => Message.Get_Line,
+               Column => Message.Get_Column);
+            Set_Message_Information (Context, Message);
          end;
       end if;
 

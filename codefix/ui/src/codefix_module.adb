@@ -17,6 +17,7 @@
 
 --  This package defines the module for code fixing.
 
+with Ada.Strings.Unbounded;
 with Ada.Tags; use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
@@ -30,7 +31,6 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with String_Utils;              use String_Utils;
 with Basic_Types;               use Basic_Types;
 with UTF8_Utils;                use UTF8_Utils;
 with Codefix.Errors_Parser;     use Codefix.Errors_Parser;
@@ -815,13 +815,12 @@ package body Codefix_Module is
       Error   : Error_Id;
    begin
       if Has_Message_Information (Context) then
-         if not Has_Category_Information (Context)
-           or else Codefix_Module_ID.Sessions = null
-         then
+         if Codefix_Module_ID.Sessions = null then
             return;
          end if;
 
-         Session := Get_Session_By_Name (Category_Information (Context));
+         Session :=
+           Get_Session_By_Name (Message_Information (Context).Get_Category);
 
          if Session = null then
             return;
@@ -838,7 +837,9 @@ package body Codefix_Module is
             File    => File_Information (Context),
             Line    => Contexts.Line_Information (Context),
             Column  => Column_Information (Context),
-            Message => Remove_Markup (Message_Information (Context)));
+            Message =>
+              Ada.Strings.Unbounded.To_String
+                (Message_Information (Context).Get_Text));
 
          if Error /= Null_Error_Id and then not Is_Fixed (Error) then
             Create_Submenu (Get_Kernel (Context), Menu, Session, Error);

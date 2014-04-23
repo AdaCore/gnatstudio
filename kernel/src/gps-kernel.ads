@@ -958,8 +958,7 @@ private
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
 
-      Category_Name  : GNAT.Strings.String_Access := null;
-      Message        : GNAT.Strings.String_Access := null;
+      Message        : System.Address := System.Null_Address;
       Revision       : GNAT.Strings.String_Access := null;
       Other_Revision : GNAT.Strings.String_Access := null;
       Tag            : GNAT.Strings.String_Access := null;
