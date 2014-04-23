@@ -1343,14 +1343,6 @@ package body Src_Editor_View is
       pragma Unreferenced (Result, X, Y, Info, Time);
       View : constant Source_View   := Source_View (Self);
    begin
-      --  Do not accept drag data if the view is not editable
-      if not Get_Editable (Source_View (Self)) then
-         Gtk.Handlers.Emit_Stop_By_Name
-           (Object => Self, Name => "drag-data-received");
-
-         return;
-      end if;
-
       if Atom_Name (Data.Get_Target) = "text/uri-list" then
          Gtk.Handlers.Emit_Stop_By_Name
            (Object => Self, Name => "drag-data-received");
@@ -1368,6 +1360,15 @@ package body Src_Editor_View is
                                Del     => True);
             end loop;
          end;
+      else
+         --  This is not a list of URIs, so this is probably a text DND:
+         --  drop it if the editor is read-only.
+         if not Get_Editable (Source_View (Self)) then
+            Gtk.Handlers.Emit_Stop_By_Name
+              (Object => Self, Name => "drag-data-received");
+
+            return;
+         end if;
       end if;
    end View_On_Drag_Data_Received;
 
