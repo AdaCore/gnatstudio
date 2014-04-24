@@ -164,7 +164,6 @@ package body Browsers.Scripts is
 
    type GPS_Canvas_View_Record is new Canvas_View_Record with record
       Background : Background_Type := Background_None;
-      Grid_Size  : Gdouble := 20.0;
       Grid_Style : Drawing_Style;
    end record;
    type GPS_Canvas_View is access all GPS_Canvas_View_Record'Class;
@@ -501,17 +500,17 @@ package body Browsers.Scripts is
 
          when Background_Grid_Lines =>
             Draw_Grid_Lines
-              (Style   => Self.Grid_Style,
+              (Self    => Self,
+               Style   => Self.Grid_Style,
                Context => Context,
-               Area    => Area,
-               Size    => Self.Grid_Size);
+               Area    => Area);
 
          when Background_Grid_Dots =>
             Draw_Grid_Lines
-              (Style   => Self.Grid_Style,
+              (Self    => Self,
+               Style   => Self.Grid_Style,
                Context => Context,
-               Area    => Area,
-               Size    => Self.Grid_Size);
+               Area    => Area);
       end case;
 
       Canvas_View_Record (Self.all).Draw_Internal (Context, Area);
@@ -714,7 +713,7 @@ package body Browsers.Scripts is
            (Nth_Arg (Data, 2, Background_Type'Pos (Background_None)));
          View.View.Grid_Style :=
            Get_Style (Nth_Arg (Data, 3, Allow_Null => True));
-         View.View.Grid_Size := Gdouble (Nth_Arg (Data, 4, 20.0));
+         View.View.Set_Grid_Size (Gdouble (Nth_Arg (Data, 4, 20.0)));
          View.Queue_Draw;
 
       elsif Command = "scale_to_fit" then
