@@ -178,11 +178,12 @@ def region_ref(name):
     return RegionRef(name)
 
 
-def new_style(lang, name, foreground_color, prio=20):
+def new_style(lang, name, foreground_color, background_color="white",
+              font_style="default", prio=20):
     style_id = "{0}_{1}".format(lang, name)
     pref = GPS.Preference("Editor/{0}/{1}".format(lang, name))
-    doc = "Color for '{0}'".format(name)
-    pref.create(doc, "color", doc, foreground_color)
+    doc = "Style for '{0}'".format(name)
+    pref.create_style(doc, doc, foreground_color, background_color, font_style)
     pref.tag = None
     HighlighterModule.preferences[style_id] = pref
     return Style(style_id, prio, pref)

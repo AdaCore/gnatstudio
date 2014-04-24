@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -63,7 +64,20 @@ package body GPS.Kernel.Preferences is
    Preferences_Pages : Preferences_Page_Array_Access;
    --  ??? To be included in the kernel
 
-   Value_Cst : aliased constant String := "value";
+   Label_Cst              : aliased constant String := "label";
+   Value_Cst              : aliased constant String := "value";
+   Doc_Cst                : aliased constant String := "doc";
+   Default_Font_Style_Cst : aliased constant String := "default_font_style";
+   Default_Bg_Cst         : aliased constant String := "default_bg";
+   Default_Fg_Cst         : aliased constant String := "default_fg";
+
+   Create_Style_Parameters : constant Cst_Argument_List :=
+     (1 => Label_Cst'Access,
+      2 => Doc_Cst'Access,
+      3 => Default_Fg_Cst'Access,
+      4 => Default_Bg_Cst'Access,
+      5 => Default_Font_Style_Cst'Access);
+
    Set_Cmd_Parameters : constant Cst_Argument_List := (1 => Value_Cst'Access);
 
    procedure Get_Command_Handler
@@ -222,6 +236,46 @@ package body GPS.Kernel.Preferences is
                Set_Error_Msg (Data, Exception_Message (E));
             when E : others =>
                Trace (Me, E);
+         end;
+
+      elsif Command = "create_style" then
+
+         Name_Parameters (Data, Create_Style_Parameters);
+
+         declare
+            Path               : constant String := Get_Data (Inst, Class);
+            Label              : constant String := Nth_Arg (Data, 2);
+            Doc                : constant String := Nth_Arg (Data, 3, "");
+            Default_Fg         : constant String := Nth_Arg (Data, 4, "");
+            Default_Bg         : constant String := Nth_Arg (Data, 5, "white");
+            Default_Font_Style : constant String :=
+              To_Lower (Nth_Arg (Data, 6, "default"));
+            Default_Variant    : Variant_Enum;
+            Pref               : Preference;
+            pragma Unreferenced (Pref);
+         begin
+            if Default_Font_Style = "default"
+              or else Default_Font_Style = "normal"
+              or else Default_Font_Style = "italic"
+              or else Default_Font_Style = "bold"
+              or else Default_Font_Style = "bold_italic"
+            then
+               Default_Variant := Variant_Enum'Value (Default_Font_Style);
+            else
+               Set_Error_Msg (Data,
+                              -"Wrong value for default_font_style parameter");
+            end if;
+
+            Pref := Preference
+              (Create (Manager => Kernel.Preferences,
+                       Name => Path,
+                       Label => Label,
+                       Page => Dir_Name (Path),
+                       Doc => Doc,
+                       Default_Bg => Default_Bg,
+                       Default_Fg => Default_Fg,
+                       Default_Variant => Default_Variant,
+                       Base => Default_Style));
          end;
 
       elsif Command = "create" then
@@ -1596,6 +1650,12 @@ package body GPS.Kernel.Preferences is
         (Kernel, "create",
          Minimum_Args => 2,
          Maximum_Args => Integer'Last,
+         Class        => Pref_Class,
+         Handler      => Get_Command_Handler'Access);
+      Register_Command
+        (Kernel, "create_style",
+         Minimum_Args => 2,
+         Maximum_Args => 5,
          Class        => Pref_Class,
          Handler      => Get_Command_Handler'Access);
    end Register_Module;

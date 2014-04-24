@@ -7897,6 +7897,24 @@ class Preference(object):
         """
         pass  # implemented in Ada
 
+    def create_style(self, label, doc='', default_fg="", default_bg="white",
+                     default_font_style="default"):
+        """
+        Creates a new text style preference, which enables the user to choose
+        between different text style characteristics, namely foreground
+        color, background color, and wether the text is bold, italic, both,
+        or neither.
+
+        :param string label: The label of the preference
+        :param doc: The documentation of the preference
+        :param string default_fg: The default foreground color for this
+          preference, as a CSS-like color.
+        :param default_bg: The default background color for this preference,
+          as a CSS-like color
+        :param string default_font_style: The style, one of "default",
+          "normal", "bold", "italic" or "bold_italic"
+        """
+
     def create(self, label, type, doc='', default='', *args):
         """
         Creates a new preference and makes it visible in the preferences

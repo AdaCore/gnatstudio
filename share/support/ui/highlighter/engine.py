@@ -1,6 +1,6 @@
 import GPS
 from modules import Module
-from gi.repository import Gtk, GLib, Gdk
+from gi.repository import Gtk, GLib, Gdk, Pango
 from pygps import get_gtk_buffer
 import re
 from time import time
@@ -51,30 +51,6 @@ class HighlighterModule(Module):
 #############
 
 null_span = (-1, -1)
-
-
-def take(gen, nb):
-    """
-    Consumes nb element from the generator gen, and returns them as a generator
-    :type gen: __generator[T]
-    :type nb: int
-    :rtype : __generator[T]
-    """
-    for _ in range(nb):
-        yield next(gen)
-
-
-def partition(gen, nb):
-    """
-    Returns a new generator where an element is a list of nb elements from gen
-    :type gen: __generator[T]
-    :type nb: int
-    :rtype : __generator[list[T]]
-    """
-    l = list(take(gen, nb))
-    while l:
-        yield l
-        l = list(take(gen, nb))
 
 
 def to_tuple(gtk_iter):
@@ -162,12 +138,27 @@ Gtk.TextBuffer.highlighting_initialized = False
 
 
 def propagate_change(pref):
-    color = Gdk.RGBA()
-    color_string = pref.get()
-    if "@" in color_string:
-        color_string = color_string.split("@")[1]
-    color.parse(color_string)
-    pref.tag.set_property("foreground_rgba", color)
+    fg_color = Gdk.RGBA()
+    style_string = pref.get()
+    font_style, fg_style, bg_style = style_string.split("@")
+    has_bg = bg_style != "rgba(0,0,0,0)"
+    fg_color.parse(fg_style)
+    pref.tag.set_property("foreground_rgba", fg_color)
+
+    if has_bg:
+        bg_color = Gdk.RGBA()
+        bg_color.parse(bg_style)
+        pref.tag.set_property("background_rgba", bg_color)
+
+    if font_style in ["BOLD", "BOLD_ITALIC"]:
+        pref.tag.set_property("weight", Pango.Weight.BOLD)
+
+    if font_style in ["ITALIC", "BOLD_ITALIC"]:
+        pref.tag.set_property("style", Pango.Style.ITALIC)
+
+    if font_style in ["DEFAULT", "NORMAL"]:
+        pref.tag.set_property("style", Pango.Style.NORMAL)
+        pref.tag.set_property("weight", Pango.Weight.NORMAL)
 
 # Data classes for highlighters
 
@@ -380,23 +371,6 @@ class SubHighlighter(object):
         return self.__str__()
 
 
-def gen_to_fn(gen, granularity, max_time):
-    def fn():
-        ret = False
-        try:
-            t = time()
-            while time() - t < max_time:
-                for _ in range(granularity):
-                    gen.next()
-            # print time() - t
-            ret = True
-        except StopIteration:
-            pass
-        return ret
-
-    return fn
-
-
 class Highlighter(object):
 
     def __init__(self, spec=()):
@@ -480,7 +454,9 @@ class Highlighter(object):
                         endi = gtk_ed.get_iter_at_line(current_line)
                         endi.backward_char()
                         endo = endi.get_offset()
-                        results.append((subhl_stack[-1].gtk_tag, endo, endo))
+                        rstart = rstarts.pop() if rstarts else start_offset
+                        results.append((subhl_stack[-1].gtk_tag, rstart,
+                                        endo))
                         self.sync_stop = True
                         return results
 
@@ -538,21 +514,14 @@ class Highlighter(object):
         results.append((None, end_offset, end_offset))
         return results
 
-    def highlight_gen(self, gtk_ed, start_line=-1, remove_tag_step=100):
+    def highlight_gen(self, gtk_ed, start_line=-1):
         """
         :type gtk_ed: Gtk.TextBuffer
         :type start_line: int
-        :type remove_tag_step: int
         """
-        t = time()
+        # t = time()
         start_it = gtk_ed.get_start_iter()
         end_it = gtk_ed.get_start_iter()
-
-        def get_action_list(sl):
-            return sorted(
-                self.highlight_info_gen(gtk_ed, sl),
-                key=lambda t: t[1]
-            )
 
         if start_line == -1:
             for tag, start, end in self.highlight_info_gen(gtk_ed, 0):
@@ -562,24 +531,19 @@ class Highlighter(object):
                     gtk_ed.apply_tag(tag, start_it, end_it)
         else:
             st_iter = gtk_ed.get_iter_at_line(start_line)
-            actions_list = get_action_list(start_line)
+            actions_list = self.highlight_info_gen(gtk_ed, start_line,
+                                                   start_line + 1000)
 
-            end_it.set_offset(actions_list[-1][1])
+            # if not self.sync_stop:
+            #     actions_list = self.highlight_info_gen(gtk_ed, start_line)
+
+            end_it.set_offset(actions_list[-1][2])
             gtk_ed.remove_all_tags(st_iter, end_it)
 
-            # Only one action means we only have the end marker in the
-            # action list -> no region change
-            if len(actions_list) == 1:
-                tag = actions_list[0][0]
+            for tag, start, end in actions_list:
+                start_it.set_offset(start)
+                end_it.set_offset(end)
                 if tag:
-                    end_it.set_offset(actions_list[0][1])
-                    gtk_ed.apply_tag(tag, st_iter, end_it)
-
-            all_actions = (a for a in actions_list[:-1])
-            for actions in partition(all_actions, remove_tag_step):
-                for tag, start, end in actions:
-                    start_it.set_offset(start)
-                    end_it.set_offset(end)
                     gtk_ed.apply_tag(tag, start_it, end_it)
 
         # print time() - t
@@ -589,12 +553,6 @@ class Highlighter(object):
 
     def gtk_highlight_region(self, gtk_ed, start_line):
         self.highlight_gen(gtk_ed, start_line)
-
-    @staticmethod
-    def gtk_idle_highlight(gtk_ed, gen, gran=1000, max_time=0.10):
-        fn = gen_to_fn(gen, gran, max_time)
-        if gen_to_fn(gen, 1000, 1)():
-            gtk_ed.idle_highlight_id = GLib.timeout_add(120, fn)
 
     def init_highlighting(self, ed):
         gtk_ed = get_gtk_buffer(ed)
