@@ -582,11 +582,33 @@ class FileContext(Context):
 
 
 ###########################################################
+# ClassContext
+###########################################################
+
+class MessageContext(FileContext):
+    """
+    A special context used when the Locations window has the focus.
+    """
+
+    def __init__(self):
+        """
+        Prevents creation of the self, since such contexts are always
+        created by GPS itself.
+        """
+
+    def message(self):
+        """
+        Returns the current message that was clicked on
+
+        :returntype: :class:`GPS.Message`
+        """
+
+
+###########################################################
 # AreaContext
 ###########################################################
 
 class AreaContext(FileContext):
-
     """
     Represents a context that contains file information and a range of lines
     currently selected.

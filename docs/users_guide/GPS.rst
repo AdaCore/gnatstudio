@@ -1328,6 +1328,17 @@ Classes
 
    .. automethod:: GPS.Message.set_subprogram
 
+:class:`GPS.MessageContext`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: MessageContext
+
+   .. inheritance-diagram:: GPS.MessageContext
+
+   .. automethod:: GPS.MessageContext.__init__
+
+   .. automethod:: GPS.MessageContext.message
+
 :class:`GPS.Missing_Arguments`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1360,8 +1371,6 @@ Classes
    .. automethod:: GPS.Preference.__init__
 
    .. automethod:: GPS.Preference.create
-
-   .. automethod:: GPS.Preference.create_style
 
    .. automethod:: GPS.Preference.get
 
