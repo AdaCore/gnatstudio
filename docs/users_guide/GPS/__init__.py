@@ -7906,11 +7906,11 @@ class Preference(object):
         or neither.
 
         :param string label: The label of the preference
-        :param doc: The documentation of the preference
+        :param string doc: The documentation of the preference
         :param string default_fg: The default foreground color for this
           preference, as a CSS-like color.
-        :param default_bg: The default background color for this preference,
-          as a CSS-like color
+        :param string default_bg: The default background color for this
+          preference, as a CSS-like color
         :param string default_font_style: The style, one of "default",
           "normal", "bold", "italic" or "bold_italic"
         """

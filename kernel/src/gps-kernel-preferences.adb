@@ -64,22 +64,6 @@ package body GPS.Kernel.Preferences is
    Preferences_Pages : Preferences_Page_Array_Access;
    --  ??? To be included in the kernel
 
-   Label_Cst              : aliased constant String := "label";
-   Value_Cst              : aliased constant String := "value";
-   Doc_Cst                : aliased constant String := "doc";
-   Default_Font_Style_Cst : aliased constant String := "default_font_style";
-   Default_Bg_Cst         : aliased constant String := "default_bg";
-   Default_Fg_Cst         : aliased constant String := "default_fg";
-
-   Create_Style_Parameters : constant Cst_Argument_List :=
-     (1 => Label_Cst'Access,
-      2 => Doc_Cst'Access,
-      3 => Default_Fg_Cst'Access,
-      4 => Default_Bg_Cst'Access,
-      5 => Default_Font_Style_Cst'Access);
-
-   Set_Cmd_Parameters : constant Cst_Argument_List := (1 => Value_Cst'Access);
-
    procedure Get_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Get preference command handler
@@ -200,7 +184,6 @@ package body GPS.Kernel.Preferences is
          end;
 
       elsif Command = "set" then
-         Name_Parameters (Data, Set_Cmd_Parameters);
          declare
             Name : constant String     := Get_Data (Inst, Class);
             Pref : constant Preference :=
@@ -239,8 +222,6 @@ package body GPS.Kernel.Preferences is
          end;
 
       elsif Command = "create_style" then
-
-         Name_Parameters (Data, Create_Style_Parameters);
 
          declare
             Path               : constant String := Get_Data (Inst, Class);
@@ -1630,34 +1611,44 @@ package body GPS.Kernel.Preferences is
         (Module      => Module,
          Kernel      => Kernel,
          Module_Name => "Preferences");
+
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Pref_Class,
          Handler      => Get_Command_Handler'Access);
+
       Register_Command
         (Kernel, "get",
          Class   => Pref_Class,
          Handler => Get_Command_Handler'Access);
+
       Register_Command
-        (Kernel, "set",
-         Minimum_Args => 1,
-         Maximum_Args => 2,
+        (Kernel.Scripts, "set",
+         Params => (1 => Param ("value"),
+                    2 => Param ("save", Optional => True)),
          Class        => Pref_Class,
          Handler      => Get_Command_Handler'Access);
+
       Register_Command
         (Kernel, "create",
          Minimum_Args => 2,
          Maximum_Args => Integer'Last,
          Class        => Pref_Class,
          Handler      => Get_Command_Handler'Access);
+
       Register_Command
-        (Kernel, "create_style",
-         Minimum_Args => 2,
-         Maximum_Args => 5,
+        (Kernel.Scripts, "create_style",
+         Params       =>
+           (1 => Param ("label"),
+            2 => Param ("doc", Optional => True),
+            3 => Param ("default_font_style", Optional => True),
+            4 => Param ("default_bg", Optional => True),
+            5 => Param ("default_fg", Optional => True)),
          Class        => Pref_Class,
          Handler      => Get_Command_Handler'Access);
+
    end Register_Module;
 
    ----------------------
