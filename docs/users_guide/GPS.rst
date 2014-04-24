@@ -1372,6 +1372,8 @@ Classes
 
    .. automethod:: GPS.Preference.create
 
+   .. automethod:: GPS.Preference.create_style
+
    .. automethod:: GPS.Preference.get
 
    .. automethod:: GPS.Preference.set
