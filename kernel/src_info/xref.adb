@@ -758,6 +758,10 @@ package body Xref is
                C : constant access Simple_Construct_Information :=
                  Construct_From_Entity (Entity.Db, Entity);
             begin
+               if C = null then
+                  return "";
+               end if;
+
                return Get (C.Name).all;
             end;
          end if;
