@@ -146,14 +146,17 @@ class GMC_Canvas_View(GPS.Browsers.View):
             GPS.Browsers.Style(stroke="rgba(200,200,200,0.8)"))
         self.scale_to_fit(max_scale=1.0)
 
-    def on_item_clicked(self, item, x, y, *args):
-        GPS.Console().write("clicked on %s, at %s,%s\n" % (item, x, y))
+    def on_item_clicked(self, topitem, item, x, y, *args):
+        GPS.Console().write(
+            "clicked on %s (%s), at %s,%s\n" % (topitem, item, x, y))
 
-    def on_item_double_clicked(self, item, x, y, *args):
-        GPS.Console().write("double_clicked on %s, at %s,%s\n" % (item, x, y))
+    def on_item_double_clicked(self, topitem, item, x, y, *args):
+        GPS.Console().write(
+            "double_clicked on %s (%s), at %s,%s\n" % (topitem, item, x, y))
 
-    def on_create_context(self, context, item, x, y, *args):
-        GPS.Console().write("create_context on %s, at %s,%s\n" % (item, x, y))
+    def on_create_context(self, context, topitem, item, x, y, *args):
+        GPS.Console().write(
+            "create_context on %s (%s), at %s,%s\n" % (topitem, item, x, y))
         context._simulink_item = item
 
 

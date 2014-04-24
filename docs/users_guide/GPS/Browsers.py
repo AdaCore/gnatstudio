@@ -696,22 +696,24 @@ class View(GPS.GUI):
 
         class My_View(GPS.Browsers.View):
 
-            def on_item_double_clicked(self, item, x, y, *args):
+            def on_item_double_clicked(self, topitem, item, x, y, *args):
                 '''
                 Called when the user double clicks on a specific item.
                 It is recommended to add "*args" in the list of parameters,
                 since new parameters might be added in the future.
 
+                :param GPS.Browsers.Item topitem: the toplevel item clicked on
                 :param GPS.Browsers.Item item: the item clicked on.
                    When the item was created from a JSON file (see
                    :func:`GPS.Browsers.Diagram.load_json`), it contains
                    additional fields like `data` and `id` that were extracted
                    from JSON.
+                   This item is either topitem or a child of it.
                 :param float x: the coordinates of the mouse within the item.
                 :param float y: the coordinates of the mouse within the item.
                 '''
 
-            def on_item_clicked(self, item, x, y, *args):
+            def on_item_clicked(self, topitem, item, x, y, *args):
                 '''
                 Called when the user releases the mouse button on a specific
                 item.
@@ -720,7 +722,7 @@ class View(GPS.GUI):
                 The parameters are the same as above.
                 '''
 
-            def on_create_context(self, context, item, x, y, *args):
+            def on_create_context(self, context, topitem, item, x, y, *args):
                 '''
                 Called when the user has right-clicked on an item.
                 This function should prepare the context for contextual menus,

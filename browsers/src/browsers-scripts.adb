@@ -531,7 +531,6 @@ package body Browsers.Scripts is
       Inst    : Class_Instance := No_Class_Instance;
       Scripts : constant Scripting_Language_Array :=
         Self.Kernel.Scripts.Get_Scripting_Languages;
-      Point   : Item_Point;
       Subp   : Subprogram_Type;
       Dummy  : Boolean;
       Count  : Integer;
@@ -546,29 +545,43 @@ package body Browsers.Scripts is
          Subp := Get_Method (Inst, Name);
          if Subp /= null then
             if Context = No_Context then
-               Count := 3;
-               First := 1;
-            else
                Count := 4;
-               First := 2;
+            else
+               Count := 5;
             end if;
 
             declare
                Args : Callback_Data'Class := Subp.Get_Script.Create (Count);
             begin
-               Point := Event.Toplevel_Item.Model_To_Item (Event.M_Point);
-
-               if Count = 4 then
+               if Context /= No_Context then
                   Set_Nth_Arg
                     (Args, 1, Create_Context (Subp.Get_Script, Context));
+                  First := 2;
+               else
+                  First := 1;
                end if;
 
-               Set_Nth_Arg
-                 (Args, First,
-                  Get_Instance (Python_Item_Access (Event.Toplevel_Item),
-                    Subp.Get_Script));
-               Set_Nth_Arg (Args, First + 1, Float (Point.X));
-               Set_Nth_Arg (Args, First + 2, Float (Point.Y));
+               if Event.Toplevel_Item /= null then
+                  Set_Nth_Arg
+                    (Args, First,
+                     Get_Instance (Python_Item_Access (Event.Toplevel_Item),
+                       Subp.Get_Script));
+               else
+                  Set_Nth_Arg (Args, First, No_Class_Instance);
+               end if;
+
+               if Event.Item /= null then
+                  Set_Nth_Arg
+                    (Args, First + 1,
+                     Get_Instance (Python_Item_Access (Event.Item),
+                       Subp.Get_Script));
+                  Set_Nth_Arg (Args, First + 2, Float (Event.I_Point.X));
+                  Set_Nth_Arg (Args, First + 3, Float (Event.I_Point.Y));
+               else
+                  Set_Nth_Arg (Args, First + 1, No_Class_Instance);
+                  Set_Nth_Arg (Args, First + 2, Float'First);
+                  Set_Nth_Arg (Args, First + 3, Float'First);
+               end if;
 
                Dummy := Subp.Execute (Args);
                Free (Args);
