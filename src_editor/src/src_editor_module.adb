@@ -209,7 +209,7 @@ package body Src_Editor_Module is
 
    function Get_Filename (Child : MDI_Child) return GNATCOLL.VFS.Virtual_File;
    function Get_Project (Child : MDI_Child) return Project_Type;
-      --  If Child is a file editor, return the corresponding filename,
+   --  If Child is a file editor, return the corresponding filename,
    --  otherwise return an empty string.
 
    function Get_File_Identifier (Child  : MDI_Child) return Virtual_File;
