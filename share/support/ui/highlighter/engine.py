@@ -16,13 +16,12 @@ class HighlighterModule(Module):
     def init_highlighting(self, f):
         highlighter = self.highlighters.get(f.language(), None)
         if isinstance(highlighter, Highlighter):
-            ed = GPS.EditorBuffer.get(f)
-            gtk_ed = get_gtk_buffer(ed)
-            if not gtk_ed.highlighting_initialized:
-                highlighter.init_highlighting(ed)
-                # gen = highlighter.highlight_gen(gtk_ed)
-                # highlighter.gtk_idle_highlight(gtk_ed, gen)
-                highlighter.gtk_highlight(gtk_ed)
+            ed = GPS.EditorBuffer.get(f, open=False)
+            if ed:
+                gtk_ed = get_gtk_buffer(ed)
+                if not gtk_ed.highlighting_initialized:
+                    highlighter.init_highlighting(ed)
+                    highlighter.gtk_highlight(gtk_ed)
 
     def gps_started(self):
         ed = GPS.EditorBuffer.get(open=False)
@@ -36,8 +35,9 @@ class HighlighterModule(Module):
 
     def context_changed(self, ctx):
         if isinstance(ctx, GPS.FileContext):
-            ed = GPS.EditorBuffer.get()
-            self.init_highlighting(ed.file())
+            ed = GPS.EditorBuffer.get(open=False)
+            if ed:
+                self.init_highlighting(ed.file())
 
     def file_edited(self, f):
         """
