@@ -7,6 +7,7 @@ project Docs is
    for Source_Dirs use ("programmers_guide",
                         "tutorial",
                         "users_guide",
+                        "users_guide/GPS",
                         "../gnatdoc/docs/users_guide");
 
    package Naming is
