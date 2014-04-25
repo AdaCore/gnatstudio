@@ -1556,7 +1556,7 @@ package body GPS.Kernel.Scripts is
          Class        => Get_Entity_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
       Register_Command
-        (Kernel, "entity",
+        (Kernel, "entity", 0, 1,
          Class        => Get_Entity_Context_Class (Kernel),
          Handler      => Entity_Context_Command_Handler'Access);
 
