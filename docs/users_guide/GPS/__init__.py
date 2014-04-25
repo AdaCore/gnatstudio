@@ -11203,7 +11203,7 @@ def visual_diff(file1, file2, file3=''):
 
 def xref_frozen():
     """
-    Return trues if the xref database is frozen.
+    Return true if the xref database is frozen.
 
     .. seealso:: :func:`GPS.freeze_xref`
     """
