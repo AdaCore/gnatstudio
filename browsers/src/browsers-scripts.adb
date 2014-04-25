@@ -703,6 +703,10 @@ package body Browsers.Scripts is
          GPS_MDI_Child (C).Set_Save_Desktop_Callback
            (Nth_Arg (Data, 4, Default => null));
 
+         View.View.Set_Snap
+           (Snap_To_Grid   => Nth_Arg (Data, 5, True),
+            Snap_To_Guides => Nth_Arg (Data, 6, False));
+
          Inst := Nth_Arg (Data, 1);
          Set_Data (Inst, Widget => GObject (View));
 
@@ -713,7 +717,9 @@ package body Browsers.Scripts is
            (Nth_Arg (Data, 2, Background_Type'Pos (Background_None)));
          View.View.Grid_Style :=
            Get_Style (Nth_Arg (Data, 3, Allow_Null => True));
+
          View.View.Set_Grid_Size (Gdouble (Nth_Arg (Data, 4, 20.0)));
+
          View.Queue_Draw;
 
       elsif Command = "scale_to_fit" then
@@ -1272,7 +1278,9 @@ package body Browsers.Scripts is
          Class   => Module.View_Class,
          Params  => (1 => Param ("diagram"),
                      2 => Param ("title"),
-                     3 => Param ("save_desktop", Optional => True)),
+                     3 => Param ("save_desktop", Optional => True),
+                     4 => Param ("snap_to_grid", Optional => True),
+                     5 => Param ("snap_to_guides", Optional => True)),
          Handler => View_Handler'Access);
       Register_Command
         (Kernel.Scripts,

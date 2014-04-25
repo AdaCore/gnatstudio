@@ -750,7 +750,8 @@ class View(GPS.GUI):
         This is in particular needed to provide support for user interaction.
         """
 
-    def create(self, diagram, title, save_desktop=None):
+    def create(self, diagram, title, save_desktop=None,
+               snap_to_grid=True, snap_to_guides=False):
         """
         Creates a new view that shows the given diagram.
         This view is automatically made visible in GPS.
@@ -764,6 +765,16 @@ class View(GPS.GUI):
            useful, unless you are writting a custom python module, in which
            case the parameter should be set to "module._save_desktop". See
            the documentation for :file:`modules.py` for more information.
+        :param bool snap_to_grid: whether items should preferably align on
+           the grid when they are moved (ie they might be moved an additional
+           small amount so that they are properly aligned). Snapping is
+           systematically disabled when the user moves the item while pressing
+           shift.
+        :param bool snap_to_guides: whether items should preferably align on
+           smart guides. These guides are generated for particular points of
+           interests of the other items (typically the top, middle and bottom
+           of the bounding box). This feature is useful to help user align
+           items.
         """
 
     def scale_to_fit(self, max_scale=4.0):
