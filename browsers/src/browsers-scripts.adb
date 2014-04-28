@@ -228,6 +228,10 @@ package body Browsers.Scripts is
 
    function On_Item_Event_Zoom is new On_Item_Event_Zoom_Generic
      (Modifier => Mod1_Mask);
+   function On_Item_Event_Key_Navigate
+     is new On_Item_Event_Key_Navigate_Generic (Modifier => 0);
+   function On_Item_Event_Key_Scrolls is new On_Item_Event_Key_Scrolls_Generic
+     (Modifier => Mod1_Mask);
 
    function Get_Item (Inst : Class_Instance) return Abstract_Item;
    --  Set or get the style associated with an instance of GPS.Browsers.Item
@@ -645,9 +649,12 @@ package body Browsers.Scripts is
       Gtkada.Canvas_View.Initialize (Self.View);
       Scrolled.Add (Self.View);
 
+      Self.View.On_Item_Event (On_Item_Event_Select'Access);
       Self.View.On_Item_Event (On_Item_Event_Scroll_Background'Access);
       Self.View.On_Item_Event (On_Item_Event_Zoom'Access);
       Self.View.On_Item_Event (On_Item_Event'Access, Self);
+      Self.View.On_Item_Event (On_Item_Event_Key_Navigate'Access);
+      Self.View.On_Item_Event (On_Item_Event_Key_Scrolls'Access);
 
       Register_Contextual_Menu
         (Kernel          => Self.Kernel,
