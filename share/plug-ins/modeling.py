@@ -127,6 +127,17 @@ project_switches = """<?xml version='1.0' ?>
 """
 
 
+class GMC_Diagram(GPS.Browsers.Diagram):
+
+    def on_selection_changed(self, item, *args):
+        if item is None:
+            GPS.Console().write("clear selection\n")
+        else:
+           GPS.Console().write(
+               "selection_changed item=%s selected=%s\n" % (
+                   item, self.is_selected(item=item)))
+
+
 class GMC_Canvas_View(GPS.Browsers.View):
     def __init__(self, file, module):
         """
@@ -135,7 +146,8 @@ class GMC_Canvas_View(GPS.Browsers.View):
         :param modules.Module module: the module
         """
         self.file = file
-        diagrams = GPS.Browsers.Diagram.load_json(file.name())
+        diagrams = GPS.Browsers.Diagram.load_json(
+            file.name(), diagramFactory=GMC_Diagram)
         self.create(
             diagrams[0],
             title=os.path.basename(file.name()),

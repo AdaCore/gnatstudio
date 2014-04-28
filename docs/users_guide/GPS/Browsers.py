@@ -453,7 +453,21 @@ class Link(object):
 class Diagram(object):
     """
     A diagram contains a set of items.
+
+    You can extend this class with your own, and declare the following
+    special subprograms which are called automatically by GPS:
+
+            def on_selection_changed(self, item, *args):
+                '''
+                Called when the selection status of item has changed.
+
+                :param GPS.Browsers.Item item: the item that was selected or
+                  unselected. This is set to None when all items were
+                  unselected.
+                '''
     """
+
+    Selection = enum('Diagram.Selection', NONE=0, SINGLE=1, MULTIPLE=2)
 
     def __init__(self):
         """
@@ -468,8 +482,17 @@ class Diagram(object):
         :param GPS.Browsers.Item item: the item to add
         """
 
+    def set_selection_mode(self, mode=Seletion.SINGLE):
+        """
+        Controls the selection in the views associated with this buffer.
+        It can be used to indicate whether a single item or multiple items
+        can be selected.
+
+        :param GPS.Browsers.Diagram.Selection mode: the type of selection
+        """
+
     @staticmethod
-    def load_json(file):
+    def load_json(file, diagramFactory=None):
         """
         Load a JSON file into a series of diagrams.
 
@@ -682,7 +705,19 @@ class Diagram(object):
 
         :param str file: an object that has a read() function, or the name
            of a file as a string.
+        :param callable diagramFactory: a callback that creates a new instance
+           of GPS.Browsers.Diagram or one of its derived classes. Typically,
+           you could pass the class itself, since calling it will create a new
+           instance.
         :return: the list of GPS.Browsers.Diagram objects created.
+        """
+
+    def is_selected(self, item):
+        """
+        Whether the item is selected.
+
+        :param GPS.Browsers.Item item: the item to check
+        :return: a boolean
         """
 
 
@@ -801,6 +836,14 @@ class View(GPS.GUI):
            be something like `linear 0 0 1000 1000 0 black 1 yellow`
 
         :param float size: the size of the grid, when using GRID or DOTS.
+        """
+
+    def set_selection_style(self, style):
+        """
+        The style used to highlight the selected items (see
+        :func:`GPS.Browsers.Diagram.set_selection_mode`).
+
+        :param GPS.Browsers.Style style: the style to use.
         """
 
     def set_read_only(self, readonly=True):

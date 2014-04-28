@@ -36,6 +36,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Widget;                use Gtk.Widget;
@@ -120,7 +121,10 @@ package body Browsers.Scripts is
    function Get_Style (Inst : Class_Instance) return Drawing_Style;
    --  Set or get the style associated with an instance of GPS.Browsers.Style
 
-   subtype Model_Type is List_Canvas_Model;
+   type Model_Type_Record is new List_Canvas_Model_Record with record
+      Kernel : Kernel_Handle;
+   end record;
+   type Model_Type is access all Model_Type_Record'Class;
 
    type Model_Properties_Record is new Instance_Property_Record with record
       Model : Model_Type;
@@ -292,6 +296,11 @@ package body Browsers.Scripts is
      (Self : not null access Plink_Record)
       return Instance_List_Access is (Self.Inst'Access);
    overriding procedure Destroy (Self : not null access Plink_Record);
+
+   procedure On_Selection_Changed
+     (Model : not null access GObject_Record'Class;
+      Item  : Abstract_Item);
+   --  Called when the selection has changed
 
    ------------------
    -- Set_Instance --
@@ -475,15 +484,34 @@ package body Browsers.Scripts is
       Inst  : constant Class_Instance := Nth_Arg (Data, 1);
       Model : Model_Type;
       Item  : Abstract_Item;
+      Id    : Handler_Id;
+      pragma Unreferenced (Id);
    begin
       if Command = Constructor_Method then
-         Gtk_New (Model);
+         Model := new Model_Type_Record;
+         Model.Kernel := Get_Kernel (Data);
+         Gtkada.Canvas_View.Initialize (Model);
+
          Set_Model (Inst, Model);
+         Set_Data (Inst, GObject (Model));
+
+         Id := Model.On_Selection_Changed (On_Selection_Changed'Access);
 
       elsif Command = "add" then
          Model := Get_Model (Inst);
          Item  := Get_Item (Nth_Arg (Data, PA_Item));
          Model.Add (Item);
+
+      elsif Command = "set_selection_mode" then
+         Model := Get_Model (Inst);
+         Model.Set_Selection_Mode
+           (Selection_Mode'Val
+              (Nth_Arg (Data, 2, Selection_Mode'Pos (Selection_Single))));
+
+      elsif Command = "is_selected" then
+         Model := Get_Model (Inst);
+         Set_Return_Value
+           (Data, Model.Is_Selected (Get_Item (Nth_Arg (Data, 2))));
       end if;
    end Diagram_Handler;
 
@@ -522,6 +550,48 @@ package body Browsers.Scripts is
 
       Canvas_View_Record (Self.all).Draw_Internal (Context, Area);
    end Draw_Internal;
+
+   --------------------------
+   -- On_Selection_Changed --
+   --------------------------
+
+   procedure On_Selection_Changed
+     (Model : not null access GObject_Record'Class;
+      Item  : Abstract_Item)
+   is
+      Self    : constant Model_Type := Model_Type (Model);
+      Inst    : Class_Instance := No_Class_Instance;
+      Scripts : constant Scripting_Language_Array :=
+        Self.Kernel.Scripts.Get_Scripting_Languages;
+      Subp   : Subprogram_Type;
+      Dummy  : Boolean;
+   begin
+      for S in Scripts'Range loop
+         Inst := Get_Instance (Scripts (S), Self);
+         exit when Inst /= No_Class_Instance;
+      end loop;
+
+      if Inst /= No_Class_Instance then
+         Subp := Get_Method (Inst, "on_selection_changed");
+         if Subp /= null then
+            declare
+               Args : Callback_Data'Class := Subp.Get_Script.Create (1);
+            begin
+               if Item = null then
+                  Set_Nth_Arg (Args, 1, No_Class_Instance);
+               else
+                  Set_Nth_Arg
+                    (Args, 1,
+                     Get_Instance
+                       (Python_Item_Access (Item), Subp.Get_Script));
+               end if;
+               Dummy := Subp.Execute (Args);
+               Free (Args);
+               Free (Subp);
+            end;
+         end if;
+      end if;
+   end On_Selection_Changed;
 
    -----------------
    -- Call_Method --
@@ -731,6 +801,11 @@ package body Browsers.Scripts is
          View.View.Set_Grid_Size (Gdouble (Nth_Arg (Data, 4, 20.0)));
 
          View.Queue_Draw;
+
+      elsif Command = "set_selection_style" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+         View.View.Set_Selection_Style (Get_Style (Nth_Arg (Data, 2)));
 
       elsif Command = "scale_to_fit" then
          Inst := Nth_Arg (Data, 1);
@@ -1316,6 +1391,18 @@ package body Browsers.Scripts is
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "set_selection_mode",
+         Params  => (2 => Param ("mode")),
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "is_selected",
+         Params  => (2 => Param ("item")),
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
 
       Register_Command
         (Kernel.Scripts,
@@ -1331,6 +1418,12 @@ package body Browsers.Scripts is
                      3 => Param ("save_desktop", Optional => True),
                      4 => Param ("snap_to_grid", Optional => True),
                      5 => Param ("snap_to_guides", Optional => True)),
+         Handler => View_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "set_selection_style",
+         Params  => (2 => Param ("style")),
+         Class   => Module.View_Class,
          Handler => View_Handler'Access);
       Register_Command
         (Kernel.Scripts,

@@ -217,7 +217,7 @@ def parse_item(items, json, styles):
     return it
 
 
-def load_json_file(file):
+def load_json_file(file, diagramFactory=None):
     """
     Load the contents of the JSON file into the specified diagram. See the
     GPS.Browsers documentation for more information on the format.
@@ -230,13 +230,13 @@ def load_json_file(file):
         if isinstance(file, str):
             file = open(file)
 
-        return load_json_data(json.load(file))
+        return load_json_data(json.load(file), diagramFactory)
     except Exception as e:
         GPS.Console().write("Unexpected exception %s\n%s\n" % (
             e, traceback.format_exc()))
 
 
-def load_json_data(data):
+def load_json_data(data, diagramFactory=None):
     """
     Load a JSON string.
 
@@ -251,7 +251,10 @@ def load_json_data(data):
         styles.parse(s, None)
 
     for d in data.get('diagrams', []):
-        diag = B.Diagram()   # A new diagram
+        if diagramFactory is None:
+            diag = B.Diagram()   # A new diagram
+        else:
+            diag = diagramFactory()
         diagrams.append(diag)
 
         for o in d.get('items', []):
