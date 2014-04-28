@@ -811,3 +811,17 @@ class View(GPS.GUI):
 
         :param bool readonly: whether the view is read-only.
         """
+
+    def export_pdf(self, filename, format="a4", visible_only=True):
+        """
+        Creates a PDF file with the contents of the view.
+
+        :param GPS.File filename: the name of the file to create or
+           override.
+        :param str format: one of "a4", "a4_portrait", "a4_landscape",
+           or similar variants with "a3" and "letter". It can also be
+           a string "width,height" where the size is given in inches.
+        :param bool visible_only: if True, the output will match was is
+           visible in the view. If False, the output will include the
+           whole contents of the diagram.
+        """

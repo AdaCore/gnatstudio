@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Cairo.Pattern;             use Cairo, Cairo.Pattern;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -26,6 +28,7 @@ with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;              use GNAT.Strings;
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
@@ -732,6 +735,46 @@ package body Browsers.Scripts is
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
          View.Read_Only := Nth_Arg (Data, 2, True);
+
+      elsif Command = "export_pdf" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+
+         declare
+            F      : constant String := Nth_Arg (Data, 3, "a4");
+            Format : Page_Format;
+            Comma  : Integer;
+            Filename : Virtual_File;
+         begin
+            if F = "" or else F = "a4" or else F = "a4_portrait" then
+               Format := A4_Portrait;
+            elsif F = "a4_landscape" then
+               Format := A4_Landscape;
+            elsif F = "a3" or else F = "a3_portrait" then
+               Format := A3_Portrait;
+            elsif F = "a3_landscape" then
+               Format := A3_Landscape;
+            elsif F = "letter" or else F = "letter_portrait" then
+               Format := Letter_Portrait;
+            elsif F = "letter_landscape" then
+               Format := Letter_Landscape;
+            elsif Is_Digit (F (F'First)) then
+               Comma := Index (F, ",");
+               Format.Width_In_Inches :=
+                 Gdouble'Value (F (F'First .. Comma - 1));
+               Format.Height_In_Inches :=
+                 Gdouble'Value (F (Comma + 1 .. F'Last));
+            else
+               Format := A4_Portrait;
+            end if;
+
+            Filename := Nth_Arg (Data, 2);
+
+            View.View.Export_To_PDF
+              (Filename          => Filename.Display_Full_Name,
+               Format            => Format,
+               Visible_Area_Only => Nth_Arg (Data, 4, True));
+         end;
       end if;
    end View_Handler;
 
@@ -1301,6 +1344,14 @@ package body Browsers.Scripts is
          "set_read_only",
          Class   => Module.View_Class,
          Params  => (1 => Param ("readonly", Optional => True)),
+         Handler => View_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "export_pdf",
+         Class   => Module.View_Class,
+         Params  => (2 => Param ("filename"),
+                     3 => Param ("format", Optional => True),
+                     4 => Param ("visible_only", Optional => True)),
          Handler => View_Handler'Access);
 
       Register_Command
