@@ -19,6 +19,7 @@ import modules
 import os.path
 import os_utils
 import gps_utils
+import json
 
 # Constants
 
@@ -182,12 +183,26 @@ class GMC_Module(modules.Module):
         return False
 
     def load_desktop(self, view, data):
-        v = GMC_Canvas_View(file=GPS.File(data), module=self)
+        try:
+            info = json.loads(data)
+            if not isinstance(info, dict):
+                return None
+        except:
+            return None
+
+        v = GMC_Canvas_View(file=GPS.File(info["file"]), module=self)
+        v.scale = info["scale"]
+        v.topleft = info["topleft"]
+
         return GPS.MDI.get_by_child(v)
 
     def save_desktop(self, child):
         # ??? Should save position and scaling factor too
-        return child.get_child().file.name()
+        view = child.get_child()
+        info = {"file": view.file.name(),
+                "scale": view.scale,
+                "topleft": view.topleft}
+        return json.dumps(info)
 
     def setup(self):
         """

@@ -19,11 +19,19 @@ Classes
 
    
 
+
+   .. autoattribute:: GPS.Browsers.Diagram.Selection
+
+
    .. automethod:: GPS.Browsers.Diagram.__init__
 
    .. automethod:: GPS.Browsers.Diagram.add
 
+   .. automethod:: GPS.Browsers.Diagram.is_selected
+
    .. automethod:: GPS.Browsers.Diagram.load_json
+
+   .. automethod:: GPS.Browsers.Diagram.set_selection_mode
 
 :class:`GPS.Browsers.EllipseItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -158,12 +166,24 @@ Classes
    .. autoattribute:: GPS.Browsers.View.Background
 
 
+
+   .. autoattribute:: GPS.Browsers.View.scale
+
+
+
+   .. autoattribute:: GPS.Browsers.View.topleft
+
+
    .. automethod:: GPS.Browsers.View.__init__
 
    .. automethod:: GPS.Browsers.View.create
+
+   .. automethod:: GPS.Browsers.View.export_pdf
 
    .. automethod:: GPS.Browsers.View.scale_to_fit
 
    .. automethod:: GPS.Browsers.View.set_background
 
    .. automethod:: GPS.Browsers.View.set_read_only
+
+   .. automethod:: GPS.Browsers.View.set_selection_style

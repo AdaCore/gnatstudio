@@ -455,7 +455,7 @@ class Diagram(object):
     A diagram contains a set of items.
 
     You can extend this class with your own, and declare the following
-    special subprograms which are called automatically by GPS:
+    special subprograms which are called automatically by GPS::
 
             def on_selection_changed(self, item, *args):
                 '''
@@ -482,7 +482,7 @@ class Diagram(object):
         :param GPS.Browsers.Item item: the item to add
         """
 
-    def set_selection_mode(self, mode=Seletion.SINGLE):
+    def set_selection_mode(self, mode=Selection.SINGLE):
         """
         Controls the selection in the views associated with this buffer.
         It can be used to indicate whether a single item or multiple items
@@ -774,6 +774,17 @@ class View(GPS.GUI):
     """
 
     Background = enum('View.Background', NONE=0, COLOR=1, GRID=2, LINES=3)
+
+    scale = 1.0
+    """
+    The scaling factor for the view. This is a writable property
+    """
+
+    topleft = (0.0, 0.0)
+    """
+    The coordinates of the top-left corner of the view.
+    This is a writable property
+    """
 
     def __init__(self):
         """

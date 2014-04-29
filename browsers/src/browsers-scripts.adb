@@ -857,6 +857,41 @@ package body Browsers.Scripts is
                Format            => Format,
                Visible_Area_Only => Nth_Arg (Data, 4, True));
          end;
+
+      elsif Command = "scale" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+
+         if Number_Of_Arguments (Data) = 1 then
+            Set_Return_Value (Data, Float (View.View.Get_Scale));
+         else
+            View.View.Set_Scale (Gdouble (Nth_Arg (Data, 2, 1.0)));
+         end if;
+
+      elsif Command = "topleft" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+
+         if Number_Of_Arguments (Data) = 1 then
+            declare
+               A : constant Model_Rectangle := View.View.Get_Visible_Area;
+            begin
+               Set_Return_Value_As_List (Data, Size => 2);
+               Set_Return_Value (Data, Float (A.X));
+               Set_Return_Value (Data, Float (A.Y));
+            end;
+
+         else
+            declare
+               L : constant List_Instance'Class := Nth_Arg (Data, 2);
+            begin
+               View.View.Center_On
+                 ((Gdouble (Nth_Arg (L, 1, 0.0)),
+                   Gdouble (Nth_Arg (L, 2, 0.0))),
+                  X_Pos => 0.0,
+                  Y_Pos => 0.0);
+            end;
+         end if;
       end if;
    end View_Handler;
 
@@ -1285,11 +1320,13 @@ package body Browsers.Scripts is
             Anchor_From =>
               (X   => Gdouble (Nth_Arg (Data, L_From_X, 0.5)),
                Y   => Gdouble (Nth_Arg (Data, L_From_Y, 0.5)),
+               Distance => 0.0,
                Toplevel_Side => Side_Attachment'Val
                  (Nth_Arg (Data, L_From_Side, Side_Attachment'Pos (Auto)))),
             Anchor_To   =>
               (X   => Gdouble (Nth_Arg (Data, L_To_X, 0.5)),
                Y   => Gdouble (Nth_Arg (Data, L_To_Y, 0.5)),
+               Distance => 0.0,
                Toplevel_Side => Side_Attachment'Val
                  (Nth_Arg (Data, L_To_Side, Side_Attachment'Pos (Auto)))));
 
@@ -1453,6 +1490,18 @@ package body Browsers.Scripts is
                      3 => Param ("format", Optional => True),
                      4 => Param ("visible_only", Optional => True)),
          Handler => View_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "scale",
+         Class => Module.View_Class,
+         Setter => View_Handler'Access,
+         Getter => View_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "topleft",
+         Class => Module.View_Class,
+         Setter => View_Handler'Access,
+         Getter => View_Handler'Access);
 
       Register_Command
         (Kernel.Scripts,
