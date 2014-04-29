@@ -25,6 +25,19 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N425-013 GB: no current word highlighting control
+
+  Problem:    The current word under the cursor is highlighted even 
+              after deactivating Toggle Mark Occurrences control in the 
+              toolbar. This happens for Eclipse Kepler (version 4.3).
+              Also word matching is imprecise. For example, when the
+              cursor is over the reserved word "is", other words containing
+              the substring (e.g. "this", "distributed") are also highlighted.
+
+  Status:     This is fixed in 2.9 on 2014-04-29
+
+  Workaround: No workaround needed.
+
 KP-60-N423-019 GPS: dropping files does not work on a read-only editor
 
   Problem:    When drag-and-dropping a file from the window manager on top
@@ -639,19 +652,6 @@ KP-60-G928-018 GPS: "center cursor on screen" scrolls horizontally
 
 Known problems fixed in GPS 6.0.2 / GNATbench 2.8.2
 ---------------------------------------------------
-
-KP-60-N425-013 GB: no current word highlighting control
-
-  Problem:    The current word under the cursor is highlighted even 
-              after deactivating Toggle Mark Occurrences control in the 
-              toolbar. This happens for Eclipse Kepler (version 4.3).
-              Also word matching is imprecise. For example, when the
-              cursor is over the reserved word "is", other words containing
-              the substring (e.g. "this", "distributed") are also highlighted.
-
-  Status:     This is fixed in 2.8.2 on 2014-04-29
-
-  Workaround: No workaround needed.
 
 KP-60-N305-041 GPS: overwriting symbolic links
 
