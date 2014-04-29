@@ -28,7 +28,7 @@ package Entities_Tooltips is
    function Draw_Tooltip
      (Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Xref.Root_Entity'Class;
-      Ref           : Xref.General_Entity_Reference;
+      Ref           : Xref.Root_Entity_Reference'Class;
       Draw_Border   : Boolean) return Gtk.Widget.Gtk_Widget;
    --  Return a tooltip representing Entity.
 

@@ -226,19 +226,18 @@ package body GPS.Scripts.Files is
             Sortby : constant Integer := Nth_Arg
                (Data, 3, References_Sort'Pos (References_Sort'First));
             Sort   : constant References_Sort := References_Sort'Val (Sortby);
-            Refs   : Entity_Reference_Iterator;
             Result : List_Instance'Class := New_List (Get_Script (Data));
             F      : constant Class_Instance := Nth_Arg (Data, 1);
+            Refs   : Root_Reference_Iterator'Class :=
+              Kernel.Databases.Find_All_References
+                (File   => Info,
+                 Kind   => Kind,
+                 Sort   => Sort);
          begin
-            Kernel.Databases.Find_All_References
-               (Iter   => Refs,
-                File   => Info,
-                Kind   => Kind,
-                Sort   => Sort);
 
             while not At_End (Refs) loop
                declare
-                  R   : constant General_Entity_Reference := Get (Refs);
+                  R   : constant Root_Entity_Reference'Class := Get (Refs);
                   Loc : constant General_Location := Get_Location (R);
                   L   : List_Instance'Class := New_List (Get_Script (Data));
                begin

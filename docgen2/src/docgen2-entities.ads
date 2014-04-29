@@ -80,9 +80,9 @@ package Docgen2.Entities is
    package Entity_Info_List is new Ada.Containers.Vectors
      (Index_Type => Natural, Element_Type => Entity_Info);
 
-   package Entity_Ref_List is new Ada.Containers.Vectors
+   package Entity_Ref_List is new Ada.Containers.Indefinite_Vectors
      (Index_Type   => Natural,
-      Element_Type => Xref.General_Entity_Reference,
+      Element_Type => Xref.Root_Entity_Reference'Class,
       "="          => Xref."=");
 
    package Files_List is new Ada.Containers.Vectors

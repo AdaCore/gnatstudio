@@ -19,8 +19,6 @@
 --  frontend retrieves blocks of comments from the sources, parses such blocks
 --  and generates structured comments composed of tags and their attributes.
 
-with Ada.Containers.Indefinite_Holders;
-
 private package GNATdoc.Comment is
 
    type Structured_Comment is private;
@@ -33,11 +31,8 @@ private package GNATdoc.Comment is
    function Present (Comment : Structured_Comment) return Boolean;
    --  Returns true if an structured comment is available
 
-   package Holder is new Ada.Containers.Indefinite_Holders
-     (Root_Entity'Class);
-
    type Tag_Info is record
-      Entity : Holder.Holder;
+      Entity : Root_Entity_Ref;
       Tag    : Ada.Strings.Unbounded.Unbounded_String;
       Attr   : Ada.Strings.Unbounded.Unbounded_String;
       Text   : Ada.Strings.Unbounded.Unbounded_String;

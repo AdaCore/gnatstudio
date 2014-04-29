@@ -89,7 +89,6 @@ with String_Utils;               use String_Utils;
 with Tooltips;                   use Tooltips;
 
 with Xref; use Xref;
-with Ada.Containers.Indefinite_Holders;
 
 package body Src_Editor_Box is
    use type GNATCOLL.Xref.Visible_Column;
@@ -102,12 +101,9 @@ package body Src_Editor_Box is
       User_Type   => Source_Editor_Box,
       Setup       => Setup);
 
-   package Holder is new Ada.Containers.Indefinite_Holders
-     (Root_Entity'Class);
-
    type Entity_And_Kernel is record
       Kernel : Kernel_Handle;
-      Entity : Holder.Holder;
+      Entity : Root_Entity_Ref;
    end record;
 
    package Entity_Callback is new Gtk.Handlers.User_Callback
@@ -1317,7 +1313,7 @@ package body Src_Editor_Box is
       --  CP record is used to sort the menu entries by means of an ordered set
 
       type CP is record
-         Callee, Primitive_Of : Holder.Holder;
+         Callee, Primitive_Of : Root_Entity_Ref;
       end record;
 
       function "<" (Left, Right : CP) return Boolean;
@@ -1401,8 +1397,7 @@ package body Src_Editor_Box is
       Ensure_Context_Up_To_Date (Context);
 
       Xref.For_Each_Dispatching_Call
-        (Entity    => Get_Entity (Context),
-         Ref       => Get_Closest_Ref (Context),
+        (Ref       => Get_Closest_Ref (Context),
          On_Callee => On_Callee'Access,
          Filter    => Filter);
 
@@ -1457,6 +1452,15 @@ package body Src_Editor_Box is
          Show_Default  => True,
          Callback      => On_Goto_Declaration_Of'Access);
    end Append_To_Menu;
+
+   -----------------------
+   -- Reference_Is_Body --
+   -----------------------
+
+   function Reference_Is_Body
+     (Ref : Root_Entity_Reference'Class) return Boolean
+   is
+     (Ref.Reference_Is_Body);
 
    --------------------
    -- Append_To_Menu --

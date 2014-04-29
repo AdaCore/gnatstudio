@@ -468,7 +468,6 @@
 --       Traverse all the entities of a subtree calling a given function on
 --       each node.
 
-with Ada.Containers.Indefinite_Holders;
 with Ada.Containers.Vectors;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with Language;                use Language;
@@ -1122,34 +1121,31 @@ private package GNATdoc.Atree is
 private
    type Ref_Info is record
       Entity : Entity_Id;
-      Ref    : General_Entity_Reference;
+      Ref    : Root_Entity_Reference_Ref;
       Loc    : General_Location;
    end record;
 
    package Ref_List is new Ada.Containers.Vectors
      (Index_Type => Natural, Element_Type => Ref_Info);
 
-   package Holder is new Ada.Containers.Indefinite_Holders
-     (Root_Entity'Class);
-
    type Xref_Info is
       record
-         Alias            : Holder.Holder;
+         Alias            : Root_Entity_Ref;
          Body_Loc         : General_Location;
          Ekind            : Entity_Kind;
          End_Of_Scope_Loc : General_Location;
-         Entity           : Holder.Holder;
-         Etype            : Holder.Holder;
+         Entity           : Root_Entity_Ref;
+         Etype            : Root_Entity_Ref;
          Etype_Loc        : General_Location;
-         Instance_Of      : Holder.Holder;
+         Instance_Of      : Root_Entity_Ref;
          Loc              : General_Location;
 
-         Array_Component_Type : Holder.Holder;
+         Array_Component_Type : Root_Entity_Ref;
 
-         Pointed_Type     : Holder.Holder;
+         Pointed_Type     : Root_Entity_Ref;
 
-         Scope_E          : Holder.Holder;
-         Parent_Package   : Holder.Holder;
+         Scope_E          : Root_Entity_Ref;
+         Parent_Package   : Root_Entity_Ref;
          --  Present in packages
 
          First_Private_Entity_Loc : General_Location;

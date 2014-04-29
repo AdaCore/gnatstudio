@@ -64,7 +64,6 @@ with GPS.Messages_Windows;
 with GPS.Process_Launchers;
 with GPS.Process_Launchers.Implementation;
 use GPS.Process_Launchers.Implementation;
-with Ada.Containers.Indefinite_Holders;
 
 package GPS.Kernel is
 
@@ -938,9 +937,6 @@ private
       Element_Type => Boolean,
       "<"          => System."<");
 
-   package Holder is new Ada.Containers.Indefinite_Holders
-     (Xref.Root_Entity'Class, "=" => Xref."=");
-
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
       Creator   : Abstract_Module;
@@ -993,7 +989,7 @@ private
         GNATCOLL.Tribooleans.Indeterminate;
       --  Whether we clicked on a dispatching call.
 
-      Xref_Entity : Holder.Holder;
+      Xref_Entity : Xref.Root_Entity_Ref;
       --  The Entity for xref purposes. This is computed when the context
       --  is created. When the source location only results in a possible
       --  candidate (overloaded entities and not up-to-date ALI files), the
@@ -1004,7 +1000,7 @@ private
       --  Whether we have already attempted to get the Xref_Entity for this
       --  context.
 
-      Xref_Entity_Type_Of : Holder.Holder;
+      Xref_Entity_Type_Of : Xref.Root_Entity_Ref;
       --  The type of Xref_Entity, cached.
       --  No_General_Entity indicates that the entity hasn't been computed.
 
@@ -1012,8 +1008,9 @@ private
         GNATCOLL.Tribooleans.Indeterminate;
       --  Whether the entity has at least one parent type.
 
-      Xref_Closest_Ref  : Xref.General_Entity_Reference :=
-        Xref.No_General_Entity_Reference;
+      Xref_Closest_Ref  : Xref.Root_Entity_Reference_Ref :=
+        Xref.Root_Entity_Reference_Refs.To_Holder
+          (Xref.No_Root_Entity_Reference);
       --  The reference on which the user has clicked. This is slightly
       --  redundant with the location above, but since this was computed at the
       --  same time as the entity anyway, we might as well store it.

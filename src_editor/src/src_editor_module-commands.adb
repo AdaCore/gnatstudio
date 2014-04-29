@@ -122,8 +122,7 @@ package body Src_Editor_Module.Commands is
 
       if Is_Dispatching_Call (Context) = Indeterminate then
          Xref.For_Each_Dispatching_Call
-           (Entity    => Get_Entity (Context),
-            Ref       => Get_Closest_Ref (Context),
+           (Ref       => Get_Closest_Ref (Context),
             On_Callee => On_Callee'Access);
 
          --  See comment above to see why this code is commented out pragma

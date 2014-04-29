@@ -37,6 +37,13 @@ with Projects;
 with Language_Handlers;
 with Language.Tree.Database;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
+with Ada.Containers.Indefinite_Holders;
+
+----------
+-- Xref --
+----------
 
 package Xref is
 
@@ -44,7 +51,11 @@ package Xref is
      GNATCOLL.Traces.Create ("Entities.SQLITE", GNATCOLL.Traces.On);
    --  Whether to use the sqlite-based cross-reference system
 
-   type Root_Entity is abstract tagged private;
+   type Root_Reference_Iterator is abstract tagged null record;
+   type Root_Reference_Iterator_Access
+   is access all Root_Reference_Iterator'Class;
+
+   type Root_Entity is abstract tagged null record;
    No_Root_Entity : aliased constant Root_Entity'Class;
    --  aliased is added to let AJIS make it accessible to GNATbench
 
@@ -66,9 +77,43 @@ package Xref is
    --  either the constructs database or the LI database.
    --  It is further extended (GPS-specific) in GPS.Kernel.Xref.
 
-   ---------------------
-   --  The set of all databases
-   ---------------------
+   -------------------------------
+   --  The set of all databases --
+   -------------------------------
+
+   -----------------------
+   --  File location
+   -----------------------
+
+   type General_Location is record
+      File   : aliased Virtual_File := No_File;
+      --  aliased is added to let AJIS make this field accessible to GNATbench
+
+      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
+      --  Used to disambiguate which project is handling the file, for instance
+      --  in the case of aggregate projects. This might be left to No_Project
+      --  when unknown, in which case the caller is invitated to pickup one
+      --  possible project at random.
+
+      Line   : Integer := 0;
+      Column : Visible_Column_Type := 0;
+   end record;
+   No_Location : aliased constant General_Location :=
+     (No_File, GNATCOLL.Projects.No_Project, 0, 0);
+   --  ??? Should we also cache the Old_Entities.Source_File ?
+   --  aliased is added to let AJIS make it accessible to GNATbench
+
+   type Lang_Specific_Database is interface;
+   function Get_Entity
+     (Db : Lang_Specific_Database;
+      Name : String;
+      Loc : General_Location) return Root_Entity'Class is abstract;
+
+   package Lang_Specific_Databases_Maps
+   is new Ada.Containers.Indefinite_Hashed_Maps
+     (String,
+      Lang_Specific_Database'Class,
+      Hash => Ada.Strings.Hash, Equivalent_Keys => "=");
 
    type General_Xref_Database_Record is tagged record
       Entities   : aliased Old_Entities.Entities_Database;
@@ -101,7 +146,10 @@ package Xref is
       --  Whether we should remove the database from the disk when we close it
 
       Errors : access GNATCOLL.SQL.Exec.Error_Reporter'Class;
+
+      Lang_Specific_Databases : Lang_Specific_Databases_Maps.Map;
    end record;
+
    type General_Xref_Database is access all General_Xref_Database_Record'Class;
 
    procedure Destroy (Self : in out General_Xref_Database);
@@ -147,28 +195,6 @@ package Xref is
    --  Location of the sqlite file that contains the xref database on which
    --  GPS is currently working.
 
-   -----------------------
-   --  File location
-   -----------------------
-
-   type General_Location is record
-      File   : aliased Virtual_File := No_File;
-      --  aliased is added to let AJIS make this field accessible to GNATbench
-
-      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
-      --  Used to disambiguate which project is handling the file, for instance
-      --  in the case of aggregate projects. This might be left to No_Project
-      --  when unknown, in which case the caller is invitated to pickup one
-      --  possible project at random.
-
-      Line   : Integer := 0;
-      Column : Visible_Column_Type := 0;
-   end record;
-   No_Location : aliased constant General_Location :=
-     (No_File, GNATCOLL.Projects.No_Project, 0, 0);
-   --  ??? Should we also cache the Old_Entities.Source_File ?
-   --  aliased is added to let AJIS make it accessible to GNATbench
-
    type General_Entity_Declaration is record
       Loc  : aliased General_Location;
       --  aliased is added to let AJIS make this field accessible to GNATbench
@@ -179,10 +205,85 @@ package Xref is
    --  Various pieces of information computed for the entity, including the
    --  location of its declaration.
 
+   ---------------------------
+   -- Root Entity Reference --
+   ---------------------------
+
+   type Root_Entity_Reference is abstract tagged null record;
+   type Root_Entity_Ref_Access is access all Root_Entity_Reference'Class;
+
+   type Reference_Kind_Filter is access function
+     (Ref : Root_Entity_Reference'Class) return Boolean;
+
+   function From_Instances
+     (Ref : Root_Entity_Reference) return Entity_Array is abstract;
+   function Reference_Is_Body
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Reference_Is_Declaration
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Is_Real_Reference
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Is_Implicit_Reference
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Is_Real_Or_Implicit_Reference
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Is_Read_Reference
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Is_Write_Reference
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Is_Read_Or_Write_Reference
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Is_Read_Or_Implicit_Reference
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Is_Read_Or_Write_Or_Implicit_Reference
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Get_Entity
+     (Ref : Root_Entity_Reference) return Root_Entity'Class is abstract;
+   function Get_Location
+     (Ref : Root_Entity_Reference) return General_Location is abstract;
+   function Show_In_Callgraph
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Is_Dispatching_Call
+     (Ref : Root_Entity_Reference) return Boolean is abstract;
+   function Get_Display_Kind
+     (Ref  : Root_Entity_Reference) return String is abstract;
+   procedure For_Each_Dispatching_Call
+     (Ref       : Root_Entity_Reference;
+      On_Callee : access function (Callee : Root_Entity'Class) return Boolean;
+      Filter    : Reference_Kind_Filter := null) is abstract;
+   function Get_Caller
+     (Ref : Root_Entity_Reference) return Root_Entity'Class is abstract;
+
+   -----------------------------
+   -- Root Reference Iterator --
+   -----------------------------
+
+   function At_End (Iter : Root_Reference_Iterator) return Boolean is abstract;
+   --  Whether there are no more reference to return
+
+   procedure Next (Iter : in out Root_Reference_Iterator) is abstract;
+   --  Move to the next reference to the entity
+
+   function Get
+     (Iter : Root_Reference_Iterator) return Root_Entity_Reference'Class
+      is abstract;
+
+   function Get_Entity
+     (Iter : Root_Reference_Iterator) return Root_Entity'Class is abstract;
+
+   procedure Destroy (Iter : in out Root_Reference_Iterator) is abstract;
+
+   function Get_Current_Progress
+     (Iter : Root_Reference_Iterator) return Integer is abstract;
+
+   function Get_Total_Progress
+     (Iter : Root_Reference_Iterator) return Integer is abstract;
+
    --  Entity references
 
-   type General_Entity_Reference is private;
-   No_General_Entity_Reference : aliased constant General_Entity_Reference;
+   type General_Entity_Reference is new Root_Entity_Reference with private;
+
+   No_Root_Entity_Reference : aliased constant Root_Entity_Reference'Class;
    --  aliased is added to let AJIS make it accessible to GNATbench
 
    overriding function "="
@@ -335,7 +436,7 @@ package Xref is
    --  Ada packages and subprograms return the location of the end of scope
    --  of their body.
 
-   function Get_Caller
+   overriding function Get_Caller
      (Ref : General_Entity_Reference) return Root_Entity'Class;
    --  Return the enclosing scope at the given location
 
@@ -393,9 +494,8 @@ package Xref is
        Recursive : Boolean) return Entity_Array is abstract;
    --  Return the list of types that Entity extends.
 
-   function From_Instances
-     (Self   : access General_Xref_Database_Record;
-      Ref    : General_Entity_Reference) return Entity_Array;
+   overriding function From_Instances
+     (Ref : General_Entity_Reference) return Entity_Array;
    --  Indicates the instantiation chain for the given reference.
    --  If we have a nested generic, as in:
    --     generic package B is
@@ -484,50 +584,35 @@ package Xref is
    --  Some operations might even query using one back-end, then fall back
    --  on a less precise back-end if the first query is not precise enough.
 
-   type Reference_Kind_Filter is access function
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-
-   function Reference_Is_Body
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Reference_Is_Declaration
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Real_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Implicit_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Real_Or_Implicit_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Read_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Write_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Read_Or_Write_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Read_Or_Implicit_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
-   function Is_Read_Or_Write_Or_Implicit_Reference
-     (Db  : access General_Xref_Database_Record'Class;
-      Ref : General_Entity_Reference) return Boolean;
+   overriding function Reference_Is_Body
+     (Ref : General_Entity_Reference) return Boolean;
+   overriding function Reference_Is_Declaration
+     (Ref : General_Entity_Reference) return Boolean;
+   overriding function Is_Real_Reference
+     (Ref : General_Entity_Reference) return Boolean;
+   overriding function Is_Implicit_Reference
+     (Ref : General_Entity_Reference) return Boolean;
+   overriding function Is_Real_Or_Implicit_Reference
+     (Ref : General_Entity_Reference) return Boolean;
+   overriding function Is_Read_Reference
+     (Ref : General_Entity_Reference) return Boolean;
+   overriding function Is_Write_Reference
+     (Ref : General_Entity_Reference) return Boolean;
+   overriding function Is_Read_Or_Write_Reference
+     (Ref : General_Entity_Reference) return Boolean;
+   overriding function Is_Read_Or_Implicit_Reference
+     (Ref : General_Entity_Reference) return Boolean;
+   overriding function Is_Read_Or_Write_Or_Implicit_Reference
+     (Ref : General_Entity_Reference) return Boolean;
    --  Various filters for references.
    --  Some references kinds are special, and mark for instance the end of
    --  scope. They should not in general be visible to users. One special kind
    --  are implicit references.
 
-   procedure For_Each_Dispatching_Call
-     (Entity    : Root_Entity;
-      Ref       : General_Entity_Reference;
+   overriding procedure For_Each_Dispatching_Call
+     (Ref       : General_Entity_Reference;
       On_Callee : access function (Callee : Root_Entity'Class) return Boolean;
-      Filter    : Reference_Kind_Filter := null) is abstract;
+      Filter    : Reference_Kind_Filter := null);
    --  If Ref references a dispatching call then call On_Callee with all the
    --  overridding primitives (that is, all the primitives that might possibly
    --  be called instead of Entity). For example, if you have:
@@ -558,30 +643,11 @@ package Xref is
    --  This also works for operators, whether they are quoted ("=") or
    --  not (=).
 
-   function Find_Declaration_Or_Overloaded
-     (Self              : access General_Xref_Database_Record;
-      Loc               : General_Location;
-      Entity_Name       : String;
-      Ask_If_Overloaded : Boolean := False;
-      Closest_Ref       : out General_Entity_Reference;
-      Approximate_Search_Fallback : Boolean := True) return Root_Entity'Class;
-   --  Similar to Get_Entity, but also returns the closest reference, and
-   --  handles interaction with the user if possible
-   --
-   --  Find the declaration of the given entity in the file.
-   --  If Ask_If_Overloaded is True and there are several possible matches for
-   --  the entity (for instance because the xref info is not up-to-date), an
-   --  interactive dialog is opened.
-   --
-   --  This also works for operators, whether they are quoted ("=") or
-   --  not (=).
-   --
-   --  Passing No_Location for Loc will search for predefined entities.
-
-   function Get_Entity (Ref : General_Entity_Reference) return General_Entity;
+   overriding function Get_Entity
+     (Ref : General_Entity_Reference) return Root_Entity'Class;
    --  Return the entity the reference is pointing to
 
-   function Get_Location
+   overriding function Get_Location
      (Ref : General_Entity_Reference) return General_Location;
    --  Return the location of this reference
 
@@ -593,17 +659,15 @@ package Xref is
    --  instead we provide a number of subprograms to perform the expected
    --  tests on the kind.
 
-   function Show_In_Callgraph
-     (Db  : access General_Xref_Database_Record;
-      Ref : General_Entity_Reference) return Boolean;
+   overriding function Show_In_Callgraph
+     (Ref : General_Entity_Reference) return Boolean;
    --  Whether to show the corresponding entity in a callgraph.
 
-   function Is_Dispatching_Call
-     (Db  : access General_Xref_Database_Record;
-      Ref : General_Entity_Reference) return Boolean;
+   overriding function Is_Dispatching_Call
+     (Ref : General_Entity_Reference) return Boolean;
    --  Whether ref is dispatching call for a subprogram
 
-   function Get_Display_Kind
+   overriding function Get_Display_Kind
      (Ref  : General_Entity_Reference) return String;
    --  A displayable version of the type of reference. This should not be used
    --  for comparison purposes (better to use one of the Is_* subprograms).
@@ -687,13 +751,10 @@ package Xref is
    --  find all references. This will no longer be needed when we only use the
    --  sqlite backend.
 
-   type Entity_Reference_Iterator is private;
-   type Entity_Reference_Iterator_Access
-     is access all Entity_Reference_Iterator;
+   type Entity_Reference_Iterator is new Root_Reference_Iterator with private;
 
-   procedure Find_All_References
-     (Iter                  : out Entity_Reference_Iterator;
-      Entity                : Root_Entity;
+   function Find_All_References
+     (Entity                : Root_Entity;
       File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;
       In_File               : GNATCOLL.VFS.Virtual_File :=
         GNATCOLL.VFS.No_File;
@@ -702,7 +763,8 @@ package Xref is
       Include_Overridden    : Boolean := False;
       Include_Implicit      : Boolean := False;
       Include_All           : Boolean := False;
-      Kind                  : String := "") is abstract;
+      Kind                  : String := "")
+      return Root_Reference_Iterator'Class is abstract;
    --  Find all the references to the entity. This also return the location
    --  for the declaration of the entity.
    --  If In_File is specified, then only the references in that file will be
@@ -726,44 +788,44 @@ package Xref is
    --  a list of comma-separated strings.
 
    subtype References_Sort is GNATCOLL.Xref.References_Sort;
-   procedure Find_All_References
+   function Find_All_References
       (Self     : access General_Xref_Database_Record;
-       Iter     : out Entity_Reference_Iterator;
        File     : GNATCOLL.VFS.Virtual_File;
        Kind     : String := "";
-       Sort     : References_Sort := GNATCOLL.Xref.By_Location);
+       Sort     : References_Sort := GNATCOLL.Xref.By_Location)
+     return Root_Reference_Iterator'Class;
    --  Return references to all entities in the file, possibly filtering by
    --  entity kind.
    --  ??? This will always return an empty list when using the old xref
    --  engine.
 
-   function At_End (Iter : Entity_Reference_Iterator) return Boolean;
-   --  Whether there are no more reference to return
+   overriding function At_End
+     (Iter : Entity_Reference_Iterator) return Boolean;
 
-   procedure Next (Iter : in out Entity_Reference_Iterator);
+   overriding procedure Next (Iter : in out Entity_Reference_Iterator);
    --  Move to the next reference to the entity
 
-   function Get
-     (Iter : Entity_Reference_Iterator) return General_Entity_Reference;
+   overriding function Get
+     (Iter : Entity_Reference_Iterator) return Root_Entity_Reference'Class;
    --  Return the current reference. This might be No_Entity_Reference if the
    --  iterator needs to parse more source files to get that information.
    --  The search is done with small steps, so that this can be easily put in
    --  the background, including the parsing of the source files.
 
-   function Get_Entity
+   overriding function Get_Entity
      (Iter : Entity_Reference_Iterator) return Root_Entity'Class;
    --  Return the entity referenced at the current location. Most of the time,
    --  it will be the entity passed in argument to Find_All_Reference. However,
    --  if Is_Real_Reference is false, it might be a different one, such as
    --  the name of a discriminant or a subprogram parameter for instance
 
-   procedure Destroy (Iter : in out Entity_Reference_Iterator);
-   procedure Destroy (Iter : in out Entity_Reference_Iterator_Access);
+   overriding procedure Destroy (Iter : in out Entity_Reference_Iterator);
+   procedure Destroy (Iter : in out Root_Reference_Iterator_Access);
    --  Free the memory used by Iter
 
-   function Get_Current_Progress
+   overriding function Get_Current_Progress
      (Iter : Entity_Reference_Iterator) return Integer;
-   function Get_Total_Progress
+   overriding function Get_Total_Progress
      (Iter : Entity_Reference_Iterator) return Integer;
    --  Return the progress indicators for the iterator
 
@@ -828,8 +890,42 @@ package Xref is
    --  The view of the project has changed, we need to refresh the xref
    --  databases.
 
+   package Root_Entity_Reference_Refs
+   is new Ada.Containers.Indefinite_Holders (Root_Entity_Reference'Class);
+
+   subtype Root_Entity_Reference_Ref is Root_Entity_Reference_Refs.Holder;
+
+   function Find_Declaration_Or_Overloaded
+     (Self              : access General_Xref_Database_Record;
+      Loc               : General_Location;
+      Entity_Name       : String;
+      Ask_If_Overloaded : Boolean := False;
+      Closest_Ref       : out Root_Entity_Reference_Ref;
+      Approximate_Search_Fallback : Boolean := True) return Root_Entity'Class;
+   --  Similar to Get_Entity, but also returns the closest reference, and
+   --  handles interaction with the user if possible
+   --
+   --  Find the declaration of the given entity in the file.
+   --  If Ask_If_Overloaded is True and there are several possible matches for
+   --  the entity (for instance because the xref info is not up-to-date), an
+   --  interactive dialog is opened.
+   --
+   --  This also works for operators, whether they are quoted ("=") or
+   --  not (=).
+   --
+   --  Passing No_Location for Loc will search for predefined entities.
+
+   package Root_Entity_Refs
+   is new Ada.Containers.Indefinite_Holders (Root_Entity'Class);
+
+   package Root_Reference_Iterator_Refs
+   is new Ada.Containers.Indefinite_Holders (Root_Reference_Iterator'Class);
+
+   subtype Root_Entity_Ref is Root_Entity_Refs.Holder;
+   subtype Root_Reference_Iterator_Ref
+     is Root_Reference_Iterator_Refs.Holder;
+
 private
-   type Root_Entity is abstract tagged null record;
 
    type Extended_Xref_Database is new GNATCOLL.Xref.Xref_Database with
       null record;
@@ -850,9 +946,8 @@ private
    overriding procedure Ref (Entity : General_Entity);
    overriding procedure Unref (Entity : in out General_Entity);
 
-   overriding procedure Find_All_References
-     (Iter                  : out Entity_Reference_Iterator;
-      Entity                : General_Entity;
+   overriding function Find_All_References
+     (Entity                : General_Entity;
       File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;
       In_File               : GNATCOLL.VFS.Virtual_File :=
         GNATCOLL.VFS.No_File;
@@ -861,15 +956,10 @@ private
       Include_Overridden    : Boolean := False;
       Include_Implicit      : Boolean := False;
       Include_All           : Boolean := False;
-      Kind                  : String := "");
+      Kind                  : String := "")
+      return Root_Reference_Iterator'Class;
 
-   overriding procedure For_Each_Dispatching_Call
-     (Entity    : General_Entity;
-      Ref       : General_Entity_Reference;
-      On_Callee : access function (Callee : Root_Entity'Class) return Boolean;
-      Filter    : Reference_Kind_Filter := null);
-
-   type General_Entity_Reference is record
+   type General_Entity_Reference is new Root_Entity_Reference with record
       Old_Ref : Old_Entities.Entity_Reference :=
         Old_Entities.No_Entity_Reference;
       Ref : Entity_Reference := No_Entity_Reference;
@@ -993,10 +1083,10 @@ private
    overriding function Parameters
      (Entity : General_Entity) return Parameter_Array;
 
-   No_General_Entity_Reference : aliased constant General_Entity_Reference :=
-     (Old_Ref => Old_Entities.No_Entity_Reference,
-      Db      => null,
-      Ref     => No_Entity_Reference);
+   No_Root_Entity_Reference : aliased constant Root_Entity_Reference'Class
+     := General_Entity_Reference'(Old_Ref => Old_Entities.No_Entity_Reference,
+                                  Db      => null,
+                                  Ref  => GNATCOLL.Xref.No_Entity_Reference);
 
    No_General_Entity_Declaration : constant General_Entity_Declaration :=
      (Loc  => No_Location,
@@ -1011,7 +1101,7 @@ private
       Kind             : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
-   type Entity_Reference_Iterator is record
+   type Entity_Reference_Iterator is new Root_Reference_Iterator with record
       Old_Iter : Old_Entities.Queries.Entity_Reference_Iterator;
 
       Iter     : GPS_Recursive_References_Cursor;
