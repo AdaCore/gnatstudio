@@ -771,6 +771,17 @@ class View(GPS.GUI):
                    action associated with a :class:`GPS.Contextual`.
                 '''
 
+            def on_key(self, topitem, item, key, *args):
+                '''
+                Called when the user presses a keyboard key while the view has
+                the focus.
+
+                :param GPS.Browsers.Item topitem: the toplevel item clicked on
+                :param GPS.Browsers.Item item: the specific item clicked on.
+                :param int key: the key that was pressed (see Gdk.KEY_*
+                   constants)
+                '''
+
     """
 
     Background = enum('View.Background', NONE=0, COLOR=1, GRID=2, LINES=3)

@@ -620,10 +620,14 @@ package body Browsers.Scripts is
       if Inst /= No_Class_Instance then
          Subp := Get_Method (Inst, Name);
          if Subp /= null then
-            if Context = No_Context then
-               Count := 4;
+            if Event.Event_Type = Key_Press then
+               Count := 3;
             else
-               Count := 5;
+               if Context = No_Context then
+                  Count := 4;
+               else
+                  Count := 5;
+               end if;
             end if;
 
             declare
@@ -646,17 +650,31 @@ package body Browsers.Scripts is
                   Set_Nth_Arg (Args, First, No_Class_Instance);
                end if;
 
-               if Event.Item /= null then
-                  Set_Nth_Arg
-                    (Args, First + 1,
-                     Get_Instance (Python_Item_Access (Event.Item),
-                       Subp.Get_Script));
-                  Set_Nth_Arg (Args, First + 2, Float (Event.I_Point.X));
-                  Set_Nth_Arg (Args, First + 3, Float (Event.I_Point.Y));
+               if Event.Event_Type = Key_Press then
+                  if Event.Item /= null then
+                     Set_Nth_Arg
+                       (Args, First + 1,
+                        Get_Instance (Python_Item_Access (Event.Item),
+                          Subp.Get_Script));
+                  else
+                     Set_Nth_Arg (Args, First + 1, No_Class_Instance);
+                  end if;
+
+                  Set_Nth_Arg (Args, First + 2, Integer (Event.Key));
+
                else
-                  Set_Nth_Arg (Args, First + 1, No_Class_Instance);
-                  Set_Nth_Arg (Args, First + 2, Float'First);
-                  Set_Nth_Arg (Args, First + 3, Float'First);
+                  if Event.Item /= null then
+                     Set_Nth_Arg
+                       (Args, First + 1,
+                        Get_Instance (Python_Item_Access (Event.Item),
+                          Subp.Get_Script));
+                     Set_Nth_Arg (Args, First + 2, Float (Event.I_Point.X));
+                     Set_Nth_Arg (Args, First + 3, Float (Event.I_Point.Y));
+                  else
+                     Set_Nth_Arg (Args, First + 1, No_Class_Instance);
+                     Set_Nth_Arg (Args, First + 2, Float'First);
+                     Set_Nth_Arg (Args, First + 3, Float'First);
+                  end if;
                end if;
 
                Dummy := Subp.Execute (Args);
@@ -686,7 +704,10 @@ package body Browsers.Scripts is
          return True;
       end if;
 
-      if Event.Button = 1
+      if Event.Event_Type = Key_Press then
+         return Call_Method (Self, "on_key", Event);
+
+      elsif Event.Button = 1
         and then Event.Toplevel_Item /= null
         and then Event.Toplevel_Item.all in Python_Item'Class
       then

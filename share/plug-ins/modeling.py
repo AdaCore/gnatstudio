@@ -172,6 +172,9 @@ class GMC_Canvas_View(GPS.Browsers.View):
             "create_context on %s (%s), at %s,%s\n" % (topitem, item, x, y))
         context._simulink_item = item
 
+    def on_key(self, topitem, item, key, *args):
+        GPS.Console().write("key on %s (%s): %s\n" % (topitem, item, key))
+
 
 class GMC_Module(modules.Module):
 
