@@ -197,7 +197,6 @@ class GMC_Module(modules.Module):
         return GPS.MDI.get_by_child(v)
 
     def save_desktop(self, child):
-        # ??? Should save position and scaling factor too
         view = child.get_child()
         info = {"file": view.file.name(),
                 "scale": view.scale,
@@ -235,7 +234,7 @@ class GMC_Module(modules.Module):
         menu entry. It only does so when the contextual menu is for a simulink
         browser.
         """
-        return context._simulink_item is not None
+        return hasattr(context, "_simulink_item")
 
 
 # Need to load the new language definition right away, since GPS loads
