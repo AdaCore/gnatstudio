@@ -82,32 +82,18 @@ id_pattern = re.compile(r"[\w0-9_]")
 @interactive("Editor", name="Add multi cursor to next occurence of selection")
 def mc_select_next_occurence():
     ed = GPS.EditorBuffer.get()
-    cur_st, cur_end = ed.selection_start(), ed.selection_end().forward_char(-1)
-    text = ed.get_chars(cur_st, cur_end)
+    mc_sel = ed.create_overlay("mc_selection")
+    text = ed.get_chars(ed.selection_start(),
+                        ed.selection_end().forward_char(-1))
 
     st, end = ed.current_view().cursor().search(text)
-    main_cursor = ed.get_cursors()[0]
-    main_cursor.set_manual_sync()
-    ed.current_view().goto(st)
-    main_cursor.move(end, True)
+    while st.has_overlay(mc_sel):
+        st, end = end.search(text)
 
-    mc = ed.add_cursor(cur_st)
-    mc.move(cur_st)
-    mc.move(cur_end.forward_char(), True)
+    mc = ed.add_cursor(st)
+    mc.move(st)
+    mc.move(end, True)
     ed.update_cursors_selection()
-    ed.set_cursors_auto_sync()
-
-
-@interactive("Editor", name="Go to next occurence of selection")
-def mc_skip_to_next_occurence():
-    ed = GPS.EditorBuffer.get()
-    cur_st, cur_end = ed.selection_start(), ed.selection_end().forward_char(-1)
-    text = ed.get_chars(cur_st, cur_end)
-    st, end = ed.current_view().cursor().search(text)
-    main_cursor = ed.get_cursors()[0]
-    main_cursor.set_manual_sync()
-    ed.current_view().goto(st)
-    main_cursor.move(end, True)
     ed.set_cursors_auto_sync()
 
 

@@ -163,7 +163,7 @@ package body Call_Graph_Views is
    --  Get the locations list associated with Iter. Create it if necessary
 
    function To_Record
-     (Ref                 : Root_Entity_Reference'Class;
+     (Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean) return Reference_Record;
    --  Extract the relevant information from Ref
 
@@ -232,7 +232,7 @@ package body Call_Graph_Views is
      (Data                : access Ancestors_User_Data;
       Entity              : Root_Entity'Class;
       Parent              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean;
    --  See inherited documentation
@@ -246,7 +246,7 @@ package body Call_Graph_Views is
      (View                : access Callgraph_View_Record'Class;
       Parent              : Root_Entity'Class;
       Entity              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Suffix              : String := "";
       Kind                : View_Type;
       Through_Dispatching : Boolean;
@@ -329,7 +329,7 @@ package body Call_Graph_Views is
    ---------------
 
    function To_Record
-     (Ref                 : Root_Entity_Reference'Class;
+     (Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean) return Reference_Record is
    begin
       return (Get_Location (Ref).Line,
@@ -900,7 +900,8 @@ package body Call_Graph_Views is
          case Get_View_Type (Get_Model (V.Tree), Iter) is
          when View_Calls     =>
             Examine_Entity_Call_Graph
-              (Entity            => Entity,
+              (Kernel            => V.Kernel,
+               Entity            => Entity,
                User_Data         => Data,
                Dispatching_Calls => True,
                Get_All_Refs      => True);
@@ -1489,7 +1490,7 @@ package body Call_Graph_Views is
      (View                : access Callgraph_View_Record'Class;
       Parent              : Root_Entity'Class;
       Entity              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Suffix              : String := "";
       Kind                : View_Type;
       Through_Dispatching : Boolean;
@@ -1543,7 +1544,7 @@ package body Call_Graph_Views is
          Set (Model, Locations, Name_Column, Computing_Label);
       end if;
 
-      if Ref /= No_Root_Entity_Reference then
+      if Ref /= No_General_Entity_Reference then
          declare
             L       : List_Access;
             Value   : GValue;
@@ -1636,7 +1637,7 @@ package body Call_Graph_Views is
      (Data                : access Ancestors_User_Data;
       Entity              : Root_Entity'Class;
       Parent              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean
    is
@@ -1703,7 +1704,7 @@ package body Call_Graph_Views is
            (View.Tree,
             Insert_Entity
               (View, No_Root_Entity, Entity,
-               No_Root_Entity_Reference, -" calls ",
+               No_General_Entity_Reference, -" calls ",
               Kind                => View_Calls,
               Through_Dispatching => False));
       end if;
@@ -1731,7 +1732,7 @@ package body Call_Graph_Views is
            (View.Tree,
             Insert_Entity
               (View, No_Root_Entity, Entity,
-               No_Root_Entity_Reference, -" is called by ",
+               No_General_Entity_Reference, -" is called by ",
                Kind                => View_Called_By,
                Through_Dispatching => False));
       end if;

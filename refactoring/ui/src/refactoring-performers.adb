@@ -27,6 +27,7 @@ with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with Ada.Containers.Indefinite_Holders;
 
 package body Refactoring.Performers is
    Me : constant Trace_Handle := Create ("REFACTORING.PERFORMERS");
@@ -40,14 +41,17 @@ package body Refactoring.Performers is
    overriding procedure Error
      (Report : in out Renaming_Error_Record; File : Virtual_File);
 
+   package Holder is new Ada.Containers.Indefinite_Holders
+     (Root_Entity'Class);
+
    type Get_Locations_Data is record
       Refs                : Location_Arrays.List;
       Stale_LI_List       : Source_File_Set;
       Read_Only_Files     : Source_File_Set;
       On_Completion       : Refactor_Performer;
       Kernel              : Kernel_Handle;
-      Entity              : Root_Entity_Ref;
-      Iter                : Root_Reference_Iterator_Ref;
+      Entity              : Holder.Holder;
+      Iter                : Entity_Reference_Iterator;
       Errors              : Renaming_Error;
       Make_Writable       : Boolean;
    end record;
@@ -83,7 +87,7 @@ package body Refactoring.Performers is
    begin
       Data.Errors.No_LI_List.Clear;
       Data.Stale_LI_List.Clear;
-      Destroy (Data.Iter.Reference);
+      Destroy (Data.Iter);
       if Data.On_Completion /= null then
          Free (Data.On_Completion.all);
          Unchecked_Free (Data.On_Completion);
@@ -135,19 +139,19 @@ package body Refactoring.Performers is
       Data.Make_Writable := Make_Writable;
 
       Data.Entity.Replace_Element (Entity);
-      Data.Iter.Replace_Element
-        (Find_All_References
-           (Entity                => Entity,
-            File_Has_No_LI_Report => File_Error_Reporter (Data.Errors),
-            Include_Overriding    => Overridden,
-            Include_Overridden    => Overridden));
+      Find_All_References
+        (Iter                  => Data.Iter,
+         Entity                => Entity,
+         File_Has_No_LI_Report => File_Error_Reporter (Data.Errors),
+         Include_Overriding    => Overridden,
+         Include_Overridden    => Overridden);
 
       Create (C, -"Refactoring", Data, Find_Next_Location'Access);
       Set_Progress
         (Command_Access (C),
          (Running,
-          Get_Current_Progress (Data.Iter.Element),
-          Get_Total_Progress   (Data.Iter.Element)));
+          Get_Current_Progress (Data.Iter),
+          Get_Total_Progress   (Data.Iter)));
 
       if Background_Mode then
          Launch_Background_Command
@@ -218,56 +222,54 @@ package body Refactoring.Performers is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
+      Ref    : General_Entity_Reference;
       Loc    : General_Location;
    begin
-      if At_End (Data.Iter.Element) then
+      if At_End (Data.Iter) then
          On_End_Of_Search (Data);
          Result := Success;
          return;
       end if;
 
-      declare
-         Ref : constant Root_Entity_Reference'Class := Get (Data.Iter.Element);
-      begin
+      Ref := Get (Data.Iter);
 
-         if Ref /= No_Root_Entity_Reference then
-            Loc := Get_Location (Ref);
+      if Ref /= No_General_Entity_Reference then
+         Loc := Get_Location (Ref);
 
-            if Data.Kernel.Databases.Is_Up_To_Date (Loc.File) then
-               Append (Data.Refs,
-                       (File    => Loc.File,
-                        Project => Loc.Project,
-                        Line    => Loc.Line,
-                        Column  => Loc.Column));
+         if Data.Kernel.Databases.Is_Up_To_Date (Loc.File) then
+            Append (Data.Refs,
+                    (File    => Loc.File,
+                     Project => Loc.Project,
+                     Line    => Loc.Line,
+                     Column  => Loc.Column));
 
-               --  If we have duplicates, they will always come one after the
-               --  other. So we just have to check the previous one.
-            else
-               Append (Data.Refs,
-                       (File    => Loc.File,
-                        Project => Loc.Project,
-                        Line    => Loc.Line,
-                        Column  => Loc.Column));
-               Data.Stale_LI_List.Include (Loc.File);
-            end if;
-
-            if not Loc.File.Is_Writable then
-               Data.Read_Only_Files.Include (Loc.File);
-            end if;
-
-            Next (Data.Iter.Reference);
-
-            Set_Progress (Command,
-                          (Running,
-                           Get_Current_Progress (Data.Iter.Element),
-                           Get_Total_Progress (Data.Iter.Element)));
-            Result := Execute_Again;
-
+         --  If we have duplicates, they will always come one after the
+         --  other. So we just have to check the previous one.
          else
-            Next (Data.Iter.Reference);
-            Result := Execute_Again;
+            Append (Data.Refs,
+                    (File    => Loc.File,
+                     Project => Loc.Project,
+                     Line    => Loc.Line,
+                     Column  => Loc.Column));
+            Data.Stale_LI_List.Include (Loc.File);
          end if;
-      end;
+
+         if not Loc.File.Is_Writable then
+            Data.Read_Only_Files.Include (Loc.File);
+         end if;
+
+         Next (Data.Iter);
+
+         Set_Progress (Command,
+                       (Running,
+                        Get_Current_Progress (Data.Iter),
+                        Get_Total_Progress (Data.Iter)));
+         Result := Execute_Again;
+
+      else
+         Next (Data.Iter);
+         Result := Execute_Again;
+      end if;
    end Find_Next_Location;
 
    --------------

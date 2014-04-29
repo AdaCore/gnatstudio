@@ -267,7 +267,7 @@ package GPS.Kernel.Contexts is
    --  type)
 
    function Get_Closest_Ref
-     (Context : Selection_Context) return Xref.Root_Entity_Reference'Class;
+     (Context : Selection_Context) return Xref.General_Entity_Reference;
    --  Return the entity reference corresponding to the current context. You
    --  should call Get_Entity first if you want to check for overloading
    --  entities.

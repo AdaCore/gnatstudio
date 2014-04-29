@@ -87,6 +87,9 @@ package body GPS.Kernel.Scripts is
    type GPS_Properties_Type is
      (Files, Contexts, Entities, Projects, File_Locations);
 
+   package Holder is new Ada.Containers.Indefinite_Holders
+     (Root_Entity'Class);
+
    type GPS_Properties_Record (Typ : GPS_Properties_Type)
      is new Instance_Property_Record
    with record
@@ -96,7 +99,7 @@ package body GPS.Kernel.Scripts is
          when Contexts =>
             Context : Selection_Context := No_Context;
          when Entities =>
-            Entity  : Root_Entity_Ref;
+            Entity  : Holder.Holder;
          when Projects =>
             Project : Project_Type;
          when File_Locations =>

@@ -48,6 +48,7 @@ with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Xref;                   use Xref;
+with Ada.Containers.Indefinite_Holders;
 
 package body Refactoring.Subprograms is
 
@@ -60,8 +61,11 @@ package body Refactoring.Subprograms is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called for "Extract Method" menu
 
+   package Holder is new Ada.Containers.Indefinite_Holders
+     (Root_Entity'Class);
+
    type Extracted_Entity is record
-      Entity : Root_Entity_Ref;
+      Entity : Holder.Holder;
       Decl   : Refactoring.Services.Entity_Declaration;
       Flags  : Entity_References_Flags;
    end record;
@@ -78,7 +82,7 @@ package body Refactoring.Subprograms is
       Source   : Virtual_File;
       --  The file in which the extracted code is at the start
 
-      Parent   : Root_Entity_Ref;
+      Parent   : Holder.Holder;
       --  The subprogram that contained the extracted code before the
       --  refactoring
 
@@ -112,7 +116,7 @@ package body Refactoring.Subprograms is
 
    type Parameters is tagged record
       List           : Parameter_Lists.List;
-      Last_Out_Param : Root_Entity_Ref;
+      Last_Out_Param : Holder.Holder;
       Count          : Natural;
       Is_Function    : Boolean;
    end record;
@@ -651,7 +655,7 @@ package body Refactoring.Subprograms is
          Flags  : Entity_References_Flags)
       is
          Decl : Refactoring.Services.Entity_Declaration;
-         H : Root_Entity_Ref;
+         H : Holder.Holder;
       begin
          Decl := Get_Declaration (Context.Code.Context, Entity);
 

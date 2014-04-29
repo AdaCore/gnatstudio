@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Holders;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Projects;             use GNATCOLL.Projects;
@@ -79,9 +80,9 @@ with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with Std_Dialogs;                   use Std_Dialogs;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+with Generic_List;
 with Xref;                          use Xref;
 with UTF8_Utils;
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 package body Browsers.Call_Graph is
    Me : constant Trace_Handle := Create ("CALL_GRAPH");
@@ -163,7 +164,7 @@ package body Browsers.Call_Graph is
      (D                   : access Add_To_List_User_Data;
       Entity              : Root_Entity'Class;
       Parent              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean;
    --  See inherited documentation.
@@ -209,7 +210,7 @@ package body Browsers.Call_Graph is
       --  One of the predefined filters
    end record;
    function Is_Valid
-     (Self : Custom_Filter; Ref : Root_Entity_Reference'Class) return Boolean;
+     (Self : Custom_Filter; Ref : General_Entity_Reference) return Boolean;
    procedure Free (Self : in out Custom_Filter);
 
    --------------
@@ -268,14 +269,14 @@ package body Browsers.Call_Graph is
      (Command : access Edit_Spec_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   package Entity_Ref_List is new
-     Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Root_Entity_Reference'Class);
+   procedure Do_Nothing (R : in out General_Entity_Reference) is null;
+   package Entity_Ref_List is new Generic_List
+     (General_Entity_Reference, Free => Do_Nothing);
    use Entity_Ref_List;
 
    type References_Command is new Root_Command with record
       Kernel        : Kernel_Handle;
-      Iter          : Xref.Root_Reference_Iterator_Ref;
+      Iter          : Entity_Reference_Iterator;
       Locations     : Entity_Ref_List.List;
       Show_Ref_Kind : Boolean;
    end record;
@@ -288,9 +289,11 @@ package body Browsers.Call_Graph is
    -- Entity items --
    ------------------
 
+   package Holder is new Ada.Containers.Indefinite_Holders (Root_Entity'Class);
+
    type Entity_Item_Record is new Browsers.Canvas.Arrow_Item_Record
    with record
-      Entity : Root_Entity_Ref;
+      Entity : Holder.Holder;
       Refs   : Xref_List;
 
       Col1_Width : Gint;
@@ -380,8 +383,8 @@ package body Browsers.Call_Graph is
 
    type Entity_Idle_Data is record
       Kernel             : Kernel_Handle;
-      Iter               : Root_Reference_Iterator_Access;
-      Entity             : Root_Entity_Ref;
+      Iter               : Entity_Reference_Iterator_Access;
+      Entity             : Holder.Holder;
       Filter             : Custom_Filter;
       Iter_Started       : Boolean;
       Show_Caller        : Boolean;
@@ -403,7 +406,7 @@ package body Browsers.Call_Graph is
      (Data                : access Examine_Ancestors_Data;
       Entity              : Root_Entity'Class;
       Parent              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean;
    --  See inherited documentation
@@ -470,7 +473,7 @@ package body Browsers.Call_Graph is
       Item                : Entity_Item;
       Link_From_Item      : Boolean;
       Entity              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Is_Renaming         : Boolean;
       Through_Dispatching : Boolean);
    --  Add Entity, and possibly a link to Cb.Item to Cb.Browser
@@ -483,7 +486,7 @@ package body Browsers.Call_Graph is
 
    procedure Print_Ref
      (Kernel       : access Kernel_Handle_Record'Class;
-      Ref          : Root_Entity_Reference'Class;
+      Ref          : General_Entity_Reference;
       Name         : String;
       Category     : String;
       Show_Caller  : Boolean;
@@ -789,7 +792,8 @@ package body Browsers.Call_Graph is
 
          begin
             Examine_Entity_Call_Graph
-              (Entity            => Entity,
+              (Kernel            => Kernel,
+               Entity            => Entity,
                User_Data         => Data,
                Dispatching_Calls => True,
                Get_All_Refs      => True);
@@ -836,7 +840,7 @@ package body Browsers.Call_Graph is
       Item                : Entity_Item;
       Link_From_Item      : Boolean;
       Entity              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Is_Renaming         : Boolean;
       Through_Dispatching : Boolean)
    is
@@ -932,7 +936,7 @@ package body Browsers.Call_Graph is
      (Data                : access Examine_Ancestors_Data;
       Entity              : Root_Entity'Class;
       Parent              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean
    is
@@ -1050,11 +1054,10 @@ package body Browsers.Call_Graph is
    -- Free --
    ----------
 
-   overriding procedure Free (Command : in out References_Command)
-   is
-      El : Root_Reference_Iterator'Class := Command.Iter.Element;
+   overriding procedure Free (Command : in out References_Command) is
    begin
-      Destroy (El);
+      Destroy (Command.Iter);
+      Free (Command.Locations);
    end Free;
 
    -------------
@@ -1064,35 +1067,32 @@ package body Browsers.Call_Graph is
    overriding function Execute
      (Command : access References_Command) return Command_Return_Type
    is
-      Iter_Ref : constant Root_Reference_Iterator_Refs.Reference_Type :=
-        Command.Iter.Reference;
+      Ref : General_Entity_Reference;
    begin
       for J in 1 .. 15 loop
-         exit when At_End (Iter_Ref);
-         declare
-            Ref : constant Root_Entity_Reference'Class :=
-              Get (Iter_Ref);
-         begin
-            if Ref /= No_Root_Entity_Reference then
-               Command.Locations.Append (Ref);
-            end if;
-         end;
+         exit when At_End (Command.Iter);
 
-         Next (Iter_Ref);
+         Ref := Get (Command.Iter);
+
+         if Ref /= No_General_Entity_Reference then
+            Append (Command.Locations, Ref);
+         end if;
+
+         Next (Command.Iter);
       end loop;
 
       Set_Progress
         (Command,
          (Activity => Unknown,
-          Current  => Get_Current_Progress (Iter_Ref),
-          Total    => Get_Total_Progress (Iter_Ref)));
+          Current  => Get_Current_Progress (Command.Iter),
+          Total    => Get_Total_Progress (Command.Iter)));
 
-      if At_End (Iter_Ref) then
+      if At_End (Command.Iter) then
          Set_Progress
            (Command,
             (Activity => Unknown,
-             Current  => Get_Total_Progress (Iter_Ref),
-             Total    => Get_Total_Progress (Iter_Ref)));
+             Current  => Get_Total_Progress (Command.Iter),
+             Total    => Get_Total_Progress (Command.Iter)));
 
          return Success;
       else
@@ -1119,7 +1119,7 @@ package body Browsers.Call_Graph is
 
    procedure Print_Ref
      (Kernel       : access Kernel_Handle_Record'Class;
-      Ref          : Root_Entity_Reference'Class;
+      Ref          : General_Entity_Reference;
       Name         : String;
       Category     : String;
       Show_Caller  : Boolean;
@@ -1184,14 +1184,16 @@ package body Browsers.Call_Graph is
       Result  : out Command_Return_Type)
    is
       Count : Integer := 0;
+      Ref   : General_Entity_Reference;
       Search_Entity : constant Root_Entity'Class := Data.Entity.Element;
       Name  : constant String := Search_Entity.Get_Name;
    begin
       Result := Execute_Again;
 
       if not Data.Iter_Started then
-         Data.Iter.all := Find_All_References
-           (Entity             => Data.Entity.Element,
+         Find_All_References
+           (Iter               => Data.Iter.all,
+            Entity             => Data.Entity.Element,
             Include_Overriding => Data.Include_Overriding,
             Include_Overridden => Data.Include_Overriding);
 
@@ -1210,34 +1212,31 @@ package body Browsers.Call_Graph is
             exit;
 
          else
-            declare
-               Ref : constant Root_Entity_Reference'Class :=
-                 Get (Data.Iter.all);
-            begin
-               --  Not done parsing all the files yet
-               if Ref = No_Root_Entity_Reference then
-                  Next (Data.Iter.all);
-                  exit;
+            Ref := Get (Data.Iter.all);
 
-               elsif Is_Valid (Data.Filter, Ref) then
-                  Data.Count := Data.Count + 1;
-                  Print_Ref
-                    (Data.Kernel,
-                     Ref,
-                     (if Get_Entity (Ref) = Search_Entity
-                      then Name
-                      else Get_Entity (Ref).Get_Name),
-                     Data.Category.all,
-                     Show_Caller  => Data.Show_Caller,
-                     Sort_In_File => False);
+            --  Not done parsing all the files yet
+            if Ref = No_General_Entity_Reference then
+               Next (Data.Iter.all);
+               exit;
 
-                  if Data.Count = 1 then
-                     Raise_Locations_Window (Data.Kernel, Give_Focus => False);
-                  end if;
+            elsif Is_Valid (Data.Filter, Ref) then
+               Data.Count := Data.Count + 1;
+               Print_Ref
+                 (Data.Kernel,
+                  Ref,
+                  (if Root_Entity'Class (Get_Entity (Ref)) = Search_Entity
+                   then Name
+                   else Get_Entity (Ref).Get_Name),
+                  Data.Category.all,
+                  Show_Caller  => Data.Show_Caller,
+                  Sort_In_File => False);
+
+               if Data.Count = 1 then
+                  Raise_Locations_Window (Data.Kernel, Give_Focus => False);
                end if;
+            end if;
 
-               Count := Count + 1;
-            end;
+            Count := Count + 1;
          end if;
 
          Next (Data.Iter.all);
@@ -1264,7 +1263,7 @@ package body Browsers.Call_Graph is
    is
       Data : Entity_Idle_Data;
       C    : Xref_Commands.Generic_Asynchronous_Command_Access;
-      H    : Root_Entity_Ref;
+      H    : Holder.Holder;
    begin
       if Info /= No_Root_Entity then
          begin
@@ -1354,46 +1353,6 @@ package body Browsers.Call_Graph is
          Trace (Me, E);
    end Contextual_Factory;
 
-   -----------------------
-   -- Is_Read_Reference --
-   -----------------------
-
-   function Is_Read_Reference
-     (Ref : Root_Entity_Reference'Class) return Boolean is
-      (Ref.Is_Read_Reference);
-
-   ------------------------
-   -- Is_Write_Reference --
-   ------------------------
-
-   function Is_Write_Reference
-     (Ref : Root_Entity_Reference'Class) return Boolean is
-     (Ref.Is_Write_Reference);
-
-   --------------------------------
-   -- Is_Read_Or_Write_Reference --
-   --------------------------------
-
-   function Is_Read_Or_Write_Reference
-     (Ref : Root_Entity_Reference'Class) return Boolean is
-     (Ref.Is_Read_Or_Write_Reference);
-
-   -----------------------------------
-   -- Is_Read_Or_Implicit_Reference --
-   -----------------------------------
-
-   function Is_Read_Or_Implicit_Reference
-     (Ref : Root_Entity_Reference'Class) return Boolean is
-      (Ref.Is_Read_Or_Implicit_Reference);
-
-   --------------------------------------------
-   -- Is_Read_Or_Write_Or_Implicit_Reference --
-   --------------------------------------------
-
-   function Is_Read_Or_Write_Or_Implicit_Reference
-     (Ref : Root_Entity_Reference'Class) return Boolean is
-     (Ref.Is_Read_Or_Write_Or_Implicit_Reference);
-
    -------------
    -- Execute --
    -------------
@@ -1480,7 +1439,7 @@ package body Browsers.Call_Graph is
      (D                   : access Add_To_List_User_Data;
       Entity              : Root_Entity'Class;
       Parent              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean
    is
@@ -1576,14 +1535,14 @@ package body Browsers.Call_Graph is
                In_File := Get_Data (Inst_In_File);
             end if;
 
-            Ref_Command.Iter.Replace_Element
-              (Find_All_References
-                 (Entity                => Entity,
-                  In_File               => In_File,
-                  Include_Implicit      => Implicit,
-                  Include_All           => False,
-                  Kind                  => Only_If_Kind,
-                  File_Has_No_LI_Report => null));
+            Find_All_References
+              (Iter                  => Ref_Command.Iter,
+               Entity                => Entity,
+               In_File               => In_File,
+               Include_Implicit      => Implicit,
+               Include_All           => False,
+               Kind                  => Only_If_Kind,
+               File_Has_No_LI_Report => null);
 
             if Synchronous then
                --  Synchronous, return directly the result
@@ -1605,8 +1564,8 @@ package body Browsers.Call_Graph is
                Set_Progress
                  (Ref_Command,
                   (Activity => Unknown,
-                   Current  => Get_Current_Progress (Ref_Command.Iter.Element),
-                   Total    => Get_Total_Progress (Ref_Command.Iter.Element)));
+                   Current  => Get_Current_Progress (Ref_Command.Iter),
+                   Total    => Get_Total_Progress (Ref_Command.Iter)));
 
                Instance := Get_Instance
                  (Launched_Command,
@@ -1626,7 +1585,8 @@ package body Browsers.Call_Graph is
          User_Data.Data := Data'Unchecked_Access;
          User_Data.Use_Parent_For_Key := False;
          Examine_Entity_Call_Graph
-           (User_Data         => User_Data,
+           (Kernel            => Kernel,
+            User_Data         => User_Data,
             Entity            => Entity,
             Dispatching_Calls => Nth_Arg (Data, 2, False),
             Get_All_Refs      => True);
@@ -1692,9 +1652,12 @@ package body Browsers.Call_Graph is
       end if;
 
       declare
+         Node  : Entity_Ref_List.List_Node := First (Command.Locations);
+         Ref   : General_Entity_Reference;
          Loc   : General_Location;
       begin
-         for Ref of Command.Locations loop
+         while Node /= Entity_Ref_List.Null_Node loop
+            Ref := Entity_Ref_List.Data (Node);
 
             Loc := Get_Location (Ref);
             Inst := Create_File_Location
@@ -1711,6 +1674,8 @@ package body Browsers.Call_Graph is
             else
                Set_Return_Value (Data, Inst);
             end if;
+
+            Node := Next (Node);
          end loop;
       end;
    end Put_Locations_In_Return;
@@ -1939,6 +1904,7 @@ package body Browsers.Call_Graph is
       Decl : constant General_Location := Get_Declaration (Entity).Loc;
       Decl2 : General_Location;
       Entity_Decl : constant Virtual_File := Decl.File;
+      Iter        : Entity_Reference_Iterator;
       Iter2       : Entities_In_File_Cursor;
       Message     : Simple_Message_Access;
       Project     : Project_Type := No_Project;
@@ -1975,39 +1941,37 @@ package body Browsers.Call_Graph is
 
                if Decl2.File = Entity_Decl then
                   if Show_Caller then
+                     Find_All_References
+                       (Iter               => Iter,
+                        Entity             => Entity2,
+                        In_File            => Local_File,
+                        Include_Overriding => Include_Overriding,
+                        Include_Overridden => Include_Overriding);
+
                      declare
-                        Iter : Root_Reference_Iterator'Class :=
-                          Find_All_References
-                            (Entity             => Entity2,
-                             In_File            => Local_File,
-                             Include_Overriding => Include_Overriding,
-                             Include_Overridden => Include_Overriding);
+                        Name2 : constant String := Get_Name (Entity2);
+                        Loc   : General_Location;
                      begin
+                        while not At_End (Iter) loop
+                           Loc := Get_Location (Get (Iter));
 
-                        declare
-                           Name2 : constant String := Get_Name (Entity2);
-                           Loc   : General_Location;
-                        begin
-                           while not At_End (Iter) loop
-                              Loc := Get_Location (Get (Iter));
-
-                              if Get (Iter) /= No_Root_Entity_Reference
-                                and then Loc.File = Local_File
-                                and then Is_Valid (Filter, Ref => Get (Iter))
-                              then
-                                 Print_Ref (Kernel,
-                                            Get (Iter),
-                                            Name2,
-                                            Title,
-                                            Show_Caller => Show_Caller,
-                                            Sort_In_File => True);
-                              end if;
-                              Next (Iter);
-                           end loop;
-                        end;
-
-                        Destroy (Iter);
+                           if Get (Iter) /= No_General_Entity_Reference
+                             and then Loc.File = Local_File
+                             and then Is_Valid (Filter, Ref => Get (Iter))
+                           then
+                              Print_Ref (Kernel,
+                                         Get (Iter),
+                                         Name2,
+                                         Title,
+                                         Show_Caller => Show_Caller,
+                                         Sort_In_File => True);
+                           end if;
+                           Next (Iter);
+                        end loop;
                      end;
+
+                     Destroy (Iter);
+
                   else
                      declare
                         Name2 : constant String := Get_Name (Entity2);
@@ -2045,35 +2009,34 @@ package body Browsers.Call_Graph is
          Get_Messages_Container (Kernel).Remove_Category
            (Title, Call_Graph_Message_Flags);
 
-         declare
-            Iter : Root_Reference_Iterator'Class :=
-              Find_All_References
-                (Entity        => Entity,
-                 In_File       => Local_File,
-                 Include_Overridden => Include_Overriding,
-                 Include_Overriding => Include_Overriding);
-         begin
-            declare
-               Name : constant String := Get_Name (Entity);
-            begin
-               while not At_End (Iter) loop
-                  if Get (Iter) /= No_Root_Entity_Reference
-                    and then Is_Valid (Filter, Get (Iter))
-                  then
-                     Print_Ref (Kernel,
-                                Get (Iter),
-                                Name,
-                                Title,
-                                Show_Caller => Show_Caller,
-                                Sort_In_File => True);
-                  end if;
-                  Next (Iter);
-               end loop;
-            end;
+         Find_All_References
+           (Iter          => Iter,
+            Entity        => Entity,
+            In_File       => Local_File,
+            Include_Overridden => Include_Overriding,
+            Include_Overriding => Include_Overriding);
 
-            Destroy (Iter);
-            Free (Filter);
+         declare
+            Name : constant String := Get_Name (Entity);
+         begin
+            while not At_End (Iter) loop
+               if Get (Iter) /= No_General_Entity_Reference
+                 and then Is_Valid (Filter, Get (Iter))
+               then
+                  Print_Ref (Kernel,
+                             Get (Iter),
+                             Name,
+                             Title,
+                             Show_Caller => Show_Caller,
+                             Sort_In_File => True);
+               end if;
+               Next (Iter);
+            end loop;
          end;
+
+         Destroy (Iter);
+         Free (Filter);
+
       else
          Find_All_References_Internal   --  will destroy filter
            (Kernel,
@@ -2116,11 +2079,10 @@ package body Browsers.Call_Graph is
    --------------
 
    function Is_Valid
-     (Self : Custom_Filter; Ref : Root_Entity_Reference'Class) return Boolean
-   is
+     (Self : Custom_Filter; Ref : General_Entity_Reference) return Boolean is
    begin
       if Self.Filter /= null
-        and then not Self.Filter (Ref)
+        and then not Self.Filter (Self.Db, Ref)
       then
          return False;
       end if;

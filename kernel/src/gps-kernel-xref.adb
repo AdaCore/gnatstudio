@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Holders;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Commands.Generic_Asynchronous;  use Commands;
@@ -50,7 +51,8 @@ with System;                         use System;
 
 package body GPS.Kernel.Xref is
    use Xref;
-   use Root_Entity_Refs;
+
+   package Holder is new Ada.Containers.Indefinite_Holders (Root_Entity'Class);
 
    Me : constant Trace_Handle := Create ("Xref");
 
@@ -73,9 +75,9 @@ package body GPS.Kernel.Xref is
    --  Return true if Lang is C or C++ (case insensitive)
 
    type Examine_Callback is record
-      Iter              : Root_Reference_Iterator_Ref;
+      Iter              : Standard.Xref.Entity_Reference_Iterator;
       Kernel            : Kernel_Handle;
-      Entity            : Root_Entity_Ref;
+      Entity            : Holder.Holder;
       Data              : Commands_User_Data;
       Watch             : Gtk_Widget;
       Dispatching_Calls : Boolean;
@@ -310,7 +312,7 @@ package body GPS.Kernel.Xref is
 
       Destroy (Data.Data.all, Data.Cancelled);
       Unchecked_Free (Data.Data);
-      Destroy (Data.Iter.Reference);
+      Destroy (Data.Iter);
       Unref (V);
       Unchecked_Free (Data);
    end Destroy_Idle;
@@ -340,78 +342,71 @@ package body GPS.Kernel.Xref is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
-      Iter_Ref : constant Root_Reference_Iterator_Refs.Reference_Type :=
-        Data.Iter.Reference;
+      Ref    : General_Entity_Reference;
    begin
       if Data.Cancelled then
          Result := Failure;
 
-      elsif At_End (Iter_Ref) then
+      elsif At_End (Data.Iter) then
          Result := Success;
 
       else
-         declare
-            Ref : constant Root_Entity_Reference'Class := Get (Iter_Ref);
-         begin
+         Ref := Get (Data.Iter);
+         Result := Execute_Again;
 
-            Result := Execute_Again;
+         if Ref /= No_General_Entity_Reference
+           and then not Data.Kernel.Databases.Reference_Is_Declaration (Ref)
+         then
+            declare
+               Parent : Root_Entity'Class := Get_Caller (Ref);
+            begin
+               if Parent /= No_Root_Entity
+                 and then Data.Kernel.Databases.Show_In_Callgraph (Ref)
+               then
+                  while Parent /= No_Root_Entity
+                    and then not Is_Container (Parent)
+                  loop
+                     Parent := Caller_At_Declaration (Parent);
+                  end loop;
 
-            if Ref /= No_Root_Entity_Reference
-              and then not Ref.Reference_Is_Declaration
-            then
-               declare
-                  Parent : Root_Entity'Class := Get_Caller (Ref);
-               begin
-                  if Parent /= No_Root_Entity
-                    and then Ref.Show_In_Callgraph
-                  then
-                     while Parent /= No_Root_Entity
-                       and then not Is_Container (Parent)
-                     loop
-                        Parent := Caller_At_Declaration (Parent);
-                     end loop;
+                  if Parent /= No_Root_Entity then
+                     --  If we are seeing a dispatching call to an overridden
+                     --  subprogram, this could also result in a call to the
+                     --  entity and we report it
 
-                     if Parent /= No_Root_Entity then
-                        --  If we are seeing a dispatching call to an
-                        --  overridden subprogram, this could also result in
-                        --  a call to the entity and we report it
-
-                        if Get_Entity (Iter_Ref) /= Data.Entity.Element then
-                           if Ref.Is_Dispatching_Call then
-                              if not On_Entity_Found
-                                (Data.Data, Get_Entity (Iter_Ref),
-                                 Parent, Ref,
-                                 Through_Dispatching => True,
-                                 Is_Renaming         => False)
-                              then
-                                 Result := Failure;
-                              end if;
-                           end if;
-
-                        else
+                     if Get_Entity (Data.Iter) /= Data.Entity.Element then
+                        if Data.Kernel.Databases.Is_Dispatching_Call (Ref) then
                            if not On_Entity_Found
-                             (Data.Data, Data.Entity.Element, Parent, Ref,
-                              Through_Dispatching    => False,
-                              Is_Renaming            => False)
+                             (Data.Data, Get_Entity (Data.Iter), Parent, Ref,
+                              Through_Dispatching => True,
+                              Is_Renaming         => False)
                            then
                               Result := Failure;
                            end if;
                         end if;
+
+                     else
+                        if not On_Entity_Found
+                          (Data.Data, Data.Entity.Element, Parent, Ref,
+                           Through_Dispatching    => False,
+                           Is_Renaming            => False)
+                        then
+                           Result := Failure;
+                        end if;
                      end if;
                   end if;
-               end;
-            end if;
+               end if;
+            end;
+         end if;
 
-         end;
-
-         Next (Iter_Ref);
+         Next (Data.Iter);
 
          if Command /= null then
             Set_Progress
               (Command,
                (Running,
-                Get_Current_Progress (Iter_Ref),
-                Get_Total_Progress (Iter_Ref)));
+                Get_Current_Progress (Data.Iter),
+                Get_Total_Progress (Data.Iter)));
          end if;
       end if;
 
@@ -436,19 +431,17 @@ package body GPS.Kernel.Xref is
       Cb     : Examine_Callback_Access;
       C      : Ancestor_Commands.Generic_Asynchronous_Command_Access;
       Result : Command_Return_Type;
+      H      : Holder.Holder;
    begin
+      H.Replace_Element (Entity);
       Cb := new Examine_Callback'
         (Kernel            => Kernel_Handle (Kernel),
          Data              => Commands_User_Data (User_Data),
-         Entity            => To_Holder (Entity),
+         Entity            => H,
          Watch             => Watch,
          Cancelled         => False,
          Dispatching_Calls => Dispatching_Calls,
-         Iter              =>
-           Root_Reference_Iterator_Refs.To_Holder
-             (Find_All_References
-                  (Entity             => Entity,
-                   Include_Overridden => Dispatching_Calls)));
+         Iter              => <>);
       Ref (Entity);
 
       --  If we have a renaming, report it
@@ -458,7 +451,7 @@ package body GPS.Kernel.Xref is
       begin
          if Rename /= No_Root_Entity then
             if not On_Entity_Found
-              (User_Data, Entity, Rename, No_Root_Entity_Reference,
+              (User_Data, Entity, Rename, No_General_Entity_Reference,
                Through_Dispatching => False,
                Is_Renaming         => True)
             then
@@ -467,6 +460,11 @@ package body GPS.Kernel.Xref is
             end if;
          end if;
       end;
+
+      Find_All_References
+        (Iter               => Cb.Iter,
+         Entity             => Entity,
+         Include_Overridden => Dispatching_Calls);
 
       if Watch /= null then
          Weak_Ref
@@ -489,68 +487,57 @@ package body GPS.Kernel.Xref is
       end if;
    end Examine_Ancestors_Call_Graph;
 
-   ------------------------------
-   -- Reference_Is_Declaration --
-   ------------------------------
-
-   function Reference_Is_Declaration
-     (Ref : Root_Entity_Reference'Class) return Boolean
-   is (Ref.Reference_Is_Declaration);
-
    -------------------------------
    -- Examine_Entity_Call_Graph --
    -------------------------------
 
    procedure Examine_Entity_Call_Graph
-     (Entity            : Root_Entity'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity            : Root_Entity'Class;
       User_Data         : access Commands_User_Data_Record'Class;
       Get_All_Refs      : Boolean;
       Dispatching_Calls : Boolean)
    is
       Calls       : Calls_Iterator;
       Called_E_Decl : General_Location;
+      Refs        : Standard.Xref.Entity_Reference_Iterator;
+      Ref         : General_Entity_Reference;
       Data        : Commands_User_Data;
       Is_First    : Boolean;
       Through_Dispatching : Boolean;
    begin
-      if Entity = No_Root_Entity then
-         return;
-      end if;
-      declare
-         Calls : Calls_Iterator'Class := Get_All_Called_Entities (Entity);
-      begin
-         For_Each_Entity :
-         while not At_End (Calls) loop
-            declare
-               Called_E : constant Root_Entity'Class := Get (Calls);
-               Refs        : Root_Reference_Iterator'Class :=
-                 Find_All_References
-                   (Entity   => Called_E,
-                    In_Scope => Entity);
-            begin
-               if Called_E /= No_Root_Entity
-                 and then Called_E.Is_Subprogram
-               then
-                  Called_E_Decl := Called_E.Get_Declaration.Loc;
+      if Entity /= No_Root_Entity then
+         declare
+            Calls : Calls_Iterator'Class := Get_All_Called_Entities (Entity);
+         begin
+            For_Each_Entity :
+            while not At_End (Calls) loop
+               declare
+                  Called_E : constant Root_Entity'Class := Get (Calls);
+               begin
+                  if Called_E /= No_Root_Entity
+                    and then Called_E.Is_Subprogram
+                  then
+                     Called_E_Decl := Called_E.Get_Declaration.Loc;
 
-                  if Get_All_Refs or Dispatching_Calls then
-                     --  Now search for all references. This was either
-                     --  requested explicitly or is needed to resolve
-                     --  dispatching calls
+                     if Get_All_Refs or Dispatching_Calls then
+                        --  Now search for all references. This was either
+                        --  requested explicitly or is needed to resolve
+                        --  dispatching calls
 
-                     Is_First := True;
+                        Find_All_References
+                          (Iter     => Refs,
+                           Entity   => Called_E,
+                           In_Scope => Entity);
+                        Is_First := True;
 
-                     while not At_End (Refs) loop
-                        declare
-                           Ref : constant Root_Entity_Reference'Class :=
-                             Get (Refs);
-                        begin
-
-                           if Ref /= No_Root_Entity_Reference
-                             and then Ref.Show_In_Callgraph
+                        while not At_End (Refs) loop
+                           Ref := Get (Refs);
+                           if Ref /= No_General_Entity_Reference
+                             and then Kernel.Databases.Show_In_Callgraph (Ref)
                              and then Get_Caller (Ref) = Entity
                              and then Get_Entity (Refs).Is_Subprogram
-                             and then Called_E_Decl /= Get_Location (Ref)
+                               and then Called_E_Decl /= Get_Location (Ref)
                            then
                               --  If we want to see all references, report this
                               --  one now, unless it is a dispatching call
@@ -558,7 +545,7 @@ package body GPS.Kernel.Xref is
 
                               if Get_All_Refs then
                                  Through_Dispatching :=
-                                   Ref.Is_Dispatching_Call;
+                                   Kernel.Databases.Is_Dispatching_Call (Ref);
 
                                  if not Dispatching_Calls
                                    or else not Through_Dispatching
@@ -582,7 +569,8 @@ package body GPS.Kernel.Xref is
                                  --  solve dispatching calls.
 
                               elsif Is_First
-                                and then not Ref.Is_Dispatching_Call
+                                and then not Kernel.Databases.
+                                  Is_Dispatching_Call (Ref)
                               then
                                  Is_First := False;
                                  if not On_Entity_Found
@@ -590,7 +578,7 @@ package body GPS.Kernel.Xref is
                                     Entity              => Get_Entity (Refs),
                                     Parent              => Entity,
                                     Ref                 =>
-                                      No_Root_Entity_Reference,
+                                      No_General_Entity_Reference,
                                     Through_Dispatching => False,
                                     Is_Renaming         => False)
                                  then
@@ -638,7 +626,8 @@ package body GPS.Kernel.Xref is
                                        & Get_Location (Ref).Line'Img);
 
                                     For_Each_Dispatching_Call
-                                      (Ref       => Ref,
+                                      (Entity    => Get_Entity (Refs),
+                                       Ref       => Ref,
                                        Filter    =>
                                          Reference_Is_Declaration'Access,
                                        On_Callee => On_Callee'Access);
@@ -649,33 +638,33 @@ package body GPS.Kernel.Xref is
                            end if;
 
                            Next (Refs);
-                        end;
-                     end loop;
-                     Destroy (Refs);
-                  else
-                     if not On_Entity_Found
-                       (User_Data,
-                        Entity              => Called_E,
-                        Parent              => Entity,
-                        Ref                 => No_Root_Entity_Reference,
-                        Through_Dispatching => False,
-                        Is_Renaming         => False)
-                     then
-                        exit For_Each_Entity;
+                        end loop;
+                        Destroy (Refs);
+                     else
+                        if not On_Entity_Found
+                          (User_Data,
+                           Entity              => Called_E,
+                           Parent              => Entity,
+                           Ref                 => No_General_Entity_Reference,
+                           Through_Dispatching => False,
+                           Is_Renaming         => False)
+                        then
+                           exit For_Each_Entity;
+                        end if;
                      end if;
                   end if;
-               end if;
 
-               Next (Calls);
-            end;
-         end loop For_Each_Entity;
-      end;
+                  Next (Calls);
+               end;
+            end loop For_Each_Entity;
+         end;
 
-      Destroy (Calls);
+         Destroy (Calls);
 
-      Destroy (User_Data.all, Cancelled => False);
-      Data := Commands_User_Data (User_Data);
-      Unchecked_Free (Data);
+         Destroy (User_Data.all, Cancelled => False);
+         Data := Commands_User_Data (User_Data);
+         Unchecked_Free (Data);
+      end if;
    end Examine_Entity_Call_Graph;
 
    ---------------------------------

@@ -20,7 +20,7 @@ with Language.Cpp;     use Language.Cpp;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Traces;  use GNATCOLL.Traces;
 with Xref;             use Xref;
-with Ada.Containers.Indefinite_Vectors;
+with Ada.Containers.Indefinite_Holders;
 
 package body Completion.C.Constructs_Extractor is
    Me : constant Trace_Handle := Create ("COMPLETION.C");
@@ -45,6 +45,8 @@ package body Completion.C.Constructs_Extractor is
       E  : Root_Entity'Class) return Language_Category;
    --  Make a simple association between entity categories and construct
    --  categories. This association is known to be inaccurate.
+
+   package Holder is new Ada.Containers.Indefinite_Holders (Root_Entity'Class);
 
    ---------------------------------
    -- Completion_Proposal_Handler --
@@ -103,7 +105,7 @@ package body Completion.C.Constructs_Extractor is
 
    private
       type C_Completion_Proposal is new Simple_Completion_Proposal with record
-         Entity_Info : Root_Entity_Ref;
+         Entity_Info : Holder.Holder;
 
          With_Params : Boolean := False;
          --  Set to true if Entity_Info is a subprogram and we need to provide
@@ -178,9 +180,9 @@ package body Completion.C.Constructs_Extractor is
          Prefix   : GNAT.Strings.String_Access;
       end record;
 
-      package Entities_List is new Ada.Containers.Indefinite_Vectors
-        (Index_Type => Natural, Element_Type => Root_Entity'Class);
-
+      package Entities_List is new Ada.Containers.Vectors
+        (Index_Type => Natural, Element_Type => Holder.Holder,
+         "=" => Holder."=");
       package Files_List is new Ada.Containers.Vectors
         (Index_Type => Natural, Element_Type => GNATCOLL.VFS.Virtual_File);
 
@@ -353,8 +355,17 @@ package body Completion.C.Constructs_Extractor is
          --------------
 
          function Contains (E : Root_Entity'Class) return Boolean is
+            Cursor : Entities_List.Cursor := It.Entities.First;
          begin
-            return It.Entities.Contains (E);
+            while Entities_List.Has_Element (Cursor) loop
+               if Entities_List.Element (Cursor).Element = E then
+                  return True;
+               end if;
+
+               Entities_List.Next (Cursor);
+            end loop;
+
+            return False;
          end Contains;
 
          ----------------
@@ -408,7 +419,12 @@ package body Completion.C.Constructs_Extractor is
                         end if;
 
                         if Has_Prefix (Get_Name (E)) then
-                           It.Entities.Append (E);
+                           declare
+                              H : Holder.Holder;
+                           begin
+                              H.Replace_Element (E);
+                              It.Entities.Append (H);
+                           end;
                            return;  --  Proposal found!
                         end if;
                      end;
@@ -653,7 +669,7 @@ package body Completion.C.Constructs_Extractor is
           Is_Param    : Boolean := False) return C_Completion_Proposal
       is
          Db : constant General_Xref_Database := Resolver.Kernel.Databases;
-         H  : Root_Entity_Ref;
+         H  : Holder.Holder;
       begin
          H.Replace_Element (Entity);
          return C_Completion_Proposal'

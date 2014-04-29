@@ -724,7 +724,6 @@ package body GPS.Kernel.Contexts is
    is
       Db : constant General_Xref_Database :=
         Context.Data.Data.Kernel.Databases;
-      Closest_Ref : Root_Entity_Reference_Ref;
    begin
       --  If we have never attempted to get the actual location of the entity,
       --  do so now.
@@ -746,7 +745,7 @@ package body GPS.Kernel.Contexts is
                        Line   => Context.Data.Data.Line,
                        Column => Context.Data.Data.Entity_Column),
                   Entity_Name => Context.Data.Data.Entity_Name.all,
-                  Closest_Ref => Closest_Ref,
+                  Closest_Ref => Context.Data.Data.Xref_Closest_Ref,
                   Approximate_Search_Fallback => Approximate_Search_Fallback));
 
             Ref (Context.Data.Data.Xref_Entity.Element);
@@ -811,10 +810,10 @@ package body GPS.Kernel.Contexts is
    ---------------------
 
    function Get_Closest_Ref
-     (Context : Selection_Context) return Root_Entity_Reference'Class
+     (Context : Selection_Context) return General_Entity_Reference
    is
    begin
-      return Context.Data.Data.Xref_Closest_Ref.Element;
+      return Context.Data.Data.Xref_Closest_Ref;
    end Get_Closest_Ref;
 
    ------------------------------

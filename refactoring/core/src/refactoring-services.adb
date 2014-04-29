@@ -598,7 +598,7 @@ package body Refactoring.Services is
          Shared : Boolean := False;
          Iter   : Construct_Tree_Iterator;
          Tree   : Construct_Tree;
-         H      : Root_Entity_Ref;
+         H      : Holder.Holder;
       begin
          Skip_To_Char (Buffer (Index .. Last), Index, ':');
          Equal := Index;
@@ -1030,8 +1030,10 @@ package body Refactoring.Services is
       Success            : out Boolean;
       Omit_Library_Level : Boolean := False)
    is
+      Ref_Iter                 : Entity_Reference_Iterator;
       Iter                     : Entities_In_File_Cursor;
       Caller                   : Root_Entity_Access;
+      Ref                      : General_Entity_Reference;
       Decl                     : General_Entity_Declaration;
       Location, Body_Loc       : General_Location := No_Location;
       Entity                   : Root_Entity_Access;
@@ -1080,167 +1082,164 @@ package body Refactoring.Services is
                      not Is_Subprogram (Caller_At_Declaration (Entity.all)));
 
          if not Is_Global then
-            declare
-               Ref_Iter : Root_Reference_Iterator'Class := Find_All_References
-                 (Entity  => Entity.all,
-                  In_File => Self.File);
-            begin
+            Find_All_References
+              (Iter    => Ref_Iter,
+               Entity  => Entity.all,
+               In_File => Self.File);
 
-               For_Each_Ref :
-               while not At_End (Ref_Iter) loop
-                  declare
-                     Ref : constant Root_Entity_Reference'Class :=
-                       Get (Ref_Iter);
-                  begin
-                     Location := Get_Location (Ref);
-                     Unchecked_Free (Caller);
-                     Caller   := new Root_Entity'Class'(Get_Caller (Ref));
+            For_Each_Ref :
+            while not At_End (Ref_Iter) loop
+               Ref      := Get (Ref_Iter);
+               Location := Get_Location (Ref);
+               Unchecked_Free (Caller);
+               Caller   := new Root_Entity'Class'(Get_Caller (Ref));
 
-                     if Parent.all /= No_Root_Entity
-                       and then Parent.all /= Caller.all
-                       and then not Ref.Reference_Is_Declaration
+               if Parent.all /= No_Root_Entity
+                 and then Parent.all /= Caller.all
+                 and then not Reference_Is_Declaration (Db, Ref)
+               then
+                  --  A reference outside of the current subprogram
+                  Flags (Flag_Ref_Outside_Parent) := True;
+
+                  --  No interest in further references, since they can't
+                  --  be in the extracted code and we already know the
+                  --  entity is ref outside of that code
+
+                  exit For_Each_Ref when Location.Line > Self.To_Line;
+
+               else
+                  if Self.From_Line <= Location.Line
+                    and then Location.Line <= Self.To_Line
+                    and then Parent.all = No_Root_Entity
+                  then
+                     Unchecked_Free (Parent);
+                     Parent := new Root_Entity'Class'(Caller.all);
+                  end if;
+
+                  if Parent.all = No_Root_Entity
+                    and then not Reference_Is_Declaration (Db, Ref)
+                  then
+                     --  We haven't computed the parent yet, so we are still
+                     --  outside of the scope of the selected text.
+
+                     Flags (Flag_Ref_Outside_Parent) := True;
+                  end if;
+
+                  --  A reference within the current subprogram
+
+                  if Location.Line > Self.To_Line then
+                     Flags (Flag_Read_After) := True;
+
+                  elsif Location.Line < Self.From_Line then
+                     if Location.Line /= Decl.Loc.Line
+                       and then Location.Line /= Body_Loc.Line
                      then
-                        --  A reference outside of the current subprogram
-                        Flags (Flag_Ref_Outside_Parent) := True;
-
-                        --  No interest in further references, since they can't
-                        --  be in the extracted code and we already know the
-                        --  entity is ref outside of that code
-
-                        exit For_Each_Ref when Location.Line > Self.To_Line;
+                        if Db.Is_Write_Reference (Ref) then
+                           Flags (Flag_Modified_Before) := True;
+                        elsif Db.Is_Read_Reference (Ref) then
+                           Flags (Flag_Read_Before) := True;
+                        end if;
 
                      else
-                        if Self.From_Line <= Location.Line
-                          and then Location.Line <= Self.To_Line
-                          and then Parent.all = No_Root_Entity
-                        then
-                           Unchecked_Free (Parent);
-                           Parent := new Root_Entity'Class'(Caller.all);
-                        end if;
+                        Is_Parameter_Of (Db, Entity.all, Is_Param, PType);
+                        if Is_Param then
+                           case PType is
+                           when Out_Parameter =>
+                              --  the entity is needed outside of the
+                              --  extracted code (both to read its value and
+                              --  set it for the caller)
+                              Flags (Flag_Modified_After) := True;
+                              Flags (Flag_Read_After) := True;
 
-                        if Parent.all = No_Root_Entity
-                          and then not Ref.Reference_Is_Declaration
-                        then
-                           --  We haven't computed the parent yet, so we are
-                           --  still outside of the scope of the selected text.
-
-                           Flags (Flag_Ref_Outside_Parent) := True;
-                        end if;
-
-                        --  A reference within the current subprogram
-
-                        if Location.Line > Self.To_Line then
-                           Flags (Flag_Read_After) := True;
-
-                        elsif Location.Line < Self.From_Line then
-                           if Location.Line /= Decl.Loc.Line
-                             and then Location.Line /= Body_Loc.Line
-                           then
-                              if Ref.Is_Write_Reference then
-                                 Flags (Flag_Modified_Before) := True;
-                              elsif Ref.Is_Read_Reference then
-                                 Flags (Flag_Read_Before) := True;
-                              end if;
-
-                           else
-                              Is_Parameter_Of
-                                (Db, Entity.all, Is_Param, PType);
-                              if Is_Param then
-                                 case PType is
-                                 when Out_Parameter =>
-                                    --  the entity is needed outside of the
-                                    --  extracted code (both to read its value
-                                    --  and set it for the caller)
-                                    Flags (Flag_Modified_After) := True;
-                                    Flags (Flag_Read_After) := True;
-
-                                 when others =>
-                                    --  An initial value might be passed
-                                    --  through the parameter
-                                    Flags (Flag_Modified_Before) := True;
-                                 end case;
-
-                              elsif Get_Declaration
-                                (Self.Context, Entity.all).Initial_Value /= ""
-                              then
-                                 Flags (Flag_Modified_Before) := True;
-                              end if;
-                           end if;
+                           when others =>
+                              --  An initial value might be passed through
+                              --  the parameter
+                              Flags (Flag_Modified_Before) := True;
+                           end case;
 
                         else
-                           --  A reference within the extracted code
-
-                           if Location.Line = Decl.Loc.Line then
-                              --  If this is the declaration, it means we have
-                              --  a "declare" block, and as such we can simply
-                              --  ignore this entity, it will be automatically
-                              --  extracted.
-                              --
-                              --  ??? Of course, the user could also have
-                              --  selected the local vars in the original
-                              --  subprogram, or only part of a declare block,
-                              --  in which case we should really display an
-                              --  error
-
-                              exit For_Each_Ref;
-                           end if;
-
-                           --  Should ignore the reference if it is a named
-                           --  parameter in a subprogram call, as in
-                           --  "Foo (Title => ...)"
-
-                           ERef := Find_Reference_Details
-                             (Get_Tree_Language (Struct),
-                              Struct,
-                              To_String_Index
-                                (Struct, Location.Line, Location.Column));
-
-                           if not ERef.Is_Named_Parameter then
-                              --  If we are calling a subprogram nested within
-                              --  the parent, we can't extract the code. ???
-                              --  We could if we extract to another nested
-                              --  subprogram. ??? We also could if the only
-                              --  reference to that nested is within the
-                              --  extracted code, in which case we should
-                              --  extract the subprogram too
-
-                              if Is_Subprogram (Entity.all) then
-                                 Unchecked_Free (Caller);
-                                 Caller := new Root_Entity'Class'
-                                   (Caller_At_Declaration (Entity.all));
-
-                                 --  ??? We should test if it is nested within
-                                 --  Context.Parent, when that is set
-                                 if Caller.all /= No_Root_Entity
-                                   and then Is_Subprogram (Caller.all)
-                                 then
-                                    Self.Context.Report_Error
-                                      ("A call to the nested subprogram "
-                                       & Get_Name (Entity.all)
-                                       & " prevents the refactoring");
-                                    Success := False;
-                                    Thaw (Db, Lock);
-                                    Unchecked_Free (Parent);
-                                    Unchecked_Free (Caller);
-                                    Unchecked_Free (Entity);
-                                    return;
-                                 end if;
+                           declare
+                              Entity_Decl : constant Entity_Declaration :=
+                                Get_Declaration (Self.Context, Entity.all);
+                           begin
+                              if Entity_Decl.Initial_Value /= "" then
+                                 Flags (Flag_Modified_Before) := True;
                               end if;
-
-                              if Ref.Is_Write_Reference then
-                                 Flags (Flag_Modified) := True;
-                              elsif Ref.Is_Read_Reference then
-                                 Flags (Flag_Read) := True;
-                              end if;
-                           end if;
+                           end;
                         end if;
                      end if;
 
-                     Next (Ref_Iter);
-                  end;
-               end loop For_Each_Ref;
-               Destroy (Ref_Iter);
-            end;
+                  else
+                     --  A reference within the extracted code
+
+                     if Location.Line = Decl.Loc.Line then
+                        --  If this is the declaration, it means we have a
+                        --  "declare" block, and as such we can simply ignore
+                        --  this entity, it will be automatically extracted.
+                        --
+                        --  ??? Of course, the user could also have selected
+                        --  the local vars in the original subprogram, or only
+                        --  part of a declare block, in which case we should
+                        --  really display an error
+
+                        exit For_Each_Ref;
+                     end if;
+
+                     --  Should ignore the reference if it is a named
+                     --  parameter in a subprogram call, as in
+                     --  "Foo (Title => ...)"
+
+                     ERef := Find_Reference_Details
+                       (Get_Tree_Language (Struct),
+                        Struct,
+                        To_String_Index
+                          (Struct, Location.Line, Location.Column));
+
+                     if not ERef.Is_Named_Parameter then
+                        --  If we are calling a subprogram nested within the
+                        --  parent, we can't extract the code.
+                        --  ??? We could if we extract to another nested
+                        --  subprogram.
+                        --  ??? We also could if the only reference to that
+                        --  nested is within the extracted code, in which
+                        --  case we should extract the subprogram too
+
+                        if Is_Subprogram (Entity.all) then
+                           Unchecked_Free (Caller);
+                           Caller := new Root_Entity'Class'
+                             (Caller_At_Declaration (Entity.all));
+
+                           --  ??? We should test if it is nested within
+                           --  Context.Parent, when that is set
+                           if Caller.all /= No_Root_Entity
+                             and then Is_Subprogram (Caller.all)
+                           then
+                              Self.Context.Report_Error
+                                ("A call to the nested subprogram "
+                                 & Get_Name (Entity.all)
+                                 & " prevents the refactoring");
+                              Success := False;
+                              Thaw (Db, Lock);
+                              Unchecked_Free (Parent);
+                              Unchecked_Free (Caller);
+                              Unchecked_Free (Entity);
+                              return;
+                           end if;
+                        end if;
+
+                        if Db.Is_Write_Reference (Ref) then
+                           Flags (Flag_Modified) := True;
+                        elsif Db.Is_Read_Reference (Ref) then
+                           Flags (Flag_Read) := True;
+                        end if;
+                     end if;
+                  end if;
+               end if;
+
+               Next (Ref_Iter);
+            end loop For_Each_Ref;
+
+            Destroy (Ref_Iter);
 
             if Flags (Flag_Modified) or else Flags (Flag_Read) then
                Callback (Entity => Entity.all, Flags => Flags);

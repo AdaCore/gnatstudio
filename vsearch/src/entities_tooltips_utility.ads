@@ -54,7 +54,7 @@ package Entities_Tooltips_Utility is
    function Get_Tooltip_Documentation
      (Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Root_Entity'Class;
-      Ref           : Root_Entity_Reference'Class) return String;
+      Ref           : General_Entity_Reference) return String;
    --  Return the documentation of the tooltip
 
    function Get_Tooltip_Documentation

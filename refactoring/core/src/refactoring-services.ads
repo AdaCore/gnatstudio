@@ -34,6 +34,7 @@ with Language.Tree;
 with Language.Tree.Database;
 with Xref;
 use Xref;
+with Ada.Containers.Indefinite_Holders;
 
 package Refactoring.Services is
 
@@ -342,10 +343,13 @@ private
       Sloc_Column   : aliased Universal_Location := Null_Universal_Location;
    end record;
 
+   package Holder is new Ada.Containers.Indefinite_Holders
+     (Root_Entity'Class);
+
    type Entity_Declaration is tagged record
       Db     : Xref.General_Xref_Database;
       File   : Language.Tree.Database.Structured_File_Access;
-      Entity : Root_Entity_Ref;
+      Entity : Holder.Holder;
       Decl   : Ada.Strings.Unbounded.Unbounded_String;
 
       SFirst, SLast : Language.Source_Location;

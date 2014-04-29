@@ -70,7 +70,7 @@ package body Entities_Tooltips is
    function Draw_Tooltip
      (Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Root_Entity'Class;
-      Ref           : Root_Entity_Reference'Class;
+      Ref           : General_Entity_Reference;
       Draw_Border   : Boolean) return Gtk_Widget is
    begin
       return Draw_Tooltip

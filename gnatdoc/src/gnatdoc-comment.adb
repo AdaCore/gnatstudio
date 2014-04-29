@@ -248,7 +248,7 @@ package body GNATdoc.Comment is
    ----------------------------
 
    function New_Structured_Comment return Structured_Comment is
-      H : Root_Entity_Ref;
+      H : Holder.Holder;
       New_Info : Tag_Info_Ptr;
       New_Node : Node_Ptr;
 

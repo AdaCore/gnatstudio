@@ -107,7 +107,7 @@ package GPS.Kernel.Xref is
      (Data                : access Commands_User_Data_Record;
       Entity              : Root_Entity'Class;
       Parent              : Root_Entity'Class;
-      Ref                 : Root_Entity_Reference'Class;
+      Ref                 : General_Entity_Reference;
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean is abstract;
    --  If Parent is a renaming of the original Entity, Is_Renaming is set to
@@ -138,7 +138,8 @@ package GPS.Kernel.Xref is
    --  Entity indirectly through a dispatching call is also listed.
 
    procedure Examine_Entity_Call_Graph
-     (Entity            : Root_Entity'Class;
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity            : Root_Entity'Class;
       User_Data         : access Commands_User_Data_Record'Class;
       Get_All_Refs      : Boolean;
       Dispatching_Calls : Boolean);
