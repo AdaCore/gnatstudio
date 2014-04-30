@@ -347,6 +347,43 @@ class TextItem(Item):
         """
 
 
+class EditableTextItem(TextItem):
+    """
+    A text item (:class:`GPS.Browsers.TextItem`) that can be double-clicked
+    on to edit its text.
+    """
+
+    def __init__(self, style, text, directed=TextItem.TextArrow.NONE):
+        """
+        Creates a new editable text item
+
+        :param GPS.Browsers.Style style: how to draw the item
+        :param str text: the text to display.
+        :param bool directed: whether to draw an additional arrow next
+           to the text. This can be used for instance when the
+           text is next to a link, and indicates in which direction
+           the text applies.
+        """
+
+
+class ImageItem(Item):
+    """
+    An item that shows an image.
+    """
+
+    def __init__(self, style, filename, width=-1.0, height=1.0):
+        """
+        Creates a new image item.
+
+        :param GPS.Browsers.Style style: how to draw the border of the item
+        :param str filename: the filename to load.
+        :param float width: forcing a size for the item (the default is to use
+           the image's own size)
+        :param float height: forcing a size for the item (the default is to use
+           the image's own size)
+        """
+
+
 class HrItem(Item):
     """
     A horizontal-line item, with optional text in the middle.

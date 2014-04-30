@@ -33,6 +33,15 @@ Classes
 
    .. automethod:: GPS.Browsers.Diagram.set_selection_mode
 
+:class:`GPS.Browsers.EditableTextItem`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: EditableTextItem
+
+   .. inheritance-diagram:: GPS.Browsers.EditableTextItem
+
+   .. automethod:: GPS.Browsers.EditableTextItem.__init__
+
 :class:`GPS.Browsers.EllipseItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -50,6 +59,15 @@ Classes
    .. inheritance-diagram:: GPS.Browsers.HrItem
 
    .. automethod:: GPS.Browsers.HrItem.__init__
+
+:class:`GPS.Browsers.ImageItem`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ImageItem
+
+   .. inheritance-diagram:: GPS.Browsers.ImageItem
+
+   .. automethod:: GPS.Browsers.ImageItem.__init__
 
 :class:`GPS.Browsers.Item`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

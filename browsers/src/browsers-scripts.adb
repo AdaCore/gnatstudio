@@ -19,8 +19,10 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Cairo.Pattern;             use Cairo, Cairo.Pattern;
 with Glib;                      use Glib;
+with Glib.Error;                use Glib.Error;
 with Glib.Object;               use Glib.Object;
 with Gdk.Event;                 use Gdk.Event;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Types;                 use Gdk.Types;
 with Generic_Views;
@@ -156,6 +158,10 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    procedure Hr_Handler
      (Data : in out Callback_Data'Class; Command : String);
+   procedure Editable_Text_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure Image_Handler
+     (Data : in out Callback_Data'Class; Command : String);
    procedure Link_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure Diagram_Handler
@@ -273,6 +279,15 @@ package body Browsers.Scripts is
       return Instance_List_Access is (Self.Inst'Access);
    overriding procedure Destroy (Self : not null access PText_Record);
 
+   type PEditable_Text_Record is new Editable_Text_Item_Record and Python_Item
+     with record
+      Inst : aliased Instance_List;
+   end record;
+   overriding function Inst_List
+     (Self : not null access PEditable_Text_Record)
+      return Instance_List_Access is (Self.Inst'Access);
+   overriding procedure Destroy (Self : not null access PEditable_Text_Record);
+
    type PHr_Record is new Hr_Item_Record and Python_Item with record
       Inst : aliased Instance_List;
    end record;
@@ -280,6 +295,14 @@ package body Browsers.Scripts is
      (Self : not null access PHr_Record)
       return Instance_List_Access is (Self.Inst'Access);
    overriding procedure Destroy (Self : not null access PHr_Record);
+
+   type PImage_Record is new Image_Item_Record and Python_Item with record
+      Inst : aliased Instance_List;
+   end record;
+   overriding function Inst_List
+     (Self : not null access PImage_Record)
+      return Instance_List_Access is (Self.Inst'Access);
+   overriding procedure Destroy (Self : not null access PImage_Record);
 
    type Pline_Record is new Polyline_Item_Record and Python_Item with record
       Inst : aliased Instance_List;
@@ -392,6 +415,28 @@ package body Browsers.Scripts is
    begin
       Destroy_Instances (Self);
       Canvas_Link_Record (Self.all).Destroy;  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Self : not null access PEditable_Text_Record)
+   is
+   begin
+      Destroy_Instances (Self);
+      Editable_Text_Item_Record (Self.all).Destroy;  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : not null access PImage_Record) is
+   begin
+      Destroy_Instances (Self);
+      Image_Item_Record (Self.all).Destroy;  --  inherited
    end Destroy;
 
    ---------------
@@ -743,9 +788,12 @@ package body Browsers.Scripts is
       Self.View.On_Item_Event (On_Item_Event_Select'Access);
       Self.View.On_Item_Event (On_Item_Event_Scroll_Background'Access);
       Self.View.On_Item_Event (On_Item_Event_Zoom'Access);
-      Self.View.On_Item_Event (On_Item_Event'Access, Self);
       Self.View.On_Item_Event (On_Item_Event_Key_Navigate'Access);
       Self.View.On_Item_Event (On_Item_Event_Key_Scrolls'Access);
+
+      --  Last event handler, so that the default behavior always takes
+      --  precedence for consistency
+      Self.View.On_Item_Event (On_Item_Event'Access, Self);
 
       Register_Contextual_Menu
         (Kernel          => Self.Kernel,
@@ -1301,6 +1349,54 @@ package body Browsers.Scripts is
       end if;
    end Hr_Handler;
 
+   ---------------------------
+   -- Editable_Text_Handler --
+   ---------------------------
+
+   procedure Editable_Text_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Item : access PEditable_Text_Record;
+   begin
+      if Command = Constructor_Method then
+         Item := new PEditable_Text_Record;
+         Item.Initialize_Text
+           (Style    => Get_Style (Nth_Arg (Data, 2)),
+            Text     => Nth_Arg (Data, 3),
+            Directed => Text_Arrow_Direction'Val
+              (Nth_Arg (Data, 4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
+         Item.Set_Instance (Nth_Arg (Data, 1));
+      end if;
+   end Editable_Text_Handler;
+
+   -------------------
+   -- Image_Handler --
+   -------------------
+
+   procedure Image_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Item   : access PImage_Record;
+      Pixbuf : Gdk_Pixbuf;
+      Error  : GError;
+   begin
+      if Command = Constructor_Method then
+         Gdk_New_From_File (Pixbuf, Nth_Arg (Data, 3), Error);
+         if Error /= null then
+            Set_Error_Msg (Data, Get_Message (Error));
+            Error_Free (Error);
+         else
+            Item := new PImage_Record;
+            Item.Initialize_Image
+              (Style    => Get_Style (Nth_Arg (Data, 2)),
+               Image    => Pixbuf,
+               Width    => Gdouble (Nth_Arg (Data, 4, -1.0)),
+               Height   => Gdouble (Nth_Arg (Data, 5, -1.0)));
+            Item.Set_Instance (Nth_Arg (Data, 1));
+         end if;
+      end if;
+   end Image_Handler;
+
    ------------------
    -- Link_Handler --
    ------------------
@@ -1374,7 +1470,8 @@ package body Browsers.Scripts is
         Kernel.Scripts.New_Class ("Style", Module => BModule);
       Diagram_Class : constant Class_Type :=
         Kernel.Scripts.New_Class ("Diagram", Module => BModule);
-      Rect_Item, Ellipse_Item, Polyline, Text, Hr, Link : Class_Type;
+      Rect_Item, Ellipse_Item, Polyline, Text, Hr, Link, Image : Class_Type;
+      Editable_Text : Class_Type;
    begin
       Module := new Browsers_Scripts_Module;
       Browser_Views.Register_Module (Kernel, Module_ID (Module));
@@ -1394,6 +1491,10 @@ package body Browsers.Scripts is
         ("PolylineItem", Module => BModule, Base => Module.Item_Class);
       Text := Kernel.Scripts.New_Class
         ("TextItem", Module => BModule, Base => Module.Item_Class);
+      Editable_Text := Kernel.Scripts.New_Class
+        ("EditableTextItem", Module => BModule, Base => Text);
+      Image := Kernel.Scripts.New_Class
+        ("ImageItem", Module => BModule, Base => Module.Item_Class);
       Hr := Kernel.Scripts.New_Class
         ("HrItem", Module => BModule, Base => Module.Item_Class);
       Link := Kernel.Scripts.New_Class
@@ -1597,6 +1698,25 @@ package body Browsers.Scripts is
                      Param ("directed", Optional => True)),
          Class   => Text,
          Handler => Text_Handler'Access);
+
+      Register_Command
+        (Kernel.Scripts,
+         Constructor_Method,
+         Params  => (Param ("style"),
+                     Param ("text"),
+                     Param ("directed", Optional => True)),
+         Class   => Editable_Text,
+         Handler => Editable_Text_Handler'Access);
+
+      Register_Command
+        (Kernel.Scripts,
+         Constructor_Method,
+         Params  => (Param ("style"),
+                     Param ("filename"),
+                     Param ("width", Optional => True),
+                     Param ("height", Optional => True)),
+         Class   => Image,
+         Handler => Image_Handler'Access);
 
       Register_Command
         (Kernel.Scripts,
