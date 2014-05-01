@@ -309,11 +309,11 @@ class Background_Highlighter(object):
         Called when some lines are folded or unfolded
         """
 
-        context = GPS.current_context()
-        location = context.location()
-        buffer = GPS.EditorBuffer.get(location.file(), open=False)
-        self.stop_highlight(buffer)
-        self.start_highlight(buffer)
+        buffer = GPS.EditorBuffer.get(open=False)
+
+        if buffer:
+            self.stop_highlight(buffer)
+            self.start_highlight(buffer)
 
     def on_start_buffer(self, buffer):
         """
