@@ -4594,13 +4594,13 @@ pragma or aspect. This is useful when the pragma or aspect argument
 references subprograms in a with'ed package which is replaced by a
 dummy package for the final build.
 
-The implementation defined policy `Assertions' applies to all
+The implementation defined assertion kind `Assertions' applies to all
 assertion kinds. The form with no assertion kind given implies this
 choice, so it applies to all assertion kinds (RM defined, and
 implementation defined).
 
-The implementation defined policy `Statement_Assertions' applies to
-`Assert', `Assert_And_Cut', `Assume', `Loop_Invariant', and
+The implementation defined assertion kind `Statement_Assertions'
+applies to `Assert', `Assert_And_Cut', `Assume', `Loop_Invariant', and
 `Loop_Variant'.
       </DOC>
    </PRAGMA>
