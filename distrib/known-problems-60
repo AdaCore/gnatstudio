@@ -38,6 +38,18 @@ KP-60-N425-013 GB: no current word highlighting control
 
   Workaround: No workaround needed.
 
+KP-60-N424-023 GPS: freeze or crash when folding blocks
+
+  Problem:    When folding or unfolding block, GPS might freeze or crash.
+              This is particularly likely to occur on big files when
+              using a custom highlighter implemented with the highlighter.py
+              plug-in.
+
+  Status:     This was fixed in 6.1.0 on 2014-05-01
+
+  Workaround: Wait for the highlighting operation to have completed before
+              folding/unfolding blocks.
+
 KP-60-N423-019 GPS: dropping files does not work on a read-only editor
 
   Problem:    When drag-and-dropping a file from the window manager on top
