@@ -703,6 +703,20 @@ package GPS.Kernel is
       Context : Selection_Context);
    --  Runs the "source_lines_revealed" hook
 
+   procedure Source_Lines_Folded
+     (Handle     : access Kernel_Handle_Record;
+      Context    : Selection_Context;
+      Start_Line : Natural;
+      End_Line   : Natural);
+   --  Runs the "source_lines_folded" hook
+
+   procedure Source_Lines_Unfolded
+     (Handle     : access Kernel_Handle_Record;
+      Context    : Selection_Context;
+      Start_Line : Natural;
+      End_Line   : Natural);
+   --  Runs the "source_lines_unfolded" hook
+
    procedure File_Edited
      (Handle : access Kernel_Handle_Record;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -836,6 +850,12 @@ package GPS.Kernel is
    --  Hooks with Context_Hooks_Args argument (a File_Area_Context_Access)
    Source_Lines_Revealed_Hook    : constant Hook_Name :=
                                      To_Hook_Name ("source_lines_revealed");
+
+   Source_Lines_Folded_Hook    : constant Hook_Name :=
+                                     To_Hook_Name ("source_lines_folded");
+
+   Source_Lines_Unfolded_Hook    : constant Hook_Name :=
+                                     To_Hook_Name ("source_lines_unfolded");
 
    --  Hooks with Project_Hooks_Args argument
    Project_Saved_Hook            : constant Hook_Name :=

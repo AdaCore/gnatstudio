@@ -522,6 +522,13 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Command : Editor_Command);
 
+   function Source_Lines_Context
+     (Buffer     : access Source_Buffer_Record;
+      Project    : GNATCOLL.Projects.Project_Type;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type) return Selection_Context;
+   --  Create a selection context for the given lines
+
    -----------
    -- Hooks --
    -----------
@@ -5775,6 +5782,42 @@ package body Src_Editor_Buffer is
       Buffer.File_Identifier := Name;
    end Set_File_Identifier;
 
+   -------------------------
+   -- Source_Lines_Folded --
+   -------------------------
+
+   procedure Source_Lines_Folded
+     (Buffer     : access Source_Buffer_Record;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type)
+   is
+      Context : constant Selection_Context := Source_Lines_Context
+        (Buffer, No_Project, Start_Line, End_Line);
+   begin
+      GPS.Kernel.Source_Lines_Folded
+        (Buffer.Kernel, Context,
+         Natural (Start_Line),
+         Natural (End_Line));
+   end Source_Lines_Folded;
+
+   ---------------------------
+   -- Source_Lines_Unfolded --
+   ---------------------------
+
+   procedure Source_Lines_Unfolded
+     (Buffer     : access Source_Buffer_Record;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type)
+   is
+      Context : constant Selection_Context := Source_Lines_Context
+        (Buffer, No_Project, Start_Line, End_Line);
+   begin
+      GPS.Kernel.Source_Lines_Unfolded
+        (Buffer.Kernel, Context,
+         Natural (Start_Line),
+         Natural (End_Line));
+   end Source_Lines_Unfolded;
+
    ---------------------------
    -- Source_Lines_Revealed --
    ---------------------------
@@ -5788,26 +5831,6 @@ package body Src_Editor_Buffer is
       Context     : Selection_Context := New_Context;
       First, Last : Editable_Line_Type;
    begin
-      Set_Context_Information
-        (Context,
-         Buffer.Kernel,
-         Abstract_Module_ID (Src_Editor_Module_Id));
-
-      if Buffer.Filename /= GNATCOLL.VFS.No_File then
-         Set_File_Information
-           (Context,
-            Files           => (1 => Buffer.Filename),
-            Project         => Project,
-            Publish_Project => False);
-
-      elsif Buffer.File_Identifier /= GNATCOLL.VFS.No_File then
-         Set_File_Information
-           (Context,
-            Files           => (1 => Buffer.File_Identifier),
-            Project         => Project,
-            Publish_Project => False);
-      end if;
-
       First := 0;
       Last  := 0;
 
@@ -5831,9 +5854,64 @@ package body Src_Editor_Buffer is
          Last := Buffer.Last_Editable_Line;
       end if;
 
-      Set_Area_Information (Context, "", Integer (First), Integer (Last));
+      Context := Source_Lines_Context (Buffer, Project, First, Last);
       GPS.Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
    end Source_Lines_Revealed;
+
+   --------------------------
+   -- Source_Lines_Context --
+   --------------------------
+
+   function Source_Lines_Context
+     (Buffer     : access Source_Buffer_Record;
+      Project    : GNATCOLL.Projects.Project_Type;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type) return Selection_Context
+   is
+      Context     : Selection_Context := New_Context;
+      The_Project : Project_Type;
+   begin
+      Set_Context_Information
+        (Context,
+         Buffer.Kernel,
+         Abstract_Module_ID (Src_Editor_Module_Id));
+
+      if Project = No_Project then
+         declare
+            Child : MDI_Child;
+         begin
+            Child := Find_Editor (Kernel  => Buffer.Kernel,
+                                  File    => Buffer.Filename,
+                                  Project => No_Project);
+
+            if Child /= null then
+               The_Project := Src_Editor_Module.Get_Project (Child);
+            end if;
+         end;
+      end if;
+
+      if Buffer.Filename /= GNATCOLL.VFS.No_File then
+         Set_File_Information
+           (Context,
+            Files           => (1 => Buffer.Filename),
+            Project         => The_Project,
+            Publish_Project => False);
+
+      elsif Buffer.File_Identifier /= GNATCOLL.VFS.No_File then
+         Set_File_Information
+           (Context,
+            Files           => (1 => Buffer.File_Identifier),
+            Project         => The_Project,
+            Publish_Project => False);
+      end if;
+
+      Set_Area_Information
+        (Context, "",
+         Integer (Start_Line),
+         Integer (End_Line));
+
+      return Context;
+   end Source_Lines_Context;
 
    ------------------------------
    -- Check_Timestamp_And_Diff --

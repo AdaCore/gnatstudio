@@ -208,7 +208,6 @@ package body Src_Editor_Module is
    --  Add an entry for File to the Recent menu, if needed
 
    function Get_Filename (Child : MDI_Child) return GNATCOLL.VFS.Virtual_File;
-   function Get_Project (Child : MDI_Child) return Project_Type;
    --  If Child is a file editor, return the corresponding filename,
    --  otherwise return an empty string.
 

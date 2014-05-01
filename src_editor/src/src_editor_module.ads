@@ -211,6 +211,13 @@ package Src_Editor_Module is
    --  Return the list of registered highlighters
 
    procedure On_Ed_View_Focus_Lost (Child : MDI_Child; File : Virtual_File);
+   --  ???
+
+   function Get_Project
+     (Child : MDI_Child) return GNATCOLL.Projects.Project_Type;
+   --  Return the project associated with the Child, which should be a
+   --  source editor view. Return No_Project if no project was found.
+
 private
 
    ------------------------

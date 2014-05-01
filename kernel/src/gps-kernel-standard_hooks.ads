@@ -175,6 +175,23 @@ package GPS.Kernel.Standard_Hooks is
    type Marker_Hooks_Args_Access is access all Marker_Hooks_Args'Class;
    --  These hooks contain a marker
 
+   ---------------------
+   -- Two_Lines_Hooks --
+   ---------------------
+
+   Two_Lines_Hook_Type : constant Hook_Type := "two_lines_hooks";
+
+   type Two_Lines_Hook_Args is new Hooks_Data with record
+      Context : GPS.Kernel.Selection_Context;
+      Line_1, Line_2  : Natural;
+      --  And editable line
+   end record;
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Two_Lines_Hook_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access;
+
    --------------------------
    --  File_Location_Hooks --
    --------------------------

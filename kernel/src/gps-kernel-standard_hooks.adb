@@ -762,6 +762,25 @@ package body GPS.Kernel.Standard_Hooks is
       return D;
    end Create_Callback_Data;
 
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
+
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Two_Lines_Hook_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access
+   is
+      D : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 3));
+   begin
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
+      Set_Nth_Arg (D.all, 2, Data.Line_1);
+      Set_Nth_Arg (D.all, 3, Data.Line_2);
+      return D;
+   end Create_Callback_Data;
+
    -----------------------------------
    -- From_Callback_Data_Preference --
    -----------------------------------

@@ -619,6 +619,18 @@ package Src_Editor_Buffer is
    --  ??? This is not really a file name, although we use it as such in
    --  various contexts
 
+   procedure Source_Lines_Folded
+     (Buffer     : access Source_Buffer_Record;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type);
+   --  Emit the signal informing that source lines have been folded
+
+   procedure Source_Lines_Unfolded
+     (Buffer     : access Source_Buffer_Record;
+      Start_Line : Editable_Line_Type;
+      End_Line   : Editable_Line_Type);
+   --  Emit the signal informing that source lines have been unfolded
+
    procedure Source_Lines_Revealed
      (Buffer     : access Source_Buffer_Record;
       Project    : GNATCOLL.Projects.Project_Type;

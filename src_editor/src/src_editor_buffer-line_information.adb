@@ -2215,6 +2215,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Do_Not_Move_Cursor := Cursor_Move;
       Emit_New_Cursor_Position (Buffer);
+
+      --  Emit the "source_lines_folded" hook
+
+      Buffer.Source_Lines_Folded (Line_Start, Line_End);
    end Hide_Lines;
 
    ------------------
@@ -2396,8 +2400,13 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Do_Not_Move_Cursor := Cursor_Move;
       Emit_New_Cursor_Position (Buffer);
-   end Unhide_Lines;
 
+      --  Emit the "source_lines_unfolded" hook
+
+      Buffer.Source_Lines_Unfolded
+        (Start_Line,
+         Start_Line + Editable_Line_Type (Number_Of_Lines_Unfolded));
+   end Unhide_Lines;
    --------------
    -- Fold_All --
    --------------

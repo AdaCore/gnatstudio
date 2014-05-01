@@ -465,6 +465,42 @@ package body GPS.Kernel is
       Kernel.Editor_Factory := Factory;
    end Set_Buffer_Factory;
 
+   -------------------------
+   -- Source_Lines_Folded --
+   -------------------------
+
+   procedure Source_Lines_Folded
+     (Handle     : access Kernel_Handle_Record;
+      Context    : Selection_Context;
+      Start_Line : Natural;
+      End_Line   : Natural)
+   is
+      Data : aliased Two_Lines_Hook_Args :=
+        (Hooks_Data with Context => Context,
+         Line_1 => Start_Line,
+         Line_2 => End_Line);
+   begin
+      Run_Hook (Handle, Source_Lines_Folded_Hook, Data'Unchecked_Access);
+   end Source_Lines_Folded;
+
+   ---------------------------
+   -- Source_Lines_Unfolded --
+   ---------------------------
+
+   procedure Source_Lines_Unfolded
+     (Handle     : access Kernel_Handle_Record;
+      Context    : Selection_Context;
+      Start_Line : Natural;
+      End_Line   : Natural)
+   is
+      Data : aliased Two_Lines_Hook_Args :=
+        (Hooks_Data with Context => Context,
+         Line_1 => Start_Line,
+         Line_2 => End_Line);
+   begin
+      Run_Hook (Handle, Source_Lines_Unfolded_Hook, Data'Unchecked_Access);
+   end Source_Lines_Unfolded;
+
    ---------------------------
    -- Source_Lines_Revealed --
    ---------------------------

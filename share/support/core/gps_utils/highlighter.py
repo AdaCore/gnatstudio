@@ -199,11 +199,19 @@ class Background_Highlighter(object):
         self.style = style
         GPS.Hook("before_exit_action_hook").add(self.__before_exit)
         GPS.Hook("file_closed").add(self.__on_file_closed)
+        GPS.Hook("source_lines_folded").add(
+            self.__on_lines_folded_or_unfolded)
+        GPS.Hook("source_lines_unfolded").add(
+            self.__on_lines_folded_or_unfolded)
 
     def __del__(self):
         self.stop_highlight()
         GPS.Hook("before_exit_action_hook").remove(self.__before_exit)
         GPS.Hook("file_closed").remove(self.__on_file_closed)
+        GPS.Hook("source_lines_folded").remove(
+            self.__on_lines_folded_or_unfolded)
+        GPS.Hook("source_lines_unfolded").remove(
+            self.__on_lines_folded_or_unfolded)
 
     def __before_exit(self, hook):
         """
@@ -296,6 +304,17 @@ class Background_Highlighter(object):
                 self.stop_highlight(b[0])
                 break
 
+    def __on_lines_folded_or_unfolded(self, hook, start_line, end_line):
+        """
+        Called when some lines are folded or unfolded
+        """
+
+        context = GPS.current_context()
+        location = context.location()
+        buffer = GPS.EditorBuffer.get(location.file(), open=False)
+        self.stop_highlight(buffer)
+        self.start_highlight(buffer)
+
     def on_start_buffer(self, buffer):
         """
         Called before we start processing a new buffer.
@@ -370,11 +389,14 @@ class Background_Highlighter(object):
                 from_line = max(start_line, min_line - self.batch_size)
 
                 f = buffer.at(from_line, 1)
-                e = buffer.at(min_line, 1).end_of_line()
 
-                if self.style:
-                    self.style.remove(f, e)
-                self.process(f, e)
+                # Do not process if the line is folded
+                if not (from_line > 1 and f.offset() == 0):
+                    e = buffer.at(min_line, 1).end_of_line()
+                    if self.style:
+                        self.style.remove(f, e)
+
+                    self.process(f, e)
 
                 min_line = from_line - 1
                 changed = True
@@ -386,11 +408,14 @@ class Background_Highlighter(object):
                 # of the locations is now invalid, so we just protect.
                 try:
                     f = buffer.at(max_line, 1)
-                    e = buffer.at(to_line, 1).end_of_line()
 
-                    if self.style:
-                        self.style.remove(f, e)
-                    self.process(f, e)
+                    # Do not process if the line is folded
+                    if not (max_line > 1 and f.offset() == 0):
+                        e = buffer.at(to_line, 1).end_of_line()
+
+                        if self.style:
+                            self.style.remove(f, e)
+                        self.process(f, e)
 
                     max_line = to_line + 1
                     changed = True
