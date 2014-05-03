@@ -8024,7 +8024,7 @@ and whose type is potentially persistent. If no argument is given, then
 the pragma is a configuration pragma, and applies to all library level
 objects with no explicit initialization of potentially persistent types.
 
-A potentially persistent type is a scalar type, or a non-tagged,
+A potentially persistent type is a scalar type, or an untagged,
 non-discriminated record, all of whose components have no explicit
 initialization and are themselves of a potentially persistent type, or
 an array, all of whose constraints are static, and whose component type
