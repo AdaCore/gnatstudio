@@ -71,7 +71,7 @@ package body Project_Explorers_Common is
          Category_Column      => GType_Int,
          Up_To_Date_Column    => GType_Boolean,
          Entity_Base_Column   => GType_String,
-         Timestamp_Column     => GType_Int);
+         Timestamp_Column     => GType_Ulong);
    end Columns_Types;
 
    -------------------
@@ -405,8 +405,8 @@ package body Project_Explorers_Common is
    begin
       --  Mark the file information as up-to-date
 
-      Set (Model, Node, Timestamp_Column,
-           Gint (File_Time_Stamp (File_Name) - GNATCOLL.Utils.No_Time));
+      Set_Ulong (Model, Node, Timestamp_Column,
+           Gulong (File_Time_Stamp (File_Name) - GNATCOLL.Utils.No_Time));
 
       --  Remove any previous information for this file
 
@@ -833,7 +833,7 @@ package body Project_Explorers_Common is
                File : constant Virtual_File :=
                         Get_File (Model, Node, File_Column);
             begin
-               return Duration (Get_Int (Model, Node, Timestamp_Column)) +
+               return Duration (Get_Ulong (Model, Node, Timestamp_Column)) +
                  GNATCOLL.Utils.No_Time =
                    File_Time_Stamp (File);
             end;
