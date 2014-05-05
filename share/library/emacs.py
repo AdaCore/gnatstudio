@@ -72,7 +72,6 @@ XML = r"""<?xml version="1.0" ?>
   <key action="paste from clipboard">control-y</key>
   <key action="paste previous from clipboard">%(alt)s-y</key>
   <key action="copy to clipboard">%(alt)s-w</key>
-  <key action="copy to clipboard">Escape w</key>
   <key action="cut to clipboard">control-w</key>
 
   <key action="macro start Keyboard">control-x parenleft</key>

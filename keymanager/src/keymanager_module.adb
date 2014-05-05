@@ -97,6 +97,7 @@ package body KeyManager_Module is
 
    procedure Get_Normalized_Key
      (Event    : Gdk.Event.Gdk_Event;
+      Msg      : String;
       Key      : out Gdk_Key_Type;
       Modifier : out Gdk_Modifier_Type);
    --  Read the key typed by the user. This procedure takes care of normalizing
@@ -1015,6 +1016,7 @@ package body KeyManager_Module is
 
    procedure Get_Normalized_Key
      (Event    : Gdk.Event.Gdk_Event;
+      Msg      : String;
       Key      : out Gdk_Key_Type;
       Modifier : out Gdk_Modifier_Type)
    is
@@ -1035,7 +1037,7 @@ package body KeyManager_Module is
       end if;
 
       if Active (Me) then
-         Trace (Me, "Key=" & Key'Img & " Modif=" & Modifier'Img
+         Trace (Me, Msg & " Key=" & Key'Img & " Modif=" & Modifier'Img
                 & " Code=" & Event.Key.Hardware_Keycode'Img
                 & " => " & Image (Key, Modifier)
                 & " / "
@@ -1097,7 +1099,7 @@ package body KeyManager_Module is
       if Keymanager_Module.Active
         and then Get_Event_Type (Event) = Key_Press
       then
-         Get_Normalized_Key (Event, Key, Modif);
+         Get_Normalized_Key (Event, "Press", Key, Modif);
 
          --  If we are pressing down CTRL, enter Hyper Mode
 
@@ -1267,7 +1269,7 @@ package body KeyManager_Module is
          end if;
 
       elsif Get_Event_Type (Event) = Key_Release then
-         Get_Normalized_Key (Event, Key, Modif);
+         Get_Normalized_Key (Event, "Release", Key, Modif);
 
          --  If we are releasing CTRL, enter Hyper Mode
 
@@ -1287,8 +1289,9 @@ package body KeyManager_Module is
 
       if not (Found_Action or Has_Secondary) then
          Trace (Me, "No action was executed, falling though gtk+");
+         return False;
       end if;
-      return Found_Action or Has_Secondary;
+      return True;
 
    exception
       when E : others =>
