@@ -567,12 +567,12 @@ package body Project_Explorers is
        Project  : Project_Type) return Node_Types
    is
    begin
-      if Project = Explorer.Kernel.Registry.Tree.Root_Project then
+      if Project.Modified then
+         return Modified_Project_Node;
+      elsif Project = Explorer.Kernel.Registry.Tree.Root_Project then
          return Root_Project_Node;
       elsif Extending_Project (Project) /= No_Project then
          return Extends_Project_Node;
-      elsif Project.Modified then
-         return Modified_Project_Node;
       else
          return Project_Node;
       end if;
