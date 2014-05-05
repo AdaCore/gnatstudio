@@ -295,6 +295,11 @@ package body Project_Explorers is
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
    --  Used to sort nodes in the explorer
 
+   function Compute_Project_Node_Type
+      (Explorer : not null access Project_Explorer_Record'Class;
+       Project  : Project_Type) return Node_Types;
+   --  The node type to use for a project
+
    --------------
    -- Tooltips --
    --------------
@@ -552,6 +557,26 @@ package body Project_Explorers is
    overriding function Filter_Matches_Primitive
      (Context : access Entity_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
+   -------------------------------
+   -- Compute_Project_Node_Type --
+   -------------------------------
+
+   function Compute_Project_Node_Type
+      (Explorer : not null access Project_Explorer_Record'Class;
+       Project  : Project_Type) return Node_Types
+   is
+   begin
+      if Project = Explorer.Kernel.Registry.Tree.Root_Project then
+         return Root_Project_Node;
+      elsif Extending_Project (Project) /= No_Project then
+         return Extends_Project_Node;
+      elsif Project.Modified then
+         return Modified_Project_Node;
+      else
+         return Project_Node;
+      end if;
+   end Compute_Project_Node_Type;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -1159,7 +1184,7 @@ package body Project_Explorers is
                       (Obj_Dir_Attribute) = ""
                     and then Source_Dirs (Project)'Length = 0;
       Node_Text : constant String := Project.Name;
-      Node_Type : Node_Types := Project_Node;
+      Node_Type : Node_Types;
       N         : Gtk_Tree_Iter;
       Ref       : Gtk_Tree_Iter := Null_Iter;
 
@@ -1168,15 +1193,7 @@ package body Project_Explorers is
          return Null_Iter;
       end if;
 
-      if Project = Explorer.Kernel.Registry.Tree.Root_Project then
-         Node_Type := Root_Project_Node;
-
-      elsif Extending_Project (Project) /= No_Project then
-         Node_Type := Extends_Project_Node;
-
-      elsif Project.Modified then
-         Node_Type := Modified_Project_Node;
-      end if;
+      Node_Type := Compute_Project_Node_Type (Explorer, Project);
 
       if Parent_Node /= Null_Iter then
          Ref := Children (Explorer.Tree.Model, Parent_Node);
@@ -1185,7 +1202,8 @@ package body Project_Explorers is
 
          while Ref /= Null_Iter
            and then
-             (Get_Node_Type (Explorer.Tree.Model, Ref) /= Project_Node
+             (Get_Node_Type (Explorer.Tree.Model, Ref)
+                  not in Project_Node_Types
                or else Get_String (Explorer.Tree.Model, Ref,
                                     Display_Name_Column)
                 < Node_Text)
@@ -2201,12 +2219,7 @@ package body Project_Explorers is
       --  up-to-date or not, as long as its icon is visible.
       --  Change the icons to reflect the modified state of the project.
       if Node_Type in Project_Node_Types then
-         if Prj /= No_Project and then Prj.Modified then
-            N_Type := Modified_Project_Node;
-         else
-            N_Type := Project_Node;
-         end if;
-
+         N_Type := Compute_Project_Node_Type (Explorer, Prj);
          Set_Node_Type (Explorer.Tree.Model, Node, N_Type, Expanded);
       end if;
 
