@@ -79,6 +79,7 @@ package Project_Explorers_Common is
 
    type Node_Types is
      (Project_Node,
+      Root_Project_Node,
       Extends_Project_Node,
       Modified_Project_Node,
       Directory_Node,

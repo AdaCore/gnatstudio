@@ -1129,7 +1129,7 @@ package body Project_Explorers_Files is
                Free_Children (T, Iter);
                Append_File_Info (T.Kernel, T.File_Model, Iter, File);
 
-            when Project_Node | Extends_Project_Node =>
+            when Project_Node | Root_Project_Node | Extends_Project_Node =>
                null;
 
             when Category_Node | Entity_Node =>

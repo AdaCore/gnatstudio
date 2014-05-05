@@ -151,6 +151,8 @@ XML = r"""<?xml version="1.0"?>
 
     <icon id="gps-project-open"                file="16px/project_box.png" />
     <icon id="gps-project-closed"              file="16px/project_box.png" />
+    <icon id="gps-project-root-open"           file="16px/project_root_box.png" />
+    <icon id="gps-project-root-closed"         file="16px/project_root_box.png" />
     <icon id="gps-project-modified-open"       file="16px/project_box_pencil.png" />
     <icon id="gps-project-modified-closed"     file="16px/project_box_pencil.png" />
 

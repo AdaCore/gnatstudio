@@ -103,6 +103,9 @@ package body Project_Explorers_Common is
       Open_Pixbufs (Project_Node)  := R ("gps-project-open");
       Close_Pixbufs (Project_Node) := R ("gps-project-closed");
 
+      Open_Pixbufs (Root_Project_Node)  := R ("gps-project-root-open");
+      Close_Pixbufs (Root_Project_Node) := R ("gps-project-root-closed");
+
       Open_Pixbufs (Modified_Project_Node)  := R ("gps-project-modified-open");
       Close_Pixbufs (Modified_Project_Node) :=
         R ("gps-project-modified-closed");
@@ -601,7 +604,9 @@ package body Project_Explorers_Common is
               (Integer (Get_Int (Model, Iter, Node_Type_Column)))
             is
 
-               when Directory_Node | Project_Node | Category_Node =>
+               when Directory_Node_Types
+                  | Project_Node_Types
+                  | Category_Node =>
                   Cancel_Child_Drag (Child);
 
                   if Event.The_Type = Gdk_2button_Press then
@@ -695,10 +700,6 @@ package body Project_Explorers_Common is
                         Line    => Natural (Line),
                         Column  => Visible_Column_Type (Column));
                   end if;
-                  return False;
-
-               when others =>
-                  Cancel_Child_Drag (Child);
                   return False;
             end case;
 
@@ -937,9 +938,7 @@ package body Project_Explorers_Common is
       while Parent_Iter /= Null_Iter loop
          Node_Type := Get_Node_Type (Model, Parent_Iter);
 
-         exit when Node_Type = Project_Node
-           or else Node_Type = Extends_Project_Node
-           or else Node_Type = Modified_Project_Node;
+         exit when Node_Type in Project_Node_Types;
 
          Parent_Iter := Parent (Model, Parent_Iter);
       end loop;
@@ -1021,10 +1020,7 @@ package body Project_Explorers_Common is
          L := Integer (Get_Int (Model, Iter, Line_Column));
       end if;
 
-      if Node_Type = Project_Node
-        or else Node_Type = Extends_Project_Node
-        or else Node_Type = Modified_Project_Node
-      then
+      if Node_Type in Project_Node_Types then
          Set_File_Information
            (Context           => Context,
             Project           =>

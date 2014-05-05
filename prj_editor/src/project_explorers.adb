@@ -1168,7 +1168,10 @@ package body Project_Explorers is
          return Null_Iter;
       end if;
 
-      if Extending_Project (Project) /= No_Project then
+      if Project = Explorer.Kernel.Registry.Tree.Root_Project then
+         Node_Type := Root_Project_Node;
+
+      elsif Extending_Project (Project) /= No_Project then
          Node_Type := Extends_Project_Node;
 
       elsif Project.Modified then
