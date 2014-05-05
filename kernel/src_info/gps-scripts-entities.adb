@@ -20,6 +20,7 @@ with GPS.Intl;                         use GPS.Intl;
 with GPS.Scripts.Files;
 with GPS.Scripts.File_Locations;
 with GNATCOLL.Projects;
+with GNATCOLL.Xref;                    use GNATCOLL.Xref;
 with Xref;                             use Xref;
 with Basic_Types;                      use Basic_Types;
 
@@ -144,12 +145,42 @@ package body GPS.Scripts.Entities is
          --  ??? Should be made obsolete and replaced by separate functions.
          declare
             Entity : constant Root_Entity'Class := Get_Data (Data, 1);
+            Subp   : constant Root_Entity'Class := Entity.Is_Parameter_Of;
          begin
             Set_Return_Value (Data, Entity.Is_Global);
             Set_Return_Value_Key (Data, "global");
 
             Set_Return_Value (Data, Entity.Is_Static_Local);
             Set_Return_Value_Key (Data, "static");
+
+            if Subp /= No_Root_Entity then
+               declare
+                  Params : constant Parameter_Array := Subp.Parameters;
+               begin
+                  for P in Params'Range loop
+                     if Root_Entity'Class (Params (P).Parameter) = Entity then
+                        case Params (P).Kind is
+                           when In_Parameter =>
+                              Set_Return_Value (Data, True);
+                              Set_Return_Value_Key (Data, "in");
+
+                           when Out_Parameter =>
+                              Set_Return_Value (Data, True);
+                              Set_Return_Value_Key (Data, "out");
+
+                           when In_Out_Parameter =>
+                              Set_Return_Value (Data, True);
+                              Set_Return_Value_Key (Data, "inout");
+
+                           when Access_Parameter =>
+                              Set_Return_Value (Data, True);
+                              Set_Return_Value_Key (Data, "access");
+                        end case;
+                        exit;
+                     end if;
+                  end loop;
+               end;
+            end if;
          end;
 
       elsif Command = "is_subprogram" then

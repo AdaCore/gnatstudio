@@ -4833,7 +4833,13 @@ class Entity(object):
         Returns various boolean attributes of the entity: is the entity global,
         static, etc.
 
-        :return: A htable
+        :return: A htable with the following keys:
+            - 'global': whether the entity is a global entity
+            - 'static': whether the entity is a local static variable (C/C++)
+            - 'in': for an in parameter for an Ada subprogram
+            - 'out': for an out parameter for an Ada subprogram
+            - 'inout': for an in-out parameter for an Ada subprogram
+            - 'access': for an access parameter for an Ada subprogram
         """
         pass  # implemented in Ada
 
