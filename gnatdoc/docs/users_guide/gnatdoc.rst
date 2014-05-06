@@ -212,6 +212,62 @@ For example::
   --
   package Drawing is
 
+Documenting enumeration types
+-----------------------------
+
+The documentation attached to each enumeration type is the block of comment
+directly following the record type declaration, or directly preceding it if
+the option *-l* was specified.
+
+The following tag is supported when annotating enumeration literals:
+
+*@value*
+
+   document an enumeration literal, with the following syntax:
+
+      *@value <enumeration_literal> <description>*
+
+   where:
+
+      *<enumeration_literal>*
+
+        is the value of the enumeration literal as it appears in the
+        enumeration type declaration.
+
+      *<description>*
+
+        the documentation for the enumeration literal; all following text
+        is considered for inclusion, until a blank comment line or
+        another tag is encountered.
+
+For example::
+
+  --  Colors supported by this drawing application
+  --  @value Black The black color is the default color of the pen
+  --  @value White The white color is the default color of the background
+  --  @value Green The green color is the default color of the border
+  type Colors is (Black, White, Green);
+
+Enumeration literals can also be documented in line, with the documentation for
+each literal directly following its declaration (or directly preceding the
+component declaration, if the option  *-l* was specified). In this case, the
+tag *@value* is not required::
+
+  --  Colors supported by this drawing application
+  type Colors is (
+    Black,
+    -- The black color is the default color of the pen
+    White,
+    -- The white color is the default color of the background
+    Green
+    -- The green color is the default color of the border
+  );
+
+As shown above, a combined approach of documentation is also supported (see
+that the general description of the enumeration type *Colors* is located
+before its declaration and the documentation of its literals is located
+after their declaration).
+
 Documenting record types
 ------------------------
 
