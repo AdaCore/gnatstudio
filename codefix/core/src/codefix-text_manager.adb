@@ -2030,7 +2030,7 @@ package body Codefix.Text_Manager is
       if String_Match = "" then
          Free (Word.String_Match);
       else
-         Assign (Word.String_Match, new String'(String_Match));
+         Assign (Word.String_Match, String_Match);
       end if;
       Word.Mode := Mode;
    end Set_Word;
