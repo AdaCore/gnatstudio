@@ -2155,7 +2155,11 @@ package body GPS.Kernel.Messages is
       Container : constant Messages_Container_Access := Self.Get_Container;
 
    begin
-      Free (Self.Action);
+      if Self.Action /= null then
+         GPS.Editors.Line_Information.Free (Self.Action.all);
+         Free (Self.Action);
+      end if;
+
       Self.Action := Action;
 
       Notifiers.Notify_Listeners_About_Message_Property_Changed
