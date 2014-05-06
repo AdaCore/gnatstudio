@@ -170,6 +170,26 @@ class Item(object):
     Overflow = enum('Item.Overflow', PREVENT=0, HIDE=1)
     Layout = enum('Item.Layout', HORIZONTAL=0, VERTICAL=1)
 
+    children = None
+    """
+    The list of :class:`GPS.Browsers.Item` that were added to the item.
+    This property is not writable.
+    """
+
+    is_link = False
+    """
+    A boolean, set to True when the item is a link. This property is not
+    writable.
+    """
+
+    position = (0, 0)
+    """
+    The position of the item. For a toplevel item, this is the position
+    within the diagram. For an item that was added to another item, this is
+    the position within its parent.
+    This property is writable, but you can also use set_position to modify it.
+    """
+
     def __init__(self):
         """
         Will raise an exception, this is an abstract class.
@@ -506,6 +526,18 @@ class Diagram(object):
 
     Selection = enum('Diagram.Selection', NONE=0, SINGLE=1, MULTIPLE=2)
 
+    selected = None
+    """
+    The list of selected :class:`GPS.Browsers.Item`
+    """
+
+    items = None
+    """
+    The list of all :class:`GPS.Browsers.Item` in the diagram. This only
+    include toplevel items, you will need to iterate their own children if
+    you need access to them.
+    """
+
     def __init__(self):
         """
         Creates a new empty diagram.
@@ -746,6 +778,9 @@ class Diagram(object):
            of GPS.Browsers.Diagram or one of its derived classes. Typically,
            you could pass the class itself, since calling it will create a new
            instance.
+           As a special case, the diagrams returned by this function include a
+           special `ids` field, which is a dict mapping the id to the actual
+           item.
         :return: the list of GPS.Browsers.Diagram objects created.
         """
 
@@ -755,6 +790,52 @@ class Diagram(object):
 
         :param GPS.Browsers.Item item: the item to check
         :return: a boolean
+        """
+
+    def clear(self):
+        """
+        Remove all items from the diagram.
+        """
+
+    def clear_selection(self):
+        """
+        Unselect all items in the diagram.
+        """
+
+    def lower_item(self, item):
+        """
+        Lower the item, so that it is displayed below all other items.
+
+        :param GPS.Browsers.Item item: the item to lower.
+        """
+
+    def raise_item(self, item):
+        """
+        Raise the item, so that it is displayed above all other items.
+
+        :param GPS.Browsers.Item item: the item to raise.
+        """
+
+    def remove(self, item):
+        """
+        Remove an item from the diagram.
+
+        :param GPS.Browsers.Item item: the item to remove.
+        """
+
+    def select(self, item):
+        """
+        Select the item. If the diagram is set up for single selection, any
+        previously selected item is first unselected.
+
+        :param GPS.Browsers.Item item: the item to select.
+        """
+
+    def unselect(self, item):
+        """
+        Unselect the item.
+
+        :param GPS.Browsers.Item item: the item to select.
         """
 
 
@@ -832,6 +913,12 @@ class View(GPS.GUI):
     """
     The coordinates of the top-left corner of the view.
     This is a writable property
+    """
+
+    diagram = None
+    """
+    The :class:`GPS.Browsers.Diagram` that the view is referring to.
+    This is a writable property.
     """
 
     def __init__(self):
@@ -912,6 +999,22 @@ class View(GPS.GUI):
         view.
 
         :param bool readonly: whether the view is read-only.
+        """
+
+    def center_on(self, point, xpos=0.5, ypos=0.5):
+        """
+        Scrolls the view so that the point is at the given position within
+        the view (in the middle if xpos and ypos are both 0.5, or to the
+        left if xpos is 0.0, or the right if xpos is 1.0, and so on).
+
+        :param tuple point: the point
+        """
+
+    def scroll_into_view(self, item):
+        """
+        Scrolls the view as little as possible so that item becomes visible.
+
+        :param GPS.Browsers.Item item: the item to show
         """
 
     def export_pdf(self, filename, format="a4", visible_only=True):

@@ -23,15 +23,37 @@ Classes
    .. autoattribute:: GPS.Browsers.Diagram.Selection
 
 
+
+   .. autoattribute:: GPS.Browsers.Diagram.items
+
+
+
+   .. autoattribute:: GPS.Browsers.Diagram.selected
+
+
    .. automethod:: GPS.Browsers.Diagram.__init__
 
    .. automethod:: GPS.Browsers.Diagram.add
+
+   .. automethod:: GPS.Browsers.Diagram.clear
+
+   .. automethod:: GPS.Browsers.Diagram.clear_selection
 
    .. automethod:: GPS.Browsers.Diagram.is_selected
 
    .. automethod:: GPS.Browsers.Diagram.load_json
 
+   .. automethod:: GPS.Browsers.Diagram.lower_item
+
+   .. automethod:: GPS.Browsers.Diagram.raise_item
+
+   .. automethod:: GPS.Browsers.Diagram.remove
+
+   .. automethod:: GPS.Browsers.Diagram.select
+
    .. automethod:: GPS.Browsers.Diagram.set_selection_mode
+
+   .. automethod:: GPS.Browsers.Diagram.unselect
 
 :class:`GPS.Browsers.EditableTextItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -86,6 +108,18 @@ Classes
 
 
    .. autoattribute:: GPS.Browsers.Item.Overflow
+
+
+
+   .. autoattribute:: GPS.Browsers.Item.children
+
+
+
+   .. autoattribute:: GPS.Browsers.Item.is_link
+
+
+
+   .. autoattribute:: GPS.Browsers.Item.position
 
 
    .. automethod:: GPS.Browsers.Item.__init__
@@ -185,6 +219,10 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Browsers.View.diagram
+
+
+
    .. autoattribute:: GPS.Browsers.View.scale
 
 
@@ -194,11 +232,15 @@ Classes
 
    .. automethod:: GPS.Browsers.View.__init__
 
+   .. automethod:: GPS.Browsers.View.center_on
+
    .. automethod:: GPS.Browsers.View.create
 
    .. automethod:: GPS.Browsers.View.export_pdf
 
    .. automethod:: GPS.Browsers.View.scale_to_fit
+
+   .. automethod:: GPS.Browsers.View.scroll_into_view
 
    .. automethod:: GPS.Browsers.View.set_background
 

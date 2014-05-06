@@ -557,6 +557,79 @@ package body Browsers.Scripts is
          Model := Get_Model (Inst);
          Set_Return_Value
            (Data, Model.Is_Selected (Get_Item (Nth_Arg (Data, 2))));
+
+      elsif Command = "select" then
+         Model := Get_Model (Inst);
+         Item  := Get_Item (Nth_Arg (Data, 2));
+         Model.Add_To_Selection (Item);
+
+      elsif Command = "unselect" then
+         Model := Get_Model (Inst);
+         Item  := Get_Item (Nth_Arg (Data, 2));
+         Model.Remove_From_Selection (Item);
+
+      elsif Command = "clear_selection" then
+         Model := Get_Model (Inst);
+         Model.Clear_Selection;
+
+      elsif Command = "selected" then
+         declare
+            procedure Add_Child
+              (Child : not null access Abstract_Item_Record'Class);
+            procedure Add_Child
+              (Child : not null access Abstract_Item_Record'Class)
+            is
+            begin
+               if Child.all in Python_Item'Class then
+                  Set_Return_Value
+                    (Data,
+                     Get_Instance
+                       (Python_Item_Access (Child), Get_Script (Data)));
+               end if;
+            end Add_Child;
+         begin
+            Model := Get_Model (Inst);
+            Model.For_Each_Item (Add_Child'Access, Selected_Only => True);
+         end;
+
+      elsif Command = "items" then
+         declare
+            procedure Add_Child
+              (Child : not null access Abstract_Item_Record'Class);
+            procedure Add_Child
+              (Child : not null access Abstract_Item_Record'Class)
+            is
+            begin
+               if Child.all in Python_Item'Class then
+                  Set_Return_Value
+                    (Data,
+                     Get_Instance
+                       (Python_Item_Access (Child), Get_Script (Data)));
+               end if;
+            end Add_Child;
+         begin
+            Model := Get_Model (Inst);
+            Model.For_Each_Item (Add_Child'Access);
+         end;
+
+      elsif Command = "remove" then
+         Model := Get_Model (Inst);
+         Item  := Get_Item (Nth_Arg (Data, 2));
+         Model.Remove (Item);
+
+      elsif Command = "clear" then
+         Model := Get_Model (Inst);
+         Model.Clear;
+
+      elsif Command = "raise_item" then
+         Model := Get_Model (Inst);
+         Item  := Get_Item (Nth_Arg (Data, 2));
+         Model.Raise_Item (Item);
+
+      elsif Command = "lower_item" then
+         Model := Get_Model (Inst);
+         Item  := Get_Item (Nth_Arg (Data, 2));
+         Model.Lower_Item (Item);
       end if;
    end Diagram_Handler;
 
@@ -744,7 +817,9 @@ package body Browsers.Scripts is
       Self   : constant Browser_View := Browser_View (View);
    begin
       if not Self.Read_Only
-        and then On_Item_Event_Move_Item (View, Event)
+        and then
+          (On_Item_Event_Move_Item (Self.View, Event)
+           or else On_Item_Event_Edit (Self.View, Event))
       then
          return True;
       end if;
@@ -838,6 +913,7 @@ package body Browsers.Scripts is
       View   : Browser_View;
       Model  : Model_Type;
       C      : MDI_Child;
+      Pos    : Model_Point;
    begin
       if Command = Constructor_Method then
          null;  --  nothing to do
@@ -886,6 +962,26 @@ package body Browsers.Scripts is
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
          View.Read_Only := Nth_Arg (Data, 2, True);
+
+      elsif Command = "scroll_into_view" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+         View.View.Scroll_Into_View (Get_Item (Nth_Arg (Data, 2)));
+
+      elsif Command = "center_on" then
+         declare
+            L : constant List_Instance'Class := Nth_Arg (Data, 2);
+         begin
+            Pos.X := Gdouble (Nth_Arg (L, 1, 0.0));
+            Pos.Y := Gdouble (Nth_Arg (L, 2, 0.0));
+         end;
+
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+         View.View.Center_On
+           (Center_On => Pos,
+            X_Pos     => Gdouble (Nth_Arg (Data, 3, 0.5)),
+            Y_Pos     => Gdouble (Nth_Arg (Data, 4, 0.5)));
 
       elsif Command = "export_pdf" then
          Inst := Nth_Arg (Data, 1);
@@ -961,6 +1057,18 @@ package body Browsers.Scripts is
                   Y_Pos => 0.0);
             end;
          end if;
+
+      elsif Command = "diagram" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+
+         if Number_Of_Arguments (Data) = 1 then
+            Model := Model_Type (View.View.Model);
+            Set_Return_Value (Data, Get_Instance (Get_Script (Data), Model));
+         else
+            Model := Get_Model (Nth_Arg (Data, 2));
+            View.View.Set_Model (Model);
+         end if;
       end if;
    end View_Handler;
 
@@ -975,6 +1083,7 @@ package body Browsers.Scripts is
       M    : Margins := No_Margins;
       Item : Container_Item;
       X, Y : Gdouble := Gdouble'First;
+      Pos  : Gtkada.Style.Point;
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, "GPS.Browsers.Item is an abstract class");
@@ -991,6 +1100,54 @@ package body Browsers.Scripts is
          end if;
 
          Canvas_Item (Get_Item (Inst)).Set_Position ((X, Y));
+
+      elsif Command = "position" then
+         Inst := Nth_Arg (Data, 1);
+
+         if Number_Of_Arguments (Data) = 1 then
+            Pos := Get_Item (Inst).Position;
+            Set_Return_Value_As_List (Data, 2);
+            Set_Return_Value (Data, Float (Pos.X));
+            Set_Return_Value (Data, Float (Pos.Y));
+         else
+            declare
+               L : constant List_Instance'Class := Nth_Arg (Data, 2);
+            begin
+               Pos.X := Gdouble (Nth_Arg (L, 1, 0.0));
+               Pos.Y := Gdouble (Nth_Arg (L, 2, 0.0));
+               Get_Item (Inst).Set_Position (Pos);
+            end;
+         end if;
+
+      elsif Command = "is_link" then
+         Inst := Nth_Arg (Data, 1);
+         Set_Return_Value (Data, Get_Item (Inst).Is_Link);
+
+      elsif Command = "children" then
+         Inst := Nth_Arg (Data, 1);
+         Set_Return_Value_As_List (Data);
+
+         declare
+            procedure Add_Child
+              (Child : not null access Container_Item_Record'Class);
+            procedure Add_Child
+              (Child : not null access Container_Item_Record'Class)
+            is
+            begin
+               if Child.all in Python_Item'Class then
+                  Set_Return_Value
+                    (Data,
+                     Get_Instance
+                       (Python_Item_Access (Child), Get_Script (Data)));
+               end if;
+            end Add_Child;
+
+            It : constant Abstract_Item := Get_Item (Inst);
+         begin
+            if It.all in Container_Item_Record'Class then
+               Container_Item (It).For_Each_Child (Add_Child'Access);
+            end if;
+         end;
 
       elsif Command = "set_min_size" then
          Inst := Nth_Arg (Data, 1);
@@ -1552,6 +1709,18 @@ package body Browsers.Scripts is
          Handler => Diagram_Handler'Access);
       Register_Command
         (Kernel.Scripts,
+         "remove",
+         Params  => (2 => Param ("item")),
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "clear",
+         Params  => (2 => Param ("item")),
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
          "set_selection_mode",
          Params  => (2 => Param ("mode")),
          Class   => Diagram_Class,
@@ -1562,6 +1731,45 @@ package body Browsers.Scripts is
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "select",
+         Params  => (2 => Param ("item")),
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "unselect",
+         Params  => (2 => Param ("item")),
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "clear_selection",
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "raise_item",
+         Params  => (2 => Param ("item")),
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "lower_item",
+         Params  => (2 => Param ("item")),
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "selected",
+         Class   => Diagram_Class,
+         Getter  => Diagram_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "items",
+         Class   => Diagram_Class,
+         Getter  => Diagram_Handler'Access);
 
       Register_Command
         (Kernel.Scripts,
@@ -1606,6 +1814,21 @@ package body Browsers.Scripts is
          Handler => View_Handler'Access);
       Register_Command
         (Kernel.Scripts,
+         "scroll_into_view",
+         Class   => Module.View_Class,
+         Params  => (1 => Param ("item")),
+         Handler => View_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "center_on",
+         Class   => Module.View_Class,
+         Params  => (2 => Param ("point"),
+                     3 => Param ("xpos", Optional => True),
+                     4 => Param ("ypos", Optional => True)),
+         Handler => View_Handler'Access);
+
+      Register_Command
+        (Kernel.Scripts,
          "export_pdf",
          Class   => Module.View_Class,
          Params  => (2 => Param ("filename"),
@@ -1624,6 +1847,12 @@ package body Browsers.Scripts is
          Class => Module.View_Class,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "diagram",
+         Class => Module.View_Class,
+         Setter => View_Handler'Access,
+         Getter => View_Handler'Access);
 
       Register_Command
         (Kernel.Scripts,
@@ -1637,6 +1866,22 @@ package body Browsers.Scripts is
                      Param ("y", Optional => True)),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "position",
+         Class => Module.Item_Class,
+         Setter => Item_Handler'Access,
+         Getter => Item_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "is_link",
+         Class => Module.Item_Class,
+         Getter => Item_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "children",
+         Class => Module.Item_Class,
+         Getter => Item_Handler'Access);
       Register_Command
         (Kernel.Scripts,
          "set_child_layout",
