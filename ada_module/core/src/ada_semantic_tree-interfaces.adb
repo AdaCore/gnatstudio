@@ -53,6 +53,8 @@ package body Ada_Semantic_Tree.Interfaces is
       Old_Tree  : Construct_Tree;
       Kind      : Update_Kind);
 
+   overriding procedure Free (Assistant : in out Interfaces_Db_Assistant);
+
    ------------------------
    -- Register_Assistant --
    ------------------------
@@ -96,6 +98,21 @@ package body Ada_Semantic_Tree.Interfaces is
    begin
       Free (Obj.Name);
       Free (Obj.Convention);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Assistant : in out Interfaces_Db_Assistant) is
+      Value : Entity_Persistent_Access;
+   begin
+      for X of Assistant.Exports loop
+         Value := X;
+         Unref (Value);
+      end loop;
+
+      Assistant.Exports.Clear;
    end Free;
 
    ------------------
