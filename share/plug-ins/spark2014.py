@@ -16,6 +16,7 @@ import tool_output
 import re
 import gps_utils
 import json
+import subprocess
 
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
@@ -76,9 +77,18 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
          lang="python">spark2014.on_prove_subp(GPS.current_context())</shell>
     </action>
     <action name="Prove Line Action" category="GNATprove" output="none">
-       <filter id="Inside Subprogram Context" />
+       <filter language="Ada" shell_lang="python"
+         shell_cmd="spark2014.is_file_context(GPS.contextual_context())" />
        <shell
-         lang="python">spark2014.on_prove_line(GPS.current_context())</shell>
+         lang="python">spark2014.on_prove_line(GPS.contextual_context())
+       </shell>
+    </action>
+    <action name="Prove Check Action" category="GNATprove" output="none">
+       <filter language="Ada" shell_lang="python"
+        shell_cmd="spark2014.prove_check_context(GPS.contextual_context())" />
+       <shell
+         lang="python">spark2014.on_prove_check(GPS.contextual_context())
+       </shell>
     </action>
     <action name="Show Report Action" category="GNATprove" output="none">
         <shell
@@ -144,6 +154,9 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </contextual>
     <contextual action="Prove Line Action">
       <Title>%(prefix)s/Prove Line</Title>
+    </contextual>
+    <contextual action="Prove Check Action">
+      <Title>%(prefix)s/Prove Check</Title>
     </contextual>
 
     <doc_path>share/doc/spark</doc_path>
@@ -331,6 +344,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
         <title>SPARK IO</title>
       </menu>
     </submenu>
+
   </GNATPROVE>
 """
 
@@ -649,6 +663,27 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        </output-parsers>
     </target>
 
+    <target model="gnatprove-prove" name="Prove Line Location"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         end_of_build
+       </output-parsers>
+    </target>
+
     <target-model name="gnatprove_clean">
        <description>Target model for GNATprove for cleaning</description>
        <command-line>
@@ -669,6 +704,26 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>--clean</arg>
        </command-line>
     </target>
+
+    <target model="gnatprove-prove" name="Prove Check" category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <icon>gps-build-all</icon>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         end_of_build
+       </output-parsers>
+    </target>
   </GNATPROVE>
 """
 
@@ -688,6 +743,11 @@ prove_root_project = 'Prove Root Project'
 prove_file = 'Prove File'
 prove_subp = 'Prove Subprogram'
 prove_line = 'Prove Line'
+# used to launch Prove Line from Location View
+prove_line_loc = 'Prove Line Location'
+# in case of manual provers, prove_check is
+# the only one allowed to open editors
+prove_check = 'Prove Check'
 show_report = 'Show Report'
 clean_up = 'Clean Proofs'
 clear_highlighting = 'Remove Editor Highlighting'
@@ -885,6 +945,28 @@ class GNATprove_Message(GPS.Message):
 should_clear_messages = True
 
 
+# This is the on_exit callback for the editor process
+def check_proof_after_close(proc, ex_st, outp):
+    if not proc._is_killed:
+        try:
+            vc_kind = get_vc_kind(proc._proc_msg)
+            global should_clear_messages
+            should_clear_messages = True
+            llarg = limit_line_option(proc._proc_msg, vc_kind)
+            GPS.BuildTarget(prove_check).execute(extra_args=[llarg],
+                                                 synchronous=False)
+        except TypeError:
+            pass
+
+
+# For some reason, when the process is killed,
+# on_exit function of the process is called twice
+# and asking twice to relaunch GNATprove.
+# So instead of that if the process was killed we don't do anything
+def editor_before_kill(proc, outp):
+    proc._is_killed = True
+
+
 class GNATprove_Parser(tool_output.OutputParser):
 
     """Class that parses messages of the gnatprove tool, and creates
@@ -937,7 +1019,35 @@ class GNATprove_Parser(tool_output.OutputParser):
                     msg['message'],
                     0,
                     tracefile=tracefile,
-                    )
+                )
+
+                # We don't want to open hundreds of editors if a Prove All
+                # or Prove File was launched with a manual prover.
+                # We only open an editor for prove check.
+                editor_dialog = "The condition couldn't be verified\n" \
+                                + "Would you like to edit the VC file?\n"
+
+                if command.name() == prove_check and 'vc_file' in msg \
+                   and GPS.MDI.yes_no_dialog(editor_dialog):
+                    if 'editor_cmd' in msg:
+                        cmd = msg['editor_cmd']
+
+                        try:
+                            proc = GPS.Process(cmd,
+                                               on_exit=check_proof_after_close,
+                                               before_kill=editor_before_kill)
+                            proc._proc_msg = m
+                            proc._is_killed = False
+                        except OSError:
+                            GPS.MDI.dialog("Editor " + cmd[0]
+                                           + " not found\n"
+                                           + "Manual proof file saved as: "
+                                           + msg['vc_file'] + "\n")
+                    else:
+                        GPS.MDI.dialog("No editor configured for this prover\n"
+                                       + "Manual proof file saved as: "
+                                       + msg['vc_file'] + "\n")
+
             except ValueError:
 
                 # it's a non-JSON message
@@ -998,7 +1108,7 @@ def is_subp_context(self):
     return is_subp_decl_context(self) or is_subp_body_context(self)
 
 
-def is_msg_context(self):
+def is_file_context(self):
     """This is the context in which "Show Path" may appear."""
 
     return isinstance(self, GPS.FileContext)
@@ -1037,7 +1147,17 @@ def on_prove_file(self):
 
 
 def on_prove_line(self):
-    generic_on_analyze(prove_line)
+    if isinstance(self, GPS.MessageContext):
+        global should_clear_messages
+        should_clear_messages = True
+        llarg = "--limit-line=" \
+                + os.path.basename(self.message().get_file().name()) \
+                + ":" + str(self.message().get_line())
+        GPS.BuildTarget(prove_line_loc).execute(extra_args=[llarg],
+                                                synchronous=False)
+
+    else:
+        generic_on_analyze(prove_line)
 
 
 def on_show_report(self):
@@ -1121,6 +1241,10 @@ def inside_subp_context(self):
         return 1
     else:
         return 0
+
+
+def is_file_context(self):
+    return isinstance(self, GPS.FileContext)
 
 
 def generic_action_on_subp(self, action):
@@ -1234,6 +1358,101 @@ class GNATProve_Plugin:
         self.trace_msg = None
         GPS.Locations.remove_category(toolname)
 
+
+# Manual proof
+
+class UnknownVCError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+vc_msg_dict = {
+    'divide by zero might fail': 'VC_DIVISION_CHECK',
+    'array index check might fail': 'VC_INDEX_CHECK',
+    'overflow check might fail': 'VC_OVERFLOW_CHECK',
+    'range check might fail': 'VC_RANGE_CHECK',
+    'length check might fail': 'VC_LENGTH_CHECK',
+    'discriminant check might fail': 'VC_DISCRIMINANT_CHECK',
+    'initial condition might fail': 'VC_INITIAL_CONDITION',
+    'precondition might fail': 'VC_PRECONDITION',
+    'precondition of main program might fail': 'VC_PRECONDITION_MAIN',
+    'postcondition might fail': 'VC_POSTCONDITION',
+    'refined postcondition might fail': 'VC_REFINED_POST',
+    'contract case might fail': 'VC_CONTRACT_CASE',
+    'contract cases might not be disjoint': 'VC_DISJOINT_CONTRACT_CASES',
+    'contract cases might not be complete': 'VC_COMPLETE_CONTRACT_CASES',
+    'loop invariant might fail': 'VC_LOOP_INVARIANT',
+    'loop invariant might fail in first iteration': 'VC_LOOP_INVARIANT_INIT',
+    'loop invariant might fail after first iteration':
+    'VC_LOOP_INVARIANT_PRESERV',
+    'loop variant might fail': 'VC_LOOP_VARIANT',
+    'assertion might fail': 'VC_ASSERT',
+    'exception might be raised': 'VC_RAISE'
+}
+
+
+def is_prove_warning(msg):
+    for vc_warn in vc_msg_dict.keys():
+        if msg.get_text()[9:].startswith(vc_warn):
+            return True
+    return False
+
+
+def get_line_warn(context):
+    def msg_filter(msg):
+        return msg.get_line() == context.location().line() \
+            and is_prove_warning(msg)
+    return filter(msg_filter, GPS.Message.list(file=context.file()))
+
+
+def prove_check_context(context):
+    if isinstance(context, GPS.FileContext):
+        if isinstance(context, GPS.MessageContext):
+            context._loc_msg = context.message()
+            return is_prove_warning(context._loc_msg)
+        else:
+            tmp = get_line_warn(context)
+            if len(tmp) == 1:
+                context._loc_msg = tmp[0]
+                return True
+            return False
+    return False
+
+
+def get_vc_kind(msg):
+    # get rid of "warning:"
+    clean_msg = msg.get_text()[9:]
+
+    def best_match(acc, elem):
+        if clean_msg.startswith(elem):
+            if not acc or len(acc) < len(elem):
+                return elem
+            else:
+                return acc
+        else:
+            return acc
+
+    msg_key = reduce(best_match,
+                     vc_msg_dict.keys(), None)
+    if not msg_key:
+        raise UnknownVCError(clean_msg)
+    return vc_msg_dict[msg_key]
+
+
+def limit_line_option(msg, vc_kind):
+    return "--limit-line=" + os.path.basename(msg.get_file().name()) \
+                           + ":" + str(msg.get_line()) \
+                           + ":" + str(msg.get_column()) \
+                           + ":" + vc_kind
+
+
+def on_prove_check(context):
+    msg = context._loc_msg
+    vc_kind = get_vc_kind(msg)
+    global should_clear_messages
+    should_clear_messages = True
+    llarg = limit_line_option(msg, vc_kind)
+    GPS.BuildTarget(prove_check).execute(extra_args=[llarg],
+                                         synchronous=False)
 
 # Check for GNAT toolchain: gnatprove
 
