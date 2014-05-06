@@ -57,11 +57,14 @@ private package GNATdoc.Comment is
    function  Get    (C : Tag_Cursor) return Tag_Info_Ptr;
    function  At_End (C : Tag_Cursor) return Boolean;
 
+   function First_Field (Comment : Structured_Comment) return Tag_Cursor;
+   function Last_Field (Comment : Structured_Comment) return Tag_Cursor;
+
    function First_Param (Comment : Structured_Comment) return Tag_Cursor;
    function Last_Param (Comment : Structured_Comment) return Tag_Cursor;
 
-   function First_Field (Comment : Structured_Comment) return Tag_Cursor;
-   function Last_Field (Comment : Structured_Comment) return Tag_Cursor;
+   function First_Value (Comment : Structured_Comment) return Tag_Cursor;
+   function Last_Value (Comment : Structured_Comment) return Tag_Cursor;
 
    function Search_Param
      (Comment : Structured_Comment;
@@ -86,7 +89,7 @@ private package GNATdoc.Comment is
       Entity     : Root_Entity'Class;
       Field_Name : Unbounded_String;
       Text       : Unbounded_String);
-   --  Append "@field Param_Name Text" to the comment. Entity is the entity
+   --  Append "@field Field_Name Text" to the comment. Entity is the entity
    --  associated with Field_Name.
 
    procedure Append_Param_Tag
@@ -96,6 +99,14 @@ private package GNATdoc.Comment is
       Text       : Unbounded_String);
    --  Append "@param Param_Name Text" to the comment. Entity is the entity
    --  associated with Param_Name.
+
+   procedure Append_Value_Tag
+     (Comment    : Structured_Comment;
+      Entity     : Root_Entity'Class;
+      Value_Name : Unbounded_String;
+      Text       : Unbounded_String);
+   --  Append "@value Value_Name Text" to the comment. Entity is the entity
+   --  associated with Value_Name.
 
    function Append_Tag
      (Comment   : Structured_Comment;

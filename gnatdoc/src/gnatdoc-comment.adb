@@ -70,6 +70,24 @@ package body GNATdoc.Comment is
          Text      => Text);
    end Append_Param_Tag;
 
+   ----------------------
+   -- Append_Value_Tag --
+   ----------------------
+
+   procedure Append_Value_Tag
+     (Comment    : Structured_Comment;
+      Entity     : Root_Entity'Class;
+      Value_Name : Unbounded_String;
+      Text       : Unbounded_String) is
+   begin
+      Internal_Append_Tag
+        (Comment   => Comment,
+         Tag_Name  => To_Unbounded_String ("value"),
+         Entity    => Entity,
+         Attr_Name => Value_Name,
+         Text      => Text);
+   end Append_Value_Tag;
+
    ----------------
    -- Append_Tag --
    ----------------
@@ -142,6 +160,13 @@ package body GNATdoc.Comment is
    begin
       return Comment.First_Param;
    end First_Param;
+
+   -----------------
+   -- First_Value --
+   -----------------
+
+   function First_Value (Comment : Structured_Comment) return Tag_Cursor
+     renames First_Param;
 
    ----------
    -- Free --
@@ -233,6 +258,13 @@ package body GNATdoc.Comment is
    begin
       return Comment.Last_Param;
    end Last_Param;
+
+   ----------------
+   -- Last_Value --
+   ----------------
+
+   function Last_Value (Comment : Structured_Comment) return Tag_Cursor
+     renames Last_Param;
 
    ----------------
    -- New_Cursor --

@@ -1943,6 +1943,8 @@ package body GNATdoc.Frontend is
                         begin
                            if Is_Record_Type (Scope) then
                               In_Parent_Part := True;
+                           elsif Get_Kind (Scope) = E_Enumeration_Type then
+                              Set_Is_Subtype (Scope);
                            end if;
                         end;
                      end if;
@@ -2148,7 +2150,8 @@ package body GNATdoc.Frontend is
                             (Text       => Doc,
                              Start_Line => Doc_Start_Line));
 
-                     elsif Get_Kind (E) = E_Formal
+                     elsif Kind_In (Get_Kind (E), E_Enumeration_Literal,
+                                                  E_Formal)
                        or else Doc_End_Line = LL.Get_Location (E).Line - 1
                      then
                         Set_Doc_Before (E,
@@ -2198,12 +2201,18 @@ package body GNATdoc.Frontend is
                            Prev_E :=
                              Get_Prev_Entity_In_Scope (Current_Context);
 
+                           --  Attach the documentation after the previous
+                           --  entity
+
                            if No (Prev_E) then
                               declare
                                  Scope : constant Entity_Id :=
                                    Get_Scope (Current_Context);
                               begin
-                                 if Get_Kind (E) = E_Formal then
+                                 if Kind_In (Get_Kind (E),
+                                      E_Enumeration_Literal,
+                                      E_Formal)
+                                 then
                                     Set_Doc_Before (E);
 
                                  elsif Is_Concurrent_Type_Or_Object (Scope)
@@ -2228,7 +2237,9 @@ package body GNATdoc.Frontend is
                               Prev_E_End_Loc :=
                                 Get_End_Of_Syntax_Scope_Loc (Prev_E);
 
-                              if Get_Kind (E) = E_Formal then
+                              if Kind_In (Get_Kind (E), E_Enumeration_Literal,
+                                                        E_Formal)
+                              then
                                  Set_Doc_After (Prev_E);
 
                               --  Attach the comment to the previous entity
@@ -2253,7 +2264,13 @@ package body GNATdoc.Frontend is
                               end if;
                            end if;
 
+                           --  Attach the documentation before the current
+                           --  entity
+
                            if No (Prev_E) then
+                              Set_Doc_Before (E);
+
+                           elsif Get_Kind (E) = E_Enumeration_Literal then
                               Set_Doc_Before (E);
 
                            --  Do not attach this comment to the current
@@ -2299,7 +2316,14 @@ package body GNATdoc.Frontend is
                            Curr_Entity_In_Scope : constant Entity_Id :=
                              Get_Current_Entity (Current_Context);
                         begin
-                           if Is_Subprogram_Or_Entry (Scope)
+                           if Get_Kind (Scope) = E_Enumeration_Type
+                             and then Present (Curr_Entity_In_Scope)
+                             and then Get_Kind (Curr_Entity_In_Scope)
+                                        = E_Enumeration_Literal
+                           then
+                              Set_Doc_After (Curr_Entity_In_Scope);
+
+                           elsif Is_Subprogram_Or_Entry (Scope)
                              and then Present (Curr_Entity_In_Scope)
                              and then
                                Get_Kind (Curr_Entity_In_Scope) = E_Formal
@@ -2671,7 +2695,9 @@ package body GNATdoc.Frontend is
                                  Get_Current_Entity (Current_Context);
                         begin
                            if Present (E)
-                             and then Get_Kind (E) = E_Formal
+                             and then Kind_In (Get_Kind (E),
+                                        E_Enumeration_Literal,
+                                        E_Formal)
                            then
                               Do_Exit;
                            end if;
@@ -3228,7 +3254,9 @@ package body GNATdoc.Frontend is
                          (Text       => Doc,
                           Start_Line => Doc_Start_Line));
 
-                  elsif Get_Kind (E) = E_Formal then
+                  elsif Kind_In (Get_Kind (E), E_Enumeration_Literal,
+                                               E_Formal)
+                  then
                      Set_Doc_After (E,
                        Comment_Result'
                          (Text       => Doc,
@@ -4814,8 +4842,13 @@ package body GNATdoc.Frontend is
       --  ??? This info should be configurable in a separate file to allow
       --  customers to define their own tags
 
+      procedure Parse_Enumeration_Comments (Enum : Entity_Id);
+      --  Initialize the structured comment associated with Enum, parse the
+      --  block of comments retrieved from sources (and clean it), and report
+      --  errors/warnings on missing documentation.
+
       procedure Parse_Record_Comments (Rec : Entity_Id);
-      --  Initialize the structured comment associated with Entity, parse the
+      --  Initialize the structured comment associated with Rec, parse the
       --  block of comments retrieved from sources (and clean it), and report
       --  errors/warnings on missing documentation.
 
@@ -4848,7 +4881,8 @@ package body GNATdoc.Frontend is
         (Entity      : Entity_Id;
          Scope_Level : Natural) return Traverse_Result;
       --  Dispatch a call to build an structured comment between routines
-      --  Parse_Doc, Parse_Record_Comments, and Parse_Subprogram_Comments.
+      --  Parse_Doc, Parse_Enumeration_Comments, Parse_Record_Comments,
+      --  and Parse_Subprogram_Comments.
 
       -----------
       -- Error --
@@ -4900,7 +4934,8 @@ package body GNATdoc.Frontend is
             --  or else Tag = "version"
 
             --  GNATdoc enhancements
-           or else Tag = "field";
+           or else Tag = "field"
+           or else Tag = "value";
       end Is_Custom_Tag;
 
       -----------------------
@@ -5197,8 +5232,9 @@ package body GNATdoc.Frontend is
             end if;
 
             declare
-               Param_Tag : constant String := "param";
                Field_Tag : constant String := "field";
+               Param_Tag : constant String := "param";
+               Value_Tag : constant String := "value";
                Tag_Text  : constant String :=
                              To_Lower (S (Tag_Loc.First + 1 .. Tag_Loc.Last));
                Attr_Loc  : Location;
@@ -5230,14 +5266,17 @@ package body GNATdoc.Frontend is
 
                   Check_Tag (Tag_Text);
 
-                  if Tag_Text = Param_Tag
-                    or else Tag_Text = Field_Tag
+                  if Tag_Text = Field_Tag
+                    or else Tag_Text = Param_Tag
+                    or else Tag_Text = Value_Tag
                   then
                      if No (Attr_Loc) then
-                        if Tag_Text = Param_Tag then
+                        if Tag_Text = Field_Tag then
+                           Error (E, "missing field name");
+                        elsif Tag_Text = Param_Tag then
                            Error (E, "missing parameter name");
                         else
-                           Error (E, "missing field name");
+                           Error (E, "missing value name");
                         end if;
 
                      else
@@ -5250,13 +5289,17 @@ package body GNATdoc.Frontend is
                              Search_Param (Comment, Attr_Name);
 
                            if Cursor = No_Cursor then
-                              if Tag_Text = Param_Tag then
+                              if Tag_Text = Field_Tag then
+                                 Error (E,
+                                   "wrong field name '"
+                                   & Attr_Name & "'");
+                              elsif Tag_Text = Param_Tag then
                                  Error (E,
                                    "wrong parameter name '"
                                    & Attr_Name & "'");
                               else
                                  Error (E,
-                                   "wrong field name '"
+                                   "wrong value name '"
                                    & Attr_Name & "'");
                               end if;
 
@@ -5267,7 +5310,13 @@ package body GNATdoc.Frontend is
                               begin
                                  for Ent of Get_Entities (E).all loop
                                     if LL.Get_Entity (Ent) = Entity then
-                                       if Tag_Text = Param_Tag then
+                                       if Tag_Text = Field_Tag then
+                                          Error
+                                            (Ent,
+                                             "field '"
+                                               & Attr_Name
+                                               & "' documented twice");
+                                       elsif Tag_Text = Param_Tag then
                                           Error
                                             (Ent,
                                              "parameter '"
@@ -5276,7 +5325,7 @@ package body GNATdoc.Frontend is
                                        else
                                           Error
                                             (Ent,
-                                             "field '"
+                                             "value '"
                                                & Attr_Name
                                                & "' documented twice");
                                        end if;
@@ -5365,6 +5414,66 @@ package body GNATdoc.Frontend is
          Set_Comment (E, Comment);
       end Parse_Doc;
 
+      --------------------------------
+      -- Parse_Enumeration_Comments --
+      --------------------------------
+
+      procedure Parse_Enumeration_Comments (Enum : Entity_Id) is
+         Has_Values : constant Boolean := Present (Get_Entities (Enum));
+      begin
+         --  No action needed if the enumeration has no values. This case
+         --  occurs in enumeration subtypes and generic formals.
+
+         if not Has_Values then
+            return;
+         end if;
+
+         --  Initialize the structured comment associated with this entity
+
+         Set_Comment (Enum, New_Structured_Comment);
+
+         --  Search for documentation located in middle of the declaration
+
+         for Value of Get_Entities (Enum).all loop
+            pragma Assert (Get_Kind (Value) = E_Enumeration_Literal);
+            Append_Value_Tag
+              (Comment    => Get_Comment (Enum),
+               Entity     => LL.Get_Entity (Value),
+               Value_Name => To_Unbounded_String (Get_Short_Name (Value)),
+               Text       => Get_Doc (Value).Text);
+         end loop;
+
+         --  Parse the documentation
+
+         if Get_Doc (Enum) /= No_Comment_Result then
+            Parse_Doc_Wrapper (Context, Enum, To_String (Get_Doc (Enum).Text));
+            Set_Doc (Enum, No_Comment_Result);
+         end if;
+
+         --  Report warning on undocumented values
+
+         declare
+            Cursor   : Tag_Cursor := First_Value (Get_Comment (Enum));
+            Tag_Info : Tag_Info_Ptr;
+         begin
+            loop
+               Tag_Info := Get (Cursor);
+
+               if No (Tag_Info.Text) then
+                  Warning
+                    (Context,
+                     Tag_Info.Entity.Element,
+                     "undocumented value ("
+                     & To_String (Tag_Info.Attr)
+                     & ")");
+               end if;
+
+               exit when Cursor = Last_Value (Get_Comment (Enum));
+               Next (Cursor);
+            end loop;
+         end;
+      end Parse_Enumeration_Comments;
+
       ---------------------------
       -- Parse_Record_Comments --
       ---------------------------
@@ -5419,7 +5528,7 @@ package body GNATdoc.Frontend is
                         & ")");
                   end if;
 
-                  exit when C = Last_Param (Get_Comment (Rec));
+                  exit when C = Last_Field (Get_Comment (Rec));
                   Next (C);
                end loop;
             end;
@@ -5691,6 +5800,10 @@ package body GNATdoc.Frontend is
 
          elsif Is_Record_Type (Entity) then
             Parse_Record_Comments (Entity);
+            return Skip;
+
+         elsif Get_Kind (Entity) = E_Enumeration_Type then
+            Parse_Enumeration_Comments (Entity);
             return Skip;
 
          elsif Present (Get_Doc (Entity).Text) then
