@@ -626,6 +626,7 @@ package body Browsers.Scripts is
          end;
 
       elsif Command = "items" then
+         Set_Return_Value_As_List (Data);
          declare
             procedure Add_Child
               (Child : not null access Abstract_Item_Record'Class);
