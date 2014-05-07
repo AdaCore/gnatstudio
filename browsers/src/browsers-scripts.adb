@@ -362,15 +362,17 @@ package body Browsers.Scripts is
    -----------------------
 
    procedure Destroy_Instances (Self : not null access Python_Item'Class) is
-      List : Instance_List_Access := Self.Inst_List;
+      List : constant Instance_List_Access := Self.Inst_List;
       Arr  : constant Instance_Array := Get_Instances (List.all);
    begin
       for Inst in Arr'Range loop
-         Set_Data (Arr (Inst), "Browsers.Item",
-                   Item_Properties_Record'(Item => null));
+         if Arr (Inst) /= No_Class_Instance then
+            Set_Data (Arr (Inst), "Browsers.Item",
+                      Item_Properties_Record'(Item => null));
+         end if;
       end loop;
 
-      Free (List);
+      Free (List.all);
    end Destroy_Instances;
 
    -------------
@@ -576,6 +578,7 @@ package body Browsers.Scripts is
          Model := Get_Model (Inst);
          Item  := Get_Item (Nth_Arg (Data, PA_Item));
          Model.Add (Item);
+         Model.Refresh_Layout;
 
       elsif Command = "set_selection_mode" then
          Model := Get_Model (Inst);
@@ -646,20 +649,24 @@ package body Browsers.Scripts is
          Model := Get_Model (Inst);
          Item  := Get_Item (Nth_Arg (Data, 2));
          Model.Remove (Item);
+         Model.Refresh_Layout;
 
       elsif Command = "clear" then
          Model := Get_Model (Inst);
          Model.Clear;
+         Model.Refresh_Layout;
 
       elsif Command = "raise_item" then
          Model := Get_Model (Inst);
          Item  := Get_Item (Nth_Arg (Data, 2));
          Model.Raise_Item (Item);
+         Model.Refresh_Layout;
 
       elsif Command = "lower_item" then
          Model := Get_Model (Inst);
          Item  := Get_Item (Nth_Arg (Data, 2));
          Model.Lower_Item (Item);
+         Model.Refresh_Layout;
       end if;
    end Diagram_Handler;
 
@@ -1133,23 +1140,24 @@ package body Browsers.Scripts is
 
          Canvas_Item (Get_Item (Inst)).Set_Position ((X, Y));
 
-      elsif Command = "position" then
+      elsif Command = "x" then
          Inst := Nth_Arg (Data, 1);
+         Pos := Get_Item (Inst).Position;
+         Set_Return_Value (Data, Float (Pos.X));
 
-         if Number_Of_Arguments (Data) = 1 then
-            Pos := Get_Item (Inst).Position;
-            Set_Return_Value_As_List (Data, 2);
-            Set_Return_Value (Data, Float (Pos.X));
-            Set_Return_Value (Data, Float (Pos.Y));
-         else
-            declare
-               L : constant List_Instance'Class := Nth_Arg (Data, 2);
-            begin
-               Pos.X := Gdouble (Nth_Arg (L, 1, 0.0));
-               Pos.Y := Gdouble (Nth_Arg (L, 2, 0.0));
-               Get_Item (Inst).Set_Position (Pos);
-            end;
-         end if;
+      elsif Command = "y" then
+         Inst := Nth_Arg (Data, 1);
+         Pos := Get_Item (Inst).Position;
+         Set_Return_Value (Data, Float (Pos.Y));
+
+      elsif Command = "width" then
+         Inst := Nth_Arg (Data, 1);
+         Set_Return_Value (Data, Float (Get_Item (Inst).Bounding_Box.Width));
+
+      elsif Command = "height" then
+         Inst := Nth_Arg (Data, 1);
+         Pos := Get_Item (Inst).Position;
+         Set_Return_Value (Data, Float (Get_Item (Inst).Bounding_Box.Height));
 
       elsif Command = "is_link" then
          Inst := Nth_Arg (Data, 1);
@@ -1900,9 +1908,23 @@ package body Browsers.Scripts is
          Handler => Item_Handler'Access);
       Register_Property
         (Kernel.Scripts,
-         "position",
-         Class => Module.Item_Class,
-         Setter => Item_Handler'Access,
+         "x",
+         Class  => Module.Item_Class,
+         Getter => Item_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "y",
+         Class  => Module.Item_Class,
+         Getter => Item_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "width",
+         Class  => Module.Item_Class,
+         Getter => Item_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "height",
+         Class  => Module.Item_Class,
          Getter => Item_Handler'Access);
       Register_Property
         (Kernel.Scripts,

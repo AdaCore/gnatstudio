@@ -182,12 +182,30 @@ class Item(object):
     writable.
     """
 
-    position = (0, 0)
+    x = 0
     """
     The position of the item. For a toplevel item, this is the position
     within the diagram. For an item that was added to another item, this is
     the position within its parent.
     This property is writable, but you can also use set_position to modify it.
+    """
+
+    y = 0
+    """
+    The position of the item. For a toplevel item, this is the position
+    within the diagram. For an item that was added to another item, this is
+    the position within its parent.
+    This property is writable, but you can also use set_position to modify it.
+    """
+
+    width = 0
+    """
+    The width of the item (in its own coordinate space)
+    """
+
+    height = 0
+    """
+    The height of the item (in its own coordinate space)
     """
 
     def __init__(self):
