@@ -551,8 +551,8 @@ package body KeyManager_Module is
    function Hash (Key : Key_Binding) return Keys_Header_Num is
    begin
       return Keys_Header_Num
-        ((Integer (Key.Key) + Integer (Key.Modifier) * 16#FFFF#)
-          mod Integer (Keys_Header_Num'Last + 1));
+        ((Long_Integer (Key.Key) + Long_Integer (Key.Modifier) * 16#FFFF#)
+          mod Long_Integer (Keys_Header_Num'Last + 1));
    end Hash;
 
    ------------------------
