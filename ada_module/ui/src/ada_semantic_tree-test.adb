@@ -841,6 +841,8 @@ begin
 
       pragma Unreferenced (File_Node);
    begin
+      Sort (Files.all);
+
       --  First, generate the whole database
       Clear (Construct_Db);
       for J in Files.all'Range loop
