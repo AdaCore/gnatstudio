@@ -429,7 +429,7 @@ class Link(object):
     """
 
     Routing = enum('Link.Routing',
-                   ORTHOGONAL=0, STRAIGHT=1, CURVE=2, ORTHOCURVE=3)
+                   ORTHOGONAL=0, STRAIGHT=1, ARC=2, CURVE=3)
     Side = enum('Link.Side',
                 AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
 

@@ -53,7 +53,7 @@ GPS.Browsers.Diagram.Selection = enum(NONE=0, SINGLE=1, MULTIPLE=2)
 GPS.Browsers.TextItem.TextArrow = enum(NONE=0, UP=1, DOWN=2, LEFT=3, RIGHT=4)
 
 GPS.Browsers.Link.Routing = enum(
-    ORTHOGONAL=0, STRAIGHT=1, CURVE=2, ORTHOCURVE=3)
+    ORTHOGONAL=0, STRAIGHT=1, ARC=2, CURVE=3)
 GPS.Browsers.Link.Side = enum(
     AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
 

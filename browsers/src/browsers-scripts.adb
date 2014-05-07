@@ -261,7 +261,9 @@ package body Browsers.Scripts is
    overriding function Inst_List
      (Self : not null access PRect_Record)
       return Instance_List_Access is (Self.Inst'Access);
-   overriding procedure Destroy (Self : not null access PRect_Record);
+   overriding procedure Destroy
+     (Self     : not null access PRect_Record;
+      In_Model : not null access Canvas_Model_Record'Class);
 
    type PEllipse_Record is new Ellipse_Item_Record and Python_Item with record
       Inst : aliased Instance_List;
@@ -269,7 +271,9 @@ package body Browsers.Scripts is
    overriding function Inst_List
      (Self : not null access PEllipse_Record)
       return Instance_List_Access is (Self.Inst'Access);
-   overriding procedure Destroy (Self : not null access PEllipse_Record);
+   overriding procedure Destroy
+     (Self     : not null access PEllipse_Record;
+      In_Model : not null access Canvas_Model_Record'Class);
 
    type PText_Record is new Text_Item_Record and Python_Item with record
       Inst : aliased Instance_List;
@@ -277,7 +281,9 @@ package body Browsers.Scripts is
    overriding function Inst_List
      (Self : not null access PText_Record)
       return Instance_List_Access is (Self.Inst'Access);
-   overriding procedure Destroy (Self : not null access PText_Record);
+   overriding procedure Destroy
+     (Self     : not null access PText_Record;
+      In_Model : not null access Canvas_Model_Record'Class);
 
    type PEditable_Text_Record is new Editable_Text_Item_Record and Python_Item
      with record
@@ -286,7 +292,9 @@ package body Browsers.Scripts is
    overriding function Inst_List
      (Self : not null access PEditable_Text_Record)
       return Instance_List_Access is (Self.Inst'Access);
-   overriding procedure Destroy (Self : not null access PEditable_Text_Record);
+   overriding procedure Destroy
+     (Self     : not null access PEditable_Text_Record;
+      In_Model : not null access Canvas_Model_Record'Class);
 
    type PHr_Record is new Hr_Item_Record and Python_Item with record
       Inst : aliased Instance_List;
@@ -294,7 +302,9 @@ package body Browsers.Scripts is
    overriding function Inst_List
      (Self : not null access PHr_Record)
       return Instance_List_Access is (Self.Inst'Access);
-   overriding procedure Destroy (Self : not null access PHr_Record);
+   overriding procedure Destroy
+     (Self     : not null access PHr_Record;
+      In_Model : not null access Canvas_Model_Record'Class);
 
    type PImage_Record is new Image_Item_Record and Python_Item with record
       Inst : aliased Instance_List;
@@ -302,7 +312,9 @@ package body Browsers.Scripts is
    overriding function Inst_List
      (Self : not null access PImage_Record)
       return Instance_List_Access is (Self.Inst'Access);
-   overriding procedure Destroy (Self : not null access PImage_Record);
+   overriding procedure Destroy
+     (Self     : not null access PImage_Record;
+      In_Model : not null access Canvas_Model_Record'Class);
 
    type Pline_Record is new Polyline_Item_Record and Python_Item with record
       Inst : aliased Instance_List;
@@ -310,7 +322,9 @@ package body Browsers.Scripts is
    overriding function Inst_List
      (Self : not null access Pline_Record)
       return Instance_List_Access is (Self.Inst'Access);
-   overriding procedure Destroy (Self : not null access Pline_Record);
+   overriding procedure Destroy
+     (Self     : not null access Pline_Record;
+      In_Model : not null access Canvas_Model_Record'Class);
 
    type Plink_Record is new Canvas_Link_Record and Python_Item with record
       Inst : aliased Instance_List;
@@ -318,7 +332,9 @@ package body Browsers.Scripts is
    overriding function Inst_List
      (Self : not null access Plink_Record)
       return Instance_List_Access is (Self.Inst'Access);
-   overriding procedure Destroy (Self : not null access Plink_Record);
+   overriding procedure Destroy
+     (Self     : not null access Plink_Record;
+      In_Model : not null access Canvas_Model_Record'Class);
 
    procedure On_Selection_Changed
      (Model : not null access GObject_Record'Class;
@@ -361,60 +377,12 @@ package body Browsers.Scripts is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Self : not null access PRect_Record) is
+   overriding procedure Destroy
+     (Self     : not null access PRect_Record;
+      In_Model : not null access Canvas_Model_Record'Class) is
    begin
       Destroy_Instances (Self);
-      Rect_Item_Record (Self.all).Destroy;  --  inherited
-   end Destroy;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Self : not null access PEllipse_Record) is
-   begin
-      Destroy_Instances (Self);
-      Ellipse_Item_Record (Self.all).Destroy;  --  inherited
-   end Destroy;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Self : not null access PText_Record) is
-   begin
-      Destroy_Instances (Self);
-      Text_Item_Record (Self.all).Destroy;  --  inherited
-   end Destroy;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Self : not null access PHr_Record) is
-   begin
-      Destroy_Instances (Self);
-      Hr_Item_Record (Self.all).Destroy;  --  inherited
-   end Destroy;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Self : not null access Pline_Record) is
-   begin
-      Destroy_Instances (Self);
-      Polyline_Item_Record (Self.all).Destroy;  --  inherited
-   end Destroy;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Self : not null access Plink_Record) is
-   begin
-      Destroy_Instances (Self);
-      Canvas_Link_Record (Self.all).Destroy;  --  inherited
+      Rect_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
    -------------
@@ -422,21 +390,83 @@ package body Browsers.Scripts is
    -------------
 
    overriding procedure Destroy
-     (Self : not null access PEditable_Text_Record)
-   is
+     (Self     : not null access PEllipse_Record;
+      In_Model : not null access Canvas_Model_Record'Class) is
    begin
       Destroy_Instances (Self);
-      Editable_Text_Item_Record (Self.all).Destroy;  --  inherited
+      Ellipse_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
    -------------
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Self : not null access PImage_Record) is
+   overriding procedure Destroy
+     (Self     : not null access PText_Record;
+      In_Model : not null access Canvas_Model_Record'Class) is
    begin
       Destroy_Instances (Self);
-      Image_Item_Record (Self.all).Destroy;  --  inherited
+      Text_Item_Record (Self.all).Destroy (In_Model);  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Self     : not null access PHr_Record;
+      In_Model : not null access Canvas_Model_Record'Class) is
+   begin
+      Destroy_Instances (Self);
+      Hr_Item_Record (Self.all).Destroy (In_Model);  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Self     : not null access Pline_Record;
+      In_Model : not null access Canvas_Model_Record'Class) is
+   begin
+      Destroy_Instances (Self);
+      Polyline_Item_Record (Self.all).Destroy (In_Model);  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Self     : not null access Plink_Record;
+      In_Model : not null access Canvas_Model_Record'Class) is
+   begin
+      Destroy_Instances (Self);
+      Canvas_Link_Record (Self.all).Destroy (In_Model);  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Self     : not null access PEditable_Text_Record;
+      In_Model : not null access Canvas_Model_Record'Class) is
+   begin
+      Destroy_Instances (Self);
+      Editable_Text_Item_Record (Self.all).Destroy (In_Model);  --  inherited
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Self     : not null access PImage_Record;
+      In_Model : not null access Canvas_Model_Record'Class) is
+   begin
+      Destroy_Instances (Self);
+      Image_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
    ---------------
@@ -648,8 +678,10 @@ package body Browsers.Scripts is
             null;
 
          when Background_Color =>
-            Set_Source (Context.Cr, Self.Grid_Style.Get_Fill);
-            Paint (Context.Cr);
+            if Self.Grid_Style.Get_Fill /= Null_Pattern then
+               Set_Source (Context.Cr, Self.Grid_Style.Get_Fill);
+               Paint (Context.Cr);
+            end if;
 
          when Background_Grid_Lines =>
             Draw_Grid_Lines
