@@ -419,6 +419,31 @@ function buildDocumentationPage() {
                     }
                 }
 
+                //  For enumeration types generate description of each
+                //  enumeration literal.
+
+                if (entity.literals !== undefined) {
+                    list = document.createElement('dl');
+
+                    for (var lindex = 0;
+                         lindex < entity.literals.length;
+                         lindex++)
+                    {
+                        var literal = entity.literals[lindex];
+                        var term = document.createElement('dt');
+                        term.id = 'L' + literal.line.toString() +
+                            'C' + literal.column.toString();
+                        term.appendChild(
+                          document.createTextNode(literal.label));
+
+                        var description = document.createElement('dd');
+                        buildText(description, literal.description);
+
+                        list.appendChild(term);
+                        list.appendChild(description);
+                    }
+                }
+
                 if (list != null) {
                    pane.appendChild(list);
                 }

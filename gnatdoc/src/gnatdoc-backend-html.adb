@@ -871,23 +871,27 @@ package body GNATdoc.Backend.HTML is
                Result.Set_Field ("line", Declaration.Loc.Line);
                Result.Set_Field ("column", Natural (Declaration.Loc.Column));
 
-               --  Construct reference information to entity's type
+               if Tag.Tag /= "value" then
+                  --  Construct reference information to entity's type
 
-               Declaration := Xref.Get_Declaration
-                 (Xref.Get_Type_Of (Tag.Entity.Element));
-               Entity_Type := Find_Unique_Entity (Declaration.Loc);
+                  Declaration := Xref.Get_Declaration
+                    (Xref.Get_Type_Of (Tag.Entity.Element));
+                  Entity_Type := Find_Unique_Entity (Declaration.Loc);
 
-               Type_Data := Create_Object;
+                  Type_Data := Create_Object;
 
-               if Present (Entity_Type) then
-                  Type_Data.Set_Field ("label", Get_Full_Name (Entity_Type));
-                  Type_Data.Set_Field ("docHref", Get_Docs_Href (Entity_Type));
+                  if Present (Entity_Type) then
+                     Type_Data.Set_Field
+                       ("label", Get_Full_Name (Entity_Type));
+                     Type_Data.Set_Field
+                       ("docHref", Get_Docs_Href (Entity_Type));
 
-               else
-                  Type_Data.Set_Field ("label", Declaration.Name);
+                  else
+                     Type_Data.Set_Field ("label", Declaration.Name);
+                  end if;
+
+                  Result.Set_Field ("type", Type_Data);
                end if;
-
-               Result.Set_Field ("type", Type_Data);
             end if;
 
             Result.Set_Field
@@ -1071,6 +1075,31 @@ package body GNATdoc.Backend.HTML is
 
                   if Length (Fields) /= 0 then
                      Entity_Entry.Set_Field ("fields", Fields);
+                  end if;
+               end;
+            end if;
+
+            if Get_Kind (E) = E_Enumeration_Type then
+               --  Extract enumeration literals
+
+               declare
+                  Cursor   : Tag_Cursor := New_Cursor (Get_Comment (E));
+                  Tag      : Tag_Info_Ptr;
+                  Literals : JSON_Array;
+
+               begin
+                  while not At_End (Cursor) loop
+                     Tag := Get (Cursor);
+
+                     if Tag.Tag = "value" then
+                        Append (Literals, Entity_Data (Tag));
+                     end if;
+
+                     Next (Cursor);
+                  end loop;
+
+                  if Length (Literals) /= 0 then
+                     Entity_Entry.Set_Field ("literals", Literals);
                   end if;
                end;
             end if;
