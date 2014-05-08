@@ -1331,28 +1331,34 @@ package body GNATdoc.Backend.HTML is
    begin
       case Kind is
          when Tmpl_Index_JS =>
-            return Self.Get_Resource_File ("index.js.tmpl");
+            return Self.Get_Resource_File ("templates/index.js.tmpl");
          when Tmpl_Documentation_HTML =>
-            return Self.Get_Resource_File ("documentation.html.tmpl");
+            return Self.Get_Resource_File
+              ("templates/documentation.html.tmpl");
          when Tmpl_Documentation_JS =>
-            return Self.Get_Resource_File ("documentation.js.tmpl");
+            return Self.Get_Resource_File ("templates/documentation.js.tmpl");
          when Tmpl_Documentation_Index_JS =>
-            return Self.Get_Resource_File ("documentation_index.js.tmpl");
+            return Self.Get_Resource_File
+              ("templates/documentation_index.js.tmpl");
          when Tmpl_Inheritance_Index_JS =>
-            return Self.Get_Resource_File ("inheritance_index.js.tmpl");
+            return Self.Get_Resource_File
+              ("templates/inheritance_index.js.tmpl");
          when Tmpl_Entities_Category_HTML =>
-            return Self.Get_Resource_File ("entities_category.html.tmpl");
+            return Self.Get_Resource_File
+              ("templates/entities_category.html.tmpl");
          when Tmpl_Entities_Category_JS =>
-            return Self.Get_Resource_File ("entities_category.js.tmpl");
+            return Self.Get_Resource_File
+              ("templates/entities_category.js.tmpl");
          when Tmpl_Entities_Categories_Index_JS =>
             return Self.Get_Resource_File
-              ("entities_categories_index.js.tmpl");
+              ("templates/entities_categories_index.js.tmpl");
          when Tmpl_Source_File_HTML =>
-            return Self.Get_Resource_File ("source_file.html.tmpl");
+            return Self.Get_Resource_File ("templates/source_file.html.tmpl");
          when Tmpl_Source_File_JS =>
-            return Self.Get_Resource_File ("source_file.js.tmpl");
+            return Self.Get_Resource_File ("templates/source_file.js.tmpl");
          when Tmpl_Source_File_Index_JS =>
-            return Self.Get_Resource_File ("source_file_index.js.tmpl");
+            return Self.Get_Resource_File
+              ("templates/source_file_index.js.tmpl");
       end case;
    end Get_Template;
 
@@ -1384,27 +1390,27 @@ package body GNATdoc.Backend.HTML is
          GNATdoc_CSS      : constant Filesystem_String := "gnatdoc.css";
 
          Index_HTML_Src       : constant Virtual_File :=
-           Self.Get_Resource_File (Index_HTML);
+           Self.Get_Resource_File ("static/" & Index_HTML);
          Index_HTML_Dst       : constant Virtual_File :=
            Get_Doc_Directory
              (Self.Context.Kernel).Create_From_Dir (Index_HTML);
          Blank_HTML_Src       : constant Virtual_File :=
-           Self.Get_Resource_File (Blank_HTML);
+           Self.Get_Resource_File ("static/" & Blank_HTML);
          Blank_HTML_Dst       : constant Virtual_File :=
            Get_Doc_Directory
              (Self.Context.Kernel).Create_From_Dir (Blank_HTML);
          Inheritance_HTML_Src : constant Virtual_File :=
-           Self.Get_Resource_File (Inheritance_HTML);
+           Self.Get_Resource_File ("static/" & Inheritance_HTML);
          Inheritance_HTML_Dst : constant Virtual_File :=
            Get_Doc_Directory
              (Self.Context.Kernel).Create_From_Dir (Inheritance_HTML);
          GNATdoc_JS_Src       : constant Virtual_File :=
-           Self.Get_Resource_File (GNATdoc_JS);
+           Self.Get_Resource_File ("static/" & GNATdoc_JS);
          GNATdoc_JS_Dst       : constant Virtual_File :=
            Get_Doc_Directory
              (Self.Context.Kernel).Create_From_Dir (GNATdoc_JS);
          GNATdoc_CSS_Src      : constant Virtual_File :=
-           Self.Get_Resource_File (GNATdoc_CSS);
+           Self.Get_Resource_File ("static/" & GNATdoc_CSS);
          GNATdoc_CSS_Dst      : constant Virtual_File :=
            Get_Doc_Directory
              (Self.Context.Kernel).Create_From_Dir (GNATdoc_CSS);
