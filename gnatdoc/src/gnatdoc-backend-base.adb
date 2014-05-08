@@ -30,21 +30,16 @@ package body GNATdoc.Backend.Base is
       File_Name : GNATCOLL.VFS.Filesystem_String)
       return GNATCOLL.VFS.Virtual_File
    is
-      Backend : constant Filesystem_String := Filesystem_String (Self.Name);
-      Dir     : GNATCOLL.VFS.Virtual_File :=
-        Self.Context.Kernel.Get_Share_Dir.Create_From_Dir
-          ("gnatdoc").Create_From_Dir (Backend);
+      File : GNATCOLL.VFS.Virtual_File;
+
    begin
-      --  Special case: check for this in order to be able to work
-      --  in the development environment
+      for Directory of Self.Resource_Dirs loop
+         File := Directory.Create_From_Dir (File_Name);
 
-      if not Dir.Is_Directory then
-         Dir := Create_From_Dir
-           (Get_Share_Dir (Self.Context.Kernel).Get_Parent,
-            "gnatdoc/resources/" & Backend);
-      end if;
+         exit when File.Is_Regular_File;
+      end loop;
 
-      return Dir.Create_From_Dir (File_Name);
+      return File;
    end Get_Resource_File;
 
    ----------------
@@ -52,10 +47,28 @@ package body GNATdoc.Backend.Base is
    ----------------
 
    overriding procedure Initialize
-     (Backend : in out Base_Backend;
-      Context : access constant Docgen_Context) is
+     (Self    : in out Base_Backend;
+      Context : access constant Docgen_Context)
+   is
+      Dir : GNATCOLL.VFS.Virtual_File;
+
    begin
-      Backend.Context := Context;
+      Self.Context := Context;
+
+      Dir := Self.Context.Kernel.Get_Share_Dir.Create_From_Dir
+        ("gnatdoc").Create_From_Dir
+        (Filesystem_String (Base_Backend'Class (Self).Name));
+
+      --  Special case: check for this in order to be able to work
+      --  in the development environment
+
+      if not Dir.Is_Directory then
+         Dir := Self.Context.Kernel.Get_Share_Dir.Get_Parent.Create_From_Dir
+           ("gnatdoc/resources/"
+            & Filesystem_String (Base_Backend'Class (Self).Name));
+      end if;
+
+      Self.Resource_Dirs.Prepend (Dir);
    end Initialize;
 
    ------------------

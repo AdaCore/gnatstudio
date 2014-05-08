@@ -19,6 +19,9 @@ with GNATdoc.Atree; use GNATdoc.Atree;
 
 package GNATdoc.Backend.Base is
 
+   package Virtual_File_Vectors is
+     new Ada.Containers.Vectors (Positive, GNATCOLL.VFS.Virtual_File);
+
    type Collected_Entities is record
       Access_Types      : EInfo_List.Vector;
       CPP_Classes       : EInfo_List.Vector;
@@ -41,9 +44,11 @@ package GNATdoc.Backend.Base is
 
    type Base_Backend is
      abstract new GNATdoc.Backend.GNATdoc_Backend with record
-      Context   : access constant Docgen_Context;
-      Src_Files : Files_List.Vector;
-      Entities  : Collected_Entities;
+      Context       : access constant Docgen_Context;
+      Src_Files     : Files_List.Vector;
+      Entities      : Collected_Entities;
+      Resource_Dirs : Virtual_File_Vectors.Vector;
+      --  List of directories to lookup for resource files.
    end record;
 
    function Name (Self : Base_Backend) return String is abstract;
@@ -65,7 +70,7 @@ package GNATdoc.Backend.Base is
    --  lookup in all resource directories and take in sense name of backend.
 
    overriding procedure Initialize
-     (Backend : in out Base_Backend;
+     (Self    : in out Base_Backend;
       Context : access constant Docgen_Context);
    --  Initialize backend.
 
