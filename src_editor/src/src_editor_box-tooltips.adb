@@ -42,7 +42,8 @@ with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 with GPS.Editors;               use GPS.Editors;
-with Xref;                      use Xref;
+with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
+with Xref;                          use Xref;
 
 package body Src_Editor_Box.Tooltips is
    use type GNATCOLL.Xref.Visible_Column;

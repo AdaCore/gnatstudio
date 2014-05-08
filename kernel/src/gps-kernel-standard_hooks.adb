@@ -89,20 +89,6 @@ package body GPS.Kernel.Standard_Hooks is
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  Convert some shell arguments into suitable hooks_data
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Action_Item) is
-      procedure Unchecked_Free is
-        new Ada.Unchecked_Deallocation (Line_Information_Record, Action_Item);
-   begin
-      if X /= null then
-         Free (X.all);
-         Unchecked_Free (X);
-      end if;
-   end Free;
-
    ------------------------------
    -- General_Line_Information --
    ------------------------------

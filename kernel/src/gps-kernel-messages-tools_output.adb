@@ -579,7 +579,7 @@ package body GPS.Kernel.Messages.Tools_Output is
                if Message /= null then
                   Message.Set_Action (Action);
                else
-                  Free (Action.all);
+                  Free (Action);
                end if;
             end;
          end if;

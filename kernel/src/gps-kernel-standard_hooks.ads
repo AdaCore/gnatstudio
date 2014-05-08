@@ -426,15 +426,12 @@ package GPS.Kernel.Standard_Hooks is
    -- Location_Action_Hook --
    --------------------------
 
-   type Action_Item is access Line_Information_Record;
+   subtype Action_Item is GPS.Editors.Line_Information.Action_Item;
 
    function To_Action_Item is new Ada.Unchecked_Conversion
      (System.Address, Action_Item);
    function To_Address is new Ada.Unchecked_Conversion
      (Action_Item, System.Address);
-
-   procedure Free (X : in out Action_Item);
-   --  Free memory associated to X
 
    type Location_Hooks_Args (Ident_Length, Cat_Length, Mes_Length : Natural) is
      new Hooks_Data with

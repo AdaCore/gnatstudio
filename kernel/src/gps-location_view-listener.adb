@@ -30,7 +30,8 @@ with Commands;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 with GPS.Editors.GtkAda;
-with String_Utils;              use String_Utils;
+with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
+with String_Utils;                  use String_Utils;
 
 package body GPS.Location_View.Listener is
 

@@ -762,7 +762,7 @@ package body Codefix_Module is
       Session : access Codefix_Session_Record;
       Error   : Error_Id)
    is
-      New_Action : Action_Item;
+      New_Action : GPS.Editors.Line_Information.Action_Item;
       Err        : constant Error_Message := Get_Error_Message (Error);
    begin
       New_Action := new Line_Information_Record;

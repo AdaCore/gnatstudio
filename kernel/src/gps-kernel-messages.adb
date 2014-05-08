@@ -15,30 +15,31 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers;            use Ada.Containers;
-with Ada.Strings.Fixed.Hash;    use Ada.Strings, Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with Ada.Tags;                  use Ada.Tags;
+with Ada.Containers;                use Ada.Containers;
+with Ada.Strings.Fixed.Hash;        use Ada.Strings, Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
+with Ada.Tags;                      use Ada.Tags;
 with Ada.Unchecked_Conversion;
 
 with Glib.Convert;
 
-with Basic_Types;               use Basic_Types;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GPS.Editors;               use GPS.Editors;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with Basic_Types;                   use Basic_Types;
+with GNATCOLL.Projects;             use GNATCOLL.Projects;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
+with GPS.Editors;                   use GPS.Editors;
+with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
+with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-with GPS.Styles.UI;             use GPS.Styles, GPS.Styles.UI;
-with Histories;                 use Histories;
-with Projects;                  use Projects;
-with XML_Parsers;               use XML_Parsers;
-with XML_Utils;                 use XML_Utils;
+with GPS.Kernel.Project;            use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
+with GPS.Styles.UI;                 use GPS.Styles, GPS.Styles.UI;
+with Histories;                     use Histories;
+with Projects;                      use Projects;
+with XML_Parsers;                   use XML_Parsers;
+with XML_Utils;                     use XML_Utils;
 
 package body GPS.Kernel.Messages is
    Me : constant Trace_Handle := Create ("MSG");
@@ -182,9 +183,6 @@ package body GPS.Kernel.Messages is
    function To_Messages_Container_Access is
      new Ada.Unchecked_Conversion (System.Address, Messages_Container_Access);
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (GPS.Editors.Line_Information.Line_Information_Record, Action_Item);
-
    procedure Free is
      new Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
 
@@ -302,10 +300,6 @@ package body GPS.Kernel.Messages is
       end if;
 
       --  Destroy action item.
-
-      if Self.Action /= null then
-         GPS.Editors.Line_Information.Free (Self.Action.all);
-      end if;
 
       Free (Self.Action);
    end Finalize;

@@ -57,6 +57,7 @@ with Basic_Types;                      use Basic_Types;
 with Commands.Interactive;             use Commands.Interactive;
 with GPS.Editors;                      use GPS.Editors;
 with GPS.Editors.GtkAda;               use GPS.Editors.GtkAda;
+with GPS.Editors.Line_Information;     use GPS.Editors.Line_Information;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;

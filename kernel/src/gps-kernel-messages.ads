@@ -69,8 +69,7 @@ package GPS.Kernel.Messages is
 
    type Listener_Access is access all Abstract_Listener'Class;
 
-   type Action_Item is access all
-     GPS.Editors.Line_Information.Line_Information_Record;
+   subtype Action_Item is GPS.Editors.Line_Information.Action_Item;
 
    type Unbounded_String_Array is
      array (Positive range <>) of Ada.Strings.Unbounded.Unbounded_String;
