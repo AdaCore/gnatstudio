@@ -1079,7 +1079,9 @@ package body GNATdoc.Backend.HTML is
                end;
             end if;
 
-            if Get_Kind (E) = E_Enumeration_Type then
+            if Get_Kind (E) = E_Enumeration_Type
+              and then Present (Get_Comment (E))
+            then
                --  Extract enumeration literals
 
                declare
