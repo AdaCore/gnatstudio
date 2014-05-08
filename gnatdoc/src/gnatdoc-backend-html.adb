@@ -1376,6 +1376,23 @@ package body GNATdoc.Backend.HTML is
    begin
       GNATdoc.Backend.Base.Base_Backend (Self).Initialize (Context);
 
+      --  Register user defined customization directory
+
+      declare
+         Project : constant GNATCOLL.Projects.Project_Type :=
+           Self.Context.Kernel.Registry.Tree.Root_Project;
+         Value   : constant String :=
+           Project.Attribute_Value
+             (Attribute_Pkg_String'(Build (Pkg_Name, HTML_Custom_Dir_Name)));
+
+      begin
+         if Value /= "" then
+            Self.Resource_Dirs.Prepend
+              (Project.Project_Path.Get_Parent.Create_From_Dir
+                 (Filesystem_String (Value)));
+         end if;
+      end;
+
       --  Create directories and copy static resources.
 
       for Directory of reverse Self.Resource_Dirs loop

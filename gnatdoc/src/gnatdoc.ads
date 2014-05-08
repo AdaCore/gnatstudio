@@ -38,6 +38,7 @@ package GNATdoc is
    Image_Dir_Name           : constant String := "image_dir";
    Doc_Pattern_Name         : constant String := "doc_pattern";
    Ignored_Subprojects_Name : constant String := "ignored_subprojects";
+   HTML_Custom_Dir_Name     : constant String := "html_custom_dir";
 
    type Report_Errors_Kind is (None, Errors_Only, Errors_And_Warnings);
 
