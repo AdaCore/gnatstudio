@@ -1370,117 +1370,30 @@ package body GNATdoc.Backend.HTML is
      (Self    : in out HTML_Backend;
       Context : access constant Docgen_Context)
    is
-
-      procedure Generate_Support_Files;
-      --  Generate support files in destination directory
-
-      procedure Create_Documentation_Directories;
-      --  Creates root documentation directory and its subdirectories
-
-      ----------------------------
-      -- Generate_Support_Files --
-      ----------------------------
-
-      procedure Generate_Support_Files is
-         Index_HTML       : constant Filesystem_String := "index.html";
-         Blank_HTML       : constant Filesystem_String := "blank.html";
-         Inheritance_HTML : constant Filesystem_String :=
-                              "inheritance_index.html";
-         GNATdoc_JS       : constant Filesystem_String := "gnatdoc.js";
-         GNATdoc_CSS      : constant Filesystem_String := "gnatdoc.css";
-
-         Index_HTML_Src       : constant Virtual_File :=
-           Self.Get_Resource_File ("static/" & Index_HTML);
-         Index_HTML_Dst       : constant Virtual_File :=
-           Get_Doc_Directory
-             (Self.Context.Kernel).Create_From_Dir (Index_HTML);
-         Blank_HTML_Src       : constant Virtual_File :=
-           Self.Get_Resource_File ("static/" & Blank_HTML);
-         Blank_HTML_Dst       : constant Virtual_File :=
-           Get_Doc_Directory
-             (Self.Context.Kernel).Create_From_Dir (Blank_HTML);
-         Inheritance_HTML_Src : constant Virtual_File :=
-           Self.Get_Resource_File ("static/" & Inheritance_HTML);
-         Inheritance_HTML_Dst : constant Virtual_File :=
-           Get_Doc_Directory
-             (Self.Context.Kernel).Create_From_Dir (Inheritance_HTML);
-         GNATdoc_JS_Src       : constant Virtual_File :=
-           Self.Get_Resource_File ("static/" & GNATdoc_JS);
-         GNATdoc_JS_Dst       : constant Virtual_File :=
-           Get_Doc_Directory
-             (Self.Context.Kernel).Create_From_Dir (GNATdoc_JS);
-         GNATdoc_CSS_Src      : constant Virtual_File :=
-           Self.Get_Resource_File ("static/" & GNATdoc_CSS);
-         GNATdoc_CSS_Dst      : constant Virtual_File :=
-           Get_Doc_Directory
-             (Self.Context.Kernel).Create_From_Dir (GNATdoc_CSS);
-
-         Success : Boolean;
-
-      begin
-         Index_HTML_Src.Copy (Index_HTML_Dst.Full_Name, Success);
-         pragma Assert (Success);
-         Blank_HTML_Src.Copy (Blank_HTML_Dst.Full_Name, Success);
-         pragma Assert (Success);
-         Inheritance_HTML_Src.Copy (Inheritance_HTML_Dst.Full_Name, Success);
-         pragma Assert (Success);
-         GNATdoc_JS_Src.Copy (GNATdoc_JS_Dst.Full_Name, Success);
-         pragma Assert (Success);
-         GNATdoc_CSS_Src.Copy (GNATdoc_CSS_Dst.Full_Name, Success);
-         pragma Assert (Success);
-      end Generate_Support_Files;
-
-      --------------------------------------
-      -- Create_Documentation_Directories --
-      --------------------------------------
-
-      procedure Create_Documentation_Directories is
-         Root_Dir : constant Virtual_File :=
-           Get_Doc_Directory (Self.Context.Kernel);
-         Srcs_Dir : constant Virtual_File := Root_Dir.Create_From_Dir ("srcs");
-         Docs_Dir : constant Virtual_File := Root_Dir.Create_From_Dir ("docs");
-         Ents_Dir : constant Virtual_File :=
-           Root_Dir.Create_From_Dir ("entities");
-         Imgs_Dir : constant Virtual_File :=
-           Root_Dir.Create_From_Dir ("images");
-
-         procedure Try_Mkdir (D : Virtual_File);
-         --  Attempt to make the directory if it does not exist, and
-         --  print an error in case of failure
-
-         ---------------
-         -- Try_Mkdir --
-         ---------------
-
-         procedure Try_Mkdir (D : Virtual_File) is
-         begin
-            if not D.Is_Directory then
-               D.Make_Dir;
-            end if;
-         exception
-            when others =>
-               Trace
-                 (Me, "Could not create directory: " & D.Display_Full_Name);
-         end Try_Mkdir;
-
-      begin
-         Try_Mkdir (Root_Dir);
-         Try_Mkdir (Srcs_Dir);
-         Try_Mkdir (Docs_Dir);
-         Try_Mkdir (Ents_Dir);
-         Try_Mkdir (Imgs_Dir);
-      end Create_Documentation_Directories;
+      Source  : GNATCOLL.VFS.Virtual_File;
+      Success : Boolean;
 
    begin
       GNATdoc.Backend.Base.Base_Backend (Self).Initialize (Context);
 
-      --  Create documentation directory and its subdirectories
+      --  Create directories and copy static resources.
 
-      Create_Documentation_Directories;
+      for Directory of reverse Self.Resource_Dirs loop
+         Source := Directory.Create_From_Dir ("static");
 
-      --  Copy support files
+         if Source.Is_Directory then
+            Source.Copy
+              (Get_Doc_Directory (Self.Context.Kernel).Full_Name, Success);
 
-      Generate_Support_Files;
+            if not Success then
+               Trace
+                 (Me,
+                  "unable to copy static resources from "
+                  & String (Source.Full_Name.all)
+                  & " directory");
+            end if;
+         end if;
+      end loop;
    end Initialize;
 
    ----------
