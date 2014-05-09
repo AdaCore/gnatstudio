@@ -26,6 +26,34 @@ package body Completion.C is
       Context : Completion_Context)
       return Completion_List
    is
+      function In_String_Literal (Offset : String_Index_Type) return Boolean;
+      --  Returns true if Offset references a location inside of an string
+      --  literal
+
+      function In_String_Literal (Offset : String_Index_Type) return Boolean is
+         In_String : Boolean := False;
+         J         : Natural := Natural (Context.Offset);
+
+      begin
+         --  Locate the beginning of the current line
+
+         while J > Context.Buffer'First
+            and then Context.Buffer (J) /= ASCII.LF
+         loop
+            J := J - 1;
+         end loop;
+
+         while J < Natural (Offset) loop
+            if Context.Buffer (J) = '"' then
+               In_String := not In_String;
+            end if;
+
+            J := J + 1;
+         end loop;
+
+         return In_String;
+      end In_String_Literal;
+
       New_Context : constant Completion_Context :=
         new C_Completion_Context'(Buffer => Context.Buffer,
                                   Offset => Context.Offset,
@@ -40,6 +68,10 @@ package body Completion.C is
       Prev_Tok : Token_Record;
 
    begin
+      if In_String_Literal (Context.Offset) then
+         return Null_Completion_List;
+      end if;
+
       Append (Manager.Contexts, New_Context);
 
       New_Context_All.Expression :=
