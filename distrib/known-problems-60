@@ -540,6 +540,15 @@ KP-60-MB13-062 GPS: key shortcuts not displayed in some Build menus
 
   Workaround: Use the key shortcut editor to see the corresponding shortcuts.
 
+KP-60-MB07-017 GPS: completion enabled in string literals
+
+  Problem:    When dynamic completion is enabled GPS erroneously computes
+              completions for the text written in string literals.
+
+  Status:     This was fixed in 6.1 on 2014-05-09
+
+  Workaround: Lower the smart completion capability to normal mode.
+
 KP-60-MB06-028 GPS: drag and drop of files opens extraneous editors
 
   Problem:    When dragging/dropping files from the window manager to GPS
