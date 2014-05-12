@@ -1141,6 +1141,15 @@ package body Browsers.Scripts is
 
          Canvas_Item (Get_Item (Inst)).Set_Position ((X, Y));
 
+      elsif Command = "parent" then
+         Inst := Nth_Arg (Data, 1);
+         if Get_Item (Inst).Parent /= null then
+            Set_Return_Value
+               (Data,
+                Get_Instance (Python_Item_Access (Get_Item (Inst).Parent),
+                              Get_Script (Data)));
+         end if;
+
       elsif Command = "x" then
          Inst := Nth_Arg (Data, 1);
          Pos := Get_Item (Inst).Position;
@@ -1907,6 +1916,11 @@ package body Browsers.Scripts is
                      Param ("y", Optional => True)),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
+      Register_Property
+        (Kernel.Scripts,
+         "parent",
+         Class  => Module.Item_Class,
+         Getter => Item_Handler'Access);
       Register_Property
         (Kernel.Scripts,
          "x",
