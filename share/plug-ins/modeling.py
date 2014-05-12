@@ -13,6 +13,7 @@ you open a .mdl file, for instance from the Project view.
 
 """
 
+import json
 import GPS
 import GPS.Browsers
 import glob
@@ -22,7 +23,6 @@ import os
 import os.path
 import os_utils
 import re
-import json
 
 #############
 # Constants #
@@ -46,6 +46,10 @@ BLOCK_KIND = 1
 
 COMPILE_MODEL_ACTION = "compile model"
 # The name of the general action which triggers a GMC compilation
+
+CONTEXTUAL_MENU = "Locate in model: <b>%s</b>"
+# The name of the contextual menu produced when right clicking on a source code
+# file. The name must contain %s which is replaced by the Simulink model.
 
 DESKTOP_ENABLED = "enabled"
 DESKTOP_SCALE = "scale"
@@ -244,6 +248,16 @@ if GMC_EXEC:
     GPS.parse_xml(PROJECT_DEFS)
 
 
+class GMC_Diagram(GPS.Browsers.Diagram):
+
+    def on_selection_changed(self, item, *args):
+        """
+        React to a change in selection of an item. This routine is not used,
+        but must be present for overriding purposes.
+        """
+        pass
+
+
 class GMC_Diagram_Viewer(GPS.Browsers.View):
 
     # _gmc_module
@@ -257,19 +271,55 @@ class GMC_Diagram_Viewer(GPS.Browsers.View):
         """
         self._gmc_module = gmc_module
 
+    def on_create_context(self, context, topitem, item, x, y, *args):
+        """
+        React to a right click on an item. The routine is not used, but must be
+        present for overriding purposes.
+        """
+        pass
+
     def on_item_clicked(self, topitem, item, x, y, *args):
+        """
+        React to a single click event on an item. The routine is not used, but
+        must be present for overriding purposes.
+        """
         pass
 
     def on_item_double_clicked(self, topitem, item, x, y, *args):
+        """
+        React to a double click event on an item.
+        :param GPS.Browsers.Item topitem: The root of the subtree where item
+            appears.
+        :param GPS.Browsers.Item item: The item being double clicked.
+        :param Float x: The x coordinate of the click.
+        :param Float y: The y coordinate of the click.
+        """
         self._gmc_module.handle_diagram_viewer_event(
             topitem, item, x, y, *args)
+
+    def on_key(self, topitem, item, key, *args):
+        """
+        React to a key press while the diagram viewer is in focus. This routine
+        is not used, but must be present for overriding purposes.
+        """
+        pass
 
 
 class GMC_Module(modules.Module):
 
+    # _block_id
+    #    type: String
+    # A block id whose corresponding graphical item must be highlighted when
+    # a MDL2JSON compilation event occurs.
+
+    # _locations
+    #    type: list
+    #    element: GPS.Message
+    # A list of locations displayed in the Locations viewer.
+
     def __block_data(self, line):
         """
-        Extract the block annotation data from a line.
+        Extract the block annotation data (if any) from a line.
         :param String line: A line to parse.
         :return: A tuple of the form (String, Boolean). The first element is
             the block id. The second element is a flag which is set to True
@@ -302,34 +352,98 @@ class GMC_Module(modules.Module):
 
         return cmd.strip()
 
+    def build_contextual_menu(self, context):
+        """
+        Create a submenu for the "Locate in model" contextual menu. Each choice
+        of the submenu represents an open annotation block.
+        :param GPS.FileContext context: The context of the source code file
+            subject to the right click.
+        """
+        # The following list contains the block ids of all open annotations
+        # upto the current line where the double click occurred.
+
+        block_ids = []
+
+        # Open the source code file and examine each line
+
+        click_line_num = context.location().line()
+        phys_file = open(context.file().name())
+        line_num = 0
+
+        for line in phys_file:
+            line_num = line_num + 1
+
+            # Stop the parse once the current line reaches the line where the
+            # right click occurred.
+
+            if line_num == click_line_num:
+                break
+
+            # Check whether the current line denotes a block annotation. If it
+            # does, block_data[0] contains the block id, block_data[1] is True
+            # when the annotation starts a block.
+
+            block_data = self.__block_data(line)
+
+            if block_data and block_data[0]:
+
+                # "/" has a special meaning in GPS menus as it signals a new
+                # submenu. To remedy this, convert every "/" into ".". This
+                # substitution must be undone in handle_contextual_menu_event.
+
+                block_id = block_data[0].replace("/", ".")
+
+                # The line denotes a start annotation. Add the block id to the
+                # list of open block scopes.
+
+                if block_data[1]:
+                    if not block_id in block_ids:
+                        block_ids.append(block_id)
+
+                # Otherwise the line denotes an end annotation which closes a
+                # open block scope.
+
+                else:
+                    if block_id in block_ids:
+                        block_ids.remove(block_id)
+
+        return block_ids
+
     def __compile_model_to_json(self):
         """
         Compile a Simulink model with MDL2JSON to generate a JSON file.
         """
-        switches = self.__switches()
+        # Guard against extra compilations if there is a MDL2JSON compilation
+        # currently taking place.
 
-        # Remove unwanted switches
+        if not self.__is_running(MDL2JSON_EXEC):
+            switches = self.__switches()
 
-        switches = re.sub(pattern=OPTION_FLATTEN, repl="", string=switches)
+            # Remove unwanted switches
 
-        # Construct the argument list and call MDL2JSON to compile the Simulink
-        # model. Note that the compilation is executed without a build target
-        # because the JSON machinery must remain hidden.
+            switches = re.sub(pattern=OPTION_FLATTEN, repl="", string=switches)
 
-        GPS.Process(
-            command=self.__build_compilation_command(
-                executable=MDL2JSON_EXEC,
-                file=self.__model_file(),
-                switches=switches),
-            on_exit=self.__handle_MDL2JSON_compilation_event
-        )
+            # Construct the argument list and call MDL2JSON to compile the
+            # Simulink model. Note that the compilation is executed without
+            # a build target because the JSON machinery must remain hidden.
 
-    def __compile_model_to_source_code(self):
+            GPS.Process(
+                command=self.__build_compilation_command(
+                    executable=MDL2JSON_EXEC,
+                    file=self.__model_file(),
+                    switches=switches),
+                on_exit=self.handle_MDL2JSON_compilation_event)
+
+    def compile_model_to_source_code(self):
         """
         Compile a Simulink model with GMC to generate source code files in a
         particular target language.
         """
-        if self.__project_file_ok():
+        # Compile the Simulink model only when vital project attributes are
+        # set. Guard against extra compilations if there is a GMC compilation
+        # currently taking place.
+
+        if self.__project_file_ok() and not self.__is_running(TARGET):
             switches = self.__switches()
 
             # Handle a missing compilation behavior switch (-c/-i) by adding a
@@ -378,21 +492,22 @@ class GMC_Module(modules.Module):
         """
         def find_graphical_item(item):
             """
-            Inspect the children of a graphical item and try to match their ids
-            against block_id.
+            Inspect the input graphical item and its children (if any) to try
+            and match their ids against the block id.
             :param GPS.Browsers.Item item): The (parent) item.
             :return GPS.Browsers.Item: The graphical item whose id matches
                 block_id or None.
             """
-            # Check whether the current item's matches the block id. Note that
-            # the item's id may contain an extra level of detail, therefore
-            # perform the membership test against the item's id rather than the
-            # other way around. To illustrate:
+            # Check whether the current item id matches the block id. Note that
+            # the block id may contain an extra level of detail, therefore
+            # perform the membership test against the block id rather than
+            # the other way around. To illustrate:
 
-            #     A/B        block id
-            #     A/B/C      item id
+            #     A/B/C      block id
+            #     A/B        item id
 
-            # Note that the item may not even have the "id" attribute set
+            # Note that the item may not even have the "id" attribute set or it
+            # may be None.
 
             if hasattr(item, "id"):
                 item_id = item.id
@@ -429,28 +544,52 @@ class GMC_Module(modules.Module):
 
         return None
 
-    def __handle_context_menu_event(self):
+    def handle_contextual_menu_event(self, context, choice, choice_index):
         """
         Process a contextual menu event and perform the appropriate navigation
         action.
         """
-        pass
+        # Updo the replacement done in build_contextual_menu as item ids use
+        # "/" to delimit their children, not ".".
+
+        block_id = choice.replace(".", "/")
+
+        # Bring the diagram viewer into focus and highlight the chosen
+        # graphical item.
+
+        if self.__diagram_viewer():
+            self.__select_item(block_id)
+
+            window = GPS.MDI.get(os.path.basename(self.__model_file()))
+            window.raise_window()
+
+        # Otherwise the Simulink model needs to be compiled to JSON. Note that
+        # this action automatically brings the diagram viewer into focus and
+        # highlights the chosen graphical object.
+
+        else:
+            self._block_id = block_id
+            self.__compile_model_to_json()
 
     def handle_diagram_viewer_event(self, topitem, item, x, y, *args):
         """
         Process a diagram viewer event and perform the appropriate navigation
         action.
-        :param GPS.Browsers.Item item: The item being double clicked
+        :param GPS.Browsers.Item topitem: The root of the subtree where item
+            appears.
+        :param GPS.Browsers.Item item: The item being double clicked.
+        :param Float x: The x coordinate of the click.
+        :param Float y: The y coordinate of the click.
         """
-        def add_block_id_locations(file, item_id):
+        def add_locations(cod_file, item_id):
             """
             Examine the contents of a source code file and add a new location
             to the Locations viewer for eash starting block annotation which
             mentions item_id. Note that the file may lack such annotations.
-            :param String file: The full path + name of a source code file.
+            :param String cod_file: The path + name of a source code file.
             :param String item_id: The item id to search for.
             """
-            phys_file = open(file)
+            phys_file = open(cod_file)
             line_num = 0
 
             for line in phys_file:
@@ -462,40 +601,61 @@ class GMC_Module(modules.Module):
 
                 block_data = self.__block_data(line)
 
-                # The current line denotes a starting block annotation
+                # The current line denotes a starting block annotatio. Check
+                # whether the item id matches the block id. Note that the block
+                # id may contain an extra level of detail, therefore perform
+                # the membership test against the block id rather than the
+                # other way around. To illustrate:
 
-                if block_data and block_data[0] and block_data[1]:
-                    if block_data[0] == item_id:
-                        print "Exact location: %s:%d:1" % (file, line_num)
+                #     A/B/C      block id
+                #     A/B        item id
 
-                    elif item_id in block_data[0]:
-                        print "First location: %s:%d:1" % (file, line_num)
-                        break
+                if (
+                    block_data
+                    and block_data[0]
+                    and block_data[1]
+                    and item_id in block_data[0]
+                ):
+                    self._locations.append(GPS.Message(
+                        category="default",
+                        file=GPS.File(cod_file),
+                        line=line_num,
+                        column=1,
+                        text=block_data[0],
+                        flags=0))
 
         # Start of processing for handle_diagram_viewer_event
 
-        # Open all files in the output directory and try to detect source code
-        # files by matching their contents against a predefined GMC header.
+        if hasattr(item, "id") and item.id:
 
-        all_files = os.path.join(self.__output_directory(), "*")
-        for cod_file in glob.glob(all_files):
-            if self.__is_source_code_file(cod_file):
+            # Clear all locations displayed in the Locations viewer as the
+            # current item will generate new ones.
 
-                # Note that the item may not even have the "id" attribute set
+            for location in self._locations:
+                location.remove()
 
-                if hasattr(item, "id"):
-                    add_block_id_locations(file=cod_file, item_id=item.id)
+            # Open all files in the output directory and try to detect source
+            # code files by matching their contents against a predefined GMC
+            # header.
 
-    def __handle_editor_event(self, hookname, file, line, column):
+            all_files = os.path.join(self.__output_directory(), "*")
+            for cod_file in glob.glob(all_files):
+                if self.__is_source_code_file(cod_file):
+                    add_locations(cod_file=cod_file, item_id=item.id)
+
+            return True
+
+        return False
+
+    def handle_editor_event(self, hookname, file, line, column):
         """
         Process an editor event and perform the appropriate navigation action.
+        :param ??? hookname: ???
         :param GPS.File file: The file being edited.
         :param Integer line: The line number of the cursor.
         :param Integer column: The column number of the cursor.
         """
-        diag_view = self.__diagram_viewer()
-
-        if self.__is_source_code_file(file.name()) and diag_view:
+        if self.__is_source_code_file(file.name()) and self.__diagram_viewer():
             editor = GPS.EditorBuffer.get(file)
             start = editor.at(line, 1)
 
@@ -507,22 +667,15 @@ class GMC_Module(modules.Module):
             block_data = self.__block_data(
                 editor.get_chars(start, start.end_of_line()))
 
-            # Find the graphical item which corresponds to the selected block
-            # id. If such a block exists, clear the current location within the
-            # diagram and select the item.
+            # Select the graphical item which corresponds to the block id
+            # being clicked on.
 
             if block_data and block_data[0]:
-                graph_item = self.__find_graphical_item(block_data[0])
+                self.__select_item(block_data[0])
 
-                if graph_item:
-                    diag = diag_view.diagram
-
-                    diag.clear_selection()
-                    diag.select(graph_item)
-
-    def __handle_GMC_compilation_event(
+    def handle_GMC_compilation_event(
         self,
-        hook,
+        hookname,
         category,
         target_name="",
         mode_name="",
@@ -530,60 +683,75 @@ class GMC_Module(modules.Module):
     ):
         """
         Process a compilation event and perform the appropriate action.
+        :param ??? hookname: ???
+        :param String category: The location/highlighting category that
+            contains the compilation output.
+        :param String target_name: The name of the executed build target.
+        :param String mode_name: The name of the executed build mode.
+        :param Integer status: The exit status of the executed program.
         """
         # GMC has finished compiling a Simulink model. Reload the project
         # explorer as the compilation generates new files which must be
-        # displayed accordingly. Inspect the output directory and collect
-        # all generated source code files in a list for further processing.
-        # Create the navigation maps which establish a relation between a
-        # source location and a graphical item.
+        # displayed accordingly.
 
         if target_name == TARGET:
             GPS.execute_action("reload project")
 
-    def __handle_MDL2JSON_compilation_event(self, process, status, output):
+    def handle_MDL2JSON_compilation_event(self, process, status, output):
         """
         Process a MDL2JSON compilation event and perform the appropriate action
+        :param GPS.Process process: An instance of GPS.Process.
         :param Integer status: The exit status of the call to MDL2JSON.
         :param String output: the output of the call to MDL2JSON.
         """
-        if status == 0:
-            if not self.__diagram_viewer():
+        if status == 0 and not self.__diagram_viewer():
+            diag_view = GMC_Diagram_Viewer(self)
 
-                # Load the JSON file and display the diagram
+            # Load the JSON file and display the diagram
 
-                model_file = os.path.basename(self.__model_file())
+            model_file = os.path.basename(self.__model_file())
+            diags = GPS.Browsers.Diagram.load_json(
+                self.__json_file(), diagramFactory=GMC_Diagram)
+            diag_view.create(
+                diagram=diags[0],
+                title=model_file,
+                save_desktop=self.save_desktop
+            )
 
-                diags = GPS.Browsers.Diagram.load_json(self.__json_file())
-                diag_view = GMC_Diagram_Viewer(self)
-                diag_view.create(
-                    diagram=diags[0],
-                    title=model_file,
-                    save_desktop=self.save_desktop
-                )
+            # Store the instance of the diagram viewer in the window in charge
+            # of displaying it.
 
-                # Store the instance of the diagram viewer in the window in
-                # charge of displaying it.
+            window = GPS.MDI.get(model_file)
+            window._diagram_viewer = diag_view
 
-                window = GPS.MDI.get(model_file)
-                window._diagram_viewer = diag_view
+            # Highlight the corresponding graphical item of a block selected
+            # during an interaction with contextual menu "Locate in model".
 
-                # JSON files must never be exposed to the outside. Destroy the
-                # file once the diagram has been displayed.
+            if self._block_id:
+                self.__select_item(self._block_id)
+                self._block_id = None
 
-                os.remove(self.__json_file())
+            # JSON files must never be exposed to the outside. Destroy the file
+            # once the diagram has been displayed.
 
-    def __handle_viewer_event(self):
+            # os.remove(self.__json_file())
+
+    def __is_running(self, process):
         """
-        Process a diagram viewer event and perform the appropriate navigation
-        action.
+        Determine whether a process is currently running in GPS.
+        :param String process: The name of the process.
+        :return: The Boolean status of the test.
         """
-        pass
+        for task in GPS.Task.list():
+            if task.name() == process:
+                return True
+
+        return False
 
     def __is_source_code_file(self, file):
         """
         Determine whether a file is the byproduct of a GMC compilation.
-        :param String file: The file to test.
+        :param String file: The path + name of the file to test.
         :return: The Boolean status of the test.
         """
         if os.path.isfile(file):
@@ -601,6 +769,17 @@ class GMC_Module(modules.Module):
 
         else:
             return False
+
+    def is_source_code_file_context(self, context):
+        """
+        Determine whether the context of a right click is a file which is the
+        byproduct of a GMC compilation.
+        :param GPS.Context context: The context being right clicked on.
+        :return: The Boolean status of the test.
+        """
+        return (
+            isinstance(context, GPS.FileContext)
+            and self.__is_source_code_file(context.file().name()))
 
     def __json_file(self):
         """
@@ -650,7 +829,8 @@ class GMC_Module(modules.Module):
         """
         Obtain the Simulink model used in a GMC/MDL2JSON compilation as
         specified in a GMC project.
-        :return: The value of project attribute Source_Model as String.
+        :return: The value of project attribute Source_Model as String. This
+            is usually the path + name of the Simulink model.
         """
         return GPS.Project.root().get_attribute_as_string(
             package="GMC", attribute=SOURCE_MODEL)
@@ -669,7 +849,7 @@ class GMC_Module(modules.Module):
         Determine whether a file is physically present on disk. If this is not
         the case, issue an error.
         :param GPS.File file: The file to be tested.
-        :return: The Boolean outcome of the test.
+        :return: The Boolean status of the test.
         """
         file_name = file.name()
 
@@ -721,6 +901,19 @@ class GMC_Module(modules.Module):
 
         return ""
 
+    def __select_item(self, block_id):
+        """
+        Given a block id, find the corresponding graphical item and select it.
+        :param String block_id: The id of a block annotation.
+        """
+        graph_item = self.__find_graphical_item(block_id)
+
+        if graph_item:
+            diag = self.__diagram_viewer().diagram
+
+            diag.clear_selection()
+            diag.select(graph_item)
+
     def setup(self):
         """
         Setup the GMC plug-in.
@@ -728,27 +921,36 @@ class GMC_Module(modules.Module):
         # The module is loaded only when GMC is available
 
         if GMC_EXEC:
+            self._locations = []
+
             self.__setup_hooks()
             self.__setup_menus()
 
     def __setup_hooks(self):
         """
-        Enable the GMC plug-in functionaliry by registering various actions
+        Enable the GMC plug-in functionality by registering various actions
         with corresponding GPS event hooks.
         """
         GPS.Hook("compilation_finished").add(
-            self.__handle_GMC_compilation_event, last=False)
+            self.handle_GMC_compilation_event, last=False)
         GPS.Hook("location_changed").add(
-            self.__handle_editor_event, last=False)
+            self.handle_editor_event, last=False)
         GPS.Hook("open_file_action_hook").add(
-            self.__visualize_model, last=False)
+            self.visualize_model, last=False)
 
     def __setup_menus(self):
         """
         Enable the GMC plug-in menus and buttons.
         """
+        GPS.Contextual(
+            CONTEXTUAL_MENU % os.path.basename(self.__model_file())
+        ).create_dynamic(
+            on_activate=self.handle_contextual_menu_event,
+            factory=self.build_contextual_menu,
+            filter=self.is_source_code_file_context)
+
         gps_utils.make_interactive(
-            callback=self.__compile_model_to_source_code,
+            callback=self.compile_model_to_source_code,
             name=COMPILE_MODEL_ACTION)
 
     def __switches(self):
@@ -766,7 +968,7 @@ class GMC_Module(modules.Module):
         # ??? useless ???
         pass
 
-    def __visualize_model(
+    def visualize_model(
         self,
         hookname,
         model_file,
@@ -781,7 +983,15 @@ class GMC_Module(modules.Module):
     ):
         """
         Create the visual representation of a Simulink model.
-        :param GPS.File model_file: the model file to visualize
+        :param GPS.File model_file: The model file to visualize.
+        :param Integer line:
+        :param Integer column_end:
+        :param Boolean enabled_navigation:
+        :param Boolean new_file:
+        :param Boolean force_reload:
+        :param Boolean focus:
+        :param GPS.Project project:
+        :return: The Boolean status of the operation.
         """
         # Compile a Simulink model into JSON only when the MDL2JSON tool is
         # available.
