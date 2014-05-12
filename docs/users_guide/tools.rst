@@ -502,11 +502,11 @@ Its documentation will be:
 Invoke the documentation generator from the :menuselection:`Tools ->
 Documentation` menu:
 
-*Generate project*
+*Generate Project*
 
   Generate documentation for all files in the loaded project.
 
-*Generate projects & subprojects*
+*Generate Projects & Subprojects*
 
   Generate documentation for all files in the loaded project and its
   subprojects.
@@ -514,22 +514,6 @@ Documentation` menu:
 *Generate current file*
 
   Generate documentation for the current file.
-
-*Generate for...*
-
-  Open a File Selector Dialog (see :ref:`The_File_Selector`) and generate
-  documentation for the specified file.
-
-In addition, when relevant (depending on the context), right-clicking
-displays a :guilabel:`Documentation` contextual menu.
-
-Select the entry called :guilabel:`Generate for <filename>` from a source
-file contextual menu to generate documentations for that file, and if it
-exists, its corresponding body (see :ref:`The_Preferences_Dialog`).  From a
-project contextual menu (see :ref:`The_Project_View`), you have the choice
-of generating documentation for all files in the selected project only or
-from the selected project and all subprojects.  Find the list of all
-documentation options in :ref:`The_Preferences_Dialog`.
 
 The documentation generator relies on the :file:`.ali` files created by
 GNAT.  Depending on the version of GNAT used, the following restrictions

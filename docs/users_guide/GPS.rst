@@ -462,34 +462,6 @@ Classes
 
    .. automethod:: GPS.Debugger.spawn
 
-:class:`GPS.Docgen`
-^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Docgen
-
-   
-
-   .. automethod:: GPS.Docgen.generate_index_file
-
-   .. automethod:: GPS.Docgen.get_current_file
-
-   .. automethod:: GPS.Docgen.get_doc_dir
-
-   .. automethod:: GPS.Docgen.register_css
-
-   .. automethod:: GPS.Docgen.register_main_index
-
-   .. automethod:: GPS.Docgen.register_tag_handler
-
-:class:`GPS.DocgenTagHandler`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: DocgenTagHandler
-
-   
-
-   .. automethod:: GPS.DocgenTagHandler.__init__
-
 :class:`GPS.Editor`
 ^^^^^^^^^^^^^^^^^^^
 

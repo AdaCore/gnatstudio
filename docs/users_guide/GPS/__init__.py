@@ -5467,15 +5467,6 @@ class File(object):
         """
         pass  # implemented in Ada
 
-    def generate_doc(self):
-        """
-        Generates the documentation of the file and displays it in the
-        default browser.
-
-        .. seealso:: :func:`GPS.Project.generate_doc`
-        """
-        pass  # implemented in Ada
-
     def get_property(self, name):
         """
         Returns the value of the property associated with the file. This
@@ -8500,17 +8491,6 @@ class Project(object):
         Returns the project file.
 
         :return: An instance of :class:`GPS.File`
-        """
-        pass  # implemented in Ada
-
-    def generate_doc(self, recursive=False):
-        """
-        Generates the documentation for the project (and its subprojects if
-        ``recursive`` is True) and displays it in the default browser.
-
-        :param recursive: A boolean
-
-        .. seealso:: :func:`GPS.File.generate_doc`
         """
         pass  # implemented in Ada
 

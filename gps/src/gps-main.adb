@@ -131,7 +131,6 @@ with Command_Window;
 with Cpp_Module;
 with Custom_Module;
 with Project_Templates.GPS;
-with Docgen2_Module;
 with External_Editor_Module;
 with GNATStack.Module;
 with GNATTest_Module;
@@ -172,8 +171,6 @@ procedure GPS.Main is
    Pid_Image  : constant String := String_Utils.Image (Get_Process_Id);
    Gtk_Errors : constant Trace_Handle := Create ("GTK");
 
-   Docgen2_Trace          : constant Trace_Handle :=
-                              Create ("MODULE.Docgen2", GNATCOLL.Traces.On);
    Refactor_Trace         : constant Trace_Handle :=
                               Create ("MODULE.Refactor", GNATCOLL.Traces.On);
    Python_Trace           : constant Trace_Handle :=
@@ -2081,10 +2078,6 @@ procedure GPS.Main is
 
       if Active (Refactor_Trace) then
          Refactoring_Module.Register_Module (GPS_Main.Kernel);
-      end if;
-
-      if Active (Docgen2_Trace) then
-         Docgen2_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Code_Analysis_Trace) then
