@@ -180,6 +180,7 @@ package body GPS.Kernel.Project is
    is
    begin
       Do_Subdirs_Cleanup (Self);
+
       Recompute_View (Project_Tree (Self), Errors);
 
       --  If we are in the process of creating the kernel, no need to do
@@ -493,6 +494,7 @@ package body GPS.Kernel.Project is
      (Handle : access Kernel_Handle_Record'Class) is
    begin
       Trace (Me, -"Build server connected: recompute predefined paths");
+      Handle.Registry.Environment.Invalidate_Gnatls_Cache;
       Compute_Predefined_Paths (Handle, False);
       Remove_Hook
         (Handle, Build_Server_Connected_Hook,
@@ -775,17 +777,15 @@ package body GPS.Kernel.Project is
          Get_Messages_Container (Kernel).Remove_Category
            (Location_Category, Location_Message_Flags);
 
-         --  Always call Compute_Predefined_Paths to detect if recomputation
-         --  is really needed. This is also used to get the value of
-         --  ADA_PROJECT_PATH. and the default search path.
+         --  Always force a call to gnatls.
+         --  This is also used to get the value of ADA_PROJECT_PATH. and the
+         --  default search path.
          --  If we are running locally, do not use the cache, and recompute the
          --  output of gnatls, so that users can possibly change the
          --  environment variables like ADA_PROJECT_PATH before reloading the
          --  project (FB07-010)
-         --  This call to Compute_Predefined_Paths is needed before even
-         --  loading the project, in case it depends on some predefined
-         --  projects. The loading of the project will call it a second time
-         --  once we know the "gnat" attribute.
+
+         Kernel.Registry.Environment.Invalidate_Gnatls_Cache;
 
          begin
             New_Project_Loaded := True;
