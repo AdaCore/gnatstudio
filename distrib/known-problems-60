@@ -92,23 +92,6 @@ KP-60-N407-001 GPS: GPS crashes on some completions involving generic packages
   Workaround: Deactivate dynamic smart completion/Don't trigger it on generic
               packages with child packages.
 
-KP-60-N325-035 ECL: event breakpoint on specific exception cannot be created.
-
-  Problem:    Cannot create with the UI Ada Event Breakpoint on specific
-              exception raised condition.
-
-  Status:     This was fixed in 2.9 on 2014-03-27
-
-  Workaround: Create and export an "Ada assertion failed" ada event breakpoint.
-              Change the following attributes in the "bkpt" exported file.
-              - message
-                 Event Breakpoint: org.eclipse.cdt.debug.gdb.exception.specific
-              - org.eclipse.cdt.debug.core.eventbreakpoint_event_id
-                 org.eclipse.cdt.debug.gdb.exception.specific
-              - org.eclipse.cdt.debug.core.eventbreakpoint_event_arg
-                 the exception name for the breakpoint ex: constraint_error
-              Import the modified "bkpt" file.
-
 KP-60-N320-050 GPS: cannot deactivate align.py and tab.py plugins
 
   Problem:    The plug-ins dialog does not allow deactivating align.py
@@ -606,18 +589,6 @@ KP-60-MA29-023 GPS: Goto declaration/body with a floating window
 
   Workaround: Use "goto declaration/body" with non floating windows.
 
-KP-60-MA24-011 GB: UI freeze importing existing GNAT project
-
-  Problem:    When running menu "File => Import... => Ada => Existing GNAT
-              Project" and an imported folder already exists in the
-              workspace's file system, the UI sometimes stops responding.
-
-  Status:     This was fixed in 2.9 on 2014-01-14
-
-  Workaround: Kill the GNATbench process and retry the operation. Before
-              retrying the import operation, you may have to manually delete
-              the folders you want to import.
-
 KP-60-M918-001 Wrong indentation of complex entry
 
   Problem:    When indenting entries with parametrized conditions such as
@@ -663,6 +634,24 @@ KP-60-G928-018 GPS: "center cursor on screen" scrolls horizontally
 
 Known problems fixed in GPS 6.0.2 / GNATbench 2.8.2
 ---------------------------------------------------
+
+KP-60-N325-035 ECL: event breakpoint on specific exception cannot be created.
+
+  Problem:    Cannot create with the UI Ada Event Breakpoint on specific
+              exception raised condition.
+
+  Status:     This was fixed in 2.9 on 2014-03-27
+              This was fixed in 2.8.2 on 2014-05-12
+
+  Workaround: Create and export an "Ada assertion failed" ada event breakpoint.
+              Change the following attributes in the "bkpt" exported file.
+              - message
+                 Event Breakpoint: org.eclipse.cdt.debug.gdb.exception.specific
+              - org.eclipse.cdt.debug.core.eventbreakpoint_event_id
+                 org.eclipse.cdt.debug.gdb.exception.specific
+              - org.eclipse.cdt.debug.core.eventbreakpoint_event_arg
+                 the exception name for the breakpoint ex: constraint_error
+              Import the modified "bkpt" file.
 
 KP-60-N305-041 GPS: overwriting symbolic links
 
@@ -746,6 +735,19 @@ KP-60-MB29-031 GPS: rsync failures in remote mode
 
   Workaround: Use a passwordless connection via an ssh agent, for example, or
               use network directories.
+
+KP-60-MA24-011 GB: UI freeze importing existing GNAT project
+
+  Problem:    When running menu "File => Import... => Ada => Existing GNAT
+              Project" and an imported folder already exists in the
+              workspace's file system, the UI sometimes stops responding.
+
+  Status:     This was fixed in 2.9 on 2014-01-14
+              This was fixed in 2.8.2 on 2014-05-12
+
+  Workaround: Kill the GNATbench process and retry the operation. Before
+              retrying the import operation, you may have to manually delete
+              the folders you want to import.
 
 KP-60-M829-007 GPS: Navigation and remote mode
 
