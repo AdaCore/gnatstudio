@@ -17,7 +17,9 @@
 
 with Interfaces.C.Strings;       use Interfaces.C, Interfaces.C.Strings;
 with GNAT.Strings;               use GNAT.Strings;
+with GNAT.Heap_Sort;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -85,6 +87,68 @@ package body GPS.Kernel.Search.Sources is
       Allocation : Cairo_Rectangle_Int);
    --  Called when the preview widget is resized.
 
+   procedure Sort (X : in out File_And_Project_Array);
+   --  Utility function
+
+   ----------
+   -- Sort --
+   ----------
+
+   procedure Sort (X : in out File_And_Project_Array) is
+
+      procedure Xchg_Procedure (Op1, Op2 : Natural);
+      --  Exchange procedure
+
+      function Lt_Function (Op1, Op2 : Natural) return Boolean;
+      --  Comparison function
+
+      --------------------
+      -- Xchg_Procedure --
+      --------------------
+
+      procedure Xchg_Procedure (Op1, Op2 : Natural) is
+         D : constant File_And_Project := X (Op1 + X'First - 1);
+      begin
+         X (Op1 + X'First - 1) := X (Op2 + X'First - 1);
+         X (Op2 + X'First - 1) := D;
+      end Xchg_Procedure;
+
+      -----------------
+      -- Lt_Function --
+      -----------------
+
+      function Lt_Function (Op1, Op2 : Natural) return Boolean is
+
+         function "<" (Left, Right : Project_Type) return Boolean;
+
+         function "<" (Left, Right : Project_Type) return Boolean is
+         begin
+            return Left.Name < Right.Name;
+         end "<";
+
+      begin
+         if X (Op1 + X'First - 1).Project < X (Op2 + X'First - 1).Project then
+            return True;
+         end if;
+
+         if X (Op2 + X'First - 1).Project < X (Op1 + X'First - 1).Project then
+            return False;
+         end if;
+
+         if X (Op1 + X'First - 1).File < X (Op2 + X'First - 1).File then
+            return True;
+         end if;
+
+         return False;
+      end Lt_Function;
+
+   begin
+      GNAT.Heap_Sort.Sort
+        (X'Last,
+         Xchg_Procedure'Unrestricted_Access,
+         Lt_Function'Unrestricted_Access);
+   end Sort;
+
    -------------
    -- Execute --
    -------------
@@ -95,7 +159,14 @@ package body GPS.Kernel.Search.Sources is
    begin
       Free (Hook.Provider.Files);
       Hook.Provider.Files :=
-         Get_Project (Kernel).Source_Files (Recursive => True);
+        Get_Project (Kernel).Source_Files (Recursive => True);
+
+      --  In testsuite mode, we want to sort the results so that the matches
+      --  do not depend on the filesystem order.
+      if Active (Testsuite_Handle) then
+         Sort (Hook.Provider.Files.all);
+      end if;
+
       Hook.Provider.Index := Hook.Provider.Files'First;
    end Execute;
 
