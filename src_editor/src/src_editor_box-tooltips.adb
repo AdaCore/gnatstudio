@@ -63,7 +63,7 @@ package body Src_Editor_Box.Tooltips is
    function Get_Declaration_Info
      (Editor  : access Source_Editor_Box_Record;
       Context : Selection_Context;
-      Ref     : out General_Entity_Reference) return Root_Entity'Class;
+      Ref     : out Root_Entity_Reference_Ref) return Root_Entity'Class;
    --  Perform a cross-reference to the declaration of the entity located at
    --  (Line, Column) in Editor. Fail silently when no declaration or no
    --  entity can be located, and set File_Decl to null.
@@ -91,11 +91,10 @@ package body Src_Editor_Box.Tooltips is
    function Get_Declaration_Info
      (Editor  : access Source_Editor_Box_Record;
       Context : Selection_Context;
-      Ref     : out General_Entity_Reference) return Root_Entity'Class
+      Ref     : out Root_Entity_Reference_Ref) return Root_Entity'Class
    is
       Filename : constant Virtual_File := Get_Filename (Editor);
    begin
-      Ref := No_General_Entity_Reference;
 
       if Filename = GNATCOLL.VFS.No_File then
          return No_Root_Entity;
@@ -259,7 +258,7 @@ package body Src_Editor_Box.Tooltips is
       Tooltip.Set_Tip_Area (Area);
 
       declare
-         Entity_Ref : General_Entity_Reference;
+         Entity_Ref : Root_Entity_Reference_Ref;
          Context    : Selection_Context := New_Context;
          W          : Gtk_Widget;
       begin
@@ -361,7 +360,8 @@ package body Src_Editor_Box.Tooltips is
             Ref (Entity);
 
             W := Entities_Tooltips.Draw_Tooltip
-              (Box.Kernel, Entity, Entity_Ref, Draw_Border => False);
+              (Box.Kernel, Entity, Entity_Ref.Element, Draw_Border => False);
+
             if W /= null then
                if Vbox = null then
                   Gtk_New_Vbox (Vbox, Homogeneous => False);

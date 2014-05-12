@@ -736,6 +736,7 @@ package body GPS.Kernel.Contexts is
            and then Has_Line_Information (Context)
            and then Context.Data.Data.Entity_Name /= null
          then
+
             Context.Data.Data.Xref_Entity.Replace_Element
               (Db.Find_Declaration_Or_Overloaded
                  (Loc  =>
@@ -810,10 +811,10 @@ package body GPS.Kernel.Contexts is
    ---------------------
 
    function Get_Closest_Ref
-     (Context : Selection_Context) return General_Entity_Reference
+     (Context : Selection_Context) return Root_Entity_Reference'Class
    is
    begin
-      return Context.Data.Data.Xref_Closest_Ref;
+      return Context.Data.Data.Xref_Closest_Ref.Element;
    end Get_Closest_Ref;
 
    ------------------------------

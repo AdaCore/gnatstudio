@@ -17,7 +17,6 @@
 
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Numerics.Generic_Elementary_Functions;
-with Ada.Containers.Indefinite_Holders;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -71,8 +70,6 @@ with Ada.Unchecked_Deallocation;
 
 package body Browsers.Entities is
    Me : constant Trace_Handle := Create ("Browser.Entities");
-
-   package Holder is new Ada.Containers.Indefinite_Holders (Root_Entity'Class);
 
    package Num is new Ada.Numerics.Generic_Elementary_Functions (Gdouble);
    use Num;
@@ -152,7 +149,7 @@ package body Browsers.Entities is
    ---------------
 
    type Type_Item_Record is new Browsers.Canvas.Arrow_Item_Record with record
-      Entity                : Holder.Holder;
+      Entity                : Root_Entity_Ref;
       Might_Have_Primitives : Boolean := True;
       Inherited_Primitives  : Boolean := False;
       General_Lines,
@@ -285,7 +282,7 @@ package body Browsers.Entities is
 
    type Show_Entity_Callback is new Active_Area_Callback with record
       Item      : Browser_Item;
-      Entity    : Holder.Holder;
+      Entity    : Root_Entity_Ref;
       Link_Name : GNAT.Strings.String_Access;
    end record;
 
@@ -460,7 +457,7 @@ package body Browsers.Entities is
       Entity    : Root_Entity'Class;
       Link_Name : String := "") return Active_Area_Cb
    is
-      H : Holder.Holder;
+      H : Root_Entity_Ref;
    begin
       Ref (Entity);
       H.Replace_Element (Entity);

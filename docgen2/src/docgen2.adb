@@ -1423,32 +1423,32 @@ package body Docgen2 is
             --  Retrieve references
 
             declare
-               Iter       : Entity_Reference_Iterator;
-               Ref        : General_Entity_Reference;
+               Iter       : Root_Reference_Iterator'Class :=
+                 Find_All_References (Entity);
             begin
                if Cmd.Options.References
                  and then Construct.Category /= Cat_Package
                then
-                  Find_All_References (Iter, Entity);
-
                   while not At_End (Iter) loop
-                     Ref := Get (Iter);
-
-                     if Ref /= No_General_Entity_Reference then
-                        E_Info.References.Append (Ref);
-                        declare
-                           Caller_E : constant Root_Entity'Class :=
-                             Get_Caller (Ref);
-                        begin
-                           if Caller_E /= No_Root_Entity
-                             and then Is_Subprogram (Caller_E)
-                           then
-                              E_Info.Called.Append
-                                (Create_Xref (Caller_E, Entity));
-                           end if;
-                        end;
-                     end if;
-
+                     declare
+                        Ref  : constant Root_Entity_Reference'Class :=
+                          Get (Iter);
+                     begin
+                        if Ref /= No_Root_Entity_Reference then
+                           E_Info.References.Append (Ref);
+                           declare
+                              Caller_E : constant Root_Entity'Class :=
+                                Get_Caller (Ref);
+                           begin
+                              if Caller_E /= No_Root_Entity
+                                and then Is_Subprogram (Caller_E)
+                              then
+                                 E_Info.Called.Append
+                                   (Create_Xref (Caller_E, Entity));
+                              end if;
+                           end;
+                        end if;
+                     end;
                      Next (Iter);
                   end loop;
 

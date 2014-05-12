@@ -115,15 +115,18 @@ package body Src_Editor_Module.Commands is
          return Count <= 1;
       end On_Callee;
 
+      --  Ensure Xref has been computed for the context
+      Entity : Root_Entity'Class := Get_Entity (Context);
+      pragma Unreferenced (Entity);
    begin
+
       --  Assertion commented out, since does not always hold, e.g. at start
       --  up when the xref DB is loaded, if the 'Load Xref info' pref is set.
       --  pragma Assert (Frozen (Get_Database (Kernel)) = Create_And_Update);
 
       if Is_Dispatching_Call (Context) = Indeterminate then
          Xref.For_Each_Dispatching_Call
-           (Entity    => Get_Entity (Context),
-            Ref       => Get_Closest_Ref (Context),
+           (Ref       => Get_Closest_Ref (Context),
             On_Callee => On_Callee'Access);
 
          --  See comment above to see why this code is commented out pragma

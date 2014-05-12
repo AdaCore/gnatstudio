@@ -1424,26 +1424,28 @@ package body GNATdoc.Atree is
 
          if LL.Is_Type (New_E) then
             declare
-               Cursor : Entity_Reference_Iterator;
+               Cursor : Root_Reference_Iterator'Class :=
+                 Find_All_References
+                   (LL.Get_Entity (New_E), Include_All => True);
                Info   : Ref_Info;
-               Ref    : General_Entity_Reference;
-
             begin
-               Find_All_References
-                 (Cursor, LL.Get_Entity (New_E), Include_All => True);
                while not At_End (Cursor) loop
-                  Ref  := Get (Cursor);
-                  Info :=
-                    Ref_Info'(Entity => New_E,
-                              Ref    => Ref,
-                              Loc    => Get_Location (Ref));
+                  declare
+                     Ref : constant Root_Entity_Reference'Class :=
+                       Get (Cursor);
+                  begin
+                     Info :=
+                       Ref_Info'(Entity => New_E,
+                                 Ref    =>
+                                   Root_Entity_Reference_Refs.To_Holder (Ref),
+                                 Loc    => Get_Location (Ref));
 
-                  New_E.Xref.References.Append (Info);
-                  Append_To_Map (Info);
+                     New_E.Xref.References.Append (Info);
+                     Append_To_Map (Info);
 
-                  Next (Cursor);
+                     Next (Cursor);
+                  end;
                end loop;
-
                Destroy (Cursor);
             end;
          end if;
@@ -1458,21 +1460,24 @@ package body GNATdoc.Atree is
            or else Is_Concurrent_Type_Or_Object (New_E)
          then
             declare
-               Cursor : Entity_Reference_Iterator;
-               Ref    : General_Entity_Reference;
+               Cursor : Root_Reference_Iterator'Class :=
+                 Find_All_References
+                   (LL.Get_Entity (New_E), Include_All => True);
             begin
-               Find_All_References
-                 (Cursor, LL.Get_Entity (New_E), Include_All => True);
                while not At_End (Cursor) loop
-                  Ref := Get (Cursor);
+                  declare
+                     Ref : constant Root_Entity_Reference'Class :=
+                       Get (Cursor);
+                  begin
+                     if Get_Display_Kind (Ref) = "end of spec" then
+                        exit;
+                     elsif Get_Display_Kind (Ref) = "private part" then
+                        New_E.Xref.First_Private_Entity_Loc :=
+                          Get_Location (Ref);
+                     end if;
 
-                  if Get_Display_Kind (Ref) = "end of spec" then
-                     exit;
-                  elsif Get_Display_Kind (Ref) = "private part" then
-                     New_E.Xref.First_Private_Entity_Loc := Get_Location (Ref);
-                  end if;
-
-                  Next (Cursor);
+                     Next (Cursor);
+                  end;
                end loop;
 
                Destroy (Cursor);
@@ -1524,14 +1529,14 @@ package body GNATdoc.Atree is
       --  is updated to reference the corresponding .c (or .cpp) file.
 
       declare
-         Alias            : Holder.Holder;
-         Entity           : Holder.Holder;
-         Etype            : Holder.Holder;
-         Instance_Of      : Holder.Holder;
-         Component_Type   : Holder.Holder;
-         Pointed_Type     : Holder.Holder;
-         Scope_E          : Holder.Holder;
-         Parent_Package   : Holder.Holder;
+         Alias            : Root_Entity_Ref;
+         Entity           : Root_Entity_Ref;
+         Etype            : Root_Entity_Ref;
+         Instance_Of      : Root_Entity_Ref;
+         Component_Type   : Root_Entity_Ref;
+         Pointed_Type     : Root_Entity_Ref;
+         Scope_E          : Root_Entity_Ref;
+         Parent_Package   : Root_Entity_Ref;
       begin
          Alias.Replace_Element (No_Root_Entity);
          Etype.Replace_Element (No_Root_Entity);
@@ -2057,7 +2062,6 @@ package body GNATdoc.Atree is
    ------------------
 
    procedure LL_Set_Etype (E : Entity_Id; Value : Root_Entity'Class) is
-      use type Holder.Holder;
    begin
       E.Xref.Etype.Replace_Element (Value);
 

@@ -24,14 +24,10 @@ with GNATCOLL.Xref;                    use GNATCOLL.Xref;
 with Xref;                             use Xref;
 with Basic_Types;                      use Basic_Types;
 
-with Ada.Containers.Indefinite_Holders;
-
 package body GPS.Scripts.Entities is
 
-   package Holder is new Ada.Containers.Indefinite_Holders (Root_Entity'Class);
-
    type Entity_Properties_Record is new Instance_Property_Record with record
-      H : Holder.Holder;
+      H : Root_Entity_Ref;
    end record;
 
    Entity_Class_Name        : constant String := "Entity";
@@ -84,8 +80,6 @@ package body GPS.Scripts.Entities is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel  : constant Core_Kernel := Get_Kernel (Data);
-      Ref    : General_Entity_Reference;
-
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Entity_Cmd_Parameters);
@@ -114,6 +108,7 @@ package body GPS.Scripts.Entities is
             end if;
 
             declare
+               Ref : Root_Entity_Reference_Ref;
                Entity : constant Root_Entity'Class :=
                  Kernel.Databases.Find_Declaration_Or_Overloaded
                    (Loc               => Loc,

@@ -285,7 +285,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
       Line           : Editable_Line_Type;
       Column         : Visible_Column_Type;
 
-      Closest        : General_Entity_Reference;
+      Closest        : Root_Entity_Reference_Ref;
 
       Location       : General_Location;
       Decl           : General_Entity_Declaration;

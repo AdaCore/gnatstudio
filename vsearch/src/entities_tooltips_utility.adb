@@ -34,8 +34,7 @@ with Tooltips;                  use Tooltips;
 package body Entities_Tooltips_Utility is
 
    function Get_Instance
-     (Db         : access General_Xref_Database_Record'Class;
-      Entity_Ref : General_Entity_Reference) return String;
+     (Entity_Ref : Root_Entity_Reference'Class) return String;
    --  Return the text describing from what instance the entity is
 
    ------------------------
@@ -73,17 +72,16 @@ package body Entities_Tooltips_Utility is
    ------------------
 
    function Get_Instance
-     (Db         : access General_Xref_Database_Record'Class;
-      Entity_Ref : General_Entity_Reference) return String
+     (Entity_Ref : Root_Entity_Reference'Class) return String
    is
       use Ada.Strings.Unbounded;
       Result  : Unbounded_String;
       Loc     : General_Location;
 
    begin
-      if Entity_Ref /= No_General_Entity_Reference then
+      if Entity_Ref /= No_Root_Entity_Reference then
          declare
-            Insts : Xref.Entity_Array := Db.From_Instances (Entity_Ref);
+            Insts : Xref.Entity_Array := Entity_Ref.From_Instances;
          begin
             for Inst in Insts'Range loop
                declare
@@ -136,10 +134,10 @@ package body Entities_Tooltips_Utility is
    function Get_Tooltip_Documentation
      (Kernel        : access Kernel_Handle_Record'Class;
       Entity        : Root_Entity'Class;
-      Ref           : General_Entity_Reference) return String
+      Ref           : Root_Entity_Reference'Class) return String
    is
    begin
-      return  Get_Instance (Kernel.Databases, Ref)
+      return Get_Instance (Ref)
         & Documentation
         (Self    => Kernel.Databases,
          Handler => Kernel.Get_Language_Handler,
