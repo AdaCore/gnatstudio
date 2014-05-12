@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers;
-with GNAT.Strings;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
@@ -33,9 +32,12 @@ package Projects is
    --  Return True if Name is a valid project name
 
    function Create
-     (Tree : not null access GNATCOLL.Projects.Project_Tree'Class)
+     (Tree : not null access GNATCOLL.Projects.Project_Tree'Class;
+      Env  : access GNATCOLL.Projects.Project_Environment'Class := null)
       return Project_Registry_Access;
-   --  Create a new project registry (associated with a custom tree)
+   --  Create a new project registry (associated with a custom tree).
+   --  Env can be passed a specific value if you want to extend
+   --  Project_Environment. In all cases, Initialize(Env) is called.
 
    function Environment
      (Self : Project_Registry)
@@ -88,14 +90,6 @@ package Projects is
    function Get_Paths_Type
      (Project : Project_Type) return Paths_Type_Information;
    --  Indicate how the types are stored internally for the project
-
-   procedure Compute_Predefined_Paths
-     (Registry     : Project_Registry_Access;
-      GNAT_Version : out GNAT.Strings.String_Access;
-      Gnatls_Args  : GNAT.Strings.String_List_Access;
-      Errors       : GNATCOLL.Projects.Error_Report := null);
-   --  Compute the predefined paths for the GNAT runtime, and return the
-   --  GNAT version that is used.
 
 private
    type Project_Registry is tagged record

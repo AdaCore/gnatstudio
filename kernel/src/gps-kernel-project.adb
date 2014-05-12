@@ -73,7 +73,6 @@ package body GPS.Kernel.Project is
    type GPS_Project_Tree is new Project_Tree with record
       Handle : Kernel_Handle;
    end record;
-
    overriding function Data_Factory
      (Self : GPS_Project_Tree) return Project_Data_Access;
    overriding procedure Recompute_View
@@ -81,9 +80,37 @@ package body GPS.Kernel.Project is
       Errors : Error_Report := null);
    --  See inherited documentation
 
+   type GPS_Project_Environment is new Project_Environment with null record;
+   overriding procedure Spawn_Gnatls
+     (Self         : GPS_Project_Environment;
+      Fd           : out GNAT.Expect.Process_Descriptor_Access;
+      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
+      Errors       : Error_Report);
+
    procedure Do_Subdirs_Cleanup (Tree : Project_Tree'Class);
    --  Cleanup empty subdirs created when opening a project with prj.subdirs
    --  set.
+
+   ------------------
+   -- Spawn_Gnatls --
+   ------------------
+
+   overriding procedure Spawn_Gnatls
+     (Self         : GPS_Project_Environment;
+      Fd           : out GNAT.Expect.Process_Descriptor_Access;
+      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
+      Errors       : Error_Report)
+   is
+   begin
+      if not Is_Local (Build_Server) then
+         Remote_Spawn
+           (Fd, Get_Nickname (Build_Server), Gnatls_Args.all,
+            Err_To_Out => True);
+      else
+         --  Inherited version spawns gnatls locally
+         Spawn_Gnatls (Project_Environment (Self), Fd, Gnatls_Args, Errors);
+      end if;
+   end Spawn_Gnatls;
 
    ------------------------
    -- Do_Subdirs_Cleanup --
@@ -124,9 +151,11 @@ package body GPS.Kernel.Project is
       Result : out Projects.Project_Registry_Access)
    is
       Tree : constant Project_Tree_Access := new GPS_Project_Tree;
+      Env  : constant Project_Environment_Access :=
+         new GPS_Project_Environment;
    begin
       GPS_Project_Tree (Tree.all).Handle := Kernel_Handle (Handle);
-      Result := Projects.Create (Tree => Tree);
+      Result := Projects.Create (Tree => Tree, Env => Env);
    end Create_Registry;
 
    ------------------
@@ -152,8 +181,6 @@ package body GPS.Kernel.Project is
    begin
       Do_Subdirs_Cleanup (Self);
       Recompute_View (Project_Tree (Self), Errors);
-
-      Compute_Predefined_Paths (Self.Handle);
 
       --  If we are in the process of creating the kernel, no need to do
       --  anything else here
@@ -433,11 +460,8 @@ package body GPS.Kernel.Project is
          end if;
 
          Free (Handle.GNAT_Version);
-         Projects.Compute_Predefined_Paths
-           (Handle.Registry,
-            Handle.GNAT_Version,
-            Gnatls_Args,
-            Report_Error'Unrestricted_Access);
+         Handle.Registry.Environment.Set_Path_From_Gnatls
+            (Gnatls, Handle.GNAT_Version, Report_Error'Unrestricted_Access);
 
          if Property_Index /= No_Index then
             Property.Source_Path := new File_Array'
@@ -658,7 +682,7 @@ package body GPS.Kernel.Project is
       Previous_Project : Virtual_File;
 
    begin
-      Trace (Me, "Load_Project " & Project.Display_Full_Name);
+      Increase_Indent (Me, "Load_Project " & Project.Display_Full_Name);
 
       Remove_Category
         (Get_Messages_Container (Kernel),
@@ -687,6 +711,7 @@ package body GPS.Kernel.Project is
       if not No_Save
         and then not Save_MDI_Children (Kernel, Force => False)
       then
+         Decrease_Indent (Me);
          return;
       end if;
 
@@ -737,6 +762,7 @@ package body GPS.Kernel.Project is
                Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
 
                Ignore := Load_Desktop (Kernel);
+               Decrease_Indent (Me);
                return;
             end if;
 
@@ -760,11 +786,6 @@ package body GPS.Kernel.Project is
          --  loading the project, in case it depends on some predefined
          --  projects. The loading of the project will call it a second time
          --  once we know the "gnat" attribute.
-
-         Trace (Me, "Recompute predefined paths -- Local builder server ? "
-                & Boolean'Image (Is_Local (Build_Server)));
-         Compute_Predefined_Paths
-           (Kernel, Use_Cache => not Is_Local (Build_Server));
 
          begin
             New_Project_Loaded := True;
@@ -800,8 +821,6 @@ package body GPS.Kernel.Project is
                        "",
                        Local_Project,
                        Reload_Prj => False);
-               Trace (Me, "Recompute predefined paths");
-               Compute_Predefined_Paths (Kernel);
                Trace (Me, "Load the project locally");
 
                begin
@@ -855,6 +874,7 @@ package body GPS.Kernel.Project is
 
          Xref.Project_Changed (Kernel.Databases);
       end if;
+      Decrease_Indent (Me);
    end Load_Project;
 
    -----------------
