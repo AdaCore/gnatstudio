@@ -1163,13 +1163,6 @@ private
       GNAT_Version : GNAT.Strings.String_Access;
       --  Full GNAT Version, if relevant
 
-      Gnatls_Cache : GNAT.Strings.String_Access;
-      --  The name of the gnatls command used to get the predefined source
-      --  path.
-
-      Gnatls_Server : GNAT.Strings.String_Access;
-      --  The name of the server having executed the last gnatls command
-
       Preferences : Default_Preferences.Preferences_Manager;
       --  The current setting for the preferences
 

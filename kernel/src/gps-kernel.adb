@@ -328,9 +328,6 @@ package body GPS.Kernel is
 
       GPS.Core_Kernels.Initialize (Handle);
 
-      --  by default, the local server
-      Handle.Gnatls_Server := new String'("");
-
       --  Initialize the preferences. We load the file now, even though it
       --  will also be reloaded after the customization files, so that themes
       --  do not override user's preferences.
@@ -1085,8 +1082,6 @@ package body GPS.Kernel is
 
       Unchecked_Free (Handle.Refactoring);
 
-      Free (Handle.Gnatls_Cache);
-      Free (Handle.Gnatls_Server);
       Free (Handle.GNAT_Version);
 
       --  Handle.Symbols.Display_Stats;

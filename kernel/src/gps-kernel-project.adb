@@ -16,10 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
-with GNAT.Strings;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
-with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 pragma Warnings (Off);
@@ -28,8 +26,6 @@ pragma Warnings (On);
 with Ada.Unchecked_Deallocation;
 
 with Projects;                         use Projects;
-with Basic_Types;
-with XML_Utils;                        use XML_Utils;
 with Remote;                           use Remote;
 with Prj;
 with Types;                            use Types;
@@ -37,12 +33,10 @@ with Types;                            use Types;
 with Gtk.Icon_Factory;  use Gtk.Icon_Factory;
 
 with GPS.Intl;                         use GPS.Intl;
-with GPS.Properties;                   use GPS.Properties;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
@@ -58,17 +52,6 @@ package body GPS.Kernel.Project is
    Location_Message_Flags : constant Message_Flags :=
      (Editor_Side => True,
       Locations   => True);
-
-   procedure Compute_Predefined_Paths
-     (Handle : access Kernel_Handle_Record'Class;
-      Use_Cache : Boolean := True);
-   --  Compute the predefined source and object paths, given the current
-   --  project view associated with Handle.
-
-   procedure On_Build_Server_Connection
-     (Handle : access Kernel_Handle_Record'Class);
-   --  Recompute the predefined source and object paths upon build server
-   --  connection, when this information was previously retrieved from cache.
 
    type GPS_Project_Tree is new Project_Tree with record
       Handle : Kernel_Handle;
@@ -214,292 +197,6 @@ package body GPS.Kernel.Project is
       Get_Registry (Handle).Tree.Recompute_View
         (Errors => Report_Error'Unrestricted_Access);
    end Recompute_View;
-
-   -------------------------------
-   -- Predefined_Paths_Property --
-   -------------------------------
-
-   type Property_Index_Type is record
-      Nickname : GNAT.Strings.String_Access;
-      Gnatls   : GNAT.Strings.String_Access;
-   end record;
-
-   No_Index : constant Property_Index_Type :=
-                (Nickname => null,
-                 Gnatls   => null);
-
-   function To_String (Idx : Property_Index_Type) return String;
-   --  Translate the property_index_type into a unique string
-
-   function To_String (Idx : Property_Index_Type) return String is
-   begin
-      return Idx.Nickname.all & "||" & Idx.Gnatls.all;
-   end To_String;
-
-   type Predefined_Paths_Property is new GPS.Properties.Property_Record
-   with record
-      Source_Path  : File_Array_Access;
-      Object_Path  : File_Array_Access;
-      Project_Path : File_Array_Access;
-   end record;
-
-   overriding procedure Save
-     (Property : access Predefined_Paths_Property;
-      Node     : in out XML_Utils.Node_Ptr);
-   --  See inherited procedure
-
-   overriding procedure Load
-     (Property : in out Predefined_Paths_Property;
-      From     : XML_Utils.Node_Ptr);
-   --  See inherited procedure
-
-   function Tag_Name (Idx : Natural) return XML_Utils.UTF8_String;
-   --  Return the tag name for path index idx
-
-   --------------
-   -- Tag_Name --
-   --------------
-
-   function Tag_Name (Idx : Natural) return XML_Utils.UTF8_String is
-      Str : constant String := Idx'Img;
-   begin
-      return "path" & Str (Str'First + 1 .. Str'Last);
-   end Tag_Name;
-
-   ----------
-   -- Save --
-   ----------
-
-   overriding procedure Save
-     (Property : access Predefined_Paths_Property;
-      Node     : in out XML_Utils.Node_Ptr)
-   is
-      Child : XML_Utils.Node_Ptr;
-   begin
-      Child := new XML_Utils.Node;
-      Child.Tag := new String'("source_path");
-      XML_Utils.Set_Attribute
-        (Child, "nb_paths", Property.Source_Path'Length'Img);
-
-      for J in Property.Source_Path'Range loop
-         XML_Utils.Add_File_Child
-           (Child, Tag_Name (J), Property.Source_Path (J));
-      end loop;
-
-      Add_Child (Node, Child);
-
-      Child := new XML_Utils.Node;
-      Child.Tag := new String'("object_path");
-      XML_Utils.Set_Attribute
-        (Child, "nb_paths", Property.Object_Path'Length'Img);
-
-      for J in Property.Object_Path'Range loop
-         XML_Utils.Add_File_Child
-           (Child, Tag_Name (J), Property.Object_Path (J));
-      end loop;
-
-      Add_Child (Node, Child);
-
-      Child := new XML_Utils.Node;
-      Child.Tag := new String'("project_path");
-      XML_Utils.Set_Attribute
-        (Child, "nb_paths", Property.Project_Path'Length'Img);
-
-      for J in Property.Project_Path'Range loop
-         XML_Utils.Add_File_Child
-           (Child, Tag_Name (J), Property.Project_Path (J));
-      end loop;
-
-      Add_Child (Node, Child);
-
-   exception
-      when E : others => Trace (Me, E);
-   end Save;
-
-   ----------
-   -- Load --
-   ----------
-
-   overriding procedure Load
-     (Property : in out Predefined_Paths_Property;
-      From     : XML_Utils.Node_Ptr)
-   is
-      Child : XML_Utils.Node_Ptr;
-   begin
-      Child := Find_Tag (From.Child, "source_path");
-      Property.Source_Path := new File_Array
-        (1 .. Natural'Value (Get_Attribute (Child, "nb_paths", "0")));
-
-      for J in Property.Source_Path'Range loop
-         Property.Source_Path (J) :=
-           XML_Utils.Get_File_Child (Child, Tag_Name (J));
-      end loop;
-
-      Child := Find_Tag (From.Child, "object_path");
-      Property.Source_Path := new File_Array
-        (1 .. Natural'Value (Get_Attribute (Child, "nb_paths", "0")));
-
-      for J in Property.Object_Path'Range loop
-         Property.Object_Path (J) :=
-           XML_Utils.Get_File_Child (Child, Tag_Name (J));
-      end loop;
-
-      Child := Find_Tag (From.Child, "project_path");
-      Property.Project_Path := new File_Array
-        (1 .. Natural'Value (Get_Attribute (Child, "nb_paths", "0")));
-
-      for J in Property.Project_Path'Range loop
-         Property.Project_Path (J) :=
-           XML_Utils.Get_File_Child (Child, Tag_Name (J));
-      end loop;
-   end Load;
-
-   ---------------------------------------
-   -- Invalidate_Predefined_Paths_Cache --
-   ---------------------------------------
-
-   procedure Invalidate_Predefined_Paths_Cache
-     (Handle : access Kernel_Handle_Record'Class;
-      Host   : String)
-   is
-      Property_Index   : Property_Index_Type := No_Index;
-   begin
-      Property_Index.Nickname := new String'(Host);
-      Property_Index.Gnatls   := Handle.Gnatls_Cache;
-      Remove_Property
-        (Handle, "predefined_path", To_String (Property_Index), "gnatls");
-      Free (Property_Index.Nickname);
-   end Invalidate_Predefined_Paths_Cache;
-
-   ------------------------------
-   -- Compute_Predefined_Paths --
-   ------------------------------
-
-   procedure Compute_Predefined_Paths
-     (Handle    : access Kernel_Handle_Record'Class;
-      Use_Cache : Boolean := True)
-   is
-      procedure Report_Error (Msg : String);
-      --  Report an error that occurred while parsing gnatls output
-
-      procedure Report_Error (Msg : String) is
-      begin
-         Insert (Handle, Msg, Mode => Info);
-      end Report_Error;
-
-      Gnatls         : constant String :=
-                         Get_Project (Handle).Attribute_Value
-                           (Gnatlist_Attribute, Default => "gnatls");
-      Gnatls_Args    : Argument_List_Access :=
-                         Argument_String_To_List (Gnatls & " -v");
-      Langs          : Argument_List := Get_Project (Handle).Languages;
-      Property       : Predefined_Paths_Property;
-      Prop_Access    : Property_Access;
-      Property_Index : Property_Index_Type := No_Index;
-      Success        : Boolean;
-
-   begin
-      --  If we never computed the predefined paths before, we always do it at
-      --  least once, since this is needed to find the predefined projects.
-      --  Otherwise we only do it if Ada is a supported language.
-
-      if Handle.Gnatls_Cache = null
-        or else Basic_Types.Contains (Langs, "ada", Case_Sensitive => False)
-      then
-         --  If the gnatls commands hasn't changed, no need to recompute the
-         --  predefined paths.
-
-         if Use_Cache
-           and then Handle.Gnatls_Cache /= null
-           and then Handle.Gnatls_Cache.all = Gnatls
-           and then Handle.Gnatls_Server.all = Get_Nickname (Build_Server)
-         then
-            Free (Langs);
-            Free (Gnatls_Args);
-            return;
-         end if;
-
-         Free (Handle.Gnatls_Cache);
-         Free (Handle.Gnatls_Server);
-         Handle.Gnatls_Cache := new String'(Gnatls);
-         Handle.Gnatls_Server := new String'(Get_Nickname (Build_Server));
-
-         if not Is_Local (Build_Server)
-           and then Use_Cache
-           and then not Is_Ready_Session (Get_Nickname (Build_Server))
-         then
-            Property_Index.Nickname := Handle.Gnatls_Server;
-            Property_Index.Gnatls   := Handle.Gnatls_Cache;
-            Get_Property
-              (Property, "predefined_path", To_String (Property_Index),
-               Name => "gnatls", Found => Success);
-
-            if Success then
-               if Active (Me) then
-                  Trace (Me, "set source path from cache to " &
-                         (+To_Path (Property.Source_Path.all)));
-                  Trace (Me, "set object path from cache to " &
-                         (+To_Path (Property.Object_Path.all)));
-                  Trace (Me, "set project path from cache to " &
-                         (+To_Path (Property.Project_Path.all)));
-               end if;
-
-               Handle.Registry.Environment.Set_Predefined_Source_Path
-                 (Property.Source_Path.all);
-               Handle.Registry.Environment.Set_Predefined_Object_Path
-                 (Property.Object_Path.all);
-               Handle.Registry.Environment.Set_Predefined_Project_Path
-                 (Property.Project_Path.all);
-               Add_Hook
-                 (Handle, Build_Server_Connected_Hook,
-                  Wrapper (On_Build_Server_Connection'Access),
-                  "compute_predefined_path");
-
-               return;
-
-            end if;
-         end if;
-
-         Free (Handle.GNAT_Version);
-         Handle.Registry.Environment.Set_Path_From_Gnatls
-            (Gnatls, Handle.GNAT_Version, Report_Error'Unrestricted_Access);
-
-         if Property_Index /= No_Index then
-            Property.Source_Path := new File_Array'
-              (Handle.Registry.Environment.Predefined_Source_Path);
-            Property.Object_Path := new File_Array'
-              (Handle.Registry.Environment.Predefined_Object_Path);
-            Property.Project_Path := new File_Array'
-              (Handle.Registry.Environment.Predefined_Project_Path);
-            Prop_Access := new Predefined_Paths_Property'(Property);
-            Set_Property
-              (Handle,
-               "predefined_path", To_String (Property_Index),
-               Name       => "gnatls",
-               Property   => Prop_Access,
-               Persistent => True);
-         end if;
-
-      end if;
-
-      Free (Gnatls_Args);
-      Free (Langs);
-   end Compute_Predefined_Paths;
-
-   --------------------------------
-   -- On_Build_Server_Connection --
-   --------------------------------
-
-   procedure On_Build_Server_Connection
-     (Handle : access Kernel_Handle_Record'Class) is
-   begin
-      Trace (Me, -"Build server connected: recompute predefined paths");
-      Handle.Registry.Environment.Invalidate_Gnatls_Cache;
-      Compute_Predefined_Paths (Handle, False);
-      Remove_Hook
-        (Handle, Build_Server_Connected_Hook,
-         Wrapper (On_Build_Server_Connection'Access));
-   end On_Build_Server_Connection;
 
    --------------------------
    -- Load_Default_Project --
@@ -808,11 +505,6 @@ package body GPS.Kernel.Project is
                   Display_Full_Name (Local_Project, True) &
                   (-"'. Trying with the build server set to (local)...") &
                   ASCII.LF);
-
-               --  Reset the predefined paths cached, in case they are faulty
-               Trace (Me, "Invalidate predefined paths cache");
-               Invalidate_Predefined_Paths_Cache
-                 (Kernel, Get_Nickname (Build_Server));
 
                --  Reset the build server
                Trace (Me, "Reset the build server");
