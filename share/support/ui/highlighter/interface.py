@@ -1,7 +1,6 @@
 """
-This package is the public interface to the highlighting engine of GPS. The
-public interface here described allows any user to add syntax highlighting
-for any language in a declarative DSL.
+The mechanism here described allows any user to add syntax highlighting to GPS
+for any language in a declarative domain specific language.
 
 Tutorial: Add support for python highlighting in GPS
 ----------------------------------------------------
@@ -125,6 +124,9 @@ Here are the important points:
   are preceded by a backslash, and so they won't be available for the ending
   matcher anymore.
 
+API Documentation
+-----------------
+
 """
 from functools import partial
 
@@ -138,11 +140,12 @@ import GPS
 ##############################
 
 
-def simple(regexp_string, tag=None):
+def simple(regexp_string, tag):
     """
     Return a simple matcher for a regexp string
-    :type regexp_string: str
-    :type tag: Style
+
+    :param str regexp_string: The regular expression for this matcher
+    :rtype: SimpleMatcher
     """
     return SimpleMatcher(tag, regexp_string)
 
@@ -150,7 +153,11 @@ def simple(regexp_string, tag=None):
 def words(words_list, **kwargs):
     """
     Return a matcher for a list of words
-    @type words_list: str|list[str]
+
+    :param words_list: The list of words, either as a string of "|"
+    separated words, or as a list of strings.
+    :type words_list: str|list[str]
+    :rtype: SimpleMatcher
     """
     if type(words_list) is list:
         words_list = "|".join(words_list)
@@ -163,23 +170,73 @@ def region(start_re, end_re, tag=None, name="", highlighter=(),
     """
     Return a matcher for a region, which can contain a whole specific
     highlighter
-    :type start_re: string
-    :type end_re: string
-    :type tag: Style
+
+    :param string start_re: The regexp used to match the start of the region
+    :param string end_re: The regexp used to match the end of the region
+    :param Style tag: The Tag which will be used to highlight the whole
+    region. Beware, if you plan to apply other tags to elements inside the
+    region, they must have an higher priority than this one !
+    :rtype: RegionMatcher
     """
     return RegionMatcher(tag, start_re, end_re, highlighter, matchall, name)
 
 
 def region_template(*args, **kwargs):
+    """
+    Used to partially construct a region, if you want to define for example,
+    several regions having the same sub highlighter and tag, but not the
+    same start and end regular expressions.
+
+    :param args: Positional params to pass to region
+    :param kwargs: Keyword params to pass to region
+    :return: A partially constructed region
+    """
     return partial(region, *args, **kwargs)
 
 
 def region_ref(name):
+    """
+    Used to reference a region that already exists. The main and only use
+    for this is to define recursive regions, eg. region that can occur
+    inside themselves or inside their own sub regions. See  the tutorial for a
+    concrete use case.
+
+    The returned region reference will behave exactly the same as the
+    original region inside the highlighter.
+
+    :param name: The name of the region.
+    :rtype: RegionRef
+    """
     return RegionRef(name)
 
 
 def new_style(lang, name, foreground_color, background_color="white",
               font_style="default", prio=20):
+    """
+    Creates a new style to apply when a matcher successfully matches a
+    portion of text.
+
+    :param string lang: The language for which this style will be applicable
+      . This is used to automatically store the preference associated with
+      this style in the right preferences subcategory.
+
+    :param string name: The name of the style, as will be shown in the
+      preferences.
+
+    :param string foreground_color: The foreground color of the style,
+      expressed as a CSS-like string, for example "#FF6677".
+
+    :param string background_color: The background color of the style.
+
+    :param string font_style: : The style of the font, one of "default",
+          "normal", "bold", "italic" or "bold_italic"
+
+    :param prio: The priority of the style. This determines which style will
+    prevail if two styles are applied to the same portion of text. See
+    :ref:`region`.
+
+    :rtype: Style
+    """
     style_id = "{0}_{1}".format(lang, name)
     pref = GPS.Preference("Editor/{0}/{1}".format(lang, name))
     doc = "Style for '{0}'".format(name)
@@ -191,6 +248,11 @@ def new_style(lang, name, foreground_color, background_color="white",
 
 def existing_style(pref_name, name="", prio=20):
     """
+    Creates a new style to apply when a matcher succeeds, using an existing
+    style as a basis. This probably should not be used directly, but one
+    should use one of the existing styles declared in :ref:`Highlighting
+    .common`
+
     :param string pref_name: The name of the preference to bind to the style
     :param string name: The name of the style, used for the underlying gtk tag
     :param int prio: The priority of the style compared to others. Higher
@@ -201,9 +263,18 @@ def existing_style(pref_name, name="", prio=20):
     pref = GPS.Preference(pref_name)
     pref.tag = None
     HighlighterModule.preferences[style_id] = pref
+
     return Style(style_id, prio, pref)
 
 
-def register_highlighter(language, *args, **kwargs):
-    highlighter = Highlighter(*args, **kwargs)
-    HighlighterModule.highlighters[language] = highlighter
+def register_highlighter(language, spec):
+    """
+    Used to register the declaration of an highlighter. See the tutorial for
+    more information
+
+    :param string language: The language to be used as a filter for the
+    highlighter.
+
+    :param tuple spec: The spec of the highlighter.
+    """
+    HighlighterModule.highlighters[language] = Highlighter(spec)

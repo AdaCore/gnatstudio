@@ -174,6 +174,9 @@ class Style(object):
         self.prio = prio
         self.style_id = style_id
 
+    def __repr__(self):
+        return "<Style : {0}>".format(self.style_id)
+
 
 class BaseMatcher(object):
 

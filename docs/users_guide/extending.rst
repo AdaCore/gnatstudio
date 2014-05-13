@@ -3339,6 +3339,19 @@ defined::
     </vsearch-pattern>
   </search>
 
+.. _Defining_custom_highlighters:
+
+Defining custom highlighters
+----------------------------
+
+.. index:: <Highlighters>
+
+.. automodule:: highlighter.interface
+  :members:
+
+.. automodule:: highlighter.common
+  :members:
+
 .. _Adding_support_for_new_languages:
 
 Adding support for new languages
@@ -3351,6 +3364,10 @@ tag. Defining languages gives GPS the ability to perform language-specific
 operations such as highlighting the syntax of a file, exploring a file
 using the :guilabel:`Project` view, and finding files associated with that
 language.
+
+NOTE: The highlighting of syntax via the mechanisms described here are
+deprecated. See :ref:`Highlighters` for the current way to highlight custom
+languages.
 
 The following child tags are available:
 
