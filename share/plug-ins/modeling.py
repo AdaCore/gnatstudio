@@ -690,48 +690,54 @@ class GMC_Module(modules.Module):
         :param Integer status: The exit status of the call to MDL2JSON.
         :param String output: the output of the call to MDL2JSON.
         """
-        if status == 0:
-            diags = GPS.Browsers.Diagram.load_json(
-                self.__json_file(), diagramFactory=GMC_Diagram)
+        if status != 0:
+            GPS.Console("Messages").write(
+                "%s\n" % output)
+            GPS.Console("Messages").write(
+                "mdl2json returned error %s" % status, mode="error")
+            return
 
-            # The compilation of the Simulink model to JSON was triggered by
-            # routine load_desktop. Reuse the already available diagram viewer
-            # and set the proper diagram.
+        diags = GPS.Browsers.Diagram.load_json(
+            self.__json_file(), diagramFactory=GMC_Diagram)
 
-            diag_view = self.__diagram_viewer()
+        # The compilation of the Simulink model to JSON was triggered by
+        # routine load_desktop. Reuse the already available diagram viewer
+        # and set the proper diagram.
 
-            if diag_view:
-                diag_view.diagram = diags[0]
+        diag_view = self.__diagram_viewer()
 
-            # Otherwise the compilation was triggered by double clicking on the
-            # Simulink model. Create a diagram viewer and display the diagram.
+        if diag_view:
+            diag_view.diagram = diags[0]
 
-            else:
-                model_file = os.path.basename(self.__model_file())
+        # Otherwise the compilation was triggered by double clicking on the
+        # Simulink model. Create a diagram viewer and display the diagram.
 
-                diag_view = GMC_Diagram_Viewer(self)
-                diag_view.create(
-                    diagram=diags[0],
-                    title=model_file,
-                    save_desktop=self._save_desktop)
+        else:
+            model_file = os.path.basename(self.__model_file())
 
-                # Store the instance of the diagram viewer in the window in
-                # charge of displaying it.
+            diag_view = GMC_Diagram_Viewer(self)
+            diag_view.create(
+                diagram=diags[0],
+                title=model_file,
+                save_desktop=self._save_desktop)
 
-                window = GPS.MDI.get(model_file)
-                window._diagram_viewer = diag_view
+            # Store the instance of the diagram viewer in the window in
+            # charge of displaying it.
 
-            # Highlight the corresponding graphical item of a block selected
-            # during an interaction with contextual menu "Locate in model".
+            window = GPS.MDI.get(model_file)
+            window._diagram_viewer = diag_view
 
-            if self._block_id:
-                self.__select_item(self._block_id)
-                self._block_id = None
+        # Highlight the corresponding graphical item of a block selected
+        # during an interaction with contextual menu "Locate in model".
 
-            # JSON files must never be exposed to the outside. Destroy the file
-            # once the diagram has been displayed.
+        if self._block_id:
+            self.__select_item(self._block_id)
+            self._block_id = None
 
-            os.remove(self.__json_file())
+        # JSON files must never be exposed to the outside. Destroy the file
+        # once the diagram has been displayed.
+
+        os.remove(self.__json_file())
 
     def __is_running(self, process):
         """
@@ -1100,7 +1106,7 @@ class GMC_Module(modules.Module):
             # displayed. Instead bring the digram viewer into focus.
 
             if self.__diagram_viewer():
-                self.__dagram_viewer_focus()
+                self.__diagram_viewer_focus()
             else:
                 self.__compile_model_to_json()
 
