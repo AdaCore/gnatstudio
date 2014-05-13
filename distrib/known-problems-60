@@ -81,6 +81,17 @@ KP-60-N418-029 GPS: Size of line numbers area not following font size
 
   Workaround: Restart GPS.
 
+KP-60-N410-050 GPS: search window dies closing floating window
+
+  Problem:    When opening the search window when a floating source editor is
+              opened and focused, and then closing the source editor, the
+              search window would be closed as well, and any attempt to open it
+              again would crash GPS.
+
+  Status:     Fixed in 6.1 on 2014-05-13.
+
+  Workaround: Open the search window when the main window is focused.
+
 KP-60-N407-001 GPS: GPS crashes on some completions involving generic packages
 
   Problem:    On completing some generic packages with child packages, the
