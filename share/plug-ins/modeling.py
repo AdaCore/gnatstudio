@@ -875,7 +875,7 @@ class GMC_Module(modules.Module):
             DIAGRAM_SCALE: diag_view.scale,
             DIAGRAM_TOPLEFT: diag_view.topleft}
 
-        return ("GMC_Module", json.dumps(info))
+        return (self.name(), json.dumps(info))
 
     def __select_item(self, block_id):
         """
