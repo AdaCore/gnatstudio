@@ -53,6 +53,7 @@ CONTEXTUAL_MENU = "Locate in model: <b>%s</b>"
 
 DIAGRAM_ENABLED = "enabled"
 DIAGRAM_SCALE = "scale"
+DIAGRAM_SELECTED_ITEM = "selected_item"
 DIAGRAM_TOPLEFT = "topleft"
 # The names of various attributes used in saving/loading a GMC plug-in module
 
@@ -374,7 +375,7 @@ class GMC_Module(modules.Module):
             editor.get_chars(start, start.end_of_line()))
 
         # The line where the right click occurred denotes a block id. Create a
-        # one element contextual menu.
+        # one element contextual menu with the block id as the only choice.
 
         if block_data and block_data[0]:
 
@@ -387,7 +388,15 @@ class GMC_Module(modules.Module):
 
         # Otherwise the line denotes code, comment or white spaces. Either way,
         # parse the file and extract all open annotation blocks upto the said
-        # line.
+        # line. This "scoping" approach yields the blocks where a piece of code
+        # is "visible":
+
+        #     block 1
+        #     block 2
+        #     source code statement 1  -  associated with block 1 and 2
+        #     end block 2
+        #     source code statement 2  -  associated with block 1
+        #     end block 1
 
         else:
             block_ids = []
@@ -448,7 +457,6 @@ class GMC_Module(modules.Module):
         if (
             self.__project_file_ok()
             and not self.__is_running(MDL2JSON_EXEC)
-            and not self.__diagram_viewer()
         ):
             switches = self.__switches()
 
@@ -516,6 +524,12 @@ class GMC_Module(modules.Module):
 
         return None
 
+    def __diagram_viewer_focus(self):
+        """
+        Bring the diagram viewer into focus.
+        """
+        GPS.MDI.get(os.path.basename(self.__model_file())).raise_window()
+
     def handle_contextual_menu_event(self, context, choice, choice_index):
         """
         Process a contextual menu event and perform the appropriate navigation
@@ -526,18 +540,16 @@ class GMC_Module(modules.Module):
 
         block_id = choice.replace(".", "/")
 
-        # Bring the diagram viewer into focus and highlight the chosen
-        # graphical item.
+        # Highlight the chosen graphical item and bring the diagram viewer into
+        # focus.
 
         if self.__diagram_viewer():
             self.__select_item(block_id)
-
-            window = GPS.MDI.get(os.path.basename(self.__model_file()))
-            window.raise_window()
+            self.__diagram_viewer_focus()
 
         # Otherwise the Simulink model needs to be compiled to JSON. Note that
-        # this action automatically brings the diagram viewer into focus and
-        # highlights the chosen graphical item.
+        # this action automatically highlights the chosen graphical item and
+        # brings the diagram viewer into focus.
 
         else:
             self._block_id = block_id
@@ -573,7 +585,7 @@ class GMC_Module(modules.Module):
 
                 block_data = self.__block_data(line)
 
-                # The current line denotes a starting block annotatio. Check
+                # The current line denotes a starting block annotation. Check
                 # whether the item id matches the block id. Note that the block
                 # id may contain an extra level of detail, therefore perform
                 # the membership test against the block id rather than the
@@ -679,24 +691,35 @@ class GMC_Module(modules.Module):
         :param String output: the output of the call to MDL2JSON.
         """
         if status == 0:
-            diag_view = GMC_Diagram_Viewer(self)
-
-            # Load the JSON file and display the diagram
-
-            model_file = os.path.basename(self.__model_file())
             diags = GPS.Browsers.Diagram.load_json(
                 self.__json_file(), diagramFactory=GMC_Diagram)
-            diag_view.create(
-                diagram=diags[0],
-                title=model_file,
-                save_desktop=self._save_desktop
-            )
 
-            # Store the instance of the diagram viewer in the window in charge
-            # of displaying it.
+            # The compilation of the Simulink model to JSON was triggered by
+            # routine load_desktop. Reuse the already available diagram viewer
+            # and set the proper diagram.
 
-            window = GPS.MDI.get(model_file)
-            window._diagram_viewer = diag_view
+            diag_view = self.__diagram_viewer()
+
+            if diag_view:
+                diag_view.diagram = diags[0]
+
+            # Otherwise the compilation was triggered by double clicking on the
+            # Simulink model. Create a diagram viewer and display the diagram.
+
+            else:
+                model_file = os.path.basename(self.__model_file())
+
+                diag_view = GMC_Diagram_Viewer(self)
+                diag_view.create(
+                    diagram=diags[0],
+                    title=model_file,
+                    save_desktop=self._save_desktop)
+
+                # Store the instance of the diagram viewer in the window in
+                # charge of displaying it.
+
+                window = GPS.MDI.get(model_file)
+                window._diagram_viewer = diag_view
 
             # Highlight the corresponding graphical item of a block selected
             # during an interaction with contextual menu "Locate in model".
@@ -788,15 +811,44 @@ class GMC_Module(modules.Module):
         except:
             return None
 
-        # Recompile the Simulink model to JSON if the diagram viewer was
-        # enabled when GPS close.
+        # The diagram viewer was enabled in the previous session of GPS
 
-        if info[DESKTOP_ENABLED]:
+        if info[DIAGRAM_ENABLED]:
+            model_file = os.path.basename(self.__model_file())
+
+            # Routine load_desktop launches an asynchronous compilation process
+            # and at the same time it must return one of the byproducts of the
+            # said compilation. To resolve this race condition, construct an
+            # empty diagram viewer now and store it in the corresponding MDI
+            # window. Routine handle_MDL2JSON_compilation_event will then reuse
+            # the diagram viewer and finish loading the diagram.
+
+            diag_view = GMC_Diagram_Viewer(self)
+
+            # Note that the diagram viewer loads an empty diagram. The actual
+            # diagram is set in handle_MDL2JSON_compilation_event.
+
+            diag_view.create(
+                diagram=GPS.Browsers.Diagram(),
+                title=model_file,
+                save_desktop=self._save_desktop
+            )
+
+            # Set the properties used in the previous session of GPS
+
+            diag_view.scale = info[DIAGRAM_SCALE]
+            self._block_id = info[DIAGRAM_SELECTED_ITEM]
+            diag_view.topleft = info[DIAGRAM_TOPLEFT]
+
+            # Store the instance of the diagram viewer in the window in charge
+            # of displaying it.
+
+            window = GPS.MDI.get(model_file)
+            window._diagram_viewer = diag_view
+
+            # Recompile the Simulink model to JSON and display the diagram
+
             self.__compile_model_to_json()
-
-            diag_view = self.__diagram_viewer()
-            diag_view.scale = info[DESKTOP_SCALE]
-            diag_view.topleft = info[DESKTOP_TOPLEFT]
 
             return GPS.MDI.get_by_child(diag_view)
 
@@ -873,6 +925,7 @@ class GMC_Module(modules.Module):
         info = {
             DIAGRAM_ENABLED: True,
             DIAGRAM_SCALE: diag_view.scale,
+            DIAGRAM_SELECTED_ITEM: self._block_id,
             DIAGRAM_TOPLEFT: diag_view.topleft}
 
         return (self.name(), json.dumps(info))
@@ -1043,7 +1096,14 @@ class GMC_Module(modules.Module):
             and self.__present(model_file)
             and model_file.language() == "simulink"
         ):
-            self.__compile_model_to_json()
+            # Do not recompile the Simulink model if the diagram is already
+            # displayed. Instead bring the digram viewer into focus.
+
+            if self.__diagram_viewer():
+                self.__dagram_viewer_focus()
+            else:
+                self.__compile_model_to_json()
+
             return True
 
         else:
