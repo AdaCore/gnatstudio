@@ -290,7 +290,6 @@ class Module(object):
         return (self.name(), self.save_desktop(child) or "")
 
     def _load_desktop(self, name, data):
-        print "#%s# #%s#" % (self.name(), name)
         if name == self.name():
             child = self.get_child(allow_create=True)
             c = self.load_desktop(child, data)
