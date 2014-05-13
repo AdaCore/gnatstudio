@@ -179,6 +179,14 @@ targets = """
   </target>
 """
 
+SPAWN_BROWSER_PREF = "Documentation/Doc-Spawn-Browser"
+GPS.Preference(SPAWN_BROWSER_PREF).create(
+    "Spawn a browser",
+    "boolean",
+    "Whether GNATdoc should spawn a browser after having generated"
+    " the documentation.",
+    True)
+
 
 @interactive(name="documentation generate for project", category="GNATdoc")
 def doc_for_project():
@@ -257,4 +265,5 @@ class GNATdoc_Module(modules.Module):
                 else:
                     doc_dir = "gnatdoc"
 
-            GPS.HTML.browse(os.path.join(doc_dir, "index.html"))
+            if GPS.Preference(SPAWN_BROWSER_PREF).get():
+                GPS.HTML.browse(os.path.join(doc_dir, "index.html"))
