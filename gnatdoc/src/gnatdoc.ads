@@ -219,4 +219,9 @@ private
    --  Report a warning indicating that File is not processed because
    --  cross references are not up-to-date.
 
+   function Read_Source_File
+     (Kernel : GPS.Core_Kernels.Core_Kernel;
+      File   : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access;
+   --  Reads source code file and make attempt to convert it to UTF-8.
+
 end GNATdoc;

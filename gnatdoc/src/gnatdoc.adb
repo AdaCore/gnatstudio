@@ -35,6 +35,7 @@ with Language.C;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
 with Templates_Parser;        use Templates_Parser;
+with UTF8_Utils;
 with Xref.Docgen;             use Xref.Docgen;
 
 with GNAT.IO;
@@ -1832,6 +1833,51 @@ package body GNATdoc is
 
       return Create_From_Dir (Base_Dir, +"gnatdoc/");
    end Get_Doc_Directory;
+
+   ----------------------
+   -- Read_Source_File --
+   ----------------------
+
+   function Read_Source_File
+     (Kernel : GPS.Core_Kernels.Core_Kernel;
+      File   : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access
+   is
+      use type GNAT.Strings.String_Access;
+
+      Buffer  : GNAT.Strings.String_Access := File.Read_File;
+      Result  : GNAT.Strings.String_Access;
+      Success : Boolean;
+
+   begin
+      --  There are some heuristicts should be used to guess most appropriate
+      --  encoding of the file:
+      --
+      --  1. Check whether UTF-8 is used for file. This is important to cover
+      --  useful case when only ASCII characters are used for identifiers, but
+      --  UTF-8 is used for string literals and comments.
+      --
+      --  2. Look for compiler switches (-gnati?) in ALI file to detect
+      --  encoding of identifiers (and string literals and comments too). This
+      --  is not implemented now, Unknown_To_UTF8 attempts to use encoding of
+      --  currect locale.
+
+      UTF8_Utils.Unknown_To_UTF8 (Buffer.all, Result, Success);
+
+      if not Success then
+         Kernel.Messages_Window.Insert
+           (-("unable to detect encoding for ")
+            & File.Display_Base_Name);
+      end if;
+
+      if Result /= null then
+         GNAT.Strings.Free (Buffer);
+
+         return Result;
+
+      else
+         return Buffer;
+      end if;
+   end Read_Source_File;
 
    -------------------------
    -- Report_Skipped_File --

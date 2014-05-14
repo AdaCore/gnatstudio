@@ -548,7 +548,7 @@ package body GNATdoc.Backend.HTML is
            (Me, "generate annotated source for " & String (File.Base_Name));
 
          Lang      := Get_Language_From_File (Self.Context.Lang_Handler, File);
-         Buffer    := File.Read_File;
+         Buffer    := Read_Source_File (Self.Context.Kernel, File);
          Sloc_Last := (0, 0, 0);
          Printer.Start_File
            (File, Buffer, 1, Self.Context.Options.Show_Private, Continue);
