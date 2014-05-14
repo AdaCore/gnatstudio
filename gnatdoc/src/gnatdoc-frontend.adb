@@ -36,6 +36,7 @@ with Language.Ada;             use Language.Ada;
 with Language.Tree;            use Language.Tree;
 with Language.Tree.Database;   use Language.Tree.Database;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with String_Utils;
 with Xref.Docgen;              use Xref.Docgen;
 with Xref;
 with Ada.Unchecked_Deallocation;
@@ -116,6 +117,14 @@ package body GNATdoc.Frontend is
       Root    : Entity_Id);
    --  Traverse the Tree of entities and replace blocks of comments by
    --  structured comments.
+
+   function To_Visible_Column
+     (Buffer          : String;
+      Index_In_Line   : Natural;
+      Index_In_Buffer : Natural) return Visible_Column_Type;
+   --  Returns number of visible column for given column and index in the
+   --  buffer. This subprogram handles tab expansion and multibyte sequences
+   --  of UTF-8 encoding.
 
    -----------
    -- Debug --
@@ -1543,7 +1552,10 @@ package body GNATdoc.Frontend is
                              (File    => File,
                               Project => No_Project,  --  ??? unknown
                               Line    => Sloc_Start.Line,
-                              Column  => Visible_Column (Sloc_Start.Column)));
+                              Column  => To_Visible_Column
+                                (Buffer.all,
+                                 Sloc_Start.Column,
+                                 Sloc_Start.Index)));
                      end if;
                   end if;
 
@@ -1712,8 +1724,11 @@ package body GNATdoc.Frontend is
                                   (File    => File,
                                    Project => No_Project, --  ??? unknown
                                    Line    => Sloc_Start.Line,
-                                   Column  => Visible_Column_Type
-                                     (Sloc_Start.Column + Dot_Pos));
+                                   Column  => To_Visible_Column
+                                     (Buffer.all,
+                                      Sloc_Start.Column + Dot_Pos,
+                                      Sloc_Start.Index + Dot_Pos));
+                              --  ??? multiline qualified identifiers
 
                               declare
                                  LL_Parent : constant Root_Entity'Class :=
@@ -1805,7 +1820,10 @@ package body GNATdoc.Frontend is
                                 Project => No_Project, --  ???
                                 Line    => Sloc_Start.Line,
                                 Column  =>
-                                  Visible_Column (Sloc_Start.Column)));
+                                  To_Visible_Column
+                                    (Buffer.all,
+                                     Sloc_Start.Column,
+                                     Sloc_Start.Index)));
                      begin
                         if Present (Alias) then
                            Set_Alias (E, Alias);
@@ -1908,7 +1926,10 @@ package body GNATdoc.Frontend is
                          (File    => File,
                           Project => GNATCOLL.Projects.No_Project, --  ???
                           Line    => Sloc_Start.Line,
-                          Column  => Visible_Column (Sloc_Start.Column));
+                          Column  => To_Visible_Column
+                            (Buffer.all,
+                             Sloc_Start.Column,
+                             Sloc_Start.Index));
 
                   when Tok_Package |
                        Tok_Procedure |
@@ -1932,7 +1953,10 @@ package body GNATdoc.Frontend is
                              (File    => File,
                               Project => GNATCOLL.Projects.No_Project, --  ???
                               Line    => Sloc_Start.Line,
-                              Column  => Visible_Column (Sloc_Start.Column)));
+                              Column  => To_Visible_Column
+                                (Buffer.all,
+                                 Sloc_Start.Column,
+                                 Sloc_Start.Index)));
                      end if;
 
                   when Tok_New =>
@@ -2067,7 +2091,10 @@ package body GNATdoc.Frontend is
                                       Project => No_Project, --  ???
                                       Line    => Sloc_Start.Line,
                                       Column  =>
-                                        Visible_Column (Sloc_Start.Column));
+                                        To_Visible_Column
+                                          (Buffer.all,
+                                           Sloc_Start.Column,
+                                           Sloc_Start.Index));
                                  Current_Entity : constant Entity_Id :=
                                    Get_Current_Entity (Current_Context);
                                  E : constant Entity_Id :=
@@ -3227,12 +3254,15 @@ package body GNATdoc.Frontend is
                then
                   return Sloc_Start.Line = Loc.Line
                     and then Sloc_End.Line = Loc.Line
-                    and then Natural (Loc.Column) = Sloc_Start.Column - 1;
+                    and then Loc.Column = To_Visible_Column
+                     (Buffer.all, Sloc_Start.Column - 1, Sloc_Start.Index - 1);
                else
                   return Sloc_Start.Line = Loc.Line
                     and then Sloc_End.Line = Loc.Line
-                    and then Natural (Loc.Column) >= Sloc_Start.Column
-                    and then Natural (Loc.Column) <= Sloc_End.Column;
+                    and then Loc.Column >= To_Visible_Column
+                      (Buffer.all, Sloc_Start.Column, Sloc_Start.Index)
+                    and then Loc.Column <= To_Visible_Column
+                      (Buffer.all, Sloc_End.Column, Sloc_End.Index);
                end if;
             end In_Next_Entity;
 
@@ -3400,7 +3430,9 @@ package body GNATdoc.Frontend is
                Loc   : constant General_Location :=
                  (File,
                   GNATCOLL.Projects.No_Project,  --  ??? unknown
-                  Sloc_Start.Line, Visible_Column (Sloc_Start.Column));
+                  Sloc_Start.Line,
+                  To_Visible_Column
+                    (Buffer.all, Sloc_Start.Column, Sloc_Start.Index));
                Lang  : constant Language_Access :=
                         Get_Language_From_File (Context.Lang_Handler, File);
                New_E : constant Entity_Id :=
@@ -3435,7 +3467,8 @@ package body GNATdoc.Frontend is
                  (File,
                   GNATCOLL.Projects.No_Project, --  ??? unknown
                   Sloc_Start.Line,
-                  Visible_Column (Sloc_Start.Column));
+                  To_Visible_Column
+                    (Buffer.all, Sloc_Start.Column, Sloc_Start.Index));
             begin
                LL.Set_Location (E, Loc);
 
@@ -3491,8 +3524,9 @@ package body GNATdoc.Frontend is
                          or else
                            (Sloc_Start.Line = LL.Get_Location (E).Line
                               and then
-                            Sloc_Start.Column
-                               > Natural (LL.Get_Location (E).Column)))
+                            To_Visible_Column
+                              (Buffer.all, Sloc_Start.Column, Sloc_Start.Index)
+                                 > LL.Get_Location (E).Column))
                   loop
                      --  Handle wide character encoding of identifiers. For
                      --  example:
@@ -3501,8 +3535,9 @@ package body GNATdoc.Frontend is
                      if Prev_Token = Tok_Left_Square_Bracket
                        and then Token = Tok_String_Literal
                        and then Sloc_Start.Line = LL.Get_Location (E).Line
-                       and then Sloc_Start.Column =
-                                  Natural (LL.Get_Location (E).Column + 1)
+                       and then To_Visible_Column
+                         (Buffer.all, Sloc_Start.Column, Sloc_Start.Index)
+                            = LL.Get_Location (E).Column + 1
                      then
                         exit;
                      end if;
@@ -3720,7 +3755,10 @@ package body GNATdoc.Frontend is
                                       Project => No_Project,  --  ??? unknown
                                       Line    => Sloc_Start.Line,
                                       Column  =>
-                                        Visible_Column (Sloc_Start.Column));
+                                        To_Visible_Column
+                                          (Buffer.all,
+                                           Sloc_Start.Column,
+                                           Sloc_Start.Index));
                               begin
                                  Set_End_Of_Profile_Location_In_Body (E, Loc);
                               end;
@@ -4309,8 +4347,10 @@ package body GNATdoc.Frontend is
 
                return Sloc_Start.Line = Loc.Line
                  and then Sloc_End.Line = Loc.Line
-                 and then Natural (Loc.Column) >= Sloc_Start.Column
-                 and then Natural (Loc.Column) <= Sloc_End.Column;
+                 and then Loc.Column >= To_Visible_Column
+                   (Buffer.all, Sloc_Start.Column, Sloc_Start.Index)
+                 and then Loc.Column <= To_Visible_Column
+                   (Buffer.all, Sloc_End.Column, Sloc_End.Index);
             end In_Next_Entity;
 
             -------------------
@@ -6211,5 +6251,26 @@ package body GNATdoc.Frontend is
          null;
       end Print_Scopes;
    end Scopes_Stack;
+
+   -----------------------
+   -- To_Visible_Column --
+   -----------------------
+
+   function To_Visible_Column
+     (Buffer          : String;
+      Index_In_Line   : Natural;
+      Index_In_Buffer : Natural) return Visible_Column_Type
+   is
+      Aux_Index : String_Index_Type :=
+        String_Index_Type
+          (GNATCOLL.Utils.Line_Start (Buffer, Index_In_Buffer));
+      Column    : Visible_Column_Type;
+
+   begin
+      String_Utils.Skip_To_Index
+        (Buffer, Column, String_Index_Type (Index_In_Line), Aux_Index);
+
+      return Column;
+   end To_Visible_Column;
 
 end GNATdoc.Frontend;
