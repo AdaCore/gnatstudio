@@ -95,7 +95,7 @@ class Styles(object):
         props = {}
         for key in ("stroke", "fill", "lineWidth", "dashes", "sloppy",
                     "fontName", "fontUnderline", "fontStrike", "fontColor",
-                    "fontLineSpacing", "fontHalign", "fontValign", "arrowFrom",
+                    "fontLineSpacing", "fontHalign", "arrowFrom",
                     "arrowFromLength", "arrowFromAngle", "arrowFromStroke",
                     "arrowFromFill", "arrowFromWidth", "arrowTo",
                     "arrowToLength", "arrowToAngle", "arrowToStroke",
@@ -203,7 +203,9 @@ def parse_item(items, json, styles):
         height=json.get('minHeight', it_default.get('minHeight')))
     it.set_position(
         x=json.get('x'),
-        y=json.get('y'))
+        y=json.get('y'),
+        anchorx=json.get('anchorx', 0),
+        anchory=json.get('anchory', 0))
 
     data = json.get('data')
     if data is not None:

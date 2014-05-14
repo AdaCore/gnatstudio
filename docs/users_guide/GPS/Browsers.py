@@ -48,7 +48,6 @@ class Style(object):
         fontColor="black",
         fontLineSpacing=0,
         fontHalign=Align.LEFT,
-        fontValign=0.0,
         arrowFrom=Arrow.NONE,
         arrowFromLength=8.0,
         arrowFromAngle=0.4,
@@ -120,10 +119,6 @@ class Style(object):
 
         :param GPS.Browsers.Style.Align fontHalign: How text should be aligned
            horizontally within its bounding box.
-
-        :param float fontValign: How text should be aligned vertically within
-           its bounding box. This is a float in the range 0.0 .. 1.0, where
-           0 is the top and 1 is the bottom.
 
         :param GPS.Browsers.Style.Arrow arrowFrom: How should arrows be
            displayed on the origin of a line.
@@ -213,7 +208,7 @@ class Item(object):
         Will raise an exception, this is an abstract class.
         """
 
-    def set_position(self, x=None, y=None):
+    def set_position(self, x=None, y=None, anchorx=0.0, anchory=0.0):
         """
         Indicates the position of the item. This is the position within its
         parent item, or if there is no parent this is the absolute position
@@ -225,6 +220,11 @@ class Item(object):
 
         :param float x: coordinates relative to parent or browser.
         :param float y: coordinates relative to parent or browser.
+        :param float anchorx: what position within the item x is refering to.
+           If set to 0.0, x indicates the left side of the item. If set to
+           0.5, x indicates the middle of the item. 1.0 indicates the right
+           side of the item.
+        :param float anchory: what position within the item y is refering to.
         """
 
     def set_child_layout(self, layout=Layout.VERTICAL):
@@ -636,8 +636,8 @@ class Diagram(object):
               specific data, in particular since the instance will be passed
               to the callbacks to handle click events.
 
-            - `x`, `y`: optional float attributes. See the description of
-              :func:`GPS.Browsers.Item.set_position()`.
+            - `x`, `y`, `anchorx`, `anchory`: optional float attributes. See
+              the description of :func:`GPS.Browsers.Item.set_position()`.
 
             - `style`: an optional string (which then references the id of one
               of the styles defined in the "styles" attribute described above,

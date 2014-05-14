@@ -70,27 +70,26 @@ package body Browsers.Scripts is
    P_Font_Color         : constant := 10;
    P_Font_LS            : constant := 11;
    P_Font_Halign        : constant := 12;
-   P_Font_Valign        : constant := 13;
-   P_Arrow_From_Head    : constant := 14;
-   P_Arrow_From_Length  : constant := 15;
-   P_Arrow_From_Angle   : constant := 16;
-   P_Arrow_From_Stroke  : constant := 17;
-   P_Arrow_From_Fill    : constant := 18;
-   P_Arrow_From_Width   : constant := 19;
-   P_Arrow_To_Head      : constant := 20;
-   P_Arrow_To_Length    : constant := 21;
-   P_Arrow_To_Angle     : constant := 22;
-   P_Arrow_To_Stroke    : constant := 23;
-   P_Arrow_To_Fill      : constant := 24;
-   P_Arrow_To_Width     : constant := 25;
-   P_Symbol_From_Name   : constant := 26;
-   P_Symbol_From_Stroke : constant := 27;
-   P_Symbol_From_Dist   : constant := 28;
-   P_Symbol_From_Width  : constant := 29;
-   P_Symbol_To_Name     : constant := 30;
-   P_Symbol_To_Stroke   : constant := 31;
-   P_Symbol_To_Dist     : constant := 32;
-   P_Symbol_To_Width    : constant := 33;
+   P_Arrow_From_Head    : constant := 13;
+   P_Arrow_From_Length  : constant := 14;
+   P_Arrow_From_Angle   : constant := 15;
+   P_Arrow_From_Stroke  : constant := 16;
+   P_Arrow_From_Fill    : constant := 17;
+   P_Arrow_From_Width   : constant := 18;
+   P_Arrow_To_Head      : constant := 19;
+   P_Arrow_To_Length    : constant := 20;
+   P_Arrow_To_Angle     : constant := 21;
+   P_Arrow_To_Stroke    : constant := 22;
+   P_Arrow_To_Fill      : constant := 23;
+   P_Arrow_To_Width     : constant := 24;
+   P_Symbol_From_Name   : constant := 25;
+   P_Symbol_From_Stroke : constant := 26;
+   P_Symbol_From_Dist   : constant := 27;
+   P_Symbol_From_Width  : constant := 28;
+   P_Symbol_To_Name     : constant := 29;
+   P_Symbol_To_Stroke   : constant := 30;
+   P_Symbol_To_Dist     : constant := 31;
+   P_Symbol_To_Width    : constant := 32;
    --  All the parameters to GPS.Browsers.Style.__init__
 
    PA_Item              : constant := 2;
@@ -1123,6 +1122,7 @@ package body Browsers.Scripts is
       M    : Margins := No_Margins;
       Item : Container_Item;
       X, Y : Gdouble := Gdouble'First;
+      AnchorX, AnchorY : Gdouble;
       Pos  : Gtkada.Style.Point;
    begin
       if Command = Constructor_Method then
@@ -1139,7 +1139,11 @@ package body Browsers.Scripts is
             Y := Gdouble (Nth_Arg (Data, 3, Float'First));
          end if;
 
-         Canvas_Item (Get_Item (Inst)).Set_Position ((X, Y));
+         AnchorX := Gdouble (Nth_Arg (Data, 4, 0.0));
+         AnchorY := Gdouble (Nth_Arg (Data, 5, 0.0));
+
+         Container_Item (Get_Item (Inst)).Set_Position
+           ((X, Y), Anchor_X => AnchorX, Anchor_Y => AnchorY);
 
       elsif Command = "parent" then
          Inst := Nth_Arg (Data, 1);
@@ -1392,9 +1396,7 @@ package body Browsers.Scripts is
                      Line_Spacing => Gint (Nth_Arg (Data, P_Font_LS, 0)),
                      Halign => Alignment'Val
                        (Integer'(Nth_Arg (Data, P_Font_Halign,
-                        Alignment'Pos (Pango_Align_Left)))),
-                     Valign => Gdouble (Nth_Arg (Data, P_Font_Valign, 0.0))
-                    ),
+                        Alignment'Pos (Pango_Align_Left))))),
             Arrow_From =>
               (Head  => Arrow_Head'Val
                  (Nth_Arg (Data, P_Arrow_From_Head, Arrow_Head'Pos (None))),
@@ -1722,7 +1724,6 @@ package body Browsers.Scripts is
             P_Font_Color         => Param ("fontColor", True),
             P_Font_LS            => Param ("fontLineSpacing", True),
             P_Font_Halign        => Param ("fontHalign", True),
-            P_Font_Valign        => Param ("fontValign", True),
             P_Arrow_From_Head    => Param ("arrowFrom", True),
             P_Arrow_From_Length  => Param ("arrowFromLength", True),
             P_Arrow_From_Angle   => Param ("arrowFromAngle", True),
@@ -1913,7 +1914,9 @@ package body Browsers.Scripts is
         (Kernel.Scripts,
          "set_position",
          Params  => (Param ("x", Optional => True),
-                     Param ("y", Optional => True)),
+                     Param ("y", Optional => True),
+                     Param ("anchorx", Optional => True),
+                     Param ("anchory", Optional => True)),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
       Register_Property
