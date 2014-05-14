@@ -961,57 +961,21 @@ class GMC_Module(modules.Module):
         Given a block id, find the corresponding graphical item and select it.
         :param String block_id: The id of a block annotation.
         """
-        def find_matching_graphical_item(item):
-            """
-            Inspect the input graphical item and its children (if any) to try
-            and match their ids against the block id.
-            :param GPS.Browsers.Item item): The (parent) item.
-            :return GPS.Browsers.Item: The graphical item whose id matches
-                block_id or None.
-            """
-            # Check whether the current item id matches the block id. Note that
-            # the block id may contain an extra level of detail, therefore
-            # perform the membership test against the block id rather than
-            # the other way around. To illustrate:
-
-            #     A/B/C      block id
-            #     A/B        item id
-
-            # Note that the item may not even have the "id" attribute set or it
-            # may be None.
-
-            item_id = self.__item_id(item)
-
-            if item_id and item_id in block_id:
-                return item
-
-            # Inspect any available children. Note that the item may not even
-            # have the "children" attribute set or it may be None.
-
-            if hasattr(item, "children"):
-                graph_items = item.children
-
-                if graph_items:
-                    for graph_item in graph_items:
-                        result = find_matching_graphical_item(graph_item)
-
-                        if result:
-                            return result
-
-            return None
-
-        # Start of processing for __select_item
-
         graph_item = None
 
-        # Inspect all the top level items of the diagram. Note that each top
-        # level item may have children, grand children and so on. The search
-        # favors roots over children.
+        # Inspect all the top level items of the diagram and check whether the
+        # item id matches the block id. Note that the block id may contain an
+        # extra level of detail, therefore perform the membership test against
+        # the block id rather than the other way around. To illustrate:
+
+        #     A/B/C      block id
+        #     A/B        item id
 
         for top_item in self.__diagram_viewer().diagram.items:
-            graph_item = find_matching_graphical_item(top_item)
+            item_id = self.__item_id(top_item)
 
-            if graph_item:
+            if item_id and item_id in block_id:
+                graph_item = top_item
                 break
 
         # Once a matching graphical item has been found, remove the previous
