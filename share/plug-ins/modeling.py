@@ -610,7 +610,11 @@ class GMC_Module(modules.Module):
 
         # Start of processing for handle_diagram_viewer_event
 
-        if hasattr(item, "id") and item.id:
+        item_id = self.__item_id(topitem)
+
+        # MDL2JSON always associates an id with a top level item
+
+        if item_id:
 
             # Clear all locations displayed in the Locations viewer as the
             # current item will generate new ones.
@@ -627,7 +631,7 @@ class GMC_Module(modules.Module):
             all_files = os.path.join(self.__output_directory(), "*")
             for cod_file in glob.glob(all_files):
                 if self.__is_source_code_file(cod_file):
-                    add_locations(cod_file=cod_file, item_id=item.id)
+                    add_locations(cod_file=cod_file, item_id=item_id)
 
             return True
 
@@ -789,6 +793,22 @@ class GMC_Module(modules.Module):
                 and self.__is_source_code_file(context.file().name()))
         except:
             return False
+
+    def __item_id(self, item):
+        """
+        Obtain the id of a graphical item.
+        :param GPS.Browsers.Item item: The item to inspect.
+        :return: The id of the item in a String form. If the id is not present,
+            return None.
+        """
+        if (
+            hasattr(item, "data")
+            and item.data
+            and "traceability_info" in item.data
+        ):
+            return item.data["traceability_info"]
+
+        return None
 
     def __json_file(self):
         """
@@ -960,11 +980,10 @@ class GMC_Module(modules.Module):
             # Note that the item may not even have the "id" attribute set or it
             # may be None.
 
-            if hasattr(item, "id"):
-                item_id = item.id
+            item_id = self.__item_id(item)
 
-                if item_id and item_id in block_id:
-                    return item
+            if item_id and item_id in block_id:
+                return item
 
             # Inspect any available children. Note that the item may not even
             # have the "children" attribute set or it may be None.
