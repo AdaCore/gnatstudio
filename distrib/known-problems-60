@@ -646,6 +646,18 @@ KP-60-G928-018 GPS: "center cursor on screen" scrolls horizontally
 Known problems fixed in GPS 6.0.2 / GNATbench 2.8.2
 ---------------------------------------------------
 
+KP-60-N507-006 incorrect normalizing of file names with multiple ".."
+
+  Problem:    When a file name includes something ike "../../" it is not
+              always properly normalized. This might result in obscure errors,
+              for instance failing to open the file (because the normalized
+              name is incorrect) via the cross-references.
+
+  Status:     This was fixed in 6.1 on 2014-05-13
+              This was fixed in 6.0.2 on 2014-05-14
+
+  Workaround: Disable the preference Project/Fast Project Loading
+
 KP-60-N325-035 ECL: event breakpoint on specific exception cannot be created.
 
   Problem:    Cannot create with the UI Ada Event Breakpoint on specific
