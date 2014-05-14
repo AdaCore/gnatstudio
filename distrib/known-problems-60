@@ -25,6 +25,19 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N505-025 project's gnatlist attribute sometimes ignored
+
+  Problem:    The "gnatls" command listed in the project (which in particular
+              is used to point to alternative runtimes via the --RTS switch)
+              is not properly taken into account on the initial loading of
+              the project.
+
+  Status:     This was fixed in 6.1.0 on 2014-05-13
+
+  Workaround: Reloading the project fixes the issue, but does not apply to
+              the gnatinspect tool which GPS uses for the cross-references,
+              so the latter will still point to the wrong runtime files.
+
 KP-60-N425-013 GB: no current word highlighting control
 
   Problem:    The current word under the cursor is highlighted even
@@ -34,7 +47,7 @@ KP-60-N425-013 GB: no current word highlighting control
               cursor is over the reserved word "is", other words containing
               the substring (e.g. "this", "distributed") are also highlighted.
 
-  Status:     This is fixed in 2.9 on 2014-04-29
+  Status:     This was fixed in 2.9 on 2014-04-29
 
   Workaround: No workaround needed.
 
