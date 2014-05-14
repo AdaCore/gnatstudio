@@ -190,6 +190,7 @@ procedure GNATdoc_Main is
       --  Compute the arguments to launch
       Append (Args, "--exit");
       Append (Args, "--symlinks");
+      Append (Args, "--encoding=iso-8859-1");
       Append (Args, "-P" & (+Project_File.Full_Name.all));
       Append (Args, "--db=" &
          (+Kernel.Databases.Xref_Database_Location.Full_Name.all));
