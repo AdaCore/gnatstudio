@@ -102,7 +102,7 @@ class Styles(object):
                     "arrowToFill", "arrowToWidth", "symbolFrom",
                     "symbolFromStroke", "symbolFromDist", "symbolFromWidth",
                     "symbolTo", "symbolToStroke", "symbolToDist",
-                    "symbolToWidth"):
+                    "symbolToWidth", "shadowColor"):
             if key in json:
                 # JSON 'null' gives a Python None, but we still want to use
                 # the non-default value for the parameter in this case

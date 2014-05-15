@@ -67,7 +67,8 @@ class Style(object):
         symbolTo=Symbol.NONE,
         symbolToStroke="black",
         symbolToDist=16.0,
-        symbolToWidth=1.0
+        symbolToWidth=1.0,
+        shadowColor=None,
     ):
         """
         Constructs a new style.
@@ -144,6 +145,8 @@ class Style(object):
         :param str symbolFromStroke: the stroke color to use for the symbol.
         :param float symbolFromDist: the distance from the end of the line
            at which the symbol should be displayed.
+
+        :param str shadowColor: the color to use for shadows
         """
 
 

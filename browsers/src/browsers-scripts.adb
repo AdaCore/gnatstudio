@@ -90,6 +90,7 @@ package body Browsers.Scripts is
    P_Symbol_To_Stroke   : constant := 30;
    P_Symbol_To_Dist     : constant := 31;
    P_Symbol_To_Width    : constant := 32;
+   P_Shadow_Color       : constant := 33;
    --  All the parameters to GPS.Browsers.Style.__init__
 
    PA_Item              : constant := 2;
@@ -1397,6 +1398,9 @@ package body Browsers.Scripts is
                      Halign => Alignment'Val
                        (Integer'(Nth_Arg (Data, P_Font_Halign,
                         Alignment'Pos (Pango_Align_Left))))),
+            Shadow     =>
+              (Color  => Color_From_Param (P_Shadow_Color, Null_RGBA),
+               others => <>),
             Arrow_From =>
               (Head  => Arrow_Head'Val
                  (Nth_Arg (Data, P_Arrow_From_Head, Arrow_Head'Pos (None))),
@@ -1743,7 +1747,8 @@ package body Browsers.Scripts is
             P_Symbol_To_Name     => Param ("symbolTo", True),
             P_Symbol_To_Stroke   => Param ("symbolToStroke", True),
             P_Symbol_To_Dist     => Param ("symbolToDist", True),
-            P_Symbol_To_Width    => Param ("symbolToWidth", True)),
+            P_Symbol_To_Width    => Param ("symbolToWidth", True),
+            P_Shadow_Color       => Param ("shadowColor", True)),
          Class   => Style_Class,
          Handler => Style_Handler'Access);
 
