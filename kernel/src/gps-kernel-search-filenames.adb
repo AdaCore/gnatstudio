@@ -389,9 +389,17 @@ package body GPS.Kernel.Search.Filenames is
             then
                Self.Data.Dirs_Index := Self.Data.Dirs_Index + 1;
                Unchecked_Free (Self.Data.Files_In_Dir);
-               Self.Data.Files_In_Dir :=
-                 Self.Source_Dirs (Self.Data.Dirs_Index).Read_Dir;
-               Self.Data.File_Index := Self.Data.Files_In_Dir'First - 1;
+
+               begin
+                  Self.Data.Files_In_Dir :=
+                    Self.Source_Dirs (Self.Data.Dirs_Index).Read_Dir;
+                  Self.Data.File_Index := Self.Data.Files_In_Dir'First - 1;
+               exception
+                  when GNATCOLL.VFS.VFS_Directory_Error =>
+                     Trace (Me, "Skipping invalid source dir: "
+                        & Self.Source_Dirs
+                           (Self.Data.Dirs_Index).Display_Full_Name);
+               end;
 
                --  Will do the actual testing at the next iteration
             else

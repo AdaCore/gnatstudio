@@ -659,6 +659,17 @@ KP-60-G928-018 GPS: "center cursor on screen" scrolls horizontally
 Known problems fixed in GPS 6.0.2 / GNATbench 2.8.2
 ---------------------------------------------------
 
+KP-60-N514-048 GPS: crash when using tab completion in omni-search
+
+  Problem:    When one of the source directories does not exist on the disk,
+              using tab completion in the omni-search crashes GPS
+
+  Status:     This was fixed in 6.1 on 2014-05-15
+              This was fixed in 6.0.2 on 2014-05-15
+
+  Workaround: Check the Messages window for errors about missing source
+              directories.
+
 KP-60-N507-006 incorrect normalizing of file names with multiple ".."
 
   Problem:    When a file name includes something ike "../../" it is not
