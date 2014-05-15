@@ -501,6 +501,13 @@ class Link(object):
            display in the middle of the link.
         :param GPS.Browsers.Item fromLabel: a label (in general a TextItem) to
            display next to the origin of the link.
+        :param float toX: This plays a similar role to fromX, but it can also
+           have a negative value. In such a case, GPS will try to move the
+           end position of the link along the border of the item, so as to get
+           a horizontal or vertical segment. If this is not possible, the
+           usual behavior applies to abs(toX) to find the attachment of the
+           link in the item.
+        :param float toY: similar to toX
         :param GPS.Browsers.Item toLabel: a label (in general a TextItem) to
            display next to the target of the link.
         """
