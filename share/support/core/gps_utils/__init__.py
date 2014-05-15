@@ -2,6 +2,7 @@
 # exported by GPS to make it easier to write plugins
 
 from GPS import *
+import UserDict
 import types
 
 # The autodoc may not have visibility on gi.repository
@@ -387,3 +388,27 @@ def execute_for_all_cursors(ed, mark_fn, extend_selection=False):
 
     ed.update_cursors_selection()
     ed.set_cursors_auto_sync()
+
+
+class Chainmap(UserDict.DictMixin):
+    """Combine multiple mappings for sequential lookup.
+
+    For example, to emulate Python's normal lookup sequence:
+
+        import __builtin__
+        pylookup = Chainmap(locals(), globals(), vars(__builtin__))
+    """
+
+    def __init__(self, *maps):
+        self._maps = maps
+
+    def __getitem__(self, key):
+        for mapping in self._maps:
+            try:
+                return mapping[key]
+            except KeyError:
+                pass
+        raise KeyError(key)
+
+    def keys(self):
+        return [k for mp in self._maps for k in mp.keys()]

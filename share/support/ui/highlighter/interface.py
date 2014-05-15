@@ -133,6 +133,7 @@ from functools import partial
 from highlighter.engine import Style, HighlighterModule, Highlighter, \
     RegionMatcher, RegionRef, SimpleMatcher
 import GPS
+import colorschemes
 
 
 ##############################
@@ -210,7 +211,8 @@ def region_ref(name):
     return RegionRef(name)
 
 
-def new_style(lang, name, foreground_color, background_color="white",
+def new_style(lang, name, foreground_colors,
+              background_colors=("white",  "white"),
               font_style="default", prio=20):
     """
     Creates a new style to apply when a matcher successfully matches a
@@ -223,10 +225,11 @@ def new_style(lang, name, foreground_color, background_color="white",
     :param string name: The name of the style, as will be shown in the
       preferences.
 
-    :param string foreground_color: The foreground color of the style,
-      expressed as a CSS-like string, for example "#FF6677".
+    :param (string, string) foreground_colors: The foreground color of the
+      style, expressed as a CSS-like string, for example "#FF6677".
 
-    :param string background_color: The background color of the style.
+    :param (string, string) background_colors: The background color of the
+      style.
 
     :param string font_style: : The style of the font, one of "default",
           "normal", "bold", "italic" or "bold_italic"
@@ -238,9 +241,19 @@ def new_style(lang, name, foreground_color, background_color="white",
     :rtype: Style
     """
     style_id = "{0}_{1}".format(lang, name)
-    pref = GPS.Preference("Editor/{0}/{1}".format(lang, name))
+    pref_name = "Editor/{0}/{1}".format(lang, name)
+    pref = GPS.Preference(pref_name)
     doc = "Style for '{0}'".format(name)
-    pref.create_style(doc, doc, foreground_color, background_color, font_style)
+    pref.create_style(doc, doc, foreground_colors[0], background_colors[0],
+                      font_style)
+
+    colorschemes.dark_common[pref_name] = (font_style.upper(),
+                                           foreground_colors[1],
+                                           background_colors[1])
+
+    colorschemes.light_common[pref_name] = (font_style.upper(),
+                                            foreground_colors[0],
+                                            background_colors[0])
     pref.tag = None
     HighlighterModule.preferences[style_id] = pref
     return Style(style_id, prio, pref)

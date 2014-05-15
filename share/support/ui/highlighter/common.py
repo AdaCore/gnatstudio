@@ -1,14 +1,16 @@
 from highlighter.interface import *
 
 
-tag_string_escapes = new_style("General", "string_escapes", '#875162')
+tag_string_escapes = new_style("General", "string_escapes", ('#875162',
+                                                             '#DA7495'))
 """
 Style for escapes in strings, such as \\n or \\t
 
 :type: Style
 """
 
-tag_comment_notes = new_style("General", "comment_notes", "#407A8E")
+tag_comment_notes = new_style("General", "comment_notes", ("#407A8E",
+                                                           "#907A8E"))
 """
 Style for notes in comments. Used for highlighting TODO and NOTE strings in
 comments.

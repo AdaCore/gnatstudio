@@ -41,7 +41,7 @@ light_common = {
 
     "Plugins/dispatching/color": "rgb(255,243,194)",
     "Plugins/ispell/bgcolor": "rgb(255,255,0)",
-    }
+}
 
 dark_common = {
     "Plugins/auto_highlight_occurrences/color_type": "rgb(3,41,97)",
@@ -69,9 +69,9 @@ dark_common = {
 
     "Plugins/dispatching/color": "rgb(46,52,56)",
     "Plugins/ispell/bgcolor": "rgb(206,92,0)",
-    }
+}
 
-default = {
+default = gps_utils.Chainmap(light_common, {
     "name": "Default",
     "GPS6-Gtk-Theme-Name": "Adwaita",
     "@theme_bg_color": None,           # the background color for windows
@@ -95,11 +95,10 @@ default = {
     "Src-Editor-Keywords-Variant": ("DEFAULT", "rgb(0,0,230)", "transparent"),
     "Src-Editor-Type-Variant": ("DEFAULT", "rgb(0,153,0)", "transparent"),
     "Src-Editor-Block-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent")
-    }
-default.update(light_common)
+})
 
 
-monokai = {
+monokai = gps_utils.Chainmap(dark_common, {
     "name": "Monokai",
     "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
     "@theme_bg_color": "rgb(39,40,34)",
@@ -141,10 +140,9 @@ monokai = {
     "Src-Editor-Block-Variant":             ("DEFAULT",
                                              "rgb(230,219,116)",
                                              "transparent")
-    }
-monokai.update(dark_common)
+})
 
-darkside = {
+darkside = gps_utils.Chainmap(dark_common, {
     "name": "Darkside",
     "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
     "@theme_bg_color": "rgb(34,35,36)",
@@ -184,10 +182,9 @@ darkside = {
     "Src-Editor-Block-Variant":             ("DEFAULT",
                                              "rgb(104,194,68)",
                                              "transparent")
-    }
-darkside.update(dark_common)
+})
 
-iplastic = {
+iplastic = gps_utils.Chainmap(light_common, {
     "name": "iPlastic",
     "GPS6-Gtk-Theme-Name": "Adwaita",
     "@editor_bg_selection": "rgb(74,144,217)",
@@ -226,8 +223,7 @@ iplastic = {
     "Src-Editor-Block-Variant":             ("DEFAULT",
                                              "rgb(255,128,0)",
                                              "transparent")
-    }
-iplastic.update(light_common)
+})
 
 themes = [default, darkside, monokai, iplastic]
 
