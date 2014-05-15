@@ -13,6 +13,7 @@ import gps_utils
 
 
 light_common = {
+    "Editor/Ada/expanded_code_style": "#dddddd",
     "Plugins/auto_highlight_occurrences/color_type":
     "rgba(144, 238, 144, 0.5)",
     "Plugins/auto_highlight_occurrences/color_unknown": "rgb(215,215,215)",
@@ -44,6 +45,7 @@ light_common = {
 }
 
 dark_common = {
+    "Editor/Ada/expanded_code_style": "#333333",
     "Plugins/auto_highlight_occurrences/color_type": "rgb(3,41,97)",
     "Plugins/auto_highlight_occurrences/color_unknown": "rgb(32,74,135)",
     "Plugins/auto_highlight_occurrences/color_subprogram": "rgb(39,81,0)",
