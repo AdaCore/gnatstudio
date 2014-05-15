@@ -53,6 +53,8 @@ procedure GNATdoc_Main is
    Ignore_Files         : aliased GNAT.Strings.String_Access;
    Leading_Doc          : aliased Boolean := False;
    Regular_Expr         : aliased GNAT.Strings.String_Access;
+   Encoding             : aliased GNAT.Strings.String_Access :=
+                            new String'("iso-8859-1");
    Process_C_Files      : aliased Boolean := False;
    Process_Bodies       : aliased Boolean := False;
    Project_Name         : aliased GNAT.Strings.String_Access;
@@ -190,7 +192,7 @@ procedure GNATdoc_Main is
       --  Compute the arguments to launch
       Append (Args, "--exit");
       Append (Args, "--symlinks");
-      Append (Args, "--encoding=iso-8859-1");
+      Append (Args, "--encoding=" & Encoding.all);
       Append (Args, "-P" & (+Project_File.Full_Name.all));
       Append (Args, "--db=" &
          (+Kernel.Databases.Xref_Database_Location.Full_Name.all));
@@ -250,6 +252,12 @@ begin
       Switch      => "-R:",
       Long_Switch => "--regexp=",
       Help        => "Regular expression to select documentation comments");
+   Define_Switch
+     (Cmdline,
+      Output      => Encoding'Access,
+      Switch      => "-e:",
+      Long_Switch => "--encoding=",
+      Help        => "The character encoding used for source and ALI files");
    Define_Switch
      (Cmdline,
       Output       => Process_Bodies'Access,
