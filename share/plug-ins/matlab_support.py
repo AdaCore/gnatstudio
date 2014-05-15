@@ -5,7 +5,7 @@ XML = """
 <Language>
   <Name>matlab</Name>
   <Body_Suffix>.m</Body_Suffix>
-  <Obj_Suffix>.pyc</Obj_Suffix>
+  <Obj_Suffix>-</Obj_Suffix>
   <Context>
     <Can_Indent>True</Can_Indent>
     <Syntax_Highlighting>False</Syntax_Highlighting>
