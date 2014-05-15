@@ -105,15 +105,10 @@ TARGET = "GMC for project"
 # Definitions #
 ###############
 
-# Matlab and Simulink languages
+# Simulink
 
 LANGUAGE_DEFS = r"""<?xml version='1.0' ?>
   <GPS>
-    <Language>
-      <Name>Matlab</Name>
-      <Body_Suffix>.m</Body_Suffix>
-      <Obj_Suffix>-</Obj_Suffix>
-    </Language>
     <Language>
       <Name>Simulink</Name>
       <Body_Suffix>.mdl</Body_Suffix>
