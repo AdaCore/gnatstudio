@@ -187,7 +187,7 @@ class GUI(object):
         user interaction or not. If the element is not sensitive, the user
         will not be able to click on it.
 
-        :param sensitive: A boolean
+        :param boolean sensitive: A boolean
 
         .. seealso:: :func:`GPS.GUI.is_sensitive()`
         """
@@ -223,7 +223,7 @@ class Action(GUI):
         :func:`GPS.Action.create`. The name of the action can either be a
         simple name, or a path name to reference a menu, such as /Edit/Copy.
 
-        :param name: A string
+        :param string name: A string
         """
         pass  # implemented in Ada
 
@@ -235,9 +235,9 @@ class Action(GUI):
         Python function that takes no argument while the callback for
         :func:`GPS.Contextual` receives one argument.
 
-        :param path: A string
-        :param ref: A string
-        :param add_before: A boolean
+        :param string path: A string
+        :param string ref: A string
+        :param boolean add_before: A boolean
         """
         pass  # implemented in Ada
 
@@ -253,7 +253,9 @@ class Action(GUI):
         gps_utils.interactive).
 
         :param on_activate: A subprogram
+        :type on_activate: () -> None
 
+        :type filter: string|(Context) -> boolean
         :param filter: A string or subprogram
            Either the name of a predefined filter (a string), or a
            subprogram that receives the context as a parameter, and should
@@ -261,10 +263,10 @@ class Action(GUI):
            context. This is used to disable menu items when they are not
            available.
 
-        :param category: A string
+        :param string category: A string
            Category of the command in the /Edit/Key Shortcuts dialog.
 
-        :param description: A string
+        :param string description: A string
            Description of the command that appears in that
            dialog. If you are using Python, a convenient value is
            on_activate.__doc__, which avoids duplicating the comment.
@@ -277,7 +279,7 @@ class Action(GUI):
         Execute the action if its filter matches the current context. If it
         could be executed, True is returned, otherwise False is returned.
 
-        :return: A boolean
+        :rtype: boolean
         """
 
     def key(self, key):
@@ -286,7 +288,7 @@ class Action(GUI):
         the user defined his own key binding. You can experiment with
         possible values for keys by using the /Edit/Key Shortcuts dialog.
 
-        :param key: A string
+        :param string key: A string
         """
         pass  # implemented in Ada
 
@@ -298,10 +300,11 @@ class Action(GUI):
         no argument, whereas the callback for :func:`GPS.Menu` receives one
         argument.
 
-        :param path: A string
-        :param ref: A string
-        :param add_before: A boolean
+        :param string path: A string
+        :param string ref: A string
+        :param boolean add_before: A boolean
         :return: The instance of GPS.Menu that was created
+        :rtype: Menu
         """
         pass  # implemented in Ada
 
@@ -320,7 +323,7 @@ class Activities(object):
         """
         Creates a new activity and returns its instance
 
-        :param name: Activity name to be given to this instance
+        :param string name: Activity name to be given to this instance
 
         .. code-block:: python
 
@@ -333,7 +336,8 @@ class Activities(object):
         """
         Adds the file to the activity.
 
-        :param file: An instance of :class:`GPS.File`
+        :param file: The file instance to add to the activity
+        :type file: :class:`GPS.File`
         """
         pass  # implemented in Ada
 
@@ -362,8 +366,12 @@ class Activities(object):
         """
         Returns the activity containing the given file.
 
-        :param file: An instance of :class:`GPS.File`
-        :return: An instance of :class:`GPS.Activities`
+        :param file: The instance for which you wish to get the corresponding
+            activity
+        :type file: :class:`GPS.File`
+
+        :return: The corresponding activity
+        :rtype: :class:`GPS.Activities`
         """
         pass  # implemented in Ada
 
@@ -372,8 +380,9 @@ class Activities(object):
         """
         Returns the activity given its id.
 
-        :param id: The unique activity's id
-        :return: An instance of :class:`GPS.Activities`
+        :param string id: The unique activity's id
+        :return: The corresponding instance
+        :rtype: :class:`GPS.Activities`
 
         .. seealso:: :func:`GPS.Activities.list`
 
@@ -384,7 +393,7 @@ class Activities(object):
         """
         Returns true if the activity will be committed atomically.
 
-        :return: A boolean
+        :rtype: boolean
         """
         pass  # implemented in Ada
 
@@ -392,7 +401,7 @@ class Activities(object):
         """
         Returns true if the activity has a log present.
 
-        :return: A boolean
+        :rtype: boolean
         """
         pass  # implemented in Ada
 
@@ -400,7 +409,7 @@ class Activities(object):
         """
         Returns the activity's unique id.
 
-        :return: A string
+        :rtype: string
         """
         pass  # implemented in Ada
 
@@ -408,7 +417,7 @@ class Activities(object):
         """
         Returns true if the activity is closed.
 
-        :return: A boolean
+        :rtype: boolean
         """
         pass  # implemented in Ada
 
@@ -418,6 +427,7 @@ class Activities(object):
         Returns the list of all activity's id.
 
         :return: A list of all activity's id defined
+        :rtype: list[string]
         """
         pass  # implemented in Ada
 
@@ -425,7 +435,7 @@ class Activities(object):
         """
         Returns the activity's log content.
 
-        :return: A string
+        :rtype: string
         """
         pass  # implemented in Ada
 
@@ -433,7 +443,7 @@ class Activities(object):
         """
         Returns the activity's log file.
 
-        :return: A file
+        :rtype: :class:`GPS.File`
         """
         pass  # implemented in Ada
 
@@ -441,7 +451,7 @@ class Activities(object):
         """
         Returns the activity's name.
 
-        :return: A string
+        :rtype: string
         """
         pass  # implemented in Ada
 
@@ -456,7 +466,8 @@ class Activities(object):
         """
         Removes the file from the activity.
 
-        :param file: An instance of :class:`GPS.File`
+        :param file: The file to remove
+        :type file: :class:`GPS.File`
         """
         pass  # implemented in Ada
 
@@ -464,7 +475,7 @@ class Activities(object):
         """
         Set the activity's status to closed.
 
-        :param status: A boolean
+        :param bool status: A boolean
         """
         pass  # implemented in Ada
 
@@ -486,7 +497,7 @@ class Activities(object):
         """
         Returns the activity's VCS name.
 
-        :return: A string
+        :rtype: string
         """
         pass  # implemented in Ada
 
@@ -542,7 +553,7 @@ class FileContext(Context):
         """
         Return the current directory of the context.
 
-        :return: A string
+        :rtype: string
         """
         pass  # implemented in Ada
 
@@ -550,7 +561,7 @@ class FileContext(Context):
         """
         Return the name of the file in the context.
 
-        :return: An instance of :class:`GPS.File`
+        :rtype: :class:`GPS.File`
         """
         pass  # implemented in Ada
 
@@ -558,7 +569,7 @@ class FileContext(Context):
         """
         Return the list of selected files in the context
 
-        :return: A list of :class:`GPS.File`
+        :rtype: list[:class:`GPS.File`]
         """
         pass  # implemented in Ada
 
@@ -566,7 +577,7 @@ class FileContext(Context):
         """
         Return the file location stored in the context.
 
-        :return: An instance of :class:`GPS.FileLocation`
+        :rtype: :class:`GPS.FileLocation`
         """
         pass  # implemented in Ada
 
@@ -576,7 +587,7 @@ class FileContext(Context):
         specified in the context. Return an error if no project can be found
         from the context.
 
-        :return: An instance of :class:`GPS.Project`
+        :rtype: :class:`GPS.Project`
         """
         pass  # implemented in Ada
 
@@ -630,7 +641,7 @@ class AreaContext(FileContext):
         """
         Return the last selected line in the context.
 
-        :return: An integer
+        :rtype: integer
         """
         pass  # implemented in Ada
 
@@ -638,7 +649,7 @@ class AreaContext(FileContext):
         """
         Return the first selected line in the context.
 
-        :return: An integer
+        :rtype: integer
         """
         pass  # implemented in Ada
 
@@ -679,8 +690,8 @@ class Bookmark(object):
         :func:`GPS.Bookmark.get`. This function emits the hook
         bookmark_added.
 
-        :param name: A string
-        :return: An instance of :class:`GPS.Bookmark`
+        :param string name: The name of the bookmark
+        :rtype: :class:`GPS.Bookmark`
 
         .. seealso:: :func:`GPS.Bookmark.get`
 
@@ -709,8 +720,8 @@ class Bookmark(object):
         be automatically preserved across GPS sessions, so you may want to
         save all your data when GPS exits
 
-        :param name: A string
-        :return: An instance of :class:`GPS.Bookmark`
+        :param string name: The name of the bookmark
+        :rtype: :class:`GPS.Bookmark`
 
         .. seealso:: :func:`GPS.Bookmark.create`
 
@@ -738,7 +749,7 @@ class Bookmark(object):
         """
         Return the list of all existing bookmarks.
 
-        :return: A list of :class`GPS.Bookmark` instances
+        :rtype: list[:class`GPS.Bookmark`]
 
         .. code-block:: python
 
@@ -755,7 +766,7 @@ class Bookmark(object):
         that was used to create or get the bookmark, since the user might have
         used the bookmarks view to rename it.
 
-        :return: A string
+        :rtype: string
         """
         pass  # implemented in Ada
 
@@ -765,7 +776,7 @@ class Bookmark(object):
         automatically, and emits the hooks :file:`bookmark_removed` and
         :file:`bookmark_added`.
 
-        :param name: A string
+        :param string name: The new name of the bookmark
         """
         pass  # implemented in Ada
 
@@ -786,7 +797,7 @@ class BuildTarget(object):
         Initializes a new instance of the class :class:`BuildTarget`. ``name``
         must correspond to an existing target.
 
-        :param name: Name of the target associated with this instance
+        :param string name: Name of the target associated with this instance
 
         .. code-block:: python
 
@@ -801,8 +812,9 @@ class BuildTarget(object):
         are copied from the target.  Any graphical element corresponding to
         this new target is created.
 
-        :param new_name: The name of the new target
-        :param new_category: The category in which to place the new target
+        :param string new_name: The name of the new target
+        :param string new_category: The category in which to place the new
+        target
         """
         pass  # implemented in Ada
 
@@ -811,26 +823,31 @@ class BuildTarget(object):
         """
         Launch the build target.
 
-        :param main_name: A String
-           Indicates the base name of the main source to build, if this target
-           acts on a main file.
-        :param file: A GPS.File
-           Indicates the file to build if this targets acts on a file.
-        :param force: A Boolean
+        :param string main_name: The base name of the main source to build, if
+            this target acts on a main file.
+
+        :param file: The file to build if this targets acts on a file.
+        :type file: :class:`GPS.File`
+
+        :param bool force:
            If True, this means that the target should be launched directly,
            even if its parameters indicate that it should be launched through
            an intermediary dialog.
-        :param extra_args: A String or a list of strings
+
+        :param string|list[string] extra_args:
            any extra parameters to pass to the command line. When a single
            string is passed, it is split into multiple arguments.
-        :param build_mode: A String
-           Indicates build mode to be used for build.
-        :param synchronous: A Boolean
+
+        :param string build_mode:  Indicates build mode to be used for build.
+
+        :param bool synchronous:
            if False, build target is launched asynchronously.
            ``compilation_finished hook`` will be called when build target
            execution is completed.
-        :param directory: A String
-        :param quiet: A Boolean
+
+        :param string directory: A String
+
+        :param bool quiet: A Boolean
         """
         pass  # implemented in Ada
 
@@ -872,9 +889,10 @@ class Button(GUI):
         Initializes a new button. When the button is pressed by the user,
         :func:`on_click` is called with the a single parameter, ``self``.
 
-        :param id: A string, a unique identifier for the button
-        :param label: A string, the text that appears on the button
-        :param on_click: A subprogram, see the GPS documentation
+        :param string id: A unique identifier for the button
+        :param string label: The text that appears on the button
+        :param on_click: A subprogram to be called when the button is clicked
+        :type on_click: (:class:`GPS.Button`) -> None
 
         .. code-block:: python
 
@@ -889,7 +907,7 @@ class Button(GUI):
         """
         Changes the text that appears on the button.
 
-        :param label: A string
+        :param string label: New label for the button
         """
         pass  # implemented in Ada
 
@@ -916,7 +934,7 @@ class Clipboard(object):
         the text at position :func:`GPS.Clipboard.current` rather than the
         first in the list.
 
-        :return: A list of strings
+        :rtype: list[string]
         """
         pass  # implemented in Ada
 
@@ -927,8 +945,9 @@ class Clipboard(object):
         to use :func:`GPS.EditorBuffer.copy`, but it might happen that you need
         to append text that do not exist in the buffer.
 
-        :param text: A string
-        :param append: A boolean
+        :param string text: The content you want to put int the clipboard.
+        :param boolean append: Wether you want to append to the current
+        clipboard content or not.
 
         .. seealso:: :func:`GPS.EditorBuffer.copy`
         """
@@ -943,7 +962,7 @@ class Clipboard(object):
         /Edit/Paste Previous, current will be incremented by 1, and the next
         selection in the clipboard is pasted.
 
-        :return: An integer
+        :rtype: integer
         """
         pass  # implemented in Ada
 
@@ -954,8 +973,8 @@ class Clipboard(object):
         index ``index1`` now contains the concatenation of both. The one at
         ``index2`` is removed.
 
-        :param index1: A null or positive integer
-        :param index2: A null or positive integer
+        :param integer index1: A null or positive integer
+        :param integer index2: A null or positive integer
         """
         pass  # implemented in Ada
 
@@ -1002,8 +1021,10 @@ class CodeAnalysis(object):
         file. The data is read from the cov parameter that should have been
         created from the specified src file.
 
-        :param src: A GPS.File instance
-        :param cov: A GPS.File instance
+        :param src: The corresponding source file
+        :type src: :class:`GPS.File`
+        :param cov: The corresponding coverage file
+        :type cov: :class:`GPS.File`
 
         .. seealso::
 
@@ -1024,7 +1045,8 @@ class CodeAnalysis(object):
         Adds coverage information of every source files referenced in
         the GNAT project file (:file:`.gpr`) for ``prj``.
 
-        :param prj: A :class:`GPS.File` instance
+        :param prj: The corresponding project file
+        :type prj: A :class:`GPS.File` instance
 
         .. seealso::
 
@@ -1045,7 +1067,8 @@ class CodeAnalysis(object):
         Create an XML-formated file containing a representation of the given
         code analysis.
 
-        :param xml: A GPS.File instance
+        :param xml: The output xml file
+        :type xml: :class:`GPS.File`
 
         .. seealso:: :func:`GPS.CodeAnalysis.load_from_file`
 
@@ -1063,10 +1086,11 @@ class CodeAnalysis(object):
         Creates an empty code analysis data structure. Data can be put in this
         structure by using one of the primitive operations.
 
-        :param name: The name of the code analysis data structure to get or
-           create
+        :param string name: The name of the code analysis data structure to
+        get or create
         :return: An instance of :class:`GPS.CodeAnalysis` associated to a code
            analysis data structure in GPS.
+        :rtype: :class:`GPS.CodeAnalysis`
 
         .. code-block:: python
 
@@ -1091,7 +1115,8 @@ class CodeAnalysis(object):
         Replace the current coverage information in memory with the given
         XML-formated file one.
 
-        :param xml: A :class:`GPS.File` instance
+        :param xml: The source xml file
+        :type xml: :class:`GPS.File`
 
         .. seealso:: :func:`GPS.CodeAnalysis.dump_to_file`
 
@@ -1147,7 +1172,7 @@ class Codefix(object):
         """
         Returns the instance of codefix associated with the given category.
 
-        :param category: A string
+        :param string category: The corresponding category
         """
         pass  # implemented in Ada
 
@@ -1158,10 +1183,11 @@ class Codefix(object):
         fixable error exists.
 
         :param file: The file where the error is
-        :param line: The line where the error is
-        :param column: The column where the error is
-        :param message: The message of the error
-        :return: An instance of :class:`GPS.CodefixError`
+        :type file: :class:`GPS.File`
+        :param integer line: The line where the error is
+        :param integer column: The column where the error is
+        :param string message: The message of the error
+        :rtype: :class:`GPS.CodefixError`
         """
         pass  # implemented in Ada
 
@@ -1169,7 +1195,7 @@ class Codefix(object):
         """
         Lists the fixable errors in the session.
 
-        :return: A list of instances of :class:`GPS.CodefixError`
+        :rtype: list[:class:`GPS.CodefixError`]
         """
         pass  # implemented in Ada
 
@@ -1192,14 +1218,14 @@ class Codefix(object):
         Access the various suggested fixes through the methods of the
         :class:`Codefix` class.
 
-        :param category: A string
-        :param output: A string
-        :param regexp: A string
-        :param file_index: An integer
-        :param line_index: An integer
-        :param column_index: An integer
-        :param style_index: An integer
-        :param warning_index: An integer
+        :param string category: A string
+        :param string output: A string
+        :param string regexp: A string
+        :param integer file_index: An integer
+        :param integer line_index: An integer
+        :param integer column_index: An integer
+        :param integer style_index: An integer
+        :param integer warning_index: An integer
 
         .. seealso:: :func:`GPS.Editor.register_highlighting`
         """
@@ -1212,7 +1238,7 @@ class Codefix(object):
         can all be used to create a new instance of :class:`Codefix` through
         its constructor.
 
-        :return: A list of strings
+        :rtype: list[string]
 
         .. code-block:: python
 
@@ -1244,20 +1270,24 @@ class CodefixError(object):
         Describes a new fixable error. If the message is not specified, the
         first error at that location is returned.
 
-        :param codefix: An instance of :class:`GPS.Codefix`
-        :param file: An instance of :class:`GPS.FileLocation`
-        :param message: A string
+        :param codefix: The owning codefix instance
+        :type codefix: :class:`GPS.Codefix`
+
+        :param file: The location of the error
+        :type file: :class:`GPS.FileLocation`
+
+        :param string message: The message of the error
         """
         pass  # implemented in Ada
 
-    def fix(self, choice='0'):
+    def fix(self, choice=0):
         """
         Fixes the error, using one of the possible fixes. The index given in
         parameter is the index in the list returned by
         :func:`possible_fixes`. By default, the first choice is
         taken. Choices start at index 0.
 
-        :param choice: Index of the fix to apply, see output of
+        :param integer choice: Index of the fix to apply, see output of
            :func:`GPS.CodefixError.possible_fixes`
 
         .. code-block:: python
@@ -1274,7 +1304,7 @@ class CodefixError(object):
         """
         Returns the location of the error.
 
-        :return: An instance of :class:`GPS.FileLocation`
+        :rtype: :class:`GPS.FileLocation`
         """
         pass  # implemented in Ada
 
@@ -1282,7 +1312,7 @@ class CodefixError(object):
         """
         Returns the error message, as issue by the tool.
 
-        :return: A string
+        :rtype: string
         """
         pass  # implemented in Ada
 
@@ -1290,7 +1320,7 @@ class CodefixError(object):
         """
         Lists the possible fixes for the specific error.
 
-        :return: A list of strings
+        :rtype: list[string]
 
         .. code-block:: python
 
@@ -1322,16 +1352,18 @@ class Combo(GUI):
         """
         Creates a new combo. The combo will graphically be preceded by some
         text if label was specified. :func`on_changed` is called every time the
-        user selects a new value for the combo box. Its parameters are the
-        following:
+        user selects a new value for the combo box.
 
-        - $1 = The instance of GPS.Combo (self)
-        - $2 = The newly selected text (a string)
+        :param string id: The name of the combo to create
+        :param string label: The label to add next to the entry
 
-        :param id: A string, the name of the combo to create
-        :param label: A string, the label to add next to the entry
-        :param on_changed: A subprogram, see the GPS documentaion on
-            Subprogram parameters.
+        :param on_changed: A subprogram, see the GPS documentation on
+            Subprogram parameters. Its parameters are the following:
+
+            - The instance of GPS.Combo (self)
+            - The newly selected text (a string)
+
+        :type on_changed: (:class:`GPS.Combo`, string) -> None
 
         .. seealso::
 
@@ -1344,15 +1376,16 @@ class Combo(GUI):
     def add(self, choice, on_selected=None):
         """
         Adds a choice to specified entry, :func:`on_selected` is executed
-        whenever this choice is selected. It is called with the following
+        whenever this choice is selected.
+
+        :param string choice: The new choice
+        :param on_selected: A subprogram, called with the following
         parameters:
 
-        - $1 = The instance of GPS.Combo (self)
-        - $2 = The newly selected text (a string)
+            - The instance of GPS.Combo (self)
+            - The newly selected text (a string)
 
-        :param choice: A string
-        :param on_selected: A subprogram, see the GPS documentation on
-           Subprogram parameters
+        :type on_selected: (:class:`GPS.Combo`, string) -> None
         """
         pass  # implemented in Ada
 
@@ -1366,7 +1399,7 @@ class Combo(GUI):
         """
         Returns the current selection in the specified entry.
 
-        :return: A string
+        :rtype: A string
         """
         pass  # implemented in Ada
 
@@ -1374,7 +1407,7 @@ class Combo(GUI):
         """
         Removes a choice from the specified entry.
 
-        :param choice: A string
+        :param string choice: The choice to remove
 
         .. seealso:: :func:`GPS.Combo.clear()`
         """
@@ -1384,7 +1417,7 @@ class Combo(GUI):
         """
         Sets the current selection in the specified entry.
 
-        :param choice: A string
+        :param string choice: The string to remove
         """
         pass  # implemented in Ada
 
@@ -1412,8 +1445,8 @@ class Command(object):
         Returns the list of commands of the name given in the parameter,
         scheduled or running in the task manager
 
-        :param name: A string
-        :return: A list of :class:`GPS.Command`
+        :param string name: A string
+        :rtype: list[:class:`GPS.Command`]
         """
         pass  # implemented in Ada
 
@@ -1435,7 +1468,7 @@ class Command(object):
         """
         Returns the list of commands scheduled or running in the task manager.
 
-        :return: A list of :class:`GPS.Command`
+        :rtype: list[:class:`GPS.Command`]
         """
         pass  # implemented in Ada
 
@@ -1449,6 +1482,7 @@ class Command(object):
         current = total, the command has completed.
 
         :return: A list [current, total]
+        :rtype: list[int]
         """
         pass  # implemented in Ada
 
@@ -1499,48 +1533,49 @@ class CommandWindow(GUI):
         Initializes an instance of a command window. An exception is raised
         if such a window is already active in GPS. Otherwise, the new window
         is popped up on the screen. Its location depends on the
-        ``global_window`` parameter: if true, the command window is displayed
-        at the bottom of the GPS window and occupies its whole width. If
-        false, it is displayed at the bottom of the currently selected
-        window.
+        ``global_window`` parameter.
 
-        The prompt is the short string displayed just before the command line
-        itself. Its goal is to indicate to the user what he is entering.
+        :param string prompt: the short string displayed just before the
+          command line itself. Its goal is to indicate to the user what he
+          is entering.
 
-        The last four parameters are callbacks:
+        :param bool global_window: If true, the command window is displayed
+          at the bottom of the GPS window and occupies its whole width. If
+          false, it is displayed at the bottom of the currently selected
+          window.
 
-        - :func:`on_changed` is called when the user has entered one or more
+        :param on_changed: A subprogram, is called when the user has entered
           new characters in the command line. This function is given two
           parameters: the current input string, and the last cursor position
           in this string. See the example above on how to get the part of the
           input before and after the cursor.
+        :type on_changed: (string, int) -> None
 
-        - :func:`on_activate` is called when the user pressed enter. The
-          command window has already been closed at that point if
+        :param on_activate: A subprogram, is called when the user pressed
+          enter.
+          The command window has already been closed at that point if
           close_on_activate is True and the focus given back to the initial
           MDI window that had it. This callback is passed a single parameter,
           the final input string.
+        :type on_activate: (string) -> None
 
-        - :func:`on_cancel` is called when the user pressed a key that closed
-          the dialog, for example :kbd:`Esc`. It is passed a single parameter,
-          the final input string. This callback is also called when you
-          explicitly destroy the window yourself by calling
+        :param on_cancel: A subprogram, is called when the user pressed a key
+          that closed the dialog, for example :kbd:`Esc`. It is passed a single
+          parameter, the final input string. This callback is also called when
+          you explicitly destroy the window yourself by calling
           :func:`self.destroy`.
+        :type on_cancel: (string) -> None
 
-        - :func:`on_key` is called when the user has pressed a new key on his
+        :param on_key: Is called when the user has pressed a new key on his
           keyboard but before the corresponding character has been added to
           the command line. This can be used to filter out some characters or
           provide special behavior for some key combination (see the example
           above). It is passed three parameters, the current input string, the
           key that was pressed, and the current cursor position.
+        :type on_key: (string, int) -> None
 
-        :param prompt: A string
-        :param global_window: A boolean
-        :param on_changed: A subprogram
-        :param on_activate: A subprogram
-        :param on_cancel: A subprogram
-        :param on_key: A subprogram
-        :param close_on_activate: A boolean
+        :param bool close_on_activate: A boolean, determines wether the
+          command window has to be closed on pressing enter.
         """
         pass  # implemented in Ada
 
@@ -1548,7 +1583,7 @@ class CommandWindow(GUI):
         """
         Returns the current contents of the command window.
 
-        :return: A string
+        :rtype: string
         """
         pass  # implemented in Ada
 
@@ -1559,7 +1594,7 @@ class CommandWindow(GUI):
         changing the color. If the color parameter is not specified, the
         color reverts to its default.
 
-        :param color: A string
+        :param string color: The new background color
         """
         pass  # implemented in Ada
 
@@ -1567,7 +1602,7 @@ class CommandWindow(GUI):
         """
         Changes the prompt displayed before the text field.
 
-        :param prompt: A string
+        :param string prompt: The new prompt to display
         """
         pass  # implemented in Ada
 
@@ -1583,8 +1618,8 @@ class CommandWindow(GUI):
         The cursor parameter can be used to specify where the cursor should
         be left after the insertion. -1 indicates the end of the string.
 
-        :param text: A string
-        :param cursor: An integer
+        :param string text: A string
+        :param integer cursor: An integer
         """
         pass  # implemented in Ada
 
@@ -1673,7 +1708,7 @@ class Console(GUI):
         parameter force is set to True, GPS creates a new console.
 
         You cannot create the Python and Shell consoles through this call. If
-        you tryu, an exception is raised. Instead, use
+        you try, an exception is raised. Instead, use
         :func:`GPS.execute_action` ("/Tools/Consoles/Python"), and then get a
         handle on the console through :class:`GPS.Console`. This is because
         these two consoles are tightly associated with each of the scripting
@@ -2022,6 +2057,7 @@ class Contextual(object):
     def create(self, on_activate, label=None, filter=None,
                ref='', add_before=True,
                group='0', visibility_filter=None, action=None):
+
         """
         Creates a new contextual menu entry.  Whenever this menu entry is
         selected by the user, GPS executes :func:`on_activate`, passing one
@@ -2057,6 +2093,8 @@ class Contextual(object):
         :param add_before: A boolean
         :param filter: A subprogram
         :param group: An integer
+        :param GPS.Action action: An action instance to be executed on menu
+            activation
 
         .. code-block:: python
 
