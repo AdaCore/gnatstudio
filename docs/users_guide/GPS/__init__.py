@@ -3943,6 +3943,7 @@ class EditorBuffer(object):
         There is a higher level method, :meth:`EditorBuffer.cursors` that
         returns a generator that will handle this manual work for you.
 
+        :rtype: list[GPS.Cursor]
         :return: A list of :class:`Cursor` instances
         """
 
@@ -3958,7 +3959,7 @@ class EditorBuffer(object):
         on all multi cursors. Cursor movements will not be propagated.
         """
 
-    def update_cursors_selection():
+    def update_cursors_selection(self):
         """
         Updates the overlay used to show the multi cursor's current
         selection.  This must be called after any operation on multi cursor
