@@ -1,7 +1,7 @@
 import GPS
 from modules import Module
 from gi.repository import Gtk, GLib, Gdk, Pango
-from pygps import get_gtk_buffer
+from pygps import get_gtk_buffer, is_editor_visible
 import re
 from time import time
 
@@ -24,9 +24,9 @@ class HighlighterModule(Module):
                     highlighter.gtk_highlight(gtk_ed)
 
     def gps_started(self):
-        ed = GPS.EditorBuffer.get(open=False)
-        if ed:
-            self.init_highlighting(ed.file())
+        for ed in GPS.EditorBuffer.list():
+            if is_editor_visible(ed):
+                self.init_highlighting(ed.file())
 
     def preferences_changed(self):
         for pref in self.preferences.values():

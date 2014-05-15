@@ -55,7 +55,7 @@ def delayed_exit(delay=200):
      is still executing, since otherwise GPS cannot exit immediately"""
 
     def exit_gps(T):
-        if GPS.Command.list() == []:
+        if not GPS.Command.list():
             GPS.exit(force=1)
 
     GPS.Timeout(delay, exit_gps)
@@ -447,6 +447,41 @@ try:
 
         if process_events:
             process_all_events()
+
+    def get_notebook(text_box):
+        """
+        :type text_box: Gtk.VBox
+        :return: Gtk.Notebook
+        """
+        try:
+            w = text_box
+            for _ in range(4):
+                w = w.get_parent()
+            return w
+        except AttributeError:
+            return None
+
+    def get_current_textbox(nb):
+        """
+        :type nb: Gtk.Notebook
+        :return: Gtk.VBox
+        """
+        return get_widgets_by_type(Gtk.VBox,
+                                   nb.get_nth_page(nb.get_current_page()))[-1]
+
+    def is_editor_visible(ed_buffer):
+        """
+        :type ed_buffer: GPS.EditorBuffer
+        :return: boolean
+        """
+        vbox = ed_buffer.current_view().pywidget()
+        nb = get_notebook(vbox)
+        if nb:
+            return get_current_textbox(nb) == vbox and vbox.is_visible()
+        # If nb is None, the editor is not in a notebook
+        else:
+            return vbox.is_visible()
+
 
 except ImportError:
     pass
