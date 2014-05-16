@@ -1891,7 +1891,10 @@ package body GPS.Kernel.MDI is
       end loop;
 
       if not Modified.Is_Empty then
-         if Interactive then
+         if not Active (Testsuite_Handle) then
+            Response := Gtk_Response_Yes;
+
+         elsif Interactive then
             Gtk_New (Dialog,
                      Title  => -"Files changed on disk",
                      Parent => Get_Current_Window (Kernel),
