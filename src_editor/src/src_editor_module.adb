@@ -61,7 +61,6 @@ with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
@@ -122,6 +121,8 @@ package body Src_Editor_Module is
      (Self  : not null access Editor_Child_Record) return Node_Ptr;
    overriding function Get_Child_Class
      (Self  : not null access Editor_Child_Record) return Class_Type;
+   overriding procedure Reload
+     (Self : not null access Editor_Child_Record);
    --  See inherited documentation
 
    function Source_File_Hook
@@ -432,6 +433,35 @@ package body Src_Editor_Module is
       end if;
    end Dnd_Data;
 
+   ------------
+   -- Reload --
+   ------------
+
+   overriding procedure Reload (Self : not null access Editor_Child_Record) is
+      Editor  : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (MDI_Child (Self));
+      Buffer  : constant Source_Buffer := Get_Buffer (Editor);
+      File    : constant Virtual_File := Buffer.Get_Filename;
+      Success : Boolean;
+      Line    : Editable_Line_Type;
+      Column  : Character_Offset_Type;
+   begin
+      if not File.Is_Regular_File then
+         Close_File_Editors (Editor.Get_Kernel, File);
+      else
+         Get_Cursor_Position (Buffer, Line, Column);
+         Load_File
+           (Buffer,
+            Filename        => File,
+            Lang_Autodetect => True,
+            Success         => Success);
+
+         if Is_Valid_Position (Buffer, Line) then
+            Set_Cursor_Location (Editor, Line, Column, False);
+         end if;
+      end if;
+   end Reload;
+
    -------------------------
    -- Get_File_Identifier --
    -------------------------
@@ -481,6 +511,36 @@ package body Src_Editor_Module is
       end if;
    end Get_Project;
 
+   -------------------
+   -- For_All_Views --
+   -------------------
+
+   procedure For_All_Views
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      File     : Virtual_File;
+      Callback : not null access procedure
+        (Child : not null access GPS_MDI_Child_Record'Class))
+   is
+      Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Child : MDI_Child;
+      Box   : Source_Editor_Box;
+   begin
+      loop
+         Child := Get (Iter);
+         exit when Child = null;
+
+         if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
+            Box := Source_Editor_Box (Get_Widget (Child));
+
+            if File = GNATCOLL.VFS.No_File or else File = Box.Get_Filename then
+               Callback (GPS_MDI_Child (Child));
+            end if;
+         end if;
+
+         Next (Iter);
+      end loop;
+   end For_All_Views;
+
    --------------------
    -- File_Edited_Cb --
    --------------------
@@ -489,9 +549,16 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+
+      procedure On_View (Child : not null access GPS_MDI_Child_Record'Class);
+      procedure On_View (Child : not null access GPS_MDI_Child_Record'Class) is
+      begin
+         Child.Update_File_Info;
+      end On_View;
    begin
       Reset_Markers_For_File (Kernel, D.File);
+      For_All_Views (Kernel, D.File, On_View'Access);
    end File_Edited_Cb;
 
    -----------------------------
@@ -502,33 +569,15 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
-      Child : MDI_Child;
-      Box   : Source_Editor_Box;
+      procedure On_View (Child : not null access GPS_MDI_Child_Record'Class);
+      procedure On_View (Child : not null access GPS_MDI_Child_Record'Class) is
+      begin
+         Check_Writable (Source_Editor_Box (Get_Widget (Child)));
+      end On_View;
+
+      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
    begin
-      loop
-         Child := Get (Iter);
-
-         exit when Child = null;
-
-         if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
-            Box := Source_Editor_Box (Get_Widget (Child));
-
-            if D.File = GNATCOLL.VFS.No_File
-              or else D.File = Get_Filename (Box)
-            then
-               Check_Timestamp_And_Reload
-                 (Box,
-                  Interactive   => False,
-                  Always_Reload => False);
-
-               Check_Writable (Box);
-            end if;
-         end if;
-
-         Next (Iter);
-      end loop;
+      For_All_Views (Kernel, D.File, On_View'Access);
    end File_Changed_On_Disk_Cb;
 
    ---------------------
@@ -564,12 +613,29 @@ package body Src_Editor_Module is
       Id    : constant Source_Editor_Module :=
                 Source_Editor_Module (Src_Editor_Module_Id);
       D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
-      Child : MDI_Child;
-      Box   : Source_Editor_Box;
 
-      I     : Editors_Hash.Cursor;
-      E     : Element;
+      procedure On_View (Child : not null access GPS_MDI_Child_Record'Class);
+      procedure On_View (Child : not null access GPS_MDI_Child_Record'Class) is
+         I     : Editors_Hash.Cursor;
+         E     : Element;
+      begin
+         Child.Update_File_Info;
+         Editors_Hash.Get_First (Id.Editors, I);
+         E := Editors_Hash.Get_Element (I);
+
+         while E /= No_Element loop
+            if E.Child = MDI_Child (Child) then
+               Editors_Hash.Remove_And_Get_Next (Id.Editors, I);
+            else
+               Editors_Hash.Get_Next (Id.Editors, I);
+            end if;
+
+            E := Editors_Hash.Get_Element (I);
+         end loop;
+
+         Editors_Hash.Set (Id.Editors, D.File, (Child => MDI_Child (Child)));
+      end On_View;
+
    begin
       --  Insert the saved file in the Recent menu
 
@@ -579,38 +645,7 @@ package body Src_Editor_Module is
          Add_To_Recent_Menu (Kernel, D.File);
       end if;
 
-      loop
-         Child := Get (Iter);
-
-         exit when Child = null;
-
-         if Get_Widget (Child).all in Source_Editor_Box_Record'Class then
-            Box := Source_Editor_Box (Get_Widget (Child));
-
-            if D.File = GNATCOLL.VFS.No_File
-              or else D.File = Get_Filename (Box)
-            then
-               Editors_Hash.Get_First (Id.Editors, I);
-               E := Editors_Hash.Get_Element (I);
-
-               while E /= No_Element loop
-                  if E.Child = Child then
-                     Editors_Hash.Remove_And_Get_Next (Id.Editors, I);
-                  else
-                     Editors_Hash.Get_Next (Id.Editors, I);
-                  end if;
-
-                  E := Editors_Hash.Get_Element (I);
-               end loop;
-
-               Editors_Hash.Set (Id.Editors, D.File, (Child => Child));
-            end if;
-         end if;
-
-         Next (Iter);
-      end loop;
-   exception
-      when E : others => Trace (Me, E);
+      For_All_Views (Kernel, D.File, On_View'Access);
    end File_Saved_Cb;
 
    -----------------------
@@ -1173,7 +1208,6 @@ package body Src_Editor_Module is
       Project          : GNATCOLL.Projects.Project_Type;
       Create_New       : Boolean := True;
       Focus            : Boolean := True;
-      Force            : Boolean := False;
       Line             : Editable_Line_Type;
       Column           : Visible_Column_Type;
       Column_End       : Visible_Column_Type;
@@ -1245,10 +1279,6 @@ package body Src_Editor_Module is
 
          if Child2 /= null then
             Trace (Me, "Reusing existing editor for same project");
-            Check_Timestamp_And_Reload
-              (Source_Editor_Box (Get_Widget (Child2)),
-               Interactive   => not Force,
-               Always_Reload => Force);
 
             --  An editor exists: raise the child and Present its
             --  toplevel window. This is useful for instance when
@@ -1303,6 +1333,8 @@ package body Src_Editor_Module is
             Areas          => Areas);
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
+
+         Child.Monitor_File (File);
 
          --  ??? Consider enabling this code
          --  if MDI_Editors_Floating.Get_Pref then
@@ -1564,7 +1596,6 @@ package body Src_Editor_Module is
             Project          => D.Project,
             Create_New       => D.New_File,
             Focus            => D.Focus,
-            Force            => D.Force_Reload,
             Group            => D.Group,
             Initial_Position => D.Initial_Position,
             Line             => Editable_Line_Type (D.Line),
@@ -2470,7 +2501,6 @@ package body Src_Editor_Module is
 
             loop
                Child := Get (Iter);
-
                exit when Child = null;
 
                if Get_Widget (Child).all in Source_Editor_Box_Record'Class then

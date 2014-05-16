@@ -30,7 +30,6 @@ with System;
 with GNAT.Strings;
 with GNATCOLL.Projects;
 with GNATCOLL.Symbols;
-with GNATCOLL.Utils;
 with GNATCOLL.VFS;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
@@ -640,16 +639,6 @@ package Src_Editor_Buffer is
    --  has been revealed.
    --  Project is the project from which the file is viewed (used for
    --  aggregate projects)
-
-   function Check_Timestamp_And_Diff
-     (Buffer : access Source_Buffer_Record'Class;
-      Update : Boolean := False) return Boolean;
-   --  Check whether the timestamp changed on the disk. If the timestamp has
-   --  changed, also checks whether the file has actually changed on the disk.
-   --
-   --  Return True if the file is up-to-date.
-   --  If Update is true, the internal timestamp is also updated, so that a
-   --  second call to this function will always return False.
 
    procedure Add_Controls (Buffer : access Source_Buffer_Record);
    --  Connect the Undo/Redo buttons to the queue containing the buffer
@@ -1522,10 +1511,6 @@ private
 
       Current_Status  : Status_Type := Unmodified;
       --  The current buffer status
-
-      Timestamp : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
-      --  Timestamp of the file the last time it was checked. It it used to
-      --  detect cases where the file was edited by an external editor.
 
       Number_Of_Views : Integer := 0;
       --  The number of objects viewing the buffer

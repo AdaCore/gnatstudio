@@ -26,6 +26,7 @@ with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Styles.UI;               use GPS.Styles.UI;
@@ -79,6 +80,14 @@ package Src_Editor_Module is
    --  Return the source editor that has currently the focus in the MDI.
    --  If the focus in the MDI is not set on a source editor, then the top most
    --  editor is returned.
+
+   procedure For_All_Views
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      File     : Virtual_File;
+      Callback : not null access procedure
+        (Child : not null access GPS_MDI_Child_Record'Class));
+   --  For all mdi children corresponding to an editor showing File
+   --  (if File is No_File, returns all source editors).
 
    function Find_Editor
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -363,7 +372,6 @@ private
       Project    : GNATCOLL.Projects.Project_Type;
       Create_New : Boolean := True;
       Focus      : Boolean := True;
-      Force      : Boolean := False;
       Line       : Editable_Line_Type;
       Column     : Visible_Column_Type;
       Column_End : Visible_Column_Type;
@@ -378,8 +386,6 @@ private
    --  If Focus is True, the box will be raised if it is in the MDI.
    --  See Create_File_Exitor.
    --  Position indicates the position to give to the editor in the MDI.
-   --  If Force is true, then the file is reloaded without asking confirmation
-   --  from the user
    --  Initial_Dir is the initial directory to create the file in, in case
    --  we are creating an editor for a new file.
 

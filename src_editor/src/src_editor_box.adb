@@ -30,11 +30,8 @@ with GNATCOLL.Xref;
 
 with Gdk;                        use Gdk;
 with Gdk.Event;                  use Gdk.Event;
-with Gdk.Main;                   use Gdk.Main;
 with Gdk.Types;                  use Gdk.Types;
 with Gdk.Window;                 use Gdk.Window;
-with Gdk.Display;                use Gdk.Display;
-with Gdk.Screen;                 use Gdk.Screen;
 
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
@@ -42,7 +39,6 @@ with Glib;                       use Glib;
 
 with Gtk;                        use Gtk;
 with Gtk.Box;                    use Gtk.Box;
-with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Frame;                  use Gtk.Frame;
@@ -65,7 +61,6 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
@@ -161,12 +156,6 @@ package body Src_Editor_Box is
 
    function Focus_Out (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_out event
-
-   function Key_Press (Box : access GObject_Record'Class) return Boolean;
-   --  Check whether the file has been modified on disk
-
-   function Check_Timestamp_Idle (Box : GObject) return Boolean;
-   --  Idle callback to check that the timestamp of a file hasn't changed
 
    procedure Set_Writable (Views : Views_Array; Writable : Boolean);
    --  Make the views editable and update their read-only label according to
@@ -539,18 +528,8 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Object, Params);
    begin
-
       Disconnect (Box.Source_Buffer, Box.Status_Handler);
-
       Delete (Box.Source_View);
-
-      --  Remove the idle handler if it was registered
-      if Box.Check_Timestamp_Registered then
-         Glib.Main.Remove (Box.Check_Timestamp_Id);
-      end if;
-   exception
-      when E : others =>
-         Trace (Me, E);
    end On_Box_Destroy;
 
    ----------------
@@ -682,8 +661,6 @@ package body Src_Editor_Box is
       Object_Return_Callback.Object_Connect
         (Box.Source_View, Signal_Focus_Out_Event,
          Focus_Out'Access, Box, False);
-      Object_Return_Callback.Object_Connect
-        (Box.Source_View, Signal_Key_Press_Event, Key_Press'Access, Box);
 
       --  The Contextual Menu handling
       Register_Contextual_Menu
@@ -714,102 +691,6 @@ package body Src_Editor_Box is
          Source => null);
    end Initialize;
 
-   ---------------
-   -- Key_Press --
-   ---------------
-
-   function Key_Press (Box : access GObject_Record'Class) return Boolean is
-      B : constant Source_Editor_Box := Source_Editor_Box (Box);
-   begin
-      if B.Timestamp_Mode = Check_At_Modify then
-         Check_Timestamp_And_Reload
-           (B, Interactive => True, Always_Reload => False);
-
-         B.Timestamp_Mode := Check_At_Focus;
-      end if;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end Key_Press;
-
-   --------------------------
-   -- Check_Timestamp_Idle --
-   --------------------------
-
-   function Check_Timestamp_Idle (Box : GObject) return Boolean is
-      B : constant Source_Editor_Box := Source_Editor_Box (Box);
-      Is_Grabbed : Boolean := False;
-   begin
-      Check_Writable (B);
-
-      --  If we are currently holding down the mouse button, then we do not
-      --  want to offer to reload the file, since the pop-up dialog will
-      --  not be able to get the mouse input. Therefore we do nothing in
-      --  this idle callback, but keep it registered so that the timestamp
-      --  is checked after the button release.
-
-      if Pointer_Is_Grabbed then
-         Is_Grabbed := True;
-      else
-         --  If the pointer is not grabbed, we might still have a button down,
-         --  for instance when dragging the window around. In this case,
-         --  do nothing until the button is released.
-         declare
-            State     : Gdk.Types.Gdk_Modifier_Type;
-            Ignored_X, Ignored_Y : Gint;
-            Display   : constant Gdk_Display := Get_Default;
-            Screen    : Gdk.Screen.Gdk_Screen;
-         begin
-            Get_Pointer (Display => Display,
-                         Screen  => Screen,
-                         X       => Ignored_X,
-                         Y       => Ignored_Y,
-                         Mask    => State);
-            if (State and Button1_Mask) /= 0 then
-               Is_Grabbed := True;
-            end if;
-         end;
-      end if;
-
-      if Is_Grabbed then
-         --  No need to try again if the file is up-to-date. Otherwise, we'll
-         --  need to try again. One issue here is that while displaying a
-         --  contextual menu for an editor that didn't have the focus before,
-         --  and the file on disk has been modified, the idle callback is
-         --  called in a loop, and that takes 100% of CPU (G227-035).
-         B.Check_Timestamp_Registered :=
-           not Check_Timestamp_And_Diff (B.Source_Buffer, Update => False)
-           or else
-             (not Is_Regular_File (Get_Filename (B.Source_Buffer))
-              and then B.Source_Buffer.Has_Been_Saved
-              and then B.Source_Buffer.Get_Writable);
-         --  The above part is to detect a writable file that has been saved at
-         --  some point (so was existing on disk) but removed somehow.
-         return B.Check_Timestamp_Registered;
-      end if;
-
-      B.Check_Timestamp_Registered := False;
-      if B.Timestamp_Mode = Check_At_Focus then
-         B.Timestamp_Mode := Checking;
-
-         Check_Timestamp_And_Reload
-           (B, Interactive => True, Always_Reload => False);
-
-         B.Timestamp_Mode := Check_At_Focus;
-      end if;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end Check_Timestamp_Idle;
-
    --------------
    -- Focus_In --
    --------------
@@ -817,17 +698,6 @@ package body Src_Editor_Box is
    function Focus_In (Box : access GObject_Record'Class) return Boolean is
       B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
-      --  We must do the check in an idle callback: otherwise, when the dialog
-      --  is popped up on the screen, and since it is modal, the button
-      --  release event is never sent to the editor, and there is a drag
-      --  selection taking place.
-
-      if not B.Check_Timestamp_Registered then
-         B.Check_Timestamp_Registered := True;
-         B.Check_Timestamp_Id :=
-           Object_Idle.Idle_Add (Check_Timestamp_Idle'Access, GObject (Box));
-      end if;
-
       --  Connect the Undo/Redo buttons to the buffer
       if Get_Writable (B.Source_Buffer) then
          Add_Controls (B.Source_Buffer);
@@ -1776,7 +1646,7 @@ package body Src_Editor_Box is
 
          else
             if not Force
-              and then not Check_Timestamp_And_Diff (Editor.Source_Buffer)
+              and then Check_Monitored_Files (Editor.Kernel)
               and then Message_Dialog
                 (Msg => Display_Base_Name (File)
                         & (-" changed on disk. Do you want to overwrite ?"),
@@ -1813,143 +1683,6 @@ package body Src_Editor_Box is
          end if;
       end if;
    end Save_To_File;
-
-   --------------------------------
-   -- Check_Timestamp_And_Reload --
-   --------------------------------
-
-   procedure Check_Timestamp_And_Reload
-     (Editor        : access Source_Editor_Box_Record;
-      Interactive   : Boolean;
-      Always_Reload : Boolean)
-   is
-      Dialog : Gtk_Dialog;
-      Ignore : Gtk_Widget;
-      pragma Unreferenced (Ignore);
-
-      Exists   : constant Boolean :=
-                   Is_Regular_File
-                     (Get_Filename (Editor.Source_Buffer));
-      Response : Gtk_Response_Type;
-      Success  : Boolean;
-      Line     : Editable_Line_Type;
-      Column   : Character_Offset_Type;
-      Data     : aliased File_Hooks_Args;
-   begin
-      if Get_Filename (Editor.Source_Buffer) /= GNATCOLL.VFS.No_File then
-         if Always_Reload
-           or else not Check_Timestamp_And_Diff
-             (Editor.Source_Buffer, Update => True)
-           or else (not Exists
-                    and then Editor.Source_Buffer.Has_Been_Saved
-                    and then Editor.Source_Buffer.Get_Writable)
-         --  The above part is to detect a writable file that has been saved at
-         --  some point (so was existing on disk) but removed somehow.
-         then
-            if Always_Reload
-              or else not Interactive
-
-              --  No dialog in the testsuite
-              or else Active (Testsuite_Handle)
-            then
-               Response := Gtk_Response_No;
-
-            else
-               Data.File := Get_Filename (Editor.Source_Buffer);
-
-               if not Run_Hook_Until_Success
-                 (Editor.Kernel, File_Changed_Detected_Hook,
-                  Data'Unchecked_Access)
-               then
-                  if Exists then
-                     Dialog := Create_Gtk_Dialog
-                       (Display_Base_Name (Get_Filename (Editor.Source_Buffer))
-                        & (-" changed on disk.")
-                        & ASCII.LF & ASCII.LF
-                        & (-"Click on Ignore to keep this editing session.")
-                        & ASCII.LF
-                        & (-"Click on Reload to reload the file from disk")
-                        & ASCII.LF
-                        & (-"and discard your current changes."),
-                        Dialog_Type   => Confirmation,
-                        Title         => -"File changed on disk",
-                        Justification => Justify_Left,
-                        Parent        => Get_Current_Window (Editor.Kernel));
-                     Ignore := Add_Button (Dialog, -"Reload", Gtk_Response_No);
-
-                  else
-                     Dialog := Create_Gtk_Dialog
-                       (Display_Base_Name (Get_Filename (Editor.Source_Buffer))
-                        & (-" removed from disk.")
-                        & ASCII.LF & ASCII.LF
-                        & (-"Click on Ignore to keep this editing session.")
-                        & ASCII.LF
-                        & (-"Click on Close to remove the file buffer."),
-                        Dialog_Type   => Confirmation,
-                        Title         => -"File removed from disk",
-                        Justification => Justify_Left,
-                        Parent        => Get_Current_Window (Editor.Kernel));
-                     Ignore := Add_Button (Dialog, -"Close", Gtk_Response_No);
-                  end if;
-
-                  Ignore := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
-
-                  --  Ungrab the pointer if needed, to avoid freezing the
-                  --  interface if the user is e.g. moving the GPS window
-
-                  Pointer_Ungrab;
-                  Show_All (Dialog);
-                  Response := Run (Dialog);
-                  Destroy (Dialog);
-               end if;
-            end if;
-
-            case Response is
-               when Gtk_Response_Yes =>
-                  if not Exists then
-                     --  Re-create the file from current buffer content
-                     declare
-                        F : Virtual_File;
-                        W : Writable_File;
-                        C : GNAT.Strings.String_Access :=
-                              Get_String (Editor.Source_Buffer);
-                     begin
-                        F := Create_From_UTF8
-                          (String
-                             (Full_Name
-                                (Get_Filename (Editor.Source_Buffer)).all));
-                        W := Write_File (F);
-                        Write (W, C.all);
-                        Close (W);
-                        Free (C);
-                     end;
-                  end if;
-
-               when Gtk_Response_No =>
-                  if not Exists then
-                     Close_File_Editors
-                       (Editor.Kernel,
-                        Get_Filename (Editor.Source_Buffer));
-
-                  else
-                     Get_Cursor_Position (Get_Buffer (Editor), Line, Column);
-                     Load_File
-                       (Editor.Source_Buffer,
-                        Filename        => Get_Filename (Editor.Source_Buffer),
-                        Lang_Autodetect => True,
-                        Success         => Success);
-
-                     if Is_Valid_Position (Editor.Source_Buffer, Line) then
-                        Set_Cursor_Location (Editor, Line, Column, False);
-                     end if;
-                  end if;
-
-               when others =>
-                  null;
-            end case;
-         end if;
-      end if;
-   end Check_Timestamp_And_Reload;
 
    -------------------------
    -- Set_Cursor_Location --
