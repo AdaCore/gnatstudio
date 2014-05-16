@@ -1646,7 +1646,8 @@ package body Src_Editor_Box is
 
          else
             if not Force
-              and then Check_Monitored_Files (Editor.Kernel)
+              and then Check_Monitored_Files
+                (Editor.Kernel, Interactive => False)
               and then Message_Dialog
                 (Msg => Display_Base_Name (File)
                         & (-" changed on disk. Do you want to overwrite ?"),
