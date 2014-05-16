@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Hashed_Sets;
-with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Tags;
 with Ada.Unchecked_Conversion;
 
@@ -27,21 +25,15 @@ with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
-with Glib.Main;                use Glib.Main;
 with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
 
-with Gdk;                      use Gdk;
-with Gdk.Display;              use Gdk.Display;
-with Gdk.Main;
-with Gdk.Screen;               use Gdk.Screen;
-with Gdk.Types;                use Gdk.Types;
+with Gdk;      use Gdk;
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Container;            use Gtk.Container;
 with Gtk.Dialog;               use Gtk.Dialog;
@@ -64,15 +56,14 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Config;
-with Default_Preferences;       use Default_Preferences;
+with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with GPS.Main_Window;          use GPS.Main_Window;
 
 with GPS.Editors;              use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -115,23 +106,6 @@ package body GPS.Kernel.MDI is
 
    UI_Module : General_UI_Module;
 
-   type Monitored_File_And_Child is record
-      Child : GPS_MDI_Child;
-      File  : Virtual_File;
-   end record;
-   package Monitored_File_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type => Monitored_File_And_Child);
-
-   package File_Sets is new Ada.Containers.Hashed_Sets
-     (Element_Type        => Virtual_File,
-      Hash                => GNATCOLL.VFS.Full_Name_Hash,
-      Equivalent_Elements => "=");
-
-   type File_Check_Button_Record is new Gtk_Check_Button_Record with record
-      File : Virtual_File;
-   end record;
-   type File_Check_Button is access all File_Check_Button_Record'Class;
-
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -149,14 +123,6 @@ package body GPS.Kernel.MDI is
      (Child : access MDI_Child_Record'Class;
       Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Called when the user is displaying the contextual menu on tabs
-
-   procedure On_Child_Selected
-     (MDI    : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Called when a different child gains the focus
-
-   function Check_Timestamp_Idle (Kernel : Kernel_Handle) return Boolean;
-   --  Checks whether any of the monitored files has been modified on disk.
 
    ------------------------
    -- Get_Current_Window --
@@ -843,6 +809,19 @@ package body GPS.Kernel.MDI is
    --------------------
 
    procedure Tab_Contextual
+     (Child : access GPS_MDI_Child_Record;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Child, Menu);
+   begin
+      null;
+   end Tab_Contextual;
+
+   --------------------
+   -- Tab_Contextual --
+   --------------------
+
+   procedure Tab_Contextual
      (Child : access MDI_Child_Record'Class;
       Menu  : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
@@ -852,82 +831,17 @@ package body GPS.Kernel.MDI is
       end if;
    end Tab_Contextual;
 
-   --------------------------
-   -- Check_Timestamp_Idle --
-   --------------------------
-
-   function Check_Timestamp_Idle (Kernel : Kernel_Handle) return Boolean is
-      State     : Gdk.Types.Gdk_Modifier_Type;
-      Ignored_X, Ignored_Y : Gint;
-      Screen    : Gdk.Screen.Gdk_Screen;
-      Dummy     : Boolean;
-      pragma Unreferenced (Dummy);
-   begin
-      --  If we are currently holding down the mouse button, then we do not
-      --  want to offer to reload the file, since the pop-up dialog will
-      --  not be able to get the mouse input. Therefore we do nothing in
-      --  this idle callback, but keep it registered so that the timestamp
-      --  is checked after the button release.
-
-      if Gdk.Main.Pointer_Is_Grabbed then
-         return True;
-      end if;
-
-      --  If the pointer is not grabbed, we might still have a button down,
-      --  for instance when dragging the window around. In this case,
-      --  do nothing until the button is released.
-
-      Get_Pointer (Display => Gdk.Display.Get_Default,
-                   Screen  => Screen,
-                   X       => Ignored_X,
-                   Y       => Ignored_Y,
-                   Mask    => State);
-      if (State and Button1_Mask) /= 0 then
-         return True;
-      end if;
-
-      Dummy := Check_Monitored_Files (Kernel);
-
-      --  The idle was only meant to be run once
-      Kernel.Check_Monitored_Files_Id := Glib.Main.No_Source_Id;
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Kernel.Check_Monitored_Files_Id := Glib.Main.No_Source_Id;
-         return False;
-   end Check_Timestamp_Idle;
-
-   -----------------------
-   -- On_Child_Selected --
-   -----------------------
-
-   procedure On_Child_Selected
-     (MDI    : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (MDI);
-   begin
-      Check_Monitored_Files_In_Background (Kernel);
-   end On_Child_Selected;
-
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
      (MDI    : out MDI_Window;
-      Kernel : not null access Kernel_Handle_Record'Class;
       Group  : access Gtk.Accel_Group.Gtk_Accel_Group_Record'Class)
    is
    begin
       Gtkada.MDI.Gtk_New (MDI, Group);
       Set_Tab_Contextual_Menu_Factory (MDI, Tab_Contextual'Access);
-
-      Kernel_Callback.Connect
-        (MDI, Signal_Child_Selected, On_Child_Selected'Access,
-         Kernel_Handle (Kernel));
    end Gtk_New;
 
    ----------------------
@@ -1749,235 +1663,5 @@ package body GPS.Kernel.MDI is
       end if;
       return N;
    end Save_Desktop;
-
-   ------------------
-   -- Monitor_File --
-   ------------------
-
-   procedure Monitor_File
-     (Self : not null access GPS_MDI_Child_Record;
-      File : GNATCOLL.VFS.Virtual_File)
-   is
-   begin
-      Self.Files := (File      => File,
-                     Timestamp => GNATCOLL.Utils.No_Time,
-                     Sha1      => (others => '-'));
-      Self.Update_File_Info;
-   end Monitor_File;
-
-   ----------------------
-   -- Update_File_Info --
-   ----------------------
-
-   procedure Update_File_Info (Self : not null access GPS_MDI_Child_Record) is
-      Str : GNAT.Strings.String_Access;
-   begin
-      if Self.Files.File /= No_File then
-         Trace (Me, "Update file info " & Self.Files.File.Display_Full_Name);
-         Self.Files.Timestamp := Self.Files.File.File_Time_Stamp;
-
-         Str := Self.Files.File.Read_File;
-         if Str /= null then
-            Self.Files.Sha1 := GNAT.SHA1.Digest (Str.all);
-         else
-            Self.Files.Sha1 := (others => '-');
-         end if;
-         Free (Str);
-      end if;
-   end Update_File_Info;
-
-   -----------------------------------------
-   -- Check_Monitored_Files_In_Background --
-   -----------------------------------------
-
-   procedure Check_Monitored_Files_In_Background
-     (Kernel      : not null access Kernel_Handle_Record'Class)
-   is
-   begin
-      --  We will check in an idle whether any of the files has changed on
-      --  disk. We can't do so immediately because the dialog that would be
-      --  popped up on the screen, and since it is modal, the button release
-      --  event is never sent to the editor, and there is a drag selection
-      --  taking place.
-
-      if Kernel.Check_Monitored_Files_Id = Glib.Main.No_Source_Id then
-         Kernel.Check_Monitored_Files_Id := Kernel_Sources.Idle_Add
-           (Check_Timestamp_Idle'Access, Kernel);
-      end if;
-   end Check_Monitored_Files_In_Background;
-
-   ---------------------------
-   -- Check_Monitored_Files --
-   ---------------------------
-
-   function Check_Monitored_Files
-     (Kernel      : not null access Kernel_Handle_Record'Class;
-      Interactive : Boolean := True)
-      return Boolean
-   is
-      function Is_File_Modified (Info : Monitored_File) return Boolean;
-      --  Whether the file has been modified on the disk, or removed from the
-      --  disk
-
-      function Is_File_Modified (Info : Monitored_File) return Boolean is
-         New_Timestamp : Ada.Calendar.Time;
-         Str  : GNAT.Strings.String_Access;
-         Exists : Boolean;
-      begin
-         if Info.File = No_File then
-            --  No file to monitor
-            return False;
-         end if;
-
-         Exists := Info.File.Is_Regular_File;
-         if not Exists and then Info.Timestamp /= GNATCOLL.Utils.No_Time then
-            --  File existed before, no longer exists
-            return True;
-         end if;
-
-         New_Timestamp := Info.File.File_Time_Stamp;
-         if New_Timestamp = Info.Timestamp then
-            --  Same timestamp, don't check anything else.
-            --  This is of course not perfect, but we are not trying to deal
-            --  with tools that would change the file and yet preserve its
-            --  timestamp.
-            return False;
-         end if;
-
-         Str := Info.File.Read_File;
-         if GNAT.SHA1.Digest (Str.all) = Info.Sha1 then
-            --  Not modified after all, same SHA1
-            Free (Str);
-            return False;
-         end if;
-
-         Free (Str);
-         return True;
-      end Is_File_Modified;
-
-      use Monitored_File_Lists, File_Sets;
-
-      MDI      : constant MDI_Window := Get_MDI (Kernel);
-      Iter     : Child_Iterator := MDI.First_Child;
-      C        : MDI_Child;
-      G        : GPS_MDI_Child;
-      Button   : File_Check_Button;
-      Modified : Monitored_File_Lists.List;
-      To_Update : File_Sets.Set;
-      F        : Monitored_File_Lists.Cursor;
-      Data     : aliased File_Hooks_Args;
-      Dialog   : Gtk_Dialog;
-      Label    : Gtk_Label;
-      Ignore   : Gtk_Widget;
-      Response : Gtk_Response_Type;
-   begin
-      loop
-         C := Get (Iter);
-         exit when C = null;
-
-         if C.all in GPS_MDI_Child_Record'Class then
-            G := GPS_MDI_Child (C);
-            Data.File := G.Files.File;
-
-            if Is_File_Modified (G.Files)
-              and then not Run_Hook_Until_Success
-                (Kernel, File_Changed_Detected_Hook, Data'Unchecked_Access)
-            then
-               Modified.Append ((Child => G, File => G.Files.File));
-            end if;
-         end if;
-
-         Next (Iter);
-      end loop;
-
-      if not Modified.Is_Empty then
-         if not Active (Testsuite_Handle) then
-            Response := Gtk_Response_Yes;
-
-         elsif Interactive then
-            Gtk_New (Dialog,
-                     Title  => -"Files changed on disk",
-                     Parent => Get_Current_Window (Kernel),
-                     Flags  => Modal or Destroy_With_Parent);
-
-            Gtk_New (Label, -"The following files were changed on disk."
-                     & ASCII.LF);
-            Label.Set_Selectable (True);
-            Label.Set_Alignment (0.0, 0.0);
-            Dialog.Get_Content_Area.Pack_Start (Label);
-
-            F := Modified.First;
-            while Has_Element (F) loop
-               if not To_Update.Contains (Element (F).File) then
-                  To_Update.Insert (Element (F).File);
-
-                  Button := new File_Check_Button_Record;
-                  Button.File := Element (F).File;
-                  Initialize (Button, Button.File.Display_Full_Name);
-                  Button.Set_Alignment (0.0, 0.5);
-                  Button.Set_Active (True);
-                  Dialog.Get_Content_Area.Pack_Start (Button);
-               end if;
-
-               Next (F);
-            end loop;
-
-            Ignore := Add_Button (Dialog, -"Synchronize", Gtk_Response_Yes);
-            Ignore.Set_Tooltip_Text
-              ("Reload selected files from disk and discard current changes."
-               & ASCII.LF
-               & "If the file was deleted, the view will be closed");
-
-            Ignore := Add_Button (Dialog, -"Ignore", Gtk_Response_No);
-            Ignore.Set_Tooltip_Text (-"Keep current GPS changes");
-
-            Dialog.Set_Default_Response (Gtk_Response_No);
-
-            Gdk.Main.Pointer_Ungrab;
-            Dialog.Show_All;
-            Response := Dialog.Run;
-
-         else
-            Response := Gtk_Response_Yes;
-         end if;
-
-         if Response = Gtk_Response_No then
-            To_Update.Clear;
-         else
-            declare
-               procedure Check_File
-                 (Widget : not null access Gtk_Widget_Record'Class);
-               procedure Check_File
-                 (Widget : not null access Gtk_Widget_Record'Class)
-               is
-               begin
-                  if Widget.all in File_Check_Button_Record'Class
-                    and then not File_Check_Button (Widget).Get_Active
-                  then
-                     To_Update.Delete (File_Check_Button (Widget).File);
-                  end if;
-               end Check_File;
-            begin
-               Dialog.Get_Content_Area.Forall (Check_File'Unrestricted_Access);
-            end;
-         end if;
-
-         if Dialog /= null then
-            Dialog.Destroy;
-         end if;
-
-         F := Modified.First;
-         while Has_Element (F) loop
-            if To_Update.Contains (Element (F).File) then
-               Element (F).Child.Reload;
-            else
-               Element (F).Child.Update_File_Info;
-            end if;
-            Next (F);
-         end loop;
-      end if;
-
-      return False;
-   end Check_Monitored_Files;
 
 end GPS.Kernel.MDI;

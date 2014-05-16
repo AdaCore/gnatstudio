@@ -25,6 +25,7 @@
 --  </description>
 
 with Glib;
+with Glib.Main;
 with Glib.Object;
 with Gdk.Event;
 
@@ -142,6 +143,17 @@ package Src_Editor_Box is
    --  Save the buffer to the given file.
    --  Success is set to false if the buffer could not be saved.
    --  If filename is null, use the filename associated with Editor.
+
+   procedure Check_Timestamp_And_Reload
+     (Editor        : access Source_Editor_Box_Record;
+      Interactive   : Boolean;
+      Always_Reload : Boolean);
+   --  Check whether the timestamp changed on the disk.
+   --  If yes, then
+   --    if Interactive is True, display a dialog asking the user whether he
+   --      wants to reload the file.
+   --    if Interactive is False, reload the file without asking.
+   --  In Always_Reload, then the file will always be reloaded.
 
    procedure Set_Cursor_Location
      (Editor      : access Source_Editor_Box_Record;
@@ -358,8 +370,19 @@ private
    --  Convert a column number in the Source Buffer to a column number
    --  in the Source Box. Same rationale as in To_Box_Line.
 
+   type Timestamp_Check_Mode is (Checking, Check_At_Focus, Check_At_Modify);
+   --  When should the source box test the timestamp of the file on disk ?
+   --  - Checking: we are already asking the user whether he wants to edit
+   --  - Check_At_Focus: check at next focus event only
+   --  - Check_At_Modify: check the next time the buffer is modified only
+   --  The goal of this type is to avoid asking the question multiple times to
+   --  the user. If he answers no the first time, we forbid editing until he
+   --  has said yes.
+
    type Source_Editor_Box_Record is new Gtk.Box.Gtk_Box_Record with record
       Kernel               : GPS.Kernel.Kernel_Handle;
+
+      Timestamp_Mode       : Timestamp_Check_Mode := Check_At_Focus;
 
       Source_View          : Src_Editor_View.Source_View;
       Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
@@ -372,6 +395,11 @@ private
       Status_Handler       : Gtk.Handlers.Handler_Id;
       --  Handler connected to the signal "status_changed"
       --  from the source buffer.
+
+      Check_Timestamp_Registered : Boolean := False;
+      Check_Timestamp_Id         : Glib.Main.G_Source_Id;
+      --  Used to protect the idle handler from being called after the box is
+      --  destroyed.
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely

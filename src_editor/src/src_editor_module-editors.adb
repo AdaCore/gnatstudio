@@ -816,8 +816,6 @@ package body Src_Editor_Module.Editors is
 
       Child : MDI_Child;
       Box   : Source_Editor_Box;
-      Dummy : Boolean;
-      pragma Unreferenced (Dummy);
    begin
       if File /= GNATCOLL.VFS.No_File then
          Child := Find_Editor (This.Kernel, File, Project);
@@ -845,7 +843,7 @@ package body Src_Editor_Module.Editors is
          Box := Get_Source_Box_From_MDI (Child);
 
          if File /= GNATCOLL.VFS.No_File and Force then
-            Dummy := Check_Monitored_Files (This.Kernel, Interactive => False);
+            Check_Timestamp_And_Reload (Box, False, True);
          end if;
       end if;
 

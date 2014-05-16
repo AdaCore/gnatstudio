@@ -514,17 +514,6 @@ package body GPS.Main_Window is
       return False;
    end On_Draw_Toolbar_Box;
 
-   -----------------
-   -- On_Focus_In --
-   -----------------
-
-   function On_Focus_In (W : access Gtk_Widget_Record'Class) return Boolean;
-   function On_Focus_In (W : access Gtk_Widget_Record'Class) return Boolean is
-   begin
-      Check_Monitored_Files_In_Background (GPS_Window (W).Kernel);
-      return False;
-   end On_Focus_In;
-
    ----------------
    -- Initialize --
    ----------------
@@ -580,9 +569,7 @@ package body GPS.Main_Window is
       Add_Default (Main_Window.Icon_Factory);
 
       GPS.Kernel.MDI.Gtk_New
-        (MDI    => Main_Window.MDI,
-         Kernel => Main_Window.Kernel,
-         Group  => Main_Window.Main_Accel_Group);
+        (Main_Window.MDI, Main_Window.Main_Accel_Group);
 
       Gtk_New_Vbox (Vbox, False, 0);
       Add (Main_Window, Vbox);
@@ -615,9 +602,6 @@ package body GPS.Main_Window is
          Delete_Callback'Access,
          Gtk_Widget (Main_Window),
          After => False);
-
-      Return_Callback.Connect
-        (Main_Window, Signal_Focus_In_Event, On_Focus_In'Access);
 
       --  Support for Win32 WM_DROPFILES drag'n'drop
 

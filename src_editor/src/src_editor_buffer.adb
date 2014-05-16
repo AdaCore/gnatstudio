@@ -4072,6 +4072,8 @@ package body Src_Editor_Buffer is
 
       Buffer.Modified_Auto := False;
 
+      Buffer.Timestamp := File_Time_Stamp (Filename);
+
       Empty_Queue (Buffer.Queue);
       Buffer.Current_Command := null;
 
@@ -4429,6 +4431,8 @@ package body Src_Editor_Buffer is
          Force => Force);
 
       if Success and then not Internal then
+         Buffer.Timestamp := File_Time_Stamp (Get_Filename (Buffer));
+
          if Name_Changed then
             --  Force an update of the persistent properties if need be
             Set_Charset  (Buffer, Get_Charset (Buffer));
@@ -5908,6 +5912,58 @@ package body Src_Editor_Buffer is
 
       return Context;
    end Source_Lines_Context;
+
+   ------------------------------
+   -- Check_Timestamp_And_Diff --
+   ------------------------------
+
+   function Check_Timestamp_And_Diff
+     (Buffer : access Source_Buffer_Record'Class;
+      Update : Boolean := False) return Boolean
+   is
+      New_Timestamp : Ada.Calendar.Time;
+      Result        : Boolean := True;
+   begin
+      if Buffer.Filename /= GNATCOLL.VFS.No_File then
+         New_Timestamp := File_Time_Stamp (Buffer.Filename);
+
+         --  If the file does not exist, we assume the editor is up-to-date
+
+         Result := New_Timestamp = No_Time
+           or else New_Timestamp = Buffer.Timestamp;
+
+         if Update then
+            Buffer.Timestamp := New_Timestamp;
+         end if;
+
+         --  If the timestamp changed, make sure the contents of the file has
+         --  really changed. Otherwise, it might be for instance a VCS that
+         --  modified the timestamps, and we don't need to bother the user with
+         --  that.
+         --  There is unfortunately no function in gtk + to get the number of
+         --  bytes in a buffer which we could use to speed up the following.
+
+         if not Result then
+            declare
+               Txt  : GNAT.Strings.String_Access := Get_String (Buffer);
+               Disk : GNAT.Strings.String_Access :=
+                        Read_File (Buffer.Filename);
+            begin
+               if Disk = null then
+                  Result := True;
+               else
+                  Result := Txt.all = Disk.all;
+               end if;
+
+               Trace (Me, "Timestamps differ, files equal ? " & Result'Img);
+               GNAT.Strings.Free (Disk);
+               GNAT.Strings.Free (Txt);
+            end;
+         end if;
+      end if;
+
+      return Result;
+   end Check_Timestamp_And_Diff;
 
    -------------------
    -- Register_View --

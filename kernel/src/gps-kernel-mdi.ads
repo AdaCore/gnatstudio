@@ -18,23 +18,21 @@
 --  This package contains various constants and subprograms used for the
 --  GPS-specific usage of the MDI.
 
-with Ada.Calendar;          use Ada.Calendar;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
 with Commands;
 with Default_Preferences;
-with GNAT.SHA1;             use GNAT.SHA1;
-with GNATCOLL.Scripts;
-with GNATCOLL.Utils;        use GNATCOLL.Utils;
-with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
-with Glib.Main;
 with Glib.Xml_Int;
+with Gtkada.MDI;         use Gtkada.MDI;
+with Glib.Main;
 with Gtk.Accel_Group;
-with Gtk.Handlers;          use Gtk.Handlers;
+with Gtk.Handlers;       use Gtk.Handlers;
 with Gtk.Icon_Factory;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Widget;
-with Gtkada.MDI;            use Gtkada.MDI;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GNATCOLL.Scripts;
 
 package GPS.Kernel.MDI is
 
@@ -102,7 +100,6 @@ package GPS.Kernel.MDI is
 
    procedure Gtk_New
      (MDI    : out MDI_Window;
-      Kernel : not null access Kernel_Handle_Record'Class;
       Group  : access Gtk.Accel_Group.Gtk_Accel_Group_Record'Class);
    --  Create the MDI and do GPS-specific initializations
 
@@ -223,8 +220,9 @@ package GPS.Kernel.MDI is
 
    procedure Tab_Contextual
      (Child : access GPS_MDI_Child_Record;
-      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class) is null;
+      Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu when the user right-click on a tab.
+   --  By default, this does nothing.
 
    function Get_File_Editor
      (Handle : access Kernel_Handle_Record'Class;
@@ -270,52 +268,6 @@ package GPS.Kernel.MDI is
    --  But the child can decide to process the interrupt itself (and do
    --  something less drastic than killing the whole process), and return
    --  True.
-
-   ---------------------
-   -- Views and files --
-   ---------------------
-   --  The following operations are used to associate a view to some files on
-   --  the disk, with the following results:
-   --  * warn the user when the file has changed on disk (or was removed), so
-   --    that he can choose to reload the file).
-   --  * mark the view as modified and ask the user to save it before a build,
-   --    before exit, and so on.
-
-   procedure Monitor_File
-     (Self : not null access GPS_MDI_Child_Record;
-      File : GNATCOLL.VFS.Virtual_File);
-   --  Indicates that the child is somehow displaying the contents of the file.
-   --  As a result, user will get warnings when the file changes on the disk.
-   --  You must override Reload to perform any useful operation when the file
-   --  was changed and the user decides to reload it.
-   --  A view that monitors a file automatically gets an icon to indicate the
-   --  status of the view (modified or not for instance).
-
-   procedure Update_File_Info (Self : not null access GPS_MDI_Child_Record);
-   --  Update cached information about the monitored files, like their
-   --  timestamps and checksums. This should be called after saving the file
-   --  explicitly, for instance.
-
-   procedure Reload (Self : not null access GPS_MDI_Child_Record) is null;
-   --  Reload the contents of the view after the monitored files have changed
-   --  on the disk.
-   --  The file might no longer exist on disk, in which case the view should be
-   --  closed.
-
-   function Check_Monitored_Files
-     (Kernel      : not null access Kernel_Handle_Record'Class;
-      Interactive : Boolean := True)
-     return Boolean;
-   procedure Check_Monitored_Files_In_Background
-     (Kernel      : not null access Kernel_Handle_Record'Class);
-   --  For each MDI child that monitors files, checks whether the file has been
-   --  updated on the disk (including computing checksums, so that simple
-   --  timestamp changes do not impact GPS), and either automatically reload
-   --  them or display an interactive dialog to the user.
-   --  A single dialog is displayed for all modified files.
-   --  Returns True if some files were modified but the user chose not to
-   --  synchronize.
-   --  Automatic reloading is performed if Interactive is False.
 
    --------------------------
    -- MDI Location markers --
@@ -435,8 +387,6 @@ package GPS.Kernel.MDI is
 
    package Kernel_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Kernel_Handle);
-   package Kernel_Return_Callback is new Gtk.Handlers.User_Return_Callback
-     (Glib.Object.GObject_Record, Boolean, Kernel_Handle);
    --  Generic callback that can be used to connect a signal to a kernel
 
    type File_Project_Record is record
@@ -450,22 +400,10 @@ package GPS.Kernel.MDI is
 
 private
 
-   type Monitored_File is record
-      File      : GNATCOLL.VFS.Virtual_File;
-      Timestamp : Ada.Calendar.Time := GNATCOLL.Utils.No_Time;
-      Sha1      : GNAT.SHA1.Message_Digest;
-   end record;
-   No_Monitored_File : constant Monitored_File :=
-     (File      => GNATCOLL.VFS.No_File,
-      Timestamp => GNATCOLL.Utils.No_Time,
-      Sha1      => (others => '-'));
-
    type GPS_MDI_Child_Record is new Gtkada.MDI.MDI_Child_Record with record
       Module              : Abstract_Module_ID;
       Desktop_Independent : Boolean;
       Save_Desktop        : GNATCOLL.Scripts.Subprogram_Type;
-
-      Files               : Monitored_File := No_Monitored_File;
    end record;
 
    type MDI_Location_Marker_Record
