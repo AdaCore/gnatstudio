@@ -115,11 +115,27 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Browsers.Item.height
+
+
+
    .. autoattribute:: GPS.Browsers.Item.is_link
 
 
 
-   .. autoattribute:: GPS.Browsers.Item.position
+   .. autoattribute:: GPS.Browsers.Item.parent
+
+
+
+   .. autoattribute:: GPS.Browsers.Item.width
+
+
+
+   .. autoattribute:: GPS.Browsers.Item.x
+
+
+
+   .. autoattribute:: GPS.Browsers.Item.y
 
 
    .. automethod:: GPS.Browsers.Item.__init__

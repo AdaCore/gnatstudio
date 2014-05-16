@@ -65,6 +65,7 @@ def get_focused_widget():
     return GPS.MDI.current().get_child().pywidget().get_toplevel().get_focus()
 
 
+# noinspection PyUnusedLocal
 def filter_text_actions(context):
     ret = type(get_focused_widget()) in [Gtk.TextView, Gtk.Entry]
     return ret
@@ -92,7 +93,7 @@ def save_dir(fn):
     return do_work
 
 
-def save_current_window(f, args=[], kwargs=dict()):
+def save_current_window(f, *args, **kwargs):
     """
     Save the window that currently has the focus, executes f, and
     reset the focus to that window.
@@ -101,7 +102,7 @@ def save_current_window(f, args=[], kwargs=dict()):
     mdi = GPS.MDI.current()
 
     try:
-        apply(f, args, kwargs)
+        f(*args, **kwargs)
     finally:
         if mdi:
             mdi.raise_window()
@@ -113,13 +114,14 @@ def with_save_current_window(fn):
     """
 
     def do_work(*args, **kwargs):
-        save_current_window(fn, args=args, kwargs=kwargs)
+        save_current_window(fn, *args, **kwargs)
+
     do_work.__name__ = fn.__name__   # Reset name
     do_work.__doc__ = fn.__doc__
     return do_work
 
 
-def save_excursion(f, args=[], kwargs=dict(), undo_group=True):
+def save_excursion(f, args, kwargs, undo_group=True):
     """
     Save current buffer, cursor position and selection and execute f.
     (args and kwargs) are passed as arguments to f. They indicate that any
@@ -154,7 +156,7 @@ def save_excursion(f, args=[], kwargs=dict(), undo_group=True):
         buffer.start_undo_group()
 
     try:
-        apply(f, args, kwargs)
+        f(*args, **kwargs)
 
     finally:
         if undo_group:
@@ -164,7 +166,7 @@ def save_excursion(f, args=[], kwargs=dict(), undo_group=True):
             # View might have been destroyed
             mdi.raise_window()
             view.goto(cursor)
-        except:
+        except Exception:
             # In this case use the next view available if any
             view = buffer.current_view()
             if not view:
@@ -259,9 +261,10 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
     if key:
         a.key(key)
 
-    return (a, m)
+    return a, m
 
 
+# noinspection PyPep8Naming
 class interactive:
 
     """
@@ -412,3 +415,18 @@ class Chainmap(UserDict.DictMixin):
 
     def keys(self):
         return [k for mp in self._maps for k in mp.keys()]
+
+
+def __insert(ed_buf, loc_or_text, text=None):
+    """
+    :type ed_buf: EditorBuffer
+    """
+    if isinstance(loc_or_text, EditorLocation):
+        assert isinstance(text, str) or isinstance(text, unicode)
+        ed_buf.__insert_at_location(loc_or_text, text)
+    else:
+        ed_buf.cursors()
+        assert isinstance(text, str) or isinstance(text, unicode)
+        ed_buf.__insert_at_location(ed_buf.current_view().cursor(),
+                                    loc_or_text)
+GPS.EditorBuffer.insert = __insert

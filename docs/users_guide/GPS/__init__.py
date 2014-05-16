@@ -3393,11 +3393,11 @@ class EditorBuffer(object):
         block and return it. If ``name`` is specified, the returned mark has
         this name.
 
-        :param start_line: An integer
-        :param text: A string
-        :param category: A string
-        :param name: A string
-        :return: An instance of :class:`GPS.EditorMark`
+        :param int start_line: An integer
+        :param string text: A string
+        :param string category: A string
+        :param string name: A string
+        :rtype: :class:`EditorMark`
 
         .. seealso:: :func:`GPS.EditorBuffer.get_mark`
         """
@@ -3410,9 +3410,10 @@ class EditorBuffer(object):
         changes the rendering of the text based on the properties of the
         overlay.
 
-        :param overlay: An instance of :class:`GPS.EditorOverlay`
-        :param frm: An instance of :class:`GPS.EditorLocation`
-        :param to: An instance of :class:`GPS.EditorLocation`
+        :param EditorOverlay overlay: An instance of :class:`GPS
+            .EditorOverlay`
+        :param EditorLocation frm: An instance of :class:`GPS.EditorLocation`
+        :param EditorLocation to: An instance of :class:`GPS.EditorLocation`
 
         .. seealso:: :func:`GPS.EditorBuffer.remove_overlay`
         """
@@ -3422,7 +3423,7 @@ class EditorBuffer(object):
         """
         Returns a new location at the given line and column in the buffer.
 
-        :return: A new instance of :class:`GPS.EditorLocation`
+        :rtype: :class:`EditorLocation`
         """
         pass  # implemented in Ada
 
@@ -3430,7 +3431,7 @@ class EditorBuffer(object):
         """
         Returns a location pointing to the first character in the buffer.
 
-        :return: An instance of :class:`GPS.EditorLocation`
+        :rtype: :class:`EditorLocation`
         """
         pass  # implemented in Ada
 
@@ -3469,7 +3470,7 @@ class EditorBuffer(object):
         """
         Returns the total number of characters in the buffer.
 
-        :return: An integer
+        :rtype: integer
         """
         pass  # implemented in Ada
 
@@ -3480,7 +3481,7 @@ class EditorBuffer(object):
         force is True, do not save and do not ask the user. All changes are
         lost.
 
-        :param force: A boolean
+        :param bool force: A boolean
         """
         pass  # implemented in Ada
 
@@ -3492,9 +3493,9 @@ class EditorBuffer(object):
         append is True, the text is appended to the last clipboard entry
         instead of generating a new one.
 
-        :param frm: An instance of :class:`GPS.EditorLocation`
-        :param to: An instance of :class:`GPS.EditorLocation`
-        :param append: A boolean
+        :param EditorLocation frm : An instance of :class:`EditorLocation`
+        :param EditorLocation to: An instance of :class:`EditorLocation`
+        :param bool append: A boolean
 
         .. seealso:: :func:`GPS.Clipboard.copy`
         """
@@ -3516,8 +3517,8 @@ class EditorBuffer(object):
         "comment", "string", "character". You can use these to navigate from
         one comment section to the next for example.
 
-        :param name: A string
-        :return: An instance of :class:`GPS.EditorOverlay`
+        :param string name: A string
+        :rtype: :class:`EditorOverlay`
         """
         pass  # implemented in Ada
 
@@ -3527,7 +3528,7 @@ class EditorBuffer(object):
         the focus and through which the user might have edited the buffer's
         contents.
 
-        :return: An instance of :class:`GPS.EditorView`
+        :rtype: :class:`EditorView`
         """
         pass  # implemented in Ada
 
@@ -3540,9 +3541,9 @@ class EditorBuffer(object):
         is appended to the last clipboard entry instead of generating a new
         one.
 
-        :param frm: An instance of :class:`GPS.EditorLocation`
-        :param to: An instance of :class:`GPS.EditorLocation`
-        :param append: A boolean
+        :param EditorLocation frm: An instance of :class:`EditorLocation`
+        :param EditorLocation to: An instance of :class:`EditorLocation`
+        :param bool append: A boolean
         """
         pass  # implemented in Ada
 
@@ -3550,8 +3551,8 @@ class EditorBuffer(object):
         """
         Deletes the given range of text from the buffer.
 
-        :param frm: An instance of :class:`GPS.EditorLocation`
-        :param to: An instance of :class:`GPS.EditorLocation`
+        :param EditorLocation frm: An instance of :class:`EditorLocation`
+        :param EditorLocation to: An instance of :class:`EditorLocation`
         """
         pass  # implemented in Ada
 
@@ -3559,7 +3560,7 @@ class EditorBuffer(object):
         """
         Returns a location pointing to the last character in the buffer.
 
-        :return: An instance of :class:`GPS.EditorLocation`
+        :rtype: :class:`EditorLocation`
         """
         pass  # implemented in Ada
 
@@ -3573,7 +3574,7 @@ class EditorBuffer(object):
         """
         Returns the name of the file edited in this buffer.
 
-        :return: An instance of :class:`GPS.File`
+        :rtype: :class:`File`
         """
         pass  # implemented in Ada
 
@@ -3609,10 +3610,10 @@ class EditorBuffer(object):
         If ``force`` is true, a reload is forced in case the file is already
         open.
 
-        :param file: An instance of :class:`GPS.File`
-        :param force: A boolean
-        :param open: A boolean
-        :return: An instance of :class:`GPS.EditorBuffer`
+        :param File file: An instance of :class:`GPS.File`
+        :param bool force: A boolean
+        :param bool open: A boolean
+        :rtype: :class:`EditorBuffer`
 
         .. code-block:: python
 
@@ -3632,9 +3633,9 @@ class EditorBuffer(object):
         Returns the contents of the buffer between the two locations given in
         parameter. Modifying the returned value has no effect on the buffer.
 
-        :param frm: An instance of :class:`GPS.EditorLocation`
-        :param to: An instance of :class:`GPS.EditorLocation`
-        :return: A string
+        :param EditorLocation frm: An instance of :class:`EditorLocation`
+        :param EditorLocation to: An instance of :class:`EditorLocation`
+        :rtype: string
         """
         pass  # implemented in Ada
 
@@ -3643,8 +3644,8 @@ class EditorBuffer(object):
         Checks whether there is a mark with that name in the buffer, and return
         it. An exception is raised if there is no such mark.
 
-        :param name: A string
-        :return: An instance of :class:`GPS.EditorMark`
+        :param string name: A string
+        :rtype: :class:`GPS.EditorMark`
 
         .. seealso:: :func:`GPS.EditorLocation.create_mark`
 
@@ -3668,7 +3669,7 @@ class EditorBuffer(object):
         Opens a new editor on a blank file. This file has no name, and you will
         have to provide one when you save it.
 
-        :return: An instance of :class:`GPS.EditorBuffer`
+        :rtype: :class:`EditorBuffer`
         """
         pass  # implemented in Ada
 
@@ -3677,17 +3678,31 @@ class EditorBuffer(object):
         Recomputes the indentation of the given range of text. This feature
         is language-dependent.
 
-        :param frm: An instance of :class:`GPS.EditorLocation`
-        :param to: An instance of :class:`GPS.EditorLocation`
+        :param EditorLocation frm: An instance of :class:`EditorLocation`
+        :param EditorLocation to: An instance of :class:`EditorLocation`
         """
         pass  # implemented in Ada
 
-    def insert(self, location, text):
+    def __insert_at_location(self, location, text):
         """
         Inserts some text in the buffer.
 
-        :param location: An instance of :class:`GPS.EditorLocation`
-        :param text: A string
+        :param EditorLocation location: An instance of :class:`EditorLocation`
+        :param string text: A string
+        """
+        pass  # implemented in Ada
+
+    def insert(self, loc_or_text, text=None):
+        """
+        Inserts some text in the buffer.
+
+        :param EditorLocation loc_or_text: Either where to insert the text,
+            or the text to insert in the buffer
+        :type loc_or_text: string|EditorLocation
+
+        :param string text: If the first passed parameter was a location,
+            this is the text to be inserted. Else, it can be ignored.
+        :type text: string|None
 
         .. seealso:: :func:`GPS.EditorBuffer.delete`
         """
@@ -3698,7 +3713,7 @@ class EditorBuffer(object):
         Tests whether the buffer has been modified since it was last opened
         or saved.
 
-        :return: A boolean
+        :rtype: bool
         """
         pass  # implemented in Ada
 
@@ -3706,7 +3721,7 @@ class EditorBuffer(object):
         """
         Whether the buffer is editable or not.
 
-        :return: A boolean
+        :rtype: bool
 
         .. seealso:: :func:`GPS.EditorBuffer.set_read_only`
         """
@@ -3716,7 +3731,7 @@ class EditorBuffer(object):
         """
         Returns the total number of lines in the buffer.
 
-        :return: An integer
+        :rtype: int
         """
         pass  # implemented in Ada
 
@@ -3726,6 +3741,7 @@ class EditorBuffer(object):
         Returns the list of all editors that are currently open in GPS.
 
         :return: A list of instances of :class:`GPS.EditorBuffer`
+        :rtype: list[EditorBuffer]
 
         .. code-block:: python
 
@@ -3741,7 +3757,7 @@ class EditorBuffer(object):
         Pastes the contents of the clipboard at the given location in the
         buffer.
 
-        :param location: An instance of :class:`GPS.EditorLocation`
+        :param EditorLocation location: An instance of :class:`EditorLocation`
         """
         pass  # implemented in Ada
 
@@ -3756,8 +3772,8 @@ class EditorBuffer(object):
         Refills the given range of text, i.e., cuts long lines if necessary
         so that they fit in the limit specified in the GPS preferences.
 
-        :param frm: An instance of :class:`GPS.EditorLocation`
-        :param to: An instance of :class:`GPS.EditorLocation`
+        :param EditorLocation frm: An instance of :class:`EditorLocation`
+        :param EditorLocation to: An instance of :class:`EditorLocation`
 
         """
         pass  # implemented in Ada
@@ -3769,9 +3785,9 @@ class EditorBuffer(object):
         not an error if the overlay is not applied to any of the character in
         the range, it just has no effect in that case.
 
-        :param overlay: An instance of :class:`GPS.EditorOverlay`
-        :param frm: An instance of :class:`GPS.EditorLocation`
-        :param to: An instance of :class:`GPS.EditorLocation`
+        :param EditorOverlay overlay: An instance of :class:`EditorOverlay`
+        :param EditorLocation frm: An instance of :class:`EditorLocation`
+        :param EditorLocation to: An instance of :class:`EditorLocation`
 
         .. seealso:: :func:`GPS.EditorBuffer.apply_overlay`
 
@@ -3783,8 +3799,8 @@ class EditorBuffer(object):
         Removes specified number of special lines at the specified mark. It
         does not delete the mark.
 
-        :param mark: An instance of :class:`GPS.EditorMark`
-        :param lines: An integer
+        :param EditorMark mark: An instance of :class:`EditorMark`
+        :param int lines: An integer
         """
         pass  # implemented in Ada
 
@@ -3795,8 +3811,8 @@ class EditorBuffer(object):
         gives him a chance to cancel the saving. ``interactive`` is ignored if
         ``file`` is specified.
 
-        :param interactive: A boolean
-        :param file: An instance of :class:`GPS.File`
+        :param bool interactive: A boolean
+        :param File file: An instance of :class:`File`
         """
         pass  # implemented in Ada
 
@@ -3805,9 +3821,9 @@ class EditorBuffer(object):
         Selects an area in the buffer. The boundaries are included in the
         selection. The order of the boundaries is irrelevant, but the cursor
         is be left on ``to``.
-
-        :param frm: An instance of :class:`GPS.EditorLocation`
-        :param to: An instance of :class:`GPS.EditorLocation`
+gnores __
+        :param EditorLocation frm: An instance of :class:`EditorLocation`
+        :param EditorLocation to: An instance of :class:`EditorLocation`
 
         """
         pass  # implemented in Ada
@@ -3820,7 +3836,7 @@ class EditorBuffer(object):
         selection is empty, :func:`EditorBuffer.selection_start` and
         :func:`EditorBuffer.selection_end` will be equal.
 
-        :return: An instance of :class:`GPS.EditorLocation`
+        :rtype: :class:`EditorLocation`
 
         .. code-block:: python
 
@@ -3839,7 +3855,7 @@ class EditorBuffer(object):
         end of the selection, no matter what the order of parameters passed
         to :func:`GPS.EditorBuffer.select` is.
 
-        :return: An instance of :class:`GPS.EditorLocation`
+        :rtype: :class:`EditorLocation`
 
         """
         pass  # implemented in Ada
@@ -3849,7 +3865,7 @@ class EditorBuffer(object):
         Indicates whether the user should be able to edit the buffer
         interactively (through any view).
 
-        :param read_only: A boolean
+        :param bool read_only: A boolean
 
         .. seealso:: :func:`GPS.EditorBuffer.is_read_only`
 
@@ -3882,7 +3898,8 @@ class EditorBuffer(object):
         always at least one such view. When the last view is destroyed, the
         buffer itself is destroyed.
 
-        :return: A list of :class:`GPS.EditorView` instances
+        :return: A list of :class:`EditorView` instances
+        :rtype: list[:class:`EditorView`]
 
         """
         pass  # implemented in Ada
@@ -3892,14 +3909,14 @@ class EditorBuffer(object):
         Returns true if there are any alive slave cursors in the buffer
         currently.
 
-        :return: A boolean
+        :rtype: bool
         """
 
     def add_cursor(self, location):
         """
         Adds a new slave cursor at the given location.
 
-        :return: The resulting :class:`Cursor` instance
+        :rtype: The resulting :class:`Cursor` instance
         """
 
     def main_cursor(self):
@@ -3909,7 +3926,8 @@ class EditorBuffer(object):
         main cursor. Instead, you should iterate on the result of
         :meth:`EditorBuffer.cursors`.
 
-        :return: A list of :class:`Cursor` instances
+        :return: A :class:`Cursor` instance
+        :rtype: Cursor
         """
 
     def cursors(self):
@@ -3919,7 +3937,7 @@ class EditorBuffer(object):
         :func:`set_manual_sync` for each cursor and the call to
         :func:`update_cursors_selection` at the end.
 
-        :return: A list of :class:`Cursor` instances
+        :rtype: list[:class:`Cursor`]
 
         .. code-block:: python
 
@@ -3935,7 +3953,7 @@ class EditorBuffer(object):
     def get_cursors(self):
         """
         Returns a list of :class:`Cursor` instances.  Note that if you
-        intend to perform actions with them (in particular
+        intend to perform actions with tgnores __hem (in particular
         deletions/insertions), you should call set_manual_sync,
         on the cursor's instance.  Also, if you move any selection
         mark, you should call update_cursors_selection afterwards.
@@ -3943,8 +3961,7 @@ class EditorBuffer(object):
         There is a higher level method, :meth:`EditorBuffer.cursors` that
         returns a generator that will handle this manual work for you.
 
-        :rtype: list[GPS.Cursor]
-        :return: A list of :class:`Cursor` instances
+        :rtype: list[:class:`Cursor`]
         """
 
     def remove_all_slave_cursors(self):
@@ -4700,7 +4717,7 @@ class EditorView(GUI):
         view for the given buffer, and is automatically inserted into the GPS
         MDI.
 
-        :param buffer: An instance of :class:`GPS.EditorBuffer`
+        :param EditorBuffer buffer: An instance of :class:`GPS.EditorBuffer`
         """
         pass  # implemented in Ada
 
@@ -4709,7 +4726,7 @@ class EditorView(GUI):
         Returns the buffer to which the view is attached. Editing the text of
         the file should be done through this instance.
 
-        :return: An instance of :class:`GPS.EditorBuffer`
+        :rtype: :class:`EditorBuffer`
         """
         pass  # implemented in Ada
 
@@ -4717,7 +4734,8 @@ class EditorView(GUI):
         """
         Scrolls the view so that the location is centered.
 
-        :param location: An instance of :class:`GPS.EditorLocation`
+        :param EditorLocation location: An instance of :class:`GPS
+            .EditorLocation`
         """
         pass  # implemented in Ada
 
@@ -4725,13 +4743,14 @@ class EditorView(GUI):
         """
         Returns the current location of the cursor in this view.
 
-        :return: An instance of :class:`GPS.EditorLocation`
+        :rtype: :class:`EditorLocation`
         """
         pass  # implemented in Ada
 
     def get_extend_selection(self):
         """
 
+        :rtype: bool
         :return: A boolean, whether the user is currently performing a
            selection. This should impact cursor movements (since moving
            the cursor should extend the selection).
@@ -4744,8 +4763,9 @@ class EditorView(GUI):
         by the user will be inserted. If extend_selection is True, extend the
         selection from the current bound to the new location.
 
-        :param location: An instance of :class:`GPS.EditorLocation`
-        :param extend_selection: A Boolean
+        :param EditorLocation location: An instance of :class:`GPS
+            .EditorLocation`
+        :param bool extend_selection: A Boolean
         """
         pass  # implemented in Ada
 
@@ -4754,7 +4774,7 @@ class EditorView(GUI):
         Whether the view is editable or not. This property is shared by all
         views of the same buffer.
 
-        :return: A boolean
+        :rtype: bool
 
         .. seealso:: :func:`GPS.EditorBuffer.is_read_only`
         """
@@ -4768,7 +4788,7 @@ class EditorView(GUI):
         then moving the cursor). When the parameter is false, cursor
         movement cancels the selection.
 
-        :param extend: A boolean
+        :param bool extend: A boolean
         """
 
     def set_read_only(self, read_only=True):
@@ -4777,7 +4797,7 @@ class EditorView(GUI):
         this view. Setting a view Writable/Read Only will also modify the
         status of the other views of the same buffer.
 
-        :param read_only: A boolean
+        :param bool read_only: A boolean
 
         .. seealso:: :func:`GPS.EditorBuffer.get_read_only`
         """
@@ -4788,7 +4808,7 @@ class EditorView(GUI):
         Returns the view's title; the short title is returned if ``short`` is
         set to True.
 
-        :param short: A boolean
+        :param bool short: A boolean
         """
         pass  # implemented in Ada
 
