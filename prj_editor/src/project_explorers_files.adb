@@ -575,9 +575,11 @@ package body Project_Explorers_Files is
 
                   --  First matching project, since we have nothing else to
                   --  base our guess on
-                  P    : constant Project_Type :=
-                    Get_Registry (D.Explorer.Kernel).Tree
-                    .Info_Set (File).First_Element.Project;
+                  F_Info : constant File_Info'Class :=
+                    File_Info'Class
+                      (Get_Registry (D.Explorer.Kernel).Tree
+                       .Info_Set (File).First_Element);
+                  P      : constant Project_Type    := F_Info.Project;
                begin
                   --  If not part of a project, then we remove the file
                   if P = No_Project

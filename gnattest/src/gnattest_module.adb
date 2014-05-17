@@ -471,7 +471,6 @@ package body GNATTest_Module is
       pragma Unreferenced (Filter);
       use type GNATCOLL.Projects.Unit_Parts;
       File : GNATCOLL.VFS.Virtual_File;
-      Info : GNATCOLL.Projects.File_Info;
    begin
       if Has_File_Information (Context) then
          File := File_Information (Context);
@@ -480,12 +479,17 @@ package body GNATTest_Module is
             --  Safe to use the first matching info, since the language will
             --  most likely be the same in all projects anyway.
 
-            Info := GPS.Kernel.Project.Get_Registry
-              (GPS.Kernel.Get_Kernel (Context)).Tree.Info_Set (File)
-              .First_Element.all;
+            declare
+               Info : constant GNATCOLL.Projects.File_Info'Class :=
+                 GNATCOLL.Projects.File_Info'Class
+                   (GPS.Kernel.Project.Get_Registry
+                      (GPS.Kernel.Get_Kernel (Context)).Tree.Info_Set (File)
+                    .First_Element);
+            begin
 
-            return Info.Language = "ada" and then
-              Info.Unit_Part = GNATCOLL.Projects.Unit_Spec;
+               return Info.Language = "ada" and then
+                 Info.Unit_Part = GNATCOLL.Projects.Unit_Spec;
+            end;
          end if;
       end if;
 

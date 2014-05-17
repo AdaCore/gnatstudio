@@ -2319,7 +2319,11 @@ package body Vsearch is
             Idx := 1;
 
             for P of Set loop
-               Vsearch_Module_Id.Search.Projects (Idx) := P.Project;
+               declare
+                  F_Info : constant File_Info'Class := File_Info'Class (P);
+               begin
+                  Vsearch_Module_Id.Search.Projects (Idx) := F_Info.Project;
+               end;
                Idx := Idx + 1;
             end loop;
          end if;

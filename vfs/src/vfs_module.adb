@@ -363,7 +363,12 @@ package body VFS_Module is
 
       else
          --  Do we have a source file ?
-         Prj := Tree.Info_Set (File_In).First_Element.Project;
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class (Tree.Info_Set (File_In).First_Element);
+         begin
+            Prj := F_Info.Project;
+         end;
          if Prj /= No_Project then
             return Prj;
          end if;

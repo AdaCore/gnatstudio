@@ -1483,8 +1483,14 @@ package body Old_Entities.Queries is
 
       else
          --  No support for aggregate projects, so we take the first one.
-         Project := File.Db.Registry.Tree.Info_Set (Get_Filename (File))
-           .First_Element.Project;
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (File.Db.Registry.Tree.Info_Set (Get_Filename (File))
+                 .First_Element);
+         begin
+            Project := F_Info.Project;
+         end;
 
          if Project = No_Project then
             --  Project not found ? We'll have to parse all projects, since

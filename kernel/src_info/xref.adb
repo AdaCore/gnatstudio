@@ -481,7 +481,12 @@ package body Xref is
             else
                if Loc.Project = No_Project then
                   Set := Self.Registry.Tree.Info_Set (Loc.File);
-                  P := Set.First_Element.Project;
+                  declare
+                     F_Info : constant File_Info'Class :=
+                       File_Info'Class (Set.First_Element);
+                  begin
+                     P := F_Info.Project;
+                  end;
                else
                   P := Loc.Project;
                end if;
@@ -4093,7 +4098,8 @@ package body Xref is
          --  old xref engine does not support aggregate project, so take the
          --  first possible match
          Info : constant File_Info :=
-           Tree.Info_Set (Old_Entities.Get_Filename (S)).First_Element.all;
+           File_Info
+             (Tree.Info_Set (Old_Entities.Get_Filename (S)).First_Element);
       begin
          if Info.Project = No_Project then
             Old_Entities.Reset (S);

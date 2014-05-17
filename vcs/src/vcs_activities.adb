@@ -356,7 +356,7 @@ package body VCS_Activities is
                Sets : constant File_Info_Set :=
                  Get_Registry (Kernel).Tree.Info_Set (File);
                Project : constant Project_Type :=
-                 Sets.First_Element.Project;
+                 File_Info'Class (Sets.First_Element).Project;
             begin
                if Project /= No_Project then
                   VCS := Get_Current_Ref (Kernel, Project);
@@ -608,7 +608,8 @@ package body VCS_Activities is
       --  file the VCS will be the same
       Sets : constant File_Info_Set :=
         Get_Registry (Kernel).Tree.Info_Set (File);
-      Project    : constant Project_Type := Sets.First_Element.Project (True);
+      Project    : constant Project_Type :=
+        File_Info'Class (Sets.First_Element).Project (True);
 
       F_Activity : constant Activity_Id := Get_File_Activity (File);
       VCS        : constant VCS_Access := Get_Current_Ref (Kernel, Project);

@@ -572,11 +572,16 @@ package body GPS.Kernel.Search.Filenames is
       --  either be very slow to load and display, or will simply crash gtk
       --  and GPS
 
-      if Get_Registry (Self.Kernel).Tree.Info_Set (Self.File)
-           .First_Element.Language = ""
-      then
-         return null;
-      end if;
+      declare
+         F_Info : constant File_Info'Class :=
+           File_Info'Class
+             (Get_Registry (Self.Kernel).Tree.Info_Set (Self.File)
+              .First_Element);
+      begin
+         if F_Info.Language = "" then
+            return null;
+         end if;
+      end;
 
       Read_File_With_Charset
         (Self.File,

@@ -53,8 +53,8 @@ package body Docgen2.Utils is
       File   : GNATCOLL.VFS.Virtual_File) return Boolean is
    begin
       --  Likely the same unit_part in all projects, so use the first one
-      return Get_Registry
-        (Kernel).Tree.Info_Set (File).First_Element.Unit_Part = Unit_Spec;
+      return File_Info'Class (Get_Registry
+        (Kernel).Tree.Info_Set (File).First_Element).Unit_Part = Unit_Spec;
    end Is_Spec_File;
 
    ----------------

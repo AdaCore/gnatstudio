@@ -243,8 +243,13 @@ package body Docgen2_Module is
             File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
             Pattern_Name      => -"All files;Ada files;C/C++ files",
             History           => Get_History (Kernel));
-         Project := Get_Registry
-           (Kernel).Tree.Info_Set (File).First_Element.Project;
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
+         begin
+            Project := F_Info.Project;
+         end;
       else
          File := File_Information (Context.Context);
          Project := Project_Information (Context.Context);
@@ -279,8 +284,14 @@ package body Docgen2_Module is
          begin
             Trace (Me, "Generating doc for file " &
                    Display_Full_Name (File));
-            Project := Get_Registry
-              (Get_Kernel (Data)).Tree.Info_Set (File).First_Element.Project;
+            declare
+               F_Info : constant File_Info'Class :=
+                 File_Info'Class
+                   (Get_Registry
+                      (Get_Kernel (Data)).Tree.Info_Set (File).First_Element);
+            begin
+               Project := F_Info.Project;
+            end;
             Generate
               (Get_Kernel (Data),
                Docgen_Module (Docgen_Module_Id).Backend,

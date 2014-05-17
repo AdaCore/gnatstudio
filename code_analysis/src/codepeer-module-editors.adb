@@ -110,8 +110,13 @@ package body CodePeer.Module.Editors is
       Project      : Project_Type;
 
    begin
-      Project := Get_Registry (Kernel).Tree.Info_Set
-        (D.File).First_Element.Project;
+      declare
+         F_Info : constant File_Info'Class :=
+           File_Info'Class
+             (Get_Registry (Kernel).Tree.Info_Set (D.File).First_Element);
+      begin
+         Project := F_Info.Project;
+      end;
 
       if Module.Tree /= null
         and then Module.Tree.Contains (Project)
@@ -139,8 +144,13 @@ package body CodePeer.Module.Editors is
       Project      : Project_Type;
 
    begin
-      Project := Get_Registry (Kernel).Tree.Info_Set
-        (D.File).First_Element.Project;
+      declare
+         F_Info : constant File_Info'Class :=
+           File_Info'Class
+             (Get_Registry (Kernel).Tree.Info_Set (D.File).First_Element);
+      begin
+         Project := F_Info.Project;
+      end;
 
       if Module.Tree /= null
         and then Module.Tree.Contains (Project)

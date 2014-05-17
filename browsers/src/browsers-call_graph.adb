@@ -1956,15 +1956,19 @@ package body Browsers.Call_Graph is
 
          Set := Get_Registry (Kernel).Tree.Info_Set (Local_File);
          for S of Set loop
-            S.Project.Project_Imports
-              (Decl.Project,
-               Include_Extended => True,
-               Imports          => Imports,
-               Is_Limited_With  => Is_Limited_With);
-            if Imports then
-               Project := S.Project;
-               exit;
-            end if;
+            declare
+               F_Info : constant File_Info'Class := File_Info'Class (S);
+            begin
+               F_Info.Project.Project_Imports
+                 (Decl.Project,
+                  Include_Extended => True,
+                  Imports          => Imports,
+                  Is_Limited_With  => Is_Limited_With);
+               if Imports then
+                  Project := F_Info.Project;
+                  exit;
+               end if;
+            end;
          end loop;
 
          Iter2 := Kernel.Databases.Entities_In_File (Local_File, Project);

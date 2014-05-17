@@ -1038,9 +1038,12 @@ package body Builder_Facility_Module is
       --  compile.
 
       declare
-         P : Project_Type;
+         P      : Project_Type;
+         F_Info : constant File_Info'Class :=
+           File_Info'Class
+             (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
       begin
-         P := Get_Registry (Kernel).Tree.Info_Set (File).First_Element.Project;
+         P := F_Info.Project;
 
          --  No project was found for the file: this is not a source file, so
          --  return now.

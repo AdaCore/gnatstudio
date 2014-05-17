@@ -181,7 +181,12 @@ package body Language_Handlers is
          if Set.Is_Empty then
             return "";
          else
-            return Set.First_Element.Language;
+            declare
+               F_Info : constant File_Info'Class :=
+                 File_Info'Class (Set.First_Element);
+            begin
+               return F_Info.Language;
+            end;
          end if;
       end if;
    end Get_Language_From_File;

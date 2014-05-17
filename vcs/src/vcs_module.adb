@@ -994,11 +994,11 @@ package body VCS_Module is
 
       --  Choose the first possible project, since for the same physical file,
       --  the VCS will be the same anyway
+      F_Info : constant File_Info'Class :=
+        File_Info'Class
+          (Get_Registry (Kernel).Tree.Info_Set (D.File).First_Element);
       Ref    : constant VCS_Access :=
-        Get_Current_Ref
-          (Kernel,
-           Get_Registry (Kernel).Tree.Info_Set (D.File)
-           .First_Element.Project (True));
+        Get_Current_Ref (Kernel, F_Info.Project (True));
       Status : File_Status_Record;
    begin
       if Ref = null then
@@ -1045,8 +1045,10 @@ package body VCS_Module is
 
       --  At random chose the first possible project. If this is the same
       --  physicial source file, the VCS system will be the same anyway
-      Project  : constant Project_Type :=
-        Get_Registry (Kernel).Tree.Info_Set (D.File).First_Element.Project;
+      F_Info   : constant File_Info'Class :=
+        File_Info'Class
+          (Get_Registry (Kernel).Tree.Info_Set (D.File).First_Element);
+      Project  : constant Project_Type := F_Info.Project;
       Ref      : VCS_Access;
       Status   : Line_Record;
       F_Status : File_Status_List.List;

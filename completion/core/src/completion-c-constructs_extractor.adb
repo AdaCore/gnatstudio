@@ -269,8 +269,14 @@ package body Completion.C.Constructs_Extractor is
          Result.Processed_Files.Append (File);
 
          --  ??? Should get the project from elsewhere
-         Project := Wrapper.Resolver.Kernel.Registry.Tree.Info_Set
-           (File).First_Element.Project;
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (Wrapper.Resolver.Kernel.Registry.Tree.Info_Set
+                   (File).First_Element);
+         begin
+            Project := F_Info.Project;
+         end;
          Result.Cursor := Db.Entities_In_File (File, Project);
          Result.In_First_Entity := True;
          Result.Is_Valid_Proposal := True;
@@ -437,9 +443,14 @@ package body Completion.C.Constructs_Extractor is
                   end if;
 
                   --  ??? Should get the project from elsewhere
-                  Project := It.Resolver.Kernel.Registry.Tree.Info_Set
-                    (It.Queued_Files.First_Element)
-                    .First_Element.Project;
+                  declare
+                     F_Info : constant File_Info'Class :=
+                       File_Info'Class
+                         (It.Resolver.Kernel.Registry.Tree.Info_Set
+                            (It.Queued_Files.First_Element).First_Element);
+                  begin
+                     Project := F_Info.Project;
+                  end;
                   It.Cursor := Db.Entities_In_File
                     (It.Queued_Files.First_Element, Project);
 

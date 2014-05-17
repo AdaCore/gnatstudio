@@ -318,7 +318,8 @@ package body VCS_Status is
                --  file the VCS will be the same
                Sets : constant File_Info_Set :=
                  Get_Registry (Kernel).Tree.Info_Set (File);
-               Project : constant Project_Type := Sets.First_Element.Project;
+               Project : constant Project_Type :=
+                 File_Info'Class (Sets.First_Element).Project;
 
                VCS     : constant VCS_Access :=
                            Get_Current_Ref (Kernel, Project);

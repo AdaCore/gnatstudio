@@ -209,7 +209,13 @@ package body GPS.Scripts.Files is
 
          --  Return the first possible project, we have nothing else to base
          --  our guess on.
-         Project := Kernel.Registry.Tree.Info_Set (Info).First_Element.Project;
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (Kernel.Registry.Tree.Info_Set (Info).First_Element);
+         begin
+            Project := F_Info.Project;
+         end;
 
          if Project = No_Project and then Nth_Arg (Data, 2, True) then
             Project := Kernel.Registry.Tree.Root_Project;
@@ -265,11 +271,16 @@ package body GPS.Scripts.Files is
             Defined_In_File : constant Boolean := Nth_Arg (Data, 2, True);
          begin
             Set_Return_Value_As_List (Data);
-            Iter := Kernel.Databases.Entities_In_File
-              (File    => Info,
-               Project => Kernel.Registry
-                 .Tree.Info_Set (Info).First_Element.Project,
-               Name    => "");
+            declare
+               F_Info : constant File_Info'Class :=
+                 File_Info'Class
+                   (Kernel.Registry.Tree.Info_Set (Info).First_Element);
+            begin
+               Iter := Kernel.Databases.Entities_In_File
+                 (File    => Info,
+                  Project => F_Info.Project,
+                  Name    => "");
+            end;
 
             while not At_End (Iter) loop
                declare

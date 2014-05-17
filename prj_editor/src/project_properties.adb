@@ -2679,25 +2679,30 @@ package body Project_Properties is
             begin
                for F in Files'Range loop
                   Info := Tree.Info_Set (Files (F));
-                  if Info.First_Element.Unit_Part = Unit_Spec then
-                     --  This is the <<add>> dialog, so we only want to show
-                     --  those units that are not already in the list.
-                     --  ??? Not very efficient
+                  declare
+                     F_Info : constant File_Info'Class :=
+                       File_Info'Class (Info.First_Element);
+                  begin
+                     if F_Info.Unit_Part = Unit_Spec then
+                        --  This is the <<add>> dialog, so we only want to show
+                        --  those units that are not already in the list.
+                        --  ??? Not very efficient
 
-                     Found := False;
+                        Found := False;
 
-                     for C in Current'Range loop
-                        if Current (C).all = Info.First_Element.Unit_Name then
-                           Found := True;
-                           exit;
+                        for C in Current'Range loop
+                           if Current (C).all = F_Info.Unit_Name then
+                              Found := True;
+                              exit;
+                           end if;
+                        end loop;
+
+                        if not Found then
+                           Model.Append (Iter, Null_Iter);
+                           Model.Set (Iter, 0, F_Info.Unit_Name);
                         end if;
-                     end loop;
-
-                     if not Found then
-                        Model.Append (Iter, Null_Iter);
-                        Model.Set (Iter, 0, Info.First_Element.Unit_Name);
                      end if;
-                  end if;
+                  end;
                end loop;
 
                Unchecked_Free (Files);

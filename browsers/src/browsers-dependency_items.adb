@@ -833,8 +833,14 @@ package body Browsers.Dependency_Items is
    begin
       if File /= GNATCOLL.VFS.No_File then
          --  Take the first possible project
-         Project := Get_Registry
-           (B.Get_Kernel).Tree.Info_Set (File).First_Element.Project;
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (Get_Registry
+                   (B.Get_Kernel).Tree.Info_Set (File).First_Element);
+         begin
+            Project := F_Info.Project;
+         end;
          Examine_Dependencies (Get_Kernel (Context), File, Project);
       end if;
    end Open_File;
@@ -884,8 +890,14 @@ package body Browsers.Dependency_Items is
       --  ??? We do not know exactly which project to use, so we chose the
       --  first matching one
 
-      Project := Get_Registry
-        (Kernel).Tree.Info_Set (File).First_Element.Project;
+      declare
+         F_Info : constant File_Info'Class :=
+           File_Info'Class
+             (Get_Registry
+                (Kernel).Tree.Info_Set (File).First_Element);
+      begin
+         Project := F_Info.Project;
+      end;
 
       if Command = "uses" then
          Examine_Dependencies (Kernel, File => File, Project => Project);

@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 
@@ -343,11 +344,17 @@ package body CodePeer.Bridge.Inspection_Readers is
             File_Name := Relocated_Name;
          end if;
 
-         Project_Node :=
-           Code_Analysis.Get_Or_Create
-             (Self.Projects,
-              Get_Registry (Self.Kernel).Tree.Info_Set (File_Name)
-              .First_Element.Project);
+         declare
+            F_Info : constant GNATCOLL.Projects.File_Info'Class :=
+              GNATCOLL.Projects.File_Info'Class
+                (Get_Registry (Self.Kernel).Tree.Info_Set (File_Name)
+                 .First_Element);
+         begin
+            Project_Node :=
+              Code_Analysis.Get_Or_Create
+                (Self.Projects,
+                 F_Info.Project);
+         end;
          Self.File_Node :=
            Code_Analysis.Get_Or_Create (Project_Node, File_Name);
          Self.File_Node.Analysis_Data.CodePeer_Data :=

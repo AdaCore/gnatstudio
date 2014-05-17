@@ -865,8 +865,14 @@ package body Log_Utils is
       for J in Files'Range loop
          exit when Cancel_All;
 
-         Project := Get_Registry
-           (Kernel).Tree.Info_Set (Files (J)).First_Element.Project;
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (Get_Registry
+                   (Kernel).Tree.Info_Set (Files (J)).First_Element);
+         begin
+            Project := F_Info.Project;
+         end;
 
          if Project /= No_Project then
             declare

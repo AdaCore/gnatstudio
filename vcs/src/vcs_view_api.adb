@@ -977,12 +977,17 @@ package body VCS_View_API is
                   Set_Context_Information
                     (L_Context, Kernel, Get_Creator (Context));
 
-                  Set_File_Information
-                    (L_Context,
-                     Files   => (1 => Original),
-                     Project =>
-                       Get_Registry (Kernel).Tree.Info_Set (Original)
-                       .First_Element.Project);
+                  declare
+                     F_Info : constant File_Info'Class :=
+                       File_Info'Class
+                         (Get_Registry (Kernel).Tree.Info_Set (Original)
+                          .First_Element);
+                  begin
+                     Set_File_Information
+                       (L_Context,
+                        Files   => (1 => Original),
+                        Project => F_Info.Project);
+                  end;
 
                   Gtk_New (Item, Label => Actions (Log_Action).all & " ("
                            & Krunch (+Base_Name (Original)) & ")");
@@ -2615,8 +2620,8 @@ package body VCS_View_API is
 
          Kernel        : constant Kernel_Handle := Get_Kernel (Context);
          Project       : constant Project_Type :=
-           Get_Registry (Kernel).Tree.Info_Set
-           (Filename).First_Element.Project;
+           File_Info'Class (Get_Registry (Kernel).Tree.Info_Set
+           (Filename).First_Element).Project;
          Root_Branches : constant Filesystem_String :=
            Get_Branches_Root (Project);
          Root_Tags     : constant Filesystem_String := Get_Tags_Root (Project);
@@ -3117,8 +3122,13 @@ package body VCS_View_API is
 
       --  At this point Full must not be null
 
-      Prj := Get_Registry (Kernel).Tree.Info_Set (Full)
-        .First_Element.Project (True);
+      declare
+         F_Info : constant File_Info'Class :=
+           File_Info'Class
+             (Get_Registry (Kernel).Tree.Info_Set (Full).First_Element);
+      begin
+         Prj := F_Info.Project (True);
+      end;
 
       if Prj = No_Project then
          Insert

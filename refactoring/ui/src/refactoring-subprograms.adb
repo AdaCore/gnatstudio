@@ -889,7 +889,13 @@ package body Refactoring.Subprograms is
    begin
       --  Use the first possible project, since we have no other context
       File := Create (Nth_Arg (Data, 1));
-      Project := Kernel.Registry.Tree.Info_Set (File).First_Element.Project;
+      declare
+         F_Info : constant File_Info'Class :=
+           File_Info'Class
+             (Kernel.Registry.Tree.Info_Set (File).First_Element);
+      begin
+         Project := F_Info.Project;
+      end;
 
       Context := (Code       => Create_Range
                   (Context   => Kernel.Refactoring_Context,

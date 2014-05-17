@@ -1434,8 +1434,14 @@ package body Src_Editor_View is
 
       if Project = No_Project then
          --  Pick a project at random
-         View.Project_Path := Get_Registry (Kernel).Tree.Info_Set
-           (Buffer.Get_Filename).First_Element.Project.Project_Path;
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (Get_Registry (Kernel).Tree.Info_Set
+                 (Buffer.Get_Filename).First_Element);
+         begin
+            View.Project_Path := F_Info.Project.Project_Path;
+         end;
       else
          View.Project_Path := Project.Project_Path;
       end if;

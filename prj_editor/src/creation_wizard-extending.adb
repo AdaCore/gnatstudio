@@ -680,7 +680,11 @@ package body Creation_Wizard.Extending is
          Set := Get_Registry (Kernel).Tree.Info_Set (File);
 
          for Info of Set loop
-            Project := Info.Project;
+            declare
+               F_Info : constant File_Info'Class := File_Info'Class (Info);
+            begin
+               Project := F_Info.Project;
+            end;
             if Project /= No_Project
               and then Extended_Project (Project) /= No_Project
             then

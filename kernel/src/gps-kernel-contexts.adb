@@ -257,10 +257,14 @@ package body GPS.Kernel.Contexts is
       then
          --  Tries to guess which project is the correct one. Since we do not
          --  have any information, we just chose the first matching one.
-
-         Context.Data.Data.Project :=
-           Get_Registry (Get_Kernel (Context)).Tree
-             .Info_Set (File_Information (Context)).First_Element.Project;
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (Get_Registry (Get_Kernel (Context)).Tree
+                 .Info_Set (File_Information (Context)).First_Element);
+         begin
+            Context.Data.Data.Project := F_Info.Project;
+         end;
       end if;
       return Context.Data.Data.Project;
    end Project_Information;
