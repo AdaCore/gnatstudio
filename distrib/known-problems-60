@@ -166,18 +166,6 @@ KP-60-N304-024 GPS: Search in GPS does not find next character
 
   Workaround: Shift cursor manually when search stucks.
 
-KP-60-N226-028 GPS: crash when omni-search preview displays a binary file
-
-  Problem:    When using the omni-search and it matches binary files (e.g.,
-              either object files, executables, or images) the preview is
-              slow and might even crash GPS in some cases.
-
-  Status:     This was fixed in 6.1 on 2014-03-06
-
-  Workaround: Edit the settings for the omni-search and disable the preview.
-              An alternative is to make sure the object files and executables
-              do not go in the project's source directories.
-
 KP-60-N224-035 GPS: xref wrong on windows when file opened with /File/Open
 
   Problem:    We have noticed from time to time that the xref queries could
@@ -726,6 +714,19 @@ KP-60-N227-046 GPS: error when omni-search matches long file names
 
   Workaround: Typing fewer characters will often display a list again, and you
               can select directly in the list.
+
+KP-60-N226-028 GPS: crash when omni-search preview displays a binary file
+
+  Problem:    When using the omni-search and it matches binary files (e.g.,
+              either object files, executables, or images) the preview is
+              slow and might even crash GPS in some cases.
+
+  Status:     This was fixed in 6.1 on 2014-03-06
+              This was fixed in 6.0.2 on 2014-03-12
+
+  Workaround: Edit the settings for the omni-search and disable the preview.
+              An alternative is to make sure the object files and executables
+              do not go in the project's source directories.
 
 KP-60-N225-041 GPS: wrong color of documentation window in smart completion
 
