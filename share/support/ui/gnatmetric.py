@@ -2,13 +2,12 @@
 Provides support for gnatmetrics.
 """
 
-
 import re
 import GPS
 from gps_utils import interactive
 
 # Initialize the targets
-xml_base = """
+xml_base = ("""
 <target-model name="gnatmetrics" category="">
    <description>Generic launch of gnat metrics</description>
    <command-line>
@@ -52,7 +51,8 @@ xml_base = """
 <check label="do not consider exit statements as gotos"
                    line="1"  column="1"
                    switch="-ne"
-                   tip="do not consider exit statements as gotos when computing Essential Complexity" />
+                   tip="do not consider exit statements as gotos when """
+            """computing Essential Complexity" />
 <check label="extra exit points in subprograms"
                    line="1"  column="1"
                    switch="--extra-exit-points"
@@ -195,7 +195,8 @@ xml_base = """
     </command-line>
 </target>
 
-<target model="gnatmetrics" category="_File_" name="GNAT Metrics for project and subprojects">
+<target model="gnatmetrics" category="_File_" name="GNAT Metrics for """
+            """project and subprojects">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
@@ -222,14 +223,16 @@ xml_base = """
    <filter id="Project only" />
    <description>Launch GNAT metric on the current project</description>
    <shell lang="python" output="none"
-   >GPS.BuildTarget("GNAT Metrics for project").execute(synchronous=False)</shell>
+   >GPS.BuildTarget("GNAT Metrics for project").execute(synchronous=False)
+   </shell>
 </action>
 
 <action name="GNAT Metric on current project and subprojects">
    <filter id="Project only" />
    <description>Launch GNAT metric on the current project</description>
    <shell lang="python" output="none"
-   >GPS.BuildTarget("GNAT Metrics for project and subprojects").execute(synchronous=False)</shell>
+   >GPS.BuildTarget("GNAT Metrics for project and subprojects").execute"""
+            """(synchronous=False)</shell>
 </action>
 
 <contextual action="GNAT metric on current project" >
@@ -240,10 +243,12 @@ xml_base = """
    <title>Metrics/Compute metrics for project %p and subprojects</title>
 </contextual>
 
-"""
+""")
+
 
 def on_compilation_finished(hook, category,
-    target_name="", mode_name="", status=""):
+                            target_name="", mode_name="", status=""):
+    del hook, category, mode_name  # Unused parameters
 
     if not target_name.startswith("GNAT Metric"):
         return
@@ -258,14 +263,15 @@ def on_compilation_finished(hook, category,
 @interactive(name='open metrics view')
 def show_metrics_window():
     "Open the Metrics view"
-    w=GPS.MDI.get("Metrics")
+    w = GPS.MDI.get("Metrics")
 
-    if w == None:
+    if w is None:
         v = GPS.XMLViewer.create_metric("Metrics")
         v.parse("metrix.xml")
     else:
-        v = w.get_child()
+        w.get_child()
         w.raise_window()
+
 
 GPS.parse_xml(xml_base)
 GPS.Hook("compilation_finished").add(on_compilation_finished)

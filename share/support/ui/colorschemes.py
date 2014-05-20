@@ -25,7 +25,6 @@ light_common = {
     "rgba(144, 238, 144, 0.5)",
 
     'Plugins/isearch/nextmatchcolor': 'cyan',
-    'Plugins/isearch/bgcolor': 'yellow',
     'Plugins/isearch/bgcolor': 'red',
 
     "Search-Src-Highlight-Color": "rgb(189,215,255)",
@@ -54,7 +53,6 @@ dark_common = {
     "rgb(94,0,118)",
 
     'Plugins/isearch/nextmatchcolor': 'rgb(9,60,60)',
-    'Plugins/isearch/bgcolor': 'rgb(74,43,75)',
     'Plugins/isearch/bgcolor': 'rgb(77,19,19)',
 
     "Search-Src-Highlight-Color": "rgb(0,113,128)",
@@ -237,13 +235,14 @@ def pref_set(gps_pref, val):
         pass
 
 
-class Color_Theme_Switcher(object):
+class ColorThemeSwitcher(object):
 
     pref_name = "General/ColorTheme"
     pref_gtk_theme = "GPS6-Gtk-Theme-Name"
     gtkpref_name = "/ColorTheme gtk+"
 
     def __init__(self):
+        self.__modified = False
         args = ["Custom"] + [t["name"] for t in themes]
         p = GPS.Preference(self.pref_name)
         p.create(
@@ -297,6 +296,8 @@ class Color_Theme_Switcher(object):
                 cb(key, "@".join((subst(v[0]), subst(v[1]), subst(v[2]))))
 
     def __on_preferences_changed(self, hook):
+        del hook  # Unused parameter
+
         v = GPS.Preference(self.pref_name).get()
         if v == "Custom":
             self.current = v
@@ -371,4 +372,4 @@ class Color_Theme_Switcher(object):
 
         self.__set_gtk_properties()
 
-Color_Theme_Switcher()
+ColorThemeSwitcher()
