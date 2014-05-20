@@ -201,15 +201,6 @@ KP-60-N224-020 GPS: display errors in the console when database is corrupted
               the file gnatinspect.db in your project's object_dir, and
               restart GPS.
 
-KP-60-N224-019 GPS: error creating call graph recursively
-
-  Problem:    The contextual menu "Browsers/[Method Name] calls (recursively)"
-              does not work.
-
-  Status:     This was fixed in 6.1 on 2014-03-06
-
-  Workaround: Use the "Browsers/[Method Name] calls" menu instead.
-
 KP-60-N220-040 GPS: "Close all other editors" does nothing
 
   Problem:    The "Close all other editors" menu does not work when activated
@@ -739,6 +730,16 @@ KP-60-N225-041 GPS: wrong color of documentation window in smart completion
 
   Workaround: Switch to another theme, or edit the CSS file to change the
               foreground color.
+
+KP-60-N224-019 GPS: error creating call graph recursively
+
+  Problem:    The contextual menu "Browsers/[Method Name] calls (recursively)"
+              does not work.
+
+  Status:     This was fixed in 6.1 on 2014-03-06
+              This was fixed in 6.0.2 on 2014-05-20
+
+  Workaround: Use the "Browsers/[Method Name] calls" menu instead.
 
 KP-60-N218-041 GPS: cannot install from directory with spaces under unix
 
