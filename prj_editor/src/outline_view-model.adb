@@ -538,12 +538,20 @@ package body Outline_View.Model is
    --------------
 
    procedure Set_File
-     (Model : not null access Outline_Model_Record'Class;
-      File  : Structured_File_Access)
+     (Model  : not null access Outline_Model_Record'Class;
+      File   : Structured_File_Access;
+      Key    : Construct_Annotations_Pckg.Annotation_Key;
+      Filter : Tree_Filter)
    is
       It : Construct_Tree_Iterator;
    begin
+      --  First delete the nodes, with the previous filters, otherwise we might
+      --  be changing the ordering and therefore all operations on .Children
+      --  would not find the nodes and clearing the tree would not work well.
       Model.Clear_Nodes (Model.Phantom_Root'Access);
+
+      Model.Filter := Filter;
+      Model.Annotation_Key := Key;
 
       --  Order is important here, in case File=Model.File. This whole blocks
       --  also needs to be called after we clear the tree.
@@ -867,19 +875,6 @@ package body Outline_View.Model is
          return New_Iter (Get_Sorted_Node (Child).Parent);
       end if;
    end Parent;
-
-   -----------
-   -- Setup --
-   -----------
-
-   procedure Setup
-     (Model  : not null access Outline_Model_Record'Class;
-      Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Filter : Tree_Filter) is
-   begin
-      Model.Filter := Filter;
-      Model.Annotation_Key := Key;
-   end Setup;
 
    ----------------
    -- Set_Filter --

@@ -66,12 +66,6 @@ private package Outline_View.Model is
    --  Flat_View indicates whether to display all entities in a flat view, or
    --  hierarchically
 
-   procedure Setup
-     (Model  : not null access Outline_Model_Record'Class;
-      Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Filter : Tree_Filter);
-   --  Setup the filters for the model.
-
    procedure Set_Filter
      (Model   : not null access Outline_Model_Record'Class;
       Pattern : GPS.Search.Search_Pattern_Access);
@@ -79,7 +73,9 @@ private package Outline_View.Model is
 
    procedure Set_File
      (Model : not null access Outline_Model_Record'Class;
-      File  : Structured_File_Access);
+      File  : Structured_File_Access;
+      Key    : Construct_Annotations_Pckg.Annotation_Key;
+      Filter : Tree_Filter);
    function Get_File (Model : Outline_Model) return Structured_File_Access;
    --  Return the file modelized by this model.
    --  Setting the file forces a refresh of the model.

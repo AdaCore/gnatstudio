@@ -1058,14 +1058,14 @@ package body Outline_View is
       --  This function is called directly after the settings have changed,
       --  and should take their new value into account.
 
-      Model.Setup
-        (Outline_View_Module_Record
-           (Outline_View_Module.all).Construct_Annotation_Key,
-         Filter);
       Outline.Tree.Set_Show_Expanders (Enabled => not Filter.Flat_View);
       Outline.Body_Column.Set_Visible (Filter.Group_Spec_And_Body);
 
-      Model.Set_File (Struct_File);
+      Model.Set_File
+         (Struct_File,
+          Outline_View_Module_Record
+            (Outline_View_Module.all).Construct_Annotation_Key,
+          Filter);
 
       if Struct_File /= null then
          declare
