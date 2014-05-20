@@ -21,10 +21,7 @@ to point to new doc directories. See the GPS documentation for more details.
 
 RUNNING GPS UNDER MAC OS X
 
-Under Mac OS X, GPS requires a running X11 server. X11 is distributed as part
-of Mac OS X. 
+Under Mac OS X, GPS requires an install of Xquartz, which can be found
+at:     https://xquartz.macosforge.org
 
-Once you have X11 running, if you are launching GPS from a regular Terminal,
-you first need to call
-  export DISPLAY=:0
-
+X11 does not need to be running in order to launch GPS.
