@@ -339,7 +339,10 @@ package body Outline_View.Model is
       Comparison : Integer;
 
    begin
-      if Left.Model.Filter.Sorted then
+      if Left = Right then
+         return False;
+
+      elsif Left.Model.Filter.Sorted then
          --  Alphabetical sort
          if Sort_Entities (Left.Category) < Sort_Entities (Right.Category) then
             return True;
@@ -548,8 +551,10 @@ package body Outline_View.Model is
    --------------
 
    procedure Set_File
-     (Model : not null access Outline_Model_Record'Class;
-      File  : Structured_File_Access)
+     (Model  : not null access Outline_Model_Record'Class;
+      File   : Structured_File_Access;
+      Key    : Construct_Annotations_Pckg.Annotation_Key;
+      Filter : Tree_Filter)
    is
       procedure Add_Root_With;
       --  Create Root_With node and append it to model
@@ -583,7 +588,14 @@ package body Outline_View.Model is
       end Add_Root_With;
 
    begin
+      --  First delete the nodes, with the previous filters, otherwise we might
+      --  be changing the ordering and therefore all operations on .Children
+      --  would not find the nodes and clearing the tree would not work well.
       Model.Clear_Nodes (Model.Phantom_Root'Access);
+
+      Model.Filter := Filter;
+      Model.Annotation_Key := Key;
+
       Add_Root_With;
 
       --  Order is important here, in case File=Model.File. This whole blocks
@@ -916,19 +928,6 @@ package body Outline_View.Model is
          return New_Iter (Get_Sorted_Node (Child).Parent);
       end if;
    end Parent;
-
-   -----------
-   -- Setup --
-   -----------
-
-   procedure Setup
-     (Model  : not null access Outline_Model_Record'Class;
-      Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Filter : Tree_Filter) is
-   begin
-      Model.Filter := Filter;
-      Model.Annotation_Key := Key;
-   end Setup;
 
    ----------------
    -- Set_Filter --

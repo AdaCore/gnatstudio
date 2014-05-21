@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N516-014 GPS: error when toggling sort order
+
+  Problem:    Changing the sort order in the outline view (alphabetical to
+              code order, or the opposite) triggers an internal error in GPS,
+              which results in various error messages or even crashes GPS.
+
+  Status:     This was fixed in 6.1 on 2014-05-19
+
+  Workaround: after toggling the sort order, exit GPS and restart.
+
 KP-60-N505-025 project's gnatlist attribute sometimes ignored
 
   Problem:    The "gnatls" command listed in the project (which in particular
