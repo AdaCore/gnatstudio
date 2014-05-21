@@ -23,7 +23,6 @@ with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use  Src_Editor_Buffer.Line_Information;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Commands.Editor is
 
@@ -269,8 +268,6 @@ package body Commands.Editor is
          end if;
 
          if Start_Column /= 0 then
-            Put_Line (Item.Locs.Start_Loc.Col'Img);
-            Put_Line (Start_Column'Img);
             Item.Locs.Start_Loc.Col := Start_Column;
          end if;
       end if;

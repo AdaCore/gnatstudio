@@ -110,6 +110,7 @@ package body GPS.Kernel.MDI is
    MDI_Float_Short_Title : Boolean_Preference;
    MDI_Editors_Floating  : Boolean_Preference;
    MDI_Homogeneous_Tabs  : Boolean_Preference;
+   Auto_Reload_Files     : Boolean_Preference;
 
    Desktop_Name : constant Filesystem_String := "perspectives6.xml";
 
@@ -390,6 +391,16 @@ package body GPS.Kernel.MDI is
          Doc   => -("Where the tabs should be displayed relative to the"
            & " notebooks"),
          Default => Top);
+
+      Auto_Reload_Files := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Auto-Reload-Files",
+         Default => False,
+         Doc     =>
+           -("If enabled, automatically reload files when they have been"
+           & " changed on the disk."),
+         Label   => -"Auto-Reload files",
+         Page    => -"Editors");
    end Create_MDI_Preferences;
 
    -------------------
@@ -1877,6 +1888,7 @@ package body GPS.Kernel.MDI is
       C        : MDI_Child;
       G        : GPS_MDI_Child;
       Button   : File_Check_Button;
+      Auto_Reload : Gtk_Check_Button;
       Modified : Monitored_File_Lists.List;
       To_Update : File_Sets.Set;
       F        : Monitored_File_Lists.Cursor;
@@ -1911,11 +1923,19 @@ package body GPS.Kernel.MDI is
       end loop;
 
       if not Modified.Is_Empty then
-         if Active (Testsuite_Handle) then
-            --  No dialog in testsuite
+         if Active (Testsuite_Handle)    --  no dialog in testsuite
+           or else Auto_Reload_Files.Get_Pref
+           or else not Interactive
+         then
             Response := Gtk_Response_Yes;
 
-         elsif Interactive then
+            F := Modified.First;
+            while Has_Element (F) loop
+               To_Update.Include (Element (F).File);
+               Next (F);
+            end loop;
+
+         else
             Gtk_New (Dialog,
                      Title  => -"Files changed on disk",
                      Parent => Get_Current_Window (Kernel),
@@ -1943,6 +1963,15 @@ package body GPS.Kernel.MDI is
                Next (F);
             end loop;
 
+            Gtk_New (Auto_Reload, -"Auto-reload");
+            Auto_Reload.Set_Tooltip_Text
+              (-"Whether to reload files as soon as they are modified on disk."
+               & " This setting can also be changed in the preferences"
+               & " dialog");
+            Auto_Reload.Set_Alignment (0.0, 0.5);
+            Dialog.Get_Action_Area.Pack_End (Auto_Reload, Expand => False);
+            Auto_Reload.Set_Active (Auto_Reload_Files.Get_Pref);
+
             Ignore := Add_Button (Dialog, -"Synchronize", Gtk_Response_Yes);
             Ignore.Set_Tooltip_Text
               ("Reload selected files from disk and discard current changes."
@@ -1958,8 +1987,7 @@ package body GPS.Kernel.MDI is
             Dialog.Show_All;
             Response := Dialog.Run;
 
-         else
-            Response := Gtk_Response_Yes;
+            Set_Pref (Auto_Reload_Files, Kernel, Auto_Reload.Get_Active);
          end if;
 
          if Response = Gtk_Response_No then

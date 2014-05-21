@@ -4003,15 +4003,17 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      Buffer.Start_Undo_Group;
+
       if not File_Is_New then
          Emit_By_Name (Get_Object (Buffer), Signal_Closed & ASCII.NUL);
          File_Closed (Buffer.Kernel, Filename);
          Reset_Buffer (Buffer);
+      else
+         Buffer.Start_Inserting;
       end if;
 
       --  Insert the new text
-
-      Buffer.Start_Inserting;
 
       begin
          if Lang_Autodetect then
@@ -4059,21 +4061,30 @@ package body Src_Editor_Buffer is
          if Recovering then
             Buffer.Saved_Position := -1;
             Buffer.Restored_From_Autosave := True;
-         else
+         elsif File_Is_New then
             Buffer.Saved_Position := 0;
          end if;
 
-         Buffer.End_Inserting;
+         if File_Is_New then
+            Buffer.End_Inserting;
+         end if;
+
       exception
          when others =>
-            Buffer.End_Inserting;
+            if File_Is_New then
+               Buffer.End_Inserting;
+            end if;
             raise;
       end;
 
+      Buffer.Finish_Undo_Group;
+
       Buffer.Modified_Auto := False;
 
-      Empty_Queue (Buffer.Queue);
-      Buffer.Current_Command := null;
+      --  Do not empty the undo/redo queue, so that reloading a file can be
+      --  undone.
+      --      Empty_Queue (Buffer.Queue);
+      --      Buffer.Current_Command := null;
 
       --  If the file was not new (ie the file was re-loaded from disk after
       --  some edition, this typically happens when editing with another file
@@ -4085,12 +4096,17 @@ package body Src_Editor_Buffer is
 
       if not File_Is_New then
          File_Edited (Buffer.Kernel, Filename);
+
+         Buffer.Saved_Position := Get_Position (Buffer.Queue);
+         Buffer.Current_Status := Saved;
+         Status_Changed (Buffer);
       end if;
 
    exception
       when E : others =>
          Trace (Me, E);
          Success := False;
+         Buffer.Finish_Undo_Group;
    end Load_File;
 
    ------------------------------
