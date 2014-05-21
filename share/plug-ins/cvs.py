@@ -327,7 +327,7 @@ XML = r"""<?xml version="1.0"?>
       <external check-password="true">cvs -f diff -rHEAD "$1"</external>
 
       <on-failure>
-	<shell>base_name "$1"</shell>
+	    <shell>base_name "$1"</shell>
         <shell>dump "%2" TRUE</shell>
         <shell>File "%1"</shell>
         <shell>File "$1" TRUE</shell>

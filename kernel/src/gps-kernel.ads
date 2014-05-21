@@ -34,6 +34,7 @@ with GNATCOLL.Tribooleans;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
 
+with Glib.Main;
 with Glib.Object;  use Glib;
 with Gdk.Types;
 with Gtk.Widget;
@@ -1249,9 +1250,16 @@ private
 
       Contextual_Menu_Open : Boolean := False;
 
+      Check_Monitored_Files_Id : Glib.Main.G_Source_Id :=
+         Glib.Main.No_Source_Id;
+      --  An idle callback  used to check whether any file currently edited
+      --  has been changed on disk.
+
       Env : Environment;
       --  List of environment variables overwritten by GPS
    end record;
+
+   package Kernel_Sources is new Glib.Main.Generic_Sources (Kernel_Handle);
 
    overriding procedure Create_Registry
      (Self   : not null access Kernel_Handle_Record;
