@@ -1,6 +1,9 @@
 from modules import Module
 from highlighter.common import *
 
+
+# Load language definition before the gps_started hook, and before we load
+# the project.
 XML = """
 <Language>
   <Name>matlab</Name>
@@ -13,6 +16,7 @@ XML = """
   </Context>
 </Language>
 """
+GPS.parse_xml(XML)
 
 register_highlighter(
     language="matlab",
@@ -34,9 +38,3 @@ register_highlighter(
         simple(r"\b[0-9]*\.?[0-9]+\b", tag=tag_number),
     )
 )
-
-
-# noinspection PyMethodMayBeStatic
-class MatlabSupport(Module):
-    def gps_started(self):
-        GPS.parse_xml(XML)
