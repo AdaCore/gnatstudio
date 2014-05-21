@@ -62,54 +62,56 @@ package GNATdoc is
 
    type Docgen_Options is record
 
-      Comments_Filter : GNAT.Expect.Pattern_Matcher_Access := null;
+      Comments_Filter  : GNAT.Expect.Pattern_Matcher_Access := null;
       --  User-defined regular expression to filter comments
 
-      Report_Errors   : Report_Errors_Kind := Errors_And_Warnings;
+      Report_Errors    : Report_Errors_Kind := Errors_And_Warnings;
       --  Enables reporting errors and warnings on missing documentation,
       --  duplicated tags, etc.
 
-      Leading_Doc     : Boolean := False;
+      Leading_Doc      : Boolean := False;
       --  If True then extract the documentation of an entity declaration by
       --  first looking at the leading comments, and fallback to the comments
       --  after the entity if not found. If this flag is False then the search
       --  order is reversed.
 
-      Skip_C_Files    : Boolean := True;
+      Skip_C_Files     : Boolean := True;
       --  Used to force skip processing C and C++ files (since, although the
       --  project may have or reference these files we may not be interested
       --  in the addition of those files to the generated documentation).
 
-      Process_Bodies  : Boolean := False;
+      Process_Bodies   : Boolean := False;
       --  True to enable processing of body files
 
-      Show_Private    : Boolean := False;
+      Show_Private     : Boolean := False;
       --  Show also private entities
 
-      Quiet_Mode      : Boolean := False;
+      Quiet_Mode       : Boolean := False;
       --  Quiet mode
 
-      Backend_Name    : Ada.Strings.Unbounded.Unbounded_String;
+      Backend_Name     : Ada.Strings.Unbounded.Unbounded_String;
       --  Name of selected backend.
 
-      Ignore_Files    : GNAT.Strings.String_Access;
+      Ignore_Files     : GNAT.Strings.String_Access;
       --  List of files to be skipped by GNATdoc
 
       --  -------------------------- Internal switches -----------------------
 
-      Display_Time    : Boolean := False;
+      Display_Time     : Boolean := False;
       --  Used to enable an extra output with the time consumed by the docgen
       --  components processing files. Used to identify which components of
       --  GNATdoc must be optimized.
 
-      Tree_Output     : Tree_Output_Type := (Full, True);
+      Tree_Output      : Tree_Output_Type := (Full, True);
       --  Enables the generation of tree listings. Used to write regression
       --  tests.
 
-      Output_Comments : Boolean := False;
+      Output_Comments  : Boolean := False;
       --  Enable an extra output with the retrieved sources, retrieved sources
       --  and parsed comments. Used to write regression tests.
 
+      Default_Encoding : GNAT.Strings.String_Access;
+      --  Default encoding of source files.
    end record;
 
    procedure Process_Project_Files
@@ -220,8 +222,8 @@ private
    --  cross references are not up-to-date.
 
    function Read_Source_File
-     (Kernel : GPS.Core_Kernels.Core_Kernel;
-      File   : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access;
+     (Context : access constant Docgen_Context;
+      File    : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access;
    --  Reads source code file and make attempt to convert it to UTF-8.
 
 end GNATdoc;

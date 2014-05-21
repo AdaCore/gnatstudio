@@ -20,6 +20,7 @@ with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Command_Line;
 with Config;
+with GNATCOLL.Iconv;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Messages_Windows;    use GPS.Messages_Windows;
@@ -1839,14 +1840,14 @@ package body GNATdoc is
    ----------------------
 
    function Read_Source_File
-     (Kernel : GPS.Core_Kernels.Core_Kernel;
-      File   : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access
+     (Context : access constant Docgen_Context;
+      File    : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access
    is
       use type GNAT.Strings.String_Access;
 
       Buffer  : GNAT.Strings.String_Access := File.Read_File;
-      Result  : GNAT.Strings.String_Access;
-      Success : Boolean;
+      Aux     : GNAT.Strings.String_Access;
+      Default : GNATCOLL.Iconv.Iconv_T;
 
    begin
       --  There are some heuristicts should be used to guess most appropriate
@@ -1858,25 +1859,26 @@ package body GNATdoc is
       --
       --  2. Look for compiler switches (-gnati?) in ALI file to detect
       --  encoding of identifiers (and string literals and comments too). This
-      --  is not implemented now, Unknown_To_UTF8 attempts to use encoding of
-      --  currect locale.
+      --  is not implemented now.
+      --
+      --  3. Default encoding is used otherwise.
 
-      UTF8_Utils.Unknown_To_UTF8 (Buffer.all, Result, Success);
-
-      if not Success then
-         Kernel.Messages_Window.Insert
-           (-("unable to detect encoding for ")
-            & File.Display_Base_Name);
-      end if;
-
-      if Result /= null then
-         GNAT.Strings.Free (Buffer);
-
-         return Result;
-
-      else
+      if UTF8_Utils.Validate_UTF_8 (Buffer.all) then
          return Buffer;
       end if;
+
+      Default := GNATCOLL.Iconv.Iconv_Open
+        (GNATCOLL.Iconv.UTF8, Context.Options.Default_Encoding.all);
+
+      if UTF8_Utils.Validate (Default, Buffer.all) then
+         Aux := Buffer;
+         Buffer := new String'(GNATCOLL.Iconv.Iconv (Default, Aux.all));
+         GNAT.Strings.Free (Aux);
+      end if;
+
+      GNATCOLL.Iconv.Iconv_Close (Default);
+
+      return Buffer;
    end Read_Source_File;
 
    -------------------------

@@ -4743,8 +4743,7 @@ package body GNATdoc.Frontend is
                         end if;
                      end loop;
 
-                     Buffer_Body :=
-                       Read_Source_File (Context.Kernel, Body_File);
+                     Buffer_Body := Read_Source_File (Context, Body_File);
 
                      Clear_Doc;
                      Extended_Cursor.Initialize
@@ -4823,7 +4822,7 @@ package body GNATdoc.Frontend is
    begin
       EInfo_Vector_Sort_Loc.Sort (File_Entities.All_Entities);
 
-      Buffer := Read_Source_File (Context.Kernel, File);
+      Buffer := Read_Source_File (Context, File);
 
       if Is_Spec_File (Context.Kernel, File)
         and then Context.Options.Process_Bodies
@@ -4835,7 +4834,7 @@ package body GNATdoc.Frontend is
             Body_File := P_Tree.Other_File (File);
 
             if Body_File /= File and then Is_Regular_File (Body_File) then
-               Buffer_Body := Read_Source_File (Context.Kernel, Body_File);
+               Buffer_Body := Read_Source_File (Context, Body_File);
             else
                Body_File := No_File;
             end if;
