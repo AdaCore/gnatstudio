@@ -2597,6 +2597,7 @@ package body GPS.Kernel.Modules.UI is
                A.Proxy.Show;  --  in case it was hidden earlier
 
                if Action.Filter = null then
+                  A.Proxy.Set_Sensitive (True);
                   --  The item is already active, and will remain so, so
                   --  nothing to do here. We thus remove the item from the list
                   --  since there will be nothing to do with it anymore,

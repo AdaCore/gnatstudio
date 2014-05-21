@@ -1812,6 +1812,7 @@ package body Custom_Module is
                Description => Descr,
                Category    => Category,
                Filter      => Filter);
+            Update_Menus_And_Buttons (Kernel);
          end;
 
       elsif Command = "key" then
