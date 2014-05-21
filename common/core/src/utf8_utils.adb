@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Decode_UTF8_String;
-with GNATCOLL.Iconv;       use GNATCOLL.Iconv;
 with Config;
 
 package body UTF8_Utils is
@@ -29,9 +28,6 @@ package body UTF8_Utils is
 
    procedure Open;
    --  Initialize internal data if not yet initialized
-
-   function Validate (Object : Iconv_T; Input : Byte_Sequence) return Boolean;
-   --  Check if convertion of Text is possible using given Object
 
    ----------
    -- Open --
@@ -239,6 +235,17 @@ package body UTF8_Utils is
          end case;
       end loop;
    end Validate;
+
+   --------------------
+   -- Validate_UTF_8 --
+   --------------------
+
+   function Validate_UTF_8 (Input : Byte_Sequence) return Boolean is
+   begin
+      Open;
+
+      return Validate (UTF_8_To_UTF_32, Input);
+   end Validate_UTF_8;
 
    ---------------------
    -- Column_To_Index --

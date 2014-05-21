@@ -18,8 +18,10 @@
 --  This package provides a set of high-level subprograms for handling UTF8
 --  encoding
 
-with Basic_Types;  use Basic_Types;
-with GNAT.Strings; use GNAT.Strings;
+with Basic_Types;    use Basic_Types;
+with GNAT.Strings;   use GNAT.Strings;
+with GNATCOLL.Iconv; use GNATCOLL.Iconv;
+
 package UTF8_Utils is
 
    function Unknown_To_UTF8
@@ -86,5 +88,11 @@ package UTF8_Utils is
 
    function UTF8_Length (Item : UTF8_String) return Natural;
    --  Returns number of user visible characters in UTF8 encoded string.
+
+   function Validate (Object : Iconv_T; Input : Byte_Sequence) return Boolean;
+   --  Check if convertion of Text is possible using given Object
+
+   function Validate_UTF_8 (Input : Byte_Sequence) return Boolean;
+   --  Check whether Input is valid UTF-8
 
 end UTF8_Utils;

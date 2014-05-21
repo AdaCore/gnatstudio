@@ -156,19 +156,20 @@ package body GPS.CLI_Scripts is
             Backend_Name  : constant String := Nth_Arg (Data, 5, "html");
 
             Options : constant GNATdoc.Docgen_Options :=
-              (Comments_Filter => null,
-               Report_Errors   => Report_Errors_Kind'Value (Report_Errors),
-               Ignore_Files    => null,
-               Leading_Doc     => False,
-               Skip_C_Files    => Skip_C_Files,
-               Tree_Output     => (Tree_Output_Kind'Value (Tree_Output),
-                                   With_Comments),
-               Backend_Name    => To_Unbounded_String (Backend_Name),
-               Display_Time    => False,
-               Process_Bodies  => False,
-               Show_Private    => True,
-               Output_Comments => True,
-               Quiet_Mode      => False);
+              (Comments_Filter  => null,
+               Report_Errors    => Report_Errors_Kind'Value (Report_Errors),
+               Ignore_Files     => null,
+               Leading_Doc      => False,
+               Skip_C_Files     => Skip_C_Files,
+               Tree_Output      => (Tree_Output_Kind'Value (Tree_Output),
+                                    With_Comments),
+               Backend_Name     => To_Unbounded_String (Backend_Name),
+               Display_Time     => False,
+               Process_Bodies   => False,
+               Show_Private     => True,
+               Output_Comments  => True,
+               Quiet_Mode       => False,
+               Default_Encoding => new String'("iso-8859-1"));
          begin
             GNATdoc.Process_Project_Files
               (Kernel    => Kernel,

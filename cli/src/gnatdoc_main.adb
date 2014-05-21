@@ -484,24 +484,25 @@ begin
       Internal_Output : constant Boolean := Backend_Name.all = "test";
 
       Options : constant GNATdoc.Docgen_Options :=
-        (Comments_Filter => (if Pattern = "" then null
-                             else new Pattern_Matcher'
-                                        (Compile
-                                          (Pattern, Single_Line))),
-         Report_Errors   => (if Enable_Warnings then Errors_And_Warnings
-                                                else Errors_Only),
-         Ignore_Files    => Ignore_Files,
-         Leading_Doc     => Leading_Doc,
-         Skip_C_Files    => not Process_C_Files,
-         Tree_Output     => ((if Internal_Output then Full
-                                                 else None),
-                             With_Comments => False),
-         Backend_Name    => To_Unbounded_String (Backend_Name.all),
-         Display_Time    => Internal_Output,
-         Process_Bodies  => Process_Bodies,
-         Show_Private    => Process_Private_Part,
-         Output_Comments => Internal_Output,
-         Quiet_Mode      => Quiet_Mode);
+        (Comments_Filter  => (if Pattern = "" then null
+                              else new Pattern_Matcher'
+                                         (Compile
+                                           (Pattern, Single_Line))),
+         Report_Errors    => (if Enable_Warnings then Errors_And_Warnings
+                                                 else Errors_Only),
+         Ignore_Files     => Ignore_Files,
+         Leading_Doc      => Leading_Doc,
+         Skip_C_Files     => not Process_C_Files,
+         Tree_Output      => ((if Internal_Output then Full
+                                                  else None),
+                              With_Comments => False),
+         Backend_Name     => To_Unbounded_String (Backend_Name.all),
+         Display_Time     => Internal_Output,
+         Process_Bodies   => Process_Bodies,
+         Show_Private     => Process_Private_Part,
+         Output_Comments  => Internal_Output,
+         Quiet_Mode       => Quiet_Mode,
+         Default_Encoding => Encoding);
 
    begin
       GNATdoc.Process_Project_Files
