@@ -66,12 +66,6 @@ package Task_Manager is
    procedure Interrupt_All_Tasks (Manager : Task_Manager_Access);
    --  Interrput all tasks
 
-   procedure Set_Busy_Commands
-     (Manager      : Task_Manager_Access;
-      Push_Command : Command_Access;
-      Pop_Command  : Command_Access);
-   --  Set the commands used to push/pop the busy state
-
    procedure Pause_Command
      (Manager : access Task_Manager_Record'Class;
       Index   : Integer);
@@ -167,9 +161,6 @@ private
 
       Minimal_Active_Priority  : Integer := 0;
       Minimal_Passive_Priority : Integer := 0;
-
-      Push_Command, Pop_Command : Command_Access;
-      --  Commands used to push/pop the "busy" state
    end record;
 
    type Task_Manager_Access is access all Task_Manager_Record'Class;

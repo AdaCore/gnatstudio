@@ -166,12 +166,6 @@ package body Task_Manager.GUI is
       Idle : Boolean);
    --  Hide or show the proper widgets
 
-   procedure On_Progress_Bar_Destroy
-     (Object  : access GObject_Record'Class;
-      Manager : Manager_Index_Record);
-   pragma Unreferenced (On_Progress_Bar_Destroy);
-   --  Called when a progress bar is destroyed
-
    procedure Refresh (GUI : Task_Manager_Interface);
    --  Refresh the information in View from the Task_Manager
 
@@ -215,22 +209,6 @@ package body Task_Manager.GUI is
    procedure Unregister_Timeout (GUI : Task_Manager_Interface);
    --  Remove the timeout that refreshes the GUI and clear the list of items
    --  that need to be refreshed.
-
-   procedure Pop_State (Manager : access Task_Manager_Record'Class);
-   --  Push and pop the "busy" state of the task manager
-
-   -----------------------------
-   -- On_Progress_Bar_Destroy --
-   -----------------------------
-
-   procedure On_Progress_Bar_Destroy
-     (Object  : access GObject_Record'Class;
-      Manager : Manager_Index_Record)
-   is
-      pragma Unreferenced (Object);
-   begin
-      Pop_State (Manager.D.Manager);
-   end On_Progress_Bar_Destroy;
 
    -----------------------------------------
    -- On_Main_Progress_Button_Press_Event --
@@ -343,19 +321,6 @@ package body Task_Manager.GUI is
       end if;
    end Refresh;
 
-   ---------------
-   -- Pop_State --
-   ---------------
-
-   procedure Pop_State (Manager : access Task_Manager_Record'Class) is
-      Dummy : Command_Return_Type;
-      pragma Unreferenced (Dummy);
-   begin
-      if Manager.Pop_Command /= null then
-         Dummy := Execute (Manager.Pop_Command);
-      end if;
-   end Pop_State;
-
    --------------------
    -- On_GUI_Destroy --
    --------------------
@@ -409,10 +374,6 @@ package body Task_Manager.GUI is
    begin
       Refresh (GUI);
 
-      if GUI.Manager.Queues (Index).Show_Bar then
-         Dummy := Execute (GUI.Manager.Push_Command);
-      end if;
-
       Unregister_Timeout (GUI);
       Run_Hook (Manager.Kernel, Task_Started_Hook, Data'Access);
    end Queue_Added;
@@ -438,10 +399,6 @@ package body Task_Manager.GUI is
       end;
 
       Refresh (GUI);
-
-      if GUI.Manager.Queues (Index).Show_Bar then
-         Dummy := Execute (GUI.Manager.Pop_Command);
-      end if;
 
       Unregister_Timeout (GUI);
    end Queue_Removed;

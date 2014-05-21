@@ -19,10 +19,7 @@ with Glib.Object;               use Glib.Object;
 with Gtk.Widget;                use Gtk.Widget;
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with Task_Manager.Shell;        use Task_Manager.Shell;
-with Commands.Custom;           use Commands.Custom;
 
 package body GPS.Kernel.Task_Manager is
    Me : constant Trace_Handle := Create ("Tasks");
@@ -175,22 +172,7 @@ package body GPS.Kernel.Task_Manager is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Push_Command, Pop_Command : Custom_Command_Access;
-      Script                    : Scripting_Language;
    begin
-      Script := Lookup_Scripting_Language
-        (Get_Scripts (Kernel), GPS_Shell_Name);
-      Create
-        (Push_Command, "set_busy", Kernel_Handle (Kernel), "set_busy", Script);
-      Create
-        (Pop_Command, "unset_busy",
-         Kernel_Handle (Kernel), "unset_busy", Script);
-
-      Set_Busy_Commands
-        (Get_Task_Manager (Kernel),
-         Command_Access (Push_Command),
-         Command_Access (Pop_Command));
-
       Standard.Task_Manager.Shell.Register_Commands (Kernel);
    end Register_Module;
 

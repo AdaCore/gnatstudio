@@ -565,27 +565,6 @@ package body Task_Manager is
       return null;
    end Head;
 
-   -----------------------
-   -- Set_Busy_Commands --
-   -----------------------
-
-   procedure Set_Busy_Commands
-     (Manager      : Task_Manager_Access;
-      Push_Command : Command_Access;
-      Pop_Command  : Command_Access) is
-   begin
-      if Manager.Push_Command /= null then
-         Unref (Manager.Push_Command);
-      end if;
-
-      if Manager.Pop_Command /= null then
-         Unref (Manager.Pop_Command);
-      end if;
-
-      Manager.Push_Command := Push_Command;
-      Manager.Pop_Command := Pop_Command;
-   end Set_Busy_Commands;
-
    -------------
    -- Destroy --
    -------------
@@ -601,14 +580,6 @@ package body Task_Manager is
          end loop;
 
          Unchecked_Free (Manager.Queues);
-      end if;
-
-      if Manager.Push_Command /= null then
-         Unref (Manager.Push_Command);
-      end if;
-
-      if Manager.Pop_Command /= null then
-         Unref (Manager.Pop_Command);
       end if;
    end Destroy;
 
