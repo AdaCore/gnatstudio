@@ -33,7 +33,7 @@ class OverlayStyle(object):
     """
 
     def __init__(self, name, foreground="", background="", weight=None,
-                 slant=None, editable=True, whole_line=False, speedbar=False,
+                 slant=None, editable=None, whole_line=False, speedbar=False,
                  **kwargs):
         self.name = name
         self.foreground = foreground
@@ -94,7 +94,9 @@ class OverlayStyle(object):
                 for prop, value in self.others.iteritems():
                     over.set_property(prop, value)
 
-                over.set_property("editable", self.editable)
+                if self.editable:
+                    over.set_property("editable", self.editable)
+
                 over.ts = self._style_ts
             return over
 
