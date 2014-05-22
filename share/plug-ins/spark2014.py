@@ -930,7 +930,11 @@ class GNATprove_Parser(tool_output.OutputParser):
                     pass
 
     def act_on_extra_info(self, m, extra, objdir, command):
-        """act on extra info for the message m"""
+        """act on extra info for the message m. More precisely, if the message
+           has a tracefile, add an action to the message, and if the message
+           has manual proof information, run the external editor
+        """
+
         if 'tracefile' in extra and extra['tracefile'] != '':
             tracefile = os.path.join(objdir, extra['tracefile'])
             lines = self.parse_trace_file(tracefile)
