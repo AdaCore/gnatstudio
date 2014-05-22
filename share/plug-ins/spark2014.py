@@ -13,10 +13,8 @@ import GPS
 import os_utils
 import os.path
 import tool_output
-import re
-import gps_utils
 import json
-import subprocess
+import re
 
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
@@ -98,13 +96,6 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <action name="Clean Proofs Action" category="GNATprove" output="none">
         <shell
           lang="python">spark2014.on_clean_up(GPS.current_context())</shell>
-    </action>
-    <action
-      name="Remove Editor Highlighting Action"
-      category="GNATprove" output="none">
-       <shell
-         lang="python">spark2014.on_clear_highlighting(GPS.current_context())
-       </shell>
     </action>
 
     <submenu before="Window">
@@ -484,6 +475,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -506,6 +498,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -530,6 +523,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -552,6 +546,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -573,6 +568,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -594,6 +590,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -616,6 +613,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -637,6 +635,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -658,6 +657,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -679,6 +679,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -720,6 +721,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
+         location_parser
          console_writer
          end_of_build
        </output-parsers>
@@ -750,35 +752,34 @@ prove_line_loc = 'Prove Line Location'
 prove_check = 'Prove Check'
 show_report = 'Show Report'
 clean_up = 'Clean Proofs'
-clear_highlighting = 'Remove Editor Highlighting'
 
-Default_colors = {'info': '#88eeaa', 'error': '#f75d59',
-                  'trace': '#00ffff'}
+Default_Trace_Color = "#00ffff"
+Overlay_Name = "Gnatprove_Trace_Overlay"
 
-Pref_Names = {}
+Color_Pref_Name = 'Plugins/gnatprove/color_trace'
 
-Overlays = {'trace': 'gnatprove_trace_overlay',
-            'error': 'gnatprove_error_overlay',
-            'info': 'gnatprove_info_overlay'}
+GPS.Preference(Color_Pref_Name).create(
+    'Highlight color for trace',
+    'color',
+    'color used to highlight trace lines.' +
+    ' You must restart GPS to take changes into account.',
+    Default_Trace_Color)
 
-Color_pref_prefix = 'Plugins/gnatprove/color_'
 
-# The default colors
+def get_trace_overlay(buf):
+    """retrieve the trace overlay for a buffer. If the buffer hasn't got one
+       yet, create it, add it to the buffer, and return it.
+    """
 
-for k in Default_colors:
-    pref_name = Color_pref_prefix + k
-    text = \
-        ('color used to highlight corresponding lines.' +
-            ' You must restart gps to take changes into account')
-    GPS.Preference(pref_name).create(
-        'Highlight color for ' + k,
-        'color',
-        text,
-        Default_colors[k])
+    if not hasattr(buf, Overlay_Name):
+        o = buf.create_overlay('trace overlay')
+        o.set_property('paragraph-background',
+                       GPS.Preference(Color_Pref_Name).get())
+        setattr(buf, Overlay_Name, o)
+    return getattr(buf, Overlay_Name)
 
 
 # helper functions that do not really fit elsewhere
-
 def goto_location(sloc):
     """go to the location defined by the given GPS.FileLocation"""
 
@@ -789,169 +790,14 @@ def goto_location(sloc):
     v.center()
 
 
-def get_overlay(buf, overlay_name):
-    """ For a buffer and an overlay name, return the corresponding overlay
-        object of the buffer.
-
-        The Overlay name must be a key of the Overlays object. This function
-        will take care of creating the needed overlays in the buffer when they
-        are not there, and will also take care of creating them in the right
-        order.
-    """
-
-    needed_attr = Overlays[overlay_name]
-    if not hasattr(buf, needed_attr):
-
-        # the overlay is not there, it means we need to create all three in
-        # the right order.
-
-        info = buf.create_overlay('info overlay')
-        error = buf.create_overlay('error overlay')
-        trace = buf.create_overlay('trace overlay')
-        my_overlays = {'info': info, 'trace': trace, 'error': error}
-        for k in Overlays:
-            o = my_overlays[k]
-            pref_name = Color_pref_prefix + k
-            o.set_property('paragraph-background',
-                           GPS.Preference(pref_name).get())
-            setattr(buf, Overlays[k], o)
-
-    # we are all set now, get the required attribute
-
-    return getattr(buf, needed_attr)
-
-
-class GNATprove_Message(GPS.Message):
-
-    """Class that defines gnatprove messages, which are richer than plain GPS
-    messages. In particular, a gnatprove message can have an explanation
-    attached, which is shown in the form of a path."""
-
-    def __init__(self, category, f, line, col, text, flags, tracefile=''):
-        """initialize state for GNATprove_Message"""
-
-        GPS.Message.__init__(self, category, f, line, col, text, flags)
-        self.trace_visible = False
-        self.lines = []
-        if tracefile != '':
-            objdirs = GPS.Project.root().object_dirs()
-            self.tracefile = \
-                os.path.join(objdirs[0], obj_subdir_name, tracefile)
-        else:
-            self.tracefile = ''
-        self.is_info_message = text.find('info:') != -1
-        self.highlight_message()
-        self.load_trace_if_needed()
-
-        # register ourselves in the gnatprove plugin
-
-        gnatprove_plug.add_msg(self)
-
-    def load_trace_if_needed(self):
-        if os.path.isfile(self.tracefile):
-            self.parse_trace_file()
-            if len(self.lines) > 0:
-                self.set_subprogram(lambda m: m.toggle_trace(),
-                                    'gps-gnatprove-path',
-                                    'show path information')
-
-    def highlight_message(self):
-        msg_buffer = GPS.EditorBuffer.get(self.get_file())
-        if self.is_info_message:
-            needed_overlay = 'info'
-        else:
-            needed_overlay = 'error'
-        overlay = get_overlay(msg_buffer, needed_overlay)
-        loc = msg_buffer.at(self.get_line(), 1)
-        msg_buffer.apply_overlay(overlay, loc, loc)
-
-    def clear_trace(self):
-        """clear the trace of the message"""
-
-        f = None
-        for sloc in self.lines or []:
-            if sloc.file() != f:
-                f = sloc.file()
-                buf = GPS.EditorBuffer.get(f, open=False)
-                if buf:
-                    overlay = get_overlay(buf, 'trace')
-                    buf.remove_overlay(overlay)
-        self.trace_visible = False
-
-    def clear_highlighting(self):
-        """simply remove all overlays. Note that this will also affect the
-           highlighting of other messages
-        """
-
-        self.clear_trace()
-        buf = GPS.EditorBuffer.get(self.get_file(), open=False)
-        for k in Overlays:
-            o = get_overlay(buf, k)
-            buf.remove_overlay(o)
-
-    def remove(self):
-        """remove the message and clear the trace"""
-
-        GPS.Message.remove(self)
-        self.clear_highlighting()
-
-    def toggle_trace(self):
-        """Toggle visibility of the trace information"""
-
-        if self.trace_visible:
-            gnatprove_plug.remove_trace(self)
-            self.clear_trace()
-        else:
-            gnatprove_plug.register_trace(self)
-            self.show_trace()
-
-    def parse_trace_file(self):
-        """parse the trace file (a list of file:line information) and store it
-            in the list self.lines
-        """
-
-        with open(self.tracefile, 'r') as f:
-            for line in f:
-                sl = line.split(':')
-                if len(sl) >= 2:
-                    self.lines.append(
-                        GPS.FileLocation(GPS.File(sl[0]), int(sl[1]), 1))
-
-    def show_trace(self):
-        """show the trace of the message. If necessary, read the associated
-           trace file to load the information.
-        """
-
-        self.trace_visible = True
-        f = None
-        for sloc in self.lines or []:
-            if sloc.file() != f:
-                f = sloc.file()
-                buf = GPS.EditorBuffer.get(f)
-                goto_location(sloc)
-                overlay = get_overlay(buf, 'trace')
-                buf.remove_overlay(overlay)
-            buf.apply_overlay(overlay, buf.at(sloc.line(), 1),
-                              buf.at(sloc.line(), 1))
-
-
-# this variable is used to clear GNATprove messages whenever a new
-# builder action is run. It is too early to do it in the menu entry
-# callbacks, so we have to do it when starting to parse the tool
-# output. See GNATprove_Parser.on_stdout.
-# This variable cannot be a member of GNATprove_Parser, because we don't have
-# access to the instance in this plugin.
-
-should_clear_messages = True
-
-
 # This is the on_exit callback for the editor process
 def check_proof_after_close(proc, ex_st, outp):
+    """run gnatprove to check a proof after the external editor has been
+       closed
+    """
     if not proc._is_killed:
         try:
             vc_kind = get_vc_kind(proc._proc_msg)
-            global should_clear_messages
-            should_clear_messages = True
             llarg = limit_line_option(proc._proc_msg, vc_kind)
             GPS.BuildTarget(prove_check).execute(extra_args=[llarg],
                                                  synchronous=False)
@@ -964,7 +810,55 @@ def check_proof_after_close(proc, ex_st, outp):
 # and asking twice to relaunch GNATprove.
 # So instead of that if the process was killed we don't do anything
 def editor_before_kill(proc, outp):
+    """check if editor was killed"""
     proc._is_killed = True
+
+
+trace_msg = None
+trace_lines = []
+
+
+def show_trace(lines):
+    """show the trace given by the lines"""
+    f = None
+    for sloc in lines or []:
+        if sloc.file() != f:
+            f = sloc.file()
+            buf = GPS.EditorBuffer.get(f)
+            goto_location(sloc)
+            overlay = get_trace_overlay(buf)
+        buf.apply_overlay(overlay,
+                          buf.at(sloc.line(), 1),
+                          buf.at(sloc.line(), 1))
+
+
+def remove_trace(lines):
+    """remove the trace given by the lines"""
+    f = None
+    for sloc in lines or []:
+        if sloc.file() != f:
+            f = sloc.file()
+            buf = GPS.EditorBuffer.get(f, open=False)
+            if buf:
+                overlay = get_trace_overlay(buf)
+                buf.remove_overlay(overlay)
+
+
+def toggle_trace(msg, lines):
+    """toggle the trace for the given msg and lines"""
+    global trace_msg, trace_lines
+    if trace_msg is None:
+        trace_msg = msg
+        trace_lines = lines
+        show_trace(lines)
+    elif trace_msg == msg:
+        remove_trace(trace_lines)
+        trace_msg = None
+    else:
+        remove_trace(trace_lines)
+        trace_msg = msg
+        trace_lines = lines
+        show_trace(lines)
 
 
 class GNATprove_Parser(tool_output.OutputParser):
@@ -974,138 +868,151 @@ class GNATprove_Parser(tool_output.OutputParser):
 
     def __init__(self, child):
         tool_output.OutputParser.__init__(self, child)
-        should_clear_messages = True
-        regex = '([^:]+):([0-9]+):([0-9]+):(.*)'
-        self.comp_msg_regex = re.compile(regex)
+        # holds the unit names for which extra info is retrieved
+        self.units_with_extra_info = []
+        # holds the mapping "msg" -> msg_id
+        self.msg_id = {}
+        self.regex = re.compile(r"(.*)\[#([0-9])\]$")
+        # holds the mapping "unit,msg_id" -> extra_info
+        self.extra_info = {}
+
+    def build_msg_full_text(self, file, line, col, text):
+        """Given a msg text and location, return the string
+           "file:line:col:msg"
+        """
+        return file + ':' + str(line) + ':' + str(col) + ': ' + text
+
+    def pass_output(self, text, command):
+        """pass the text on to the next output parser"""
+        if self.child:
+            self.child.on_stdout(text + '\n', command)
 
     def error_msg_from_json(self, msg):
         """Given a JSON dict that contains the data for a message, print a
         corresponding "compiler-like" message on the GPS Console"""
 
-        text = msg['file'] + ':' + str(msg['line']) + ':' \
-            + str(msg['col']) + ': ' + msg['message'] + '\n'
-        GPS.Console('Messages').write(text)
+        text = self.build_msg_full_text(msg['file'],
+                                        msg['line'],
+                                        msg['col'],
+                                        msg['message'])
+        return text
+
+    def parse_trace_file(self, filename):
+        """ parse the trace file as a list of "file:line" information and
+            return the result
+        """
+
+        lines = []
+        if os.path.isfile(filename):
+            with open(filename, 'r') as f:
+                for line in f:
+                    sl = line.split(':')
+                    if len(sl) >= 2:
+                        lines.append(
+                            GPS.FileLocation(GPS.File(sl[0]),
+                                             int(sl[1]),
+                                             1))
+        return lines
+
+    def parsejson(self, unit, file):
+        """parse the json file "file", which belongs to unit "unit" and fill
+           the "extra_info" mapping for any entry
+        """
+        if os.path.isfile(file):
+            with open(file, 'r') as f:
+                try:
+                    list = json.load(f)
+                    for entry in list:
+                        if 'msg_id' in entry:
+                            full_id = unit, entry['msg_id']
+                            self.extra_info[full_id] = entry
+                except ValueError:
+                    pass
+
+    def act_on_extra_info(self, m, extra, objdir, command):
+        """act on extra info for the message m"""
+        if 'tracefile' in extra and extra['tracefile'] != '':
+            tracefile = os.path.join(objdir, extra['tracefile'])
+            lines = self.parse_trace_file(tracefile)
+            if lines != []:
+                m.set_subprogram(lambda m: toggle_trace(m, lines),
+                                 'gps-gnatprove-path',
+                                 'show path information')
+        # We don't want to open hundreds of editors if a Prove All
+        # or Prove File was launched with a manual prover.
+        # We only open an editor for prove check.
+        editor_dialog = "The condition couldn't be verified\n" \
+                        + "Would you like to edit the VC file?\n"
+
+        if command.name() == prove_check and 'vc_file' in extra \
+           and GPS.MDI.yes_no_dialog(editor_dialog):
+            if 'editor_cmd' in extra:
+                cmd = extra['editor_cmd']
+
+                try:
+                    proc = GPS.Process(cmd,
+                                       on_exit=check_proof_after_close,
+                                       before_kill=editor_before_kill)
+                    proc._proc_msg = m
+                    proc._is_killed = False
+                except OSError:
+                    GPS.MDI.dialog("Editor " + cmd[0]
+                                   + " not found\n"
+                                   + "Manual proof file saved as: "
+                                   + extra['vc_file'] + "\n")
+            else:
+                GPS.MDI.dialog("No editor configured for this prover\n"
+                               + "Manual proof file saved as: "
+                               + extra['vc_file'] + "\n")
+
+    def on_exit(self, status, command):
+        """When gnatprove has finished, scan through messages to see if extra
+           info has been attached to them. If so, parse the .flow and .proof
+           files of the corresponding unit to get the extra info, and act on
+           the extra info"""
+
+        objdir = os.path.join(
+            GPS.Project.root().object_dirs()[0],
+            obj_subdir_name)
+        #
+        imported_units = set()
+        for m in GPS.Message.list():
+            file = os.path.basename(m.get_file().name())
+            text = self.build_msg_full_text(
+                file,
+                m.get_line(),
+                m.get_column(),
+                m.get_text())
+            if text in self.msg_id:
+                id = self.msg_id[text]
+                unit = os.path.splitext(file)[0]
+                full_id = unit, id
+                if unit not in imported_units:
+                    self.parsejson(unit, os.path.join(objdir, unit + ".flow"))
+                    self.parsejson(unit, os.path.join(objdir, unit + ".proof"))
+                extra = {}
+                if full_id in self.extra_info:
+                    extra = self.extra_info[full_id]
+                    self.act_on_extra_info(m, extra, objdir, command)
 
     def on_stdout(self, text, command):
-
-        # On the first message, we assume the tool has been run; clear the
-        # locations view of the gnatprove messages.
-
-        global should_clear_messages
-        if should_clear_messages:
-            should_clear_messages = False
-            gnatprove_plug.clean_locations_view()
+        """for each gnatprove message, check for a msg_id tag of the form
+           [#id] where id is a number. If no such tag is found, just pass the
+           text on to the next parser. Otherwise, add a mapping
+              msg text -> msg id
+           which will be used later (in on_exit) to associate more info to the
+           message
+        """
         lines = text.splitlines()
         for line in lines:
-            try:
-
-                # we first try to parse a JSON dict
-
-                msg = json.loads(line)
-
-                # it actually was a JSON dict, we print something that looks
-                # like regular GNATProve output on the console
-
-                self.error_msg_from_json(msg)
-                if 'tracefile' in msg:
-                    tracefile = msg['tracefile']
-                else:
-                    tracefile = ''
-                m = GNATprove_Message(
-                    toolname,
-                    GPS.File(msg['file']),
-                    msg['line'],
-                    msg['col'],
-                    msg['message'],
-                    0,
-                    tracefile=tracefile,
-                )
-
-                # We don't want to open hundreds of editors if a Prove All
-                # or Prove File was launched with a manual prover.
-                # We only open an editor for prove check.
-                editor_dialog = "The condition couldn't be verified\n" \
-                                + "Would you like to edit the VC file?\n"
-
-                if command.name() == prove_check and 'vc_file' in msg \
-                   and GPS.MDI.yes_no_dialog(editor_dialog):
-                    if 'editor_cmd' in msg:
-                        cmd = msg['editor_cmd']
-
-                        try:
-                            proc = GPS.Process(cmd,
-                                               on_exit=check_proof_after_close,
-                                               before_kill=editor_before_kill)
-                            proc._proc_msg = m
-                            proc._is_killed = False
-                        except OSError:
-                            GPS.MDI.dialog("Editor " + cmd[0]
-                                           + " not found\n"
-                                           + "Manual proof file saved as: "
-                                           + msg['vc_file'] + "\n")
-                    else:
-                        GPS.MDI.dialog("No editor configured for this prover\n"
-                                       + "Manual proof file saved as: "
-                                       + msg['vc_file'] + "\n")
-
-            except ValueError:
-
-                # it's a non-JSON message
-                # we can print it as-is
-
-                GPS.Console('Messages').write(line + '\n')
-
-                # we try to parse a file:line:msg format
-
-                m = re.match(self.comp_msg_regex, line)
-                if m:
-                    (fn, line, col, msg_text) = m.group(1, 2, 3, 4)
-                    msg_text = msg_text.replace('<', '&lt;')
-                    msg_text = msg_text.replace('>', '&gt;')
-                    m = GNATprove_Message(
-                        toolname,
-                        GPS.File(fn),
-                        int(line),
-                        int(col),
-                        msg_text,
-                        0,
-                        )
-
-
-# not used anymore. kept for possible future use.
-
-def is_subp_decl_context(self):
-    """Check whether the given context is the context of a subprogram
-       declaration."""
-
-    return (isinstance(self, GPS.EntityContext) and
-            self.entity() and
-            self.entity().is_subprogram() and
-            self.entity().declaration() and
-            self.location().file() == self.entity().declaration().file() and
-            self.location().line() == self.entity().declaration().line())
-
-
-# not used anymore. kept for possible future use.
-
-def is_subp_body_context(self):
-    """Check whether the given context is the context of a subprogram
-       body."""
-
-    return (isinstance(self, GPS.EntityContext) and
-            self.entity() and
-            self.entity().is_subprogram() and self.entity().body() and
-            self.location().file() == self.entity().body().file() and
-            self.location().line() == self.entity().body().line())
-
-
-# not used anymore. kept for possible future use.
-
-def is_subp_context(self):
-    """Check whether the given context is the context of a subprogram
-       body or declaration."""
-
-    return is_subp_decl_context(self) or is_subp_body_context(self)
+            m = re.match(self.regex, line)
+            if m:
+                text = m.group(1)
+                self.pass_output(text, command)
+                self.msg_id[text] = int(m.group(2))
+            else:
+                # the line doesn't have any extra info, go on
+                self.pass_output(line, command)
 
 
 def is_file_context(self):
@@ -1117,8 +1024,6 @@ def is_file_context(self):
 # It's more convenient to define these callbacks outside of the plugin class
 
 def generic_on_analyze(target):
-    global should_clear_messages
-    should_clear_messages = True
     GPS.BuildTarget(target).execute(synchronous=False)
 
 
@@ -1148,8 +1053,6 @@ def on_prove_file(self):
 
 def on_prove_line(self):
     if isinstance(self, GPS.MessageContext):
-        global should_clear_messages
-        should_clear_messages = True
         llarg = "--limit-line=" \
                 + os.path.basename(self.message().get_file().name()) \
                 + ":" + str(self.message().get_line())
@@ -1162,10 +1065,6 @@ def on_prove_line(self):
 
 def on_show_report(self):
     gnatprove_plug.show_report()
-
-
-def on_clear_highlighting(self):
-    gnatprove_plug.clear_highlighting()
 
 
 def on_clean_up(self):
@@ -1181,7 +1080,7 @@ def mk_loc_string(sloc):
 def subprogram_start(cursor):
     """Return the start of the subprogram that we are currently in"""
 
-   # This function has been copied and modified from plug-in "expanded_code"
+    # This function has been copied and modified from plug-in "expanded_code"
 
     blocks = {'CAT_PROCEDURE': 1, 'CAT_FUNCTION': 1}
 
@@ -1205,7 +1104,7 @@ def compute_subp_sloc(self):
     try:
         curloc = self.location()
         buf = GPS.EditorBuffer.get(curloc.file(), open=False)
-        if buf:
+        if buf is not None:
             edloc = buf.at(curloc.line(), curloc.column())
             start_loc = subprogram_start(edloc)
         else:
@@ -1228,7 +1127,7 @@ def compute_subp_sloc(self):
                             start_loc.line(), start_loc.column())
     except:
         return None
-    if entity:
+    if entity is not None:
         return entity.declaration()
     else:
         return None
@@ -1237,7 +1136,7 @@ def compute_subp_sloc(self):
 def inside_subp_context(self):
     """Return True if the context is inside a subprogram declaration or body"""
 
-    if compute_subp_sloc(self):
+    if compute_subp_sloc(self) is not None:
         return 1
     else:
         return 0
@@ -1257,10 +1156,8 @@ def generic_action_on_subp(self, action):
     # appear in the editable box shown to the user, even if appears in the
     # uneditable argument list displayed below it.
 
-    global should_clear_messages
-    should_clear_messages = True
     loc = compute_subp_sloc(self)
-    if loc:
+    if loc is not None:
         target = GPS.BuildTarget(action)
         target.execute(extra_args='--limit-subp=' + mk_loc_string(loc),
                        synchronous=False)
@@ -1288,20 +1185,6 @@ class GNATProve_Plugin:
     def __init__(self):
         GPS.parse_xml(xml_gnatprove)
         GPS.parse_xml(xml_gnatprove_menus % {'prefix': prefix})
-        self.messages = []
-        self.trace_msg = None
-
-    def add_msg(self, msg):
-        """register the given message as a gnatprove message. objects of
-        GNATprove_Message are automatically registered.
-        """
-
-        self.messages.append(msg)
-
-    def clear_messages(self):
-        """reset the list of messages"""
-
-        self.messages = []
 
     def show_report(self):
         """show report produced in gnatprove/gnatprove.out"""
@@ -1332,34 +1215,8 @@ class GNATProve_Plugin:
         v = buf.current_view()
         GPS.MDI.get_by_child(v).raise_window()
 
-    def clear_highlighting(self):
-        """delete the traces for all registered messages"""
-
-        for msg in self.messages:
-            msg.clear_highlighting()
-
-    def register_trace(self, msg):
-        if self.trace_msg:
-            self.trace_msg.toggle_trace()
-        self.trace_msg = msg
-
-    def remove_trace(self, msg):
-        if self.trace_msg == msg:
-            self.trace_msg = None
-
-    def clean_locations_view(self):
-        """clean up the locations view: delete the "gnatprove" category,
-           remove traces of the gnatprove messages, and remove the messages
-           themselves
-        """
-
-        self.clear_highlighting()
-        self.clear_messages()
-        self.trace_msg = None
-        GPS.Locations.remove_category(toolname)
-
-
 # Manual proof
+
 
 class UnknownVCError(Exception):
     def __init__(self, msg):
@@ -1448,8 +1305,6 @@ def limit_line_option(msg, vc_kind):
 def on_prove_check(context):
     msg = context._loc_msg
     vc_kind = get_vc_kind(msg)
-    global should_clear_messages
-    should_clear_messages = True
     llarg = limit_line_option(msg, vc_kind)
     GPS.BuildTarget(prove_check).execute(extra_args=[llarg],
                                          synchronous=False)
