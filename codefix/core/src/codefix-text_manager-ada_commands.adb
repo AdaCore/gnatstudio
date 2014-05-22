@@ -1627,6 +1627,10 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       while not Is_Parent_Scope (Null_Construct_Tree_Iterator, It) loop
          It := Get_Parent_Scope (Tree, It);
+
+         if It = Null_Construct_Tree_Iterator then
+            return "";
+         end if;
       end loop;
 
       return Get_Full_Name (Tree, It);
