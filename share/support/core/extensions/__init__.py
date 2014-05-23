@@ -55,7 +55,7 @@ class EditorBuffer(object):
             assert isinstance(text, str) or isinstance(text, unicode)
             self._insert_at_location(loc_or_text, text)
         else:
-            self.cursors()
+            text = loc_or_text
             assert isinstance(text, str) or isinstance(text, unicode)
             self._insert_at_location(self.current_view().cursor(),
                                      loc_or_text)
