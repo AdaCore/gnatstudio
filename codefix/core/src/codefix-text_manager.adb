@@ -1174,7 +1174,7 @@ package body Codefix.Text_Manager is
            To_Composite_Identifier
              (Get_Full_Name (Get_Tree (Get_Structured_File (This)), It));
       begin
-         if Length (It_Id) = 1 then
+         if Length (It_Id) <= 1 then
             return "";
          else
             return To_String (Get_Slice (It_Id, 1, Length (It_Id) - 1));
