@@ -243,6 +243,11 @@ package body GPS.Kernel.Modules.UI is
       Hash            => Ada.Strings.Hash_Case_Insensitive,
       Equivalent_Keys => "=");
 
+   procedure Add_Menu_To_List
+     (Action : not null access Action_Record;
+      Path   : String);
+   --  Add a menu to the list of menus associated with Action.
+
    -------------------------
    -- proxies for actions --
    -------------------------
@@ -1312,6 +1317,55 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Get_Data;
 
+   ----------------------
+   -- Add_Menu_To_List --
+   ----------------------
+
+   procedure Add_Menu_To_List
+     (Action : not null access Action_Record;
+      Path   : String)
+   is
+   begin
+      if Action.Menus /= null then
+         for M in Action.Menus'Range loop
+            if Action.Menus (M).all = Path then
+               return;
+            end if;
+         end loop;
+      end if;
+
+      Append (Action.Menus, Path);
+   end Add_Menu_To_List;
+
+   -----------------------------
+   -- Update_Shortcut_Display --
+   -----------------------------
+
+   procedure Update_Shortcut_Display
+     (Kernel : access Kernel_Handle_Record'Class;
+      Action : String)
+   is
+      Act    : constant access Action_Record := Lookup_Action (Kernel, Action);
+      Item   : Gtk_Menu_Item;
+      Key    : Gdk_Key_Type;
+      Mods   : Gdk_Modifier_Type;
+      Label  : Gtk_Accel_Label;
+   begin
+      if Act /= null and then Act.Menus /= null then
+         Kernel.Get_Shortcut_Simple
+           (Action => Act.Name.all,
+            Key    => Key,
+            Mods   => Mods);
+         for M in Act.Menus'Range loop
+            Item := Find_Menu_Item (Kernel, Act.Menus (M).all);
+            if Item.all in Action_Menu_Item_Record'Class then
+               Label := Gtk_Accel_Label (Action_Menu_Item (Item).Get_Child);
+               Label.Set_Accel (Guint (Key), Mods);
+            end if;
+         end loop;
+      end if;
+   end Update_Shortcut_Display;
+
    -------------------
    -- Lookup_Action --
    -------------------
@@ -1335,9 +1389,21 @@ package body GPS.Kernel.Modules.UI is
       Action := Lookup_Action (Data.Kernel, Data.Action.all);
 
       if Action /= Data.Looked_Up then
+         --  ??? Commented out because Data.Looked_Up might no longer be valid
+--           if Data.Looked_Up /= null then
+--              if Self.all in Gtk_Menu_Item_Record'Class then
+--             Remove_Menu_From_List (Data.Looked_Up, Create_Menu_Path (Self));
+--              end if;
+--           end if;
+
          Data.Looked_Up := Action;
 
          if Action /= null then
+            if Self.all in Gtk_Menu_Item_Record'Class then
+               Add_Menu_To_List
+                 (Action, Create_Menu_Path (Gtk_Menu_Item (Self)));
+            end if;
+
             if Action.Category = null then
                Action.Category := new String'("");
             end if;
@@ -1386,7 +1452,7 @@ package body GPS.Kernel.Modules.UI is
                end if;
             end if;
 
-               Get_Style_Context (Self).Remove_Class ("nogpsaction");
+            Get_Style_Context (Self).Remove_Class ("nogpsaction");
 
          else
             Self.Set_Tooltip_Markup

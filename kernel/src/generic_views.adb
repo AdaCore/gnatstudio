@@ -20,8 +20,11 @@ with Glib.Object;             use Glib, Glib.Object;
 with XML_Utils;               use XML_Utils;
 with Gtk.Editable;
 with Gdk.Event;               use Gdk.Event;
+with Gdk.Window;              use Gdk.Window;
 with Gtk.Box;                 use Gtk.Box;
+with Gtk.Button;              use Gtk.Button;
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
+with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Menu;                use Gtk.Menu;
@@ -29,16 +32,19 @@ with Gtk.Style_Context;       use Gtk.Style_Context;
 with Gtk.Radio_Menu_Item;     use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
+with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Tool_Button;         use Gtk.Tool_Button;
 with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Window;              use Gtk.Window;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.Search_Entry;     use Gtkada.Search_Entry;
 with Gtkada.MDI;              use Gtkada.MDI;
 
 with Ada.Tags;                  use Ada.Tags;
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Kernel;                use GPS.Kernel;
@@ -105,6 +111,7 @@ package body Generic_Views is
 
       if Filter.Timeout /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (Filter.Timeout);
+         Filter.Timeout := Glib.Main.No_Source_Id;
       end if;
    end On_Destroy;
 
@@ -253,6 +260,20 @@ package body Generic_Views is
       Set_Default_Get_Preferred_Width_Handler
         (Self, Get_Filter_Preferred_Width'Access);
    end Filter_Panel_Class_Init;
+
+   ----------------
+   -- Set_Filter --
+   ----------------
+
+   procedure Set_Filter
+     (Self : not null access View_Record;
+      Text : String)
+   is
+   begin
+      if Self.Filter /= null then
+         Self.Filter.Pattern.Set_Text (Text);
+      end if;
+   end Set_Filter;
 
    ------------------
    -- Build_Filter --
@@ -453,8 +474,15 @@ package body Generic_Views is
    ------------------
 
    package body Simple_Views is
-
       Module : Module_ID;
+
+      Window_X_Hist_Key  : constant History_Key :=
+        "window_x_" & History_Key (View_Name);
+      Window_Y_Hist_Key  : constant History_Key :=
+        "window_y_" & History_Key (View_Name);
+
+      type Local_Formal_MDI_Child_Access
+         is access all Local_Formal_MDI_Child'Class;
 
       type Open_Command is new Interactive_Command with null record;
       overriding function Execute
@@ -480,6 +508,55 @@ package body Generic_Views is
          Child        : out GPS_MDI_Child;
          View         : out View_Access);
       --  Find any existing view
+
+      procedure Store_Position (View : View_Access);
+      procedure Restore_Position (View : View_Access);
+      --  Store and restore the position of the view's dialog.
+
+      ----------------------
+      -- Restore_Position --
+      ----------------------
+
+      procedure Restore_Position (View : View_Access) is
+         X, Y    : Gint;
+         Win     : constant Gtk_Widget := View.Get_Toplevel;
+         Hist_X  : constant String_List_Access := Get_History
+           (Get_History (View.Kernel).all, Window_X_Hist_Key);
+         Hist_Y  : constant String_List_Access := Get_History
+           (Get_History (View.Kernel).all, Window_Y_Hist_Key);
+      begin
+         if Hist_X = null or else Hist_Y = null then
+            return;
+         end if;
+
+         X := Gint'Value (Hist_X (Hist_X'First).all);
+         Y := Gint'Value (Hist_Y (Hist_Y'First).all);
+         Move (Gtk_Window (Win), X, Y);
+      end Restore_Position;
+
+      --------------------
+      -- Store_Position --
+      --------------------
+
+      procedure Store_Position (View : View_Access) is
+         Child   : constant MDI_Child := Child_From_View (View);
+         Win  : Gtk_Widget;
+         X, Y : Gint;
+      begin
+         if Child.Is_Floating then
+            --  Store the position of the floating window
+
+            Win := View.Get_Toplevel;
+            Get_Root_Origin (Get_Window (Win), X, Y);
+
+            Add_To_History
+              (Get_History (View.Kernel).all, Window_X_Hist_Key,
+               Gint'Image (X));
+            Add_To_History
+              (Get_History (View.Kernel).all, Window_Y_Hist_Key,
+               Gint'Image (Y));
+         end if;
+      end Store_Position;
 
       ---------------------
       -- On_Delete_Event --
@@ -598,6 +675,60 @@ package body Generic_Views is
          end if;
       end Find;
 
+      -----------------------------
+      -- On_Close_Floating_Child --
+      -----------------------------
+
+      procedure On_Close_Floating_Child
+        (Self : access Gtk_Widget_Record'Class)
+      is
+         View : constant View_Access := View_Access (Self);
+         C    : constant MDI_Child := Child_From_View (View);
+      begin
+         Store_Position (View);
+         C.Close_Child (Force => True);
+
+         --  Give the focus back to the main Window, since this is not always
+         --  done by the window manager (e.g. under Windows)
+
+         Gdk.Window.Gdk_Raise (View.Kernel.Get_Main_Window.Get_Window);
+      end On_Close_Floating_Child;
+
+      --------------------
+      -- On_Float_Child --
+      --------------------
+
+      procedure On_Float_Child (Child : access Gtk_Widget_Record'Class) is
+         Self   : constant Local_Formal_MDI_Child_Access :=
+           Local_Formal_MDI_Child_Access (Child);
+         View   : constant View_Access := View_From_Widget (Self.Get_Widget);
+         Close_Button : Gtk_Button;
+         Req : Gtk_Requisition;
+      begin
+         if Self.Is_Floating then
+            Gtk_Dialog (View.Get_Toplevel).Set_Resizable (True);
+
+            --  Add the "Close" button.
+            Close_Button := Gtk_Button
+              (Gtk_Dialog (View.Get_Toplevel).Add_Button
+                   (Stock_Close, Gtk_Response_Cancel));
+
+            Widget_Callback.Object_Connect
+              (Close_Button, Gtk.Button.Signal_Clicked,
+               On_Close_Floating_Child_Access, View);
+
+            --  Set the position of the floating window
+            Restore_Position (View);
+            View.Set_Size_Request (-1, -1);
+            Size_Request (View, Req);
+            View.Set_Size_Request (Req.Width, Req.Height);
+         else
+            --  Store the position of the floating window
+            Store_Position (View);
+            View.Set_Size_Request (-1, -1);
+         end if;
+      end On_Float_Child;
+
       ----------------------
       -- Create_If_Needed --
       ----------------------
@@ -666,14 +797,22 @@ package body Generic_Views is
          --  Child does not exist yet, create it
          Child := new Local_Formal_MDI_Child;
          Initialize (Child, W,
-                     Default_Width  => 215,
-                     Default_Height => 600,
+                     Default_Width  => Default_Width,
+                     Default_Height => Default_Height,
                      Focus_Widget   => Focus_Widget,
                      Flags          => MDI_Flags,
                      Module         => Module,
                      Group          => Group,
                      Areas          => Areas);
          Set_Title (Child, View_Name, View_Name);
+
+         if Add_Close_Button_On_Float then
+            Widget_Callback.Connect
+              (Child, Signal_Float_Child, On_Float_Child_Access);
+            Widget_Callback.Connect
+              (Child, Signal_Unfloat_Child, On_Float_Child_Access);
+         end if;
+
          Put (Get_MDI (Kernel), Child, Initial_Position => Position);
       end Create_If_Needed;
 

@@ -588,16 +588,18 @@ package body GPS.Location_View is
       pragma Unreferenced (Dummy);
 
    begin
-      Get_Selected (Get_Selection (V.View), Model, Iter);
-      Path := Get_Path (Model, Iter);
+      if V /= null then
+         Get_Selected (Get_Selection (V.View), Model, Iter);
+         Path := Get_Path (Model, Iter);
 
-      while Path.Get_Depth > 1 and then Up (Path) loop
-         null;
-      end loop;
+         while Path.Get_Depth > 1 and then Up (Path) loop
+            null;
+         end loop;
 
-      Dummy := V.View.Expand_Row (Path, True);
+         Dummy := V.View.Expand_Row (Path, True);
 
-      Path_Free (Path);
+         Path_Free (Path);
+      end if;
       return Commands.Success;
    end Execute;
 

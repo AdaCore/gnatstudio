@@ -38,6 +38,9 @@ package GPS.Kernel.Actions is
       Category    : GNAT.Strings.String_Access;
       Defined_In  : GNATCOLL.VFS.Virtual_File;
 
+      Menus       : GNAT.Strings.String_List_Access;
+      --  List of all menu paths that are associated with this action.
+
       Stock_Id    : GNAT.Strings.String_Access;
    end record;
    --  Command is freed automatically. We use an anonymous type so that calls

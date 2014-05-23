@@ -92,6 +92,8 @@ def add_icons():
     Icon("gps-writable", "", "svg/unlock-12.svg")
     Icon("gps-regexp", "", "16px/regexp.png")
     Icon("gps-negate", "", "16px/negate.png")
+    Icon("gps-shortcuts-only", "", "svg/shortcuts_only.svg")
+    Icon("gps-grab", "", "9px/grab_hand.png")
 
     Icon("gps-folder-closed", "", "16px/folder_closed.png")
     Icon("gps-folder-open", "", "16px/folder_open.png")

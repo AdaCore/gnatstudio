@@ -1038,6 +1038,28 @@ package body String_Utils is
 
    procedure Append
      (List  : in out GNAT.Strings.String_List_Access;
+      Item  : String)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (String_List, String_List_Access);
+      L : String_List_Access := List;
+   begin
+      if List = null then
+         List := new String_List'(1 .. 1 => new String'(Item));
+      else
+         List := new String_List (L'First .. L'Last + 1);
+         List (L'Range) := L.all;
+         List (List'Last) := new String'(Item);
+         Unchecked_Free (L);
+      end if;
+   end Append;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
+     (List  : in out GNAT.Strings.String_List_Access;
       List2 : GNAT.Strings.String_List)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation

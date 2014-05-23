@@ -139,6 +139,12 @@ package Generic_Views is
    --  Pattern must be freed by the callee.
    --  null is passed when no pattern is set by the user.
 
+   procedure Set_Filter
+     (Self : not null access View_Record;
+      Text : String);
+   --  Change the text of the filter (assuming a filter was added through
+   --  Build_Filter);
+
    type MDI_Child_With_Local_Toolbar is interface;
    type MDI_Child_With_Local_Toolbar_Access
       is access all MDI_Child_With_Local_Toolbar'Class;
@@ -174,7 +180,7 @@ package Generic_Views is
       --  The type of MDI child, in case the view needs to use a specialized
       --  type, for instance to add drag-and-drop capabilities
 
-      Reuse_If_Exist : Boolean;
+      Reuse_If_Exist : Boolean := True;
       --  If True a single MDI child will be created and shared
 
       with function Initialize
@@ -183,6 +189,7 @@ package Generic_Views is
       --  Function used to create the view itself.
       --  The Gtk_Widget returned, if non-null, is the Focus Widget to pass
       --  to the MDI.
+      --  View has already been allocated, and the kernel has been set.
 
       Local_Toolbar : Boolean := False;
       --  Whether the view should contain a local toolbar. If it does, the
@@ -209,6 +216,17 @@ package Generic_Views is
 
       Areas : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Both;
       --  Where is the view allowed to go ?
+
+      Default_Width  : Glib.Gint := 215;
+      Default_Height : Glib.Gint := 600;
+      --  The default size of the MDI child
+
+      Add_Close_Button_On_Float : Boolean := False;
+      --  If true:
+      --  When the child is floated, a [Close] button will be added. When
+      --  the child is unfloated, it is put inside a scrolled_window so that
+      --  it can be resized to any size while within the MDI. The size and
+      --  position of the floating window are saved and restored automatically.
 
    package Simple_Views is
 
@@ -255,7 +273,7 @@ package Generic_Views is
       --  Close the view
 
       type Local_Formal_MDI_Child is new Formal_MDI_Child
-        and MDI_Child_With_Local_Toolbar with null record;
+        and MDI_Child_With_Local_Toolbar with private;
       overriding function Save_Desktop
         (Self : not null access Local_Formal_MDI_Child)
          return XML_Utils.Node_Ptr;
@@ -264,6 +282,8 @@ package Generic_Views is
          return Gtk.Widget.Gtk_Widget;
 
    private
+      type Local_Formal_MDI_Child is new Formal_MDI_Child
+        and MDI_Child_With_Local_Toolbar with null record;
       --  The following subprograms need to be in the spec so that we can get
       --  access to them from callbacks in the body
 
@@ -288,6 +308,19 @@ package Generic_Views is
         Gtkada.Handlers.Return_Callback.Simple_Handler :=
           On_Delete_Event'Access;
       --  Propagate the delete event to the view
+
+      procedure On_Float_Child
+        (Child : access Gtk.Widget.Gtk_Widget_Record'Class);
+      On_Float_Child_Access : constant
+        Gtkada.Handlers.Widget_Callback.Simple_Handler :=
+          On_Float_Child'Access;
+
+      procedure On_Close_Floating_Child
+        (Self : access Gtk.Widget.Gtk_Widget_Record'Class);
+      On_Close_Floating_Child_Access : constant
+        Gtkada.Handlers.Widget_Callback.Simple_Handler :=
+          On_Close_Floating_Child'Access;
+
    end Simple_Views;
 
 private

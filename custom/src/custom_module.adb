@@ -622,8 +622,7 @@ package body Custom_Module is
                Tool.Initial_Cmd_Line := new String'(N.Value.all);
 
             elsif N.Tag.all = "language" then
-               Append
-                 (Tool.Languages, (1 => new String'(To_Lower (N.Value.all))));
+               Append (Tool.Languages, To_Lower (N.Value.all));
 
             elsif N.Tag.all = "switches" then
                Parse_Switches_Node

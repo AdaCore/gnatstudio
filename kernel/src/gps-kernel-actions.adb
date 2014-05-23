@@ -170,6 +170,7 @@ package body GPS.Kernel.Actions is
          Category   => Cat,
          Defined_In => Defined_In,
          Overriden  => Overriden,
+         Menus      => null,
          Stock_Id   => Stock);
 
       Register_Perma_Command (Kernel, Cmd);

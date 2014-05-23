@@ -120,7 +120,7 @@
          </menu>
          <separator />  <!--  Below this: general dialogs -->
          <menu label='_Aliases...'               action='aliases edit'/>
-         <menu label='_Key Shortcuts...'         action='open key shortcuts dialog'/>
+         <menu label='_Key Shortcuts...'         action='open key shortcuts'/>
          <menu label='_Preferences...'           action='open preferences'/>
       </menu>
 
@@ -509,6 +509,11 @@
       <separator/>
       <button action='messages save to file'/>
       <button action='messages load from file'/>
+   </toolbar>
+
+   <toolbar id='Key Shortcuts'>
+      <button action='key shortcuts expand all'/>
+      <separator/>
    </toolbar>
 
    <toolbar id='Browser'>

@@ -411,6 +411,11 @@ package GPS.Kernel.Modules.UI is
    --  the underlying gtk menu item. Useful in particular to check or change
    --  the state of a menu item. Path is case insensitive
 
+   procedure Update_Shortcut_Display
+     (Kernel : access Kernel_Handle_Record'Class;
+      Action : String);
+   --  Update the shortcut for all menus associated with the action
+
    procedure Register_MDI_Menu
      (Kernel     : Kernel_Handle;
       Item_Name  : String;

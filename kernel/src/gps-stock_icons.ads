@@ -56,6 +56,9 @@ package GPS.Stock_Icons is
    GPS_Toggle_Links : constant String := "gps-toggle-links";
    --  Hide or Show links in a browser
 
+   GPS_Shortcuts_Only : constant String := "gps-shortcuts-only";
+   --  Show only actions with shortcuts
+
    GPS_Remove_Unselected : constant String := "gps-remove-unselected";
    --  Remove unselected elements
 
@@ -91,6 +94,9 @@ package GPS.Stock_Icons is
    GPS_Save                : constant String := "gtk-cdrom";
    --  The icon for save. We avoid using "gtk-save" because of a startup
    --  interaction with gio.
+
+   GPS_Grab                : constant String := "gps-grab";
+   --  Grab a key
 
    function Set_Icon
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;

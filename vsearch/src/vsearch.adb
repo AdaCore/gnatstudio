@@ -2165,7 +2165,6 @@ package body Vsearch is
                   Desktop_Independent => True);
          Set_Title (Child, -"Search");
          Put (Get_MDI (Kernel), Child, Initial_Position => Position_Left);
-         Float_Vsearch (Child);
 
          Widget_Callback.Connect
            (Child, Signal_Float_Child, Float_Vsearch'Access);

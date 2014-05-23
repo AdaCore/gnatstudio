@@ -30,26 +30,27 @@ with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
-with Gtk.Accel_Map;           use Gtk.Accel_Map;
+with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Button;              use Gtk.Button;
+with Gtk.Button_Box;          use Gtk.Button_Box;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;  use Gtk.Cell_Renderer_Text;
-with Gtk.Check_Button;        use Gtk.Check_Button;
-with Gtk.Dialog;              use Gtk.Dialog;
+with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
 with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Event_Box;           use Gtk.Event_Box;
 with Gtk.Frame;               use Gtk.Frame;
-with Gtk.Label;               use Gtk.Label;
 with Gtk.Main;                use Gtk.Main;
+with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Paned;               use Gtk.Paned;
 with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
-with Gtk.Separator;           use Gtk.Separator;
-with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
 with Gtk.Text_Tag;            use Gtk.Text_Tag;
 with Gtk.Text_View;           use Gtk.Text_View;
 with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
+with Gtk.Toggle_Tool_Button;  use Gtk.Toggle_Tool_Button;
+with Gtk.Toolbar;             use Gtk.Toolbar;
+with Gtk.Tool_Button;         use Gtk.Tool_Button;
 with Gtk.Tree_Model;          use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;   use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Model_Sort;     use Gtk.Tree_Model_Sort;
@@ -60,15 +61,21 @@ with Gtk.Tree_View_Column;    use Gtk.Tree_View_Column;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
 with Gtkada.Handlers;         use Gtkada.Handlers;
+with Gtkada.MDI;              use Gtkada.MDI;
 with Pango.Enums;             use Pango.Enums;
 
 with Commands.Interactive;    use Commands, Commands.Interactive;
+with Generic_Views;           use Generic_Views;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Intl;                use GPS.Intl;
+with GPS.Search;              use GPS.Search;
+with GPS.Stock_Icons;         use GPS.Stock_Icons;
 with GUI_Utils;               use GUI_Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with Histories;               use Histories;
 
 package body KeyManager_Module.GUI is
    Me : constant Trace_Handle := Create ("KEYMGR");
@@ -76,45 +83,78 @@ package body KeyManager_Module.GUI is
 
    Action_Column     : constant := 0;
    Key_Column        : constant := 1;
+   Weight_Column     : constant := 2;
+   Icon_Column       : constant := 3;
 
-   type Keys_Editor_Record is new Gtk_Dialog_Record with record
-      Kernel             : Kernel_Handle;
-      Bindings           : HTable_Access;
+   Hist_Show_All_Menus : constant History_Key := "shortcuts-show-all-menus";
+
+   type Keys_Editor_Record is new Generic_Views.View_Record with record
       View               : Gtk_Tree_View;
       Model              : Gtk_Tree_Store;
       Filter             : Gtk_Tree_Model_Filter;
       Sort               : Gtk_Tree_Model_Sort;
       Help               : Gtk_Text_Buffer;
-      Action_Name        : Gtk_Label;
-      With_Shortcut_Only : Gtk_Check_Button;
-      Flat_List          : Gtk_Check_Button;
+      With_Shortcut_Only : Gtk_Toggle_Tool_Button;
+      Flat_List          : Gtk_Toggle_Tool_Button;
       Remove_Button      : Gtk_Button;
       Grab_Button        : Gtk_Toggle_Button;
-      Grab_Label         : Gtk_Label;
-
       Disable_Filtering  : Boolean := False;
+
+      Filter_Pattern     : Search_Pattern_Access;
+      --  ??? Should be freed when the view is destroyed
    end record;
-   type Keys_Editor is access all Keys_Editor_Record'Class;
+   function Initialize
+     (Editor : access Keys_Editor_Record'Class) return Gtk_Widget;
+   overriding procedure Create_Toolbar
+     (View    : not null access Keys_Editor_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access Keys_Editor_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Keys_Editor_Record;
+      Pattern : in out Search_Pattern_Access);
+
+   package Keys_Editor_Views is new Simple_Views
+     (Module_Name        => "Keyshortcuts_editor",
+      View_Name          => "Key Shortcuts",
+      Formal_View_Record => Keys_Editor_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Reuse_If_Exist     => True,
+      Local_Toolbar      => True,
+      Local_Config       => True,
+      Group              => Group_Default,
+      Areas              => Gtkada.MDI.Both,
+      Default_Width      => 700,
+      Default_Height     => 700,
+      Commands_Category  => -"Views",
+      Add_Close_Button_On_Float => True,
+      MDI_Flags          =>
+         All_Buttons or Float_As_Dialog or Always_Destroy_Float,
+      Position           => Position_Float,
+      Initialize         => Initialize);
+   use Keys_Editor_Views;
+   subtype Keys_Editor is Keys_Editor_Views.View_Access;
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class);
+   procedure Refill_Editor (View : access GObject_Record'Class);
    --  Fill the contents of the editor
-
-   type Open_Keyshortcuts_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Open_Keyshortcuts_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Open a GUI to edit the key bindings
+   --  The second version is suitable for gtk+ callbacks.
 
    procedure On_Grab_Key (Editor : access Gtk_Widget_Record'Class);
    procedure On_Remove_Key (Editor : access Gtk_Widget_Record'Class);
    --  Handle the "Grab", "Remove" and "Add" buttons
 
+   procedure On_Grab_For_Filter (View : access GObject_Record'Class);
+   --  Called when the user wants to grab a key for the filter
+
    function Grab_Multiple_Key
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Widget         : access Gtk_Widget_Record'Class;
-      Allow_Multiple : Boolean) return String;
+     (View : not null access Keys_Editor_Record'Class;
+      For_Display : Boolean := False) return String;
    --  Grab a key binding, with support for multiple keymaps. Returns the
    --  empty string if no key could be grabbed.
+   --  If For_Display is true, the returned string is suitable for displaying
+   --  the shortcut to the user, but not to parse it into its components.
 
    function Cancel_Grab return Boolean;
    --  Exit the current nest main loop, if any
@@ -124,14 +164,10 @@ package body KeyManager_Module.GUI is
    --  Fill_Editor when possible, since this will preserve expanded/closed
    --  nodes.
 
-   procedure Save_Editor (Editor : access Keys_Editor_Record'Class);
-   --  Save the contents of the editor
-
-   procedure On_Toggle_Flat_List (Editor : access Gtk_Widget_Record'Class);
+   procedure On_Toggle_Flat_List (Editor : access GObject_Record'Class);
    --  Called when the user toggles the "View Flat List" filter button
 
-   procedure On_Toggle_Shortcuts_Only
-     (Editor : access Gtk_Widget_Record'Class);
+   procedure On_Toggle_Shortcuts_Only (Editor : access GObject_Record'Class);
    --  Called when the user toggles "View only actions with shortcuts"
 
    package Keys_Editor_Visible_Funcs is new
@@ -156,8 +192,44 @@ package body KeyManager_Module.GUI is
      (Model  : Gtk_Tree_Store;
       Parent : Gtk_Tree_Iter;
       Descr  : String;
-      Key    : String := "") return Gtk_Tree_Iter;
+      Icon   : String := "";
+      Key    : String := "";
+      Weight : Pango.Enums.Weight := Pango_Weight_Normal)
+      return Gtk_Tree_Iter;
    --  Add a new line into the model
+
+   type Expand_All_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Expand_All_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Expand all files within the current category
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Expand_All_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      K : constant Kernel_Handle := Get_Kernel (Context.Context);
+      V : constant Keys_Editor := Keys_Editor_Views.Retrieve_View (K);
+      Path : Gtk_Tree_Path;
+   begin
+      if V /= null then
+         Path := Gtk_Tree_Path_New_First;
+         if V.View.Row_Expanded (Path) then
+            V.View.Collapse_All;
+         else
+            V.View.Expand_All;
+         end if;
+         Path_Free (Path);
+      end if;
+      return Commands.Success;
+   end Execute;
 
    ---------
    -- Set --
@@ -167,13 +239,18 @@ package body KeyManager_Module.GUI is
      (Model  : Gtk_Tree_Store;
       Parent : Gtk_Tree_Iter;
       Descr  : String;
-      Key    : String := "") return Gtk_Tree_Iter
+      Icon   : String := "";
+      Key    : String := "";
+      Weight : Pango.Enums.Weight := Pango_Weight_Normal)
+      return Gtk_Tree_Iter
    is
       procedure Set
         (Tree, Iter : System.Address;
          Col1       : Gint; Value1 : String;
-         Col2       : Gint; Value2 : String);
-      pragma Import (C, Set, "ada_gtk_tree_store_set_ptr_ptr");
+         Col2       : Gint; Value2 : String;
+         Col3       : Gint; Value3 : String;
+         Col4       : Gint; Value4 : Pango.Enums.Weight);
+      pragma Import (C, Set, "ada_gtk_tree_store_set_ptr_ptr_ptr_weight");
 
       Iter : Gtk_Tree_Iter;
 
@@ -182,7 +259,9 @@ package body KeyManager_Module.GUI is
       Set
         (Get_Object (Model), Iter'Address,
          Col1 => Action_Column,     Value1 => Descr & ASCII.NUL,
-         Col2 => Key_Column,        Value2 => Key & ASCII.NUL);
+         Col2 => Key_Column,        Value2 => Key & ASCII.NUL,
+         Col3 => Icon_Column,       Value3 => Icon & ASCII.NUL,
+         Col4 => Weight_Column,     Value4 => Weight);
       return Iter;
    end Set;
 
@@ -221,6 +300,8 @@ package body KeyManager_Module.GUI is
       Action       : Action_Record_Access;
       Action_Iter  : Action_Iterator := Start (Editor.Kernel);
       User_Changed : aliased Boolean;
+      Show_All_Menus : constant Boolean :=
+        Get_History (Get_History (Editor.Kernel).all, Hist_Show_All_Menus);
    begin
       --  Disable tree filtering while refreshing the contents of the tree.
       --  This works around a bug in gtk+.
@@ -244,17 +325,29 @@ package body KeyManager_Module.GUI is
          then
             declare
                Name : constant String := Get (Action_Iter).Name.all;
+               Key  : constant String := Lookup_Key_From_Action
+                 (Get_Shortcuts (Editor.Kernel),
+                  Name,
+                  Use_Markup => False,
+                  Is_User_Changed => User_Changed'Unchecked_Access,
+                  Default => -Disabled_String);
             begin
-               Parent := Set
-                 (Model   => Editor.Model,
-                  Parent  => Parent,
-                  Descr   => Name,
-                  Key     => Lookup_Key_From_Action
-                    (Editor.Bindings,
-                     Name,
-                     Use_Markup => False,
-                     Is_User_Changed => User_Changed'Unchecked_Access,
-                     Default => -Disabled_String));
+               if Name (Name'First) /= '/'
+                 or else Show_All_Menus
+                 or else Key /= ""
+               then
+                  Parent := Set
+                    (Model   => Editor.Model,
+                     Parent  => Parent,
+                     Descr   => Name,
+                     Icon    => (if Action.Stock_Id /= null then
+                                      Action.Stock_Id.all
+                                 else ""),
+                     Key     => Key
+                        & (if User_Changed then " (modified)" else ""),
+                     Weight  => (if User_Changed then Pango_Weight_Bold
+                                 else Pango_Weight_Normal));
+               end if;
             end;
          end if;
 
@@ -265,107 +358,6 @@ package body KeyManager_Module.GUI is
 
       Refilter (Editor.Filter);
    end Fill_Editor;
-
-   -----------------
-   -- Save_Editor --
-   -----------------
-
-   procedure Save_Editor (Editor : access Keys_Editor_Record'Class) is
-
-      procedure Process_Menu_Binding
-        (Accel_Path : String;
-         Accel_Key  : Gdk.Types.Gdk_Key_Type;
-         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
-         Changed    : Boolean);
-      --  Called for each known accel path
-
-      --------------------------
-      -- Process_Menu_Binding --
-      --------------------------
-
-      procedure Process_Menu_Binding
-        (Accel_Path : String;
-         Accel_Key  : Gdk.Types.Gdk_Key_Type;
-         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
-         Changed    : Boolean)
-      is
-         First   : Natural := Accel_Path'First + 1;
-         Iter    : Key_Htable.Cursor;
-         Binding : Key_Description_List;
-         Found   : Boolean := False;
-         Ignore  : Boolean;
-         pragma Unreferenced (Changed, Accel_Key, Accel_Mods, Ignore);
-
-      begin
-         while First <= Accel_Path'Last
-           and then Accel_Path (First - 1) /= '>'
-         loop
-            First := First + 1;
-         end loop;
-
-         --  If the menu is associated with at least one short key binding (ie
-         --  from the toplevel keymap), we change it so that it shows up in the
-         --  menu as well).
-         Get_First (Get_Shortcuts (Editor.Kernel).all, Iter);
-         Foreach_Binding :
-         loop
-            Binding := Get_Element (Iter);
-            exit Foreach_Binding when Binding = No_Key;
-
-            if Get_Key (Iter).Key = 0 then
-               --  An invalid key, here just to indicate the key should be
-               --  disabled during the next startup.
-               Binding := null;
-            end if;
-
-            while Binding /= null loop
-               if Binding.Action /= null
-                 and then Equal
-                   (Binding.Action.all,
-                    Accel_Path (First .. Accel_Path'Last),
-                    Case_Sensitive => False)
-               then
-                  Found := True;
-
-                  --  The following call will fail in general, since the
-                  --  shortcut is already associated with the same Accel_Path.
-                  --  Unfortunately, gtk+ doesn't detect that we are just
-                  --  trying to set the same binding again, and will always
-                  --  report a failure. We should not therefore fallback on
-                  --  clearing the binding in case of failure. F721-013
-                  Ignore := Change_Entry
-                    (Accel_Path => Accel_Path,
-                     Accel_Key  => Get_Key (Iter).Key,
-                     Accel_Mods => Get_Key (Iter).Modifier,
-                     Replace    => True);
-                  exit Foreach_Binding;
-               end if;
-
-               Binding := Binding.Next;
-            end loop;
-
-            Get_Next (Get_Shortcuts (Editor.Kernel).all, Iter);
-         end loop Foreach_Binding;
-
-         if not Found then
-            Ignore := Change_Entry
-              (Accel_Path => Accel_Path,
-               Accel_Key  => 0,
-               Accel_Mods => 0,
-               Replace    => True);
-         end if;
-      end Process_Menu_Binding;
-
-   begin
-      Clone (From => Editor.Bindings.all,
-             To   => Get_Shortcuts (Editor.Kernel).all);
-
-      --  Update the gtk+ accelerators for the menus to reflect the keybindings
-      Gtk.Accel_Map.Foreach_Unfiltered
-        (Process_Menu_Binding'Unrestricted_Access);
-
-      Save_Custom_Keys (Editor.Kernel);
-   end Save_Editor;
 
    ---------------------------
    -- Add_Selection_Changed --
@@ -447,7 +439,7 @@ package body KeyManager_Module.GUI is
             Insert
               (Ed.Help, Text_Iter,
                Lookup_Key_From_Action
-                 (Ed.Bindings,
+                 (Get_Shortcuts (Ed.Kernel),
                   Action            => Get_String (Model, Iter, Action_Column),
                   Default           => -"none",
                   Is_User_Changed => User_Changed'Unchecked_Access,
@@ -473,13 +465,21 @@ package body KeyManager_Module.GUI is
                Insert (Ed.Help, Text_Iter, -"built-in");
             end if;
 
-            Set_Text (Ed.Action_Name, Get_String (Model, Iter, 0));
+            Insert_With_Tags
+              (Ed.Help, Text_Iter, ASCII.LF & (-"Menus: ") & ASCII.LF,
+               Bold);
+            if Action.Menus = null then
+               Insert (Ed.Help, Text_Iter, -"none");
+            else
+               for M in Action.Menus'Range loop
+                  Insert (Ed.Help, Text_Iter, Action.Menus (M).all & ASCII.LF);
+               end loop;
+            end if;
          end if;
       else
          Set_Sensitive (Ed.Remove_Button, False);
          Set_Sensitive (Ed.Grab_Button, False);
          Set_Text (Ed.Help, "");
-         Set_Text (Ed.Action_Name, "");
       end if;
 
    exception
@@ -490,7 +490,7 @@ package body KeyManager_Module.GUI is
    -- On_Toggle_Flat_List --
    -------------------------
 
-   procedure On_Toggle_Flat_List (Editor : access Gtk_Widget_Record'Class) is
+   procedure On_Toggle_Flat_List (Editor : access GObject_Record'Class) is
    begin
       Fill_Editor (Keys_Editor (Editor));
    end On_Toggle_Flat_List;
@@ -499,8 +499,7 @@ package body KeyManager_Module.GUI is
    -- On_Toggle_Shortcuts_Only --
    ------------------------------
 
-   procedure On_Toggle_Shortcuts_Only
-     (Editor : access Gtk_Widget_Record'Class) is
+   procedure On_Toggle_Shortcuts_Only (Editor : access GObject_Record'Class) is
    begin
       Refilter (Keys_Editor (Editor).Filter);
    end On_Toggle_Shortcuts_Only;
@@ -514,22 +513,92 @@ package body KeyManager_Module.GUI is
       Iter  : Gtk_Tree_Iter;
       Data  : Keys_Editor) return Boolean
    is
+      Row_Visible : Boolean;
+      Child       : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Action      : Action_Record_Access;
    begin
-      return Data.Disable_Filtering
-        or else not Get_Active (Data.With_Shortcut_Only)
-        or else Get_String (Model, Iter, 1) /= ""
-        or else N_Children (Model, Iter) > 0;
+      if Data.Disable_Filtering then
+         return True;
+      end if;
+
+      --  Compute the row itself should be visible (not withstanding its
+      --  children.
+
+      Row_Visible :=
+        not Data.With_Shortcut_Only.Get_Active
+        or else Get_String (Model, Iter, 1) /= "";
+
+      if Row_Visible
+        and then Data.Filter_Pattern /= null
+      then
+         Row_Visible :=
+           Data.Filter_Pattern.Start (Get_String (Model, Iter, 0)) /= No_Match
+           or else
+           Data.Filter_Pattern.Start (Get_String (Model, Iter, 1)) /= No_Match;
+
+         if not Row_Visible then
+            Action := Lookup_Action (Data.Kernel, Get_String (Model, Iter, 0));
+            if Action /= null and then Action.Description /= null then
+               Row_Visible :=
+                 Data.Filter_Pattern.Start (Action.Description.all)
+                 /= No_Match;
+            end if;
+
+            if Action /= null
+              and then not Row_Visible
+              and then Action.Menus /= null
+            then
+               for M in Action.Menus'Range loop
+                  if Data.Filter_Pattern.Start (Action.Menus (M).all)
+                    /= No_Match
+                  then
+                     Row_Visible := True;
+                     exit;
+                  end if;
+               end loop;
+            end if;
+         end if;
+      end if;
+
+      --  If the row should be invisible, but any of its children is visible,
+      --  we display it anyway.
+
+      if not Row_Visible then
+         Child := Children (Model, Iter);
+         while Child /= Null_Iter loop
+            if Action_Is_Visible (Model, Child, Data) then
+               return True;
+            end if;
+            Next (Model, Child);
+         end loop;
+      end if;
+
+      return Row_Visible;
+
    exception
       when E : others =>
          Trace (Me, E);
          return True;
    end Action_Is_Visible;
 
+   -------------------
+   -- Refill_Editor --
+   -------------------
+
+   procedure Refill_Editor (View : access GObject_Record'Class) is
+   begin
+      Fill_Editor (Keys_Editor (View));
+   end Refill_Editor;
+
    --------------------
    -- Refresh_Editor --
    --------------------
 
    procedure Refresh_Editor (Editor : access Keys_Editor_Record'Class) is
+
+      procedure Set
+        (Tree, Iter : System.Address; Col1 : Gint; Val1 : Pango.Enums.Weight);
+      pragma Import (C, Set, "ada_gtk_tree_store_set_weight");
 
       procedure Refresh_Iter (Iter : Gtk_Tree_Iter);
       --  Refresh for Iter and its sibling
@@ -540,21 +609,36 @@ package body KeyManager_Module.GUI is
 
       procedure Refresh_Iter (Iter : Gtk_Tree_Iter) is
          It           : Gtk_Tree_Iter;
-         User_Changed : aliased Boolean;
       begin
          It := Iter;
          while It /= Null_Iter loop
             if Children (Editor.Model, It) /= Null_Iter then
                Refresh_Iter (Children (Editor.Model, It));
             else
-               Set
-                 (Editor.Model, It, Key_Column,
-                  Lookup_Key_From_Action
-                    (Editor.Bindings,
-                     Action => Get_String (Editor.Model, It, Action_Column),
-                     Default => "",
-                     Use_Markup => False,
-                     Is_User_Changed => User_Changed'Unchecked_Access));
+               declare
+                  User_Changed : aliased Boolean;
+                  Key : constant String :=
+                    Lookup_Key_From_Action
+                      (Get_Shortcuts (Editor.Kernel),
+                       Action => Get_String (Editor.Model, It, Action_Column),
+                       Default => "",
+                       Use_Markup => False,
+                       Is_User_Changed => User_Changed'Unchecked_Access);
+                  W : Weight;
+               begin
+                  Set
+                    (Editor.Model, It, Key_Column,
+                     Key & (if User_Changed then " (modified)" else ""));
+
+                  if User_Changed then
+                     W := Pango_Weight_Bold;
+                  else
+                     W := Pango_Weight_Normal;
+                  end if;
+
+                  Set
+                    (Get_Object (Editor.Model), It'Address, Weight_Column, W);
+               end;
             end if;
 
             Next (Editor.Model, It);
@@ -578,7 +662,7 @@ package body KeyManager_Module.GUI is
          Main_Quit;
       end if;
 
-      return False;
+      return True;  --  so that we can remove it later without an error
    end Cancel_Grab;
 
    -----------------------
@@ -586,59 +670,64 @@ package body KeyManager_Module.GUI is
    -----------------------
 
    function Grab_Multiple_Key
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Widget         : access Gtk_Widget_Record'Class;
-      Allow_Multiple : Boolean) return String
+     (View : not null access Keys_Editor_Record'Class;
+      For_Display : Boolean := False) return String
    is
       Grabbed, Tmp : String_Access;
       Key          : Gdk_Key_Type;
       Modif        : Gdk_Modifier_Type;
       Id           : Glib.Main.G_Source_Id;
-
    begin
-      Block_Key_Shortcuts (Kernel);
+      Block_Key_Shortcuts (View.Kernel);
 
-      Key_Grab (Widget, Key, Modif);
+      Key_Grab (View.View, Key, Modif);
 
       if Key /= GDK_Escape or else Modif /= 0 then
-         Grabbed := new String'(Image (Key, Modif));
+         if For_Display then
+            Grabbed := new String'
+              (Gtk.Accel_Group.Accelerator_Get_Label (Key, Modif));
+         else
+            Grabbed := new String'(Image (Key, Modif));
+         end if;
       else
          return "";
       end if;
 
       --  Are we grabbing multiple keymaps ?
 
-      if Allow_Multiple then
-         loop
-            Id := Glib.Main.Timeout_Add (500, Cancel_Grab'Access);
-            Key_Grab (Widget, Key, Modif);
-            Glib.Main.Remove (Id);
+      loop
+         Id := Glib.Main.Timeout_Add (500, Cancel_Grab'Access);
+         Key_Grab (View.View, Key, Modif);
+         Glib.Main.Remove (Id);
 
-            exit when Key = 0 and then Modif = 0;
+         exit when Key = 0 and then Modif = 0;
 
-            if Key = GDK_Escape and then Modif = 0 then
-               Free (Grabbed);
-               return "";
-            end if;
+         if Key = GDK_Escape and then Modif = 0 then
+            Free (Grabbed);
+            return "";
+         end if;
 
-            Tmp := Grabbed;
+         Tmp := Grabbed;
+         if For_Display then
+            Grabbed := new String'
+              (Grabbed.all & ' '
+               & Gtk.Accel_Group.Accelerator_Get_Label (Key, Modif));
+         else
             Grabbed := new String'(Grabbed.all & ' ' & Image (Key, Modif));
-            Free (Tmp);
-         end loop;
-      end if;
+         end if;
 
-      Unblock_Key_Shortcuts (Kernel);
+         Free (Tmp);
+      end loop;
 
-      declare
-         K : constant String := Grabbed.all;
-      begin
+      Unblock_Key_Shortcuts (View.Kernel);
+
+      return K : constant String := Grabbed.all do
          Free (Grabbed);
-         return K;
-      end;
+      end return;
 
    exception
       when others =>
-         Unblock_Key_Shortcuts (Kernel);
+         Unblock_Key_Shortcuts (View.Kernel);
          raise;
    end Grab_Multiple_Key;
 
@@ -666,16 +755,12 @@ package body KeyManager_Module.GUI is
          if Iter /= Null_Iter
            and then Children (Ed.Model, Iter) = Null_Iter
          then
-            Show (Ed.Grab_Label);
-
             declare
-               Key          : constant String :=
-                                Grab_Multiple_Key
-                                  (Ed.Kernel, Ed, Allow_Multiple => True);
-               Old_Action   : constant String :=
-                                Lookup_Action_From_Key (Key, Ed.Bindings);
-               Old_Prefix   : constant String :=
-                                Actions_With_Key_Prefix (Key, Ed.Bindings);
+               Key          : constant String := Grab_Multiple_Key (Ed);
+               Old_Action   : constant String := Lookup_Action_From_Key
+                 (Key, Get_Shortcuts (Ed.Kernel));
+               Old_Prefix   : constant String := Actions_With_Key_Prefix
+                 (Key, Get_Shortcuts (Ed.Kernel));
                User_Changed : aliased Boolean := False;
                Count_Prefix : constant Natural :=
                                 Count
@@ -698,7 +783,7 @@ package body KeyManager_Module.GUI is
                     --  and we want to map it to ctrl-x+b. So we do nothing
                     --  only if the if keys are fully equivelent.
                     and then Key = Lookup_Key_From_Action
-                      (Ed.Bindings,
+                      (Get_Shortcuts (Ed.Kernel),
                        Old_Action,
                        Is_User_Changed => User_Changed'Access)
                   then
@@ -741,25 +826,24 @@ package body KeyManager_Module.GUI is
                   end if;
 
                   if Do_Nothing then
-                     Hide (Ed.Grab_Label);
                      Set_Active (Ed.Grab_Button, False);
                      return;
                   end if;
 
                   Bind_Default_Key_Internal
                     (Kernel           => Ed.Kernel,
-                     Table            => Ed.Bindings.all,
+                     Table            => Get_Shortcuts (Ed.Kernel).all,
                      Action           => New_Action,
                      Key              => Key,
                      Save_In_Keys_XML => True,
                      Remove_Existing_Actions_For_Shortcut => True,
                      Remove_Existing_Shortcuts_For_Action => True,
                      Update_Menus     => True);
+                  Save_Custom_Keys (Ed.Kernel);
+                  Update_Shortcut_Display (Ed.Kernel, New_Action);
                   Refresh_Editor (Ed);
                end if;
             end;
-
-            Hide (Ed.Grab_Label);
          end if;
 
          Set_Active (Ed.Grab_Button, False);
@@ -789,7 +873,7 @@ package body KeyManager_Module.GUI is
         and then Children (Ed.Model, Iter) = Null_Iter
       then
          Bind_Default_Key_Internal
-           (Table             => Ed.Bindings.all,
+           (Table             => Get_Shortcuts (Ed.Kernel).all,
             Kernel            => Ed.Kernel,
             Action            => Get_String (Ed.Model, Iter, Action_Column),
             Key               => "",
@@ -797,7 +881,9 @@ package body KeyManager_Module.GUI is
             Remove_Existing_Shortcuts_For_Action => True,
             Remove_Existing_Actions_For_Shortcut => True,
             Update_Menus      => False);
-
+         Update_Shortcut_Display
+           (Ed.Kernel, Get_String (Ed.Model, Iter, Action_Column));
+         Save_Custom_Keys (Ed.Kernel);
          Refresh_Editor (Ed);
       end if;
 
@@ -805,175 +891,219 @@ package body KeyManager_Module.GUI is
       when E : others => Trace (Me, E);
    end On_Remove_Key;
 
-   -------------
-   -- Execute --
-   -------------
+   -----------------
+   -- Create_Menu --
+   -----------------
 
-   overriding function Execute
-     (Command : access Open_Keyshortcuts_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding procedure Create_Menu
+     (View    : not null access Keys_Editor_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Editor    : Keys_Editor;
+      Check : Gtk_Check_Menu_Item;
+   begin
+      Gtk_New (Check, Label => -"Show all menus");
+      Check.Set_Tooltip_Text
+        (-("Whether to show all menus, or only those with a shortcut."
+         & ASCII.LF
+         & "Historically, shortcuts used to be associated directly to menus,"
+         & " but it is in fact better to associate them with the corresponding"
+         & " action, which you can see by looking at the tooltip on the menu."
+         & ASCII.LF
+         & "This ensures the shortcut remains available even when the menu is"
+         & " not visible."));
+      Associate (Get_History (View.Kernel).all, Hist_Show_All_Menus, Check);
+      Menu.Append (Check);
+      Check.On_Toggled (Refill_Editor'Access, View);
+   end Create_Menu;
+
+   ------------------------
+   -- On_Grab_For_Filter --
+   ------------------------
+
+   procedure On_Grab_For_Filter (View : access GObject_Record'Class) is
+      V : constant Keys_Editor := Keys_Editor (View);
+      Key : constant String := Grab_Multiple_Key (V, For_Display => True);
+   begin
+      V.Set_Filter (Key);
+   end On_Grab_For_Filter;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Keys_Editor_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+      B : Gtk_Tool_Button;
+   begin
+      View.Append_Toolbar (Toolbar, View.With_Shortcut_Only);
+      View.Append_Toolbar (Toolbar, View.Flat_List);
+
+      View.Build_Filter
+        (Toolbar     => Toolbar,
+         Hist_Prefix => "keyshortcuts",
+         Tooltip     => -"Filter the contents of the shortcuts list",
+         Placeholder => -"filter",
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy
+         or Has_Approximate);
+
+      Gtk_New_From_Stock (B, Stock_Id => GPS_Grab);
+      B.Set_Tooltip_Text (-"Grab a key sequence to search for");
+      B.On_Clicked (On_Grab_For_Filter'Access, View);
+      View.Append_Toolbar (Toolbar, B, Is_Filter => True);
+   end Create_Toolbar;
+
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Keys_Editor_Record;
+      Pattern : in out Search_Pattern_Access)
+   is
+   begin
+      Free (Self.Filter_Pattern);
+      Self.Filter_Pattern := Pattern;
+      Self.Filter.Refilter;
+
+      if Pattern /= null then
+         Self.View.Expand_All;  --  show all results more conveniently
+      end if;
+   end Filter_Changed;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   function Initialize
+     (Editor : access Keys_Editor_Record'Class) return Gtk_Widget
+   is
       Scrolled  : Gtk_Scrolled_Window;
-      Bbox      : Gtk_Box;
-      Hbox, Vbox, Filter_Box : Gtk_Box;
+      Hbox      : Gtk_Box;
+      Bbox      : Gtk_Button_Box;
       Col       : Gtk_Tree_View_Column;
       Render    : Gtk_Cell_Renderer_Text;
-      Ignore    : Gint;
+      Pixbuf    : Gtk_Cell_Renderer_Pixbuf;
       Frame     : Gtk_Frame;
       Pane      : Gtk_Paned;
-      Sep       : Gtk_Separator;
-      Event     : Gtk_Event_Box;
       Text      : Gtk_Text_View;
-      Ignore_Action : Gtk_Widget;
-      pragma Unreferenced (Ignore, Ignore_Action);
+      Ignore    : Gint;
 
    begin
-      Editor := new Keys_Editor_Record;
-      Editor.Bindings := new Key_Htable.Instance;
+      Initialize_Vbox (Editor);
+      Editor.Set_Name ("Key shortcuts");  --  for testsuite
 
-      Initialize
-        (Editor,
-         Title  => -"Key shortcuts",
-         Parent => Get_Current_Window (Kernel),
-         Flags  => Destroy_With_Parent or Modal);
-      Set_Name (Editor, "Key shortcuts");  --  for testsuite
-      Set_Default_Size (Editor, 900, 700);
-      Editor.Kernel  := Kernel;
+      --  The model we will modify, wrapped in a filter and sort model
 
-      Clone
-        (From => Get_Shortcuts (Kernel).all,
-         To   => Editor.Bindings.all);
-
-      Gtk_New_Vbox (Vbox, Homogeneous => False);
-      Pack_Start
-        (Get_Content_Area (Editor), Vbox, Expand => True, Fill => True);
-
-      Gtk_New_Hbox (Filter_Box, Homogeneous => False);
-      Pack_Start (Vbox, Filter_Box, Expand => False);
-
-      Gtk_New (Editor.With_Shortcut_Only, -"Shortcuts only");
-      Set_Tooltip_Text
-        (Editor.With_Shortcut_Only,
-         -("Show only actions that are associated with a key shortcut"));
-      Set_Active (Editor.With_Shortcut_Only, False);
-      Pack_Start (Filter_Box, Editor.With_Shortcut_Only, Expand => False);
-      Widget_Callback.Object_Connect
-        (Editor.With_Shortcut_Only,
-         Gtk.Toggle_Button.Signal_Toggled, On_Toggle_Shortcuts_Only'Access,
-         Editor);
-
-      Gtk_New (Editor.Flat_List, -"Flat list");
-      Set_Tooltip_Text
-        (Editor.Flat_List,
-         -("If selected, actions are not grouped into categories, but"
-           & " displayed as a single long list. This might help to find some"
-           & " specific actions"));
-      Set_Active (Editor.Flat_List, False);
-      Pack_Start (Filter_Box, Editor.Flat_List, Expand => False);
-      Widget_Callback.Object_Connect
-        (Editor.Flat_List,
-         Signal_Toggled, On_Toggle_Flat_List'Access, Editor);
-
-      --  ??? Will be implemented shortly
---        Gtk_New_From_Stock (Button, Stock_Find);
---        Pack_Start (Filter_Box, Button, Expand => False);
-
-      Gtk_New_Vpaned (Pane);
-      Pack_Start (Vbox, Pane, Expand => True, Fill => True);
-
-      --  List of macros
-
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Pack1 (Pane, Scrolled, True, True);
-
-      --  The model we will modify
       Gtk_New
         (Editor.Model,
          (Action_Column     => GType_String,
-          Key_Column        => GType_String));
+          Key_Column        => GType_String,
+          Weight_Column     => GType_Int,
+          Icon_Column       => GType_String));
 
-      --  A filter model on top of it, so that we can filter out some rows
       Gtk_New (Editor.Filter, +Editor.Model);
       Keys_Editor_Visible_Funcs.Set_Visible_Func
         (Editor.Filter, Action_Is_Visible'Access, Editor);
 
-      --  A sort model on top of the filter, so that rows can be sorted
       Gtk_New_With_Model (Editor.Sort, +Editor.Filter);
 
+      --  Create toolbar buttons, but do not insert them yet
+
+      Gtk_New_From_Stock (Editor.With_Shortcut_Only, GPS_Shortcuts_Only);
+      Editor.With_Shortcut_Only.Set_Name ("shortcuts-only");  --  for testsuite
+      Editor.With_Shortcut_Only.Set_Tooltip_Text
+        (-("Shortcuts only" & ASCII.LF
+         & "Show only actions that are associated with a key shortcut"));
+      Editor.With_Shortcut_Only.Set_Active (False);
+      Editor.With_Shortcut_Only.On_Toggled
+        (On_Toggle_Shortcuts_Only'Access, Editor);
+
+      Gtk_New_From_Stock (Editor.Flat_List, GPS_Collapse_All);
+      Editor.Flat_List.Set_Name ("shortcuts-flat-list");  --  for testsuite
+      Editor.Flat_List.Set_Tooltip_Text
+        (-("Flat list" & ASCII.LF
+         & "If selected, actions are not grouped into categories, but"
+         & " displayed as a single long list. This might help to find some"
+         & " specific actions"));
+      Editor.Flat_List.Set_Active (False);
+      Editor.Flat_List.On_Toggled (On_Toggle_Flat_List'Access, Editor);
+
+      --  A hbox: on the left, the list of actions and help, on the left some
+      --  buttons to modify key shortcuts
+
+      Gtk_New_Hbox (Hbox);
+      Editor.Pack_Start (Hbox, Expand => True, Fill => True);
+
+      Gtk_New_Vpaned (Pane);
+      Hbox.Pack_Start (Pane, Expand => True, Fill => True);
+
+      --  List of actions
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Pane.Pack1 (Scrolled, Resize => True, Shrink => True);
+      Pane.Set_Position (500);
+
       Gtk_New (Editor.View, Editor.Sort);
-      Set_Name (Editor.View, "Key shortcuts tree"); --  for testsuite
-      Add (Scrolled, Editor.View);
-
-      --  Bottom area
-      Gtk_New (Frame);
-      Pack2 (Pane, Frame, False, True);
-      Set_Size_Request (Frame, -1, 200);
-
-      Gtk_New_Vbox (Hbox, Homogeneous => False);
-      Add (Frame, Hbox);
-
-      --  Name of current action
-
-      Create_Blue_Label (Editor.Action_Name, Event);
-      Pack_Start (Hbox,  Event, Expand => False);
-
-      Gtk_New_Hbox (Bbox, Homogeneous => False);
-      Pack_Start (Hbox, Bbox, Expand => False);
-
-      Gtk_New_From_Stock (Editor.Remove_Button, Stock_Remove);
-      Set_Sensitive (Editor.Remove_Button, False);
-      Pack_Start (Bbox, Editor.Remove_Button, Expand => False);
-      Widget_Callback.Object_Connect
-        (Editor.Remove_Button,
-         Gtk.Button.Signal_Clicked, On_Remove_Key'Access, Editor);
-
-      Gtk_New (Editor.Grab_Button, -"Change Shortcut");
-      Set_Sensitive (Editor.Grab_Button, False);
-      Pack_Start (Bbox, Editor.Grab_Button, Expand => False);
-      Widget_Callback.Object_Connect
-        (Editor.Grab_Button,
-         Gtk.Toggle_Button.Signal_Toggled, On_Grab_Key'Access, Editor);
-
-      Gtk_New
-        (Editor.Grab_Label,
-         -"<i>Press the key(s) to use a shortcut / ESC to cancel</i>");
-      Set_Use_Markup (Editor.Grab_Label, True);
-      Set_Alignment (Editor.Grab_Label, 0.0, 0.5);
-      Set_Padding (Editor.Grab_Label, 10, 0);
-      Pack_Start (Bbox, Editor.Grab_Label, Expand => True, Fill => True);
-
+      Editor.View.Set_Name ("Key shortcuts tree"); --  for testsuite
+      Scrolled.Add (Editor.View);
       Widget_Callback.Object_Connect
         (Get_Selection (Editor.View), Gtk.Tree_Selection.Signal_Changed,
          Add_Selection_Changed'Access, Editor);
 
-      Gtk_New_Hseparator (Sep);
-      Pack_Start (Hbox, Sep, Expand => False);
+      --  Action buttons
 
-      --  Help on current action
+      Gtk_New (Bbox, Orientation_Vertical);
+      Bbox.Set_Layout (Buttonbox_Start);
+      Bbox.Set_Spacing (20);
+      Hbox.Pack_Start (Bbox, Expand => False, Fill => True);
+
+      Gtk_New (Editor.Remove_Button, -"Remove");
+      Editor.Remove_Button.Set_Sensitive (False);
+      Bbox.Add (Editor.Remove_Button);
+      Widget_Callback.Object_Connect
+        (Editor.Remove_Button,
+         Gtk.Button.Signal_Clicked, On_Remove_Key'Access, Editor);
+
+      Gtk_New (Editor.Grab_Button, -"Modify");
+      Editor.Grab_Button.Set_Sensitive (False);
+      Bbox.Add (Editor.Grab_Button);
+      Widget_Callback.Object_Connect
+        (Editor.Grab_Button,
+         Gtk.Toggle_Button.Signal_Toggled, On_Grab_Key'Access, Editor);
+
+      --  Help on selected action
+
+      Gtk_New (Frame);
+      Pane.Pack2 (Frame, Resize => True, Shrink => True);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Frame.Add (Scrolled);
 
       Gtk_New (Editor.Help);
-      Gtk_New (Scrolled);
-      Pack_Start (Hbox, Scrolled, Expand => True, Fill => True);
-
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Gtk_New (Text, Editor.Help);
-      Set_Wrap_Mode (Text, Wrap_Word);
-      Set_Editable (Text, False);
-      Add (Scrolled, Text);
+      Text.Set_Wrap_Mode (Wrap_Word);
+      Text.Set_Editable (False);
+      Scrolled.Add (Text);
 
       --  The tree
 
       Gtk_New (Render);
+      Gtk_New (Pixbuf);
+      Pixbuf.Set_Alignment (Xalign => 0.0, Yalign => 0.5);
 
       Gtk_New (Col);
       Ignore := Append_Column (Editor.View, Col);
       Set_Title (Col, -"Action");
+      Pack_Start (Col, Pixbuf, False);
+      Add_Attribute (Col, Pixbuf, "stock-id", Icon_Column);
       Pack_Start (Col, Render, True);
       Add_Attribute (Col, Render, "text", Action_Column);
+      Add_Attribute (Col, Render, "weight", Weight_Column);
       Set_Clickable (Col, True);
       Set_Resizable (Col, True);
       Set_Sort_Column_Id (Col, Action_Column);
@@ -985,32 +1115,15 @@ package body KeyManager_Module.GUI is
       Set_Title (Col, -"Shortcut");
       Pack_Start (Col, Render, False);
       Add_Attribute (Col, Render, "text", Key_Column);
+      Add_Attribute (Col, Render, "weight", Weight_Column);
       Set_Clickable (Col, True);
       Set_Resizable (Col, True);
       Set_Sort_Column_Id (Col, Key_Column);
 
       Fill_Editor (Editor);
 
-      Ignore_Action := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
-      Ignore_Action := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
-
-      Show_All (Editor);
-      Hide (Editor.Grab_Label);
-
-      Set_GUI_Running (True);
-
-      if Run (Editor) = Gtk_Response_OK then
-         Save_Editor (Editor);
-      end if;
-
-      Set_GUI_Running (False);
-
-      Reset (Editor.Bindings.all);
-      Unchecked_Free (Editor.Bindings);
-      Destroy (Editor);
-
-      return Commands.Success;
-   end Execute;
+      return Gtk_Widget (Editor.View);
+   end Initialize;
 
    -----------------------
    -- Register_Key_Menu --
@@ -1019,10 +1132,17 @@ package body KeyManager_Module.GUI is
    procedure Register_Key_Menu
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
+      Keys_Editor_Views.Register_Module (Kernel);
+
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Show_All_Menus, False);
+
       Register_Action
-        (Kernel, "open key shortcuts dialog", new Open_Keyshortcuts_Command,
-         -"Edit or create key shortcuts for all actions and menus",
-         Category => -"Views");
+        (Kernel, "key shortcuts expand all",
+         new Expand_All_Command,
+         -"Expand or collapse all nodes in the shortcuts editor",
+         Stock_Id => GPS_Expand_All,
+         Category => -"Key Shortcuts");
    end Register_Key_Menu;
 
 end KeyManager_Module.GUI;

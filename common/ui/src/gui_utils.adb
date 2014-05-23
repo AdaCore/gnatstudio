@@ -33,6 +33,7 @@ with Glib.Values;               use Glib.Values;
 
 with Gdk;                       use Gdk;
 with Gdk.Cursor;                use Gdk.Cursor;
+with Gdk.Device;                use Gdk.Device;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Keyval;                use Gdk.Keyval;
 with Gdk.Main;                  use Gdk.Main;
@@ -146,14 +147,18 @@ package body GUI_Utils is
       Data   : Glib.Gint);
    --  Callback for the editable renderer
 
-   type Event_Access is access all Gdk_Event;
+   type Event_Info is record
+      Key   : Gdk_Key_Type;
+      State : Gdk_Modifier_Type;
+   end record;
+   type Event_Info_Access is access all Event_Info;
    package Event_Callback is new Gtk.Handlers.User_Return_Callback
-     (Gtk_Widget_Record, Boolean, Event_Access);
+     (Gtk_Widget_Record, Boolean, Event_Info_Access);
 
    function Key_Press_In_Grab
      (In_Widget : access Gtk_Widget_Record'Class;
       Event     : Gdk_Event;
-      Output    : Event_Access) return Boolean;
+      Output    : Event_Info_Access) return Boolean;
    --  Temporary event filter set when grabing the key for a key preference
 
    function "<" (A, B : Gtk_Window) return Boolean is
@@ -1060,14 +1065,15 @@ package body GUI_Utils is
    function Key_Press_In_Grab
      (In_Widget : access Gtk_Widget_Record'Class;
       Event     : Gdk_Event;
-      Output    : Event_Access) return Boolean
+      Output    : Event_Info_Access) return Boolean
    is
       pragma Unreferenced (In_Widget);
       Text  : constant String :=
                 Image (Get_Key_Val (Event), Get_State (Event));
    begin
       if Text /= Special_Key_Binding then
-         Output.all := Copy (Event);
+         Output.Key := Get_Key_Val (Event);
+         Output.State := Get_State (Event) and Get_Default_Mod_Mask;
          Main_Quit;
       end if;
       return True;
@@ -1088,45 +1094,46 @@ package body GUI_Utils is
       Mods : out Gdk.Types.Gdk_Modifier_Type)
    is
       Tmp    : Gdk_Grab_Status;
+      Device : constant Gdk_Device := Gtk.Main.Get_Current_Event_Device;
+      Id     : Handler_Id;
+      Output : aliased Event_Info := (0, 0);
+      Cursor : Gdk.Gdk_Cursor;
       pragma Unreferenced (Tmp);
 
-      Id     : Handler_Id;
-      Output : aliased Gdk_Event := null;
-      O      : constant Event_Access := Output'Unchecked_Access;
    begin
-      Tmp := Keyboard_Grab
-        (Get_Window (In_Widget), Owner_Events => False, Time => 0);
-
-      Tmp := Pointer_Grab
-        (Window     => Get_Window (In_Widget),
-         Event_Mask => Button_Press_Mask or Button_Release_Mask,
-         Confine_To => Get_Window (In_Widget),
-         Time       => 0);
-      In_Widget.Grab_Add;
+      Gdk_New (Cursor, Watch);
+      if Device /= null then   --  might be null in testsuite
+         Tmp := Device.Grab
+           (Window         => In_Widget.Get_Window,
+            Grab_Ownership => Ownership_Application,
+            Owner_Events   => True,
+            Event_Mask     => Button_Press_Mask or Button_Release_Mask
+            or Key_Press_Mask,
+            Cursor         => Cursor,
+            Time           => Gdk.Types.Current_Time);
+      else
+         In_Widget.Grab_Add;
+      end if;
 
       Grab_Focus (In_Widget);
 
       Id := Event_Callback.Connect
         (In_Widget, Signal_Key_Press_Event,
          Event_Callback.To_Marshaller (Key_Press_In_Grab'Access),
-         User_Data => O);
+         User_Data => Output'Unchecked_Access);
 
       Gtk.Main.Main;
+      Key  := Output.Key;
+      Mods := Output.State;
 
-      --  Output could be null if the main loop was exited
-      if Output /= null then
-         Key  := Get_Key_Val (Output);
-         Mods := Get_State (Output);
-         Free (Output);
+      if Device /= null then
+         Device.Ungrab (Gdk.Types.Current_Time);
       else
-         Key  := 0;
-         Mods := 0;
+         In_Widget.Grab_Remove;
       end if;
 
-      In_Widget.Grab_Remove;
-      Keyboard_Ungrab (0);
-      Pointer_Ungrab (0);
       Gtk.Handlers.Disconnect (In_Widget, Id);
+      Unref (Cursor);
    end Key_Grab;
 
    -------------------
@@ -1422,6 +1429,34 @@ package body GUI_Utils is
          Index := -1;
       end if;
    end Find_Menu_Item_By_Name;
+
+   ----------------------
+   -- Create_Menu_Path --
+   ----------------------
+
+   function Create_Menu_Path
+     (Item : not null access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class)
+      return String
+   is
+      Path   : constant String := Item.Get_Accel_Path;
+      P      : Integer := Path'First;
+      Result : String (Path'Range);
+      Index  : Integer := Result'First;
+   begin
+      if Starts_With (Path, "<gps>") then
+         P := Path'First + 5;
+      end if;
+
+      while P <= Path'Last loop
+         if Path (P) /= '_' then
+            Result (Index) := Path (P);
+            Index := Index + 1;
+         end if;
+         P := P + 1;
+      end loop;
+
+      return Result (Result'First .. Index - 1);
+   end Create_Menu_Path;
 
    ----------------------
    -- Create_Menu_Path --

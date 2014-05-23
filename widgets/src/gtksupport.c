@@ -22,6 +22,28 @@ ada_gtk_tree_store_set_ptr_ptr (GtkTreeStore *tree_store,
 }
 
 void
+ada_gtk_tree_store_set_ptr_ptr_ptr_weight
+  (GtkTreeStore *tree_store,
+  GtkTreeIter  *iter,
+  gint          col1,   void         *val1,
+  gint          col2,   void         *val2,
+  gint          col3,   void         *val3,
+  gint          col4,   PangoWeight   val4)
+{
+  gtk_tree_store_set
+    (tree_store, iter, col1, val1, col2, val2, col3, val3, col4, val4, -1);
+}
+
+void
+ada_gtk_tree_store_set_weight (GtkTreeStore *tree_store,
+			       GtkTreeIter  *iter,
+			       gint          col1,
+			       PangoWeight   val1)
+{
+  gtk_tree_store_set (tree_store, iter, col1, val1, -1);
+}
+
+void
 ada_gtk_tree_store_set_ptr_int (GtkTreeStore *tree_store,
                                GtkTreeIter  *iter,
                                gint          col1,

@@ -465,6 +465,11 @@ package GUI_Utils is
    --  Create a menu from its parent (possibly empty) and its name (which might
    --  need to be escaped first).
 
+   function Create_Menu_Path
+     (Item : not null access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class)
+      return String;
+   --  Return the path to this menu item
+
    procedure Add_Menu
      (Parent     : Gtk.Menu.Gtk_Menu;
       Menu_Bar   : Gtk.Menu_Bar.Gtk_Menu_Bar := null;

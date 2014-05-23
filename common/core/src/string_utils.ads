@@ -251,6 +251,9 @@ package String_Utils is
    procedure Append
      (List  : in out GNAT.Strings.String_List_Access;
       List2 : GNAT.Strings.String_List);
+   procedure Append
+     (List  : in out GNAT.Strings.String_List_Access;
+      Item  : String);
    --  Append all the strings in List2 to the end of List.
    --  The strings in List2 are not duplicated.
    --  List might be null initially.
