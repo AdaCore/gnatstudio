@@ -1160,9 +1160,15 @@ package body Src_Editor_Module.Commands is
             File  : constant Virtual_File := File_Information (Context);
             Block : Unbounded_String := Null_Unbounded_String;
          begin
-            Buffer := Get_Buffer
-              (Get_Source_Box_From_MDI
-                 (Find_Editor (Kernel, File, Project_Information (Context))));
+            declare
+               Prj : constant Project_Type := Project_Information (Context);
+               Editor : MDI_Child := Find_Editor (Kernel, File, Prj);
+            begin
+               if Editor = null then
+                  Editor := Find_Editor (Kernel, File, No_Project);
+               end if;
+               Buffer := Get_Buffer (Get_Source_Box_From_MDI (Editor));
+            end;
 
             if not Get_Writable (Buffer) then
                return;
