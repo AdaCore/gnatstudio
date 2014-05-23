@@ -24,7 +24,6 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
-with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Glib;                      use Glib;
 with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
@@ -1233,8 +1232,6 @@ package body Completion_Module is
          new Completion_Command (Smart_Completion => False),
          -("Complete current identifier based on the contents of the editor"),
          Category   => "Editor",
-         Accel_Key  => GDK_slash,
-         Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
 
       Register_Action
@@ -1242,8 +1239,6 @@ package body Completion_Module is
          new Completion_Command (Smart_Completion => True),
          -("Complete current identifier based on advanced entities database"),
          Category => "Editor",
-         Accel_Key  => GDK_space,
-         Accel_Mods => Control_Mask,
          Filter   => Src_Action_Context);
 
       Add_Hook (Kernel, Preference_Changed_Hook,

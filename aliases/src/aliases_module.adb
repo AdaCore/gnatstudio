@@ -34,8 +34,6 @@ with System.Assertions;
 
 with Gdk.Event;                use Gdk.Event;
 with Gdk.RGBA;                 use Gdk.RGBA;
-with Gdk.Types;                use Gdk.Types;
-with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
@@ -2169,8 +2167,6 @@ package body Aliases_Module is
         (Kernel, "Expand alias", new Interactive_Alias_Expansion_Command,
          Category    => -"Editor",
          Description => -"Expand the alias found just before the cursor",
-         Accel_Key   => GDK_LC_o,
-         Accel_Mods  => Primary_Mod_Mask,
          Filter      => Lookup_Filter (Kernel, "Source editor"));
 
       Register_Special_Alias_Entity

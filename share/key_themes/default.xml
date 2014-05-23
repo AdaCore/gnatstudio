@@ -1,0 +1,113 @@
+<?xml version='1.0'?>
+<GPS>
+  <key action="Toggle to next alias field">control-Tab</key>
+  <key action="Expand alias under cursor">control-o</key>
+
+  <key action="Interrupt">shift-control-C</key>
+
+  <key action="Macro Stop">control-Escape</key>
+  <key action="Repeat Next">control-y</key>
+
+  <!--  Do not use gtk+ builtin handling for cut/copy/paste, since that
+        preserves the tags. For instance, copy-pasting non-editable text would
+        keep the text as read-only. -->
+  <key action="Cut to Clipboard">control-x</key>
+  <key action="Cut to Clipboard">shift-Delete</key>
+  <key action="Copy to Clipboard">control-c</key>
+  <key action="Copy to Clipboard">control-Insert</key>
+  <key action="Paste From Clipboard">control-v</key>
+  <key action="Paste From Clipboard">shift-Insert</key>
+  <key action="Paste Previous From Clipboard">shift-control-Insert</key>
+
+  <key action="debug display local variables">control-l</key>
+  <key action="debug display arguments">control-u</key>
+  <key action="debug run dialog">F2</key>
+  <key action="debug step">F5</key>
+  <key action="debug stepi">shift-F5</key>
+  <key action="debug next">F6</key>
+  <key action="debug nexti">shift-F6</key>
+  <key action="debug finish">F7</key>
+  <key action="debug continue">F8</key>
+  <key action="debug interrupt">control-backslash</key>
+  <key action="continue till line">control-b</key>
+
+  <key action="start of statement">alt-Up</key>
+  <key action="end of statement">alt-Down</key>
+  <key action="previous subprogram">control-Up</key>
+  <key action="next subprogram">control-Down</key>
+  <key action="previous tag">control-less</key>
+  <key action="next tag">control-greater</key>
+  <key action="backward locations history">alt-Left</key>
+  <key action="forward locations history">alt-Right</key>
+
+  <key action="Build Main Number 1">F4</key>
+  <key action="Run Main Number 1">shift-F2</key>
+  <key action="Custom Build...">F9</key>
+  <key action="Compile File">shift-F4</key>
+
+  <key action="No casing/indentation on next key">control-q</key>
+  <key action="Toggle auto casing/indentation">alt-q</key>
+  <key action="open file">F3</key>
+  <key action="open from host">control-F3</key>
+  <key action="save">control-s</key>
+  <key action="Close current window">control-w</key>
+  <key action="undo">control-z</key>
+  <key action="redo">control-r</key>
+  <key action="comment lines">control-minus</key>
+  <key action="uncomment lines">control-underscore</key>
+  <key action="refill">control-equal</key>
+  <key action="goto line">control-g</key>
+  <key action="jump to matching delimiter">control-apostrophe</key>
+
+  <key action="Add multi cursor and go down">shift-alt-Down</key>
+  <key action="Add multi cursor and go up">shift-alt-Up</key>
+  <key action="Move to next word">control-Right</key>
+  <key action="Move to previous word">control-Left</key>
+  <key action="Move to next word (extend selection)">shift-control-Right</key>
+  <key action="Move to previous word (extend selection)">shift-control-Left</key>
+  <key action="Move to previous char">Left</key>
+  <key action="Move to next char">Right</key>
+  <key action="Move to previous char (extend selection)">shift-Left</key>
+  <key action="Move to next char (extend selection)">shift-Right</key>
+  <key action="Move to previous line (extend selection)">shift-Up</key>
+  <key action="Move to next line (extend selection)">shift-Down</key>
+  <key action="Move to previous line">Up</key>
+  <key action="Move to next line">Down</key>
+  <key action="Delete word forward" >control-Delete</key>
+  <key action="Delete word backward" >control-BackSpace</key>
+  <key action="forward delete" >Delete</key>
+  <key action="backward delete" >BackSpace</key>
+  <key action="goto beginning of line" >Home</key>
+  <key action="goto end of line" >End</key>
+  <key action="goto beginning of line (extend selection)" >shift-Home</key>
+  <key action="goto end of line (extend selection)" >shift-End</key>
+  <key action="Move block right">control-alt-greater</key>
+  <key action="Move block left">control-alt-less</key>
+  <key action="Format selection">Tab</key>
+  <key action="smart escape">Escape</key>
+
+  <key action="increase text size">control-plus</key>
+  <key action="decrease text size">control-alt-plus</key>
+
+  <key action="Search">control-f</key>
+  <key action="find next">control-n</key>
+  <key action="find previous">control-p</key>
+
+  <key action="Remove message">alt-Delete</key>
+
+  <key action="Move to next window">alt-Tab</key>
+  <key action="Move to previous window">alt-shift-ISO_Left_Tab</key>
+  <key action="Move tab to left">shift-control-alt-Left</key>
+  <key action="Move tab to right">shift-control-alt-Right</key>
+  <key action="Move to next tab">control-alt-Right</key>
+  <key action="Move to previous tab">control-alt-Left</key>
+
+<key action="browser zoom out">minus</key>
+  <key action="browser zoom in">equal</key>
+
+  <key action="Global Search in context: File Names">shift-F3</key>
+  <key action="Global Search in context: Entities">control-t</key>
+
+  <key action="Complete identifier">control-slash</key>
+  <key action="Complete identifier (advanced)">control-space</key>
+</GPS>

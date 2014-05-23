@@ -24,8 +24,6 @@ with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
-with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
-with Gdk.Types;                         use Gdk.Types;
 with Gdk;                               use Gdk;
 
 with Glib.Object;                       use Glib.Object;
@@ -2095,8 +2093,6 @@ package body Src_Editor_Module is
         (Kernel, "No casing/indentation on next key",
          Command, -"Disable the casing and indentation on next key",
          Category   => "Editor",
-         Accel_Key  => GDK_LC_q,
-         Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
 
       Command := new Control_Command;
@@ -2105,8 +2101,6 @@ package body Src_Editor_Module is
         (Kernel, "Toggle auto casing/indentation",
          Command, -"Disable or enable the casing and indentation",
          Category => "Editor",
-         Accel_Key  => GDK_LC_q,
-         Accel_Mods => Mod1_Mask,
          Filter     => Src_Action_Context);
 
       Register_Action
@@ -2151,15 +2145,12 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, Open_Command_Name, new Open_Command,
          Description => -"Open an existing file",
-         Stock_Id    => Stock_Open,
-         Accel_Key   => GDK_F3);
+         Stock_Id    => Stock_Open);
 
       Register_Action
         (Kernel, "open from host", new Open_Remote_Command,
          Description => -"Open a file from a remote host",
-         Stock_Id    => Stock_Open,
-         Accel_Key   => GDK_F3,
-         Accel_Mods  => Primary_Mod_Mask);
+         Stock_Id    => Stock_Open);
 
       Recent_Menu_Item := Find_Menu_Item (Kernel, "/File/Recent");
       Associate (Get_History (Kernel).all,
@@ -2171,9 +2162,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, Save_Command_Name, new Save_Command,
          Stock_Id    => GPS_Save,
-         Description => -"Save the current editor",
-         Accel_Key   => GDK_LC_s,
-         Accel_Mods  => Primary_Mod_Mask);
+         Description => -"Save the current editor");
 
       Register_Action
         (Kernel, "save as", new Save_As_Command,
@@ -2190,9 +2179,7 @@ package body Src_Editor_Module is
         (Kernel, "Close current window", Command,
          Description => -"Close the currently selected window",
          Category    => -"MDI",
-         Stock_Id    => Stock_Close,
-         Accel_Key   => GDK_LC_w,
-         Accel_Mods  => Primary_Mod_Mask);
+         Stock_Id    => Stock_Close);
 
       Command := new Close_Command;
       Close_Command (Command.all).Mode := Close_All;
@@ -2216,17 +2203,13 @@ package body Src_Editor_Module is
         (Kernel, "undo", new Undo_Command,
          Description => -"Undo the last command",
          Stock_Id    => Stock_Undo,
-         Filter      => new Has_Undo_Filter,
-         Accel_Key   => GDK_LC_z,
-         Accel_Mods  => Primary_Mod_Mask);
+         Filter      => new Has_Undo_Filter);
 
       Register_Action
         (Kernel, "redo", new Redo_Command,
          Description => -"Redo the last command that was undone",
          Stock_Id    => Stock_Redo,
-         Filter      => new Has_Redo_Filter,
-         Accel_Key   => GDK_LC_r,
-         Accel_Mods  => Primary_Mod_Mask);
+         Filter      => new Has_Redo_Filter);
 
       Register_Action
         (Kernel, "select all", new Select_All_Command,
@@ -2243,25 +2226,19 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "comment lines", new Comment_Lines_Command,
          Description   => -"Comment the selected lines",
-         Filter        => Src_Action_Context,
-         Accel_Key     => GDK_minus,
-         Accel_Mods    => Primary_Mod_Mask);
+         Filter        => Src_Action_Context);
 
       Register_Action
         (Kernel, "uncomment lines", new Uncomment_Lines_Command,
          Description   => -"Uncomment the selected lines",
-         Filter        => Src_Action_Context,
-         Accel_Key     => GDK_underscore,
-         Accel_Mods    => Primary_Mod_Mask);
+         Filter        => Src_Action_Context);
 
       Register_Action
         (Kernel, "refill", new Refill_Command,
          Description   =>
            -("Reformat selected lines or current paragraph so that the list"
            & " are shorter than the grey line on the right"),
-         Filter        => Src_Action_Context,
-         Accel_Key     => GDK_equal,
-         Accel_Mods    => Primary_Mod_Mask);
+         Filter        => Src_Action_Context);
 
       Register_Action
         (Kernel, "print selection", new Print_Selection_Command,
@@ -2286,9 +2263,7 @@ package body Src_Editor_Module is
 
       Register_Action
         (Kernel, "goto line", new Goto_Line_Command,
-         -"Open a dialog to select a line to go to",
-         Accel_Key   => GDK_LC_g,
-         Accel_Mods  => Primary_Mod_Mask);
+         -"Open a dialog to select a line to go to");
       Register_Contextual_Menu
         (Kernel, -"Goto line...",
          Action => Command,
@@ -2305,8 +2280,6 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "jump to matching delimiter", new Jump_To_Delimiter_Command,
          -"Jump to the matching delimiter ()[]{}",
-         Accel_Key  => GDK_apostrophe,
-         Accel_Mods => Primary_Mod_Mask,
          Category   => "Editor",
          Filter     => Src_Action_Context);
 

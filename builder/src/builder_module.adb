@@ -24,8 +24,6 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
-with Gdk.Types;                  use Gdk.Types;
-with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
@@ -304,9 +302,7 @@ package body Builder_Module is
         (Kernel, "Interrupt", new Interrupt_Tool_Command,
          Description =>
            -"Interrupt the tasks performed in the background by GPS",
-         Stock_Id   => GPS_Stop_Task,
-         Accel_Key  => GDK_C,
-         Accel_Mods => Primary_Mod_Mask + Shift_Mask);
+         Stock_Id   => GPS_Stop_Task);
 
       Add_Hook
         (Kernel => Kernel,

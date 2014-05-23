@@ -671,10 +671,6 @@ package body GPS.Main_Window is
          Description =>
            -("Select the next window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
-      Bind_Default_Key
-        (Kernel      => Main_Window.Kernel,
-         Action      => "Move to next window",
-         Default_Key => "alt-Tab");
 
       Command              := new MDI_Child_Selection_Command;
       Command.Move_To_Next := False;
@@ -687,10 +683,6 @@ package body GPS.Main_Window is
          Description =>
            -("Select the previous window in GPS. Any key binding should use a"
              & " modifier such as control for best usage of this function."));
-      Bind_Default_Key
-        (Kernel      => Main_Window.Kernel,
-         Action      => "Move to previous window",
-         Default_Key => "alt-shift-ISO_Left_Tab");
 
       Command              := new MDI_Child_Selection_Command;
       Command.Group        := Group_Default;
@@ -742,10 +734,6 @@ package body GPS.Main_Window is
          Description =>
          -("Move the current notebook tab one position to the left, within"
            & " the notebook (cyclic)"));
-      Bind_Default_Key
-        (Kernel      => Main_Window.Kernel,
-         Action      => "Move tab to left",
-         Default_Key => "shift-control-alt-Left");
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Reorder_Tab_Right;
@@ -757,10 +745,6 @@ package body GPS.Main_Window is
          Description =>
          -("Move the current notebook tab one position to the right, within"
            & " the notebook (cyclic)"));
-      Bind_Default_Key
-        (Kernel      => Main_Window.Kernel,
-         Action      => "Move tab to right",
-         Default_Key => "shift-control-alt-Right");
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Move_To_Next_Tab;
@@ -770,10 +754,6 @@ package body GPS.Main_Window is
          Command     => Command2,
          Category    => "MDI",
          Description => -("Move to the next tab in the current notebook"));
-      Bind_Default_Key
-        (Kernel      => Main_Window.Kernel,
-         Action      => "Move to next tab",
-         Default_Key => "primary-alt-Right");
 
       Command2        := new MDI_Window_Actions_Command;
       Command2.Mode   := Move_To_Previous_Tab;
@@ -783,10 +763,6 @@ package body GPS.Main_Window is
          Command     => Command2,
          Category    => "MDI",
          Description => -("Move to the previous tab in the current notebook"));
-      Bind_Default_Key
-        (Kernel      => Main_Window.Kernel,
-         Action      => "Move to previous tab",
-         Default_Key => "primary-alt-Left");
 
       Register_Command
         (Main_Window.Kernel, "dialog",

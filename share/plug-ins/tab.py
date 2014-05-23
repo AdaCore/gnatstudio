@@ -26,7 +26,7 @@ if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
 
 
 @interactive(name='Format selection', category='Editor',
-             filter="Source editor", key='Tab')
+             filter="Source editor")
 def smart_tab():
     """
     This action is the default binding for the tab key, and will
@@ -68,8 +68,7 @@ def smart_tab():
 
 @interactive(name='smart escape',
              category='Editor',
-             filter="Source editor",
-             key='Escape')
+             filter="Source editor")
 def smart_escape():
     """
     This action is the default binding for the Escape key, and will

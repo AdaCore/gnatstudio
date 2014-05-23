@@ -15,9 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
-with Gdk.Types;              use Gdk.Types;
-
 with Glib.Object;            use Glib.Object;
 with Glib;                   use Glib;
 
@@ -400,18 +397,14 @@ package body GPS.Menu is
       Register_Action
         (Kernel, "Cut to Clipboard", Command,
          Description => -"Cut the current selection to the clipboard",
-         Stock_Id    => Stock_Cut,
-         Accel_Key   => GDK_Delete,
-         Accel_Mods  => Shift_Mask);
+         Stock_Id    => Stock_Cut);
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kind   := Copy;
       Register_Action
         (Kernel, "Copy to Clipboard", Command,
          Description => -"Copy the current selection to the clipboard",
-         Stock_Id    => Stock_Copy,
-         Accel_Key   => GDK_Insert,
-         Accel_Mods  => Primary_Mod_Mask);
+         Stock_Id    => Stock_Copy);
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kind   := Paste;
@@ -419,9 +412,7 @@ package body GPS.Menu is
         (Kernel, "Paste From Clipboard", Command,
          Description =>
            -"Paste the contents of the clipboard into the current text area",
-         Stock_Id   => Stock_Paste,
-         Accel_Key  => GDK_Insert,
-         Accel_Mods => Shift_Mask);
+         Stock_Id   => Stock_Paste);
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kind   := Paste_Previous;
@@ -429,47 +420,7 @@ package body GPS.Menu is
         (Kernel, -"Paste Previous From Clipboard", Command,
          -("Cancel the previous Paste operation, and instead insert the text"
            & " copied before through Copy To Clipboard"),
-         Stock_Id   => Stock_Paste,
-         Accel_Key  => GDK_Insert,
-         Accel_Mods => Primary_Mod_Mask + Shift_Mask);
-
-      --  The menus created above are created before the keymanager_module
-      --  is registered, so the default key assignations is not done through
-      --  the menu registration itself.
-      --  Also, we cannot register these menus afterwards, since these are
-      --  used by other modules as reference for placement of other menus.
-      --  So we register key bindings manually here.
-      --  ??? This can be removed when we have a global mechanism for menu
-      --  registering and ordering.
-      Bind_Default_Key (Kernel, "/Edit/Cut", "shift-Delete");
-      Bind_Default_Key (Kernel, "/Edit/Copy", "primary-Insert");
-      Bind_Default_Key (Kernel, "/Edit/Paste", "shift-Insert");
-      Bind_Default_Key
-        (Kernel, "/Edit/Paste Previous", "primary-shift-Insert");
-
-      --  Gtk+ provides hard-coded bindings for Cut (ctrl-x), Copy (ctrl-c)
-      --  and Paste (ctrl-v). Making use of these mechanisms in GPS is not a
-      --  good idea, because copying/cutting and pasting within the same buffer
-      --  preserves the tags.
-      --  For example, when copying and pasting "non-editable" text (such as in
-      --  the debugger console), the pasted text becomes non-editable.
-      --  Also, pasting a line which contains multiple tag changes (for example
-      --  a line containing two keywords) confuses the syntax highlighting.
-      --  To avoid this, we completely circumvent the Gtk+ mechanisms by
-      --  providing default bindings to the corresponding GPS actions.
-
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => -"Cut to Clipboard",
-         Default_Key => "primary-x");
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => -"Copy to Clipboard",
-         Default_Key => "primary-c");
-      Bind_Default_Key
-        (Kernel      => Kernel,
-         Action      => -"Paste From Clipboard",
-         Default_Key => "primary-v");
+         Stock_Id   => Stock_Paste);
 
       Register_Action
         (Kernel, "open Preferences", new Preference_Dialog_Command,

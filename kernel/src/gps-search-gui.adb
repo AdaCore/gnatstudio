@@ -20,7 +20,6 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Default_Preferences;      use Default_Preferences;
-with Gdk.Types.Keysyms;        use Gdk.Types, Gdk.Types.Keysyms;
 with Glib.Object;              use Glib, Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
@@ -1459,9 +1458,7 @@ package body GPS.Search.GUI is
       P := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
       Register_Provider_And_Action
         (Kernel, P,
-         Stock_Id   => Stock_Open,
-         Accel_Key  => GDK_F3,
-         Accel_Mods => Shift_Mask);
+         Stock_Id   => Stock_Open);
 
       P := new GPS.Kernel.Search.Actions.Actions_Search_Provider;
       Register_Provider_And_Action (Kernel, P);

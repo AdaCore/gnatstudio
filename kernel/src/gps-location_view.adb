@@ -1269,7 +1269,6 @@ package body GPS.Location_View is
          -"Remove the selected category, file or message",
          Stock_Id => Stock_Remove,
          Category => -"Locations");
-      GPS.Kernel.Bind_Default_Key (Kernel, -"Remove message", "alt-Delete");
 
       Register_Action
         (Kernel, "locations clear",

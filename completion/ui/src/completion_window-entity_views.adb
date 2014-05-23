@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Completion.Search;     use Completion.Search;
-with Gdk.Types.Keysyms;     use Gdk.Types, Gdk.Types.Keysyms;
 with GPS.Kernel.Search;     use GPS.Kernel.Search;
 
 package body Completion_Window.Entity_Views is
@@ -31,10 +30,7 @@ package body Completion_Window.Entity_Views is
       P : Kernel_Search_Provider_Access;
    begin
       P := new Entities_Search_Provider;
-      Register_Provider_And_Action
-        (Kernel, P,
-         Accel_Key  => GDK_LC_t,
-         Accel_Mods => Primary_Mod_Mask);
+      Register_Provider_And_Action (Kernel, P);
    end Register_Module;
 
 end Completion_Window.Entity_Views;

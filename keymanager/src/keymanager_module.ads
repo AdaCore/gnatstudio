@@ -38,6 +38,12 @@ package KeyManager_Module is
    --  XML files and themes have been loaded, so that the user's choice
    --  overrides everything.
 
+   procedure Load_Key_Theme
+     (Kernel       : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Theme        : String);
+   --  Load an XML file that contains a key theme.
+   --  This does not remove existing key bindings.
+
    procedure Block_Key_Shortcuts
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Block all handling of key shortcuts defined in GPS. gtk+'s own key

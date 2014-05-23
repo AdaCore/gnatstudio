@@ -42,7 +42,6 @@ with Gdk.Event;                         use Gdk.Event;
 with Gdk.Pixbuf;                        use Gdk.Pixbuf;
 with Gdk.RGBA;                          use Gdk.RGBA;
 with Gdk.Rectangle;                     use Gdk.Rectangle;
-with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
 with Gdk.Window;                        use Gdk.Window;
 
 with Gtk.Box;                           use Gtk.Box;
@@ -2511,16 +2510,14 @@ package body Browsers.Canvas is
          -"Zoom out",
          Stock_Id  => Stock_Zoom_Out,
          Category  => -"Browsers",
-         Filter    => Filter,
-         Accel_Key => GDK_minus);
+         Filter    => Filter);
 
       Register_Action
         (Kernel, "browser zoom in", new Zoom_In_Command,
          -"Zoom in",
          Stock_Id  => Stock_Zoom_In,
          Category  => -"Browsers",
-         Filter    => Filter,
-         Accel_Key => GDK_equal);
+         Filter    => Filter);
 
       Register_Action
         (Kernel, "browser toggle links", new Toggle_Links,

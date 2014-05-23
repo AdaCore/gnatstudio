@@ -2129,6 +2129,11 @@ procedure GPS.Main is
 
       Register_Hook_No_Args (GPS_Main.Kernel, GPS_Started_Hook);
 
+      --  Load the default key theme before the python plug-ins, so that the
+      --  latter can override
+
+      KeyManager_Module.Load_Key_Theme (GPS_Main.Kernel, "default");
+
       --  Load the customization files before loading the actual projects,
       --  so that the usual hooks are taken into account right from the
       --  beginning

@@ -792,8 +792,6 @@ package body KeyManager_Module.Macros is
          Command     => Command,
          Description => -"Stop recording the current macro",
          Filter      => Filter,
-         Accel_Key   => GDK_Escape,
-         Accel_Mods  => Primary_Mod_Mask,
          Category    => -"Macro");
 
       Command := new Macro_Command;

@@ -19,7 +19,6 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Commands;                  use Commands;
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.Types;                 use Gdk.Types;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -78,9 +77,7 @@ package body GPS.Kernel.Actions is
       Filter      : Action_Filter := null;
       Category    : String := "General";
       Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Stock_Id    : String := "";
-      Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
-      Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0)
+      Stock_Id    : String := "")
    is
       Old : constant Action_Record_Access := Lookup_Action (Kernel, Name);
       Overriden : Boolean := False;
@@ -177,10 +174,6 @@ package body GPS.Kernel.Actions is
 
       Set (Actions_Htable_Access (Kernel.Actions).Table,
            To_Lower (Name), Action);
-
-      if Accel_Key /= 0 then
-         Kernel.Set_Default_Key (Name, Accel_Key, Accel_Mods);
-      end if;
    end Register_Action;
 
    -----------------------

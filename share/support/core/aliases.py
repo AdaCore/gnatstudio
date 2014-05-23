@@ -15,11 +15,6 @@ from color_utils import Color
 subst_pattern = re.compile("%\(.*?\)|%_")
 id_pattern = re.compile(r"[^\w0-9_]")
 
-xml_conf = """
-<key action="Toggle to next alias field">primary-Tab</key>
-<key action="Expand alias under cursor">primary-o</key>
-"""
-
 color_pref_name = "Plugins/aliases/color_current_field"
 Preference(color_pref_name).create(
     "Aliases current field color",
@@ -309,4 +304,3 @@ def expand_alias(editor, alias):
     toggle_next_field(editor)
 
 EditorBuffer.expand_alias = expand_alias
-parse_xml(xml_conf)

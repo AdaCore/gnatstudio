@@ -146,6 +146,12 @@ package body KeyManager_Module is
      (Event : Gdk_Event; Kernel : Kernel_Handle);
    --  General event handler used for event-level debugging
 
+   procedure Load_XML_Keys
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Filename     : Virtual_File;
+      User_Defined : Boolean := False);
+   --  Load an XML file that contains key definitions
+
    type Keymanager_Module_Record is new Module_ID_Record with record
       Handlers         : Event_Handler_Access;
 
@@ -1299,26 +1305,35 @@ package body KeyManager_Module is
          return False;
    end Process_Key_Event;
 
-   ----------------------
-   -- Load_Custom_Keys --
-   ----------------------
+   --------------------
+   -- Load_Key_Theme --
+   --------------------
 
-   procedure Load_Custom_Keys
-     (Kernel  : access Kernel_Handle_Record'Class)
+   procedure Load_Key_Theme
+     (Kernel       : not null access Kernel_Handle_Record'Class;
+      Theme        : String)
    is
-      Filename    : Virtual_File :=
-                      Create_From_Dir (Get_Home_Dir (Kernel), "keys6.xml");
+      Filename : constant Virtual_File :=
+        Create_From_Dir
+          (Kernel.Get_Share_Dir,
+           +("key_themes/" & Theme & ".xml"));
+   begin
+      Load_XML_Keys (Kernel, Filename, User_Defined => False);
+   end Load_Key_Theme;
+
+   -------------------
+   -- Load_XML_Keys --
+   -------------------
+
+   procedure Load_XML_Keys
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Filename     : Virtual_File;
+      User_Defined : Boolean := False)
+   is
       File, Child : Node_Ptr;
       Err         : String_Access;
       Prev        : Boolean;
-
    begin
-      Keymanager_Module.Custom_Keys_Loaded := True;
-
-      if not Is_Regular_File (Filename) then
-         Filename := Create_From_Dir (Get_Home_Dir (Kernel), "keys.xml");
-      end if;
-
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
@@ -1339,9 +1354,9 @@ package body KeyManager_Module is
                   Table            => Keymanager_Module.Table.all,
                   Action           => Get_Attribute (Child, "action"),
                   Key              => Child.Value.all,
-                  Save_In_Keys_XML => True,
-                  Remove_Existing_Shortcuts_For_Action => True,
-                  Remove_Existing_Actions_For_Shortcut => True,
+                  Save_In_Keys_XML => User_Defined,
+                  Remove_Existing_Shortcuts_For_Action => User_Defined,
+                  Remove_Existing_Actions_For_Shortcut => User_Defined,
                   Update_Menus     => True);
                Child := Child.Next;
             end loop;
@@ -1356,7 +1371,25 @@ package body KeyManager_Module is
       when E : others =>
          Trace (Me, E);
          Insert (Kernel, -"Could not parse " &
-                 Filename.Display_Full_Name, Mode => Error);
+                   Filename.Display_Full_Name, Mode => Error);
+   end Load_XML_Keys;
+
+   ----------------------
+   -- Load_Custom_Keys --
+   ----------------------
+
+   procedure Load_Custom_Keys
+     (Kernel  : access Kernel_Handle_Record'Class)
+   is
+      Filename    : Virtual_File :=
+                      Create_From_Dir (Get_Home_Dir (Kernel), "keys6.xml");
+   begin
+      Keymanager_Module.Custom_Keys_Loaded := True;
+
+      if not Is_Regular_File (Filename) then
+         Filename := Create_From_Dir (Get_Home_Dir (Kernel), "keys.xml");
+      end if;
+      Load_XML_Keys (Kernel, Filename, User_Defined => True);
    end Load_Custom_Keys;
 
    ----------------------------
@@ -2003,7 +2036,6 @@ package body KeyManager_Module is
            & " instance, if this is associated with ctrl-u, you can type"
            & " ""ctrl-u 30 t"" to  the character t 30 times"),
          Category => -"General");
-      Bind_Default_Key (Kernel, "Repeat Next", "primary-u");
 
       Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),

@@ -8,41 +8,6 @@ from gps_utils import *
 from text_utils import goto_word_start, goto_word_end
 import re
 
-xml_conf = """
-<key action="Add multi cursor and go down">shift-alt-Down</key>
-<key action="Add multi cursor and go up">shift-alt-Up</key>
-
-<key action="Move to next word">primary-Right</key>
-<key action="Move to previous word">primary-Left</key>
-
-<key action="Move to next word (extend selection)">shift-primary-Right</key>
-<key action="Move to previous word (extend selection)">shift-primary-Left</key>
-
-<key action="Move to previous char">Left</key>
-<key action="Move to next char">Right</key>
-
-<key action="Move to previous char (extend selection)">shift-Left</key>
-<key action="Move to next char (extend selection)">shift-Right</key>
-
-<key action="Move to previous line (extend selection)">shift-Up</key>
-<key action="Move to next line (extend selection)">shift-Down</key>
-
-<key action="Move to previous line">Up</key>
-<key action="Move to next line">Down</key>
-
-<key action="Delete word forward" >primary-Delete</key>
-<key action="Delete word backward" >primary-BackSpace</key>
-
-<key action="forward delete" >Delete</key>
-<key action="backward delete" >BackSpace</key>
-
-<key action="goto beginning of line" >Home</key>
-<key action="goto end of line" >End</key>
-
-<key action="goto beginning of line (extend selection)" >shift-Home</key>
-<key action="goto end of line (extend selection)" >shift-End</key>
-"""
-
 mc_on_entity_color = GPS.Preference("Plugins/multi_cursors/mc_on_entity_color")
 
 mc_on_entity_color.create(
@@ -222,5 +187,3 @@ def mc_all_entity_references():
 
     Hook("character_added").add(on_edit)
     Hook("location_changed").add(on_move)
-
-GPS.parse_xml(xml_conf)

@@ -83,6 +83,7 @@ endif
 	$(RM) $(sharedir)/gps/shell_commands.xml
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - templates/)  | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - key_themes/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
 	(cd docgen2/resources; tar cf - *.tmpl custom/*.css support/*.css support/*.js support/images/*.png) \
 		| (cd $(sharedir)/gps/docgen2; tar xf -)

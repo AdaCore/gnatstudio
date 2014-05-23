@@ -2781,24 +2781,18 @@ package body Vsearch is
            & " will be selected, otherwise the context is reset depending on"
            & " the active window"),
          Stock_Id    => Stock_Find,
-         Accel_Key   => GDK_LC_f,
-         Accel_Mods  => Primary_Mod_Mask,
          Category    => -"Search");
 
       Filter  := new Has_Search_Filter;
       Register_Action
         (Kernel, "find next", new Find_Next_Command,
          Description => -"Find the next occurrence of the search pattern",
-         Filter      => Filter,
-         Accel_Key   => GDK_LC_n,
-         Accel_Mods  => Primary_Mod_Mask);
+         Filter      => Filter);
 
       Register_Action
         (Kernel, "find previous", new Find_Previous_Command,
          Description => -"Find the previous occurrence of the search pattern",
-         Filter      => Filter,
-         Accel_Key   => GDK_LC_p,
-         Accel_Mods  => Primary_Mod_Mask);
+         Filter      => Filter);
 
       --  Register the default search functions
 

@@ -27,8 +27,6 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with XML_Utils;                  use XML_Utils;
-with Gdk.Types;                  use Gdk.Types;
-with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Commands.Interactive;       use Commands, Commands.Interactive;
@@ -1147,47 +1145,35 @@ package body Navigation_Module is
         (Kernel, "start of statement", new Start_Statement_Command,
          -"Move to the beginning of the current statement",
          Category   => -"Editor",
-         Accel_Key  => GDK_Up,
-         Accel_Mods => Mod1_Mask,
          Filter     => Src_Action_Context);
 
       Register_Action
         (Kernel, "end of statement", new End_Statement_Command,
          -"Move to the end of the current statement",
          Category   => -"Editor",
-         Accel_Key  => GDK_Down,
-         Accel_Mods => Mod1_Mask,
          Filter     => Src_Action_Context);
 
       Register_Action
         (Kernel, "previous subprogram", new Previous_Subprogram_Command,
          -"Move to the previous subprogram",
          Category   => -"Editor",
-         Accel_Key  => GDK_Up,
-         Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
 
       Register_Action
         (Kernel, "next subprogram", new Next_Subprogram_Command,
          -"Move to the next subprogram",
          Category   => -"Editor",
-         Accel_Key  => GDK_Down,
-         Accel_Mods => Primary_Mod_Mask,
          Filter     => Src_Action_Context);
 
       Register_Action
         (Kernel, "previous tag", new Previous_Tag_Command,
          -"Move to the previous message from the Locations window",
-         Category   => -"Locations",
-         Accel_Key  => GDK_less,
-         Accel_Mods => Primary_Mod_Mask);
+         Category   => -"Locations");
 
       Register_Action
         (Kernel, "next tag", new Next_Tag_Command,
          -"Move to the next message from the Locations window",
-         Category   => -"Locations",
-         Accel_Key  => GDK_greater,
-         Accel_Mods => Primary_Mod_Mask);
+         Category   => -"Locations");
 
       Filter := new Has_Back_Navigation;
       Kernel.Register_Filter (Filter, "has back navigation");
@@ -1196,9 +1182,7 @@ package body Navigation_Module is
          Description => -"Goto previous location",
          Filter      => Filter,
          Category    => -"Editor",
-         Stock_Id    => "gps-navigate-back",
-         Accel_Key => GDK_Left,
-         Accel_Mods => Mod1_Mask);
+         Stock_Id    => "gps-navigate-back");
 
       Filter := new Has_Forward_Navigation;
       Kernel.Register_Filter (Filter, "has forward navigation");
@@ -1207,9 +1191,7 @@ package body Navigation_Module is
          Description => -"Goto next location",
          Filter      => Filter,
          Category    => -"Editor",
-         Stock_Id    => "gps-navigate-forward",
-         Accel_Key => GDK_Right,
-         Accel_Mods => Mod1_Mask);
+         Stock_Id    => "gps-navigate-forward");
 
       Register_Hook_No_Args (Kernel, Marker_Added_In_History_Hook);
       Add_Hook (Kernel, Marker_Added_In_History_Hook,

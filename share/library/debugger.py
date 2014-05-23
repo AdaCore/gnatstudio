@@ -128,7 +128,7 @@ Contextual("debug print as decimal").create(
 ###################################
 
 @interactive(name="continue till line", category="Debug",
-             filter="Debugger active", key="primary-b")
+             filter="Debugger active")
 def continue_till_line():
     """
 Continue executing the debuggee until it reaches the current editor line.

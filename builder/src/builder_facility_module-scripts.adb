@@ -156,19 +156,6 @@ package body Builder_Facility_Module.Scripts is
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
-      Bind_Default_Key (Kernel      => Kernel,
-                        Action      => (-"Build Main Number 1"),
-                        Default_Key => "F4");
-      Bind_Default_Key (Kernel      => Kernel,
-                        Action      => (-"Run Main Number 1"),
-                        Default_Key => "shift-F2");
-      Bind_Default_Key (Kernel      => Kernel,
-                        Action      => -"Custom Build...",
-                        Default_Key => "F9");
-      Bind_Default_Key (Kernel      => Kernel,
-                        Action      => -"Compile File",
-                        Default_Key => "shift-F4");
-
       --  Global commands
 
       Register_Command (Kernel        => Kernel,
