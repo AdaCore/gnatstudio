@@ -1861,7 +1861,7 @@ package body Src_Editor_Module.Shell is
            (Data, Get_Buffer (Data, 1).Get_Chars
             (From => Get_Location (Data, 2), To => Get_Location (Data, 3)));
 
-      elsif Command = "__insert_at_location" then
+      elsif Command = "_insert_at_location" then
          Name_Parameters
            (Data, (1 => Location_Cst'Access, 2 => Text_Cst'Access));
          Get_Buffer (Data, 1).Insert
@@ -2824,7 +2824,7 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "get_chars", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "__insert_at_location", 2, 2,
+        (Kernel, "_insert_at_location", 2, 2,
          Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "delete", 0, 2, Buffer_Cmds'Access, EditorBuffer);

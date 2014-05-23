@@ -582,6 +582,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.__init__
 
+   .. automethod:: GPS.EditorBuffer._insert_at_location
+
    .. automethod:: GPS.EditorBuffer.add_cursor
 
    .. automethod:: GPS.EditorBuffer.add_special_line

@@ -7,7 +7,7 @@ this one).
 """
 
 import GPS
-from gps_utils import X, Icon
+from GPS import Icon
 
 
 def add_icons():
