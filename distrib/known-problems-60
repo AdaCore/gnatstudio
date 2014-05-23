@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N521-002 GPS: crash or freeze after compiling
+
+  Problem:    After a compilation, GPS might freeze or crash as it is
+              attempting to provide auto-fixes for error messages, if
+              the error messages are in a location that does not exist.
+
+  Status:     This was fixed in 6.1 on 2014-05-23
+
+  Workaround: Build outside of GPS to fix these errors.
+
 KP-60-N516-014 GPS: error when toggling sort order
 
   Problem:    Changing the sort order in the outline view (alphabetical to
