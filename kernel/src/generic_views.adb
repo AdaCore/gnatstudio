@@ -439,10 +439,11 @@ package body Generic_Views is
    --------------------
 
    procedure Append_Toolbar
-     (Self      : not null access View_Record;
-      Toolbar   : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
-      Item      : not null access Gtk.Tool_Item.Gtk_Tool_Item_Record'Class;
-      Is_Filter : Boolean := False)
+     (Self        : not null access View_Record;
+      Toolbar     : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Item        : not null access Gtk.Tool_Item.Gtk_Tool_Item_Record'Class;
+      Is_Filter   : Boolean := False;
+      Homogeneous : Boolean := True)
    is
       pragma Unreferenced (Self);
       Sep : Gtk_Separator_Tool_Item;
@@ -467,6 +468,8 @@ package body Generic_Views is
             Toolbar.Insert (Item, Pos => -1);
          end if;
       end if;
+
+      Item.Set_Homogeneous (Homogeneous);
    end Append_Toolbar;
 
    ------------------

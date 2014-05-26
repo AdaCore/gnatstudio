@@ -80,12 +80,14 @@ package Generic_Views is
    --  This menu should contain entries that configure the current view.
 
    procedure Append_Toolbar
-     (Self      : not null access View_Record;
-      Toolbar   : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
-      Item      : not null access Gtk.Tool_Item.Gtk_Tool_Item_Record'Class;
-      Is_Filter : Boolean := False);
+     (Self        : not null access View_Record;
+      Toolbar     : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      Item        : not null access Gtk.Tool_Item.Gtk_Tool_Item_Record'Class;
+      Is_Filter   : Boolean := False;
+      Homogeneous : Boolean := True);
    --  Appends an item to the local toolbar.
    --  If Is_Filter is True, the item will be right-aligned.
+   --  All items with Homogeneous set to True will have the same width.
    --  It is better to use this procedure than Gtk.Toolbar.Insert, since the
    --  latter makes it harder to know how to append items to the left or to
    --  the right.

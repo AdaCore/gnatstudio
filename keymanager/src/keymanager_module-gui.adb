@@ -48,7 +48,6 @@ with Gtk.Text_Iter;           use Gtk.Text_Iter;
 with Gtk.Text_Tag;            use Gtk.Text_Tag;
 with Gtk.Text_View;           use Gtk.Text_View;
 with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
-with Gtk.Toggle_Tool_Button;  use Gtk.Toggle_Tool_Button;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Tool_Button;         use Gtk.Tool_Button;
 with Gtk.Tree_Model;          use Gtk.Tree_Model;
@@ -87,6 +86,8 @@ package body KeyManager_Module.GUI is
    Icon_Column       : constant := 3;
 
    Hist_Show_All_Menus : constant History_Key := "shortcuts-show-all-menus";
+   Hist_Shortcuts_Only : constant History_Key := "shortcuts-only";
+   Hist_Categories     : constant History_Key := "shorcuts-categories";
 
    type Keys_Editor_Record is new Generic_Views.View_Record with record
       View               : Gtk_Tree_View;
@@ -94,8 +95,6 @@ package body KeyManager_Module.GUI is
       Filter             : Gtk_Tree_Model_Filter;
       Sort               : Gtk_Tree_Model_Sort;
       Help               : Gtk_Text_Buffer;
-      With_Shortcut_Only : Gtk_Toggle_Tool_Button;
-      Flat_List          : Gtk_Toggle_Tool_Button;
       Remove_Button      : Gtk_Button;
       Grab_Button        : Gtk_Toggle_Button;
       Disable_Filtering  : Boolean := False;
@@ -163,12 +162,6 @@ package body KeyManager_Module.GUI is
    --  Refresh the list of key bindings in editor. Better use this one than
    --  Fill_Editor when possible, since this will preserve expanded/closed
    --  nodes.
-
-   procedure On_Toggle_Flat_List (Editor : access GObject_Record'Class);
-   --  Called when the user toggles the "View Flat List" filter button
-
-   procedure On_Toggle_Shortcuts_Only (Editor : access GObject_Record'Class);
-   --  Called when the user toggles "View only actions with shortcuts"
 
    package Keys_Editor_Visible_Funcs is new
      Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (Keys_Editor);
@@ -294,14 +287,17 @@ package body KeyManager_Module.GUI is
    -----------------
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class) is
-      Flat_List : constant Boolean := Get_Active (Editor.Flat_List);
+      Show_All_Menus : constant Boolean :=
+        Get_History (Get_History (Editor.Kernel).all, Hist_Show_All_Menus);
+      Show_Categories : constant Boolean :=
+        Get_History (Get_History (Editor.Kernel).all, Hist_Categories);
+      Shortcuts_Only : constant Boolean :=
+        Get_History (Get_History (Editor.Kernel).all, Hist_Shortcuts_Only);
 
       Parent       : Gtk_Tree_Iter;
       Action       : Action_Record_Access;
       Action_Iter  : Action_Iterator := Start (Editor.Kernel);
       User_Changed : aliased Boolean;
-      Show_All_Menus : constant Boolean :=
-        Get_History (Get_History (Editor.Kernel).all, Hist_Show_All_Menus);
    begin
       --  Disable tree filtering while refreshing the contents of the tree.
       --  This works around a bug in gtk+.
@@ -314,15 +310,7 @@ package body KeyManager_Module.GUI is
          Action := Get (Action_Iter);
          exit when Action = null;
 
-         if not Flat_List then
-            Parent := Find_Parent (Editor.Model, Action);
-         else
-            Parent := Null_Iter;
-         end if;
-
-         if Action.Category /= null
-           and then (Flat_List or else Parent /= Null_Iter)
-         then
+         if Action.Category /= null then
             declare
                Name : constant String := Get (Action_Iter).Name.all;
                Key  : constant String := Lookup_Key_From_Action
@@ -331,11 +319,24 @@ package body KeyManager_Module.GUI is
                   Use_Markup => False,
                   Is_User_Changed => User_Changed'Unchecked_Access,
                   Default => -Disabled_String);
+               Show : Boolean;
             begin
-               if Name (Name'First) /= '/'
-                 or else Show_All_Menus
-                 or else Key /= ""
-               then
+               if Name (Name'First) /= '/' then
+                  Show := not Shortcuts_Only or else Key /= "";
+               else
+                  Show := Key /= ""
+                    or else (not Shortcuts_Only and then Show_All_Menus);
+               end if;
+
+               if Show then
+                  if Show_Categories then
+                     --  Create category node only when needed, which ensures
+                     --  we do not show empty categories
+                     Parent := Find_Parent (Editor.Model, Action);
+                  else
+                     Parent := Null_Iter;
+                  end if;
+
                   Parent := Set
                     (Model   => Editor.Model,
                      Parent  => Parent,
@@ -344,7 +345,7 @@ package body KeyManager_Module.GUI is
                                       Action.Stock_Id.all
                                  else ""),
                      Key     => Key
-                        & (if User_Changed then " (modified)" else ""),
+                     & (if User_Changed then " (modified)" else ""),
                      Weight  => (if User_Changed then Pango_Weight_Bold
                                  else Pango_Weight_Normal));
                end if;
@@ -486,24 +487,6 @@ package body KeyManager_Module.GUI is
       when E : others => Trace (Me, E);
    end Add_Selection_Changed;
 
-   -------------------------
-   -- On_Toggle_Flat_List --
-   -------------------------
-
-   procedure On_Toggle_Flat_List (Editor : access GObject_Record'Class) is
-   begin
-      Fill_Editor (Keys_Editor (Editor));
-   end On_Toggle_Flat_List;
-
-   ------------------------------
-   -- On_Toggle_Shortcuts_Only --
-   ------------------------------
-
-   procedure On_Toggle_Shortcuts_Only (Editor : access GObject_Record'Class) is
-   begin
-      Refilter (Keys_Editor (Editor).Filter);
-   end On_Toggle_Shortcuts_Only;
-
    -----------------------
    -- Action_Is_Visible --
    -----------------------
@@ -513,7 +496,7 @@ package body KeyManager_Module.GUI is
       Iter  : Gtk_Tree_Iter;
       Data  : Keys_Editor) return Boolean
    is
-      Row_Visible : Boolean;
+      Row_Visible : Boolean := True;
       Child       : Gtk.Tree_Model.Gtk_Tree_Iter;
       Action      : Action_Record_Access;
    begin
@@ -524,13 +507,7 @@ package body KeyManager_Module.GUI is
       --  Compute the row itself should be visible (not withstanding its
       --  children.
 
-      Row_Visible :=
-        not Data.With_Shortcut_Only.Get_Active
-        or else Get_String (Model, Iter, 1) /= "";
-
-      if Row_Visible
-        and then Data.Filter_Pattern /= null
-      then
+      if Data.Filter_Pattern /= null then
          Row_Visible :=
            Data.Filter_Pattern.Start (Get_String (Model, Iter, 0)) /= No_Match
            or else
@@ -901,9 +878,22 @@ package body KeyManager_Module.GUI is
    is
       Check : Gtk_Check_Menu_Item;
    begin
+      Gtk_New (Check, Label => -"Shortcuts only");
+      Check.Set_Tooltip_Text
+        (-("If enabled, only actions with a shortcut are displayed"));
+      Associate (Get_History (View.Kernel).all, Hist_Shortcuts_Only, Check);
+      Menu.Append (Check);
+      Check.On_Toggled (Refill_Editor'Access, View);
+
+      Gtk_New (Check, Label => -"Show categories");
+      Check.Set_Tooltip_Text (-"Whether to group actions by categories");
+      Associate (Get_History (View.Kernel).all, Hist_Categories, Check);
+      Menu.Append (Check);
+      Check.On_Toggled (Refill_Editor'Access, View);
+
       Gtk_New (Check, Label => -"Show all menus");
       Check.Set_Tooltip_Text
-        (-("Whether to show all menus, or only those with a shortcut."
+        (-("Whether to show all menus, or only those with a shortcut"
          & ASCII.LF
          & "Historically, shortcuts used to be associated directly to menus,"
          & " but it is in fact better to associate them with the corresponding"
@@ -914,6 +904,7 @@ package body KeyManager_Module.GUI is
       Associate (Get_History (View.Kernel).all, Hist_Show_All_Menus, Check);
       Menu.Append (Check);
       Check.On_Toggled (Refill_Editor'Access, View);
+
    end Create_Menu;
 
    ------------------------
@@ -937,9 +928,6 @@ package body KeyManager_Module.GUI is
    is
       B : Gtk_Tool_Button;
    begin
-      View.Append_Toolbar (Toolbar, View.With_Shortcut_Only);
-      View.Append_Toolbar (Toolbar, View.Flat_List);
-
       View.Build_Filter
         (Toolbar     => Toolbar,
          Hist_Prefix => "keyshortcuts",
@@ -949,10 +937,11 @@ package body KeyManager_Module.GUI is
            Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy
          or Has_Approximate);
 
-      Gtk_New_From_Stock (B, Stock_Id => GPS_Grab);
+      Gtk_New (B, Label => -"Grab");
       B.Set_Tooltip_Text (-"Grab a key sequence to search for");
       B.On_Clicked (On_Grab_For_Filter'Access, View);
-      View.Append_Toolbar (Toolbar, B, Is_Filter => True);
+      View.Append_Toolbar
+        (Toolbar, B, Is_Filter => True, Homogeneous => False);
    end Create_Toolbar;
 
    --------------------
@@ -1009,27 +998,6 @@ package body KeyManager_Module.GUI is
         (Editor.Filter, Action_Is_Visible'Access, Editor);
 
       Gtk_New_With_Model (Editor.Sort, +Editor.Filter);
-
-      --  Create toolbar buttons, but do not insert them yet
-
-      Gtk_New_From_Stock (Editor.With_Shortcut_Only, GPS_Shortcuts_Only);
-      Editor.With_Shortcut_Only.Set_Name ("shortcuts-only");  --  for testsuite
-      Editor.With_Shortcut_Only.Set_Tooltip_Text
-        (-("Shortcuts only" & ASCII.LF
-         & "Show only actions that are associated with a key shortcut"));
-      Editor.With_Shortcut_Only.Set_Active (False);
-      Editor.With_Shortcut_Only.On_Toggled
-        (On_Toggle_Shortcuts_Only'Access, Editor);
-
-      Gtk_New_From_Stock (Editor.Flat_List, GPS_Collapse_All);
-      Editor.Flat_List.Set_Name ("shortcuts-flat-list");  --  for testsuite
-      Editor.Flat_List.Set_Tooltip_Text
-        (-("Flat list" & ASCII.LF
-         & "If selected, actions are not grouped into categories, but"
-         & " displayed as a single long list. This might help to find some"
-         & " specific actions"));
-      Editor.Flat_List.Set_Active (False);
-      Editor.Flat_List.On_Toggled (On_Toggle_Flat_List'Access, Editor);
 
       --  A hbox: on the left, the list of actions and help, on the left some
       --  buttons to modify key shortcuts
@@ -1136,6 +1104,10 @@ package body KeyManager_Module.GUI is
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Show_All_Menus, False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Shortcuts_Only, False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Categories, True);
 
       Register_Action
         (Kernel, "key shortcuts expand all",
