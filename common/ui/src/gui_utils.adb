@@ -1090,39 +1090,59 @@ package body GUI_Utils is
 
    procedure Key_Grab
      (In_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Key  : out Gdk.Types.Gdk_Key_Type;
-      Mods : out Gdk.Types.Gdk_Modifier_Type)
+      Key       : out Gdk.Types.Gdk_Key_Type;
+      Mods      : out Gdk.Types.Gdk_Modifier_Type)
    is
-      Tmp    : Gdk_Grab_Status;
-      Device : constant Gdk_Device := Gtk.Main.Get_Current_Event_Device;
+      Device : Gdk_Device := null;
       Id     : Handler_Id;
       Output : aliased Event_Info := (0, 0);
       Cursor : Gdk.Gdk_Cursor;
-      pragma Unreferenced (Tmp);
-
    begin
-      Gdk_New (Cursor, Watch);
+      Grab_Focus (In_Widget);
+
+      --  We could enable a grab of the device with the following code.
+      --  This seems to be very system-specific though, since setting for
+      --  instance a Key_Press_Mask on a mouse device works fine on OSX, but
+      --  is rejected with X11 servers. For now, we are leaving this code
+      --  disabled and using the simpler Grab_Add.
+      --      Device := Gtk.Main.Get_Current_Event_Device;
+
       if Device /= null then   --  might be null in testsuite
-         Tmp := Device.Grab
+         if Device.Get_Source /= Source_Keyboard then
+            Device := Device.Get_Associated_Device;
+         end if;
+
+         if Device = null
+           or else Device.Get_Source /= Source_Keyboard
+           or else Device.Grab
            (Window         => In_Widget.Get_Window,
             Grab_Ownership => Ownership_Application,
             Owner_Events   => True,
-            Event_Mask     => Button_Press_Mask or Button_Release_Mask
-            or Key_Press_Mask,
-            Cursor         => Cursor,
-            Time           => Gdk.Types.Current_Time);
+            Event_Mask     => Key_Press_Mask,
+            Cursor         => null,
+            Time           => Gdk.Types.Current_Time) /= Grab_Success
+         then
+            Key := 0;
+            Mods := 0;
+            return;
+         end if;
       else
          In_Widget.Grab_Add;
       end if;
-
-      Grab_Focus (In_Widget);
 
       Id := Event_Callback.Connect
         (In_Widget, Signal_Key_Press_Event,
          Event_Callback.To_Marshaller (Key_Press_In_Grab'Access),
          User_Data => Output'Unchecked_Access);
 
+      Gdk_New (Cursor, Watch);
+      Set_Cursor (In_Widget.Get_Toplevel.Get_Window, Cursor);
+
       Gtk.Main.Main;
+
+      Set_Cursor (In_Widget.Get_Toplevel.Get_Window, null);
+      Unref (Cursor);
+
       Key  := Output.Key;
       Mods := Output.State;
 
@@ -1133,7 +1153,6 @@ package body GUI_Utils is
       end if;
 
       Gtk.Handlers.Disconnect (In_Widget, Id);
-      Unref (Cursor);
    end Key_Grab;
 
    -------------------

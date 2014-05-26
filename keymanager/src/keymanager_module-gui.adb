@@ -680,7 +680,7 @@ package body KeyManager_Module.GUI is
    begin
       Block_Key_Shortcuts (View.Kernel);
 
-      Key_Grab (View.View, Key, Modif);
+      Key_Grab (View.Get_Toplevel, Key, Modif);
 
       if Key /= GDK_Escape or else Modif /= 0 then
          if For_Display then
@@ -697,7 +697,7 @@ package body KeyManager_Module.GUI is
 
       loop
          Id := Glib.Main.Timeout_Add (500, Cancel_Grab'Access);
-         Key_Grab (View.View, Key, Modif);
+         Key_Grab (View.Get_Toplevel, Key, Modif);
          Glib.Main.Remove (Id);
 
          exit when Key = 0 and then Modif = 0;
