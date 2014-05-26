@@ -788,6 +788,7 @@ package body Generic_Views is
 
          if Local_Config then
             Gtk_New_From_Stock (Button, GPS_Stock_Config_Menu);
+            Button.Set_Name ("local-config");
             Button.Set_Homogeneous (False);
             Button.Set_Tooltip_Text (-"Configure this panel");
             View.Append_Toolbar (Toolbar, Button, Is_Filter => True);
