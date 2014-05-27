@@ -83,6 +83,16 @@ KP-60-N424-023 GPS: freeze or crash when folding blocks
   Workaround: Wait for the highlighting operation to have completed before
               folding/unfolding blocks.
 
+KP-60-N423-020 GPS: typed text inserted in wrong window
+
+  Problem:    In search dialog, after hit TAB key, combobox button is focused.
+              This causes typed text to be inserted in text editor instead of
+              replace entry, as expected.
+
+  Status:     This was fixed in 6.1 on 2014-05-27
+
+  Workaround: Hit TAB key twice to focus replace entry.
+
 KP-60-N423-019 GPS: dropping files does not work on a read-only editor
 
   Problem:    When drag-and-dropping a file from the window manager on top
