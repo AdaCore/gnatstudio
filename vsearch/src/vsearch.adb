@@ -1688,6 +1688,23 @@ package body Vsearch is
      (Vsearch : access Vsearch_Record'Class;
       Handle  : GPS.Kernel.Kernel_Handle)
    is
+
+      procedure Disable_Button_Focus (Combo_Box : Gtk_Combo_Box);
+      --  Disable focus on internal button in given Combo_Box
+
+      --------------------------
+      -- Disable_Button_Focus --
+      --------------------------
+
+      procedure Disable_Button_Focus (Combo_Box : Gtk_Combo_Box) is
+         Focus_Chain : Gtk.Widget.Widget_List.Glist;
+      begin
+         --  Create single element list that contains only text entry
+         Gtk.Widget.Widget_List.Append (Focus_Chain, Combo_Box.Get_Child);
+         --  Set it as focus chain
+         Combo_Box.Set_Focus_Chain (Focus_Chain);
+      end Disable_Button_Focus;
+
       Layout      : Gtk_Cell_Layout;
       Renderer    : Gtk_Cell_Renderer_Text;
       Value       : String_List_Access;
@@ -1735,6 +1752,8 @@ package body Vsearch is
       Set_Tooltip_Text (Vsearch.Replace_Combo,
                -"The text that will replace each match");
 
+      Disable_Button_Focus (Vsearch.Replace_Combo);
+
       Vsearch.Replace_Combo.Get_Child.On_Button_Press_Event
         (On_Button_Press'Access, After => False);
 
@@ -1761,6 +1780,8 @@ package body Vsearch is
 
       Vsearch.Pattern_Combo.Get_Child.On_Button_Release_Event
         (On_Button_Release'Access, After => False);
+
+      Disable_Button_Focus (Vsearch.Pattern_Combo);
 
       Gtk_New (Renderer);
       Gtk.Cell_Layout.Clear (Layout);
