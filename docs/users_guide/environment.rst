@@ -204,6 +204,10 @@ Files
   :ref:`Customizing_through_XML_and_Python_files` and
   :ref:`Adding_support_for_new_languages`.
 
+* :file:`$HOME/.gps/key_themes/`
+
+  Directory containing user defined key themes (XML files). These themes are
+  loaded through the Keyshortcuts editor.
 
 * :file:`$HOME/.gps/keys6.xml`
 
@@ -336,6 +340,11 @@ Files
   Directory containing files with system-wide plug-ins (XML and Python files)
   that are not loaded automatically at startup but can be selected in the
   Plug-ins editor.
+
+* :file:`prefix/share/gps/key_themes`
+
+  Directory containing the predefined key themes (XML files). These can be
+  loaded through the Key shortcuts editor.
 
 * :file:`prefix/share/gps/gps-splash.png`
 

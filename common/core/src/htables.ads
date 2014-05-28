@@ -217,6 +217,10 @@ pragma Preelaborate (HTables);
       function Get_Element (Iter : Cursor) return Element;
       --  Return the element pointed to by Iter
 
+      procedure Set_Element (Iter : Cursor; E : Element);
+      --  Replacing the elment at the given position. This does not impact
+      --  the key, so the iterator remains valid.
+
       procedure Remove_And_Get_Next
         (T : in out Instance; Iter : in out Cursor);
       --  Remove current element and move to next one

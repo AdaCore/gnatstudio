@@ -38,6 +38,9 @@ package Config is
    Target  : constant String := "@TARGET@";
    --  Target for which GPS is built
 
+   Darwin_Target : constant Boolean := @TARGET_IS_DARWIN@;
+   --  running on OSX ?
+
    Prefix : constant String := "@prefix@";
    --  Default prefix used e.g for finding support files like po files.
    --  Note that this prefix can be overriden by using the GPS_ROOT or

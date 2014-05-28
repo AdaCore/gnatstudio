@@ -3035,18 +3035,35 @@ Binding actions to keys
 .. index:: <key>
 
 All actions can be bound to specific key shortcuts through the
-:file:`<key>` tag.  It requires one :file:`action` attribute to specify
-what to do when the key is pressed. The name of the action can start with a
-'/' to indicate that a menu should be executed instead of a user-defined
-action.  If the action is specified as an empty string, the key is no
-longer bound to any action.
+:file:`<key>` tag. This tag has two different forms:
 
-This tag does not contain any child tags. Instead, its text contents
-specifies the keyboard shortcut. The name of the key can be prefixed by
-:command:`control-`, :command:`alt-`, :command:`shift-` or any combination
-of these to specify the key modifiers to apply.
+* `<key load='file.xml'/>` tells GPS to load the given key theme (either
+  from the GPS predefined directory or from the user's own directory.
 
-You can also define multiple key bindings similar to Emacs' by separating
+* `<key action='name'>shortcut</key>`
+  It requires one :file:`action` attribute to specify what to do when the key
+  is pressed. The name of the action can start with a '/' to indicate that a
+  menu should be executed instead of a user-defined action (although it is
+  preferred to bind to an actual action).  If the action is specified as an
+  empty string, the key is no longer bound to any action.
+
+  This tag does not contain any child tags. Instead, its text contents
+  specifies the keyboard shortcut. The name of the key can be prefixed by
+  any combination of the following:
+
+  - :command:`control-` is the control key on the keyboard;
+  - :command:`alt-` is the alt key on the keyboard (left or right) or the
+    option key on OSX;
+  - :command:`shift-` is the shift key. It should not be necessary if you
+    want to point to symbols for which shift would be necessary, so for
+    instance on an US keyboard, :command:`shift-%` and :command:`%` are
+    the same);
+  - :command:`cmd-` is the command key on OSX, or the alt key on other
+    keyboards;
+  - :command:`primary-` is the command key on OSX, or the control key on
+    other keyboards.
+
+You can also define multi-key bindings similar to Emacs' by separating
 them by a space. For example, :command:`control-x control-k` means the user
 should press :kbd:`Ctrl-x`, followed by a :kbd:`Ctrl-k` to activate
 the corresponding action. This only works if the first key is not already

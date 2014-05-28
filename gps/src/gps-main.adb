@@ -2132,7 +2132,7 @@ procedure GPS.Main is
       --  Load the default key theme before the python plug-ins, so that the
       --  latter can override
 
-      KeyManager_Module.Load_Key_Theme (GPS_Main.Kernel, "default");
+      KeyManager_Module.Load_Key_Theme (GPS_Main.Kernel);
 
       --  Load the customization files before loading the actual projects,
       --  so that the usual hooks are taken into account right from the
@@ -2457,13 +2457,12 @@ procedure GPS.Main is
       end if;
    end Error_Message;
 
-   Darwin_Host : Boolean := False;
    Dead        : Boolean;
    Status      : Glib.Gint;
    pragma Unreferenced (Dead);
 
 begin
-   --  Create and setup a Gtk Applciation
+   --  Create and setup a Gtk Application
 
    Application := Gtk_Application_New
      ("com.adacore.GPS",
@@ -2475,10 +2474,7 @@ begin
         Gtkada_Application_OSX_FullScreen);
    Application.Set_Default;
 
-   Darwin_Host :=
-     Ada.Strings.Fixed.Index (Config.Target, "darwin") > 0;
-
-   if Config.Host = Config.Unix and then not Darwin_Host then
+   if Config.Host = Config.Unix and then not Config.Darwin_Target then
       --  On systems with DBus and an existing DBus configuration
       --  for the system's gtk, we don't want to open a session as
       --  we're using a different gtk library, that may have
@@ -2501,8 +2497,6 @@ begin
    if Status /= 0 then
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Exit_Status (Status));
    end if;
-
-   Trace (Me, "Done");
 
 exception
    when E : others =>

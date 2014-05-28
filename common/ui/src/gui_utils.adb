@@ -1045,11 +1045,15 @@ package body GUI_Utils is
             elsif From (Start .. D) = "alt-" then
                Mods := Mods or Mod1_Mask;
             elsif From (Start .. D) = "cmd-" then
-               --  backward compatibility: cmd-<key> are now saved as
-               --  primary-<key> on OSX
-               Mods := Mods or Primary_Mod_Mask;
+               if Config.Darwin_Target then
+                  --  backward compatibility: cmd-<key> are now saved as
+                  --  primary-<key> on OSX
+                  Mods := Mods or Primary_Mod_Mask; --  command (OSX)
+               else
+                  Mods := Mods or Mod1_Mask;  --  alt on other systems
+               end if;
             elsif From (Start .. D) = "primary-" then
-               Mods := Mods or Primary_Mod_Mask;
+               Mods := Mods or Primary_Mod_Mask;  --  command (OSX) or control
             end if;
             Start := D + 1;
          end if;

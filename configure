@@ -639,6 +639,7 @@ DEFAULT_FIXED_FONT
 DEFAULT_FONT
 DEFAULT_PS
 EXEC_COMMAND
+TARGET_IS_DARWIN
 TARGET_LFLAGS
 TARGET_CFLAGS
 CAN_OUTPUT
@@ -2331,6 +2332,11 @@ CHARSET="ISO-8859-1"
 
 TARGET=$host
 EXEC_PREFIX="$prefix"
+
+TARGET_IS_DARWIN="False"
+case $TARGET in
+   *darwin*) TARGET_IS_DARWIN="True" ;;
+esac
 
 ######## Check XML/Ada
 
@@ -4562,6 +4568,7 @@ case "${host}" in
 esac
 
 # Set the version number of GPS
+
 
 
 

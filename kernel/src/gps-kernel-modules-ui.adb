@@ -1353,7 +1353,7 @@ package body GPS.Kernel.Modules.UI is
    begin
       if Act /= null and then Act.Menus /= null then
          Kernel.Get_Shortcut_Simple
-           (Action => Act.Name.all,
+           (Action => Action,
             Key    => Key,
             Mods   => Mods);
          for M in Act.Menus'Range loop

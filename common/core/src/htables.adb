@@ -404,6 +404,18 @@ package body HTables is
       end Get_Key;
 
       -----------------
+      -- Set_Element --
+      -----------------
+
+      procedure Set_Element (Iter : Cursor; E : Element) is
+         Ptr : constant Elmt_Ptr := Get_Element (Iter.Iter);
+      begin
+         if Ptr /= null then
+            Ptr.E := E;
+         end if;
+      end Set_Element;
+
+      -----------------
       -- Get_Element --
       -----------------
 

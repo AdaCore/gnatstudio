@@ -37,12 +37,17 @@ with Gtk.Button_Box;          use Gtk.Button_Box;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;  use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
+with Gtk.Combo_Box_Text;      use Gtk.Combo_Box_Text;
+with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Frame;               use Gtk.Frame;
+with Gtk.GEntry;              use Gtk.GEntry;
+with Gtk.Label;               use Gtk.Label;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Paned;               use Gtk.Paned;
 with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
+with Gtk.Separator;           use Gtk.Separator;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
 with Gtk.Text_Tag;            use Gtk.Text_Tag;
@@ -68,7 +73,6 @@ with Generic_Views;           use Generic_Views;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Search;              use GPS.Search;
 with GPS.Stock_Icons;         use GPS.Stock_Icons;
@@ -98,6 +102,7 @@ package body KeyManager_Module.GUI is
       Remove_Button      : Gtk_Button;
       Grab_Button        : Gtk_Toggle_Button;
       Disable_Filtering  : Boolean := False;
+      Themes             : Gtk_Combo_Box_Text;
 
       Filter_Pattern     : Search_Pattern_Access;
       --  ??? Should be freed when the view is destroyed
@@ -142,7 +147,9 @@ package body KeyManager_Module.GUI is
 
    procedure On_Grab_Key (Editor : access Gtk_Widget_Record'Class);
    procedure On_Remove_Key (Editor : access Gtk_Widget_Record'Class);
-   --  Handle the "Grab", "Remove" and "Add" buttons
+   procedure On_Reset (Editor : access Gtk_Widget_Record'Class);
+   procedure On_Create (Editor : access Gtk_Widget_Record'Class);
+   --  Handle the "Grab", "Remove", "Reset" and "Create" buttons
 
    procedure On_Grab_For_Filter (View : access GObject_Record'Class);
    --  Called when the user wants to grab a key for the filter
@@ -157,6 +164,9 @@ package body KeyManager_Module.GUI is
 
    function Cancel_Grab return Boolean;
    --  Exit the current nest main loop, if any
+
+   procedure On_Load_Key_Theme (Editor : access GObject_Record'Class);
+   --  Called when the user selects an alternative key theme to load
 
    procedure Refresh_Editor (Editor : access Keys_Editor_Record'Class);
    --  Refresh the list of key bindings in editor. Better use this one than
@@ -817,7 +827,6 @@ package body KeyManager_Module.GUI is
                      Remove_Existing_Shortcuts_For_Action => True,
                      Update_Menus     => True);
                   Save_Custom_Keys (Ed.Kernel);
-                  Update_Shortcut_Display (Ed.Kernel, New_Action);
                   Refresh_Editor (Ed);
                end if;
             end;
@@ -829,6 +838,69 @@ package body KeyManager_Module.GUI is
    exception
       when E : others => Trace (Me, E);
    end On_Grab_Key;
+
+   ---------------
+   -- On_Create --
+   ---------------
+
+   procedure On_Create (Editor : access Gtk_Widget_Record'Class) is
+      Self   : constant Keys_Editor := Keys_Editor (Editor);
+      Dialog : Gtk_Dialog;
+      Label  : Gtk_Label;
+      Ent    : Gtk_Entry;
+      W      : Gtk_Widget;
+      pragma Unreferenced (W);
+   begin
+      Gtk_New (Dialog,
+               Title  => -"Select key theme name",
+               Parent => Get_Main_Window (Self.Kernel),
+               Flags  => Destroy_With_Parent or Modal);
+
+      Gtk_New (Label, -"Enter theme name:");
+      Label.Set_Alignment (0.0, 0.5);
+      Dialog.Get_Content_Area.Pack_Start (Label, Expand => False);
+
+      Gtk_New (Ent);
+      Dialog.Get_Content_Area.Pack_Start (Ent, Expand => False);
+
+      W := Dialog.Add_Button (-"OK", Gtk_Response_OK);
+      W := Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel);
+      Dialog.Set_Default_Response (Gtk_Response_Cancel);
+
+      Dialog.Show_All;
+
+      if Dialog.Run = Gtk_Response_OK then
+         declare
+            Name : constant String := Ent.Get_Text;
+         begin
+            Save_Keys
+              (Self.Kernel, Save_All => True,
+               Filename => Create_From_Dir
+                 (User_Key_Theme_Directory (Self.Kernel), +Name & ".xml"));
+
+            --  Discard all user-specific shortcuts
+            Remove_Shortcuts (Self.Kernel, User_Shortcuts);
+            Save_Custom_Keys (Self.Kernel);
+
+            Self.Themes.Insert_Text (0, Text => Name);
+            Self.Themes.Set_Active (0);
+         end;
+      end if;
+
+      Dialog.Destroy;
+   end On_Create;
+
+   --------------
+   -- On_Reset --
+   --------------
+
+   procedure On_Reset (Editor : access Gtk_Widget_Record'Class) is
+      Self : constant Keys_Editor := Keys_Editor (Editor);
+   begin
+      Remove_Shortcuts (Self.Kernel, User_Shortcuts);
+      Save_Custom_Keys (Self.Kernel);
+      Refresh_Editor (Self);
+   end On_Reset;
 
    -------------------
    -- On_Remove_Key --
@@ -858,8 +930,6 @@ package body KeyManager_Module.GUI is
             Remove_Existing_Shortcuts_For_Action => True,
             Remove_Existing_Actions_For_Shortcut => True,
             Update_Menus      => False);
-         Update_Shortcut_Display
-           (Ed.Kernel, Get_String (Ed.Model, Iter, Action_Column));
          Save_Custom_Keys (Ed.Kernel);
          Refresh_Editor (Ed);
       end if;
@@ -962,6 +1032,19 @@ package body KeyManager_Module.GUI is
       end if;
    end Filter_Changed;
 
+   -----------------------
+   -- On_Load_Key_Theme --
+   -----------------------
+
+   procedure On_Load_Key_Theme (Editor : access GObject_Record'Class) is
+      Self : constant Keys_Editor := Keys_Editor (Editor);
+   begin
+      Remove_Shortcuts (Self.Kernel, Mode => Standard_Shortcuts);
+      Load_Key_Theme (Self.Kernel, Self.Themes.Get_Active_Text);
+      Fill_Editor (Self);
+      Set_Key_Theme (Self.Kernel, Self.Themes.Get_Active_Text);
+   end On_Load_Key_Theme;
+
    ----------------
    -- Initialize --
    ----------------
@@ -972,6 +1055,7 @@ package body KeyManager_Module.GUI is
       Scrolled  : Gtk_Scrolled_Window;
       Hbox      : Gtk_Box;
       Bbox      : Gtk_Button_Box;
+      Button    : Gtk_Button;
       Col       : Gtk_Tree_View_Column;
       Render    : Gtk_Cell_Renderer_Text;
       Pixbuf    : Gtk_Cell_Renderer_Pixbuf;
@@ -979,6 +1063,10 @@ package body KeyManager_Module.GUI is
       Pane      : Gtk_Paned;
       Text      : Gtk_Text_View;
       Ignore    : Gint;
+      Sep       : Gtk_Separator;
+      Selected  : Gint := 0;
+      Key_Themes : String_List_Access := List_Key_Themes (Editor.Kernel);
+      Theme_Name : constant String := Get_Key_Theme (Editor.Kernel);
 
    begin
       Initialize_Vbox (Editor);
@@ -1026,10 +1114,48 @@ package body KeyManager_Module.GUI is
 
       Gtk_New (Bbox, Orientation_Vertical);
       Bbox.Set_Layout (Buttonbox_Start);
-      Bbox.Set_Spacing (20);
+      Bbox.Set_Spacing (5);
       Hbox.Pack_Start (Bbox, Expand => False, Fill => True);
 
+      Gtk_New (Editor.Themes);
+      Bbox.Add (Editor.Themes);
+      Editor.Themes.Set_Tooltip_Text
+        (-("Select an alternate list of shortcuts. User-overridden shortcuts"
+           & " are preserved, but all others are reset and reloaded from the"
+           & " new theme"));
+      for K in Key_Themes'Range loop
+         Editor.Themes.Append_Text (Key_Themes (K).all);
+         if Key_Themes (K).all = Theme_Name then
+            Selected := Gint (K - Key_Themes'First);
+         end if;
+      end loop;
+      Editor.Themes.Set_Active (Selected);
+
+      --  Set the callback after setting the active item.
+      Editor.Themes.On_Changed (On_Load_Key_Theme'Access, Editor);
+      Free (Key_Themes);
+
+      Gtk_New (Button, -"Reset");
+      Button.Set_Tooltip_Text
+        (-"Remove all custom key bindings, and revert to the theme's default");
+      Bbox.Add (Button);
+      Widget_Callback.Object_Connect
+        (Button, Gtk.Button.Signal_Clicked, On_Reset'Access, Editor);
+
+      Gtk_New (Button, -"Create");
+      Button.Set_Tooltip_Text
+        (-("Create a new key theme which includes the base theme plus the user"
+         & " any change you did. This resets all custom changes."));
+      Bbox.Add (Button);
+      Widget_Callback.Object_Connect
+        (Button, Gtk.Button.Signal_Clicked, On_Create'Access, Editor);
+
+      Gtk_New (Sep, Orientation_Horizontal);
+      Bbox.Add (Sep);
+      --  Bbox.Set_Child_Non_Homogeneous (Sep, True);
+
       Gtk_New (Editor.Remove_Button, -"Remove");
+      Editor.Remove_Button.Set_Tooltip_Text (-"Remove selected key binding");
       Editor.Remove_Button.Set_Sensitive (False);
       Bbox.Add (Editor.Remove_Button);
       Widget_Callback.Object_Connect
@@ -1037,6 +1163,7 @@ package body KeyManager_Module.GUI is
          Gtk.Button.Signal_Clicked, On_Remove_Key'Access, Editor);
 
       Gtk_New (Editor.Grab_Button, -"Modify");
+      Editor.Remove_Button.Set_Tooltip_Text (-"Modify selected key binding");
       Editor.Grab_Button.Set_Sensitive (False);
       Bbox.Add (Editor.Grab_Button);
       Widget_Callback.Object_Connect

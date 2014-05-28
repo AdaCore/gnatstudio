@@ -57,13 +57,15 @@ with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel;                       use GPS.Kernel;
+with Histories;                        use Histories;
 
 with GUI_Utils;               use GUI_Utils;
 with HTables;                 use HTables;
 with KeyManager_Module.GUI;
-
+with String_Utils;            use String_Utils;
 with XML_Utils;               use XML_Utils;
 with XML_Parsers;
 with GPS.Main_Window; use GPS.Main_Window;
@@ -71,6 +73,7 @@ with GPS.Main_Window; use GPS.Main_Window;
 package body KeyManager_Module is
 
    Me : constant Trace_Handle := Create ("Keymanager", GNATCOLL.Traces.Off);
+   Debug : constant Trace_Handle := Create ("KM");
    Event_Debug_Trace : constant Trace_Handle := Create
      ("Event_Debug", GNATCOLL.Traces.Off);
 
@@ -79,6 +82,8 @@ package body KeyManager_Module is
    Command_Cst : aliased constant String := "command";
    Key_Cst     : aliased constant String := "key";
    Count_Cst   : aliased constant String := "count";
+
+   Hist_Key_Theme : constant History_Key := "key-theme";
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Key_Description, Key_Description_List);
@@ -127,6 +132,10 @@ package body KeyManager_Module is
    --  Read an argument for the command. This includes all keys pressed while
    --  Validator returns True. Callback is called when the argument has been
    --  read.
+
+   procedure Dump_Shortcuts (Prefix : String);
+   pragma Unreferenced (Dump_Shortcuts);
+   --  Debug: dump the existing shortcuts to the traces
 
    type Event_Handler_Record;
    type Event_Handler_Access is access all Event_Handler_Record;
@@ -284,13 +293,38 @@ package body KeyManager_Module is
       Mods       : out Gdk.Types.Gdk_Modifier_Type);
    --  Implement the kernel interface for retrieving key shortcuts
 
+   ------------------------------
+   -- User_Key_Theme_Directory --
+   ------------------------------
+
+   function User_Key_Theme_Directory
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File
+   is
+   begin
+      return Create_From_Dir (Kernel.Get_Home_Dir, "key_themes/");
+   end User_Key_Theme_Directory;
+
    ----------------------
    -- Save_Custom_Keys --
    ----------------------
 
    procedure Save_Custom_Keys (Kernel : access Kernel_Handle_Record'Class) is
       Filename : constant Virtual_File :=
-                   Create_From_Dir (Get_Home_Dir (Kernel), "keys6.xml");
+        Create_From_Dir (Get_Home_Dir (Kernel), "keys6.xml");
+   begin
+      Save_Keys (Kernel, Save_All => False, Filename => Filename);
+   end Save_Custom_Keys;
+
+   ---------------
+   -- Save_Keys --
+   ---------------
+
+   procedure Save_Keys
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Save_All : Boolean;
+      Filename : GNATCOLL.VFS.Virtual_File)
+   is
       File     : Node_Ptr;
       Success  : Boolean;
 
@@ -321,7 +355,7 @@ package body KeyManager_Module is
             exit when Binding = No_Key;
 
             Save_Binding : while Binding /= null loop
-               if Binding.Changed
+               if (Save_All or else Binding.User_Defined)
                  and then Binding.Action /= null
                  and then N = Level
                then
@@ -380,14 +414,16 @@ package body KeyManager_Module is
          end loop;
       end;
 
-      Trace (Me, "Saving " & Filename.Display_Full_Name);
+      Make_Dir (Create (Filename.Dir_Name), Recursive => True);
+
+      Trace (Debug, "Saving " & Filename.Display_Full_Name);
       Print (File, Filename, Success);
       Free (File);
 
       if not Success then
          Report_Preference_File_Error (Kernel, Filename);
       end if;
-   end Save_Custom_Keys;
+   end Save_Keys;
 
    -------------
    -- Destroy --
@@ -569,13 +605,11 @@ package body KeyManager_Module is
    begin
       if Element.Action /= null then
          Free (Element.Action);
-         Element.Action := null;
       end if;
 
       if Element.Keymap /= null then
          Reset (Element.Keymap.Table);
          Unchecked_Free (Element.Keymap);
-         Element.Keymap := null;
       end if;
 
       Unchecked_Free (Element);
@@ -624,7 +658,7 @@ package body KeyManager_Module is
             Clone (From => Tmp.Keymap.Table, To => Tmp_To.Keymap.Table);
          end if;
 
-         Tmp_To.Changed := Tmp.Changed;
+         Tmp_To.User_Defined := Tmp.User_Defined;
          Tmp := Tmp.Next;
       end loop;
    end Clone;
@@ -717,6 +751,7 @@ package body KeyManager_Module is
                      Accel_Key  => 0,
                      Accel_Mods => 0,
                      Replace    => True);
+                  Update_Shortcut_Display (Kernel, Tmp.Action.all);
                end if;
                Tmp := Tmp.Next;
             end loop;
@@ -737,11 +772,20 @@ package body KeyManager_Module is
 
             Binding2 := new Key_Description'
               (Action  => new String'(Action),
-               Changed => Save_In_Keys_XML,
+               User_Defined => Save_In_Keys_XML,
                Keymap  => null,
                Next    => Tmp);
             Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
+            Update_Shortcut_Display (Kernel, Action);
          else
+            Binding2 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
+            while Binding2 /= null loop
+               if Binding2.Action /= null then
+                  Update_Shortcut_Display (Kernel, Binding2.Action.all);
+               end if;
+               Binding2 := Binding2.Next;
+            end loop;
+
             Remove (Table, Key_Binding'(Default_Key, Default_Mod));
          end if;
       end Bind_Internal;
@@ -843,7 +887,7 @@ package body KeyManager_Module is
             Replace    => True);
       end if;
 
-      --  On Windows binding contol-c to non default copy action can result in
+      --  On Windows binding control-c to non default copy action can result in
       --  unexpected behavior.
 
       if Config.Host = Windows
@@ -989,7 +1033,7 @@ package body KeyManager_Module is
          Keymap := new Keymap_Record;
          Binding := new Key_Description'
            (Action  => null,
-            Changed => False,
+            User_Defined => False,
             Keymap  => Keymap,
             Next    => null);
          Set (Table, (Key, Modif), Binding);
@@ -1007,7 +1051,7 @@ package body KeyManager_Module is
             Keymap := new Keymap_Record;
             Binding.Next := new Key_Description'
               (Action  => null,
-               Changed => False,
+               User_Defined => False,
                Keymap  => Keymap,
                Next    => null);
          else
@@ -1305,21 +1349,255 @@ package body KeyManager_Module is
          return False;
    end Process_Key_Event;
 
+   -------------------
+   -- Get_Key_Theme --
+   -------------------
+
+   function Get_Key_Theme
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return String
+   is
+   begin
+      return Most_Recent (Get_History (Kernel), Hist_Key_Theme, "default");
+   end Get_Key_Theme;
+
+   -------------------
+   -- Set_Key_Theme --
+   -------------------
+
+   procedure Set_Key_Theme
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name   : String)
+   is
+   begin
+      Add_To_History (Get_History (Kernel).all, Hist_Key_Theme, Name);
+   end Set_Key_Theme;
+
    --------------------
    -- Load_Key_Theme --
    --------------------
 
    procedure Load_Key_Theme
-     (Kernel       : not null access Kernel_Handle_Record'Class;
-      Theme        : String)
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Theme  : String := "")
    is
-      Filename : constant Virtual_File :=
-        Create_From_Dir
-          (Kernel.Get_Share_Dir,
-           +("key_themes/" & Theme & ".xml"));
+      T : constant String :=
+        (if Theme /= "" then Theme else Get_Key_Theme (Kernel));
+      User_Theme : constant Virtual_File :=
+        Create_From_Dir (User_Key_Theme_Directory (Kernel), +T & ".xml");
+      System_Theme : constant Virtual_File :=
+        Create_From_Dir (Kernel.Get_Share_Dir, +("key_themes/" & T & ".xml"));
    begin
-      Load_XML_Keys (Kernel, Filename, User_Defined => False);
+      if User_Theme.Is_Regular_File then
+         Load_XML_Keys (Kernel, User_Theme, User_Defined => False);
+      else
+         Load_XML_Keys (Kernel, System_Theme, User_Defined => False);
+      end if;
    end Load_Key_Theme;
+
+   ---------------------
+   -- List_Key_Themes --
+   ---------------------
+
+   function List_Key_Themes
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return String_List_Access
+   is
+      User_Theme : constant Virtual_File := User_Key_Theme_Directory (Kernel);
+      System_Theme : constant Virtual_File :=
+        Create_From_Dir (Kernel.Get_Share_Dir, +"key_themes");
+
+      Result : String_List_Access;
+
+      procedure Add_From_Dir (Dir : Virtual_File);
+      procedure Add_From_Dir (Dir : Virtual_File) is
+         Files : File_Array_Access;
+      begin
+         if Dir.Is_Directory then
+            Files := Read_Dir (Dir, Files_Only);
+            for F in Files'Range loop
+               if Files (F).File_Extension = ".xml" then
+                  Append (Result, Files (F).Display_Base_Name (".xml"));
+               end if;
+            end loop;
+            Unchecked_Free (Files);
+         end if;
+      end Add_From_Dir;
+
+   begin
+      Add_From_Dir (User_Theme);
+      Add_From_Dir (System_Theme);
+      return Result;
+   end List_Key_Themes;
+
+   ----------------------
+   -- Remove_Shortcuts --
+   ----------------------
+
+   procedure Remove_Shortcuts
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Mode   : Remove_Mode)
+   is
+      procedure Update_Menu (Binding : Key_Description_List);
+      --  Delete the binding and update associated menus
+
+      procedure Update_Menu (Binding : Key_Description_List) is
+         Success : Boolean;
+         pragma Unreferenced (Success);
+      begin
+         if Binding.Action /= null then
+            declare
+               A : constant String := Binding.Action.all;
+            begin
+               --  Need to remove action so that update_shortcut_display
+               --  works.
+               Free (Binding.Action);
+               if A (A'First) = '/' then
+                  Success := Change_Entry  --  remove gtk+ binding
+                    ("<gps>" & A,
+                     Accel_Key  => 0,
+                     Accel_Mods => 0,
+                     Replace    => True);
+               end if;
+               Update_Shortcut_Display (Kernel, A);
+            end;
+         end if;
+      end Update_Menu;
+
+      procedure Traverse (Table : in out Key_Htable.Instance);
+      procedure Traverse (Table : in out Key_Htable.Instance) is
+         Iter    : Key_Htable.Cursor;
+         Binding, Previous : Key_Description_List;
+         Remove, Remove_Action  : Boolean;
+         Move_To_Next : Boolean;
+
+      begin
+         Get_First (Table, Iter);
+         loop
+            Binding := Get_Element (Iter);
+            exit when Binding = No_Key;
+
+            Move_To_Next := True;
+            Previous := null;
+
+            while Binding /= null loop
+               Remove_Action := False;
+
+               case Mode is
+                  when All_Shortcuts =>
+                     Remove_Action := True;
+                  when Standard_Shortcuts =>
+                     Remove_Action := not Binding.User_Defined;
+                  when User_Shortcuts =>
+                     Remove_Action := Binding.User_Defined;
+               end case;
+
+               if Binding.Keymap /= null then
+                  Traverse (Binding.Keymap.Table);
+
+                  --  Never remove if we still have secondary keymaps
+                  Remove := Remove_Action
+                    and then Get_First (Binding.Keymap.Table) = null;
+               else
+                  Remove := Remove_Action;
+               end if;
+
+               if Remove then
+                  if Previous = null then
+                     if Binding.Next = null then
+                        Move_To_Next := False;
+                        Update_Menu (Binding);
+
+                        --  ??? Can't free Binding, since it might point to
+                        --  non-allocated data
+                        --      Free_Non_Recursive (Binding);
+
+                        Remove_And_Get_Next (Table, Iter);
+                        exit;
+                     else
+                        Set_Element (Iter, Binding.Next);
+
+                        Previous := Binding;
+                        Binding := Binding.Next;
+
+                        Update_Menu (Previous);
+                        Free_Non_Recursive (Previous);
+                        Previous := null;
+                     end if;
+
+                  else
+                     Previous.Next := Binding.Next;
+                     Update_Menu (Binding);
+                     Free_Non_Recursive (Binding);
+                     Binding := Previous.Next;
+                  end if;
+
+               else
+                  if Remove_Action then
+                     Update_Menu (Binding);
+                  end if;
+
+                  Previous := Binding;
+                  Binding := Binding.Next;
+               end if;
+            end loop;
+
+            if Move_To_Next then
+               Get_Next (Table, Iter);
+            end if;
+         end loop;
+      end Traverse;
+
+   begin
+      Traverse (Keymanager_Module.Table.all);
+   end Remove_Shortcuts;
+
+   --------------------
+   -- Dump_Shortcuts --
+   --------------------
+
+   procedure Dump_Shortcuts (Prefix : String) is
+      procedure Dump_Table
+        (Table : in out Key_Htable.Instance; P : String);
+      procedure Dump_Table
+        (Table : in out Key_Htable.Instance; P : String)
+      is
+         Iter    : Key_Htable.Cursor;
+         Binding : Key_Description_List;
+         Key          : Key_Binding;
+      begin
+         Increase_Indent (Debug, P);
+         Get_First (Table, Iter);
+         loop
+            Binding := Get_Element (Iter);
+            exit when Binding = No_Key;
+
+            Key := Get_Key (Iter);
+
+            while Binding /= null loop
+               if Binding.Action /= null then
+                  Trace (Debug, P & ' ' & Image (Key.Key, Key.Modifier) & ' '
+                         & Binding.Action.all
+                         & " user=" & Binding.User_Defined'Img);
+               end if;
+
+               if Binding.Keymap /= null then
+                  Dump_Table
+                    (Binding.Keymap.Table,
+                     Prefix & " " & Image (Key.Key, Key.Modifier));
+               end if;
+
+               Binding := Binding.Next;
+            end loop;
+
+            Get_Next (Table, Iter);
+         end loop;
+         Decrease_Indent (Debug);
+      end Dump_Table;
+
+   begin
+      Dump_Table (Keymanager_Module.Table.all, Prefix);
+   end Dump_Shortcuts;
 
    -------------------
    -- Load_XML_Keys --
@@ -1335,7 +1613,7 @@ package body KeyManager_Module is
       Prev        : Boolean;
    begin
       if Is_Regular_File (Filename) then
-         Trace (Me, "Loading " & Filename.Display_Full_Name);
+         Trace (Debug, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
 
          if File = null then
@@ -1347,17 +1625,25 @@ package body KeyManager_Module is
             Keymanager_Module.Menus_Created := True;
 
             while Child /= null loop
-               --  Remove all other bindings previously defined, so that only
-               --  the last definition is taken into account
-               Bind_Default_Key_Internal
-                 (Kernel           => Kernel,
-                  Table            => Keymanager_Module.Table.all,
-                  Action           => Get_Attribute (Child, "action"),
-                  Key              => Child.Value.all,
-                  Save_In_Keys_XML => User_Defined,
-                  Remove_Existing_Shortcuts_For_Action => User_Defined,
-                  Remove_Existing_Actions_For_Shortcut => User_Defined,
-                  Update_Menus     => True);
+               declare
+                  Action : constant String := Get_Attribute (Child, "action");
+                  Load   : constant String := Get_Attribute (Child, "load");
+               begin
+                  if Load /= "" then
+                     Load_Key_Theme (Kernel, Load);
+                  else
+                     Bind_Default_Key_Internal
+                       (Kernel           => Kernel,
+                        Table            => Keymanager_Module.Table.all,
+                        Action           => Action,
+                        Key              => Child.Value.all,
+                        Save_In_Keys_XML => User_Defined,
+                        Remove_Existing_Shortcuts_For_Action => User_Defined,
+                        Remove_Existing_Actions_For_Shortcut => User_Defined,
+                        Update_Menus     => True);
+                  end if;
+               end;
+
                Child := Child.Next;
             end loop;
 
@@ -1369,7 +1655,7 @@ package body KeyManager_Module is
 
    exception
       when E : others =>
-         Trace (Me, E);
+         Trace (Debug, E);
          Insert (Kernel, -"Could not parse " &
                    Filename.Display_Full_Name, Mode => Error);
    end Load_XML_Keys;
@@ -1456,7 +1742,7 @@ package body KeyManager_Module is
                      end if;
 
                      Is_User_Changed.all :=
-                       Is_User_Changed.all or Binding.Changed;
+                       Is_User_Changed.all or Binding.User_Defined;
 
                      if Use_Markup then
                         Append
@@ -1479,7 +1765,7 @@ package body KeyManager_Module is
                      --  the ones with a single key, so that we can display
                      --  them in menu shortcuts
                      Is_User_Changed.all :=
-                       Is_User_Changed.all or Binding.Changed;
+                       Is_User_Changed.all or Binding.User_Defined;
 
                      if Use_Markup then
                         Result := To_Unbounded_String
@@ -1996,6 +2282,10 @@ package body KeyManager_Module is
             null);
       end if;
 
+      Create_New_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Key_Theme, Strings);
+      Set_Max_Length (Get_History (Kernel).all, 1, Hist_Key_Theme);
+
       Register_Command
         (Kernel, "last_command", 0, 0, Keymanager_Command_Handler'Access);
       Register_Command
@@ -2274,7 +2564,7 @@ package body KeyManager_Module is
          --  No key is already defined for this action: set it now.
          Keys := new Key_Description'
            (Action  => new String'(Action),
-            Changed => False,
+            User_Defined => False,
             Keymap  => null,
             Next    => null);
          Set

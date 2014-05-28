@@ -51,12 +51,16 @@ ifeq ($(OS),Windows_NT)
 endif
 	$(RM) -f $(sharedir)/gps/GPS_old
 	$(RM) $(sharedir)/gps/library/*.py
+	$(RM) $(sharedir)/gps/library/*.pyc
 	$(RM) $(sharedir)/gps/library/*.xml
 	$(RM) $(sharedir)/gps/plug-ins/*.py
+	$(RM) $(sharedir)/gps/plug-ins/*.pyc
 	$(RM) $(sharedir)/gps/plug-ins/*.xml
 	$(RM) -r $(sharedir)/gps/plug-ins/spark
 	$(RM) $(sharedir)/gps/support/core/*.py
+	$(RM) $(sharedir)/gps/support/core/*.pyc
 	$(RM) $(sharedir)/gps/support/ui/*.py
+	$(RM) $(sharedir)/gps/support/ui/*.pyc
 	${RM} ${sharedir}/gps/perspectives.xml
 	$(RMDIR) $(sharedir)/gps/templates
 # update runtime.xml before copying the plug-ins files.

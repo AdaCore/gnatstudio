@@ -1,0 +1,76 @@
+<?xml version='1.0'?>
+<!--  This file contains shortcuts that are specific to GPS, and
+      therefore have no equivalent in other editors. It is a convenient
+      way to define the shortcuts in all the key themes.
+-->
+<GPS>
+  <key action="Interrupt">shift-control-C</key>
+
+  <key action="debug run dialog">F2</key>
+  <key action="debug step">F5</key>
+  <key action="debug stepi">shift-F5</key>
+  <key action="debug next">F6</key>
+  <key action="debug nexti">shift-F6</key>
+  <key action="debug finish">F7</key>
+  <key action="debug continue">F8</key>
+
+  <key action="start of statement">alt-Up</key>
+  <key action="end of statement">alt-Down</key>
+  <key action="previous subprogram">control-Up</key>
+  <key action="next subprogram">control-Down</key>
+  <key action="previous tag">control-less</key>
+  <key action="next tag">control-greater</key>
+  <key action="backward locations history">alt-Left</key>
+  <key action="forward locations history">alt-Right</key>
+
+  <key action="Build Main Number 1">F4</key>
+  <key action="Run Main Number 1">shift-F2</key>
+  <key action="Custom Build...">F9</key>
+  <key action="Compile File">shift-F4</key>
+
+  <key action="open file">F3</key>
+  <key action="open from host">control-F3</key>
+
+  <key action="Add multi cursor and go down">shift-alt-Down</key>
+  <key action="Add multi cursor and go up">shift-alt-Up</key>
+  <key action="Move to next word">control-Right</key>
+  <key action="Move to previous word">control-Left</key>
+  <key action="Move to next word (extend selection)">shift-control-Right</key>
+  <key action="Move to previous word (extend selection)">shift-control-Left</key>
+  <key action="Move to previous char">Left</key>
+  <key action="Move to next char">Right</key>
+  <key action="Move to previous char (extend selection)">shift-Left</key>
+  <key action="Move to next char (extend selection)">shift-Right</key>
+  <key action="Move to previous line (extend selection)">shift-Up</key>
+  <key action="Move to next line (extend selection)">shift-Down</key>
+  <key action="Move to previous line">Up</key>
+  <key action="Move to next line">Down</key>
+  <key action="forward delete" >Delete</key>
+  <key action="backward delete" >BackSpace</key>
+  <key action="goto beginning of line" >Home</key>
+  <key action="goto end of line" >End</key>
+  <key action="goto beginning of line (extend selection)" >shift-Home</key>
+  <key action="goto end of line (extend selection)" >shift-End</key>
+  <key action="Move block right">control-alt-greater</key>
+  <key action="Move block left">control-alt-less</key>
+  <key action="Format selection">Tab</key>
+  <key action="smart escape">Escape</key>
+
+  <key action="increase text size">control-plus</key>
+  <key action="decrease text size">control-alt-plus</key>
+
+  <key action="Move to next window">alt-Tab</key>
+  <key action="Move to previous window">alt-shift-ISO_Left_Tab</key>
+  <key action="Move tab to left">shift-control-alt-Left</key>
+  <key action="Move tab to right">shift-control-alt-Right</key>
+  <key action="Move to next tab">control-alt-Right</key>
+  <key action="Move to previous tab">control-alt-Left</key>
+
+  <key action="browser zoom out">minus</key>
+  <key action="browser zoom in">equal</key>
+
+  <key action="Global Search in context: File Names">shift-F3</key>
+
+  <key action="Complete identifier">control-slash</key>
+  <key action="Complete identifier (advanced)">control-space</key>
+</GPS>

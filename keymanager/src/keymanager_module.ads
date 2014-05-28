@@ -19,6 +19,7 @@ with Ada.Unchecked_Deallocation;
 with Gdk.Event;
 with Gdk.Types;
 with GNAT.Strings;
+with GNATCOLL.VFS;
 with GPS.Kernel;
 with HTables;
 
@@ -38,11 +39,41 @@ package KeyManager_Module is
    --  XML files and themes have been loaded, so that the user's choice
    --  overrides everything.
 
+   function Get_Key_Theme
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return String;
+   procedure Set_Key_Theme
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name   : String);
+   --  Return the name of the key theme selected by the user
+
+   function User_Key_Theme_Directory
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
+   --  Return the directory used for user themes.
+
    procedure Load_Key_Theme
-     (Kernel       : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Theme        : String);
-   --  Load an XML file that contains a key theme.
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Theme  : String := "");
+   --  Load an XML file that contains a key theme. By default, it loads the
+   --  key theme that the user has selected last. If Theme is specified, it is
+   --  also stored as the default key theme for the next GPS session.
    --  This does not remove existing key bindings.
+
+   type Remove_Mode is (All_Shortcuts, Standard_Shortcuts, User_Shortcuts);
+   procedure Remove_Shortcuts
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Mode   : Remove_Mode);
+   --  Remove key shortcuts:
+   --  * either all shortcuts
+   --  * or shortcuts loaded from key themes (but preserve user defined ones)
+   --  * or only user defined shortcuts (and preserve standard ones).
+
+   function List_Key_Themes
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return GNAT.Strings.String_List_Access;
+   --  Return all known key themes.
+   --  Returned value must be freed by user.
 
    procedure Block_Key_Shortcuts
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -86,12 +117,12 @@ private
       Next    : Key_Description_List;
       Keymap  : Keymap_Access := null;
       --  This is the secondary keymap
-      Changed : Boolean := False;
+
+      User_Defined : Boolean := False;
+      --  True when this binding was loaded from ~/.gps/keys6.xml, as opposed
+      --  to loaded from one of the predefined themes.
    end record;
    No_Key : constant Key_Description_List := null;
-   --  Changed is set to True when the key was customized from within GPS
-   --  itself, and should therefore be saved on exit. It is false for values
-   --  read from the custom files.
 
    function Hash (Key : Key_Binding) return Keys_Header_Num;
    procedure Free (Element : in out Key_Description_List);
@@ -200,6 +231,12 @@ private
 
    procedure Clone (From : Key_Htable.Instance; To : out Key_Htable.Instance);
    --  Deep copy of From
+
+   procedure Save_Keys
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Save_All : Boolean;
+      Filename : GNATCOLL.VFS.Virtual_File);
+   --  save either all keys or only the modified ones in thegiven file.
 
    procedure Save_Custom_Keys
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
