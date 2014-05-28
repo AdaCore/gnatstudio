@@ -318,7 +318,8 @@ package body Xref is
    begin
       --  Handle cases in which no action is needed
 
-      if Ref.Db = null or else not Ref.Is_Dispatching_Call
+      if Ref.Db = null
+        or else not Ref.Is_Dispatching_Call
       then
          return;
       end if;
@@ -470,7 +471,6 @@ package body Xref is
          P       : Project_Type;
       begin
          if Active (SQLITE) then
-
             if Loc = No_Location then
                --  predefined entities
                Closest_General_Ref.Ref := Self.Xref.Get_Entity
@@ -2675,12 +2675,22 @@ package body Xref is
       Trace (Me, "Set up xref database: " &
              (+Working_Xref_File.Full_Name.all));
 
-      Self.Xref.Setup_DB
-        (DB    => GNATCOLL.SQL.Sqlite.Setup
-           (Database => +Working_Xref_File.Full_Name.all,
-            Errors   => Self.Errors),
-         Tree  => Tree,
-         Error => Error);
+      if Self.Disable_SQL_Queries then
+         --  Just to avoid errors because we are accessing a non-existing db
+         Self.Xref.Setup_DB
+           (DB    => GNATCOLL.SQL.Sqlite.Setup
+              (Database => ":memory:",
+               Errors   => Self.Errors),
+            Tree  => Tree,
+            Error => Error);
+      else
+         Self.Xref.Setup_DB
+           (DB    => GNATCOLL.SQL.Sqlite.Setup
+              (Database => +Working_Xref_File.Full_Name.all,
+               Errors   => Self.Errors),
+            Tree  => Tree,
+            Error => Error);
+      end if;
 
       --  Not interested in schema version errors, gnatinspect already
       --  displays them on the console
@@ -4071,11 +4081,28 @@ package body Xref is
             Trace
               (Me, "project db file: " &
                  Self.Working_Xref_Db.Display_Full_Name);
+
+            Self.Disable_SQL_Queries :=
+              not Create (Self.Working_Xref_Db.Dir_Name).Is_Writable
+              or else
+                (Self.Working_Xref_Db.Is_Regular_File
+                 and then not Self.Working_Xref_Db.Is_Writable);
          end;
       end if;
 
       return Self.Working_Xref_Db;
    end Xref_Database_Location;
+
+   -------------------
+   -- Allow_Queries --
+   -------------------
+
+   function Allow_Queries
+     (Self : not null access General_Xref_Database_Record) return Boolean
+   is
+   begin
+      return not Self.Disable_SQL_Queries;
+   end Allow_Queries;
 
    --------------------------
    -- Project_View_Changed --

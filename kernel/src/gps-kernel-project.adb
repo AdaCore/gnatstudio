@@ -178,6 +178,14 @@ package body GPS.Kernel.Project is
       Xref.Project_View_Changed
         (Self.Handle.Databases, Get_Project_Tree (Self.Handle));
 
+      if not Self.Handle.Databases.Allow_Queries then
+         Insert
+           (Self.Handle,
+            -"The file '"
+            & Self.Handle.Databases.Xref_Database_Location.Display_Full_Name
+            & "' cannot be written. Cross-references are disabled.");
+      end if;
+
       Run_Hook (Self.Handle, Project_View_Changed_Hook);
    end Recompute_View;
 

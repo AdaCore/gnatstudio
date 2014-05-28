@@ -140,6 +140,10 @@ package Xref is
       --  Location of the sqlite database on which GPS is currently working
       --  Set to No_File if GPS is not working on a database at the moment.
 
+      Disable_SQL_Queries : Boolean := False;
+      --  Whether the database is writable. When True, no update or query is
+      --  performed.
+
       Xref_Db_Is_Temporary : Boolean := False;
       --  Whether we should remove the database from the disk when we close it
 
@@ -192,6 +196,10 @@ package Xref is
       return GNATCOLL.VFS.Virtual_File;
    --  Location of the sqlite file that contains the xref database on which
    --  GPS is currently working.
+
+   function Allow_Queries
+     (Self : not null access General_Xref_Database_Record) return Boolean;
+   --  Whether SQL queries can be performed in the database
 
    type General_Entity_Declaration is record
       Loc  : aliased General_Location;
