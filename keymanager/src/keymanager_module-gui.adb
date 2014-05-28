@@ -1152,7 +1152,6 @@ package body KeyManager_Module.GUI is
 
       Gtk_New (Sep, Orientation_Horizontal);
       Bbox.Add (Sep);
-      --  Bbox.Set_Child_Non_Homogeneous (Sep, True);
 
       Gtk_New (Editor.Remove_Button, -"Remove");
       Editor.Remove_Button.Set_Tooltip_Text (-"Remove selected key binding");

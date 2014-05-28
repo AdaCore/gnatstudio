@@ -54,12 +54,11 @@ Finally, you can select windows with the omni-search, the search field in
 the global toolbar. One of the contexts for the search is the list of
 opened windows. To make things more convenient, you can bind a key shortcut
 via the :menuselection:`Edit --> Key Shortcuts` menu (the name of the
-action is :menuselection:`Search --> Global Search in context: Opened`). If
-you load the :file:`emacs.py` plugin, a standard key binding is set for
-:kbd:`control-xb`.  Any window whose name contains the specified letter
-matches the search field. For example, if you are currently editing the
-files :file:`unit1.adb` and :file:`file.adb`, pressing :kbd:`t` leaves only
-:file:`unit1.adb` selectable.
+action is :menuselection:`Search --> Global Search in context: Opened`).
+
+Any window whose name contains the specified letter matches the search field.
+For example, if you are currently editing the files :file:`unit1.adb` and
+:file:`file.adb`, pressing :kbd:`t` leaves only :file:`unit1.adb` selectable.
 
 .. index:: MDI; closing windows
 .. _Closing_Windows:
@@ -120,7 +119,7 @@ Split Horizontally` and :menuselection:`Window --> Split Vertically` menus
 using the key manager. If you want to achieve an effect similar to standard
 Emacs behavior (where :kbd:`control-x 2` splits a window horizontally and
 :kbd:`control-x 3` splits a window vertically), use the key manager
-(see :ref:`The_Key_Manager_Dialog`).
+(see :ref:`The_Key_Shortcuts_Editor`).
 
 :ref:`Moving_Windows` shows how to split windows using drag-and-drop, which
 is the fastest way.

@@ -109,7 +109,7 @@ The source editor provides an extensive set of features, including:
   When enabled, lines are automatically :index:`indented <indentation>`
   each time you press the :kbd:`Enter` key or the indentation key, which,
   by default, is :kbd:`Tab`.  Change it in the key manager dialog.  See
-  :ref:`The_Key_Manager_Dialog`.
+  :ref:`The_Key_Shortcuts_Editor`.
 
   If you have selected a list of lines when you press the indentation key,
   GPS indents all the lines.
@@ -884,7 +884,7 @@ The :menuselection:`Edit` Menu
 * :menuselection:`Edit --> Key shortcuts`
 
   Start the key manager dialog, used to associate commands with special
-  keys.  See :ref:`The_Key_Manager_Dialog`.
+  keys.  See :ref:`The_Key_Shortcuts_Editor`.
 
 .. index:: menu; edit --> preferences
 
@@ -903,12 +903,11 @@ Rectangles
 Rectangle commands operate on a rectangular area of the text, specifically
 all the characters between two columns in a certain range of lines.
 
-.. index:: plug-ins; emacs.py
-
 Select a rectangle using the standard selection mechanism.  Either use the
 mouse to highlight the proper region, use :kbd:`shift` and the cursor keys
 to extend the selection, or use the Emacs selection (with the mark and the
-current cursor location) if you have activated the :file:`emacs.py` plugin.
+current cursor location) if you have activated the Emacs key themes in
+the Key Shortcuts editor (:ref:`The_Key_Shortcuts_Editor`).
 
 Visually, a selected rectangle appears exactly the same as the standard
 selection.  In particular, the characters after the last column on each

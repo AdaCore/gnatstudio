@@ -206,6 +206,12 @@ class Item(object):
     The height of the item (in its own coordinate space)
     """
 
+    parent = None
+    """
+    The :class:`GPS.Browsers.Item` that contains this item.
+    This is a read-only propery.
+    """
+
     def __init__(self):
         """
         Will raise an exception, this is an abstract class.

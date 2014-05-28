@@ -814,7 +814,7 @@ class BuildTarget(object):
 
         :param string new_name: The name of the new target
         :param string new_category: The category in which to place the new
-        target
+          target
         """
         pass  # implemented in Ada
 
@@ -947,7 +947,7 @@ class Clipboard(object):
 
         :param string text: The content you want to put int the clipboard.
         :param boolean append: Wether you want to append to the current
-        clipboard content or not.
+           clipboard content or not.
 
         .. seealso:: :func:`GPS.EditorBuffer.copy`
         """
@@ -1087,16 +1087,16 @@ class CodeAnalysis(object):
         structure by using one of the primitive operations.
 
         :param string name: The name of the code analysis data structure to
-        get or create
+           get or create
         :return: An instance of :class:`GPS.CodeAnalysis` associated to a code
            analysis data structure in GPS.
         :rtype: :class:`GPS.CodeAnalysis`
 
         .. code-block:: python
 
-           a = GPS.CodeAnalysis.get ("Coverage")
-           a.add_all_gcov_project_info ()
-           a.show_coverage_information ()
+           a = GPS.CodeAnalysis.get("Coverage")
+           a.add_all_gcov_project_info()
+           a.show_coverage_information()
         """
         pass  # implemented in Ada
 
@@ -1380,10 +1380,9 @@ class Combo(GUI):
 
         :param string choice: The new choice
         :param on_selected: A subprogram, called with the following
-        parameters:
-
-            - The instance of GPS.Combo (self)
-            - The newly selected text (a string)
+           parameters:
+           - The instance of GPS.Combo (self)
+           - The newly selected text (a string)
 
         :type on_selected: (:class:`GPS.Combo`, string) -> None
         """
@@ -3805,7 +3804,7 @@ class EditorBuffer(object):
         Selects an area in the buffer. The boundaries are included in the
         selection. The order of the boundaries is irrelevant, but the cursor
         is be left on ``to``.
-gnores __
+
         :param EditorLocation frm: An instance of :class:`EditorLocation`
         :param EditorLocation to: An instance of :class:`EditorLocation`
 
@@ -5509,6 +5508,14 @@ class File(object):
         :return: A list of :class:`GPS.Entity`
         """
         pass  # implemented in Ada
+
+    def generate_doc(self):
+        """
+        Generates the documentation fo the file and displays it in the default
+        browsers.
+
+        .. seealso: :func:`GPS.Project.generate_doc`
+        """
 
     def get_property(self, name):
         """
@@ -8536,6 +8543,14 @@ class Project(object):
         :return: An instance of :class:`GPS.File`
         """
         pass  # implemented in Ada
+
+    def generate_doc(self, recursive=False):
+        """
+        Generates the documentation for the projet (and its subprojects
+        if ``recursive`` is True) and displays it in the default browser.
+
+        .. seealso: :func:`GPS.File.generate_doc`
+        """
 
     def get_attribute_as_list(self, attribute, package='', index=''):
         """

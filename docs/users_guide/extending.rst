@@ -537,11 +537,11 @@ arrow, as seen in the screenshot above).
       Use tab characters when indenting.  This preference does not modify
       the :kbd:`Tab` key, which still inserts tab characters. You can also
       map the :menuselection:`Edit --> Insert Tab With Spaces` key shortcut
-      to, e.g., :kbd:`Tab` via :ref:`The_Key_Manager_Dialog`. You can also
+      to, e.g., :kbd:`Tab` via :ref:`The_Key_Shortcuts_Editor`. You can also
       reconfigure the default key binding for the automatic indentation
       action: by default, it is mapped to :kbd:`Tab`, but you can change it
       to :kbd:`Tab` by modifying the :menuselection:`Edit --> Format
-      Selection` action from :ref:`The_Key_Manager_Dialog`.
+      Selection` action from :ref:`The_Key_Shortcuts_Editor`.
 
     * :guilabel:`Default indentation`
 
@@ -1528,44 +1528,110 @@ theme loaded by GPS overrides all previously loaded themes. However, there
 is no predefined order in which the themes are loaded, so you should not
 depend on this behavior.
 
-.. _The_Key_Manager_Dialog:
 
-The Key Manager Dialog
-======================
+.. index:: key shortcuts; editing
+.. _The_Key_Shortcuts_Editor:
 
-Access the key manager dialog through the :menuselection:`Edit --> Key
-Shortcuts` menu.  This dialog provides an easy way to associate key
-shortcuts with actions.  Actions are either predefined in GPS or defined in
-your own customization files, as documented in
-:ref:`Customizing_through_XML_and_Python_files`.  It also provides an easy
-way to redefine menu shortcuts.
+The Key Shortcuts Editor
+========================
 
-.. index:: screen shot
 .. image:: key-shortcuts.jpg
 
-Actions are referenced by their name and grouped into categories indicating
-when the action applies. For example, the indentation command applies only
-in source editors while the command to change the current window applies
-anywhere in GPS.  Specify the category when you create your own actions
-through XML files (see :ref:`Defining_Actions`).
+This editor is started through the :menuselection:`Edit --> Key Shortcuts`
+menu. It provides a convenient way to edit the keyboard shortcuts that
+are available throughout GPS.
 
-As an example, you can use the key manager to define key bindings similar
-to what Emacs uses (such as :kbd:`Ctrl-x` followed by
-:kbd:`Ctrl-k`). To register such key bindings, press the
-:guilabel:`Grab` button and type the shortcut.  Recording of the key
-binding stops shortly after you press the last key.
+This editor is displayed as a separate dialog (floating window) by default,
+but you can embed it in the main GPS window by selecting the menu
+:menuselection:`Window --> Floating`.
 
-If you define complex shortcuts for menus, they will not appear next to the
-menu name when you select it with the mouse due to technical limitations in
-the graphical toolkit that GPS uses.
+All keyboard shortcuts are associated with actions, which are either
+predefined in GPS, or defined in your customization python files,
+as documented in :ref:`Customizing_through_XML_and_Python_files`.
+The main part of the editor is a list showing all actions that are defined
+in GPS, grouped into categories.
 
-Assigning a new shortcut to an action causes the following:
+There are literally hundreds of such actions, and finding the one you should
+use might be difficult. To simplify the search, you can use the filter field at
+the top-right corner of the editor. Typing any text in this field will restrict
+the list of actions to those that contain the text either in their name, their
+description, their keyboard shortcut, or the menus the action is bound to.
+Entering keyboard shortcut is in fact easier done via the :guilabel:`Grab`
+button next to the filter field. Click on it, then type the shortcut you are
+looking for.
 
-* All actions and menus currently associated with key are no longer
-  executed when the key is pressed.
+By using the local configuration menu (click on the top-right button of the
+editor), you can further restrict what is displayed in the editor:
 
-* All key shortcuts defined for this action are replaced by the new one;
-  the action is only executable through this new shortcut.
+* :guilabel:`Shortcuts only` will only display the actions that have an actual
+  shortcut, and hide all the others.
+
+* :guilabel:`Show categories` can be unset if you just want to display a flat
+  list of all the actions.
+
+* All menus in GPS are themselves bound to actions. In general, it is better
+  to associate a key shortcut to the action itself, as opposed to the menu.
+  For this reason, GPS by default does not list all the menus in the keyboard
+  shortcuts editor. However, historically, GPS used to show all menus there
+  and you can get this behavior back by enabling the
+  :guilabel:`Show all menus` configuration.
+
+When you select an action, GPS will display its documentation in the bottom
+part of the ditor. This documentation also includes a pointer to the python
+file that defines the action (or whether it is built-in in GPS), as well as the
+list of menus that will execute this action when selected.
+
+Finally, the editor includes a set of buttons on its right side, which are
+grouped into two logical sets:
+
+* The top three buttons allow you to control `Key themes`. These are sets of
+  keyboard shortcuts that are either provided as part of GPS (for instance
+  GPS provides an :index:`Emacs key theme` which attempts to emulate some of
+  the Emacs key bindings) or created by the user.
+
+  The first box lists all known themes, and lets you alternate between them
+  simply by selecting their name. This will unset all existing key bindings
+  except the ones you have set manually, and replace them with the shortcuts
+  loaded from the key theme. This also updates all the menus to reflect the
+  new shortcuts.
+
+  The :guilabel:`Reset` button will discard all the keybindings you have
+  manually overridden, and revert to the theme's default key bindings.
+
+  The :guilabel:`Create` lets you create a new key theme by copying all
+  the current shortcuts (those from the theme and the ones you have set
+  manually) into a new theme. In effect, this creates a new XML file
+  in the directory :file:`$HOME/.gps/key_themes`. Removing a custom key
+  theme is done by deleting the file from that directory, no GUI is
+  provided for this at the moment.
+
+* The second group of buttons lets you edit the shortcut for the currently
+  selected action either by removing the shortcut, or by overriding the
+  ones that is currently set.
+
+  When you click on the :guilabel:`Modify` button, GPS waits for you to
+  press any keyboard shortcut you wish to associate with the action. This
+  shortcut can include multiple keys, so for instance to get an Emacs-like
+  binding you could for instance press :kbd:`Ctrl-x` and then press
+  :kbd:`Ctrl-k`. After pressing the last key in the sequence, wait for a
+  short delay and GPS will associate the resulting shortcut to the action
+  and update the menus, when relevant, to show the new binding. Note that
+  multi-key shortcuts cannot be displayed in menus due to technical
+  limitations of the GUI toolkit.
+
+  Assigning a new shortcut to an action causes the following:
+
+  - All actions and menus currently associated with key are no longer
+    executed when the key is pressed.
+  
+  - All key shortcuts defined for this action are replaced by the new one;
+    the action is only executable through this new shortcut.
+
+Any change to the shortcuts is immediately and automatically saved, so that
+they become instantly usable in GPS, and will be restored properly when GPS
+is restarted.
+
+
 
 .. _The_Plug-ins_Editor:
 
@@ -1584,15 +1650,6 @@ programming languages) and others are available but not loaded
 automatically, such as Emacs emulation mode.
 
 Some plug-ins provided with GPS are:
-
-* :program:`Emacs` emulation
-
-  .. index:: Emacs
-
-  Several plug-ins emulate many functions provided by :program:`Emacs`,
-  such as the interactive search, manipulation of rectangles, navigation,
-  and the usual :program:`Emacs` key shortcuts.  Activate it by loading the
-  :file:`emacs.xml` plug-in.
 
 * :file:`Makefile` support
 
@@ -1691,9 +1748,8 @@ versions of GPS you should not have keep other files in these directories.
 
   The :file:`INSTALL/share/gps/library` directory contain files GPS
   displays in the :guilabel:`Plug-ins` editor but does not load
-  automatically.  Typically, these files add optional capabilities to GPS,
-  for example an :program:`emacs` emulation mode or additional editor
-  capabilities that many of users generally will not use.
+  automatically.  Typically, these files add optional capabilities to GPS
+  that many of users generally will not use.
 
 * :file:`GPS_CUSTOM_PATH`
 
@@ -2080,7 +2136,7 @@ The valid children of :file:`<action>` are the following XML tags:
   .. index:: description
 
   A description of the command, which is used in the graphical editor for
-  the key manager. See :ref:`The_Key_Manager_Dialog`.
+  the key manager. See :ref:`The_Key_Shortcuts_Editor`.
 
 * :file:`<filter>`, :file:`<filter_and>`, :file:`<filter_or>`
 
@@ -3083,7 +3139,6 @@ binding::
     <key action="/Window/Close">control-x control-w</key>
   </key>
 
-
 If you bind multiple actions to the same key binding, they are executed
 sequentually, followed by any menu for which this key is an accelerator.
 
@@ -3091,7 +3146,10 @@ When GPS processes a :file:`<key>` tag, it does the following:
 
 * Removes all actions bound to that key.  This ensures that any action
   previously associated with it, either by default in GPS or in some other
-  XML file, is no longer executed.
+  XML file, is no longer executed. This removal is not done when loading
+  key themes (i.e. XML files from :file:`$HOME/.gps/key_themes` directory),
+  so it is possible to bind an action to multiple key bindings as part of
+  a key theme.
 * Adds the new key to the list of shortcuts that can execute the
   action. Any existing shortcut for the action is preserved, allowing
   multiple shortcuts for the action.
@@ -3361,7 +3419,7 @@ defined::
 Defining custom highlighters
 ----------------------------
 
-.. index:: <Highlighters>
+.. index:: Highlighters
 
 .. automodule:: highlighter.interface
   :members:
@@ -3383,7 +3441,7 @@ using the :guilabel:`Project` view, and finding files associated with that
 language.
 
 NOTE: The highlighting of syntax via the mechanisms described here are
-deprecated. See :ref:`Highlighters` for the current way to highlight custom
+deprecated. See :ref:`Defining_custom_highlighters` for the current way to highlight custom
 languages.
 
 The following child tags are available:
@@ -7684,7 +7742,7 @@ Implementing VCS menus
 
 All of the actions defined in the previous section can, for example, be
 viewed in the :guilabel:`VCS` page of the :guilabel:`Key Shortcuts` dialog
-(see :ref:`The_Key_Manager_Dialog`).
+(see :ref:`The_Key_Shortcuts_Editor`).
 
 GPS provides a Python facility in the plugin :file:`vcs.py` that associates
 menu items to VCS actions. This facility defines, in one place, the VCS

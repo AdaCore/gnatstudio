@@ -213,7 +213,7 @@ Files
 
   Contains all key bindings for the actions defined in GPS or custom
   files. This file only contains the key bindings overridden through the
-  key shortcuts editor (see :ref:`The_Key_Manager_Dialog`).
+  key shortcuts editor (see :ref:`The_Key_Shortcuts_Editor`).
 
 
 

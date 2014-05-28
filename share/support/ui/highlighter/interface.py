@@ -156,7 +156,7 @@ def words(words_list, **kwargs):
     Return a matcher for a list of words
 
     :param words_list: The list of words, either as a string of "|"
-    separated words, or as a list of strings.
+       separated words, or as a list of strings.
     :type words_list: str|list[str]
     :rtype: SimpleMatcher
     """
@@ -175,8 +175,8 @@ def region(start_re, end_re, tag=None, name="", highlighter=(),
     :param string start_re: The regexp used to match the start of the region
     :param string end_re: The regexp used to match the end of the region
     :param Style tag: The Tag which will be used to highlight the whole
-    region. Beware, if you plan to apply other tags to elements inside the
-    region, they must have an higher priority than this one !
+      region. Beware, if you plan to apply other tags to elements inside the
+      region, they must have an higher priority than this one !
     :rtype: RegionMatcher
     """
     return RegionMatcher(tag, start_re, end_re, highlighter, matchall, name)
@@ -235,8 +235,8 @@ def new_style(lang, name, foreground_colors,
           "normal", "bold", "italic" or "bold_italic"
 
     :param prio: The priority of the style. This determines which style will
-    prevail if two styles are applied to the same portion of text. See
-    :ref:`region`.
+      prevail if two styles are applied to the same portion of text. See
+      :func:`Highlighter.region`
 
     :rtype: Style
     """
@@ -263,8 +263,8 @@ def existing_style(pref_name, name="", prio=20):
     """
     Creates a new style to apply when a matcher succeeds, using an existing
     style as a basis. This probably should not be used directly, but one
-    should use one of the existing styles declared in :ref:`Highlighting
-    .common`
+    should use one of the existing styles declared in
+    :func:`Highlighter.common`
 
     :param string pref_name: The name of the preference to bind to the style
     :param string name: The name of the style, used for the underlying gtk tag
@@ -286,8 +286,7 @@ def register_highlighter(language, spec):
     more information
 
     :param string language: The language to be used as a filter for the
-    highlighter.
-
+       highlighter.
     :param tuple spec: The spec of the highlighter.
     """
     HighlighterModule.highlighters[language] = Highlighter(spec)
