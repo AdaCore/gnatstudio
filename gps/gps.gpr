@@ -84,4 +84,8 @@ project GPS is
       --  for Default_Switches ("Ada") use ("-pg");
    end Linker;
 
+   package CodePeer is
+      for Switches use ("-level 1");
+   end CodePeer;
+
 end GPS;
