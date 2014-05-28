@@ -884,8 +884,9 @@ package body KeyManager_Module.GUI is
          Msg            =>
            -("This operation will remove all the custom shortcuts you have"
              & ASCII.LF
-             & "added (set the filter to 'modified' to see them." & ASCII.LF
-             & "Should GPS remove all custom shortcuts ?"))
+             & "added (set the filter to 'modified' to see them)."
+             & ASCII.LF & ASCII.LF
+             & "Remove all custom shortcuts?"))
         = Button_Yes
       then
          Remove_Shortcuts (Self.Kernel, User_Shortcuts);
