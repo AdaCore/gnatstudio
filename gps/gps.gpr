@@ -85,7 +85,7 @@ project GPS is
    end Linker;
 
    package CodePeer is
-      for Switches use ("-level 1");
+      for Switches use ("-level", "1");
    end CodePeer;
 
 end GPS;
