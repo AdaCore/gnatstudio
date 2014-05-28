@@ -337,7 +337,7 @@ begin
       --  In this case the contents of File_Name would be "-no-subprojects"
 
       if File_Name.all /= ""
-        and then File_Name.all (1) = '-'
+        and then File_Name.all (File_Name.all'First) = '-'
       then
          Put_Line ("gnatdoc: invalid filename");
          Put_Line ("try ""gnatdoc --help"" for more information.");
