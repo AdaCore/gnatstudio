@@ -199,14 +199,6 @@ package body GPS.Kernel.Search.Actions is
 
          Buffer.Insert (Iter, Action.Description.all);
 
-         Buffer.Insert_With_Tags
-            (Iter, ASCII.LF & ASCII.LF & "Declared in: ", Bold);
-         if Action.Defined_In /= GNATCOLL.VFS.No_File then
-            Buffer.Insert (Iter, Action.Defined_In.Display_Full_Name);
-         else
-            Buffer.Insert (Iter, +"built-in");
-         end if;
-
          return Gtk.Widget.Gtk_Widget (View);
       end if;
       return null;

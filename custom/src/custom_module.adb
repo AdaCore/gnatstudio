@@ -833,7 +833,6 @@ package body Custom_Module is
             Name        => Name,
             Command     => Command,
             Description => Description.all,
-            Defined_In  => File,
             Category    => Category,
             Filter      => Filter_A);
          Free (Description);

@@ -23,7 +23,6 @@
 with Commands.Interactive;  use Commands.Interactive;
 with Gdk.Event;
 with GNAT.Strings;
-with GNATCOLL.VFS;
 
 package GPS.Kernel.Actions is
 
@@ -35,7 +34,6 @@ package GPS.Kernel.Actions is
       Modified    : Boolean;
       Overriden   : Boolean;
       Category    : GNAT.Strings.String_Access;
-      Defined_In  : GNATCOLL.VFS.Virtual_File;
 
       Menus       : GNAT.Strings.String_List_Access;
       --  List of all menu paths that are associated with this action.
@@ -52,8 +50,6 @@ package GPS.Kernel.Actions is
    --  time.
    --  Category is used in the key bindings editor to group actions. If null,
    --  the action should not be shown in the keybinding editor.
-   --  Defined_In indicates in which file the action was defined. This is
-   --  optional and could be No_File to indicate builtin actions.
    --
    --  Stock_Id is the icon for this action. It might not be set.
 
@@ -66,7 +62,6 @@ package GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Stock_Id    : String := "");
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user
@@ -76,8 +71,6 @@ package GPS.Kernel.Actions is
    --  Category is used in the key bindings editor to group actions and make
    --  them easier to find by the user. If it is the empty string, the action
    --  will not be shown in the keybinding editor.
-   --  Defined_In indicates in which file the action is defined. By default, it
-   --  is considered as a builtin action.
    --  Command is then owned by the kernel, and will be freed when GPS exits.
    --  You must not call Unref withouth first calling Ref on that command.
 

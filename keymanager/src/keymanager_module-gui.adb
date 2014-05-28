@@ -381,7 +381,6 @@ package body KeyManager_Module.GUI is
       Iter      : Gtk_Tree_Iter;
       Text_Iter : Gtk_Text_Iter;
       Action    : Action_Record_Access;
-      Comp_Iter : Component_Iterator;
       Bold      : Gtk_Text_Tag;
 
       procedure Insert_Details
@@ -455,26 +454,6 @@ package body KeyManager_Module.GUI is
                   Default           => -"none",
                   Is_User_Changed => User_Changed'Unchecked_Access,
                   Use_Markup        => False));
-
-            Insert_With_Tags
-              (Ed.Help, Text_Iter, ASCII.LF & (-"Declared in: "),
-               Bold);
-            if Action.Defined_In /= GNATCOLL.VFS.No_File then
-               Insert
-                 (Ed.Help, Text_Iter, Display_Full_Name (Action.Defined_In));
-
-               Comp_Iter := Start (Action.Command);
-               if Get (Comp_Iter) /= null then
-                  Insert_With_Tags
-                    (Ed.Help, Text_Iter,
-                     ASCII.LF & (-"Implementation details:") & ASCII.LF,
-                     Bold);
-                  Insert_Details (Comp_Iter, "  ");
-               end if;
-
-            else
-               Insert (Ed.Help, Text_Iter, -"built-in");
-            end if;
 
             Insert_With_Tags
               (Ed.Help, Text_Iter, ASCII.LF & (-"Menus: ") & ASCII.LF,
@@ -897,9 +876,22 @@ package body KeyManager_Module.GUI is
    procedure On_Reset (Editor : access Gtk_Widget_Record'Class) is
       Self : constant Keys_Editor := Keys_Editor (Editor);
    begin
-      Remove_Shortcuts (Self.Kernel, User_Shortcuts);
-      Save_Custom_Keys (Self.Kernel);
-      Refresh_Editor (Self);
+      if Message_Dialog
+        (Dialog_Type    => Confirmation,
+         Buttons        => Button_Yes or Button_No,
+         Default_Button => Button_Yes,
+         Title          => -"Reset custom shortcuts",
+         Msg            =>
+           -("This operation will remove all the custom shortcuts you have"
+             & ASCII.LF
+             & "added (set the filter to 'modified' to see them." & ASCII.LF
+             & "Should GPS remove all custom shortcuts ?"))
+        = Button_Yes
+      then
+         Remove_Shortcuts (Self.Kernel, User_Shortcuts);
+         Save_Custom_Keys (Self.Kernel);
+         Refresh_Editor (Self);
+      end if;
    end On_Reset;
 
    -------------------

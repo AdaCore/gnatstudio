@@ -37,10 +37,6 @@ package body GPS.Kernel.Actions is
         & " definition encountered"));
    Overrides_Builtin : constant String :=
      -"Action overrides a builtin action" & ASCII.LF;
-   Overrides_Old     : constant String :=
-     -"Action already defined in ";
-   Overridden_In     : constant String :=
-     -" and overriden in ";
 
    ----------
    -- Free --
@@ -76,7 +72,6 @@ package body GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Defined_In  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Stock_Id    : String := "")
    is
       Old : constant Action_Record_Access := Lookup_Action (Kernel, Name);
@@ -98,35 +93,9 @@ package body GPS.Kernel.Actions is
             --  for instance in the Build module.
 
             null;
-
-         elsif Old.Defined_In /= GNATCOLL.VFS.No_File then
-            if Defined_In /= GNATCOLL.VFS.No_File then
-               Insert
-                 (Kernel,
-                  '"' & Name & """: " & Overrides_Old
-                  & Display_Full_Name (Old.Defined_In)
-                  & Overridden_In & Display_Full_Name (Defined_In)
-                  & Future,
-                  Mode => Error);
-            else
-               Insert
-                 (Kernel,
-                  '"' & Name & """: " & Overrides_Old
-                  & Display_Full_Name (Old.Defined_In) & Future,
-                  Mode => Error);
-            end if;
          else
-            if Defined_In /= GNATCOLL.VFS.No_File then
-               Insert
-                 (Kernel,
-                  '"' & Name & """: " & Overrides_Builtin
-                  & (-" New definition in ")
-                  & Display_Full_Name (Defined_In) & Future,
-                  Mode => Error);
-            else
-               Insert (Kernel, '"' & Name & """: " & Overrides_Builtin
-                       & Future, Mode => Error);
-            end if;
+            Insert (Kernel, '"' & Name & """: " & Overrides_Builtin
+                    & Future, Mode => Error);
          end if;
 
          Overriden := True;
@@ -165,7 +134,6 @@ package body GPS.Kernel.Actions is
          Name       => new String'(Name),
          Modified   => False,
          Category   => Cat,
-         Defined_In => Defined_In,
          Overriden  => Overriden,
          Menus      => null,
          Stock_Id   => Stock);
