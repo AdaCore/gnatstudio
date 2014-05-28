@@ -1154,7 +1154,7 @@ package body KeyManager_Module.GUI is
          Gtk.Button.Signal_Clicked, On_Remove_Key'Access, Editor);
 
       Gtk_New (Editor.Grab_Button, -"Modify");
-      Editor.Remove_Button.Set_Tooltip_Text (-"Modify selected key binding");
+      Editor.Grab_Button.Set_Tooltip_Text (-"Modify selected key binding");
       Editor.Grab_Button.Set_Sensitive (False);
       Bbox.Add (Editor.Grab_Button);
       Widget_Callback.Object_Connect
