@@ -55,7 +55,6 @@ immediately. The highlighting of the next matches is done in the background
 if pygtk was installed along with GPS. Otherwise, it is done every time the
 pattern is modified, and will slow things down a little
 """
-
 
 
 from GPS import *
@@ -69,15 +68,18 @@ Preference('Plugins/isearch/highlightnext').create(
     + " To cancel, start an isearch and press Esc immediately",
     True)
 
-Preference('Plugins/isearch/nextmatchcolor').create('Matches color', 'color',
-        """Color to use when highlighting the next matches""", 'cyan')
+Preference('Plugins/isearch/nextmatchcolor').create(
+    'Matches color', 'color',
+    """Color to use when highlighting the next matches""", 'cyan')
 
-Preference('Plugins/isearch/bgcolor').create('Background color', 'color',
-        'Background color to use for the search field', 'yellow')
+Preference('Plugins/isearch/bgcolor').create(
+    'Background color', 'color',
+    'Background color to use for the search field', 'yellow')
 
-Preference('Plugins/isearch/errcolor').create('Error color', 'color',
-        'Background color to use for the search field when no match is found',
-        'red')
+Preference('Plugins/isearch/errcolor').create(
+    'Error color', 'color',
+    'Background color to use for the search field when no match is found',
+    'red')
 
 isearch_action_name = 'isearch'
 isearch_backward_action_name = 'isearch backward'
@@ -163,9 +165,10 @@ class Isearch(CommandWindow):
                 loc = loc2
 
     def insert_next_overlay(self, input):
-        result = self.overlay_loc.search(input, regexp=self.regexp,
-                case_sensitive=self.case_sensitive, dialog_on_failure=False,
-                backward=self.backward)
+        result = self.overlay_loc.search(
+            input, regexp=self.regexp,
+            case_sensitive=self.case_sensitive, dialog_on_failure=False,
+            backward=self.backward)
         if result:
             (self.overlay_loc, end_loc) = result
 
@@ -312,8 +315,9 @@ class Isearch(CommandWindow):
         if not self.locked and input != '':
             # Automatic case sensitivity: when we have an upper case, switch to
             # case sensitive
-            if not self.explicit_case_sensitive and not self.case_sensitive \
-                and input.lower() != input:
+            if (not self.explicit_case_sensitive
+               and not self.case_sensitive
+               and input.lower() != input):
                 self.case_sensitive = True
                 self.set_prompt(self.prompt())
             Isearch.last_case_sensitive = self.case_sensitive
@@ -405,6 +409,3 @@ once activated, each character you type is added to the search pattern, and
 GPS jumps to the stack occurrence of the pattern.
     """
     Isearch(backward=True)
-
-
-
