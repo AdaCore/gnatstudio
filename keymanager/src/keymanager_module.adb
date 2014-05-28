@@ -40,7 +40,6 @@ with Glib.Object;             use Glib.Object;
 with Glib;                    use Glib;
 
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
-with Gtk.Accel_Map;           use Gtk.Accel_Map;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Window;              use Gtk.Window;
 with Gtk.Widget;              use Gtk.Widget;
@@ -746,11 +745,6 @@ package body KeyManager_Module is
                if Tmp.Action /= null
                  and then Tmp.Action (Tmp.Action'First) = '/'
                then
-                  Success := Change_Entry
-                    ("<gps>" & Tmp.Action.all,
-                     Accel_Key  => 0,
-                     Accel_Mods => 0,
-                     Replace    => True);
                   Update_Shortcut_Display (Kernel, Tmp.Action.all);
                end if;
                Tmp := Tmp.Next;
@@ -870,23 +864,6 @@ package body KeyManager_Module is
          Remove_In_Keymap (Table);
       end if;
 
-      --  Systematically remove the accel binding when updating menus: the
-      --  binding will be set again in the call to Change_Entry further below.
-      --  Not doing that may cause the call to Change_Entry to return False if
-      --  the keys were already set, in which case we will fall back on
-      --  removing the shortcut altogether.
-      if Update_Menus
-        and then Action /= ""
-        and then Action (Action'First) = '/'
-      then
-         --  Guess the accel path from the menu
-         Success := Change_Entry
-           ("<gps>" & Action,
-            Accel_Key  => 0,
-            Accel_Mods => 0,
-            Replace    => True);
-      end if;
-
       --  On Windows binding control-c to non default copy action can result in
       --  unexpected behavior.
 
@@ -938,21 +915,6 @@ package body KeyManager_Module is
                      Set_Mnemonic_Modifier
                        (Get_Main_Window (Kernel),
                         Modif or Primary_Mod_Mask or Mod1_Mask or Shift_Mask);
-                  end if;
-
-                  if not Change_Entry
-                    ("<gps>" & Action,
-                     Accel_Key  => Partial_Key,
-                     Accel_Mods => Modif,
-                     Replace    => True)
-                  then
-                     --  If we couldn't change the entry, at very least disable
-                     --  it from the menu so as not to confuse users
-                     Success := Change_Entry
-                       ("<gps>" & Action,
-                        Accel_Key  => 0,
-                        Accel_Mods => 0,
-                        Replace    => True);
                   end if;
 
                   if Modif = Mnemonic_Modif then
@@ -1452,13 +1414,6 @@ package body KeyManager_Module is
                --  Need to remove action so that update_shortcut_display
                --  works.
                Free (Binding.Action);
-               if A (A'First) = '/' then
-                  Success := Change_Entry  --  remove gtk+ binding
-                    ("<gps>" & A,
-                     Accel_Key  => 0,
-                     Accel_Mods => 0,
-                     Replace    => True);
-               end if;
                Update_Shortcut_Display (Kernel, A);
             end;
          end if;
