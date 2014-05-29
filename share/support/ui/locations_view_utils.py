@@ -120,8 +120,11 @@ def on_label(context):
 
 
 def on_filter(context):
-    return isinstance(context, GPS.FileContext) and len(
-        GPS.Message.list(file=context.file())) > 0
+    try:
+        return isinstance(context, GPS.FileContext) and len(
+            GPS.Message.list(file=context.file())) > 0
+    except:
+        return False
 
 
 def on_contextual(context):
