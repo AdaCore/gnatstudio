@@ -1,10 +1,13 @@
 """This plug-in adds a menu File->Messages->Export Locations to Editor
    which opens an editor with the contents of the Locations view.
+   It also add contextual menu to clear items for current file from
+   location view.
 """
 
 
 import GPS
 import gps_utils
+import os.path
 
 
 def message_compare(a, b):
@@ -19,6 +22,7 @@ def message_compare(a, b):
         return -1
     return 1
 
+
 def remove_markup(text):
     """ Remove pango markup from text """
 
@@ -26,9 +30,9 @@ def remove_markup(text):
     result = ""
     for c in text:
         if c == '<':
-            remove=True
+            remove = True
         elif c == '>':
-            remove=False
+            remove = False
         else:
             if not remove:
                 result += c
@@ -37,7 +41,7 @@ def remove_markup(text):
 
 
 def in_locations_filter(context):
-   return context.module_name == "Location_View_Record"
+    return context.module_name == "Location_View_Record"
 
 
 @gps_utils.interactive(
@@ -51,7 +55,7 @@ def export_locations_to_editor():
     """
 
     categories = {}
-    files      = {}
+    files = {}
 
     # Get all messages
 
@@ -60,16 +64,16 @@ def export_locations_to_editor():
     # Filter them and organize them by category and file
     for m in msgs:
         if m.get_flags() & 2 == 0:
-            file     = m.get_file()
+            file = m.get_file()
             category = m.get_category()
 
             if category in categories:
                 if file in categories[category]:
-                    categories[category][file]+=[m]
+                    categories[category][file] += [m]
                 else:
-                    categories[category][file]=[m]
+                    categories[category][file] = [m]
             else:
-                categories[category]={file:[m]}
+                categories[category] = {file: [m]}
 
     if not categories:
         GPS.MDI.dialog("The Locations view is empty.")
@@ -89,12 +93,12 @@ def export_locations_to_editor():
         files_list.sort()
 
         for f in files_list:
-             text += "    " + f.name() + "\n"
-             messages = categories[c][f]
-             messages.sort (message_compare)
+            text += "    " + f.name() + "\n"
+            messages = categories[c][f]
+            messages.sort(message_compare)
 
-             for m in messages:
-                 text += "        %s:%s %s\n" % (
+            for m in messages:
+                text += "        %s:%s %s\n" % (
                     m.get_line(),
                     m.get_column(),
                     remove_markup(m.get_text()))
@@ -109,3 +113,28 @@ def export_locations_to_editor():
     # Write the contents
     buf.insert(buf.at(1, 1), text)
 
+
+def on_label(context):
+    return "Clear locations for <b>%s</b>" % (
+        (os.path.basename(context.file().name())))
+
+
+def on_filter(context):
+    return isinstance(context, GPS.FileContext) and len(
+        GPS.Message.list(file=context.file())) > 0
+
+
+def on_contextual(context):
+    list = GPS.Message.list(file=context.file())
+    for m in list:
+        m.remove()
+
+GPS.Contextual("Clear locations for file").create(
+    on_activate=on_contextual, filter=on_filter, label=on_label, group=30)
+
+
+@gps_utils.interactive(category="Locations", filter="File",
+                       name="Clear locations for file")
+def clear_locations_for_file():
+    context = GPS.current_context()
+    on_contextual(context)
