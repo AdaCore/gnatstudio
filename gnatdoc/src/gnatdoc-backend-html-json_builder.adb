@@ -65,17 +65,16 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
 
                elsif Event.Name = "image" then
                   Project := Kernel.Registry.Tree.Root_Project;
+                  Dir := Project.Project_Path.Get_Parent;
                   Dir :=
-                    GNATCOLL.VFS.Create
+                    GNATCOLL.VFS.Create_From_Base
                       (Filesystem_String
                          (Project.Attribute_Value
                             (Attribute =>
                                  Attribute_Pkg_String'
                                (Build (Pkg_Name, Image_Dir_Name)),
-                             Default   =>
-                               String
-                                 (Project.Project_Path.Get_Parent
-                                  .Full_Name.all))));
+                             Default   => String (Dir.Full_Name.all))),
+                       Dir.Full_Name.all);
                   File :=
                     GNATCOLL.VFS.Create_From_Base
                       (Filesystem_String (To_String (Event.Parameter)),
