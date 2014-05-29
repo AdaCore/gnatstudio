@@ -224,6 +224,7 @@ private
    function Read_Source_File
      (Context : access constant Docgen_Context;
       File    : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access;
-   --  Reads source code file and make attempt to convert it to UTF-8.
+   --  Reads source code file and make attempt to convert it to UTF-8. Replace
+   --  CR/LF pairs by single LF character.
 
 end GNATdoc;

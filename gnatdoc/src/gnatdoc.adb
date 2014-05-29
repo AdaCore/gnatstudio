@@ -18,6 +18,7 @@
 with Ada.Unchecked_Deallocation;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Latin_1;  use Ada.Characters.Latin_1;
 with Ada.Command_Line;
 with Config;
 with GNATCOLL.Iconv;
@@ -1848,6 +1849,8 @@ package body GNATdoc is
       Buffer  : GNAT.Strings.String_Access := File.Read_File;
       Aux     : GNAT.Strings.String_Access;
       Default : GNATCOLL.Iconv.Iconv_T;
+      Last    : Natural;
+      Index   : Positive;
 
    begin
       --  There are some heuristicts should be used to guess most appropriate
@@ -1863,20 +1866,46 @@ package body GNATdoc is
       --
       --  3. Default encoding is used otherwise.
 
-      if UTF8_Utils.Validate_UTF_8 (Buffer.all) then
-         return Buffer;
+      if not UTF8_Utils.Validate_UTF_8 (Buffer.all) then
+         Default := GNATCOLL.Iconv.Iconv_Open
+           (GNATCOLL.Iconv.UTF8, Context.Options.Default_Encoding.all);
+
+         if UTF8_Utils.Validate (Default, Buffer.all) then
+            Aux := Buffer;
+            Buffer := new String'(GNATCOLL.Iconv.Iconv (Default, Aux.all));
+            GNAT.Strings.Free (Aux);
+         end if;
+
+         GNATCOLL.Iconv.Iconv_Close (Default);
       end if;
 
-      Default := GNATCOLL.Iconv.Iconv_Open
-        (GNATCOLL.Iconv.UTF8, Context.Options.Default_Encoding.all);
+      --  Replace CR/LF pairs by singe LF character
 
-      if UTF8_Utils.Validate (Default, Buffer.all) then
+      Index := Buffer'First;
+      Last  := Index - 1;
+
+      while Index <= Buffer'Last loop
+         Last := Last + 1;
+
+         if Buffer (Index) = CR
+           and then Index < Buffer'Last
+           and then Buffer (Index + 1) = LF
+         then
+            Buffer (Last) := LF;
+            Index := Index + 1;
+
+         elsif Index /= Last then
+            Buffer (Last) := Buffer (Index);
+         end if;
+
+         Index := Index + 1;
+      end loop;
+
+      if Last /= Buffer'Last then
          Aux := Buffer;
-         Buffer := new String'(GNATCOLL.Iconv.Iconv (Default, Aux.all));
+         Buffer := new String'(Aux (Aux'First .. Last));
          GNAT.Strings.Free (Aux);
       end if;
-
-      GNATCOLL.Iconv.Iconv_Close (Default);
 
       return Buffer;
    end Read_Source_File;
