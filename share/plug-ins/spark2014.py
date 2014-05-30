@@ -475,8 +475,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
@@ -498,8 +498,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
@@ -523,8 +523,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
@@ -546,8 +546,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
@@ -568,8 +568,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
@@ -590,8 +590,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
@@ -613,8 +613,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
@@ -635,8 +635,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
@@ -657,8 +657,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
@@ -679,8 +679,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
@@ -721,8 +721,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          utf_converter
          progress_parser
          gnatprove_parser
-         location_parser
          console_writer
+         location_parser
          end_of_build
        </output-parsers>
     </target>
