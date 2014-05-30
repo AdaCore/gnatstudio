@@ -876,7 +876,22 @@ def toggle_trace(msg, lines):
 class GNATprove_Parser(tool_output.OutputParser):
 
     """Class that parses messages of the gnatprove tool, and creates
-    GNATprove_Message objects instead of GPS.Message objects"""
+       decorates the messages coming from GNATprove with actions (showing
+       traces) when needed.
+       In IDE mode, and when extra info is available for a message, Gnatprove
+       appends a symbol [#id] to a message, where "id" is a number  which is
+       unique for this unit and this message.
+       The GNATprove parser strips the extra symbol from the message so that
+       it's not visible in GPS, and builds up a mapping
+         msg -> id
+       Once GNATprove is terminated, for each msg which has an entry in this
+       mapping, the parser opens the files "unit.flow" and "unit.proof", which
+       are JSON files. See the [parsejson] function for the format of these
+       files.
+       Once these files are parsed, the GNATprove parser now knows the extra
+       information associated to a message, if any. See [act_on_extra_info] to
+       know what is down with this extra information.
+    """
 
     def __init__(self, child):
         tool_output.OutputParser.__init__(self, child)
@@ -928,7 +943,15 @@ class GNATprove_Parser(tool_output.OutputParser):
 
     def parsejson(self, unit, file):
         """parse the json file "file", which belongs to unit "unit" and fill
-           the "extra_info" mapping for any entry
+           the "extra_info" mapping for any entry.
+           The json file, if it exists and is a valid JSON value, is a list of
+           dictionaries. Some of these dictionaries have the field "msg_id",
+           these dictionaries are extra information for the corresponding
+           message for the current unit. For those messages, we simply build
+           up a mapping
+             (unit, id) -> extra_info
+           which is later used to act on this extra information for each
+           message.
         """
         if os.path.isfile(file):
             with open(file, 'r') as f:
@@ -943,8 +966,9 @@ class GNATprove_Parser(tool_output.OutputParser):
 
     def act_on_extra_info(self, m, extra, objdir, command):
         """act on extra info for the message m. More precisely, if the message
-           has a tracefile, add an action to the message, and if the message
-           has manual proof information, run the external editor
+           has a tracefile, add an action to the message which will show/hide
+           the corresponding trace, and if the message has manual proof
+           information, run the external editor.
         """
 
         if 'tracefile' in extra and extra['tracefile'] != '':
