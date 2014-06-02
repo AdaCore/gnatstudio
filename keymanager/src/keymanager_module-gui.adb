@@ -92,6 +92,7 @@ package body KeyManager_Module.GUI is
    Hist_Show_All_Menus : constant History_Key := "shortcuts-show-all-menus";
    Hist_Shortcuts_Only : constant History_Key := "shortcuts-only";
    Hist_Categories     : constant History_Key := "shorcuts-categories";
+   Hist_Show_Empty_Cat : constant History_Key := "shorcuts-show-empty-cat";
 
    type Keys_Editor_Record is new Generic_Views.View_Record with record
       View               : Gtk_Tree_View;
@@ -277,18 +278,16 @@ package body KeyManager_Module.GUI is
       Action : Action_Record_Access) return Gtk_Tree_Iter
    is
       Parent : Gtk_Tree_Iter;
+      Cat : constant String :=
+        (if Action.Category = null
+         then "<no category>"
+         else Action.Category.all);
+
    begin
-      if Action = null or else Action.Category = null then
-         return Null_Iter;
-
-      else
-         Parent := Find_Node (Model, Action.Category.all, Action_Column);
-         if Parent = Null_Iter then
-            Parent := Set (Model, Null_Iter,
-                           Descr => Action.Category.all);
-         end if;
+      Parent := Find_Node (Model, Cat, Action_Column);
+      if Parent = Null_Iter then
+         Parent := Set (Model, Null_Iter, Descr => Cat);
       end if;
-
       return Parent;
    end Find_Parent;
 
@@ -303,6 +302,8 @@ package body KeyManager_Module.GUI is
         Get_History (Get_History (Editor.Kernel).all, Hist_Categories);
       Shortcuts_Only : constant Boolean :=
         Get_History (Get_History (Editor.Kernel).all, Hist_Shortcuts_Only);
+      Show_Empty_Cat : constant Boolean :=
+        Get_History (Get_History (Editor.Kernel).all, Hist_Show_Empty_Cat);
 
       Parent       : Gtk_Tree_Iter;
       Action       : Action_Record_Access;
@@ -320,47 +321,52 @@ package body KeyManager_Module.GUI is
          Action := Get (Action_Iter);
          exit when Action = null;
 
-         if Action.Category /= null then
-            declare
-               Name : constant String := Get (Action_Iter).Name.all;
-               Key  : constant String := Lookup_Key_From_Action
-                 (Get_Shortcuts (Editor.Kernel),
-                  Name,
-                  Use_Markup => False,
-                  Is_User_Changed => User_Changed'Unchecked_Access,
-                  Default => -Disabled_String);
-               Show : Boolean;
-            begin
+         declare
+            Name : constant String := Get (Action_Iter).Name.all;
+            Key  : constant String := Lookup_Key_From_Action
+              (Get_Shortcuts (Editor.Kernel),
+               Name,
+               Use_Markup => False,
+               Is_User_Changed => User_Changed'Unchecked_Access,
+               Default => -Disabled_String);
+            Show : Boolean;
+         begin
+            --  Do not show actions with no category, by default
+            Show := Show_Empty_Cat
+              or else Action.Category /= null
+              or else Key /= "";
+
+            if Show then
                if Name (Name'First) /= '/' then
                   Show := not Shortcuts_Only or else Key /= "";
                else
                   Show := Key /= ""
                     or else (not Shortcuts_Only and then Show_All_Menus);
                end if;
+            end if;
 
-               if Show then
-                  if Show_Categories then
-                     --  Create category node only when needed, which ensures
-                     --  we do not show empty categories
-                     Parent := Find_Parent (Editor.Model, Action);
-                  else
-                     Parent := Null_Iter;
-                  end if;
-
-                  Parent := Set
-                    (Model   => Editor.Model,
-                     Parent  => Parent,
-                     Descr   => Name,
-                     Icon    => (if Action.Stock_Id /= null then
-                                      Action.Stock_Id.all
-                                 else ""),
-                     Key     => Key
-                     & (if User_Changed then " (modified)" else ""),
-                     Weight  => (if User_Changed then Pango_Weight_Bold
-                                 else Pango_Weight_Normal));
+            if Show then
+               if Show_Categories then
+                  --  Create category node only when needed, which ensures
+                  --  we do not show empty categories
+                  Parent := Find_Parent (Editor.Model, Action);
+               else
+                  Parent := Null_Iter;
                end if;
-            end;
-         end if;
+
+               Parent := Set
+                 (Model   => Editor.Model,
+                  Parent  => Parent,
+                  Descr   => Name,
+                  Icon    => (if Action.Stock_Id /= null then
+                                   Action.Stock_Id.all
+                              else ""),
+                  Key     => Key
+                    & (if User_Changed then " (modified)" else ""),
+                  Weight  => (if User_Changed then Pango_Weight_Bold
+                              else Pango_Weight_Normal));
+            end if;
+         end;
 
          Next (Editor.Kernel, Action_Iter);
       end loop;
@@ -832,7 +838,7 @@ package body KeyManager_Module.GUI is
    begin
       Gtk_New (Dialog,
                Title  => -"Select key theme name",
-               Parent => Get_Main_Window (Self.Kernel),
+               Parent => Gtk_Window (Self.Get_Toplevel),
                Flags  => Destroy_With_Parent or Modal);
 
       Gtk_New (Label, -"Enter theme name:");
@@ -968,6 +974,16 @@ package body KeyManager_Module.GUI is
       Menu.Append (Check);
       Check.On_Toggled (Refill_Editor'Access, View);
 
+      Gtk_New (Check, Label => -"Show all categories");
+      Check.Set_Tooltip_Text
+        (-("Whether to show actions with no category."
+         & ASCII.LF
+         & "These actions are typically internal to GPS, and are generally not"
+         & " bound to a key shortcut. However, it might occasionally be useful"
+         & " to see them."));
+      Associate (Get_History (View.Kernel).all, Hist_Show_Empty_Cat, Check);
+      Menu.Append (Check);
+      Check.On_Toggled (Refill_Editor'Access, View);
    end Create_Menu;
 
    ------------------------
@@ -1230,6 +1246,8 @@ package body KeyManager_Module.GUI is
         (Get_History (Kernel).all, Hist_Shortcuts_Only, False);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Categories, True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Hist_Show_Empty_Cat, False);
 
       Register_Action
         (Kernel, "key shortcuts expand all",

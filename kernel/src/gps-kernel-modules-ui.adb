@@ -1404,17 +1404,16 @@ package body GPS.Kernel.Modules.UI is
                  (Action, Create_Menu_Path (Gtk_Menu_Item (Self)));
             end if;
 
-            if Action.Category = null then
-               Action.Category := new String'("");
-            end if;
-
             Self.Set_Tooltip_Markup
               (Escape_Text (Action.Description.all)
                & ASCII.LF & ASCII.LF
                & "<b>Action:</b> "
                & Escape_Text (Action.Name.all) & ASCII.LF
                & "<b>Category:</b> "
-               & Escape_Text (Action.Category.all) & ASCII.LF
+               & Escape_Text
+                 ((if Action.Category = null then ""
+                  else Action.Category.all))
+               & ASCII.LF
                & "<b>Shortcut:</b> "
                & Data.Kernel.Get_Shortcut
                  (Action          => Action.Name.all,

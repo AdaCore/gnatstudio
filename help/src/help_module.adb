@@ -770,7 +770,7 @@ package body Help_Module is
         (Kernel, "display documentation " & Descr, Command,
          -"Load the documentation for '" & Descr
          & "' into an external web browser",
-         Category => Category);
+         Category => "");
 
       if Menu_Path /= "" then
          if Menu_Before /= "" then
@@ -1032,7 +1032,7 @@ package body Help_Module is
                     (Kernel,
                      URL         => URL,
                      Descr       => Descr.Value.all,
-                     Category    => Cat.Value.all,
+                     Category    => (if Cat = null then "" else Cat.Value.all),
                      Menu_Before => Get_Attribute (Menu, "before", ""),
                      Menu_After  => Get_Attribute (Menu, "after", ""),
                      Menu_Path   => Menu.Value.all);
@@ -1054,7 +1054,7 @@ package body Help_Module is
                   Shell_Cmd   => Shell.all,
                   Shell_Lang  => Shell_Lang.all,
                   Descr       => Descr.Value.all,
-                  Category    => Cat.Value.all,
+                  Category    => (if Cat = null then "" else Cat.Value.all),
                   Menu_Before => Get_Attribute (Menu, "before", ""),
                   Menu_After  => Get_Attribute (Menu, "after", ""),
                   Menu_Path   => Menu.Value.all);
