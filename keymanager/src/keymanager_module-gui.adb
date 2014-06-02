@@ -1137,8 +1137,11 @@ package body KeyManager_Module.GUI is
 
       Gtk_New (Button, -"Create");
       Button.Set_Tooltip_Text
-        (-("Create a new key theme which includes the base theme plus the user"
-         & " any change you did. This resets all custom changes."));
+        (-("Creates a new key theme. This theme includes all the current"
+         & " key bindings."
+         & ASCII.LF
+         & "Once the theme has been created, the manual changes will be part"
+         & " of the theme, and thus no longer marked as 'modified'."));
       Bbox.Add (Button);
       Widget_Callback.Object_Connect
         (Button, Gtk.Button.Signal_Clicked, On_Create'Access, Editor);
