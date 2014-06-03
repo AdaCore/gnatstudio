@@ -260,6 +260,7 @@ def load_json_data(data, diagramFactory=None):
         diagrams.append(diag)
 
         diag.ids = items
+        diag.id = d.get('id', None)
 
         for o in d.get('items', []):
             it = parse_item(items, o, styles)
