@@ -454,30 +454,51 @@ function buildDocumentationPage() {
 
 /**
  * ???
+ * @param {Object} entries    ???.
+ */
+
+function buildPackagesIndexList(entries) {
+    var list = document.createElement('ul');
+
+    for (var index = 0; index < entries.length; index++)
+    {
+        var entry = entries[index];
+
+        if (entry.items == undefined) {
+            var item = document.createElement('li');
+            var href = document.createElement('a');
+
+            href.href = entry.file;
+            href.target = 'contentView';
+            text = document.createTextNode(entry.label);
+            href.appendChild(text);
+            item.appendChild(href);
+            list.appendChild(item);
+
+        } else {
+            var item = document.createElement('li');
+
+            item.appendChild(document.createTextNode(entry.label));
+            item.appendChild(buildPackagesIndexList(entry.items));
+            list.appendChild(item);
+        }
+    }
+
+    return list;
+}
+
+/**
+ * ???
  * @param {Object} toc    ???.
  */
 
 function buildPackagesIndex(toc) {
-    var list = document.createElement('ul');
-
-    toc.appendChild(list);
-
-    for (var index = 0; index < GNATdoc.DocumentationIndex.length; index++)
-    {
-        var entry = GNATdoc.DocumentationIndex[index];
-        var item = document.createElement('li');
-        var href = document.createElement('a');
-
-        href.href = entry.file;
-        href.target = 'contentView';
-        text = document.createTextNode(entry.label);
-        href.appendChild(text);
-        item.appendChild(href);
-        list.appendChild(item);
-    }
+    var list = buildPackagesIndexList(GNATdoc.DocumentationIndex);
 
     list.style.display = 'none';
     list.id = 'packagesAndClasses';
+
+    toc.appendChild(list);
 }
 
 /**
