@@ -463,11 +463,10 @@ function buildPackagesIndexList(entries) {
     for (var index = 0; index < entries.length; index++)
     {
         var entry = entries[index];
+        var item = document.createElement('li');
+        var href = document.createElement('a');
 
         if (entry.items == undefined) {
-            var item = document.createElement('li');
-            var href = document.createElement('a');
-
             href.href = entry.file;
             href.target = 'contentView';
             text = document.createTextNode(entry.label);
@@ -476,9 +475,8 @@ function buildPackagesIndexList(entries) {
             list.appendChild(item);
 
         } else {
-            var item = document.createElement('li');
-
-            item.appendChild(document.createTextNode(entry.label));
+            href.appendChild(document.createTextNode(entry.label));
+            item.appendChild(href);
             item.appendChild(buildPackagesIndexList(entry.items));
             list.appendChild(item);
         }
