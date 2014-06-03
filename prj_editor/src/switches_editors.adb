@@ -504,7 +504,8 @@ package body Switches_Editors is
                      Prepend   => False);
                   Changed := True;
 
-               elsif To_Remove then
+               elsif not Is_Default_Value then
+                  --  Args'Length = 0 and diffs from old value, so drop it
                   Trace (Me, "No more switches for '"
                          & Tool.Project_Package.all & "."
                          & Tool.Project_Attribute.all & "'");
