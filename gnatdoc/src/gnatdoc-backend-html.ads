@@ -17,6 +17,7 @@
 
 --  This package implements a HTML backend of Docgen.
 
+private with Ada.Containers.Ordered_Maps;
 private with Ada.Containers.Ordered_Sets;
 
 with GNATCOLL.JSON;
@@ -59,8 +60,20 @@ private
      new Ada.Containers.Ordered_Sets
        (GNATCOLL.JSON.JSON_Value, Less, GNATCOLL.JSON."=");
 
-   type HTML_Backend is new GNATdoc.Backend.Base.Base_Backend with record
+   type Docs_Group is record
+      Name      : Unbounded_String;
       Doc_Files : Docs_Sets.Set;
+   end record;
+
+   type Docs_Group_Access is access all Docs_Group;
+
+   package Docs_Maps is
+     new Ada.Containers.Ordered_Maps
+       (Unbounded_String, Docs_Group_Access);
+
+   type HTML_Backend is new GNATdoc.Backend.Base.Base_Backend with record
+      Doc_Groups : Docs_Maps.Map;
+      Doc_Files  : Docs_Sets.Set;
       --  Set of generated documentation files.
    end record;
 

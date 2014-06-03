@@ -635,10 +635,26 @@ package body GNATdoc.Backend.HTML is
       --  Write JSON data file for index of documentation files.
 
       declare
-         Translation : Translate_Set;
-         Result      : GNATCOLL.JSON.JSON_Array;
+         Translation  : Translate_Set;
+         Result       : GNATCOLL.JSON.JSON_Array;
+         Group_Items  : GNATCOLL.JSON.JSON_Array;
+         Group_Object : GNATCOLL.JSON.JSON_Value;
 
       begin
+         for Group of Self.Doc_Groups loop
+            Clear (Group_Items);
+
+            for Object of Group.Doc_Files loop
+               Append (Group_Items, Object);
+            end loop;
+
+            Group_Object := Create_Object;
+            Group_Object.Set_Field ("label", Group.Name);
+            Group_Object.Set_Field ("items", Group_Items);
+
+            Append (Result, Group_Object);
+         end loop;
+
          for Object of Self.Doc_Files loop
             Append (Result, Object);
          end loop;
@@ -1124,6 +1140,7 @@ package body GNATdoc.Backend.HTML is
       Summary        : JSON_Array;
       Description    : JSON_Array;
       Entity_Entries : JSON_Array;
+      Default_Group  : Boolean := True;
 
    begin
       if Present (LL.Get_Instance_Of (Entity)) then
@@ -1257,7 +1274,36 @@ package body GNATdoc.Backend.HTML is
 
       Index_Entry.Set_Field ("label", Get_Full_Name (Entity));
       Index_Entry.Set_Field ("file", "docs/" & HTML_File_Name);
-      Self.Doc_Files.Insert (Index_Entry);
+
+      if Present (Get_Comment (Entity)) then
+         declare
+            Cursor : Tag_Cursor := New_Cursor (Get_Comment (Entity));
+            Tag    : Tag_Info_Ptr;
+
+         begin
+            while not At_End (Cursor) loop
+               Tag := Get (Cursor);
+
+               if Tag.Tag = "group" then
+                  Default_Group := False;
+
+                  if not Self.Doc_Groups.Contains (Tag.Text) then
+                     Self.Doc_Groups.Insert
+                       (Tag.Text,
+                        new Docs_Group'(Name => Tag.Text, Doc_Files => <>));
+                  end if;
+
+                  Self.Doc_Groups (Tag.Text).Doc_Files.Insert (Index_Entry);
+               end if;
+
+               Next (Cursor);
+            end loop;
+         end;
+      end if;
+
+      if Default_Group then
+         Self.Doc_Files.Insert (Index_Entry);
+      end if;
    end Generate_Lang_Documentation;
 
    ------------------------
