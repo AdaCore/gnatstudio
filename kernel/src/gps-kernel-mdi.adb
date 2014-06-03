@@ -400,7 +400,7 @@ package body GPS.Kernel.MDI is
            -("If enabled, automatically reload files when they have been"
            & " changed on the disk."),
          Label   => -"Auto-Reload files",
-         Page    => -"Editors");
+         Page    => -"Editor");
    end Create_MDI_Preferences;
 
    -------------------
@@ -1811,7 +1811,9 @@ package body GPS.Kernel.MDI is
       --  event is never sent to the editor, and there is a drag selection
       --  taking place.
 
-      if Kernel.Check_Monitored_Files_Id = Glib.Main.No_Source_Id then
+      if Kernel.Check_Monitored_Files_Dialog = null
+        and then Kernel.Check_Monitored_Files_Id = Glib.Main.No_Source_Id
+      then
          Kernel.Check_Monitored_Files_Id := Kernel_Sources.Timeout_Add
            (100, Check_Timestamp_Idle'Access, Kernel);
       end if;
@@ -1898,6 +1900,11 @@ package body GPS.Kernel.MDI is
       Ignore   : Gtk_Widget;
       Response : Gtk_Response_Type;
    begin
+      if Kernel.Check_Monitored_Files_Dialog /= null then
+         --  Let the current dialog complete before we display another one.
+         return False;
+      end if;
+
       if Kernel.Check_Monitored_Files_Id /= Glib.Main.No_Source_Id then
          Remove (Kernel.Check_Monitored_Files_Id);
          Kernel.Check_Monitored_Files_Id := Glib.Main.No_Source_Id;
@@ -1940,6 +1947,7 @@ package body GPS.Kernel.MDI is
                      Title  => -"Files changed on disk",
                      Parent => Get_Current_Window (Kernel),
                      Flags  => Modal or Destroy_With_Parent);
+            Kernel.Check_Monitored_Files_Dialog := Dialog;
 
             Gtk_New (Label, -"The following files were changed on disk."
                      & ASCII.LF);
@@ -1977,11 +1985,10 @@ package body GPS.Kernel.MDI is
               ("Reload selected files from disk and discard current changes."
                & ASCII.LF
                & "If the file was deleted, the view will be closed");
+            Ignore.Grab_Default;
 
-            Ignore := Add_Button (Dialog, -"Ignore", Gtk_Response_No);
+            Ignore := Add_Button (Dialog, -"Ignore", Gtk_Response_Cancel);
             Ignore.Set_Tooltip_Text (-"Keep current GPS changes");
-
-            Dialog.Set_Default_Response (Gtk_Response_No);
 
             Gdk.Main.Pointer_Ungrab;
             Dialog.Show_All;
@@ -1990,7 +1997,9 @@ package body GPS.Kernel.MDI is
             Set_Pref (Auto_Reload_Files, Kernel, Auto_Reload.Get_Active);
          end if;
 
-         if Response = Gtk_Response_No then
+         if Response = Gtk_Response_Cancel
+           or else Response = Gtk_Response_Delete_Event
+         then
             To_Update.Clear;
          elsif Dialog /= null then
             declare
@@ -2013,6 +2022,7 @@ package body GPS.Kernel.MDI is
 
          if Dialog /= null then
             Dialog.Destroy;
+            Kernel.Check_Monitored_Files_Dialog := null;
          end if;
 
          F := Modified.First;

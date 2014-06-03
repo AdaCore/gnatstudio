@@ -37,6 +37,7 @@ with GNATCOLL.Xref; use GNATCOLL.Xref;
 with Glib.Main;
 with Glib.Object;  use Glib;
 with Gdk.Types;
+with Gtk.Dialog;
 with Gtk.Widget;
 with Gtk.Window;
 
@@ -1249,6 +1250,9 @@ private
       --  created.
 
       Contextual_Menu_Open : Boolean := False;
+
+      Check_Monitored_Files_Dialog : Gtk.Dialog.Gtk_Dialog := null;
+      --  The dialog that let's users synchronize edited files with the disk.
 
       Check_Monitored_Files_Id : Glib.Main.G_Source_Id :=
          Glib.Main.No_Source_Id;
