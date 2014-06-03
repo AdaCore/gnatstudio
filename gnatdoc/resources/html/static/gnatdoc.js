@@ -475,6 +475,8 @@ function buildPackagesIndexList(entries) {
             list.appendChild(item);
 
         } else {
+            href.href = 'blank.html';
+            href.target = 'contentView';
             href.appendChild(document.createTextNode(entry.label));
             item.appendChild(href);
             item.appendChild(buildPackagesIndexList(entry.items));
