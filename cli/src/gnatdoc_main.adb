@@ -362,8 +362,34 @@ begin
    end;
 
    --  Check project file path passed in command line
+   --  Use project file in current directory if only one project file present
    --  Exit with message if no project file path found at all
    if not GPS.CLI_Utils.Is_Project_Path_Specified (Project_Name) then
+      declare
+         Files : File_Array_Access := Get_Current_Dir.Read_Dir (Files_Only);
+
+      begin
+         Free (Project_Name);
+
+         for F of Files.all loop
+            if F.File_Extension = ".gpr" then
+               if Project_Name /= null then
+                  --  More that one project file found in current directory,
+                  --  output error message.
+
+                  Free (Project_Name);
+                  exit;
+               end if;
+
+               Project_Name := new String'(String (F.Base_Name));
+            end if;
+         end loop;
+
+         Unchecked_Free (Files);
+      end;
+   end if;
+
+   if Project_Name = null then
       Put_Line ("No project file specified");
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
       return;
