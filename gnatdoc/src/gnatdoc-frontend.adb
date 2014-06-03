@@ -4962,7 +4962,8 @@ package body GNATdoc.Frontend is
             --  Reference to another package, method, type, etc.
            or else Tag = "c_version"
             --  For bindings, the version of the C file
-            --  or else Tag = "group" --  ???
+           or else Tag = "group"
+            --  For grouping of packages in index
             --  or else Tag = "code"  --  ???
 
             --  JavaDoc possible additional tags???
