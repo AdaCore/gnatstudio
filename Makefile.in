@@ -69,7 +69,7 @@ endif
 	$(MKDIR) share/icons/light/svg
 	(cd distrib; $(PYTHON) iconsets.py)
 
-	(cd share; tar cf - plug-ins/*.py) | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - plug-ins/*) | (cd $(sharedir)/gps; tar xf -)
 ifeq ($(OS),Windows_NT)
 # Clean-up changes made above for Windows.
 	$(MV) share/plug-ins/_subversion_ share/plug-ins/subversion.py

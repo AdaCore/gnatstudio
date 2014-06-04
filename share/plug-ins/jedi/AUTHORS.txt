@@ -1,0 +1,27 @@
+Main Authors
+============
+
+David Halter (@davidhalter) <davidhalter88@gmail.com>
+Takafumi Arakaki (@tkf) <aka.tkf@gmail.com>
+
+Code Contributors
+=================
+
+Danilo Bargen (@dbrgn) <mail@dbrgn.ch>
+Laurens Van Houtven (@lvh) <_@lvh.cc>
+Aldo Stracquadanio (@Astrac) <aldo.strac@gmail.com>
+Jean-Louis Fuchs (@ganwell) <ganwell@fangorn.ch>
+tek (@tek)
+Yasha Borevich (@jjay) <j.borevich@gmail.com>
+Aaron Griffin <aaronmgriffin@gmail.com>
+andviro (@andviro)
+Mike Gilbert (@floppym) <floppym@gentoo.org>
+Aaron Meurer (@asmeurer) <asmeurer@gmail.com>
+Lubos Trilety <ltrilety@redhat.com>
+Akinori Hattori (@hattya)
+srusskih (@srusskih)
+Steven Silvester (@blink1073)
+Colin Duquesnoy (@ColinDuquesnoy) <colin.duquesnoy@gmail.com>
+Jorgen Schaefer (@jorgenschaefer) <contact@jorgenschaefer.de>
+
+Note: (@user) means a github user name.
