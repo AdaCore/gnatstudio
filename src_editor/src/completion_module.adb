@@ -68,7 +68,6 @@ with Completion_Window;         use Completion_Window;
 with Completion;                use Completion;
 with Completion.History;        use Completion.History;
 with Completion.Keywords;       use Completion.Keywords;
-with Completion.Aliases;        use Completion.Aliases;
 with Completion.Python;         use Completion.Python;
 
 with Completion.Ada;            use Completion.Ada;
@@ -218,7 +217,6 @@ package body Completion_Module is
 
       Completion_History  : Completion_History_Access;
       Completion_Keywords : Completion_Keywords_Access;
-      Completion_Aliases  : Completion_Aliases_Access;
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -461,7 +459,6 @@ package body Completion_Module is
       Kill_File_Iteration (Get_Kernel (Module), Db_Loading_Queue);
       Free (Completion_Resolver_Access (Module.Completion_History));
       Free (Completion_Resolver_Access (Module.Completion_Keywords));
-      Free (Completion_Resolver_Access (Module.Completion_Aliases));
 
       Reset_Completion_Data;
       Completion_Module := null;
@@ -858,8 +855,6 @@ package body Completion_Module is
                        Current_File   => Get_Filename (Buffer),
                        Current_Buffer => Data.The_Text);
 
-                  Register_Resolver
-                    (Data.Manager, Completion_Module.Completion_Aliases);
                else
 
                   Data.Manager := new C_Completion_Manager;
@@ -1261,7 +1256,6 @@ package body Completion_Module is
       Completion_Window.Entity_Views.Register_Module (Kernel);
 
       Completion_Module.Completion_History := new Completion_History;
-      Completion_Module.Completion_Aliases := new Completion_Aliases;
       Completion_Module.Completion_Keywords := new Completion_Keywords;
 
       --  Register the commands
