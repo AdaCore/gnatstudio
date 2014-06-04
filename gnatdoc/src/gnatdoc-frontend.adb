@@ -5752,13 +5752,17 @@ package body GNATdoc.Frontend is
                      end Get_Name;
 
                      Param_Name : constant String := Get_Name (Attribute);
+                     Cursor     : constant Tag_Cursor :=
+                                    Search_Param (Comment, Param_Name);
+
                   begin
-                     Current :=
-                       Append_Tag
-                         (Comment,
-                          Tag       => Tag_Text,
-                          Entity    => No_Root_Entity,
-                          Attribute => To_Unbounded_String (Param_Name));
+                     if Cursor = No_Cursor then
+                        Error (E,
+                          "wrong parameter name '"
+                          & Param_Name & "'");
+                     else
+                        Current := Cursor;
+                     end if;
                   end;
 
                --  Opening other tag

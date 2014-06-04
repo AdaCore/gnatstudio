@@ -968,12 +968,7 @@ package body GNATdoc.Backend.HTML is
                      Tag := Get (Cursor);
 
                      if Tag.Tag = "param" then
-                        if Tag.Entity.Element /= No_Root_Entity then
-                           --  This check was installed to workaround N328-008
-                           --  and can be removed when it will be fixed.
-
-                           Append (Parameters, Entity_Data (Tag));
-                        end if;
+                        Append (Parameters, Entity_Data (Tag));
                      end if;
 
                      Next (Cursor);
