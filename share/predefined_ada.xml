@@ -2467,25 +2467,6 @@ returned is:
 by copy (value)
 
 by reference
-
-by descriptor (default descriptor class)
-
-by descriptor (UBS: unaligned bit string)
-
-by descriptor (UBSB: aligned bit string with arbitrary bounds)
-
-by descriptor (UBA: unaligned bit array)
-
-by descriptor (S: string, also scalar access type parameter)
-
-by descriptor (SB: string with arbitrary bounds)
-
-by descriptor (A: contiguous array)
-
-by descriptor (NCA: non-contiguous array)
-
-Values from 3 through 10 are only relevant to Digital OpenVMS
-implementations.
       </DOC>
    </ATTRIBUTE>
 
@@ -6451,10 +6432,6 @@ MECHANISM_ASSOCIATION ::=
 MECHANISM_NAME ::=
 Value
 | Reference
-| Descriptor [([Class =&gt;] CLASS_NAME)]
-| Short_Descriptor [([Class =&gt;] CLASS_NAME)]
-
-CLASS_NAME ::= ubs | ubsb | uba | s | sb | a | nca
 
 This pragma is used in conjunction with a pragma `Import' to specify
 additional information for an imported function.  The pragma `Import'
@@ -6477,19 +6454,6 @@ specify a single mechanism name, it applies to all parameters.
 Otherwise you may specify a mechanism on a parameter by parameter basis
 using either positional or named notation.  If the mechanism is not
 specified, the default mechanism is used.
-
-Passing by descriptor is supported only on the OpenVMS ports of GNAT.
-The default behavior for Import_Function is to pass a 64bit descriptor
-unless short_descriptor is specified, then a 32bit descriptor is passed.
-
-`First_Optional_Parameter' applies only to OpenVMS ports of GNAT.
-It specifies that the designated parameter and all following parameters
-are optional, meaning that they are not passed at the generated code
-level (this is distinct from the notion of optional parameters in Ada
-where the parameters are passed anyway with the designated optional
-parameters).  All optional parameters must be of mode `IN' and have
-default parameter values that are either known at compile time
-expressions, or uses of the `'Null_Parameter' attribute.
       </DOC>
    </PRAGMA>
 
@@ -6545,13 +6509,7 @@ MECHANISM_NAME
 MECHANISM_ASSOCIATION ::=
 [formal_parameter_NAME =&gt;] MECHANISM_NAME
 
-MECHANISM_NAME ::=
-Value
-| Reference
-| Descriptor [([Class =&gt;] CLASS_NAME)]
-| Short_Descriptor [([Class =&gt;] CLASS_NAME)]
-
-CLASS_NAME ::= ubs | ubsb | uba | s | sb | a | nca
+MECHANISM_NAME ::= Value | Reference
 
 This pragma is identical to `Import_Function' except that it applies to
 a procedure rather than a function and the parameters `Result_Type' and
@@ -6589,13 +6547,7 @@ MECHANISM_NAME
 MECHANISM_ASSOCIATION ::=
 [formal_parameter_NAME =&gt;] MECHANISM_NAME
 
-MECHANISM_NAME ::=
-Value
-| Reference
-| Descriptor [([Class =&gt;] CLASS_NAME)]
-| Short_Descriptor [([Class =&gt;] CLASS_NAME)]
-
-CLASS_NAME ::= ubs | ubsb | uba | s | sb | a | nca
+MECHANISM_NAME ::= Value | Reference
 
 This pragma is identical to `Import_Procedure' except that the first
 parameter of LOCAL_NAME, which must be present, must be of mode `OUT',
