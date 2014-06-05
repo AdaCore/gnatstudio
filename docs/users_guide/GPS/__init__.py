@@ -9069,6 +9069,15 @@ class Project(object):
         :func:`GPS.Project.recompute` to activate this change (so that
         multiple changes to the project can be grouped.
 
+        If name does not correspond to an actual scenario variable in
+        your project (i.e. the name of the variable in an "external(...)"
+        typed expression), the corresponding environment variable is
+        still changed. This might impact the reloading of the project,
+        for instance when "external(...)" is used to construct the name
+        of a directory, as in::
+
+            for Object_Dir use external("BASE") & "/obj";
+
         :param name: A string
         :param value: A string
 
