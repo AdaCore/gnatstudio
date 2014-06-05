@@ -5345,6 +5345,8 @@ package body GNATdoc.Frontend is
                               end if;
 
                            elsif Present (Get (Cursor).Text) then
+                              Current := Cursor;
+
                               declare
                                  Entity : constant Root_Entity'Class :=
                                    Get (Cursor).Entity.Element;
@@ -5385,6 +5387,9 @@ package body GNATdoc.Frontend is
                               begin
                                  Append_Text (Current, Text);
                               end;
+
+                           else
+                              Current := Cursor;
                            end if;
                         end;
                      end if;
