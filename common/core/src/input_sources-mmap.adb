@@ -90,7 +90,7 @@ package body Input_Sources.Mmap is
 
    overriding function Eof (From : Mmap_Input) return Boolean is
    begin
-      return File_Size (From.Index) > Length (From.File);
+      return GNATCOLL.Mmap.File_Size (From.Index) > Length (From.File);
    end Eof;
 
    -------------------
