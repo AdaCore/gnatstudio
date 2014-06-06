@@ -3,132 +3,145 @@ This file provides support for gnattest.
 """
 
 
+###########################################################################
+# No user customization below this line
+###########################################################################
 
-import os.path, GPS
+import os.path
+import GPS
 
-GPS.Preference ("Plugins/gnattest/read_only_color").create (
-  "Highlight color", "color",
-   """Background color for read-only areas""",
-   "#e0e0e0")
+GPS.Preference("Plugins/gnattest/read_only_color"
+               ).create("Highlight color", "color",
+                        """Background color for read-only areas""",
+                        "#e0e0e0")
 
 last_gnattest_project = None
 
-def run (project, target, extra_args=""):
-   """ Run gnattest and switch to harness if success. """
-   global last_gnattest_project
-   last_gnattest_project = project
-   GPS.BuildTarget(target).execute(synchronous=False, extra_args=extra_args)
 
-def is_harness_project ():
-   """ Check if root project is harness project. """
-   root_project = GPS.Project.root()
-   mapping = root_project.get_attribute_as_string ("GNATtest_Mapping_File",
+def run(project, target, extra_args=""):
+    """ Run gnattest and switch to harness if success. """
+    global last_gnattest_project
+    last_gnattest_project = project
+    GPS.BuildTarget(target).execute(synchronous=False, extra_args=extra_args)
+
+
+def is_harness_project():
+    """ Check if root project is harness project. """
+    root_project = GPS.Project.root()
+    mapping = root_project.get_attribute_as_string("GNATtest_Mapping_File",
                                                    package="GNATtest")
-   return mapping.strip() != ""
+    return mapping.strip() != ""
 
-def open_harness_project (cur):
-   """ Open harness project if it hasn't open yet."""
-   if is_harness_project():
-      return
 
-   harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
+def open_harness_project(cur):
+    """ Open harness project if it hasn't open yet."""
+    if is_harness_project():
+        return
 
-   if harness_dir == "" :
-      harness_dir = "gnattest/harness"
+    harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
 
-   prj = os.path.join (cur.object_dirs()[0], harness_dir, "test_driver.gpr")
-   GPS.Project.load (prj, False, True)
-   GPS.Console ("Messages").write ("Switched to harness project: " +
-      GPS.Project.root().file().name() +"\n")
+    if harness_dir == "":
+        harness_dir = "gnattest/harness"
 
-def exit_harness_project ():
-   """ Leave harness project and open user's project. """
-   root_project = GPS.Project.root()
+    prj = os.path.join(cur.object_dirs()[0], harness_dir, "test_driver.gpr")
+    GPS.Project.load(prj, False, True)
+    GPS.Console("Messages").write("Switched to harness project: " +
+                                  GPS.Project.root().file().name() + "\n")
 
-   for p in root_project.dependencies():
-      if p.name() != "AUnit":
-         for d in p.dependencies():
-            if d.name() != "AUnit":
-               user_project = d
-               break
 
-   GPS.Project.load (user_project.file().name(), False, True)
-   GPS.Console ("Messages").write ("Exit harness project: " +
-      GPS.Project.root().file().name() +"\n")
+def exit_harness_project():
+    """ Leave harness project and open user's project. """
+    root_project = GPS.Project.root()
+
+    for p in root_project.dependencies():
+        if p.name() != "AUnit":
+            for d in p.dependencies():
+                if d.name() != "AUnit":
+                    user_project = d
+                    break
+
+    GPS.Project.load(user_project.file().name(), False, True)
+    GPS.Console("Messages").write("Exit harness project: " +
+                                  GPS.Project.root().file().name() + "\n")
+
 
 def on_compilation_finished(hook, category,
-    target_name="", mode_name="", status=""):
+                            target_name="", mode_name="", status=""):
 
-   global last_gnattest_project
+    global last_gnattest_project
 
-   if not target_name.startswith("GNATtest"):
-      return
+    if not target_name.startswith("GNATtest"):
+        return
 
-   if status:
-      return
+    if status:
+        return
 
-   open_harness_project (last_gnattest_project)
+    open_harness_project(last_gnattest_project)
+
 
 def on_project_view_changed(hook):
-   """ Replace run target in harness project. """
-   test_run_target=GPS.BuildTarget ("Run a test-driver")
-   run_main_target=GPS.BuildTarget ("Run Main")
+    """ Replace run target in harness project. """
+    test_run_target = GPS.BuildTarget("Run a test-driver")
+    run_main_target = GPS.BuildTarget("Run Main")
 
-   if is_harness_project():
-      run_main_target.hide()
-      test_run_target.show()
-   else:
-      run_main_target.show()
-      test_run_target.hide()
-      return
+    if is_harness_project():
+        run_main_target.hide()
+        test_run_target.show()
+    else:
+        run_main_target.show()
+        test_run_target.hide()
+        return
 
-   # Update read-only areas in already opened files
-   buffer_list = GPS.EditorBuffer.list()
-   for buffer in buffer_list:
-      mark_read_only_areas (buffer)
+    # Update read-only areas in already opened files
+    buffer_list = GPS.EditorBuffer.list()
+    for buffer in buffer_list:
+        mark_read_only_areas(buffer)
 
-def on_file_edited (hook,file):
-   """ Find read-only areas and apply an overlay on them. """
-   if not is_harness_project():
-      return
 
-   buffer = GPS.EditorBuffer.get (file)
-   mark_read_only_areas (buffer)
+def on_file_edited(hook, file):
+    """ Find read-only areas and apply an overlay on them. """
+    if not is_harness_project():
+        return
 
-def mark_read_only_areas (buffer):
-   read_only_overlay = None
-   loc = buffer.beginning_of_buffer ()
+    buffer = GPS.EditorBuffer.get(file)
+    mark_read_only_areas(buffer)
 
-   # Iterate over read-only areas
-   while loc:
-      found = loc.search ("--  begin read only", dialog_on_failure=False)
 
-      if found:
-         from_line,last = found
-         found = last.search ("--  end read only", dialog_on_failure=False)
+def mark_read_only_areas(buffer):
+    read_only_overlay = None
+    loc = buffer.beginning_of_buffer()
 
-         if found:
-            to_line,loc = found
-         else:
+    # Iterate over read-only areas
+    while loc:
+        found = loc.search("--  begin read only", dialog_on_failure=False)
+
+        if found:
+            from_line, last = found
+            found = last.search("--  end read only", dialog_on_failure=False)
+
+            if found:
+                to_line, loc = found
+            else:
+                loc = None
+
+        else:
             loc = None
 
-      else:
-         loc = None
+        # if area found
+        if loc:
+            from_line = from_line.beginning_of_line()
+            to_line = to_line.end_of_line()
 
-      # if area found
-      if loc:
-         from_line = from_line.beginning_of_line ()
-         to_line = to_line.end_of_line ()
+            # if overlay hasn't exist yet, create one
+            if not read_only_overlay:
+                read_only_overlay = buffer.create_overlay()
+                color = GPS.Preference("Plugins/gnattest/read_only_color"
+                                       ).get()
+                read_only_overlay.set_property("paragraph-background", color)
+                read_only_overlay.set_property("editable", False)
 
-         # if overlay hasn't exist yet, create one
-         if read_only_overlay == None:
-            read_only_overlay = buffer.create_overlay ()
-            color = GPS.Preference ("Plugins/gnattest/read_only_color").get ()
-            read_only_overlay.set_property ("paragraph-background", color)
-            read_only_overlay.set_property ("editable", False)
-
-         buffer.apply_overlay (read_only_overlay, from_line, to_line)
-   # No more read-only areas
+            buffer.apply_overlay(read_only_overlay, from_line, to_line)
+    # No more read-only areas
 
 XML = r"""<?xml version="1.0" ?>
 <gnattest>
@@ -137,7 +150,8 @@ XML = r"""<?xml version="1.0" ?>
     editor_page="GNATtest"
     editor_section="Directories"
     label="Harness Directory"
-    description="is used to specify the directory in which to place harness packages and project file for the test driver"
+    description="is used to specify the directory in which to """ \
+    """place harness packages and project file for the test driver"
     hide_in="wizard library_wizard"
     >
     <string type="directory" default="gnattest/harness"/>
@@ -148,7 +162,7 @@ XML = r"""<?xml version="1.0" ?>
     editor_page="GNATtest"
     editor_section="Directories"
     disable_if_not_set="true"
-    disable="gnattest.tests_root gnattest.stub_subdir"
+    disable="gnattest.tests_root gnattest.subdir"
     label="Tests Directory"
     description="Test files are put in given directory"
     hide_in="wizard library_wizard"
@@ -161,14 +175,15 @@ XML = r"""<?xml version="1.0" ?>
     editor_page="GNATtest"
     editor_section="Directories"
     disable_if_not_set="true"
-    disable="gnattest.tests_dir gnattest.stub_subdir"
+    disable="gnattest.tests_dir gnattest.subdir"
     label="Tests Root"
-    description="Test files are put in a same directory hierarchy as the sources with this directory as the root directory."
+    description="Test files are put in a same directory hierarchy """ \
+    """as the sources with this directory as the root directory."
     hide_in="wizard library_wizard"
     />
 
   <project_attribute package="gnattest"
-    name="stub_subdir"
+    name="subdir"
     editor_page="GNATtest"
     editor_section="Directories"
     disable_if_not_set="true"
@@ -183,7 +198,8 @@ XML = r"""<?xml version="1.0" ?>
     name="additional_tests"
     editor_page="GNATtest"
     label="Additional Tests"
-    description="Sources described in given project are considered potential additional manual tests to be added to the test suite."
+    description="Sources described in given project are considered """ \
+    """potential additional manual tests to be added to the test suite."
     hide_in="wizard library_wizard"
     >
     <string type="file" filter="project"/>
@@ -226,7 +242,8 @@ XML = r"""<?xml version="1.0" ?>
     </filter_and>
     <description>Run gnattest on current project</description>
     <shell lang="python" output="none"
-    >gnattest.run(GPS.current_context().project(), "GNATtest for project")</shell>
+    >gnattest.run(GPS.current_context().project(), """ \
+    """"GNATtest for project")</shell>
   </action>
 
   <action name="run gnattest recursive">
@@ -236,7 +253,8 @@ XML = r"""<?xml version="1.0" ?>
     </filter_and>
     <description>Run gnattest on current project and subprojects</description>
     <shell lang="python" output="none"
-    >gnattest.run(GPS.current_context().project(), "GNATtest for project", "-r")</shell>
+    >gnattest.run(GPS.current_context().project(), """ \
+    """"GNATtest for project", "-r")</shell>
   </action>
 
   <action name="run gnattest on root">
@@ -254,7 +272,8 @@ XML = r"""<?xml version="1.0" ?>
     </filter_and>
     <description>Run gnattest on root project and subprojects</description>
     <shell lang="python" output="none"
-    >gnattest.run(GPS.Project.root(), "GNATtest for root project", "-r")</shell>
+    >gnattest.run(GPS.Project.root(), """ \
+    """"GNATtest for root project", "-r")</shell>
   </action>
 
   <action name="open harness" output="none">
@@ -263,12 +282,14 @@ XML = r"""<?xml version="1.0" ?>
       <filter id="Non harness project"/>
     </filter_and>
     <description>Open harness project for current project</description>
-    <shell lang="python">gnattest.open_harness_project(GPS.current_context().project())</shell>
+    <shell lang="python">gnattest.open_harness_project""" \
+    """(GPS.current_context().project())</shell>
   </action>
 
   <action name="exit harness" output="none">
     <filter id="Harness project"/>
-    <description>Return to user project from current harness project</description>
+    <description>Return to user project from current """ \
+    """harness project</description>
     <shell lang="python">gnattest.exit_harness_project()</shell>
   </action>
 
@@ -320,13 +341,16 @@ XML = r"""<?xml version="1.0" ?>
              switch="--harness-dir"
              separator="="
              as-directory="true"
-             tip="is used to specify the directory in which to place harness packages and project file for the test driver." />
+             tip="is used to specify the directory in which to """ \
+"""place harness packages and project file for the test driver." />
       <field label="separate stub root"
              line="1"  column="1"
              switch="--separate-root"
              separator="="
              as-directory="true"
-             tip="The directory hierarchy of tested sources is recreated in this directory, and test packages are placed in corresponding directories." />
+             tip="The directory hierarchy of tested sources is """ \
+    """recreated in this directory, and test packages are placed in """ \
+    """corresponding directories." />
       <field label="stub subdir"
              line="1"  column="1"
              switch="--subdir"
@@ -338,7 +362,8 @@ XML = r"""<?xml version="1.0" ?>
              switch="--additional-tests"
              separator="="
              as-file="true"
-             tip="Sources described in given project are considered potential additional manual tests to be added to the test suite." />
+             tip="Sources described in given project are considered """ \
+    """potential additional manual tests to be added to the test suite." />
       <combo label="stubs default"
              line="2"  column="1"
              switch="--stub-default"
@@ -351,7 +376,8 @@ XML = r"""<?xml version="1.0" ?>
       <check label="generate harness only"
              line="1"  column="2"
              switch="--harness-only"
-             tip="Create a harness for all sources, treating them as test packages." />
+             tip="Create a harness for all sources, treating them as """ \
+    """test packages." />
       <check label="Recursive"
              line="1"  column="2"
              switch="-r"
@@ -367,7 +393,8 @@ XML = r"""<?xml version="1.0" ?>
       <check label="Liskov verification"
              line="1"  column="2"
              switch="--liskov"
-             tip="Enables Liskov verification: run all tests from all parents in order to check substitutability." />
+             tip="Enables Liskov verification: run all tests from all """ \
+    """parents in order to check substitutability." />
     </switches>
   </target-model>
 
@@ -462,6 +489,6 @@ XML = r"""<?xml version="1.0" ?>
 """
 
 GPS.parse_xml(XML)
-GPS.Hook("file_edited").add (on_file_edited)
+GPS.Hook("file_edited").add(on_file_edited)
 GPS.Hook("compilation_finished").add(on_compilation_finished)
 GPS.Hook("project_view_changed").add(on_project_view_changed)
