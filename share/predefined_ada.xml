@@ -5783,13 +5783,7 @@ MECHANISM_NAME
 MECHANISM_ASSOCIATION ::=
 [formal_parameter_NAME =&gt;] MECHANISM_NAME
 
-MECHANISM_NAME ::=
-Value
-| Reference
-| Descriptor [([Class =&gt;] CLASS_NAME)]
-| Short_Descriptor [([Class =&gt;] CLASS_NAME)]
-
-CLASS_NAME ::= ubs | ubsb | uba | s | sb | a
+MECHANISM_NAME ::= Value | Reference
 
 Use this pragma to make a function externally callable and optionally
 provide information on mechanisms to be used for passing parameter and
@@ -5812,11 +5806,6 @@ designation.  SUBTYPE_MARKs in these parameters must exactly match the
 subtypes in the corresponding function specification, using positional
 notation to match parameters with subtype marks.  The form with an
 `'Access' attribute can be used to match an anonymous access parameter.
-
-Passing by descriptor is supported only on the OpenVMS ports of GNAT.
-The default behavior for Export_Function is to accept either 64bit or
-32bit descriptors unless short_descriptor is specified, then only 32bit
-descriptors are accepted.
 
 Special treatment is given if the EXTERNAL is an explicit null
 string or a static string expressions that evaluates to the null
@@ -5877,13 +5866,7 @@ MECHANISM_NAME
 MECHANISM_ASSOCIATION ::=
 [formal_parameter_NAME =&gt;] MECHANISM_NAME
 
-MECHANISM_NAME ::=
-Value
-| Reference
-| Descriptor [([Class =&gt;] CLASS_NAME)]
-| Short_Descriptor [([Class =&gt;] CLASS_NAME)]
-
-CLASS_NAME ::= ubs | ubsb | uba | s | sb | a
+MECHANISM_NAME ::= Value | Reference
 
 This pragma is identical to `Export_Function' except that it applies to
 a procedure rather than a function and the parameters `Result_Type' and
@@ -5892,11 +5875,6 @@ pragma `Export', but if none is present, `Convention Ada' is assumed,
 which is usually not what is wanted, so it is usually appropriate to
 use this pragma in conjunction with a `Export' or `Convention' pragma
 that specifies the desired foreign convention.
-
-Passing by descriptor is supported only on the OpenVMS ports of GNAT.
-The default behavior for Export_Procedure is to accept either 64bit or
-32bit descriptors unless short_descriptor is specified, then only 32bit
-descriptors are accepted.
 
 Special treatment is given if the EXTERNAL is an explicit null
 string or a static string expressions that evaluates to the null
@@ -5953,13 +5931,7 @@ MECHANISM_NAME
 MECHANISM_ASSOCIATION ::=
 [formal_parameter_NAME =&gt;] MECHANISM_NAME
 
-MECHANISM_NAME ::=
-Value
-| Reference
-| Descriptor [([Class =&gt;] CLASS_NAME)]
-| Short_Descriptor [([Class =&gt;] CLASS_NAME)]
-
-CLASS_NAME ::= ubs | ubsb | uba | s | sb | a
+MECHANISM_NAME ::= Value | Reference
 
 This pragma is identical to `Export_Procedure' except that the first
 parameter of LOCAL_NAME, which must be present, must be of mode `OUT',
@@ -5973,11 +5945,6 @@ not what is wanted since the whole point of this pragma is to interface
 with foreign language functions, so it is usually appropriate to use
 this pragma in conjunction with a `Export' or `Convention' pragma that
 specifies the desired foreign convention.
-
-Passing by descriptor is supported only on the OpenVMS ports of GNAT.
-The default behavior for Export_Valued_Procedure is to accept either
-64bit or 32bit descriptors unless short_descriptor is specified, then
-only 32bit descriptors are accepted.
 
 Special treatment is given if the EXTERNAL is an explicit null
 string or a static string expressions that evaluates to the null
@@ -6242,15 +6209,8 @@ Syntax:
 
 pragma Ident (static_string_EXPRESSION);
 
-This pragma provides a string identification in the generated object
-file, if the system supports the concept of this kind of identification
-string.  This pragma is allowed only in the outermost declarative part
-or declarative items of a compilation unit. If more than one `Ident'
-pragma is given, only the last one processed is effective.  On OpenVMS
-systems, the effect of the pragma is identical to the effect of the DEC
-Ada 83 pragma of the same name. Note that in DEC Ada 83, the maximum
-allowed length is 31 characters, so if it is important to maintain
-compatibility with this compiler, you should obey this length limit.
+This pragma is identical in effect to pragma `Comment'. It is provided
+for compatibility with other Ada compilers providing this pragma.
       </DOC>
    </PRAGMA>
 
@@ -6407,8 +6367,7 @@ pragma Import_Function (
 [, [Parameter_Types          =&gt;] PARAMETER_TYPES]
 [, [Result_Type              =&gt;] SUBTYPE_MARK]
 [, [Mechanism                =&gt;] MECHANISM]
-[, [Result_Mechanism         =&gt;] MECHANISM_NAME]
-[, [First_Optional_Parameter =&gt;] IDENTIFIER]);
+[, [Result_Mechanism         =&gt;] MECHANISM_NAME]);
 
 EXTERNAL_SYMBOL ::=
 IDENTIFIER
@@ -6487,8 +6446,7 @@ pragma Import_Procedure (
 [Internal                 =&gt;] LOCAL_NAME
 [, [External                 =&gt;] EXTERNAL_SYMBOL]
 [, [Parameter_Types          =&gt;] PARAMETER_TYPES]
-[, [Mechanism                =&gt;] MECHANISM]
-[, [First_Optional_Parameter =&gt;] IDENTIFIER]);
+[, [Mechanism                =&gt;] MECHANISM]);
 
 EXTERNAL_SYMBOL ::=
 IDENTIFIER
@@ -6525,8 +6483,7 @@ pragma Import_Valued_Procedure (
 [Internal                 =&gt;] LOCAL_NAME
 [, [External                 =&gt;] EXTERNAL_SYMBOL]
 [, [Parameter_Types          =&gt;] PARAMETER_TYPES]
-[, [Mechanism                =&gt;] MECHANISM]
-[, [First_Optional_Parameter =&gt;] IDENTIFIER]);
+[, [Mechanism                =&gt;] MECHANISM]);
 
 EXTERNAL_SYMBOL ::=
 IDENTIFIER
@@ -9268,11 +9225,9 @@ Syntax:
 
 pragma Short_Descriptors
 
-In VMS versions of the compiler, this configuration pragma causes all
-occurrences of the mechanism types Descriptor[_xxx] to be treated as
-Short_Descriptor[_xxx]. This is helpful in porting legacy applications
-from a 32-bit environment to a 64-bit environment. This pragma is
-ignored for non-VMS versions.
+This pragma is provided for compatibility with other Ada
+implementations. It is recognized but ignored by all current versions
+of GNAT.
       </DOC>
    </PRAGMA>
 
