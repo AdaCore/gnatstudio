@@ -737,10 +737,15 @@ package body Language.Custom is
    overriding function Keywords
      (Lang : access Custom_Language) return GNAT.Strings.String_List
    is
+      use type Strings.String_List_Access;
    begin
       --  ??? This list is never populated. We should add a facility for
       --  specifying lists of keywords in XML, and maybe compute the
       --  regexp from this list.
+      if Lang.Keywords_List = null then
+         return (1 .. 0 => null);
+      end if;
+
       return Lang.Keywords_List.all;
    end Keywords;
 
