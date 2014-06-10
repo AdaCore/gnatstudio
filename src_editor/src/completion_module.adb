@@ -1440,7 +1440,8 @@ package body Completion_Module is
                 or else C = '('
                 or else C = '>';
          else
-            return False;
+            return (C /= ' '
+                    and then C /= ASCII.HT);
          end if;
       end Triggers_Auto_Completion;
 
