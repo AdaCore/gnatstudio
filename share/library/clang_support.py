@@ -16,13 +16,13 @@ style_warning = None
 style_error = None
 
 kind_name_to_category = {
-    ci.CursorKind.ENUM_CONSTANT_DECL: completion.Cat_Literal,
-    ci.CursorKind.FIELD_DECL: completion.Cat_Field,
-    ci.CursorKind.FUNCTION_DECL: completion.Cat_Function,
-    ci.CursorKind.NOT_IMPLEMENTED: completion.Cat_Unknown,
-    ci.CursorKind.PARM_DECL: completion.Cat_Parameter,
-    ci.CursorKind.TYPEDEF_DECL: completion.Cat_Type,
-    ci.CursorKind.VAR_DECL: completion.Cat_Variable,
+    ci.CursorKind.ENUM_CONSTANT_DECL: completion.CAT_LITERAL,
+    ci.CursorKind.FIELD_DECL: completion.CAT_FIELD,
+    ci.CursorKind.FUNCTION_DECL: completion.CAT_FUNCTION,
+    ci.CursorKind.NOT_IMPLEMENTED: completion.CAT_UNKNOWN,
+    ci.CursorKind.PARM_DECL: completion.CAT_PARAMETER,
+    ci.CursorKind.TYPEDEF_DECL: completion.CAT_TYPE,
+    ci.CursorKind.VAR_DECL: completion.CAT_VARIABLE,
     }
 # translates cursor names to completion language categories
 
@@ -38,15 +38,6 @@ def initialize_styles():
     style_error.set_background(
         GPS.Preference("Errors-Src-Highlight-Color").get()
     )
-
-
-def to_completion_point(ed_loc):
-    return forward_until(
-        ed_loc.forward_char(-1),
-        lambda c: not (c.isalpha() or c.isdigit() or c == "_"),
-        backwards=True
-    ).forward_char()
-
 
 ####################
 # Main clang class #
@@ -224,7 +215,7 @@ class Clang(object):
         """
 
         ed = ed_loc.buffer()
-        ed_loc = to_completion_point(ed_loc)
+        ed_loc = completion.to_completion_point(ed_loc)
 
         file_tuple = (ed.file().name(), ed.get_chars())
         tu = self.get_translation_unit(ed, True)
@@ -255,7 +246,7 @@ class ClangCompletionResolver(CompletionResolver):
         pass
 
     def get_completion_prefix(self, loc):
-        loc_begin = to_completion_point(loc)
+        loc_begin = completion.to_completion_point(loc)
         self.prefix = loc.buffer().get_chars(loc_begin, loc)[:-1]
         return self.prefix
 
@@ -282,7 +273,7 @@ class ClangCompletionResolver(CompletionResolver):
                     if kind in kind_name_to_category:
                         language_category = kind_name_to_category[kind]
                     else:
-                        language_category = completion.Cat_Unknown
+                        language_category = completion.CAT_UNKNOWN
 
                     yield CompletionProposal(
                         label,

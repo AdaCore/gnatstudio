@@ -60,46 +60,59 @@ returns a list of completion proposals, and one which is a function
 
 
 import GPS
+import text_utils
 
-Cat_Unknown = 1
-Cat_Package = 2
-Cat_Namespace = 3
-Cat_Task = 4
-Cat_Procedure = 5
-Cat_Function = 6
-Cat_Method = 7
-Cat_Constructor = 8
-Cat_Destructor = 9
-Cat_Protected = 10
-Cat_Entry = 11
-Cat_Class = 12
-Cat_Structure = 13
-Cat_Case_Inside_Record = 14
-Cat_Union = 15
-Cat_Type = 16
-Cat_Subtype = 17
-Cat_Variable = 18
-Cat_Local_Variable = 19
-Cat_Parameter = 20
-Cat_Discriminant = 21
-Cat_Field = 22
-Cat_Literal = 23
-Cat_Representation_Clause = 24
-Cat_With = 25
-Cat_Use = 26
-Cat_Include = 27
-Cat_Loop_Statement = 28
-Cat_If_Statement = 29
-Cat_Case_Statement = 30
-Cat_Select_Statement = 31
-Cat_Accept_Statement = 32
-Cat_Declare_Block = 33
-Cat_Return_Block = 34
+CAT_UNKNOWN = 1
+CAT_PACKAGE = 2
+CAT_NAMESPACE = 3
+CAT_TASK = 4
+Cat_PROCEDURE = 5
+CAT_FUNCTION = 6
+CAT_METHOD = 7
+CAT_CONSTRUCTOR = 8
+CAT_DESTRUCTOR = 9
+CAT_PROTECTED = 10
+CAT_ENTRY = 11
+CAT_CLASS = 12
+CAT_STRUCTURE = 13
+CAT_CASE_INSIDE_RECORD = 14
+CAT_UNION = 15
+CAT_TYPE = 16
+CAT_SUBTYPE = 17
+CAT_VARIABLE = 18
+CAT_LOCAL_VARIABLE = 19
+CAT_PARAMETER = 20
+CAT_DISCRIMINANT = 21
+CAT_FIELD = 22
+CAT_LITERAL = 23
+CAT_REPRESENTATION_CLAUSE = 24
+CAT_WITH = 25
+CAT_USE = 26
+CAT_INCLUDE = 27
+CAT_LOOP_STATEMENT = 28
+CAT_IF_STATEMENT = 29
+CAT_CASE_STATEMENT = 30
+CAT_SELECT_STATEMENT = 31
+CAT_ACCEPT_STATEMENT = 32
+CAT_DECLARE_BLOCK = 33
+CAT_RETURN_BLOCK = 34
 Cat_Simple_Block = 35
-Cat_Exception_Handler = 36
-Cat_Pragma = 37
-Cat_Aspect = 38
-Cat_Custom = 39
+CAT_EXCEPTION_HANDLER = 36
+CAT_PRAGMA = 37
+CAT_ASPECT = 38
+CAT_CUSTOM = 39
+
+
+def to_completion_point(ed_loc):
+    """
+       Find the beginning of the word currently being completed.
+       Word = [a-zA-Z0-9_]
+    """
+    return text_utils.forward_until(
+        ed_loc.forward_char(-1),
+        lambda c: not (c.isalpha() or c.isdigit() or c == "_"),
+        backwards=True
+    ).forward_char()
 
 
 class CompletionProposal(object):
@@ -107,7 +120,7 @@ class CompletionProposal(object):
     """
 
     def __init__(self, name, label, documentation,
-                 icon_name="", action_name="", language_category=Cat_Custom):
+                 icon_name="", action_name="", language_category=CAT_CUSTOM):
         """
             Creates a Completion Proposal.
             The following fields can be defined:
