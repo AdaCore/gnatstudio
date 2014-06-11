@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
 with GNAT.Strings;
 
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
@@ -243,7 +245,7 @@ package body GPS.Scripts.Projects is
          begin
             Set_Return_Value_As_List (Data);
             for L in Langs'Range loop
-               Set_Return_Value (Data, Langs (L).all);
+               Set_Return_Value (Data, To_Lower (Langs (L).all));
             end loop;
             Free (Langs);
          end;
