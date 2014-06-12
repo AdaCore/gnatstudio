@@ -705,6 +705,8 @@ package body Src_Editor_Box is
          Remove_Controls (B.Source_Buffer);
       end if;
 
+      Check_Writable (B);
+
       return False;
    end Focus_In;
 
