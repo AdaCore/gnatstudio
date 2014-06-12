@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N604-048 GPS: control-click on child package does not go to body
+
+  Problem:    When pressing down the control key in an editor and clicking on
+              the declaration of a child package, the cursor is left on that
+              declaration and does not jump to the body of the package.
+
+  Status:     This was fixed in 6.1 on 2014-06-12
+
+  Workaround: Use the contextual menu "Go to body" instead.
+
 KP-60-N602-060 GPS: saving file via symlink might no longer find it in project
 
   Problem:    When source files are found via symbolic links (a.adb points to

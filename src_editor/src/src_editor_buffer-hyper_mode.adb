@@ -369,10 +369,15 @@ package body Src_Editor_Buffer.Hyper_Mode is
          Decl := Get_Declaration (Entity);
          Location := Decl.Loc;
 
+         --  Do not check the column: it is unlikely to have both spec and
+         --  body on the same line, and this works around an issue in the
+         --  constructs where going to the body for a child package
+         --  declaration goes in fact to the name of the parent
+         --  package on the child package declaration line.
+
          if Alternate
            or else
              (Location.Line = Natural (Line)
-              and then Column = Location.Column
               and then Location.File = Buffer.Filename)
          then
             --  We asked for the alternate behavior, or we are already on
