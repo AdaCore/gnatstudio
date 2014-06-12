@@ -1432,6 +1432,10 @@ package body Src_Editor_Box is
       Line : Editable_Line_Type;
       Col  : Character_Offset_Type;
    begin
+      --  Capture the current position before we create a new view for the
+      --  buffer, or we lost that information.
+      Get_Cursor_Position (Source.Source_Buffer, Line, Col);
+
       Box := new Source_Editor_Box_Record;
       Initialize
         (Box, Project, Kernel_Handle (Kernel),
@@ -1444,7 +1448,6 @@ package body Src_Editor_Box is
       end if;
 
       --  Preserve the current location
-      Get_Cursor_Position (Box.Source_Buffer, Line, Col);
       Box.Set_Cursor_Location
         (Line   => Line,
          Column => Col);
