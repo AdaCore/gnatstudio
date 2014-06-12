@@ -1060,8 +1060,6 @@ package body GPS.Location_View is
       Path : Gtk_Tree_Path;
       Iter : Gtk_Tree_Iter)
    is
-      pragma Unreferenced (Path);
-
       use type Commands.Command_Access;
 
       Value   : GValue;
@@ -1070,6 +1068,8 @@ package body GPS.Location_View is
       pragma Unreferenced (Ignore);
 
    begin
+      On_Location_Clicked (Self, Path, Iter);
+
       Get_Value (Self.View.Get_Model, Iter, Action_Command_Column, Value);
       Action := To_Action_Item (Get_Address (Value));
 
