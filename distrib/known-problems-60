@@ -25,6 +25,34 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N610-032 GB: configuration location on network drive not supported.s
+
+  Problem:    On Windows platforms, when the configuration location is located
+              on a network drive, GNATbench is able to be installed, but once
+              installed no GNATbench views, editors, preferences pages, menus
+              are working properly. The Error Log contains a lot of GNATbench
+              errors.
+              Wind River Workbench installations set the configuration area
+              inside the @user.home area. In this case if @user.home is on a
+              network drive GNATbench cannot be used with Wind River Workbench
+              default installation.
+
+  Status:     This was fixed in 2.9 on 2014-06-12
+
+  Workaround: Move configuration location to a local drive,
+              In the eclipse.ini file, add two lines. The first one for the
+              "-configuration" keyword. The second one for the configuration
+              location full path.
+              The configuration location cannot be shared between different
+              Eclipse/Wind River Workbench installations.
+              For Wind River Workbench installations the file to patch is not
+              named eclipse.ini file. It is the eclipse-x86-win32.ini file.
+              It can be found at
+              workbench-x.y/wrwb/platform/x86-windows/eclipse.
+              example:
+              -configuration
+              C:/your_configuration_area
+
 KP-60-N604-048 GPS: control-click on child package does not go to body
 
   Problem:    When pressing down the control key in an editor and clicking on
