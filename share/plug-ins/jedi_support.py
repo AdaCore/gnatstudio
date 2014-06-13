@@ -100,7 +100,7 @@ class PythonResolver(CompletionResolver):
 
 class Jedi_Module(Module):
 
-    __resolver = None
+    __resolver = PythonResolver()
 
     def __refresh_source_dirs(self):
         """
@@ -121,7 +121,6 @@ class Jedi_Module(Module):
            When GPS start, create and register a resolver
            and update its source dirs
         """
-        self.__resolver = PythonResolver()
         GPS.Completion.register(self.__resolver)
         self.__refresh_source_dirs()
 
