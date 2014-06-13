@@ -1399,6 +1399,10 @@ package body Codefix.Formal_Errors is
         (Current_Text, Pkg_Cursor);
       Prefix   : constant String := Get_Full_Prefix (Current_Text, Pkg_Cursor);
    begin
+      if Pkg_Name = "" then
+         return Result;
+      end if;
+
       Add_Use
         (Use_Solution,
          Current_Text,
