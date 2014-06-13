@@ -4,22 +4,22 @@ Its aim is to integrate the jedi (python auto-completion API)
 into GPS.
 """
 
+import os
+import sys
+
 try:
     import jedi
 except ImportError:
     # If import fails, add the manual install path of jedi to:
     # sys.path list.
-    import os
-    import sys
     sys.path.append(os.path.join(os.path.dirname(__file__), "jedi"))
     import jedi
 
 import GPS
-from GPS import EditorBuffer
 from text_utils import forward_until
 from completion import CompletionResolver, CompletionProposal
 import completion
-
+from modules import Module
 
 TYPE_LABELS = {
     # Global hash tabel for pop-out label icons
@@ -39,6 +39,8 @@ class PythonResolver(CompletionResolver):
     """
     def __init__(self):
         self.__prefix = None
+        # additional directories that module search will perform
+        self.source_dirs = set([])
 
     def get_completions(self, loc):
         """
@@ -52,14 +54,20 @@ class PythonResolver(CompletionResolver):
             # This ensures that the resolver returns completion object
             # only for python file.
 
+            # check in the current directory
+            sys_path_backup = list(sys.path)
+            self.source_dirs.update([loc.buffer().file().directory()])
+            sys.path = sys.path + list(self.source_dirs)
+
             # Feed Jedi API
             script = jedi.Script(
                 source=loc.buffer().get_chars(),
                 line=loc.line(),
-                column=loc.column()-1)
+                column=loc.column() - 1,
+                )
 
-            # Sort, filter and return results
-            return sorted((CompletionProposal(
+            # Sort, filter results
+            result = sorted((CompletionProposal(
                 name=i.name,
                 label=i.name,
                 documentation=i.docstring(),
@@ -68,6 +76,10 @@ class PythonResolver(CompletionResolver):
                 for i in script.complete()
                 if i.name.startswith(self.__prefix)),
                 key=lambda d: d.name)
+
+            # restore sys.path before exit
+            sys.path = sys_path_backup
+            return result
 
         return []
 
@@ -86,6 +98,41 @@ class PythonResolver(CompletionResolver):
         return self.__prefix
 
 
-# Create an instance of the python resolver class and register it with GPS
-tr = PythonResolver()
-GPS.Completion.register(tr)
+class Jedi_Module(Module):
+
+    __resolver = None
+
+    def __refresh_source_dirs(self):
+        """
+           Update resolver's source_dirs with user's working directory
+        """
+        self.__resolver.source_dirs = set([])
+        for i in GPS.Project.root().dependencies():
+            if "python" in i.languages():
+                self.__resolver.source_dirs.update(
+                    i.source_dirs())
+        self.__resolver.source_dirs.update(
+            GPS.Project.root().source_dirs())
+
+    # The followings are hooks:
+
+    def gps_started(self):
+        """
+           When GPS start, create and register a resolver
+           and update its source dirs
+        """
+        self.__resolver = PythonResolver()
+        GPS.Completion.register(self.__resolver)
+        self.__refresh_source_dirs()
+
+    def project_changed(self):
+        """
+           When project changes, prepare new source dirs for resolver
+        """
+        self.__refresh_source_dirs()
+
+    def project_view_changed(self):
+        """
+           When project view changes, update source dirs for resolver
+        """
+        self.__refresh_source_dirs()
