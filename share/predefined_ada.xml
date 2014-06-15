@@ -6934,19 +6934,18 @@ unknown license, and no checking is done.  However, standard GNAT
 headers are recognized, and license information is derived from them as
 follows.
 
-A GNAT license header starts with a line containing 78 hyphens.
-The following comment text is searched for the appearance of any
-of the following strings.
+A GNAT license header starts with a line containing 78 hyphens.  The
+following comment text is searched for the appearance of any of the
+following strings.
 
 If the string "GNU General Public License" is found, then the unit
 is assumed to have GPL license, unless the string "As a special
-exception" follows, in which case the license is assumed to be
-modified GPL.
+exception" follows, in which case the license is assumed to be modified
+GPL.
 
 If one of the strings "This specification is adapted from the Ada
 Semantic Interface" or "This specification is derived from the Ada
-Reference Manual" is found then the unit is assumed to be
-unrestricted.
+Reference Manual" is found then the unit is assumed to be unrestricted.
 
 These default actions means that a program with a restricted license
 pragma will automatically get warnings if a GPL unit is inappropriately
