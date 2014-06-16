@@ -467,12 +467,12 @@ package body CodePeer.Bridge.Inspection_Readers is
 
             if Message.Is_Check then
                CodePeer.Project_Data'Class
-                 (Self.Root_Inspection.all).Check_Categories.Include
+                 (Self.Root_Inspection.all).Check_Subcategories.Include
                  (Message.Category);
 
             else
                CodePeer.Project_Data'Class
-                 (Self.Root_Inspection.all).Warning_Categories.Include
+                 (Self.Root_Inspection.all).Warning_Subcategories.Include
                  (Message.Category);
             end if;
          end;

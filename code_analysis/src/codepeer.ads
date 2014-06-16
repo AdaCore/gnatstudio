@@ -215,8 +215,8 @@ package CodePeer is
       Message_Categories    : Message_Category_Sets.Set;
       Annotation_Categories : Annotation_Category_Sets.Set;
 
-      Check_Categories      : Message_Category_Sets.Set;
-      Warning_Categories    : Message_Category_Sets.Set;
+      Check_Subcategories   : Message_Category_Sets.Set;
+      Warning_Subcategories : Message_Category_Sets.Set;
       --  These sets of categories are subsets of Message_Categories and
       --  are used by messages filter.
 

@@ -709,7 +709,7 @@ package body CodePeer.Messages_Reports is
          Self.Kernel,
          -"Warning categories",
          "codepeer-summary_report-categories-warning",
-         Project_Data.Warning_Categories);
+         Project_Data.Warning_Subcategories);
       Category_Box.Pack_Start (Self.Warning_Categories_Editor);
 
       Message_Categories_Criteria_Callbacks.Connect
@@ -726,7 +726,7 @@ package body CodePeer.Messages_Reports is
          Self.Kernel,
          -"Check categories",
          "codepeer-summary_report-categories-check",
-         Project_Data.Check_Categories);
+         Project_Data.Check_Subcategories);
       Category_Box.Pack_Start (Self.Check_Categories_Editor);
 
       Message_Categories_Criteria_Callbacks.Connect
