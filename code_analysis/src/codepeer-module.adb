@@ -1331,7 +1331,7 @@ package body CodePeer.Module is
       --  or non-existent directories.
 
       for J in Objs'Range loop
-         Remove_Dir (Dir       => Create_From_Dir (Objs (J), "codepeer"),
+         Remove_Dir (Dir       => Objs (J),
                      Recursive => True,
                      Success   => Ignore);
       end loop;
