@@ -48,6 +48,7 @@ package body CodePeer.Bridge.Inspection_Readers is
    Previous_Attribute      : constant String := "previous";
    Rank_Attribute          : constant String := "rank";
    Category_Attribute      : constant String := "category";
+   Primary_Attribute       : constant String := "primary";
 
    -----------------
    -- End_Element --
@@ -512,10 +513,16 @@ package body CodePeer.Bridge.Inspection_Readers is
       elsif Qname = Orig_Check_Tag
         and then Self.Current_Message /= null
       then
-         Check_Category :=
-           Self.Check_Categories
-             (Natural'Value (Attrs.Get_Value (Category_Attribute)));
-         Self.Current_Message.Checks.Insert (Check_Category);
+         --  Only primary checks need to be displayed.
+
+         if Attrs.Get_Index (Primary_Attribute) /= -1
+           and then Boolean'Value (Attrs.Get_Value (Primary_Attribute))
+         then
+            Check_Category :=
+              Self.Check_Categories
+                (Natural'Value (Attrs.Get_Value (Category_Attribute)));
+            Self.Current_Message.Checks.Insert (Check_Category);
+         end if;
 
       elsif Qname = Entry_Point_Tag then
          Entry_Point :=
