@@ -47,6 +47,9 @@ private
    package Annotation_Category_Maps is new Ada.Containers.Hashed_Maps
      (Natural, Annotation_Category_Access, Hash, "=");
 
+   package Check_Category_Maps is new Ada.Containers.Hashed_Maps
+     (Natural, Check_Category_Access, Hash, "=");
+
    package Entry_Point_Maps is new Ada.Containers.Hashed_Maps
      (Natural, Entry_Point_Information_Access, Hash, "=");
 
@@ -68,6 +71,7 @@ private
       Root_Inspection       : Code_Analysis.CodePeer_Data_Access;
       Message_Categories    : Message_Category_Maps.Map;
       Annotation_Categories : Annotation_Category_Maps.Map;
+      Check_Categories      : Check_Category_Maps.Map;
       Entry_Point_Map       : Entry_Point_Maps.Map;
       File_Node             : Code_Analysis.File_Access;
       Subprogram_Node       : Code_Analysis.Subprogram_Access;
@@ -75,6 +79,7 @@ private
       Object_Race           : CodePeer.Object_Race_Information;
       Object_Accesses       : CodePeer.Entry_Point_Object_Access_Information;
       Messages              : CodePeer.Message_Maps.Map;
+      Current_Message       : CodePeer.Message_Access;
    end record;
 
    overriding procedure Start_Element

@@ -1920,6 +1920,35 @@ package body CodePeer.Module is
             function Image
               (Message : CodePeer.Message_Access) return String
             is
+               function Checks_Image return String;
+               --  Returns image of set of originating checks for the message.
+
+               ------------------
+               -- Checks_Image --
+               ------------------
+
+               function Checks_Image return String is
+                  Aux : Unbounded_String;
+
+               begin
+                  for Check of Message.Checks loop
+                     if Length (Aux) = 0 then
+                        Append (Aux, "(");
+
+                     else
+                        Append (Aux, ", ");
+                     end if;
+
+                     Append (Aux, Check.Name.all);
+                  end loop;
+
+                  if Length (Aux) /= 0 then
+                     Append (Aux, ") ");
+                  end if;
+
+                  return To_String (Aux);
+               end Checks_Image;
+
             begin
                if Message.Text'Length = 0
                  or else Message.Text (Message.Text'First) = ':'
@@ -1927,11 +1956,13 @@ package body CodePeer.Module is
                   return
                     Ranking_Image (Message) & ": "
                     & Message.Category.Name.all
+                    & Checks_Image
                     & Message.Text.all;
                else
                   return
                     Ranking_Image (Message) & ": "
                     & Message.Category.Name.all & " "
+                    & Checks_Image
                     & Message.Text.all;
                end if;
             end Image;

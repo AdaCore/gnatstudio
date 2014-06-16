@@ -24,6 +24,7 @@ package body CodePeer.Bridge.Inspection_Readers is
    Inspection_Tag          : constant String := "inspection";
    Message_Category_Tag    : constant String := "message_category";
    Annotation_Category_Tag : constant String := "annotation_category";
+   Check_Category_Tag      : constant String := "check_category";
    File_Tag                : constant String := "file";
    Subprogram_Tag          : constant String := "subprogram";
    Message_Tag             : constant String := "message";
@@ -32,6 +33,7 @@ package body CodePeer.Bridge.Inspection_Readers is
    Object_Race_Tag         : constant String := "object_race";
    Entry_Point_Access_Tag  : constant String := "entry_point_access";
    Object_Access_Tag       : constant String := "object_access";
+   Orig_Check_Tag          : constant String := "orig_check";
 
    Checks_Attribute        : constant String := "checks";
    Column_Attribute        : constant String := "column";
@@ -45,6 +47,7 @@ package body CodePeer.Bridge.Inspection_Readers is
    Name_Attribute          : constant String := "name";
    Previous_Attribute      : constant String := "previous";
    Rank_Attribute          : constant String := "rank";
+   Category_Attribute      : constant String := "category";
 
    -----------------
    -- End_Element --
@@ -63,6 +66,9 @@ package body CodePeer.Bridge.Inspection_Readers is
          --  Decrase depth of ignored XML element.
 
          Self.Ignore_Depth := Self.Ignore_Depth - 1;
+
+      elsif Qname = Message_Tag then
+         Self.Current_Message := null;
 
       elsif Qname = Object_Race_Tag then
          CodePeer.Project_Data'Class
@@ -137,6 +143,7 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       Message_Category    : CodePeer.Message_Category_Access;
       Annotation_Category : CodePeer.Annotation_Category_Access;
+      Check_Category      : CodePeer.Check_Category_Access;
       File_Name           : GNATCOLL.VFS.Virtual_File;
       Relocated_Name      : GNATCOLL.VFS.Virtual_File;
       Project_Node        : Code_Analysis.Project_Access;
@@ -328,6 +335,15 @@ package body CodePeer.Bridge.Inspection_Readers is
            (Natural'Value (Attrs.Get_Value ("identifier")),
             Annotation_Category);
 
+      elsif Qname = Check_Category_Tag then
+         Check_Category :=
+           new CodePeer.Check_Category'
+             (Name => new String'(Attrs.Get_Value ("name")));
+         CodePeer.Project_Data'Class
+           (Self.Root_Inspection.all).Check_Categories.Insert (Check_Category);
+         Self.Check_Categories.Insert
+           (Natural'Value (Attrs.Get_Value ("identifier")), Check_Category);
+
       elsif Qname = File_Tag then
          File_Name :=
            GPS.Kernel.Create (+Attrs.Get_Value ("name"), Self.Kernel);
@@ -382,100 +398,98 @@ package body CodePeer.Bridge.Inspection_Readers is
              (Self.Subprogram_Node.Analysis_Data.CodePeer_Data);
 
       elsif Qname = Message_Tag then
-         declare
-            Message : CodePeer.Message_Access;
+         case Self.Version is
+            when 2 =>
+               Self.Current_Message :=
+                 new CodePeer.Message'
+                   (Positive'Value (Attrs.Get_Value ("identifier")),
+                    Merged,
+                    Lifeage,
+                    Positive'Value (Attrs.Get_Value ("line")),
+                    Positive'Value (Attrs.Get_Value ("column")),
+                    Self.Message_Categories.Element
+                      (Positive'Value (Attrs.Get_Value ("category"))),
+                    Is_Check,
+                    Computed_Ranking,
+                    CodePeer.Message_Ranking_Level'Value
+                      (Attrs.Get_Value ("probability")),
+                    Unclassified,
+                    new String'(Attrs.Get_Value ("text")),
+                    False,
+                    CodePeer.Audit_V2_Vectors.Empty_Vector,
+                    CodePeer.Audit_V3_Vectors.Empty_Vector,
+                    GNATCOLL.VFS.No_File,
+                    1,
+                    1,
+                    null,
+                    Check_Category_Sets.Empty_Set);
 
-         begin
-            case Self.Version is
-               when 2 =>
-                  Message :=
-                    new CodePeer.Message'
-                      (Positive'Value (Attrs.Get_Value ("identifier")),
-                       Merged,
-                       Lifeage,
-                       Positive'Value (Attrs.Get_Value ("line")),
-                       Positive'Value (Attrs.Get_Value ("column")),
-                       Self.Message_Categories.Element
-                         (Positive'Value (Attrs.Get_Value ("category"))),
-                       Is_Check,
-                       Computed_Ranking,
-                       CodePeer.Message_Ranking_Level'Value
-                         (Attrs.Get_Value ("probability")),
-                       Unclassified,
-                       new String'(Attrs.Get_Value ("text")),
-                       False,
-                       CodePeer.Audit_V2_Vectors.Empty_Vector,
-                       CodePeer.Audit_V3_Vectors.Empty_Vector,
-                       GNATCOLL.VFS.No_File,
-                       1,
-                       1,
-                       null);
+            when 3 =>
+               Self.Current_Message :=
+                 new CodePeer.Message'
+                   (Positive'Value (Attrs.Get_Value ("identifier")),
+                    Merged,
+                    Lifeage,
+                    Positive'Value (Attrs.Get_Value ("line")),
+                    Positive'Value (Attrs.Get_Value ("column")),
+                    Self.Message_Categories.Element
+                      (Positive'Value (Attrs.Get_Value ("category"))),
+                    Is_Check,
+                    CodePeer.High,
+                    CodePeer.Message_Ranking_Level'Value
+                      (Attrs.Get_Value (Rank_Attribute)),
+                    Unclassified,
+                    new String'(Attrs.Get_Value ("text")),
+                    False,
+                    CodePeer.Audit_V2_Vectors.Empty_Vector,
+                    CodePeer.Audit_V3_Vectors.Empty_Vector,
+                    GNATCOLL.VFS.No_File,
+                    1,
+                    1,
+                    null,
+                    Check_Category_Sets.Empty_Set);
 
-               when 3 =>
-                  Message :=
-                    new CodePeer.Message'
-                      (Positive'Value (Attrs.Get_Value ("identifier")),
-                       Merged,
-                       Lifeage,
-                       Positive'Value (Attrs.Get_Value ("line")),
-                       Positive'Value (Attrs.Get_Value ("column")),
-                       Self.Message_Categories.Element
-                         (Positive'Value (Attrs.Get_Value ("category"))),
-                       Is_Check,
-                       CodePeer.High,
-                       CodePeer.Message_Ranking_Level'Value
-                         (Attrs.Get_Value (Rank_Attribute)),
-                       Unclassified,
-                       new String'(Attrs.Get_Value ("text")),
-                       False,
-                       CodePeer.Audit_V2_Vectors.Empty_Vector,
-                       CodePeer.Audit_V3_Vectors.Empty_Vector,
-                       GNATCOLL.VFS.No_File,
-                       1,
-                       1,
-                       null);
+               if Self.Messages.Contains (Self.Current_Message.Id) then
+                  Self.Kernel.Insert
+                    (Text   =>
+                       "CodePeer: duplicate message"
+                       & Natural'Image (Self.Current_Message.Id),
+                     Add_LF => False,
+                     Mode   => GPS.Kernel.Error);
 
-                  if Self.Messages.Contains (Message.Id) then
-                     Self.Kernel.Insert
-                       (Text   =>
-                          "CodePeer: duplicate message"
-                           & Natural'Image (Message.Id),
-                        Add_LF => False,
-                        Mode   => GPS.Kernel.Error);
+               else
+                  Self.Messages.Insert
+                    (Self.Current_Message.Id, Self.Current_Message);
+               end if;
+         end case;
 
-                  else
-                     Self.Messages.Insert (Message.Id, Message);
-                  end if;
-            end case;
+         if Attrs.Get_Index ("from_file") /= -1 then
+            Self.Current_Message.From_File :=
+              GPS.Kernel.Create
+                (+Attrs.Get_Value ("from_file"), Self.Kernel);
+            Self.Current_Message.From_Line :=
+              Positive'Value (Attrs.Get_Value ("from_line"));
+            Self.Current_Message.From_Column :=
+              Positive'Value (Attrs.Get_Value ("from_column"));
+         end if;
 
-            if Attrs.Get_Index ("from_file") /= -1 then
-               Message.From_File :=
-                 GPS.Kernel.Create
-                   (+Attrs.Get_Value ("from_file"), Self.Kernel);
-               Message.From_Line :=
-                 Positive'Value (Attrs.Get_Value ("from_line"));
-               Message.From_Column :=
-                 Positive'Value (Attrs.Get_Value ("from_column"));
-            end if;
+         --  Append message to the list of subprogram's messages
 
-            --  Append message to the list of subprogram's messages
+         Self.Subprogram_Data.Messages.Append (Self.Current_Message);
 
-            Self.Subprogram_Data.Messages.Append (Message);
+         --  Append message's category to the list of corresponding
+         --  categories.
 
-            --  Append message's category to the list of corresponding
-            --  categories.
+         if Self.Current_Message.Is_Check then
+            CodePeer.Project_Data'Class
+              (Self.Root_Inspection.all).Check_Subcategories.Include
+              (Self.Current_Message.Category);
 
-            if Message.Is_Check then
-               CodePeer.Project_Data'Class
-                 (Self.Root_Inspection.all).Check_Subcategories.Include
-                 (Message.Category);
-
-            else
-               CodePeer.Project_Data'Class
-                 (Self.Root_Inspection.all).Warning_Subcategories.Include
-                 (Message.Category);
-            end if;
-         end;
+         else
+            CodePeer.Project_Data'Class
+              (Self.Root_Inspection.all).Warning_Subcategories.Include
+              (Self.Current_Message.Category);
+         end if;
 
       elsif Qname = Annotation_Tag then
          Annotation_Category :=
@@ -494,6 +508,14 @@ package body CodePeer.Bridge.Inspection_Readers is
            (new CodePeer.Annotation'
               (Lifeage,
                new String'(Attrs.Get_Value ("text"))));
+
+      elsif Qname = Orig_Check_Tag
+        and then Self.Current_Message /= null
+      then
+         Check_Category :=
+           Self.Check_Categories
+             (Natural'Value (Attrs.Get_Value (Category_Attribute)));
+         Self.Current_Message.Checks.Insert (Check_Category);
 
       elsif Qname = Entry_Point_Tag then
          Entry_Point :=
