@@ -6,6 +6,7 @@ into GPS.
 
 import os
 import sys
+from itertools import chain
 
 try:
     import jedi
@@ -106,13 +107,12 @@ class Jedi_Module(Module):
         """
            Update resolver's source_dirs with user's working directory
         """
-        self.__resolver.source_dirs = set([])
-        for i in GPS.Project.root().dependencies():
-            if "python" in i.languages():
-                self.__resolver.source_dirs.update(
-                    i.source_dirs())
-        self.__resolver.source_dirs.update(
-            GPS.Project.root().source_dirs())
+        self.__resolver.source_dirs = set(
+            chain.from_iterable(i.source_dirs()
+                                for i in [GPS.Project.root()] +
+                                GPS.Project.root().dependencies()
+                                if "python" in i.languages())
+        )
 
     # The followings are hooks:
 
