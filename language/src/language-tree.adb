@@ -186,13 +186,14 @@ package body Language.Tree is
    -----------------------
 
    function To_Construct_Tree
-     (Buffer : String;
+     (File   : GNATCOLL.VFS.Virtual_File;
+      Buffer : String;
       Lang   : access Language_Root'Class)
       return Construct_Tree
    is
       List : aliased Construct_List;
    begin
-      Parse_Constructs (Lang, Buffer, List);
+      Parse_Constructs (Lang, File, Buffer, List);
 
       return To_Construct_Tree (List'Access, True);
    end To_Construct_Tree;

@@ -160,7 +160,7 @@ package body Coverage_GUI is
                   Text := Read_File (Src_File);
                   Add_Subprogram_Info
                     (File_Node, To_Construct_Tree
-                       (Locale_To_UTF8 (Text.all), Lang));
+                       (File_Node.Name, Locale_To_UTF8 (Text.all), Lang));
                   Free (Text);
                end if;
             end;

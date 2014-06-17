@@ -105,6 +105,7 @@ used to override some of GPS's internal behavior.
 """
 
 import exceptions
+from constructs import INDENTATION_SIMPLE
 
 
 ###########################################################
@@ -10437,6 +10438,67 @@ class Icon(object):
             typically 48x48 pixels.
         """
         pass
+
+
+class Language(object):
+
+    @staticmethod
+    def register(instance, name, body_suffix, spec_suffix="", obj_suffix="",
+                 indentation_kind=INDENTATION_SIMPLE):
+        """
+        Register an instance of language in GPS.
+
+        :param Language instance: The instance you want to register
+        :param string name: The name of the language
+        :param body_suffix: The file suffix for the language - ".c" for the C
+            language for example
+        :param spec_suffix: The file suffix for specification files for the
+            language, if it applies - ".h" for the C language.
+        :param obj_suffix: The suffix for object files produced for the
+            language, if it applies - ".o" for the C language.
+        :param int indentation_kind: One of the INDENTATION_NONE,
+            INDENTATION_SIMPLE or INDENTATION_EXTENDED constants defined in
+            the constructs module, defining the way the language will be
+            indented.
+        """
+        pass
+
+    def parse_constructs(self, constructs_list, gps_file, content_string):
+        """
+        Abstract method that has to be implemented by the subclasses.
+
+        Given an empty list of constructs, a file instance and a string
+        containing the contents of the file, this needs to populate the list of
+        language constructs. In turn this will give support for a number of
+        features in GPS including:
+
+        - Outline support
+        - Block highlighting/folding support
+        - Entity search support
+
+        TODO: Explain how to build a proper construct list
+
+        :param ConstructList constructs_list: The list of constructs to
+            populate.
+        :param File gps_file: The gps file corresponding to the file to parse.
+        :param string content_string: The content of the file
+        """
+        pass
+
+
+class ConstructsList(object):
+    """
+    Internal class, represents an opaque construct list that will be used by
+    GPS for internal purposes.
+    """
+
+    def add_constructs(self, category, is_declaration, visibility, name,
+                       profile, sloc_start, sloc_end, sloc_entity):
+        """
+        WIP: Add documentation for add_constructs
+        """
+        pass
+
 
 ###########################################################
 # Globals

@@ -11,6 +11,7 @@ from text_utils import forward_until
 import completion
 from completion import CompletionResolver, CompletionProposal
 import os
+from time import time
 
 style_warning = None
 style_error = None
@@ -144,8 +145,11 @@ class Clang(object):
             ci.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD
 
         try:
+            t = time()
             tu = self.index.parse(file_name, args, [file_tuple], flags)
+            print time() - t
         except ci.TranslationUnitLoadError:
+            print "FAIL"
             return None
 
         self.translation_units[file_name] = tu

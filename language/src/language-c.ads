@@ -83,6 +83,7 @@ package Language.C is
    overriding
    procedure Parse_Constructs
      (Lang    : access C_Language;
+      File   : GNATCOLL.VFS.Virtual_File;
       Buffer  : UTF8_String;
       Result  : out Construct_List);
 

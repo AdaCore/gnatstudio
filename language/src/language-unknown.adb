@@ -144,10 +144,11 @@ package body Language.Unknown is
 
    overriding procedure Parse_Constructs
      (Lang   : access Unknown_Language;
+      File   : GNATCOLL.VFS.Virtual_File;
       Buffer : UTF8_String;
       Result : out Construct_List)
    is
-      pragma Unreferenced (Lang, Buffer);
+      pragma Unreferenced (Lang, Buffer, File);
    begin
       Result := (null, null, null, 0);
    end Parse_Constructs;

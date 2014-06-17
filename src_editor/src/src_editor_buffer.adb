@@ -8286,7 +8286,8 @@ package body Src_Editor_Buffer is
       Free (Buffer.Constructs);
 
       Text := Get_String (Source_Buffer (Buffer));
-      Parse_Constructs (Buffer.Lang, Text.all, Buffer.Constructs);
+      Parse_Constructs (Buffer.Lang, Buffer.Get_Filename,
+                        Text.all, Buffer.Constructs);
       GNAT.Strings.Free (Text);
 
       Buffer.Constructs_State := Exact;

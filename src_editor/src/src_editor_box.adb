@@ -1560,7 +1560,8 @@ package body Src_Editor_Box is
             --  unit <-> file name mapping
 
             Buffer := Get_String (Editor.Source_Buffer);
-            Parse_Constructs (Ada_Lang, Buffer.all, Constructs);
+            Parse_Constructs (Ada_Lang,
+                              Editor.Get_Filename, Buffer.all, Constructs);
             Free (Buffer);
 
             Info := Constructs.Last;

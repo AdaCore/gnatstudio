@@ -66,6 +66,7 @@ with XML_Viewer;
 with Switches_Parser;           use Switches_Parser;
 with XML_Utils;                 use XML_Utils;
 with XML_Utils.GtkAda;          use XML_Utils.GtkAda;
+with Language.Shell;
 
 package body Custom_Module is
 
@@ -2022,6 +2023,8 @@ package body Custom_Module is
          Class         => Contextual_Class,
          Static_Method => True,
          Handler       => Contextual_Handler'Access);
+
+      Language.Shell.Setup (Kernel_Handle (Kernel));
    end Register_Module;
 
 end Custom_Module;

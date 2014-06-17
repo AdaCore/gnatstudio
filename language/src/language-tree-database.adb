@@ -169,10 +169,11 @@ package body Language.Tree.Database is
                              Buffer (Type_Start.Index .. Type_End.Index),
                            Default => "");
                      else
+                        null;
                         Formater.Add_Parameter
                           (Name    => Padded_Name,
                            Mode    => "",
-                           Of_Type => "???",
+                           Of_Type => "",
                            Default => "");
                      end if;
                   end;
@@ -805,7 +806,7 @@ package body Language.Tree.Database is
          --  Phase 1 : analyze the new tree
 
          Buffer := Get_Buffer (File.Db.Provider, File.File);
-         Parse_Constructs (File.Lang, Buffer.all, Constructs);
+         Parse_Constructs (File.Lang, File.File, Buffer.all, Constructs);
          New_Tree := To_Construct_Tree (Constructs'Access, True);
 
          Analyze_Referenced_Identifiers

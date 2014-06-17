@@ -26,6 +26,7 @@ package Language.Unknown is
 
    overriding procedure Parse_Constructs
      (Lang   : access Unknown_Language;
+      File   : GNATCOLL.VFS.Virtual_File;
       Buffer : UTF8_String;
       Result : out Construct_List);
 

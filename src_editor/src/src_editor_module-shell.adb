@@ -1693,6 +1693,10 @@ package body Src_Editor_Module.Shell is
       end if;
    end Edit_Command_Handler;
 
+   -------------
+   -- MC_Cmds --
+   -------------
+
    procedure MC_Cmds (Data : in out Callback_Data'Class; Command : String)
    is
       Curs_Class : constant Class_Type :=

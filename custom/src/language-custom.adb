@@ -884,6 +884,7 @@ package body Language.Custom is
 
    overriding procedure Parse_Constructs
      (Lang   : access Custom_Language;
+      File   : GNATCOLL.VFS.Virtual_File;
       Buffer : Glib.UTF8_String;
       Result : out Construct_List) is
    begin
@@ -891,9 +892,10 @@ package body Language.Custom is
          if Lang.Parent = null
            or else Lang.Categories'Length > 0
          then
-            Parse_Constructs (Language_Root (Lang.all)'Access, Buffer, Result);
+            Parse_Constructs (Language_Root (Lang.all)'Access, File,
+                              Buffer, Result);
          else
-            Parse_Constructs (Lang.Parent, Buffer, Result);
+            Parse_Constructs (Lang.Parent, File, Buffer, Result);
          end if;
       else
          Lang.Parse_Constructs

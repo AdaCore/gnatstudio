@@ -42,14 +42,17 @@ package body Language.Profile_Formaters is
       end if;
 
       Append (Self.Text, Trim (Name, Ada.Strings.Right));
-      Append (Self.Text, " : ");
 
-      if Mode_Image /= "" then
-         Append (Self.Text, Mode_Image);
-         Append (Self.Text, " ");
+      if Of_Type /= "" then
+         Append (Self.Text, " : ");
+
+         if Mode_Image /= "" then
+            Append (Self.Text, Mode_Image);
+            Append (Self.Text, " ");
+         end if;
+
+         Append (Self.Text, Trim (Of_Type, Ada.Strings.Right));
       end if;
-
-      Append (Self.Text, Trim (Of_Type, Ada.Strings.Right));
 
       if Default /= "" then
          Append (Self.Text, " :=");

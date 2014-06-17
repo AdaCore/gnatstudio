@@ -38,7 +38,7 @@ package body Language_Utils is
       if Buffer /= null then
          --  ??? The call to Locale_To_UTF8 is not optimal
          Parse_Constructs
-           (Lang, Locale_To_UTF8 (Buffer.all), Result);
+           (Lang, File_Name, Locale_To_UTF8 (Buffer.all), Result);
          Free (Buffer);
       end if;
 

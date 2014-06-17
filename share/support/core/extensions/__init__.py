@@ -68,7 +68,6 @@ class Icon(object):
                  alt_local_toolbar=None, alt_button=None, alt_dnd=None,
                  alt_dialog=None):
         """
-
         :param string icon_id: The id of the icon
         :param string label: The label of the icon
         :param string path: The path of the default icon file
@@ -100,3 +99,18 @@ class Icon(object):
         self.x = x.children(X("alternate", file=a, size=s) for a, s in alts
                             if a is not None)
         GPS.parse_xml(X("GPS", X("stock", self.x)).with_header())
+
+
+@extend_gps
+class Language(object):
+
+    @override_gps_method
+    def __init__(self):
+        """
+        This constructor is provided to prevent the initialisation of any
+        object of the Language class, because it is abstract. The
+        consequence of this is that subclassers of Language must reimplement
+        __init__ to avoid having an exception raised at instance construction
+        time
+        """
+        raise NotImplementedError

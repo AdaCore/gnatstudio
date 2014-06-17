@@ -488,9 +488,11 @@ package body Language is
 
    procedure Parse_Constructs
      (Lang   : access Language_Root;
+      File   : GNATCOLL.VFS.Virtual_File;
       Buffer : UTF8_String;
       Result : out Construct_List)
    is
+      pragma Unreferenced (File);
       Matches     : Match_Array (0 .. 10);
       Categories  : constant Explorer_Categories :=
                       Explorer_Regexps (Language_Access (Lang));

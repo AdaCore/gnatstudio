@@ -24,15 +24,143 @@ following are provided:
 #   - "class browser" -> project view in GPS
 
 import GPS
+from itertools import chain, repeat
 import sys
+import ast
 import os.path
 import gps_utils
+from constructs import *
 
 try:
     from gi.repository import Gtk
     has_pygtk = 1
 except:
     has_pygtk = 0
+
+
+def get_last_body_statement(node):
+    if hasattr(node, "body"):
+        return get_last_body_statement(node.body[-1])
+    else:
+        return node
+
+
+# noinspection PyPep8Naming
+class ASTVisitor(ast.NodeVisitor):
+
+    def __init__(self, bufstr, clist):
+        self.buflines = bufstr.splitlines()
+        self.lines_offsets = [0 for _ in self.buflines]
+        self.lines_offsets[0] = 0
+
+        for i in range(1, len(self.buflines)):
+            self.lines_offsets[i] = (self.lines_offsets[i - 1]
+                                     + len(self.buflines[i - 1]) + 1)
+
+        self.clist = clist
+
+    def get_offset(self, lineno, col):
+        return self.lines_offsets[lineno - 1] + col + 1
+
+    def make_tuple(self, line, col):
+        return line, col, self.get_offset(line, col)
+
+    def get_locations(self, n, kw=None):
+        end_line = n.end_line
+        start_pos = self.make_tuple(n.lineno, n.col_offset)
+        end_col = len(self.buflines[end_line - 1]) - 1
+        end_pos = self.make_tuple(end_line, end_col)
+        if kw:
+            entity_pos = self.make_tuple(n.lineno, n.col_offset + len(kw))
+            return start_pos, end_pos, entity_pos
+        else:
+            return start_pos, end_pos
+
+    @staticmethod
+    def make_fn_profile(fn_node):
+        args = fn_node.args
+        argsd = (a.id for a in args.args)
+
+        profile = "({0})".format(
+            ", ".join(argsd)
+            + ", %s" % args.vararg if args.vararg else ""
+            + ", %s" % args.kwarg if args.kwarg else ""
+        )
+
+        return profile
+
+    def visit_FunctionDef(self, n):
+        self.generic_visit(n)
+        start_pos, end_pos, entity_pos = self.get_locations(n, "def ")
+        self.clist.add_construct(
+            CAT_FUNCTION, False, VISIBILITY_PUBLIC, n.name, "",
+            start_pos, end_pos, entity_pos
+        )
+
+    def visit_Name(self, node):
+        start_pos = self.make_tuple(node.lineno, node.col_offset)
+        if isinstance(node.ctx, ast.Param):
+            self.clist.add_construct(
+                CAT_PARAMETER, False, VISIBILITY_PRIVATE, node.id, "",
+                start_pos, start_pos, start_pos
+            )
+
+    def generic_visit(self, n):
+        ast.NodeVisitor.generic_visit(self, n)
+        if getattr(n, "lineno", None):
+            end_line = n.lineno
+            for node_name in n._fields:
+                _node = getattr(n, node_name)
+                node = _node
+                if isinstance(_node, list):
+                    if not _node:
+                        continue
+                    node = _node[-1]
+                end_line = max(end_line, getattr(node, "end_line", 0))
+            n.end_line = end_line
+        else:
+            n.end_line = None
+
+    def visit_ClassDef(self, n):
+        self.generic_visit(n)
+        start_pos, end_pos, entity_pos = self.get_locations(n, "class ")
+        self.clist.add_construct(
+            CAT_TYPE, False, VISIBILITY_PUBLIC, n.name, "",
+            start_pos, end_pos, entity_pos
+        )
+
+    def add_private_construct(self, n, constructs_cat):
+        self.generic_visit(n)
+        start_pos, end_pos = self.get_locations(n)
+        self.clist.add_construct(
+            constructs_cat, False, VISIBILITY_PRIVATE, "", "",
+            start_pos, end_pos, start_pos
+        )
+
+    def visit_While(self, n):
+        self.add_private_construct(n, CAT_LOOP_STATEMENT)
+
+    def visit_If(self, n):
+        self.add_private_construct(n, CAT_IF_STATEMENT)
+
+    def visit_For(self, n):
+        self.add_private_construct(n, CAT_LOOP_STATEMENT)
+
+
+# noinspection PyMethodMayBeStatic
+class PythonLanguage(GPS.Language):
+
+    def __init__(self):
+        pass
+
+    def parse_constructs(self, constructs_list, gps_file, string):
+        del gps_file
+        try:
+            tree = ast.parse(string)
+            tree.lineno = 0
+            ASTVisitor(string, constructs_list).visit(tree)
+        except SyntaxError:
+            pass
 
 
 class Python_Support(object):
@@ -46,34 +174,8 @@ documentation for the standard python library. It is accessed through the
 /Python menu when editing a python file""",
             9432)
 
+        GPS.Language.register(PythonLanguage(), "Python", ".py", "", ".pyc")
         XML = """
-  <Language>
-    <Name>Python</Name>
-    <Body_Suffix>.py</Body_Suffix>
-    <Obj_Suffix>.pyc</Obj_Suffix>
-    <Context>
-      <New_Line_Comment_Start>#</New_Line_Comment_Start>
-      <String_Delimiter>&quot;</String_Delimiter>
-      <Can_Indent>True</Can_Indent>
-      <Syntax_Highlighting>False</Syntax_Highlighting>
-      <Case_Sensitive>True</Case_Sensitive>
-    </Context>
-    <Categories>
-      <Category>
-        <Name>class</Name>
-        <Pattern>^\s*class\s+([\w_][\w\d_]+)\s*(\([^\)]*\))?:</Pattern>
-        <Index>1</Index>
-        <Icon>package_xpm</Icon>
-      </Category>
-      <Category>
-        <Name>procedure</Name>
-        <Pattern>^\s*def\s+([\w_][\w\d_]+)\s*\([^\)]*\)\s*:</Pattern>
-        <Index>1</Index>
-        <Icon>subprogram_xpm</Icon>
-      </Category>
-    </Categories>
-  </Language>
-
   <filter_and name="Python file">
     <filter id="Source editor" />
      <filter language="Python" />

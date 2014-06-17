@@ -110,6 +110,7 @@ package Language.Custom is
 
    overriding procedure Parse_Constructs
      (Lang   : access Custom_Language;
+      File   : GNATCOLL.VFS.Virtual_File;
       Buffer : UTF8_String;
       Result : out Construct_List);
 

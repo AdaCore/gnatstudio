@@ -378,6 +378,15 @@ Classes
 
    .. automethod:: GPS.Console.write_with_links
 
+:class:`GPS.ConstructsList`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ConstructsList
+
+   
+
+   .. automethod:: GPS.ConstructsList.add_construct
+
 :class:`GPS.Context`
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -1086,6 +1095,17 @@ Classes
 .. autoclass:: Invalid_Argument
 
    .. inheritance-diagram:: GPS.Invalid_Argument
+
+:class:`GPS.Language`
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Language
+
+   
+
+   .. automethod:: GPS.Language.__init__
+
+   .. automethod:: GPS.Language.register
 
 :class:`GPS.Locations`
 ^^^^^^^^^^^^^^^^^^^^^^

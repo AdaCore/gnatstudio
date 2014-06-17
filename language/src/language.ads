@@ -24,6 +24,7 @@ with GNATCOLL.Symbols;
 with GNATCOLL.Xref;
 with Basic_Types;       use Basic_Types;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.VFS;
 
 package Language is
 
@@ -616,6 +617,7 @@ package Language is
 
    procedure Parse_Constructs
      (Lang   : access Language_Root;
+      File   : GNATCOLL.VFS.Virtual_File;
       Buffer : UTF8_String;
       Result : out Construct_List);
    --  Parse the constructs contained in Buffer and store all the language

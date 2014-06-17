@@ -555,9 +555,11 @@ package body Language.Ada is
 
    overriding procedure Parse_Constructs
      (Lang   : access Ada_Language;
+      File   : GNATCOLL.VFS.Virtual_File;
       Buffer : UTF8_String;
       Result : out Construct_List)
    is
+      pragma Unreferenced (File);
       Constructs : aliased Construct_List;
    begin
       Analyze_Ada_Source
