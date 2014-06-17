@@ -106,6 +106,8 @@ package body Project_Explorers is
                            "explorer-show-flat-view";
    Show_Hidden_Dirs    : constant History_Key :=
      "explorer-show-hidden-directories";
+   Show_Empty_Dirs     : constant History_Key :=
+     "explorer-show-empty-directories";
 
    Toggle_Absolute_Path_Name : constant String :=
      "Explorer toggle absolute paths";
@@ -1075,24 +1077,27 @@ package body Project_Explorers is
       Check : Gtk_Check_Menu_Item;
    begin
       Gtk_New (Check, -"Show absolute paths");
-      Associate (Get_History (View.Kernel).all, Show_Absolute_Paths, Check,
-                 Default => False);
+      Associate (Get_History (View.Kernel).all, Show_Absolute_Paths, Check);
       Widget_Callback.Object_Connect
         (Check, Gtk.Check_Menu_Item.Signal_Toggled,
          Update_Absolute_Paths'Access, View);
       Menu.Add (Check);
 
       Gtk_New (Check, -"Show flat view");
-      Associate (Get_History (View.Kernel).all, Show_Flat_View, Check,
-                 Default => False);
+      Associate (Get_History (View.Kernel).all, Show_Flat_View, Check);
       Widget_Callback.Object_Connect
         (Check, Gtk.Check_Menu_Item.Signal_Toggled,
          Update_View'Access, View);
       Menu.Add (Check);
 
       Gtk_New (Check, -"Show hidden directories");
-      Associate (Get_History (View.Kernel).all, Show_Hidden_Dirs, Check,
-                Default => True);
+      Associate (Get_History (View.Kernel).all, Show_Hidden_Dirs, Check);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
+      Menu.Add (Check);
+
+      Gtk_New (Check, -"Show empty directories");
+      Associate (Get_History (View.Kernel).all, Show_Empty_Dirs, Check);
       Widget_Callback.Object_Connect
         (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
       Menu.Add (Check);
@@ -2098,32 +2103,34 @@ package body Project_Explorers is
 
       --  Add those source directories that contain no file
 
-      for D in Dirs'Range loop
-         declare
-            Dir : constant Virtual_File := Dirs (D);
-         begin
-            Ensure_Directory (Dir);
+      if Get_History (Get_History (Explorer.Kernel).all, Show_Empty_Dirs) then
+         for D in Dirs'Range loop
+            declare
+               Dir : constant Virtual_File := Dirs (D);
+            begin
+               Ensure_Directory (Dir);
 
-            if Find (S_Dirs, Dir) = File_Node_Hash.No_Element then
-               if Get_History
-                 (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
-                 or else not Is_Hidden (Dir)
-               then
-                  Append
-                    (Explorer.Tree.Model,
-                     Iter    => N,
-                     Parent  => Node);
-                  Set_Directory_Node_Attributes
-                    (Explorer  => Explorer,
-                     Directory => Dir,
-                     Node      => N,
-                     Project   => Project,
-                     Node_Type => Directory_Node);
-                  Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
+               if Find (S_Dirs, Dir) = File_Node_Hash.No_Element then
+                  if Get_History
+                    (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
+                    or else not Is_Hidden (Dir)
+                  then
+                     Append
+                       (Explorer.Tree.Model,
+                        Iter    => N,
+                        Parent  => Node);
+                     Set_Directory_Node_Attributes
+                       (Explorer  => Explorer,
+                        Directory => Dir,
+                        Node      => N,
+                        Project   => Project,
+                        Node_Type => Directory_Node);
+                     Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
+                  end if;
                end if;
-            end if;
-         end;
-      end loop;
+            end;
+         end loop;
+      end if;
 
       Add_Object_Directories (Explorer, Node, Project);
 
@@ -3163,6 +3170,15 @@ package body Project_Explorers is
       Explorer_Views.Register_Module
         (Kernel => Kernel,
          ID     => Explorer_Module_ID);
+
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Show_Empty_Dirs, True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Show_Absolute_Paths, False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Show_Flat_View, False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Show_Hidden_Dirs, False);
 
       Register_Action
         (Kernel, "Locate file in explorer",
