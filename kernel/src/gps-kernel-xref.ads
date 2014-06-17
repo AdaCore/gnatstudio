@@ -58,39 +58,12 @@ package GPS.Kernel.Xref is
       Result : out Standard.Xref.General_Xref_Database);
    --  Create and initialize the xref databases
 
-   procedure Compilation_Finished
-     (Kernel : access Kernel_Handle_Record'Class;
-      C_Only : Boolean);
-   --  Called when some files have been recompiled, this will update the
-   --  cross-references as needed.
-   --  C_Only is specific to the old LI engine, and indicates whether we should
-   --  load all xref in memory, or only C/C++ related ones.
-
    ------------------------
    -- Background queries --
    ------------------------
    --  This package contains various subprograms to do highlevel xref queries
    --  in background mode. In particular, it is used for the call-graph related
    --  queries.
-   --  ??? These are mostly obsolete with the sqlite-based engine, since the
-   --  results are immediately accessible. These subprograms are kept
-   --  temporarily for compatibility with the old database.
-
-   procedure Load_Xref_In_Memory
-     (Kernel       : access Kernel_Handle_Record'Class;
-      C_Only       : Boolean);
-   --  Load all xref info in memory for faster access.
-   --  ??? This is needed only for the "old" database, and should be removed
-   --  when switching to GNATCOLL.Xref.
-
-   procedure Parse_All_LI_Information
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : GNATCOLL.Projects.Project_Type;
-      Recursive : Boolean);
-   --  Parse all the LI information in Project, for all the supported
-   --  languages. This can be used in cases where there is no obvious way to
-   --  find the LI file matching a given source file (for instance, with a
-   --  separate krunched file in Ada).
 
    type Commands_User_Data_Record is abstract tagged null record;
    type Commands_User_Data is access all Commands_User_Data_Record'Class;
@@ -154,11 +127,6 @@ package GPS.Kernel.Xref is
    ----------------------
    -- Context handling --
    ----------------------
-
-   procedure Ensure_Context_Up_To_Date (Context : Selection_Context);
-   --  Ensure that the current context has up to date information
-   --  ??? This is needed only for the "old" database, and should be removed
-   --  when switching to GNATCOLL.Xref.
 
    function Get_Entity_Information_Type return Glib.GType;
    --  Return the type associated with an entity. This is the type that should

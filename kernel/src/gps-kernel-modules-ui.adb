@@ -1360,7 +1360,7 @@ package body GPS.Kernel.Modules.UI is
             Item := Find_Menu_Item (Kernel, Act.Menus (M).all);
             if Item.all in Action_Menu_Item_Record'Class then
                Label := Gtk_Accel_Label (Action_Menu_Item (Item).Get_Child);
-               Label.Set_Accel (Guint (Key), Mods);
+               Label.Set_Accel (Key, Mods);
             end if;
          end loop;
       end if;
@@ -1447,7 +1447,7 @@ package body GPS.Kernel.Modules.UI is
                   Mods   => Mods);
                if Key /= 0 then
                   Label := Gtk_Accel_Label (Action_Menu_Item (Self).Get_Child);
-                  Label.Set_Accel (Guint (Key), Mods);
+                  Label.Set_Accel (Key, Mods);
                end if;
             end if;
 

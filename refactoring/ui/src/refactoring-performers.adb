@@ -138,7 +138,6 @@ package body Refactoring.Performers is
       Data.Iter.Replace_Element
         (Find_All_References
            (Entity                => Entity,
-            File_Has_No_LI_Report => File_Error_Reporter (Data.Errors),
             Include_Overriding    => Overridden,
             Include_Overridden    => Overridden));
 

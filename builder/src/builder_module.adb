@@ -15,12 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Expect;                use GNAT.Expect;
-pragma Warnings (Off);
-with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
-pragma Warnings (On);
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
@@ -35,20 +30,15 @@ with GPS.Kernel.Commands;        use GPS.Kernel.Commands;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
 with GPS.Stock_Icons;            use GPS.Stock_Icons;
 
 with Build_Command_Utils;
 with Builder_Facility_Module;
 with Commands.Builder;           use Commands.Builder;
-with Default_Preferences;        use Default_Preferences;
-with Xref;                       use Xref;
 
 package body Builder_Module is
-   Me : constant Trace_Handle := Create ("Builder");
 
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
 
@@ -77,13 +67,6 @@ package body Builder_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Build->Compute Xref information menu
 
-   type Load_Xref_In_Memory_Command
-      is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Load_Xref_In_Memory_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Build->Load Xref info
-
    procedure On_Compilation_Finished
      (Kernel : access Kernel_Handle_Record'Class;
       Data : access Hooks_Data'Class);
@@ -98,10 +81,6 @@ package body Builder_Module is
    overriding function Execute
      (Command : access Interrupt_Tool_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-
-   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
-   --  Called every time the project view has changed, ie potentially the list
-   --  of main units.
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called every time a new project is loaded
@@ -170,21 +149,6 @@ package body Builder_Module is
       return Commands.Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Load_Xref_In_Memory_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-   begin
-      GPS.Kernel.Xref.Load_Xref_In_Memory (Kernel, C_Only => False);
-      return Commands.Success;
-   end Execute;
-
    -----------------------------
    -- On_Compilation_Starting --
    -----------------------------
@@ -209,17 +173,10 @@ package body Builder_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Data);
+      pragma Unreferenced (Kernel, Data);
    begin
       if Builder_Module_ID.Build_Count > 0 then
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
-      end if;
-
-      if Builder_Module_ID.Build_Count = 0 then
-         GPS.Kernel.Xref.Compilation_Finished
-           (Kernel,
-            C_Only => Automatic_Xrefs_Load /= null
-            and then not Automatic_Xrefs_Load.Get_Pref);
       end if;
    end On_Compilation_Finished;
 
@@ -258,21 +215,6 @@ package body Builder_Module is
    end Execute;
 
    ---------------------
-   -- On_View_Changed --
-   ---------------------
-
-   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
-   begin
-      Trace (Me, "Project view changed, loading xref in memory");
-      GPS.Kernel.Xref.Load_Xref_In_Memory
-        (Kernel, C_Only => Automatic_Xrefs_Load /= null
-         and then not Automatic_Xrefs_Load.Get_Pref);
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_View_Changed;
-
-   ---------------------
    -- Register_Module --
    ---------------------
 
@@ -288,27 +230,12 @@ package body Builder_Module is
          Module_Name => "Builder",
          Priority    => Default_Priority);
 
-      if not Active (Xref.SQLITE) then
-         Register_Action
-           (Kernel, "Recompute Xref Info", new Recompute_Xref_Command,
-            Description => -"Reload the contents of all ALI files");
-
-         Register_Action
-           (Kernel, "Load Xref in memory", new Load_Xref_In_Memory_Command,
-            Description => -"Load all ALI file in memory, for faster queries");
-      end if;
-
       Register_Action
         (Kernel, "Interrupt", new Interrupt_Tool_Command,
          Description =>
            -"Interrupt the tasks performed in the background by GPS",
          Stock_Id   => GPS_Stop_Task);
 
-      Add_Hook
-        (Kernel => Kernel,
-         Hook   => Project_View_Changed_Hook,
-         Func   => Wrapper (On_View_Changed'Access),
-         Name   => "builder_module.on_view_changed");
       Add_Hook
         (Kernel => Kernel,
          Hook   => Compilation_Finished_Hook,

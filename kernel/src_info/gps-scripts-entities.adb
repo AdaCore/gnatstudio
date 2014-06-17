@@ -386,8 +386,6 @@ package body GPS.Scripts.Entities is
          raise Invalid_Data;
       end if;
 
-      Ref (Entity);
-
       R.H.Replace_Element (Entity);
       Set_Data (Instance, Entity_Class_Name, R);
    end Set_Data;

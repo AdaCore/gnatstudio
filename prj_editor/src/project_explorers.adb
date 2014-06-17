@@ -52,7 +52,6 @@ with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
@@ -78,7 +77,6 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
@@ -502,9 +500,6 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
    --  Called every time a new child is selected in the MDI. This makes sure
    --  that the selected node in the explorer doesn't reflect false information
-
-   procedure On_Parse_Xref (Explorer : access Gtk_Widget_Record'Class);
-   --  Parse all the LI information contained in the selected project
 
    function Get_Imported_Projects
      (Project         : Project_Type;
@@ -1047,25 +1042,6 @@ package body Project_Explorers is
       end if;
    end Child_Selected;
 
-   -------------------
-   -- On_Parse_Xref --
-   -------------------
-
-   procedure On_Parse_Xref (Explorer : access Gtk_Widget_Record'Class) is
-      E     : constant Project_Explorer := Project_Explorer (Explorer);
-      Node  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
-
-   begin
-      Get_Selected (Get_Selection (E.Tree), Model, Node);
-
-      Parse_All_LI_Information
-        (Kernel  => E.Kernel,
-         Project => Get_Project_From_Node
-           (E.Tree.Model, E.Kernel, Node, False),
-         Recursive => False);
-   end On_Parse_Xref;
-
    -----------------
    -- Create_Menu --
    -----------------
@@ -1123,9 +1099,7 @@ package body Project_Explorers is
         Explorer_Views.Get_Or_Create_View (Kernel, Focus => True);
       Iter      : constant Gtk_Tree_Iter :=
                     Find_Iter_For_Event (T.Tree, Event);
-      Item      : Gtk_Menu_Item;
       Path      : Gtk_Tree_Path;
-      Node_Type : Node_Types;
    begin
       if Iter /= Null_Iter then
          Path := Get_Path (T.Tree.Model, Iter);
@@ -1133,25 +1107,10 @@ package body Project_Explorers is
             Set_Cursor (T.Tree, Path, null, False);
          end if;
          Path_Free (Path);
-         Node_Type := Get_Node_Type (T.Tree.Model, Iter);
-      else
-         return;
+         Project_Explorers_Common.Context_Factory
+           (Context, Kernel_Handle (Kernel),
+            T.Tree, T.Tree.Model, Event, Menu);
       end if;
-
-      Project_Explorers_Common.Context_Factory
-        (Context, Kernel_Handle (Kernel), T.Tree, T.Tree.Model, Event, Menu);
-
-      if Node_Type in Project_Node_Types
-        and then Menu /= null
-      then
-         Gtk_New (Item, -"Parse all xref information");
-         Add (Menu, Item);
-         Widget_Callback.Object_Connect
-           (Item, Signal_Activate, On_Parse_Xref'Access, T);
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end Explorer_Context_Factory;
 
    -------------

@@ -807,14 +807,6 @@ package body GPS.Kernel is
          --  already been freed as part of the kernel destruction.
 
          if Data.Kernel /= null and then not Data.Kernel.Is_In_Destruction then
-            if not Data.Xref_Entity.Is_Empty then
-               declare
-                  V : Root_Entity'Class := Data.Xref_Entity.Element;
-               begin
-                  Unref (V);
-               end;
-            end if;
-
             --   ??? problem of double deallocation at shutdown time, ideally
             --   the following call should be outside of the conditional.
             GNATCOLL.VFS.Unchecked_Free (Data.Files);

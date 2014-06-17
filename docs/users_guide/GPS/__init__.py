@@ -9113,19 +9113,6 @@ class Project(object):
         """
         pass  # implemented in Ada
 
-    def update_xref(self, recursive=False):
-        """
-        Updates the cross-reference information in memory for all files of
-        the project. This does not regenerate that information, just read all
-        the :file:`.ali` files found in the object directory of the project
-        (and all imported projects if recursive is True).  For efficiency
-        purpose, this should generally be called before calling
-        :func:`GPS.freeze_xref`.
-
-        :param recursive: A boolean
-        """
-        pass  # implemented in Ada
-
 
 ###########################################################
 # ProjectTemplate
@@ -10833,41 +10820,6 @@ def extract_method(file, line_start, line_end, method_name='New_Method'):
     pass  # implemented in Ada
 
 
-def freeze_xref():
-    """
-    Forces GPS to use the cross-reference information it already has in
-    memory. GPS no longer checks on the disk whether more recent information
-    is available. This can provide a significant speedup in complex scripts
-    or scripts that need to analyze the cross-reference information for lots
-    of files. In such cases, the script should generally call
-    :func:`GPS.Project.update_xref` to first load all the required
-    information in memory.
-
-    You need to explicitly call :func:`GPS.thaw_xref` to return to the
-    default GPS behavior. Note the use of the "finally" exception handling in
-    the following example, which ensures that even if there is some
-    unexpected exception, the script always restores properly the default
-    behavior.
-
-    .. seealso::
-
-      :func:`GPS.Project.update_xref`
-
-      :func:`GPS.thaw_xref`
-
-    .. code-block:: python
-
-       try:
-          GPS.Project.root().update_xref(recursive=True)
-          GPS.freeze_xref()
-          ... complex computation
-
-       finally:
-          GPS.thaw_xref()
-    """
-    pass  # implemented in Ada
-
-
 def freeze_prefs():
     """
     Prevents the signal "preferences_changed" from being emitted.  Call
@@ -11256,15 +11208,6 @@ def reset_xref_db():
     pass
 
 
-def thaw_xref():
-    """
-    See :func:`GPS.freeze_xref` for more information.
-
-    .. seealso:: :func:`GPS.freeze_xref`
-    """
-    pass  # implemented in Ada
-
-
 def version():
     """
     Returns the GPS version as a string.
@@ -11282,15 +11225,6 @@ def visual_diff(file1, file2, file3=''):
     :param file1: A string
     :param file2: A string
     :param file3: A string
-    """
-    pass  # implemented in Ada
-
-
-def xref_frozen():
-    """
-    Return true if the xref database is frozen.
-
-    .. seealso:: :func:`GPS.freeze_xref`
     """
     pass  # implemented in Ada
 

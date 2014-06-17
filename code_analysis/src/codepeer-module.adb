@@ -59,7 +59,6 @@ with CodePeer.Shell_Commands;   use CodePeer.Shell_Commands;
 with Commands, Commands.Interactive;  use Commands, Commands.Interactive;
 with Commands.CodePeer;
 with Code_Analysis_GUI;
-with Xref; use Xref;
 
 package body CodePeer.Module is
 
@@ -82,7 +81,6 @@ package body CodePeer.Module is
      Ada.Finalization.Controlled with
    record
       Mode : Unbounded_String;
-      Lock : Database_Lock;
    end record;
    overriding procedure Initialize (Self : in out CodePeer_Build_Mode);
    overriding procedure Finalize (Self : in out CodePeer_Build_Mode);
@@ -290,7 +288,6 @@ package body CodePeer.Module is
    overriding procedure Initialize (Self : in out CodePeer_Build_Mode) is
    begin
       Set_Unbounded_String (Self.Mode, Self.Kernel.Get_Build_Mode);
-      Self.Lock := Self.Kernel.Databases.Freeze;
       Module.Kernel.Set_Build_Mode ("codepeer");
    end Initialize;
 
@@ -301,7 +298,6 @@ package body CodePeer.Module is
    overriding procedure Finalize (Self : in out CodePeer_Build_Mode) is
    begin
       Self.Kernel.Set_Build_Mode (To_String (Self.Mode));
-      Self.Kernel.Databases.Thaw (Self.Lock);
    end Finalize;
    -----------------------
    -- Fill_Object_Races --

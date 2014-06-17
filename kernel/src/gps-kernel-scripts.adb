@@ -60,7 +60,6 @@ with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
 with GPS.Scripts;             use GPS.Scripts;
 with GPS.Scripts.Commands;
 with Histories;               use Histories;
@@ -223,7 +222,6 @@ package body GPS.Kernel.Scripts is
    Sensitive_Cst  : aliased constant String := "sensitive";
    Force_Cst      : aliased constant String := "force";
    Value_Cst      : aliased constant String := "value";
-   Recursive_Cst  : aliased constant String := "recursive";
    Regexp_Cst     : aliased constant String := "regexp";
    On_Click_Cst   : aliased constant String := "on_click";
    Text_Cst       : aliased constant String := "text";
@@ -522,25 +520,6 @@ package body GPS.Kernel.Scripts is
             end if;
          end;
 
-      elsif Command = "freeze_xref" then
-         declare
-            Lock : Database_Lock;
-            pragma Unreferenced (Lock);
-         begin
-            Lock := Kernel.Databases.Freeze;
-            --  will release the constructs lock too
-         end;
-
-      elsif Command = "thaw_xref" then
-         declare
-            Lock : Database_Lock := No_Lock;
-         begin
-            Kernel.Databases.Thaw (Lock);
-         end;
-
-      elsif Command = "xref_frozen" then
-         Set_Return_Value (Data, Kernel.Databases.Frozen);
-
       elsif Command = "freeze_prefs" then
          Kernel.Preferences.Freeze;
       elsif Command = "thaw_prefs" then
@@ -583,13 +562,6 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "recompute" then
          Recompute_View (Get_Kernel (Data));
-
-      elsif Command = "update_xref" then
-         Name_Parameters (Data, (1 => Recursive_Cst'Access));
-         Parse_All_LI_Information
-           (Kernel    => Kernel,
-            Project   => Get_Data (Data, 1),
-            Recursive => Nth_Arg (Data, 2, False));
       end if;
    end Create_Project_Command_Handler;
 
@@ -2013,15 +1985,8 @@ package body GPS.Kernel.Scripts is
             --  context itself is destroyed.
             null;
 
-         when Files | Projects =>
+         when Files | Projects | Entities =>
             null;
-
-         when Entities =>
-            declare
-               V : Root_Entity'Class := Prop.Entity.Element;
-            begin
-               Unref (V);
-            end;
 
          when File_Locations =>
             Prop.Location := No_File_Location;

@@ -27,12 +27,9 @@ with Basic_Types;            use Basic_Types;
 with GNATCOLL.Projects;
 with GNATCOLL.SQL.Exec;
 with GNATCOLL.Symbols;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GNATCOLL.Xref;          use GNATCOLL.Xref;
 with GNAT.Strings;
-with Old_Entities;
-with Old_Entities.Queries;   use Old_Entities.Queries;
 with Projects;
 with Language_Handlers;
 with Language.Tree.Database;
@@ -46,10 +43,6 @@ with Ada.Containers.Indefinite_Holders;
 ----------
 
 package Xref is
-
-   SQLITE : constant GNATCOLL.Traces.Trace_Handle :=
-     GNATCOLL.Traces.Create ("Entities.SQLITE", GNATCOLL.Traces.On);
-   --  Whether to use the sqlite-based cross-reference system
 
    type Root_Reference_Iterator is abstract tagged null record;
 
@@ -114,10 +107,6 @@ package Xref is
       Hash => Ada.Strings.Hash, Equivalent_Keys => "=");
 
    type General_Xref_Database_Record is tagged record
-      Entities   : aliased Old_Entities.Entities_Database;
-      --  The "legacy" LI database
-      --  aliased is added to let AJIS make this field accessible to GNATbench
-
       Xref       : Extended_Xref_Database_Access;
       --  The "new" LI database
 
@@ -166,15 +155,11 @@ package Xref is
          access Language.Tree.Database.Abstract_Language_Handler_Record'Class;
       Symbols      : GNATCOLL.Symbols.Symbol_Table_Access;
       Registry     : Projects.Project_Registry_Access;
-      Subprogram_Ref_Is_Call : Boolean := False;
       Errors       : access GNATCOLL.SQL.Exec.Error_Reporter'Class := null);
    --  Initialize various internal fields for the constructs. It is assumed
    --  that the xref and LI databases have already been initialized.
    --  It is possible to pre-allocate Xref and/or Entities database if you want
    --  specific instances to be used, instead of the default ones.
-   --
-   --  Subprogram_Ref_Is_Call should be True for old GNAT versions, which were
-   --  using 'r' for subprogram calls, instead of 's' in more recent versions.
    --
    --  Errors is never freed, and is used to report errors when executing
    --  SQL queries.
@@ -761,7 +746,6 @@ package Xref is
 
    function Find_All_References
      (Entity                : Root_Entity;
-      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;
       In_File               : GNATCOLL.VFS.Virtual_File :=
         GNATCOLL.VFS.No_File;
       In_Scope              : Root_Entity'Class := No_Root_Entity;
@@ -777,9 +761,6 @@ package Xref is
    --  returned. This is also more efficient. Alternatively, In_Scope can be
    --  specified to limit the list of references to the ones that appear
    --  in the scope of In_Scope.
-   --  Source files with no LI file are reported through File_Has_No_LI_Report.
-   --  You must destroy the iterator when you are done with it, to avoid
-   --  memory leaks.
    --  If Include_Overriding or Include_Overridden are True, then all
    --  references to an overriding or Overriden subprogram will also be
    --  returned. If Entity is a parameter of subprogram A, this will also
@@ -834,42 +815,10 @@ package Xref is
      (Iter : Entity_Reference_Iterator) return Integer;
    --  Return the progress indicators for the iterator
 
-   -------------------------
-   -- Life cycle handling --
-   -------------------------
-
-   procedure Ref (Entity : Root_Entity) is abstract;
-   procedure Unref (Entity : in out Root_Entity) is abstract;
-   --  Increase/Decrease the reference counter on entities.
-   --  ??? This is needed only as long as the legacy system is in place.
-
-   type Database_Lock is private;
-   No_Lock : constant Database_Lock;
-
-   function Freeze
-     (Self : access General_Xref_Database_Record) return Database_Lock;
-   procedure Thaw
-     (Self : access General_Xref_Database_Record;
-      Lock : in out Database_Lock);
-   --  Freeze the update of the xref database
-
-   function Frozen
-     (Self : access General_Xref_Database_Record) return Boolean;
-   --  Return frozen state of the xref database
-
    -------------
    -- private --
    -------------
    --  The following subprograms should only be used from GPS.Kernel.Xref.
-
-   function To_Old
-     (Entity : General_Entity) return Old_Entities.Entity_Information;
-   function From_Old
-     (Entity : Old_Entities.Entity_Information) return Root_Entity'Class;
-   --  Convert to or from an old format entity
-
---     function To_New
---       (Entity : Root_Entity'Class) return GNATCOLL.Xref.Entity_Information;
 
    function From_New
      (Db     : General_Xref_Database;
@@ -878,10 +827,6 @@ package Xref is
    function From_Constructs
      (Db     : General_Xref_Database;
       Entity : Language.Tree.Database.Entity_Access) return General_Entity;
-
-   function Get_Entity_Reference
-     (Old_Ref : Old_Entities.Entity_Reference) return General_Entity_Reference;
-   --  Return the associated general entity reference
 
    procedure Project_Changed (Self : General_Xref_Database);
    --  The project has changed, we need to reset the xref database. This is
@@ -936,24 +881,18 @@ private
       null record;
 
    type General_Entity is new Root_Entity with record
-      Old_Entity : Old_Entities.Entity_Information := null;
       Is_Fuzzy   : Boolean := False;  --  Whether this is a fuzzy match
       Entity     : GNATCOLL.Xref.Entity_Information := No_Entity;
 
       Loc        : General_Location := No_Location;
       --  The location which was used to query the entity. This is used to
-      --  fall back on the Constructs database if Entity and Old_Entity are
-      --  null.
+      --  fall back on the Constructs database if Entity is null.
 
       Db         : General_Xref_Database;
    end record;
 
-   overriding procedure Ref (Entity : General_Entity);
-   overriding procedure Unref (Entity : in out General_Entity);
-
    overriding function Find_All_References
      (Entity                : General_Entity;
-      File_Has_No_LI_Report : Basic_Types.File_Error_Reporter := null;
       In_File               : GNATCOLL.VFS.Virtual_File :=
         GNATCOLL.VFS.No_File;
       In_Scope              : Root_Entity'Class := No_Root_Entity;
@@ -965,8 +904,6 @@ private
       return Root_Reference_Iterator'Class;
 
    type General_Entity_Reference is new Root_Entity_Reference with record
-      Old_Ref : Old_Entities.Entity_Reference :=
-        Old_Entities.No_Entity_Reference;
       Ref : Entity_Reference := No_Entity_Reference;
       Db  : General_Xref_Database;
    end record;
@@ -1089,8 +1026,7 @@ private
      (Entity : General_Entity) return Parameter_Array;
 
    No_Root_Entity_Reference : aliased constant Root_Entity_Reference'Class
-     := General_Entity_Reference'(Old_Ref => Old_Entities.No_Entity_Reference,
-                                  Db      => null,
+     := General_Entity_Reference'(Db      => null,
                                   Ref  => GNATCOLL.Xref.No_Entity_Reference);
 
    No_General_Entity_Declaration : constant General_Entity_Declaration :=
@@ -1107,8 +1043,6 @@ private
    end record;
 
    type Entity_Reference_Iterator is new Root_Reference_Iterator with record
-      Old_Iter : Old_Entities.Queries.Entity_Reference_Iterator;
-
       Iter     : GPS_Recursive_References_Cursor;
       In_File  : GNATCOLL.VFS.Virtual_File;
       In_Scope : General_Entity := No_General_Entity;
@@ -1121,40 +1055,20 @@ private
       Db       : General_Xref_Database;
    end record;
 
-   type Calls_Iterator is new Base_Entities_Cursor with record
-      Old_Iter : Old_Entities.Queries.Calls_Iterator;
-   end record;
-
-   type Entities_In_File_Cursor is new Base_Entities_Cursor with record
-      Old_Iter : Old_Entities.Queries.Entity_Iterator;
-   end record;
-
-   type Entities_In_Project_Cursor is new Base_Entities_Cursor with record
-      Old_Iter : Old_Entities.Entities_Search_Tries.Vector_Trie_Iterator;
-   end record;
+   type Calls_Iterator is new Base_Entities_Cursor with null record;
+   type Entities_In_File_Cursor is new Base_Entities_Cursor with null record;
+   type Entities_In_Project_Cursor is new Base_Entities_Cursor
+      with null record;
 
    type File_Iterator is tagged record
       Tree : GNATCOLL.Projects.Project_Tree_Access;
-
-      --  Old LI database
-      Old_Iter : Old_Entities.Queries.File_Dependency_Iterator;
-      Old_Ancestor_Iter : Old_Entities.Queries.Dependency_Iterator;
-      Is_Ancestor : Boolean;
 
       --  New sqlite database
       Iter         : Files_Cursor;
    end record;
 
-   type Database_Lock is record
-      Constructs : Old_Entities.Construct_Heuristics_Lock;
-   end record;
-
-   No_Lock : constant Database_Lock :=
-     (Constructs => Old_Entities.No_Lock);
-
    No_General_Entity : aliased constant General_Entity :=
-     (Old_Entity => null,
-      Is_Fuzzy   => False,
+     (Is_Fuzzy   => False,
       Loc        => No_Location,
       Entity     => No_Entity,
       Db         => null);

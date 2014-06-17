@@ -594,7 +594,6 @@ package body Browsers.Call_Graph is
       Name   : constant String := Get_Name (Entity);
    begin
       Item.Entity.Replace_Element (Entity);
-      Ref (Entity);
       Initialize (Item, Browser, Name,
                   Examine_Ancestors_Call_Graph'Access,
                   Examine_Entity_Call_Graph'Access);
@@ -671,11 +670,6 @@ package body Browsers.Call_Graph is
          end loop;
       end if;
 
-      declare
-         V : Root_Entity'Class := Item.Entity.Element;
-      begin
-         Unref (V);
-      end;
       Free (Item.Refs);
       Destroy (Arrow_Item_Record (Item));
    end Destroy;
@@ -1105,11 +1099,9 @@ package body Browsers.Call_Graph is
    ------------------
 
    procedure Destroy_Idle (Data : in out Entity_Idle_Data) is
-      V : Root_Entity'Class := Data.Entity.Element;
    begin
       Free (Data.Filter);
       Data.Iter.Reference.Destroy;
-      Unref (V);
       Free (Data.Category);
    end Destroy_Idle;
 
@@ -1271,8 +1263,6 @@ package body Browsers.Call_Graph is
          begin
             Get_Messages_Container (Kernel).Remove_Category
               (Category_Title, Call_Graph_Message_Flags);
-
-            Ref (Info);
             H.Replace_Element (Info);
             Data := (Kernel             => Kernel_Handle (Kernel),
                      Iter               => <>,
@@ -1583,8 +1573,7 @@ package body Browsers.Call_Graph is
                   In_File               => In_File,
                   Include_Implicit      => Implicit,
                   Include_All           => False,
-                  Kind                  => Only_If_Kind,
-                  File_Has_No_LI_Report => null));
+                  Kind                  => Only_If_Kind));
 
             if Synchronous then
                --  Synchronous, return directly the result
@@ -1822,14 +1811,7 @@ package body Browsers.Call_Graph is
                Item      : Entity_Item;
                Iter      : Item_Iterator;
                Count     : Integer := 1;
-               Lock      : Database_Lock := Kernel.Databases.Freeze;
-
             begin
-               Parse_All_LI_Information (Kernel, Get_Project (Kernel), False);
-               --  ??? for some reason, calling Freeze (Db) here generates
-               --  incomplete call graphs
-               --  Freeze (Db);
-
                Examine_Entity_Call_Graph
                  (Kernel, Node_Entity, Refresh => False);
 
@@ -1855,16 +1837,11 @@ package body Browsers.Call_Graph is
                   exit Main_Loop when Count > Max_Items;
                end loop Main_Loop;
 
-               --  ??? See comment about Freeze above
-               --  Thaw (Db);
-               Kernel.Databases.Thaw (Lock);
-
                Layout (Browser, Force => True);
                Refresh_Canvas (Canvas);
 
             exception
                when E    : others =>
-                  Kernel.Databases.Thaw (Lock);
                   Insert (Get_Kernel (Context.Context),
                           -"Internal error when creating the call graph for "
                           & Entity_Name_Information (Context.Context),

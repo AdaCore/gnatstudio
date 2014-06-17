@@ -440,11 +440,8 @@ package body Browsers.Entities is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Callback : in out Show_Entity_Callback)
-   is
-      V : Root_Entity'Class := Callback.Entity.Element;
+   overriding procedure Destroy (Callback : in out Show_Entity_Callback) is
    begin
-      Unref (V);
       Free (Callback.Link_Name);
    end Destroy;
 
@@ -459,7 +456,6 @@ package body Browsers.Entities is
    is
       H : Root_Entity_Ref;
    begin
-      Ref (Entity);
       H.Replace_Element (Entity);
       return new Show_Entity_Callback'
         (Active_Area_Callback with
@@ -827,7 +823,6 @@ package body Browsers.Entities is
            (Item, Browser, Name,
             Find_Parent_Types'Access, Find_Child_Types'Access);
       end if;
-      Ref (Entity);
       Item.Entity.Replace_Element (Entity);
       Recompute_Size (Item);
    end Initialize;

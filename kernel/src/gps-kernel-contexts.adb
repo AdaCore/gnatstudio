@@ -595,7 +595,6 @@ package body GPS.Kernel.Contexts is
    is
       Decl   : constant General_Location := Entity.Get_Declaration.Loc;
    begin
-      Ref (Entity);
       Context.Data.Data.Entity_Name   := new String'(Entity.Get_Name);
 
       Context.Data.Data.Entity_Column := Decl.Column;
@@ -752,8 +751,6 @@ package body GPS.Kernel.Contexts is
                   Entity_Name => Context.Data.Data.Entity_Name.all,
                   Closest_Ref => Context.Data.Data.Xref_Closest_Ref,
                   Approximate_Search_Fallback => Approximate_Search_Fallback));
-
-            Ref (Context.Data.Data.Xref_Entity.Element);
          end if;
       end if;
 

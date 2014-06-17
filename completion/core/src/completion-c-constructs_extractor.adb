@@ -950,21 +950,13 @@ package body Completion.C.Constructs_Extractor is
       function Is_Self_Referenced_Type
         (E : Root_Entity'Class) return Boolean is
       begin
-         if Active (SQLITE) then
-            return
-              E /= No_Root_Entity
-                and then Is_Type (E)
-                and then Is_Container (E)
-                and then Is_Global (E)
-                and then Get_Name (Caller_At_Declaration (E))
-                           = Get_Name (E);
-         else
-            return
-              E /= No_Root_Entity
-                and then Is_Type (E)
-                and then Get_Type_Of (E) /= No_Root_Entity
-                and then Get_Type_Of (E) = Caller_At_Declaration (E);
-         end if;
+         return
+           E /= No_Root_Entity
+           and then Is_Type (E)
+           and then Is_Container (E)
+           and then Is_Global (E)
+           and then Get_Name (Caller_At_Declaration (E))
+             = Get_Name (E);
       end Is_Self_Referenced_Type;
 
       ----------------
@@ -1166,11 +1158,7 @@ package body Completion.C.Constructs_Extractor is
                         --  needed for completion purposes)
 
                         if Is_Self_Referenced_Type (E) then
-                           if Active (SQLITE) then
-                              E := Caller_At_Declaration (E);
-                           else
-                              E := Get_Type_Of (E);
-                           end if;
+                           E := Caller_At_Declaration (E);
                         end if;
 
                         Append_Scope_Proposals

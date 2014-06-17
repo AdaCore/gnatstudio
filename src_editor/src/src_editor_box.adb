@@ -67,7 +67,6 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
 
 with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
@@ -248,14 +247,9 @@ package body Src_Editor_Box is
          return;
       end if;
 
-      --  Before getting its entity we check if the LI handler has unresolved
-      --  imported references to force updating its references
-
-      Ensure_Context_Up_To_Date (Context);
-
       --  Query the entity
       declare
-         Entity   : Root_Entity'Class := Get_Entity (Context);
+         Entity   : constant Root_Entity'Class := Get_Entity (Context);
       begin
 
          if Entity = No_Root_Entity then
@@ -269,8 +263,6 @@ package body Src_Editor_Box is
                Mode => Error);
             return;
          end if;
-
-         Ref (Entity);
 
          --  Get the declaration/body
 
@@ -293,8 +285,6 @@ package body Src_Editor_Box is
                Column      => Location.Column,
                Entity_Name => Get_Name (Entity));
          end if;
-
-         Unref (Entity);
       end;
    end Goto_Declaration_Or_Body;
 
@@ -1261,12 +1251,6 @@ package body Src_Editor_Box is
 
    begin
       Increase_Indent (Me, "Computing Dispatch_Submenu: " & Default_Title);
-
-      --  Before getting its entity we check if the LI handler has unresolved
-      --  imported references to force updating its references
-      --  ??? Seems unneeded
-
-      Ensure_Context_Up_To_Date (Context);
 
       Xref.For_Each_Dispatching_Call
         (Ref       => Get_Closest_Ref (Context),

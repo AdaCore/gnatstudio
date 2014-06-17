@@ -348,16 +348,12 @@ package body Src_Editor_Box.Tooltips is
          --  tooltip, based on cross references.
 
          declare
-            Entity : Root_Entity'Class := Get_Declaration_Info
+            Entity : constant Root_Entity'Class := Get_Declaration_Info
               (Box, Context, Entity_Ref);
          begin
             if Entity = No_Root_Entity then
                return Gtk_Widget (Vbox);
             end if;
-
-            --  Ref the entity, so that if Draw_Tooltip regenerates the xref
-            --  info, we are sure to always have a valid entity reference.
-            Ref (Entity);
 
             W := Entities_Tooltips.Draw_Tooltip
               (Box.Kernel, Entity, Entity_Ref.Element, Draw_Border => False);
@@ -368,8 +364,6 @@ package body Src_Editor_Box.Tooltips is
                end if;
                Vbox.Pack_Start (W, Expand => False, Fill => True);
             end if;
-
-            Unref (Entity);
          end;
 
          return Gtk_Widget (Vbox);

@@ -1041,7 +1041,6 @@ package body Refactoring.Services is
       PType                    : Parameter_Kind;
       Struct                   : Structured_File_Access;
       ERef                     : Entity_Reference_Details;
-      Lock                     : Database_Lock;
 
       Parent                   : Root_Entity_Access;
       --  The entity that contains the code to extract. This is set lazily.
@@ -1051,8 +1050,6 @@ package body Refactoring.Services is
 
       --  This code might require loading a file, so we only freeze afterward
       Iter := Db.Entities_In_File (Self.File, Self.Project);
-
-      Lock := Freeze (Db);
 
       Struct := Get_Or_Create (Self.Context.Db.Constructs, File => Self.File);
       Update_Contents (Struct);
@@ -1219,7 +1216,6 @@ package body Refactoring.Services is
                                        & Get_Name (Entity.all)
                                        & " prevents the refactoring");
                                     Success := False;
-                                    Thaw (Db, Lock);
                                     Unchecked_Free (Parent);
                                     Unchecked_Free (Caller);
                                     Unchecked_Free (Entity);
@@ -1250,7 +1246,6 @@ package body Refactoring.Services is
          Next (Iter);
       end loop;
 
-      Thaw (Db, Lock);
       Success := True;
 
       Unchecked_Free (Parent);
@@ -1260,7 +1255,6 @@ package body Refactoring.Services is
    exception
       when E : others =>
          Trace (Me, E);
-         Thaw (Db, Lock);
          raise;
    end For_All_Variable_In_Range;
 

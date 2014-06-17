@@ -23,10 +23,8 @@ with GNATCOLL.SQL.Exec;              use GNATCOLL.SQL.Exec;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
-with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                     use GPS.Kernel;
 with Glib.Convert;                   use Glib.Convert;
@@ -44,8 +42,6 @@ with Gtk.Tree_Store;                 use Gtk.Tree_Store;
 with Gtk.Tree_View;                  use Gtk.Tree_View;
 with Gtk.Widget;                     use Gtk.Widget;
 with Gtkada.Handlers;                use Gtkada.Handlers;
-with Old_Entities.Queries;
-with Old_Entities.Values;
 with System;                         use System;
 
 package body GPS.Kernel.Xref is
@@ -53,24 +49,6 @@ package body GPS.Kernel.Xref is
    use Root_Entity_Refs;
 
    Me : constant Trace_Handle := Create ("Xref");
-
-   type All_LI_Information_Command (Name_Len : Natural)
-   is new Root_Command with record
-      Iter         : Old_Entities.Queries.Recursive_LI_Information_Iterator;
-      Lang_Name    : String (1 .. Name_Len);
-      Count, Total : Natural := 0;
-      Chunk_Size   : Natural := 10;  --  ??? Should be configurable
-   end record;
-
-   overriding function Progress
-     (Command : access All_LI_Information_Command) return Progress_Record;
-   overriding function Execute
-     (Command : access All_LI_Information_Command) return Command_Return_Type;
-   overriding function Name
-     (Command : access All_LI_Information_Command) return String;
-
-   function C_Filter (Ext : Filesystem_String) return Boolean;
-   --  Return true if Lang is C or C++ (case insensitive)
 
    type Examine_Callback is record
       Iter              : Root_Reference_Iterator_Ref;
@@ -120,54 +98,6 @@ package body GPS.Kernel.Xref is
      (Self       : in out SQL_Error_Reporter;
       Connection : access Database_Connection_Record'Class);
 
-   ----------
-   -- Name --
-   ----------
-
-   overriding function Name
-     (Command : access All_LI_Information_Command) return String is
-   begin
-      return Command.Lang_Name;
-   end Name;
-
-   --------------
-   -- Progress --
-   --------------
-
-   overriding function Progress
-     (Command : access All_LI_Information_Command) return Progress_Record is
-   begin
-      return Progress_Record'
-        (Activity => Running,
-         Current  => Command.Count,
-         Total    => Command.Total);
-   end Progress;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access All_LI_Information_Command) return Command_Return_Type
-   is
-   begin
-      Old_Entities.Queries.Next (Command.Iter, Steps => Command.Chunk_Size,
-            Count => Command.Count, Total => Command.Total);
-
-      if Command.Count >= Command.Total then
-         Trace (Me, "Finished loading xref in memory");
-         Old_Entities.Queries.Free (Command.Iter);
-         return Success;
-      else
-         if Active (Me) then
-            Trace (Me, "Load xref in memory, count="
-                   & Command.Count'Img & " total="
-                   & Command.Total'Img);
-         end if;
-         return Execute_Again;
-      end if;
-   end Execute;
-
    --------------
    -- On_Error --
    --------------
@@ -182,105 +112,6 @@ package body GPS.Kernel.Xref is
          Add_LF => True,
          Mode   => GPS.Kernel.Error);
    end On_Error;
-
-   -------------------------------
-   -- Ensure_Context_Up_To_Date --
-   -------------------------------
-
-   procedure Ensure_Context_Up_To_Date (Context : Selection_Context) is
-      use Old_Entities;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-   begin
-      if not Active (Standard.Xref.SQLITE)
-        and then Has_Entity_Name_Information (Context)
-        and then Has_Line_Information (Context)
-        and then Has_File_Information (Context)
-      then
-         declare
-            Handler : Old_Entities.LI_Handler;
-            File    : Old_Entities.Source_File;
-
-         begin
-            File :=
-              Old_Entities.Get_Or_Create
-                (Db   => Kernel.Databases.Entities,
-                 File => File_Information (Context));
-
-            Handler := Old_Entities.Get_LI_Handler
-              (Kernel.Databases.Entities);
-
-            if Old_Entities.Has_Unresolved_Imported_Refs
-              (Old_Entities.Get_LI (File))
-            then
-               Old_Entities.Set_Update_Forced (Handler);
-               Old_Entities.Update_Xref (File);
-            end if;
-         end;
-      end if;
-   end Ensure_Context_Up_To_Date;
-
-   --------------
-   -- C_Filter --
-   --------------
-
-   function C_Filter (Ext : Filesystem_String) return Boolean is
-   begin
-      return Ext = ".gli";
-   end C_Filter;
-
-   -------------------------
-   -- Load_Xref_In_Memory --
-   -------------------------
-
-   procedure Load_Xref_In_Memory
-     (Kernel       : access Kernel_Handle_Record'Class;
-      C_Only       : Boolean)
-   is
-      use Old_Entities;
-      C : Command_Access;
-      C_Name : constant String := "load C/C++ xref";
-      All_Name : constant String := "load xref";
-
-   begin
-      if Active (Standard.Xref.SQLITE) then
-         --  Nothing to do
-         return;
-      end if;
-
-      if Active (Me) then
-         Trace (Me, "Load xref in memory, c only ? " & C_Only'Img);
-      end if;
-
-      if C_Only then
-         C := new All_LI_Information_Command
-           (Name_Len => C_Name'Length);
-         All_LI_Information_Command (C.all).Lang_Name := C_Name;
-
-         Old_Entities.Queries.Start
-           (All_LI_Information_Command (C.all).Iter,
-            Kernel.Databases.Entities,
-            Get_Language_Handler (Kernel),
-            Get_Project (Kernel).Start (Recursive => True),
-            C_Filter'Access);
-      else
-         C := new All_LI_Information_Command
-           (Name_Len => All_Name'Length);
-         All_LI_Information_Command (C.all).Lang_Name := All_Name;
-         Old_Entities.Queries.Start
-           (All_LI_Information_Command (C.all).Iter,
-            Kernel.Databases.Entities,
-            Get_Language_Handler (Kernel),
-            Get_Project (Kernel).Start (Recursive => True));
-      end if;
-
-      GPS.Kernel.Task_Manager.Launch_Background_Command
-        (Kernel,
-         C,
-         Active     => True,
-         Show_Bar   => True,
-         Queue_Id   => All_LI_Information_Command (C.all).Lang_Name,
-         Block_Exit => False);
-   end Load_Xref_In_Memory;
 
    -------------------------------------
    -- Watch_Destroyed_While_Computing --
@@ -299,7 +130,6 @@ package body GPS.Kernel.Xref is
    ------------------
 
    procedure Destroy_Idle (Data : in out Examine_Callback_Access) is
-      V : Root_Entity'Class := Data.Entity.Element;
    begin
       if not Data.Cancelled
         and then Data.Watch /= null
@@ -311,7 +141,6 @@ package body GPS.Kernel.Xref is
       Destroy (Data.Data.all, Data.Cancelled);
       Unchecked_Free (Data.Data);
       Destroy (Data.Iter.Reference);
-      Unref (V);
       Unchecked_Free (Data);
    end Destroy_Idle;
 
@@ -326,10 +155,6 @@ package body GPS.Kernel.Xref is
    begin
       null;
    end Destroy;
-
-   ----------------------------
-   -- Examine_Ancestors_Idle --
-   ----------------------------
 
    ----------------------------
    -- Examine_Ancestors_Idle --
@@ -449,7 +274,6 @@ package body GPS.Kernel.Xref is
              (Find_All_References
                   (Entity             => Entity,
                    Include_Overridden => Dispatching_Calls)));
-      Ref (Entity);
 
       --  If we have a renaming, report it
 
@@ -684,11 +508,7 @@ package body GPS.Kernel.Xref is
 
    function Get_Entity_Information_Type return Glib.GType is
    begin
-      if Active (SQLITE) then
-         return Glib.GType_Int;
-      else
-         return Old_Entities.Values.Get_Entity_Information_Type;
-      end if;
+      return Glib.GType_Int;
    end Get_Entity_Information_Type;
 
    ---------------------------
@@ -731,12 +551,10 @@ package body GPS.Kernel.Xref is
          Result := Kernel.Databases;
       end if;
 
-      if Active (SQLITE) then
-         if Result.Xref = null then
-            Result.Xref := new GPS.Kernel.Xref.GPS_Xref_Database;
-            GPS_Xref_Database (Result.Xref.all).Kernel :=
-              Kernel_Handle (Kernel);
-         end if;
+      if Result.Xref = null then
+         Result.Xref := new GPS.Kernel.Xref.GPS_Xref_Database;
+         GPS_Xref_Database (Result.Xref.all).Kernel :=
+           Kernel_Handle (Kernel);
       end if;
 
       Errors := new SQL_Error_Reporter;   --  never freed
@@ -746,65 +564,8 @@ package body GPS.Kernel.Xref is
         (Lang_Handler => Kernel.Lang_Handler,
          Symbols      => Kernel.Symbols,
          Registry     => Kernel.Registry,
-         Errors       => Errors,
-         Subprogram_Ref_Is_Call =>
-            not Require_GNAT_Date
-              (Kernel, Old_Entities.Advanced_Ref_In_Call_Graph_Date));
+         Errors       => Errors);
    end Create_Database;
-
-   --------------------------
-   -- Compilation_Finished --
-   --------------------------
-
-   procedure Compilation_Finished
-     (Kernel : access Kernel_Handle_Record'Class;
-      C_Only : Boolean)
-   is
-   begin
-      Trace (Me, "Compilation finished, loading xref");
-      if Active (SQLITE) then
-         --  Nothing to do: the plugin cross_references.py has a special
-         --  target that already takes care of re-running gnatinspect when a
-         --  compilation is finished.
-         null;
-
-      else
-         Load_Xref_In_Memory (Kernel, C_Only => C_Only);
-
-      end if;
-   end Compilation_Finished;
-
-   ------------------------------
-   -- Parse_All_LI_Information --
-   ------------------------------
-
-   procedure Parse_All_LI_Information
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Project_Type;
-      Recursive : Boolean)
-   is
-   begin
-      if not Active (SQLITE) then
-         declare
-            use Old_Entities, Old_Entities.Queries;
-            Iter : Recursive_LI_Information_Iterator;
-            Count, Total : Natural;
-         begin
-            Start (Iter,
-                   Kernel.Databases.Entities,
-                   Get_Language_Handler (Kernel),
-                   Project => Project.Start (Recursive => Recursive));
-
-            loop
-               Next (Iter, Steps => Natural'Last,  --  As much as possible
-                     Count => Count, Total => Total);
-               exit when Count >= Total;
-            end loop;
-
-            Free (Iter);
-         end;
-      end if;
-   end Parse_All_LI_Information;
 
    -------------------------------
    -- Select_Entity_Declaration --
