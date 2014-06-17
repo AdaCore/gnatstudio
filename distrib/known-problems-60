@@ -239,6 +239,15 @@ KP-60-N312-023 GPS: Windows not remaining docked when using Aero "Snap"
   Workaround: Do not use the "Snap" feature, but position the windows to the
               same position and size manually.
 
+KP-60-N307-001 GPS: highlighting in wrong position
+
+  Problem:    GPS highlights occurrences of selected identifier incorrectly
+              when non-ASCII characters are present before the identifier.
+
+  Status:     This was fixed in 6.1 on 2014-03-19
+
+  Workaround: Turn off auto_highlight_occurrences.py plugin.
+
 KP-60-N305-008 GPS: characters can be inserted in read-only editors
 
   Problem:    It is possible to insert characters in some regions of
