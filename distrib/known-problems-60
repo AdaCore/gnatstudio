@@ -95,6 +95,16 @@ KP-60-N523-013 GPS: no error reported when root object_dir is read-only
   Workaround: Make the root object directory writable, or use the
               Ide'Xref_Database attribute to move the database somewhere else.
 
+KP-60-N521-012 GPS: comment line does not work on a new saved file
+
+  Problem:    When creating an ada file in GPS, and using the comment line on
+              the newly saved file right away, the comment line command would
+              not work.
+
+  Status:     This was fixed in 6.1 on 2014-06-16
+
+  Workaround: Close the file and open it again.
+
 KP-60-N521-002 GPS: crash or freeze after compiling
 
   Problem:    After a compilation, GPS might freeze or crash as it is
@@ -204,6 +214,16 @@ KP-60-N410-050 GPS: search window dies closing floating window
   Status:     Fixed in 6.1 on 2014-05-13.
 
   Workaround: Open the search window when the main window is focused.
+
+KP-60-N410-006 GPS: Completion window never closed on alias completion
+
+  Problem:    When using the dynamic completion, and triggering the completion
+              of an identifier via the keyboard, the completion window would
+              never be closed
+
+  Status:     Fixed in 6.1 on 2014-06-16.
+
+  Workaround: Close the completion window by clicking on the entry
 
 KP-60-N407-001 GPS: GPS crashes on some completions involving generic packages
 

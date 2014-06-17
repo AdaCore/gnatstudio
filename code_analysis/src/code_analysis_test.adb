@@ -153,7 +153,7 @@ procedure Code_Analysis_Test is
          if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
             Add_Subprogram_Info
               (File_Node, To_Construct_Tree
-                 (Read_File (Src_File_Name).all, Ada_Lang));
+                 (Src_File_Name, Read_File (Src_File_Name).all, Ada_Lang));
          end if;
 
          Compute_Project_Coverage (Project_Node);
