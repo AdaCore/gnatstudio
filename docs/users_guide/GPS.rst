@@ -14,7 +14,6 @@ Functions
 .. autofunction:: add_location_command
 .. autofunction:: base_name
 .. autofunction:: cd
-.. autofunction:: compute_xref
 .. autofunction:: contextual_context
 .. autofunction:: current_context
 .. autofunction:: delete
