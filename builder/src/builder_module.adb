@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
@@ -22,12 +23,17 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Commands.Interactive;       use Commands, Commands.Interactive;
+with Commands.Builder;           use Commands.Builder;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Stock_Icons;            use GPS.Stock_Icons;
+
+with Builder_Facility_Module;    use Builder_Facility_Module;
+with Build_Command_Utils;        use Build_Command_Utils;
 
 package body Builder_Module is
 
@@ -35,6 +41,47 @@ package body Builder_Module is
    overriding function Execute
      (Command : access Interrupt_Tool_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
+
+   procedure Compile_Command
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Command handler for the "compile" command
+
+   ---------------------
+   -- Compile_Command --
+   ---------------------
+
+   procedure Compile_Command
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Data);
+   begin
+      if Command = "compute_xref" then
+         Launch_Target
+           (Builder_Facility_Module.Builder,
+            "Build All", "xref",
+            GNATCOLL.VFS.No_File,
+            Extra_Args  => null,
+            Quiet       => True,
+            Synchronous => True,
+            Dialog      => Build_Command_Utils.Force_No_Dialog,
+            Background  => False,
+            Main        => GNATCOLL.VFS.No_File);
+
+      elsif Command = "compute_xref_bg" then
+         Launch_Target
+           (Builder_Facility_Module.Builder,
+            "Build All", "xref",
+            GNATCOLL.VFS.No_File,
+            Extra_Args  => null,
+            Quiet       => True,
+            Synchronous => False,
+            Background  => False,
+            Dialog      => Build_Command_Utils.Force_No_Dialog,
+            Main        => GNATCOLL.VFS.No_File);
+      end if;
+   end Compile_Command;
 
    -------------
    -- Execute --
@@ -72,6 +119,10 @@ package body Builder_Module is
          Description =>
            -"Interrupt the tasks performed in the background by GPS",
          Stock_Id   => GPS_Stop_Task);
+
+      Register_Command
+        (Kernel, "compute_xref",
+         Handler => Compile_Command'Access);
    end Register_Module;
 
 end Builder_Module;
