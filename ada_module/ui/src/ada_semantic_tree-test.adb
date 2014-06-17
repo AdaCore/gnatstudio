@@ -39,8 +39,6 @@ with Language.Ada;                   use Language.Ada;
 with Language.Tree.Database;         use Language.Tree.Database;
 with Language.Tree;                  use Language.Tree;
 with Language;                       use Language;
-with Old_Entities;
-with Projects;                       use Projects;
 with String_Utils;                   use String_Utils;
 
 with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;
@@ -815,13 +813,9 @@ procedure Ada_Semantic_Tree.Test is
       Put ("ada_semantic_tree: Error loading project: " & Msg);
    end Project_Error;
 
-   New_Registry : constant Project_Registry_Access := Create (Tree);
-   Db : constant Old_Entities.Entities_Database :=
-     Old_Entities.Create (New_Registry, Construct_Db);
 begin
    GNATCOLL.Traces.Parse_Config_File;
    Set_Symbols (Construct_Db, Symbols);
-   Old_Entities.Set_Symbols (Db, Symbols);
    Set_Symbols (Ada_Lang, Symbols);
 
    Tree.Load
