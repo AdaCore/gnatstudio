@@ -149,6 +149,7 @@ package body Project_Explorers is
       Areas              => Gtkada.MDI.Sides_Only,
       Position           => Position_Left,
       Initialize         => Initialize);
+   use Explorer_Views;
    subtype Project_Explorer is Explorer_Views.View_Access;
 
    -----------------------
@@ -1007,13 +1008,10 @@ package body Project_Explorers is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      Child    : constant MDI_Child :=
-                   Find_MDI_Child_By_Tag
-                     (Get_MDI (Kernel), Project_Explorer_Record'Tag);
-      Explorer : Project_Explorer;
+      Explorer : constant Project_Explorer :=
+        Explorer_Views.Retrieve_View (Kernel);
    begin
-      if Child /= null then
-         Explorer := Project_Explorer (Get_Widget (Child));
+      if Explorer /= null then
          Set_Font_And_Colors
            (Explorer.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
       end if;
