@@ -27,7 +27,6 @@ with Language.Tree.Database;    use Language.Tree.Database;
 with GNATCOLL.SQL;              use GNATCOLL.SQL;
 with GNATCOLL.SQL.Inspect;      use GNATCOLL.SQL.Inspect;
 with GNAT.Regpat;               use GNAT.Regpat;
-with Old_Entities;
 
 package body Xref.Docgen is
 
@@ -845,43 +844,36 @@ package body Xref.Docgen is
           (Get_Language_From_File (Handler, Source_Filename => Location.File));
       Result  : Unbounded_String;
 
-      use type Old_Entities.Entity_Information;
-      use type Old_Entities.File_Location;
-
    begin
-      pragma Assert (Active (SQLITE));
+      if Location /= No_Location then
+         declare
+            C_Result : Comment_Result :=
+              GNATCOLL.Comment
+                (Self     => Xref_Database (Self.Xref.all),
+                 Buffer   => Buffer,
+                 Location => Location,
+                 End_Loc  => End_Loc,
+                 Language => Context.Syntax,
+                 Format   => Form);
 
-      if Active (SQLITE) then
-         if Location /= No_Location then
-            declare
-               C_Result : Comment_Result :=
-                 GNATCOLL.Comment
-                   (Self     => Xref_Database (Self.Xref.all),
-                    Buffer   => Buffer,
-                    Location => Location,
-                    End_Loc  => End_Loc,
-                    Language => Context.Syntax,
-                    Format   => Form);
+            --  This call will be replaced by:
+            --   Self.Xref.Comment
+            --     (Buffer, Entity.Entity, Context.Syntax, Form);
 
-               --  This call will be replaced by:
-               --   Self.Xref.Comment
-               --     (Buffer, Entity.Entity, Context.Syntax, Form);
+            S1 : constant String := To_String (C_Result.Text);
 
-               S1 : constant String := To_String (C_Result.Text);
+         begin
+            Append (Result, S1 & ASCII.LF);
 
-            begin
-               Append (Result, S1 & ASCII.LF);
+            C_Result.Text :=
+              Ada.Strings.Unbounded.Trim
+                (Result,
+                 Left => Ada.Strings.Maps.Null_Set,
+                 Right => Ada.Strings.Maps.To_Set
+                   (' ' & ASCII.HT & ASCII.LF & ASCII.CR));
 
-               C_Result.Text :=
-                 Ada.Strings.Unbounded.Trim
-                   (Result,
-                    Left => Ada.Strings.Maps.Null_Set,
-                    Right => Ada.Strings.Maps.To_Set
-                      (' ' & ASCII.HT & ASCII.LF & ASCII.CR));
-
-               return C_Result;
-            end;
-         end if;
+            return C_Result;
+         end;
       end if;
 
       return No_Comment_Result;
