@@ -43,11 +43,7 @@ package body Builder_Module is
    Xrefs_Loading_Queue : constant String := "xrefs_loading";
 
    type Builder_Module_ID_Record is
-     new GPS.Kernel.Modules.Module_ID_Record
-   with record
-      Build_Count : Natural := 0;
-      --  Number of on-going builds
-   end record;
+     new GPS.Kernel.Modules.Module_ID_Record with null record;
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record;
    --  Data stored with the module id
 
@@ -66,16 +62,6 @@ package body Builder_Module is
      (Command : access Recompute_Xref_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Build->Compute Xref information menu
-
-   procedure On_Compilation_Finished
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data : access Hooks_Data'Class);
-   --  Called when the compilation is finished
-
-   function On_Compilation_Starting
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean;
-   --  Called when the compilation is starting
 
    type Interrupt_Tool_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -150,37 +136,6 @@ package body Builder_Module is
    end Execute;
 
    -----------------------------
-   -- On_Compilation_Starting --
-   -----------------------------
-
-   function On_Compilation_Starting
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
-   is
-      pragma Unreferenced (Data);
-   begin
-      Interrupt_Xrefs_Loading (Kernel);
-      Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
-
-      return True;
-   end On_Compilation_Starting;
-
-   -----------------------------
-   -- On_Compilation_Finished --
-   -----------------------------
-
-   procedure On_Compilation_Finished
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-   is
-      pragma Unreferenced (Kernel, Data);
-   begin
-      if Builder_Module_ID.Build_Count > 0 then
-         Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
-      end if;
-   end On_Compilation_Finished;
-
-   -----------------------------
    -- Interrupt_Xrefs_Loading --
    -----------------------------
 
@@ -236,16 +191,6 @@ package body Builder_Module is
            -"Interrupt the tasks performed in the background by GPS",
          Stock_Id   => GPS_Stop_Task);
 
-      Add_Hook
-        (Kernel => Kernel,
-         Hook   => Compilation_Finished_Hook,
-         Func   => Wrapper (On_Compilation_Finished'Access),
-         Name   => "load_xrefs");
-      Add_Hook
-        (Kernel => Kernel,
-         Hook   => Compilation_Starting_Hook,
-         Func   => Wrapper (On_Compilation_Starting'Access),
-         Name   => "stop_load_xrefs");
       Add_Hook
         (Kernel => Kernel,
          Hook   => Project_Changed_Hook,
