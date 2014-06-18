@@ -123,6 +123,9 @@ package body Builder_Module is
       Register_Command
         (Kernel, "compute_xref",
          Handler => Compile_Command'Access);
+      Register_Command
+        (Kernel, "compute_xref_bg",
+         Handler => Compile_Command'Access);
    end Register_Module;
 
 end Builder_Module;
