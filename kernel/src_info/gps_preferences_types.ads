@@ -17,12 +17,10 @@
 
 package GPS_Preferences_Types is
 
-   type Multi_Language_Builder_Policy is (Auto, Gnatmake, Gprbuild);
-   --  The List of possible multi-language builders
-   --   - Auto: gnatmake for Ada projects, gprbuild otherwise
+   type Multi_Language_Builder_Policy is (Gnatmake, Gprbuild);
    --   - Gnatmake: always use gnatmake (disable multi-language builds)
    --   - Gprbuild: always use gprbuild, even for Ada projects
 
-   Default_Builder : constant Multi_Language_Builder_Policy := Auto;
+   Default_Builder : constant Multi_Language_Builder_Policy := Gprbuild;
 
 end GPS_Preferences_Types;

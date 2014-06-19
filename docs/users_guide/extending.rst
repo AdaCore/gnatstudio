@@ -124,16 +124,10 @@ arrow, as seen in the screenshot above).
 
     The default builder used by GPS.
 
-    * :samp:`Auto` to use :program:`gnatmake` for Ada-only projects and
-      :program:`gprbuild` otherwise (for multi-language and non Ada
-      projects).
+    * :samp:`Gprbuild` to always use :program:`gprbuild` for builds
 
-    * :samp:`Gnatmake` to always use :program:`gnatmake` for builds, even
-      for projects containing sources in other languages. This disables
-      support for building non-Ada projects.
-
-    * :samp:`Gprbuild` to always use :program:`gprbuild` for builds, even
-      for Ada-only projects.
+    * :samp:`Gnatmake` to always use :program:`gnatmake` for builds. Using
+      setting is not recommended, and not supported for multi-language builds.
 
   * :guilabel:`Hyper links`
 

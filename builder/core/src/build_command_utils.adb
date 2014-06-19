@@ -142,9 +142,6 @@ package body Build_Command_Utils is
    procedure Free_Adapter is new Ada.Unchecked_Deallocation
      (Build_Command_Adapter, Build_Command_Adapter_Access);
 
-   procedure Free (Ar : in out Argument_List);
-   --  Free memory associated to Ar
-
    ---------------------
    -- Apply_Mode_Args --
    ---------------------
@@ -566,17 +563,6 @@ package body Build_Command_Utils is
       return Adapter.Multi_Language_Builder;
    end Get_Multi_Language_Builder;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Ar : in out Argument_List) is
-   begin
-      for A in Ar'Range loop
-         Free (Ar (A));
-      end loop;
-   end Free;
-
    ---------------------------------
    -- Scenario_Variables_Cmd_Line --
    ---------------------------------
@@ -646,8 +632,7 @@ package body Build_Command_Utils is
       function Get_Index (A, B : Natural) return Natural;
       --  Return A if A /= 0, B otherwise
 
-      function Multi_Language_Build
-        (Prj    : Project_Type) return Boolean;
+      function Multi_Language_Build return Boolean;
       --  Return True if the build is multi-language, False if build is Ada
       --  only.
 
@@ -733,8 +718,7 @@ package body Build_Command_Utils is
       -- Multi_Language_Build --
       --------------------------
 
-      function Multi_Language_Build
-        (Prj : Project_Type) return Boolean
+      function Multi_Language_Build return Boolean
       is
          Policy : constant Multi_Language_Builder_Policy :=
            Get_Multi_Language_Builder (Adapter.all);
@@ -744,23 +728,6 @@ package body Build_Command_Utils is
                return True;
             when Gnatmake =>
                return False;
-            when Auto =>
-               if Get_Kernel_Registry (Adapter.all)
-                 .Tree.Root_Project.Is_Aggregate_Project
-               then
-                  --  Always use gprbuild with aggregate projects
-                  return True;
-               end if;
-
-               declare
-                  Langs  : Argument_List := Prj.Languages (Recursive => True);
-                  Result : Boolean;
-               begin
-                  Result := Langs'Length /= 1
-                    or else Langs (Langs'First).all /= "ada";
-                  Free (Langs);
-                  return Result;
-               end;
          end case;
       end Multi_Language_Build;
 
@@ -860,7 +827,7 @@ package body Build_Command_Utils is
          begin
             if Arg = "%gprbuild" then
                Res.Args := Create_Command ("gprbuild", Tc);
-            elsif Multi_Language_Build (Prj) then
+            elsif Multi_Language_Build then
                if Clean then
                   Res.Args := Create_Command ("gprclean", Tc);
                else

@@ -462,11 +462,9 @@ package body GPS.Kernel.Preferences is
          Label   => -"Default builder",
          Doc     =>
          -("GPS default builder choice:" & ASCII.LF &
-           "  - Auto (gnatmake for Ada projects, gprbuild otherwise)" &
-           ASCII.LF &
-           "  - Gnatmake (will disable multi-language builds)" & ASCII.LF &
-           "  - Gprbuild (force use of gprbuild even for Ada projects)"
-          ),
+           "  - gprbuild" & ASCII.LF &
+           "  - gnatmake (not recommended, not supported for "
+           & "multi-language builds)"),
          Page    => -"General",
          Default => Default_Builder);
 
