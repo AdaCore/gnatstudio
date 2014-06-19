@@ -23,9 +23,6 @@ project Shared is
             for VCS_Kind use VCS_Kind;
       end case;
 
-      for VCS_Log_Check use "log_check";
-      for VCS_File_Check use "ci_check";
-
       for Documentation_Dir use Project'Object_Dir & "/html";
    end IDE;
 
