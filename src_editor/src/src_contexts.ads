@@ -16,23 +16,25 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;
-with Basic_Types;                   use Basic_Types;
-with Files_Extra_Info_Pkg;
-with Find_Utils;                    use Find_Utils;
 with GNAT.Regexp;
 with GNAT.Regpat;
-with GNAT.Strings;
+
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
-with GPS.Kernel;
-with GPS.Search;
-with Generic_List;
+
 with Gtk.Box;
 with Gtk.Combo_Box_Text;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;                 use Gtk.Text_Mark;
 with Gtk.Widget;
+
+with Basic_Types;                   use Basic_Types;
+with Find_Utils;                    use Find_Utils;
+with Files_Extra_Info_Pkg;
+with Generic_List;
+with GPS.Kernel;
 with Language_Handlers;
 with Src_Editor_Buffer;             use Src_Editor_Buffer;
+with GNAT.Strings;
 
 package Src_Contexts is
 
@@ -74,7 +76,7 @@ package Src_Contexts is
    -- File context --
    ------------------
 
-   type File_Search_Context is abstract new Root_Search_Context with private;
+   type File_Search_Context is abstract new Search_Context with private;
 
    type Current_File_Context is new File_Search_Context with private;
    type Current_File_Context_Access is access all Current_File_Context'Class;
@@ -89,7 +91,7 @@ package Src_Contexts is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
+      return Search_Context_Access;
    --  Factory for "Current File". A Files_Project_Context is returned if
    --  searching for All_Occurrences
    --  This only works from the GUI, and shouldn't be used for text mode
@@ -97,8 +99,7 @@ package Src_Contexts is
    function Current_File_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
-      Scope             : Search_Scope := Whole)
-      return Root_Search_Context_Access;
+      Scope             : Search_Scope := Whole) return Search_Context_Access;
    --  Same as above, but takes the scope directly in parameter
 
    type Editor_Coordinates is record
@@ -163,7 +164,7 @@ package Src_Contexts is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
+      return Search_Context_Access;
    --  Factory for "Current Selection".
 
    ----------------------------
@@ -234,7 +235,7 @@ package Src_Contexts is
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
       Extra_Information  : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
+      return Search_Context_Access;
    --  Factory for "Files..."
 
    function Files_Factory
@@ -276,7 +277,7 @@ package Src_Contexts is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
+      return Search_Context_Access;
    --  Factory for "Files From Project".
    --  The list of files is automatically set to the files of the root project
    --  and its imported projects
@@ -291,7 +292,7 @@ package Src_Contexts is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
+      return Search_Context_Access;
    --  Factory for "Files From Current Project".
    --  The list of files is automatically set to the files of the root project
    --  without imported projects
@@ -314,7 +315,7 @@ package Src_Contexts is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
+      return Search_Context_Access;
    --  Factory for "Files From Runtime".
    --  The list of files is automatically set to the *.ads files from
    --  Predefined_Source_Path
@@ -345,8 +346,7 @@ package Src_Contexts is
    function Open_Files_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
+      Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access;
    --  Factory for "Open Files".
    --  The list of files is automatically set to the currently opend files
 
@@ -386,7 +386,7 @@ private
 
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
-   type Match_Result_Access is access GPS.Search.Search_Context;
+   type Match_Result_Access is access Match_Result;
    type Match_Result_Array is array (Positive range <>) of Match_Result_Access;
    type Match_Result_Array_Access is access all Match_Result_Array;
 
@@ -429,13 +429,14 @@ private
       --  Last valid element in References;
    end record;
 
-   type File_Search_Context is abstract new Root_Search_Context with record
+   type File_Search_Context is abstract new Search_Context with record
       Replace_Valid : Boolean := False;
       --  Whether the current search item that the context refers to
       --  is acceptable for a replace operation.
 
-      Current : GPS.Search.Search_Context;
-      --  Information about the last match
+      Begin_Line, End_Line     : Editable_Line_Type := 0;
+      Begin_Column, End_Column : Basic_Types.Character_Offset_Type := 0;
+      --  Begin_Line is set to 0 if no match was found
 
       All_Occurrences : Boolean := False;
       Scope           : Search_Scope := Whole;
@@ -457,7 +458,6 @@ private
 
    function Replacement_Text
      (Context         : access File_Search_Context;
-      Result          : GPS.Search.Search_Context;
       Pattern         : Replacement_Pattern;
       Matched_Text    : String) return String;
    --  Return replacement text based on replacement pattern

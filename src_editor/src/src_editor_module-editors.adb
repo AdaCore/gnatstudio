@@ -2886,7 +2886,7 @@ package body Src_Editor_Module.Editors is
          end if;
       end if;
 
-      Free (Root_Search_Context_Access (Context));
+      Free (Search_Context_Access (Context));
    end Search;
 
    ---------------------------

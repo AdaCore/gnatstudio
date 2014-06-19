@@ -52,7 +52,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Search;
 with Language;                  use Language;
 with Projects;                  use Projects;
 with Src_Contexts;              use Src_Contexts;
@@ -565,28 +564,22 @@ package body Src_Editor_Module.Shell is
       Context : Files_Project_Context_Access;
       S       : Search_Scope;
 
-      function Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+      function Callback (Match : Match_Result) return Boolean;
       --  Store the result of the match in Data
 
       --------------
       -- Callback --
       --------------
 
-      function Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
-      is
-         pragma Unreferenced (Text);
+      function Callback (Match : Match_Result) return Boolean is
       begin
          Set_Return_Value
            (Data,
             Create_File_Location
               (Get_Script (Data),
                Create_File (Get_Script (Data), Current_File (Context)),
-               Match.Line_Start,
-               Match.Col_Visible_Start));
+               Match.Begin_Line,
+               Match.Visible_Begin_Column));
          return True;
       end Callback;
 
@@ -650,28 +643,22 @@ package body Src_Editor_Module.Shell is
       Dummy   : Boolean;
       pragma Unreferenced (Dummy);
 
-      function Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+      function Callback (Match : Match_Result) return Boolean;
       --  Store the result of the match in Data
 
       --------------
       -- Callback --
       --------------
 
-      function Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
-      is
-         pragma Unreferenced (Text);
+      function Callback (Match : Match_Result) return Boolean is
       begin
          Set_Return_Value
            (Data,
             Create_File_Location
               (Get_Script (Data),
                Create_File (Get_Script (Data), File),
-               Match.Line_Start,
-               Match.Col_Visible_Start));
+               Match.Begin_Line,
+               Match.Visible_Begin_Column));
          return True;
       end Callback;
 

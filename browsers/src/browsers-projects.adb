@@ -37,7 +37,6 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Search;
 with GPS.Intl;               use GPS.Intl;
 with Projects;               use Projects;
 with Browsers.Canvas;        use Browsers.Canvas;
@@ -52,7 +51,7 @@ package body Browsers.Projects is
 
    type Project_Browser_Module is new Module_ID_Record with null record;
 
-   type Browser_Search_Context is new Root_Search_Context with null record;
+   type Browser_Search_Context is new Search_Context with null record;
    type Browser_Search_Context_Access is access all Browser_Search_Context;
 
    overriding function Context_Look_In
@@ -150,7 +149,7 @@ package body Browsers.Projects is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
+      return Search_Context_Access;
    --  Create a new search context for the explorer
 
    overriding procedure Search
@@ -526,13 +525,13 @@ package body Browsers.Projects is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
+      return Search_Context_Access
    is
       pragma Unreferenced (Kernel, All_Occurences, Extra_Information);
       Context : Browser_Search_Context_Access;
    begin
       Context := new Browser_Search_Context;
-      return Root_Search_Context_Access (Context);
+      return Search_Context_Access (Context);
    end Browser_Search_Factory;
 
    ------------
@@ -580,10 +579,9 @@ package body Browsers.Projects is
          --  encountered the current selection.
 
          if First_Match = null or else Saw_Selected then
-            if not GPS.Search.Failed
-              (Match (Context, To_String (It.Name)))
-            then
+            if Match (Context, To_String (It.Name)) /= -1 then
                First_Match := Canvas_Item (It);
+
                exit when Saw_Selected;
             end if;
          end if;

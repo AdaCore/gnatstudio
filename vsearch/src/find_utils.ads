@@ -44,10 +44,13 @@
 --    undefined behavior.
 --  * Allowed chars in a word are found in g-regpat.ads.
 
+with GNATCOLL.Boyer_Moore;
+with GNAT.Strings;
+with GNAT.Regpat;
 with Glib;
 with GPS.Kernel;
-with GPS.Search;    use GPS.Search;
 with Gtk.Widget;
+
 with Basic_Types; use Basic_Types;
 
 package Find_Utils is
@@ -85,12 +88,13 @@ package Find_Utils is
    --  search both constant strings and regular expressions.
 
    type Root_Search_Context is abstract tagged limited private;
-   type Root_Search_Context_Access is access all Root_Search_Context'Class;
 
    procedure Set_End_Notif_Done
      (Context : in out Root_Search_Context; Value : Boolean);
-   function Get_End_Notif_Done (Context : Root_Search_Context) return Boolean;
    --  Set the state of the "end of search" notification for this context
+
+   function Get_End_Notif_Done (Context : Root_Search_Context) return Boolean;
+   --  Return the state of the "end of search" notification for this context
 
    procedure Set_Context
      (Context  : access Root_Search_Context'Class;
@@ -104,12 +108,36 @@ package Find_Utils is
    --  string. If context is a regular expression, return the original regexp
    --  string if any, "" otherwise.
 
+   function Context_As_String
+     (Context : access Root_Search_Context) return String;
+   --  Return the search string.
+   --  Invalid_Context is raised if the user is in fact looking for a regular
+   --  expression.
+
+   function Context_As_Regexp
+     (Context : access Root_Search_Context) return GNAT.Regpat.Pattern_Matcher;
+   --  Return the regular expression to match. The "whole word" and "case
+   --  insensitive" options are automatically taken into account when computing
+   --  the regular expression.
+   --  Note that the regexp is cached for efficiency.
+   --  Invalid_Context is raised if the user is not looking for a regular
+   --  expression, or the regular expression is invalid.
+
    function Context_Look_In
      (Self : Root_Search_Context) return String;
    --  Describe the current context (what files are searched,...)
    --  This is intended for display to the user.
    --  The returned string should start with a lower case, and continue a
    --  a sentence that ends with "in ...".
+
+   procedure Context_As_Boyer_Moore
+     (Context : access Root_Search_Context;
+      Matcher : out GNATCOLL.Boyer_Moore.Pattern);
+   --  Return the search string as a Boyer-Moore pattern.
+   --  Matcher is computed on demand, and cached for efficiency. It
+   --  automatically includes the "case insensitive" options.
+   --  Invalid_Context is raised if the user is in fact looking for a regular
+   --  expression.
 
    function Get_Options (Context : access Root_Search_Context)
       return Search_Options;
@@ -123,8 +151,7 @@ package Find_Utils is
      (Context     : access Root_Search_Context;
       Buffer      : String;
       Start_Index : Integer := -1;
-      End_Index   : Positive := Positive'Last)
-      return GPS.Search.Search_Context;
+      End_Index   : Positive := Positive'Last) return Integer;
    --  Check if Context matches Buffer (Start_Index .. End_Index), and return
    --  the index of the first match, or -1 if there is no match. Start_Index
    --  defaults to Buffer'First, and End_Index defaults to Buffer'Last.
@@ -134,8 +161,8 @@ package Find_Utils is
    --  This automatically uses either a regexp or a faster Boyer Moore methode
    --  for constant strings.
 
-   procedure Matched_Subexpression
-     (Result      : GPS.Search.Search_Context;
+   procedure Matched_Subexpressoin
+     (Context     : access Root_Search_Context;
       Index       : Natural;
       First       : out Natural;
       Last        : out Natural);
@@ -151,13 +178,25 @@ package Find_Utils is
    --  return "".
    --  ??? Currently, only the Replace kind is taken into account.
 
-   type Scan_Callback is access function
-     (Match : GPS.Search.Search_Context;
-      Text  : String) return Boolean;
+   type Match_Result (Length : Natural) is record
+      Index                : Natural;
+      Begin_Line           : Natural;
+      Begin_Column         : Character_Offset_Type;
+      Visible_Begin_Column : Visible_Column_Type;
+      End_Line             : Natural;
+      End_Column           : Character_Offset_Type;
+      Visible_End_Column   : Visible_Column_Type;
+      Pattern_Length       : Natural;
+      Text : String (1 .. Length);
+   end record;
+   --  The result of a match. This is a discriminated type so that we don't
+   --  have to worry who is responsible to free it.
+
+   No_Result : constant Match_Result;
+
+   type Scan_Callback is access
+     function (Match : Match_Result) return Boolean;
    --  Callback for a match in a buffer.
-   --  Text is the full line that contains the matched text, where the latter
-   --  has been highlighted. This is suitable for displaying in the Locations
-   --  window.
    --  If it returns False, no more match will be checked.
 
    procedure Scan_Buffer_No_Scope
@@ -169,7 +208,6 @@ package Find_Utils is
       Ref_Index   : in out Integer;
       Ref_Line    : in out Natural;
       Ref_Column  : in out Character_Offset_Type;
-      Ref_Visible_Column : in out Visible_Column_Type;
       Was_Partial : out Boolean);
    --  Find matches of Context in Buffer (Start_Index .. End_Index), and until
    --  either End_Index or Callback returns False.
@@ -211,25 +249,36 @@ package Find_Utils is
    Invalid_Context : exception;
    --  Raised when trying to access the components in Search_Context
 
+   --------------
+   -- Contexts --
+   --------------
+
+   type Search_Context is abstract new Root_Search_Context with private;
+   type Search_Context_Access is access all Search_Context'Class;
+   --  Defines what the user is looking for.
+   --  Although the user always specifies a string, it should sometimes be
+   --  interpreted differently based on whether it is a regular expression,...
+   --  The subprograms below will compute the fields as needed.
+
    function Get_Current_Progress
-     (Context : access Root_Search_Context) return Integer is (0);
+     (Context : access Search_Context) return Integer;
    --  Return the current progress level in Context (ex: the number of file
    --  being searched. By default, return 0.
 
    function Get_Total_Progress
-     (Context : access Root_Search_Context) return Integer is (1);
+     (Context : access Search_Context) return Integer;
    --  Return the total progress level in Context (ex: the total number of
    --  files being searched). By default, return 1.
 
    procedure Reset
-     (Context : access Root_Search_Context;
+     (Context : access Search_Context;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Called whenever a new search will start (as opposed to continuing the
    --  current one through the Next button).
    --  By default, this does nothing
 
    procedure Search
-     (Context         : access Root_Search_Context;
+     (Context         : access Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean;
       Give_Focus      : Boolean;
@@ -246,7 +295,7 @@ package Find_Utils is
    --  search window
 
    function Replace
-     (Context         : access Root_Search_Context;
+     (Context         : access Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
       Case_Preserving : Boolean;
@@ -260,7 +309,7 @@ package Find_Utils is
    --  search string.
    --  The default implementation does nothing.
 
-   procedure Free (Context : in out Root_Search_Context_Access);
+   procedure Free (Context : in out Search_Context_Access);
    --  Free the memory both for the pointer and for the internal fields. It
    --  dispatches to calls to Free for Files_Context
 
@@ -272,7 +321,7 @@ package Find_Utils is
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
       Extra_Information  : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
+      return Search_Context_Access;
    --  Function called to create the search context.
    --  It should return null if it couldn't create the context, and thus if the
    --  search/replace won't be performed.
@@ -286,9 +335,21 @@ package Find_Utils is
 
 private
 
-   type Root_Search_Context is abstract tagged limited record
-      Pattern        : GPS.Search.Search_Pattern_Access;
-      --  The pattern matcher
+   type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
+
+   type Match_Array_Access is access GNAT.Regpat.Match_Array;
+
+   No_Result : constant Match_Result := (0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+
+   type Root_Search_Context is tagged limited record
+      Options        : Search_Options;
+      Look_For       : GNAT.Strings.String_Access := null;
+
+      RE_Matcher     : Pattern_Matcher_Access := null;
+      Sub_Matches    : Match_Array_Access := null;
+
+      BM_Matcher     : GNATCOLL.Boyer_Moore.Pattern;
+      BM_Initialized : Boolean := False;
 
       End_Notif_Done : Boolean := False;
       --  This variable is true when a notification has been sent to the
@@ -297,5 +358,7 @@ private
       --  should always check that is has not already been given before making
       --  it.
    end record;
+
+   type Search_Context is abstract new Root_Search_Context with null record;
 
 end Find_Utils;

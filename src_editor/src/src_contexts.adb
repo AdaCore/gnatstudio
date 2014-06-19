@@ -57,7 +57,6 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Search;                 use GPS.Search;
 with GPS.Styles;                 use GPS.Styles;
 with GPS.Styles.UI;              use GPS.Styles.UI;
 with GUI_Utils;                  use GUI_Utils;
@@ -89,7 +88,7 @@ package body Src_Contexts is
    --  S is encoded in UTF-8, and so is the result.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GPS.Search.Search_Context, Match_Result_Access);
+     (Match_Result, Match_Result_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Match_Result_Array, Match_Result_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -98,14 +97,13 @@ package body Src_Contexts is
    procedure Scan_Buffer
      (Buffer        : String;
       From          : Character_Offset_Type;
-      Context       : access Root_Search_Context'Class;
+      Context       : access Search_Context'Class;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Lang          : Language_Access := null;
       Ref_Line      : Editable_Line_Type := 1;
       Ref_Column    : Character_Offset_Type := 1;
-      Ref_Visible_Column : Visible_Column_Type := 1;
       Was_Partial   : out Boolean);
    --  Search Context in buffer starting from From character, searching only
    --  in the appropriate scope.
@@ -119,7 +117,7 @@ package body Src_Contexts is
    --  Buffer should be in UTF-8.
 
    procedure Scan_File
-     (Context       : access Root_Search_Context'Class;
+     (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle := null;
       Name          : GNATCOLL.VFS.Virtual_File;
@@ -128,7 +126,6 @@ package body Src_Contexts is
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Character_Offset_Type := 1;
-      Start_Visible_Column : Visible_Column_Type := 1;
       Force_Read    : Boolean := False;
       Was_Partial   : out Boolean);
    --  Search Context in the file Name, searching only in the appropriate
@@ -144,7 +141,7 @@ package body Src_Contexts is
    --  some point.
 
    procedure Scan_Editor
-     (Context       : access Root_Search_Context'Class;
+     (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Editor        : MDI_Child;
       Callback      : Scan_Callback;
@@ -152,13 +149,12 @@ package body Src_Contexts is
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Character_Offset_Type := 1;
-      Start_Visible_Column : Visible_Column_Type := 1;
       Was_Partial   : out Boolean);
    --  Same as above, but works directly on the editor. This is usefull for
    --  example when the editor has no file yet.
 
    function Scan_And_Store
-     (Context  : access Root_Search_Context'Class;
+     (Context  : access Search_Context'Class;
       Handler  : access Language_Handler_Record'Class;
       Kernel   : Kernel_Handle;
       Str      : String := "";
@@ -177,7 +173,7 @@ package body Src_Contexts is
    --  for the file.
 
    procedure Scan_Next
-     (Context        : access Root_Search_Context'Class;
+     (Context        : access Search_Context'Class;
       Kernel         : access Kernel_Handle_Record'Class;
       Editor         : access Source_Buffer_Record'Class;
       Scope          : Search_Scope;
@@ -204,7 +200,7 @@ package body Src_Contexts is
    --  Start_Line:Start_Column .. End_Line:End_Column
 
    procedure First_Match
-     (Context       : access Root_Search_Context'Class;
+     (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle;
       Name          : GNATCOLL.VFS.Virtual_File;
@@ -212,9 +208,7 @@ package body Src_Contexts is
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Character_Offset_Type := 1;
-      Start_Visible_Column : Visible_Column_Type := 1;
       Result        : out Match_Result_Access;
-      Text          : out GNAT.Strings.String_Access;
       Force_Read    : Boolean := False);
    --  Lightweight interface that returns the first occurence of Context in the
    --  file Name.
@@ -224,24 +218,21 @@ package body Src_Contexts is
    --  Force_Read is True.
 
    procedure First_Match
-     (Context       : access Root_Search_Context'Class;
+     (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Editor        : MDI_Child;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Character_Offset_Type := 1;
-      Start_Visible_Column : Visible_Column_Type := 1;
-      Result        : out Match_Result_Access;
-      Text          : out GNAT.Strings.String_Access);
+      Result        : out Match_Result_Access);
    --  Same as above, using an editor instead
 
    procedure Highlight_Result
      (Kernel      : access Kernel_Handle_Record'Class;
       File_Name   : GNATCOLL.VFS.Virtual_File;
       Look_For    : String;
-      Match       : GPS.Search.Search_Context;
-      Text        : String;
+      Match       : Match_Result;
       Give_Focus  : Boolean;
       Interactive : Boolean);
    --  Print the result of the search in the console
@@ -342,14 +333,13 @@ package body Src_Contexts is
    procedure Scan_Buffer
      (Buffer        : String;
       From          : Character_Offset_Type;
-      Context       : access Root_Search_Context'Class;
+      Context       : access Search_Context'Class;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Lang          : Language_Access := null;
       Ref_Line      : Editable_Line_Type := 1;
       Ref_Column    : Character_Offset_Type := 1;
-      Ref_Visible_Column : Visible_Column_Type := 1;
       Was_Partial   : out Boolean)
    is
       Scanning_Allowed : constant array (Recognized_Lexical_States) of Boolean
@@ -431,7 +421,7 @@ package body Src_Contexts is
                                 (Lang.Syntax.New_Line_Comment_Start_Regexp.all,
                                  Buffer, Matches, Pos);
 
-                              if Matches (0) /= GNAT.Regpat.No_Match then
+                              if Matches (0) /= No_Match then
                                  State := Mono_Comments;
                                  Section_End := Pos - 1;
                                  Pos := Matches (0).Last + 1;
@@ -530,7 +520,6 @@ package body Src_Contexts is
       Line_Start    : Positive;
       Line          : Editable_Line_Type := Ref_Line;
       Column        : Character_Offset_Type := Ref_Column;
-      VColumn       : Visible_Column_Type := Ref_Visible_Column;
       Dummy         : Visible_Column_Type := 1;
       Last_Index    : Positive;
       Section_End   : Integer;
@@ -556,15 +545,15 @@ package body Src_Contexts is
       --  If the language is null, we simply use the more efficient algorithm
 
       if Scope = Whole or else Lang = null then
-         Context.Scan_Buffer_No_Scope
-           (Buffer      => Buffer,
+         Scan_Buffer_No_Scope
+           (Context     => Context,
+            Buffer      => Buffer,
             Start_Index => Buffer_First,
             End_Index   => Buffer'Last,
             Callback    => Callback,
             Ref_Index   => Pos,
             Ref_Line    => Integer (Line),
             Ref_Column  => Column,
-            Ref_Visible_Column => VColumn,
             Was_Partial => Was_Partial);
          return;
       end if;
@@ -584,10 +573,9 @@ package body Src_Contexts is
            (Buffer, Pos, Lexical_State, Section_End, Language.all);
 
          if Scanning_Allowed (Old_State) then
-            Context.Scan_Buffer_No_Scope
-              (Buffer, Integer (Line_Start), Section_End,
-               Callback, Last_Index, Integer (Line), Column,
-               VColumn, Was_Partial);
+            Scan_Buffer_No_Scope
+              (Context, Buffer, Integer (Line_Start), Section_End,
+               Callback, Last_Index, Integer (Line), Column, Was_Partial);
 
             if Was_Partial then
                Lexical_State := Old_State;
@@ -612,7 +600,7 @@ package body Src_Contexts is
    ---------------
 
    procedure Scan_File
-     (Context       : access Root_Search_Context'Class;
+     (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Kernel        : GPS.Kernel.Kernel_Handle := null;
       Name          : GNATCOLL.VFS.Virtual_File;
@@ -621,7 +609,6 @@ package body Src_Contexts is
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Character_Offset_Type := 1;
-      Start_Visible_Column : Visible_Column_Type := 1;
       Force_Read    : Boolean := False;
       Was_Partial   : out Boolean)
    is
@@ -650,8 +637,8 @@ package body Src_Contexts is
                Lexical_State,
                Start_Line,
                Start_Column,
-               Start_Visible_Column,
                Was_Partial);
+
             return;
          end if;
       end if;
@@ -696,13 +683,13 @@ package body Src_Contexts is
                     (Buffer (Start .. Buffer'Last),
                      Start_Column, Context, Callback, Scope,
                      Lexical_State, Lang, Start_Line, Start_Column,
-                     Start_Visible_Column, Was_Partial);
+                     Was_Partial);
                else
                   --  Use UTF8
                   Scan_Buffer
                     (UTF8.all, Start_Column, Context, Callback, Scope,
                      Lexical_State, Lang, Start_Line, Start_Column,
-                     Start_Visible_Column, Was_Partial);
+                     Was_Partial);
                   Free (UTF8);
                end if;
             end if;
@@ -721,7 +708,7 @@ package body Src_Contexts is
    -----------------
 
    procedure Scan_Editor
-     (Context       : access Root_Search_Context'Class;
+     (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Editor        : MDI_Child;
       Callback      : Scan_Callback;
@@ -729,7 +716,6 @@ package body Src_Contexts is
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Character_Offset_Type := 1;
-      Start_Visible_Column : Visible_Column_Type := 1;
       Was_Partial   : out Boolean)
    is
       Lang   : Language_Access;
@@ -755,8 +741,7 @@ package body Src_Contexts is
 
       Scan_Buffer
         (Buffer.all, Start_Column, Context, Callback, Scope,
-         Lexical_State, Lang, Start_Line, Start_Column,
-         Start_Visible_Column, Was_Partial);
+         Lexical_State, Lang, Start_Line, Start_Column, Was_Partial);
 
       Free (Buffer);
    exception
@@ -781,8 +766,7 @@ package body Src_Contexts is
      (Kernel      : access Kernel_Handle_Record'Class;
       File_Name   : Virtual_File;
       Look_For    : String;
-      Match       : GPS.Search.Search_Context;
-      Text        : String;
+      Match       : Match_Result;
       Give_Focus  : Boolean;
       Interactive : Boolean)
    is
@@ -803,15 +787,15 @@ package body Src_Contexts is
       end To_Positive;
 
    begin
-      if Match.Line_Start = Match.Line_End then
+      if Match.Begin_Line = Match.End_Line then
          if Interactive then
             Open_File_Editor
               (Kernel,
                File_Name,
                GNATCOLL.Projects.No_Project,   --   ??? any project will do
-               Match.Line_Start,
-               Match.Col_Visible_Start,
-               Match.Col_Visible_End,
+               Match.Begin_Line,
+               Match.Visible_Begin_Column,
+               Match.Visible_End_Column,
                Focus => Give_Focus);
             Push_Current_Editor_Location_In_History (Kernel);
 
@@ -822,9 +806,9 @@ package body Src_Contexts is
                    (Get_Messages_Container (Kernel),
                     Locations_Category_Name (Look_For),
                     File_Name,
-                    To_Positive (Match.Line_Start),
-                    Match.Col_Visible_Start,
-                    Text,
+                    To_Positive (Match.Begin_Line),
+                    Match.Visible_Begin_Column,
+                    Match.Text,
                     0,
                     (Editor_Side => True, Locations => True));
             begin
@@ -834,8 +818,8 @@ package body Src_Contexts is
                      Get_Name (Search_Results_Style)
                      & '/' & Locations_Category_Name (Look_For),
                      Search_Results_Style),
-                  Integer (Match.Col_Visible_End
-                    - Match.Col_Visible_Start));
+                  Integer (Match.Visible_End_Column
+                    - Match.Visible_Begin_Column));
             end;
          end if;
       else
@@ -847,10 +831,10 @@ package body Src_Contexts is
               (Kernel,
                File_Name,
                GNATCOLL.Projects.No_Project,  --  ??? any project will do
-               Match.Line_Start,
-               Match.Col_Visible_Start,
-               Match.Col_Visible_Start
-               + Visible_Column_Type (Match.Finish - Match.Start + 1),
+               Match.Begin_Line,
+               Match.Visible_Begin_Column,
+               Match.Visible_Begin_Column
+               + Visible_Column_Type (Match.Pattern_Length),
                Focus => Give_Focus);
             Push_Current_Editor_Location_In_History (Kernel);
 
@@ -861,9 +845,9 @@ package body Src_Contexts is
                    (Get_Messages_Container (Kernel),
                     Locations_Category_Name (Look_For),
                     File_Name,
-                    To_Positive (Match.Line_Start),
-                    Match.Col_Visible_Start,
-                    Text,
+                    To_Positive (Match.Begin_Line),
+                    Match.Visible_Begin_Column,
+                    Match.Text,
                     0,
                     (Editor_Side => True, Locations => True));
             begin
@@ -873,7 +857,7 @@ package body Src_Contexts is
                      Get_Name (Search_Results_Style)
                      & '/' & Locations_Category_Name (Look_For),
                      Search_Results_Style),
-                  Match.Finish - Match.Start + 1);
+                  Match.Pattern_Length);
             end;
          end if;
       end if;
@@ -884,7 +868,7 @@ package body Src_Contexts is
    ---------------
 
    procedure Scan_Next
-     (Context        : access Root_Search_Context'Class;
+     (Context        : access Search_Context'Class;
       Kernel         : access Kernel_Handle_Record'Class;
       Editor         : access Source_Buffer_Record'Class;
       Scope          : Search_Scope;
@@ -906,27 +890,19 @@ package body Src_Contexts is
       --  Popup a dialog asking whether the user wants to continue, and return
       --  the result.
 
-      function Stop_At_First_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+      function Stop_At_First_Callback (Match : Match_Result) return Boolean;
       --  Stop at the first match encountered
 
-      function Backward_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+      function Backward_Callback (Match : Match_Result) return Boolean;
       --  Return the last match just before Current_Line and Current_Column
 
       ----------------------------
       -- Stop_At_First_Callback --
       ----------------------------
 
-      function Stop_At_First_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
-      is
-         pragma Unreferenced (Text);
+      function Stop_At_First_Callback (Match : Match_Result) return Boolean is
       begin
-         Result := new GPS.Search.Search_Context'(Match);
+         Result := new Match_Result'(Match);
          return False;
       end Stop_At_First_Callback;
 
@@ -934,19 +910,15 @@ package body Src_Contexts is
       -- Backward_Callback --
       -----------------------
 
-      function Backward_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
-      is
-         pragma Unreferenced (Text);
+      function Backward_Callback (Match : Match_Result) return Boolean is
       begin
          --  If we have already found a match, and the current one is after the
          --  current position, we can stop there. Else, if we have passed the
          --  current position but don't have any match yet, we have to return
          --  the last match.
-         if Match.Line_Start > Integer (Current_Line)
-           or else (Match.Line_Start = Integer (Current_Line)
-                    and then Match.Col_End >= Current_Column)
+         if Match.Begin_Line > Integer (Current_Line)
+           or else (Match.Begin_Line = Integer (Current_Line)
+                    and then Match.End_Column >= Current_Column)
          then
             if not Continue_Till_End
               and then Result /= null
@@ -958,7 +930,7 @@ package body Src_Contexts is
          end if;
 
          Unchecked_Free (Result);
-         Result := new GPS.Search.Search_Context'(Match);
+         Result := new Match_Result'(Match);
          return True;
       end Backward_Callback;
 
@@ -1069,7 +1041,7 @@ package body Src_Contexts is
    --------------------
 
    function Scan_And_Store
-     (Context  : access Root_Search_Context'Class;
+     (Context  : access Search_Context'Class;
       Handler  : access Language_Handler_Record'Class;
       Kernel   : Kernel_Handle;
       Str      : String := "";
@@ -1079,20 +1051,14 @@ package body Src_Contexts is
    is
       Result : Match_Result_Array_Access := null;
 
-      function Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+      function Callback (Match : Match_Result) return Boolean;
       --  Save Match in the result array.
 
       --------------
       -- Callback --
       --------------
 
-      function Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
-      is
-         pragma Unreferenced (Text);
+      function Callback (Match : Match_Result) return Boolean is
          Tmp  : Match_Result_Array_Access;
       begin
          Tmp := Result;
@@ -1107,7 +1073,7 @@ package body Src_Contexts is
             Unchecked_Free (Tmp);
          end if;
 
-         Result (Result'Last) := new GPS.Search.Search_Context'(Match);
+         Result (Result'Last) := new Match_Result'(Match);
          return True;
       end Callback;
 
@@ -1137,7 +1103,7 @@ package body Src_Contexts is
    -----------------
 
    procedure First_Match
-     (Context       : access Root_Search_Context'Class;
+     (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Kernel        : Kernel_Handle;
       Name          : GNATCOLL.VFS.Virtual_File;
@@ -1145,27 +1111,19 @@ package body Src_Contexts is
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Character_Offset_Type := 1;
-      Start_Visible_Column : Visible_Column_Type := 1;
       Result        : out Match_Result_Access;
-      Text          : out GNAT.Strings.String_Access;
       Force_Read    : Boolean := False)
    is
-      function Callback
-        (Match : GPS.Search.Search_Context;
-         Txt   : String) return Boolean;
+      function Callback (Match : Match_Result) return Boolean;
       --  Save Match in the result array.
 
       --------------
       -- Callback --
       --------------
 
-      function Callback
-        (Match : GPS.Search.Search_Context;
-         Txt   : String) return Boolean
-      is
+      function Callback (Match : Match_Result) return Boolean is
       begin
-         Result := new GPS.Search.Search_Context'(Match);
-         Text   := new String'(Txt);
+         Result := new Match_Result'(Match);
          return False;
       end Callback;
 
@@ -1174,8 +1132,8 @@ package body Src_Contexts is
       Result := null;
       Scan_File (Context, Handler, Kernel,
                  Name, Callback'Unrestricted_Access, Scope,
-                 Lexical_State, Start_Line, Start_Column,
-                 Start_Visible_Column, Force_Read, Was_Partial);
+                 Lexical_State, Start_Line, Start_Column, Force_Read,
+                 Was_Partial);
    end First_Match;
 
    -----------------
@@ -1183,43 +1141,34 @@ package body Src_Contexts is
    -----------------
 
    procedure First_Match
-     (Context       : access Root_Search_Context'Class;
+     (Context       : access Search_Context'Class;
       Handler       : access Language_Handler_Record'Class;
       Editor        : MDI_Child;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type := 1;
       Start_Column  : Character_Offset_Type := 1;
-      Start_Visible_Column : Visible_Column_Type := 1;
-      Result        : out Match_Result_Access;
-      Text          : out GNAT.Strings.String_Access)
+      Result        : out Match_Result_Access)
    is
-      function Callback
-        (Match : GPS.Search.Search_Context;
-         Txt   : String) return Boolean;
+      function Callback (Match : Match_Result) return Boolean;
       --  Save Match in the result array.
 
       --------------
       -- Callback --
       --------------
 
-      function Callback
-        (Match : GPS.Search.Search_Context;
-         Txt   : String) return Boolean
-      is
+      function Callback (Match : Match_Result) return Boolean is
       begin
-         Result := new GPS.Search.Search_Context'(Match);
-         Text   := new String'(Txt);
+         Result := new Match_Result'(Match);
          return False;
       end Callback;
 
       Was_Partial : Boolean;
    begin
-      Scan_Editor
-        (Context, Handler,
-         Editor, Callback'Unrestricted_Access, Scope,
-         Lexical_State, Start_Line, Start_Column,
-         Start_Visible_Column, Was_Partial);
+      Scan_Editor (Context, Handler,
+                 Editor, Callback'Unrestricted_Access, Scope,
+                 Lexical_State, Start_Line, Start_Column,
+                 Was_Partial);
    end First_Match;
 
    ----------
@@ -1251,21 +1200,21 @@ package body Src_Contexts is
       Directory_List.Free (Context.Dirs);
       Context.At_End := True;
       Free (Context.Replacement);
-      Free (Root_Search_Context (Context));
+      Free (Search_Context (Context));
    end Free;
 
    overriding procedure Free (Context : in out Files_Project_Context) is
    begin
       Unchecked_Free (Context.Files);
       Free (Context.Replacement);
-      Free (Root_Search_Context (Context));
+      Free (Search_Context (Context));
    end Free;
 
    overriding procedure Free (Context : in out Open_Files_Context) is
    begin
       Unchecked_Free (Context.Files);
       Free (Context.Replacement);
-      Free (Root_Search_Context (Context));
+      Free (Search_Context (Context));
    end Free;
 
    -------------------
@@ -1390,8 +1339,7 @@ package body Src_Contexts is
    function Current_File_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
+      Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       Scope    : constant Scope_Selector := Scope_Selector (Extra_Information);
    begin
@@ -1407,8 +1355,7 @@ package body Src_Contexts is
    function Current_File_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
-      Scope             : Search_Scope := Whole)
-      return Root_Search_Context_Access
+      Scope             : Search_Scope := Whole) return Search_Context_Access
    is
       pragma Unreferenced (Kernel);
 
@@ -1420,7 +1367,7 @@ package body Src_Contexts is
       Context := new Current_File_Context;
       Context.All_Occurrences := All_Occurrences;
       Context.Scope := Scope;
-      return Root_Search_Context_Access (Context);
+      return Search_Context_Access (Context);
    end Current_File_Factory;
 
    -------------------------------
@@ -1431,7 +1378,7 @@ package body Src_Contexts is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
+      return Search_Context_Access
    is
       Selector : constant Scope_Selector := Scope_Selector (Extra_Information);
       Scope    : constant Search_Scope :=
@@ -1446,7 +1393,7 @@ package body Src_Contexts is
       Result.All_Occurrences := All_Occurrences;
       Result.Scope := Scope;
 
-      return Root_Search_Context_Access (Result);
+      return Search_Context_Access (Result);
    end Current_Selection_Factory;
 
    ---------------------
@@ -1476,9 +1423,7 @@ package body Src_Contexts is
       Found           : out Boolean;
       Continue        : out Boolean)
    is
-      function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+      function Interactive_Callback (Match : Match_Result) return Boolean;
       --  Callbacks for the general search function
       --  ??? This should be factorized somehow with the Search fonction
       --  from the Abstract_File_Context.
@@ -1495,14 +1440,11 @@ package body Src_Contexts is
       -- Interactive_Callback --
       --------------------------
 
-      function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
-      is
+      function Interactive_Callback (Match : Match_Result) return Boolean is
       begin
-         if Match.Line_Start > Natural (End_Line) or else
-           (Match.Line_Start = Natural (End_Line) and then
-                Match.Col_Start > End_Column)
+         if Match.Begin_Line > Natural (End_Line) or
+           (Match.Begin_Line = Natural (End_Line) and
+              Match.Begin_Column > End_Column)
          then
             return False;
          end if;
@@ -1515,7 +1457,6 @@ package body Src_Contexts is
                File_Name   => Get_Filename (Editor),
                Look_For    => Context_Look_For (Context),
                Match       => Match,
-               Text        => Text,
                Give_Focus  => Give_Focus,
                Interactive => not Context.All_Occurrences);
          else
@@ -1524,7 +1465,6 @@ package body Src_Contexts is
                File_Name   => Editor.Get_Buffer.Get_File_Identifier,
                Look_For    => Context_Look_For (Context),
                Match       => Match,
-               Text        => Text,
                Give_Focus  => Give_Focus,
                Interactive => not Context.All_Occurrences);
          end if;
@@ -1656,20 +1596,20 @@ package body Src_Contexts is
          if Matches /= null then
             --  Fix line and column numbers
             for M in Matches'Range loop
-               if Matches (M).Line_Start = 1 then
-                  Matches (M).Col_Start :=
-                    Matches (M).Col_Start + Begin_Column - 1;
+               if Matches (M).Begin_Line = 1 then
+                  Matches (M).Begin_Column :=
+                    Matches (M).Begin_Column + Begin_Column - 1;
                end if;
 
-               if Matches (M).Line_End = 1 then
-                  Matches (M).Col_End :=
-                    Matches (M).Col_End + Begin_Column - 1;
+               if Matches (M).End_Line = 1 then
+                  Matches (M).End_Column :=
+                    Matches (M).End_Column + Begin_Column - 1;
                end if;
 
-               Matches (M).Line_Start :=
-                 Matches (M).Line_Start + Natural (Begin_Line - 1);
-               Matches (M).Line_End :=
-                 Matches (M).Line_End + Natural (Begin_Line - 1);
+               Matches (M).Begin_Line :=
+                 Matches (M).Begin_Line + Natural (Begin_Line - 1);
+               Matches (M).End_Line :=
+                 Matches (M).End_Line + Natural (Begin_Line - 1);
             end loop;
 
             Replace_Matched
@@ -1704,8 +1644,7 @@ package body Src_Contexts is
    function Files_From_Project_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
+      Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context : constant Files_Project_Context_Access :=
@@ -1713,9 +1652,9 @@ package body Src_Contexts is
    begin
       Context.Scope      := Search_Scope'Val (Get_Active (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Begin_Line      := 0;
       Set_File_List (Context, Get_Project (Kernel).Source_Files (True));
-      return Root_Search_Context_Access (Context);
+      return Search_Context_Access (Context);
    end Files_From_Project_Factory;
 
    --------------------------------
@@ -1731,7 +1670,7 @@ package body Src_Contexts is
    begin
       Context.Scope           := Scope;
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Begin_Line      := 0;
       return Context;
    end Files_From_Project_Factory;
 
@@ -1743,7 +1682,7 @@ package body Src_Contexts is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
+      return Search_Context_Access
    is
       Project  : constant Standard.Projects.Project_Type_Array :=
         Vsearch.Get_Selected_Project (Kernel);
@@ -1753,7 +1692,7 @@ package body Src_Contexts is
    begin
       Context.Scope           := Search_Scope'Val (Get_Active (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Begin_Line      := 0;
 
       if Project'Length /= 0 then
          --  Search in selected project if any
@@ -1764,7 +1703,7 @@ package body Src_Contexts is
          Set_File_List (Context, Get_Project (Kernel).Source_Files (False));
       end if;
 
-      return Root_Search_Context_Access (Context);
+      return Search_Context_Access (Context);
    end Files_From_Root_Project_Factory;
 
    --------------------------------
@@ -1775,7 +1714,7 @@ package body Src_Contexts is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
+      return Search_Context_Access
    is
       Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
       Files   : GNATCOLL.VFS.File_Array :=
@@ -1794,9 +1733,9 @@ package body Src_Contexts is
 
       Context.Scope      := Search_Scope'Val (Get_Active (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Begin_Line      := 0;
       Set_File_List (Context, new File_Array'(Files (Files'First .. Last)));
-      return Root_Search_Context_Access (Context);
+      return Search_Context_Access (Context);
    end Files_From_Runtime_Factory;
 
    ---------------------------
@@ -1824,8 +1763,7 @@ package body Src_Contexts is
    function Open_Files_Factory
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
+      Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context : constant Open_Files_Context_Access := new Open_Files_Context;
@@ -1840,9 +1778,9 @@ package body Src_Contexts is
       Context.Scope           :=
         Search_Scope'Val (Get_Active (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Begin_Line      := 0;
       Set_File_List (Context, Open_File_List);
-      return Root_Search_Context_Access (Context);
+      return Search_Context_Access (Context);
    end Open_Files_Factory;
 
    ---------------------------
@@ -1875,7 +1813,7 @@ package body Src_Contexts is
    begin
       Context.Scope := Scope;
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Begin_Line := 0;
       return Context;
    end Files_Factory;
 
@@ -1886,8 +1824,7 @@ package body Src_Contexts is
    function Files_Factory
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
+      Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       pragma Unreferenced (Kernel);
 
@@ -1912,7 +1849,7 @@ package body Src_Contexts is
               Create_From_UTF8 (Get_Text (Extra.Directory_Entry)),
             Recurse       => Get_Active (Extra.Subdirs_Check));
 
-         return Root_Search_Context_Access (Context);
+         return Search_Context_Access (Context);
       end if;
 
       Trace (Me, "Files_Factory: no files pattern specified");
@@ -1977,13 +1914,14 @@ package body Src_Contexts is
       --  course, if the cursor was moved by the user since then, we do not
       --  have anything to do.
 
-      if Context.Current /= GPS.Search.No_Match
-        and then Context.Current.Start = Context.Current.Finish
+      if Context.Begin_Column /= 0
+        and then Context.End_Column = Column
+        and then Context.Begin_Column = Context.End_Column
       then
          --  The test below will return True if the character after the current
          --  one is eol.
          if Is_Valid_Position
-           (Editor, Gint (Context.Current.Line_End - 1), Gint (Column))
+           (Editor, Gint (Context.End_Line - 1), Gint (Column))
            and then not Ends_Line (Start_At)
          then
             Column := Column + 1;
@@ -2011,17 +1949,26 @@ package body Src_Contexts is
 
       if Match /= null then
          Found := True;
-         Context.Current := Match.all;
-         Match_From :=
-           (Line => Editable_Line_Type (Context.Current.Line_Start),
-            Col  => Context.Current.Col_Start);
-         Match_Up_To :=
-           (Line => Editable_Line_Type (Context.Current.Line_End),
-            Col => Context.Current.Col_End);
+         Context.Begin_Line   := Editable_Line_Type (Match.Begin_Line);
+         Context.Begin_Column := Match.Begin_Column;
+
+         Context.End_Line     := Editable_Line_Type (Match.End_Line);
+         Context.End_Column   := Match.End_Column;
+
+         Match_From := (Line => Context.Begin_Line,
+                        Col  => Context.Begin_Column);
+         Match_Up_To := (Line => Context.End_Line,
+                         Col => Context.End_Column);
+
          Unchecked_Free (Match);
+
       else
          Found := False;
-         Context.Current := GPS.Search.No_Match;
+
+         --  The search could not be made, invalidate the context
+         --  in case it was the last search in the file.
+         Context.End_Line   := Context.Begin_Line;
+         Context.End_Column := Context.Begin_Column;
       end if;
    end Search_In_Editor;
 
@@ -2118,9 +2065,7 @@ package body Src_Contexts is
       Editor : Source_Editor_Box;
       Buffer : Source_Buffer;
 
-      function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+      function Interactive_Callback (Match : Match_Result) return Boolean;
       --  Callbacks for the general search function
       --  ??? This should be factorized somehow with the Search fonction
       --  from the Abstract_File_Context.
@@ -2129,10 +2074,7 @@ package body Src_Contexts is
       -- Interactive_Callback --
       --------------------------
 
-      function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
-      is
+      function Interactive_Callback (Match : Match_Result) return Boolean is
       begin
          Found := True;
          if Get_Filename (Editor) /= GNATCOLL.VFS.No_File then
@@ -2141,7 +2083,6 @@ package body Src_Contexts is
                File_Name   => Get_Filename (Editor),
                Look_For    => Context_Look_For (Context),
                Match       => Match,
-               Text        => Text,
                Give_Focus  => Give_Focus,
                Interactive => not Context.All_Occurrences);
          else
@@ -2150,7 +2091,6 @@ package body Src_Contexts is
                File_Name   => Editor.Get_Buffer.Get_File_Identifier,
                Look_For    => Context_Look_For (Context),
                Match       => Match,
-               Text        => Text,
                Give_Focus  => Give_Focus,
                Interactive => not Context.All_Occurrences);
          end if;
@@ -2289,7 +2229,6 @@ package body Src_Contexts is
 
    function Replacement_Text
      (Context         : access File_Search_Context;
-      Result          : GPS.Search.Search_Context;
       Pattern         : Replacement_Pattern;
       Matched_Text    : String) return String
    is
@@ -2303,8 +2242,8 @@ package body Src_Contexts is
       --  and search in regexp mode
       if Pattern.Last > 0 and then Context.Get_Options.Regexp then
          --  Read offset of Matched_Text into Offset
-         Matched_Subexpression
-           (Result, Index => 0, First => Offset, Last => Last);
+         Context.Matched_Subexpressoin
+           (Index => 0, First => Offset, Last => Last);
          Offset := Offset - Matched_Text'First;
          Last := 1;
          for J in 1 .. Pattern.Last loop
@@ -2318,8 +2257,8 @@ package body Src_Contexts is
                if Ref.Match = 0 then  --  Whole matched string
                   Append (Regexp_Result, Matched_Text);
                else
-                  Matched_Subexpression
-                    (Result, Index => Ref.Match, First => From, Last => To);
+                  Context.Matched_Subexpressoin
+                    (Index => Ref.Match, First => From, Last => To);
                   Append (Regexp_Result,
                           Matched_Text (From - Offset .. To - Offset));
                end if;
@@ -2369,19 +2308,18 @@ package body Src_Contexts is
       for M in reverse Matches'Range loop
          Replace_Slice
            (Buffer,
-            Editable_Line_Type (Matches (M).Line_Start),
-            Matches (M).Col_Start,
-            Editable_Line_Type (Matches (M).Line_End),
-            Matches (M).Col_End,
+            Editable_Line_Type (Matches (M).Begin_Line),
+            Matches (M).Begin_Column,
+            Editable_Line_Type (Matches (M).End_Line),
+            Matches (M).End_Column,
             Context.Replacement_Text
-              (Matches (M).all,
-               Replacement,
+              (Replacement,
                Get_Text
                  (Buffer,
-                  Editable_Line_Type (Matches (M).Line_Start),
-                  Matches (M).Col_Start,
-                  Editable_Line_Type (Matches (M).Line_End),
-                  Matches (M).Col_End)));
+                  Editable_Line_Type (Matches (M).Begin_Line),
+                  Matches (M).Begin_Column,
+                  Editable_Line_Type (Matches (M).End_Line),
+                  Matches (M).End_Column)));
       end loop;
 
       Buffer.Enable_Highlighting;
@@ -2408,7 +2346,7 @@ package body Src_Contexts is
       Child           : MDI_Child) return Boolean
    is
       Editor          : Source_Editor_Box;
-      Current         : GPS.Search.Search_Context;
+      Current_Matches : Boolean;
       Matches         : Match_Result_Array_Access;
       Replacement     : constant Replacement_Pattern
         := Context.Get_Replacement_Pattern (Replace_String, Case_Preserving);
@@ -2446,59 +2384,79 @@ package body Src_Contexts is
          --  in the source buffer will be erased when the focus is given to the
          --  search dialog.
 
-         if Context.Current /= GPS.Search.No_Match then
-            declare
-               Original : constant String := Editor.Get_Buffer.Get_Text
-                 (Editable_Line_Type (Context.Current.Line_Start),
-                  Context.Current.Col_Start,
-                  Editable_Line_Type (Context.Current.Line_End),
-                  Context.Current.Col_End);
-            begin
-               --  ??? Do we really need to double-check
-               Current := Context.Match (Buffer => Original);
-               if Current /= GPS.Search.No_Match then
-                  declare
-                     Text : constant String :=
-                       Context.Replacement_Text
-                         (Context.Current, Replacement, Original);
-                  begin
-                     Replace_Slice
-                       (Get_Buffer (Editor),
-                        Editable_Line_Type (Context.Current.Line_Start),
-                        Context.Current.Col_Start,
-                        Editable_Line_Type (Context.Current.Line_End),
-                        Context.Current.Col_End,
-                        Text);
-
-                     Forward_Position
-                       (Get_Buffer (Editor),
-                        Editable_Line_Type (Context.Current.Line_Start),
-                        Context.Current.Col_Start,
-                        Text'Length,
-                        Editable_Line_Type (Context.Current.Line_End),
-                        Context.Current.Col_End);
-                  end;
-
-                  Push_Current_Editor_Location_In_History (Kernel);
-
-                  if Search_Backward then
-                     Context.Current.Line_End := Context.Current.Line_Start;
-                     Context.Current.Col_End := Context.Current.Col_Start;
-                  else
-                     Context.Current.Line_Start := Context.Current.Line_End;
-                     Context.Current.Col_Start := Context.Current.Col_End - 1;
-                  end if;
-
-                  Set_Cursor_Position
+         if Context.Begin_Line > 0
+           and then Context.Begin_Column > 0
+         then
+            if Get_Options (Context).Regexp then
+               Current_Matches := Match
+                 (Context,
+                  Get_Text
                     (Get_Buffer (Editor),
-                     Editable_Line_Type (Context.Current.Line_End),
-                     Context.Current.Col_End,
-                     Internal => True);
-                  Get_View (Editor).Set_Position_Set_Explicitely;
+                     Context.Begin_Line,
+                     Context.Begin_Column)) /= -1;
+            elsif Get_Options (Context).Case_Sensitive then
+               Current_Matches := Get_Text
+                 (Get_Buffer (Editor),
+                  Context.Begin_Line, Context.Begin_Column,
+                  Context.End_Line, Context.End_Column) =
+                 Context_As_String (Context);
+            else
+               Current_Matches := UTF8_Strdown
+                 (Get_Text
+                    (Get_Buffer (Editor),
+                     Context.Begin_Line, Context.Begin_Column,
+                     Context.End_Line, Context.End_Column)) =
+                 UTF8_Strdown (Context_As_String (Context));
+            end if;
 
-                  Save_Cursor_Position (Get_View (Editor));
+            if Current_Matches then
+               declare
+                  Text : constant String :=
+                    Context.Replacement_Text
+                      (Replacement,
+                       Get_Text
+                         (Get_Buffer (Editor),
+                          Context.Begin_Line,
+                          Context.Begin_Column,
+                          Context.End_Line,
+                          Context.End_Column));
+               begin
+                  Replace_Slice
+                    (Get_Buffer (Editor),
+                     Context.Begin_Line,
+                     Context.Begin_Column,
+                     Context.End_Line,
+                     Context.End_Column,
+                     Text);
+
+                  Forward_Position
+                    (Get_Buffer (Editor),
+                     Context.Begin_Line,
+                     Context.Begin_Column,
+                     Text'Length,
+                     Context.End_Line,
+                     Context.End_Column);
+               end;
+
+               Push_Current_Editor_Location_In_History (Kernel);
+
+               if Search_Backward then
+                  Context.End_Line := Context.Begin_Line;
+                  Context.End_Column := Context.Begin_Column;
+               else
+                  Context.Begin_Line := Context.End_Line;
+                  Context.Begin_Column := Context.End_Column - 1;
                end if;
-            end;
+
+               Set_Cursor_Position
+                 (Get_Buffer (Editor),
+                  Context.End_Line,
+                  Context.End_Column,
+                  Internal => True);
+               Get_View (Editor).Set_Position_Set_Explicitely;
+
+               Save_Cursor_Position (Get_View (Editor));
+            end if;
          end if;
       end if;
 
@@ -2586,17 +2544,15 @@ package body Src_Contexts is
                if Buffer /= null then
                   for M in Matches'Range loop
                      Append
-                       (Output_Buffer, Buffer (Last .. Matches (M).Start - 1));
+                       (Output_Buffer, Buffer (Last .. Matches (M).Index - 1));
                      Append
                        (Output_Buffer,
                         Context.Replacement_Text
-                          (Matches (M).all,
-                           Replacement,
-                           Buffer (Matches (M).Start .. Matches (M).Start
+                          (Replacement,
+                           Buffer (Matches (M).Index .. Matches (M).Index
                                      + Replace_String'Length - 1)));
 
-                     Last := Matches (M).Start
-                       + Matches (M).Finish - Matches (M).Start + 1;
+                     Last := Matches (M).Index + Matches (M).Pattern_Length;
                   end loop;
 
                   Append (Output_Buffer, Buffer (Last .. Buffer'Last));
@@ -2685,7 +2641,6 @@ package body Src_Contexts is
       Matches_Found : out Boolean)
    is
       Match  : Match_Result_Access;
-      Text   : GNAT.Strings.String_Access;
    begin
       More_Matches := False;
       Matches_Found := False;
@@ -2699,7 +2654,7 @@ package body Src_Contexts is
          --  Stop looking in this file if the editor was closed (we know it was
          --  opened when the first match was seen)
 
-         if Context.Current /= GPS.Search.No_Match then
+         if Context.Begin_Line /= 0 then
             First_Match
               (Context       => Context,
                Handler       => Handler,
@@ -2707,21 +2662,20 @@ package body Src_Contexts is
                Name          => File,
                Scope         => Context.Scope,
                Lexical_State => Context.Current_Lexical,
-               Start_Line   => Editable_Line_Type (Context.Current.Line_Start),
-               Start_Column  => Context.Current.Col_Start + 1,
-               Start_Visible_Column =>
-                 Context.Current.Col_Visible_Start + 1,
+               Start_Line    => Context.Begin_Line,
+               Start_Column  => Context.Begin_Column + 1,
                Result        => Match,
-               Text          => Text,
                Force_Read    => Kernel = null);
 
             if Match /= null then
-               Context.Current := Match.all;
-               More_Matches := Callback (Context.Current, Text.all);
+               Context.Begin_Line   := Editable_Line_Type (Match.Begin_Line);
+               Context.Begin_Column := Match.Begin_Column;
+               Context.End_Line     := Editable_Line_Type (Match.End_Line);
+               Context.End_Column   := Match.End_Column;
+               More_Matches := Callback (Match.all);
                Matches_Found := True;
-
-               Free (Text);
                Unchecked_Free (Match);
+
                return;
             end if;
          end if;
@@ -2762,7 +2716,6 @@ package body Src_Contexts is
       Matches_Found : out Boolean)
    is
       Match  : Match_Result_Access;
-      Text   : GNAT.Strings.String_Access;
    begin
       More_Matches := False;
       Matches_Found := False;
@@ -2776,26 +2729,26 @@ package body Src_Contexts is
          --  Stop looking in this file if the editor was closed (we know it was
          --  opened when the first match was seen)
 
-         if Context.Current /= GPS.Search.No_Match then
+         if Context.Begin_Line /= 0 then
             First_Match
               (Context       => Context,
                Handler       => Handler,
                Editor        => Editor,
                Scope         => Context.Scope,
                Lexical_State => Context.Current_Lexical,
-               Start_Line   => Editable_Line_Type (Context.Current.Line_Start),
-               Start_Column  => Context.Current.Col_Start + 1,
-               Start_Visible_Column =>
-                 Context.Current.Col_Visible_Start + 1,
-               Result        => Match,
-               Text          => Text);
+               Start_Line    => Context.Begin_Line,
+               Start_Column  => Context.Begin_Column + 1,
+               Result        => Match);
 
             if Match /= null then
-               Context.Current := Match.all;
-               More_Matches := Callback (Context.Current, Text.all);
+               Context.Begin_Line   := Editable_Line_Type (Match.Begin_Line);
+               Context.Begin_Column := Match.Begin_Column;
+               Context.End_Line     := Editable_Line_Type (Match.End_Line);
+               Context.End_Column   := Match.End_Column;
+               More_Matches := Callback (Match.all);
                Matches_Found := True;
-               Free (Text);
                Unchecked_Free (Match);
+
                return;
             end if;
          end if;
@@ -2852,7 +2805,8 @@ package body Src_Contexts is
             if not Matches_Found then
                Move_To_Next_File (C);
 
-               Context.Current := GPS.Search.No_Match;
+               Context.Begin_Line := 1;
+               Context.Begin_Column := 0;
 
                if Current_File (C) = GNATCOLL.VFS.No_File then
                   if not Already_Looped then
@@ -2939,18 +2893,14 @@ package body Src_Contexts is
         Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
 
-      function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+      function Interactive_Callback (Match : Match_Result) return Boolean;
       --  Callbacks for the general search function
 
       --------------------------
       -- Interactive_Callback --
       --------------------------
 
-      function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean is
+      function Interactive_Callback (Match : Match_Result) return Boolean is
       begin
          Found := True;
          Highlight_Result
@@ -2958,7 +2908,6 @@ package body Src_Contexts is
             File_Name   => Current_File (C),
             Look_For    => Context_Look_For (C),
             Match       => Match,
-            Text        => Text,
             Give_Focus  => Give_Focus,
             Interactive => not Context.All_Occurrences);
          return True;
@@ -3004,7 +2953,7 @@ package body Src_Contexts is
       --  anything), then do the actual replacement
 
       if Interactive then
-         if Context.Current /= GPS.Search.No_Match
+         if Context.Begin_Line /= 0
            and then Is_Open (Kernel, Current_File (C))
          then
             Child := Find_Editor
