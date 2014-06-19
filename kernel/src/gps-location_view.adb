@@ -72,6 +72,7 @@ with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
 with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
+with GPS.Location_View_Sort;           use GPS.Location_View_Sort;
 with Histories;                        use Histories;
 
 package body GPS.Location_View is

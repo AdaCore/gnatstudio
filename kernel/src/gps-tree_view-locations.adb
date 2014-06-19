@@ -35,6 +35,7 @@ package body GPS.Tree_View.Locations is
    use Gtk.Cell_Renderer_Text;
    use Gtk.Tree_Model;
    use Gtk.Tree_View_Column;
+   use GPS.Location_View_Sort;
 
    function On_Button_Press
      (Self  : access GPS_Locations_Tree_View_Record'Class;
@@ -205,7 +206,9 @@ package body GPS.Tree_View.Locations is
            (On_Button_Release'Access),
          After => False);
 
-      GPS.Location_View_Filter.Gtk_New (Self.Filter, Model);
+      Gtk_New (Self.Sort, -Model);
+      GPS.Location_View_Filter.Gtk_New
+        (Self.Filter, To_Interface (Self.Sort));
       Self.Set_Source_Model (Self.Filter);
    end Initialize;
 
@@ -576,11 +579,13 @@ package body GPS.Tree_View.Locations is
 
    procedure Set_Order
      (Self : not null access GPS_Locations_Tree_View_Record'Class;
-      File_Order : GPS.Location_View.Listener.File_Sort_Order;
-      Msg_Order  : GPS.Location_View.Listener.Messages_Sort_Order) is
+      File_Order : GPS.Location_View_Sort.File_Sort_Order;
+      Msg_Order  : GPS.Location_View_Sort.Messages_Sort_Order)
+   is
    begin
-      GPS.Location_View.Listener.Classic_Tree_Model
-        (-Self.Filter.Get_Model).Set_Order (File_Order, Msg_Order);
+      Self.Sort.Set_Order
+        (File_Order => File_Order,
+         Msg_Order  => Msg_Order);
    end Set_Order;
 
    ---------------------------
@@ -592,14 +597,14 @@ package body GPS.Tree_View.Locations is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      It : Gtk_Tree_Iter;
-
+      It, It2 : Gtk_Tree_Iter;
    begin
       --  ??? How come we need access to this low-level info ?
       Self.Filter.Convert_Iter_To_Child_Iter
         (Child_Iter => It, Filter_Iter => Iter);
-
-      return It;
+      Self.Sort.Convert_Iter_To_Child_Iter
+        (Child_Iter => It2, Sorted_Iter => It);
+      return It2;
    end To_Lowest_Model_Iter;
 
 end GPS.Tree_View.Locations;

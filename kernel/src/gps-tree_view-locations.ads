@@ -44,8 +44,8 @@ with Glib;
 private with Glib.Main;
 private with Gtk.Cell_Renderer_Text;
 private with Gtk.Tree_View_Column;
-with GPS.Location_View.Listener;
 with GPS.Location_View_Filter;
+with GPS.Location_View_Sort;
 
 package GPS.Tree_View.Locations is
 
@@ -69,9 +69,9 @@ package GPS.Tree_View.Locations is
       Model  : Gtk.Tree_Model.Gtk_Tree_Model);
 
    procedure Set_Order
-     (Self       : not null access GPS_Locations_Tree_View_Record'Class;
-      File_Order : GPS.Location_View.Listener.File_Sort_Order;
-      Msg_Order  : GPS.Location_View.Listener.Messages_Sort_Order);
+     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+      File_Order : GPS.Location_View_Sort.File_Sort_Order;
+      Msg_Order  : GPS.Location_View_Sort.Messages_Sort_Order);
    --  Sets sorting order
 
    procedure Location_Clicked
@@ -111,7 +111,9 @@ private
 
       Filter                  :
         GPS.Location_View_Filter.Location_View_Filter_Model;
-      --  Intermediate model to support filtering of items in the view
+      Sort                    : GPS.Location_View_Sort.Locations_Proxy_Model;
+      --  Intermediate models to support filtering and custom sorting of items
+      --  in the view
 
       On_Row_Expanded_Path    : Gtk.Tree_Model.Gtk_Tree_Path;
       On_Row_Expanded_Handler : Glib.Main.G_Source_Id :=
