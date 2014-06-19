@@ -1970,12 +1970,22 @@ package body Xref is
             Tree  => Tree,
             Error => Error);
       else
-         Self.Xref.Setup_DB
-           (DB    => GNATCOLL.SQL.Sqlite.Setup
-              (Database => +Working_Xref_File.Full_Name.all,
-               Errors   => Self.Errors),
-            Tree  => Tree,
-            Error => Error);
+         declare
+         begin
+            Self.Xref.Setup_DB
+              (DB    => GNATCOLL.SQL.Sqlite.Setup
+                 (Database => +Working_Xref_File.Full_Name.all,
+                  Errors   => Self.Errors),
+               Tree  => Tree,
+               Error => Error);
+         exception
+            when E : others =>
+               --  Catch a corrupted database here and stop propagating
+               --  the exception, so as not to block the project loading,
+               --  the splash screen, etc
+               Trace (Me, "Exception received in Setup_DB: "
+                      & Exception_Information (E));
+         end;
       end if;
 
       --  Not interested in schema version errors, gnatinspect already
