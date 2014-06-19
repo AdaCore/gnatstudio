@@ -213,7 +213,7 @@ package body Vsearch is
    type Idle_Search_Data is record
       Vsearch         : Vsearch_Access;
       Search_Backward : Boolean;
-      Context         : Search_Context_Access;
+      Context         : Root_Search_Context_Access;
       Found           : Boolean := False;
       Replace_With    : GNAT.Strings.String_Access := null;
       --  Whether the search results in at least one match.
@@ -689,9 +689,8 @@ package body Vsearch is
       Found    : Boolean;
       Continue : Boolean;
    begin
-      Search
-        (Data.Context,
-         Data.Vsearch.Kernel,
+      Data.Context.Search
+        (Data.Vsearch.Kernel,
          Data.Search_Backward,
          Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check),
          Found      => Found,

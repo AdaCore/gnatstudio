@@ -20,6 +20,7 @@
 
 with Ada.Strings.Unbounded;
 with Basic_Types;   use Basic_Types;
+with GNAT.Regpat;
 with GNAT.Strings;
 with GNATCOLL.Xref;
 private with Ada.Containers.Doubly_Linked_Lists;
@@ -43,6 +44,10 @@ package GPS.Search is
    --  matching in long texts. The implementation of this algorithm is
    --  optimized so that characters are matched only once, but the total length
    --  of the pattern is limited to 64 characters.
+
+   Max_Capturing_Groups : constant := 10;
+   --  Maximum number of capturing parenthesis groups for which we want to
+   --  store the range in the search_context.
 
    -------------
    -- Matcher --
@@ -74,9 +79,19 @@ package GPS.Search is
       Ref_Column   : Character_Offset_Type;
       Ref_Visible_Column : Visible_Column_Type;
       --  Internal data
+
+      Groups       : GNAT.Regpat.Match_Array (0 .. Max_Capturing_Groups);
+      --  The parenthesis groups that matched. This is only set when matching
+      --  a regexp.
    end record;
    No_Match : constant Search_Context;
    --  The current state for a search matcher
+
+   function Failed (Self : Search_Context) return Boolean
+      is (Self.Start = -1);
+   --  Whether Self failed to match. This is somewhat equivalent to comparing
+   --  with No_Match, but is more efficient and does not require a
+   --  "use type Search_Context.
 
    procedure Free (Self : in out Search_Pattern);
    procedure Free (Self : in out Search_Pattern_Access);
@@ -428,13 +443,22 @@ private
    end record;
 
    No_Match : constant Search_Context :=
-     (Start => -1, Finish => -1,
-      Line_Start => -1, Line_End => -1,
-      Col_Start => 0, Col_End => 0, Score => 0,
-      Col_Visible_Start => 0, Col_Visible_End => 0,
-      Buffer_Start => -1, Buffer_End => -1,
-      Ref_Index => -1, Ref_Line => 1, Ref_Column => 0,
-      Ref_Visible_Column => -1);
+     (Start              => -1,
+      Finish             => -1,
+      Line_Start         => -1,
+      Line_End           => -1,
+      Col_Start          => 0,
+      Col_End            => 0,
+      Score              => 0,
+      Col_Visible_Start  => 0,
+      Col_Visible_End    => 0,
+      Buffer_Start       => -1,
+      Buffer_End         => -1,
+      Ref_Index          => -1,
+      Ref_Line           => 1,
+      Ref_Column         => 0,
+      Ref_Visible_Column => -1,
+      Groups             => (others => GNAT.Regpat.No_Match));
 
    type Provider_Info is record
       Provider : Search_Provider_Access;

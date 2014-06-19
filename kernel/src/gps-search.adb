@@ -32,7 +32,6 @@ package body GPS.Search is
    Memcheck_Handle : constant Trace_Handle := Create ("TESTSUITE.MEM", Off);
 
    type Boyer_Moore_Pattern_Access is access all GNATCOLL.Boyer_Moore.Pattern;
-   type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
    type Full_Text_Search is new Search_Pattern with record
       Pattern : Boyer_Moore_Pattern_Access;
@@ -41,7 +40,6 @@ package body GPS.Search is
 
    type Regexp_Search is new Search_Pattern with record
       Pattern : GNAT.Expect.Pattern_Matcher_Access;
-      Matches : Match_Array_Access;
    end record;
 
    type Fuzzy_Search is new Search_Pattern with null record;
@@ -260,6 +258,7 @@ package body GPS.Search is
                Col_Visible_Start  => 1,
                Col_Visible_End    => 1,
                Score              => 50,
+               Groups             => (others => GNAT.Regpat.No_Match),
                Buffer_Start       => S,
                Buffer_End         => F,
                Ref_Index          => R,
@@ -285,6 +284,7 @@ package body GPS.Search is
             Col_Visible_Start  => 1,
             Col_Visible_End    => 1,
             Score              => 100,
+            Groups             => (others => GNAT.Regpat.No_Match),
             Buffer_Start       => S,
             Buffer_End         => F,
             Ref_Index          => R,
@@ -316,43 +316,44 @@ package body GPS.Search is
    is
       S : constant Integer :=
         (if Start_Index = -1 then Buffer'First else Start_Index);
-      F : Integer := (if End_Index = -1 then Buffer'Last else End_Index);
+      F : constant Integer :=
+        (if End_Index = -1 then Buffer'Last else End_Index);
       R : constant Integer :=
         (if Ref_Index = -1 then Buffer'First else Ref_Index);
-      Context : Search_Context;
+      Context : Search_Context :=
+          (Start              => <>,
+           Finish             => <>,
+           Line_Start         => 1,
+           Line_End           => 1,
+           Col_Start          => 1,
+           Col_End            => 1,
+           Col_Visible_Start  => 1,
+           Col_Visible_End    => 1,
+           Score              => 100,
+           Groups             => <>,
+           Buffer_Start       => S,
+           Buffer_End         => (if F = 0 then Positive'Last else F),
+           Ref_Index          => R,
+           Ref_Line           => Ref_Line,
+           Ref_Column         => Ref_Column,
+           Ref_Visible_Column =>
+             (if Ref_Visible_Column = -1
+              then Visible_Column_Type (Ref_Column)
+              else Ref_Visible_Column));
+
    begin
-      --  Avoid an exception when calling Match
-      if F = 0 then
-         F := Positive'Last;
-      end if;
-      Match (Self.Pattern.all, Buffer, Self.Matches.all, S, F);
+      Match
+        (Self.Pattern.all, Buffer, Context.Groups,
+         Context.Buffer_Start, Context.Buffer_End);
 
       --  The second test below works around an apparent bug in GNAT.Regpat
 
-      if Self.Matches (0) = GNAT.Regpat.No_Match
-        or else Self.Matches (0).First > Buffer'Last
+      if Context.Groups (0) = GNAT.Regpat.No_Match
+        or else Context.Groups (0).First > Buffer'Last
       then
          if Self.Negate then
-            Context := Search_Context'
-              (Start              => S,
-               Finish             => F,
-               Line_Start         => 1,
-               Line_End           => 1,
-               Col_Start          => 1,
-               Col_End            => 1,
-               Col_Visible_Start  => 1,
-               Col_Visible_End    => 1,
-               Score              => 100,
-               Buffer_Start       => S,
-               Buffer_End         => F,
-               Ref_Index          => R,
-               Ref_Line           => Ref_Line,
-               Ref_Column         => Ref_Column,
-               Ref_Visible_Column =>
-                 (if Ref_Visible_Column = -1
-                  then Visible_Column_Type (Ref_Column)
-                  else Ref_Visible_Column));
-
+            Context.Start  := Context.Buffer_Start;
+            Context.Finish := Context.Buffer_End;
             Update_Location (Context, Buffer);
             return Context;
          else
@@ -362,26 +363,8 @@ package body GPS.Search is
          return No_Match;
       end if;
 
-      Context := Search_Context'
-        (Start             => Self.Matches (0).First,
-         Finish            => Self.Matches (0).Last,
-         Line_Start        => 1,
-         Line_End          => 1,
-         Col_Start         => 1,
-         Col_End           => 1,
-         Col_Visible_Start => 1,
-         Col_Visible_End   => 1,
-         Score             => 100,
-         Buffer_Start      => S,
-         Buffer_End        => F,
-         Ref_Index         => R,
-         Ref_Line          => Ref_Line,
-         Ref_Column        => Ref_Column,
-         Ref_Visible_Column =>
-           (if Ref_Visible_Column = -1
-            then Visible_Column_Type (Ref_Column)
-            else Ref_Visible_Column));
-
+      Context.Start  := Context.Groups (0).First;
+      Context.Finish := Context.Groups (0).Last;
       Update_Location (Context, Buffer);
       return Context;
    end Start;
@@ -452,6 +435,7 @@ package body GPS.Search is
                      Col_Visible_Start  => 1,
                      Col_Visible_End    => 1,
                      Score              => Score,
+                     Groups             => (others => GNAT.Regpat.No_Match),
                      Buffer_Start       => S,
                      Buffer_End         => F,
                      Ref_Index          => R,
@@ -485,6 +469,7 @@ package body GPS.Search is
             Col_Visible_Start  => 1,
             Col_Visible_End    => 1,
             Score              => 100,
+            Groups             => (others => GNAT.Regpat.No_Match),
             Buffer_Start       => S,
             Buffer_End         => F,
             Ref_Index          => R,
@@ -537,6 +522,7 @@ package body GPS.Search is
          Col_Visible_Start => 1,
          Col_Visible_End   => 1,
          Score             => 100,
+         Groups            => (others => GNAT.Regpat.No_Match),
          Buffer_Start      => S,
          Buffer_End        => F,
          Ref_Index         => R,
@@ -784,18 +770,18 @@ package body GPS.Search is
       Context : in out Search_Context)
    is
    begin
-      Match (Self.Pattern.all, Buffer, Self.Matches.all,
+      Match (Self.Pattern.all, Buffer, Context.Groups,
              Context.Start + 1, Context.Buffer_End);
 
       --  The second test below works around an apparent bug in GNAT.Regpat
 
-      if Self.Matches (0) = GNAT.Regpat.No_Match
-        or else Self.Matches (0).First > Buffer'Last
+      if Context.Groups (0) = GNAT.Regpat.No_Match
+        or else Context.Groups (0).First > Buffer'Last
       then
          Context := No_Match;
       else
-         Context.Start := Self.Matches (0).First;
-         Context.Finish := Self.Matches (0).Last;
+         Context.Start := Context.Groups (0).First;
+         Context.Finish := Context.Groups (0).Last;
          Update_Location (Context, Buffer);
       end if;
    end Next;
@@ -957,12 +943,9 @@ package body GPS.Search is
    ----------
 
    overriding procedure Free (Self : in out Regexp_Search) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (GNAT.Regpat.Match_Array, Match_Array_Access);
    begin
       Free (Search_Pattern (Self));
       Unchecked_Free (Self.Pattern);
-      Unchecked_Free (Self.Matches);
    end Free;
 
    ----------
@@ -1126,8 +1109,7 @@ package body GPS.Search is
                   Case_Sensitive => Case_Sensitive,
                   Whole_Word     => Whole_Word,
                   Kind           => Kind,
-                  Negate         => Negate,
-                  Matches      => new Match_Array (0 .. Paren_Count (Re.all)));
+                  Negate         => Negate);
 
             exception
                when GNAT.Regpat.Expression_Error =>

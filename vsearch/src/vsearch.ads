@@ -211,9 +211,9 @@ private
       Replace_Only_Button     : Gtk.Button.Gtk_Button;
       Extra_Information       : Gtk.Widget.Gtk_Widget;
       Search_Idle_Handler     : Glib.Main.G_Source_Id := 0;
-      Last_Search_Context     : Find_Utils.Search_Context_Access;
+      Last_Search_Context     : Find_Utils.Root_Search_Context_Access;
       --  This is the context used for single Find/Next and Replace operations.
-      Last_Search_All_Context : Find_Utils.Search_Context_Access;
+      Last_Search_All_Context : Find_Utils.Root_Search_Context_Access;
       --  This is the context used for Find/Replace All operations. It is
       --  then copied to the idle data of the background command. The purpose
       --  here it to be able to launch a new Find/Replace All operation while
