@@ -10575,26 +10575,6 @@ def compute_xref_bg():
     pass  # implemented in Ada
 
 
-def compute_xref():
-    """
-    Updates the cross-reference information stored in GPS. This needs to be
-    called after major changes to the sources only, since GPS itself is able
-    to work with partially up-to-date information
-
-    """
-    pass  # implemented in Ada
-
-
-def compute_xref_bg():
-    """
-    Updates cross-reference information stored in GPS in the background.
-
-    .. seealso:: :func:`GPS.compute_xref`
-
-    """
-    pass  # implemented in Ada
-
-
 def contextual_context():
     """
     Returns the context at the time the contextual menu was open.
