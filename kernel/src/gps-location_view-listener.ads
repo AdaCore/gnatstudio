@@ -32,10 +32,24 @@ with Gtk.Tree_Model;
 
 package GPS.Location_View.Listener is
 
+   type Messages_Sort_Order is (By_Location, By_Weight);
+
+   type File_Sort_Order is
+     (Category_Default_Sort,
+      Alphabetical);
+   --  The sort order of files. Each category defines its own default order
+   --  (which is set in the model itself), but users can override it if needed.
+
    type Classic_Tree_Model_Record is
      new Gtk.Tree_Store.Gtk_Tree_Store_Record with private;
 
    type Classic_Tree_Model is access all Classic_Tree_Model_Record'Class;
+
+   procedure Set_Order
+     (Self       : not null access Classic_Tree_Model_Record'Class;
+      File_Order : File_Sort_Order;
+      Msg_Order  : Messages_Sort_Order);
+   --  Set the sort order for Self.
 
    type Locations_Listener is new Abstract_Listener with private;
    type Locations_Listener_Access is access all Locations_Listener'Class;
@@ -102,7 +116,13 @@ package GPS.Location_View.Listener is
 private
 
    type Classic_Tree_Model_Record is
-     new Gtk.Tree_Store.Gtk_Tree_Store_Record with null record;
+     new Gtk.Tree_Store.Gtk_Tree_Store_Record with record
+      Messages_Order : Messages_Sort_Order := By_Location;
+      --  Sort order for locations within a file.
+
+      File_Order : File_Sort_Order := Category_Default_Sort;
+      --  Sort order for files within a category
+   end record;
 
    procedure Initialize (Self : access Classic_Tree_Model_Record'Class);
    procedure Gtk_New (Object : out Classic_Tree_Model);
