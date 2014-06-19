@@ -55,8 +55,8 @@ class Pep8_Parser(tool_output.OutputParser):
         """
         self.__messages = []
         if text is not None:
-            for i in text.split("\n"):
-                a = i.strip("\n").split(":")
+            for i in text.splitlines():
+                a = i.split(":")
                 if a[0] == "/tmp/_gps_pep8.py":
                     m = GPS.Message(category="Pep8",
                                     file=GPS.EditorBuffer.get().file(),

@@ -11,10 +11,8 @@ from text_utils import forward_until
 import completion
 from completion import CompletionResolver, CompletionProposal
 import os
-from time import time
+import colorschemes
 
-style_warning = None
-style_error = None
 
 kind_name_to_category = {
     ci.CursorKind.ENUM_CONSTANT_DECL: completion.CAT_LITERAL,
@@ -27,18 +25,6 @@ kind_name_to_category = {
     }
 # translates cursor names to completion language categories
 
-
-def initialize_styles():
-    global style_warning
-    global style_error
-    style_warning = GPS.Style("clang-live-warnings")
-    style_warning.set_background(
-        GPS.Preference("Warnings-Src-Highlight-Color").get()
-    )
-    style_error = GPS.Style("clang-live-errors")
-    style_error.set_background(
-        GPS.Preference("Errors-Src-Highlight-Color").get()
-    )
 
 ####################
 # Main clang class #
@@ -206,10 +192,10 @@ class Clang(object):
 
                 if d.severity < 3:
                     m.set_action("", "gps-build-warning", d.spelling)
-                    m.set_style(style_warning)
+                    m.set_style(colorschemes.STYLE_WARNING)
                 else:
                     m.set_action("", "gps-build-error", d.spelling)
-                    m.set_style(style_error)
+                    m.set_style(colorschemes.STYLE_ERROR)
 
                 self.messages.append(m)
 

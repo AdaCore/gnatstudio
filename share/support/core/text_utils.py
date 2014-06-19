@@ -25,6 +25,7 @@ import gi
 from gi.repository import Gtk
 from gps_utils import *
 
+
 should_extend_selection = False
 # Whether the selection should be extended when moving the cursor
 

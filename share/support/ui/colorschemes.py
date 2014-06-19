@@ -11,6 +11,14 @@ import GPS
 from gi.repository import Gtk, Gdk
 import gps_utils
 
+STYLE_WARNING = GPS.Style("editor-warnings")
+STYLE_WARNING.set_background(
+    GPS.Preference("Warnings-Src-Highlight-Color").get())
+
+STYLE_ERROR = GPS.Style("editor-errors")
+STYLE_ERROR.set_background(
+    GPS.Preference("Errors-Src-Highlight-Color").get())
+
 
 light_common = {
     "Editor/Ada/expanded_code_style": "#dddddd",
@@ -297,6 +305,11 @@ class ColorThemeSwitcher(object):
 
     def __on_preferences_changed(self, hook):
         del hook  # Unused parameter
+
+        STYLE_WARNING.set_background(
+            GPS.Preference("Warnings-Src-Highlight-Color").get())
+        STYLE_WARNING.set_background(
+            GPS.Preference("Warnings-Src-Highlight-Color").get())
 
         v = GPS.Preference(self.pref_name).get()
         if v == "Custom":
