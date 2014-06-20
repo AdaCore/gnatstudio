@@ -899,7 +899,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         self.units_with_extra_info = []
         # holds the mapping "msg" -> msg_id
         self.msg_id = {}
-        self.regex = re.compile(r"(.*)\[#([0-9])\]$")
+        self.regex = re.compile(r"(.*)\[#([0-9]+)\]$")
         # holds the mapping "unit,msg_id" -> extra_info
         self.extra_info = {}
 
@@ -1030,6 +1030,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                 if unit not in imported_units:
                     self.parsejson(unit, os.path.join(objdir, unit + ".flow"))
                     self.parsejson(unit, os.path.join(objdir, unit + ".proof"))
+                    imported_units.add(unit)
                 extra = {}
                 if full_id in self.extra_info:
                     extra = self.extra_info[full_id]
