@@ -174,13 +174,17 @@ package body GPS.Search is
       --  Visible_Column_Type (Vsearch.Get_Tab_Width);
 
       C : Character;
+
+      --  Matching an empty string will have Finish < Start
+      M : constant Integer := Integer'Max
+        (Context.Start.Index, Context.Finish.Index);
    begin
       if Context.Ref = Unknown_Position then
          --  Assume beginning of buffer is first line and column
          Context.Ref := (Buffer'First, 1, 1, 1);
       end if;
 
-      while Context.Ref.Index <= Context.Finish.Index
+      while Context.Ref.Index <= M
         and then Context.Ref.Index <= Context.Buffer_End
       loop
          if Context.Ref.Index = Context.Start.Index then
@@ -321,7 +325,8 @@ package body GPS.Search is
    begin
       Match
         (Self.Pattern.all, Buffer, Context.Groups,
-         Context.Buffer_Start, Context.Buffer_End);
+         Data_First => Context.Buffer_Start,
+         Data_Last  => Context.Buffer_End);
 
       --  The second test below works around an apparent bug in GNAT.Regpat
 
@@ -338,6 +343,11 @@ package body GPS.Search is
          end if;
       elsif Self.Negate then
          return No_Match;
+      end if;
+
+      --  If we are matching an empty string
+      if Context.Groups (0).Last < Context.Groups (0).First then
+         Context.Groups (0).Last := Context.Groups (0).First;
       end if;
 
       Context.Start  := (Context.Groups (0).First, 1, 1, 1);

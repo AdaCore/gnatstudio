@@ -431,7 +431,7 @@ private
       --  Whether the current search item that the context refers to
       --  is acceptable for a replace operation.
 
-      Current : GPS.Search.Search_Context;
+      Current : GPS.Search.Search_Context := GPS.Search.No_Match;
       --  Information about the last match
 
       All_Occurrences : Boolean := False;
