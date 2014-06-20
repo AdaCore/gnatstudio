@@ -99,7 +99,7 @@ package Find_Utils is
      (Context     : access Root_Search_Context;
       Buffer      : String;
       Start_Index : Integer := -1;
-      End_Index   : Positive := Positive'Last)
+      End_Index   : Integer := -1)
       return GPS.Search.Search_Context;
    --  Check if Context matches Buffer (Start_Index .. End_Index), and return
    --  the index of the first match, or -1 if there is no match. Start_Index

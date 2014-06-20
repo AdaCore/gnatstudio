@@ -34,7 +34,7 @@ package body Find_Utils is
      (Context     : access Root_Search_Context;
       Buffer      : String;
       Start_Index : Integer := -1;
-      End_Index   : Positive := Positive'Last)
+      End_Index   : Integer := -1)
       return GPS.Search.Search_Context
    is
    begin
@@ -113,8 +113,12 @@ package body Find_Utils is
       while Result /= GPS.Search.No_Match loop
          Ref  := Result.Ref;
 
+         --  It is possible that Result.Finish.Index is less than Buffer'First
+         --  when we matched an empty string (for instance "^").
          BOL := Line_Start (Buffer, Result.Start.Index);
-         EOL := Line_End (Buffer, Result.Finish.Index);
+         EOL := Line_End
+           (Buffer,
+            Integer'Max (Buffer'First, Result.Finish.Index));
 
          --  Don't use GPS.Search.Highlight_Match, since that would only show
          --  the part of the buffer that was tested, whereas we want the full

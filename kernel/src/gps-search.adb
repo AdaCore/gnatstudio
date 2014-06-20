@@ -175,6 +175,11 @@ package body GPS.Search is
 
       C : Character;
    begin
+      if Context.Ref = Unknown_Position then
+         --  Assume beginning of buffer is first line and column
+         Context.Ref := (Buffer'First, 1, 1, 1);
+      end if;
+
       while Context.Ref.Index <= Context.Finish.Index
         and then Context.Ref.Index <= Context.Buffer_End
       loop
@@ -245,6 +250,7 @@ package body GPS.Search is
            (Self.Pattern.all, Buffer (S2 .. F));
          exit when not Self.Whole_Word
            or else Index = -1
+           or else Index > Buffer'Last
            or else
              --  Check we have word delimiters on either sides
              ((Index = S or else Is_Word_Delimiter (Buffer (Index - 1)))
@@ -467,10 +473,12 @@ package body GPS.Search is
 
       Next (Self, Buffer, Context);
 
-      if Context = No_Match and then Self.Negate then
-         Context.Start := (S, 1, 1, 1);
-         Context.Finish := (F, 1, 1, 1);
-         Update_Location (Context, Buffer);
+      if Context = No_Match then
+         if Self.Negate then
+            Context.Start := (S, 1, 1, 1);
+            Context.Finish := (F, 1, 1, 1);
+            Update_Location (Context, Buffer);
+         end if;
          return Context;
       elsif Self.Negate then
          return No_Match;
@@ -685,6 +693,7 @@ package body GPS.Search is
             Buffer (Context.Start.Index + 1 .. Context.Buffer_End));
          exit when not Self.Whole_Word
            or else Index = -1
+           or else Index > Buffer'Last
            or else
              ((Index = Buffer'First
                or else Is_Word_Delimiter (Buffer (Index - 1)))

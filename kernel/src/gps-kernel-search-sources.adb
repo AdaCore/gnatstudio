@@ -378,12 +378,7 @@ package body GPS.Kernel.Search.Sources is
             Start := Start + 1;
          end loop;
 
-         Finish := Self.Context.Finish.Index;
-         while Finish <= Self.Text'Last
-           and then Self.Text (Finish) /= ASCII.LF
-         loop
-            Finish := Finish + 1;
-         end loop;
+         Finish := Line_End (Self.Text.all, Self.Context.Finish.Index);
 
          declare
             P_Name : constant String :=
@@ -408,7 +403,7 @@ package body GPS.Kernel.Search.Sources is
                Score      => Self.Context.Score,
                Short      => new String'
                  (Self.Pattern.Highlight_Match
-                      (Self.Text (Start .. Finish - 1), Self.Context)),
+                      (Self.Text (Start .. Finish), Self.Context)),
                Long       => L,
                Id         => L,
                File       => Self.File,
