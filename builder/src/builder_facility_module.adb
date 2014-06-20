@@ -614,6 +614,7 @@ package body Builder_Facility_Module is
               (Get_Kernel,
                Compute_Build_Targets_Hook,
                Data'Unchecked_Access);
+            D : Dialog_Mode;
 
          begin
             if Mains.Length > 0
@@ -628,6 +629,15 @@ package body Builder_Facility_Module is
                   Mode => Error);
 
             else
+               case Get_Properties (Target).Launch_Mode is
+                  when Manually | On_File_Save | In_Background =>
+                     D := Default;
+                  when Manually_With_Dialog =>
+                     D := Force_Dialog;
+                  when Manually_With_No_Dialog =>
+                     D := Force_No_Dialog;
+               end case;
+
                for J in 1 .. Mains.Length loop
                   if Mains.List (J).Length /= 0 then
                      Create (Item        => M,
@@ -636,7 +646,7 @@ package body Builder_Facility_Module is
                              Target_Type => To_String (Targets),
                              Main        => J,
                              Quiet       => False,
-                             Dialog      => Default);
+                             Dialog      => D);
                      Set_Unbounded_String (Action, N & (-" Number") & J'Img);
                      Unregister_Action (Get_Kernel, To_String (Action));
                      Register_Action
