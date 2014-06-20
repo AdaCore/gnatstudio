@@ -248,14 +248,16 @@ package body GPS.Search is
       loop
          Index := GNATCOLL.Boyer_Moore.Search
            (Self.Pattern.all, Buffer (S2 .. F));
+
          exit when not Self.Whole_Word
            or else Index = -1
            or else Index > Buffer'Last
            or else
-             --  Check we have word delimiters on either sides
-             ((Index = S or else Is_Word_Delimiter (Buffer (Index - 1)))
+               --  Check we have word delimiters on either sides
+           ((Index = Buffer'First
+             or else Is_Word_Delimiter (Buffer (Index - 1)))
               and then
-                (Index = F - Self.Length + 1
+                (Index = Buffer'Last - Self.Length + 1
                  or else Is_Word_Delimiter (Buffer (Index + Self.Length))));
          S2 := Index + 1;
       end loop;
@@ -698,7 +700,7 @@ package body GPS.Search is
              ((Index = Buffer'First
                or else Is_Word_Delimiter (Buffer (Index - 1)))
               and then
-                (Index = Context.Buffer_End - Self.Length + 1
+                (Index = Buffer'Last - Self.Length + 1
                  or else Is_Word_Delimiter (Buffer (Index + Self.Length))));
          Context.Start.Index := Index + 1;
       end loop;
