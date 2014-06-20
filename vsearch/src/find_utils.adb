@@ -16,68 +16,15 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Glib.Convert;              use Glib.Convert;
-with Glib.Unicode;              use Glib.Unicode;
-with GNATCOLL.Boyer_Moore;      use GNATCOLL.Boyer_Moore;
-with GNATCOLL.Xref;
 with GPS.Kernel;                use GPS.Kernel;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with Glib.Convert;              use Glib.Convert;
 with Gtk.Widget;                use Gtk.Widget;
-with Vsearch;                   use Vsearch;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Intl;                  use GPS.Intl;
-with UTF8_Utils;                use UTF8_Utils;
 
 package body Find_Utils is
-   use type GNATCOLL.Xref.Visible_Column;
-
-   Me : constant Trace_Handle := Create ("Find_Utils");
-
-   procedure Free_Pattern_Matcher is new Ada.Unchecked_Deallocation
-     (Pattern_Matcher, Pattern_Matcher_Access);
-
-   procedure Free_Match_Array is new Ada.Unchecked_Deallocation
-     (Match_Array, Match_Array_Access);
-
-   function Is_Word_Delimiter (C : Character) return Boolean;
-   pragma Inline (Is_Word_Delimiter);
-   --  Return True if C is a character which can't be in a word.
-
-   function End_Of_Line (Buffer : String; Pos : Natural) return Integer;
-   pragma Inline (End_Of_Line);
-   --  Return the index for the end of the line containing Pos
-
-   -----------------------
-   -- Is_Word_Delimiter --
-   -----------------------
-
-   function Is_Word_Delimiter (C : Character) return Boolean is
-   begin
-      return not (Is_Alphanumeric (C) or else C = '_');
-   end Is_Word_Delimiter;
-
-   -----------------
-   -- End_Of_Line --
-   -----------------
-
-   function End_Of_Line (Buffer : String; Pos : Natural) return Integer is
-      J : Integer := Pos;
-   begin
-      while J < Buffer'Last loop
-         if Buffer (J) = ASCII.LF
-           or else Buffer (J) = ASCII.CR
-         then
-            return J - 1;
-         end if;
-
-         J := J + 1;
-      end loop;
-
-      return Buffer'Last;
-   end End_Of_Line;
+   use type Basic_Types.Visible_Column_Type;
 
    -----------
    -- Match --
@@ -87,57 +34,34 @@ package body Find_Utils is
      (Context     : access Root_Search_Context;
       Buffer      : String;
       Start_Index : Integer := -1;
-      End_Index   : Positive := Positive'Last) return Integer
+      End_Index   : Positive := Positive'Last)
+      return GPS.Search.Search_Context
    is
-      Result : Integer := -1;
-
-      function Callback (Match : Match_Result) return Boolean;
-      --  Simple callback for the search algorithm
-
-      --------------
-      -- Callback --
-      --------------
-
-      function Callback (Match : Match_Result) return Boolean is
-      begin
-         Result := Match.Index;
-         return False;
-      end Callback;
-
-      Index       : Integer := Buffer'First;
-      Line        : Natural := 0;
-      Column      : Character_Offset_Type := 0;
-      Was_Partial : Boolean;
-      Start       : constant Integer :=
-                      Integer'Max (Start_Index, Buffer'First);
-      Last        : constant Integer := Integer'Min (End_Index, Buffer'Last);
    begin
-      Scan_Buffer_No_Scope
-        (Context, Buffer, Start, Last, Callback'Unrestricted_Access,
-         Index, Line, Column, Was_Partial);
-      return Result;
+      return Context.Pattern.Start
+        (Buffer      => Buffer,
+         Start_Index => Start_Index,
+         End_Index   => End_Index);
    end Match;
 
    ---------------------------
-   -- Matched_Subexpressoin --
+   -- Matched_Subexpression --
    ---------------------------
 
-   procedure Matched_Subexpressoin
-     (Context     : access Root_Search_Context;
+   procedure Matched_Subexpression
+     (Result      : GPS.Search.Search_Context;
       Index       : Natural;
       First       : out Natural;
       Last        : out Natural) is
    begin
-      if Context.Sub_Matches /= null
-        and then Index in Context.Sub_Matches'Range
-      then
-         First := Context.Sub_Matches (Index).First;
-         Last := Context.Sub_Matches (Index).Last;
+      if Index in Result.Groups'Range then
+         First := Result.Groups (Index).First;
+         Last := Result.Groups (Index).Last;
       else
          First := 1;
          Last := 0;
       end if;
-   end Matched_Subexpressoin;
+   end Matched_Subexpression;
 
    ---------------------------
    -- Get_Terminate_Message --
@@ -162,333 +86,61 @@ package body Find_Utils is
       Start_Index : Natural;
       End_Index   : Natural;
       Callback    : Scan_Callback;
-      Ref_Index   : in out Integer;
-      Ref_Line    : in out Natural;
-      Ref_Column  : in out Character_Offset_Type;
+      Ref         : in out Buffer_Position;
       Was_Partial : out Boolean)
    is
-      Last_Line_Start    : Natural;
-      Ref_Visible_Column : Visible_Column_Type;
-
-      function Pretty_Print_Line
-        (Line      : String;
-         Start_Pos : Integer;
-         End_Pos   : Integer) return String;
-      --  Return a version of the string that highlights the pattern between
-      --  Start_Pos and End_Pos, using the pango markup language.
-      --  Start_Pos and End_Pos should be valid indexes in Line.
-
-      procedure Re_Search;
-      --  Handle the search for a regular expression
-
-      procedure BM_Search;
-      --  Handle the search for a constant string
-
-      -----------------------
-      -- Pretty_Print_Line --
-      -----------------------
-
-      function Pretty_Print_Line
-        (Line      : String;
-         Start_Pos : Integer;
-         End_Pos   : Integer) return String
-      is
-         Success, Success2, Success3 : aliased Boolean;
-      begin
-         if Line = "" then
-            return "";
-         end if;
-
-         if End_Pos < Start_Pos then
-            declare
-               UTF8 : constant String :=
-                 Unknown_To_UTF8 (Line, Success'Access);
-            begin
-               if Success then
-                  return Escape_Text (UTF8);
-               else
-                  return "";
-               end if;
-            end;
-         end if;
-
-         declare
-            UTF8_Begin : constant String :=
-              Unknown_To_UTF8 (Line (Line'First .. Start_Pos - 1),
-                               Success'Access);
-            UTF8_Middle : constant String :=
-              Unknown_To_UTF8 (Line (Start_Pos .. End_Pos - 1),
-                               Success2'Access);
-            UTF8_End : constant String :=
-              Unknown_To_UTF8 (Line (End_Pos .. Line'Last),
-                               Success3'Access);
-         begin
-            if not Success
-              and then Success2
-              and then Success3
-            then
-               return "";
-            else
-               return Escape_Text (UTF8_Begin)
-                 & "<span foreground=""red"">" &
-               Escape_Text (UTF8_Middle)
-                 & "</span>" &
-               Escape_Text (UTF8_End);
-            end if;
-         end;
-      end Pretty_Print_Line;
-
-      ---------------
-      -- Re_Search --
-      ---------------
-
-      procedure Re_Search is
-         RE  : constant Pattern_Matcher := Context_As_Regexp (Context);
-         Pos : Natural := Start_Index;
-      begin
-         --  Special case here: If we have an empty section, do nothing. In
-         --  fact, End_Index might be 0 in the following case: we search in
-         --  one of the GPS source files for "all but comments". The first
-         --  section is empty, and End_Index is 0. However, it is
-         --  legitimate, if inefficient, to have an empty section
-
-         if End_Index = 0 then
-            return;
-         end if;
-
-         loop
-            Match (RE, Buffer, Context.Sub_Matches.all, Pos, End_Index);
-
-            --  The second test below works around an apparent bug in
-            --  GNAT.Regpat
-            exit when Context.Sub_Matches (0) = No_Match
-              or else Context.Sub_Matches (0).First > Buffer'Last;
-
-            Pos := Context.Sub_Matches (0).First;
-            Ref_Column := 1;
-            Ref_Visible_Column := 1;
-            To_Line_Column
-              (Buffer (Last_Line_Start .. Buffer'Last),
-               Pos, Ref_Line, Ref_Column,
-               Ref_Visible_Column,
-               Last_Line_Start);
-            Ref_Index := Pos;
-
-            declare
-               End_Col : constant Natural :=
-                 Natural (UTF8_Strlen
-                   (Buffer (Context.Sub_Matches (0).First ..
-                        Context.Sub_Matches (0).Last)));
-
-               Line_End : constant Natural := End_Of_Line (Buffer, Pos);
-
-               End_Pos  : constant Natural := Natural'Min
-                 (Pos + End_Col, Line_End);
-
-               Match_Length : constant Natural :=
-                 Context.Sub_Matches (0).Last - Pos + 1;
-
-               Line    : constant String := Pretty_Print_Line
-                 (Buffer (Last_Line_Start .. Line_End), Pos, End_Pos);
-
-               End_Line   : Natural := Ref_Line;
-               End_Column : Character_Offset_Type := 1;
-               End_Visible_Column : Visible_Column_Type := 1;
-               Dummy      : Natural := 0;
-            begin
-               To_Line_Column
-                 (Buffer (Last_Line_Start .. Buffer'Last),
-                  Pos + End_Col,
-                  End_Line, End_Column, End_Visible_Column, Dummy);
-
-               if not Callback (Match_Result'
-                   (Length         => Line'Length,
-                    Pattern_Length => Match_Length,
-                    Index          => Pos,
-                    Begin_Line     => Ref_Line,
-                    End_Line       => End_Line,
-                    Begin_Column   => Ref_Column,
-                    Visible_Begin_Column => Ref_Visible_Column,
-                    Visible_End_Column   => End_Visible_Column,
-                    End_Column     => End_Column,
-                    Text           => Line))
-               then
-                  Was_Partial := True;
-                  return;
-               end if;
-            end;
-
-            Pos := Pos + 1;
-         end loop;
-
-         Was_Partial := False;
-      end Re_Search;
-
-      ---------------
-      -- BM_Search --
-      ---------------
-
-      procedure BM_Search is
-         BM  : Pattern;
-         Pos : Integer := Start_Index;
-      begin
-         Context_As_Boyer_Moore (Context, BM);
-
-         --  The loop is optimized so that the search is as efficient as
-         --  possible (we scan the whole buffer, instead of line-by-line
-         --  search). We then pay a small price to actually compute the
-         --  buffer coordinates, but this algorithm is much faster for files
-         --  that don't match.
-
-         loop
-            Pos := Search (BM, Buffer (Pos .. End_Index));
-            exit when Pos = -1;
-
-            if not Context.Options.Whole_Word
-              or else
-                ((not (Pos - 1 in Buffer'Range)
-                  or else Is_Word_Delimiter (Buffer (Pos - 1)))
-               and then
-                 (Pos + Context.Look_For'Length - 1 = End_Index
-                  or else Is_Word_Delimiter
-                    (Buffer (Pos + Context.Look_For'Length))))
-            then
-               Ref_Column := 1;
-               Ref_Visible_Column := 1;
-               To_Line_Column
-                 (Buffer (Last_Line_Start .. Buffer'Last),
-                  Pos, Ref_Line, Ref_Column, Ref_Visible_Column,
-                  Last_Line_Start);
-               Ref_Index := Pos;
-
-               declare
-                  Line_End_Pos : constant Natural := End_Of_Line
-                    (Buffer, Pos + Context.Look_For'Length);
-
-                  Line : constant String :=
-                    Pretty_Print_Line
-                      (Buffer (Last_Line_Start .. Line_End_Pos),
-                       Pos, Pos + Context.Look_For'Length);
-
-                  End_Line   : Natural := Ref_Line;
-                  End_Column : Character_Offset_Type := 1;
-                  End_Visible_Column : Visible_Column_Type := 1;
-                  Dummy      : Natural := 0;
-               begin
-                  To_Line_Column
-                    (Buffer (Last_Line_Start .. Buffer'Last),
-                     Pos + Context.Look_For'Length,
-                     End_Line, End_Column, End_Visible_Column, Dummy);
-
-                  if not Callback (Match_Result'
-                      (Length         => Line'Length,
-                       Pattern_Length => Context.Look_For'Length,
-                       Index          => Pos,
-                       Begin_Line     => Ref_Line,
-                       End_Line       => End_Line,
-                       Begin_Column   => Ref_Column,
-                       End_Column     => End_Column,
-                       Visible_Begin_Column => Ref_Visible_Column,
-                       Visible_End_Column   => End_Visible_Column,
-                       Text           => Line))
-                  then
-                     Was_Partial := True;
-                     return;
-                  end if;
-               end;
-            end if;
-
-            Pos := Pos + 1;
-         end loop;
-         Was_Partial := False;
-      end BM_Search;
-
+      Result : GPS.Search.Search_Context;
+      BOL, EOL : Integer;
    begin
       Was_Partial := False;
 
-      --  Initialize the value of Last_Line_Start.
+      --  Special case here: If we have an empty section, do nothing. In
+      --  fact, End_Index might be 0 in the following case: we search in
+      --  one of the GPS source files for "all but comments". The first
+      --  section is empty, and End_Index is 0. However, it is
+      --  legitimate, if inefficient, to have an empty section
 
-      Last_Line_Start := Buffer'First;
-
-      declare
-         J : Integer := Start_Index - 1;
-      begin
-         loop
-            exit when J < Buffer'First;
-
-            if Buffer (J) = ASCII.LF then
-               Last_Line_Start := J + 1;
-               exit;
-            end if;
-
-            J := UTF8_Find_Prev_Char (Buffer, J);
-         end loop;
-      end;
-
-      --  ??? Would be nice to handle backward search, which is extremely hard
-      --  with regular expressions
-
-      if Context.Options.Regexp then
-         Re_Search;
-      else
-         BM_Search;
+      if End_Index = 0 then
+         return;
       end if;
+
+      Result := Context.Pattern.Start
+        (Buffer      => Buffer,
+         Start_Index => Start_Index,
+         End_Index   => End_Index,
+         Ref         => Ref);
+
+      while Result /= GPS.Search.No_Match loop
+         Ref  := Result.Ref;
+
+         BOL := Line_Start (Buffer, Result.Start.Index);
+         EOL := Line_End (Buffer, Result.Finish.Index);
+
+         --  Don't use GPS.Search.Highlight_Match, since that would only show
+         --  the part of the buffer that was tested, whereas we want the full
+         --  line (including comments if we were only searching in code for
+         --  instance)
+         if not Callback
+           (Result,
+            Glib.Convert.Escape_Text (Buffer (BOL .. Result.Start.Index - 1))
+            & "<b>"
+            & Glib.Convert.Escape_Text
+              (Buffer (Result.Start.Index .. Result.Finish.Index))
+            & "</b>"
+            & Glib.Convert.Escape_Text
+              (Buffer (Result.Finish.Index + 1 .. EOL)))
+         then
+            Was_Partial := True;
+            exit;
+         end if;
+
+         Context.Pattern.Next (Buffer, Result);
+      end loop;
 
    exception
       when Invalid_Context =>
          null;
    end Scan_Buffer_No_Scope;
-
-   --------------------
-   -- To_Line_Column --
-   --------------------
-
-   procedure To_Line_Column
-     (Buffer         : Glib.UTF8_String;
-      Pos            : Natural;
-      Line           : in out Natural;
-      Column         : in out Character_Offset_Type;
-      Visible_Column : in out Visible_Column_Type;
-      Line_Start     : in out Natural)
-   is
-      J          : Natural := Buffer'First;
-      Tab_Width  : constant Visible_Column_Type :=
-        Visible_Column_Type (Get_Tab_Width);
-
-      function At_Line_End return Boolean;
-      pragma Inline (At_Line_End);
-      --  Return True if J points to an end-of-line character
-
-      function At_Line_End return Boolean is
-      begin
-         return Buffer (J) = ASCII.LF
-           or else (Buffer (J) = ASCII.CR
-                    and then Buffer (J + 1) /= ASCII.LF);
-      end At_Line_End;
-
-   begin
-      loop
-         exit when J > Pos - 1;
-
-         if At_Line_End then
-            Line           := Line + 1;
-            Column         := 1;
-            Visible_Column := 1;
-            Line_Start := J + 1;
-         else
-            Column := Column + 1;
-
-            if Buffer (J) = ASCII.HT then
-               Visible_Column := Visible_Column
-                 + Tab_Width - (Visible_Column mod Tab_Width) + 1;
-            else
-               Visible_Column := Visible_Column + 1;
-            end if;
-         end if;
-
-         J := UTF8_Utils.UTF8_Next_Char (Buffer, J);
-      end loop;
-   end To_Line_Column;
 
    ----------------------
    -- Context_Look_For --
@@ -497,88 +149,8 @@ package body Find_Utils is
    function Context_Look_For
      (Context : access Root_Search_Context) return String is
    begin
-      if Context.Look_For = null then
-         return "";
-      else
-         return Context.Look_For.all;
-      end if;
+      return Context.Pattern.Get_Text;
    end Context_Look_For;
-
-   -----------------------
-   -- Context_As_String --
-   -----------------------
-
-   function Context_As_String
-     (Context : access Root_Search_Context) return String is
-   begin
-      if Context.Look_For = null or else Context.Options.Regexp then
-         raise Invalid_Context;
-      end if;
-
-      return Context.Look_For.all;
-   end Context_As_String;
-
-   -----------------------
-   -- Context_As_Regexp --
-   -----------------------
-
-   function Context_As_Regexp
-     (Context : access Root_Search_Context)
-      return GNAT.Regpat.Pattern_Matcher
-   is
-      Flags : Regexp_Flags := Multiple_Lines;
-      WD    : constant String := "\b";  -- Word_Delimiter
-   begin
-      if Context.RE_Matcher = null then
-         if not Context.Options.Regexp or else Context.Look_For = null then
-            raise Invalid_Context;
-         end if;
-
-         if not Context.Options.Case_Sensitive then
-            Flags := Flags or Case_Insensitive;
-         end if;
-
-         if Context.Options.Whole_Word then
-            Context.RE_Matcher := new Pattern_Matcher'
-              (Compile (WD & Context.Look_For.all & WD, Flags));
-         else
-            Context.RE_Matcher := new Pattern_Matcher'
-              (Compile (Context.Look_For.all, Flags));
-         end if;
-
-         Context.Sub_Matches :=
-           new Match_Array (0 .. Paren_Count (Context.RE_Matcher.all));
-      end if;
-
-      return Context.RE_Matcher.all;
-
-   exception
-      when Expression_Error =>
-         Trace (Me, "Invalid regexp: " & Context.Look_For.all);
-         raise Invalid_Context;
-   end Context_As_Regexp;
-
-   ----------------------------
-   -- Context_As_Boyer_Moore --
-   ----------------------------
-
-   procedure Context_As_Boyer_Moore
-     (Context : access Root_Search_Context;
-      Matcher : out Pattern) is
-   begin
-      if not Context.BM_Initialized then
-         if Context.Options.Regexp or else Context.Look_For = null then
-            raise Invalid_Context;
-         end if;
-
-         Context.BM_Initialized := True;
-         Compile (Context.BM_Matcher, Context.Look_For.all,
-                  Context.Options.Case_Sensitive);
-         Context.Sub_Matches := new Match_Array'(0 => No_Match);
-      end if;
-
-      Matcher := Context.BM_Matcher;
-   end Context_As_Boyer_Moore;
 
    ------------------------
    -- Set_End_Notif_Done --
@@ -601,19 +173,25 @@ package body Find_Utils is
    end Get_End_Notif_Done;
 
    -----------------
-   -- Set_Context --
+   -- Set_Pattern --
    -----------------
 
-   procedure Set_Context
-     (Context  : access Root_Search_Context'Class;
-      Look_For : String;
-      Options  : Search_Options) is
+   procedure Set_Pattern
+     (Context        : access Root_Search_Context'Class;
+      Pattern        : String;
+      Whole_Word     : Boolean;
+      Case_Sensitive : Boolean;
+      Kind           : GPS.Search.Search_Kind)
+   is
    begin
-      Free (Root_Search_Context (Context.all));
-      Context.Look_For       := new String'(Look_For);
-      Context.Options        := Options;
-      Context.BM_Initialized := False;
-   end Set_Context;
+      Free (Context.Pattern);
+      Context.Pattern := Build
+        (Pattern,
+         Whole_Word      => Whole_Word,
+         Case_Sensitive  => Case_Sensitive,
+         Kind            => Kind,
+         Allow_Highlight => True);
+   end Set_Pattern;
 
    ----------
    -- Free --
@@ -621,15 +199,12 @@ package body Find_Utils is
 
    procedure Free (Context : in out Root_Search_Context) is
    begin
-      Free (Context.Look_For);
-      Free_Pattern_Matcher (Context.RE_Matcher);
-      Free (Context.BM_Matcher);
-      Free_Match_Array (Context.Sub_Matches);
+      Free (Context.Pattern);
    end Free;
 
-   procedure Free (Context : in out Search_Context_Access) is
+   procedure Free (Context : in out Root_Search_Context_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Search_Context'Class, Search_Context_Access);
+        (Root_Search_Context'Class, Root_Search_Context_Access);
    begin
       if Context /= null then
          Free (Context.all);
@@ -642,7 +217,7 @@ package body Find_Utils is
    -------------
 
    function Replace
-     (Context         : access Search_Context;
+     (Context         : access Root_Search_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
       Case_Preserving : Boolean;
@@ -656,39 +231,15 @@ package body Find_Utils is
       return False;
    end Replace;
 
-   -----------------
-   -- Get_Options --
-   -----------------
+   ---------------
+   -- Is_Regexp --
+   ---------------
 
-   function Get_Options
-     (Context : access Root_Search_Context) return Search_Options is
+   function Is_Regexp (Context : access Root_Search_Context) return Boolean is
    begin
-      return Context.Options;
-   end Get_Options;
-
-   --------------------------
-   -- Get_Current_Progress --
-   --------------------------
-
-   function Get_Current_Progress
-     (Context : access Search_Context) return Integer
-   is
-      pragma Unreferenced (Context);
-   begin
-      return 0;
-   end Get_Current_Progress;
-
-   ------------------------
-   -- Get_Total_Progress --
-   ------------------------
-
-   function Get_Total_Progress
-     (Context : access Search_Context) return Integer
-   is
-      pragma Unreferenced (Context);
-   begin
-      return 1;
-   end Get_Total_Progress;
+      return Context.Pattern /= null
+        and then Context.Pattern.Get_Kind = GPS.Search.Regexp;
+   end Is_Regexp;
 
    ------------------------
    -- Find_Closest_Match --
@@ -702,69 +253,47 @@ package body Find_Utils is
       Str            : String;
       Case_Sensitive : Boolean)
    is
-      Best_Line     : Integer := 0;
-      Best_Column   : Character_Offset_Type := 0;
+      Best_Line   : Integer := 0;
+      Best_Column : Character_Offset_Type := 0;
+      Pattern     : Search_Pattern_Access;
+      Result      : GPS.Search.Search_Context;
+      Line_Diff, Col_Diff : Integer;
+      Ref         : constant Buffer_Position := (Buffer'First, 1, 1, 1);
 
-      function Callback (Match : Match_Result) return Boolean;
-      --  Called every time a reference to the entity is found
+   begin
+      Pattern := Build
+        (Pattern       => Str,
+         Case_Sensitive => Case_Sensitive,
+         Whole_Word     => True,
+         Kind           => GPS.Search.Full_Text);
+      Result := Pattern.Start
+        (Buffer      => Buffer,
+         Start_Index => Buffer'First,
+         End_Index   => Buffer'Last,
+         Ref         => Ref);
 
-      --------------
-      -- Callback --
-      --------------
+      while Result /= GPS.Search.No_Match loop
 
-      function Callback (Match : Match_Result) return Boolean is
-         Line_Diff : constant Integer :=
-           Integer (abs (Match.Begin_Line - Line)
-                    - abs (Best_Line - Line));
-         Col_Diff : constant Integer :=
-           Integer (abs (Match.Begin_Column - Column)
-                    - abs (Best_Column - Column));
-      begin
-         Found := True;
+         Line_Diff := Integer
+           (abs (Result.Start.Line - Line) - abs (Best_Line - Line));
+         Col_Diff := Integer
+           (abs (Result.Start.Column - Column) - abs (Best_Column - Column));
 
          if Line_Diff < 0
            or else (Line_Diff = 0 and then Col_Diff < 0)
          then
-            Best_Line := Match.Begin_Line;
-            Best_Column := Match.Begin_Column;
+            Best_Line := Result.Start.Line;
+            Best_Column := Result.Start.Column;
          end if;
 
-         return True;
-      end Callback;
+         Pattern.Next (Buffer, Result);
+      end loop;
 
-      Context     : aliased Root_Search_Context;
-      L           : Integer := 1;
-      C           : Character_Offset_Type := 1;
-      Index       : Integer;
-      Was_Partial : Boolean;
-
-   begin
-      Found := False;
-      Index := Buffer'First;
-
-      Set_Context
-        (Context'Access,
-         Look_For => Str,
-         Options  =>
-           (Case_Sensitive => Case_Sensitive,
-            Whole_Word     => True,
-            Regexp         => False));
-
-      Scan_Buffer_No_Scope
-        (Context     => Context'Access,
-         Buffer      => Buffer,
-         Start_Index => Buffer'First,
-         End_Index   => Buffer'Last,
-         Callback    => Callback'Unrestricted_Access,
-         Ref_Index   => Index,
-         Ref_Line    => L,
-         Ref_Column  => C,
-         Was_Partial => Was_Partial);
+      Free (Pattern);
 
       Line   := Best_Line;
       Column := Best_Column;
-
-      Free (Context);
+      Found  := Best_Line /= 0;
    end Find_Closest_Match;
 
    -----------
@@ -772,12 +301,12 @@ package body Find_Utils is
    -----------
 
    procedure Reset
-     (Context : access Search_Context;
+     (Context : access Root_Search_Context;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
    begin
       Get_Messages_Container (Kernel).Remove_Category
-        (-"Search for: " & Context_Look_For (Context),
+        (-"Search for: " & Context.Context_Look_For,
          (Editor_Side => True, Locations => True));
    end Reset;
 

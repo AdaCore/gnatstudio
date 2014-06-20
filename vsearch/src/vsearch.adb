@@ -65,6 +65,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with GPS.Search;                use GPS.Search;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Commands;                  use Commands;
@@ -213,7 +214,7 @@ package body Vsearch is
    type Idle_Search_Data is record
       Vsearch         : Vsearch_Access;
       Search_Backward : Boolean;
-      Context         : Search_Context_Access;
+      Context         : Root_Search_Context_Access;
       Found           : Boolean := False;
       Replace_With    : GNAT.Strings.String_Access := null;
       --  Whether the search results in at least one match.
@@ -441,9 +442,11 @@ package body Vsearch is
    --  Store and restore the position of the Vsearch dialog.
 
    procedure Add_To_History_And_Combo
-     (Vsearch : not null access Vsearch_Record'Class;
-      Pattern : String;
-      Options : Search_Options);
+     (Vsearch        : not null access Vsearch_Record'Class;
+      Pattern        : String;
+      Whole_Word     : Boolean;
+      Case_Sensitive : Boolean;
+      Regexp         : Boolean);
    --  Add the current settings to the history, and updates the combo box
 
    procedure Add_History_To_Combo
@@ -689,9 +692,8 @@ package body Vsearch is
       Found    : Boolean;
       Continue : Boolean;
    begin
-      Search
-        (Data.Context,
-         Data.Vsearch.Kernel,
+      Data.Context.Search
+        (Data.Vsearch.Kernel,
          Data.Search_Backward,
          Give_Focus => Get_Active (Data.Vsearch.Select_Editor_Check),
          Found      => Found,
@@ -823,13 +825,15 @@ package body Vsearch is
    procedure Add_To_History_And_Combo
      (Vsearch : not null access Vsearch_Record'Class;
       Pattern : String;
-      Options : Search_Options)
+      Whole_Word     : Boolean;
+      Case_Sensitive : Boolean;
+      Regexp         : Boolean)
    is
       V : constant String :=
         Pattern
-        & (if Options.Whole_Word then '*' else ' ')
-        & (if Options.Regexp then '*' else ' ')
-        & (if Options.Case_Sensitive then '*' else ' ')
+        & (if Whole_Word then '*' else ' ')
+        & (if Regexp then '*' else ' ')
+        & (if Case_Sensitive then '*' else ' ')
         & Character'Val (127);
    begin
       Add_To_History (Get_History (Vsearch.Kernel).all, Pattern_Hist_Key, V);
@@ -849,7 +853,10 @@ package body Vsearch is
                     (Vsearch.Kernel, Get_Active_Id (Vsearch.Context_Combo));
 
       Pattern : constant String := Get_Active_Text (Vsearch.Pattern_Combo);
-      Options : Search_Options;
+      Whole_Word   : constant Boolean := Get_Active (Vsearch.Whole_Word_Check);
+      Case_Sensitive : constant Boolean := Get_Active (Vsearch.Case_Check);
+      Kind : constant GPS.Search.Search_Kind :=
+        (if Get_Active (Vsearch.Regexp_Check) then Regexp else Full_Text);
    begin
       if not All_Occurrences then
          Free (Vsearch.Last_Search_Context);
@@ -867,16 +874,19 @@ package body Vsearch is
          if (All_Occurrences and then Vsearch.Last_Search_All_Context /= null)
            or else Vsearch.Last_Search_Context /= null
          then
-            Options :=
-              (Case_Sensitive => Get_Active (Vsearch.Case_Check),
-               Whole_Word     => Get_Active (Vsearch.Whole_Word_Check),
-               Regexp         => Get_Active (Vsearch.Regexp_Check));
-
             if All_Occurrences then
-               Set_Context (Vsearch.Last_Search_All_Context, Pattern, Options);
+               Vsearch.Last_Search_All_Context.Set_Pattern
+                 (Pattern         => Pattern,
+                  Case_Sensitive => Case_Sensitive,
+                  Whole_Word     => Whole_Word,
+                  Kind           => Kind);
                Reset (Vsearch.Last_Search_All_Context, Vsearch.Kernel);
             else
-               Set_Context (Vsearch.Last_Search_Context, Pattern, Options);
+               Vsearch.Last_Search_Context.Set_Pattern
+                 (Pattern         => Pattern,
+                  Case_Sensitive => Case_Sensitive,
+                  Whole_Word     => Whole_Word,
+                  Kind           => Kind);
                Reset (Vsearch.Last_Search_Context, Vsearch.Kernel);
             end if;
          else
@@ -887,15 +897,19 @@ package body Vsearch is
 
       --  Update the contents of the combo boxes
       if Get_Active_Iter (Vsearch.Pattern_Combo) = Null_Iter then
-         Add_To_History_And_Combo (Vsearch, Pattern, Options);
+         Add_To_History_And_Combo
+           (Vsearch, Pattern,
+            Whole_Word     => Whole_Word,
+            Case_Sensitive => Case_Sensitive,
+            Regexp         => Kind = Regexp);
 
          --  It sometimes happens that another entry is selected, for some
          --  reason. This also resets the options to the unwanted selection,
          --  so we also need to override them.
          Set_Active_Text (Vsearch.Pattern_Combo, Pattern);
-         Set_Active (Vsearch.Case_Check,       Options.Case_Sensitive);
-         Set_Active (Vsearch.Whole_Word_Check, Options.Whole_Word);
-         Set_Active (Vsearch.Regexp_Check,     Options.Regexp);
+         Set_Active (Vsearch.Case_Check,       Case_Sensitive);
+         Set_Active (Vsearch.Whole_Word_Check, Whole_Word);
+         Set_Active (Vsearch.Regexp_Check,     Kind = Regexp);
       end if;
 
       declare
@@ -1311,17 +1325,10 @@ package body Vsearch is
             Set_Active (Vsearch.Whole_Word_Check, False);
          end if;
 
-         if (Data.Mask and Find_Utils.Regexp) = 0 then
-            Set_Active (Vsearch.Regexp_Check, False);
-         end if;
-
          Set_Sensitive
            (Vsearch.Case_Check, (Data.Mask and Case_Sensitive) /= 0);
          Set_Sensitive
            (Vsearch.Whole_Word_Check, (Data.Mask and Whole_Word) /= 0);
-         Set_Sensitive (Vsearch.Regexp_Check,
-                        (Data.Mask and Find_Utils.Regexp) /= 0);
-
          Set_Sensitive (Vsearch.Search_Previous_Button,
                         (Data.Mask and Search_Backward) /= 0);
 
@@ -1546,10 +1553,9 @@ package body Vsearch is
       Item    : Gtk_Tree_Iter;
       List    : Gtk_List_Store;
       Is_Regexp, Case_Sensitive : Boolean;
-      Options : constant Search_Options :=
-        (Case_Sensitive => Get_Active (Search.Case_Check),
-         Whole_Word     => Get_Active (Search.Whole_Word_Check),
-         Regexp         => Get_Active (Search.Regexp_Check));
+      Casing     : constant Boolean := Get_Active (Search.Case_Check);
+      Whole_Word : constant Boolean := Get_Active (Search.Whole_Word_Check);
+      Regexp     : constant Boolean := Get_Active (Search.Regexp_Check);
 
    begin
       for S in 1 .. Search_Regexps_Count (Kernel) loop
@@ -1571,9 +1577,9 @@ package body Vsearch is
       --  Restore the options as before (they might have changed depending
       --  on the last predefined regexp we inserted)
 
-      Set_Active (Search.Case_Check, Options.Case_Sensitive);
-      Set_Active (Search.Whole_Word_Check, Options.Whole_Word);
-      Set_Active (Search.Regexp_Check, Options.Regexp);
+      Set_Active (Search.Case_Check, Casing);
+      Set_Active (Search.Whole_Word_Check, Whole_Word);
+      Set_Active (Search.Regexp_Check, Regexp);
    end New_Predefined_Regexp;
 
    ---------------------------

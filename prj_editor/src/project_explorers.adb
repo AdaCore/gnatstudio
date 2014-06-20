@@ -77,6 +77,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Search;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
@@ -230,7 +231,7 @@ package body Project_Explorers is
    use String_Status_Hash;
    use String_Status_Hash.String_Hash_Table;
 
-   type Explorer_Search_Context is new Search_Context with record
+   type Explorer_Search_Context is new Root_Search_Context with record
       Current             : Gtk_Tree_Iter := Null_Iter;
       Include_Entities    : Boolean;
       Include_Projects    : Boolean;
@@ -265,14 +266,14 @@ package body Project_Explorers is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Search_Context_Access;
+      return Root_Search_Context_Access;
    --  Create a new search context for the explorer
 
    function Explorer_Search_Factory
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Include_Projects : Boolean;
       Include_Files    : Boolean)
-      return Search_Context_Access;
+      return Root_Search_Context_Access;
    --  Create a new search context for the explorer. Only one occurence is
    --  searched, and only in Projects or Files, depending on the parameters.
 
@@ -2376,7 +2377,7 @@ package body Project_Explorers is
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurences    : Boolean;
       Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Search_Context_Access
+      return Root_Search_Context_Access
    is
       pragma Unreferenced (Kernel, All_Occurences);
       Context : Explorer_Search_Context_Access;
@@ -2402,12 +2403,12 @@ package body Project_Explorers is
               or else Context.Include_Files
               or else Context.Include_Entities)
       then
-         Free (Search_Context_Access (Context));
+         Free (Root_Search_Context_Access (Context));
          return null;
       end if;
 
       Reset (Context.Matches);
-      return Search_Context_Access (Context);
+      return Root_Search_Context_Access (Context);
    end Explorer_Search_Factory;
 
    -----------------------------
@@ -2418,7 +2419,7 @@ package body Project_Explorers is
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Include_Projects : Boolean;
       Include_Files    : Boolean)
-      return Search_Context_Access
+      return Root_Search_Context_Access
    is
       pragma Unreferenced (Kernel);
       Context : Explorer_Search_Context_Access;
@@ -2432,7 +2433,7 @@ package body Project_Explorers is
       Context.Include_Entities    := False;
 
       Reset (Context.Matches);
-      return Search_Context_Access (Context);
+      return Root_Search_Context_Access (Context);
    end Explorer_Search_Factory;
 
    ------------
@@ -2541,7 +2542,8 @@ package body Project_Explorers is
          Finish := False;
 
          if Check_Match
-           and then Start /= C.Current and then Match (C, Name) /= -1
+           and then Start /= C.Current
+           and then not GPS.Search.Failed (Match (C, Name))
          then
             Result := Start;
             Finish := True;
@@ -2773,7 +2775,8 @@ package body Project_Explorers is
          while Constructs.Current /= null loop
             if Filter_Category (Constructs.Current.Category) /= Cat_Unknown
               and then Constructs.Current.Name /= No_Symbol
-              and then Match (C, Get (Constructs.Current.Name).all) /= -1
+              and then not GPS.Search.Failed
+                (Match (C, Get (Constructs.Current.Name).all))
             then
                Status := True;
 
@@ -2865,7 +2868,7 @@ package body Project_Explorers is
          while Current (Iter) /= No_Project loop
             Project_Marked := False;
 
-            if Match (C, Current (Iter).Name) /= -1 then
+            if not GPS.Search.Failed (Match (C, Current (Iter).Name)) then
                Mark_File_And_Projects
                  (File           => Project_Path (Current (Iter)),
                   Project_Marked => Project_Marked,
@@ -2882,7 +2885,7 @@ package body Project_Explorers is
                      declare
                         Name : constant String := Directory_Name (Sources (S));
                      begin
-                        if Match (C, Name) /= -1 then
+                        if not GPS.Search.Failed (Match (C, Name)) then
                            Mark_File_And_Projects
                              (File           => Sources (S),
                               Project_Marked => Project_Marked,
@@ -2903,7 +2906,7 @@ package body Project_Explorers is
                   declare
                      Base : constant String := Display_Base_Name (Sources (S));
                   begin
-                     if Match (C, Base) /= -1 then
+                     if not GPS.Search.Failed (Match (C, Base)) then
                         Mark_File_And_Projects
                           (File           => Sources (S),
                            Project_Marked => Project_Marked,
@@ -3021,7 +3024,7 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      C        : Search_Context_Access;
+      C        : Root_Search_Context_Access;
       Found    : Boolean;
       Continue : Boolean;
    begin
@@ -3032,14 +3035,13 @@ package body Project_Explorers is
       --  ??? Should we work directly with a Virtual_File, so that we
       --  are sure to match the right file, not necessarily a file with
       --  the same base name in an extending project...
-      Set_Context
-        (Context  => C,
-         Look_For =>
+
+      C.Set_Pattern
+        (Pattern =>
            "^" & (+Base_Name (File_Information (Context.Context))) & "$",
-         Options  =>
-           (Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)),
-            Whole_Word     => True,
-            Regexp         => True));
+         Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)),
+         Whole_Word     => True,
+         Kind           => GPS.Search.Regexp);
 
       Search
         (C, Kernel,
@@ -3069,7 +3071,7 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      C        : Search_Context_Access;
+      C        : Root_Search_Context_Access;
       Found    : Boolean;
       Continue : Boolean;
    begin
@@ -3077,13 +3079,12 @@ package body Project_Explorers is
         (Kernel,
          Include_Projects => True,
          Include_Files    => False);
-      Set_Context
-        (Context  => C,
-         Look_For => Project_Information (Context.Context).Name,
-         Options  =>
-           (Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)),
-            Whole_Word     => True,
-            Regexp         => False));
+
+      C.Set_Pattern
+        (Pattern => Project_Information (Context.Context).Name,
+         Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)),
+         Whole_Word     => True,
+         Kind           => GPS.Search.Full_Text);
 
       Search
         (C, Kernel,

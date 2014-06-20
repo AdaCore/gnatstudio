@@ -38,6 +38,7 @@ with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
+with GPS.Search;                use GPS.Search;
 
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
@@ -2844,12 +2845,11 @@ package body Src_Editor_Module.Editors is
       Aux_Ends    : Src_Editor_Location;
 
    begin
-      Set_Context
-        (Context,
-         Look_For => Pattern,
-         Options  => (Case_Sensitive => Case_Sensitive,
-                      Whole_Word     => Whole_Word,
-                      Regexp         => Regexp));
+      Context.Set_Pattern
+        (Pattern => Pattern,
+         Case_Sensitive => Case_Sensitive,
+         Whole_Word     => Whole_Word,
+         Kind => (if Regexp then GPS.Search.Regexp else Full_Text));
 
       Get_Location (Iter, This, Iter, Success);
       if Success then
@@ -2886,7 +2886,7 @@ package body Src_Editor_Module.Editors is
          end if;
       end if;
 
-      Free (Search_Context_Access (Context));
+      Free (Root_Search_Context_Access (Context));
    end Search;
 
    ---------------------------

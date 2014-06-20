@@ -52,6 +52,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Search;
 with Language;                  use Language;
 with Projects;                  use Projects;
 with Src_Contexts;              use Src_Contexts;
@@ -564,22 +565,28 @@ package body Src_Editor_Module.Shell is
       Context : Files_Project_Context_Access;
       S       : Search_Scope;
 
-      function Callback (Match : Match_Result) return Boolean;
+      function Callback
+        (Match : GPS.Search.Search_Context;
+         Text  : String) return Boolean;
       --  Store the result of the match in Data
 
       --------------
       -- Callback --
       --------------
 
-      function Callback (Match : Match_Result) return Boolean is
+      function Callback
+        (Match : GPS.Search.Search_Context;
+         Text  : String) return Boolean
+      is
+         pragma Unreferenced (Text);
       begin
          Set_Return_Value
            (Data,
             Create_File_Location
               (Get_Script (Data),
                Create_File (Get_Script (Data), Current_File (Context)),
-               Match.Begin_Line,
-               Match.Visible_Begin_Column));
+               Match.Start.Line,
+               Match.Start.Visible_Column));
          return True;
       end Callback;
 
@@ -600,12 +607,12 @@ package body Src_Editor_Module.Shell is
         (Scope           => S,
          All_Occurrences => True);
       Set_File_List (Context, Files);
-      Set_Context
-        (Context,
-         Look_For => Pattern,
-         Options  => (Case_Sensitive => Casing,
-                      Whole_Word     => False,
-                      Regexp         => Regexp));
+      Context.Set_Pattern
+        (Pattern  => Pattern,
+         Case_Sensitive => Casing,
+         Whole_Word     => False,
+         Kind =>
+           (if Regexp then GPS.Search.Regexp else GPS.Search.Full_Text));
 
       Set_Return_Value_As_List (Data);
 
@@ -643,22 +650,28 @@ package body Src_Editor_Module.Shell is
       Dummy   : Boolean;
       pragma Unreferenced (Dummy);
 
-      function Callback (Match : Match_Result) return Boolean;
+      function Callback
+        (Match : GPS.Search.Search_Context;
+         Text  : String) return Boolean;
       --  Store the result of the match in Data
 
       --------------
       -- Callback --
       --------------
 
-      function Callback (Match : Match_Result) return Boolean is
+      function Callback
+        (Match : GPS.Search.Search_Context;
+         Text  : String) return Boolean
+      is
+         pragma Unreferenced (Text);
       begin
          Set_Return_Value
            (Data,
             Create_File_Location
               (Get_Script (Data),
                Create_File (Get_Script (Data), File),
-               Match.Begin_Line,
-               Match.Visible_Begin_Column));
+               Match.Start.Line,
+               Match.Start.Visible_Column));
          return True;
       end Callback;
 
@@ -674,12 +687,12 @@ package body Src_Editor_Module.Shell is
          Id.Search_Context := Files_From_Project_Factory (Whole, False);
          Set_File_List (Id.Search_Context, new File_Array'(1 => File));
 
-         Set_Context
-           (Id.Search_Context,
-            Look_For => Pattern,
-            Options  => (Case_Sensitive => Casing,
-                         Whole_Word     => False,
-                         Regexp         => Regexp));
+         Id.Search_Context.Set_Pattern
+           (Pattern        => Pattern,
+            Case_Sensitive => Casing,
+            Whole_Word     => False,
+            Kind => (if Regexp
+                     then GPS.Search.Regexp else GPS.Search.Full_Text));
       end if;
 
       Dummy := Search

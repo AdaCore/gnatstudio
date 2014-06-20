@@ -65,13 +65,23 @@ package Vsearch is
    -- Search contexts --
    ---------------------
 
+   type Search_Options_Mask is mod 256;
+   Case_Sensitive    : constant Search_Options_Mask := 2 ** 1;
+   Whole_Word        : constant Search_Options_Mask := 2 ** 2;
+   --  Regexp            : constant Search_Options_Mask := 2 ** 3;
+   All_Occurrences   : constant Search_Options_Mask := 2 ** 4;
+   Search_Backward   : constant Search_Options_Mask := 2 ** 5;
+   Supports_Replace  : constant Search_Options_Mask := 2 ** 6;
+   All_Options       : constant Search_Options_Mask := 255;
+   --  Which options are supported by which contextual search
+
    procedure Register_Search_Function
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       Label             : String;
       Factory           : Find_Utils.Module_Search_Context_Factory;
       Extra_Information : access Gtk.Widget.Gtk_Widget_Record'Class := null;
       Id           : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
-      Mask         : Find_Utils.Search_Options_Mask := Find_Utils.All_Options;
+      Mask         : Search_Options_Mask := All_Options;
       In_Selection : Boolean := False);
    --  Register a new search function.
    --  This will be available under the title Label in the search combo box.
@@ -211,9 +221,9 @@ private
       Replace_Only_Button     : Gtk.Button.Gtk_Button;
       Extra_Information       : Gtk.Widget.Gtk_Widget;
       Search_Idle_Handler     : Glib.Main.G_Source_Id := 0;
-      Last_Search_Context     : Find_Utils.Search_Context_Access;
+      Last_Search_Context     : Find_Utils.Root_Search_Context_Access;
       --  This is the context used for single Find/Next and Replace operations.
-      Last_Search_All_Context : Find_Utils.Search_Context_Access;
+      Last_Search_All_Context : Find_Utils.Root_Search_Context_Access;
       --  This is the context used for Find/Replace All operations. It is
       --  then copied to the idle data of the background command. The purpose
       --  here it to be able to launch a new Find/Replace All operation while

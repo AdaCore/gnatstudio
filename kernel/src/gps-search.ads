@@ -20,6 +20,7 @@
 
 with Ada.Strings.Unbounded;
 with Basic_Types;   use Basic_Types;
+with GNAT.Regpat;
 with GNAT.Strings;
 with GNATCOLL.Xref;
 private with Ada.Containers.Doubly_Linked_Lists;
@@ -44,6 +45,10 @@ package GPS.Search is
    --  optimized so that characters are matched only once, but the total length
    --  of the pattern is limited to 64 characters.
 
+   Max_Capturing_Groups : constant := 10;
+   --  Maximum number of capturing parenthesis groups for which we want to
+   --  store the range in the search_context.
+
    -------------
    -- Matcher --
    -------------
@@ -54,29 +59,47 @@ package GPS.Search is
    --  It can also be used to do the actual matching using the appropriate
    --  algorithm, depending on the search kind.
 
+   type Buffer_Position is record
+      Index : Integer;   --  Index in the buffer string, in bytes
+      Line  : Natural;   --  line corresponding to this index (starting at 1)
+      Column         : Character_Offset_Type;  --  column for this index
+      Visible_Column : Visible_Column_Type; --  visible column for this index
+   end record;
+   Unknown_Position : constant Buffer_Position;
+   --  This record describes a position in the buffer, and its mapping to
+   --  user-visible line and columns.
+   --  This is used for efficiency, to avoid recomputing these line/column
+   --  information from the beginning of the buffer every time.
+
+   function Image (Pos : Buffer_Position) return String;
+   --  ??? MANU temporary
+
    type Search_Context is record
-      Start, Finish : Integer;
-      --  Indexes for the start and end of the current match, in the buffer
-      --  passed to Start and Next.
-
-      Score : Natural;
-      --  The score for the current match
-
-      Line_Start, Line_End : Integer;
-      Col_Start, Col_End : Character_Offset_Type;
-      Col_Visible_Start, Col_Visible_End : Visible_Column_Type;
+      Start, Finish : Buffer_Position;
       --  Locations of start and end of the current match.
 
-      Buffer_Start : Integer;
-      Buffer_End   : Integer;
-      Ref_Index    : Integer;
-      Ref_Line     : Natural;
-      Ref_Column   : Character_Offset_Type;
-      Ref_Visible_Column : Visible_Column_Type;
-      --  Internal data
+      Score         : Natural;
+      --  The score for the current match
+
+      Buffer_Start  : Integer;
+      Buffer_End    : Integer;
+      --  The range of the buffer that we are searching
+
+      Ref           : Buffer_Position;
+      --  last known position in the buffer
+
+      Groups        : GNAT.Regpat.Match_Array (0 .. Max_Capturing_Groups);
+      --  The parenthesis groups that matched. This is only set when matching
+      --  a regexp.
    end record;
    No_Match : constant Search_Context;
    --  The current state for a search matcher
+
+   function Failed (Self : Search_Context) return Boolean
+      is (Self.Start.Index = -1);
+   --  Whether Self failed to match. This is somewhat equivalent to comparing
+   --  with No_Match, but is more efficient and does not require a
+   --  "use type Search_Context.
 
    procedure Free (Self : in out Search_Pattern);
    procedure Free (Self : in out Search_Pattern_Access);
@@ -137,20 +160,17 @@ package GPS.Search is
       Buffer      : String;
       Start_Index : Integer := -1;
       End_Index   : Integer := -1;
-      Ref_Index   : Integer := -1;
-      Ref_Line    : Natural := 1;
-      Ref_Column  : Character_Offset_Type := 1;
-      Ref_Visible_Column : Visible_Column_Type := -1) return Search_Context
-     is abstract;
+      Ref         : Buffer_Position := Unknown_Position)
+      return Search_Context
+      is abstract;
    --  Start searching for Self in Buffer (Start_Index .. End_Index).
    --  Note: it is important to pass the full file contents in Buffer, since
    --  otherwise regular expressions starting with "^" or ending with "$" will
    --  not workproperly.
    --  Start_Index and End_Index default to the string bounds.
    --
-   --  Ref_Index is the index in Buffer that corresponds to the location
-   --  (Ref_Line, Ref_Column). It is used to speed up the computation of the
-   --  match location.
+   --  Ref provides a reference point for the computation of line/column
+   --  information. It is assumed to be located before Start_Index.
    --
    --  Return value is No_Match if the Buffer did not match.
 
@@ -427,14 +447,16 @@ private
       Negate         : Boolean := False;
    end record;
 
+   Unknown_Position : constant Buffer_Position := (-1, 0, 0, -1);
+
    No_Match : constant Search_Context :=
-     (Start => -1, Finish => -1,
-      Line_Start => -1, Line_End => -1,
-      Col_Start => 0, Col_End => 0, Score => 0,
-      Col_Visible_Start => 0, Col_Visible_End => 0,
-      Buffer_Start => -1, Buffer_End => -1,
-      Ref_Index => -1, Ref_Line => 1, Ref_Column => 0,
-      Ref_Visible_Column => -1);
+     (Start              => Unknown_Position,
+      Finish             => Unknown_Position,
+      Score              => 0,
+      Buffer_Start       => -1,
+      Buffer_End         => -1,
+      Ref                => Unknown_Position,
+      Groups             => (others => GNAT.Regpat.No_Match));
 
    type Provider_Info is record
       Provider : Search_Provider_Access;

@@ -363,7 +363,7 @@ package body GPS.Kernel.Search.Sources is
          Has_Next := False;
       else
          --  Find beginning of the line, but ignore leading spaces
-         Start := Self.Context.Start;
+         Start := Self.Context.Start.Index;
          while Start >= Self.Text'First
            and then Self.Text (Start) /= ASCII.LF
          loop
@@ -371,14 +371,14 @@ package body GPS.Kernel.Search.Sources is
          end loop;
 
          Start := Start + 1;
-         while Start <= Self.Context.Start
+         while Start <= Self.Context.Start.Index
            and then (Self.Text (Start) = ' '
                      or else Self.Text (Start) = ASCII.HT)
          loop
             Start := Start + 1;
          end loop;
 
-         Finish := Self.Context.Finish;
+         Finish := Self.Context.Finish.Index;
          while Finish <= Self.Text'Last
            and then Self.Text (Finish) /= ASCII.LF
          loop
@@ -397,9 +397,9 @@ package body GPS.Kernel.Search.Sources is
          begin
             L := new String'
               (Self.File.Display_Full_Name
-               & ":" & Image (Self.Context.Line_Start, Min_Width => 0)
+               & ":" & Image (Self.Context.Start.Line, Min_Width => 0)
                & ":"
-               & Image (Integer (Self.Context.Col_Start), Min_Width => 0)
+               & Image (Integer (Self.Context.Start.Column), Min_Width => 0)
                & P_Name);
 
             Result   := new Source_Search_Result'
@@ -413,10 +413,10 @@ package body GPS.Kernel.Search.Sources is
                Id         => L,
                File       => Self.File,
                Project    => Self.Project,
-               Line       => Self.Context.Line_Start,
-               Column     => Integer (Self.Context.Col_Start),
-               Line_End   => Self.Context.Line_End,
-               Column_End => Integer (Self.Context.Col_End));
+               Line       => Self.Context.Start.Line,
+               Column     => Integer (Self.Context.Start.Column),
+               Line_End   => Self.Context.Finish.Line,
+               Column_End => Integer (Self.Context.Finish.Column));
             Self.Adjust_Score (Result);
             Has_Next := True;
          end;
