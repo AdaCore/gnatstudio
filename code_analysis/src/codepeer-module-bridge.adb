@@ -15,15 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;       use Ada.Calendar;
-with GNATCOLL.Projects;  use GNATCOLL.Projects;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with Ada.Calendar;        use Ada.Calendar;
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNATCOLL.Projects;   use GNATCOLL.Projects;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
 with GPS.Kernel.Project;
-with GPS.Intl;           use GPS.Intl;
+with GPS.Intl;            use GPS.Intl;
+with Build_Command_Utils; use Build_Command_Utils;
+with Commands.Builder;
 
 with CodePeer.Bridge.Commands;
-with CodePeer.Shell_Commands;
 
 package body CodePeer.Module.Bridge is
 
@@ -39,6 +41,11 @@ package body CodePeer.Module.Bridge is
      "inspection_data.xml";
    Review_Status_File_Name      : constant Filesystem_String :=
      "review_status_data.xml";
+
+   procedure Run_GPS_Codepeer_Bridge
+     (Module       : CodePeer.Module.CodePeer_Module_Id;
+      Command_File : GNATCOLL.VFS.Virtual_File);
+   --  Runs gps_codepeer_bridge
 
    ----------------------
    -- Add_Audit_Record --
@@ -103,14 +110,7 @@ package body CodePeer.Module.Bridge is
       end case;
 
       Module.Action := None;
-      CodePeer.Shell_Commands.Build_Target_Execute
-        (Kernel_Handle (Module.Kernel),
-         CodePeer.Shell_Commands.Build_Target
-           (Kernel_Handle (Module.Kernel), "CodePeer Bridge"),
-         Force       => True,
-         Extra_Args  => +Command_File_Name.Full_Name.all,
-         Build_Mode  => "codepeer",
-         Synchronous => False);
+      Run_GPS_Codepeer_Bridge (Module, Command_File_Name);
       Module.Kernel.Set_Build_Mode (Mode);
    end Add_Audit_Record;
 
@@ -168,14 +168,7 @@ package body CodePeer.Module.Bridge is
          Module.Action := Load_Bridge_Results;
          Module.Inspection_File := Reply_File_Name;
          Module.Status_File := Status_File_Name;
-         CodePeer.Shell_Commands.Build_Target_Execute
-           (Kernel_Handle (Module.Kernel),
-            CodePeer.Shell_Commands.Build_Target
-              (Kernel_Handle (Module.Kernel), "CodePeer Bridge"),
-            Force       => True,
-            Extra_Args  => +Command_File_Name.Full_Name.all,
-            Build_Mode  => "codepeer",
-            Synchronous => False);
+         Run_GPS_Codepeer_Bridge (Module, Command_File_Name);
       end if;
    end Inspection;
 
@@ -248,15 +241,39 @@ package body CodePeer.Module.Bridge is
       Module.Action := Audit_Trail;
       Module.Inspection_File := Reply_File_Name;
       Module.Bridge_Message := Message;
-      CodePeer.Shell_Commands.Build_Target_Execute
-        (Kernel_Handle (Module.Kernel),
-         CodePeer.Shell_Commands.Build_Target
-           (Kernel_Handle (Module.Kernel), "CodePeer Bridge"),
-         Force       => True,
-         Extra_Args  => +Command_File_Name.Full_Name.all,
-         Build_Mode  => "codepeer",
-         Synchronous => False);
+      Run_GPS_Codepeer_Bridge (Module, Command_File_Name);
       Module.Kernel.Set_Build_Mode (Mode);
    end Review_Message;
+
+   -----------------------------
+   -- Run_GPS_Codepeer_Bridge --
+   -----------------------------
+
+   procedure Run_GPS_Codepeer_Bridge
+     (Module       : CodePeer.Module.CodePeer_Module_Id;
+      Command_File : GNATCOLL.VFS.Virtual_File)
+   is
+      Builder    : constant Builder_Context := Builder_Context
+        (Module.Kernel.Module (Builder_Context_Record'Tag));
+      Extra_Args : Argument_List_Access;
+
+   begin
+      Extra_Args := new Argument_List (1 .. 1);
+      Extra_Args (1) := new String'(+Command_File.Full_Name.all);
+      Commands.Builder.Launch_Target
+        (Builder     => Builder,
+         Target_Name => "CodePeer Bridge",
+         Mode_Name   => "codepeer",
+         Force_File  => No_File,
+         Extra_Args  => Extra_Args,
+         Quiet       => False,
+         Synchronous => False,
+         Dialog      => Force_No_Dialog,
+         Main        => No_File,
+         Background  => True,
+         Directory   => No_File);
+      Free (Extra_Args (1));
+      Free (Extra_Args);
+   end Run_GPS_Codepeer_Bridge;
 
 end CodePeer.Module.Bridge;

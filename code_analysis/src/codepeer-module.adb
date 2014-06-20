@@ -1356,7 +1356,7 @@ package body CodePeer.Module is
 
       if Hook_Data.Status /= 0
         or else Action = None
-        or else Hook_Data.Category /= "CodePeer"
+        or else Hook_Data.Mode_Name /= "codepeer"
       then
          return;
       end if;
