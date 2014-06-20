@@ -62,6 +62,18 @@ KP-60-N610-032 GB: configuration location on network drive not supported.s
               -configuration
               C:/your_configuration_area
 
+KP-60-N605-031 Ever-growing xref database when using Ada separates
+
+  Problem:    When your source code uses Ada separate packages, the
+              gnatinspect.db database created by GPS on the disk will keep
+              growing because outdated information in separates is not
+              properly purged. This also slows down GPS over time.
+
+  Status:     This was fixed in 6.1 on 2014-06-20
+
+  Workaround: Delete gnatinspect.db periodically (in your project's object
+              directory)
+
 KP-60-N604-048 GPS: control-click on child package does not go to body
 
   Problem:    When pressing down the control key in an editor and clicking on
