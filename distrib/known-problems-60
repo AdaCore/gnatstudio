@@ -245,6 +245,15 @@ KP-60-N402-044 GPS: exception from highlightinh plugin
 
   Workaround: Deactivate auto_highlight_occurrences.py plugin.
 
+KP-60-N331-023 GPS: CodePeer report is not dispayed
+
+  Problem:    GPS is unable to display CodePeer report when project's path has
+              spaces.
+
+  Status:     This was fixed in 6.1 on 2014-06-20
+
+  Workaround: Rename directory to don't have spaces.
+
 KP-60-N320-050 GPS: cannot deactivate align.py and tab.py plugins
 
   Problem:    The plug-ins dialog does not allow deactivating align.py
