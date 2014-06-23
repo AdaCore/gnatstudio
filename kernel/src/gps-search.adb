@@ -173,7 +173,11 @@ package body GPS.Search is
       Tab_Width : constant Visible_Column_Type := 8;
       --  Visible_Column_Type (Vsearch.Get_Tab_Width);
 
+      type Unicode_Char is mod 2 ** 32;
+
       C : Character;
+      C2 : Unicode_Char;
+      Len : Integer;
 
       --  Matching an empty string will have Finish < Start
       M : constant Integer := Integer'Max
@@ -187,15 +191,38 @@ package body GPS.Search is
       while Context.Ref.Index <= M
         and then Context.Ref.Index <= Context.Buffer_End
       loop
-         if Context.Ref.Index = Context.Start.Index then
+         --  UTF-8 decoding for the current character.
+
+         C := Buffer (Context.Ref.Index);
+         C2 := Character'Pos (C);
+         if C2 < 128 then
+            Len := 1;
+         elsif (C2 and 16#E0#) = 16#C0# then
+            Len := 2;
+         elsif (C2 and 16#F0#) = 16#E0# then
+            Len := 3;
+         elsif (C2 and 16#F8#) = 16#F0# then
+            Len := 4;
+         elsif (C2 and 16#FC#) = 16#F8# then
+            Len := 5;
+         elsif (C2 and 16#FE#) = 16#FC# then
+            Len := 6;
+         else
+            Len := 1;   --  not valid utf8
+         end if;
+
+         if Context.Ref.Index <= Context.Start.Index
+           and then Context.Start.Index < Context.Ref.Index + Len
+         then
             Context.Start := Context.Ref;
          end if;
 
-         if Context.Ref.Index = Context.Finish.Index then
+         if Context.Ref.Index <= Context.Finish.Index
+           and then Context.Finish.Index < Context.Ref.Index + Len
+         then
             Context.Finish := Context.Ref;
+            Context.Finish.Index := Context.Ref.Index + Len - 1;
          end if;
-
-         C := Buffer (Context.Ref.Index);
 
          if C = ASCII.LF
            or else (C = ASCII.CR
@@ -205,17 +232,20 @@ package body GPS.Search is
             Context.Ref.Line := Context.Ref.Line + 1;
             Context.Ref.Column := 1;
             Context.Ref.Visible_Column := 1;
+            Context.Ref.Index := Context.Ref.Index + 1;
 
          elsif C = ASCII.HT then
             Context.Ref.Column := Context.Ref.Column + 1;
             Context.Ref.Visible_Column := Context.Ref.Visible_Column
               + Tab_Width - (Context.Ref.Visible_Column mod Tab_Width) + 1;
+            Context.Ref.Index := Context.Ref.Index + 1;
+
          else
+            Context.Ref.Index := Context.Ref.Index + Len;
             Context.Ref.Column := Context.Ref.Column + 1;
             Context.Ref.Visible_Column := Context.Ref.Visible_Column + 1;
          end if;
 
-         Context.Ref.Index := Context.Ref.Index + 1;
       end loop;
    end Update_Location;
 
