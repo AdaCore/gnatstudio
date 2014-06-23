@@ -116,21 +116,6 @@ class Jedi_Module(Module):
                                 if "python" in i.languages())
         )
 
-    def __format_check(self, file):
-        """
-           Check format using pep8 for python files
-        """
-        if file.language() == "python":
-            fname = "/tmp/_gps_pep8.py"
-            for m in GPS.Message.list(category="Pep8"):
-                m.remove()
-            f = open(fname, 'w')
-            f.write(GPS.EditorBuffer.get(file).get_chars())
-            f.close()
-            checker = GPS.BuildTarget("Pep8")
-            checker.execute(extra_args=fname)
-            os.remove(fname)
-
     # The followings are hooks:
 
     def gps_started(self):
@@ -139,7 +124,6 @@ class Jedi_Module(Module):
            and update its source dirs
         """
         GPS.Completion.register(self.__resolver)
-        GPS.Hook("before_file_saved").add(self.on_file_saved)
         self.__refresh_source_dirs()
 
     def project_changed(self):
@@ -153,9 +137,3 @@ class Jedi_Module(Module):
            When project view changes, update source dirs for resolver
         """
         self.__refresh_source_dirs()
-
-    def on_file_saved(self, hook, f):
-        self.__format_check(f)
-
-    def buffer_edited(self, f):
-        self.__format_check(f)
