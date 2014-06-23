@@ -34,6 +34,19 @@ KP-60-N616-042 GPS: use fixed font in Project view
 
   Workaround: Change the default font to be a fixed font
 
+KP-60-N613-005 GPS: building through key shortcut ignores dialog settings
+
+  Problem:    Edit the 'Build Main' target via the menu
+              /Build/Settings/Targets to force the display of a dialog or to
+              remove the dialog altogether. This setting is ignored when you
+              execute the action 'Build Main Number 1' via the keyboard for
+              instance.
+
+  Status:     This was fixed in 6.1 on 2014-06-19
+
+  Workaround: The dialog is always displayed, simply press Return to close it
+              and start the build.
+
 KP-60-N610-032 GB: configuration location on network drive not supported.s
 
   Problem:    On Windows platforms, when the configuration location is located
