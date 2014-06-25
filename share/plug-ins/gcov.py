@@ -13,7 +13,6 @@ Note that GPS calls gcov so that the .gcov files are generated
 
 """
 
-
 ###########################################################################
 ## No user customization below this line
 ###########################################################################

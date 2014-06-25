@@ -6,7 +6,6 @@ formatted manually, and graphical edition should be avoided,
 so as to preserve the formatting.
 """
 
-
 #############################################################################
 ## No user customization below this line
 #############################################################################

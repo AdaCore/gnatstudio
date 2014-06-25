@@ -3,7 +3,6 @@ This plugin provides highlighting of text in Message View
 matched by user defined regular expressions.
 """
 
-
 import GPS
 
 # number of regexps

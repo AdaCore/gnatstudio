@@ -32,7 +32,6 @@ This allows you through a simple key shortcut to automatically continue the
 debugger till the current line.
 """
 
-
 ###########################################################################
 ## No user customization below this line
 ###########################################################################

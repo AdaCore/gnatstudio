@@ -1,6 +1,5 @@
 """This module gives access to all project-related interfaces in GPS"""
 
-
 
 try:
     import pygps

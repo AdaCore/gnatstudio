@@ -2,7 +2,6 @@
 Adds highlighting of all branches and labels for PPC assembly code
 """
 
-
 
 import GPS
 

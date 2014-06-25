@@ -7,7 +7,6 @@ This package provides syntax highlighting for partition configuration
 language, and allows to run tool from GPS.
 """
 
-
 
 import os_utils, GPS
 

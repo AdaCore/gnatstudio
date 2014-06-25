@@ -2,7 +2,6 @@
 This file adds contextual menu to GPS Messages window.
 """
 
-
 
 import GPS
 

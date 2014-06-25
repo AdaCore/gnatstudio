@@ -12,7 +12,6 @@ connection issues or unterminated remote executions with the GPS remote mode.
 Consider such use as obsolete and not recommended.
 """
 
-
 
 import GPS
 

@@ -9,7 +9,6 @@ You can easily edit this file if you would like to customize
 the mercurial commands that are sent for each of the menus.
 """
 
-
 ###########################################################################
 ## No user customization below this line
 ###########################################################################

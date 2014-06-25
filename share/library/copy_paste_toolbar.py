@@ -1,7 +1,6 @@
 """This plug-in provides Cut, Copy and Paste buttons in the toolbar
 """
 
-
 #############################################################################
 ## No user customization below this line
 #############################################################################

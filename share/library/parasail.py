@@ -24,7 +24,6 @@ The following features are provided:
      - top level functions, classes and interfaces are shown in the Outline
 """
 
-
 
 import GPS
 

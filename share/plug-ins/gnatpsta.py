@@ -9,7 +9,6 @@ command line utility, as well as new versions where the gcc driver itself
 must be used.
 """
 
-
 ###########################################################################
 ## No user customization below this line
 ############################################################################

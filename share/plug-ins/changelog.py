@@ -7,7 +7,6 @@ text alias "hdr" which expands to the following line:
 You do not need to load this file if you never edit Changelog files
 """
 
-
 ###########################################################################
 ## No user customization below this line
 ###########################################################################

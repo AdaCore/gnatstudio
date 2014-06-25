@@ -4,7 +4,6 @@
    location view.
 """
 
-
 import GPS
 import gps_utils
 import os.path

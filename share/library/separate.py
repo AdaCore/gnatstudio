@@ -10,7 +10,6 @@ makes it slightly faster to navigate if you use Ada separates a
 lot
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

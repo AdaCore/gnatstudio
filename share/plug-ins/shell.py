@@ -19,7 +19,6 @@ always echos what you type. This is done by running the command
 in such cases. In general, this can be safely done in your .bashrc
 """
 
-
 import os.path
 import GPS, re, traceback, os
 from gps_utils import interactive

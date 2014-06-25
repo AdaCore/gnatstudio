@@ -3,7 +3,6 @@ This plugin implements the "Task Manager" view.
 """
 
 
-
 
 import GPS
 from modules import Module

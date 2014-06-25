@@ -64,7 +64,6 @@ displaying the command window. This is by analogy with vi's <.> command,
 although the scope is less ambitious here.
 """
 
-
 #############################################################################
 ## No user customization below this line
 #############################################################################

@@ -8,7 +8,6 @@ This function is available in GPS through the action
 "Format Selection", which is bound to the <tab> key by default.
 """
 
-
 import GPS
 from gps_utils import interactive, in_editor
 import pygps

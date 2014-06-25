@@ -6,7 +6,6 @@ then have to navigate to the directory in which you want to create the new
 file.
 """
 
-
 
 from GPS import *
 import os.path

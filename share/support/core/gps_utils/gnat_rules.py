@@ -6,7 +6,6 @@ This also includes predefined search patterns.
 And finally a number of predefined text aliases are defined.
 """
 
-
 import GPS, os, os.path, re, string, sys, traceback
 import os_utils, gnat_switches
 from gps_utils.switches import *

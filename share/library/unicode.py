@@ -21,7 +21,6 @@ assigned to a menu, or more easily executed through the startup script
 execute_extended.py
 """
 
-
 
 background_color = "yellow"
 ## Background color to use for the command window

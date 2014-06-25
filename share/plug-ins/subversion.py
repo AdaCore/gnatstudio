@@ -7,7 +7,6 @@ You can easily edit this file if you would like to customize
 the svn commands that are sent for each of the menus.
 """
 
-
 
 import GPS, string
 

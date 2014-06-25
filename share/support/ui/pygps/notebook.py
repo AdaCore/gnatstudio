@@ -2,7 +2,6 @@
     It relies on the pygobject package.
 """
 
-
 
 try:
   from gi.repository import Gtk, GObject

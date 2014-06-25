@@ -19,7 +19,6 @@ being edited:
     Open a read-only widget that shows the organization of the XML file
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

@@ -6,7 +6,6 @@ These themes are inspired from:
     http://colorsublime.com/?page=5
 """
 
-
 import GPS
 from gi.repository import Gtk, Gdk
 import gps_utils

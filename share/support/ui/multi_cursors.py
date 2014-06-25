@@ -2,7 +2,6 @@
 Functionnality and actions related to multi cursors
 """
 
-
 import GPS
 from gps_utils import *
 from text_utils import goto_word_start, goto_word_end

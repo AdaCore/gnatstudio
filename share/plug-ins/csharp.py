@@ -2,7 +2,6 @@
 This plug-in adds support for C# syntax highlighting and Outline.
 """
 
-
 
 XML = r"""<?xml version="1.0" ?>
 <GPS>

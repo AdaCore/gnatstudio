@@ -8,7 +8,6 @@ bind key shortcuts through the menu /Edit/Key shortcuts:
   - "goto other file"
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

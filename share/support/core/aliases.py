@@ -3,7 +3,6 @@ This file provides the core functionnality for interactive aliases expansion
 in GPS
 """
 
-
 from GPS import *
 from gps_utils import *
 from itertools import izip_longest

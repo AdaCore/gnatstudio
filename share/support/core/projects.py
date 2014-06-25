@@ -9,7 +9,6 @@ load this script, GPS will display a number of warnings in its Messages
 window when a project is loaded
 """
 
-
 
 import GPS
 

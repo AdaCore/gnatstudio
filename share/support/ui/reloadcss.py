@@ -5,7 +5,6 @@ This is mostly useful for developers who want to build their
 own CSS files.
 """
 
-
 import GPS
 from gps_utils import interactive
 from gi.repository import Gtk

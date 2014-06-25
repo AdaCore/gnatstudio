@@ -8,7 +8,6 @@ This package integrates it into GPS:
   - switches edition through the project editor
 """
 
-
 import GPS
 
 XML = u"""<?xml version="1.0" ?>

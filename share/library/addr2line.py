@@ -18,7 +18,6 @@ A convenience menu is added to open the console:
 It asks you for the location of the executable
 """
 
-
 #############################################################################
 ## No user customization below this line
 #############################################################################

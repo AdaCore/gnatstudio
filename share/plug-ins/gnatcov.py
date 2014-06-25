@@ -60,7 +60,6 @@ Note: this plug-in activates only when the command-line tool
 "gnatcov" is found on the PATH.
 """
 
-
 ###########################################################################
 ## No user customization below this line
 ###########################################################################

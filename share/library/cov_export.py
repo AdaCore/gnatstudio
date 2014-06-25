@@ -1,7 +1,6 @@
 """Contextual menu for show coverage report in HTML Browser
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

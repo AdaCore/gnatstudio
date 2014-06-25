@@ -10,7 +10,6 @@ special indentation that doesn't match what the automatic
 indentation engine tries to do.
 """
 
-
 
 import GPS
 

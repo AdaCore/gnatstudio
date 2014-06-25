@@ -45,7 +45,6 @@ When you select one of the new menus, GPS will run ant or make, and parse
 error messages to display them in the locations window as usual.
 """
 
-
 
 import GPS, sys, traceback, re, os, os_utils
 from os.path import *

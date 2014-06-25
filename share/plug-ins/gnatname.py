@@ -4,7 +4,6 @@ See the menu /Build/Settings/Targets to configure toolbar icons to
 easily launch gnatname.
 """
 
-
 
 import GPS
 

@@ -8,7 +8,6 @@ The modification is permanent, since it modifies the actual preferences,
 and the new text size will be active when GPS is relaunched later on.
 """
 
-
 #############################################################################
 ## No user customization below this line
 #############################################################################

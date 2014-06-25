@@ -3,7 +3,6 @@ This file provides default build modes and targets (gnatmake and gprbuild) for
 GPS
 """
 
-
 XML = r"""<?xml version="1.0" ?>
 <GPS>
  <builder-mode name="default">

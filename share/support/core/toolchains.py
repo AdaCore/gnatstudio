@@ -4,7 +4,6 @@ Defines the standard toolchains used by the GPS project editor.
 THIS PLUG-IN MUST BE LOADED.
 """
 
-
 import GPS
 
 XML = r"""<?xml version="1.0" ?>

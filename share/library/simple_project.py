@@ -8,7 +8,6 @@ creation of new basic project files:
   - Or by asking for a name, and creating both the main unit and the project
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

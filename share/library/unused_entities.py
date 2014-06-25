@@ -29,7 +29,6 @@ Note that you can save the contents of the Locations window, after execution,
 through the GPS.Locations.dump() method in the python console.
 """
 
-
 #############################################################################
 ## No user customization below this line
 #############################################################################

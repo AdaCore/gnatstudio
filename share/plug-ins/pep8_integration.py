@@ -34,6 +34,7 @@ class Pep8_Module(Module):
         """
            Check format using pep8 for python source codes
         """
+        print file
         # only check python file
         if file.language() == "python":
             for m in GPS.Message.list(category="Pep8"):

@@ -9,7 +9,6 @@ Note that some gnatpp switches have no direct equivalence (and vice-versa),
 in which case they are ignored.
 """
 
-
 
 import GPS
 

@@ -4,7 +4,6 @@ This script adds a new menu /File/Close All Editors that close all open editors
 (and only editors) upon activation.
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

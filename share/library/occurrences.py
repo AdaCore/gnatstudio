@@ -19,7 +19,6 @@ Occurrences" action, or simply by deleting the corresponding category in the
 Locations window.
 """
 
-
 ############################################################################
 ## no user customization below this line
 ############################################################################

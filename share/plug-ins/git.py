@@ -13,7 +13,6 @@ will be lost. For example interactive add or rebase commands
 can't be integrated into GPS.
 """
 
-
 ###########################################################################
 ## No user customization below this line
 ###########################################################################

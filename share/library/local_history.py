@@ -19,7 +19,6 @@ the revert, the current version is in the local revision history, and can
 therefore be reverted.
 """
 
-
 ###########################################################################
 ## No user customization below this line
 ############################################################################

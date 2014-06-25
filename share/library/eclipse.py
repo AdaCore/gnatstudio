@@ -3,7 +3,6 @@
 The "delete line" (Ctrl-D or Cmd-D) action was contributed by Robert ter Vehn.
 """
 
-
 
 import GPS
 

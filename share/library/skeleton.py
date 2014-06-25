@@ -12,7 +12,6 @@ which do not insert anything in the file but can be quickly expanded to
 advanced contents containing for instance the current date.
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

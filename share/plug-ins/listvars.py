@@ -5,7 +5,6 @@ The submenu will list the first reference to all variables (local or global)
 used in the selected subprogram.
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

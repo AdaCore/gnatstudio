@@ -10,7 +10,6 @@ You need to reload your project file (/Project/Reload Project) to
 force GPS to take into account your changes.
 """
 
-
 
 import GPS
 

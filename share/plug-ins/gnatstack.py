@@ -1,7 +1,6 @@
 """This file provides support for gnatstack (static stack usage).
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

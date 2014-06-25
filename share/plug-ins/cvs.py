@@ -7,7 +7,6 @@ You can easily edit this file to configurat the CVS commands that
 are executed by each of the menus
 """
 
-
 
 import GPS
 from vcs import *

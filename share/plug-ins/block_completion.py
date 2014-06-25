@@ -16,7 +16,6 @@ Example of use:
   This automatically adds "end if;" on the line following the statement
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

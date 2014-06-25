@@ -7,7 +7,6 @@ corresponding widgets for a GUI editor.
 * Used by gnatcheck_rules_editor.py
 """
 
-
 import GPS
 
 # call Check() from xml values:

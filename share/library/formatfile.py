@@ -9,7 +9,6 @@ This is basically the same thing as "Select All", followed by
 cursor, which Select All cannot do.
 """
 
-
 
 import GPS
 import gps_utils

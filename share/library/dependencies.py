@@ -19,7 +19,6 @@ GPS Messages window (which you can then save to a text file, or through a
 graphical tree widget, which you can dynamically manipulate.
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

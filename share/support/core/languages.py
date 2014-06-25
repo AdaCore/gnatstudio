@@ -9,7 +9,6 @@ Based on these examples, you can add support for your own
 languages.
 """
 
-
 
 import GPS
 

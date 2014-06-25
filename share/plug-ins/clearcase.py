@@ -6,7 +6,6 @@ systems supported by GPS. You can easily edit this file if you would like to
 customize the cleartool commands that are sent for each of the menus.
 """
 
-
 import GPS
 
 from vcs import *

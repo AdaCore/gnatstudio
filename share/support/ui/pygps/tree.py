@@ -1,6 +1,5 @@
 """This module gives access to all tree and tables in GPS"""
 
-
 
 try:
    from gi.repository import Gtk, GObject, Gdk

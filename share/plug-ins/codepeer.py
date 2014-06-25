@@ -7,7 +7,6 @@ a project and integrates its output into GPS.
 See menu Tools->CodePeer.
 """
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

@@ -3,7 +3,6 @@ saved on disk. See also autognatpp.py for another version using the external
 gnatpp pretty-printer instead.
 """
 
-
 import GPS
 
 # Actions to be performed each time a file is saved

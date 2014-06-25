@@ -3,7 +3,6 @@ This file adds support for the gnatstub utility.
 This external tool creates the Ada body from an Ada spec.
 """
 
-
 
 import GPS
 import gps_utils

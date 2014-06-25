@@ -32,7 +32,6 @@ To add custom parser to a target insert next line to target description:
 </target>
 """
 
-
 #############################################################################
 ## No user customization below this line
 #############################################################################

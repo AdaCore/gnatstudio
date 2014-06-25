@@ -55,7 +55,6 @@ immediately. The highlighting of the next matches is done in the background
 if pygtk was installed along with GPS. Otherwise, it is done every time the
 pattern is modified, and will slow things down a little
 """
-
 
 from GPS import *
 from gps_utils import interactive

@@ -5,7 +5,6 @@ The output is saved in a file called "messages.txt" in the root project's
 object directory.
 """
 
-
 from GPS import *
 
 def on_compilation_finished (hook, category, target_name, mode_name, status):

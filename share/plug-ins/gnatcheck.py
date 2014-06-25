@@ -3,7 +3,6 @@
 This plug-in adds support for gnatcheck, a coding standard checker
 """
 
-
 ###########################################################################
 ## No user customization below this line
 ###########################################################################

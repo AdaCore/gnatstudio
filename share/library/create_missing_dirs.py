@@ -10,7 +10,6 @@ A new preference is created that allows you to disable the creation
 of directories, and the default is to create missing directories.
 """
 
-
 #############################################################################
 ## No user customization below this line
 #############################################################################

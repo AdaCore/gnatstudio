@@ -37,7 +37,6 @@ If you move the cursor before "A", and paste the rectangle:
 """
 
 
-
 ############################################################################
 ## No user customization below this line
 ############################################################################

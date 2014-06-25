@@ -5,7 +5,6 @@ This also includes predefined search patterns, as well as aliases to ease the
 editing of Ada files.
 """
 
-
 ###########################################################################
 ## No user customization below this line
 ###########################################################################

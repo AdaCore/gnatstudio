@@ -155,7 +155,6 @@ package body Startup_Module is
       Model      : Gtk_Tree_Model;
       Iter       : Gtk_Tree_Iter;
       Text_Iter  : Gtk_Text_Iter;
-      End_Of_Descr : Integer;
       Contents   : String_Access;
       File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       F2         : Virtual_File;
@@ -204,31 +203,24 @@ package body Startup_Module is
 
          Contents := Read_File (File);
          if Contents /= null then
-            End_Of_Descr := Contents'Last;
-            for C in Contents'Range loop
-               if Contents (C) = ASCII.FF then
-                  End_Of_Descr := C - 1;
-                  exit;
-               end if;
-            end loop;
-
             First := Contents'First;
             Skip_Blanks (Contents.all, First);
-            if Looking_At (Contents.all, First, """""""")
-              or else Looking_At (Contents.all, First, "'''")
-            then
-               First := First + 3;
-            end if;
-            Skip_Blanks (Contents.all, First);
 
-            Last := End_Of_Descr;
-            Skip_Blanks_Backward (Contents.all, Last);
-            if Last - 2 >= Contents'First
-              and then (Looking_At (Contents.all, Last - 2, """""""")
-                        or else Looking_At (Contents.all, Last - 2, "'''"))
-            then
-               Last := Last - 3;
+            if Looking_At (Contents.all, First, """""""") then
+               First := First + 3;
+               Last := First;
+               Skip_To_String (Contents.all, Last, """""""");
+               Last := Last - 1;
+            elsif Looking_At (Contents.all, First, "'''") then
+               First := First + 3;
+               Last := First;
+               Skip_To_String (Contents.all, Last, "'''");
+               Last := Last - 1;
+            else
+               Last := Contents'Last;
             end if;
+
+            Skip_Blanks (Contents.all, First);
             Skip_Blanks_Backward (Contents.all, Last);
 
             Insert (Ed.Description, Text_Iter, Contents (First .. Last));

@@ -6,7 +6,6 @@ output the layout of all the records in the current file, by recompiling
 the file with -gnatR.
 """
 
-
 import GPS
 import gps_utils
 from tool_output import OutputParser
