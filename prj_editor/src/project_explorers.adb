@@ -2502,7 +2502,11 @@ package body Project_Explorers is
                      end if;
 
                   when Dummy_Node =>
-                     null;
+                     Start_Node := Parent (Explorer.Tree.Model, Start_Node);
+                     Next_File_Node (Start_Node, Tmp, Finish);
+                     if Finish and then Context.Include_Files then
+                        return Tmp;
+                     end if;
                end case;
 
                while Tmp = Null_Iter loop
