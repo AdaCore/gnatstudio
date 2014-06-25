@@ -17,7 +17,6 @@
 
 with Ada.Strings.Fixed;              use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Text_IO;                    use Ada.Text_IO;
-with System.Address_To_Access_Conversions;
 
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
@@ -153,9 +152,6 @@ package body GPS.Location_View is
    function Idle_Expand (Self : Location_View) return Boolean;
    --  Idle callback used to expand nodes of category and its first or defined
    --  file; select first message and the open first location if requested.
-
-   package Message_Conversions is
-     new System.Address_To_Access_Conversions (Abstract_Message'Class);
 
    -------------
    -- Actions --
@@ -796,6 +792,7 @@ package body GPS.Location_View is
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
       Model    : Gtk_Tree_Model;
+      Message  : Message_Access;
 
    begin
       Get_Selected (Get_Selection (Explorer.View), Model, Iter);
@@ -807,23 +804,13 @@ package body GPS.Location_View is
       Path := Get_Path (Model, Iter);
 
       if Get_Depth (Path) >= 3 then
-         declare
-            Message : GPS.Kernel.Messages.Message_Access;
-            Value   : Glib.Values.GValue;
-
-         begin
-            Get_Value (Model, Iter, Message_Column, Value);
-            Message := Message_Access
-              (Message_Conversions.To_Pointer (Get_Address (Value)));
-            Glib.Values.Unset (Value);
-
-            Set_File_Information
-              (Context,
-               Files  => (1 => Message.Get_File),
-               Line   => Message.Get_Line,
-               Column => Message.Get_Column);
-            Set_Message_Information (Context, Message);
-         end;
+         Message := Get_Message (Model, Iter, Message_Column);
+         Set_File_Information
+           (Context,
+            Files  => (1 => Message.Get_File),
+            Line   => Message.Get_Line,
+            Column => Message.Get_Column);
+         Set_Message_Information (Context, Message);
       end if;
 
       Path_Free (Path);
@@ -1551,13 +1538,13 @@ package body GPS.Location_View is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Self);
-      View : constant Location_View :=
+      View    : constant Location_View :=
         Location_Views.Retrieve_View (Get_Kernel (Context.Context));
-      Path     : Gtk_Tree_Path;
-      Iter     : Gtk_Tree_Iter;
-      Model    : Gtk_Tree_Model;
-      Message  : Message_Access;
-      Value    : GValue;
+      Path    : Gtk_Tree_Path;
+      Iter    : Gtk_Tree_Iter;
+      Model   : Gtk_Tree_Model;
+      Message : Message_Access;
+
    begin
       if View = null then
          return Commands.Failure;
@@ -1583,10 +1570,7 @@ package body GPS.Location_View is
             Locations_Message_Flags);
          Path_Free (Path);
       elsif Get_Depth (Path) >= 3 then
-         Get_Value (Model, Iter, Message_Column, Value);
-         Message := Message_Access
-           (Message_Conversions.To_Pointer (Get_Address (Value)));
-         Glib.Values.Unset (Value);
+         Message := Get_Message (Model, Iter, Message_Column);
          Message.Remove;
 
          --  We just selected a new row,

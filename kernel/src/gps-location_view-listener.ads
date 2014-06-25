@@ -114,6 +114,12 @@ package GPS.Location_View.Listener is
    Total_Columns             : constant Glib.Gint  := 16;
    --  Total number of columns.
 
+   function Get_Message
+     (Model  : Gtk_Tree_Model;
+      Iter   : Gtk_Tree_Iter;
+      Column : Glib.Gint) return Message_Access;
+   --  Returns message at specified position
+
 private
 
    type Classic_Tree_Model_Record is

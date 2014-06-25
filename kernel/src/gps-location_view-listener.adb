@@ -640,6 +640,21 @@ package body GPS.Location_View.Listener is
       return GNATCOLL.VFS.GtkAda.Get_File (Self, Iter, Column);
    end Get;
 
+   -----------------
+   -- Get_Message --
+   -----------------
+
+   function Get_Message
+     (Model  : Gtk_Tree_Model;
+      Iter   : Gtk_Tree_Iter;
+      Column : Glib.Gint) return Message_Access is
+   begin
+      return
+        Message_Access
+          (Message_Conversions.To_Pointer
+             (Get_Address (Model, Iter, Column)));
+   end Get_Message;
+
    ---------------
    -- Get_Model --
    ---------------
