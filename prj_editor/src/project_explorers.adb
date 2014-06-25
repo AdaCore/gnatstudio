@@ -1011,6 +1011,18 @@ package body Project_Explorers is
          when Runtime_Node =>
             return B_Before_A;
 
+         when File_Node =>
+            case B_Type is
+               when Project_Node_Types =>
+                  if Projects_Before_Directories then
+                     return B_Before_A;
+                  else
+                     return A_Before_B;
+                  end if;
+               when others =>
+                  return Alphabetical;
+            end case;
+
          when others =>
             if B_Type = A_Type then
                return Alphabetical;
@@ -1478,6 +1490,7 @@ package body Project_Explorers is
       File       : Virtual_File;
       Area       : Gdk_Rectangle;
       Label      : Gtk_Label;
+      P          : Project_Type;
    begin
       Get_Path_At_Pos
         (Tooltip.Explorer.Tree, X, Y, Path,
@@ -1522,19 +1535,15 @@ package body Project_Explorers is
                  (Tooltip.Explorer.Tree.Model, Par, Display_Name_Column));
 
          when File_Node =>
-            --  Base filename and Project name
-            --  Get grand-parent node which is the project node
-            Par := Parent
-              (Tooltip.Explorer.Tree.Model,
-               Parent (Tooltip.Explorer.Tree.Model, Iter));
+            File := Get_File_From_Node (Tooltip.Explorer.Tree.Model, Iter);
+            P := Get_Project_From_Node
+              (Tooltip.Explorer.Tree.Model, Tooltip.Explorer.Kernel,
+               Iter, Importing => False);
             Gtk_New
-              (Label, Get_String
-                 (Tooltip.Explorer.Tree.Model, Iter,
-                  Display_Name_Column)
+              (Label,
+               File.Display_Full_Name
                & ASCII.LF &
-               (-"in project ") &
-               Get_String
-                 (Tooltip.Explorer.Tree.Model, Par, Display_Name_Column));
+               (-"in project ") & P.Name);
 
          when Entity_Node =>
             --  Entity (parameters) declared at Filename:line
