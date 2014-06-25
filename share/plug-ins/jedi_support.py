@@ -62,23 +62,30 @@ class PythonResolver(CompletionResolver):
             self.source_dirs.update([loc.buffer().file().directory()])
             sys.path = sys.path + list(self.source_dirs)
 
-            # Feed Jedi API
-            script = jedi.Script(
-                source=loc.buffer().get_chars(),
-                line=loc.line(),
-                column=loc.column() - 1,
-                )
+            try:
+                # Feed Jedi API
+                script = jedi.Script(
+                    source=loc.buffer().get_chars(),
+                    line=loc.line(),
+                    column=loc.column() - 1,
+                    )
 
-            # Sort, filter results
-            result = sorted((CompletionProposal(
-                name=i.name,
-                label=i.name,
-                documentation=i.docstring(),
-                language_category=TYPE_LABELS.get(
-                    i.type, completion.CAT_UNKNOWN))
-                for i in script.complete()
-                if i.name.startswith(self.__prefix)),
-                key=lambda d: d.name)
+                # Sort, filter results
+                result = sorted((CompletionProposal(
+                    name=i.name,
+                    label=i.name,
+                    documentation=i.docstring(),
+                    language_category=TYPE_LABELS.get(
+                        i.type, completion.CAT_UNKNOWN))
+                    for i in script.complete()
+                    if i.name.startswith(self.__prefix)),
+                    key=lambda d: d.name)
+
+            except:
+                jedi_log = GPS.Logger("JEDI_PARSING")
+                jedi_log.log("jedi fails to parse:" +
+                             GPS.EditorBuffer.get().file().name())
+                result = []
 
             # restore sys.path before exit
             sys.path = sys_path_backup
