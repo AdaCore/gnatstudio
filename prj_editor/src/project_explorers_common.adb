@@ -25,13 +25,11 @@ with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Glib.Convert;              use Glib.Convert;
-with Glib.Object;
 
 with Basic_Types;               use Basic_Types;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -60,7 +58,7 @@ package body Project_Explorers_Common is
    function Columns_Types return GType_Array is
    begin
       return GType_Array'
-        (Icon_Column          => Gdk.Pixbuf.Get_Type,
+        (Icon_Column          => GType_String,
          File_Column          => Get_Virtual_File_Type,
          Display_Name_Column  => GType_String,
          Node_Type_Column     => GType_Int,
@@ -69,59 +67,73 @@ package body Project_Explorers_Common is
          Entity_Base_Column   => GType_String);
    end Columns_Types;
 
-   -------------------
-   -- Init_Graphics --
-   -------------------
+   --------------------
+   -- Stock_For_Node --
+   --------------------
 
-   procedure Init_Graphics (Widget : Gtk_Widget) is
-
-      function R (Id : String) return Gdk_Pixbuf;
-      --  Convenience function: create the Gdk_Pixbuf from stock Id
-
-      -------
-      -- R --
-      -------
-
-      function R (Id : String) return Gdk_Pixbuf is
-      begin
-         return Render_Icon (Widget, Id, Icon_Size_Menu);
-      end R;
-
+   function Stock_For_Node
+     (Node : Node_Types; Expanded : Boolean) return String is
    begin
-      --  If initialization has already been done, exit
-      if Open_Pixbufs (Project_Node) /= null then
-         return;
-      end if;
+      case Node is
+         when Project_Node =>
+            if Expanded then
+               return "gps-project-open";
+            else
+               return "gps-project-closed";
+            end if;
 
-      Language.Icons.Init_Graphics (Widget);
+         when Root_Project_Node =>
+            if Expanded then
+               return "gps-project-root-open";
+            else
+               return "gps-project-root-closed";
+            end if;
 
-      Open_Pixbufs (Project_Node)  := R ("gps-project-open");
-      Close_Pixbufs (Project_Node) := R ("gps-project-closed");
+         when Modified_Project_Node =>
+            if Expanded then
+               return "gps-project-modified-open";
+            else
+               return "gps-project-modified-closed";
+            end if;
 
-      Open_Pixbufs (Root_Project_Node)  := R ("gps-project-root-open");
-      Close_Pixbufs (Root_Project_Node) := R ("gps-project-root-closed");
+         when Extends_Project_Node =>
+            if Expanded then
+               return "gps-project-open";
+            else
+               return "gps-project-closed";
+            end if;
 
-      Open_Pixbufs (Modified_Project_Node)  := R ("gps-project-modified-open");
-      Close_Pixbufs (Modified_Project_Node) :=
-        R ("gps-project-modified-closed");
+         when Directory_Node =>
+            if Expanded then
+               return "gps-folder-open";
+            else
+               return "gps-folder-closed";
+            end if;
 
-      --  ??? Would be nice to have different pixbufs for these
-      Open_Pixbufs (Extends_Project_Node)  := R ("gps-project-open");
-      Close_Pixbufs (Extends_Project_Node) := R ("gps-project-closed");
+         when Obj_Directory_Node =>
+            if Expanded then
+               return "gps-folder-obj-open";
+            else
+               return "gps-folder-obj-closed";
+            end if;
 
-      Open_Pixbufs (Directory_Node)  := R ("gps-folder-open");
-      Close_Pixbufs (Directory_Node) := R ("gps-folder-closed");
-      Open_Pixbufs (Obj_Directory_Node)  := R ("gps-folder-obj-open");
-      Close_Pixbufs (Obj_Directory_Node) := R ("gps-folder-obj-closed");
+         when Exec_Directory_Node =>
+            if Expanded then
+               return "gps-folder-exec-open";
+            else
+               return "gps-folder-exec-closed";
+            end if;
 
-      Open_Pixbufs (Exec_Directory_Node)  := R ("gps-folder-exec-open");
-      Close_Pixbufs (Exec_Directory_Node) := R ("gps-folder-exec-closed");
-      Open_Pixbufs (File_Node)  := R ("gps-file");
-      Close_Pixbufs (File_Node) := R ("gps-file");
+         when File_Node =>
+            return "gps-file";
 
-      Open_Pixbufs (Category_Node)  := R ("gps-box");
-      Close_Pixbufs (Category_Node) := R ("gps-box");
-   end Init_Graphics;
+         when Category_Node =>
+            return "gps-box";
+
+         when Dummy_Node | Entity_Node =>
+            return "";
+      end case;
+   end Stock_For_Node;
 
    -----------------
    -- Append_File --
@@ -174,7 +186,7 @@ package body Project_Explorers_Common is
       Set_File (Model, Iter, File_Column, File);
       Set (Model, Iter, Display_Name_Column, Display_Base_Name (File));
       Set (Model, Iter, Icon_Column,
-           Glib.Object.GObject (Close_Pixbufs (File_Node)));
+           Stock_For_Node (File_Node, Expanded => False));
       Set (Model, Iter, Node_Type_Column, Gint (Node_Types'Pos (File_Node)));
 
       Lang := Get_Language_From_File (Get_Language_Handler (Kernel), File);
@@ -252,8 +264,10 @@ package body Project_Explorers_Common is
       Set_File (Model, N, File_Column, File);
       Set (Model, N, Display_Name_Column, Locale_To_UTF8 (Name));
       Set (Model, N, Icon_Column,
-           Glib.Object.GObject
-             (Entity_Icons (False, Visibility_Public) (Category)));
+           Stock_From_Category
+             (Is_Declaration => False,
+              Visibility     => Visibility_Public,
+              Category       => Category));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Category_Node)));
 
       return N;
@@ -317,18 +331,22 @@ package body Project_Explorers_Common is
    --------------------
 
    function Entity_Icon_Of
-     (Construct : Construct_Information) return Gdk_Pixbuf is
+     (Construct : Construct_Information) return String is
    begin
-      return Entity_Icons
-        (Construct.Is_Declaration, Construct.Visibility) (Construct.Category);
+      return Stock_From_Category
+        (Is_Declaration => Construct.Is_Declaration,
+         Visibility     => Construct.Visibility,
+         Category       => Construct.Category);
    end Entity_Icon_Of;
 
    function Entity_Icon_Of
-     (Construct : Simple_Construct_Information) return Gdk.Pixbuf.Gdk_Pixbuf
+     (Construct : Simple_Construct_Information) return String
    is
    begin
-      return Entity_Icons
-        (Construct.Is_Declaration, Construct.Visibility) (Construct.Category);
+      return Stock_From_Category
+        (Is_Declaration => Construct.Is_Declaration,
+         Visibility     => Construct.Visibility,
+         Category       => Construct.Category);
    end Entity_Icon_Of;
 
    ------------------------
@@ -365,8 +383,7 @@ package body Project_Explorers_Common is
       Set_File (Model, N, File_Column, File);
       Set (Model, N, Display_Name_Column, Entity_Name_Of (Construct, True));
       Set (Model, N, Entity_Base_Column, Reduce (Get (Construct.Name).all));
-      Set (Model, N, Icon_Column,
-           Glib.Object.GObject (Entity_Icon_Of (Construct)));
+      Set (Model, N, Icon_Column, Entity_Icon_Of (Construct));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Entity_Node)));
 
       if Construct.Sloc_Entity.Line /= 0 then
@@ -804,13 +821,8 @@ package body Project_Explorers_Common is
       Set (Model, Node, Node_Type_Column, Gint (Node_Types'Pos (N_Type)));
 
       if N_Type not in Category_Node .. Entity_Node then
-         if Expanded then
-            Set (Model, Node, Icon_Column,
-                 Glib.Object.GObject (Open_Pixbufs (N_Type)));
-         else
-            Set (Model, Node, Icon_Column,
-                 Glib.Object.GObject (Close_Pixbufs (N_Type)));
-         end if;
+         Set (Model, Node, Icon_Column,
+              Stock_For_Node (N_Type, Expanded => Expanded));
       end if;
    end Set_Node_Type;
 

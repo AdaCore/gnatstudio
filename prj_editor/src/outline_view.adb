@@ -66,7 +66,6 @@ with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Language;                  use Language;
-with Project_Explorers_Common;  use Project_Explorers_Common;
 with Tooltips;                  use Tooltips;
 
 with Language.Tree;          use Language.Tree;
@@ -742,8 +741,6 @@ package body Outline_View is
       Out_Model : Outline_Model;
 
    begin
-      Init_Graphics (Gtk_Widget (Get_Main_Window (Outline.Kernel)));
-
       Initialize_Vbox (Outline);
 
       Gtk_New (Scrolled);
@@ -776,7 +773,7 @@ package body Outline_View is
       Gtk_New (Pixbuf_Render);
       Pack_Start (Outline.Spec_Column, Pixbuf_Render, False);
       Add_Attribute
-        (Outline.Spec_Column, Pixbuf_Render, "pixbuf", Spec_Pixbuf_Column);
+        (Outline.Spec_Column, Pixbuf_Render, "stock-id", Spec_Pixbuf_Column);
 
       Gtk_New (Outline.Body_Column);
       Outline.Body_Column.Set_Sizing (Tree_View_Column_Autosize);
@@ -784,7 +781,7 @@ package body Outline_View is
       Gtk_New (Pixbuf_Render);
       Pack_Start (Outline.Body_Column, Pixbuf_Render, False);
       Add_Attribute
-        (Outline.Body_Column, Pixbuf_Render, "pixbuf", Body_Pixbuf_Column);
+        (Outline.Body_Column, Pixbuf_Render, "stock-id", Body_Pixbuf_Column);
 
       Gtk_New (Text_Col);
       Col_Number := Append_Column (Outline.Tree, Text_Col);

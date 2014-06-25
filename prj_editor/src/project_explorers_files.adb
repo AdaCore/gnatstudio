@@ -526,13 +526,13 @@ package body Project_Explorers_Files is
 
          if D.Physical_Read then
             Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 GObject (Open_Pixbufs (Directory_Node)));
+                 Stock_For_Node (Directory_Node, Expanded => True));
             D.Base := Iter;
 
          else
             Append_Dummy_Iter (D.Explorer.File_Model, Iter);
             Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 GObject (Close_Pixbufs (Directory_Node)));
+                 Stock_For_Node (Directory_Node, Expanded => False));
             New_D := D;
             Free (New_D);
 
@@ -610,7 +610,7 @@ package body Project_Explorers_Files is
 
       if Empty then
          Set (D.Explorer.File_Model, D.Base, Icon_Column,
-              GObject (Close_Pixbufs (Directory_Node)));
+              Stock_For_Node (Directory_Node, Expanded => False));
       end if;
 
       for J in D.Files'Range loop
@@ -649,7 +649,7 @@ package body Project_Explorers_Files is
                   D.Explorer.Expanding := Expanding;
 
                   Set (D.Explorer.File_Model, D.Base, Icon_Column,
-                       GObject (Open_Pixbufs (Directory_Node)));
+                       Stock_For_Node (Directory_Node, Expanded => True));
 
                   Path_Free (Path);
                end;
@@ -680,7 +680,7 @@ package body Project_Explorers_Files is
                         D.Explorer.Path);
 
                      Set (D.Explorer.File_Model, Iter, Icon_Column,
-                          GObject (Open_Pixbufs (Directory_Node)));
+                          Stock_For_Node (Directory_Node, True));
                      D.Explorer.Scroll_To_Directory := True;
                      D.Explorer.Realize_Cb_Id :=
                        Gtkada.Handlers.Object_Return_Callback.Object_Connect
@@ -698,7 +698,7 @@ package body Project_Explorers_Files is
                Append_Dummy_Iter (D.Explorer.File_Model, Iter);
 
                Set (D.Explorer.File_Model, Iter, Icon_Column,
-                    GObject (Close_Pixbufs (Directory_Node)));
+                    Stock_For_Node (Directory_Node, False));
             end if;
          end if;
       end loop;
@@ -803,7 +803,7 @@ package body Project_Explorers_Files is
       Gtk_New (Col);
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, True);
-      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
+      Add_Attribute (Col, Pixbuf_Rend, "stock-id", Icon_Column);
       Add_Attribute (Col, Text_Rend, "text", Display_Name_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
@@ -867,8 +867,6 @@ package body Project_Explorers_Files is
          Object          => Explorer,
          ID              => Explorer_Files_Module_Id,
          Context_Func    => Explorer_Context_Factory'Access);
-
-      Init_Graphics (Gtk_Widget (Explorer));
 
       Refresh (Explorer);
 
@@ -1054,10 +1052,8 @@ package body Project_Explorers_Files is
    begin
       if File.Is_Directory then
          Set
-           (T.File_Model,
-            Iter,
-            Icon_Column,
-            GObject (Close_Pixbufs (Directory_Node)));
+           (T.File_Model, Iter, Icon_Column,
+            Stock_For_Node (Directory_Node, False));
       end if;
 
    exception
@@ -1124,7 +1120,7 @@ package body Project_Explorers_Files is
             when Directory_Node =>
                Free_Children (T, Iter);
                Set (T.File_Model, Iter, Icon_Column,
-                    GObject (Open_Pixbufs (Directory_Node)));
+                    Stock_For_Node (Directory_Node, True));
                File_Append_Directory (T, File, Iter, 1);
 
             when File_Node =>

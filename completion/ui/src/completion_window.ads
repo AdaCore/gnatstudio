@@ -29,9 +29,6 @@
 with Glib;           use Glib;
 with Glib.Main;      use Glib.Main;
 with GNAT.Strings;   use GNAT.Strings;
-
-with Gdk.Pixbuf;
-
 with Gtk.Box;        use Gtk.Box;
 with Gtk.Bin;        use Gtk.Bin;
 
@@ -158,11 +155,9 @@ private
    --  Select the next item in the explorer
 
    type Information_Record is record
-      Markup  : String_Access;
-      Text    : String_Access;
-      Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
-      --  This can be null, in which case it indicates that it must be computed
-      --  from Proposal.
+      Markup   : String_Access;
+      Text     : String_Access;
+      Stock_Id : String_Access;
       Offset   : Character_Offset_Type;
       --  The offset at which to place the cursor after completion.
       Proposals : Proposals_List.List;

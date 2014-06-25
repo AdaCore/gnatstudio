@@ -17,10 +17,10 @@
 
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Window;                use Gdk.Window;
 with Gtkada.Style;              use Gtkada.Style;
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Separator;             use Gtk.Separator;
@@ -38,13 +38,13 @@ with Entities_Tooltips_Utility; use Entities_Tooltips_Utility;
 package body Entities_Tooltips is
    function Get_Pixbuf
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Root_Entity'Class) return Gdk_Pixbuf;
-   --  Return the image associated to an entity
+      Entity : Root_Entity'Class) return String;
+   --  Return the image (stock-id) associated to an entity
 
    function Draw_Tooltip
      (Header      : String;
       Doc         : String;
-      Pixbuf      : Gdk_Pixbuf;
+      Stock_Id    : String;
       Draw_Border : Boolean;
       Guess       : Boolean := False) return Gtk_Widget;
    --  Helper function, factorizing the tooltip widget creation
@@ -55,12 +55,13 @@ package body Entities_Tooltips is
 
    function Get_Pixbuf
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Root_Entity'Class) return Gdk_Pixbuf
+      Entity : Root_Entity'Class) return String
    is
       Info : constant Tooltip_Information :=
         Get_Tooltip_Information (Kernel, Entity);
    begin
-      return Entity_Icons (Info.Is_Spec, Info.Visibility) (Info.Category);
+      return Stock_From_Category
+        (Info.Is_Spec, Info.Visibility, Info.Category);
    end Get_Pixbuf;
 
    ------------------
@@ -76,7 +77,7 @@ package body Entities_Tooltips is
       return Draw_Tooltip
         (Guess       => Is_Guess (Entity),
          Header      => Get_Tooltip_Header (Kernel, Entity),
-         Pixbuf      => Get_Pixbuf (Kernel, Entity),
+         Stock_Id    => Get_Pixbuf (Kernel, Entity),
          Draw_Border => Draw_Border,
          Doc         => Get_Tooltip_Documentation (Kernel, Entity, Ref));
    end Draw_Tooltip;
@@ -99,10 +100,10 @@ package body Entities_Tooltips is
         (Guess  => False,
          Header => Get_Tooltip_Header (Entity),
          Draw_Border => Draw_Border,
-         Doc => Get_Tooltip_Documentation (Kernel, Entity),
-         Pixbuf => Entity_Icons
-           (Construct.Is_Declaration, Construct.Visibility)
-           (Construct.Category));
+         Doc      => Get_Tooltip_Documentation (Kernel, Entity),
+         Stock_Id => Stock_From_Category
+           (Construct.Is_Declaration, Construct.Visibility,
+            Construct.Category));
    end Draw_Tooltip;
 
    ------------------
@@ -112,7 +113,7 @@ package body Entities_Tooltips is
    function Draw_Tooltip
      (Header      : String;
       Doc         : String;
-      Pixbuf      : Gdk_Pixbuf;
+      Stock_Id    : String;
       Draw_Border : Boolean;
       Guess       : Boolean := False)
      return Gtk_Widget
@@ -130,8 +131,10 @@ package body Entities_Tooltips is
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Box.Pack_Start (Hbox, Expand => False, Fill => False);
 
-      if Pixbuf /= null then
-         Gtk_New (Image, Pixbuf);
+      if Stock_Id /= "" then
+         Gtk_New
+           (Image, Stock_Id => Stock_Id,
+            Size => Icon_Size_Small_Toolbar);
          Image.Set_Alignment (0.0, 0.0);
          Hbox.Pack_Start (Image, Expand => False, Fill => False);
       end if;

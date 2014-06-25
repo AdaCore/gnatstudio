@@ -17,23 +17,12 @@
 
 --  This package describes the icons associated to language constructs.
 
-with Gdk.Pixbuf;
-with Gtk.Widget;
-
 package Language.Icons is
 
-   type Cat_Array is array (Language_Category) of Gdk.Pixbuf.Gdk_Pixbuf;
-
-   type Pixbuf_Entity_Array is array
-     (Boolean,              --  True for entities that are declarations
-      Construct_Visibility) --  The visibility of entities
-   of Cat_Array;
-
-   Entity_Icons : Pixbuf_Entity_Array;
-   --  The icons to be associated with entities.
-
-   procedure Init_Graphics (Widget : Gtk.Widget.Gtk_Widget);
-   --  Initialize the graphics. Widgets serves as a resource for the default
-   --  styles and GCs.
+   function Stock_From_Category
+     (Is_Declaration : Boolean;
+      Visibility     : Construct_Visibility;
+      Category       : Language_Category) return String;
+   --  Return the icon to use for a given entity
 
 end Language.Icons;

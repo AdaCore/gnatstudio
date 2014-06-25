@@ -666,7 +666,7 @@ package body Project_Explorers is
       Gtk_New (Col);
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, True);
-      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
+      Add_Attribute (Col, Pixbuf_Rend, "stock-id", Icon_Column);
       Add_Attribute (Col, Text_Rend, "markup", Display_Name_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
@@ -750,7 +750,6 @@ package body Project_Explorers is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Explorer.Pack_Start (Scrolled, Expand => True, Fill => True);
 
-      Init_Graphics (Gtk_Widget (Explorer));
       Gtk_New (Explorer.Tree, Columns_Types, Filtered => True);
       Set_Headers_Visible (Explorer.Tree, False);
       Set_Column_Types (Gtk_Tree_View (Explorer.Tree));

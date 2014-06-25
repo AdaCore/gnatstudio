@@ -19,7 +19,6 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Gdk.Pixbuf;
 with Gdk.Event;      use Gdk.Event;
 with Glib;           use Glib;
 with Gtk.Tree_Model; use Gtk.Tree_Model;
@@ -89,17 +88,9 @@ package Project_Explorers_Common is
      is Node_Types range Directory_Node .. Exec_Directory_Node;
    --  The kind of nodes one might find in the tree
 
-   --------------
-   -- Graphics --
-   --------------
-
-   type Pixbuf_Array is array (Node_Types) of Gdk.Pixbuf.Gdk_Pixbuf;
-
-   Open_Pixbufs  : Pixbuf_Array;
-   Close_Pixbufs : Pixbuf_Array;
-
-   procedure Init_Graphics (Widget : Gtk_Widget);
-   --  Initialize the pixbufs
+   function Stock_For_Node
+     (Node : Node_Types; Expanded : Boolean) return String;
+   --  Return the name of the stock icon to use.
 
    ---------------------------------
    -- Tree manipulation functions --
@@ -206,12 +197,11 @@ package Project_Explorers_Common is
    --  to specify the maximum number of characters returned for the profile
    --  using Max_Profile_Length.
 
-   function Entity_Icon_Of
-     (Construct : Construct_Information) return Gdk.Pixbuf.Gdk_Pixbuf;
+   function Entity_Icon_Of (Construct : Construct_Information) return String;
    --  Return the icon associated with Construct
 
    function Entity_Icon_Of
-     (Construct : Simple_Construct_Information) return Gdk.Pixbuf.Gdk_Pixbuf;
+     (Construct : Simple_Construct_Information) return String;
    --  Return the icon associated with Construct
 
    function Filter_Category

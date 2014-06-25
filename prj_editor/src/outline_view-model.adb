@@ -23,16 +23,15 @@ with Ada.Unchecked_Conversion;
 
 with Glib.Object;                 use Glib.Object;
 with Glib.Convert;                use Glib.Convert;
-with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Gtk.Tree_Model.Utils;        use Gtk.Tree_Model.Utils;
 
 with Basic_Types;                 use Basic_Types;
-with Project_Explorers_Common;    use Project_Explorers_Common;
 with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Search;                  use GPS.Search;
 with Language.Profile_Formaters;  use Language.Profile_Formaters;
 with Language.Icons;              use Language.Icons;
+with Project_Explorers_Common;    use Project_Explorers_Common;
 
 package body Outline_View.Model is
    Me : constant Trace_Handle := Create ("OUTLINE");
@@ -643,9 +642,9 @@ package body Outline_View.Model is
       pragma Unreferenced (Self);
    begin
       if Index = Spec_Pixbuf_Column then
-         return Gdk.Pixbuf.Get_Type;
+         return GType_String;
       elsif Index = Body_Pixbuf_Column then
-         return Gdk.Pixbuf.Get_Type;
+         return GType_String;
       elsif Index = Display_Name_Column then
          return GType_String;
       end if;
@@ -723,20 +722,19 @@ package body Outline_View.Model is
       if Column = Spec_Pixbuf_Column
          or else Column = Body_Pixbuf_Column
       then
-         Init (Value, Gdk.Pixbuf.Get_Type);
+         Init (Value, GType_String);
 
          if Entity /= Null_Entity_Access then
             It := To_Construct_Tree_Iterator (Entity);
-            Set_Object
-              (Value, GObject (Entity_Icon_Of (Get_Construct (It).all)));
+            Set_String (Value, Entity_Icon_Of (Get_Construct (It).all));
          elsif Iter /= Null_Iter
            and then Get_Sorted_Node (Iter) = Self.Root_With
          then
-            Set_Object
-              (Value, Entity_Icons (False, Visibility_Public) (Cat_With));
+            Set_String
+              (Value,
+               Stock_From_Category (False, Visibility_Public, Cat_With));
          else
-
-            Set_Object (Value, null);
+            Set_String (Value, "");
          end if;
 
       elsif Column = Display_Name_Column then

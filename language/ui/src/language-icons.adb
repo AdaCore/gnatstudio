@@ -15,77 +15,60 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Widget; use Gtk.Widget;
-with Gdk.Pixbuf; use Gdk.Pixbuf;
-with Gtk.Enums;  use Gtk.Enums;
-
 package body Language.Icons is
 
-   -------------------
-   -- Init_Graphics --
-   -------------------
+   -------------------------
+   -- Stock_From_Category --
+   -------------------------
 
-   procedure Init_Graphics (Widget : Gtk_Widget) is
-
-      function R (Id : String) return Gdk_Pixbuf;
-      --  Convenience function: create the Gdk_Pixbuf from stock Id
-
-      function Predefined_Array (Suffix : String) return Cat_Array;
-      --  Convenience function to produce the predefined entity graphics
-
-      -------
-      -- R --
-      -------
-
-      function R (Id : String) return Gdk_Pixbuf is
+   function Stock_From_Category
+     (Is_Declaration : Boolean;
+      Visibility     : Construct_Visibility;
+      Category       : Language_Category) return String
+   is
+      function Get_Name (Suffix : String) return String;
+      function Get_Name (Suffix : String) return String is
       begin
-         return Render_Icon (Widget, Id, Icon_Size_Menu);
-      end R;
+         case Category is
+            when Cat_Unknown | Cat_With
+               | Cat_Use   | Cat_Include
+               | Construct_Category | Cat_Exception_Handler
+               | Cat_Pragma | Cat_Aspect =>
+               return "gps-entity-generic" & Suffix;
 
-      ----------------------
-      -- Predefined_Array --
-      ----------------------
+            when Cat_Package | Cat_Namespace | Cat_Custom =>
+               return "gps-entity-package" & Suffix;
 
-      function Predefined_Array (Suffix : String) return Cat_Array is
-      begin
-         return
-           (Cat_Unknown | Cat_With
-            | Cat_Use   | Cat_Include
-            | Construct_Category | Cat_Exception_Handler
-            | Cat_Pragma | Cat_Aspect =>
-              R ("gps-entity-generic" & Suffix),
-            Cat_Package | Cat_Namespace | Cat_Custom =>
-              R ("gps-entity-package" & Suffix),
-            Cat_Task        | Cat_Procedure   | Cat_Function
-            | Cat_Method    | Cat_Constructor | Cat_Destructor
-            | Cat_Protected | Cat_Entry =>
-              R ("gps-entity-subprogram" & Suffix),
-            Cat_Class | Cat_Structure | Cat_Union |
-            Cat_Type  | Cat_Subtype | Cat_Case_Inside_Record =>
-              R ("gps-entity-type" & Suffix),
-            Cat_Variable    | Cat_Local_Variable
-            | Cat_Parameter | Cat_Discriminant | Cat_Field
-            | Cat_Literal   | Cat_Representation_Clause =>
-              R ("gps-entity-variable" & Suffix));
-      end Predefined_Array;
+            when Cat_Task | Cat_Procedure   | Cat_Function
+               | Cat_Method    | Cat_Constructor | Cat_Destructor
+               | Cat_Protected | Cat_Entry =>
+               return "gps-entity-subprogram" & Suffix;
+
+            when Cat_Class | Cat_Structure | Cat_Union
+               | Cat_Type  | Cat_Subtype | Cat_Case_Inside_Record =>
+               return "gps-entity-type" & Suffix;
+
+            when Cat_Variable    | Cat_Local_Variable
+               | Cat_Parameter | Cat_Discriminant | Cat_Field
+               | Cat_Literal   | Cat_Representation_Clause =>
+               return "gps-entity-variable" & Suffix;
+         end case;
+      end Get_Name;
 
    begin
-      --  If initialization has already been done, exit
-      if Entity_Icons (False, Visibility_Public) (Cat_Unknown) /= null then
-         return;
+      if Is_Declaration then
+         case Visibility is
+            when Visibility_Public    => return Get_Name ("-spec");
+            when Visibility_Protected => return Get_Name ("-protected-spec");
+            when Visibility_Private   => return Get_Name ("-private-spec");
+         end case;
+
+      else
+         case Visibility is
+            when Visibility_Public    => return Get_Name ("");
+            when Visibility_Protected => return Get_Name ("-protected");
+            when Visibility_Private   => return Get_Name ("-private");
+         end case;
       end if;
-
-      Entity_Icons (False, Visibility_Public) := Predefined_Array ("");
-      Entity_Icons (False, Visibility_Protected) :=
-        Predefined_Array ("-protected");
-      Entity_Icons (False, Visibility_Private) :=
-        Predefined_Array ("-private");
-
-      Entity_Icons (True, Visibility_Public) := Predefined_Array ("-spec");
-      Entity_Icons (True, Visibility_Protected) :=
-        Predefined_Array ("-protected-spec");
-      Entity_Icons (True, Visibility_Private) := Predefined_Array
-        ("-private-spec");
-   end Init_Graphics;
-
+   end Stock_From_Category;
 end Language.Icons;
