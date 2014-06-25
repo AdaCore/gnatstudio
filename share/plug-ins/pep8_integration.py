@@ -41,7 +41,8 @@ class Pep8_Module(Module):
 
             # parse text in buffer and catches stdout
             source = [i+"\n" for i in
-                      GPS.EditorBuffer.get().get_chars().splitlines()]
+                      GPS.EditorBuffer.get(open=False).
+                      get_chars().splitlines()]
 
             with Catch_Stdout() as output:
                 m = pep8.Checker(filename=None, lines=source, report=False)
@@ -50,7 +51,7 @@ class Pep8_Module(Module):
             for i in output:
                 a = i.split(":")
                 m = GPS.Message(category="Pep8",
-                                file=GPS.EditorBuffer.get().file(),
+                                file=GPS.EditorBuffer.get(open=False).file(),
                                 line=int(a[1]),
                                 column=int(a[2]),
                                 text=a[3],
