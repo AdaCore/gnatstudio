@@ -1778,6 +1778,17 @@ package body Project_Explorers is
       --  Return true if Dir contains an hidden directory (a directory starting
       --  with a dot).
 
+      procedure For_Each_File_Node
+        (Parent   : Gtk_Tree_Iter;
+         Callback : not null access procedure (It : in out Gtk_Tree_Iter));
+      --  For each file node representing a direct source of Parent (does not
+      --  look into nested project nodes). Callback can freely modify It, or
+      --  the model.
+
+      procedure Remove_If_Obsolete (C : in out Gtk_Tree_Iter);
+      --  Remove C from the model if it matches a file which is no longer in
+      --  the project.
+
       Show_Abs_Paths : constant Boolean :=
         Get_History (Get_History (Self.Kernel).all, Show_Absolute_Paths);
       Show_Obj_Dirs : constant Boolean :=
@@ -1847,6 +1858,14 @@ package body Project_Explorers is
          end if;
 
          Set_File (Self.Tree.Model, Child, File_Column, P.Project_Path);
+
+         --  If the node had been expanded before, we need to refresh its
+         --  contents, since we might be called as part of project_view_changed
+
+         if not Has_Dummy_Iter (Self.Tree.Model, Child) then
+            Refresh_Project_Node (Self, Child, Flat_View => Flat_View);
+         end if;
+
          return Child;
       end Create_Or_Reuse_Project;
 
@@ -1866,6 +1885,46 @@ package body Project_Explorers is
             Name   =>
               Directory_Node_Text (Show_Abs_Paths, Project, Dir.Directory));
       end Create_Or_Reuse_Directory;
+
+      ------------------------
+      -- For_Each_File_Node --
+      ------------------------
+
+      procedure For_Each_File_Node
+        (Parent   : Gtk_Tree_Iter;
+         Callback : not null access procedure (It : in out Gtk_Tree_Iter))
+      is
+         It, Current : Gtk_Tree_Iter;
+      begin
+         It := Self.Tree.Model.Children (Parent);
+         while It /= Null_Iter loop
+            Current := It;
+            Self.Tree.Model.Next (It);
+            case Get_Node_Type (Self.Tree.Model, Current) is
+               when File_Node      => Callback (Current);
+               when Directory_Node => For_Each_File_Node (Current, Callback);
+               when others         => null;
+            end case;
+         end loop;
+      end For_Each_File_Node;
+
+      ------------------------
+      -- Remove_If_Obsolete --
+      ------------------------
+
+      procedure Remove_If_Obsolete (C : in out Gtk_Tree_Iter) is
+         F : constant Virtual_File :=
+           Get_File_From_Node (Self.Tree.Model, C);
+         S : constant File_Info_Set :=
+           Get_Registry (Self.Kernel).Tree.Info_Set (F);
+      begin
+         for N of S loop
+            if File_Info'Class (N).Project = Project then
+               return;
+            end if;
+         end loop;
+         Self.Tree.Model.Remove (C);
+      end Remove_If_Obsolete;
 
       Filter  : Filter_Type;
       Path    : Gtk_Tree_Path;
@@ -1971,12 +2030,34 @@ package body Project_Explorers is
          for F in Files'Range loop
             Dirs ((Files (F).Dir, Directory_Node)).Append (Files (F));
          end loop;
-      else
-         for F in Files'Range loop
-            Create_Or_Reuse_File
-              (Self.Tree.Model, Self.Kernel, Node, Files (F));
-         end loop;
+
+         --  Remove obsolete directory nodes (which also removes all files at
+         --  once, so is more efficient)
+         declare
+            Dir  : Virtual_File;
+            Prev : Gtk_Tree_Iter;
+            T    : Node_Types;
+         begin
+            Child := Self.Tree.Model.Children (Node);
+            while Child /= Null_Iter loop
+               T := Get_Node_Type (Self.Tree.Model, Child);
+               Prev := Child;
+               Self.Tree.Model.Next (Child);
+
+               if T not in Project_Node_Types then
+                  Dir := Get_File_From_Node (Self.Tree.Model, Prev);
+
+                  if not Dirs.Contains ((Dir, T)) then
+                     Self.Tree.Model.Remove (Prev);
+                  end if;
+               end if;
+            end loop;
+         end;
       end if;
+
+      --  Remove obsolete file nodes
+
+      For_Each_File_Node (Node, Remove_If_Obsolete'Access);
 
       --  Now insert directories and files (including object directories)
 
@@ -2005,6 +2086,13 @@ package body Project_Explorers is
             Next (Dir);
          end loop;
       end;
+
+      if not Show_Dirs then
+         for F in Files'Range loop
+            Create_Or_Reuse_File
+              (Self.Tree.Model, Self.Kernel, Node, Files (F));
+         end loop;
+      end if;
 
       Unchecked_Free (Files);
    end Refresh_Project_Node;
