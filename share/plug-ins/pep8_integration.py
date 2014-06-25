@@ -42,7 +42,7 @@ class Pep8_Module(Module):
 
             # parse text in buffer and catches stdout
             source = [i+"\n" for i in
-                      GPS.EditorBuffer.get(open=False).
+                      GPS.EditorBuffer.get(file=file, open=False).
                       get_chars().splitlines()]
 
             with Catch_Stdout() as output:
@@ -52,7 +52,8 @@ class Pep8_Module(Module):
             for i in output:
                 a = i.split(":")
                 m = GPS.Message(category="Pep8",
-                                file=GPS.EditorBuffer.get(open=False).file(),
+                                file=GPS.EditorBuffer.get(file=file,
+                                                          open=False).file(),
                                 line=int(a[1]),
                                 column=int(a[2]),
                                 text=a[3],
