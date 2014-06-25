@@ -112,6 +112,8 @@ package body Project_Explorers is
      "explorer-show-hidden-directories";
    Show_Empty_Dirs     : constant History_Key :=
      "explorer-show-empty-directories";
+   Projects_Before_Directories : constant History_Key :=
+     "explorer-show-projects-first";
 
    Toggle_Absolute_Path_Name : constant String :=
      "Explorer toggle absolute paths";
@@ -119,9 +121,10 @@ package body Project_Explorers is
      "Toggle the display of absolute paths or just base names in the"
      & " project explorer";
 
-   Projects_Before_Directories : constant Boolean := False;
-   --  <preference> True if the projects should be displayed, when sorted,
-   --  before the directories in the project view.
+   package Boolean_User_Data is new Glib.Object.User_Data (Boolean);
+   User_Data_Projects_Before_Directories : constant String :=
+     "gps-prj-before-dirs";
+   --  local cache of the history key, for use in Sort_Func
 
    -------------
    --  Filter --
@@ -904,6 +907,9 @@ package body Project_Explorers is
          end if;
       end Alphabetical;
 
+      Projects_Before_Directories : constant Boolean :=
+        Boolean_User_Data.Get (M, User_Data_Projects_Before_Directories);
+
    begin
       Get_Sort_Column_Id (M, Column, Order);
       if Order = Sort_Descending then
@@ -1091,6 +1097,16 @@ package body Project_Explorers is
 
       Gtk_New (Check, -"Show empty directories");
       Associate (Get_History (View.Kernel).all, Show_Empty_Dirs, Check);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
+      Menu.Add (Check);
+
+      Gtk_New (Check, -"Projects before directories");
+      Check.Set_Tooltip_Text
+        (-("Whether imported projects should occur before or after source"
+           & " directories"));
+      Associate
+        (Get_History (View.Kernel).all, Projects_Before_Directories, Check);
       Widget_Callback.Object_Connect
         (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
       Menu.Add (Check);
@@ -1630,8 +1646,14 @@ package body Project_Explorers is
       Path_Start, Path_End : Gtk_Tree_Path;
       Success : Boolean;
       Id      : Gint;
-
    begin
+      --  Cache the value for use in Sort_Func
+      Boolean_User_Data.Set
+        (T.Tree.Model,
+         Get_History (Get_History (T.Kernel).all,
+           Projects_Before_Directories),
+         User_Data_Projects_Before_Directories);
+
       if Get_Project (T.Kernel) = No_Project then
          T.Tree.Model.Clear;
          return;
@@ -2753,6 +2775,8 @@ package body Project_Explorers is
         (Get_History (Kernel).all, Show_Flat_View, False);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Show_Hidden_Dirs, False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Projects_Before_Directories, False);
 
       Register_Action
         (Kernel, "Locate file in explorer",
