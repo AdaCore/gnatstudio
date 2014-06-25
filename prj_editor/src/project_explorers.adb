@@ -576,7 +576,15 @@ package body Project_Explorers is
 
    function "<" (D1, D2 : Directory_Info) return Boolean is
    begin
-      return D1.Directory < D2.Directory;
+      if D1.Kind < D2.Kind then
+         return True;
+      elsif D1.Kind = D2.Kind
+        and then D1.Directory < D2.Directory
+      then
+         return True;
+      else
+         return False;
+      end if;
    end "<";
 
    ------------------------------
@@ -1245,7 +1253,7 @@ package body Project_Explorers is
                   Mark_Project_And_Parents_Visible (P);
                end if;
 
-               Self.Cache.Include (Create (Files (F).Dir_Name), Show_Indirect);
+               Self.Cache.Include (Files (F).Dir, Show_Indirect);
                Self.Cache.Include (Files (F), Show_Direct);
             end if;
          end loop;
