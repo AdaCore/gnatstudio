@@ -454,8 +454,7 @@ package body Project_Explorers_Common is
 
       if Lang /= null then
          Language_Utils.Parse_File_Constructs
-           (Get_Language_From_File
-              (Languages, File_Name), File_Name, Constructs);
+           (Lang, File_Name, Constructs);
 
          Constructs.Current := Constructs.First;
 
@@ -576,20 +575,17 @@ package body Project_Explorers_Common is
       File   : Virtual_File)
    is
       Child : Gtk_Tree_Iter;
-      Lang : Language_Access;
+      Lang : constant Language_Access := Get_Language_From_File
+        (Get_Language_Handler (Kernel), File);
+      pragma Unreferenced (Child);
    begin
       Child := Create_Or_Reuse_Node
         (Model  => Model,
          Parent => Dir,
          Kind   => File_Node,
          File   => File,
-         Name   => File.Display_Base_Name);
-
-      Lang := Get_Language_From_File
-        (Get_Language_Handler (Kernel), File);
-      if Lang /= Unknown_Lang then
-         Append_Dummy_Iter (Model, Child);
-      end if;
+         Name   => File.Display_Base_Name,
+         Add_Dummy => Lang /= null);
    end Create_Or_Reuse_File;
 
    -------------------------
