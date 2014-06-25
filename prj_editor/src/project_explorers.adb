@@ -118,6 +118,8 @@ package body Project_Explorers is
      "explorer-show-object-dirs";
    Show_Runtime        : constant History_Key :=
      "explorer-show-runtime";
+   Show_Directories    : constant History_Key :=
+     "explorer-show-directories";
 
    Toggle_Absolute_Path_Name : constant String :=
      "Explorer toggle absolute paths";
@@ -1111,6 +1113,15 @@ package body Project_Explorers is
          Update_View'Access, View);
       Menu.Add (Check);
 
+      Gtk_New (Check, -"Group by directories");
+      Check.Set_Tooltip_Text
+        (-("If False, files are shown directly below the projects, otherwise"
+         & " they are grouped by categories"));
+      Associate (Get_History (View.Kernel).all, Show_Directories, Check);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
+      Menu.Add (Check);
+
       Gtk_New (Check, -"Show hidden directories");
       Associate (Get_History (View.Kernel).all, Show_Hidden_Dirs, Check);
       Widget_Callback.Object_Connect
@@ -1762,6 +1773,8 @@ package body Project_Explorers is
         Get_History (Get_History (Self.Kernel).all, Show_Absolute_Paths);
       Show_Obj_Dirs : constant Boolean :=
         Get_History (Get_History (Self.Kernel).all, Show_Object_Dirs);
+      Show_Dirs : constant Boolean :=
+        Get_History (Get_History (Self.Kernel).all, Show_Directories);
 
       Child   : Gtk_Tree_Iter;
       Files   : File_Array_Access;
@@ -1926,10 +1939,6 @@ package body Project_Explorers is
 
       --  Prepare list of directories
 
-      for Dir of Project.Source_Dirs loop
-         Dirs.Include ((Dir, Directory_Node), Files_List.Empty_List);
-      end loop;
-
       if Show_Obj_Dirs then
          Dirs.Include
            ((Project.Object_Dir, Obj_Directory_Node), Files_List.Empty_List);
@@ -1941,15 +1950,26 @@ package body Project_Explorers is
          end if;
       end if;
 
-      --  Prepare list of files
-
       Files := Project.Source_Files (Recursive => False);
-      for F in Files'Range loop
-         Dirs ((Files (F).Dir, Directory_Node)).Append (Files (F));
-      end loop;
-      Unchecked_Free (Files);
 
-      --  Now insert directories and files
+      if Show_Dirs then
+         for Dir of Project.Source_Dirs loop
+            Dirs.Include ((Dir, Directory_Node), Files_List.Empty_List);
+         end loop;
+
+         --  Prepare list of files
+
+         for F in Files'Range loop
+            Dirs ((Files (F).Dir, Directory_Node)).Append (Files (F));
+         end loop;
+      else
+         for F in Files'Range loop
+            Create_Or_Reuse_File
+              (Self.Tree.Model, Self.Kernel, Node, Files (F));
+         end loop;
+      end if;
+
+      --  Now insert directories and files (including object directories)
 
       declare
          Dir : Dirs_Files_Hash.Cursor := Dirs.First;
@@ -1976,6 +1996,8 @@ package body Project_Explorers is
             Next (Dir);
          end loop;
       end;
+
+      Unchecked_Free (Files);
    end Refresh_Project_Node;
 
    -----------------------------
@@ -2789,6 +2811,8 @@ package body Project_Explorers is
         (Get_History (Kernel).all, Show_Object_Dirs, True);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Show_Runtime, False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Show_Directories, True);
 
       Register_Action
         (Kernel, "Locate file in explorer",
