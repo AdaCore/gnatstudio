@@ -75,6 +75,7 @@ package Project_Explorers_Common is
       Root_Project_Node,
       Extends_Project_Node,
       Modified_Project_Node,
+      Runtime_Node,
       Directory_Node,
       Obj_Directory_Node,
       Exec_Directory_Node,
@@ -99,6 +100,26 @@ package Project_Explorers_Common is
    --  The following functions are intended to work on a Model that
    --  has been initialized with the columns described above.
 
+   function Create_Or_Reuse_Node
+     (Model  : Gtk_Tree_Store;
+      Parent : Gtk_Tree_Iter;
+      Kind   : Node_Types;
+      Name   : String;
+      File   : Virtual_File;
+      Add_Dummy : Boolean := False) return Gtk_Tree_Iter;
+   --  Check if Parent already has a child with the correct kind and name,
+   --  and returns it. If not, creates a new node, where Name is set for the
+   --  Display_Name_Column.
+   --  If Add_Dummy is true and a new node is created, a dummy child is
+   --  added to it so that the user can expand the node.
+
+   procedure Create_Or_Reuse_File
+     (Model  : Gtk_Tree_Store;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Dir    : Gtk_Tree_Iter;
+      File   : Virtual_File);
+   --  Create a new file node, or reuse one if it already exists
+
    procedure Append_File
      (Kernel : Kernel_Handle;
       Model  : Gtk_Tree_Store;
@@ -111,6 +132,9 @@ package Project_Explorers_Common is
    procedure Append_Dummy_Iter
      (Model : Gtk_Tree_Store;
       Base  : Gtk_Tree_Iter);
+   function Has_Dummy_Iter
+     (Model  : Gtk_Tree_Store;
+      Parent : Gtk_Tree_Iter) return Boolean;
    procedure Remove_Dummy_Iter
      (Model  : Gtk_Tree_Store;
       Parent : Gtk_Tree_Iter);
@@ -140,6 +164,12 @@ package Project_Explorers_Common is
       File_Name : GNATCOLL.VFS.Virtual_File;
       Sorted    : Boolean);
    --  Add info to a file node in the model
+
+   procedure Append_Runtime_Info
+     (Kernel    : Kernel_Handle;
+      Model     : Gtk_Tree_Store;
+      Node      : Gtk_Tree_Iter);
+   --  Add runtime information
 
    function Get_Node_Type
      (Model : Gtk_Tree_Store;

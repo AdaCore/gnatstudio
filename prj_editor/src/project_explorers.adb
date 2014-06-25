@@ -26,6 +26,7 @@ with Ada.Strings.Hash;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
@@ -85,7 +86,6 @@ with GPS.Search;                use GPS.Search;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
-with Language.Unknown;          use Language.Unknown;
 with Language_Handlers;         use Language_Handlers;
 with Language_Utils;            use Language_Utils;
 with Projects;                  use Projects;
@@ -116,6 +116,8 @@ package body Project_Explorers is
      "explorer-show-projects-first";
    Show_Object_Dirs    : constant History_Key :=
      "explorer-show-object-dirs";
+   Show_Runtime        : constant History_Key :=
+     "explorer-show-runtime";
 
    Toggle_Absolute_Path_Name : constant String :=
      "Explorer toggle absolute paths";
@@ -935,6 +937,9 @@ package body Project_Explorers is
                when Project_Node_Types =>
                   return Alphabetical;
 
+               when Runtime_Node =>
+                  return A_Before_B;
+
                when others =>
                   if Projects_Before_Directories then
                      return A_Before_B;
@@ -974,6 +979,9 @@ package body Project_Explorers is
                when Obj_Directory_Node =>
                   return Alphabetical;
 
+               when Runtime_Node =>
+                  return A_Before_B;
+
                when others =>
                   return B_Before_A;
             end case;
@@ -993,9 +1001,15 @@ package body Project_Explorers is
                when Exec_Directory_Node =>
                   return Alphabetical;
 
+               when Runtime_Node =>
+                  return A_Before_B;
+
                when others =>
                   return B_Before_A;
             end case;
+
+         when Runtime_Node =>
+            return B_Before_A;
 
          when others =>
             if B_Type = A_Type then
@@ -1117,6 +1131,12 @@ package body Project_Explorers is
         (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
       Menu.Add (Check);
 
+      Gtk_New (Check, -"Show runtime files");
+      Associate (Get_History (View.Kernel).all, Show_Runtime, Check);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
+      Menu.Add (Check);
+
       Gtk_New (Check, -"Projects before directories");
       Check.Set_Tooltip_Text
         (-("Whether imported projects should occur before or after source"
@@ -1144,7 +1164,7 @@ package body Project_Explorers is
             File := Get_File_From_Node (-Child_Model, Iter);
             return Is_Visible (Self.Filter, File) /= Hide;
 
-         when Category_Node | Entity_Node | Dummy_Node =>
+         when Category_Node | Entity_Node | Dummy_Node | Runtime_Node =>
             return True;
       end case;
    end Is_Visible;
@@ -1380,7 +1400,8 @@ package body Project_Explorers is
                  (Exp.Tree.Model, Exp.Kernel, Iter, False);
 
             when Directory_Node_Types
-               | File_Node | Category_Node | Entity_Node | Dummy_Node =>
+               | File_Node | Category_Node | Entity_Node | Dummy_Node
+               | Runtime_Node =>
                null;
          end case;
 
@@ -1563,16 +1584,22 @@ package body Project_Explorers is
 
       case N_Type is
          when Project_Node_Types =>
-            Refresh_Project_Node
-              (T, Iter,
-               Flat_View =>
-                  Get_History (Get_History (T.Kernel).all, Show_Flat_View));
-            Success := Expand_Row (T.Tree, Filter_Path, False);
+            if Has_Dummy_Iter (T.Tree.Model, Iter) then
+               Refresh_Project_Node
+                 (T, Iter,
+                  Flat_View =>
+                    Get_History (Get_History (T.Kernel).all, Show_Flat_View));
+               Success := Expand_Row (T.Tree, Filter_Path, False);
+            end if;
 
          when File_Node =>
             Append_File_Info
               (T.Kernel, T.Tree.Model, Iter,
                Get_File_From_Node (T.Tree.Model, Iter), Sorted => False);
+            Success := Expand_Row (T.Tree, Filter_Path, False);
+
+         when Runtime_Node =>
+            Append_Runtime_Info (T.Kernel, T.Tree.Model, Iter);
             Success := Expand_Row (T.Tree, Filter_Path, False);
 
          when Directory_Node_Types | Category_Node | Entity_Node
@@ -1642,6 +1669,15 @@ package body Project_Explorers is
             Rel : constant String :=
                +Relative_Path (Dir, Project.Project_Path.Dir);
          begin
+            --  If there is in common is '/', we just use a full path
+            --  instead, that looks better, especially for runtime files
+            if Starts_With (Rel, "..")
+              and then Greatest_Common_Path
+                ((Dir, Project.Project_Path.Dir)).Full_Name.all = "/"
+            then
+               return Dir.Display_Full_Name;
+            end if;
+
             if Rel = "" then
                return "";
             elsif Rel (Rel'Last) = '/' or else Rel (Rel'Last) = '\' then
@@ -1714,25 +1750,10 @@ package body Project_Explorers is
       Node      : Gtk_Tree_Iter;
       Flat_View : Boolean)
    is
-      function Create_Or_Reuse_Node
-        (Self   : not null access Project_Explorer_Record'Class;
-         Parent : Gtk_Tree_Iter;
-         Kind   : Node_Types;
-         Name   : String;
-         File   : Virtual_File;
-         Add_Dummy : Boolean := False) return Gtk_Tree_Iter;
-      --  Check if Parent already has a child with the correct kind and name,
-      --  and returns it. If not, creates a new node, where Name is set for the
-      --  Display_Name_Column.
-      --  If Add_Dummy is true and a new node is created, a dummy child is
-      --  added to it so that the user can expand the node.
-
       function Create_Or_Reuse_Project
         (P : Project_Type; Add_Dummy : Boolean := False) return Gtk_Tree_Iter;
       function Create_Or_Reuse_Directory
-        (Dir : Directory_Info) return Gtk_Tree_Iter;
-      procedure Create_Or_Reuse_File
-        (Dir : Gtk_Tree_Iter; File : Virtual_File);
+        (Dir : Directory_Info; Parent : Gtk_Tree_Iter) return Gtk_Tree_Iter;
       --  Create a new project node, or reuse one if it exists
 
       function Is_Hidden (Dir : Virtual_File) return Boolean;
@@ -1770,47 +1791,6 @@ package body Project_Explorers is
          return False;
       end Is_Hidden;
 
-      --------------------------
-      -- Create_Or_Reuse_Node --
-      --------------------------
-
-      function Create_Or_Reuse_Node
-        (Self   : not null access Project_Explorer_Record'Class;
-         Parent : Gtk_Tree_Iter;
-         Kind   : Node_Types;
-         Name   : String;
-         File   : Virtual_File;
-         Add_Dummy : Boolean := False) return Gtk_Tree_Iter
-      is
-         Iter : Gtk_Tree_Iter := Null_Iter;
-      begin
-         if Parent = Null_Iter then
-            Iter := Self.Tree.Model.Get_Iter_First;
-         else
-            Iter := Self.Tree.Model.Children (Parent);
-         end if;
-
-         while Iter /= Null_Iter loop
-            if Get_Node_Type (Self.Tree.Model, Iter) = Kind
-              and then Get_File (Self.Tree.Model, Iter, File_Column) = File
-            then
-               return Iter;
-            end if;
-            Self.Tree.Model.Next (Iter);
-         end loop;
-
-         Self.Tree.Model.Append (Iter => Iter, Parent => Parent);
-         Self.Tree.Model.Set (Iter, Display_Name_Column, Name);
-         Set_File (Self.Tree.Model, Iter, File_Column, File);
-         Set_Node_Type (Self.Tree.Model, Iter, Kind, False);
-
-         if Add_Dummy then
-            Append_Dummy_Iter (Self.Tree.Model, Iter);
-         end if;
-
-         return Iter;
-      end Create_Or_Reuse_Node;
-
       -----------------------------
       -- Create_Or_Reuse_Project --
       -----------------------------
@@ -1822,7 +1802,7 @@ package body Project_Explorers is
       begin
          if Flat_View and then P = Get_Project (Self.Kernel) then
             Child := Create_Or_Reuse_Node
-              (Self   => Self,
+              (Model  => Self.Tree.Model,
                Parent => Node,
                Kind   => T,
                File   => P.Project_Path,
@@ -1830,7 +1810,7 @@ package body Project_Explorers is
                Add_Dummy => Add_Dummy);
          elsif P.Extending_Project /= No_Project then
             Child := Create_Or_Reuse_Node
-              (Self   => Self,
+              (Model  => Self.Tree.Model,
                Parent => Node,
                Kind   => T,
                File   => P.Project_Path,
@@ -1838,7 +1818,7 @@ package body Project_Explorers is
                Add_Dummy => Add_Dummy);
          else
             Child := Create_Or_Reuse_Node
-              (Self   => Self,
+              (Model  => Self.Tree.Model,
                Parent => Node,
                Kind   => T,
                File   => P.Project_Path,
@@ -1855,40 +1835,17 @@ package body Project_Explorers is
       -------------------------------
 
       function Create_Or_Reuse_Directory
-        (Dir : Directory_Info) return Gtk_Tree_Iter is
+        (Dir : Directory_Info; Parent : Gtk_Tree_Iter) return Gtk_Tree_Iter
+      is
       begin
          return Create_Or_Reuse_Node
-           (Self   => Self,
-            Parent => Node,
+           (Model  => Self.Tree.Model,
+            Parent => Parent,
             Kind   => Dir.Kind,
             File   => Dir.Directory,
             Name   =>
               Directory_Node_Text (Show_Abs_Paths, Project, Dir.Directory));
       end Create_Or_Reuse_Directory;
-
-      --------------------------
-      -- Create_Or_Reuse_File --
-      --------------------------
-
-      procedure Create_Or_Reuse_File
-        (Dir : Gtk_Tree_Iter; File : Virtual_File)
-      is
-         Child : Gtk_Tree_Iter;
-         Lang : Language_Access;
-      begin
-         Child := Create_Or_Reuse_Node
-           (Self   => Self,
-            Parent => Dir,
-            Kind   => File_Node,
-            File   => File,
-            Name   => File.Display_Base_Name);
-
-         Lang := Get_Language_From_File
-           (Get_Language_Handler (Self.Kernel), File);
-         if Lang /= Unknown_Lang then
-            Append_Dummy_Iter (Self.Tree.Model, Child);
-         end if;
-      end Create_Or_Reuse_File;
 
       Filter  : Filter_Type;
       Path    : Gtk_Tree_Path;
@@ -1931,6 +1888,20 @@ package body Project_Explorers is
       Project := Get_Project_From_Node
         (Self.Tree.Model, Self.Kernel, Node, Importing => False);
       Remove_Dummy_Iter (Self.Tree.Model, Node);
+
+      --  Insert runtime files if requested
+
+      if Project = Get_Project (Self.Kernel)
+        and then Get_History (Get_History (Self.Kernel).all, Show_Runtime)
+      then
+         Child := Create_Or_Reuse_Node
+           (Model  => Self.Tree.Model,
+            Parent => Null_Iter,  --  always at toplevel
+            Kind   => Runtime_Node,
+            File   => No_File,
+            Name   => "runtime",
+            Add_Dummy => True);
+      end if;
 
       --  Insert non-expanded nodes for imported projects
 
@@ -1986,15 +1957,21 @@ package body Project_Explorers is
          Dir : Dirs_Files_Hash.Cursor := Dirs.First;
          Show_Hidden : constant Boolean :=
            Get_History (Get_History (Self.Kernel).all, Show_Hidden_Dirs);
+         Previous : Virtual_File;
       begin
          while Has_Element (Dir) loop
             if Show_Hidden or else not Is_Hidden (Key (Dir).Directory) then
-               Child := Create_Or_Reuse_Directory (Key (Dir));
+               --  minor optimization, reuse dir if same as previous file
+               if Key (Dir).Directory /= Previous then
+                  Previous := Key (Dir).Directory;
+                  Child := Create_Or_Reuse_Directory (Key (Dir), Node);
+               end if;
 
                for F of Dirs (Dir) loop
                   --  ??? This is O(n^2), since every time we insert a row
                   --  it will be searched next time.
-                  Create_Or_Reuse_File (Child, F);
+                  Create_Or_Reuse_File
+                    (Self.Tree.Model, Self.Kernel, Child, F);
                end loop;
             end if;
 
@@ -2392,6 +2369,19 @@ package body Project_Explorers is
                      else
                         Tmp := Start_Node;
                         Next (Explorer.Tree.Model, Tmp);
+                     end if;
+
+                  when Runtime_Node =>
+                     Next_Or_Child
+                       (Name           => "runtime",
+                        Key            => "runtime",
+                        Start          => Start_Node,
+                        Check_Match    => False,
+                        Check_Projects => False,
+                        Result         => Tmp,
+                        Finish         => Finish);
+                     if Finish then
+                        return Tmp;
                      end if;
 
                   when Dummy_Node =>
@@ -2799,6 +2789,8 @@ package body Project_Explorers is
         (Get_History (Kernel).all, Projects_Before_Directories, False);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Show_Object_Dirs, True);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Show_Runtime, False);
 
       Register_Action
         (Kernel, "Locate file in explorer",

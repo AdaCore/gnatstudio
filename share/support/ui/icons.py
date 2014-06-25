@@ -108,6 +108,8 @@ def add_icons():
     Icon("gps-project-root-closed", "", "16px/project_root_box.png")
     Icon("gps-project-modified-open", "", "16px/project_box_pencil.png")
     Icon("gps-project-modified-closed", "", "16px/project_box_pencil.png")
+    Icon("gps-project-runtime-open", "", "16px/project_runtime.png")
+    Icon("gps-project-runtime-closed", "", "16px/project_runtime.png")
 
     Icon("gps-search-and-menu", "", "svg/search-and-menu.svg")
     Icon("gps-fold-block", "", "svg/gps-fold-block.svg")
