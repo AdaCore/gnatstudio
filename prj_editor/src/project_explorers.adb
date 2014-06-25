@@ -580,10 +580,8 @@ package body Project_Explorers is
    begin
       if D1.Kind < D2.Kind then
          return True;
-      elsif D1.Kind = D2.Kind
-        and then D1.Directory < D2.Directory
-      then
-         return True;
+      elsif D1.Kind = D2.Kind then
+         return D1.Directory < D2.Directory;
       else
          return False;
       end if;
@@ -1957,13 +1955,13 @@ package body Project_Explorers is
          Dir : Dirs_Files_Hash.Cursor := Dirs.First;
          Show_Hidden : constant Boolean :=
            Get_History (Get_History (Self.Kernel).all, Show_Hidden_Dirs);
-         Previous : Virtual_File;
+         Previous : Directory_Info := (No_File, Dummy_Node);
       begin
          while Has_Element (Dir) loop
             if Show_Hidden or else not Is_Hidden (Key (Dir).Directory) then
                --  minor optimization, reuse dir if same as previous file
-               if Key (Dir).Directory /= Previous then
-                  Previous := Key (Dir).Directory;
+               if Key (Dir) /= Previous then
+                  Previous := (Key (Dir).Directory, Key (Dir).Kind);
                   Child := Create_Or_Reuse_Directory (Key (Dir), Node);
                end if;
 
