@@ -17,7 +17,6 @@
 
 with Ada.Containers;            use Ada.Containers;
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Calendar;              use Ada.Calendar;
 with Ada.Strings.Hash;
 
 with GNAT.Strings;              use GNAT.Strings;
@@ -29,6 +28,7 @@ with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;
@@ -64,14 +64,9 @@ package body Project_Explorers_Common is
          File_Column          => Get_Virtual_File_Type,
          Display_Name_Column  => GType_String,
          Node_Type_Column     => GType_Int,
-         User_Data_Column     => GType_Pointer,
          Line_Column          => GType_Int,
          Column_Column        => GType_Int,
-         Project_Path_Column  => Get_Virtual_File_Type,
-         Category_Column      => GType_Int,
-         Up_To_Date_Column    => GType_Boolean,
-         Entity_Base_Column   => GType_String,
-         Timestamp_Column     => GType_Ulong);
+         Entity_Base_Column   => GType_String);
    end Columns_Types;
 
    -------------------
@@ -172,7 +167,6 @@ package body Project_Explorers_Common is
          if not Done then
             Append (Model, Iter, Base);
          end if;
-
       else
          Append (Model, Iter, Base);
       end if;
@@ -182,7 +176,6 @@ package body Project_Explorers_Common is
       Set (Model, Iter, Icon_Column,
            Glib.Object.GObject (Close_Pixbufs (File_Node)));
       Set (Model, Iter, Node_Type_Column, Gint (Node_Types'Pos (File_Node)));
-      Set (Model, Iter, Up_To_Date_Column, False);
 
       Lang := Get_Language_From_File (Get_Language_Handler (Kernel), File);
 
@@ -202,8 +195,26 @@ package body Project_Explorers_Common is
       Iter : Gtk_Tree_Iter;
    begin
       Append (Model, Iter, Base);
-      Set_Node_Type (Model, Iter, Entity_Node, Expanded => False);
+      Set_Node_Type (Model, Iter, Dummy_Node, Expanded => False);
    end Append_Dummy_Iter;
+
+   -----------------------
+   -- Remove_Dummy_Iter --
+   -----------------------
+
+   procedure Remove_Dummy_Iter
+     (Model  : Gtk_Tree_Store;
+      Parent : Gtk_Tree_Iter)
+   is
+      Iter : Gtk_Tree_Iter;
+   begin
+      Iter := Model.Nth_Child (Parent, 0);
+      if Iter /= Null_Iter
+        and then Get_Node_Type (Model, Iter) = Dummy_Node
+      then
+         Model.Remove (Iter);
+      end if;
+   end Remove_Dummy_Iter;
 
    --------------------------
    -- Append_Category_Node --
@@ -214,30 +225,28 @@ package body Project_Explorers_Common is
       File          : GNATCOLL.VFS.Virtual_File;
       Category      : Language_Category;
       Category_Name : GNATCOLL.Symbols.Symbol;
-      Parent_Iter   : Gtk_Tree_Iter) return Gtk_Tree_Iter
+      Parent_Iter   : Gtk_Tree_Iter;
+      Sorted        : Boolean) return Gtk_Tree_Iter
    is
       Name    : constant String :=
                   Language.Category_Name (Category, Category_Name);
       N       : Gtk_Tree_Iter;
-      Sibling : Gtk_Tree_Iter;
+      Sibling : Gtk_Tree_Iter := Null_Iter;
 
    begin
-      Sibling := Children (Model, Parent_Iter);
-
-      if Sibling = Null_Iter then
-         Append (Model, N, Parent_Iter);
-      else
+      if Sorted then
+         Sibling := Children (Model, Parent_Iter);
          while Sibling /= Null_Iter
            and then Get_String (Model, Sibling, Display_Name_Column) <= Name
          loop
             Next (Model, Sibling);
          end loop;
+      end if;
 
-         if Sibling = Null_Iter then
-            Append (Model, N, Parent_Iter);
-         else
-            Insert_Before (Model, N, Parent_Iter, Sibling);
-         end if;
+      if Sibling = Null_Iter then
+         Append (Model, N, Parent_Iter);
+      else
+         Insert_Before (Model, N, Parent_Iter, Sibling);
       end if;
 
       Set_File (Model, N, File_Column, File);
@@ -246,8 +255,6 @@ package body Project_Explorers_Common is
            Glib.Object.GObject
              (Entity_Icons (False, Visibility_Public) (Category)));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Category_Node)));
-      Set (Model, N, Up_To_Date_Column, True);
-      Set (Model, N, Category_Column, Language_Category'Pos (Category));
 
       return N;
    end Append_Category_Node;
@@ -332,29 +339,27 @@ package body Project_Explorers_Common is
      (Model       : Gtk_Tree_Store;
       File        : GNATCOLL.VFS.Virtual_File;
       Construct   : Construct_Information;
-      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
+      Parent_Iter : Gtk_Tree_Iter;
+      Sorted      : Boolean) return Gtk_Tree_Iter
    is
       N       : Gtk_Tree_Iter;
-      Sibling : Gtk_Tree_Iter;
+      Sibling : Gtk_Tree_Iter := Null_Iter;
 
    begin
-      Sibling := Children (Model, Parent_Iter);
-
-      if Sibling = Null_Iter then
-         Append (Model, N, Parent_Iter);
-      else
+      if Sorted then
+         Sibling := Children (Model, Parent_Iter);
          while Sibling /= Null_Iter
            and then Get_String (Model, Sibling, Display_Name_Column)
            <= Get (Construct.Name).all
          loop
             Next (Model, Sibling);
          end loop;
+      end if;
 
-         if Sibling = Null_Iter then
-            Append (Model, N, Parent_Iter);
-         else
-            Insert_Before (Model, N, Parent_Iter, Sibling);
-         end if;
+      if Sibling = Null_Iter then
+         Append (Model, N, Parent_Iter);
+      else
+         Insert_Before (Model, N, Parent_Iter, Sibling);
       end if;
 
       Set_File (Model, N, File_Column, File);
@@ -372,7 +377,6 @@ package body Project_Explorers_Common is
          Set (Model, N, Column_Column, Gint (Construct.Sloc_Start.Column));
       end if;
 
-      Set (Model, N, Up_To_Date_Column, True);
       return N;
    end Append_Entity_Node;
 
@@ -384,17 +388,9 @@ package body Project_Explorers_Common is
      (Kernel    : Kernel_Handle;
       Model     : Gtk_Tree_Store;
       Node      : Gtk_Tree_Iter;
-      File_Name : GNATCOLL.VFS.Virtual_File)
+      File_Name : GNATCOLL.VFS.Virtual_File;
+      Sorted    : Boolean)
    is
-      Languages  : constant Language_Handler := Get_Language_Handler (Kernel);
-
-      N, N2      : Gtk_Tree_Iter;
-      Iter       : Gtk_Tree_Iter;
-
-      Lang       : Language_Access;
-      Constructs : Construct_List;
-      Category   : Language_Category;
-
       package Iter_Map is new Ada.Containers.Indefinite_Hashed_Maps
         (Key_Type        => String,
          Element_Type    => Gtk_Tree_Iter,
@@ -402,24 +398,20 @@ package body Project_Explorers_Common is
          Equivalent_Keys => "=");
       use Iter_Map;
 
-      Categories : Iter_Map.Map;
+      Languages  : constant Language_Handler := Get_Language_Handler (Kernel);
+      N          : Gtk_Tree_Iter;
+      Iter       : Gtk_Tree_Iter;
+      Lang       : Language_Access;
+      Constructs : Construct_List;
+      Category   : Language_Category;
       Node_Appended : Boolean := False;
+      Categories    : Iter_Map.Map;
+      pragma Unreferenced (N);
 
    begin
-      --  Mark the file information as up-to-date
-
-      Set_Ulong (Model, Node, Timestamp_Column,
-           Gulong (File_Time_Stamp (File_Name) - GNATCOLL.Utils.No_Time));
-
       --  Remove any previous information for this file
 
-      N := Children (Model, Node);
-
-      while N /= Null_Iter loop
-         N2 := N;
-         Next (Model, N);
-         Remove (Model, N2);
-      end loop;
+      Remove_Child_Nodes (Model, Parent => Node);
 
       Lang := Get_Language_From_File (Languages, File_Name);
 
@@ -457,7 +449,8 @@ package body Project_Explorers_Common is
                               Category      => Category,
                               Category_Name =>
                                 Constructs.Current.Category_Name,
-                              Parent_Iter   => Node);
+                              Parent_Iter   => Node,
+                              Sorted        => Sorted);
                         Insert (Categories, Name, New_Iter);
 
                      else
@@ -465,7 +458,8 @@ package body Project_Explorers_Common is
                      end if;
 
                      N := Append_Entity_Node
-                       (Model, File_Name, Constructs.Current.all, New_Iter);
+                       (Model, File_Name, Constructs.Current.all, New_Iter,
+                        Sorted => Sorted);
                   end;
 
                   Node_Appended := True;
@@ -583,127 +577,140 @@ package body Project_Explorers_Common is
       Event     : Gdk_Event_Button;
       Add_Dummy : Boolean) return Boolean
    is
-      Iter         : Gtk_Tree_Iter;
+      Iter         : Gtk_Tree_Iter;  --  applies to Model
       Path         : Gtk_Tree_Path;
       Line, Column : Gint;
       Project      : Project_Type;
       File         : Virtual_File;
    begin
       if Event.Button = 1 then
-         Iter := Find_Iter_For_Event (Tree, Event);
-
-         if Iter /= Null_Iter then
-            if Event.The_Type /= Button_Release then
-               --  Set cursor to pointed position before open menu, etc
-               Path := Get_Path (Model, Iter);
-               Set_Cursor (Tree, Path, null, False);
-               Path_Free (Path);
+         declare
+            Filter_M     : constant Gtk_Tree_Model := Get_Model (Tree);
+            Filter_Iter  : Gtk_Tree_Iter;  --  applies to Filter_M
+         begin
+            Filter_Iter := Find_Iter_For_Event (Tree, Event);
+            if Filter_Iter = Null_Iter then
+               return False;
             end if;
 
-            case Node_Types'Val
-              (Integer (Get_Int (Model, Iter, Node_Type_Column)))
-            is
+            if Filter_M /= +Model then
+               Convert_Iter_To_Child_Iter
+                 (Gtk_Tree_Model_Filter'(-Filter_M),
+                  Child_Iter  => Iter,
+                  Filter_Iter => Filter_Iter);
+            else
+               Iter := Filter_Iter;
+            end if;
+         end;
 
-               when Directory_Node_Types
-                  | Project_Node_Types
-                  | Category_Node =>
-                  Cancel_Child_Drag (Child);
+         if Event.The_Type /= Button_Release then
+            --  Set cursor to pointed position before open menu, etc
+            Path := Get_Path (Model, Iter);
+            Set_Cursor (Tree, Path, null, False);
+            Path_Free (Path);
+         end if;
 
-                  if Event.The_Type = Gdk_2button_Press then
-                     declare
-                        Path    : Gtk_Tree_Path;
-                        Ignore  : Boolean;
-                        pragma Unreferenced (Ignore);
-                     begin
-                        Path := Get_Path (Model, Iter);
+         case Get_Node_Type (Model, Iter) is
+            when Directory_Node_Types
+               | Project_Node_Types
+               | Category_Node =>
+               Cancel_Child_Drag (Child);
 
-                        if Row_Expanded (Tree, Path) then
-                           Ignore := Collapse_Row (Tree, Path);
+               if Event.The_Type = Gdk_2button_Press then
+                  declare
+                     Path    : Gtk_Tree_Path;
+                     Ignore  : Boolean;
+                     pragma Unreferenced (Ignore);
+                  begin
+                     Path := Get_Path (Model, Iter);
 
-                        else
-                           if Add_Dummy then
-                              Append_Dummy_Iter (Model, Iter);
-                           end if;
+                     if Row_Expanded (Tree, Path) then
+                        Ignore := Collapse_Row (Tree, Path);
 
-                           Ignore := Expand_Row (Tree, Path, False);
+                     else
+                        if Add_Dummy then
+                           Append_Dummy_Iter (Model, Iter);
                         end if;
+                        Ignore := Expand_Row (Tree, Path, False);
+                     end if;
 
-                        Path_Free (Path);
-                     end;
+                     Path_Free (Path);
+                  end;
+               end if;
+
+               return False;
+
+            when File_Node =>
+               File    := Get_File (Model, Iter, File_Column);
+               Project := Get_Project_From_Node
+                 (Model, Kernel, Iter, Importing => False);
+
+               if Event.The_Type = Gdk_2button_Press
+                 or else Event.The_Type = Gdk_3button_Press
+               then
+                  Cancel_Child_Drag (Child);
+                  Open_File_Editor
+                    (Kernel,
+                     File,
+                     Project => Project,
+                     Line    => 0,
+                     Column  => 0);
+                  return True;
+
+               elsif Event.The_Type = Button_Press then
+
+                  declare
+                     use type Gtk.Target_List.Gtk_Target_List;
+                     X : constant Gtk.Target_List.Gtk_Target_List
+                       := Gtk.Dnd.Source_Get_Target_List (Tree);
+                  begin
+                     --  If Tree provides drag&drop source, then use it
+                     --  instead of MDI drag&drop
+                     if not X.Is_Null then
+                        Cancel_Child_Drag (Child);
+                        return False;
+                     end if;
+                  end;
+
+                  --  Drag-and-drop does not work on floating MDI children
+
+                  if Get_State (Child) /= Gtkada.MDI.Floating then
+                     Child.Kernel        := Kernel;
+                     Child.Dnd_From_File := File;
+                     Child.Dnd_From_Project := Project;
+
+                     Child_Drag_Begin
+                       (Child, Event,
+                        Areas => Central_Only);  --  editors
                   end if;
-
                   return False;
 
-               when File_Node =>
-                  File    := Get_File (Model, Iter, File_Column);
+               else
+                  Cancel_Child_Drag (Child);
+               end if;
+
+            when Entity_Node =>
+               Cancel_Child_Drag (Child);
+
+               if Event.The_Type = Button_Release then
+                  Line := Get_Int (Model, Iter, Line_Column);
+                  Column := Get_Int (Model, Iter, Column_Column);
+                  File   := Get_File (Model, Iter, File_Column);
                   Project := Get_Project_From_Node
                     (Model, Kernel, Iter, Importing => False);
 
-                  if Event.The_Type = Gdk_2button_Press
-                    or else Event.The_Type = Gdk_3button_Press
-                  then
-                     Cancel_Child_Drag (Child);
-                     Open_File_Editor
-                       (Kernel,
-                        File,
-                        Project => Project,
-                        Line    => 0,
-                        Column  => 0);
-                     return True;
+                  Open_File_Editor
+                    (Kernel,
+                     File,
+                     Project => Project,
+                     Line    => Natural (Line),
+                     Column  => Visible_Column_Type (Column));
+               end if;
+               return False;
 
-                  elsif Event.The_Type = Button_Press then
-
-                     declare
-                        use type Gtk.Target_List.Gtk_Target_List;
-                        X : constant Gtk.Target_List.Gtk_Target_List
-                          := Gtk.Dnd.Source_Get_Target_List (Tree);
-                     begin
-                        --  If Tree provides drag&drop source, then use it
-                        --  instead of MDI drag&drop
-                        if not X.Is_Null then
-                           Cancel_Child_Drag (Child);
-                           return False;
-                        end if;
-                     end;
-
-                     --  Drag-and-drop does not work on floating MDI children
-
-                     if Get_State (Child) /= Gtkada.MDI.Floating then
-                        Child.Kernel        := Kernel;
-                        Child.Dnd_From_File := File;
-                        Child.Dnd_From_Project := Project;
-
-                        Child_Drag_Begin
-                          (Child, Event,
-                           Areas => Central_Only);  --  editors
-                     end if;
-                     return False;
-
-                  else
-                     Cancel_Child_Drag (Child);
-                  end if;
-
-               when Entity_Node =>
-                  Cancel_Child_Drag (Child);
-
-                  if Event.The_Type = Button_Release then
-                     Line := Get_Int (Model, Iter, Line_Column);
-                     Column := Get_Int (Model, Iter, Column_Column);
-                     File   := Get_File (Model, Iter, File_Column);
-                     Project := Get_Project_From_Node
-                       (Model, Kernel, Iter, Importing => False);
-
-                     Open_File_Editor
-                       (Kernel,
-                        File,
-                        Project => Project,
-                        Line    => Natural (Line),
-                        Column  => Visible_Column_Type (Column));
-                  end if;
-                  return False;
-            end case;
-
-         end if;
+            when Dummy_Node =>
+               return False;
+         end case;
       end if;
 
       return False;
@@ -807,55 +814,6 @@ package body Project_Explorers_Common is
       end if;
    end Set_Node_Type;
 
-   -----------------------
-   -- Get_Category_Type --
-   -----------------------
-
-   function Get_Category_Type
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Language_Category is
-   begin
-      return
-        Language_Category'Val
-          (Integer (Get_Int (Model, Node, Category_Column)));
-   end Get_Category_Type;
-
-   -------------------
-   -- Is_Up_To_Date --
-   -------------------
-
-   function Is_Up_To_Date
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Boolean is
-   begin
-      case Get_Node_Type (Model, Node) is
-         when File_Node =>
-            declare
-               File : constant Virtual_File :=
-                        Get_File (Model, Node, File_Column);
-            begin
-               return Duration (Get_Ulong (Model, Node, Timestamp_Column)) +
-                 GNATCOLL.Utils.No_Time =
-                   File_Time_Stamp (File);
-            end;
-
-         when others =>
-            return Get_Boolean (Model, Node, Up_To_Date_Column);
-      end case;
-   end Is_Up_To_Date;
-
-   --------------------
-   -- Set_Up_To_Date --
-   --------------------
-
-   procedure Set_Up_To_Date
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter;
-      State : Boolean) is
-   begin
-      Set (Model, Node, Up_To_Date_Column, State);
-   end Set_Up_To_Date;
-
    -------------------
    -- Get_Base_Name --
    -------------------
@@ -946,7 +904,7 @@ package body Project_Explorers_Common is
       if Parent_Iter /= Null_Iter then
          declare
             N : constant Virtual_File :=
-              Get_File (Model, Parent_Iter, Project_Path_Column);
+              Get_File (Model, Parent_Iter, File_Column);
          begin
             Project := Get_Registry (Kernel).Tree.Project_From_Path (N);
          end;
@@ -971,13 +929,9 @@ package body Project_Explorers_Common is
    procedure Context_Factory
      (Context : in out Selection_Context;
       Kernel  : Kernel_Handle;
-      Tree    : access Gtk_Tree_View_Record'Class;
       Model   : Gtk_Tree_Store;
-      Event   : Gdk_Event;
-      Menu    : Gtk_Menu)
+      Iter    : Gtk_Tree_Iter)
    is
-      pragma Unreferenced (Menu);
-
       function Entity_Base (Name : String) return String;
       --  Return the "basename" for the entity, ie convert "parent.name" to
       --  "name", in the case of Ada parent packages.
@@ -998,8 +952,6 @@ package body Project_Explorers_Common is
          return Name;
       end Entity_Base;
 
-      Iter      : constant Gtk_Tree_Iter :=
-                    Find_Iter_For_Event (Tree, Event);
       Node_Type : Node_Types;
       L         : Integer := 0;
 

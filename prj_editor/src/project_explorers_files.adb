@@ -1129,18 +1129,12 @@ package body Project_Explorers_Files is
 
             when File_Node =>
                Free_Children (T, Iter);
-               Append_File_Info (T.Kernel, T.File_Model, Iter, File);
+               Append_File_Info (T.Kernel, T.File_Model, Iter, File,
+                                 Sorted => True);
 
-            when Project_Node | Root_Project_Node | Extends_Project_Node =>
-               null;
-
-            when Category_Node | Entity_Node =>
-               null;
-
-            when Obj_Directory_Node | Exec_Directory_Node =>
-               null;
-
-            when Modified_Project_Node =>
+            when Category_Node | Entity_Node | Dummy_Node
+               | Obj_Directory_Node | Exec_Directory_Node
+               | Project_Node_Types =>
                null;
          end case;
       end;
@@ -1179,7 +1173,7 @@ package body Project_Explorers_Files is
       return On_Button_Press
         (T.Kernel,
          MDI_Explorer_Child (Explorer_Files_Views.Child_From_View (T)),
-         T.File_Tree, T.File_Model, Event, True);
+         T.File_Tree, T.File_Model, Event, Add_Dummy => True);
    end File_Button_Press;
 
    --------------------

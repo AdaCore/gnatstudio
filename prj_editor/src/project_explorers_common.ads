@@ -22,7 +22,6 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with Gdk.Pixbuf;
 with Gdk.Event;      use Gdk.Event;
 with Glib;           use Glib;
-with Gtk.Menu;       use Gtk.Menu;
 with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
 with Gtk.Tree_View;  use Gtk.Tree_View;
@@ -64,14 +63,9 @@ package Project_Explorers_Common is
    Display_Name_Column  : constant := 1;
    File_Column          : constant := 2;
    Node_Type_Column     : constant := 3;
-   User_Data_Column     : constant := 4;
-   Line_Column          : constant := 5;
-   Column_Column        : constant := 6;
-   Project_Path_Column  : constant := 7;
-   Category_Column      : constant := 8;
-   Up_To_Date_Column    : constant := 9;
-   Entity_Base_Column   : constant := 10;
-   Timestamp_Column     : constant := 11;
+   Line_Column          : constant := 4;
+   Column_Column        : constant := 5;
+   Entity_Base_Column   : constant := 6;
 
    ----------------------
    -- Node definitions --
@@ -87,7 +81,8 @@ package Project_Explorers_Common is
       Exec_Directory_Node,
       File_Node,
       Category_Node,
-      Entity_Node);
+      Entity_Node,
+      Dummy_Node);
    subtype Project_Node_Types
      is Node_Types range Project_Node .. Modified_Project_Node;
    subtype Directory_Node_Types
@@ -125,6 +120,9 @@ package Project_Explorers_Common is
    procedure Append_Dummy_Iter
      (Model : Gtk_Tree_Store;
       Base  : Gtk_Tree_Iter);
+   procedure Remove_Dummy_Iter
+     (Model  : Gtk_Tree_Store;
+      Parent : Gtk_Tree_Iter);
    --  Append an empty iter to Base
 
    function Append_Category_Node
@@ -132,21 +130,24 @@ package Project_Explorers_Common is
       File          : GNATCOLL.VFS.Virtual_File;
       Category      : Language_Category;
       Category_Name : GNATCOLL.Symbols.Symbol;
-      Parent_Iter   : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+      Parent_Iter   : Gtk_Tree_Iter;
+      Sorted        : Boolean) return Gtk_Tree_Iter;
    --  Add a category node in the model
 
    function Append_Entity_Node
      (Model       : Gtk_Tree_Store;
       File        : GNATCOLL.VFS.Virtual_File;
       Construct   : Construct_Information;
-      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+      Parent_Iter : Gtk_Tree_Iter;
+      Sorted      : Boolean) return Gtk_Tree_Iter;
    --  Add an entity node in the model
 
    procedure Append_File_Info
      (Kernel    : Kernel_Handle;
       Model     : Gtk_Tree_Store;
       Node      : Gtk_Tree_Iter;
-      File_Name : GNATCOLL.VFS.Virtual_File);
+      File_Name : GNATCOLL.VFS.Virtual_File;
+      Sorted    : Boolean);
    --  Add info to a file node in the model
 
    function Get_Node_Type
@@ -160,22 +161,6 @@ package Project_Explorers_Common is
       N_Type   : Node_Types;
       Expanded : Boolean);
    --  Set the Node type and the pixmap accordingly
-
-   function Get_Category_Type
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Language_Category;
-   --  Return the type of category
-
-   function Is_Up_To_Date
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Boolean;
-   --  Return the state of the Up_To_Date flag for Node
-
-   procedure Set_Up_To_Date
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter;
-      State : Boolean);
-   --  Set the state of the Up_To_Date flag for Node
 
    function Get_Base_Name
      (Model : Gtk_Tree_Store;
@@ -246,6 +231,9 @@ package Project_Explorers_Common is
    --  location accordingly, and return whether the event should be propagated.
    --  If Add_Dummy is true, a dummy node will be added to nodes collapsed
    --  by this call.
+   --  Model is the model where the insertion of dummy nodes should take place.
+   --  This might not be the same as Tree.Get_Model, in case there is a filter
+   --  model.
 
    function On_Key_Press
      (Kernel : Kernel_Handle;
@@ -256,10 +244,8 @@ package Project_Explorers_Common is
    procedure Context_Factory
      (Context : in out Selection_Context;
       Kernel  : Kernel_Handle;
-      Tree    : access Gtk_Tree_View_Record'Class;
       Model   : Gtk_Tree_Store;
-      Event   : Gdk_Event;
-      Menu    : Gtk_Menu);
+      Iter    : Gtk_Tree_Iter);
    --  Return the context to use for the contextual menu
 
 private

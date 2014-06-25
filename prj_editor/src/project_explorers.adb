@@ -16,8 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Indefinite_Hashed_Sets;
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Hash;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
@@ -36,7 +39,6 @@ with Gdk;                       use Gdk;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Dnd;                   use Gtk.Dnd;
@@ -47,7 +49,9 @@ with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
+with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -65,7 +69,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Find_Utils;                use Find_Utils;
-with Generic_Views;
+with Generic_Views;             use Generic_Views;
 with Histories;                 use Histories;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -77,10 +81,11 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Search;
+with GPS.Search;                use GPS.Search;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Language;                  use Language;
+with Language.Unknown;          use Language.Unknown;
 with Language_Handlers;         use Language_Handlers;
 with Language_Utils;            use Language_Utils;
 with Projects;                  use Projects;
@@ -118,12 +123,52 @@ package body Project_Explorers is
    --  <preference> True if the projects should be displayed, when sorted,
    --  before the directories in the project view.
 
+   -------------
+   --  Filter --
+   -------------
+
+   type Filter_Type is (Show_Direct, Show_Indirect, Hide);
+   --  The status of the filter for each node:
+   --  - show_direct is used when the node itself matches the filter.
+   --  - show_indirect is used when a child of the node must be displayed, but
+   --    the node itself does not match the filter.
+   --  - hide is used when the node should be hidden
+
+   package Filter_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type        => Virtual_File,
+      Hash            => GNATCOLL.VFS.Full_Name_Hash,
+      Element_Type    => Filter_Type,
+      Equivalent_Keys => "=");
+   use Filter_Maps;
+
+   type Explorer_Filter is record
+      Pattern  : GPS.Search.Search_Pattern_Access;
+      --  The pattern on which we filter.
+
+      Cache    : Filter_Maps.Map;
+      --  A cache of the filter. We do not manipulate the gtk model directlyy,
+      --  because it does not contain everything in general (the contents of
+      --  nodes is added dynamically).
+   end record;
+
+   procedure Set_Pattern
+     (Self    : in out Explorer_Filter;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Pattern : Search_Pattern_Access);
+   --  Change the pattern and update the cache
+
+   function Is_Visible
+     (Self : Explorer_Filter; File : Virtual_File) return Filter_Type;
+   --  Whether the given file should be visible
+
    ---------------------------------
    -- The project explorer widget --
    ---------------------------------
 
    type Project_Explorer_Record is new Generic_Views.View_Record with record
       Tree      : Gtkada.Tree_View.Tree_View;
+
+      Filter    : Explorer_Filter;
 
       Expand_Id : Gtk.Handlers.Handler_Id;
       --  The signal for the expansion of nodes in the project view
@@ -133,6 +178,12 @@ package body Project_Explorers is
    overriding procedure Create_Menu
      (View    : not null access Project_Explorer_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Explorer_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Project_Explorer_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access);
 
    function Initialize
      (Explorer : access Project_Explorer_Record'Class)
@@ -152,6 +203,16 @@ package body Project_Explorers is
       Initialize         => Initialize);
    use Explorer_Views;
    subtype Project_Explorer is Explorer_Views.View_Access;
+
+   package Set_Visible_Funcs is new Set_Visible_Func_User_Data
+     (User_Data_Type => Project_Explorer);
+
+   function Is_Visible
+     (Child_Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self        : Project_Explorer) return Boolean;
+   --  Filter out some lines in the project view, based on the filter in the
+   --  toolbar.
 
    -----------------------
    -- Local subprograms --
@@ -181,21 +242,23 @@ package body Project_Explorers is
       Equivalent_Keys => "=");
    use File_Node_Hash;
 
+   type Directory_Info is record
+      Directory : Virtual_File;
+      Kind      : Node_Types;
+   end record;
+   function "<" (D1, D2 : Directory_Info) return Boolean;
+   package Files_List is new Ada.Containers.Doubly_Linked_Lists (Virtual_File);
+   package Dirs_Files_Hash is new Ada.Containers.Indefinite_Ordered_Maps
+     (Key_Type        => Directory_Info,
+      Element_Type    => Files_List.List,
+      "="             => Files_List."=");
+   use Files_List, Dirs_Files_Hash;
+
    overriding procedure Default_Context_Factory
      (Module  : access Explorer_Module_Record;
       Context : in out Selection_Context;
       Child   : Glib.Object.GObject);
    --  See inherited documentation
-
-   type Explorer_Path is record
-      Explorer : Project_Explorer;
-      Path     : Gtk_Tree_Path;
-   end record;
-
-   package Scroll_Idle is new Glib.Main.Generic_Sources (Explorer_Path);
-
-   function Idle_Scroll_To (Data : Explorer_Path) return Boolean;
-   --  Utility function to scroll to Data.Path
 
    ---------------
    -- Searching --
@@ -323,75 +386,38 @@ package body Project_Explorers is
    procedure Set_Column_Types (Tree : Gtk_Tree_View);
    --  Sets the types of columns to be displayed in the tree_view
 
-   ------------------
-   -- Adding nodes --
-   ------------------
-
-   procedure Add_Or_Update_Flat_View_Root_Node
-     (Explorer : access Project_Explorer_Record'Class);
-   --  Add the root node for the flat view
-
-   function Add_Project_Node
-     (Explorer     : access Project_Explorer_Record'Class;
-      Project      : Project_Type;
-      Parent_Node  : Gtk_Tree_Iter := Null_Iter;
-      Name_Suffix  : String := "") return Gtk_Tree_Iter;
-   --  Add a new project node in the tree.
-   --  Name_Suffix is added to the node's name in addition to the project name.
-   --  Parent_Node is the parent of the project in the tree. If this is null,
-   --  the new node is added at the root level of the tree.
-   --  The new node is initially closed, and its contents will only be
-   --  initialized when the node is opened by the user.
-
-   procedure Compute_Children
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter);
-   --  Compute the children of Node, if they haven't been computed yet
-
-   procedure Add_Object_Directories
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter;
-      Project  : Project_Type);
-   --  Add the object and exec directory nodes for Node. They are added
-   --  unconditionally.
-
-   procedure Set_Directory_Node_Attributes
-     (Explorer  : access Project_Explorer_Record'Class;
-      Directory : Virtual_File;
-      Node      : Gtk_Tree_Iter;
-      Project   : Project_Type;
-      Node_Type : Directory_Node_Types);
-   --  Set the attributes in tree model for a directory node
-
    ---------------------
    -- Expanding nodes --
    ---------------------
 
-   procedure Expand_Project_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter);
-   --  Expand a project node, ie add children for all the imported projects,
-   --  the directories, ...
-
-   procedure Expand_File_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter);
-   --  Expand a file node, ie add children for all the entities defined in the
-   --  file.
+   function Directory_Node_Text
+     (Show_Abs_Paths : Boolean;
+      Project        : Project_Type;
+      Dir            : Virtual_File) return String;
+   --  Return the text to use for a directory node
 
    procedure Expand_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Iter     : Gtk_Tree_Iter;
-      Path     : Gtk_Tree_Path);
+     (Explorer    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Filter_Iter : Gtk_Tree_Iter;
+      Filter_Path : Gtk_Tree_Path);
    --  Called every time a node is expanded. It is responsible for
    --  automatically adding the children of the current node if they are not
    --  there already.
 
    procedure Collapse_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Iter     : Gtk_Tree_Iter;
-      Path     : Gtk_Tree_Path);
+     (Explorer    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Filter_Iter : Gtk_Tree_Iter;
+      Filter_Path : Gtk_Tree_Path);
    --  Called every time a node is collapsed
+
+   procedure Refresh_Project_Node
+     (Self      : not null access Project_Explorer_Record'Class;
+      Node      : Gtk_Tree_Iter;
+      Flat_View : Boolean);
+   --  Insert the children nodes for the project (directories, imported
+   --  projects,...)
+   --  Node is associated with Project. Both can be null when in flat view
+   --  mode.
 
    function Button_Press
      (Explorer : access GObject_Record'Class;
@@ -413,46 +439,17 @@ package body Project_Explorers is
    -- Updating nodes --
    --------------------
 
-   procedure Update_Project_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Files    : File_Array;
-      Node     : Gtk_Tree_Iter);
-   --  Recompute the directories for the project
-
-   procedure Update_Directory_Node_Text
-     (Explorer : access Project_Explorer_Record'Class;
-      Project  : Project_Type;
-      Node     : Gtk_Tree_Iter);
-   --  Set the text to display for this directory node
-
    procedure Update_Absolute_Paths
      (Explorer : access Gtk_Widget_Record'Class);
    --  Update the text for all directory nodes in the tree, mostly after the
    --  "show absolute path" setting has changed.
 
-   procedure Update_View
-     (Explorer : access Gtk_Widget_Record'Class);
-   --  Update the tree when "show flat view" or "show hidden directories"
-   --  setting have changed.
+   procedure Update_View (Explorer : access Gtk_Widget_Record'Class);
+   --  Clear the view and recreate from scratch.
 
    ----------------------------
    -- Retrieving information --
    ----------------------------
-
-   procedure Update_Node
-     (Explorer         : access Project_Explorer_Record'Class;
-      Node             : Gtk_Tree_Iter;
-      Files_In_Project : File_Array_Access;
-      Force_Expanded   : Boolean := False);
-   --  Refresh the contents of the Node after the Project_View has
-   --  changed. This means that possibly the list of directories has
-   --  changed. However, the hierarchy of projects can not change, nor the list
-   --  of modified projects.
-   --  Files_In_Project should contain the list of sources in the project to
-   --  which Node belongs. If it is null, it will be computed automatically.
-   --
-   --  If Force_Expanded is true, then the node is considered as currently
-   --  expanded.
 
    procedure Refresh
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class);
@@ -501,15 +498,6 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
    --  Called every time a new child is selected in the MDI. This makes sure
    --  that the selected node in the explorer doesn't reflect false information
-
-   function Get_Imported_Projects
-     (Project         : Project_Type;
-      Direct_Only     : Boolean := True;
-      Include_Project : Boolean := False)
-      return Project_Type_Array;
-   --  Return the list of imported projects as an array.
-   --  If Include_Project is False, then Project itself will not be included in
-   --  the returned array
 
    --------------
    -- Commands --
@@ -576,6 +564,15 @@ package body Project_Explorers is
          return Project_Node;
       end if;
    end Compute_Project_Node_Type;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (D1, D2 : Directory_Info) return Boolean is
+   begin
+      return D1.Directory < D2.Directory;
+   end "<";
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -693,7 +690,7 @@ package body Project_Explorers is
            (T.Kernel,
             MDI_Explorer_Child
               (Explorer_Views.Child_From_View (T)),
-            T.Tree, T.Tree.Model, Event, False);
+            T.Tree, T.Tree.Model, Event, Add_Dummy => False);
       end if;
    exception
       when E : others =>
@@ -730,7 +727,8 @@ package body Project_Explorers is
    begin
       Context_Changed (T.Kernel);
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Tree_Select_Row_Cb;
 
    ----------------
@@ -753,9 +751,12 @@ package body Project_Explorers is
       Explorer.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Init_Graphics (Gtk_Widget (Explorer));
-      Gtk_New (Explorer.Tree, Columns_Types);
+      Gtk_New (Explorer.Tree, Columns_Types, Filtered => True);
       Set_Headers_Visible (Explorer.Tree, False);
       Set_Column_Types (Gtk_Tree_View (Explorer.Tree));
+
+      Set_Visible_Funcs.Set_Visible_Func
+         (Explorer.Tree.Filter, Is_Visible'Access, Data => Explorer);
 
       Set_Name (Explorer.Tree, "Project Explorer Tree");  --  For testsuite
 
@@ -884,16 +885,8 @@ package body Project_Explorers is
             return A_Before_B;
          elsif A_Name = B_Name then
             case A_Type is   --  same as B_Type
-               when Project_Node_Types =>
-                  if Get_File (Model, A, Project_Path_Column) <
-                    Get_File (Model, B, Project_Path_Column)
-                  then
-                     return A_Before_B;
-                  else
-                     return B_Before_A;
-                  end if;
-
-               when Directory_Node | Obj_Directory_Node
+               when Project_Node_Types
+                  | Directory_Node | Obj_Directory_Node
                   | Exec_Directory_Node | File_Node =>
 
                   if Get_File (Model, A, File_Column) <
@@ -1026,14 +1019,20 @@ package body Project_Explorers is
       Child : constant MDI_Child := MDI_Child (To_Object (Args, 1));
       Model : Gtk_Tree_Model;
       Node  : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
    begin
       Get_Selected (Get_Selection (E.Tree), Model, Node);
 
-      if Node = Null_Iter
-        or else Child = null
+      if Node = Null_Iter then
+         return;
+      end if;
+
+      E.Tree.Convert_To_Store_Iter (Store_Iter => Iter, Filter_Iter => Node);
+
+      if Child = null
         or else (Get_Title (Child) = " ")
         or else (Get_Title (Child) =
-                   Display_Full_Name (Get_File_From_Node (E.Tree.Model, Node)))
+                   Display_Full_Name (Get_File_From_Node (E.Tree.Model, Iter)))
       then
          return;
       end if;
@@ -1042,6 +1041,24 @@ package body Project_Explorers is
          Unselect_All (Get_Selection (E.Tree));
       end if;
    end Child_Selected;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Explorer_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+   begin
+      View.Build_Filter
+        (Toolbar     => Toolbar,
+         Hist_Prefix => "project_view",
+         Tooltip     => -"Filter the contents of the project view",
+         Placeholder => -"filter",
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
+   end Create_Toolbar;
 
    -----------------
    -- Create_Menu --
@@ -1080,6 +1097,153 @@ package body Project_Explorers is
       Menu.Add (Check);
    end Create_Menu;
 
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   function Is_Visible
+     (Child_Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Self        : Project_Explorer) return Boolean
+   is
+      File   : Virtual_File;
+   begin
+      case Get_Node_Type (-Child_Model, Iter) is
+         when Project_Node_Types | Directory_Node_Types | File_Node =>
+            File := Get_File_From_Node (-Child_Model, Iter);
+            return Is_Visible (Self.Filter, File) /= Hide;
+
+         when Category_Node | Entity_Node | Dummy_Node =>
+            return True;
+      end case;
+   end Is_Visible;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   function Is_Visible
+     (Self : Explorer_Filter; File : Virtual_File) return Filter_Type
+   is
+      C : Filter_Maps.Cursor;
+   begin
+      if Self.Pattern = null then
+         return Show_Direct;
+      end if;
+
+      C := Self.Cache.Find (File);
+      if Has_Element (C) then
+         return Element (C);
+      end if;
+      return Hide;
+   end Is_Visible;
+
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   procedure Set_Pattern
+     (Self    : in out Explorer_Filter;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Pattern : Search_Pattern_Access)
+   is
+      Show_Abs_Paths : constant Boolean :=
+        Get_History (Get_History (Kernel).all, Show_Absolute_Paths);
+      Flat_View : constant Boolean :=
+        Get_History (Get_History (Kernel).all, Show_Flat_View);
+
+      procedure Mark_Project_And_Parents_Visible (P : Project_Type);
+      --  mark the given project node and all its parents as visible
+
+      procedure Mark_Project_And_Parents_Visible (P : Project_Type) is
+         It : Project_Iterator;
+         C  : Filter_Maps.Cursor;
+      begin
+         C := Self.Cache.Find (P.Project_Path);
+         if Has_Element (C) and then Element (C) /= Hide then
+            --  Already marked, nothing more to do
+            return;
+         end if;
+
+         Self.Cache.Include (P.Project_Path, Show_Indirect);
+
+         if not Flat_View then
+            It := P.Find_All_Projects_Importing
+              (Include_Self => False, Direct_Only => False);
+            while Current (It) /= No_Project loop
+               Mark_Project_And_Parents_Visible (Current (It));
+               Next (It);
+            end loop;
+         end if;
+      end Mark_Project_And_Parents_Visible;
+
+      PIter : Project_Iterator;
+      P     : Project_Type;
+      Files : File_Array_Access;
+      Found : Boolean;
+      Prj_Filter : Filter_Type;
+   begin
+      GPS.Search.Free (Self.Pattern);
+      Self.Pattern := Pattern;
+
+      Self.Cache.Clear;
+
+      if Pattern = null then
+         --  No filter applied, make all visible
+         return;
+      end if;
+
+      PIter := Get_Project (Kernel).Start
+        (Direct_Only      => False,
+         Include_Extended => True);
+      while Current (PIter) /= No_Project loop
+         P := Current (PIter);
+
+         if Self.Pattern.Start (P.Name) /= GPS.Search.No_Match then
+            Prj_Filter := Show_Direct;
+            Mark_Project_And_Parents_Visible (P);
+            Self.Cache.Include (P.Project_Path, Show_Direct);
+         else
+            Prj_Filter := Hide;
+         end if;
+
+         Files := P.Source_Files (Recursive => False);
+         for F in Files'Range loop
+            Found :=
+              (Show_Abs_Paths and then Self.Pattern.Start
+                 (Files (F).Display_Full_Name) /= GPS.Search.No_Match)
+              or else
+              (not Show_Abs_Paths and then Self.Pattern.Start
+                 (Files (F).Display_Base_Name) /= GPS.Search.No_Match);
+
+            if Found then
+               if Prj_Filter = Hide then
+                  Prj_Filter := Show_Indirect;
+                  Mark_Project_And_Parents_Visible (P);
+               end if;
+
+               Self.Cache.Include (Create (Files (F).Dir_Name), Show_Indirect);
+               Self.Cache.Include (Files (F), Show_Direct);
+            end if;
+         end loop;
+         Unchecked_Free (Files);
+
+         Next (PIter);
+      end loop;
+   end Set_Pattern;
+
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Project_Explorer_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access) is
+   begin
+      Set_Pattern (Self.Filter, Self.Kernel, Pattern);
+      Self.Tree.Filter.Refilter;
+   end Filter_Changed;
+
    ------------------------------
    -- Explorer_Context_Factory --
    ------------------------------
@@ -1092,26 +1256,31 @@ package body Project_Explorers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu)
    is
-      pragma Unreferenced (Event_Widget, Object);
+      pragma Unreferenced (Event_Widget, Object, Menu);
 
       --  "Object" is also the explorer, but this way we make sure the current
       --  context is that of the explorer (since it will have the MDI focus)
       T         : constant Project_Explorer :=
         Explorer_Views.Get_Or_Create_View (Kernel, Focus => True);
-      Iter      : constant Gtk_Tree_Iter :=
+      Filter_Iter      : constant Gtk_Tree_Iter :=
                     Find_Iter_For_Event (T.Tree, Event);
-      Path      : Gtk_Tree_Path;
+      Iter        : Gtk_Tree_Iter;
+      Filter_Path : Gtk_Tree_Path;
    begin
-      if Iter /= Null_Iter then
-         Path := Get_Path (T.Tree.Model, Iter);
-         if not Path_Is_Selected (Get_Selection (T.Tree), Path) then
-            Set_Cursor (T.Tree, Path, null, False);
-         end if;
-         Path_Free (Path);
-         Project_Explorers_Common.Context_Factory
-           (Context, Kernel_Handle (Kernel),
-            T.Tree, T.Tree.Model, Event, Menu);
+      if Filter_Iter = Null_Iter then
+         return;
       end if;
+
+      Filter_Path := Get_Path (T.Tree.Get_Model, Filter_Iter);
+      if not Path_Is_Selected (Get_Selection (T.Tree), Filter_Path) then
+         Set_Cursor (T.Tree, Filter_Path, null, False);
+      end if;
+      Path_Free (Filter_Path);
+
+      T.Tree.Convert_To_Store_Iter
+        (Store_Iter => Iter, Filter_Iter => Filter_Iter);
+      Project_Explorers_Common.Context_Factory
+        (Context, Kernel_Handle (Kernel), T.Tree.Model, Iter);
    end Explorer_Context_Factory;
 
    -------------
@@ -1130,118 +1299,6 @@ package body Project_Explorers is
 
       Clear (Hook.Explorer.Tree.Model);
    end Execute;
-
-   ----------------------
-   -- Add_Project_Node --
-   ----------------------
-
-   function Add_Project_Node
-     (Explorer    : access Project_Explorer_Record'Class;
-      Project     : Project_Type;
-      Parent_Node : Gtk_Tree_Iter := Null_Iter;
-      Name_Suffix : String := "") return Gtk_Tree_Iter
-   is
-      Is_Leaf   : constant Boolean :=
-                    not Has_Imported_Projects (Project)
-                    and then Project.Attribute_Value
-                      (Obj_Dir_Attribute) = ""
-                    and then Source_Dirs (Project)'Length = 0;
-      Node_Text : constant String := Project.Name;
-      Node_Type : Node_Types;
-      N         : Gtk_Tree_Iter;
-      Ref       : Gtk_Tree_Iter := Null_Iter;
-
-   begin
-      if Project = No_Project then
-         return Null_Iter;
-      end if;
-
-      Node_Type := Compute_Project_Node_Type (Explorer, Project);
-
-      if Parent_Node /= Null_Iter then
-         Ref := Children (Explorer.Tree.Model, Parent_Node);
-
-         --  Insert the nodes sorted
-
-         while Ref /= Null_Iter
-           and then
-             (Get_Node_Type (Explorer.Tree.Model, Ref)
-                  not in Project_Node_Types
-               or else Get_String (Explorer.Tree.Model, Ref,
-                                    Display_Name_Column)
-                < Node_Text)
-         loop
-            Next (Explorer.Tree.Model, Ref);
-         end loop;
-      end if;
-
-      if Ref = Null_Iter then
-         Append (Explorer.Tree.Model, N, Parent_Node);
-      else
-         Insert_Before (Explorer.Tree.Model, N, Parent_Node, Ref);
-      end if;
-
-      Set_File (Explorer.Tree.Model, N, File_Column, Project_Path (Project));
-
-      if Extending_Project (Project) /= No_Project then
-         --  ??? We could use a different icon instead
-         Set (Explorer.Tree.Model, N, Display_Name_Column,
-              Display_Full_Name (Create (+Node_Text))
-              & " (extended)" & Name_Suffix);
-      else
-         Set (Explorer.Tree.Model, N, Display_Name_Column,
-              Display_Full_Name (Create (+(Node_Text & Name_Suffix))));
-      end if;
-
-      Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
-
-      Set_File
-        (Explorer.Tree.Model, N, Project_Path_Column, Project.Project_Path);
-
-      if not Is_Leaf then
-         Append_Dummy_Iter (Explorer.Tree.Model, N);
-      end if;
-
-      return N;
-   end Add_Project_Node;
-
-   --------------------------------
-   -- Update_Directory_Node_Text --
-   --------------------------------
-
-   procedure Update_Directory_Node_Text
-     (Explorer : access Project_Explorer_Record'Class;
-      Project  : Project_Type;
-      Node     : Gtk_Tree_Iter)
-   is
-      File : constant Virtual_File :=
-               Get_File (Explorer.Tree.Model, Node, File_Column);
-   begin
-      if Get_History
-        (Get_History (Explorer.Kernel).all, Show_Absolute_Paths)
-      then
-         Set (Explorer.Tree.Model, Node, Display_Name_Column,
-              File.Display_Full_Name);
-      else
-         declare
-            Rel_Path : constant String :=
-                         +Relative_Path (File, Project_Directory (Project));
-         begin
-            if Rel_Path (Rel_Path'Last) = '/'
-              or else Rel_Path (Rel_Path'Last) = '\'
-            then
-               Set
-                 (Explorer.Tree.Model, Node,
-                  Display_Name_Column,
-                  Rel_Path (Rel_Path'First .. Rel_Path'Last - 1));
-            else
-               Set
-                 (Explorer.Tree.Model, Node,
-                  Display_Name_Column, Rel_Path);
-            end if;
-         end;
-      end if;
-   end Update_Directory_Node_Text;
 
    -------------
    -- Execute --
@@ -1272,6 +1329,8 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class)
    is
       Exp : constant Project_Explorer := Project_Explorer (Explorer);
+      Show_Abs_Paths : constant Boolean :=
+         Get_History (Get_History (Exp.Kernel).all, Show_Absolute_Paths);
 
       procedure Process_Node (Iter : Gtk_Tree_Iter; Project : Project_Type);
       --  Recursively process node
@@ -1290,7 +1349,7 @@ package body Project_Explorers is
                  (Exp.Tree.Model, Exp.Kernel, Iter, False);
 
             when Directory_Node_Types
-               | File_Node | Category_Node | Entity_Node =>
+               | File_Node | Category_Node | Entity_Node | Dummy_Node =>
                null;
          end case;
 
@@ -1300,7 +1359,10 @@ package body Project_Explorers is
                   Process_Node (It, No_Project);
 
                when Directory_Node_Types =>
-                  Update_Directory_Node_Text (Exp, Prj, It);
+                  Set (Exp.Tree.Model, It, Display_Name_Column,
+                       Directory_Node_Text
+                          (Show_Abs_Paths, Prj,
+                           Get_File (Exp.Tree.Model, It, File_Column)));
 
                when others =>
                   null;
@@ -1313,7 +1375,6 @@ package body Project_Explorers is
       Iter : Gtk_Tree_Iter := Get_Iter_First (Exp.Tree.Model);
       Sort : constant Gint := Freeze_Sort (Exp.Tree.Model);
    begin
-      --  There can be multiple toplevel nodes in the case of the flat view
       while Iter /= Null_Iter loop
          Process_Node (Iter, Get_Project (Exp.Kernel));
          Next (Exp.Tree.Model, Iter);
@@ -1331,29 +1392,9 @@ package body Project_Explorers is
    is
       Tree : constant Project_Explorer := Project_Explorer (Explorer);
    begin
-      Clear (Tree.Tree.Model);
+      Tree.Tree.Model.Clear;
       Refresh (Explorer);
    end Update_View;
-
-   -----------------------------------
-   -- Set_Directory_Node_Attributes --
-   -----------------------------------
-
-   procedure Set_Directory_Node_Attributes
-     (Explorer  : access Project_Explorer_Record'Class;
-      Directory : Virtual_File;
-      Node      : Gtk_Tree_Iter;
-      Project   : Project_Type;
-      Node_Type : Directory_Node_Types) is
-   begin
-      Ensure_Directory (Directory);
-      Set_File (Explorer.Tree.Model, Node, File_Column, Directory);
-
-      Update_Directory_Node_Text (Explorer, Project, Node);
-
-      Set_Node_Type (Explorer.Tree.Model, Node, Node_Type, False);
-      Set (Explorer.Tree.Model, Node, Up_To_Date_Column, False);
-   end Set_Directory_Node_Attributes;
 
    ---------------------
    -- Create_Contents --
@@ -1460,305 +1501,61 @@ package body Project_Explorers is
       return Gtk_Widget (Label);
    end Create_Contents;
 
-   -------------------------
-   -- Expand_Project_Node --
-   -------------------------
-
-   procedure Expand_Project_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter)
-   is
-      Project : constant Project_Type :=
-                  Get_Project_From_Node
-                    (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-      Files   : File_Array_Access := Project.Source_Files (Recursive => False);
-   begin
-      Update_Project_Node (Explorer, Files.all, Node);
-      Unchecked_Free (Files);
-   end Expand_Project_Node;
-
-   ----------------------------
-   -- Add_Object_Directories --
-   ----------------------------
-
-   procedure Add_Object_Directories
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter;
-      Project  : Project_Type)
-   is
-      Obj  : constant Virtual_File := Project.Object_Dir;
-      Exec : constant Virtual_File := Executables_Directory (Project);
-
-      function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter;
-      --  Create a node for display of the object directory
-
-      -----------------------
-      -- Create_Object_Dir --
-      -----------------------
-
-      function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter is
-         N   : Gtk_Tree_Iter;
-         Ref : Gtk_Tree_Iter := Children (Explorer.Tree.Model, Node);
-      begin
-         while Ref /= Null_Iter loop
-            if Get_Node_Type (Explorer.Tree.Model, Ref) /= Directory_Node then
-               Insert_Before (Explorer.Tree.Model, N, Node, Ref);
-               return N;
-            end if;
-
-            Next (Explorer.Tree.Model, Ref);
-         end loop;
-
-         Append (Explorer.Tree.Model, N, Node);
-         return N;
-      end Create_Object_Dir;
-
-   begin
-      if Obj /= GNATCOLL.VFS.No_File then
-         Set_Directory_Node_Attributes
-           (Explorer  => Explorer,
-            Directory => Obj,
-            Node      => Create_Object_Dir (Node),
-            Project   => Project,
-            Node_Type => Obj_Directory_Node);
-      end if;
-
-      if Exec /= GNATCOLL.VFS.No_File and then Exec /= Obj then
-         Set_Directory_Node_Attributes
-           (Explorer  => Explorer,
-            Directory => Exec,
-            Node      => Create_Object_Dir (Node),
-            Project   => Project,
-            Node_Type => Exec_Directory_Node);
-      end if;
-   end Add_Object_Directories;
-
-   ----------------------
-   -- Expand_File_Node --
-   ----------------------
-
-   procedure Expand_File_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter)
-   is
-      File_Name : constant Virtual_File :=
-                    Get_File_From_Node (Explorer.Tree.Model, Node);
-   begin
-      Append_File_Info (Explorer.Kernel, Explorer.Tree.Model, Node, File_Name);
-
-   exception
-      when E : others => Trace (Me, E);
-   end Expand_File_Node;
-
-   ----------------------
-   -- Compute_Children --
-   ----------------------
-
-   procedure Compute_Children
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter)
-   is
-      type Boolean_Categories is array (Language_Category) of Boolean;
-      Expansion : Boolean_Categories;
-      N, File   : Gtk_Tree_Iter;
-      Path      : Gtk_Tree_Path;
-      Dummy     : Boolean;
-      pragma Unreferenced (Dummy);
-      Sort_Col  : constant Gint := Freeze_Sort (Explorer.Tree.Model);
-
-   begin
-      --  If the node is not already up-to-date
-      if not Is_Up_To_Date (Explorer.Tree.Model, Node) then
-         --  Remove the dummy node, and report that the node is up-to-date
-
-         N := Children (Explorer.Tree.Model, Node);
-         if N /= Null_Iter then
-            Remove (Explorer.Tree.Model, N);
-         end if;
-
-         Set (Explorer.Tree.Model, Node, Up_To_Date_Column, True);
-
-         case Get_Node_Type (Explorer.Tree.Model, Node) is
-            when Project_Node_Types =>
-               Expand_Project_Node (Explorer, Node);
-
-            when Directory_Node_Types =>
-               null;
-
-            when File_Node =>
-               Expand_File_Node (Explorer, Node);
-
-            when Category_Node =>
-               --  If this is not up-to-date, we need to recompute at the
-               --  file_node level, but keep the other category nodes in their
-               --  expanded state.
-
-               --  Memorize the current expansion state for the categories
-
-               Expansion := (others => False);
-
-               File := Parent (Explorer.Tree.Model, Node);
-               N := Children (Explorer.Tree.Model, File);
-
-               while N /= Null_Iter loop
-                  Path := Get_Path (Explorer.Tree.Model, N);
-                  Expansion (Get_Category_Type (Explorer.Tree.Model, N)) :=
-                    Row_Expanded (Explorer.Tree, Path);
-                  Path_Free (Path);
-                  Next (Explorer.Tree.Model, N);
-               end loop;
-
-               --  Recompute the file node (closing and expanding it again will
-               --  generate the appropriate callbacks, and this is taken care
-               --  of automatically)
-
-               Path := Get_Path (Explorer.Tree.Model, File);
-               Dummy := Collapse_Row (Explorer.Tree, Path);
-
-               --  ??? Expanding should already recompile the children...
-               --               Compute_Children (Explorer, File);
-
-               Dummy := Expand_Row (Explorer.Tree, Path, False);
-               Path_Free (Path);
-
-               --  Restore the state of the categories
-
-               N := Children (Explorer.Tree.Model, File);
-
-               while N /= Null_Iter loop
-                  if Expansion
-                    (Get_Category_Type (Explorer.Tree.Model, N))
-                  then
-                     Path := Get_Path (Explorer.Tree.Model, N);
-                     Dummy := Expand_Row (Explorer.Tree, Path, False);
-                     Path_Free (Path);
-                  end if;
-
-                  Next (Explorer.Tree.Model, N);
-               end loop;
-
-            when Entity_Node =>
-               --   These are leaf nodes, so don't have children
-               null;
-         end case;
-
-      else
-         Update_Node (Explorer, Node, null, Force_Expanded => True);
-      end if;
-
-      Thaw_Sort (Explorer.Tree.Model, Sort_Col);
-   end Compute_Children;
-
-   --------------------
-   -- Idle_Scroll_To --
-   --------------------
-
-   function Idle_Scroll_To (Data : Explorer_Path) return Boolean is
-   begin
-      Scroll_To_Cell
-        (Data.Explorer.Tree,
-         Data.Path, null, True,
-         0.1, 0.1);
-      Path_Free (Data.Path);
-      return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end Idle_Scroll_To;
-
    -------------------
    -- Expand_Row_Cb --
    -------------------
 
    procedure Expand_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Iter     : Gtk_Tree_Iter;
-      Path     : Gtk_Tree_Path)
+     (Explorer    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Filter_Iter : Gtk_Tree_Iter;
+      Filter_Path : Gtk_Tree_Path)
    is
-      Margin    : constant Gint := 30;
       T         : constant Project_Explorer := Project_Explorer (Explorer);
-      Area_Rect : Gdk_Rectangle;
-      Path2     : Gtk_Tree_Path;
-      Iter2     : Gtk_Tree_Iter;
-
+      Iter      : Gtk_Tree_Iter;
       Success   : Boolean;
-      pragma Unreferenced (Success);
       Dummy     : G_Source_Id;
-      pragma Unreferenced (Dummy);
-
-      Alloc : Gtk_Allocation;
+      Sort_Col  : Gint;
+      N_Type    : Node_Types;
+      pragma Unreferenced (Success, Dummy);
    begin
-      if T.Expanding then
+      if T.Expanding or else Filter_Iter = Null_Iter then
          return;
       end if;
 
       T.Expanding := True;
+      T.Tree.Convert_To_Store_Iter
+        (Store_Iter => Iter, Filter_Iter => Filter_Iter);
+      N_Type := Get_Node_Type (T.Tree.Model, Iter);
+      Set_Node_Type (T.Tree.Model, Iter, N_Type, Expanded => True);
 
-      Compute_Children (T, Iter);
+      Sort_Col := Freeze_Sort (T.Tree.Model);
 
-      Success := Expand_Row (T.Tree, Path, False);
+      case N_Type is
+         when Project_Node_Types =>
+            Refresh_Project_Node
+              (T, Iter,
+               Flat_View =>
+                  Get_History (Get_History (T.Kernel).all, Show_Flat_View));
+            Success := Expand_Row (T.Tree, Filter_Path, False);
 
-      --  Gtk+ Hack. Here, in Compute_Children, we have probably removed the
-      --  prelight, either when re-sorting the tree, or when deleting rows
-      --  (the dummy iter, or project-related iters).
-      --  In order to re-prelight the expander, fake a motion event.
-      --  This is a copy of a hack done in gtktreeview.c
-      --  (gtk_tree_view_real_collapse_row)
-      declare
-         Event  : Gdk_Event;
-         Child_X, Child_Y, X, Y  : Gint;
-         Mask   : Gdk_Modifier_Type;
-         Dummy_W : Gdk_Window;
-         Child  : Gdk_Window;
-         Parent : Gdk_Window;
-         Dummy  : Boolean;
-         pragma Unreferenced (Dummy);
-         use Gdk;
-      begin
-         Child := Get_Bin_Window (T.Tree);
-         Parent := Get_Parent (Child);
-         Get_Pointer (Parent, X, Y, Mask, Dummy_W);
-         if Dummy_W = Child then
-            Gdk_New (Event, Motion_Notify);
-            Get_Position (Child, Child_X, Child_Y);
+         when File_Node =>
+            Append_File_Info
+              (T.Kernel, T.Tree.Model, Iter,
+               Get_File_From_Node (T.Tree.Model, Iter), Sorted => False);
+            Success := Expand_Row (T.Tree, Filter_Path, False);
 
-            Event.Motion.Window := Child;
-            Event.Motion.Time := 0;
-            Event.Motion.X := Gdouble (X - Child_X);
-            Event.Motion.Y := Gdouble (Y - Child_Y);
-            Dummy := Return_Callback.Emit_By_Name
-              (T.Tree, Signal_Motion_Notify_Event, Event);
-         end if;
-      end;
+         when Directory_Node_Types | Category_Node | Entity_Node
+            | Dummy_Node =>
+            null;   --  nothing to do
+      end case;
 
-      Set_Node_Type
-        (T.Tree.Model,
-         Iter,
-         Get_Node_Type (T.Tree.Model, Iter),
-         True);
-
-      if T.Tree.Get_Realized then
-         Iter2 := Children (T.Tree.Model, Iter);
-
-         if Iter2 /= Null_Iter then
-            Path2 := Get_Path (T.Tree.Model, Iter2);
-            Get_Cell_Area (T.Tree, Path2, Get_Column (T.Tree, 0), Area_Rect);
-            T.Tree.Get_Allocation (Alloc);
-            if Area_Rect.Y > Alloc.Height - Margin then
-               Dummy :=
-                 Scroll_Idle.Idle_Add
-                   (Idle_Scroll_To'Access, (T, Copy (Path)));
-            end if;
-            Path_Free (Path2);
-         end if;
-      end if;
-
+      Thaw_Sort (T.Tree.Model, Sort_Col);
       T.Expanding := False;
 
    exception
       when E : others =>
          Trace (Me, E);
+         Thaw_Sort (T.Tree.Model, Sort_Col);
          T.Expanding := False;
    end Expand_Row_Cb;
 
@@ -1767,491 +1564,22 @@ package body Project_Explorers is
    ---------------------
 
    procedure Collapse_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Iter     : Gtk_Tree_Iter;
-      Path     : Gtk_Tree_Path)
+     (Explorer    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Filter_Iter : Gtk_Tree_Iter;
+      Filter_Path : Gtk_Tree_Path)
    is
-      pragma Unreferenced (Path);
-
+      pragma Unreferenced (Filter_Path);
       E : constant Project_Explorer := Project_Explorer (Explorer);
-
+      Iter : Gtk_Tree_Iter;
    begin
-      --  Redraw the pixmap
-
-      Set_Node_Type
+      E.Tree.Convert_To_Store_Iter
+         (Store_Iter => Iter, Filter_Iter => Filter_Iter);
+      Set_Node_Type   --  update the icon
         (E.Tree.Model,
          Iter,
          Get_Node_Type (E.Tree.Model, Iter),
-         False);
+         Expanded => False);
    end Collapse_Row_Cb;
-
-   ---------------------------
-   -- Get_Imported_Projects --
-   ---------------------------
-
-   function Get_Imported_Projects
-     (Project         : Project_Type;
-      Direct_Only     : Boolean := True;
-      Include_Project : Boolean := False)
-      return Project_Type_Array
-   is
-      Count : Natural := 0;
-      Iter  : Project_Iterator :=
-        Project.Start (Recursive => True, Direct_Only => Direct_Only);
-   begin
-      while Current (Iter) /= No_Project loop
-         Count := Count + 1;
-         Next (Iter);
-      end loop;
-
-      declare
-         Imported : Project_Type_Array (1 .. Count);
-         Index    : Natural := Imported'First;
-      begin
-         Iter := Start
-           (Project, Recursive => True, Direct_Only => Direct_Only);
-         while Current (Iter) /= No_Project loop
-            --  In some cases, we get the project itself in the list of its
-            --  dependencies (???). For instance, doing a search in the
-            --  explorer if we didn't have this test would duplicate the
-            --  project node.
-            if Include_Project or else Current (Iter) /= Project then
-               Imported (Index) := Current (Iter);
-               Index := Index + 1;
-            end if;
-            Next (Iter);
-         end loop;
-
-         return Imported (Imported'First .. Index - 1);
-      end;
-   end Get_Imported_Projects;
-
-   -------------------------
-   -- Update_Project_Node --
-   -------------------------
-
-   procedure Update_Project_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Files    : File_Array;
-      Node     : Gtk_Tree_Iter)
-   is
-      function Is_Hidden (Dir : Virtual_File) return Boolean;
-      --  Return true if Dir contains an hidden directory (a directory starting
-      --  with a dot).
-
-      Project   : constant Project_Type :=
-                    Get_Project_From_Node
-                      (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-
-      Dirs      : constant File_Array := Project.Source_Dirs;
-
-      N, N2, N3 : Gtk_Tree_Iter;
-      Index     : Natural;
-      Prj       : Project_Type;
-      Imported  : Project_Type_Array := Get_Imported_Projects (Project);
-
-      ---------------
-      -- Is_Hidden --
-      ---------------
-
-      function Is_Hidden (Dir : Virtual_File) return Boolean is
-
-         Root : constant Virtual_File := Get_Root (Dir);
-         D    : Virtual_File := Dir;
-
-      begin
-         while D /= GNATCOLL.VFS.No_File
-           and then D /= Root
-         loop
-            if Is_Hidden (Explorer.Kernel, D.Base_Dir_Name) then
-               return True;
-            end if;
-
-            D := D.Get_Parent;
-         end loop;
-
-         return False;
-      end Is_Hidden;
-
-      S_Dirs   : File_Node_Hash.Map;
-      Old_Dirs : File_Node_Hash.Map;
-      S_Files  : Filename_Node_Hash.Map;
-      D_Cursor : File_Node_Hash.Cursor;
-      S_Cursor : Filename_Node_Hash.Cursor;
-
-   begin
-      --  Depending on whether we used trusted mode or not, some extra
-      --  directories might be displayed in addition to the explicit ones
-      --  mentioned in the project. This would be the case if some of them are
-      --  links but the user chose the trusted mode anyway. This is acceptable,
-      --  since that is an explicit choice from the user.
-
-      --  Find all existing source dirs and files. Directory names read from
-      --  the tree always end with a directory separator.
-
-      N := Children (Explorer.Tree.Model, Node);
-
-      while N /= Null_Iter loop
-         N2 := N;
-         Next (Explorer.Tree.Model, N2);
-
-         case Get_Node_Type (Explorer.Tree.Model, N) is
-            when Directory_Node =>
-               Include
-                 (Old_Dirs, Get_Absolute_Name (Explorer.Tree.Model,  N), N);
-
-               N3 := Children (Explorer.Tree.Model, N);
-               while N3 /= Null_Iter loop
-                  Include
-                    (S_Files,
-                     Full_Name
-                       (Get_Absolute_Name (Explorer.Tree.Model, N3)).all,
-                     N3);
-                  Next (Explorer.Tree.Model, N3);
-               end loop;
-
-            when Obj_Directory_Node | Exec_Directory_Node =>
-               --  Remove it, we'll put it back anyway
-               Remove (Explorer.Tree.Model, N);
-
-            when Project_Node_Types =>
-               --  The list of imported projects could change if another
-               --  dependency was added, so we need to check for this case
-               --  as well.
-
-               Prj := Get_Project_From_Node
-                 (Explorer.Tree.Model, Explorer.Kernel, N, False);
-
-               if Prj /= No_Project then
-                  Index := Imported'First;
-                  while Index <= Imported'Last loop
-                     if Imported (Index) = Prj then
-                        Imported (Index) := No_Project;
-                        exit;
-                     end if;
-                     Index := Index + 1;
-                  end loop;
-               else
-                  Index := Natural'Last;
-               end if;
-
-               if Index > Imported'Last then
-                  Remove (Explorer.Tree.Model, N);
-               elsif Get_Expanded (Explorer.Tree, N) then
-                  Update_Node (Explorer, N, Files_In_Project => null);
-               end if;
-
-            when others =>
-               null;
-
-         end case;
-
-         N := N2;
-      end loop;
-
-      --  Now add each file (and missing source dirs when needed). The
-      --  directories are created based on the needs of the files, not on the
-      --  source dirs attribute (this is done later for the directories that
-      --  contain no file) so that when a project is created through the
-      --  debugger for instance it doesn't have to include the runtime dirs
-      --  and other directories that might contain source files.
-
-      for F in Files'Range loop
-         declare
-            Dir : constant Virtual_File := Get_Parent (Files (F));
-         begin
-            D_Cursor := Find (S_Dirs, Dir);
-
-            if D_Cursor = File_Node_Hash.No_Element then
-               --  Was this directory already displayed in the tree ?
-
-               D_Cursor := Find (Old_Dirs, Dir);
-
-               if D_Cursor = File_Node_Hash.No_Element then
-                  --  No, create it
-
-                  if Get_History
-                    (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
-                    or else not Is_Hidden (Dir)
-                  then
-                     Append
-                       (Explorer.Tree.Model,
-                        Iter    => N,
-                        Parent  => Node);
-                     Set_Directory_Node_Attributes
-                       (Explorer  => Explorer,
-                        Directory => Dir,
-                        Node      => N,
-                        Project   => Project,
-                        Node_Type => Directory_Node);
-                     Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
-                     Include (S_Dirs, Dir, N);
-                  else
-                     N := Null_Iter;
-                  end if;
-
-               else
-                  --  Consider the directory as new, ie we need to keep it for
-                  --  the new representation of tree
-                  N := Element (D_Cursor);
-                  Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
-                  Include (S_Dirs, Dir, N);
-                  Delete (Old_Dirs, D_Cursor);
-               end if;
-
-            else
-               N := Element (D_Cursor);
-            end if;
-         end;
-
-         S_Cursor := Find (S_Files, Full_Name (Files (F)).all);
-
-         if S_Cursor /= Filename_Node_Hash.No_Element then
-            --  The file was already present in the tree, preserve it if it has
-            --  the same parent directory
-
-            N2 := Element (S_Cursor);
-            if Parent (Explorer.Tree.Model, N2) /= N then
-               --  Do not remove from the tree immediately, since we could end
-               --  up with an empty directory node, which would thus become
-               --  unexpanded.
-               --  Add the file at the new location
-
-               if N /= Null_Iter then
-                  Append_File
-                    (Explorer.Kernel, Explorer.Tree.Model, N, Files (F));
-               end if;
-
-            else
-               --  Remove the file from the htable, so that we do not delete
-               --  the node later
-               Delete (S_Files, S_Cursor);
-            end if;
-
-         elsif N /= Null_Iter then
-            Append_File
-              (Explorer.Kernel, Explorer.Tree.Model, N, Files (F));
-         end if;
-      end loop;
-
-      --  Remove file nodes that no longer correspond to existing files
-
-      S_Cursor := First (S_Files);
-      while Has_Element (S_Cursor) loop
-         N := Element (S_Cursor);
-         Remove (Explorer.Tree.Model, N);
-         Next (S_Cursor);
-      end loop;
-
-      --  Remove directory nodes that no longer correspond to valid dirs.
-      --  These are the empty directories, since we only create directories
-      --  when we have files.
-
-      N := Children (Explorer.Tree.Model, Node);
-      while N /= Null_Iter loop
-         N2 := N;
-         Next (Explorer.Tree.Model, N);
-
-         if Get_Node_Type (Explorer.Tree.Model, N2) = Directory_Node then
-            if Find (Old_Dirs, Get_Absolute_Name (Explorer.Tree.Model, N2)) /=
-              File_Node_Hash.No_Element
-            then
-               Remove (Explorer.Tree.Model, N2);
-            end if;
-         end if;
-      end loop;
-
-      --  Add those source directories that contain no file
-
-      if Get_History (Get_History (Explorer.Kernel).all, Show_Empty_Dirs) then
-         for D in Dirs'Range loop
-            declare
-               Dir : constant Virtual_File := Dirs (D);
-            begin
-               Ensure_Directory (Dir);
-
-               if Find (S_Dirs, Dir) = File_Node_Hash.No_Element then
-                  if Get_History
-                    (Get_History (Explorer.Kernel).all, Show_Hidden_Dirs)
-                    or else not Is_Hidden (Dir)
-                  then
-                     Append
-                       (Explorer.Tree.Model,
-                        Iter    => N,
-                        Parent  => Node);
-                     Set_Directory_Node_Attributes
-                       (Explorer  => Explorer,
-                        Directory => Dir,
-                        Node      => N,
-                        Project   => Project,
-                        Node_Type => Directory_Node);
-                     Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
-                  end if;
-               end if;
-            end;
-         end loop;
-      end if;
-
-      Add_Object_Directories (Explorer, Node, Project);
-
-      --  Add project nodes
-
-      if not Get_History
-        (Get_History (Explorer.Kernel).all, Show_Flat_View)
-      then
-         for P in Imported'Range loop
-            if Imported (P) /= No_Project then
-               N := Add_Project_Node
-                 (Explorer, Project => Imported (P), Parent_Node => Node);
-            end if;
-         end loop;
-      end if;
-   end Update_Project_Node;
-
-   -----------------
-   -- Update_Node --
-   -----------------
-
-   procedure Update_Node
-     (Explorer         : access Project_Explorer_Record'Class;
-      Node             : Gtk_Tree_Iter;
-      Files_In_Project : File_Array_Access;
-      Force_Expanded   : Boolean := False)
-   is
-      Sort_Col  : constant Gint := Freeze_Sort (Explorer.Tree.Model);
-
-      N, N2     : Gtk_Tree_Iter;
-      Node_Type : constant Node_Types :=
-                    Get_Node_Type (Explorer.Tree.Model, Node);
-      N_Type    : Node_Types;
-      Prj       : constant Project_Type :=
-                    Get_Project_From_Node
-                      (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-      Expanded  : constant Boolean := Get_Expanded (Explorer.Tree, Node);
-   begin
-      --  If the information about the node hasn't been computed before,
-      --  then we don't need to do anything. This will be done when the
-      --  node is actually expanded by the user.
-
-      if Is_Up_To_Date (Explorer.Tree.Model, Node) then
-         --  Likewise, if a node is not expanded, we simply remove all
-         --  underlying information.
-         --  Directory_Node contents is computed along with the project node,
-         --  so we mustn't remove its contents
-
-         if Force_Expanded
-           or else Expanded
-           or else Node_Type = Directory_Node
-         then
-            case Node_Type is
-               when Project_Node_Types =>
-                  declare
-                     Files : File_Array_Access := Files_In_Project;
-
-                  begin
-                     if Prj /= No_Project then
-                        if Files_In_Project = null then
-                           Files := Prj.Source_Files (Recursive => False);
-                        end if;
-
-                        Update_Project_Node (Explorer, Files.all, Node);
-
-                        if Files_In_Project = null then
-                           Unchecked_Free (Files);
-                        end if;
-                     end if;
-                  end;
-
-               when others => null;
-            end case;
-
-         else
-            Set_Up_To_Date (Explorer.Tree.Model, Node, False);
-
-            N := Children (Explorer.Tree.Model, Node);
-
-            while N /= Null_Iter loop
-               N2 := N;
-               Next (Explorer.Tree.Model, N);
-               Remove (Explorer.Tree.Model, N2);
-            end loop;
-
-            Append_Dummy_Iter (Explorer.Tree.Model, Node);
-         end if;
-      end if;
-
-      --  Has to be done whether the node is expanded or not, and whether it is
-      --  up-to-date or not, as long as its icon is visible.
-      --  Change the icons to reflect the modified state of the project.
-      if Node_Type in Project_Node_Types then
-         N_Type := Compute_Project_Node_Type (Explorer, Prj);
-         Set_Node_Type (Explorer.Tree.Model, Node, N_Type, Expanded);
-      end if;
-
-      Thaw_Sort (Explorer.Tree.Model, Sort_Col);
-   end Update_Node;
-
-   ---------------------------------------
-   -- Add_Or_Update_Flat_View_Root_Node --
-   ---------------------------------------
-
-   procedure Add_Or_Update_Flat_View_Root_Node
-     (Explorer : access Project_Explorer_Record'Class)
-   is
-      Iter2, Iter3 : Gtk_Tree_Iter;
-      Imported     : Project_Type_Array :=
-                       Get_Imported_Projects
-                         (Get_Project (Explorer.Kernel),
-                          Direct_Only     => False,
-                          Include_Project => True);
-      Found        : Boolean;
-      Id           : constant Gint := Freeze_Sort (Explorer.Tree.Model);
-
-   begin
-      Iter2 := Get_Iter_First (Explorer.Tree.Model);
-
-      while Iter2 /= Null_Iter loop
-         declare
-            Name : constant Virtual_File :=
-              Get_File (Explorer.Tree.Model, Iter2, Project_Path_Column);
-         begin
-            Found := False;
-
-            for Im in Imported'Range loop
-               if Imported (Im) /= No_Project
-                 and then Imported (Im).Project_Path = Name
-               then
-                  Imported (Im) := No_Project;
-                  Found := True;
-                  exit;
-               end if;
-            end loop;
-         end;
-
-         if not Found then
-            Iter3 := Iter2;
-            Next (Explorer.Tree.Model, Iter2);
-            Remove (Explorer.Tree.Model, Iter3);
-         else
-            Update_Node (Explorer, Iter2, null);
-            Next (Explorer.Tree.Model, Iter2);
-         end if;
-      end loop;
-
-      for Im in Imported'Range loop
-         if Imported (Im) = No_Project then
-            --  Already updated
-            null;
-         elsif Imported (Im) = Get_Project (Explorer.Kernel) then
-            Iter2 := Add_Project_Node (Explorer, Imported (Im), Null_Iter,
-                                       Name_Suffix => " (root project)");
-         elsif Imported (Im) /= No_Project then
-            Iter2 := Add_Project_Node (Explorer, Imported (Im), Null_Iter);
-         end if;
-      end loop;
-
-      Thaw_Sort (Explorer.Tree.Model, Id);
-   end Add_Or_Update_Flat_View_Root_Node;
 
    -------------
    -- Execute --
@@ -2266,85 +1594,373 @@ package body Project_Explorers is
       Refresh (Hook.Explorer);
    end Execute;
 
+   -------------------------
+   -- Directory_Node_Text --
+   -------------------------
+
+   function Directory_Node_Text
+     (Show_Abs_Paths : Boolean;
+      Project        : Project_Type;
+      Dir            : Virtual_File) return String
+   is
+   begin
+      if Show_Abs_Paths then
+         return Dir.Display_Full_Name;
+      else
+         declare
+            Rel : constant String :=
+               +Relative_Path (Dir, Project.Project_Path.Dir);
+         begin
+            if Rel = "" then
+               return "";
+            elsif Rel (Rel'Last) = '/' or else Rel (Rel'Last) = '\' then
+               return Rel (Rel'First .. Rel'Last - 1);
+            else
+               return Rel;
+            end if;
+         end;
+      end if;
+   end Directory_Node_Text;
+
    -------------
    -- Refresh --
    -------------
 
    procedure Refresh (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class) is
       T     : constant Project_Explorer := Project_Explorer (Explorer);
-      Iter  : Gtk_Tree_Iter;
-      Dummy : Boolean;
-      Path  : Gtk_Tree_Path;
-      pragma Unreferenced (Dummy);
+      Path_Start, Path_End : Gtk_Tree_Path;
+      Success : Boolean;
+      Id      : Gint;
 
    begin
-      --  No project view => Clean up the tree
       if Get_Project (T.Kernel) = No_Project then
-         Clear (T.Tree.Model);
-
-         --  ??? must free memory associated with entities !
+         T.Tree.Model.Clear;
          return;
       end if;
 
-      --  For a flat view
+      T.Tree.Filter.Ref;
 
-      if Get_History (Get_History (T.Kernel).all, Show_Flat_View) then
-         Add_Or_Update_Flat_View_Root_Node (T);
+      --  Store current settings (visible part, sort order,...)
+      Id := Freeze_Sort (T.Tree.Model);
+      T.Tree.Get_Visible_Range (Path_Start, Path_End, Success);
 
-      --  If the tree is empty, this simply means we never created it, so we
-      --  need to do it now.
+      --  Insert the nodes
+      Refresh_Project_Node
+        (Self      => T,
+         Node      => Null_Iter,
+         Flat_View =>
+          Get_History (Get_History (T.Kernel).all, Show_Flat_View));
 
-      elsif Get_Iter_First (T.Tree.Model) = Null_Iter then
-         Iter := Add_Project_Node (T, Get_Project (T.Kernel));
-         Path := Get_Path (T.Tree.Model, Iter);
-         Dummy := Collapse_Row (T.Tree, Path);
-         Compute_Children (T, Iter);
+      --  Restore initial settings
 
-         --  Expand, but we do not need to recompute the children, since this
-         --  was just done.
-         Gtk.Handlers.Handler_Block (T.Tree, T.Expand_Id);
-         Dummy := Expand_Row (T.Tree, Path, False);
-         Gtk.Handlers.Handler_Unblock (T.Tree, T.Expand_Id);
+      if Success then
+         T.Tree.Scroll_To_Cell
+           (Path      => Path_Start,
+            Column    => null,
+            Use_Align => True,
+            Row_Align => 0.0,
+            Col_Align => 0.0);
+         Path_Free (Path_Start);
+         Path_Free (Path_End);
+      end if;
 
-         Path_Free (Path);
+      Thaw_Sort (T.Tree.Model, Id);
+      T.Tree.Filter.Unref;
+   end Refresh;
 
-      --  If we are displaying a new view of the tree that was there before, we
-      --  want to keep the project nodes, and most important their open/close
-      --  status, so as to minimize the changes the user sees.
+   --------------------------
+   -- Refresh_Project_Node --
+   --------------------------
 
-      else
-         declare
-            Path_Start, Path_End : Gtk_Tree_Path;
-            Success : Boolean;
-         begin
+   procedure Refresh_Project_Node
+     (Self      : not null access Project_Explorer_Record'Class;
+      Node      : Gtk_Tree_Iter;
+      Flat_View : Boolean)
+   is
+      function Create_Or_Reuse_Node
+        (Self   : not null access Project_Explorer_Record'Class;
+         Parent : Gtk_Tree_Iter;
+         Kind   : Node_Types;
+         Name   : String;
+         File   : Virtual_File;
+         Add_Dummy : Boolean := False) return Gtk_Tree_Iter;
+      --  Check if Parent already has a child with the correct kind and name,
+      --  and returns it. If not, creates a new node, where Name is set for the
+      --  Display_Name_Column.
+      --  If Add_Dummy is true and a new node is created, a dummy child is
+      --  added to it so that the user can expand the node.
 
-            --  Memorize the visible path before updating
+      function Create_Or_Reuse_Project
+        (P : Project_Type; Add_Dummy : Boolean := False) return Gtk_Tree_Iter;
+      function Create_Or_Reuse_Directory
+        (Dir : Directory_Info) return Gtk_Tree_Iter;
+      procedure Create_Or_Reuse_File
+        (Dir : Gtk_Tree_Iter; File : Virtual_File);
+      --  Create a new project node, or reuse one if it exists
 
-            T.Tree.Get_Visible_Range (Path_Start, Path_End, Success);
+      function Is_Hidden (Dir : Virtual_File) return Boolean;
+      --  Return true if Dir contains an hidden directory (a directory starting
+      --  with a dot).
 
-            --  Update the tree
+      Show_Abs_Paths : constant Boolean :=
+        Get_History (Get_History (Self.Kernel).all, Show_Absolute_Paths);
 
-            Update_Node
-              (T, Get_Iter_First (T.Tree.Model), Files_In_Project => null);
+      Child   : Gtk_Tree_Iter;
+      Files   : File_Array_Access;
+      Project : Project_Type;
+      Dirs    : Dirs_Files_Hash.Map;
 
-            --  Scroll to the initial location after updating
+      ---------------
+      -- Is_Hidden --
+      ---------------
 
-            if Success then
-               T.Tree.Scroll_To_Cell
-                 (Path      => Path_Start,
-                  Column    => null,
-                  Use_Align => True,
-                  Row_Align => 0.0,
-                  Col_Align => 0.0);
-               Path_Free (Path_Start);
-               Path_Free (Path_End);
+      function Is_Hidden (Dir : Virtual_File) return Boolean is
+         Root : constant Virtual_File := Get_Root (Dir);
+         D    : Virtual_File := Dir;
+      begin
+         while D /= GNATCOLL.VFS.No_File
+           and then D /= Root
+         loop
+            if Is_Hidden (Self.Kernel, D.Base_Dir_Name) then
+               return True;
             end if;
+
+            D := D.Get_Parent;
+         end loop;
+
+         return False;
+      end Is_Hidden;
+
+      --------------------------
+      -- Create_Or_Reuse_Node --
+      --------------------------
+
+      function Create_Or_Reuse_Node
+        (Self   : not null access Project_Explorer_Record'Class;
+         Parent : Gtk_Tree_Iter;
+         Kind   : Node_Types;
+         Name   : String;
+         File   : Virtual_File;
+         Add_Dummy : Boolean := False) return Gtk_Tree_Iter
+      is
+         Iter : Gtk_Tree_Iter := Null_Iter;
+      begin
+         if Parent = Null_Iter then
+            Iter := Self.Tree.Model.Get_Iter_First;
+         else
+            Iter := Self.Tree.Model.Children (Parent);
+         end if;
+
+         while Iter /= Null_Iter loop
+            if Get_Node_Type (Self.Tree.Model, Iter) = Kind
+              and then Get_File (Self.Tree.Model, Iter, File_Column) = File
+            then
+               return Iter;
+            end if;
+            Self.Tree.Model.Next (Iter);
+         end loop;
+
+         Self.Tree.Model.Append (Iter => Iter, Parent => Parent);
+         Self.Tree.Model.Set (Iter, Display_Name_Column, Name);
+         Set_File (Self.Tree.Model, Iter, File_Column, File);
+         Set_Node_Type (Self.Tree.Model, Iter, Kind, False);
+
+         if Add_Dummy then
+            Append_Dummy_Iter (Self.Tree.Model, Iter);
+         end if;
+
+         return Iter;
+      end Create_Or_Reuse_Node;
+
+      -----------------------------
+      -- Create_Or_Reuse_Project --
+      -----------------------------
+
+      function Create_Or_Reuse_Project
+        (P : Project_Type; Add_Dummy : Boolean := False) return Gtk_Tree_Iter
+      is
+         T : constant Node_Types := Compute_Project_Node_Type (Self, P);
+      begin
+         if Flat_View and then P = Get_Project (Self.Kernel) then
+            Child := Create_Or_Reuse_Node
+              (Self   => Self,
+               Parent => Node,
+               Kind   => T,
+               File   => P.Project_Path,
+               Name   => P.Name & " (root project)",
+               Add_Dummy => Add_Dummy);
+         elsif P.Extending_Project /= No_Project then
+            Child := Create_Or_Reuse_Node
+              (Self   => Self,
+               Parent => Node,
+               Kind   => T,
+               File   => P.Project_Path,
+               Name   => P.Name & " (extended)",
+               Add_Dummy => Add_Dummy);
+         else
+            Child := Create_Or_Reuse_Node
+              (Self   => Self,
+               Parent => Node,
+               Kind   => T,
+               File   => P.Project_Path,
+               Name   => P.Name,
+               Add_Dummy => Add_Dummy);
+         end if;
+
+         Set_File (Self.Tree.Model, Child, File_Column, P.Project_Path);
+         return Child;
+      end Create_Or_Reuse_Project;
+
+      -------------------------------
+      -- Create_Or_Reuse_Directory --
+      -------------------------------
+
+      function Create_Or_Reuse_Directory
+        (Dir : Directory_Info) return Gtk_Tree_Iter is
+      begin
+         return Create_Or_Reuse_Node
+           (Self   => Self,
+            Parent => Node,
+            Kind   => Dir.Kind,
+            File   => Dir.Directory,
+            Name   =>
+              Directory_Node_Text (Show_Abs_Paths, Project, Dir.Directory));
+      end Create_Or_Reuse_Directory;
+
+      --------------------------
+      -- Create_Or_Reuse_File --
+      --------------------------
+
+      procedure Create_Or_Reuse_File
+        (Dir : Gtk_Tree_Iter; File : Virtual_File)
+      is
+         Child : Gtk_Tree_Iter;
+         Lang : Language_Access;
+      begin
+         Child := Create_Or_Reuse_Node
+           (Self   => Self,
+            Parent => Dir,
+            Kind   => File_Node,
+            File   => File,
+            Name   => File.Display_Base_Name);
+
+         Lang := Get_Language_From_File
+           (Get_Language_Handler (Self.Kernel), File);
+         if Lang /= Unknown_Lang then
+            Append_Dummy_Iter (Self.Tree.Model, Child);
+         end if;
+      end Create_Or_Reuse_File;
+
+      Filter  : Filter_Type;
+      Path    : Gtk_Tree_Path;
+      Success : Boolean;
+      pragma Unreferenced (Success);
+
+   begin
+      if Node = Null_Iter then
+         if Flat_View then
+            declare
+               Iter : Project_Iterator := Get_Project (Self.Kernel).Start
+                 (Direct_Only => False,
+                  Include_Extended => True);
+            begin
+               while Current (Iter) /= No_Project loop
+                  Filter := Is_Visible
+                    (Self.Filter, Current (Iter).Project_Path);
+
+                  if Filter = Show_Direct then
+                     Child := Create_Or_Reuse_Project (Current (Iter));
+                     Refresh_Project_Node (Self, Child, Flat_View);
+                  end if;
+
+                  Next (Iter);
+               end loop;
+            end;
+         else
+            --  Create and expand the node for the root project
+            Child := Create_Or_Reuse_Project
+              (Get_Project (Self.Kernel), Add_Dummy => True);
+
+            --  This only works if the tree is still associated with the model
+            Path := Gtk_Tree_Path_New_First;
+            Success := Expand_Row (Self.Tree, Path, False);
+            Path_Free (Path);
+         end if;
+         return;
+      end if;
+
+      Project := Get_Project_From_Node
+        (Self.Tree.Model, Self.Kernel, Node, Importing => False);
+      Remove_Dummy_Iter (Self.Tree.Model, Node);
+
+      --  Insert non-expanded nodes for imported projects
+
+      if not Flat_View then
+         declare
+            Iter : Project_Iterator := Project.Start
+              (Direct_Only => True, Include_Extended => True);
+         begin
+            while Current (Iter) /= No_Project loop
+               if Current (Iter) /= Project then
+                  Filter := Is_Visible
+                    (Self.Filter, Current (Iter).Project_Path);
+
+                  if Filter /= Hide then
+                     Child := Create_Or_Reuse_Project
+                       (Current (Iter), Add_Dummy => True);
+                  end if;
+               end if;
+
+               Next (Iter);
+            end loop;
          end;
       end if;
 
-   exception
-      when E : others => Trace (Me, E);
-   end Refresh;
+      --  Prepare list of directories
+
+      for Dir of Project.Source_Dirs loop
+         Dirs.Include ((Dir, Directory_Node), Files_List.Empty_List);
+      end loop;
+
+      Dirs.Include
+        ((Project.Object_Dir, Obj_Directory_Node), Files_List.Empty_List);
+
+      if Project.Executables_Directory /= Project.Object_Dir then
+         Dirs.Include
+           ((Project.Executables_Directory, Exec_Directory_Node),
+            Files_List.Empty_List);
+      end if;
+
+      --  Prepare list of files
+
+      Files := Project.Source_Files (Recursive => False);
+      for F in Files'Range loop
+         Dirs ((Files (F).Dir, Directory_Node)).Append (Files (F));
+      end loop;
+      Unchecked_Free (Files);
+
+      --  Now insert directories and files
+
+      declare
+         Dir : Dirs_Files_Hash.Cursor := Dirs.First;
+         Show_Hidden : constant Boolean :=
+           Get_History (Get_History (Self.Kernel).all, Show_Hidden_Dirs);
+      begin
+         while Has_Element (Dir) loop
+            if Show_Hidden or else not Is_Hidden (Key (Dir).Directory) then
+               Child := Create_Or_Reuse_Directory (Key (Dir));
+
+               for F of Dirs (Dir) loop
+                  --  ??? This is O(n^2), since every time we insert a row
+                  --  it will be searched next time.
+                  Create_Or_Reuse_File (Child, F);
+               end loop;
+            end if;
+
+            Next (Dir);
+         end loop;
+      end;
+   end Refresh_Project_Node;
 
    -----------------------------
    -- Default_Context_Factory --
@@ -2552,7 +2168,7 @@ package body Project_Explorers is
             if Check_Projects then
                declare
                   Project_Name : constant Virtual_File :=
-                    Get_File (Explorer.Tree.Model, Start, Project_Path_Column);
+                    Get_File (Explorer.Tree.Model, Start, File_Column);
                begin
                   if Projects.Contains (Project_Name) then
                      Result := Start;
@@ -2560,13 +2176,11 @@ package body Project_Explorers is
 
                   else
                      Projects.Insert (Project_Name);
-                     Compute_Children (Explorer, Start);
                      Result := Children (Explorer.Tree.Model, Start);
                   end if;
                end;
 
             else
-               Compute_Children (Explorer, Start);
                Result := Children (Explorer.Tree.Model, Start);
             end if;
 
@@ -2593,7 +2207,6 @@ package body Project_Explorers is
          if C.Include_Entities then
             --  The file was already parsed, and we know it matched
             if Status >= Search_Match then
-               Compute_Children (Explorer, Start);
                Result := Children (Explorer.Tree.Model, Start);
                Finish := False;
                return;
@@ -2605,7 +2218,6 @@ package body Project_Explorers is
                     (Get_Directory_From_Node (Explorer.Tree.Model, Start), N))
                then
                   Set (C.Matches, +N, Search_Match);
-                  Compute_Children (Explorer, Start);
                   Result := Children (Explorer.Tree.Model, Start);
                   Finish := False;
                   return;
@@ -2740,6 +2352,9 @@ package body Project_Explorers is
                         Tmp := Start_Node;
                         Next (Explorer.Tree.Model, Tmp);
                      end if;
+
+                  when Dummy_Node =>
+                     null;
                end case;
 
                while Tmp = Null_Iter loop

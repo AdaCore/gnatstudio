@@ -204,6 +204,9 @@ package body GPS.Location_View_Filter is
                end if;
             end if;
 
+            --  ??? Should do a single pass on the whole model, and have an
+            --  extra boolean column in the model. The following is O(n^2).
+
             Child := Children (Child_Model, Iter);
             while Child /= Null_Iter loop
                if Is_Visible (Child_Model, Child, Self) then
