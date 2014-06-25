@@ -114,6 +114,8 @@ package body Project_Explorers is
      "explorer-show-empty-directories";
    Projects_Before_Directories : constant History_Key :=
      "explorer-show-projects-first";
+   Show_Object_Dirs    : constant History_Key :=
+     "explorer-show-object-dirs";
 
    Toggle_Absolute_Path_Name : constant String :=
      "Explorer toggle absolute paths";
@@ -1095,6 +1097,12 @@ package body Project_Explorers is
         (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
       Menu.Add (Check);
 
+      Gtk_New (Check, -"Show object directories");
+      Associate (Get_History (View.Kernel).all, Show_Object_Dirs, Check);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled, Update_View'Access, View);
+      Menu.Add (Check);
+
       Gtk_New (Check, -"Show empty directories");
       Associate (Get_History (View.Kernel).all, Show_Empty_Dirs, Check);
       Widget_Callback.Object_Connect
@@ -1725,6 +1733,8 @@ package body Project_Explorers is
 
       Show_Abs_Paths : constant Boolean :=
         Get_History (Get_History (Self.Kernel).all, Show_Absolute_Paths);
+      Show_Obj_Dirs : constant Boolean :=
+        Get_History (Get_History (Self.Kernel).all, Show_Object_Dirs);
 
       Child   : Gtk_Tree_Iter;
       Files   : File_Array_Access;
@@ -1943,13 +1953,15 @@ package body Project_Explorers is
          Dirs.Include ((Dir, Directory_Node), Files_List.Empty_List);
       end loop;
 
-      Dirs.Include
-        ((Project.Object_Dir, Obj_Directory_Node), Files_List.Empty_List);
-
-      if Project.Executables_Directory /= Project.Object_Dir then
+      if Show_Obj_Dirs then
          Dirs.Include
-           ((Project.Executables_Directory, Exec_Directory_Node),
-            Files_List.Empty_List);
+           ((Project.Object_Dir, Obj_Directory_Node), Files_List.Empty_List);
+
+         if Project.Executables_Directory /= Project.Object_Dir then
+            Dirs.Include
+              ((Project.Executables_Directory, Exec_Directory_Node),
+               Files_List.Empty_List);
+         end if;
       end if;
 
       --  Prepare list of files
@@ -2777,6 +2789,8 @@ package body Project_Explorers is
         (Get_History (Kernel).all, Show_Hidden_Dirs, False);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Projects_Before_Directories, False);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Show_Object_Dirs, True);
 
       Register_Action
         (Kernel, "Locate file in explorer",
