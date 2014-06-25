@@ -18,6 +18,7 @@ from modules import Module
 
 
 class Catch_Stdout(list):
+
     def __enter__(self):
         self._stdout = sys.stdout
         sys.stdout = self._stringio = StringIO()
@@ -34,7 +35,6 @@ class Pep8_Module(Module):
         """
            Check format using pep8 for python source codes
         """
-        print file
         # only check python file
         if file.language() == "python":
             for m in GPS.Message.list(category="Pep8"):
