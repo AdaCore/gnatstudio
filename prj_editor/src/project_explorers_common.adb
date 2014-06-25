@@ -72,7 +72,8 @@ package body Project_Explorers_Common is
    --------------------
 
    function Stock_For_Node
-     (Node : Node_Types; Expanded : Boolean) return String is
+     (Node : Node_Types; Expanded : Boolean) return String
+   is
    begin
       case Node is
          when Project_Node =>
@@ -536,6 +537,7 @@ package body Project_Explorers_Common is
       Add_Dummy : Boolean := False) return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter := Null_Iter;
+      T    : Node_Types;
    begin
       if Parent = Null_Iter then
          Iter := Model.Get_Iter_First;
@@ -544,7 +546,10 @@ package body Project_Explorers_Common is
       end if;
 
       while Iter /= Null_Iter loop
-         if Get_Node_Type (Model, Iter) = Kind
+         T := Get_Node_Type (Model, Iter);
+         if (T = Kind
+             or else (Kind in Modified_Project_Node
+                      and then T in Project_Node_Types))
            and then Get_File (Model, Iter, File_Column) = File
          then
             return Iter;
