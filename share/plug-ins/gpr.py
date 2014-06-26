@@ -19,7 +19,7 @@ XML = r"""<?xml version="1.0"?>
     <Name>Project File</Name>
     <Parent>Ada</Parent>
     <Body_Suffix>.gpr</Body_Suffix>
-    <Keywords>(a(bstract|t|ll)|case|e(nd|xte(nds|rnal))|for|is|li(brary|mited)|null|</Keywords>
+    <Keywords>(a(bstract|t|ll|ggregate)|case|e(nd|xte(nds|rnal))|for|is|li(brary|mited)|null|</Keywords>
     <Keywords>others|p(ackage|roject)|renames|type|use|w(hen|ith))\b</Keywords>
     <Context>
       <New_Line_Comment_Start>--</New_Line_Comment_Start>
