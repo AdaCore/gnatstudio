@@ -65,9 +65,12 @@ class PythonResolver(CompletionResolver):
             sys.path = sys.path + list(self.source_dirs)
 
             try:
+                # filter out ^L in source text
+                text = loc.buffer().get_chars()
+                text = text.replace('\x0c', ' ')
                 # Feed Jedi API
                 script = jedi.Script(
-                    source=loc.buffer().get_chars(),
+                    source=text,
                     line=loc.line(),
                     column=loc.column() - 1,
                 )
@@ -82,11 +85,10 @@ class PythonResolver(CompletionResolver):
                     for i in script.complete()
                     if i.name.startswith(self.__prefix)),
                     key=lambda d: d.name)
-
             except:
                 jedi_log = GPS.Logger("JEDI_PARSING")
                 jedi_log.log("jedi fails to parse:" +
-                             GPS.EditorBuffer.get().file().name())
+                             loc.buffer().file().name())
                 result = []
 
             # restore sys.path before exit
