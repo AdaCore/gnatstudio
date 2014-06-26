@@ -244,6 +244,7 @@ GPS.Project.generate_doc = generate_doc_project
 
 
 class GNATdoc_Module(modules.Module):
+
     def setup(self):
         GPS.parse_xml(project_attributes)
         GPS.parse_xml(targets)

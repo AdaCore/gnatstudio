@@ -35,10 +35,11 @@ It also shows how to get the word under the cursor in GPS.
 """
 
 ###########################################################################
-## No user customization below this line
+# No user customization below this line
 ###########################################################################
 
-import re, os_utils
+import re
+import os_utils
 from text_utils import *
 import traceback
 import GPS
@@ -74,7 +75,7 @@ is sent to its stdin.""",
             """The type of contextual menu we should use:
 - "dynamic" only shows the possible replacements for the current word.
 - "static" displays a single entry that spawns the spell checked for the current word.""",
-            1, "static", "dynamic", "none");
+            1, "static", "dynamic", "none")
 
         self.ispell = None          # The ispell process
         self.ispell_command = None  # The command used to start ispell
@@ -135,8 +136,8 @@ is sent to its stdin.""",
 
         if self.ispell_command != cmd:
             if self.ispell:
-                 GPS.Logger ('ISPELL').log('command changed, restart process')
-                 self.kill()
+                GPS.Logger('ISPELL').log('command changed, restart process')
+                self.kill()
 
             self.ispell_command = ''
             if os_utils.locate_exec_on_path(cmd.split()[0]):
@@ -171,7 +172,7 @@ is sent to its stdin.""",
         """Save the user's personal dictionary if modified"""
         if self.personal_dict_modified and self.ispell:
             if GPS.MDI.yes_no_dialog(
-                "Spell-checking personal dictionary modified. Save ?"):
+                    "Spell-checking personal dictionary modified. Save ?"):
                 self.ispell.send("#")
 
                 # Make sure the dict is saved: since ispell doesn't show any
@@ -191,7 +192,7 @@ is sent to its stdin.""",
         self._restart_if_needed()
         self.ispell.send("*%s\n" % word)
         self.local_dict.add(word)
-        self.personal_dict_modified=True
+        self.personal_dict_modified = True
 
     def _before_killing_ispell(self, proc, output):
         """Called just before killing ispell"""
@@ -206,7 +207,7 @@ is sent to its stdin.""",
                     self.ispell_command,
                     before_kill=self._before_killing_ispell,
                     task_manager=False)
-                result = self.ispell.expect ("^.*\\n", timeout=2000)
+                result = self.ispell.expect("^.*\\n", timeout=2000)
             except:
                 GPS.Console().write(
                     "Could not start external command: %s\n" % self.cmd)
@@ -216,7 +217,8 @@ is sent to its stdin.""",
            Always reset self.ispell to None.
         """
         if self.ispell:
-            self.ispell.kill()   # Will run _before_killing_ispell and save dict
+            # Will run _before_killing_ispell and save dict
+            self.ispell.kill()
             self.ispell = None
 
     ##############################
@@ -242,7 +244,8 @@ is sent to its stdin.""",
         for start, end in BlockIterator(self.buffer, category):
             while start < end:
                 end_line = start.forward_line()
-                next_line = end_line.create_mark() # need mark, since we modify buffer
+                # need mark, since we modify buffer
+                next_line = end_line.create_mark()
                 line = self.buffer.get_chars(start, end_line - 1)
                 offset_adjust = 0
                 attempt = 0
@@ -281,7 +284,7 @@ is sent to its stdin.""",
                 for proposal in result.splitlines():
                     if proposal and proposal[0] == '&':
                         colon = proposal.find(":")
-                        meta  = proposal[:colon].split()
+                        meta = proposal[:colon].split()
 
                         if meta[1] not in self.local_dict:
                             s = start - 1 + offset_adjust + int(meta[3])
@@ -301,12 +304,12 @@ is sent to its stdin.""",
                             yield self.current
 
                             # Take into account changes in the length of words
-                            offset_adjust += (e_mark.location().offset() - e_off - 1)
+                            offset_adjust += (e_mark.location().offset() -
+                                              e_off - 1)
 
                 start = next_line.location()
 
         raise StopIteration
-
 
     ##############################
     # Command window
@@ -383,13 +386,13 @@ is sent to its stdin.""",
             self.replace(input)
             self._next_with_error_or_destroy()
 
-    def _on_key (self, input, key, cursor_pos):
+    def _on_key(self, input, key, cursor_pos):
         """Handles key events in the command window"""
 
         if self.replace_mode:
-           return False
+            return False
 
-        key = key.replace ("shift-", "")
+        key = key.replace("shift-", "")
         if key == "i":
             self.ignore_word(self.current[0])
             self.local_dict.add(self.current[0])
@@ -399,30 +402,31 @@ is sent to its stdin.""",
             self.local_dict.add(self.current[0])
             self._next_with_error_or_destroy()
         elif key == "r":
-           self.window.write("")
-           self.replace_mode = True
+            self.window.write("")
+            self.replace_mode = True
         elif key.isdigit():
-           try:
-               self.replace(self.current[3][int(key)])
-               self._next_with_error_or_destroy()
-           except IndexError:
-               pass
+            try:
+                self.replace(self.current[3][int(key)])
+                self._next_with_error_or_destroy()
+            except IndexError:
+                pass
         elif key == "Escape":
-           self.window.destroy()
-           self.window = None
+            self.window.destroy()
+            self.window = None
         elif key == "space":
-           self._next_with_error_or_destroy()
+            self._next_with_error_or_destroy()
         elif key.islower():
-           try:
-               self.replace(self.current[3][ord(key) - ord('a') + 10])
-               self._next_with_error_or_destroy()
-           except IndexError:
-               pass
+            try:
+                self.replace(self.current[3][ord(key) - ord('a') + 10])
+                self._next_with_error_or_destroy()
+            except IndexError:
+                pass
 
         return True
 
 
 class AbstractContextual(GPS.Contextual):
+
     def find_current_word(self, context):
         """
         Stores in context the current word start, end and text.
@@ -436,7 +440,7 @@ class AbstractContextual(GPS.Contextual):
         view = buffer.current_view()
         cursor = view.cursor()
 
-        start  = goto_word_start(cursor, underscore_is_word=False)
+        start = goto_word_start(cursor, underscore_is_word=False)
         cursor = goto_word_end(cursor, underscore_is_word=False)
 
         context.ispell_module_start = start
@@ -445,6 +449,7 @@ class AbstractContextual(GPS.Contextual):
 
 
 class Static_Contextual(AbstractContextual):
+
     def __init__(self, ispell):
         """Create a new static contextual menu for spell checking"""
         GPS.Contextual.__init__(self, "Spell Check Static")
@@ -466,11 +471,12 @@ class Static_Contextual(AbstractContextual):
             return False
 
     def _label(self, context):
-       """Return the label to use for the contextual menu entry"""
-       return "Spell Check %s" % (context.ispell_module_word, )
+        """Return the label to use for the contextual menu entry"""
+        return "Spell Check %s" % (context.ispell_module_word, )
 
 
 class Dynamic_Contextual(AbstractContextual):
+
     def __init__(self, ispell):
         """Create a new dynamic contextual menu for spell checking"""
         GPS.Contextual.__init__(self, "Spell Check")

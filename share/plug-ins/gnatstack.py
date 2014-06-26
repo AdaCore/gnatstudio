@@ -2,15 +2,17 @@
 """
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
-import GPS, os_utils, os.path
+import GPS
+import os_utils
+import os.path
 
 tool = os_utils.locate_exec_on_path("gnatstack")
 
 if tool != "":
-  GPS.parse_xml ("""
+    GPS.parse_xml ("""
   <!--  Support for running GNATStack as a build target  -->
 
   <target-model name="gnatstack" category="">

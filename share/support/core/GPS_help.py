@@ -6,7 +6,8 @@ import GPS
 
 default_help = help
 
-def helpdoc (gps_class_name):
+
+def helpdoc(gps_class_name):
     import GPS_doc
 
     items = gps_class_name.split('.')
@@ -21,6 +22,7 @@ def helpdoc (gps_class_name):
 
     # no class found
     return "Could not find documentation for GPS class %s" % gps_class_name
+
 
 def help(item):
     # If this item belongs to the GPS module, extract its documentation
@@ -41,7 +43,7 @@ def help(item):
                 klass = getattr(GPS, class_name)
                 if inspect.isclass(klass):
                     if (hasattr(klass, item_name)
-                        and getattr(klass, item_name) == item):
+                            and getattr(klass, item_name) == item):
                         class_name = klass.__name__ + '.' + item_name
                         break
 

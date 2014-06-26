@@ -115,6 +115,7 @@ def to_completion_point(ed_loc):
 
 
 class CompletionProposal(object):
+
     """ A completion proposal.
     """
 
@@ -194,10 +195,12 @@ class CompletionResolver(object):
 
 
 class AdaIterableWrapper(object):
+
     """
         This object wraps around a python iterable object, and provides
         binding to the Ada completion iterator. For internal use only.
     """
+
     def __init__(self, iterable):
         self.iterable = iterable
         self.iterator = None
@@ -212,6 +215,7 @@ class AdaIterableWrapper(object):
 
 
 class AdaIteratorWrapper(object):
+
     """ Binding to a Python iterator, for internal use only. """
 
     def __init__(self, iterator):

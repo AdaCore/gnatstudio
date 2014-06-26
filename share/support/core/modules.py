@@ -50,6 +50,7 @@ from gi.repository import GLib
 
 
 class Module_Metaclass(type):
+
     """
     A metaclass which ensures that any class derived from Module will
     automatically be known to GPS, and which connects a number of hooks
@@ -100,6 +101,7 @@ GPS.Hook("gps_started").add(Module_Metaclass.setup_all_modules)
 
 
 class Module(object):
+
     """
     A Module is a singleton, so this class also ensures that pattern is
     followed. As a result, a Module's __init__ method is only called once.

@@ -35,9 +35,11 @@ TYPE_LABELS = {
 
 
 class PythonResolver(CompletionResolver):
+
     """
        The Python Resolver class that inherits completion.CompletionResolver.
     """
+
     def __init__(self):
         self.__prefix = None
         # additional directories that module search will perform
@@ -68,7 +70,7 @@ class PythonResolver(CompletionResolver):
                     source=loc.buffer().get_chars(),
                     line=loc.line(),
                     column=loc.column() - 1,
-                    )
+                )
 
                 # Sort, filter results
                 result = sorted((CompletionProposal(

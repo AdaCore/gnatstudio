@@ -33,8 +33,9 @@ To add custom parser to a target insert next line to target description:
 """
 
 #############################################################################
-## No user customization below this line
+# No user customization below this line
 #############################################################################
+
 
 class OutputParserMetaClass(type):
     registered = dict()   # list of registered parsers
@@ -50,26 +51,28 @@ class OutputParserMetaClass(type):
         """
         return getattr(self, 'name', self.__name__).lower()
 
+
 class OutputParser(object):
     __metaclass__ = OutputParserMetaClass
 
-    def __init__(self,child):
+    def __init__(self, child):
         self.child = child
 
-    def on_stdout(self,text,command):
+    def on_stdout(self, text, command):
         if self.child != None:
-            self.child.on_stdout (text,command)
+            self.child.on_stdout(text, command)
 
-    def on_stderr(self,text,command):
+    def on_stderr(self, text, command):
         if self.child != None:
-           self.child.on_stderr (text,command)
+            self.child.on_stderr(text, command)
 
-    def on_exit(self,status,command):
+    def on_exit(self, status, command):
         if self.child != None:
-            self.child.on_exit (status,command)
+            self.child.on_exit(status, command)
+
 
 def create_parser(name, child=None):
-    if OutputParserMetaClass.registered.has_key (name):
+    if OutputParserMetaClass.registered.has_key(name):
         return OutputParserMetaClass.registered[name](child)
     else:
         return None

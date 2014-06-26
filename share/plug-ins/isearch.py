@@ -82,11 +82,11 @@ Preference('Plugins/isearch/errcolor').create(
 
 isearch_action_name = 'isearch'
 isearch_backward_action_name = 'isearch backward'
-## Changing the name of menus should be reflected in emacs.xml
+# Changing the name of menus should be reflected in emacs.xml
 
 try:
-   # # If we have PyGTK installed, we'll do the highlighting of the next
-   # # matches in the background, which makes the interface more responsive
+   # If we have PyGTK installed, we'll do the highlighting of the next
+   # matches in the background, which makes the interface more responsive
     from gi.repository import GLib
     has_pygtk = 1
 except:
@@ -94,6 +94,7 @@ except:
 
 
 class Isearch(CommandWindow):
+
     """This class provides an incremental search facility in GPS.
       When instanciated, it immediately starts executing"""
 
@@ -315,8 +316,8 @@ class Isearch(CommandWindow):
             # Automatic case sensitivity: when we have an upper case, switch to
             # case sensitive
             if (not self.explicit_case_sensitive
-               and not self.case_sensitive
-               and input.lower() != input):
+                    and not self.case_sensitive
+                    and input.lower() != input):
                 self.case_sensitive = True
                 self.set_prompt(self.prompt())
             Isearch.last_case_sensitive = self.case_sensitive

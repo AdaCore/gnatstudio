@@ -13,11 +13,11 @@ def parse_color(strcol):
     if strcol.startswith("#"):
         col = strcol[1:]
 
-        # #RGB case
+        # RGB case
         if len(col) == 3:
             return tuple((int(c, 16) / 15.0 for c in col))
 
-        # #RRGGBB case
+        # RRGGBB case
         elif len(col) == 6:
             return tuple([int(col[a:a + 2], 16) / 255.0
                           for a in [0, 2, 4]])

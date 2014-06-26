@@ -5,11 +5,12 @@ This script adds a new menu /File/Close All Editors that close all open editors
 """
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 import GPS
 import gps_utils
+
 
 @gps_utils.interactive(name='close all editors')
 def close_editors():
@@ -18,7 +19,7 @@ def close_editors():
     """
     GPS.execute_action("/File/Save More/All")
     for ed in GPS.EditorBuffer.list():
-       ed.close(True)
+        ed.close(True)
 
 
 @gps_utils.interactive(name='close all editors except current')
@@ -29,5 +30,5 @@ def close_editors_except_current():
     buffer = GPS.EditorBuffer.get(open=False)
     GPS.execute_action("/File/Save More/All")
     for ed in GPS.EditorBuffer.list():
-       if ed != buffer:
-          ed.close(True)
+        if ed != buffer:
+            ed.close(True)

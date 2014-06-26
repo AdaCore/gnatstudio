@@ -7,10 +7,11 @@ so as to preserve the formatting.
 """
 
 #############################################################################
-## No user customization below this line
+# No user customization below this line
 #############################################################################
 
 import GPS
+
 
 def on_gps_started(hook):
     # Remove the contextual menus that may cause modifications in the
@@ -24,4 +25,4 @@ def on_gps_started(hook):
     GPS.Menu.get("/Project/Edit project properties").hide()
     GPS.Menu.get("/Project/Edit file switches").hide()
 
-GPS.Hook ("gps_started").add (on_gps_started)
+GPS.Hook("gps_started").add(on_gps_started)

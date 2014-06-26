@@ -13,6 +13,7 @@ cursor, which Select All cannot do.
 import GPS
 import gps_utils
 
+
 @gps_utils.interactive(category="Editor",
                        name="Format Whole File",
                        menu="/Edit/Format Whole File",

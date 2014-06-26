@@ -8,7 +8,7 @@ You do not need to load this file if you never edit Changelog files
 """
 
 ###########################################################################
-## No user customization below this line
+# No user customization below this line
 ###########################################################################
 
 import GPS

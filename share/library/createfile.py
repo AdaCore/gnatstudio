@@ -10,39 +10,37 @@ file.
 from GPS import *
 import os.path
 
+
 class Create_File_Contextual (Contextual):
 
-   def __init__ (self):
-      Contextual.__init__ (self, "Create File From Dir")
-      self.create (
-         on_activate = self.on_activate,
-         label       = self.label,
-         filter      = self.filter)
+    def __init__(self):
+        Contextual.__init__(self, "Create File From Dir")
+        self.create(
+            on_activate=self.on_activate,
+            label=self.label,
+            filter=self.filter)
 
-   def label (self, context):
-      return "File operations/New File..."
+    def label(self, context):
+        return "File operations/New File..."
 
-   def on_activate (self, context):
-      dir = context.directory ()
-      name, = MDI.input_dialog (
-         "Enter file name (in directory \n%s)" % dir, "Name")
-      if name:
-         name = os.path.join (dir, name)
-         if not os.path.isfile (name):
-            f = file (name, "w")
-            f.write ("")
-            f.close ()
-            Project.recompute ()
-         EditorBuffer.get (File (name))
+    def on_activate(self, context):
+        dir = context.directory()
+        name, = MDI.input_dialog(
+            "Enter file name (in directory \n%s)" % dir, "Name")
+        if name:
+            name = os.path.join(dir, name)
+            if not os.path.isfile(name):
+                f = file(name, "w")
+                f.write("")
+                f.close()
+                Project.recompute()
+            EditorBuffer.get(File(name))
 
-   def filter (self, context):
-      try:
-         dir = context.directory ()
-         return True
-      except:
-         return False
+    def filter(self, context):
+        try:
+            dir = context.directory()
+            return True
+        except:
+            return False
 
-Create_File_Contextual ()
-
-
-
+Create_File_Contextual()

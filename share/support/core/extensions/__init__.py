@@ -37,6 +37,7 @@ def override_gps_method(method):
 
 @extend_gps
 class EditorBuffer(object):
+
     def insert(self, loc_or_text, text=None):
         """
         Inserts some text in the buffer.
@@ -63,6 +64,7 @@ class EditorBuffer(object):
 
 @extend_gps
 class Icon(object):
+
     def __init__(self, icon_id, label, path, alt_menu=None,
                  alt_small_toolbar=None, alt_large_toolbar=None,
                  alt_local_toolbar=None, alt_button=None, alt_dnd=None,

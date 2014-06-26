@@ -131,6 +131,7 @@ def delete_until_char(char, buffer=None):
 
 @interactive("Editor", name="zap to char")
 class Zap_To_Char(CommandWindow):
+
     """
     Deletes all characters from the cursor position up to and including the
     next occurrence of a character. The character is queried interactively
@@ -872,6 +873,7 @@ def center_line():
 
 
 class BlockIterator:
+
     """
     An iterator for the various sections of an editor.
     Each step in the iteration returns a tuple (start, end) of EditorLocation

@@ -9,47 +9,48 @@ one of the two menus:
 """
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 import GPS
 import string
 from gps_utils import *
 
-@interactive ("Editor", filter="Source editor",
-              name="sort selected lines descending")
-def sort_selection_revert ():
-   """Sorts the current selection, in descending order"""
-   sort_selection (revert=True)
+
+@interactive("Editor", filter="Source editor",
+             name="sort selected lines descending")
+def sort_selection_revert():
+    """Sorts the current selection, in descending order"""
+    sort_selection(revert=True)
 
 
-@interactive ("Editor", filter="Source editor",
-              name="sort selected lines ascending")
-def sort_selection (revert=False):
-   """Sorts the current selection, in ascending order"""
-   context = GPS.current_context ();
-   ed      = GPS.EditorBuffer.get (context.file())
-   start   = ed.selection_start()
-   to      = ed.selection_end()
+@interactive("Editor", filter="Source editor",
+             name="sort selected lines ascending")
+def sort_selection(revert=False):
+    """Sorts the current selection, in ascending order"""
+    context = GPS.current_context()
+    ed = GPS.EditorBuffer.get(context.file())
+    start = ed.selection_start()
+    to = ed.selection_end()
 
-   # If the end is at the first column we really want to sort the lines
-   # before the current one.
+    # If the end is at the first column we really want to sort the lines
+    # before the current one.
 
-   if to.column() == 1:
-	to = to.forward_char (-1)
+    if to.column() == 1:
+        to = to.forward_char(-1)
 
-   selection = ed.get_chars (start, to)
+    selection = ed.get_chars(start, to)
 
-   if selection == "" or context.__class__ == GPS.EntityContext:
-      return;
+    if selection == "" or context.__class__ == GPS.EntityContext:
+        return
 
-   lines = string.split (selection,"\n");
-   # strip off extraneous trailing "" line
-   lines = lines[:-1];
-   lines.sort ();
-   if revert:
-      lines.reverse ();
-   ed.start_undo_group()
-   ed.delete (start, to)
-   ed.insert (start, "\n".join (lines) + "\n")
-   ed.finish_undo_group()
+    lines = string.split(selection, "\n")
+    # strip off extraneous trailing "" line
+    lines = lines[:-1]
+    lines.sort()
+    if revert:
+        lines.reverse()
+    ed.start_undo_group()
+    ed.delete(start, to)
+    ed.insert(start, "\n".join(lines) + "\n")
+    ed.finish_undo_group()

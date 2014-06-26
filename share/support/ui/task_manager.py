@@ -3,7 +3,6 @@ This plugin implements the "Task Manager" view.
 """
 
 
-
 import GPS
 from modules import Module
 from gi.repository import Gtk, GLib
@@ -17,6 +16,7 @@ COL_TASK_ID = 4
 
 
 class Task_Manager_Widget():
+
     """ A widget containing a task manager """
 
     def __init__(self):
@@ -39,7 +39,7 @@ class Task_Manager_Widget():
         self.view.append_column(self.close_col)
 
         col = Gtk.TreeViewColumn("Progress", Gtk.CellRendererProgress(),
-            value=COL_PROGRESS, text=COL_PROGRESS_TEXT)
+                                 value=COL_PROGRESS, text=COL_PROGRESS_TEXT)
         col.set_expand(True)
         self.view.append_column(col)
 
@@ -129,7 +129,8 @@ class Task_Manager_Widget():
 
         self.store[iter] = [
             progress_percent,  # COL_PROGRESS
-            "%s %s / %s" % (task.name(), progress[0], progress[1]),  # COL_PROGRESS_TEXT
+            # COL_PROGRESS_TEXT
+            "%s %s / %s" % (task.name(), progress[0], progress[1]),
             "gtk-close",       # COL_CANCEL_PIXBUF
             status_icon,       # COL_PLAYPAUSE_PIXBUF
             str(id(task))]     # COL_TASK_ID
@@ -149,6 +150,7 @@ class Task_Manager_Widget():
 
 
 class Task_Manager(Module):
+
     """ A GPS module, providing a view that wraps around a task manager """
 
     view_title = "Task Manager"
@@ -171,8 +173,8 @@ class Task_Manager(Module):
             parent=GPS.MDI.current().pywidget().get_toplevel())
 
         l = Gtk.Label(
-           "The following tasks are running, do you want to quit GPS?\n"
-           "Warning: Quitting will kill all running tasks")
+            "The following tasks are running, do you want to quit GPS?\n"
+            "Warning: Quitting will kill all running tasks")
         l.set_alignment(0.0, 0.0)
         d.get_content_area().pack_start(l, False, False, 10)
 
@@ -194,7 +196,6 @@ class Task_Manager(Module):
             return True
 
         return False
-
 
     def setup(self):
         make_interactive(

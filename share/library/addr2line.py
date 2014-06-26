@@ -19,64 +19,68 @@ It asks you for the location of the executable
 """
 
 #############################################################################
-## No user customization below this line
+# No user customization below this line
 #############################################################################
 
 from GPS import *
 import re
 import os.path
 
-Preference ("Plugins/addr2line/args").create (
-  "Arguments", "string",
-  """Additional arguments to pass to addr2line""",
-  "--functions --demangle=gnat")
+Preference("Plugins/addr2line/args").create(
+    "Arguments", "string",
+    """Additional arguments to pass to addr2line""",
+    "--functions --demangle=gnat")
 
 file_line_re = "(([-_\w./\\\\]+):(\d+)(:(\d+))?)"
 
+
 class Addr2line (Console):
-  def __init__ (self, executable):
-     self.executable = executable
-     self.name = "addr2line -e " + os.path.basename (self.executable)
-     Console.__init__ (self, self.name,
-                       on_input=Addr2line.on_input)
-     self.create_link (file_line_re, self.onclick)
-     self.clear ()
-     self.write ("Backtrace ?")
-     self.enable_input (True)
-     MDI.get (self.name).raise_window()
 
-  def backtrace (self, bt):
-     self.clear ()
-     cmd = "addr2line -e " + self.executable + " " + Preference ("Plugins/addr2line/args").get()
-     self.write (cmd + "\n")
-     Process (cmd + " " + bt, ".+",
-              on_exit = self.on_exit,
-              on_match = self.on_output)
+    def __init__(self, executable):
+        self.executable = executable
+        self.name = "addr2line -e " + os.path.basename(self.executable)
+        Console.__init__(self, self.name,
+                         on_input=Addr2line.on_input)
+        self.create_link(file_line_re, self.onclick)
+        self.clear()
+        self.write("Backtrace ?")
+        self.enable_input(True)
+        MDI.get(self.name).raise_window()
 
-  def on_input (self, input):
-     self.backtrace (input.replace ("\n", " "))
+    def backtrace(self, bt):
+        self.clear()
+        cmd = "addr2line -e " + self.executable + " " + \
+            Preference("Plugins/addr2line/args").get()
+        self.write(cmd + "\n")
+        Process(cmd + " " + bt, ".+",
+                on_exit=self.on_exit,
+                on_match=self.on_output)
 
-  def on_output (self, process, matched, unmatched):
-     self.write_with_links (unmatched + matched)
+    def on_input(self, input):
+        self.backtrace(input.replace("\n", " "))
 
-  def on_exit (self, process, status, full_output):
-     MDI.get (self.name).raise_window()
-     self.write ("\n\nBacktrace ?")
-     self.enable_input (True)
+    def on_output(self, process, matched, unmatched):
+        self.write_with_links(unmatched + matched)
 
-  def onclick (self, text):
-     matched = re.match (file_line_re, text)
-     buffer = EditorBuffer.get (File (matched.group (2)))
-     MDI.get_by_child (buffer.current_view()).raise_window()
-     line = int (matched.group (3))
-     column = matched.group (5)
-     if column != None:
-        buffer.current_view().goto (buffer.at(line, int (column)))
-     else:
-        buffer.current_view().goto (buffer.at(line, 1))
+    def on_exit(self, process, status, full_output):
+        MDI.get(self.name).raise_window()
+        self.write("\n\nBacktrace ?")
+        self.enable_input(True)
 
-def open_addr2line_console (menu):
-  executable = MDI.input_dialog ("Location of the executable ?", "Exec")[0]
-  addr = Addr2line (executable)
+    def onclick(self, text):
+        matched = re.match(file_line_re, text)
+        buffer = EditorBuffer.get(File(matched.group(2)))
+        MDI.get_by_child(buffer.current_view()).raise_window()
+        line = int(matched.group(3))
+        column = matched.group(5)
+        if column != None:
+            buffer.current_view().goto(buffer.at(line, int(column)))
+        else:
+            buffer.current_view().goto(buffer.at(line, 1))
 
-Menu.create ("/Navigate/Open Addr2line Console", open_addr2line_console)
+
+def open_addr2line_console(menu):
+    executable = MDI.input_dialog("Location of the executable ?", "Exec")[0]
+    addr = Addr2line(executable)
+
+Menu.create("/Navigate/Open Addr2line Console", open_addr2line_console)

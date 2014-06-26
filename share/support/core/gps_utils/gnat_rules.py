@@ -6,156 +6,178 @@ This also includes predefined search patterns.
 And finally a number of predefined text aliases are defined.
 """
 
-import GPS, os, os.path, re, string, sys, traceback
-import os_utils, gnat_switches
+import GPS
+import os
+import os.path
+import re
+import string
+import sys
+import traceback
+import os_utils
+import gnat_switches
 from gps_utils.switches import *
 
 gnatmakeproc = None
 
-def EnsureInitialized ():
-   global gnatmakeproc
-   if gnatmakeproc == None:
-     gnatmakeproc = gnatMakeProc()
-   gnatmakeproc.init_switches()
+
+def EnsureInitialized():
+    global gnatmakeproc
+    if gnatmakeproc == None:
+        gnatmakeproc = gnatMakeProc()
+    gnatmakeproc.init_switches()
+
 
 def Label(switch, default):
-   if gnat_switches.switches_comments.has_key (switch):
-      str = re.sub ("^(Activate warnings|Validity checks) (on|for) ",
-                    "",
-                    gnat_switches.switches_comments[switch][0].strip())
-   else:
-      str = re.sub ("^turn on (checking|warnings) (on|for) ",
-                    "",
-                    default.strip())
-   str = str[0].upper()+str[1:]
-   str = re.sub ("[.] *$", "", str)
-   return str
+    if gnat_switches.switches_comments.has_key(switch):
+        str = re.sub("^(Activate warnings|Validity checks) (on|for) ",
+                     "",
+                     gnat_switches.switches_comments[switch][0].strip())
+    else:
+        str = re.sub("^turn on (checking|warnings) (on|for) ",
+                     "",
+                     default.strip())
+    str = str[0].upper() + str[1:]
+    str = re.sub("[.] *$", "", str)
+    return str
+
 
 def Tip(switch, default):
-   if gnat_switches.switches_comments.has_key (switch):
-      return gnat_switches.switches_comments[switch][1].strip()
-   else:
-      return default.strip()
+    if gnat_switches.switches_comments.has_key(switch):
+        return gnat_switches.switches_comments[switch][1].strip()
+    else:
+        return default.strip()
 
-def Warning (switch, defaulttip, defaultstate, before=False):
-   """Returns a Warning switch object"""
-   sw = "-gnatw"+switch
-   return Check (sw, "-gnatw"+switch.upper(),
-                 Label (sw, defaulttip),
-                 Tip (sw, defaulttip),
+
+def Warning(switch, defaulttip, defaultstate, before=False):
+    """Returns a Warning switch object"""
+    sw = "-gnatw" + switch
+    return Check(sw, "-gnatw" + switch.upper(),
+                 Label(sw, defaulttip),
+                 Tip(sw, defaulttip),
                  defaultstate, before)
 
-def Validity (switch, defaulttip, defaultstate, before=False):
-   """Returns a Validity Check switch object"""
-   sw = "-gnatV"+switch
-   return Check (sw, "-gnatV"+switch.upper(),
-                 Label (sw, defaulttip),
-                 Tip (sw, defaulttip),
+
+def Validity(switch, defaulttip, defaultstate, before=False):
+    """Returns a Validity Check switch object"""
+    sw = "-gnatV" + switch
+    return Check(sw, "-gnatV" + switch.upper(),
+                 Label(sw, defaulttip),
+                 Tip(sw, defaulttip),
                  defaultstate, before)
 
-def StyleSpin (switch, defaulttip, defaultval, minval, maxval, before=False):
-   """Returns a SyleSpin switch object"""
-   sw = "-gnaty"+switch
-   return Spin (sw, "",
-                Label (sw, defaulttip),
-                Tip (sw, defaulttip), "",
+
+def StyleSpin(switch, defaulttip, defaultval, minval, maxval, before=False):
+    """Returns a SyleSpin switch object"""
+    sw = "-gnaty" + switch
+    return Spin(sw, "",
+                Label(sw, defaulttip),
+                Tip(sw, defaulttip), "",
                 defaultval, minval, maxval, before)
 
-def Style (switch, defaulttip, defaultstate, before=False):
-   """Returns a Syle switch object"""
-   sw = "-gnaty"+switch
-   return Check (sw, "",
-                 Label (sw, defaulttip),
-                 Tip (sw, defaulttip),
+
+def Style(switch, defaulttip, defaultstate, before=False):
+    """Returns a Syle switch object"""
+    sw = "-gnaty" + switch
+    return Check(sw, "",
+                 Label(sw, defaulttip),
+                 Tip(sw, defaulttip),
                  defaultstate, before)
 
+
 class gnatMakeProc:
-   """This class controls the gnatmake execution"""
-   def __init__ (self):
-      self.warnings_list = []
-      self.validity_checks_list = []
-      self.style_checks_list = []
-      self.gnatCmd = ""
 
-   def init_switches(self):
-      # ensure_switches returns true if the gnat command is not identical to
-      # the previous one. In this case, we need to recreate the whole xml
-      # tree and call GPS.parse_xml to update the switch editor.
-      if self.__ensure_switches():
-         try:
-            xmlCompiler = self.__get_xml()
-         except:
-            GPS.Console("Messages").write ("Exception thrown in ada_support.py:\n")
-            name = sys.exc_info()[1]
-            tb = traceback.format_list (traceback.extract_tb(sys.exc_info()[2]))
-            for info in tb:
-               GPS.Console("Messages").write (info)
-            GPS.Console("Messages").write (str (name) + "\n");
-            xmlCompiler = xmlCompilerHead+xmlCompilerDefault+xmlCompilerTrailer
-         GPS.parse_xml ("""<?xml version="1.0" ?><GPS>"""+xmlCompiler+"</GPS>")
+    """This class controls the gnatmake execution"""
 
-   def get_warnings_list(self):
-      self.init_switches()
-      return self.warnings_list;
+    def __init__(self):
+        self.warnings_list = []
+        self.validity_checks_list = []
+        self.style_checks_list = []
+        self.gnatCmd = ""
 
-   def get_validity_checks_list(self):
-      self.init_switches()
-      return self.validity_checks_list;
+    def init_switches(self):
+        # ensure_switches returns true if the gnat command is not identical to
+        # the previous one. In this case, we need to recreate the whole xml
+        # tree and call GPS.parse_xml to update the switch editor.
+        if self.__ensure_switches():
+            try:
+                xmlCompiler = self.__get_xml()
+            except:
+                GPS.Console("Messages").write(
+                    "Exception thrown in ada_support.py:\n")
+                name = sys.exc_info()[1]
+                tb = traceback.format_list(
+                    traceback.extract_tb(sys.exc_info()[2]))
+                for info in tb:
+                    GPS.Console("Messages").write(info)
+                GPS.Console("Messages").write(str(name) + "\n")
+                xmlCompiler = xmlCompilerHead + \
+                    xmlCompilerDefault + xmlCompilerTrailer
+            GPS.parse_xml(
+                """<?xml version="1.0" ?><GPS>""" + xmlCompiler + "</GPS>")
 
-   def get_style_checks_list(self):
-      self.init_switches()
-      return self.style_checks_list;
+    def get_warnings_list(self):
+        self.init_switches()
+        return self.warnings_list
 
-   def __ensure_switches(self):
-      prev_cmd = self.gnatCmd
-      self.gnatCmd = GPS.Project.root().get_attribute_as_string("gnat", "ide")
+    def get_validity_checks_list(self):
+        self.init_switches()
+        return self.validity_checks_list
 
-      if self.gnatCmd == "":
-         self.gnatCmd = "gnat"
+    def get_style_checks_list(self):
+        self.init_switches()
+        return self.style_checks_list
 
-      if GPS.is_server_local("Build_Server"):
-         if not os.path.isfile(self.gnatCmd):
-            cmd = os_utils.locate_exec_on_path(self.gnatCmd)
-            if cmd == "":
-               GPS.Console("Messages").write(
-                   "Error: '%s' is not in the path.\n" % self.gnatCmd)
-               GPS.Console("Messages").write(
-                   "Error: Could not initialize the ada_support module.\n")
-               return
+    def __ensure_switches(self):
+        prev_cmd = self.gnatCmd
+        self.gnatCmd = GPS.Project.root().get_attribute_as_string(
+            "gnat", "ide")
 
-            self.gnatCmd = cmd
+        if self.gnatCmd == "":
+            self.gnatCmd = "gnat"
 
-      # gnat check command changed: we reinitialize the rules list
-      if prev_cmd != self.gnatCmd:
-         self.__get_switches_from_help()
-         return True
-      else:
-         return False
+        if GPS.is_server_local("Build_Server"):
+            if not os.path.isfile(self.gnatCmd):
+                cmd = os_utils.locate_exec_on_path(self.gnatCmd)
+                if cmd == "":
+                    GPS.Console("Messages").write(
+                        "Error: '%s' is not in the path.\n" % self.gnatCmd)
+                    GPS.Console("Messages").write(
+                        "Error: Could not initialize the ada_support module.\n")
+                    return
 
-   def __get_xml(self):
-      xml = """<popup label="Warnings" line="2" column="1" lines="2" columns="3">
+                self.gnatCmd = cmd
+
+        # gnat check command changed: we reinitialize the rules list
+        if prev_cmd != self.gnatCmd:
+            self.__get_switches_from_help()
+            return True
+        else:
+            return False
+
+    def __get_xml(self):
+        xml = """<popup label="Warnings" line="2" column="1" lines="2" columns="3">
                  <title line="1" column="1" column-span="3">Global switches</title>
                  <title line="2" column="1" column-span="3">Warnings</title>
 """
-      n = 0
-      for switch in self.warnings_list:
-         if switch.Switch() == "-gnatwa" or switch.Switch() == "-gnatw.e" or switch.Switch() == "-gnatws" or switch.Switch() == "-gnatwe":
-            line = "1"
-            if switch.Switch() == "-gnatwa" or switch.Switch() == "-gnatwe":
-              col = "1"
+        n = 0
+        for switch in self.warnings_list:
+            if switch.Switch() == "-gnatwa" or switch.Switch() == "-gnatw.e" or switch.Switch() == "-gnatws" or switch.Switch() == "-gnatwe":
+                line = "1"
+                if switch.Switch() == "-gnatwa" or switch.Switch() == "-gnatwe":
+                    col = "1"
+                else:
+                    col = "2"
             else:
-              col = "2"
-         else:
-            line = "2"
-            if n <= (len (self.warnings_list) - 4) / 3:
-               col = "1"
-            elif n <= (len (self.warnings_list) - 4) * 2 / 3:
-               col = "2"
-            else:
-               col = "3"
-            n = n + 1
-         xml += switch.Xml (line, col)
-      xml += """
+                line = "2"
+                if n <= (len(self.warnings_list) - 4) / 3:
+                    col = "1"
+                elif n <= (len(self.warnings_list) - 4) * 2 / 3:
+                    col = "2"
+                else:
+                    col = "3"
+                n = n + 1
+            xml += switch.Xml(line, col)
+        xml += """
         <dependency master-page="Ada" slave-page="Ada"
                     master-switch="-gnatwa" master-status="on"
                     slave-switch="-gnatws" slave-status="off" />
@@ -180,13 +202,13 @@ class gnatMakeProc:
         <title line="1" column="1">Global switches</title>
         <title line="2" column="1">Checks</title>
 """
-      for switch in self.validity_checks_list:
-         if switch.Switch() == "-gnatVa" or switch.Switch() == "-gnatVn":
-            line = "1"
-         else:
-            line = "2"
-         xml += switch.Xml(line, "1")
-      xml += """
+        for switch in self.validity_checks_list:
+            if switch.Switch() == "-gnatVa" or switch.Switch() == "-gnatVn":
+                line = "1"
+            else:
+                line = "2"
+            xml += switch.Xml(line, "1")
+        xml += """
         <dependency master-page="Ada" slave-page="Ada"
                     master-switch="-gnatp" master-status="on"
                     slave-switch="-gnatVn" slave-status="on" />
@@ -200,152 +222,167 @@ class gnatMakeProc:
       </popup>
       <popup label="Style checks" line="2" column="1">
 """
-      default_style_alias = "-gnaty3abcefhiklmnprst"
-      if gnat_switches.switches_comments.has_key ("-gnatyy"):
-         style_alias_res = re.split ("^ *This is equivalent to ([^., ]*).*", gnat_switches.switches_comments["-gnatyy"][1]);
-         if len (style_alias_res) > 1:
-            default_style_alias = "-"+style_alias_res[1]
+        default_style_alias = "-gnaty3abcefhiklmnprst"
+        if gnat_switches.switches_comments.has_key("-gnatyy"):
+            style_alias_res = re.split(
+                "^ *This is equivalent to ([^., ]*).*", gnat_switches.switches_comments["-gnatyy"][1])
+            if len(style_alias_res) > 1:
+                default_style_alias = "-" + style_alias_res[1]
 
-      for switch in self.style_checks_list:
-         if switch.Switch()=="-gnatyy":
-            xml += '<expansion switch="-gnatyy" alias="-gnaty" />'
-         elif switch.Switch()=="-gnatyg":
-            xml += '<expansion switch="-gnatyg" alias="%s" />' % (default_style_alias + "dISux")
-         else:
-            xml += switch.Xml("1", "1")
-      xml += '<expansion switch="-gnatym" alias="-gnatyM79" />'
-      xml += """<expansion switch="-gnaty" alias="%s" />""" % (default_style_alias)
-      xml += """
+        for switch in self.style_checks_list:
+            if switch.Switch() == "-gnatyy":
+                xml += '<expansion switch="-gnatyy" alias="-gnaty" />'
+            elif switch.Switch() == "-gnatyg":
+                xml += '<expansion switch="-gnatyg" alias="%s" />' % (
+                    default_style_alias + "dISux")
+            else:
+                xml += switch.Xml("1", "1")
+        xml += '<expansion switch="-gnatym" alias="-gnatyM79" />'
+        xml += """<expansion switch="-gnaty" alias="%s" />""" % (
+            default_style_alias)
+        xml += """
          <expansion switch="-gnaty"/>
       </popup>
 """
-      xmlCompiler = xmlCompilerHead+xml+xmlCompilerTrailer
-      return xmlCompiler
+        xmlCompiler = xmlCompilerHead + xml + xmlCompilerTrailer
+        return xmlCompiler
 
-   def __add_switch_callback (self, process, matched, unmatched):
-      if unmatched.startswith("\n"):
-        line = self.msg
-        self.msg = ""
-        if re.search ("^ +[-]gnatwxx", line):
-          self.warnings_analysis = True
-        elif re.search ("^ +[-]gnatVxx", line):
-          self.validity_checks_analysis = True
-        elif re.search ("^ +[-]gnatyxx", line):
-          self.style_checks_analysis = True
-        elif re.search ("^ +[-]gnat", line):
-          self.warnings_analysis = False
-          self.validity_checks_analysis = False
-        elif self.style_checks_analysis and re.search ("^ *[-]", line):
-          self.style_checks_analysis = False
+    def __add_switch_callback(self, process, matched, unmatched):
+        if unmatched.startswith("\n"):
+            line = self.msg
+            self.msg = ""
+            if re.search("^ +[-]gnatwxx", line):
+                self.warnings_analysis = True
+            elif re.search("^ +[-]gnatVxx", line):
+                self.validity_checks_analysis = True
+            elif re.search("^ +[-]gnatyxx", line):
+                self.style_checks_analysis = True
+            elif re.search("^ +[-]gnat", line):
+                self.warnings_analysis = False
+                self.validity_checks_analysis = False
+            elif self.style_checks_analysis and re.search("^ *[-]", line):
+                self.style_checks_analysis = False
 
-        elif self.warnings_analysis:
-          res = re.split ("^ *([^ *+]+)([*]?)([+]?) +(.+) *$", line)
-          i_sw = 1
-          i_star = 2
-          i_plus = 3
-          i_desc = 4
-          if len (res) > 2:
-            if res[i_sw] == "a":
-              # retrieve the list of warnings not activated by -gnatwa
-              # Note that this is not used anymore with recent GNAT version:
-              # the all_warnings_exception_list is now determined by '+' sign
-              # after the switch definition
-              exception = re.split ("\(except ([a-zA-Z. ]*)\) *$", res[i_desc])
-              if len (exception) > 1:
-                self.all_warnings_exception_list = re.findall("[.]?[a-zA-Z]", exception[1]+".e")
-              self.warnings_list.append (Warning (res[i_sw], res[i_desc], False, True))
+            elif self.warnings_analysis:
+                res = re.split("^ *([^ *+]+)([*]?)([+]?) +(.+) *$", line)
+                i_sw = 1
+                i_star = 2
+                i_plus = 3
+                i_desc = 4
+                if len(res) > 2:
+                    if res[i_sw] == "a":
+                        # retrieve the list of warnings not activated by -gnatwa
+                        # Note that this is not used anymore with recent GNAT version:
+                        # the all_warnings_exception_list is now determined by '+' sign
+                        # after the switch definition
+                        exception = re.split(
+                            "\(except ([a-zA-Z. ]*)\) *$", res[i_desc])
+                        if len(exception) > 1:
+                            self.all_warnings_exception_list = re.findall(
+                                "[.]?[a-zA-Z]", exception[1] + ".e")
+                        self.warnings_list.append(
+                            Warning(res[i_sw], res[i_desc], False, True))
 
-            elif res[i_sw] == "e" or res[i_sw] == ".e" or res[i_sw] == "s":
-              # include the global switches directly.
-              self.warnings_list.append (Warning (res[i_sw], res[i_desc], False, True))
+                    elif res[i_sw] == "e" or res[i_sw] == ".e" or res[i_sw] == "s":
+                        # include the global switches directly.
+                        self.warnings_list.append(
+                            Warning(res[i_sw], res[i_desc], False, True))
 
-            # include only on warnings, and a limited list of global warnings (gnatwa, gnatws, gnatw.e)
-            elif not re.search ("turn off", res[i_desc]) and not re.search ("(all|every)", res[i_desc]) and not re.search ("^normal warning", res[i_desc]):
-              # two ways to determine if the switch is part of gnatwa or not:
-              # the old way used the gnatwa exception list, that was part of
-              # the -gnatwa description, while we now use with recent gnat
-              # versions the '+' sign after the switch description
-              if len (self.all_warnings_exception_list) == 0:
-                is_alias_part = (res[i_plus] == "+")
-              else:
-                is_alias_part = False
-                # switches activated by default are not part of gnatwa
-                if res[i_star] == "*":
-                  is_alias_part = False
-                else:
-                  if re.search ("turn on", res[i_desc]):
-                    # part of gnatwa, unless explicitely part of the gnatwa exception list
-                    # search if warning is not part of gnatwa
-                    is_alias_part = True
-                    for ex in self.all_warnings_exception_list:
-                      if ex == res[i_sw]:
-                        is_alias_part = False
-                        break
+                    # include only on warnings, and a limited list of global
+                    # warnings (gnatwa, gnatws, gnatw.e)
+                    elif not re.search("turn off", res[i_desc]) and not re.search("(all|every)", res[i_desc]) and not re.search("^normal warning", res[i_desc]):
+                        # two ways to determine if the switch is part of gnatwa or not:
+                        # the old way used the gnatwa exception list, that was part of
+                        # the -gnatwa description, while we now use with recent gnat
+                        # versions the '+' sign after the switch description
+                        if len(self.all_warnings_exception_list) == 0:
+                            is_alias_part = (res[i_plus] == "+")
+                        else:
+                            is_alias_part = False
+                            # switches activated by default are not part of
+                            # gnatwa
+                            if res[i_star] == "*":
+                                is_alias_part = False
+                            else:
+                                if re.search("turn on", res[i_desc]):
+                                    # part of gnatwa, unless explicitely part of the gnatwa exception list
+                                    # search if warning is not part of gnatwa
+                                    is_alias_part = True
+                                    for ex in self.all_warnings_exception_list:
+                                        if ex == res[i_sw]:
+                                            is_alias_part = False
+                                            break
 
-              # warnings_list is a list of [switch, description, default value, part_of_gnatwa]
-              # remove the 'turn on' in the description
-              warn = Warning (res[i_sw], res[i_desc], res[i_star] == "*")
-              if is_alias_part:
-                 warn.Add_Default_Val_Dependency ("-gnatwa", True);
-              warn.Add_Default_Val_Dependency ("-gnatw.e", True);
-              warn.Add_Default_Val_Dependency ("-gnatws", False);
-              self.warnings_list.append (warn)
+                        # warnings_list is a list of [switch, description, default value, part_of_gnatwa]
+                        # remove the 'turn on' in the description
+                        warn = Warning(
+                            res[i_sw], res[i_desc], res[i_star] == "*")
+                        if is_alias_part:
+                            warn.Add_Default_Val_Dependency("-gnatwa", True)
+                        warn.Add_Default_Val_Dependency("-gnatw.e", True)
+                        warn.Add_Default_Val_Dependency("-gnatws", False)
+                        self.warnings_list.append(warn)
 
-        elif self.validity_checks_analysis:
-          res = re.split ("^ *([^ *]+) +(.+) *$", line)
-          if len (res) > 2:
-            if res[1] == "a" or res[1] == "n":
-              self.validity_checks_list.append (Validity (res[1], res[2], False, True))
-            elif res[1].lower() == res[1]:
-              val = Validity (res[1], res[2], res[1] == "d")
-              if res[1] != "d":
-                 val.Add_Default_Val_Dependency ("-gnatVa", True)
-              val.Add_Default_Val_Dependency ("-gnatVn", False)
-              self.validity_checks_list.append (val)
+            elif self.validity_checks_analysis:
+                res = re.split("^ *([^ *]+) +(.+) *$", line)
+                if len(res) > 2:
+                    if res[1] == "a" or res[1] == "n":
+                        self.validity_checks_list.append(
+                            Validity(res[1], res[2], False, True))
+                    elif res[1].lower() == res[1]:
+                        val = Validity(res[1], res[2], res[1] == "d")
+                        if res[1] != "d":
+                            val.Add_Default_Val_Dependency("-gnatVa", True)
+                        val.Add_Default_Val_Dependency("-gnatVn", False)
+                        self.validity_checks_list.append(val)
 
-        elif self.style_checks_analysis:
-          res = re.split ("^ *(1[-]9|.)(n*) +(.+) *$", line)
-          if len (res) > 2:
-            if res[1] == "1-9":
-               self.style_checks_list.append(StyleSpin (switch = "", defaulttip = res[3], defaultval=0, minval=0, maxval=9, before=True))
+            elif self.style_checks_analysis:
+                res = re.split("^ *(1[-]9|.)(n*) +(.+) *$", line)
+                if len(res) > 2:
+                    if res[1] == "1-9":
+                        self.style_checks_list.append(StyleSpin(
+                            switch="", defaulttip=res[3], defaultval=0, minval=0, maxval=9, before=True))
 
-            # no parameters. Do not include -gnatyN (remove all checks) and -gnatym (alias of -gnatyM79)
-            elif res[1] != "N" and res[1] != "m":
-               if res[2] == "":
-                  self.style_checks_list.append(Style (switch = res[1], defaulttip = res[3], defaultstate=False))
-               else:
-                  self.style_checks_list.append(StyleSpin (switch = res[1], defaulttip = res[3], defaultval=0, minval=0, maxval=32768))
+                    # no parameters. Do not include -gnatyN (remove all checks)
+                    # and -gnatym (alias of -gnatyM79)
+                    elif res[1] != "N" and res[1] != "m":
+                        if res[2] == "":
+                            self.style_checks_list.append(
+                                Style(switch=res[1], defaulttip=res[3], defaultstate=False))
+                        else:
+                            self.style_checks_list.append(
+                                StyleSpin(switch=res[1], defaulttip=res[3], defaultval=0, minval=0, maxval=32768))
 
-      self.msg += matched
+        self.msg += matched
 
-   def __get_switches_from_help (self):
-      # Verify we have the correct gnatcheck executable
-      self.warnings_list = []
-      self.validity_checks_list = []
-      self.style_checks_list = []
-      self.all_warnings_exception_list = []
-      self.warnings_analysis = False
-      self.validity_checks_analysis = False
-      self.style_checks_analysis = False
+    def __get_switches_from_help(self):
+        # Verify we have the correct gnatcheck executable
+        self.warnings_list = []
+        self.validity_checks_list = []
+        self.style_checks_list = []
+        self.all_warnings_exception_list = []
+        self.warnings_analysis = False
+        self.validity_checks_analysis = False
+        self.style_checks_analysis = False
 
-      if self.gnatCmd != "":
-         # Then retrieve warnings/style/restriction checks from gnatmake
-         self.msg = ""
-         # ??? We don't spawn this process on the build server as this leads
-         # to undesired results: this spawn command becomes asynchronous
-         # because of the rsync commands that are enqueued. Thus the result
-         # of the gnatmake -h analysis arrives after the switches dialog is
-         # created, leading to empty boxes.
-         # The behavior is then to try getting a valid gnat make command from
-         # the local machine, and fallback to the default switches if not
-         # found.
-         process = GPS.Process \
-           ("\"\"\"" + self.gnatCmd + "\"\"\" make -h",
-            "^.+\r?$",
-            on_match=self.__add_switch_callback,
-            remote_server="Build_Server")
-         process.get_result()
-      return True
+        if self.gnatCmd != "":
+            # Then retrieve warnings/style/restriction checks from gnatmake
+            self.msg = ""
+            # ??? We don't spawn this process on the build server as this leads
+            # to undesired results: this spawn command becomes asynchronous
+            # because of the rsync commands that are enqueued. Thus the result
+            # of the gnatmake -h analysis arrives after the switches dialog is
+            # created, leading to empty boxes.
+            # The behavior is then to try getting a valid gnat make command from
+            # the local machine, and fallback to the default switches if not
+            # found.
+            process = GPS.Process \
+                ("\"\"\"" + self.gnatCmd + "\"\"\" make -h",
+                 "^.+\r?$",
+                 on_match=self.__add_switch_callback,
+                 remote_server="Build_Server")
+            process.get_result()
+        return True
 
 # Constant definitions: those are switches that we define for all versions of
 # GNAT. Those constants also contain the default values that we use when we
@@ -452,7 +489,7 @@ xmlCompilerHead = """
                  tip="Override the compiler's default, and activate Ada 2012 language features" />
 """
 
-xmlCompilerDefault="""
+xmlCompilerDefault = """
          <popup label="Warnings" line="2" column="1">
             <check label="Turn on all optional warnings (except dhl.ot.w)" switch="-gnatwa"
                    tip="Activates all optional warnings" />
@@ -578,7 +615,7 @@ xmlCompilerDefault="""
          </popup>
 """
 
-xmlCompilerTrailer="""
+xmlCompilerTrailer = """
       </switches>
    </tool>
 

@@ -7,6 +7,7 @@ import tool_output
 
 
 class Sqlite_Cross_References(object):
+
     """
     A python class to support the xref engine in GPS.
     This class takes care of running gnatinspect as needed to refresh the

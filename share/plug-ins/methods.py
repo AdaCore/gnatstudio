@@ -16,54 +16,59 @@ happen when several methods have the same name.
 
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 import GPS
 
+
 class Methods_Contextual (GPS.Contextual):
-  def __init__ (self):
-     GPS.Contextual.__init__ (self, "Methods")
-     self.create_dynamic (on_activate = self.on_activate,
-                          label       = "References/Methods of %e",
-                          filter      = self.filter,
-                          factory     = self.factory)
 
-  def filter (self, context):
-     ## Store the methods in the context, so that we do not have to
-     ## recompute them if the menu is selected, and so that we can
-     ## handle overriden methods as well
-     if isinstance (context, GPS.EntityContext) and context.entity():
-        context.methods_list = context.entity().methods(include_inherited=True)
+    def __init__(self):
+        GPS.Contextual.__init__(self, "Methods")
+        self.create_dynamic(on_activate=self.on_activate,
+                            label="References/Methods of %e",
+                            filter=self.filter,
+                            factory=self.factory)
 
-        ## if we have an access to a tagged type, behave as if we had the
-        ## type itself
-        if context.methods_list == [] \
-           and context.entity().pointed_type():
-           context.methods_list = context.entity().pointed_type().methods()
+    def filter(self, context):
+        # Store the methods in the context, so that we do not have to
+        # recompute them if the menu is selected, and so that we can
+        # handle overriden methods as well
+        if isinstance(context, GPS.EntityContext) and context.entity():
+            context.methods_list = context.entity().methods(
+                include_inherited=True)
 
-        return context.methods_list != []
-     else:
-        return False
+            # if we have an access to a tagged type, behave as if we had the
+            # type itself
+            if context.methods_list == [] \
+               and context.entity().pointed_type():
+                context.methods_list = context.entity(
+                ).pointed_type().methods()
 
-  def factory (self, context):
-     own = set(context.entity().methods())  # overridden methods
-     context.methods_list.sort()
-     result = []
-     for m in context.methods_list:
-         if m in own:
-             result.append("%s" % m.name())
-         else:
-             result.append("%s (inherited)" % m.name())
-     return result
+            return context.methods_list != []
+        else:
+            return False
 
-  def on_activate (self, context, choice, choice_index):
-     decl = context.methods_list [choice_index].body()
-     buffer = GPS.EditorBuffer.get (decl.file())
-     buffer.current_view().goto \
-        (buffer.at(decl.line(), decl.column()))
+    def factory(self, context):
+        own = set(context.entity().methods())  # overridden methods
+        context.methods_list.sort()
+        result = []
+        for m in context.methods_list:
+            if m in own:
+                result.append("%s" % m.name())
+            else:
+                result.append("%s (inherited)" % m.name())
+        return result
 
-def on_gps_started (hook_name):
-   Methods_Contextual()
+    def on_activate(self, context, choice, choice_index):
+        decl = context.methods_list[choice_index].body()
+        buffer = GPS.EditorBuffer.get(decl.file())
+        buffer.current_view().goto \
+            (buffer.at(decl.line(), decl.column()))
 
-GPS.Hook ("gps_started").add (on_gps_started)
+
+def on_gps_started(hook_name):
+    Methods_Contextual()
+
+GPS.Hook("gps_started").add(on_gps_started)

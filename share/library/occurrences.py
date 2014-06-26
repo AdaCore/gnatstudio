@@ -20,39 +20,43 @@ Locations window.
 """
 
 ############################################################################
-## no user customization below this line
+# no user customization below this line
 ############################################################################
 
 import GPS
 from gps_utils import *
 from text_utils import *
 
-GPS.Preference ("Plugins/occurrences/color").create (
-  "Highlight Color", "color",
-  """color used to highlight matching occurrences.
+GPS.Preference("Plugins/occurrences/color").create(
+    "Highlight Color", "color",
+    """color used to highlight matching occurrences.
 you must restart gps to take changes into account""",
-  "lightblue")
+    "lightblue")
 
-def on_gps_started (hook_name):
-  GPS.Editor.register_highlighting \
-    ("dynamic occurrences", GPS.Preference ("Plugins/occurrences/color").get(), True)
 
-@interactive ("Editor", filter="Source editor",name="mark occurrences",
-              menu="/Navigate/Mark Occurrences In File")
-def mark_selected ():
-   """Mark all the occurrences of the selected element in the current editor.
-      Does nothing if multiple lines are selected"""
-   (buffer, start, end) = get_selection_or_word ()
-   selection = buffer.get_chars (start, end)
+def on_gps_started(hook_name):
+    GPS.Editor.register_highlighting \
+        ("dynamic occurrences", GPS.Preference(
+            "Plugins/occurrences/color").get(), True)
 
-   if selection != "":
-      for m in buffer.file().search (selection, regexp=False):
-         GPS.Locations.add ("Local occurrences", m.file(), m.line(), m.column(),
-              selection, highlight="dynamic occurrences", length=len(selection))
 
-@interactive ("Editor", filter="Source editor",
-              name="remove marked occurrences")
-def unmark_selected ():
-   GPS.Locations.remove_category ("Local occurrences")
+@interactive("Editor", filter="Source editor", name="mark occurrences",
+             menu="/Navigate/Mark Occurrences In File")
+def mark_selected():
+    """Mark all the occurrences of the selected element in the current editor.
+       Does nothing if multiple lines are selected"""
+    (buffer, start, end) = get_selection_or_word()
+    selection = buffer.get_chars(start, end)
 
-GPS.Hook ("gps_started").add (on_gps_started)
+    if selection != "":
+        for m in buffer.file().search(selection, regexp=False):
+            GPS.Locations.add("Local occurrences", m.file(), m.line(), m.column(),
+                              selection, highlight="dynamic occurrences", length=len(selection))
+
+
+@interactive("Editor", filter="Source editor",
+             name="remove marked occurrences")
+def unmark_selected():
+    GPS.Locations.remove_category("Local occurrences")
+
+GPS.Hook("gps_started").add(on_gps_started)

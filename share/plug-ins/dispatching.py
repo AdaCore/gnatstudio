@@ -8,7 +8,7 @@ not known until run time.
 """
 
 #############################################################################
-## No user customization below this line
+# No user customization below this line
 #############################################################################
 
 import GPS
@@ -25,6 +25,7 @@ GPS.Preference("Plugins/dispatching/context").create(
 
 
 class Dispatching_Highlighter(Location_Highlighter):
+
     def __init__(self):
         Location_Highlighter.__init__(self, style=None)
         self.background_color = None
@@ -37,7 +38,8 @@ class Dispatching_Highlighter(Location_Highlighter):
         if GPS.Logger("ENTITIES.SQLITE").active:
             GPS.Hook("xref_updated").add(self.__on_compilation_finished)
         else:
-            GPS.Hook("compilation_finished").add(self.__on_compilation_finished)
+            GPS.Hook("compilation_finished").add(
+                self.__on_compilation_finished)
 
     def __del__(self):
         Location_Highlighter.__del__(self)
@@ -48,7 +50,8 @@ class Dispatching_Highlighter(Location_Highlighter):
         if GPS.Logger("ENTITIES.SQLITE").active:
             GPS.Hook("xref_updated").remove(self.__on_compilation_finished)
         else:
-            GPS.Hook("compilation_finished").remove(self.__on_compilation_finished)
+            GPS.Hook("compilation_finished").remove(
+                self.__on_compilation_finished)
 
     def __on_preferences_changed(self, hook):
         changed = False
@@ -71,7 +74,7 @@ class Dispatching_Highlighter(Location_Highlighter):
         self.start_highlight(GPS.EditorBuffer.get(file, open=False))
 
     def __on_compilation_finished(
-        self, hook=None, category="", target_name="", mode_name="", status=""):
+            self, hook=None, category="", target_name="", mode_name="", status=""):
         """Re-highlight all editors"""
 
         for b in GPS.EditorBuffer.list():
@@ -97,6 +100,8 @@ class Dispatching_Highlighter(Location_Highlighter):
 
 
 highlighter = None
+
+
 def on_gps_started(h):
     global highlighter
     highlighter = Dispatching_Highlighter()

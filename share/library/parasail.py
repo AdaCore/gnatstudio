@@ -69,7 +69,7 @@ language_description = """
 """
 
 
-def on_gps_started (hook_name):
+def on_gps_started(hook_name):
     """ Called once, when GPS is starting.
     """
     pass
@@ -83,6 +83,6 @@ def on_gps_started (hook_name):
 #        GPS.parse_xml(xml.replace("@MENU@", 'menu="%s"' % menu))
 
 
-GPS.parse_xml (language_description)
+GPS.parse_xml(language_description)
 
-GPS.Hook ("gps_started").add (on_gps_started)
+GPS.Hook("gps_started").add(on_gps_started)

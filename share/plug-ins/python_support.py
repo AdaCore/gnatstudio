@@ -16,7 +16,7 @@ following are provided:
 
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 # To be added (from idle environment)
@@ -164,6 +164,7 @@ class PythonLanguage(GPS.Language):
 
 
 class Python_Support(object):
+
     def __init__(self):
         self.port_pref = GPS.Preference("Plugins/python_support/port")
         self.port_pref.create(
@@ -238,13 +239,13 @@ Otherwise, reload the current version of the file.
             file = GPS.current_context().file()
             module = os.path.splitext(os.path.basename(file.name()))[0]
 
-            ## The actual import and reload must be done in the context of the
-            ## GPS console so that they are visible there. The current function
-            ## executes in a different context, and would not impact the GPS
-            ## console as a result otherwise.
+            # The actual import and reload must be done in the context of the
+            # GPS console so that they are visible there. The current function
+            # executes in a different context, and would not impact the GPS
+            # console as a result otherwise.
 
-            ## We cannot use  execfile(...), since that would be the equivalent
-            ## of "from ... import *", not of "import ..."
+            # We cannot use  execfile(...), since that would be the equivalent
+            # of "from ... import *", not of "import ..."
 
             if module in sys.modules:
                 GPS.exec_in_console("reload(sys.modules[\"" + module + "\"])")
@@ -259,8 +260,8 @@ Otherwise, reload the current version of the file.
                 # This would import in the current context, not what we want
                 # exec (compile ("import " + module, "<cmdline>", "exec"))
 
-                ## The proper solution is to execute in the context of the GPS
-                ## console
+                # The proper solution is to execute in the context of the GPS
+                # console
                 GPS.exec_in_console("import " + module)
         except:
             pass   # Current context is not a file
@@ -307,6 +308,7 @@ works to open these files as it does for the Ada runtime
 
 
 class PythonTracer(object):
+
     """ Basic python tracer, useful for GPS plugin development and debug.
     """
 

@@ -20,6 +20,7 @@ Key_Escape = 65307
 
 
 class Console_Process(GPS.Console, GPS.Process):
+
     """This class provides a way to spawn an interactive process and
      do its input/output in a dedicated console in GPS.
      The process is created so that it does not appear in the task
@@ -118,7 +119,7 @@ class Console_Process(GPS.Console, GPS.Process):
                 self.write('\nexit status: ' + `status`)
         except:
             pass  # Might have already been destroyed if that's what
-                  # resulted in the call to on_exit
+            # resulted in the call to on_exit
 
     def on_input(self, input):
         """This method is called when the user has pressed <enter> in the
@@ -186,6 +187,7 @@ class Console_Process(GPS.Console, GPS.Process):
 
 
 class ANSI_Console_Process(Console_Process):
+
     """This class has a purpose similar to Console_Process.
       However, this class does not attempt to do any of the high-level
       processing of prompt and input that Console_Process does, and instead

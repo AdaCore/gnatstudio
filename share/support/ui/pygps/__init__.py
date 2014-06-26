@@ -122,6 +122,7 @@ try:
     # The following classes and functions are used to traverse the tree of
     # widgets displayed on the screen, or access specific widgets
     class WidgetTreeIterator:
+
         """
         An iterator for WidgetTree (see the class WidgetTree for examples)
         """
@@ -329,16 +330,16 @@ try:
                     return True
 
             params = tuple([dialog] + [get_widget_by_name(name, dialog)
-                           for name in widgets])
+                                       for name in widgets])
             apply(on_open, params + args, kwargs)
 
         windows = Gtk.Window.list_toplevels()
         if timeout == 0:
             GObject.idle_add(lambda: internal_on_open(on_open, widgets,
-                             windows, args, kwargs))
+                                                      windows, args, kwargs))
         else:
             GObject.timeout_add(timeout, lambda: internal_on_open(on_open,
-                                widgets, windows, args, kwargs))
+                                                                  widgets, windows, args, kwargs))
         GPS.Menu.get(menu).pywidget().activate()
 
     # ###############

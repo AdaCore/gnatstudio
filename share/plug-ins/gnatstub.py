@@ -10,6 +10,7 @@ import os
 
 
 class OnExit(object):
+
     def __init__(self, file):
         self.file = file
 
@@ -23,6 +24,7 @@ class OnExit(object):
         else:
             GPS.Locations.parse(output, "gnatstub")
 
+
 @gps_utils.interactive(
     category="Editor",
     filter=gps_utils.in_ada_file,
@@ -35,7 +37,7 @@ body file.
     GPS.MDI.save_all()
     proj = GPS.current_context().project()
     file = GPS.current_context().file()
-    command='"%s" stub "%s" %s "%s" "%s"' % (
+    command = '"%s" stub "%s" %s "%s" "%s"' % (
         proj.get_attribute_as_string("gnat", "ide"),
         "-P%s" % proj.file().name() if proj else "",
         GPS.Project.scenario_variables_cmd_line("-X"),

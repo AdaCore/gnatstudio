@@ -11,7 +11,7 @@ of directories, and the default is to create missing directories.
 """
 
 #############################################################################
-## No user customization below this line
+# No user customization below this line
 #############################################################################
 
 import GPS
@@ -19,34 +19,35 @@ import os
 from os.path import *
 import string
 
-def on_project_changed(self):
-  CreatedDirs=False
-  try:
-     must_create = GPS.Preference ("Auto-Create-Dirs").get()
-  except:
-     must_create = True
 
-  if must_create:
-     prjs = GPS.Project.root().dependencies (True)
-     prjs.append (GPS.Project.root())
-     created=[]
-     for i in prjs :
-        dirs=[i.get_attribute_as_string("Exec_Dir"),
-              i.get_attribute_as_string("Library_Dir"),
-              i.get_attribute_as_string("Object_Dir"),
-              i.get_attribute_as_string("Library_Src_Dir")]
-        for j in dirs:
-            if i and i not in [".",""," "]:
-               dir = join (dirname (i.file().name()), j).strip()
-               if not exists(dir):
-                   os.makedirs(dir)
-                   created.append(dir)
-                   CreatedDirs=True
-     if CreatedDirs:
-        GPS.Console("Messages").write("Created missing dirs\n")
-        GPS.Console("Messages").write(string.join(created,"\n"))
-        GPS.Console("Messages").write("\n")
-        GPS.Project.recompute()
+def on_project_changed(self):
+    CreatedDirs = False
+    try:
+        must_create = GPS.Preference("Auto-Create-Dirs").get()
+    except:
+        must_create = True
+
+    if must_create:
+        prjs = GPS.Project.root().dependencies(True)
+        prjs.append(GPS.Project.root())
+        created = []
+        for i in prjs:
+            dirs = [i.get_attribute_as_string("Exec_Dir"),
+                    i.get_attribute_as_string("Library_Dir"),
+                    i.get_attribute_as_string("Object_Dir"),
+                    i.get_attribute_as_string("Library_Src_Dir")]
+            for j in dirs:
+                if i and i not in [".", "", " "]:
+                    dir = join(dirname(i.file().name()), j).strip()
+                    if not exists(dir):
+                        os.makedirs(dir)
+                        created.append(dir)
+                        CreatedDirs = True
+        if CreatedDirs:
+            GPS.Console("Messages").write("Created missing dirs\n")
+            GPS.Console("Messages").write(string.join(created, "\n"))
+            GPS.Console("Messages").write("\n")
+            GPS.Project.recompute()
 
 GPS.parse_xml("""
 <preference name="Auto-Create-Dirs"
@@ -57,4 +58,4 @@ GPS.parse_xml("""
    type="boolean"/>
 """)
 
-GPS.Hook ("project_view_changed").add (on_project_changed)
+GPS.Hook("project_view_changed").add(on_project_changed)

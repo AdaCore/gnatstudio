@@ -22,7 +22,7 @@ kind_name_to_category = {
     ci.CursorKind.PARM_DECL: completion.CAT_PARAMETER,
     ci.CursorKind.TYPEDEF_DECL: completion.CAT_TYPE,
     ci.CursorKind.VAR_DECL: completion.CAT_VARIABLE,
-    }
+}
 # translates cursor names to completion language categories
 
 
@@ -227,6 +227,7 @@ class Clang(object):
 
 
 class ClangCompletionResolver(CompletionResolver):
+
     """
         A completion resolver based on clang results
     """

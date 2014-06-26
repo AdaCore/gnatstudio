@@ -13,139 +13,144 @@ second (for instance "file1" depends on "file2", which depends on "file3")
 """
 
 #############################################################################
-## No user customization below this line
+# No user customization below this line
 #############################################################################
 
 import GPS
 import os.path
 
-def internal_dependency_path (from_file, to_file, include_implicit):
-  # We do the computation starting from to_file, since it is more efficient
-  # to compute "imported" files than "importing files". Since we want to
-  # compute the path itself, do not do a recursive search.
-  deps = dict()
 
-  # List of files to analyze. This is a list of tuples, the first element of
-  # which is the name of the file to analyze, and the second is the name of
-  # the parent that put it in the list
-  to_analyze = [(from_file, None)]
+def internal_dependency_path(from_file, to_file, include_implicit):
+    # We do the computation starting from to_file, since it is more efficient
+    # to compute "imported" files than "importing files". Since we want to
+    # compute the path itself, do not do a recursive search.
+    deps = dict()
 
-  while len (to_analyze) != 0:
-    (file, because_of) = to_analyze.pop()
-    imports = file.imports (include_implicit=include_implicit,
-                            include_system=False)
+    # List of files to analyze. This is a list of tuples, the first element of
+    # which is the name of the file to analyze, and the second is the name of
+    # the parent that put it in the list
+    to_analyze = [(from_file, None)]
 
-    # imports does not list the dependency from body to spec, so we add it
-    # explicitly if from_file is a body.
+    while len(to_analyze) != 0:
+        (file, because_of) = to_analyze.pop()
+        imports = file.imports(include_implicit=include_implicit,
+                               include_system=False)
 
-    ext = os.path.splitext (from_file.name())
-    if ext[1] == ".adb" or (ext[1] == ".ada" and ext[0][-2:] == ".2"):
-      imports.append (from_file.other_file())
+        # imports does not list the dependency from body to spec, so we add it
+        # explicitly if from_file is a body.
 
-    deps[file] = because_of
-    if file == to_file:
-      break
+        ext = os.path.splitext(from_file.name())
+        if ext[1] == ".adb" or (ext[1] == ".ada" and ext[0][-2:] == ".2"):
+            imports.append(from_file.other_file())
 
-    for f in imports:
-      if f and not deps.has_key (f):
-        to_analyze.append ((f, file))
+        deps[file] = because_of
+        if file == to_file:
+            break
 
-  target = to_file
-  added=False
-  result=""
-  targets = []
+        for f in imports:
+            if f and not deps.has_key(f):
+                to_analyze.append((f, file))
 
-  while target:
-    targets.append (target)
-    result = " -> " + target.name() + "\n" + result
-    if not deps.has_key (target):
-      result = "No dependency between these two files"
-      break
-    target = deps[target]
-  return (result, targets)
+    target = to_file
+    added = False
+    result = ""
+    targets = []
 
-def dependency_path (from_file, to_file, fill_location=False, title=""):
- """Shows why modifying to_file implies that from_file needs to be
-    recompiled. This information is computed from the cross-references
-    database, and requires your application to have been compiled
-    properly. This function does not attempt to compute the shortest
-    dependency path, and just returns the first one it finds.
-    FROM_FILE and TO_FILE must be instances of GPS.File.
-    If FILL_LOCATION is True, then the locations view will also be filled."""
+    while target:
+        targets.append(target)
+        result = " -> " + target.name() + "\n" + result
+        if not deps.has_key(target):
+            result = "No dependency between these two files"
+            break
+        target = deps[target]
+    return (result, targets)
 
- if not isinstance (from_file, GPS.File):
-   from_file = GPS.File (from_file)
- if not isinstance (to_file, GPS.File):
-   to_file = GPS.File (to_file)
 
- if from_file == to_file:
-    return "Same file"
+def dependency_path(from_file, to_file, fill_location=False, title=""):
+    """Shows why modifying to_file implies that from_file needs to be
+       recompiled. This information is computed from the cross-references
+       database, and requires your application to have been compiled
+       properly. This function does not attempt to compute the shortest
+       dependency path, and just returns the first one it finds.
+       FROM_FILE and TO_FILE must be instances of GPS.File.
+       If FILL_LOCATION is True, then the locations view will also be filled."""
 
- # First, try without implicit dependencies, this gives better results
- # in general, and then fallback to implicit deps if needed.
+    if not isinstance(from_file, GPS.File):
+        from_file = GPS.File(from_file)
+    if not isinstance(to_file, GPS.File):
+        to_file = GPS.File(to_file)
 
- (result, targets) = internal_dependency_path (from_file, to_file,
-                                               include_implicit=False)
+    if from_file == to_file:
+        return "Same file"
 
- if result == "No dependency between these two files":
-   (result, targets) = internal_dependency_path (from_file, to_file,
-                                                 include_implicit=True)
+    # First, try without implicit dependencies, this gives better results
+    # in general, and then fallback to implicit deps if needed.
 
- if fill_location and result != "No dependency between these two files":
-   target = targets.pop()
+    (result, targets) = internal_dependency_path(from_file, to_file,
+                                                 include_implicit=False)
 
-   # Fill the locations view with the result
-   while len (targets) != 0:
-     prev_target = target
-     target = targets.pop()
+    if result == "No dependency between these two files":
+        (result, targets) = internal_dependency_path(from_file, to_file,
+                                                     include_implicit=True)
 
-     # Assume simple naming schemes:
-     #   - parent-child.ads -> parent.child
-     #   - parent.child.1.ada -> parent.child
-     # ??? Would be good to have a file_to_unit API instead
-     unit=os.path.splitext (os.path.basename (target.name()))[0]
+    if fill_location and result != "No dependency between these two files":
+        target = targets.pop()
 
-     if len (unit) > 2 and (unit[-2:] == ".1" or unit[-2:] == ".2"):
-       unit = unit [0:len (unit) - 2]
+        # Fill the locations view with the result
+        while len(targets) != 0:
+            prev_target = target
+            target = targets.pop()
 
-     unit=unit.split ('-')[-1].split ('.')[-1]
+            # Assume simple naming schemes:
+            #   - parent-child.ads -> parent.child
+            #   - parent.child.1.ada -> parent.child
+            # ??? Would be good to have a file_to_unit API instead
+            unit = os.path.splitext(os.path.basename(target.name()))[0]
 
-     # Find the 'with <unit>' clause in prev_target and fill the location view
-     for e in prev_target.entities(local=False):
-        if e.category() == "package/namespace" \
-          and e.name().lower() == unit \
-          and e.declaration().file() == target:
-           refs = e.references (in_file=prev_target)
+            if len(unit) > 2 and (unit[-2:] == ".1" or unit[-2:] == ".2"):
+                unit = unit[0:len(unit) - 2]
 
-           if len (refs) > 1:
-             r = refs[1]
-             GPS.Locations.add (category=title,
-                                file=prev_target,
-                                line=r.line(),
-                                column=r.column(),
-                                message="with " + unit,
-                                highlight="",
-                                length=0)
-             added = True
-             break
-   if added:
-     GPS.MDI.get ("Locations").raise_window()
- return result
+            unit = unit.split('-')[-1].split('.')[-1]
 
-def print_dependency_path (from_file, to_file):
-  title = "Dependencies from " + os.path.basename (from_file.name()) + \
-                 " to " + os.path.basename (to_file.name())
-  result = dependency_path (from_file, to_file, True, title)
-  GPS.Console().write (title + "\n" + result + "\n")
+            # Find the 'with <unit>' clause in prev_target and fill the
+            # location view
+            for e in prev_target.entities(local=False):
+                if e.category() == "package/namespace" \
+                        and e.name().lower() == unit \
+                        and e.declaration().file() == target:
+                    refs = e.references(in_file=prev_target)
 
-def interactive_dependency_path (menu):
-   try:
-     (file1, file2)=GPS.MDI.input_dialog ("Show file dependency path",
-                                          "From File", "To File")
-   except:
-     return
+                    if len(refs) > 1:
+                        r = refs[1]
+                        GPS.Locations.add(category=title,
+                                          file=prev_target,
+                                          line=r.line(),
+                                          column=r.column(),
+                                          message="with " + unit,
+                                          highlight="",
+                                          length=0)
+                        added = True
+                        break
+        if added:
+            GPS.MDI.get("Locations").raise_window()
+    return result
 
-   print_dependency_path (GPS.File (file1), GPS.File (file2))
 
-GPS.Menu.create ("/Navigate/Show File Dependency Path...",
-                 interactive_dependency_path)
+def print_dependency_path(from_file, to_file):
+    title = "Dependencies from " + os.path.basename (from_file.name()) + \
+        " to " + os.path.basename(to_file.name())
+    result = dependency_path(from_file, to_file, True, title)
+    GPS.Console().write(title + "\n" + result + "\n")
+
+
+def interactive_dependency_path(menu):
+    try:
+        (file1, file2) = GPS.MDI.input_dialog("Show file dependency path",
+                                              "From File", "To File")
+    except:
+        return
+
+    print_dependency_path(GPS.File(file1), GPS.File(file2))
+
+GPS.Menu.create("/Navigate/Show File Dependency Path...",
+                interactive_dependency_path)

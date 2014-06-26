@@ -13,21 +13,22 @@ advanced contents containing for instance the current date.
 """
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
-## Possible enhancements: if we knew the type/language of the file, we could
-## insert one skeleton or another
+# Possible enhancements: if we knew the type/language of the file, we could
+# insert one skeleton or another
 
-import GPS, os.path
+import GPS
+import os.path
 
 
 template_pref = "Plugins/skeleton/skeleton"
 
 GPS.Preference(template_pref).create(
-  "Template", "multiline",
-  """Text to insert in newly created files""",
-  """------------------------------------------------------------------
+    "Template", "multiline",
+    """Text to insert in newly created files""",
+    """------------------------------------------------------------------
 -- Demo for a skeleton, see skeleton.py in the GPS installation --
 ------------------------------------------------------------------
 """)
@@ -40,4 +41,4 @@ def add_skeleton(hook_name, file):
         loc = ed.at(1, 1)
         ed.insert(loc, GPS.Preference(template_pref).get())
 
-GPS.Hook ("file_edited").add (add_skeleton)
+GPS.Hook("file_edited").add(add_skeleton)

@@ -12,7 +12,7 @@ not defined in this file.
 """
 
 ###########################################################################
-## No user customization below this line
+# No user customization below this line
 ###########################################################################
 
 import GPS

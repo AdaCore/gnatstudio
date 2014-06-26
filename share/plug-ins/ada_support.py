@@ -6,10 +6,12 @@ editing of Ada files.
 """
 
 ###########################################################################
-## No user customization below this line
+# No user customization below this line
 ###########################################################################
 
-import GPS, gps_utils.gnat_rules
+import GPS
+import gps_utils.gnat_rules
+
 
 def on_switch_editor(hook_name):
     gps_utils.gnat_rules.EnsureInitialized()

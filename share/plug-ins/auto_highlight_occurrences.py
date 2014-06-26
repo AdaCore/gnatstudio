@@ -25,7 +25,7 @@ like "TODO", or special comments for instance.
 """
 
 ############################################################################
-## no user customization below this line
+# no user customization below this line
 ############################################################################
 
 import GPS
@@ -78,6 +78,7 @@ for k in default_colors:
 
 
 class Current_Entity_Highlighter(Location_Highlighter):
+
     """Class to handle the highlighting of local occurrences."""
 
     def __init__(self):

@@ -9,10 +9,11 @@ creation of new basic project files:
 """
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
-import GPS, os.path
+import GPS
+import os.path
 
 GPS.parse_xml ("""
   <action name="simple_project_from_dialog" show-command="false" category="Projects">
@@ -41,47 +42,53 @@ GPS.parse_xml ("""
   </menu>
   """)
 
-def create_from_main (main_file, create_main=0):
-  print "file = " + main_file
-  if main_file != "":
-     main = os.path.splitext (os.path.basename(main_file)) [0]
-     out_file = os.path.dirname (os.path.abspath (main_file)) + os.sep + main + ".gpr"
-     out = file (out_file, "w")
-     out.write ("project " + main + " is\n")
-     out.write ("   for Source_Dirs use (\".\");\n")
-     out.write ("   for Main use (\"" + main_file + "\");\n")
-     out.write ("end " + main + ";\n")
-     out.close()
 
-     if create_main:
-        out = file (os.path.splitext (os.path.abspath (main_file))[0] + ".adb", "w")
-        out.write ("procedure " + main + " is\n")
-        out.write ("begin\n")
-        out.write ("   null;\n")
-        out.write ("end " + main + ";\n")
-        out.close ()
+def create_from_main(main_file, create_main=0):
+    print "file = " + main_file
+    if main_file != "":
+        main = os.path.splitext(os.path.basename(main_file))[0]
+        out_file = os.path.dirname(
+            os.path.abspath(main_file)) + os.sep + main + ".gpr"
+        out = file(out_file, "w")
+        out.write("project " + main + " is\n")
+        out.write("   for Source_Dirs use (\".\");\n")
+        out.write("   for Main use (\"" + main_file + "\");\n")
+        out.write("end " + main + ";\n")
+        out.close()
 
-     GPS.Project.load (out_file)
+        if create_main:
+            out = file(
+                os.path.splitext(os.path.abspath(main_file))[0] + ".adb", "w")
+            out.write("procedure " + main + " is\n")
+            out.write("begin\n")
+            out.write("   null;\n")
+            out.write("end " + main + ";\n")
+            out.close()
+
+        GPS.Project.load(out_file)
 
 
 def create_from_dialog():
-   """Create a new project file, asking the user for the name of the main unit"""
-   main = GPS.MDI.input_dialog \
-      ("Please enter file name that contains the main unit", "main unit") [0]
-   create_from_main (main)
+    """Create a new project file, asking the user for the name of the main unit"""
+    main = GPS.MDI.input_dialog \
+        ("Please enter file name that contains the main unit", "main unit")[0]
+    create_from_main(main)
+
 
 def create_from_context():
-   """Create a new project file, using the current source as main"""
-   try:
-      create_from_main (GPS.current_context().file().name())
-   except:
-      pass
+    """Create a new project file, using the current source as main"""
+    try:
+        create_from_main(GPS.current_context().file().name())
+    except:
+        pass
+
 
 def create_project_and_main():
-   """Ask the user for a project name, and create a main unit and project file"""
-   dir, main = GPS.MDI.input_dialog \
-      ("Enter the name of the project", "directory", "name")
-   dir = os.path.abspath (dir)
-   if not os.path.isdir (dir): os.mkdir (dir)
-   os.chdir (dir)
-   create_from_main (main, create_main=1)
+    """Ask the user for a project name, and create a main unit and project file"""
+    dir, main = GPS.MDI.input_dialog \
+        ("Enter the name of the project", "directory", "name")
+    dir = os.path.abspath(dir)
+    if not os.path.isdir(dir):
+        os.mkdir(dir)
+    os.chdir(dir)
+    create_from_main(main, create_main=1)

@@ -61,7 +61,7 @@ Note: this plug-in activates only when the command-line tool
 """
 
 ###########################################################################
-## No user customization below this line
+# No user customization below this line
 ###########################################################################
 
 import os.path
@@ -69,6 +69,7 @@ import os.path
 import GPS
 import gps_utils.highlighter
 import os_utils
+
 
 class GNATcovPlugin(object):
 
@@ -299,7 +300,7 @@ class GNATcovPlugin(object):
         GPS.execute_action("/Tools/Coverage/Load data for all projects")
 
     def on_compilation_finished(self, hook, category,
-        target_name="", mode_name="", status=""):
+                                target_name="", mode_name="", status=""):
         """Called whenever a compilation ends."""
 
         # If compilation failed, do nothing.
@@ -317,6 +318,7 @@ class GNATcovPlugin(object):
             GPS.Preference('GNATcov-Inlined-Details-Background').get())
         self.inline_details_style.set_foreground(
             GPS.Preference('GNATcov-Inlined-Details-Foreground').get())
+
 
 def setup_plugin(hook):
     # To make debugging easier, keep a reference to the plugin in the module

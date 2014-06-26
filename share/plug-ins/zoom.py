@@ -9,7 +9,7 @@ and the new text size will be active when GPS is relaunched later on.
 """
 
 #############################################################################
-## No user customization below this line
+# No user customization below this line
 #############################################################################
 
 from GPS import *
@@ -18,15 +18,15 @@ import gps_utils
 
 
 def zoom_pref(pref, factor, save=True):
-   p = Preference(pref)
-   (font, fg, bg) = p.get().split("@")
-   descr = Pango.FontDescription(font)
-   descr.set_size(int (descr.get_size() * factor))
-   p.set(descr.to_string() + "@" + fg + "@" + bg, save)
+    p = Preference(pref)
+    (font, fg, bg) = p.get().split("@")
+    descr = Pango.FontDescription(font)
+    descr.set_size(int(descr.get_size() * factor))
+    p.set(descr.to_string() + "@" + fg + "@" + bg, save)
 
 
 def zoom(factor):
-   zoom_pref("Src-Editor-Reference-Style", factor, True)
+    zoom_pref("Src-Editor-Reference-Style", factor, True)
 
 
 @gps_utils.interactive(name="increase text size", category="Editor")
@@ -40,4 +40,4 @@ This impacts the corresponding preferences."""
 def zoom_out():
     """Decrease the size of fonts in the source editors.
 This impacts the corresponding preferences."""
-    zoom(1/1.2)
+    zoom(1 / 1.2)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 """
@@ -1260,6 +1260,7 @@ class GNATProve_Plugin:
 
 
 class UnknownVCError(Exception):
+
     def __init__(self, msg):
         self.msg = msg
 

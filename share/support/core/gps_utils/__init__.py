@@ -395,6 +395,7 @@ def execute_for_all_cursors(ed, mark_fn, extend_selection=False):
 
 
 class Chainmap(UserDict.DictMixin):
+
     """Combine multiple mappings for sequential lookup.
 
     For example, to emulate Python's normal lookup sequence:

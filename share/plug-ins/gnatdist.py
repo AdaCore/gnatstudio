@@ -8,19 +8,20 @@ language, and allows to run tool from GPS.
 """
 
 
-import os_utils, GPS
+import os_utils
+import GPS
 
 #  First, try to find gnatdist/po_gnatdist executable. po_gnatdist have
 #  preference over gnatdist
 
 gnatdist_tool = os_utils.locate_exec_on_path("po_gnatdist")
 if gnatdist_tool == "":
-  gnatdist_tool = os_utils.locate_exec_on_path("gnatdist")
+    gnatdist_tool = os_utils.locate_exec_on_path("gnatdist")
 
 #  If gnatdist/po_gnatdist tool was found, enable its support in GPS
 
 if gnatdist_tool != "":
-  GPS.parse_xml ("""
+    GPS.parse_xml ("""
   <Language>
     <Name>gnatdist</Name>
     <Parent>Ada</Parent>
@@ -109,4 +110,3 @@ if gnatdist_tool != "":
       <arg>%attr(dsa'configuration_file)</arg>
     </command-line>
   </target>""")
-

@@ -10,6 +10,7 @@ import traceback
 
 
 class Styles(object):
+
     """
     This class is used to manage object styles, and provide a cache
     were appropriate for efficiency.
@@ -34,9 +35,9 @@ class Styles(object):
         self.default_item_props = dict(
             text=dict(
                 #margin=[0, 5, 0, 5],
-                #align=2,
-                )
+                # align=2,
             )
+        )
 
     def create_default_styles(self):
         """

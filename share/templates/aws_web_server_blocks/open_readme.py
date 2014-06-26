@@ -1,2 +1,2 @@
 import GPS
-GPS.EditorBuffer.get (GPS.File("README"))
+GPS.EditorBuffer.get(GPS.File("README"))

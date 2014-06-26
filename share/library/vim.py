@@ -64,12 +64,15 @@ def with_col(loc, col):
 def forward_vim_word(loc, fwd=True):
 
     loc = loc if fwd else loc.forward_char(-1)
-    isword = lambda c : c == '_' or c.isalpha()
+    isword = lambda c: c == '_' or c.isalpha()
 
-    def cat (c):
-        if isword(c): return 1
-        elif c.isspace(): return 2
-        else: return 3
+    def cat(c):
+        if isword(c):
+            return 1
+        elif c.isspace():
+            return 2
+        else:
+            return 3
 
     offset = 1 if fwd else -1
     fw_ws = partial(forward_until, pred=lambda c: not c.isspace(),
@@ -109,7 +112,8 @@ def forward_until(loc, pred,
         cur_loc = cur_loc.forward_char(step)
 
     while not pred(cur_loc.get_char()):
-        print "OY : "; cur_loc.get_char()
+        print "OY : "
+        cur_loc.get_char()
 
         if cur_loc.get_char() == "\n" and stop_at_eol:
             return loc
@@ -186,11 +190,13 @@ def create_action(action_tuple, vim_state):
 
 
 class KeyMap(object):
+
     def get_action(keyval, vim_state):
         return NoAction()
 
 
 class CharActionKeyMap(KeyMap):
+
     def __init__(self, keymap):
         self.keymap = keymap
 
@@ -200,6 +206,7 @@ class CharActionKeyMap(KeyMap):
 
 
 class CharCharKeyMap(KeyMap):
+
     def get_action(self, keyval, vim_state):
         return create_action((CharAction, chr(keyval)), vim_state)
 
@@ -409,6 +416,7 @@ class ComposedAction(BaseAction):
 
 
 class NoAction(BaseAction):
+
     def apply_action(self):
         pass
 
@@ -436,6 +444,7 @@ class SwitchState(BaseAction):
 
 @insert_command
 class Insert(BaseAction):
+
     def apply_action(self):
         self.vim_state.state = InsertState
         self.vim_state.gtk_view.set_overwrite(False)
@@ -463,8 +472,10 @@ class Movement(BaseAction):
 import re
 is_keyword_re = re.compile("[\w_0-9]")
 
+
 def is_symbol_char(char):
     return not is_keyword_char(char) and not char.isspace()
+
 
 def is_keyword_char(char):
     return is_keyword_re.match(char) != None
@@ -547,6 +558,7 @@ class Replace(LineAction):
 
 
 class Undo(BaseAction):
+
     def apply_action(self):
         self.vim_state.view.buffer().undo()
 
@@ -613,6 +625,7 @@ class UntilCharMovement(ComposedAction):
 
 
 class ChainedAction(BaseAction):
+
     def __init__(self, *actions):
         self.actions = actions
 
@@ -622,17 +635,20 @@ class ChainedAction(BaseAction):
 
 
 class ReplayAction(BaseAction):
+
     def apply(self):
         self.vim_state.last_write_command.replay()
 
 
 class ReplayMove(BaseAction):
+
     def apply(self):
         # print "IN REPLAYMOVE"
         self.vim_state.last_movement_command.replay()
 
 
 class SwitchToVisual(BaseAction):
+
     def __init__(self, state):
         self.visual_state = state
 
@@ -642,6 +658,7 @@ class SwitchToVisual(BaseAction):
 
 
 class VisualDeletion(BaseAction):
+
     def apply_action(self):
         for loc_a, loc_b in self.vim_state.get_selection_locs():
             self.vim_state.delete(
@@ -653,18 +670,22 @@ class VisualDeletion(BaseAction):
 
 
 class VisualYank(BaseAction):
+
     def apply_action(self):
         for loc_a, loc_b in self.vim_state.get_selection_locs():
-            self.vim_state.yank(loc_a, loc_b, is_line=self.vim_state.state == VisualStateLine)
+            self.vim_state.yank(
+                loc_a, loc_b, is_line=self.vim_state.state == VisualStateLine)
         switch_state(self.vim_state, NormalState)
 
 
 class EOLMovement(Movement):
+
     def get_end_location(self):
         return self.cursor().end_of_line().forward_char(-1)
 
 
 class BOLMovement(Movement):
+
     def get_end_location(self):
         return self.cursor().beginning_of_line().forward_until(
             lambda c: not c.isspace()
@@ -672,6 +693,7 @@ class BOLMovement(Movement):
 
 
 class ConflateLines(BaseAction):
+
     def apply_action(self):
         self.vim_state.view.goto(self.cursor().end_of_line().forward_char(-1))
         self.vim_state.buffer.delete(
@@ -707,12 +729,12 @@ basic_actions = {
     "T": (UntilCharMovement, True, True),
     "$": (ChainedAction, (UntilCharMovement, False, True), (CharAction, "\n")),
     "D": (ChainedAction, (Deletion,),
-                         (UntilCharMovement, False, True),
-                         (CharAction, "\n"),
-                         (SimpleMovement, Mov_Char, -1)),
+          (UntilCharMovement, False, True),
+          (CharAction, "\n"),
+          (SimpleMovement, Mov_Char, -1)),
     "C": (ChainedAction, (Replace,),
-                         (UntilCharMovement, False, True),
-                         (CharAction, "\n")),
+          (UntilCharMovement, False, True),
+          (CharAction, "\n")),
     "d": (Deletion,),
     "c": (Replace,),
     "u": (Undo,),

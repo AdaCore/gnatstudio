@@ -166,6 +166,7 @@ def propagate_change(pref):
 
 
 class Style(object):
+
     def __init__(self, style_id, prio, pref):
         """
         :type style_id: string
@@ -219,6 +220,7 @@ class Matcher(BaseMatcher):
 
 
 class SimpleMatcher(Matcher):
+
     def __init__(self, tag, pattern, name=""):
         """
             :type tag: Style
@@ -270,6 +272,7 @@ class RegionMatcher(Matcher):
 
 
 class RegionRef(BaseMatcher):
+
     def __init__(self, region_name):
         self.region_name = region_name
 
@@ -283,6 +286,7 @@ class RegionRef(BaseMatcher):
 
 
 class HighlighterStacks(object):
+
     def __init__(self):
         # The stack of highlighter at (0, 0) is necessarily the empty stack,
         # so the stack list comes prepopulated with one empty stack

@@ -2,6 +2,7 @@ from copy import copy
 
 
 class X(object):
+
     """
     Class to construct and print XML nodes in python syntax. Here is an
     example of use::

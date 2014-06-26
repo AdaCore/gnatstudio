@@ -9,22 +9,24 @@ import GPS
 #
 # Local subprograms
 #
+
+
 def delete_line():
-  """ Remove the lines that include the current selection. If there is
-      no selection, remove the line at the cursor position.
-   """
+    """ Remove the lines that include the current selection. If there is
+        no selection, remove the line at the cursor position.
+     """
 
-  buffer = GPS.EditorBuffer.get()
-  cpos = buffer.current_view().cursor()
+    buffer = GPS.EditorBuffer.get()
+    cpos = buffer.current_view().cursor()
 
-  append = GPS.last_command() == "delete line"
-  if append:
-    GPS.set_last_command ("delete line")
+    append = GPS.last_command() == "delete line"
+    if append:
+        GPS.set_last_command("delete line")
 
-  start = buffer.selection_start().beginning_of_line()
-  end   = buffer.selection_end().end_of_line()
+    start = buffer.selection_start().beginning_of_line()
+    end = buffer.selection_end().end_of_line()
 
-  buffer.delete (start, end)
+    buffer.delete(start, end)
 
 #
 # Bindings

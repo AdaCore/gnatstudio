@@ -33,23 +33,25 @@ debugger till the current line.
 """
 
 ###########################################################################
-## No user customization below this line
+# No user customization below this line
 ###########################################################################
 
 from GPS import *
 from gps_utils import *
-import text_utils, re, os.path
+import text_utils
+import re
+import os.path
 
 Preference("Plugins/debugger/save_autocont_br").create(
-   "Preserve auto-cont breakpoints", "boolean",
-   """If set, the source locations where the debugger should not stop on an exception are preserved across GPS sessions. If unset, you'll have to reset them the next time you start the debugger, but on the other hand this might work better when the source code has changed""", True)
+    "Preserve auto-cont breakpoints", "boolean",
+    """If set, the source locations where the debugger should not stop on an exception are preserved across GPS sessions. If unset, you'll have to reset them the next time you start the debugger, but on the other hand this might work better when the source code has changed""", True)
 
 
 def in_debugger(context):
     try:
-       return Debugger.get() != None
+        return Debugger.get() != None
     except:
-       return False
+        return False
 
 
 def print_in_console(debug, txt):
@@ -69,7 +71,7 @@ Show in the Data Window the value for each all local variables
 (one box per variable).
     """
     buffer = EditorBuffer.get()
-    subp   = text_utils.goto_subprogram_start(buffer.current_view().cursor())
+    subp = text_utils.goto_subprogram_start(buffer.current_view().cursor())
     if subp:
         entity = Entity(subp.block_name(), buffer.file(), subp.line())
     vars = text_utils.get_local_vars(entity)
@@ -99,9 +101,9 @@ def in_debugger_on_entity(context):
 
 
 Contextual("debug display full name").create(
-   label=display_full_name_label,
-   on_activate=display_full_name_run,
-   filter=in_debugger_on_entity)
+    label=display_full_name_label,
+    on_activate=display_full_name_run,
+    filter=in_debugger_on_entity)
 
 
 #######################
@@ -111,15 +113,16 @@ Contextual("debug display full name").create(
 def print_as_dec_label(context):
     return "Debug/Print <b>" + context.entity().name() + "</b> as decimal"
 
+
 def print_as_dec_run(context):
     Debugger.get().send("print/d " + context.entity().name(),
                         show_in_console=True)
 
 
 Contextual("debug print as decimal").create(
-   label=print_as_dec_label,
-   on_activate=print_as_dec_run,
-   filter=in_debugger_on_entity)
+    label=print_as_dec_label,
+    on_activate=print_as_dec_run,
+    filter=in_debugger_on_entity)
 
 
 ###################################
@@ -136,7 +139,8 @@ If this line is never reached, the debugger will not stop.
     context = current_context()
     try:
         debug = Debugger.get()
-        debug.send("tbreak %s:%s" % (context.file().name(), context.location().line()))
+        debug.send("tbreak %s:%s" %
+                   (context.file().name(), context.location().line()))
         debug.send("cont")
     except:
         pass  # No debugger active
@@ -151,13 +155,14 @@ def debug_add_br_exception_label(context):
                    context.location().line())
     if f in autocont_br:
         return "Debug/Do not ignore exception breakpoints on line <b>%d</b>" % (
-           context.location().line(), )
+            context.location().line(), )
     else:
         return "Debug/Ignore exception breakpoints on line <b>%d</b>" % (
-           context.location().line(), )
+            context.location().line(), )
 
 
 autocont_br = set()
+
 
 @with_save_current_window
 def on_debugger_stopped(h, debug):
@@ -192,25 +197,26 @@ def add_breakpoint_exception(context):
     else:
         autocont_br.add(f)
     if Preference("Plugins/debugger/save_autocont_br").get():
-        Project.root().set_property("autocont_br", "--".join(autocont_br), True)
+        Project.root().set_property(
+            "autocont_br", "--".join(autocont_br), True)
 
 
 def on_project_view_changed(h):
     global autocont_br
     try:
-      autocont_br = set(Project.root().get_property("autocont_br").split("--"))
-      Console().write(
-          "The debugger will not stop when an exception is raised at " +
-          "\n".join(autocont_br))
+        autocont_br = set(
+            Project.root().get_property("autocont_br").split("--"))
+        Console().write(
+            "The debugger will not stop when an exception is raised at " +
+            "\n".join(autocont_br))
     except:
-      autocont_br = set()
+        autocont_br = set()
 
 
 Contextual("debug add breakpoint exception").create(
-   label=debug_add_br_exception_label,
-   on_activate=add_breakpoint_exception,
-   filter=in_debugger)
+    label=debug_add_br_exception_label,
+    on_activate=add_breakpoint_exception,
+    filter=in_debugger)
 
 Hook("debugger_process_stopped").add(on_debugger_stopped)
 Hook("project_view_changed").add(on_project_view_changed)
-

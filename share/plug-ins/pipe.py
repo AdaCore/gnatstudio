@@ -22,79 +22,84 @@ commands:
 """
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 from GPS import *
 import os_utils
 from gps_utils import *
 
-Preference ("Plugins/pipe/bgcolor").create (
-  "Background color", "color", """Background color for the command window where you enter the command to execute""", "yellow")
+Preference("Plugins/pipe/bgcolor").create(
+    "Background color", "color", """Background color for the command window where you enter the command to execute""", "yellow")
 
-def sel_pipe (command, buffer=None):
-   """Process the current selection in BUFFER through COMMAND,
-      and replace that selection with the output of the command"""
-   if not buffer:
-      buffer = EditorBuffer.get()
-   start  = buffer.selection_start()
-   end    = buffer.selection_end()
 
-   # Ignore white spaces and newlines at end, to preserve the rest
-   # of the text
-   if start != end:
-     while end.get_char() == ' ' or end.get_char() == '\n':
-        end = end - 1
+def sel_pipe(command, buffer=None):
+    """Process the current selection in BUFFER through COMMAND,
+       and replace that selection with the output of the command"""
+    if not buffer:
+        buffer = EditorBuffer.get()
+    start = buffer.selection_start()
+    end = buffer.selection_end()
 
-     text = buffer.get_chars (start, end)
-   else:
-     text = ""
+    # Ignore white spaces and newlines at end, to preserve the rest
+    # of the text
+    if start != end:
+        while end.get_char() == ' ' or end.get_char() == '\n':
+            end = end - 1
 
-   proc = Process (command)
-   proc.send (text)
-   proc.send (chr (4))  # Close input
-   output = proc.get_result()
-   buffer.start_undo_group()
+        text = buffer.get_chars(start, end)
+    else:
+        text = ""
 
-   if start != end:
-      buffer.delete (start, end)
-   buffer.insert (start, output.rstrip())
-   buffer.finish_undo_group()
+    proc = Process(command)
+    proc.send(text)
+    proc.send(chr(4))  # Close input
+    output = proc.get_result()
+    buffer.start_undo_group()
 
-@interactive (name="Fmt selection")
-def fmt_selection ():
-  """Process the current selection through the "fmt" command to reformat paragraphs"""
-  width  = Preference ("Src-Editor-Highlight-Column").get()
-  buffer = EditorBuffer.get()
-  prefix = None
+    if start != end:
+        buffer.delete(start, end)
+    buffer.insert(start, output.rstrip())
+    buffer.finish_undo_group()
 
-  if buffer.file().language() == "ada":
-     prefix = "--"
 
-  loc = buffer.selection_start().beginning_of_line()
-  while loc.get_char() == ' ':
-     loc = loc + 1
+@interactive(name="Fmt selection")
+def fmt_selection():
+    """Process the current selection through the "fmt" command to reformat paragraphs"""
+    width = Preference("Src-Editor-Highlight-Column").get()
+    buffer = EditorBuffer.get()
+    prefix = None
 
-  prefix = '-p """' + (' ' * (loc.column() - 1)) + prefix + '"""'
-  sel_pipe ("fmt " + prefix + " -w " + `width`, buffer)
+    if buffer.file().language() == "ada":
+        prefix = "--"
+
+    loc = buffer.selection_start().beginning_of_line()
+    while loc.get_char() == ' ':
+        loc = loc + 1
+
+    prefix = '-p """' + (' ' * (loc.column() - 1)) + prefix + '"""'
+    sel_pipe("fmt " + prefix + " -w " + `width`, buffer)
+
 
 class ShellProcess (CommandWindow):
-   """Send the current selection to an external process,
-      and replace it with the output of that process"""
 
-   def __init__ (self):
-      CommandWindow.__init__ (self, global_window = True,
-                              prompt = "Shell command:",
-                              on_activate = self.on_activate)
-      self.set_background (Preference ("Plugins/pipe/bgcolor").get())
+    """Send the current selection to an external process,
+       and replace it with the output of that process"""
 
-   def on_activate (self, shell_command):
-      sel_pipe (shell_command)
+    def __init__(self):
+        CommandWindow.__init__(self, global_window=True,
+                               prompt="Shell command:",
+                               on_activate=self.on_activate)
+        self.set_background(Preference("Plugins/pipe/bgcolor").get())
+
+    def on_activate(self, shell_command):
+        sel_pipe(shell_command)
+
 
 @interactive(filter="Source editor")
 def pipe():
-   """
-Process the current selection through a shell command,
-and replace it with the output of that command.
-   """
-   ShellProcess()
+    """
+ Process the current selection through a shell command,
+ and replace it with the output of that command.
+    """
+    ShellProcess()

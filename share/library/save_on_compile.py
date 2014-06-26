@@ -7,9 +7,10 @@ object directory.
 
 from GPS import *
 
-def on_compilation_finished (hook, category, target_name, mode_name, status):
-   f = file (Project.root().object_dirs (False)[0] + "/messages.txt", "w")
-   f.write (Console().get_text())
-   f.close()
 
-Hook ("compilation_finished").add (on_compilation_finished)
+def on_compilation_finished(hook, category, target_name, mode_name, status):
+    f = file(Project.root().object_dirs(False)[0] + "/messages.txt", "w")
+    f.write(Console().get_text())
+    f.close()
+
+Hook("compilation_finished").add(on_compilation_finished)

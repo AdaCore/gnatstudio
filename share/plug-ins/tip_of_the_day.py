@@ -2,7 +2,7 @@
 """
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 import GPS
@@ -329,7 +329,8 @@ users? Please send us your suggestion at report@adacore.com.
 
 """
 
-def parse_tips ():
+
+def parse_tips():
     """ Parse the tips string and return a list of the form
         [ (tip_title_1, tip_text_1, tip_img_1),
           (tip_title_2, tip_text_2, tip_img_2) ... ]
@@ -338,43 +339,44 @@ def parse_tips ():
     result = []
 
     current_tip_title = ""
-    current_tip_text  = ""
-    current_tip_img   = ""
+    current_tip_text = ""
+    current_tip_img = ""
 
-    title_re = re.compile ("^Tip: (.*)")
-    img_re   = re.compile ("^Img: (.*)")
+    title_re = re.compile("^Tip: (.*)")
+    img_re = re.compile("^Img: (.*)")
 
     for l in tips.split('\n'):
-       title = title_re.match(l)
-       img   = img_re.match(l)
+        title = title_re.match(l)
+        img = img_re.match(l)
 
-       if title:
-           if len (current_tip_text) > 0:
-               result += [(current_tip_title,
-                           current_tip_text,
-                           current_tip_img)]
-               current_tip_img = ""
-               current_tip_text = ""
-           current_tip_title = title.group(1) or ""
+        if title:
+            if len(current_tip_text) > 0:
+                result += [(current_tip_title,
+                            current_tip_text,
+                            current_tip_img)]
+                current_tip_img = ""
+                current_tip_text = ""
+            current_tip_title = title.group(1) or ""
 
-       elif img:
-           # commented for now, see I903-007
-           # current_tip_img = os.path.join (GPS.get_system_dir(),
-           #                                 "share", "gps", "plug-ins",
-           #                                 "images",
-           #                                 img.group(1)) or ""
-           pass
+        elif img:
+            # commented for now, see I903-007
+            # current_tip_img = os.path.join (GPS.get_system_dir(),
+            #                                 "share", "gps", "plug-ins",
+            #                                 "images",
+            #                                 img.group(1)) or ""
+            pass
 
-       else:
-           if len (l) > 1:
-              current_tip_text += l + '\n'
+        else:
+            if len(l) > 1:
+                current_tip_text += l + '\n'
 
-    if len (current_tip_text) > 0:
+    if len(current_tip_text) > 0:
         result += [(current_tip_title, current_tip_text, current_tip_img)]
 
     return result
 
-def display_tip (title, doc, img):
+
+def display_tip(title, doc, img):
     """ Display the tip. Return a widget containing the tip. """
 
     vbox = Gtk.VBox()
@@ -386,22 +388,22 @@ def display_tip (title, doc, img):
     title_label.set_use_markup(True)
     title_label.set_markup ("""<big>%s</big>""" % title)
 
-    hbox.pack_start (title_label, False, False, 10)
+    hbox.pack_start(title_label, False, False, 10)
 
-    vbox.pack_start (hbox, False, False, 10);
+    vbox.pack_start(hbox, False, False, 10)
 
     # display the image if any
 
     if img != "":
-       hbox = Gtk.HBox()
+        hbox = Gtk.HBox()
 
-       image = Gtk.Image()
-       image.set_from_file (img)
-       image.show()
+        image = Gtk.Image()
+        image.set_from_file(img)
+        image.show()
 
-       hbox.pack_start (image, False, False, 10)
+        hbox.pack_start(image, False, False, 10)
 
-       vbox.pack_start (hbox, False, False, 10)
+        vbox.pack_start(hbox, False, False, 10)
 
     # display the documentation
     hbox = Gtk.HBox()
@@ -410,64 +412,66 @@ def display_tip (title, doc, img):
     doc_label.set_markup ("""%s""" % doc)
     doc_label.set_selectable(True)
 
-    hbox.pack_start (doc_label, False, False, 10)
+    hbox.pack_start(doc_label, False, False, 10)
 
-    vbox.pack_start (hbox, True, True, 10);
+    vbox.pack_start(hbox, True, True, 10)
 
     return vbox
 
+
 class Tip:
 
-    def on_key_press (self, widget, event):
+    def on_key_press(self, widget, event):
         """ Callback on a key press event"""
 
         if event.keyval == Gdk.KEY_Escape:
-           self.on_close_button (widget)
-           return True
+            self.on_close_button(widget)
+            return True
 
         return False
 
-    def on_close_button (self, widget):
+    def on_close_button(self, widget):
         """ Callback on a click on the close button """
 
         # save the current tip number
 
-        GPS.Preference ("Plugins/tip of the day/tip-of-the-day-number").set (self.tip_number)
+        GPS.Preference(
+            "Plugins/tip of the day/tip-of-the-day-number").set(self.tip_number)
 
         # take into account the checkbox
 
-        GPS.Preference (
-          "General/Display-Tip-Of-The-Day").set (self.check.get_active())
+        GPS.Preference(
+            "General/Display-Tip-Of-The-Day").set(self.check.get_active())
 
         self.window.destroy()
 
-    def on_next_button (self, widget):
+    def on_next_button(self, widget):
         """ Callback on a click on the next button """
         self.tip_number += 1
 
-        if self.tip_number >= len (self.results):
+        if self.tip_number >= len(self.results):
             self.tip_number = 0
 
-        self.display_tip (self.tip_number)
+        self.display_tip(self.tip_number)
 
-    def on_prev_button (self, widget):
+    def on_prev_button(self, widget):
         """ Callback on a click on the previous button """
         self.tip_number -= 1
 
         if self.tip_number < 0:
-            self.tip_number = len (self.results) - 1
+            self.tip_number = len(self.results) - 1
 
-        self.display_tip (self.tip_number)
+        self.display_tip(self.tip_number)
 
-    def display_tip (self, number):
+    def display_tip(self, number):
         """ Display tip of the day of the given number """
         if self.tip_container.get_child():
-            self.tip_container.remove (self.tip_container.get_child())
+            self.tip_container.remove(self.tip_container.get_child())
 
-        self.tip_container.add (display_tip
-                         (self.results[self.tip_number][0],
-                          self.results[self.tip_number][1],
-                          self.results[self.tip_number][2]))
+        self.tip_container.add(display_tip
+                               (self.results[self.tip_number][0],
+                                self.results[self.tip_number][1],
+                                self.results[self.tip_number][2]))
 
         self.window.show_all()
 
@@ -476,136 +480,137 @@ class Tip:
 
         self.results = results
 
-        border     = Gdk.color_parse ("#6897CB") # GPS blue
-        background = Gdk.color_parse ("#F0F0F0") # light grey
+        border = Gdk.color_parse("#6897CB")  # GPS blue
+        background = Gdk.color_parse("#F0F0F0")  # light grey
 
         window = Gtk.Window()
         self.window = window
 
-        window.set_default_size (550, 350)
-        window.set_decorated (True)
+        window.set_default_size(550, 350)
+        window.set_decorated(True)
 
-        if isinstance (parent, Gtk.Window):
-            window.set_transient_for (parent)
+        if isinstance(parent, Gtk.Window):
+            window.set_transient_for(parent)
 
-        window.set_position (Gtk.WindowPosition.CENTER_ON_PARENT)
-        window.modify_bg (Gtk.StateType.NORMAL, border)
+        window.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
+        window.modify_bg(Gtk.StateType.NORMAL, border)
 
         # EventBox for the blue frame
 
         ebox = Gtk.EventBox()
         ebox.modify_bg(Gtk.StateType.NORMAL, background)
-        ebox.modify_fg(Gtk.StateType.NORMAL, Gdk.color_parse ("black"))
-        ebox.set_border_width (5)
+        ebox.modify_fg(Gtk.StateType.NORMAL, Gdk.color_parse("black"))
+        ebox.set_border_width(5)
         window.add(ebox)
 
         vbox = Gtk.VBox()
-        ebox.add (vbox)
+        ebox.add(vbox)
 
         # window title
 
         hbox = Gtk.HBox()
         title_label = Gtk.Label()
         title_label.set_use_markup(True)
-        title_label.set_markup (
-          """<big>Tip of the Day</big>""")
+        title_label.set_markup(
+            """<big>Tip of the Day</big>""")
 
-        img=Gtk.Image()
-        img.set_from_stock (Gtk.STOCK_INFO, Gtk.IconSize.LARGE_TOOLBAR)
-        hbox.pack_start (img, False, False, 10)
-        hbox.pack_start (title_label, False, False, 3)
-        vbox.pack_start (hbox, False, False, 10)
+        img = Gtk.Image()
+        img.set_from_stock(Gtk.STOCK_INFO, Gtk.IconSize.LARGE_TOOLBAR)
+        hbox.pack_start(img, False, False, 10)
+        hbox.pack_start(title_label, False, False, 3)
+        vbox.pack_start(hbox, False, False, 10)
 
         # display the tip
 
         self.tip_number = initial_tip
 
         self.tip_container = Gtk.Frame()
-        self.tip_container.set_shadow_type (Gtk.ShadowType.NONE)
+        self.tip_container.set_shadow_type(Gtk.ShadowType.NONE)
 
-        vbox.pack_start (self.tip_container, True, True, 0)
+        vbox.pack_start(self.tip_container, True, True, 0)
 
         # display the previous/next buttons
 
         hbox = Gtk.HBox()
 
         label = Gtk.Label()
-        label.set_use_markup (True)
-        label.set_markup ('<span foreground="#0000FF">Next &gt;</span>')
+        label.set_use_markup(True)
+        label.set_markup('<span foreground="#0000FF">Next &gt;</span>')
 
-        next_button = Gtk.Button ()
+        next_button = Gtk.Button()
         next_button.add(label)
 
         label = Gtk.Label()
-        label.set_use_markup (True)
-        label.set_markup ('<span foreground="#0000FF">&lt; Previous</span>')
+        label.set_use_markup(True)
+        label.set_markup('<span foreground="#0000FF">&lt; Previous</span>')
 
-        prev_button = Gtk.Button ()
+        prev_button = Gtk.Button()
         prev_button.add(label)
 
         for button in [next_button, prev_button]:
-            button.modify_bg (Gtk.StateType.NORMAL, background)
-            button.modify_bg (Gtk.StateType.PRELIGHT, background)
-            button.modify_bg (Gtk.StateType.ACTIVE, background)
-            button.set_relief (Gtk.ReliefStyle.NONE)
+            button.modify_bg(Gtk.StateType.NORMAL, background)
+            button.modify_bg(Gtk.StateType.PRELIGHT, background)
+            button.modify_bg(Gtk.StateType.ACTIVE, background)
+            button.set_relief(Gtk.ReliefStyle.NONE)
 
-        hbox.pack_end (next_button, False, False, 10)
-        hbox.pack_end (prev_button, False, False, 3)
+        hbox.pack_end(next_button, False, False, 10)
+        hbox.pack_end(prev_button, False, False, 3)
 
-        vbox.pack_start (hbox, False, False, 10)
+        vbox.pack_start(hbox, False, False, 10)
 
         # display the footer
 
         hbox = Gtk.HBox()
 
-        close_button = Gtk.Button (Gtk.STOCK_CLOSE)
-        close_button.set_use_stock (True)
+        close_button = Gtk.Button(Gtk.STOCK_CLOSE)
+        close_button.set_use_stock(True)
         close_button.grab_focus()
 
-        hbox.pack_end (close_button, False, False, 10)
+        hbox.pack_end(close_button, False, False, 10)
 
         self.check = Gtk.CheckButton()
-        self.check.set_active (True)
-        self.check.set_label ("Display Tip of the Day on startup")
-        self.check.modify_bg (Gtk.StateType.PRELIGHT, background)
+        self.check.set_active(True)
+        self.check.set_label("Display Tip of the Day on startup")
+        self.check.modify_bg(Gtk.StateType.PRELIGHT, background)
 
-        hbox.pack_start (self.check, False, False, 10)
+        hbox.pack_start(self.check, False, False, 10)
 
-        vbox.pack_start (hbox, False, False, 10)
+        vbox.pack_start(hbox, False, False, 10)
 
-        window.set_default (close_button)
-        window.set_focus (close_button)
+        window.set_default(close_button)
+        window.set_focus(close_button)
         window.show_all()
 
         # Display tip number 0
 
-        self.display_tip (self.tip_number)
+        self.display_tip(self.tip_number)
 
         # callbacks
 
-        window.connect ("key_press_event", self.on_key_press)
-        close_button.connect ("clicked", self.on_close_button)
-        next_button.connect ("clicked", self.on_next_button)
-        prev_button.connect ("clicked", self.on_prev_button)
+        window.connect("key_press_event", self.on_key_press)
+        close_button.connect("clicked", self.on_close_button)
+        next_button.connect("clicked", self.on_next_button)
+        prev_button.connect("clicked", self.on_prev_button)
 
 # Register preferences
 
-GPS.Preference ("Plugins/tip of the day/tip-of-the-day-number").create (
-  "Tip of the day #",
-  "integer",
-  "The last tip of the day displayed",
-  0)
+GPS.Preference("Plugins/tip of the day/tip-of-the-day-number").create(
+    "Tip of the day #",
+    "integer",
+    "The last tip of the day displayed",
+    0)
 
-def on_gps_started (hook):
-    if not GPS.Preference ("General/Display-Tip-Of-The-Day").get():
-         return
+
+def on_gps_started(hook):
+    if not GPS.Preference("General/Display-Tip-Of-The-Day").get():
+        return
     # If we reach this point, display the tip of the day
 
     # Parse the tips file
-    results = parse_tips ()
+    results = parse_tips()
 
     # Get the main window
-    messages = GPS.MDI.get ("Messages").pywidget()
+    messages = GPS.MDI.get("Messages").pywidget()
     top = messages.get_toplevel()
 
     # If one toplevel is a dialog for the main window, do not display the
@@ -615,8 +620,8 @@ def on_gps_started (hook):
         if t.get_transient_for() == top:
             return
 
-    t = Tip (results, top,
-             GPS.Preference ("Plugins/tip of the day/tip-of-the-day-number").get ())
-    t.on_next_button (None)
+    t = Tip(results, top,
+            GPS.Preference("Plugins/tip of the day/tip-of-the-day-number").get())
+    t.on_next_button(None)
 
-GPS.Hook ("gps_started").add (on_gps_started)
+GPS.Hook("gps_started").add(on_gps_started)

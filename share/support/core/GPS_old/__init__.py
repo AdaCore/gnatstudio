@@ -12,20 +12,25 @@ As much as possible, you should update your scripts, though
 """
 
 ###########################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 import GPS
+
+
 class Preference:
+
     def get(name):
-       return GPS.Preference(name).get()
+        return GPS.Preference(name).get()
     get = staticmethod(get)
 
     def set(name, value):
-       GPS.Preference(name).set (value)
+        GPS.Preference(name).set(value)
     set = staticmethod(set)
 
+
 class Entity(object):
+
     """Provides backward compatibility with older versions of GPS.
 To use, build an instance of GPS.Entity, as usual, and then an instance of this method:
     ent = GPS.Entity ("name", GPS.File ("file"))
@@ -34,10 +39,13 @@ To use, build an instance of GPS.Entity, as usual, and then an instance of this 
 """
 
     def __init__(self, gps_entity):
-       self.gps_entity = gps_entity
+        self.gps_entity = gps_entity
+
     def decl_file(self):
-       return self.gps_entity.declaration().file()
+        return self.gps_entity.declaration().file()
+
     def decl_line(self):
-       return self.gps_entity.declaration().line()
+        return self.gps_entity.declaration().line()
+
     def decl_column(self):
-       return self.gps_entity.declaration().column()
+        return self.gps_entity.declaration().column()

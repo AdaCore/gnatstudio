@@ -46,7 +46,12 @@ error messages to display them in the locations window as usual.
 """
 
 
-import GPS, sys, traceback, re, os, os_utils
+import GPS
+import sys
+import traceback
+import re
+import os
+import os_utils
 from os.path import *
 from GPS import *
 
@@ -129,127 +134,138 @@ or machine compilations will occur in parallel" />
 </target>
 """
 
+
 class Builder:
-   def compute_buildfile (self):
-      """Compute the build file to use. By default, we look in the project
-         itself. If none is specified there, we default on the build file
-         found in the same directory as the root project"""
 
-      root_dir = dirname (Project.root().file().name())
-      self.buildfile = Project.root().get_attribute_as_string \
-           (self.build_file_attr, self.pkg_name)
+    def compute_buildfile(self):
+        """Compute the build file to use. By default, we look in the project
+           itself. If none is specified there, we default on the build file
+           found in the same directory as the root project"""
 
-      self.buildfile = join (root_dir, self.buildfile)
-      if not isfile (self.buildfile):
-         for f in self.default_build_files:
-            self.buildfile = join (root_dir, f)
-            if isfile (self.buildfile): break
-            self.buildfile = None
-      Logger ("MAKE").log ("Build file for " + self.pkg_name + " is " + `self.buildfile`)
+        root_dir = dirname(Project.root().file().name())
+        self.buildfile = Project.root().get_attribute_as_string \
+            (self.build_file_attr, self.pkg_name)
 
-   def read_targets (self):
-      """Read all targets from the build file, and return a list targets"""
-      return None
+        self.buildfile = join(root_dir, self.buildfile)
+        if not isfile(self.buildfile):
+            for f in self.default_build_files:
+                self.buildfile = join(root_dir, f)
+                if isfile(self.buildfile):
+                    break
+                self.buildfile = None
+        Logger("MAKE").log(
+            "Build file for " + self.pkg_name + " is " + `self.buildfile`)
 
-   def compute_build_targets (self, name):
-      return None
+    def read_targets(self):
+        """Read all targets from the build file, and return a list targets"""
+        return None
 
-   def on_compute_build_targets (self, hook, name):
-      """Called when the a build target needs to be computed"""
-      try:
-         return self.compute_build_targets (name)
+    def compute_build_targets(self, name):
+        return None
 
-      except:
-         Logger ("MAKE").log (traceback.format_exc())
-         return None
+    def on_compute_build_targets(self, hook, name):
+        """Called when the a build target needs to be computed"""
+        try:
+            return self.compute_build_targets(name)
 
-   def __init__ (self):
-      self.targets = []
-      Hook ("compute_build_targets").add (self.on_compute_build_targets)
+        except:
+            Logger("MAKE").log(traceback.format_exc())
+            return None
+
+    def __init__(self):
+        self.targets = []
+        Hook("compute_build_targets").add(self.on_compute_build_targets)
+
 
 class Makefile (Builder):
-   def __init__ (self):
-      self.pkg_name = "make"
-      self.build_file_attr = "makefile"
-      self.default_build_files = ["Makefile", "makefile"]
-      Builder.__init__ (self)
 
-   def read_targets (self):
-      targets = []
-      matcher=re.compile ("^([^#.=%\t][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
-      f = file (self.buildfile)
-      for line in f:
-         matches=matcher.match (line)
-         if matches:
-            if matches.group (3):
-               if matches.group (3).strip() != "IGNORE":
-                  target_name = matches.group (1)
-                  targets += [(target_name, target_name)]
-            else:
-               ## Handle multiple targets on same line
-               for target in matches.group (1).split():
-                 targets += [(target, target)]
-      f.close ()
-      return targets
+    def __init__(self):
+        self.pkg_name = "make"
+        self.build_file_attr = "makefile"
+        self.default_build_files = ["Makefile", "makefile"]
+        Builder.__init__(self)
 
-   def compute_build_targets (self, name):
-      if name == "make":
-        self.compute_buildfile ()
-        if self.buildfile:
-          return self.read_targets ()
-      return None
+    def read_targets(self):
+        targets = []
+        matcher = re.compile("^([^#.=%\t][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
+        f = file(self.buildfile)
+        for line in f:
+            matches = matcher.match(line)
+            if matches:
+                if matches.group(3):
+                    if matches.group(3).strip() != "IGNORE":
+                        target_name = matches.group(1)
+                        targets += [(target_name, target_name)]
+                else:
+                    # Handle multiple targets on same line
+                    for target in matches.group(1).split():
+                        targets += [(target, target)]
+        f.close()
+        return targets
+
+    def compute_build_targets(self, name):
+        if name == "make":
+            self.compute_buildfile()
+            if self.buildfile:
+                return self.read_targets()
+        return None
 
 ant_targets = []
 
+
 class Antfile (Builder):
-   def __init__ (self):
-      self.pkg_name = "ant"
-      self.build_file_attr = "antfile"
-      self.default_build_files = ["build.xml"]
-      Builder.__init__ (self)
 
-   def read_targets (self):
-      global ant_targets
-      ant_targets = []
-      class MySaxDocumentHandler (handler.ContentHandler):
-         def startElement (self, name, attrs):
-            global ant_targets
-            if name == "target":
-               target=None
-               description=None
-               for attrName in attrs.keys():
-                  if attrName=="name":
-                      target=attrs.get(attrName)
-                  if attrName=="description":
-                      description=attrs.get(attrName)
-               ant_targets += [(str(target), str(target))]
+    def __init__(self):
+        self.pkg_name = "ant"
+        self.build_file_attr = "antfile"
+        self.default_build_files = ["build.xml"]
+        Builder.__init__(self)
 
-      parser = make_parser ()
-      parser.setContentHandler (MySaxDocumentHandler ())
-      inFile = open (self.buildfile, 'r')
+    def read_targets(self):
+        global ant_targets
+        ant_targets = []
 
-      parser.parse (inFile)
+        class MySaxDocumentHandler (handler.ContentHandler):
 
-      inFile.close ()
+            def startElement(self, name, attrs):
+                global ant_targets
+                if name == "target":
+                    target = None
+                    description = None
+                    for attrName in attrs.keys():
+                        if attrName == "name":
+                            target = attrs.get(attrName)
+                        if attrName == "description":
+                            description = attrs.get(attrName)
+                    ant_targets += [(str(target), str(target))]
 
-      return ant_targets
+        parser = make_parser()
+        parser.setContentHandler(MySaxDocumentHandler())
+        inFile = open(self.buildfile, 'r')
 
-   def compute_build_targets (self, name):
-      if name == "ant":
-        self.compute_buildfile ()
-        if self.buildfile:
-          return self.read_targets ()
-      return None
+        parser.parse(inFile)
 
-ant_support=False
+        inFile.close()
 
-def on_gps_started (hook_name):
-   Makefile()
-   if ant_support:
-      Antfile()
+        return ant_targets
 
-parse_xml (Make_Model)
-parse_xml (Ant_Model_Template)
+    def compute_build_targets(self, name):
+        if name == "ant":
+            self.compute_buildfile()
+            if self.buildfile:
+                return self.read_targets()
+        return None
+
+ant_support = False
+
+
+def on_gps_started(hook_name):
+    Makefile()
+    if ant_support:
+        Antfile()
+
+parse_xml(Make_Model)
+parse_xml(Ant_Model_Template)
 parse_xml ("""
   <project_attribute
     name="Makefile"
@@ -280,13 +296,13 @@ parse_xml ("""
 
 # This module needs to be initialized before the others
 
-Hook ("gps_started").add (on_gps_started, False)
+Hook("gps_started").add(on_gps_started, False)
 
-if os_utils.locate_exec_on_path ("ant"):
-   try:
-      from xml.sax import handler, make_parser
-      ant_support=True
-      parse_xml ("""
+if os_utils.locate_exec_on_path("ant"):
+    try:
+        from xml.sax import handler, make_parser
+        ant_support = True
+        parse_xml ("""
   <project_attribute
     name="Antfile"
     package="Ant"
@@ -313,5 +329,5 @@ if os_utils.locate_exec_on_path ("ant"):
     <string type=""/>
  </project_attribute>""")
 
-   except:
-      pass
+    except:
+        pass

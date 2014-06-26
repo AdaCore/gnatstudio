@@ -15,6 +15,7 @@ except:
 
 
 class OverlayStyle(object):
+
     """
     Description for a style to apply to a section of an editor. In practice,
     this could be implemented as an editor overlay, or a message, depending
@@ -164,6 +165,7 @@ class OverlayStyle(object):
 
 
 class Background_Highlighter(object):
+
     """
     An abstract class that provides facilities for highlighting parts of an
     editor. If possible, this highlighting is done in the background so that it
@@ -194,7 +196,7 @@ class Background_Highlighter(object):
 
     def __init__(self, style):
         self.__source_id = None  # The gtk source_id used for background
-                                 # or the GPS.Timeout instance
+        # or the GPS.Timeout instance
         self.__buffers = []      # The list of buffers to highlight
         self.terminated = False
 
@@ -442,6 +444,7 @@ class Background_Highlighter(object):
 
 
 class On_The_Fly_Highlighter(Background_Highlighter):
+
     """
     This abstract class provides a way to easily highlight text in an editor.
     When possible, the highlighting is done in the background, in
@@ -529,6 +532,7 @@ class On_The_Fly_Highlighter(Background_Highlighter):
 
 
 class Location_Highlighter(Background_Highlighter):
+
     """
     An abstract class that can be used to implement highlighter related to
     the cross-reference engine.
@@ -617,6 +621,7 @@ class Location_Highlighter(Background_Highlighter):
 
 
 class Regexp_Highlighter(On_The_Fly_Highlighter):
+
     """
     The Regexp_Highlighter is a concrete implementation to highlight
     editors based on regular expressions. One example is for instance
@@ -676,6 +681,7 @@ class Regexp_Highlighter(On_The_Fly_Highlighter):
 
 
 class Text_Highlighter(On_The_Fly_Highlighter):
+
     """
     Similar to Regexp_Highlighter, but highlights constant text instead of
     a regular expression.

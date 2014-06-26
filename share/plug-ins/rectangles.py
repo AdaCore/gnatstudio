@@ -38,7 +38,7 @@ If you move the cursor before "A", and paste the rectangle:
 
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 from GPS import *
@@ -145,7 +145,7 @@ the contents of the rectangle.
 
 
 ##############################################################################
-## No public function below this
+# No public function below this
 ##############################################################################
 
 
@@ -244,7 +244,7 @@ class Rectangle(object):
             for line in selection.splitlines():
                 buffer.insert(start, line)
                 start = buffer.at(start.line() + 1,
-                                       start.column())
+                                  start.column())
             buffer.finish_undo_group()
         except:
 
@@ -301,7 +301,8 @@ class Rectangle(object):
             self.buffer.start_undo_group()
 
             while line <= self.end_line:
-            # Some lines might not include enough characters for the rectangle
+                # Some lines might not include enough characters for the
+                # rectangle
                 eol = EditorLocation(self.buffer, line, 1).end_of_line()
                 if eol.column() > self.end_col:
                     endcolumn = EditorLocation(self.buffer, line, self.end_col)
@@ -313,7 +314,7 @@ class Rectangle(object):
                             short_line_func(func, eol, *args)
                     else:
                         current = EditorLocation(self.buffer, line,
-                                self.start_col)
+                                                 self.start_col)
                         eol = current.end_of_line()
                         if eol.column() != 1:
                             func(current, eol - 1, *args)

@@ -12,6 +12,7 @@ from tool_output import OutputParser
 
 
 class OutputStore(OutputParser):
+
     def __init__(self, child):
         super(OutputStore, self).__init__(child)
         self.output = ""

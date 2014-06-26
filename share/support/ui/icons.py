@@ -272,6 +272,7 @@ def add_icons():
 
 
 class IconProvider(object):
+
     def __init__(self):
         GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
         self.current_theme = None

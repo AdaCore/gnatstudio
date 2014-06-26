@@ -162,7 +162,8 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
             chars = top.buffer().get_chars(line, line.end_of_line())
             matched = sep_re.search(chars)
             if matched:
-                width = pos - len(chars[:matched.start(sep_group)].rstrip()) - 1
+                width = pos - \
+                    len(chars[:matched.start(sep_group)].rstrip()) - 1
                 try:
                     sub = sep_re.sub(replace_with, matched.group(sep_group))
                 except:

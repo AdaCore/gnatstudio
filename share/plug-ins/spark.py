@@ -62,7 +62,7 @@ def on_execution_finished(hook, category, target_name, mode_name, status):
 
 
 def _spawn_spark_tool(
-    cmd_name, prj_attr, input=None, show_cmd=False, ctx=None):
+        cmd_name, prj_attr, input=None, show_cmd=False, ctx=None):
     """
     Spawn a SPARK tool. Get its switches from the project file (attribute
     name specified as prj_attr)
@@ -198,7 +198,7 @@ def riposte_vc(numeric=False):
     vc_id = 0
     in_vc = False
     for (line_no, line) in enumerate(
-        x.strip() for x in buffer.get_chars().splitlines()):
+            x.strip() for x in buffer.get_chars().splitlines()):
 
         if len(line) > 0 and ' ' not in line and line.endswith('.'):
             vc_id += 1
@@ -344,8 +344,8 @@ def do_pogs_xref(context, siv, dpc, zlg):
             regexp=True)
     else:
         (frm, to) = loc.search(
-          "^(procedure|function|package_spec|package_body)_\S+_%s\.$" % number,
-          regexp=True)
+            "^(procedure|function|package_spec|package_body)_\S+_%s\.$" % number,
+            regexp=True)
 
     # Goto the VC or DPC and then scroll the window down so the selected VC or
     # DPC is not at the bottom of the page.

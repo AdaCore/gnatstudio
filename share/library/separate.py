@@ -11,35 +11,39 @@ lot
 """
 
 ############################################################################
-## No user customization below this line
+# No user customization below this line
 ############################################################################
 
 import GPS
 
-def on_goto_separate (context):
-   loc = context.entity().body (2)
-   buffer = GPS.EditorBuffer.get (loc.file())
-   buffer.current_view().goto \
-      (buffer.at(loc.line(), loc.column()))
 
-def separate_filter (context):
-   if isinstance (context, GPS.EntityContext) and context.entity():
-      try:
-        context.entity().body(2)
-        return True
-      except:
+def on_goto_separate(context):
+    loc = context.entity().body(2)
+    buffer = GPS.EditorBuffer.get(loc.file())
+    buffer.current_view().goto \
+        (buffer.at(loc.line(), loc.column()))
+
+
+def separate_filter(context):
+    if isinstance(context, GPS.EntityContext) and context.entity():
+        try:
+            context.entity().body(2)
+            return True
+        except:
+            return False
+    else:
         return False
-   else:
-      return False
 
-def separate_label (context):
-   return "Goto separate body of " + context.entity().name()
 
-def on_gps_started (hook_name):
-   GPS.Contextual ("Jump to separate body").create \
-     (on_activate=on_goto_separate,
-      filter=separate_filter,
-      label=separate_label,
-      ref="Go to body")
+def separate_label(context):
+    return "Goto separate body of " + context.entity().name()
 
-GPS.Hook ("gps_started").add (on_gps_started)
+
+def on_gps_started(hook_name):
+    GPS.Contextual ("Jump to separate body").create \
+        (on_activate=on_goto_separate,
+         filter=separate_filter,
+         label=separate_label,
+         ref="Go to body")
+
+GPS.Hook("gps_started").add(on_gps_started)
