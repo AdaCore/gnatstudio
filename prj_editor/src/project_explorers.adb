@@ -44,7 +44,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
-with Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -164,12 +163,7 @@ package body Project_Explorers is
 
    type Project_Explorer_Record is new Generic_Views.View_Record with record
       Tree      : Gtkada.Tree_View.Tree_View;
-
       Filter    : Explorer_Filter;
-
-      Expand_Id : Gtk.Handlers.Handler_Id;
-      --  The signal for the expansion of nodes in the project view
-
       Expanding : Boolean := False;
    end record;
    overriding procedure Create_Menu
@@ -698,7 +692,7 @@ package body Project_Explorers is
       --  The contents of the nodes is computed on demand. We need to be aware
       --  when the user has changed the visibility status of a node.
 
-      Explorer.Expand_Id := Widget_Callback.Object_Connect
+      Widget_Callback.Object_Connect
         (Explorer.Tree,
          Signal_Row_Expanded,
          Widget_Callback.To_Marshaller (Expand_Row_Cb'Access),
