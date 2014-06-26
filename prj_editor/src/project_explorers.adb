@@ -19,17 +19,14 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Containers.Indefinite_Hashed_Sets;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Hash;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
 
 with Glib;                      use Glib;
 with Glib.Main;                 use Glib.Main;
@@ -46,7 +43,6 @@ with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
@@ -61,7 +57,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Toggle_Button;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -69,7 +64,6 @@ with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
-with Find_Utils;                use Find_Utils;
 with Generic_Views;             use Generic_Views;
 with Histories;                 use Histories;
 with GPS.Kernel;                use GPS.Kernel;
@@ -85,16 +79,10 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Search;                use GPS.Search;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
-with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
-with Language_Utils;            use Language_Utils;
 with Projects;                  use Projects;
 with Project_Explorers_Common;  use Project_Explorers_Common;
-with Remote;                    use Remote;
-with String_Hash;
 with String_Utils;              use String_Utils;
 with Tooltips;
-with Vsearch;                   use Vsearch;
 
 package body Project_Explorers is
 
@@ -273,90 +261,18 @@ package body Project_Explorers is
    -- Searching --
    ---------------
 
-   type Search_Status is new Integer;
-   --  Values stored in the String_Status hash table:
-   --    - n: the entry or one of its children matches. n is the number of
-   --         children that potentially matches (ie that have an entry set to
-   --         n or -1
-   --    - 0: the node doesn't match and neither do its children.
-   --    - -1: the entry hasn't been examined yet
+   procedure For_Each_File_Node
+     (Model    : Gtk_Tree_Store;
+      Parent   : Gtk_Tree_Iter;
+      Callback : not null access procedure (It : in out Gtk_Tree_Iter));
+   --  For each file node representing a direct source of Parent (does not
+   --  look into nested project nodes). Callback can freely modify It, or
+   --  the model.
 
-   Search_Match : constant Search_Status := 1;
-   No_Match     : constant Search_Status := 0;
-   Unknown      : constant Search_Status := -1;
-
-   package Project_Sets is
-     new Ada.Containers.Indefinite_Hashed_Sets
-       (Virtual_File, GNATCOLL.VFS.Full_Name_Hash, "=");
-
-   Projects : Project_Sets.Set;
-   --  Cache for project passed through search
-   --  ??? Should not be a global variable
-
-   procedure Nop (X : in out Search_Status) is null;
-   --  Do nothing, required for instantiation of string_boolean_hash
-
-   package String_Status_Hash is new String_Hash
-     (Data_Type => Search_Status,
-      Free_Data => Nop,
-      Null_Ptr  => No_Match);
-   use String_Status_Hash;
-   use String_Status_Hash.String_Hash_Table;
-
-   type Explorer_Search_Context is new Root_Search_Context with record
-      Current             : Gtk_Tree_Iter := Null_Iter;
-      Include_Entities    : Boolean;
-      Include_Projects    : Boolean;
-      Include_Directories : Boolean;
-      Include_Files       : Boolean;
-
-      Matches             : String_Status_Hash.String_Hash_Table.Instance;
-      --  The search is performed on the internal Ada structures first, and for
-      --  each matching project, directory or file, an entry is made in this
-      --  table (set to true). This then speeds up the traversing of the tree
-      --  to find the matching entities.
-      --  Key is
-      --    Base_Name for File and Project
-      --    Display_Full_Name for directories
-   end record;
-   type Explorer_Search_Context_Access is access all Explorer_Search_Context;
-
-   overriding function Context_Look_In
-     (Self : Explorer_Search_Context) return String;
-   overriding procedure Free (Context : in out Explorer_Search_Context);
-   --  Free the memory allocated for Context
-
-   type Explorer_Search_Extra_Record is new Gtk_Box_Record with record
-      Include_Entities    : Gtk_Check_Button;
-      Include_Projects    : Gtk_Check_Button;
-      Include_Directories : Gtk_Check_Button;
-      Include_Files       : Gtk_Check_Button;
-   end record;
-   type Explorer_Search_Extra is access all Explorer_Search_Extra_Record'Class;
-
-   function Explorer_Search_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
-   --  Create a new search context for the explorer
-
-   function Explorer_Search_Factory
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Include_Projects : Boolean;
-      Include_Files    : Boolean)
-      return Root_Search_Context_Access;
-   --  Create a new search context for the explorer. Only one occurence is
-   --  searched, and only in Projects or Files, depending on the parameters.
-
-   overriding procedure Search
-     (Context         : access Explorer_Search_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean);
-   --  Search the next occurrence in the explorer
+   function Find_Project_Node
+     (Self    : not null access Project_Explorer_Record'Class;
+      Project : Project_Type) return Gtk_Tree_Iter;
+   --  Find the first node matching the project
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class;
@@ -1759,6 +1675,66 @@ package body Project_Explorers is
       T.Tree.Filter.Unref;
    end Refresh;
 
+   -----------------------
+   -- Find_Project_Node --
+   -----------------------
+
+   function Find_Project_Node
+     (Self    : not null access Project_Explorer_Record'Class;
+      Project : Project_Type) return Gtk_Tree_Iter
+   is
+      Flat_View : constant Boolean :=
+        Get_History (Get_History (Self.Kernel).all, Show_Flat_View);
+      Node     : Gtk_Tree_Iter;
+      P        : Project_Type;
+   begin
+      if Project = No_Project then
+         return Null_Iter;
+      end if;
+
+      if not Flat_View then
+         Set_History (Get_History (Self.Kernel).all, Show_Flat_View, True);
+         Update_View (Self);
+      end if;
+
+      Node := Self.Tree.Model.Get_Iter_First;
+      while Node /= Null_Iter loop
+         P := Get_Project_From_Node
+           (Self.Tree.Model, Self.Kernel, Node, Importing => False);
+         if P = Project then
+            return Node;
+         end if;
+
+         Self.Tree.Model.Next (Node);
+      end loop;
+
+      return Null_Iter;
+   end Find_Project_Node;
+
+   ------------------------
+   -- For_Each_File_Node --
+   ------------------------
+
+   procedure For_Each_File_Node
+     (Model    : Gtk_Tree_Store;
+      Parent   : Gtk_Tree_Iter;
+      Callback : not null access procedure (It : in out Gtk_Tree_Iter))
+   is
+      It, Current : Gtk_Tree_Iter;
+   begin
+      It := Model.Children (Parent);
+      while It /= Null_Iter loop
+         Current := It;
+         Model.Next (It);
+         case Get_Node_Type (Model, Current) is
+            when File_Node      => Callback (Current);
+            when Directory_Node =>
+               For_Each_File_Node (Model, Current, Callback);
+            when others         => null;
+         end case;
+      end loop;
+   end For_Each_File_Node;
+
    --------------------------
    -- Refresh_Project_Node --
    --------------------------
@@ -1777,13 +1753,6 @@ package body Project_Explorers is
       function Is_Hidden (Dir : Virtual_File) return Boolean;
       --  Return true if Dir contains an hidden directory (a directory starting
       --  with a dot).
-
-      procedure For_Each_File_Node
-        (Parent   : Gtk_Tree_Iter;
-         Callback : not null access procedure (It : in out Gtk_Tree_Iter));
-      --  For each file node representing a direct source of Parent (does not
-      --  look into nested project nodes). Callback can freely modify It, or
-      --  the model.
 
       procedure Remove_If_Obsolete (C : in out Gtk_Tree_Iter);
       --  Remove C from the model if it matches a file which is no longer in
@@ -1885,28 +1854,6 @@ package body Project_Explorers is
             Name   =>
               Directory_Node_Text (Show_Abs_Paths, Project, Dir.Directory));
       end Create_Or_Reuse_Directory;
-
-      ------------------------
-      -- For_Each_File_Node --
-      ------------------------
-
-      procedure For_Each_File_Node
-        (Parent   : Gtk_Tree_Iter;
-         Callback : not null access procedure (It : in out Gtk_Tree_Iter))
-      is
-         It, Current : Gtk_Tree_Iter;
-      begin
-         It := Self.Tree.Model.Children (Parent);
-         while It /= Null_Iter loop
-            Current := It;
-            Self.Tree.Model.Next (It);
-            case Get_Node_Type (Self.Tree.Model, Current) is
-               when File_Node      => Callback (Current);
-               when Directory_Node => For_Each_File_Node (Current, Callback);
-               when others         => null;
-            end case;
-         end loop;
-      end For_Each_File_Node;
 
       ------------------------
       -- Remove_If_Obsolete --
@@ -2057,7 +2004,7 @@ package body Project_Explorers is
 
       --  Remove obsolete file nodes
 
-      For_Each_File_Node (Node, Remove_If_Obsolete'Access);
+      For_Each_File_Node (Self.Tree.Model, Node, Remove_If_Obsolete'Access);
 
       --  Now insert directories and files (including object directories)
 
@@ -2110,621 +2057,6 @@ package body Project_Explorers is
         (Context, Get_Kernel (Module.all),
          Gtk_Widget (Child), Child, null, null);
    end Default_Context_Factory;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (Context : in out Explorer_Search_Context) is
-   begin
-      Reset (Context.Matches);
-   end Free;
-
-   -----------------------------
-   -- Explorer_Search_Factory --
-   -----------------------------
-
-   function Explorer_Search_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
-   is
-      pragma Unreferenced (Kernel, All_Occurences);
-      Context : Explorer_Search_Context_Access;
-
-   begin
-      Assert (Me, Extra_Information /= null,
-              "No extra information widget specified");
-
-      Context := new Explorer_Search_Context;
-
-      Context.Include_Projects := Get_Active
-        (Explorer_Search_Extra (Extra_Information).Include_Projects);
-      Context.Include_Directories := Get_Active
-        (Explorer_Search_Extra (Extra_Information).Include_Directories);
-      Context.Include_Files := Get_Active
-        (Explorer_Search_Extra (Extra_Information).Include_Files);
-      Context.Include_Entities := Get_Active
-        (Explorer_Search_Extra (Extra_Information).Include_Entities);
-
-      --  If we have no context, nothing to do
-      if not (Context.Include_Projects
-              or else Context.Include_Directories
-              or else Context.Include_Files
-              or else Context.Include_Entities)
-      then
-         Free (Root_Search_Context_Access (Context));
-         return null;
-      end if;
-
-      Reset (Context.Matches);
-      return Root_Search_Context_Access (Context);
-   end Explorer_Search_Factory;
-
-   -----------------------------
-   -- Explorer_Search_Factory --
-   -----------------------------
-
-   function Explorer_Search_Factory
-     (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Include_Projects : Boolean;
-      Include_Files    : Boolean)
-      return Root_Search_Context_Access
-   is
-      pragma Unreferenced (Kernel);
-      Context : Explorer_Search_Context_Access;
-
-   begin
-      Context := new Explorer_Search_Context;
-
-      Context.Include_Projects    := Include_Projects;
-      Context.Include_Directories := False;
-      Context.Include_Files       := Include_Files;
-      Context.Include_Entities    := False;
-
-      Reset (Context.Matches);
-      return Root_Search_Context_Access (Context);
-   end Explorer_Search_Factory;
-
-   ------------
-   -- Search --
-   ------------
-
-   overriding procedure Search
-     (Context         : access Explorer_Search_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean)
-   is
-      pragma Unreferenced (Search_Backward, Give_Focus, Continue);
-
-      C        : constant Explorer_Search_Context_Access :=
-                   Explorer_Search_Context_Access (Context);
-      Explorer : constant Project_Explorer :=
-        Explorer_Views.Get_Or_Create_View (Kernel, Focus => True);
-
-      Full_Name_For_Dirs : constant Boolean := Get_History
-        (Get_History (Explorer.Kernel).all, Show_Absolute_Paths);
-      --  Use full name of directory in search
-
-      function Directory_Name (Dir : Virtual_File) return String;
-      --  Return directory name for search.
-      --  It returns Base_Name or Full_Name depending on Full_Name_For_Dirs
-
-      procedure Initialize_Parser;
-      --  Compute all the matching files and mark them in the htable
-
-      function Next return Gtk_Tree_Iter;
-      --  Return the next matching node
-
-      procedure Next_Or_Child
-        (Name           : String;
-         Key            : String;
-         Start          : Gtk_Tree_Iter;
-         Check_Match    : Boolean;
-         Check_Projects : Boolean;
-         Result         : out Gtk_Tree_Iter;
-         Finish         : out Boolean);
-      pragma Inline (Next_Or_Child);
-      --  Move to the next node, starting from a project or directory node by
-      --  name Name and key Key.
-      --  Key may differ from Name for directories, where Key is Full_Name,
-      --  but Name could be Base_Name.
-      --  If Check_Match is false, then this subprogram doesn't test if the
-      --  node's Name matches context.
-      --  If Check_Projects is true, then this subprogram maintain set of
-      --  projects and process children nodes only for first occurrence of the
-      --  project.
-
-      procedure Next_File_Node
-        (Start  : Gtk_Tree_Iter;
-         Result : out Gtk_Tree_Iter;
-         Finish : out Boolean);
-      pragma Inline (Next_File_Node);
-      --  Move to the next node, starting from a file node
-
-      function Check_Entities (File : Virtual_File) return Boolean;
-      pragma Inline (Check_Entities);
-      --  Check if File contains any entity matching C.
-      --  Return True if there is a match.
-
-      procedure Mark_File_And_Projects
-        (File           : Virtual_File;
-         Project_Marked : Boolean;
-         Project        : Project_Type;
-         Mark_File      : Search_Status;
-         Increment      : Search_Status);
-      pragma Inline (Mark_File_And_Projects);
-      --  Mark the file Full_Name/Base as matching, as well as the project it
-      --  belongs to and all its importing projects.
-      --  Increment is added to the reference count for all directories and
-      --  importing projects (should be 1 if the file is added, -1 if the file
-      --  is removed)
-
-      --------------------
-      -- Directory_Name --
-      --------------------
-
-      function Directory_Name (Dir : Virtual_File) return String is
-      begin
-         if Full_Name_For_Dirs then
-            return Dir.Display_Full_Name;
-         else
-            return +Dir.Base_Dir_Name;
-         end if;
-      end Directory_Name;
-
-      -------------------
-      -- Next_Or_Child --
-      -------------------
-
-      procedure Next_Or_Child
-        (Name           : String;
-         Key            : String;
-         Start          : Gtk_Tree_Iter;
-         Check_Match    : Boolean;
-         Check_Projects : Boolean;
-         Result         : out Gtk_Tree_Iter;
-         Finish         : out Boolean) is
-      begin
-         Finish := False;
-
-         if Check_Match
-           and then Start /= C.Current
-           and then not GPS.Search.Failed (Match (C, Name))
-         then
-            Result := Start;
-            Finish := True;
-
-         elsif Get (C.Matches, Key) /= No_Match then
-            if Check_Projects then
-               declare
-                  Project_Name : constant Virtual_File :=
-                    Get_File (Explorer.Tree.Model, Start, File_Column);
-               begin
-                  if Projects.Contains (Project_Name) then
-                     Result := Start;
-                     Explorer.Tree.Model.Next (Result);
-
-                  else
-                     Projects.Insert (Project_Name);
-                     Result := Children (Explorer.Tree.Model, Start);
-                  end if;
-               end;
-
-            else
-               Result := Children (Explorer.Tree.Model, Start);
-            end if;
-
-         else
-            Result := Start;
-            Next (Explorer.Tree.Model, Result);
-         end if;
-      end Next_Or_Child;
-
-      --------------------
-      -- Next_File_Node --
-      --------------------
-
-      procedure Next_File_Node
-        (Start  : Gtk_Tree_Iter;
-         Result : out Gtk_Tree_Iter;
-         Finish : out Boolean)
-      is
-         N      : aliased constant Filesystem_String :=
-                    Get_Base_Name (Explorer.Tree.Model, Start);
-         Status : Search_Status;
-      begin
-         Status := Get (C.Matches, +N);
-         if C.Include_Entities then
-            --  The file was already parsed, and we know it matched
-            if Status >= Search_Match then
-               Result := Children (Explorer.Tree.Model, Start);
-               Finish := False;
-               return;
-
-            --  The file was never parsed
-            elsif Status = Unknown then
-               if Check_Entities
-                 (Create_From_Dir
-                    (Get_Directory_From_Node (Explorer.Tree.Model, Start), N))
-               then
-                  Set (C.Matches, +N, Search_Match);
-                  Result := Children (Explorer.Tree.Model, Start);
-                  Finish := False;
-                  return;
-               else
-                  --  Decrease the count for importing directories and
-                  --  projects, so that if no file belonging to them is
-                  --  referenced any more, we simply don't parse them
-
-                  Mark_File_And_Projects
-                    (File => Create_From_Dir
-                       (Get_Directory_From_Node (Explorer.Tree.Model, Start),
-                        N),
-                     Project_Marked => False,
-                     Project        => Get_Project_From_Node
-                       (Explorer.Tree.Model, Explorer.Kernel, Start, False),
-                     Mark_File      => No_Match,
-                     Increment      => -1);
-               end if;
-            end if;
-
-         elsif Status /= No_Match then
-            --  Do not return the initial node
-            if Context.Include_Files and then C.Current /= Start then
-               Result := Start;
-               Finish := True;
-               return;
-            end if;
-         end if;
-
-         --  The file doesn't match
-
-         Result := Start;
-         Next (Explorer.Tree.Model, Result);
-         Finish := False;
-      end Next_File_Node;
-
-      ----------
-      -- Next --
-      ----------
-
-      function Next return Gtk_Tree_Iter is
-         Start_Node : Gtk_Tree_Iter := C.Current;
-         Tmp        : Gtk_Tree_Iter;
-         Finish     : Boolean;
-
-         function First_Word (Str : String) return String;
-         --  Return the first word in Str. This is required since the model
-         --  of the explorer stores the arguments of the subprograms as well,
-         --  and no match would be found otherwise
-
-         ----------------
-         -- First_Word --
-         ----------------
-
-         function First_Word (Str : String) return String is
-         begin
-            for J in Str'Range loop
-               if Str (J) = ' ' then
-                  return Str (Str'First .. J - 1);
-               end if;
-            end loop;
-            return Str;
-         end First_Word;
-
-      begin
-         while Start_Node /= Null_Iter loop
-            begin
-               case Get_Node_Type (Explorer.Tree.Model, Start_Node) is
-                  when Project_Node_Types =>
-                     declare
-                        Name : constant String :=
-                          Get_Project_From_Node
-                            (Explorer.Tree.Model, Kernel, Start_Node, False)
-                            .Name;
-                     begin
-                        Next_Or_Child
-                          (Name           => Name,
-                           Key            => Name,
-                           Start          => Start_Node,
-                           Check_Match    => Context.Include_Projects,
-                           Check_Projects => True,
-                           Result         => Tmp,
-                           Finish         => Finish);
-
-                        if Finish then
-                           return Tmp;
-                        end if;
-                     end;
-
-                  when Directory_Node =>
-                     declare
-                        Dir : constant Virtual_File := Get_Directory_From_Node
-                          (Explorer.Tree.Model, Start_Node);
-                     begin
-                        Next_Or_Child
-                          (Name           => Directory_Name (Dir),
-                           Key            => Display_Full_Name (Dir),
-                           Start          => Start_Node,
-                           Check_Match    => Context.Include_Directories,
-                           Check_Projects => False,
-                           Result         => Tmp,
-                           Finish         => Finish);
-
-                        if Finish and then Context.Include_Directories then
-                           return Tmp;
-                        end if;
-                     end;
-
-                  when Obj_Directory_Node | Exec_Directory_Node =>
-                     Tmp := Start_Node;
-                     Next (Explorer.Tree.Model, Tmp);
-
-                  when File_Node =>
-                     Next_File_Node (Start_Node, Tmp, Finish);
-                     if Finish and then Context.Include_Files then
-                        return Tmp;
-                     end if;
-
-                  when Category_Node =>
-                     Tmp := Children (Explorer.Tree.Model, Start_Node);
-
-                  when Entity_Node =>
-                     if C.Current /= Start_Node
-                       and then Get
-                         (C.Matches,
-                          First_Word
-                            (+Get_Base_Name (Explorer.Tree.Model, Start_Node)))
-                          /= No_Match
-                     then
-                        return Start_Node;
-                     else
-                        Tmp := Start_Node;
-                        Next (Explorer.Tree.Model, Tmp);
-                     end if;
-
-                  when Runtime_Node =>
-                     Next_Or_Child
-                       (Name           => "runtime",
-                        Key            => "runtime",
-                        Start          => Start_Node,
-                        Check_Match    => False,
-                        Check_Projects => False,
-                        Result         => Tmp,
-                        Finish         => Finish);
-                     if Finish then
-                        return Tmp;
-                     end if;
-
-                  when Dummy_Node =>
-                     Start_Node := Parent (Explorer.Tree.Model, Start_Node);
-                     Next_File_Node (Start_Node, Tmp, Finish);
-                     if Finish and then Context.Include_Files then
-                        return Tmp;
-                     end if;
-               end case;
-
-               while Tmp = Null_Iter loop
-                  Start_Node := Parent (Explorer.Tree.Model, Start_Node);
-                  exit when Start_Node = Null_Iter;
-
-                  Tmp := Start_Node;
-                  Next (Explorer.Tree.Model, Tmp);
-               end loop;
-
-               Start_Node := Tmp;
-            end;
-         end loop;
-         return Null_Iter;
-      end Next;
-
-      --------------------
-      -- Check_Entities --
-      --------------------
-
-      function Check_Entities (File : Virtual_File) return Boolean is
-         Languages  : constant Language_Handler :=
-                        Get_Language_Handler (Kernel);
-         Constructs : Construct_List;
-         Status     : Boolean := False;
-
-      begin
-         Parse_File_Constructs
-           (Get_Language_From_File (Languages, File), File, Constructs);
-
-         Constructs.Current := Constructs.First;
-
-         while Constructs.Current /= null loop
-            if Filter_Category (Constructs.Current.Category) /= Cat_Unknown
-              and then Constructs.Current.Name /= No_Symbol
-              and then not GPS.Search.Failed
-                (Match (C, Get (Constructs.Current.Name).all))
-            then
-               Status := True;
-
-               if Get (C.Matches, Get (Constructs.Current.Name).all) /=
-                 Search_Match
-               then
-                  Set (C.Matches, Get (Constructs.Current.Name).all,
-                       Search_Match);
-               end if;
-            end if;
-
-            Constructs.Current := Constructs.Current.Next;
-         end loop;
-
-         Free (Constructs);
-         return Status;
-      end Check_Entities;
-
-      ----------------------------
-      -- Mark_File_And_Projects --
-      ----------------------------
-
-      procedure Mark_File_And_Projects
-        (File           : Virtual_File;
-         Project_Marked : Boolean;
-         Project        : Project_Type;
-         Mark_File      : Search_Status;
-         Increment      : Search_Status)
-      is
-         Parent : constant Virtual_File := Dir (File);
-         Dir    : constant String := Display_Full_Name (Parent);
-         Iter   : Project_Iterator;
-
-      begin
-         if File.Is_Directory then
-            --  Use full name of directories to keep them unique
-            Set (C.Matches, Display_Full_Name (File), Mark_File);
-            --  Don't mark parent directory, because project view doesn't
-            --  place directories inside directory
-         else
-            Set (C.Matches, +Base_Name (File), Mark_File);
-
-            --  Mark the number of entries in the directory, so that if a file
-            --  doesn't match we can decrease it later, and finally no longer
-            --  examine the directory
-            if Get (C.Matches, Dir) /= No_Match then
-               Set (C.Matches, Dir, Get (C.Matches, Dir) + Increment);
-            elsif Increment > 0 then
-               Set (C.Matches, Dir, 1);
-            end if;
-         end if;
-
-         if not Project_Marked then
-            --  Mark the current project and all its importing projects as
-            --  matching.
-
-            declare
-               N : constant String := Project.Name;
-            begin
-               Set (C.Matches, N, Get (C.Matches, N) + Increment);
-            end;
-
-            Iter := Find_All_Projects_Importing
-              (Project      => Project);
-
-            while Current (Iter) /= No_Project loop
-               declare
-                  N : constant String := Current (Iter).Name;
-               begin
-                  Set (C.Matches, N, Get (C.Matches, N) + Increment);
-               end;
-
-               Next (Iter);
-            end loop;
-         end if;
-      end Mark_File_And_Projects;
-
-      -----------------------
-      -- Initialize_Parser --
-      -----------------------
-
-      procedure Initialize_Parser is
-         Iter : Project_Iterator := Start
-           (Get_Project (Kernel), Recursive => True);
-         Project_Marked : Boolean := False;
-      begin
-         Projects.Clear;
-
-         while Current (Iter) /= No_Project loop
-            Project_Marked := False;
-
-            if not GPS.Search.Failed (Match (C, Current (Iter).Name)) then
-               Mark_File_And_Projects
-                 (File           => Project_Path (Current (Iter)),
-                  Project_Marked => Project_Marked,
-                  Project        => Current (Iter),
-                  Mark_File      => Unknown,
-                  Increment      => 1);
-            end if;
-
-            if Context.Include_Directories then
-               declare
-                  Sources : constant File_Array := Current (Iter).Source_Dirs;
-               begin
-                  for S in Sources'Range loop
-                     declare
-                        Name : constant String := Directory_Name (Sources (S));
-                     begin
-                        if not GPS.Search.Failed (Match (C, Name)) then
-                           Mark_File_And_Projects
-                             (File           => Sources (S),
-                              Project_Marked => Project_Marked,
-                              Project        => Current (Iter),
-                              Mark_File      => Search_Match,
-                              Increment      => 1);
-                           Project_Marked  := True;
-                        end if;
-                     end;
-                  end loop;
-               end;
-            end if;
-
-            declare
-               Sources : File_Array_Access := Current (Iter).Source_Files;
-            begin
-               for S in Sources'Range loop
-                  declare
-                     Base : constant String := Display_Base_Name (Sources (S));
-                  begin
-                     if not GPS.Search.Failed (Match (C, Base)) then
-                        Mark_File_And_Projects
-                          (File           => Sources (S),
-                           Project_Marked => Project_Marked,
-                           Project        => Current (Iter),
-                           Mark_File      => Search_Match,
-                           Increment      => 1);
-                        Project_Marked  := True;
-                     end if;
-
-                     if not Project_Marked and then C.Include_Entities then
-                        Mark_File_And_Projects
-                          (File           => Sources (S),
-                           Project_Marked => Project_Marked,
-                           Project        => Current (Iter),
-                           Mark_File      => Unknown,
-                           Increment      => 1);
-                        --  Do not change Project_Marked, since we want the
-                        --  total count for directories and projects to be the
-                        --  total number of files in them.
-                        --  ??? Could be more efficient
-                     end if;
-                  end;
-               end loop;
-
-               GNATCOLL.VFS.Unchecked_Free (Sources);
-            end;
-
-            Next (Iter);
-         end loop;
-      end Initialize_Parser;
-
-   begin
-      --  We need to freeze and block the handlers to speed up the display of
-      --  the node on the screen.
-      Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
-
-      if C.Current = Null_Iter then
-         Initialize_Parser;
-         C.Current := Get_Iter_First (Explorer.Tree.Model);
-      end if;
-
-      C.Current := Next;
-
-      if C.Current /= Null_Iter then
-         Jump_To_Node (Explorer, C.Current);
-      end if;
-
-      Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
-
-      Found := C.Current /= Null_Iter;
-   end Search;
 
    --------------------
    --  Jump_To_Node  --
@@ -2789,42 +2121,40 @@ package body Project_Explorers is
      (Command : access Locate_File_In_Explorer_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      C        : Root_Search_Context_Access;
-      Found    : Boolean;
-      Continue : Boolean;
+      File     : constant Virtual_File := File_Information (Context.Context);
+      S        : File_Info_Set;
+      View     : constant Project_Explorer :=
+        Explorer_Views.Get_Or_Create_View (Kernel);
+      Node     : Gtk_Tree_Iter;
+      Success  : Boolean;
+      Filter_Path, Path : Gtk_Tree_Path;
+      pragma Unreferenced (Command, Success);
+
+      procedure Select_If_Searched (C : in out Gtk_Tree_Iter);
+      procedure Select_If_Searched (C : in out Gtk_Tree_Iter) is
+      begin
+         if Get_File_From_Node (View.Tree.Model, C) = File then
+            Jump_To_Node (View, C);
+         end if;
+      end Select_If_Searched;
+
    begin
-      C := Explorer_Search_Factory
-        (Kernel,
-         Include_Projects => False,
-         Include_Files    => True);
-      --  ??? Should we work directly with a Virtual_File, so that we
-      --  are sure to match the right file, not necessarily a file with
-      --  the same base name in an extending project...
+      S := Get_Registry (Kernel).Tree.Info_Set (File);
+      Node := Find_Project_Node
+        (View, File_Info (S.First_Element).Project);
 
-      C.Set_Pattern
-        (Pattern =>
-           "^" & (+Base_Name (File_Information (Context.Context))) & "$",
-         Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)),
-         Whole_Word     => True,
-         Kind           => GPS.Search.Regexp);
+      if Node /= Null_Iter then
+         --  Expand the project node
+         Path := View.Tree.Model.Get_Path (Node);
+         Filter_Path := View.Tree.Filter.Convert_Child_Path_To_Path (Path);
+         Path_Free (Path);
+         Success := View.Tree.Expand_Row (Filter_Path, False);
+         Path_Free (Filter_Path);
 
-      Search
-        (C, Kernel,
-         Search_Backward => False,
-         Give_Focus      => True,
-         Found           => Found,
-         Continue        => Continue);
-
-      if not Found then
-         Insert (Kernel,
-                 -"File not found in the explorer: "
-                 & Display_Base_Name (File_Information (Context.Context)),
-                 Mode => GPS.Kernel.Error);
+         For_Each_File_Node (View.Tree.Model, Node, Select_If_Searched'Access);
       end if;
 
-      Free (C);
       return Commands.Success;
    end Execute;
 
@@ -2838,35 +2168,14 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      C        : Root_Search_Context_Access;
-      Found    : Boolean;
-      Continue : Boolean;
+      View     : constant Project_Explorer :=
+        Explorer_Views.Get_Or_Create_View (Kernel);
+      Node     : Gtk_Tree_Iter;
    begin
-      C := Explorer_Search_Factory
-        (Kernel,
-         Include_Projects => True,
-         Include_Files    => False);
-
-      C.Set_Pattern
-        (Pattern => Project_Information (Context.Context).Name,
-         Case_Sensitive => Is_Case_Sensitive (Get_Nickname (Build_Server)),
-         Whole_Word     => True,
-         Kind           => GPS.Search.Full_Text);
-
-      Search
-        (C, Kernel,
-         Search_Backward => False,
-         Give_Focus      => True,
-         Found           => Found,
-         Continue        => Continue);
-
-      if not Found then
-         Insert (Kernel,
-                 -"Project not found in the explorer: "
-                 & Project_Information (Context.Context).Name);
+      Node := Find_Project_Node (View, Project_Information (Context.Context));
+      if Node /= Null_Iter then
+         Jump_To_Node (View, Node);
       end if;
-
-      Free (C);
       return Commands.Success;
    end Execute;
 
@@ -2877,9 +2186,6 @@ package body Project_Explorers is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Extra   : Explorer_Search_Extra;
-      Box     : Gtk_Box;
-
       Project_View_Filter   : constant Action_Filter :=
                                 new Project_View_Filter_Record;
       Project_Node_Filter   : constant Action_Filter :=
@@ -2942,40 +2248,6 @@ package body Project_Explorers is
          new Toggle_Absolute_Path_Command, Toggle_Absolute_Path_Tip,
          null, -"Project Explorer");
 
-      Extra := new Explorer_Search_Extra_Record;
-      Gtk.Box.Initialize_Vbox (Extra);
-
-      Gtk_New_Vbox (Box, Homogeneous => False);
-      Pack_Start (Extra, Box);
-
-      Gtk_New (Extra.Include_Projects, -"Projects");
-      Pack_Start (Box, Extra.Include_Projects);
-      Set_Active (Extra.Include_Projects, True);
-      Kernel_Callback.Connect
-        (Extra.Include_Projects, Gtk.Toggle_Button.Signal_Toggled,
-         Reset_Search'Access, Kernel_Handle (Kernel));
-
-      Gtk_New (Extra.Include_Directories, -"Directories");
-      Pack_Start (Box, Extra.Include_Directories);
-      Set_Active (Extra.Include_Directories, True);
-      Kernel_Callback.Connect
-        (Extra.Include_Directories, Gtk.Toggle_Button.Signal_Toggled,
-         Reset_Search'Access, Kernel_Handle (Kernel));
-
-      Gtk_New (Extra.Include_Files, -"Files");
-      Pack_Start (Box, Extra.Include_Files);
-      Set_Active (Extra.Include_Files, True);
-      Kernel_Callback.Connect
-        (Extra.Include_Files, Gtk.Toggle_Button.Signal_Toggled,
-         Reset_Search'Access, Kernel_Handle (Kernel));
-
-      Gtk_New (Extra.Include_Entities, -"Entities (might be slow)");
-      Pack_Start (Box, Extra.Include_Entities);
-      Set_Active (Extra.Include_Entities, False);
-      Kernel_Callback.Connect
-        (Extra.Include_Entities, Gtk.Toggle_Button.Signal_Toggled,
-         Reset_Search'Access, Kernel_Handle (Kernel));
-
       Register_Filter
         (Kernel,
          Filter => Project_View_Filter,
@@ -2996,15 +2268,6 @@ package body Project_Explorers is
         (Kernel,
          Filter => Entity_Node_Filter,
          Name   => "Explorer_Entity_Node");
-
-      Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Project View",
-         Factory           => Explorer_Search_Factory'Access,
-         Extra_Information => Extra,
-         Id                => Explorer_Module_ID,
-         Mask              => All_Options and not Supports_Replace
-         and not Search_Backward and not All_Occurrences);
    end Register_Module;
 
    ----------
@@ -3015,17 +2278,5 @@ package body Project_Explorers is
    begin
       return Ada.Strings.Hash (+Key);
    end Hash;
-
-   ---------------------
-   -- Context_Look_In --
-   ---------------------
-
-   overriding function Context_Look_In
-     (Self : Explorer_Search_Context) return String
-   is
-      pragma Unreferenced (Self);
-   begin
-      return -"project explorer";
-   end Context_Look_In;
 
 end Project_Explorers;
