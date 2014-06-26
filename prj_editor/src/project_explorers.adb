@@ -257,10 +257,6 @@ package body Project_Explorers is
       Child   : Glib.Object.GObject);
    --  See inherited documentation
 
-   ---------------
-   -- Searching --
-   ---------------
-
    procedure For_Each_File_Node
      (Model    : Gtk_Tree_Store;
       Parent   : Gtk_Tree_Iter;
@@ -1396,12 +1392,12 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Widget);
 
-      Path       : Gtk_Tree_Path;
+      Filter_Path : Gtk_Tree_Path;
       Column     : Gtk_Tree_View_Column;
       Cell_X,
       Cell_Y     : Gint;
       Row_Found  : Boolean := False;
-      Par, Iter  : Gtk_Tree_Iter;
+      Par, Filter_Iter, Iter  : Gtk_Tree_Iter;
       Node_Type  : Node_Types;
       File       : Virtual_File;
       Area       : Gdk_Rectangle;
@@ -1409,7 +1405,7 @@ package body Project_Explorers is
       P          : Project_Type;
    begin
       Get_Path_At_Pos
-        (Tooltip.Explorer.Tree, X, Y, Path,
+        (Tooltip.Explorer.Tree, X, Y, Filter_Path,
          Column, Cell_X, Cell_Y, Row_Found);
 
       if not Row_Found then
@@ -1418,14 +1414,18 @@ package body Project_Explorers is
       else
          --  Now check that the cursor is over a text
 
-         Iter := Get_Iter (Tooltip.Explorer.Tree.Model, Path);
-         if Iter = Null_Iter then
+         Filter_Iter :=
+           Get_Iter (Tooltip.Explorer.Tree.Get_Model, Filter_Path);
+         if Filter_Iter = Null_Iter then
             return null;
          end if;
       end if;
 
-      Get_Cell_Area (Tooltip.Explorer.Tree, Path, Column, Area);
-      Path_Free (Path);
+      Tooltip.Explorer.Tree.Filter.Convert_Iter_To_Child_Iter
+        (Child_Iter => Iter, Filter_Iter => Filter_Iter);
+
+      Get_Cell_Area (Tooltip.Explorer.Tree, Filter_Path, Column, Area);
+      Path_Free (Filter_Path);
 
       Tooltip.Set_Tip_Area (Area);
 
