@@ -915,14 +915,16 @@ package body GPS.Kernel.Remote is
 
       if Console /= null and then Show_Command then
          if Is_Local (Server) then
-            Insert (Console,
-                    To_Display_String (Arguments),
-                    Add_LF => True);
+            Insert_With_Links
+              (Console,
+               To_Display_String (Arguments),
+               Add_LF => True);
          else
-            Insert (Console,
-                    Get_Nickname (Server) & "> " &
-                    To_Display_String (Arguments),
-                    Add_LF => True);
+            Insert_With_Links
+              (Console,
+               Get_Nickname (Server) & "> " &
+                 To_Display_String (Arguments),
+               Add_LF => True);
          end if;
       end if;
 
