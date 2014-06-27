@@ -1885,8 +1885,8 @@ package body Project_Explorers is
                     (Self.Filter, Current (Iter).Project_Path);
 
                   if Filter = Show_Direct then
-                     Child := Create_Or_Reuse_Project (Current (Iter));
-                     Refresh_Project_Node (Self, Child, Flat_View);
+                     Child := Create_Or_Reuse_Project
+                       (Current (Iter), Add_Dummy => True);
                   end if;
 
                   Next (Iter);
