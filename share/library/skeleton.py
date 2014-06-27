@@ -4,8 +4,8 @@ This script shows how you can implement what other editors call
 skeletons. Any time you create a new file from within GPS, the
 text set in the variable skeleton will be inserted in the file.
 
-The text inserted can be customized through the /Tools/Plug-ins
-menu.
+The text inserted can be customized through the preferences dialog
+(Plugins/skeleton page).
 
 Another possible implementation is to use text aliases (/Edit/Aliases),
 which do not insert anything in the file but can be quickly expanded to
