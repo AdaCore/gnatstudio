@@ -66,7 +66,7 @@ class PythonResolver(CompletionResolver):
 
             try:
                 # filter out ^L in source text
-                # text = loc.buffer().get_chars()
+                text = loc.buffer().get_chars()
                 # text = text.replace('\x0c', ' ')
                 # Feed Jedi API
                 script = jedi.Script(
