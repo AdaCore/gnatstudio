@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N620-015 GB: allow GNAT project file change from GNATbench properties
+
+  Problem:    Changing the GNAT project file form the GNATbench properties
+              dialog is impossible if the project name is different from the
+              previous one.
+
+  Status:     This was fixed in 2.9 on 2014-06-30
+
+  Workaround: Close Eclipse/Wind River Workbench, In the .gb_project file
+              change the GNAT project. Restart Eclipse/Wind River Workbench.
+
 KP-60-N616-042 GPS: use fixed font in Project view
 
   Problem:    The project view should use a fixed font since it displays
