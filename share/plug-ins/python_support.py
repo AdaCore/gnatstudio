@@ -24,7 +24,6 @@ following are provided:
 #   - "class browser" -> project view in GPS
 
 import GPS
-from itertools import chain, repeat
 import sys
 import ast
 import os.path
@@ -34,7 +33,8 @@ from constructs import *
 try:
     from gi.repository import Gtk
     has_pygtk = 1
-except:
+except ImportError:
+    Gtk = None
     has_pygtk = 0
 
 
@@ -51,7 +51,6 @@ class ASTVisitor(ast.NodeVisitor):
     def __init__(self, bufstr, clist):
         self.buflines = bufstr.splitlines()
         self.lines_offsets = [0 for _ in self.buflines]
-        self.lines_offsets[0] = 0
 
         for i in range(1, len(self.buflines)):
             self.lines_offsets[i] = (self.lines_offsets[i - 1]
@@ -163,7 +162,7 @@ class PythonLanguage(GPS.Language):
             pass
 
 
-class Python_Support(object):
+class PythonSupport(object):
 
     def __init__(self):
         self.port_pref = GPS.Preference("Plugins/python_support/port")
@@ -177,40 +176,42 @@ documentation for the standard python library. It is accessed through the
 
         GPS.Language.register(PythonLanguage(), "Python", ".py", "", ".pyc")
         XML = """
-  <filter_and name="Python file">
-    <filter id="Source editor" />
-     <filter language="Python" />
-  </filter_and>
+        <filter_and name="Python file">
+          <filter id="Source editor" />
+           <filter language="Python" />
+        </filter_and>
 
-  <documentation_file>
-     <name>http://docs.python.org/2/tutorial/</name>
-     <descr>Python tutorial</descr>
-     <menu>/Help/Python/Python Tutorial</menu>
-     <category>Scripts</category>
-  </documentation_file>
-  <documentation_file>
-     <shell lang="python">
-        GPS.execute_action('display python library help')
-     </shell>
-     <descr>Python Library</descr>
-     <menu>/Help/Python/Python Library</menu>
-     <category>Scripts</category>
-  </documentation_file>"""
+        <documentation_file>
+           <name>http://docs.python.org/2/tutorial/</name>
+           <descr>Python tutorial</descr>
+           <menu>/Help/Python/Python Tutorial</menu>
+           <category>Scripts</category>
+        </documentation_file>
+        <documentation_file>
+          <shell lang="python">
+              GPS.execute_action('display python library help')
+          </shell>
+          <descr>Python Library</descr>
+          <menu>/Help/Python/Python Library</menu>
+          <category>Scripts</category>
+        </documentation_file>
+        """
 
-        if has_pygtk:
+        if Gtk:
             XML += """
-  <documentation_file>
-     <name>http://www.pygtk.org/pygtk2tutorial/index.html</name>
-     <descr>PyGTK tutorial</descr>
-     <menu>/Help/Python/PyGTK Tutorial</menu>
-     <category>Scripts</category>
-  </documentation_file>
-  <documentation_file>
-     <name>http://www.pygtk.org/pygtk2reference/index.html</name>
-     <descr>PyGTK Reference Manual</descr>
-     <menu>/Help/Python/PyGTK Reference Manual</menu>
-     <category>Scripts</category>
-  </documentation_file>"""
+            <documentation_file>
+               <name>http://www.pygtk.org/pygtk2tutorial/index.html</name>
+               <descr>PyGTK tutorial</descr>
+               <menu>/Help/Python/PyGTK Tutorial</menu>
+               <category>Scripts</category>
+            </documentation_file>
+            <documentation_file>
+               <name>http://www.pygtk.org/pygtk2reference/index.html</name>
+               <descr>PyGTK Reference Manual</descr>
+               <menu>/Help/Python/PyGTK Reference Manual</menu>
+               <category>Scripts</category>
+            </documentation_file>
+            """
 
         GPS.parse_xml(XML)
 
@@ -230,14 +231,14 @@ documentation for the standard python library. It is accessed through the
 
     def reload_file(self):
         """
-Reload the currently edited file in python.
-If the file has not been imported yet, import it initially.
-Otherwise, reload the current version of the file.
+        Reload the currently edited file in python.
+        If the file has not been imported yet, import it initially.
+        Otherwise, reload the current version of the file.
         """
 
         try:
-            file = GPS.current_context().file()
-            module = os.path.splitext(os.path.basename(file.name()))[0]
+            f = GPS.current_context().file()
+            module = os.path.splitext(os.path.basename(f.name()))[0]
 
             # The actual import and reload must be done in the context of the
             # GPS console so that they are visible there. The current function
@@ -252,9 +253,9 @@ Otherwise, reload the current version of the file.
 
             else:
                 try:
-                    sys.path.index(os.path.dirname(file.name()))
+                    sys.path.index(os.path.dirname(f.name()))
                 except:
-                    sys.path = [os.path.dirname(file.name())] + sys.path
+                    sys.path = [os.path.dirname(f.name())] + sys.path
                 mod = __import__(module)
 
                 # This would import in the current context, not what we want
@@ -268,9 +269,9 @@ Otherwise, reload the current version of the file.
 
     def _project_recomputed(self, hook_name):
         """
-if python is one of the supported language for the project, add various
-predefined directories that may contain python files, so that shift-F3
-works to open these files as it does for the Ada runtime
+        if python is one of the supported language for the project, add various
+        predefined directories that may contain python files, so that shift-F3
+        works to open these files as it does for the Ada runtime
         """
 
         GPS.Project.add_predefined_paths(
@@ -294,7 +295,7 @@ works to open these files as it does for the Ada runtime
                     out.rindex(   # raise exception if not found
                         "Address already in use")
                     port += 1
-                except:
+                except Exception:
                     break
 
         GPS.HTML.browse("http://localhost:%s/" % port)
@@ -326,4 +327,4 @@ class PythonTracer(object):
 
 # Create the class once GPS is started, so that the filter is created
 # immediately when parsing XML, and we can create our actions.
-GPS.Hook("gps_started").add(lambda h: Python_Support())
+GPS.Hook("gps_started").add(lambda h: PythonSupport())
