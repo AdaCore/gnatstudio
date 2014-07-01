@@ -1745,8 +1745,8 @@ package body Project_Explorers is
       --  Create a new project node, or reuse one if it exists
 
       function Is_Hidden (Dir : Virtual_File) return Boolean;
-      --  Return true if Dir contains an hidden directory (a directory starting
-      --  with a dot).
+      --  Return true if Dir contains an hidden directory (a directory matching
+      --  the global GUI regexp for hidden directories).
 
       procedure Remove_If_Obsolete (C : in out Gtk_Tree_Iter);
       --  Remove C from the model if it matches a file which is no longer in
@@ -1769,20 +1769,11 @@ package body Project_Explorers is
       ---------------
 
       function Is_Hidden (Dir : Virtual_File) return Boolean is
-         Root : constant Virtual_File := Get_Root (Dir);
-         D    : Virtual_File := Dir;
+         Show_Abs_Paths : constant Boolean := Get_History
+           (Get_History (Self.Kernel).all, Show_Absolute_Paths);
       begin
-         while D /= GNATCOLL.VFS.No_File
-           and then D /= Root
-         loop
-            if Is_Hidden (Self.Kernel, D.Base_Dir_Name) then
-               return True;
-            end if;
-
-            D := D.Get_Parent;
-         end loop;
-
-         return False;
+         return Is_Hidden
+           (Self.Kernel, +Directory_Node_Text (Show_Abs_Paths, Project, Dir));
       end Is_Hidden;
 
       -----------------------------

@@ -1234,7 +1234,7 @@ package body GPS.Kernel.Preferences is
          & " starting with a dot are considered as hidden. This regular"
          & " expression is also used to remove VCS specific directories"
          & " like CVS.",
-         Default => "^((\..+)|CVS)$",
+         Default => "(^|\\|/)((\.[^\.]+.*)|CVS)$",
          Page    => -"Project");
 
       -- Wizards --
