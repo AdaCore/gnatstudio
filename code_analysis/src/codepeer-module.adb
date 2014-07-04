@@ -1815,6 +1815,9 @@ package body CodePeer.Module is
             procedure Create_GPS_Message;
             --  Create GPS message
 
+            function Is_Visible return Boolean;
+            --  Compute visibility of the message with current filter criteria
+
             ------------------------
             -- Create_GPS_Message --
             ------------------------
@@ -1963,6 +1966,42 @@ package body CodePeer.Module is
                end if;
             end Image;
 
+            ----------------
+            -- Is_Visible --
+            ----------------
+
+            function Is_Visible return Boolean is
+            begin
+               --  Simple criteria
+
+               if not Self.Filter_Criteria.Lineages (Message.Lifeage)
+                 or not Self.Filter_Criteria.Rankings (Message.Ranking)
+                 or not Self.Filter_Criteria.Statuses (Message.Status)
+               then
+                  return False;
+               end if;
+
+               --  Category of the message should be selected
+
+               if Self.Filter_Criteria.Categories.Contains
+                 (Message.Category)
+               then
+                  return True;
+               end if;
+
+               --  or at least one check of the message should be selected
+
+               if not Self.Filter_Criteria.Categories.Intersection
+                 (Message.Checks).Is_Empty
+               then
+                  return True;
+               end if;
+
+               --  otherwise it is not visible
+
+               return False;
+            end Is_Visible;
+
             -------------------
             -- Ranking_Image --
             -------------------
@@ -2002,12 +2041,7 @@ package body CodePeer.Module is
             end Ranking_Image;
 
          begin
-            if Self.Filter_Criteria.Lineages (Message.Lifeage)
-              and then Self.Filter_Criteria.Rankings (Message.Ranking)
-              and then Self.Filter_Criteria.Statuses (Message.Status)
-              and then Self.Filter_Criteria.Categories.Contains
-                (Message.Category)
-            then
+            if Is_Visible then
                if Message.Message = null then
                   Create_GPS_Message;
 

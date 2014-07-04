@@ -316,6 +316,15 @@ package body CodePeer.Bridge.Inspection_Readers is
          Message_Category :=
            new CodePeer.Message_Category'
              (Name => new String'(Attrs.Get_Value ("name")));
+
+         if Attrs.Get_Index (Is_Check_Attribute) /= -1
+           and then Boolean'Value (Attrs.Get_Value (Is_Check_Attribute))
+         then
+            CodePeer.Project_Data'Class
+              (Self.Root_Inspection.all).Check_Subcategories.Include
+              (Message_Category);
+         end if;
+
          CodePeer.Project_Data'Class
            (Self.Root_Inspection.all).Message_Categories.Insert
            (Message_Category);
