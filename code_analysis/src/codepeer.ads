@@ -64,18 +64,6 @@ package CodePeer is
    package Message_Category_Sets is new Ada.Containers.Hashed_Sets
      (Message_Category_Access, Hash, "=");
 
-   type Check_Category is record
-      Name : GNAT.Strings.String_Access;
-   end record;
-
-   type Check_Category_Access is access all Check_Category;
-
-   function Hash
-     (Item : Check_Category_Access) return Ada.Containers.Hash_Type;
-
-   package Check_Category_Sets is new Ada.Containers.Hashed_Sets
-     (Check_Category_Access, Hash, "=");
-
    type Audit_Record_V2 (Ranking_Changed : Boolean) is record
       Timestamp   : Ada.Strings.Unbounded.Unbounded_String;
       Comment     : Ada.Strings.Unbounded.Unbounded_String;
@@ -129,7 +117,7 @@ package CodePeer is
       From_Line        : Positive;
       From_Column      : Positive;
       Message          : GPS.Kernel.Messages.Message_Access;
-      Checks           : Check_Category_Sets.Set;
+      Checks           : Message_Category_Sets.Set;
    end record;
 
    type Message_Access is access all Message;
@@ -232,9 +220,6 @@ package CodePeer is
       Warning_Subcategories : Message_Category_Sets.Set;
       --  These sets of categories are subsets of Message_Categories and
       --  are used by messages filter.
-
-      Check_Categories      : Check_Category_Sets.Set;
-      --  Set of check categories used as originating check for messages.
 
       Entry_Points          : Entry_Point_Information_Sets.Set;
       Object_Races          : Object_Race_Vectors.Vector;

@@ -39,10 +39,6 @@ package body CodePeer is
       procedure Process_Object_Race (Position : Object_Race_Vectors.Cursor);
       --  Deallocates object race information
 
-      procedure Process_Orig_Check_Category
-        (Position : Check_Category_Sets.Cursor);
-      --  Dellocate check category
-
       ---------------------------------
       -- Process_Annotation_Category --
       ---------------------------------
@@ -109,28 +105,9 @@ package body CodePeer is
          GNAT.Strings.Free (Element.Name);
       end Process_Object_Race;
 
-      ---------------------------------
-      -- Process_Orig_Check_Category --
-      ---------------------------------
-
-      procedure Process_Orig_Check_Category
-        (Position : Check_Category_Sets.Cursor)
-      is
-         Element : Check_Category_Access :=
-                     Check_Category_Sets.Element (Position);
-
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Check_Category, Check_Category_Access);
-
-      begin
-         GNAT.Strings.Free (Element.Name);
-         Free (Element);
-      end Process_Orig_Check_Category;
-
    begin
       Self.Message_Categories.Iterate (Process_Message_Category'Access);
       Self.Annotation_Categories.Iterate (Process_Annotation_Category'Access);
-      Self.Check_Categories.Iterate (Process_Orig_Check_Category'Access);
       Self.Entry_Points.Iterate (Process_Entry_Point'Access);
       Self.Object_Races.Iterate (Process_Object_Race'Access);
    end Finalize;
@@ -220,16 +197,6 @@ package body CodePeer is
       Self.Annotations.Iterate (Process_Annotations'Access);
       Self.Annotations.Clear;
    end Finalize;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash
-     (Item : Check_Category_Access) return Ada.Containers.Hash_Type is
-   begin
-      return Ada.Strings.Hash (Item.Name.all);
-   end Hash;
 
    ----------
    -- Hash --

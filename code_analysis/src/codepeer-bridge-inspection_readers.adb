@@ -24,7 +24,6 @@ package body CodePeer.Bridge.Inspection_Readers is
    Inspection_Tag          : constant String := "inspection";
    Message_Category_Tag    : constant String := "message_category";
    Annotation_Category_Tag : constant String := "annotation_category";
-   Check_Category_Tag      : constant String := "check_category";
    File_Tag                : constant String := "file";
    Subprogram_Tag          : constant String := "subprogram";
    Message_Tag             : constant String := "message";
@@ -144,7 +143,6 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       Message_Category    : CodePeer.Message_Category_Access;
       Annotation_Category : CodePeer.Annotation_Category_Access;
-      Check_Category      : CodePeer.Check_Category_Access;
       File_Name           : GNATCOLL.VFS.Virtual_File;
       Relocated_Name      : GNATCOLL.VFS.Virtual_File;
       Project_Node        : Code_Analysis.Project_Access;
@@ -336,15 +334,6 @@ package body CodePeer.Bridge.Inspection_Readers is
            (Natural'Value (Attrs.Get_Value ("identifier")),
             Annotation_Category);
 
-      elsif Qname = Check_Category_Tag then
-         Check_Category :=
-           new CodePeer.Check_Category'
-             (Name => new String'(Attrs.Get_Value ("name")));
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Check_Categories.Insert (Check_Category);
-         Self.Check_Categories.Insert
-           (Natural'Value (Attrs.Get_Value ("identifier")), Check_Category);
-
       elsif Qname = File_Tag then
          File_Name :=
            GPS.Kernel.Create (+Attrs.Get_Value ("name"), Self.Kernel);
@@ -423,7 +412,7 @@ package body CodePeer.Bridge.Inspection_Readers is
                     1,
                     1,
                     null,
-                    Check_Category_Sets.Empty_Set);
+                    Message_Category_Sets.Empty_Set);
 
             when 3 =>
                Self.Current_Message :=
@@ -448,7 +437,7 @@ package body CodePeer.Bridge.Inspection_Readers is
                     1,
                     1,
                     null,
-                    Check_Category_Sets.Empty_Set);
+                    Message_Category_Sets.Empty_Set);
 
                if Self.Messages.Contains (Self.Current_Message.Id) then
                   Self.Kernel.Insert
@@ -518,10 +507,10 @@ package body CodePeer.Bridge.Inspection_Readers is
          if Attrs.Get_Index (Primary_Attribute) /= -1
            and then Boolean'Value (Attrs.Get_Value (Primary_Attribute))
          then
-            Check_Category :=
-              Self.Check_Categories
+            Message_Category :=
+              Self.Message_Categories
                 (Natural'Value (Attrs.Get_Value (Category_Attribute)));
-            Self.Current_Message.Checks.Insert (Check_Category);
+            Self.Current_Message.Checks.Insert (Message_Category);
          end if;
 
       elsif Qname = Entry_Point_Tag then
