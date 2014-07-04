@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Projects;
+with GNATCOLL.Utils;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 
@@ -32,22 +33,21 @@ package body CodePeer.Bridge.Inspection_Readers is
    Object_Race_Tag         : constant String := "object_race";
    Entry_Point_Access_Tag  : constant String := "entry_point_access";
    Object_Access_Tag       : constant String := "object_access";
-   Orig_Check_Tag          : constant String := "orig_check";
 
-   Checks_Attribute        : constant String := "checks";
-   Column_Attribute        : constant String := "column";
-   Entry_Point_Attribute   : constant String := "entry_point";
-   File_Attribute          : constant String := "file";
-   Format_Attribute        : constant String := "format";
-   Identifier_Attribute    : constant String := "identifier";
-   Is_Check_Attribute      : constant String := "is_check";
-   Kind_Attribute          : constant String := "kind";
-   Line_Attribute          : constant String := "line";
-   Name_Attribute          : constant String := "name";
-   Previous_Attribute      : constant String := "previous";
-   Rank_Attribute          : constant String := "rank";
-   Category_Attribute      : constant String := "category";
-   Primary_Attribute       : constant String := "primary";
+   Checks_Attribute         : constant String := "checks";
+   Column_Attribute         : constant String := "column";
+   Entry_Point_Attribute    : constant String := "entry_point";
+   File_Attribute           : constant String := "file";
+   Format_Attribute         : constant String := "format";
+   Identifier_Attribute     : constant String := "identifier";
+   Is_Check_Attribute       : constant String := "is_check";
+   Kind_Attribute           : constant String := "kind";
+   Line_Attribute           : constant String := "line";
+   Name_Attribute           : constant String := "name";
+   Previous_Attribute       : constant String := "previous";
+   Rank_Attribute           : constant String := "rank";
+   Category_Attribute       : constant String := "category";
+   Primary_Checks_Attribute : constant String := "primary_checks";
 
    -----------------
    -- End_Element --
@@ -423,7 +423,7 @@ package body CodePeer.Bridge.Inspection_Readers is
                     Positive'Value (Attrs.Get_Value ("line")),
                     Positive'Value (Attrs.Get_Value ("column")),
                     Self.Message_Categories.Element
-                      (Positive'Value (Attrs.Get_Value ("category"))),
+                      (Positive'Value (Attrs.Get_Value (Category_Attribute))),
                     Is_Check,
                     CodePeer.High,
                     CodePeer.Message_Ranking_Level'Value
@@ -438,6 +438,28 @@ package body CodePeer.Bridge.Inspection_Readers is
                     1,
                     null,
                     Message_Category_Sets.Empty_Set);
+
+               --  Only primary checks need to be displayed.
+
+               if Attrs.Get_Index (Primary_Checks_Attribute) /= -1 then
+                  declare
+                     Checks : GNAT.Strings.String_List_Access :=
+                       GNATCOLL.Utils.Split
+                         (Attrs.Get_Value (Primary_Checks_Attribute),
+                          ' ',
+                          True);
+
+                  begin
+                     for Index in Checks'Range loop
+                        Message_Category :=
+                          Self.Message_Categories
+                            (Natural'Value (Checks (Index).all));
+                        Self.Current_Message.Checks.Insert (Message_Category);
+                     end loop;
+
+                     GNAT.Strings.Free (Checks);
+                  end;
+               end if;
 
                if Self.Messages.Contains (Self.Current_Message.Id) then
                   Self.Kernel.Insert
@@ -498,20 +520,6 @@ package body CodePeer.Bridge.Inspection_Readers is
            (new CodePeer.Annotation'
               (Lifeage,
                new String'(Attrs.Get_Value ("text"))));
-
-      elsif Qname = Orig_Check_Tag
-        and then Self.Current_Message /= null
-      then
-         --  Only primary checks need to be displayed.
-
-         if Attrs.Get_Index (Primary_Attribute) /= -1
-           and then Boolean'Value (Attrs.Get_Value (Primary_Attribute))
-         then
-            Message_Category :=
-              Self.Message_Categories
-                (Natural'Value (Attrs.Get_Value (Category_Attribute)));
-            Self.Current_Message.Checks.Insert (Message_Category);
-         end if;
 
       elsif Qname = Entry_Point_Tag then
          Entry_Point :=
