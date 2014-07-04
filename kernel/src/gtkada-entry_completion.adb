@@ -1534,7 +1534,7 @@ package body Gtkada.Entry_Completion is
       Gtk_New (Label, -"Field width: ");
       Box.Pack_Start (Label, Expand => False);
 
-      Gtk_New (S.Settings_Width, Min => 0.0, Max => 50.0, Step => 1.0);
+      Gtk_New (S.Settings_Width, Min => 0.0, Max => 350.0, Step => 1.0);
       S.Settings_Width.Set_Tooltip_Text
         (-"Width of the search field, in characters");
       S.Settings_Width.Set_Digits (0);
