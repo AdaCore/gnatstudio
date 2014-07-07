@@ -58,6 +58,15 @@ KP-60-N613-005 GPS: building through key shortcut ignores dialog settings
   Workaround: The dialog is always displayed, simply press Return to close it
               and start the build.
 
+KP-60-N611-032 GPS: slow filling of Locations view
+
+  Problem:    GPS take significant time to fill Locations view from file with
+              large number of message, which looks like GPS freeze
+
+  Status:     This was fixed in 6.1 on 2014-06-25
+
+  Workaround: Split file into several and load them one-by-one.
+
 KP-60-N610-032 GB: configuration location on network drive not supported.s
 
   Problem:    On Windows platforms, when the configuration location is located
