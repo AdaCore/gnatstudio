@@ -18,6 +18,7 @@
 --  This package provides classic Category/File/Message Gtk+ model to
 --  be used in location views.
 
+private with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Gtk.Tree_Store;
@@ -30,6 +31,7 @@ private with Glib.Main;
 private with Gdk.RGBA;
 private with Gdk.Pixbuf;
 with Gtk.Tree_Model;
+private with Gtk.Tree_Row_Reference;
 
 package GPS.Location_View.Listener is
 
@@ -122,6 +124,12 @@ package GPS.Location_View.Listener is
 
 private
 
+   package Row_Reference_Vectors is
+     new Ada.Containers.Vectors
+       (Positive,
+        Gtk.Tree_Row_Reference.Gtk_Tree_Row_Reference,
+        Gtk.Tree_Row_Reference."=");
+
    type Classic_Tree_Model_Record is
      new Gtk.Tree_Store.Gtk_Tree_Store_Record with record
       Messages_Order : Messages_Sort_Order := By_Location;
@@ -135,6 +143,11 @@ private
 
       Sort_Column    : Glib.Gint;
       --  Column returned by freeze function to thaw sorting
+
+      Removed_Rows   : Row_Reference_Vectors.Vector;
+      --  List of message rows was requested to be removed. It is used to don't
+      --  emit 'row_removed' signal for individual messages when file row is
+      --  removed too.
    end record;
 
    procedure Initialize (Self : access Classic_Tree_Model_Record'Class);

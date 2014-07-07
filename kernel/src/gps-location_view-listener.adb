@@ -541,10 +541,25 @@ package body GPS.Location_View.Listener is
    is
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      File_Path     : Gtk.Tree_Model.Gtk_Tree_Path;
 
    begin
       Self.Model.Disable_Sorting;
       Self.Find_File (To_String (Category), File, Category_Iter, File_Iter);
+      File_Path := Self.Model.Get_Path (File_Iter);
+
+      for Index in reverse
+        Self.Model.Removed_Rows.First_Index
+          .. Self.Model.Removed_Rows.Last_Index
+      loop
+         if Is_Ancestor
+           (File_Path, Self.Model.Removed_Rows (Index).Get_Path)
+         then
+            Self.Model.Removed_Rows.Delete (Index);
+         end if;
+      end loop;
+
+      Path_Free (File_Path);
       Self.Model.Remove (File_Iter);
    end File_Removed;
 
@@ -1040,13 +1055,22 @@ package body GPS.Location_View.Listener is
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
       Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Path          : Gtk.Tree_Model.Gtk_Tree_Path;
+      Reference     : Gtk.Tree_Row_Reference.Gtk_Tree_Row_Reference;
 
    begin
       Self.Model.Disable_Sorting;
 
       Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
 
-      Self.Model.Remove (Iter);
+      --  Postpone remove of the message
+
+      Path := Self.Model.Get_Path (Iter);
+      Reference :=
+        Gtk.Tree_Row_Reference.Gtk_Tree_Row_Reference_New
+          (Self.Model.To_Interface, Path);
+      Self.Model.Removed_Rows.Append (Reference);
+      Path_Free (Path);
 
       if Message.Level = Primary then
          --  Update message counters
@@ -1067,8 +1091,27 @@ package body GPS.Location_View.Listener is
    -------------
 
    function On_Idle (Self : Classic_Tree_Model) return Boolean is
+      Iter : Gtk_Tree_Iter;
+
    begin
       Self.Idle_Handler := Glib.Main.No_Source_Id;
+
+      --  Remove idividual messages when it was not removed by removing of
+      --  files/categories.
+
+      for Reference of Self.Removed_Rows loop
+         if Reference.Valid then
+            Iter := Self.Get_Iter (Reference.Get_Path);
+            Self.Remove (Iter);
+         end if;
+
+         Gtk.Tree_Row_Reference.Free (Reference);
+      end loop;
+
+      Self.Removed_Rows.Clear;
+
+      --  Enable sorting
+
       Self.Thaw_Sort (Self.Sort_Column);
 
       return False;
