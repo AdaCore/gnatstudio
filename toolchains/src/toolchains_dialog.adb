@@ -270,7 +270,7 @@ package body Toolchains_Dialog is
         (Widget.Tools_Entry,
          -("This path will be used to spawn all actions not related to code" &
            " generation. These actions are (the list is not exclusive)" &
-           " gnatcheck, gnatmetrics, cross-reference generation." &
+           " gnatcheck, gnatmetric, cross-reference generation." &
            ASCII.LF &
            "This path should be different from the compiler path." & ASCII.LF &
            ASCII.LF &

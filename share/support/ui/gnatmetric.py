@@ -1,5 +1,5 @@
 """
-Provides support for gnatmetrics.
+Provides support for gnatmetric.
 """
 
 import re
@@ -8,8 +8,8 @@ from gps_utils import interactive
 
 # Initialize the targets
 xml_base = ("""
-<target-model name="gnatmetrics" category="">
-   <description>Generic launch of gnat metrics</description>
+<target-model name="gnatmetric" category="">
+   <description>Generic launch of gnat metric</description>
    <command-line>
       <arg>%attr(ide'gnat,gnat)</arg>
       <arg>metric</arg>
@@ -164,7 +164,7 @@ xml_base = ("""
    </switches>
 </target-model>
 
-<target model="gnatmetrics" category="_File_" name="GNAT Metrics for file">
+<target model="gnatmetric" category="_File_" name="GNAT Metrics for file">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
@@ -180,7 +180,7 @@ xml_base = ("""
     </command-line>
 </target>
 
-<target model="gnatmetrics" category="_File_" name="GNAT Metrics for project">
+<target model="gnatmetric" category="_File_" name="GNAT Metrics for project">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
@@ -195,7 +195,7 @@ xml_base = ("""
     </command-line>
 </target>
 
-<target model="gnatmetrics" category="_File_" name="GNAT Metrics for """
+<target model="gnatmetric" category="_File_" name="GNAT Metrics for """
             """project and subprojects">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
@@ -214,7 +214,7 @@ xml_base = ("""
 
 <action name="GNAT Metric on current file">
    <description>Launch GNAT metric on the current file</description>
-   <filter language="ada" error="GNAT metrics requires an Ada file" />
+   <filter language="ada" error="gnat metric requires an Ada file" />
    <shell lang="python" output="none"
    >GPS.BuildTarget("GNAT Metrics for file").execute(synchronous=False)</shell>
 </action>
