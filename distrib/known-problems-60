@@ -60,14 +60,15 @@ KP-60-N613-005 GPS: building through key shortcut ignores dialog settings
 
 KP-60-N611-032 GPS: slow filling of Locations view
 
-  Problem:    GPS take significant time to fill Locations view from file with
-              large number of message, which looks like GPS freeze
+  Problem:    GPS takes a significant time to fill the Locations view from
+              a file containing a large number of messages. During this time
+              the GPS interface is frozen.
 
   Status:     This was fixed in 6.1 on 2014-06-25
 
   Workaround: Split file into several and load them one-by-one.
 
-KP-60-N610-032 GB: configuration location on network drive not supported.s
+KP-60-N610-032 GB: configuration location on network drive not supported.
 
   Problem:    On Windows platforms, when the configuration location is located
               on a network drive, GNATbench is able to be installed, but once
