@@ -25,6 +25,26 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N705-002 GB: Cannot run Ada commands on some workspace's resource.
+
+  Problem:    Applied to some resources, GNATbench commands "Build, Clean,
+              etc.. cannot be run. Sometimes errors are reported in the "Error
+              Log" view. Error message is usually "Errors are found in the
+              project file" but UnexpectedException or "Unhandled event loop
+              exception" may also be reported.
+              This occurs when GNATbench commands are applied to resources
+              having multiple links in the workspace.
+
+  Status:     This was fixed in 2.9 on 2014-07-08
+
+  Workaround: - Remove temporary the projects owning the duplicated resources
+                from the workspace. On "Delete Resources" confirmation dialog
+                don't select "Delete project contents on disk option". The
+                project can be later imported again as an existing project
+                (select "General > Existing Projects into Workspace" import
+                source)
+              - Remove resources duplication using multiple workspaces.
+
 KP-60-N620-015 GB: allow GNAT project file change from GNATbench properties
 
   Problem:    Changing the GNAT project file form the GNATbench properties
