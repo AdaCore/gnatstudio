@@ -6263,3 +6263,8 @@
    Memcheck:Cond
    obj:*libpixman*
 }
+{
+   Cairo
+   Memcheck:Cond
+   fun:aa_*
+}
