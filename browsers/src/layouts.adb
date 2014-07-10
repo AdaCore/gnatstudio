@@ -295,7 +295,7 @@ package body Layouts is
       Num_Per_Line    : Natural_Array;
       Vertical_Layout : Boolean)
    is
-      Relative_Position : Natural_Array (0 .. Max_Index (G) - 1);
+      Relative_Position : Natural_Array (0 .. Max_Index (G));
 
       function Barycenter_Weight_P (Vertex : Vertex_Access) return Integer;
       --  Return the weight to use for the vertex Vertex.
@@ -508,7 +508,7 @@ package body Layouts is
       -------------------
 
       procedure Process_Layer (Row : Natural; Top_Bottom : Boolean) is
-         Weights  : array (0 .. Max_Index (G) - 1) of Integer;
+         Weights  : array (0 .. Max_Index (G)) of Integer;
          L        : Vertex_Access;
          Switched : Boolean;
          C1, C2   : Natural;
@@ -778,7 +778,7 @@ package body Layouts is
       Num_Per_Line    : Natural_Array;
       Vertical_Layout : Boolean)
    is
-      Rubber    : array (0 .. Max_Index (G) - 1) of Integer;
+      Rubber    : array (0 .. Max_Index (G)) of Integer;
       Iteration : Natural := 0;
       X1, X2, Min, Dist : Integer;
       C1, C2 : Natural;
@@ -887,8 +887,8 @@ package body Layouts is
    is
       pragma Unreferenced (Force);
 
-      Layers : Natural_Array (0 .. Max_Index (Graph) - 1);
-      X, Y   : Integer_Array (0 .. Max_Index (Graph) - 1);
+      Layers : Natural_Array (0 .. Max_Index (Graph));
+      X, Y   : Integer_Array (0 .. Max_Index (Graph));
       Num_Layers : Natural;
       Iter   : Vertex_Iterator;
    begin
@@ -903,7 +903,7 @@ package body Layouts is
 
       declare
          Lines        : Node_Matrix
-           (1 .. Num_Layers, 0 .. Max_Index (Graph) - 1);
+           (1 .. Num_Layers, 0 .. Max_Index (Graph));
          Num_Per_Line : Natural_Array (1 .. Num_Layers) := (others => 0);
          Iter         : Vertex_Iterator := First (Graph);
          Layer        : Natural;
@@ -950,7 +950,7 @@ package body Layouts is
    is
       Max_X, Max_Y    : Integer := Integer'First;
       Min_X, Min_Y    : Integer := Integer'Last;
-      Layers          : Natural_Array (0 .. Max_Index (Graph) - 1);
+      Layers          : Natural_Array (0 .. Max_Index (Graph));
       Num_Layers      : Natural;
 
       procedure Find_Bounding_Boxes (Sizes : in out Integer_Array);
