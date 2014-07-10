@@ -982,9 +982,7 @@ package body Browsers.Scripts is
            (Nth_Arg (Data, 2, Background_Type'Pos (Background_None)));
          View.View.Grid_Style :=
            Get_Style (Nth_Arg (Data, 3, Allow_Null => True));
-
          View.View.Set_Grid_Size (Gdouble (Nth_Arg (Data, 4, 20.0)));
-
          View.Queue_Draw;
 
       elsif Command = "set_selection_style" then
@@ -1032,6 +1030,7 @@ package body Browsers.Scripts is
             Format : Page_Format;
             Comma  : Integer;
             Filename : Virtual_File;
+            Success  : Boolean;
          begin
             if F = "" or else F = "a4" or else F = "a4_portrait" then
                Format := A4_Portrait;
@@ -1056,11 +1055,12 @@ package body Browsers.Scripts is
             end if;
 
             Filename := Nth_Arg (Data, 2);
-
-            View.View.Export_To_PDF
+            Success := View.View.Export
               (Filename          => Filename.Display_Full_Name,
-               Format            => Format,
+               Page              => Format,
+               Format            => Export_PDF,
                Visible_Area_Only => Nth_Arg (Data, 4, True));
+            Set_Return_Value (Data, Success);
          end;
 
       elsif Command = "scale" then
