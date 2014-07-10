@@ -23,17 +23,27 @@ with Remote;                  use Remote;
 with GPS.Core_Kernels;        use GPS.Core_Kernels;
 with GPS.Scripts.Entities;    use GPS.Scripts.Entities;
 with GPS.Scripts.File_Locations; use GPS.Scripts.File_Locations;
+with GPS.Scripts.Projects;
 with Language_Handlers;       use Language_Handlers;
 with Xref;                    use Xref;
 
-with GNATCOLL.Scripts.Files;  use GNATCOLL.Scripts.Files;
-
 package body GPS.Scripts.Files is
+
+   type File_Properties_Record is new Instance_Property_Record with record
+      File : Virtual_File;
+   end record;
 
    procedure File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the "File" commands
 
+   function Get_File_Class (Data : Callback_Data'Class) return Class_Type;
+
+   procedure Set_Data (Instance : Class_Instance; File : Virtual_File);
+
+   File_Class_Name          : constant String := "File";
+
+   Default_Cst    : aliased constant String := "default_to_root";
    Name_Cst       : aliased constant String := "name";
    Local_Cst      : aliased constant String := "local";
    Server_Cst     : aliased constant String := "remote_server";
@@ -45,6 +55,53 @@ package body GPS.Scripts.Files is
                                 (1 => Local_Cst'Access);
    File_Name_Parameters  : constant Cst_Argument_List :=
                                 (1 => Server_Cst'Access);
+   File_Project_Parameters  : constant Cst_Argument_List :=
+                                (1 => Default_Cst'Access);
+   -----------------
+   -- Create_File --
+   -----------------
+
+   function Create_File
+     (Script : access Scripting_Language_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File) return Class_Instance
+   is
+      Instance : constant Class_Instance := New_Instance
+        (Script, New_Class (Get_Repository (Script), File_Class_Name));
+   begin
+      Set_Data (Instance, File);
+      return Instance;
+   end Create_File;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Instance : Class_Instance) return GNATCOLL.VFS.Virtual_File
+   is
+      Data : Instance_Property;
+   begin
+      if Instance /= No_Class_Instance then
+         Data := Get_Data (Instance, File_Class_Name);
+      end if;
+
+      if Data = null then
+         return GNATCOLL.VFS.No_File;
+      else
+         return File_Properties_Record (Data.all).File;
+      end if;
+   end Get_Data;
+
+   --------------------
+   -- Get_File_Class --
+   --------------------
+
+   function Get_File_Class
+     (Data : Callback_Data'Class)
+      return Class_Type is
+   begin
+      return New_Class (Data.Get_Repository, File_Class_Name);
+   end Get_File_Class;
 
    --------------------------
    -- File_Command_Handler --
@@ -55,6 +112,7 @@ package body GPS.Scripts.Files is
    is
       Kernel  : constant Core_Kernel := Get_Kernel (Data);
       Info    : Virtual_File;
+      Project : Project_Type;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
@@ -128,11 +186,44 @@ package body GPS.Scripts.Files is
             end if;
          end;
 
+      elsif Command = "directory" then
+         Info := Nth_Arg (Data, 1);
+         Set_Return_Value (Data, Dir_Name (Info));
+
       elsif Command = "language" then
          Info := Nth_Arg (Data, 1);
          Set_Return_Value
            (Data, Get_Language_From_File
               (Kernel.Lang_Handler, Info));
+
+      elsif Command = "other_file" then
+         Info  := Nth_Arg (Data, 1);
+         Set_Return_Value
+           (Data,
+            Create_File (Get_Script (Data),
+                         Kernel.Registry.Tree.Other_File (Info)));
+
+      elsif Command = "project" then
+         Name_Parameters (Data, File_Project_Parameters);
+         Info := Nth_Arg (Data, 1);
+
+         --  Return the first possible project, we have nothing else to base
+         --  our guess on.
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (Kernel.Registry.Tree.Info_Set (Info).First_Element);
+         begin
+            Project := F_Info.Project;
+         end;
+
+         if Project = No_Project and then Nth_Arg (Data, 2, True) then
+            Project := Kernel.Registry.Tree.Root_Project;
+         end if;
+
+         Set_Return_Value
+           (Data,
+            GPS.Scripts.Projects.Create_Project (Get_Script (Data), Project));
 
       elsif Command = "references" then
          Info := Nth_Arg (Data, 1);
@@ -218,8 +309,22 @@ package body GPS.Scripts.Files is
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
       return Class_Type is
    begin
-      return Get_File_Class (Kernel.Scripts);
+      return New_Class (Kernel.Scripts, File_Class_Name);
    end Get_File_Class;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Callback_Data'Class; N : Positive)
+      return GNATCOLL.VFS.Virtual_File
+   is
+      Class : constant Class_Type := Get_File_Class (Data);
+      Inst  : constant Class_Instance := Nth_Arg (Data, N, Class);
+   begin
+      return Get_Data (Inst);
+   end Nth_Arg;
 
    -----------------------
    -- Register_Commands --
@@ -229,23 +334,34 @@ package body GPS.Scripts.Files is
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
    is
    begin
-      GNATCOLL.Scripts.Files.Register_Commands
-        (Kernel.Scripts, Kernel.Registry.Tree);
-
-      --  Add support of Cygwin path not available in GNATCOLL
-      Override_Command
+      Register_Command
         (Kernel.Scripts, Constructor_Method,
+         Minimum_Args => 1,
+         Maximum_Args => 2,
          Class        => Get_File_Class (Kernel),
          Handler      => File_Command_Handler'Access);
-
-      --  Add support of remote server not available in GNATCOLL
-      Override_Command
-        (Kernel.Scripts, "name",
-         Class        => Get_File_Class (Kernel),
-         Handler      => File_Command_Handler'Access);
-
       Register_Command
         (Kernel.Scripts, "language",
+         Class        => Get_File_Class (Kernel),
+         Handler      => File_Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "name",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class        => Get_File_Class (Kernel),
+         Handler      => File_Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "directory",
+         Class        => Get_File_Class (Kernel),
+         Handler      => File_Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "other_file",
+         Class        => Get_File_Class (Kernel),
+         Handler      => File_Command_Handler'Access);
+      Register_Command
+        (Kernel.Scripts, "project",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => File_Command_Handler'Access);
       Register_Command
@@ -261,5 +377,34 @@ package body GPS.Scripts.Files is
          Params  => (2 => Param ("kind", Optional => True),
                      3 => Param ("sortby", Optional => True)));
    end Register_Commands;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data (Instance : Class_Instance; File : Virtual_File) is
+   begin
+      if not Is_Subclass (Instance, File_Class_Name) then
+         raise Invalid_Data;
+      end if;
+
+      Set_Data
+        (Instance, File_Class_Name,
+         File_Properties_Record'(File => File));
+   end Set_Data;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : in out Callback_Data'Class;
+      N    : Positive;
+      File : GNATCOLL.VFS.Virtual_File)
+   is
+      Inst  : constant Class_Instance := Create_File (Get_Script (Data), File);
+   begin
+      Set_Nth_Arg (Data, N, Inst);
+   end Set_Nth_Arg;
 
 end GPS.Scripts.Files;
