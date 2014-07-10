@@ -1,38 +1,38 @@
+"""
+   The two classes here:
+   class Promise
+     - provides thenable promises for any method, process and procedures
+   class ProcessWrapper
+     - an example as well as a util that controls GPS.Process with promises
+"""
+
 import GPS
 import re
 
 
 class Promise:
     """
-       A promise cam be registered with a resolve and a reject handler
-       provided by user.
-       A promise is thenable: execute either with success or fail handler and
-       then return a new promise.
+       A promise cam be registered with a resolve function which will be called
+       whenever the promise is answered. User define and provide the function.
+       A promise is thenable: it can execute the resolve function and return a
+       new promise.
     """
-    resolve = None
-    reject = None
+    # the function that is called to fullfill the promise
+    answer = None
 
-    def then(self, resolve=None, reject=None):
+    def then(self, answer=None):
         """
            Register user defined handler
         """
-        self.resolve = resolve
-        self.reject = reject
+        self.answer = answer
         return Promise()
 
-    def success(self):
+    def resolve(self, result=None):
         """
-           If there is a success handler, call it
+           If there is a handler call it, parameterized by the result
         """
-        if self.resolve is not None:
-            self.resolve()
-
-    def fail(self):
-        """
-           If there is a fail handler, call it
-        """
-        if self.reject is not None:
-            self.reject()
+        if self.answer is not None:
+            self.answer(result)
 
 
 class ProcessWrapper():
@@ -83,11 +83,11 @@ class ProcessWrapper():
         if self._current_pattern is not None:
             p = re.search(self._current_pattern, self._output)
             # if the pattern is found, update the output to remaining and
-            # answer the promise with success
+            # answer the promise with True->found it
             if p is not None:
                 self.matched = True
                 self._output = self._output[p.span()[1]::]
-                self._current_promise.success()
+                self._current_promise.resolve(self.matched)
 
     def __on_exit(self, process, status, remaining_output):
         """
@@ -97,17 +97,12 @@ class ProcessWrapper():
         # if there is, that means the pattern is never found,
         # so answer it with fail
         if self._current_promise is not None:
-            self._current_promise.fail()
+            self._current_promise.resolve(False)
 
         # check if I had made a promise to finish the process
         # if there is, answer that promise with whatever the result is
         if self._final_promise is not None:
-            if status == 0:
-                # succeed
-                self._final_promise.success()
-            else:
-                # failed
-                self._final_promise.fail()
+            self._final_promise.resolve(status)
 
         # mark my process as finished
         self.finished = True
@@ -117,11 +112,13 @@ class ProcessWrapper():
            Called by user. Make a promise to them that:
            I'll let you know when the pattern is matched/never matches
         """
+
         # keep the pattern info and return my promise
-        print "call wait on match with"+pattern, timeout
         self._current_pattern = pattern
         self._current_promise = Promise()
         self.matched = False
+
+        # if user set up a timeout, set up: close output check after timeout
         if timeout > 0:
             x = GPS.Timeout(timeout, self.__on_timeout)
         return self._current_promise
@@ -144,8 +141,9 @@ class ProcessWrapper():
            Called by GPS when time for a match desire is out.
         """
         if self._current_promise is not None:
+            # if the pattern is not found, answer the promise with False
             if not self.matched:
-                self._current_promise.fail()
+                self._current_promise.resolve(False)
         self._current_pattern = None
         self._current_promise = None
         timeout.remove()
