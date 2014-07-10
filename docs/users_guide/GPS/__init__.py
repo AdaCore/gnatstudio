@@ -9659,6 +9659,9 @@ class Timeout(object):
        import GPS;
 
        def callback(timeout):
+          if not hasattr(timeout, "occur"):
+              return True
+
           timeout.occur += 1
           print "A timeout occur=" + `timeout.occur`
           if timeout.occur == 3:
