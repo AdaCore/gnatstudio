@@ -167,6 +167,7 @@ package body Commands.Builder.Scripts is
             Dir         : Virtual_File := No_File;
             Quiet       : constant Boolean := Nth_Arg (Data, 9, False);
 
+            On_Exit     : constant Subprogram_Type := Nth_Arg (Data, 10, null);
          begin
             Info := Get_Data
               (Nth_Arg (Data, 3, Get_File_Class (Kernel), True));
@@ -215,7 +216,8 @@ package body Commands.Builder.Scripts is
                            Dialog       => Mode,
                            Main         => Create (+Main),
                            Background   => False,
-                           Directory    => Dir);
+                           Directory    => Dir,
+                           On_Exit      => On_Exit);
             Free (Extra_Args);
          end;
 
@@ -356,7 +358,8 @@ package body Commands.Builder.Scripts is
                     Param ("build_mode",  Optional => True),   --  6
                     Param ("synchronous", Optional => True),   --  7
                     Param ("directory",   Optional => True),   --  8
-                    Param ("quiet",       Optional => True)),  --  9
+                    Param ("quiet",       Optional => True),   --  9
+                    Param ("on_exit",     Optional => True)),  --  10
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 

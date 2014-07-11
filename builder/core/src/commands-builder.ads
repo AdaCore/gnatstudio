@@ -21,6 +21,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Remote;                    use Remote;
 with Build_Command_Utils;       use Build_Command_Utils;
@@ -41,7 +42,8 @@ package Commands.Builder is
       Dialog      : Dialog_Mode;
       Main        : Virtual_File;
       Background  : Boolean;
-      Directory   : Virtual_File := No_File);
+      Directory   : Virtual_File := No_File;
+      On_Exit     : Subprogram_Type := null);
    --  Launch a build of target named Target_Name
    --  If Mode_Name is not the empty string, then the mode Mode_Name will be
    --  used.
@@ -58,6 +60,7 @@ package Commands.Builder is
    --  If Directory is not empty, indicates which directory the target should
    --  be run under. Default is the project's directory.
    --  If Background, run the compile in the background.
+   --  On_Exit is the subprogram which should be called upon exit.
 
    procedure Launch_Build_Command
      (Builder          : Builder_Context;

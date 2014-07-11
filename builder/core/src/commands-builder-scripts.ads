@@ -19,8 +19,6 @@
 --  facility module. GUI independent commands only.
 --  See Builder_Facility_Module for a global description.
 
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-
 with GPS.Core_Kernels;           use GPS.Core_Kernels;
 
 package Commands.Builder.Scripts is

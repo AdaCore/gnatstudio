@@ -49,7 +49,8 @@ package body Commands.Builder is
       Dialog      : Dialog_Mode;
       Main        : Virtual_File;
       Background  : Boolean;
-      Directory   : Virtual_File := No_File)
+      Directory   : Virtual_File := No_File;
+      On_Exit     : Subprogram_Type := null)
    is
       T              : Target_Access;
       All_Extra_Args : Argument_List_Access;
@@ -77,6 +78,8 @@ package body Commands.Builder is
          Server         : Server_Type;
          Background_Env : Extending_Environment;
          Category_Name  : Unbounded_String;
+
+         The_Exit       : Subprogram_Type;
 
       begin
          Server := Get_Server (Builder.Registry, Mode, T);
@@ -106,6 +109,7 @@ package body Commands.Builder is
          if Background then
             Category_Name :=
               To_Unbounded_String (Builder.Current_Background_Build_Id);
+            The_Exit := null;
          else
             Category_Name := Get_Messages_Category (T);
 
@@ -116,6 +120,8 @@ package body Commands.Builder is
             if Main /= No_File then
                Set_Last_Main (Builder, Target_Name, Main);
             end if;
+
+            The_Exit := On_Exit;
          end if;
 
          --  Configure output parser fabrics
@@ -135,7 +141,8 @@ package body Commands.Builder is
                                                 others => <>),
                                  Extra_Args => All_Extra_Args,
                                  Dialog     => Dialog,
-                                 Launch     => True),
+                                 Launch     => True,
+                                 On_Exit    => The_Exit),
             Server           => Server,
             Synchronous      => Synchronous);
       end Launch_For_Mode;

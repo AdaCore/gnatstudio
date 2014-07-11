@@ -820,7 +820,8 @@ class BuildTarget(object):
         pass  # implemented in Ada
 
     def execute(self, main_name='', file='', force=False, extra_args='',
-                build_mode='', synchronous=True, directory='', quiet=False):
+                build_mode='', synchronous=True, directory='', quiet=False,
+                on_exit=None):
         """
         Launch the build target.
 
@@ -849,6 +850,14 @@ class BuildTarget(object):
         :param string directory: A String
 
         :param bool quiet: A Boolean
+
+        :param on_exit: A subprogram which will be called when the build target
+           finishes executing. This subprogram takes as parameter an integer,
+           representing the exit code of the command. For instance:
+
+           GPS.BuildTarget("Custom...").execute(
+               synchronous=True,
+               on_exit=lambda status: GPS.MDI.dialog("status is %s" % status))
         """
         pass  # implemented in Ada
 

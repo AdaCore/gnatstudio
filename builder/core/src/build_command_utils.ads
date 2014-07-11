@@ -31,6 +31,7 @@ with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
+with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 
 with GPS.Core_Kernels;                 use GPS.Core_Kernels;
 with GPS.Messages_Windows;             use GPS.Messages_Windows;
@@ -362,6 +363,10 @@ package Build_Command_Utils is
       Extra_Args  : Argument_List_Access;
       Dialog      : Dialog_Mode;
       Launch      : Boolean;
+
+      On_Exit     : Subprogram_Type := null;
+      --  The scripting subprogram which should be called at the end of the
+      --  build.
    end record;
 
    function Get_Last_Build

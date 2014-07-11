@@ -24,6 +24,7 @@ with Remote;                           use Remote;
 with Build_Configurations.Gtkada;      use Build_Configurations.Gtkada;
 with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
+with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 
 package body Build_Command_Manager.End_Of_Build is
 
@@ -225,6 +226,20 @@ package body Build_Command_Manager.End_Of_Build is
       Kernel : Kernel_Handle;
    begin
       Tools_Output_Parser (Self.all).End_Of_Stream (Status, Command);
+
+      --  Run the On_Exit program, if any
+
+      if Self.Build.On_Exit /= null then
+         declare
+            Script  : constant Scripting_Language :=
+              Get_Script (Self.Build.On_Exit.all);
+            Args    : Callback_Data'Class := Create (Script, 1);
+            Ignored : Boolean;
+         begin
+            Set_Nth_Arg (Args, 1, Status);
+            Ignored := Execute (Self.Build.On_Exit, Args);
+         end;
+      end if;
 
       if Is_Run (Self.Build.Target) then
          return;
