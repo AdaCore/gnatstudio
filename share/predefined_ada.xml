@@ -1462,6 +1462,16 @@ PLEASE ADD DOCUMENTATION HERE???
       </DOC>
    </ATTRIBUTE>
 
+   <ATTRIBUTE id = "0" name = "Default_Scalar_Storage_Order" origin = "GNAT RM" category = "unknown">
+      <DOC>
+`Standard'Default_Scalar_Storage_Order' (`Standard' is the only
+permissible prefix), provides the current value of the default scalar
+storage order (as specified using pragma
+`Default_Scalar_Storage_Order', or equal to `Default_Bit_Order' if
+unspecified) as a `System.Bit_Order' value. This is a static attribute.
+      </DOC>
+   </ATTRIBUTE>
+
    <ATTRIBUTE id = "50/1" name = "Definite" origin = "Ada RM" category = "variable">
       <DOC>
 For a prefix S that denotes a formal indefinite subtype:
