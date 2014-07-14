@@ -29,6 +29,7 @@ with GNAT.Regpat;                     use GNAT.Regpat;
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.Scripts.Projects;       use GNATCOLL.Scripts.Projects;
 
 with GNATdoc;                         use GNATdoc;
 
@@ -37,7 +38,6 @@ with XML_Parsers;
 
 with GPS.Customizable_Modules;        use GPS.Customizable_Modules;
 with GPS.Scripts;                     use GPS.Scripts;
-with GPS.Scripts.Projects;            use GPS.Scripts.Projects;
 
 package body GPS.CLI_Scripts is
 
@@ -429,13 +429,13 @@ package body GPS.CLI_Scripts is
         (Kernel.Scripts, "get_attribute_as_string",
          Minimum_Args => 1,
          Maximum_Args => 3,
-         Class        => Get_Project_Class (Kernel),
+         Class        => Get_Project_Class (Kernel.Scripts),
          Handler      => Project_Command_Handler'Access);
       Register_Command
         (Kernel.Scripts, "get_attribute_as_list",
          Minimum_Args => 1,
          Maximum_Args => 3,
-         Class        => Get_Project_Class (Kernel),
+         Class        => Get_Project_Class (Kernel.Scripts),
          Handler      => Project_Command_Handler'Access);
 
       Register_Command

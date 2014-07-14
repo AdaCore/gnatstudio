@@ -1449,7 +1449,9 @@ package body GPS.Kernel.Scripts is
 
       GPS.Scripts.File_Locations.Register_Commands (Kernel);
 
-      GPS.Scripts.Projects.Register_Commands (Kernel);
+      GNATCOLL.Scripts.Projects.Register_Commands
+        (Kernel.Scripts, Kernel.Registry.Tree);
+
       Register_Command
         (Kernel, "recompute",
          Class         => Get_Project_Class (Kernel),
@@ -1576,6 +1578,17 @@ package body GPS.Kernel.Scripts is
       GPS.Scripts.Commands.Register_Commands (Kernel);
       GPS.Kernel.Command_API.Register_Commands (Kernel);
    end Register_Default_Script_Commands;
+
+   -----------------------
+   -- Get_Project_Class --
+   -----------------------
+
+   function Get_Project_Class
+     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
+      return Class_Type is
+   begin
+      return GNATCOLL.Scripts.Projects.Get_Project_Class (Kernel.Scripts);
+   end Get_Project_Class;
 
    -----------------
    -- Get_Scripts --

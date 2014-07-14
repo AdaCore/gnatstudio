@@ -24,7 +24,6 @@ with GPS.Python_Core;
 with GPS.Scripts.Entities;
 with GPS.Scripts.File_Locations;
 with GPS.Scripts.Files;
-with GPS.Scripts.Projects;
 with GPS.Scripts.Commands;
 with GPS.Tools_Output;                         use GPS.Tools_Output;
 
@@ -42,6 +41,7 @@ with Language.Cpp;
 with GNAT.IO;                                  use GNAT.IO;
 with Ada.Strings.Fixed;                        use Ada.Strings.Fixed;
 with GNATCOLL.Scripts;                         use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Projects;
 with GNATCOLL.VFS_Utils;
 with GNATCOLL.Utils;
 with GNAT.OS_Lib;
@@ -66,7 +66,10 @@ package body GPS.CLI_Utils is
       GPS.Scripts.Entities.Register_Commands (Kernel);
       GPS.Scripts.File_Locations.Register_Commands (Kernel);
       GPS.Scripts.Files.Register_Commands (Kernel);
-      GPS.Scripts.Projects.Register_Commands (Kernel);
+
+      GNATCOLL.Scripts.Projects.Register_Commands
+        (Kernel.Scripts, Kernel.Registry.Tree);
+
       GPS.Scripts.Commands.Register_Commands (Kernel);
       Commands.Builder.Scripts.Register_Commands (Kernel);
       GPS.CLI_Scripts.Register_Commands (Kernel);

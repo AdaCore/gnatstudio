@@ -21,10 +21,10 @@
 with Basic_Types;
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Projects;
 with GPS.Scripts.Entities;
 with GPS.Scripts.Files;
 with GPS.Scripts.File_Locations;
-with GPS.Scripts.Projects;
 with Xref;
 
 package GPS.Kernel.Scripts is
@@ -195,19 +195,20 @@ package GPS.Kernel.Scripts is
 
    function Get_Project_Class
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
-      return Class_Type renames GPS.Scripts.Projects.Get_Project_Class;
+      return Class_Type;
    --  Return the class to use for projects. This encapsulates a Project_Type
 
    function Get_Data
      (Data : Callback_Data'Class; N : Positive)
       return GNATCOLL.Projects.Project_Type
-      renames GPS.Scripts.Projects.Get_Data;
+      renames GNATCOLL.Scripts.Projects.Get_Data;
    --  Retrieve some project information in Instance
 
    function Create_Project
      (Script  : access Scripting_Language_Record'Class;
       Project : GNATCOLL.Projects.Project_Type)
-      return Class_Instance renames GPS.Scripts.Projects.Create_Project;
+      return Class_Instance
+        renames GNATCOLL.Scripts.Projects.Create_Project;
    --  Return a new project
 
    -------------------

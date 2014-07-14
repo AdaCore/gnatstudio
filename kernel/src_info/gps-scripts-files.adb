@@ -23,7 +23,6 @@ with Remote;                  use Remote;
 with GPS.Core_Kernels;        use GPS.Core_Kernels;
 with GPS.Scripts.Entities;    use GPS.Scripts.Entities;
 with GPS.Scripts.File_Locations; use GPS.Scripts.File_Locations;
-with GPS.Scripts.Projects;
 with Language_Handlers;       use Language_Handlers;
 with Xref;                    use Xref;
 
@@ -35,7 +34,6 @@ package body GPS.Scripts.Files is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the "File" commands
 
-   Default_Cst    : aliased constant String := "default_to_root";
    Name_Cst       : aliased constant String := "name";
    Local_Cst      : aliased constant String := "local";
    Server_Cst     : aliased constant String := "remote_server";
@@ -47,8 +45,6 @@ package body GPS.Scripts.Files is
                                 (1 => Local_Cst'Access);
    File_Name_Parameters  : constant Cst_Argument_List :=
                                 (1 => Server_Cst'Access);
-   File_Project_Parameters  : constant Cst_Argument_List :=
-                                (1 => Default_Cst'Access);
 
    --------------------------
    -- File_Command_Handler --
@@ -59,7 +55,6 @@ package body GPS.Scripts.Files is
    is
       Kernel  : constant Core_Kernel := Get_Kernel (Data);
       Info    : Virtual_File;
-      Project : Project_Type;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
@@ -138,28 +133,6 @@ package body GPS.Scripts.Files is
          Set_Return_Value
            (Data, Get_Language_From_File
               (Kernel.Lang_Handler, Info));
-
-      elsif Command = "project" then
-         Name_Parameters (Data, File_Project_Parameters);
-         Info := Nth_Arg (Data, 1);
-
-         --  Return the first possible project, we have nothing else to base
-         --  our guess on.
-         declare
-            F_Info : constant File_Info'Class :=
-              File_Info'Class
-                (Kernel.Registry.Tree.Info_Set (Info).First_Element);
-         begin
-            Project := F_Info.Project;
-         end;
-
-         if Project = No_Project and then Nth_Arg (Data, 2, True) then
-            Project := Kernel.Registry.Tree.Root_Project;
-         end if;
-
-         Set_Return_Value
-           (Data,
-            GPS.Scripts.Projects.Create_Project (Get_Script (Data), Project));
 
       elsif Command = "references" then
          Info := Nth_Arg (Data, 1);
@@ -256,8 +229,7 @@ package body GPS.Scripts.Files is
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
    is
    begin
-      GNATCOLL.Scripts.Files.Register_Commands
-        (Kernel.Scripts, Kernel.Registry.Tree);
+      GNATCOLL.Scripts.Files.Register_Commands (Kernel.Scripts);
 
       --  Add support of Cygwin path not available in GNATCOLL
       Override_Command
@@ -273,12 +245,6 @@ package body GPS.Scripts.Files is
 
       Register_Command
         (Kernel.Scripts, "language",
-         Class        => Get_File_Class (Kernel),
-         Handler      => File_Command_Handler'Access);
-      Register_Command
-        (Kernel.Scripts, "project",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => File_Command_Handler'Access);
       Register_Command
