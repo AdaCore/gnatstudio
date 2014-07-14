@@ -41,9 +41,10 @@ class ProcessWrapper():
        It make a promise (yield object of the promise class) when user:
            1 want to wait for match in output
            2 want to wait until process finish
-       and the corresponding promises are answered by
-           either success or fail, which are user defined handlers(functions)
-       when the pattern matches, or when the process is terminated by GPS.
+       and the corresponding promises are answered with user defined
+       handler (functions) when:
+           1 the pattern matches/timeout
+           2 the process is terminated by GPS.
     """
     def __init__(self, cmdargs):
         """
@@ -147,12 +148,31 @@ class ProcessWrapper():
 
 
 class DebuggerWrapper():
+    """
+       DebuggerWrapper is a debbuger (eseentially a process in GPS) manager
+       It make a promise (yield object of the promise class) when user:
+           want to send a command to debugger
+
+       and the corresponding promises are answered after
+           1 the debugger is not busy, execute the command required
+           2 timeout
+    """
+
+    # static variable for interval that the manager checks whether
+    # the debugger is busy, in milliseconds
+    __query_interval = 200
 
     def __init__(self, f):
+        """
+           Initialize a manager, begin a debugger on the given file
+           with no timers, no promises, no command
+        """
         self.__debugger = GPS.Debugger.spawn(f)
         self.__this_promise = None
         self.__next_cmd = None
-        self.__output = ""
+        self.__output = None
+        self.__timer = None
+        self.__deadline = None
 
     def __is_busy(self, timeout):
         """
@@ -160,37 +180,51 @@ class DebuggerWrapper():
         """
         # if the debugger is not busy
         if not self.__debugger.is_busy():
-            timeout.remove()
-            # if there's cmd to run, send it
+
+            # and if there's cmd to run, send it
+            # remove the timer and deadline
+            # and answer the promise with the output
             if self.__next_cmd is not None:
                 self.__output = self.__debugger.send(self.__next_cmd)
-                print "output will be: " + self.__output
                 self.__next_cmd = None
-            # if there's unanswered promise, answer it
-            if self.__this_promise is not None:
+                self.__remove_timers()
                 self.__this_promise.resolve(self.__output)
-                self.__this_promise = None
 
     def __on_cmd_timeout(self, timeout):
-        print self.__next_cmd, "is timeout"
         """
-           Called by GPS at each interval
+           Called by GPS at when the deadline defined by user is reached
         """
-        # check if promise unanswered
-        if self.__this_promise is not None:
-            self.__this_promise.resolve()
-        self.__this_promise = None
-        self.__next_cmd = None
-        timeout.remove()
+        # remove all timers
+        self.__remove_timers()
 
-    def wait_and_send(self, cmd, timeout=0, interval=500):
+        # answer the promise with the output
+        if self.__this_promise is not None:
+            self.__next_cmd = None
+            self.__this_promise.resolve(self.__output)
+
+    def __remove_timers(self):
+        """
+           Called in timers to remove both: prepare for new timer registration
+        """
+        if self.__deadline is not None:
+            self.__deadline.remove()
+            self.__deadline = None
+
+        if self.__timer is not None:
+            self.__timer.remove()
+            self.__timer = None
+
+    def wait_and_send(self, cmd, timeout=0):
+        """
+           Called by user on request for command within deadline (time)
+        """
+        self.__remove_timers()
         self.__this_promise = Promise()
         self.__next_cmd = cmd
         self.__output = None
 
-        GPS.Timeout(interval, self.__is_busy)
-
+        self.__timer = GPS.Timeout(self.__query_interval, self.__is_busy)
         if timeout > 0:
-            GPS.Timeout(timeout, self.__on_cmd_timeout)
+            self.__deadline = GPS.Timeout(timeout, self.__on_cmd_timeout)
 
         return self.__this_promise
