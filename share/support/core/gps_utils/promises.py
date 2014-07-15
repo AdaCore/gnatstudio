@@ -1,9 +1,13 @@
 """
-   The two classes here:
+   The 3 classes here:
    class Promise
      - provides thenable promises for any method, process and procedures
+
    class ProcessWrapper
-     - an example as well as a util that controls GPS.Process with promises
+         DebuggerWrapper
+         TargetWrapper
+     - examples as well as utils that controls process
+       (or process-like execution) with promises
 """
 
 import GPS
@@ -46,7 +50,7 @@ class ProcessWrapper():
            1 the pattern matches/timeout
            2 the process is terminated by GPS.
     """
-    def __init__(self, cmdargs):
+    def __init__(self, cmdargs=[]):
         """
            Initialize and run a process with no promises,
            no user-defined pattern to match,
@@ -146,6 +150,9 @@ class ProcessWrapper():
         self.__current_promise = None
         timeout.remove()
 
+    def get(self):
+        return self.__process
+
 
 class DebuggerWrapper():
     """
@@ -185,10 +192,13 @@ class DebuggerWrapper():
             # remove the timer and deadline
             # and answer the promise with the output
             if self.__next_cmd is not None:
-                self.__output = self.__debugger.send(self.__next_cmd)
-                self.__next_cmd = None
-                self.__remove_timers()
-                self.__this_promise.resolve(self.__output)
+                if self.__next_cmd is not "":
+                    self.__output = self.__debugger.send(self.__next_cmd)
+                    self.__next_cmd = None
+                    self.__remove_timers()
+                    self.__this_promise.resolve(self.__output)
+                else:
+                    self.__this_promise.resolve(True)
 
     def __on_cmd_timeout(self, timeout):
         """
@@ -214,7 +224,7 @@ class DebuggerWrapper():
             self.__timer.remove()
             self.__timer = None
 
-    def wait_and_send(self, cmd, timeout=0):
+    def wait_and_send(self, cmd="", timeout=0, block=False):
         """
            Called by user on request for command within deadline (time)
         """
@@ -224,7 +234,41 @@ class DebuggerWrapper():
         self.__output = None
 
         self.__timer = GPS.Timeout(self.__query_interval, self.__is_busy)
-        if timeout > 0:
-            self.__deadline = GPS.Timeout(timeout, self.__on_cmd_timeout)
+        if not block:
+            if timeout > 0:
+                self.__deadline = GPS.Timeout(timeout, self.__on_cmd_timeout)
 
         return self.__this_promise
+
+    def get(self):
+        return self.__debugger
+
+
+class TargetWrapper():
+    """
+       TargetWrapper is a manager that build target and return
+       a thenable promise before execute the target
+       The promise will be answered with the exit status when
+       the target finishes
+    """
+    def __init__(self, target_name):
+        """
+           Build the target and initialize promise to None
+        """
+        self.__target = GPS.BuildTarget(target_name)
+        self.__promise = None
+
+    def wait_on_execute(self):
+        """
+           Called by the user. Will execute the target and return a promise.
+        """
+        self.__promise = Promise()
+        self.__target.execute(synchronous=False, on_exit=self.__on_exit)
+        return self.__promise
+
+    def __on_exit(self, status):
+        """
+           Called by GPS when target finishes executing.
+           Will answer the promise with exiting status.
+        """
+        self.__promise.resolve(status)
