@@ -28,7 +28,8 @@ with GPS.Process_Launchers;
 with GPS.Editors;
 use GPS.Editors;
 
-with GNATCOLL.Scripts;
+with GNATCOLL.Projects;
+with GNATCOLL.Scripts.Projects;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
 with Toolchains;
@@ -37,7 +38,8 @@ with Ada.Finalization; use Ada.Finalization;
 
 package GPS.Core_Kernels is
 
-   type Core_Kernel_Record is abstract tagged private;
+   type Core_Kernel_Record is abstract
+     new GNATCOLL.Scripts.Projects.Project_Tree_Retriever with private;
 
    type Core_Kernel is access all Core_Kernel_Record'Class;
 
@@ -65,6 +67,10 @@ package GPS.Core_Kernels is
      (Kernel : access Core_Kernel_Record'Class)
       return Projects.Project_Registry_Access;
    --  The project registry
+
+   overriding function Get_Project_Tree
+     (Self : Core_Kernel_Record)
+      return GNATCOLL.Projects.Project_Tree_Access;
 
    function Databases
      (Kernel : access Core_Kernel_Record'Class)
@@ -181,7 +187,9 @@ private
       Equivalent_Keys => Ada.Tags."=",
       "="             => Abstract_Module_List."=");
 
-   type Core_Kernel_Record is abstract tagged record
+   type Core_Kernel_Record is abstract
+     new GNATCOLL.Scripts.Projects.Project_Tree_Retriever with
+   record
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access;
       --  The symbol used to store common strings read from sources
 

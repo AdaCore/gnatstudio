@@ -1449,8 +1449,8 @@ package body GPS.Kernel.Scripts is
 
       GPS.Scripts.File_Locations.Register_Commands (Kernel);
 
-      GNATCOLL.Scripts.Projects.Register_Commands
-        (Kernel.Scripts, Kernel.Registry.Tree);
+      GNATCOLL.Scripts.Projects.Register_Commands (Kernel.Scripts);
+      GNATCOLL.Scripts.Projects.Set_Tree_Retrieved (Kernel);
 
       Register_Command
         (Kernel, "recompute",

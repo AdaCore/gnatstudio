@@ -106,6 +106,23 @@ package body GPS.Core_Kernels is
       return "default";
    end Get_Build_Mode;
 
+   ----------------------
+   -- Get_Project_Tree --
+   ----------------------
+
+   overriding function Get_Project_Tree
+     (Self : Core_Kernel_Record)
+      return GNATCOLL.Projects.Project_Tree_Access
+   is
+      use type Projects.Project_Registry_Access;
+   begin
+      if Self.Registry = null then
+         return null;
+      else
+         return Self.Registry.Tree;
+      end if;
+   end Get_Project_Tree;
+
    ----------
    -- Hash --
    ----------

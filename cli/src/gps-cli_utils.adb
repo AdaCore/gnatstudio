@@ -67,8 +67,8 @@ package body GPS.CLI_Utils is
       GPS.Scripts.File_Locations.Register_Commands (Kernel);
       GPS.Scripts.Files.Register_Commands (Kernel);
 
-      GNATCOLL.Scripts.Projects.Register_Commands
-        (Kernel.Scripts, Kernel.Registry.Tree);
+      GNATCOLL.Scripts.Projects.Register_Commands (Kernel.Scripts);
+      GNATCOLL.Scripts.Projects.Set_Tree_Retrieved (Kernel);
 
       GPS.Scripts.Commands.Register_Commands (Kernel);
       Commands.Builder.Scripts.Register_Commands (Kernel);
