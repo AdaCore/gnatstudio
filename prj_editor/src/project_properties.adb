@@ -1507,18 +1507,18 @@ package body Project_Properties is
          Maximum_Args => 0,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_attribute_as_string",
-         Minimum_Args => 1,
-         Maximum_Args => 3,
+
+      --  Redefine command to take into account attribute descriptions from
+      --  projects.xml, which also provides the default values for attributes
+      Override_Command
+        (Kernel.Scripts, "get_attribute_as_string",
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_attribute_as_list",
-         Minimum_Args => 1,
-         Maximum_Args => 3,
+      Override_Command
+        (Kernel.Scripts, "get_attribute_as_list",
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
+
       Register_Command
         (Kernel, "get_tool_switches_as_list",
          Minimum_Args => 1,

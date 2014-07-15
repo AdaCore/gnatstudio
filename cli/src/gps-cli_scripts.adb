@@ -29,7 +29,6 @@ with GNAT.Regpat;                     use GNAT.Regpat;
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
-with GNATCOLL.Scripts.Projects;       use GNATCOLL.Scripts.Projects;
 
 with GNATdoc;                         use GNATdoc;
 
@@ -48,18 +47,11 @@ package body GPS.CLI_Scripts is
    Report_Errors_Cst     : aliased constant String := "report_errors";
    Tree_Output_Cst       : aliased constant String := "tree_output";
    With_Comments_Cst     : aliased constant String := "with_comments";
-   Attribute_Cst         : aliased constant String := "attribute";
-   Package_Cst           : aliased constant String := "package";
-   Index_Cst             : aliased constant String := "index";
    Process_Parameters    : constant Cst_Argument_List :=
      (1 => Skip_C_Files_Cst'Access,
       2 => Report_Errors_Cst'Access,
       3 => Tree_Output_Cst'Access,
       4 => With_Comments_Cst'Access);
-   Get_Attributes_Parameters : constant Cst_Argument_List :=
-     (1 => Attribute_Cst'Unchecked_Access,
-      2 => Package_Cst'Unchecked_Access,
-      3 => Index_Cst'Unchecked_Access);
 
    procedure Command_Handler
      (Data    : in out Callback_Data'Class;
@@ -74,11 +66,6 @@ package body GPS.CLI_Scripts is
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Hanler for GPS.Docgen.process_project command
-
-   procedure Project_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
-   --  Hanler for GPS.Project.get_attribute_as_* command
 
    procedure Process_Command_Handler
      (Data    : in out Callback_Data'Class;
@@ -323,77 +310,6 @@ package body GPS.CLI_Scripts is
       end;
    end Process_Command_Handler;
 
-   -----------------------------
-   -- Project_Command_Handler --
-   -----------------------------
-
-   procedure Project_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String) is
-   begin
-      if Command = "get_attribute_as_list" then
-         Name_Parameters (Data, Get_Attributes_Parameters);
-         declare
-            Project : constant Project_Type := Get_Data (Data, 1);
-            Attr    : constant String := Nth_Arg (Data, 2);
-            Pkg     : constant String := Nth_Arg (Data, 3, "");
-            Index   : constant String := Nth_Arg (Data, 4, "");
-            List    : String_List_Access := Project.Attribute_Value
-                    (Attribute_Pkg_List'(Build (Pkg, Attr)), Index);
-            Value   : constant String := Project.Attribute_Value
-                   (Attribute_Pkg_String'(Build (Pkg, Attr)),
-                   Default => "", Index => Index);
-         begin
-            Set_Return_Value_As_List (Data);
-
-            if List = null and then Value /= "" then
-               Set_Return_Value (Data, Value);
-            elsif List /= null then
-               for L in List'Range loop
-                  Set_Return_Value (Data, List (L).all);
-               end loop;
-            end if;
-
-            Free (List);
-         end;
-      elsif Command = "get_attribute_as_string" then
-         Name_Parameters (Data, Get_Attributes_Parameters);
-         declare
-            Project : constant Project_Type := Get_Data (Data, 1);
-            Attr    : constant String := Nth_Arg (Data, 2);
-            Pkg     : constant String := Nth_Arg (Data, 3, "");
-            Index   : constant String := Nth_Arg (Data, 4, "");
-            Value   : constant String := Project.Attribute_Value
-                   (Attribute_Pkg_String'(Build (Pkg, Attr)),
-                   Default => "", Index => Index);
-         begin
-            if Value = "" then
-               declare
-                  Result : Unbounded_String;
-                  List   : String_List_Access := Project.Attribute_Value
-                    (Attribute_Pkg_List'(Build (Pkg, Attr)), Index);
-               begin
-                  if List /= null then
-                     for L in List'Range loop
-                        Append (Result, List (L).all);
-
-                        if L /= List'Last then
-                           Append (Result, " ");
-                        end if;
-                     end loop;
-
-                     Free (List);
-                  end if;
-
-                  Set_Return_Value (Data, To_String (Result));
-               end;
-            else
-               Set_Return_Value (Data, Value);
-            end if;
-         end;
-      end if;
-   end Project_Command_Handler;
-
    ----------------------
    -- Get_Docgen_Class --
    ----------------------
@@ -425,18 +341,6 @@ package body GPS.CLI_Scripts is
          Minimum_Args  => 0,
          Maximum_Args  => 4,
          Handler       => Docgen_Command_Handler'Access);
-      Register_Command
-        (Kernel.Scripts, "get_attribute_as_string",
-         Minimum_Args => 1,
-         Maximum_Args => 3,
-         Class        => Get_Project_Class (Kernel.Scripts),
-         Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel.Scripts, "get_attribute_as_list",
-         Minimum_Args => 1,
-         Maximum_Args => 3,
-         Class        => Get_Project_Class (Kernel.Scripts),
-         Handler      => Project_Command_Handler'Access);
 
       Register_Command
         (Kernel.Scripts, "launch_simple_process",
