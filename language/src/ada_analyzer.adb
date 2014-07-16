@@ -3881,7 +3881,9 @@ package body Ada_Analyzer is
                      then
                         Tmp_Index := P + 1;
 
-                        while Buffer (Tmp_Index) = ' ' loop
+                        while Tmp_Index <= Buffer'Last
+                           and then Buffer (Tmp_Index) = ' '
+                        loop
                            Tmp_Index := Tmp_Index + 1;
                         end loop;
 

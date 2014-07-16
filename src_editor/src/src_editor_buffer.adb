@@ -603,6 +603,8 @@ package body Src_Editor_Buffer is
       Success : Boolean;
       pragma Unreferenced (Success);
    begin
+      --  This procedure is called from GPS.Kernel.Clipboard.Paste_Clipboard
+
       Buffer.Start_Undo_Group;
 
       if Buffer.Has_MC_Clipboard then

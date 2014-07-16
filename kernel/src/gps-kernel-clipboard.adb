@@ -404,13 +404,6 @@ package body GPS.Kernel.Clipboard is
                Trace (Me, "Pasting system clipboard");
                Clipboard.Last_Widget := GObject (Widget);
                Clipboard.Last_Is_From_System := True;
-
-               --  The following call is not really efficient, since
-               --  Wait_For_Text really should be asynchronous. However, it
-               --  works well almost always, since the clipboard is local on
-               --  the machine and not huge in any case.
-               Clipboard.Last_Length :=
-                 Wait_For_Text (Gtk.Clipboard.Get)'Length;
                Pasted := True;
             end if;
          end;
@@ -424,7 +417,6 @@ package body GPS.Kernel.Clipboard is
          Set_Text (Gtk.Clipboard.Get,
                    Clipboard.List (Clipboard.Last_Paste).all);
          Clipboard.Last_Widget := GObject (Widget);
-         Clipboard.Last_Length := Clipboard.List (Clipboard.Last_Paste)'Length;
 
       else
          Clipboard.Last_Widget := null;
@@ -432,9 +424,9 @@ package body GPS.Kernel.Clipboard is
 
       if Clipboard.Last_Widget /= null then
          if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
+            Clipboard.First_Position := Get_Position (+Widget);
             Paste_Clipboard (+Widget);
-            Clipboard.Last_Position :=
-              Integer (Get_Position (+Widget));
+            Clipboard.Last_Position := Get_Position (+Widget);
 
          else
             if Widget.all in Gtk_Text_View_Record'Class then
@@ -464,14 +456,14 @@ package body GPS.Kernel.Clipboard is
             end if;
 
             Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
-            Clipboard.Last_Position := Integer (Get_Offset (Iter))
-              + Clipboard.Last_Length;
+            Clipboard.First_Position := Get_Offset (Iter);
 
-            --  The following call is asynchronous, which is why we had to
-            --  compute the last position first
             Paste_Clipboard
               (Buffer, Gtk.Clipboard.Get,
                Default_Editable => Default_Editable);
+
+            Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
+            Clipboard.Last_Position := Get_Offset (Iter);
          end if;
       end if;
    end Paste_Clipboard;
@@ -485,7 +477,6 @@ package body GPS.Kernel.Clipboard is
       Widget    : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Buffer      : Gtk_Text_Buffer;
-      Result      : Boolean;
       Iter, Iter2 : Gtk_Text_Iter;
    begin
       if Clipboard.Last_Widget = null then
@@ -496,19 +487,21 @@ package body GPS.Kernel.Clipboard is
       --  do nothing.
 
       if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
-         if Clipboard.Last_Position /=
-           Integer (Get_Position (+Widget))
-         then
+         if Clipboard.Last_Position /= Get_Position (+Widget) then
             Clipboard.Last_Widget := null;
-            Trace (Me, "Paste Previous not at the same position");
+            Trace (Me, "Paste Previous not at the same position in Editable "
+                   & Clipboard.Last_Position'Img
+                   & Get_Position (+Widget)'Img);
             return;
          end if;
 
       elsif Widget.all in Gtk_Text_View_Record'Class then
          Buffer := Get_Buffer (Gtk_Text_View (Widget));
          Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
-         if Clipboard.Last_Position /= Integer (Get_Offset (Iter)) then
-            Trace (Me, "Paste Previous not at the same position");
+         if Clipboard.Last_Position /= Get_Offset (Iter) then
+            Trace (Me, "Paste Previous not at the same position "
+                   & Clipboard.Last_Position'Img
+                   & Get_Offset (Iter)'Img);
             Clipboard.Last_Widget := null;
             return;
          end if;
@@ -521,13 +514,11 @@ package body GPS.Kernel.Clipboard is
       if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
          Delete_Text
            (+Widget,
-            Start_Pos => Gint (Clipboard.Last_Position
-              - Clipboard.Last_Length - 1),
-            End_Pos   => Gint (Clipboard.Last_Position));
+            Start_Pos => Clipboard.First_Position,
+            End_Pos   => Clipboard.Last_Position);
       else
-         Copy (Source => Iter, Dest => Iter2);
-         Forward_Chars (Iter, -Gint (Clipboard.Last_Length), Result);
-         Delete (Buffer, Iter, Iter2);
+         Buffer.Get_Iter_At_Offset (Iter2, Clipboard.First_Position);
+         Delete (Buffer, Iter2, Iter);
       end if;
 
       --  Prepare the next paste.
@@ -550,19 +541,20 @@ package body GPS.Kernel.Clipboard is
       if Clipboard.List (Clipboard.Last_Paste) /= null then
          Set_Text (Gtk.Clipboard.Get,
                    Clipboard.List (Clipboard.Last_Paste).all);
-         Clipboard.Last_Length := Clipboard.List (Clipboard.Last_Paste)'Length;
 
          --  Paste the new contents
          if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
+            Clipboard.First_Position := Get_Position (+Widget);
             Paste_Clipboard (+Widget);
-            Clipboard.Last_Position :=
-              Integer (Get_Position (+Widget));
+            Clipboard.Last_Position := Get_Position (+Widget);
          else
+            Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
+            Clipboard.First_Position := Get_Offset (Iter);
             Paste_Clipboard
               (Buffer, Gtk.Clipboard.Get,
                Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
             Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
-            Clipboard.Last_Position := Integer (Get_Offset (Iter));
+            Clipboard.Last_Position := Get_Offset (Iter);
          end if;
       end if;
 

@@ -112,8 +112,8 @@ private
       List          : Selection_List_Access;
       Last_Paste    : Integer := Integer'Last; --  Index in List
       Last_Widget   : Glib.Object.GObject;   --  Where the last paste occurred
-      Last_Position : Integer;               --  Where the last paste occurred
-      Last_Length   : Integer;               --  Length of last insert
+      First_Position : Gint;              --  last insertion point
+      Last_Position  : Gint;               --  Where the last paste occurred
       Last_Is_From_System : Boolean := False;
       --  True if the last paste was from the system clipboard
    end record;
