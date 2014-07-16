@@ -9,11 +9,6 @@ onto a bare STM32F4 board.
     Other models untested.
 
 For this commit:
-- The button is hidden. Criteria for when to show the button is comming.
-  * To use it, please change
-    False --> True
-    on line 125, and restart GPS.
-
 - Successful usage requires third-party utility stlink
   https://github.com/texane/stlink
   * To try other utility, please change
@@ -27,33 +22,52 @@ import gps_utils.workflow as workflow
 import gps_utils.promises as promise
 
 
-class BoardLoader():
+class BoardLoader(Module):
     """
-       This class defines managers for the button which call:
+       This class defines a manager of the button which call:
            compiles, connect and load
        of programs onto a board.
        One instance, as a global manager that takes care of button-execution,
        will be created everytime project of certain type is loaded by GPS.
     """
-    def __init__(self):
-        """
-           Initialize parameters and add button to toolbar
-        """
-        # __manager is debugger wrapper instance
-        self.__manager = None
+    __button = None
 
-        # __process is process wrapper instance
-        self.__process = None
+    def __add_button(self):
+        """
+           Add_button when criteria meets.
+           Initialize parameters.
 
-        # indicates a refresh on previously running debugger
-        self.__refresh = False
+           criteria = the program is written and can be built for
+           board stm32f4.
+        """
+        # destroy the button if it exists
+        if self.__button is not None:
+            self.__button.destroy()
+            self.__button = None
 
         # create a button and add it to the toolbar
-        # button is associated with a trigger
-        self.__button = GPS.Button("load-on-bareboard",
-                                   "Load On Board",
-                                   self.__load)
-        GPS.Toolbar().insert(self.__button, 0)
+        # if the following criteria meets:
+        p = GPS.Project.root()
+        s = p.get_attribute_as_string(package="Builder",
+                                      attribute="Default_Switches",
+                                      index="Ada") + \
+            p.get_attribute_as_string(package="Builder",
+                                      attribute="Switches",
+                                      index="Ada")
+        if "stm32f4" in s:
+            # __manager is debugger wrapper instance
+            self.__manager = None
+
+            # __process is process wrapper instance
+            self.__process = None
+
+            # indicates a refresh on previously running debugger
+            self.__refresh = False
+
+            self.__button = GPS.Button("load-on-bareboard",
+                                       "Load On Board",
+                                       self.__load)
+            GPS.Toolbar().insert(self.__button, 0)
 
     def __loading_workflow(self):
         """
@@ -128,20 +142,6 @@ class BoardLoader():
         w = self.__loading_workflow()
         workflow.driver(w)
 
-
-class Board_Loading_Button(Module):
-
-    def __add_button(self):
-        """
-           Add_button when criteria meets
-        """
-        self._loader = None
-
-        # For now modify False to True: to show the button
-        # criteria following
-        if False:
-            self._loader = BoardLoader()
-
     # The followings are hooks:
 
     def gps_started(self):
@@ -153,5 +153,11 @@ class Board_Loading_Button(Module):
     def project_view_changed(self):
         """
            When project view changes, add button (include cireteria there)
+        """
+        self.__add_button()
+
+    def project_changed(self):
+        """
+           When project changes, add button (include cireteria there)
         """
         self.__add_button()
