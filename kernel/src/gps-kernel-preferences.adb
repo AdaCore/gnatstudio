@@ -839,7 +839,7 @@ package body GPS.Kernel.Preferences is
       Browsers_Bg_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "Browsers-Bg-Color",
-         Default => "#EEEEEE",
+         Default => "#FFFFFF",
          Doc     => -"Color used to draw the background of the browsers",
          Label   => -"Background color",
          Page    => -"Browsers");
