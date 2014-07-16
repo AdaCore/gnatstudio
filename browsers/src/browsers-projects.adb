@@ -15,18 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with Glib;                   use Glib;
-with Glib.Object;            use Glib.Object;
-with Cairo;                  use Cairo;
-with Cairo.Region;           use Cairo.Region;
-with Gdk.Event;              use Gdk.Event;
-with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Stock;              use Gtk.Stock;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtkada.Canvas;          use Gtkada.Canvas;
-with Gtkada.MDI;             use Gtkada.MDI;
-with Pango.Layout;           use Pango.Layout;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Gdk.RGBA;                  use Gdk.RGBA;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
+with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Style;              use Gtkada.Style;
+with Pango.Font;                use Pango.Font;
 
 with Generic_Views;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
@@ -41,7 +40,6 @@ with GPS.Search;
 with GPS.Intl;               use GPS.Intl;
 with Projects;               use Projects;
 with Browsers.Canvas;        use Browsers.Canvas;
-with Prj;
 with Find_Utils;             use Find_Utils;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 with Vsearch;                use Vsearch;
@@ -68,7 +66,12 @@ package body Browsers.Projects is
    ---------------------
 
    type Project_Browser_Record is new Browsers.Canvas.General_Browser_Record
-     with null record;
+   with null record;
+
+   overriding procedure Contextual_Factory
+     (Self    : not null access Project_Browser_Record;
+      Context : in out GPS.Kernel.Selection_Context;
+      Details : Gtkada.Canvas_View.Canvas_Event_Details);
 
    function Initialize
      (View   : access Project_Browser_Record'Class)
@@ -85,7 +88,7 @@ package body Browsers.Projects is
       Local_Toolbar          => True,
       Local_Config           => True,
       Position               => Position_Automatic,
-      Group                  => Group_Graphs);
+      Group                  => Group_Default);
    subtype Project_Browser is Project_Views.View_Access;
    use type Project_Browser;
 
@@ -101,50 +104,77 @@ package body Browsers.Projects is
      (Command : access Imported_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   ----------------------------
-   -- Browser_Project_Vertex --
-   ----------------------------
+   ------------------
+   -- Browser_Item --
+   ------------------
 
-   type Browser_Project_Vertex is new Browsers.Canvas.Arrow_Item_Record with
-      record
-         Name : Ada.Strings.Unbounded.Unbounded_String;
-      end record;
-   type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
+   type Project_Item_Record is new Rect_Item_Record with record
+      Name : Ada.Strings.Unbounded.Unbounded_String;
+      --  Store the name, and not the project, in case the latter becomes
+      --  invalid after we reload a project
 
-   overriding procedure Contextual_Factory
-     (Item    : access Browser_Project_Vertex;
-      Context : in out Selection_Context;
-      Browser : access General_Browser_Record'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu);
-   overriding procedure Compute_Size
-     (Item          : not null access Browser_Project_Vertex;
-      Layout        : not null access Pango_Layout_Record'Class;
-      Width, Height : out Glib.Gint;
-      Title_Box     : in out Cairo_Rectangle_Int);
-   --  See doc for inherited subprogram
+      Browser : Project_Browser;
+      --  The browser in which the item is displayed
+
+      Circle : Ellipse_Item;
+      --  Might be set or not (depends on the chosen draw mode)
+
+      Highlighted : Boolean := False;
+   end record;
+   type Project_Item is access all Project_Item_Record'Class;
+
+   overriding procedure Draw
+     (Self    : not null access Project_Item_Record; Context : Draw_Context);
 
    procedure Gtk_New
-     (V       : out Browser_Project_Vertex_Access;
-      Browser : access Project_Browser_Record'Class;
+     (V       : out Project_Item;
+      Browser : not null access Project_Browser_Record'Class;
       Project : Project_Type);
    --  Create a new project vertex
+
+   procedure Gtk_New_Link
+     (L               : out Canvas_Link;
+      Browser         : not null access Project_Browser_Record'Class;
+      Src, Dest       : not null access Abstract_Item_Record'Class;
+      Is_Limited_With : Boolean := False;
+      Extending       : Boolean := False);
+   --  Create a new link
+
+   function Project_Of
+     (Self : not null access Project_Item_Record'Class) return Project_Type;
+   --  Return the project associated with Item
+
+   procedure Set_Context
+     (Item    : not null access Project_Item_Record'Class;
+      Context : in out Selection_Context);
+   --  Set the GPS context from a selected item.
+
+   -------------------
+   -- Browser links --
+   -------------------
+
+   type Browser_Link_Record is new Canvas_Link_Record with record
+      Default_Style : Drawing_Style;
+   end record;
+   type Browser_Link is access all Browser_Link_Record'Class;
+
+   procedure On_Selection_Changed
+     (Self  : not null access GObject_Record'Class;
+      Item  : Abstract_Item);
+   --  Called when the selection changes. This highlights links to and from
+   --  that item.
 
    ----------
    -- Misc --
    ----------
 
    procedure Examine_Project_Hierarchy
-     (Browser   : access Project_Browser_Record'Class;
+     (Browser   : not null access Project_Browser_Record'Class;
       Project   : Project_Type;
       Recursive : Boolean);
    --  Display the project hierarchy for Project in the canvas.
    --  If Recursive is True, then the projects imported indirectly are also
    --  displayed.
-
-   function Project_Of (Item : access Browser_Project_Vertex'Class)
-      return Project_Type;
-   --  Return the project associated with Item
 
    function Browser_Search_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -163,29 +193,35 @@ package body Browsers.Projects is
    --  Search the next occurrence in the explorer
 
    function Find_Project
-     (Browser      : access Project_Browser_Record'Class;
-      Project_Name : String) return Browser_Project_Vertex_Access;
+     (Browser      : not null access Project_Browser_Record'Class;
+      Project_Name : String) return Project_Item;
    --  Return the first item representing Project_Name
 
    function Add_Project_If_Not_Present
-     (Browser : access Project_Browser_Record'Class;
-      Project : Project_Type) return Browser_Project_Vertex_Access;
+     (Browser : not null access Project_Browser_Record'Class;
+      Project : Project_Type) return Project_Item;
    --  Add a new item for Project if there is currently none in the browser
 
    procedure Examine_Ancestor_Project_Hierarchy
-     (Browser : access Project_Browser_Record'Class;
+     (Browser : not null access Project_Browser_Record'Class;
       Project : Project_Type);
    --  Add to the browser all the projects that with Project
 
-   procedure On_Examine_Prj_Hierarchy
-     (Item : access Arrow_Item_Record'Class);
-   procedure On_Examine_Ancestor_Hierarchy
-     (Item : access Arrow_Item_Record'Class);
-   --  Callbacks for the button in the title bar
+   type Show_Importing_Projects_Button is new Left_Arrow_Record
+      with null record;
+   overriding procedure On_Click
+     (Self : not null access Show_Importing_Projects_Button;
+      View : not null access GPS_Canvas_View_Record'Class);
+
+   type Show_Imported_Projects_Button is new Right_Arrow_Record
+   with null record;
+   overriding procedure On_Click
+     (Self : not null access Show_Imported_Projects_Button;
+      View : not null access GPS_Canvas_View_Record'Class);
 
    procedure Add_Link_If_Not_Present
-     (Browser      : access Project_Browser_Record'Class;
-      Src, Dest    : Browser_Project_Vertex_Access;
+     (Browser      : not null access Project_Browser_Record'Class;
+      Src, Dest    : Project_Item;
       Limited_With : Boolean);
    --  Add a link between the two items
 
@@ -193,11 +229,11 @@ package body Browsers.Projects is
    -- Project_Of --
    ----------------
 
-   function Project_Of (Item : access Browser_Project_Vertex'Class)
+   function Project_Of (Self : not null access Project_Item_Record'Class)
       return Project_Type is
    begin
-      return Get_Registry (Get_Kernel (Get_Browser (Item))).Tree
-        .Project_From_Name (To_String (Item.Name));
+      return Get_Registry (Self.Browser.Kernel).Tree
+        .Project_From_Name (To_String (Self.Name));
    end Project_Of;
 
    ------------------
@@ -205,19 +241,25 @@ package body Browsers.Projects is
    ------------------
 
    function Find_Project
-     (Browser      : access Project_Browser_Record'Class;
-      Project_Name : String) return Browser_Project_Vertex_Access
+     (Browser      : not null access Project_Browser_Record'Class;
+      Project_Name : String) return Project_Item
    is
-      Iter : Item_Iterator := Start (Get_Canvas (Browser));
-      Item : Canvas_Item;
+      Result : Project_Item;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         if Item.all in Project_Item_Record'Class
+           and then Project_Item (Item).Name = Project_Name
+         then
+            Result := Project_Item (Item);
+         end if;
+      end On_Item;
+
    begin
-      loop
-         Item := Get (Iter);
-         exit when Item = null
-           or else Browser_Project_Vertex_Access (Item).Name = Project_Name;
-         Next (Iter);
-      end loop;
-      return Browser_Project_Vertex_Access (Item);
+      Browser.Get_View.Model.For_Each_Item
+        (On_Item'Access, Filter => Kind_Item);
+      return Result;
    end Find_Project;
 
    --------------------------------
@@ -225,70 +267,188 @@ package body Browsers.Projects is
    --------------------------------
 
    function Add_Project_If_Not_Present
-     (Browser : access Project_Browser_Record'Class;
-      Project : Project_Type) return Browser_Project_Vertex_Access
+     (Browser : not null access Project_Browser_Record'Class;
+      Project : Project_Type) return Project_Item
    is
-      V : Browser_Project_Vertex_Access :=
-        Find_Project (Browser, Project.Name);
+      V : Project_Item := Find_Project (Browser, Project.Name);
    begin
       if V = null then
          Gtk_New (V, Browser, Project);
-         Put (Get_Canvas (Browser), V);
+         V.Set_Position ((0.0, 0.0));  --  ???
+         Browser_Model (Browser.Get_View.Model).Add (V);
       end if;
 
       return V;
    end Add_Project_If_Not_Present;
+
+   ------------------
+   -- Gtk_New_Link --
+   ------------------
+
+   procedure Gtk_New_Link
+     (L               : out Canvas_Link;
+      Browser         : not null access Project_Browser_Record'Class;
+      Src, Dest       : not null access Abstract_Item_Record'Class;
+      Is_Limited_With : Boolean := False;
+      Extending       : Boolean := False)
+   is
+      S  : constant Styles := Browser.Get_Styles;
+      L2 : constant Browser_Link := new Browser_Link_Record;
+   begin
+      if Is_Limited_With then
+         L2.Default_Style := S.Link2;
+         Initialize
+           (L2,
+            From        => Src,
+            To          => Dest,
+            Routing     => Curve,
+            Label       => Gtk_New_Text (S.Title, "limited"),
+            Anchor_From => (X => 1.0, others => <>),
+            Anchor_To   => (X => 0.0, others => <>),
+            Style       => L2.Default_Style);
+      elsif Extending then
+         L2.Default_Style := S.Link2;
+         Initialize
+           (L2,
+            From        => Src,
+            To          => Dest,
+            Routing     => Curve,
+            Label       => Gtk_New_Text (S.Title, "extending"),
+            Anchor_From => (X => 1.0, others => <>),
+            Anchor_To   => (X => 0.0, others => <>),
+            Style       => L2.Default_Style);
+      else
+         L2.Default_Style := S.Link;
+         Initialize
+           (L2,
+            From        => Src,
+            To          => Dest,
+            Routing     => Curve,
+            Anchor_From => (X => 1.0, others => <>),
+            Anchor_To   => (X => 0.0, others => <>),
+            Style       => L2.Default_Style);
+      end if;
+      L := Canvas_Link (L2);
+   end Gtk_New_Link;
 
    -----------------------------
    -- Add_Link_If_Not_Present --
    -----------------------------
 
    procedure Add_Link_If_Not_Present
-     (Browser      : access Project_Browser_Record'Class;
-      Src, Dest    : Browser_Project_Vertex_Access;
+     (Browser      : not null access Project_Browser_Record'Class;
+      Src, Dest    : Project_Item;
       Limited_With : Boolean)
    is
-      L      : Browser_Link;
+      L      : Canvas_Link;
       P1, P2 : Project_Type;
-   begin
-      if not Has_Link (Get_Canvas (Browser), Src, Dest) then
-         L := new Browser_Link_Record;
+      S1, S2 : access Abstract_Item_Record'Class;
+      Exists : Boolean := False;
 
+      procedure On_Link (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Link (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         if not Exists
+           and then Item.all in Canvas_Link_Record'Class
+           and then Canvas_Link (Item).Get_To = Abstract_Item (Dest)
+         then
+            Exists := True;
+         end if;
+      end On_Link;
+
+      S : Item_Sets.Set;
+
+   begin
+      S.Include (Abstract_Item (Src));
+      Browser.Get_View.Model.For_Each_Link (On_Link'Access, From_Or_To => S);
+
+      if not Exists then
          P1 := Project_Of (Src);
          P2 := Project_Of (Dest);
 
-         if Extended_Project (P1) = P2 then
-            Add_Link
-              (Get_Canvas (Browser), L, Src, Dest, Descr => -"extending");
-         else
-            if Limited_With then
-               Add_Link (Get_Canvas (Browser), L, Src, Dest,
-                         Descr => "limited");
-            else
-               Add_Link (Get_Canvas (Browser), L, Src, Dest);
-            end if;
-         end if;
+         S1 := (if Src.Circle = null then Src else Src);
+         S2 := (if Dest.Circle = null then Dest else Dest);
+
+         Gtk_New_Link
+           (L, Browser, S1, S2,
+            Is_Limited_With => Limited_With,
+            Extending       => Extended_Project (P1) = P2);
+         Browser_Model (Browser.Get_View.Model).Add (L);
       end if;
    end Add_Link_If_Not_Present;
+
+   ----------
+   -- Draw --
+   ----------
+
+   overriding procedure Draw
+     (Self    : not null access Project_Item_Record; Context : Draw_Context)
+   is
+   begin
+      Rect_Item_Record (Self.all).Draw (Context);  --  inherited
+
+      if Self.Highlighted then
+         Self.Draw_Outline (Self.Browser.Get_Styles.Highlight, Context);
+      end if;
+   end Draw;
 
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (V       : out Browser_Project_Vertex_Access;
-      Browser : access Project_Browser_Record'Class;
-      Project : Project_Type) is
+     (V       : out Project_Item;
+      Browser : not null access Project_Browser_Record'Class;
+      Project : Project_Type)
+   is
+      Contents : access Container_Item_Record'Class;
+      S     : constant Styles := Browser.Get_Styles;
+      Left  : access Show_Importing_Projects_Button;
+      Right : access Show_Imported_Projects_Button;
    begin
-      V := new Browser_Project_Vertex;
-      Initialize (V, Browser,
-                  Project.Name & Prj.Project_File_Extension,
-                  On_Examine_Ancestor_Hierarchy'Access,
-                  On_Examine_Prj_Hierarchy'Access);
+      V := new Project_Item_Record;
+      V.Browser := Browser;
       V.Name := To_Unbounded_String (Project.Name);
 
-      Set_Children_Shown (V, not Has_Imported_Projects (Project));
-      Recompute_Size (V);
+      if True then
+         V.Initialize_Rect
+           (Style => Gtk_New (Stroke => Null_RGBA));
+         V.Set_Child_Layout (Horizontal_Stack);
+
+         V.Circle := Gtk_New_Ellipse
+           (Style => Gtk_New (Stroke => (0.27, 0.5, 0.7, 1.0),
+                              Line_Width => 2.0),
+            Width => 8.0, Height => 8.0);
+         V.Add_Child (V.Circle);
+
+         Contents := Gtk_New_Text
+           (Style => Gtk_New (Stroke => Null_RGBA,
+                              Fill => Create_Rgba_Pattern
+                                ((1.0, 1.0, 1.0, 0.6)),
+                              Font   => (Name => From_String ("sans 8"),
+                                         others => <>)),
+            Text  => Project.Name);
+         V.Add_Child (Contents, Margin => (0.0, 0.0, 0.0, 3.0));
+      else
+         V.Initialize_Rect (Style => S.Item, Radius => 5.0);
+
+         Left := new Show_Importing_Projects_Button;
+         Initialize (Left);
+
+         Right := new Show_Imported_Projects_Button;
+         Initialize (Right);
+
+         Setup_Titlebar
+           (V, Browser, Name => Project.Name, Left => Left, Right => Right);
+
+         if Project.Is_Aggregate_Project then
+            Contents := Gtk_New_Text (S.Text_Font, "<<aggregate>>");
+         else
+            Contents := Gtk_New_Rect (S.Text_Font, Height => 1.0);
+         end if;
+
+         V.Add_Child (Contents, Margin => (2.0, 2.0, 2.0, 2.0));
+      end if;
    end Gtk_New;
 
    -------------------------------
@@ -296,14 +456,14 @@ package body Browsers.Projects is
    -------------------------------
 
    procedure Examine_Project_Hierarchy
-     (Browser   : access Project_Browser_Record'Class;
+     (Browser   : not null access Project_Browser_Record'Class;
       Project   : Project_Type;
       Recursive : Boolean)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Browser);
+      pragma Unreferenced (Kernel);
 
-      procedure Process_Project
-        (Local : Project_Type; Src : Browser_Project_Vertex_Access);
+      procedure Process_Project (Local : Project_Type; Src : Project_Item);
       --  Display all the imported projects from Local.
       --  Src is the item associated with Local
 
@@ -311,43 +471,31 @@ package body Browsers.Projects is
       -- Process_Project --
       ---------------------
 
-      procedure Process_Project
-        (Local : Project_Type; Src : Browser_Project_Vertex_Access)
-      is
-         Dest : Browser_Project_Vertex_Access;
+      procedure Process_Project (Local : Project_Type; Src : Project_Item) is
+         Dest : Project_Item;
          Iter : Project_Iterator;
       begin
-         Set_Children_Shown (Src, True);
-
          --  If we are displaying the recursive hierarchy for the root project,
          --  we know that there won't be remaining ancestor projects, so we can
          --  make it clear for the user.
-         if Recursive and then Project = Get_Project (Kernel) then
-            Set_Parents_Shown (Src, True);
-         end if;
-
          Iter := Start (Local, Recursive => True, Direct_Only => True);
-
          while Current (Iter) /= No_Project loop
-            Dest := Add_Project_If_Not_Present (Browser, Current (Iter));
-            Add_Link_If_Not_Present
-              (Browser, Src, Dest, Limited_With => Is_Limited_With (Iter));
-
-            --  ??? Could be more efficient if we could use Direct_Only =>
-            --  False in the call to Start.
-
-            if Recursive and then not Children_Shown (Dest) then
-               Process_Project (Current (Iter), Dest);
+            if Current (Iter) /= Local then
+               Dest := Add_Project_If_Not_Present (Browser, Current (Iter));
+               Add_Link_If_Not_Present
+                 (Browser, Src, Dest, Limited_With => Is_Limited_With (Iter));
             end if;
-
             Next (Iter);
          end loop;
       end Process_Project;
 
-      Src : Browser_Project_Vertex_Access;
+      Src, Src2        : Project_Item;
       Item_Was_Present : Boolean;
+      Iter             : Project_Iterator;
+
    begin
-      Trace (Me, "Examine_Project_Hierarchy for " & Project.Name);
+      Trace (Me, "Examine_Project_Hierarchy for " & Project.Name
+             & " Recursive=" & Recursive'Img);
 
       Src := Find_Project (Browser, Project.Name);
       Item_Was_Present := Src /= null;
@@ -356,7 +504,17 @@ package body Browsers.Projects is
          Src := Add_Project_If_Not_Present (Browser, Project);
       end if;
 
-      Process_Project (Project, Src);
+      if Recursive then
+         Iter := Start (Project, Recursive => True, Direct_Only => False);
+         while Current (Iter) /= No_Project loop
+            Src2 := Add_Project_If_Not_Present (Browser, Current (Iter));
+            Process_Project (Current (Iter), Src2);
+            Next (Iter);
+         end loop;
+
+      else
+         Process_Project (Project, Src);
+      end if;
 
       if Item_Was_Present then
          --  Need to select the item as well: this doesn't impact the
@@ -366,13 +524,12 @@ package body Browsers.Projects is
          --
          --  As a side effect, this also refreshes the canvas
 
-         Clear_Selection (Get_Canvas (Browser));
-         Add_To_Selection (Get_Canvas (Browser), Src);
-         Show_Item (Get_Canvas (Browser), Src);
+         Browser.Get_View.Model.Clear_Selection;
+         Browser.Get_View.Model.Add_To_Selection (Src);
+         Browser.Get_View.Scroll_Into_View (Src);
       end if;
 
-      Layout (Browser, Force => False);
-      Refresh_Canvas (Get_Canvas (Browser));
+      Browser.Refresh_Layout;
    end Examine_Project_Hierarchy;
 
    ----------------------------------------
@@ -380,16 +537,15 @@ package body Browsers.Projects is
    ----------------------------------------
 
    procedure Examine_Ancestor_Project_Hierarchy
-     (Browser : access Project_Browser_Record'Class;
+     (Browser : not null access Project_Browser_Record'Class;
       Project : Project_Type)
    is
-      Src, Dest : Browser_Project_Vertex_Access;
+      Src, Dest : Project_Item;
       Iter      : Project_Iterator;
    begin
       Trace (Me, "Examine_Ancestor_Project_Hierarchy for " & Project.Name);
 
       Dest := Add_Project_If_Not_Present (Browser, Project);
-      Set_Parents_Shown (Dest, True);
 
       Iter := Find_All_Projects_Importing
         (Project      => Project,
@@ -401,75 +557,106 @@ package body Browsers.Projects is
          Add_Link_If_Not_Present
            (Browser, Src, Dest,
             Limited_With => Is_Limited_With (Iter));
-
          Next (Iter);
       end loop;
 
-      Layout (Browser, Force => False);
-      Refresh_Canvas (Get_Canvas (Browser));
+      Browser.Refresh_Layout;
    end Examine_Ancestor_Project_Hierarchy;
 
-   ------------------
-   -- Compute_Size --
-   ------------------
+   --------------
+   -- On_Click --
+   --------------
 
-   overriding procedure Compute_Size
-     (Item          : not null access Browser_Project_Vertex;
-      Layout        : not null access Pango_Layout_Record'Class;
-      Width, Height : out Glib.Gint;
-      Title_Box     : in out Cairo_Rectangle_Int)
+   overriding procedure On_Click
+     (Self : not null access Show_Imported_Projects_Button;
+      View : not null access GPS_Canvas_View_Record'Class)
    is
-   begin
-      --  Reset a little bit of space
-      Compute_Size
-        (Arrow_Item_Record (Item.all)'Access, Layout, Width, Height,
-         Title_Box);
-      Width := Title_Box.Width;
-      Height := Height + 10;
-   end Compute_Size;
-
-   ------------------------------
-   -- On_Examine_Prj_Hierarchy --
-   ------------------------------
-
-   procedure On_Examine_Prj_Hierarchy
-     (Item : access Arrow_Item_Record'Class) is
+      pragma Unreferenced (View);
+      Prj : constant Project_Item := Project_Item (Self.Get_Toplevel_Item);
    begin
       Examine_Project_Hierarchy
-        (Project_Browser (Get_Browser (Item)),
-         Project_Of (Browser_Project_Vertex_Access (Item)),
-         Recursive => False);
-   end On_Examine_Prj_Hierarchy;
+        (Prj.Browser, Project_Of (Prj), Recursive => False);
+   end On_Click;
 
-   -----------------------------------
-   -- On_Examine_Ancestor_Hierarchy --
-   -----------------------------------
+   --------------
+   -- On_Click --
+   --------------
 
-   procedure On_Examine_Ancestor_Hierarchy
-     (Item : access Arrow_Item_Record'Class)
+   overriding procedure On_Click
+     (Self : not null access Show_Importing_Projects_Button;
+      View : not null access GPS_Canvas_View_Record'Class)
    is
-      B : constant Project_Browser := Project_Browser (Get_Browser (Item));
+      pragma Unreferenced (View);
+      Prj : constant Project_Item := Project_Item (Self.Get_Toplevel_Item);
    begin
       Examine_Ancestor_Project_Hierarchy
-        (Browser => B,
-         Project => Project_Of (Browser_Project_Vertex_Access (Item)));
-   end On_Examine_Ancestor_Hierarchy;
+        (Browser => Prj.Browser,
+         Project => Project_Of (Prj));
+   end On_Click;
 
-   ------------------------
-   -- Contextual_Factory --
-   ------------------------
+   -----------------
+   -- Set_Context --
+   -----------------
 
-   overriding procedure Contextual_Factory
-     (Item    : access Browser_Project_Vertex;
-      Context : in out Selection_Context;
-      Browser : access General_Browser_Record'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu)
+   procedure Set_Context
+     (Item    : not null access Project_Item_Record'Class;
+      Context : in out Selection_Context)
    is
-      pragma Unreferenced (Browser, Event, Menu);
    begin
-      Set_File_Information (Context, Project => Project_Of (Item));
-   end Contextual_Factory;
+      Set_File_Information (Context, Project => Item.Project_Of);
+   end Set_Context;
+
+   --------------------------
+   -- On_Selection_Changed --
+   --------------------------
+
+   procedure On_Selection_Changed
+     (Self  : not null access GObject_Record'Class;
+      Item  : Abstract_Item)
+   is
+      Browser  : constant General_Browser := General_Browser (Self);
+      Selected : Boolean;
+
+      procedure On_Link (Link : not null access Abstract_Item_Record'Class);
+      procedure On_Link (Link : not null access Abstract_Item_Record'Class) is
+         It   : Browser_Link;
+         Dest : Abstract_Item;
+      begin
+         if Link.all in Browser_Link_Record'Class then
+            It := Browser_Link (Link);
+            if Selected then
+               It.Set_Style (Browser.Get_Styles.Selected_Link);
+            else
+               It.Set_Style (It.Default_Style);
+            end if;
+
+            Dest := Get_From (It);
+            if Dest /= Item then
+               Project_Item (Dest).Highlighted := Selected;
+            end if;
+
+            Dest := Get_To (It);
+            if Dest /= Item then
+               Project_Item (Dest).Highlighted := Selected;
+            end if;
+         end if;
+      end On_Link;
+
+      S : Item_Sets.Set;
+
+   begin
+      if Item = null then
+         --  clear selection
+         Selected := False;
+         Browser.Get_View.Model.For_Each_Item
+           (On_Link'Access, Filter => Kind_Link);
+      else
+         Selected := Browser.Get_View.Model.Is_Selected (Item);
+         S.Include (Item);
+         Browser.Get_View.Model.For_Each_Link
+           (On_Link'Access, From_Or_To => S);
+      end if;
+   end On_Selection_Changed;
 
    ----------------
    -- Initialize --
@@ -479,16 +666,41 @@ package body Browsers.Projects is
      (View   : access Project_Browser_Record'Class)
       return Gtk_Widget
    is
+      Id : Handler_Id;
+      pragma Unreferenced (Id);
    begin
-      Initialize (View, Create_Toolbar => False);
+      Initialize
+        (View,
+         Create_Toolbar => False,
+         Use_Canvas_View => True);
       Register_Contextual_Menu
         (Kernel          => View.Kernel,
          Event_On_Widget => View,
          Object          => View,
          ID              => Project_Views.Get_Module,
          Context_Func    => Default_Browser_Context_Factory'Access);
+
+      Id := View.Get_View.Model.On_Selection_Changed
+        (On_Selection_Changed'Access, View);
+
       return Gtk_Widget (View);
    end Initialize;
+
+   ------------------------
+   -- Contextual_Factory --
+   ------------------------
+
+   overriding procedure Contextual_Factory
+     (Self    : not null access Project_Browser_Record;
+      Context : in out GPS.Kernel.Selection_Context;
+      Details : Gtkada.Canvas_View.Canvas_Event_Details)
+   is
+      pragma Unreferenced (Self);
+   begin
+      if Details.Toplevel_Item /= null then
+         Project_Item (Details.Toplevel_Item).Set_Context (Context);
+      end if;
+   end Contextual_Factory;
 
    -----------------------------
    -- Default_Context_Factory --
@@ -502,19 +714,21 @@ package body Browsers.Projects is
       pragma Unreferenced (Module);
       Browser : constant Project_Browser :=
         Project_Views.View_From_Widget (Child);
-      Iter    : constant Item_Iterator :=
-        Start (Get_Canvas (Browser), Selected_Only => True);
+      Topmost_Selected : Abstract_Item;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         Topmost_Selected := Abstract_Item (Item);
+      end On_Item;
+
    begin
-      --  If there is no selection, or more than one item, nothing we can do
-      if Get (Iter) /= null
-        and then Get (Next (Iter)) = null
-      then
-         Contextual_Factory
-           (Item    => Browser_Item (Get (Iter)),
-            Context => Context,
-            Browser => Browser,
-            Event   => null,
-            Menu    => null);
+      Browser.Get_View.Model.For_Each_Item
+        (Callback      => On_Item'Unrestricted_Access,
+         Selected_Only => True);
+
+      if Topmost_Selected /= null then
+         Project_Item (Topmost_Selected).Set_Context (Context);
       end if;
    end Default_Context_Factory;
 
@@ -549,67 +763,59 @@ package body Browsers.Projects is
    is
       pragma Unreferenced (Search_Backward, Give_Focus);
       First_Match  : Canvas_Item;
-      Saw_Selected : Boolean;
+
+      Saw_Selected : Boolean := False;
+      --  We need to search after the currently selected item, so that Next
+      --  works properly
+
       Browser : constant Project_Browser :=
         Project_Views.Retrieve_View (Kernel);
-      Iter         : Item_Iterator;
-      It           : Browser_Project_Vertex_Access;
-      Selection    : Item_Iterator;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         if not Saw_Selected
+           and then Browser.Get_View.Model.Is_Selected (Item)
+         then
+            Saw_Selected := True;
+            return;
+         end if;
+
+         if not Found
+           and then Item.all in Project_Item_Record'Class
+           and then not GPS.Search.Failed
+             (Match (Context, To_String (Project_Item (Item).Name)))
+         then
+            --  If we are searching after the current selection, select the
+            --  new item and we are done. Otherwise we'll have to loop
+            if Saw_Selected then
+               Found := True;
+               Browser.Get_View.Model.Clear_Selection;
+               Browser.Get_View.Model.Add_To_Selection (Item);
+            elsif First_Match = null then
+               First_Match := Canvas_Item (Item);
+            end if;
+         end if;
+      end On_Item;
 
    begin
+      Found := False;
+
       if Browser = null then
-         Found := False;
          Continue := False;
          return;
       end if;
 
-      Selection := Start (Get_Canvas (Browser), Selected_Only => True);
+      Browser.Get_View.Model.For_Each_Item
+        (On_Item'Access, Filter => Kind_Item);
 
-      Saw_Selected := Get (Selection) = null;
-
-      --  We have to start from the beginning, but to save some time in case we
-      --  have no more item after the current one, we memorize the first
-      --  matching item right away
-
-      Iter := Start (Get_Canvas (Browser));
-      loop
-         It := Browser_Project_Vertex_Access (Get (Iter));
-         exit when It = null;
-
-         --  No need to test if we have already found one, but haven't
-         --  encountered the current selection.
-
-         if First_Match = null or else Saw_Selected then
-            if not GPS.Search.Failed
-              (Match (Context, To_String (It.Name)))
-            then
-               First_Match := Canvas_Item (It);
-               exit when Saw_Selected;
-            end if;
-         end if;
-
-         if Is_Selected (Get_Canvas (Browser), It) then
-            Saw_Selected := True;
-         end if;
-
-         Next (Iter);
-      end loop;
-
-      if First_Match /= null then
-         Clear_Selection (Get_Canvas (Browser));
-         Add_To_Selection (Get_Canvas (Browser), First_Match);
-         Show_Item (Get_Canvas (Browser), First_Match);
+      if not Found and then First_Match /= null then
+         Browser.Get_View.Model.Clear_Selection;
+         Browser.Get_View.Model.Add_To_Selection (First_Match);
          Found := True;
-      else
-         Found := False;
       end if;
 
-      if It = null then
-         Continue := False;
-      else
-         Continue := True;
-      end if;
-
+      Continue := Found;
    end Search;
 
    -------------
@@ -651,8 +857,6 @@ package body Browsers.Projects is
       Project_Views.Register_Module
         (Kernel, Project_Browser_Module_ID);
 
-      --  ??? will be done in hook
-      --     Set_Sensitive (Mitem, not Children_Shown (Item));
       Command := new Imported_By_Command;
       Register_Contextual_Menu
         (Kernel, "Show projects imported",
@@ -667,9 +871,8 @@ package body Browsers.Projects is
         (Kernel, "Show recursive projects imported",
          Label  => -"Show projects imported by %p recursively",
          Action => Command,
-         Filter => Create (Module => Project_Browser_Module_Name));
+         Filter => Lookup_Filter (Kernel, "Project only"));
 
-      --  ??? Set_Sensitive (Mitem, not Parents_Shown (Item));
       Command := new Imported_By_Command;
       Imported_By_Command (Command.all).Show_Ancestors := True;
       Register_Contextual_Menu

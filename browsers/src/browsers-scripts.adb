@@ -170,21 +170,6 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all commands for the python classes in this package.
 
-   type Background_Type is (Background_None,
-                            Background_Color,
-                            Background_Grid_Lines,
-                            Background_Grid_Dots);
-
-   type GPS_Canvas_View_Record is new Canvas_View_Record with record
-      Background : Background_Type := Background_None;
-      Grid_Style : Drawing_Style;
-   end record;
-   type GPS_Canvas_View is access all GPS_Canvas_View_Record'Class;
-   overriding procedure Draw_Internal
-     (Self    : not null access GPS_Canvas_View_Record;
-      Context : Draw_Context;
-      Area    : Model_Rectangle);
-
    type Browser_View_Record is new Generic_Views.View_Record with record
       View      : GPS_Canvas_View;
       Read_Only : Boolean := True;
@@ -670,44 +655,6 @@ package body Browsers.Scripts is
          Model.Refresh_Layout;
       end if;
    end Diagram_Handler;
-
-   -------------------
-   -- Draw_Internal --
-   -------------------
-
-   overriding procedure Draw_Internal
-     (Self    : not null access GPS_Canvas_View_Record;
-      Context : Draw_Context;
-      Area    : Model_Rectangle)
-   is
-   begin
-      case Self.Background is
-         when Background_None =>
-            null;
-
-         when Background_Color =>
-            if Self.Grid_Style.Get_Fill /= Null_Pattern then
-               Set_Source (Context.Cr, Self.Grid_Style.Get_Fill);
-               Paint (Context.Cr);
-            end if;
-
-         when Background_Grid_Lines =>
-            Draw_Grid_Lines
-              (Self    => Self,
-               Style   => Self.Grid_Style,
-               Context => Context,
-               Area    => Area);
-
-         when Background_Grid_Dots =>
-            Draw_Grid_Lines
-              (Self    => Self,
-               Style   => Self.Grid_Style,
-               Context => Context,
-               Area    => Area);
-      end case;
-
-      Canvas_View_Record (Self.all).Draw_Internal (Context, Area);
-   end Draw_Internal;
 
    --------------------------
    -- On_Selection_Changed --

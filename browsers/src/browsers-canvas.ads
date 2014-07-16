@@ -16,29 +16,24 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;
-
 with Cairo.Region;
-
+with GNAT.Strings;
+with GPS.Kernel;
 with Gdk.Event;
 with Gdk.Pixbuf;
 with Gdk.Rectangle;
-
+with Generic_Views;
 with Glib.Object;
-
 with Gtk.Handlers;
 with Gtk.Hbutton_Box;
 with Gtk.Menu;
 with Gtk.Stock;
 with Gtk.Toolbar;
 with Gtk.Widget;
-
 with Gtkada.Canvas;
-
+with Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Models;
 with Pango.Layout;
-
-with Generic_Views;
-with GPS.Kernel;
 
 package Browsers.Canvas is
 
@@ -46,8 +41,36 @@ package Browsers.Canvas is
    --  Margin used when drawing the items, to leave space around the arrows and
    --  the actual contents of the item
 
+   type Browser_Model_Record is new Gtkada.Canvas_View.List_Canvas_Model_Record
+   with null record;
+   type Browser_Model is access all Browser_Model_Record'Class;
+   --  which type of model we are using
+
+   overriding function Is_Selectable
+     (Self : not null access Browser_Model_Record;
+      Item : not null access Gtkada.Canvas_View.Abstract_Item_Record'Class)
+      return Boolean;
+
    type General_Browser_Record is new Generic_Views.View_Record with private;
    type General_Browser is access all General_Browser_Record'Class;
+   --  Encapsulates a browser, based either on Gtkada.Canvas or
+   --  Gtk.Canvas_View.
+
+   type Styles is record
+      Item        : Drawing_Style; --  Style to draw the item itself
+      Title       : Drawing_Style; --  Style to use the background of the title
+      Title_Font  : Drawing_Style; --  Style to draw the title itself
+      Text_Font   : Drawing_Style; --  Style to draw the contents of the box
+      Link_Label  : Drawing_Style; --  Style to draw labels on links
+      Link        : Drawing_Style; --  Style to draw the links themselves
+      Link2       : Drawing_Style; --  Style to draw other links
+      Highlight   : Drawing_Style; --  Parents or children of selected items
+
+      Selected_Link : Drawing_Style; --  link to selected items
+   end record;
+   function Get_Styles
+     (Self : not null access General_Browser_Record'Class) return Styles;
+   --  The styles to use when drawing items
 
    overriding procedure Create_Toolbar
      (View    : not null access General_Browser_Record;
@@ -69,7 +92,8 @@ package Browsers.Canvas is
      (Browser         : access General_Browser_Record'Class;
       Create_Toolbar  : Boolean;
       Parents_Pixmap  : String := Gtk.Stock.Stock_Go_Back;
-      Children_Pixmap : String := Gtk.Stock.Stock_Go_Forward);
+      Children_Pixmap : String := Gtk.Stock.Stock_Go_Forward;
+      Use_Canvas_View : Boolean := False);
    --  Initialize a new browser.
    --  It sets up all the contextual menu for this browser, as well as the key
    --  shortcuts to manipulate the browser.
@@ -97,8 +121,12 @@ package Browsers.Canvas is
    --  Return the toolbar at the bottom of the browser. This returns null if no
    --  toolbar was created in the call to Initialize.
 
-   function Get_Canvas (Browser : access General_Browser_Record)
+   function Get_Canvas
+     (Browser : access General_Browser_Record)
       return Gtkada.Canvas.Interactive_Canvas;
+   function Get_View
+     (Browser : access General_Browser_Record)
+      return Gtkada.Canvas_View.Canvas_View;
    --  Return the canvas embedded in Browser
 
    function Get_Kernel (Browser : access General_Browser_Record)
@@ -116,6 +144,9 @@ package Browsers.Canvas is
    --  Recompute the layout of items in the browser.
    --  If Force is true, then even the items that have been moved manually by
    --  the user are recomputed.
+
+   procedure Refresh_Layout (Self : not null access General_Browser_Record);
+   --  Recompute the position of all items.
 
    procedure Refresh_Layout_Orientation
      (Browser : access General_Browser_Record);
@@ -184,7 +215,11 @@ package Browsers.Canvas is
       Context : in out GPS.Kernel.Selection_Context;
       Browser : access General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu);
+      Menu    : Gtk.Menu.Gtk_Menu) is null;
+   procedure Contextual_Factory
+     (Browser : not null access General_Browser_Record;
+      Context : in out GPS.Kernel.Selection_Context;
+      Details : Gtkada.Canvas_View.Canvas_Event_Details) is null;
    --  Return the selection context to use when an item is clicked on.
    --  The coordinates in Event are relative to the upper-left corner of the
    --  item.
@@ -196,6 +231,8 @@ package Browsers.Canvas is
    --  You shoud make sure that this function can be used with a null event and
    --  a null menu, which is the case when creating a current context for
    --  GPS.Kernel.Get_Current_Context.
+   --
+   --  Only one of these is used, depending on the type of canvas
 
    procedure Recompute_Size
      (Item   : not null access Browser_Item_Record'Class);
@@ -303,6 +340,16 @@ package Browsers.Canvas is
    --
    --  This procedure doesn't need to reset the active areas for the buttons,
    --  this is done automatically.
+
+   procedure Setup_Titlebar
+     (Item    : not null access Gtkada.Canvas_View.Container_Item_Record'Class;
+      Browser : not null access General_Browser_Record'Class;
+      Name    : String;
+      Left, Right : access Gtkada.Canvas_View.Container_Item_Record'Class :=
+        null);
+   --  Add the title bar items (title, arrows, close button,...)
+   --  The two arrows should have been created and passed as argument, so that
+   --  the proper callback is set on them
 
    procedure Reset
      (Item : access Browser_Item_Record;
@@ -528,14 +575,23 @@ package Browsers.Canvas is
 
 private
 
-   type General_Browser_Record is new Generic_Views.View_Record with record
-      Canvas                   : Gtkada.Canvas.Interactive_Canvas;
-      Toolbar                  : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
+   package List_Rtree is new Gtkada.Canvas_View.Models.Rtree_Models
+     (Browser_Model_Record);
 
-      Selected_Item            : Gtkada.Canvas.Canvas_Item;
+   type General_Browser_Record is new Generic_Views.View_Record with record
+      Toolbar                  : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
 
       Close_Pixmap             : Gdk.Pixbuf.Gdk_Pixbuf;
       Up_Arrow, Down_Arrow     : Gdk.Pixbuf.Gdk_Pixbuf;
+
+      Use_Canvas_View : Boolean;
+
+      View       : GPS_Canvas_View;
+      Model      : List_Rtree.Rtree_Model;
+      The_Styles : Styles;
+
+      Canvas        : Gtkada.Canvas.Interactive_Canvas;
+      Selected_Item : Gtkada.Canvas.Canvas_Item;
    end record;
 
    type Active_Area_Tree_Record;
@@ -561,8 +617,7 @@ private
       Cr   : Cairo.Cairo_Context);
    --  See doc for inherited subprograms
 
-   type Browser_Item_Record is new Gtkada.Canvas.Canvas_Item_Record
-   with record
+   type Browser_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with record
       Hide_Links : Boolean := False;
       Browser    : General_Browser;
 
