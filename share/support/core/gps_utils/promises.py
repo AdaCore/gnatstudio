@@ -69,6 +69,7 @@ class ProcessWrapper():
         self.__final_promise = None
         self.__current_promise = None
         self.__current_pattern = None
+        self.__current_answered = False
         self.__output = ""
         self.finished = False
         self.__process = GPS.Process(cmd, ".+",
@@ -89,6 +90,7 @@ class ProcessWrapper():
             # if the pattern is found, update the output to remaining and
             # answer the promise with True->found it
             if p is not None:
+                self.__current_answered = True
                 self.__output = self.__output[p.span()[1]::]
                 self.__current_promise.resolve(True)
 
@@ -98,9 +100,14 @@ class ProcessWrapper():
            Final_promise will be solved with status
            Current_promise will be solved with False
         """
+        # mark my process as finished
+        self.finished = True
+        # print self.__output
+
         # check if there's unanswered match promises
         # if there is --> the pattern is never found, answer it with False
-        if self.__current_promise is not None:
+        if self.__current_promise is not None and \
+           not self.__current_answered:
             self.__current_promise.resolve(False)
 
         # check if I had made a promise to finish the process
@@ -108,13 +115,11 @@ class ProcessWrapper():
         if self.__final_promise is not None:
             self.__final_promise.resolve(status)
 
-        # mark my process as finished
-        self.finished = True
-
     def wait_until_match(self, pattern=None, timeout=0):
         """
            Called by user. Make a promise to them that:
            I'll let you know when the pattern is matched/never matches
+           Promise made here will be answered with: True/False
         """
 
         # keep the pattern info and return my promise
@@ -143,15 +148,18 @@ class ProcessWrapper():
         """
            Called by GPS when it's timeout for a pattern to appear in output.
         """
-        if self.__current_promise is not None:
+        timeout.remove()
+        if not self.__current_answered:
+            self.__current_pattern = None
+            self.__current_answered = True
             # if the pattern is not found, answer the promise with False
             self.__current_promise.resolve(False)
-        self.__current_pattern = None
-        self.__current_promise = None
-        timeout.remove()
 
     def get(self):
         return self.__process
+
+    def kill(self):
+        self.__process.kill()
 
 
 class DebuggerWrapper():
@@ -187,7 +195,7 @@ class DebuggerWrapper():
         """
         # if the debugger is not busy
         if not self.__debugger.is_busy():
-
+            timeout.remove()
             # and if there's cmd to run, send it
             # remove the timer and deadline
             # and answer the promise with the output
@@ -227,8 +235,12 @@ class DebuggerWrapper():
     def wait_and_send(self, cmd="", timeout=0, block=False):
         """
            Called by user on request for command within deadline (time)
+           Promise returned here will be answered with: output
+
+           This method may also function as a pure block-debugger-and-wait-
+           until-not-busy call, by default and blcok=True.
         """
-        self.__remove_timers()
+
         self.__this_promise = Promise()
         self.__next_cmd = cmd
         self.__output = None
@@ -237,7 +249,6 @@ class DebuggerWrapper():
         if not block:
             if timeout > 0:
                 self.__deadline = GPS.Timeout(timeout, self.__on_cmd_timeout)
-
         return self.__this_promise
 
     def get(self):

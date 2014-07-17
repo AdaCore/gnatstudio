@@ -17,7 +17,6 @@ def driver(w):
             else:
                 # otherwise goto the next step
                 p = w.next()
-
             # if none is get instead of a promise,
             # go ahead
             if p is None:
