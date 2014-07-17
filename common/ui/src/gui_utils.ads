@@ -251,6 +251,14 @@ package GUI_Utils is
    --  cursor corresponding to Event, if any. Otherwise return the current
    --  selection.
 
+   procedure Move_Row
+     (View    : not null access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Iter    : in out Gtk.Tree_Model.Gtk_Tree_Iter;
+      Forward : Boolean := True);
+   --  Move the iterator to the next row.
+   --  This row might be a child of the current position, a sibling or a
+   --  parent.
+
    function Find_Node
      (Model  : Gtk.Tree_Store.Gtk_Tree_Store;
       Name   : String;

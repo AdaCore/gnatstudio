@@ -2236,4 +2236,57 @@ package body GUI_Utils is
       end if;
    end Grab_Toplevel_Focus;
 
+   --------------
+   -- Move_Row --
+   --------------
+
+   procedure Move_Row
+     (View    : not null access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Iter    : in out Gtk_Tree_Iter;
+      Forward : Boolean := True)
+   is
+      Model : constant Gtk_Tree_Model := Get_Model (View);
+      C, P  : Gtk_Tree_Iter;
+      Path  : Gtk_Tree_Path;
+      Dummy : Boolean;
+      pragma Unreferenced (Dummy);
+   begin
+      if Forward then
+         C := Children (Model, Iter);
+         if C /= Null_Iter then
+            Path := Get_Path (Model, C);
+            Dummy := View.Expand_Row (Path, Open_All => False);
+            Iter := C;
+            return;
+         end if;
+
+         C := Iter;
+         Next (Model, C);
+         if C /= Null_Iter then
+            Iter := C;
+            return;
+         end if;
+
+         C := Parent (Model, Iter);
+         Next (Model, C);
+         Iter := C;
+      else
+         P := Iter;
+         Previous (Model, P);
+         if P /= Null_Iter then
+            if Has_Child (Model, P) then
+               Iter := Nth_Child (Model, P, N_Children (Model, P));
+               Path := Get_Path (Model, P);
+               Dummy := View.Expand_Row (Path, Open_All => False);
+               return;
+            end if;
+
+            Iter := P;
+            return;
+         end if;
+
+         Iter := Parent (Model, Iter);
+      end if;
+   end Move_Row;
+
 end GUI_Utils;

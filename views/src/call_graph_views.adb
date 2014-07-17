@@ -214,6 +214,14 @@ package body Call_Graph_Views is
      (Command : access Calltree_Remove_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   type Calltree_Next_Or_Previous_Command
+   is new Interactive_Command with record
+      Next : Boolean := True;
+   end record;
+   overriding function Execute
+     (Command : access Calltree_Next_Or_Previous_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    type Calltree_Collapse_All_Command
       is new Interactive_Command with null record;
    overriding function Execute
@@ -1687,6 +1695,61 @@ package body Call_Graph_Views is
    -------------
 
    overriding function Execute
+     (Command : access Calltree_Next_Or_Previous_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : constant Callgraph_View_Access :=
+        Generic_View.Get_Or_Create_View (Kernel);
+      Iter   : Gtk_Tree_Iter;
+      Model  : Gtk_Tree_Model;
+   begin
+      View.Locations_Tree.Get_Selection.Get_Selected (Model, Iter);
+      if Iter /= Null_Iter then
+         if Command.Next then
+            Next (Model, Iter);
+         else
+            Previous (Model, Iter);
+         end if;
+
+         if Iter /= Null_Iter then
+            View.Locations_Tree.Get_Selection.Select_Iter (Iter);
+            Select_Current_Location (View);
+            return Commands.Success;
+         else
+            View.Locations_Tree.Get_Selection.Unselect_All;
+         end if;
+      end if;
+
+      View.Tree.Get_Selection.Get_Selected (Model, Iter);
+      if Iter /= Null_Iter then
+         Move_Row (View.Tree, Iter, Forward => Command.Next);
+      end if;
+
+      if Iter /= Null_Iter then
+         View.Tree.Get_Selection.Select_Iter (Iter);
+
+         if not Command.Next then
+            View.Locations_Tree.Get_Selection.Select_Iter
+              (Nth_Child
+                 (View.Locations_Model, Null_Iter,
+                  N_Children (View.Locations_Model) - 1));
+         end if;
+
+         Select_Current_Location (View);
+
+      else
+         View.Tree.Get_Selection.Unselect_All;
+      end if;
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
      (Command : access Entity_Calls_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1811,6 +1874,22 @@ package body Call_Graph_Views is
          -"Close all nodes in the call tree",
          Stock_Id => GPS_Collapse_All,
          Category => -"Call trees");
+
+      Register_Action
+        (Kernel, "calltree previous",
+         new Calltree_Next_Or_Previous_Command'
+           (Interactive_Command with Next => False),
+         -"Move to the previous line in the call tree",
+         Stock_Id => "gps-navigate-back",
+         Category => -"Call trees");
+      Register_Action
+        (Kernel, "calltree next",
+         new Calltree_Next_Or_Previous_Command'
+           (Interactive_Command with Next => True),
+         -"Move to the next line in the call tree",
+         Stock_Id => "gps-navigate-forward",
+         Category => -"Call trees");
+
    end Register_Module;
 
 end Call_Graph_Views;

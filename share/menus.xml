@@ -464,6 +464,9 @@
       <button action='calltree remove selection'/>
       <separator/>
       <button action='calltree collapse all'/>
+      <separator/>
+      <button action='calltree previous'/>
+      <button action='calltree next'/>
    </toolbar>
 
    <toolbar id='Windows'>
