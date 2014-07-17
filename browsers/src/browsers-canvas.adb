@@ -97,7 +97,7 @@ package body Browsers.Canvas is
 
    Hist_Align_On_Grid : constant History_Key := "browsers-align-on-grid";
    Hist_Straight_Links : constant History_Key := "browsers-straight-links";
-   Hist_Draw_Grid : constant History_Key := "browsers-draw-grid";
+   Hist_Draw_Grid : constant History_Key := "browsers-display-grid";
 
    Zoom_Duration : constant := 0.25;
    --  Duration of the zoom animation
@@ -348,7 +348,7 @@ package body Browsers.Canvas is
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Browser.Kernel).all,
-         Hist_Draw_Grid, Default_Value => True);
+         Hist_Draw_Grid, Default_Value => False);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Browser.Kernel).all,
          Hist_Straight_Links, Default_Value => True);
@@ -629,7 +629,7 @@ package body Browsers.Canvas is
         (-"Whether to draw a grid in the background");
       Associate
         (Get_History (View.Kernel).all, Hist_Draw_Grid,
-         Check, Default => True);
+         Check, Default => False);
       Menu.Append (Check);
       Widget_Callback.Object_Connect
         (Check, Gtk.Check_Menu_Item.Signal_Toggled,
@@ -1121,8 +1121,9 @@ package body Browsers.Canvas is
          end if;
 
          View.View.Grid_Style := Gtk_New
-           (Stroke => (0.8, 0.8, 0.8, 0.8),   --  the grid color
-            Fill   => Create_Rgba_Pattern
+           (Stroke     => (0.9, 0.9, 0.9, 0.5),   --  the grid color
+            Line_Width => 1.0,                    --  the grid line width
+            Fill       => Create_Rgba_Pattern
               (Browsers_Bg_Color.Get_Pref));  --  the background color
       else
          Configure
