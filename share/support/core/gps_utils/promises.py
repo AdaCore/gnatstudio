@@ -1,5 +1,5 @@
 """
-   The 3 classes here:
+   The 4 classes here:
    class Promise
      - provides thenable promises for any method, process and procedures
 
@@ -21,7 +21,8 @@ class Promise:
        A promise is thenable: it can execute the resolve function and return a
        new promise.
     """
-    # the function that is called to fullfill the promise
+
+    # answer = a function/handler that is called to fullfill the promise
     answer = None
 
     def then(self, answer=None):
@@ -33,7 +34,7 @@ class Promise:
 
     def resolve(self, result=None):
         """
-           If there is a handler call it, parameterized by the result
+           If there is a handler, then call it -> parameterized by the result
         """
         if self.answer is not None:
             self.answer(result)
@@ -42,14 +43,15 @@ class Promise:
 class ProcessWrapper():
     """
        ProcessWrapper is a advanced process manager
-       It make a promise (yield object of the promise class) when user:
+       It makes a promise (yield object of the promise class) when user:
            1 want to wait for match in output
            2 want to wait until process finish
        and the corresponding promises are answered with user defined
        handler (functions) when:
-           1 the pattern matches/timeout
+           1 the pattern matches or timeout.
            2 the process is terminated by GPS.
     """
+
     def __init__(self, cmdargs=[]):
         """
            Initialize and run a process with no promises,
@@ -59,19 +61,32 @@ class ProcessWrapper():
            the process is unfinished and no pattern has matched yet.
         """
 
-        # input for constructor is a list of commands
+        # input for constructor is a list for command and args
         # concatenate them into a string
         cmd = ""
         for i in cmdargs:
             cmd += (i+" ")
         cmd = cmd.rstrip(" ")
 
+        # __final_promise = about termination
         self.__final_promise = None
+
+        # __current_promise = about on waiting wish for match something
         self.__current_promise = None
+
+        # __current_pattern = regexp that user waiting for in the output
         self.__current_pattern = None
+
+        # __whether the __current_promise is answered
         self.__current_answered = False
+
+        # __output = a buffer for current output of self.__process
         self.__output = ""
+
+        # __whether process has finished
         self.finished = False
+
+        # handler of process will be created -> start running
         self.__process = GPS.Process(cmd, ".+",
                                      on_match=self.__on_match,
                                      on_exit=self.__on_exit)
@@ -80,15 +95,21 @@ class ProcessWrapper():
         """
            Called by GPS everytime there's output comming
         """
+
         # Update all output returned by the process
         # and store it as a private buffer
+
         self.__output += match + unmatch
 
         # check if user has issued some pattern to match
+
         if self.__current_pattern is not None:
+
             p = re.search(self.__current_pattern, self.__output)
+
             # if the pattern is found, update the output to remaining and
-            # answer the promise with True->found it
+            # answer the promise with True-->found it
+
             if p is not None:
                 self.__current_answered = True
                 self.__output = self.__output[p.span()[1]::]
@@ -100,18 +121,18 @@ class ProcessWrapper():
            Final_promise will be solved with status
            Current_promise will be solved with False
         """
+
         # mark my process as finished
         self.finished = True
-        # print self.__output
 
         # check if there's unanswered match promises
-        # if there is --> the pattern is never found, answer it with False
+        # if there is --> pattern has never been found, answer with False
         if self.__current_promise is not None and \
            not self.__current_answered:
             self.__current_promise.resolve(False)
 
         # check if I had made a promise to finish the process
-        # if there is, answer that promise with whatever the result is
+        # if there is, answer with whatever the exit status is
         if self.__final_promise is not None:
             self.__final_promise.resolve(status)
 
@@ -119,23 +140,28 @@ class ProcessWrapper():
         """
            Called by user. Make a promise to them that:
            I'll let you know when the pattern is matched/never matches
-           Promise made here will be answered with: True/False
+           * Promise made here will be answered with: True/False
         """
 
         # keep the pattern info and return my promise
         self.__current_pattern = pattern
         self.__current_promise = Promise()
 
-        # if user set up a timeout, set up: close output check after timeout
+        # if user defines a timeout, set up to
+        # close output check after that timeout
+
         if timeout > 0:
             x = GPS.Timeout(timeout, self.__on_timeout)
+
         return self.__current_promise
 
     def wait_until_terminate(self):
         """
-           Called by impatient user. Make a promise to them that:
+           Called by user. Make a promise to them that:
            I'll let you know when the process is finished
+           * Promise made here will be answered with: exit status
         """
+
         # process has already terminated, return nothing
         if self.finished:
             return None
@@ -148,11 +174,13 @@ class ProcessWrapper():
         """
            Called by GPS when it's timeout for a pattern to appear in output.
         """
+
         timeout.remove()
+        # current promise unanswered --> too late, it fails
         if not self.__current_answered:
             self.__current_pattern = None
             self.__current_answered = True
-            # if the pattern is not found, answer the promise with False
+            # answer the promise with False
             self.__current_promise.resolve(False)
 
     def get(self):
@@ -182,29 +210,47 @@ class DebuggerWrapper():
            Initialize a manager, begin a debugger on the given file
            with no timers, no promises, no command
         """
+
+        # handler for debugger
         self.__debugger = GPS.Debugger.spawn(f)
+
+        # current on waiting promise
         self.__this_promise = None
+
+        # the command to be sent
         self.__next_cmd = None
+
+        # the output returned after send __next_cmd
         self.__output = None
+
+        # regular checker that checks if debugger is busy
         self.__timer = None
+
+        # deadline for __next_cmd and __this_promise
         self.__deadline = None
 
     def __is_busy(self, timeout):
         """
            Called by GPS at each interval.
         """
+
         # if the debugger is not busy
         if not self.__debugger.is_busy():
+
+            # remove the regular checker
             timeout.remove()
+
             # and if there's cmd to run, send it
-            # remove the timer and deadline
-            # and answer the promise with the output
             if self.__next_cmd is not None:
+
                 if self.__next_cmd is not "":
                     self.__output = self.__debugger.send(self.__next_cmd)
                     self.__next_cmd = None
                     self.__remove_timers()
                     self.__this_promise.resolve(self.__output)
+
+                # "" cmd are default value when making promise,
+                # it's also a maker for pure checker
                 else:
                     self.__this_promise.resolve(True)
 
@@ -212,6 +258,7 @@ class DebuggerWrapper():
         """
            Called by GPS at when the deadline defined by user is reached
         """
+
         # remove all timers
         self.__remove_timers()
 
@@ -239,6 +286,7 @@ class DebuggerWrapper():
 
            This method may also function as a pure block-debugger-and-wait-
            until-not-busy call, by default and blcok=True.
+           Promise returned for this purpose will be answered with: True/False
         """
 
         self.__this_promise = Promise()
@@ -246,12 +294,17 @@ class DebuggerWrapper():
         self.__output = None
 
         self.__timer = GPS.Timeout(self.__query_interval, self.__is_busy)
+
+        # only register deadline for real command waiting
         if not block:
             if timeout > 0:
                 self.__deadline = GPS.Timeout(timeout, self.__on_cmd_timeout)
         return self.__this_promise
 
     def get(self):
+        """
+           Accessible interface for my debugger
+        """
         return self.__debugger
 
 
@@ -266,15 +319,22 @@ class TargetWrapper():
         """
            Build the target and initialize promise to None
         """
+
+        # handler for my target
         self.__target = GPS.BuildTarget(target_name)
+
+        # promise about building this target
         self.__promise = None
 
     def wait_on_execute(self):
         """
            Called by the user. Will execute the target and return a promise.
+           Promises made here will be answered with: exit status of building
         """
+
         self.__promise = Promise()
         self.__target.execute(synchronous=False, on_exit=self.__on_exit)
+
         return self.__promise
 
     def __on_exit(self, status):
