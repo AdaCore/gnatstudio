@@ -66,7 +66,8 @@ package Browsers.Canvas is
       Link2       : Drawing_Style; --  Style to draw other links
       Highlight   : Drawing_Style; --  Parents or children of selected items
 
-      Selected_Link : Drawing_Style; --  link to selected items
+      Selected_Link  : Drawing_Style; --  link to selected items
+      Invisible_Link : Drawing_Style;
    end record;
    function Get_Styles
      (Self : not null access General_Browser_Record'Class) return Styles;
@@ -87,6 +88,18 @@ package Browsers.Canvas is
    type Browser_Link is access all Browser_Link_Record'Class;
    --  The type of links that are put in the canvas. These are automatically
    --  highlighted if they connect a selected item to another one.
+
+   type GPS_Link_Record is new Gtkada.Canvas_View.Canvas_Link_Record with
+      record
+         Default_Style : Drawing_Style;
+         --  The default style to use for the item. This is overriden either
+         --  when the link is made invisible by the user, or is a link to a
+         --  selected item.
+
+         Invisible     : Boolean := False;
+         --  Whether the link is current invisible
+      end record;
+   type GPS_Link is access all GPS_Link_Record'Class;
 
    procedure Initialize
      (Browser         : access General_Browser_Record'Class;

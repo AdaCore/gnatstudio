@@ -854,24 +854,24 @@ package body GPS.Kernel.Preferences is
 
       Selected_Link_Color := Create
         (Manager => Kernel.Preferences,
-         Name    => "Browsers-Selected-Link-Color",
-         Default => "#FF0000",
+         Name    => "browsers-link-to-selected-color",
+         Default => "rgba(230,50,50,0.7)",
          Doc     => -"Color to use for links between selected items",
          Label   => -"Selected link color",
          Page    => -"Browsers");
 
       Unselected_Link_Color := Create
         (Manager => Kernel.Preferences,
-         Name    => "Browsers-Unselected-Link-Color",
-         Default => "#000000",
+         Name    => "browsers-link-color",
+         Default => "rgba(180,180,180,0.7)",
          Doc     => -"Color to use for links between unselected items",
          Label   => -"Default link color",
          Page    => -"Browsers");
 
       Parent_Linked_Item_Color := Create
         (Manager => Kernel.Preferences,
-         Name    => "Browsers-Linked-Item-Color",
-         Default => "#AAAAAA",
+         Name    => "browsers-linked-item-outline",
+         Default => "rgba(0,0,180,0.7)",
          Doc     => -("Color to use for the background of the items linked"
                       & " to the selected item"),
          Label   => -"Ancestor items color",
@@ -888,8 +888,8 @@ package body GPS.Kernel.Preferences is
 
       Selected_Item_Color := Create
         (Manager => Kernel.Preferences,
-         Name    => "Browsers-Selected-Item-Color",
-         Default => "#888888",
+         Name    => "browsers-selected-item-outline",
+         Default => "rgba(138,226,52,0.7)",
          Doc     => -"Color to use to draw the selected item",
          Label   => -"Selected item color",
          Page    => -"Browsers");

@@ -434,29 +434,29 @@ package body Browsers.Canvas is
          B.The_Styles.Link_Label := Gtk_New
            (Font => (Name => F3, others => <>));
          B.The_Styles.Link := Gtk_New
-           (Stroke   => (0.7, 0.7, 0.7, 0.7),
+           (Stroke   => Unselected_Link_Color.Get_Pref,
             Arrow_To => (Head   => Solid,
                          Stroke => Null_RGBA,
                          Length => 8.0,
-                         Fill   => (0.7, 0.7, 0.7, 0.7),
+                         Fill   => Unselected_Link_Color.Get_Pref,
                          others => <>));
          B.The_Styles.Selected_Link := Gtk_New
-           (Stroke   => (0.9, 0.2, 0.2, 0.7),
+           (Stroke   => Selected_Link_Color.Get_Pref,
             Arrow_To => (Head   => Solid,
                          Stroke => Null_RGBA,
                          Length => 8.0,
-                         Fill   => (0.9, 0.2, 0.2, 0.7),
+                         Fill   => Selected_Link_Color.Get_Pref,
                          others => <>));
          B.The_Styles.Link2 := Gtk_New
-           (Stroke   => (0.7, 0.7, 0.7, 0.7),
+           (Stroke   => Unselected_Link_Color.Get_Pref,
             Arrow_To => (Head   => Solid,
                          Stroke => Null_RGBA,
                          Length => 8.0,
-                         Fill   => (0.7, 0.7, 0.7, 0.7),
+                         Fill   => Unselected_Link_Color.Get_Pref,
                          others => <>),
             Dashes   => (5.0, 5.0));
          B.The_Styles.Highlight := Gtk_New
-           (Stroke     => (0.0, 0.0, 0.7, 0.7),
+           (Stroke     => Parent_Linked_Item_Color.Get_Pref,
             Line_Width => 2.0);
          B.The_Styles.Item := Gtk_New
            (Fill => Create_Rgba_Pattern (White_RGBA),
@@ -467,10 +467,13 @@ package body Browsers.Canvas is
          B.The_Styles.Text_Font := Gtk_New
            (Font   => (Name => F2, others => <>),
             Stroke => Null_RGBA);
+         B.The_Styles.Invisible_Link := Gtk_New (Stroke => Null_RGBA);
          B.View.Set_Selection_Style
            (Gtk_New
               (Stroke     => Selected,
                Line_Width => 3.0));
+
+         --  ??? Unused preference Child_Linked_Item_Color
 
       else
          Iter := Start (B.Canvas);
@@ -816,10 +819,40 @@ package body Browsers.Canvas is
       B : constant General_Browser := Browser_From_Context (Context.Context);
       Iter : Item_Iterator;
       Item : Gtkada.Canvas.Canvas_Item;
+      S    : Item_Sets.Set;
+      Is_First_Link : Boolean := True;
+      Make_Invisible : Boolean;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         S.Include (Abstract_Item (Item));
+      end On_Item;
+
+      procedure On_Link (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Link (Item : not null access Abstract_Item_Record'Class) is
+         L : constant GPS_Link := GPS_Link (Item);
+      begin
+         if Is_First_Link then
+            --  All links must be made invisible or visible.
+            Make_Invisible := not L.Invisible;
+            Is_First_Link := False;
+         end if;
+
+         L.Invisible := Make_Invisible;
+
+         if not L.Invisible then
+            L.Set_Style (L.Default_Style);
+         else
+            L.Set_Style (B.Get_Styles.Invisible_Link);
+         end if;
+      end On_Link;
+
    begin
       if B.Use_Canvas_View then
-         B.Get_Styles.Link.Set_Stroke (Null_RGBA);
-         --   ??? Should also hide arrow
+         B.Model.For_Each_Item
+           (On_Item'Access, Filter => Kind_Item, Selected_Only => True);
+         B.View.Model.For_Each_Link (On_Link'Access, From_Or_To => S);
          B.View.Queue_Draw;
 
       else

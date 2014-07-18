@@ -132,14 +132,6 @@ package body Browsers.Projects is
       Project : Project_Type);
    --  Create a new project vertex
 
-   procedure Gtk_New_Link
-     (L               : out Canvas_Link;
-      Browser         : not null access Project_Browser_Record'Class;
-      Src, Dest       : not null access Abstract_Item_Record'Class;
-      Is_Limited_With : Boolean := False;
-      Extending       : Boolean := False);
-   --  Create a new link
-
    function Project_Of
      (Self : not null access Project_Item_Record'Class) return Project_Type;
    --  Return the project associated with Item
@@ -153,10 +145,13 @@ package body Browsers.Projects is
    -- Browser links --
    -------------------
 
-   type Browser_Link_Record is new Canvas_Link_Record with record
-      Default_Style : Drawing_Style;
-   end record;
-   type Browser_Link is access all Browser_Link_Record'Class;
+   procedure Gtk_New_Link
+     (L               : out Canvas_Link;
+      Browser         : not null access Project_Browser_Record'Class;
+      Src, Dest       : not null access Abstract_Item_Record'Class;
+      Is_Limited_With : Boolean := False;
+      Extending       : Boolean := False);
+   --  Create a new link
 
    procedure On_Selection_Changed
      (Self  : not null access GObject_Record'Class;
@@ -293,7 +288,7 @@ package body Browsers.Projects is
       Extending       : Boolean := False)
    is
       S  : constant Styles := Browser.Get_Styles;
-      L2 : constant Browser_Link := new Browser_Link_Record;
+      L2 : constant GPS_Link := new GPS_Link_Record;
    begin
       if Is_Limited_With then
          L2.Default_Style := S.Link2;
@@ -619,15 +614,17 @@ package body Browsers.Projects is
 
       procedure On_Link (Link : not null access Abstract_Item_Record'Class);
       procedure On_Link (Link : not null access Abstract_Item_Record'Class) is
-         It   : Browser_Link;
+         It   : GPS_Link;
          Dest : Abstract_Item;
       begin
-         if Link.all in Browser_Link_Record'Class then
-            It := Browser_Link (Link);
-            if Selected then
-               It.Set_Style (Browser.Get_Styles.Selected_Link);
-            else
-               It.Set_Style (It.Default_Style);
+         if Link.all in GPS_Link_Record'Class then
+            It := GPS_Link (Link);
+            if not It.Invisible then
+               if Selected then
+                  It.Set_Style (Browser.Get_Styles.Selected_Link);
+               else
+                  It.Set_Style (It.Default_Style);
+               end if;
             end if;
 
             Dest := Get_From (It);
