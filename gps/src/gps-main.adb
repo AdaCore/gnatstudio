@@ -79,6 +79,7 @@ with GPS.Kernel.Clipboard;             use GPS.Kernel.Clipboard;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;              use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;                use GPS.Kernel.Custom;
+with GPS.Kernel.Entities;              use GPS.Kernel.Entities;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
@@ -112,6 +113,7 @@ with Ada_Module;
 with Aliases_Module;
 with Bookmark_Views;
 with Browsers.Call_Graph;
+with Browsers.Canvas;
 with Browsers.Dependency_Items;
 with Browsers.Elaborations;
 with Browsers.Entities;
@@ -1960,6 +1962,10 @@ procedure GPS.Main is
       Ada_Semantic_Tree_Module.Register_Module
         (GPS_Main.Kernel,
          Create_From_Dir (Prefix_Dir, "share/gps/predefined_ada.xml"));
+
+      GPS.Kernel.Entities.Register_Module (GPS_Main.Kernel);
+
+      Browsers.Canvas.Register_Actions (GPS_Main.Kernel);
 
       if Active (Call_Graph_Trace) then
          Browsers.Call_Graph.Register_Module (GPS_Main.Kernel);

@@ -4926,10 +4926,8 @@ class Entity(object):
         Displays the list of entities that call the entity. The returned
         value is a dictionary whose keys are instances of :class:`Entity`
         calling this entity, and whose value is a list of
-        :class:`FileLocation` instances where the entity is referenced. This
-        command might take a while to execute, since GPS needs to get the
-        cross-reference information for lots of source files.  If
-        dispatching_calls is true, then calls to self that might occur
+        :class:`FileLocation` instances where the entity is referenced.
+        If dispatching_calls is true, then calls to self that might occur
         through dispatching are also listed.
 
         :param dispatching_calls: A boolean

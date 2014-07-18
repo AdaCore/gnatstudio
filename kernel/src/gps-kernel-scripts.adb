@@ -129,10 +129,6 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the default commands
 
-   procedure Create_Entity_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   --  Handler for the "Entity" command
-
    procedure Create_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the "Project" command
@@ -527,18 +523,6 @@ package body GPS.Kernel.Scripts is
          GPS.Kernel.Preferences.Emit_Preferences_Changed (Kernel);
       end if;
    end Default_Command_Handler;
-
-   -----------------------------------
-   -- Create_Entity_Command_Handler --
-   -----------------------------------
-
-   procedure Create_Entity_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String) is
-   begin
-      if Command = "category" then
-         Set_Return_Value (Data, Get_Data (Data, 1).Get_Display_Kind);
-      end if;
-   end Create_Entity_Command_Handler;
 
    ------------------------------------
    -- Create_Project_Command_Handler --
@@ -1440,13 +1424,7 @@ package body GPS.Kernel.Scripts is
          Handler       => Default_Command_Handler'Access);
 
       GPS.Scripts.Files.Register_Commands (Kernel);
-
       GPS.Scripts.Entities.Register_Commands (Kernel);
-      Register_Command
-        (Kernel, "category",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Create_Entity_Command_Handler'Access);
-
       GPS.Scripts.File_Locations.Register_Commands (Kernel);
 
       GNATCOLL.Scripts.Projects.Register_Commands (Kernel.Scripts, Kernel);

@@ -14,11 +14,12 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 --  Implementation of Entity class
 
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GPS.Core_Kernels;
-with Xref;
+with Xref;                   use Xref;
 
 package GPS.Scripts.Entities is
 
