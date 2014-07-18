@@ -705,18 +705,21 @@ package body Browsers.Canvas is
       B : constant General_Browser := Browser_From_Context (Context.Context);
       Iter : Item_Iterator;
       Item : Gtkada.Canvas.Canvas_Item;
+      To_Remove : Item_Sets.Set;
 
       procedure On_Item (Item : not null access Abstract_Item_Record'Class);
       procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
       begin
          if B.Model.Is_Selected (Item) then
-            B.Model.Remove (Item);
+            B.Model.Include_Related_Items (Item, To_Remove);
          end if;
       end On_Item;
 
    begin
       if B.Use_Canvas_View then
          B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+         B.Model.Remove (To_Remove);
+         B.Model.Refresh_Layout;
          B.View.Queue_Draw;
       else
          Iter := Start (B.Canvas);
@@ -757,18 +760,21 @@ package body Browsers.Canvas is
       B : constant General_Browser := Browser_From_Context (Context.Context);
       Iter : Item_Iterator;
       Item : Gtkada.Canvas.Canvas_Item;
+      To_Remove : Item_Sets.Set;
 
       procedure On_Item (Item : not null access Abstract_Item_Record'Class);
       procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
       begin
          if not B.Model.Is_Selected (Item) then
-            B.Model.Remove (Item);
+            B.Model.Include_Related_Items (Item, To_Remove);
          end if;
       end On_Item;
 
    begin
       if B.Use_Canvas_View then
          B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+         B.Model.Remove (To_Remove);
+         B.Model.Refresh_Layout;
          B.View.Queue_Draw;
       else
          Iter := Start (B.Canvas);
