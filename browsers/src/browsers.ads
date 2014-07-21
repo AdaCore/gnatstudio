@@ -28,16 +28,39 @@ package Browsers is
    --  The types of background we can display in a browser
 
    type GPS_Canvas_View_Record is new Gtkada.Canvas_View.Canvas_View_Record
-   with record
-      Background : Background_Type := Background_None;
-      Grid_Style : Drawing_Style;
-   end record;
+   with private;
    type GPS_Canvas_View is access all GPS_Canvas_View_Record'Class;
+
+   type Browser_Styles is record
+      Item        : Drawing_Style; --  Style to draw the item itself
+      Title       : Drawing_Style; --  Style to use the background of the title
+      Title_Font  : Drawing_Style; --  Style to draw the title itself
+      Text_Font   : Drawing_Style; --  Style to draw the contents of the box
+      Link_Label  : Drawing_Style; --  Style to draw labels on links
+      Link        : Drawing_Style; --  Style to draw the links themselves
+      Link2       : Drawing_Style; --  Style to draw other links
+      Highlight   : Drawing_Style; --  Parents or children of selected items
+
+      Circle      : Drawing_Style; --  For items with a circle
+      Label       : Drawing_Style; --  semi-transparent white
+
+      Invisible      : Drawing_Style; --  Invisible item
+      Selected_Link  : Drawing_Style; --  link to selected items
+   end record;
+   --  The styles to use when drawing items
 
    procedure Gtk_New
      (Self  : out GPS_Canvas_View;
       Model : not null access Gtkada.Canvas_View.Canvas_Model_Record'Class);
    --  Create a new canvas
+
+   procedure Create_Styles (Self : not null access GPS_Canvas_View_Record);
+   --  Recompute the styles for the canvas, based on user preferences.
+
+   function Get_Styles
+     (Self : not null access GPS_Canvas_View_Record'Class)
+      return access Browser_Styles;
+   --  Retrieve the styles for drawing items
 
    overriding procedure Draw_Internal
      (Self    : not null access GPS_Canvas_View_Record;
@@ -74,5 +97,14 @@ package Browsers is
    procedure Initialize (Self : not null access Right_Arrow_Record'Class);
    --  Right-pointing arrow in title bars.
    --  You must override On_Click to use this.
+
+private
+
+   type GPS_Canvas_View_Record is new Gtkada.Canvas_View.Canvas_View_Record
+   with record
+      Background : Background_Type := Background_None;
+      Grid_Style : Drawing_Style;
+      Styles     : aliased Browser_Styles;
+   end record;
 
 end Browsers;

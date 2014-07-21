@@ -249,6 +249,12 @@ package body Browsers.Canvas is
       Cb  : access procedure (Link : String));
    --  For each xref in Str (blocks surrounded by @..@), call Cb
 
+   procedure On_Selection_Changed
+     (Self  : not null access GObject_Record'Class;
+      Item  : Abstract_Item);
+   --  Called when the selection changes. This highlights links to and from
+   --  that item.
+
    -------------
    -- Markers --
    -------------
@@ -291,13 +297,103 @@ package body Browsers.Canvas is
       return Get_Window (Gtk_Widget_Record (Canvas.all)'Access);
    end Get_Window;
 
+   --------------------------
+   -- On_Selection_Changed --
+   --------------------------
+
+   procedure On_Selection_Changed
+     (Self  : not null access GObject_Record'Class;
+      Item  : Abstract_Item)
+   is
+   begin
+      Highlight_Related_Items (General_Browser (Self).Get_View, Item);
+   end On_Selection_Changed;
+
+   -----------------------------
+   -- Highlight_Related_Items --
+   -----------------------------
+
+   procedure Highlight_Related_Items
+     (Self   : not null access GPS_Canvas_View_Record'Class;
+      Item   : access Gtkada.Canvas_View.Abstract_Item_Record'Class := null)
+   is
+      Styles   : constant access Browser_Styles := Self.Get_Styles;
+      Selected : Boolean;
+
+      procedure On_Link (Link : not null access Abstract_Item_Record'Class);
+      procedure On_Link (Link : not null access Abstract_Item_Record'Class) is
+         It   : GPS_Link;
+         Dest : Abstract_Item;
+      begin
+         if Link.all in GPS_Link_Record'Class then
+            It := GPS_Link (Link);
+            if not It.Invisible then
+               if Selected then
+                  It.Set_Style (Styles.Selected_Link);
+               else
+                  It.Set_Style (It.Default_Style);
+               end if;
+            end if;
+
+            Dest := Get_From (It);
+            if Dest /= Item then
+               GPS_Item (Dest).Highlighted := Selected;
+            end if;
+
+            Dest := Get_To (It);
+            if Dest /= Item then
+               GPS_Item (Dest).Highlighted := Selected;
+            end if;
+         end if;
+      end On_Link;
+
+      S : Item_Sets.Set;
+
+   begin
+      if Item = null then
+         --  clear selection
+         Selected := False;
+         Self.Model.For_Each_Item (On_Link'Access, Filter => Kind_Link);
+      else
+         Selected := Self.Model.Is_Selected (Item);
+         S.Include (Item);
+         Self.Model.For_Each_Link (On_Link'Access, From_Or_To => S);
+      end if;
+   end Highlight_Related_Items;
+
+   -----------------
+   -- Set_Context --
+   -----------------
+
+   procedure Set_Context
+     (Browser : not null access General_Browser_Record;
+      Context : in out GPS.Kernel.Selection_Context)
+   is
+      Topmost_Selected : Abstract_Item;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         Topmost_Selected := Abstract_Item (Item);
+      end On_Item;
+
+   begin
+      Browser.Get_View.Model.For_Each_Item
+        (Callback      => On_Item'Unrestricted_Access,
+         Selected_Only => True);
+
+      if Topmost_Selected /= null then
+         GPS_Item (Topmost_Selected).Set_Context (Context);
+      end if;
+   end Set_Context;
+
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
      (Browser         : access General_Browser_Record'Class;
-      Create_Toolbar  : Boolean;
+      Create_Toolbar  : Boolean := False;
       Parents_Pixmap  : String := Stock_Go_Back;
       Children_Pixmap : String := Stock_Go_Forward;
       Use_Canvas_View : Boolean := False)
@@ -305,6 +401,8 @@ package body Browsers.Canvas is
       Hook     : Preferences_Hook;
       Scrolled : Gtk_Scrolled_Window;
       Canvas   : Image_Canvas;
+      Id       : Handler_Id;
+      pragma Unreferenced (Id);
    begin
       Gtk.Box.Initialize_Vbox (Browser, Homogeneous => False);
 
@@ -320,6 +418,10 @@ package body Browsers.Canvas is
          Browser.Model.Set_Selection_Mode (Selection_Multiple);
          Gtk_New (Browser.View, Browser.Model);
          Scrolled.Add (Browser.View);
+
+         Id := Browser.Get_View.Model.On_Selection_Changed
+           (On_Selection_Changed'Access, Browser);
+
       else
          Canvas := new Image_Canvas_Record;
          Gtkada.Canvas.Initialize (Canvas);
@@ -395,87 +497,21 @@ package body Browsers.Canvas is
       Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel, Data);
-      Iter            : Item_Iterator;
-
-      function Create_Title_Style (Base : Gdk_RGBA) return Drawing_Style;
-      function Create_Title_Style (Base : Gdk_RGBA) return Drawing_Style is
-         B : Gdk_RGBA;
-         P : Cairo_Pattern;
-      begin
-         P := Pattern_Create_Linear (0.0, 0.0, 0.0, 1.0);
-         B := Lighten (Base, 0.1);
-         Pattern_Add_Color_Stop_Rgb (P, 0.0, B.Red, B.Green, B.Blue);
-         B := Shade (Base, 0.1);
-         Pattern_Add_Color_Stop_Rgb (P, 1.0, B.Red, B.Green, B.Blue);
-         return Gtk_New (Fill => P, Stroke => Null_RGBA);
-      end Create_Title_Style;
-
-      B        : constant General_Browser := Hook.Browser;
-      Selected : constant Gdk_RGBA := Selected_Item_Color.Get_Pref;
-      F        : constant Pango_Font_Description :=
-        Preferences.Default_Font.Get_Pref_Font;
-      F2, F3   : Pango_Font_Description;
+      Iter : Item_Iterator;
+      B    : constant General_Browser := Hook.Browser;
+      F    : Pango_Font_Description;
 
    begin
       Refresh_Layout_Orientation (B);
 
       if B.Use_Canvas_View then
-         --  ??? Should update the style properties directly, to refresh
-         --  existing items, but for now we have no preference for those
-         --  colors.
-
-         F2 := Copy (F);
-         Set_Size (F2, Get_Size (F) - 2 * Pango_Scale);
-
-         F3 := Copy (F);
-         Set_Size (F3, Get_Size (F) - 2 * Pango_Scale);
-
-         B.The_Styles.Title := Create_Title_Style (White_RGBA);
-         B.The_Styles.Link_Label := Gtk_New
-           (Font => (Name => F3, others => <>));
-         B.The_Styles.Link := Gtk_New
-           (Stroke   => Unselected_Link_Color.Get_Pref,
-            Arrow_To => (Head   => Solid,
-                         Stroke => Null_RGBA,
-                         Length => 8.0,
-                         Fill   => Unselected_Link_Color.Get_Pref,
-                         others => <>));
-         B.The_Styles.Selected_Link := Gtk_New
-           (Stroke   => Selected_Link_Color.Get_Pref,
-            Arrow_To => (Head   => Solid,
-                         Stroke => Null_RGBA,
-                         Length => 8.0,
-                         Fill   => Selected_Link_Color.Get_Pref,
-                         others => <>));
-         B.The_Styles.Link2 := Gtk_New
-           (Stroke   => Unselected_Link_Color.Get_Pref,
-            Arrow_To => (Head   => Solid,
-                         Stroke => Null_RGBA,
-                         Length => 8.0,
-                         Fill   => Unselected_Link_Color.Get_Pref,
-                         others => <>),
-            Dashes   => (5.0, 5.0));
-         B.The_Styles.Highlight := Gtk_New
-           (Stroke     => Parent_Linked_Item_Color.Get_Pref,
-            Line_Width => 2.0);
-         B.The_Styles.Item := Gtk_New
-           (Fill => Create_Rgba_Pattern (White_RGBA),
-            Shadow => (Color => (0.0, 0.0, 0.0, 0.1), others => <>));
-         B.The_Styles.Title_Font := Gtk_New
-           (Font   => (Name => Copy (F), others => <>),
-            Stroke => Null_RGBA);
-         B.The_Styles.Text_Font := Gtk_New
-           (Font   => (Name => F2, others => <>),
-            Stroke => Null_RGBA);
-         B.The_Styles.Invisible_Link := Gtk_New (Stroke => Null_RGBA);
-         B.View.Set_Selection_Style
-           (Gtk_New
-              (Stroke     => Selected,
-               Line_Width => 3.0));
+         Create_Styles (B.View);
 
          --  ??? Unused preference Child_Linked_Item_Color
 
       else
+         F := GPS.Kernel.Preferences.Default_Font.Get_Pref_Font;
+
          Iter := Start (B.Canvas);
          while Get (Iter) /= null loop
             declare
@@ -534,11 +570,9 @@ package body Browsers.Canvas is
    --------------
 
    function Get_View
-     (Browser : access General_Browser_Record)
-      return Gtkada.Canvas_View.Canvas_View
-   is
+     (Browser : access General_Browser_Record) return GPS_Canvas_View is
    begin
-      return Canvas_View (Browser.View);
+      return Browser.View;
    end Get_View;
 
    --------------------
@@ -651,6 +685,35 @@ package body Browsers.Canvas is
          Toggle_Orthogonal'Access, View);
    end Create_Menu;
 
+   --------------
+   -- Has_Link --
+   --------------
+
+   function Has_Link
+     (Browser   : not null access General_Browser_Record'Class;
+      Src, Dest : not null access GPS_Item_Record'Class) return Boolean
+   is
+      Exists : Boolean := False;
+
+      procedure On_Link (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Link (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         if not Exists
+           and then Item.all in GPS_Link_Record'Class
+           and then GPS_Link (Item).Get_To = Abstract_Item (Dest)
+         then
+            Exists := True;
+         end if;
+      end On_Link;
+
+      S : Item_Sets.Set;
+
+   begin
+      S.Include (Abstract_Item (Src));
+      Browser.Get_View.Model.For_Each_Link (On_Link'Access, From_Or_To => S);
+      return Exists;
+   end Has_Link;
+
    -------------------------------------
    -- Default_Browser_Context_Factory --
    -------------------------------------
@@ -675,7 +738,9 @@ package body Browsers.Canvas is
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
          if B.Use_Canvas_View then
             B.View.Set_Details (Details, Event.Button);
-            B.Contextual_Factory (Context, Details);
+            if Details.Toplevel_Item /= null then
+               GPS_Item (Details.Toplevel_Item).Set_Context (Context);
+            end if;
          else
             Get_Origin (Get_Window (B.Canvas), Xr, Yr);
             Get_Root_Coords (Event, Xroot, Yroot);
@@ -844,7 +909,7 @@ package body Browsers.Canvas is
          if not L.Invisible then
             L.Set_Style (L.Default_Style);
          else
-            L.Set_Style (B.Get_Styles.Invisible_Link);
+            L.Set_Style (B.Get_View.Get_Styles.Invisible);
          end if;
       end On_Link;
 
@@ -1040,7 +1105,8 @@ package body Browsers.Canvas is
    --------------------
 
    procedure Refresh_Layout
-     (Self : not null access General_Browser_Record)
+     (Self    : not null access General_Browser_Record;
+      Rescale : Boolean := False)
    is
    begin
       if Self.Use_Canvas_View then
@@ -1053,9 +1119,11 @@ package body Browsers.Canvas is
            (Self.View.Model,
             Horizontal           => True,
             Space_Between_Items  => 10.0,
-            Space_Between_Layers => 20.0);
+            Space_Between_Layers => 30.0);
 
-         Self.View.Scale_To_Fit (Max_Scale => 2.0);
+         if Rescale then
+            Self.View.Scale_To_Fit (Min_Scale => 0.5, Max_Scale => 2.0);
+         end if;
 
       else
          Set_Layout_Algorithm (Self.Canvas, Layer_Layout'Access);
@@ -1074,8 +1142,9 @@ package body Browsers.Canvas is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Self);
+      B : constant General_Browser := Browser_From_Context (Context.Context);
    begin
-      Refresh_Layout (Browser_From_Context (Context.Context));
+      Refresh_Layout (B, Rescale => True);
       return Commands.Success;
    end Execute;
 
@@ -2870,43 +2939,38 @@ package body Browsers.Canvas is
       return Browser_From_Context (Context) /= null;
    end Filter_Matches_Primitive;
 
-   ----------------
-   -- Get_Styles --
-   ----------------
-
-   function Get_Styles
-     (Self : not null access General_Browser_Record'Class) return Styles
-   is
-   begin
-      return Self.The_Styles;
-   end Get_Styles;
-
    --------------------
    -- Setup_Titlebar --
    --------------------
 
    procedure Setup_Titlebar
-     (Item    : not null access Gtkada.Canvas_View.Container_Item_Record'Class;
+     (Item    : not null access GPS_Item_Record'Class;
       Browser : not null access General_Browser_Record'Class;
       Name    : String;
-      Left, Right : access Container_Item_Record'Class := null)
+      Left    : access Left_Arrow_Record'Class := null;
+      Right   : access Right_Arrow_Record'Class := null)
    is
       Text  : Text_Item;
       Title : Rect_Item;
       Close : Close_Button;
+      Styles : constant access Browser_Styles := Browser.Get_View.Get_Styles;
    begin
-      Title := Gtk_New_Rect (Browser.The_Styles.Title);
+      Title := Gtk_New_Rect (Styles.Title);
       Title.Set_Child_Layout (Horizontal_Stack);
       Item.Add_Child (Title);
 
       if Left /= null then
+         Item.Left := Abstract_Item (Left);
+         Initialize (Left);
          Title.Add_Child (Left);
       end if;
 
-      Text := Gtk_New_Text (Browser.The_Styles.Title_Font, Name);
+      Text := Gtk_New_Text (Styles.Title_Font, Name);
       Title.Add_Child (Text, Margin => (2.0, 10.0, 0.0, 10.0));
 
       if Right /= null then
+         Item.Right := Abstract_Item (Right);
+         Initialize (Right);
          Title.Add_Child (Right);
       end if;
 
@@ -2915,6 +2979,42 @@ package body Browsers.Canvas is
          Title.Add_Child (Close);
       end if;
    end Setup_Titlebar;
+
+   ---------------------
+   -- Show_Left_Arrow --
+   ---------------------
+
+   procedure Show_Left_Arrow (Self : not null access GPS_Item_Record) is
+   begin
+      Self.Left.Show;
+   end Show_Left_Arrow;
+
+   ----------------------
+   -- Show_Right_Arrow --
+   ----------------------
+
+   procedure Show_Right_Arrow (Self : not null access GPS_Item_Record) is
+   begin
+      Self.Right.Show;
+   end Show_Right_Arrow;
+
+   ---------------------
+   -- Hide_Left_Arrow --
+   ---------------------
+
+   procedure Hide_Left_Arrow (Self : not null access GPS_Item_Record) is
+   begin
+      Self.Left.Hide;
+   end Hide_Left_Arrow;
+
+   ----------------------
+   -- Hide_Right_Arrow --
+   ----------------------
+
+   procedure Hide_Right_Arrow (Self : not null access GPS_Item_Record) is
+   begin
+      Self.Right.Hide;
+   end Hide_Right_Arrow;
 
    -------------------
    -- Is_Selectable --
@@ -2929,5 +3029,22 @@ package body Browsers.Canvas is
    begin
       return Item.all not in Gtkada.Canvas_View.Canvas_Link_Record'Class;
    end Is_Selectable;
+
+   ----------
+   -- Draw --
+   ----------
+
+   overriding procedure Draw
+     (Self : not null access GPS_Item_Record; Context : Draw_Context)
+   is
+   begin
+      Save (Context.Cr);
+      Rect_Item_Record (Self.all).Draw (Context);  --  inherited
+      Restore (Context.Cr);
+
+      if Self.Highlighted then
+         Self.Draw_Outline (Self.Browser.Get_View.Styles.Highlight, Context);
+      end if;
+   end Draw;
 
 end Browsers.Canvas;

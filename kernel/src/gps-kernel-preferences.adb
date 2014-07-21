@@ -871,7 +871,7 @@ package body GPS.Kernel.Preferences is
       Parent_Linked_Item_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "browsers-linked-item-outline",
-         Default => "rgba(0,0,180,0.7)",
+         Default => "rgba(0,168,180,0.4)",
          Doc     => -("Color to use for the background of the items linked"
                       & " to the selected item"),
          Label   => -"Ancestor items color",

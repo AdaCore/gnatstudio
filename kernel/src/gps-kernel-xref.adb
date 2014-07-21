@@ -338,6 +338,9 @@ package body GPS.Kernel.Xref is
       Through_Dispatching : Boolean;
    begin
       if Entity = No_Root_Entity then
+         Destroy (User_Data.all, Cancelled => False);
+         Data := Commands_User_Data (User_Data);
+         Unchecked_Free (Data);
          return;
       end if;
       declare

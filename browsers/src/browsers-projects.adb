@@ -16,16 +16,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with Gdk.RGBA;                  use Gdk.RGBA;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
-with Pango.Font;                use Pango.Font;
 
 with Generic_Views;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
@@ -68,11 +65,6 @@ package body Browsers.Projects is
    type Project_Browser_Record is new Browsers.Canvas.General_Browser_Record
    with null record;
 
-   overriding procedure Contextual_Factory
-     (Self    : not null access Project_Browser_Record;
-      Context : in out GPS.Kernel.Selection_Context;
-      Details : Gtkada.Canvas_View.Canvas_Event_Details);
-
    function Initialize
      (View   : access Project_Browser_Record'Class)
       return Gtk_Widget;
@@ -108,23 +100,15 @@ package body Browsers.Projects is
    -- Browser_Item --
    ------------------
 
-   type Project_Item_Record is new Rect_Item_Record with record
+   type Project_Item_Record is new GPS_Item_Record with record
       Name : Ada.Strings.Unbounded.Unbounded_String;
       --  Store the name, and not the project, in case the latter becomes
       --  invalid after we reload a project
 
-      Browser : Project_Browser;
-      --  The browser in which the item is displayed
-
       Circle : Ellipse_Item;
       --  Might be set or not (depends on the chosen draw mode)
-
-      Highlighted : Boolean := False;
    end record;
    type Project_Item is access all Project_Item_Record'Class;
-
-   overriding procedure Draw
-     (Self    : not null access Project_Item_Record; Context : Draw_Context);
 
    procedure Gtk_New
      (V       : out Project_Item;
@@ -136,8 +120,8 @@ package body Browsers.Projects is
      (Self : not null access Project_Item_Record'Class) return Project_Type;
    --  Return the project associated with Item
 
-   procedure Set_Context
-     (Item    : not null access Project_Item_Record'Class;
+   overriding procedure Set_Context
+     (Item    : not null access Project_Item_Record;
       Context : in out Selection_Context);
    --  Set the GPS context from a selected item.
 
@@ -153,12 +137,6 @@ package body Browsers.Projects is
       Extending       : Boolean := False);
    --  Create a new link
 
-   procedure On_Selection_Changed
-     (Self  : not null access GObject_Record'Class;
-      Item  : Abstract_Item);
-   --  Called when the selection changes. This highlights links to and from
-   --  that item.
-
    ----------
    -- Misc --
    ----------
@@ -166,7 +144,8 @@ package body Browsers.Projects is
    procedure Examine_Project_Hierarchy
      (Browser   : not null access Project_Browser_Record'Class;
       Project   : Project_Type;
-      Recursive : Boolean);
+      Recursive : Boolean;
+      Rescale : Boolean);
    --  Display the project hierarchy for Project in the canvas.
    --  If Recursive is True, then the projects imported indirectly are also
    --  displayed.
@@ -199,7 +178,8 @@ package body Browsers.Projects is
 
    procedure Examine_Ancestor_Project_Hierarchy
      (Browser : not null access Project_Browser_Record'Class;
-      Project : Project_Type);
+      Project : Project_Type;
+      Rescale : Boolean);
    --  Add to the browser all the projects that with Project
 
    type Show_Importing_Projects_Button is new Left_Arrow_Record
@@ -287,7 +267,7 @@ package body Browsers.Projects is
       Is_Limited_With : Boolean := False;
       Extending       : Boolean := False)
    is
-      S  : constant Styles := Browser.Get_Styles;
+      S  : constant access Browser_Styles := Browser.Get_View.Get_Styles;
       L2 : constant GPS_Link := new GPS_Link_Record;
    begin
       if Is_Limited_With then
@@ -338,26 +318,9 @@ package body Browsers.Projects is
       L      : Canvas_Link;
       P1, P2 : Project_Type;
       S1, S2 : access Abstract_Item_Record'Class;
-      Exists : Boolean := False;
-
-      procedure On_Link (Item : not null access Abstract_Item_Record'Class);
-      procedure On_Link (Item : not null access Abstract_Item_Record'Class) is
-      begin
-         if not Exists
-           and then Item.all in Canvas_Link_Record'Class
-           and then Canvas_Link (Item).Get_To = Abstract_Item (Dest)
-         then
-            Exists := True;
-         end if;
-      end On_Link;
-
-      S : Item_Sets.Set;
 
    begin
-      S.Include (Abstract_Item (Src));
-      Browser.Get_View.Model.For_Each_Link (On_Link'Access, From_Or_To => S);
-
-      if not Exists then
+      if not Browser.Has_Link (Src, Dest) then
          P1 := Project_Of (Src);
          P2 := Project_Of (Dest);
 
@@ -372,21 +335,6 @@ package body Browsers.Projects is
       end if;
    end Add_Link_If_Not_Present;
 
-   ----------
-   -- Draw --
-   ----------
-
-   overriding procedure Draw
-     (Self    : not null access Project_Item_Record; Context : Draw_Context)
-   is
-   begin
-      Rect_Item_Record (Self.all).Draw (Context);  --  inherited
-
-      if Self.Highlighted then
-         Self.Draw_Outline (Self.Browser.Get_Styles.Highlight, Context);
-      end if;
-   end Draw;
-
    -------------
    -- Gtk_New --
    -------------
@@ -397,44 +345,28 @@ package body Browsers.Projects is
       Project : Project_Type)
    is
       Contents : access Container_Item_Record'Class;
-      S     : constant Styles := Browser.Get_Styles;
-      Left  : access Show_Importing_Projects_Button;
-      Right : access Show_Imported_Projects_Button;
+      S     : constant access Browser_Styles := Browser.Get_View.Get_Styles;
    begin
       V := new Project_Item_Record;
-      V.Browser := Browser;
+      V.Browser := General_Browser (Browser);
       V.Name := To_Unbounded_String (Project.Name);
 
       if True then
-         V.Initialize_Rect
-           (Style => Gtk_New (Stroke => Null_RGBA));
+         V.Initialize_Rect (Style => S.Invisible);
          V.Set_Child_Layout (Horizontal_Stack);
 
          V.Circle := Gtk_New_Ellipse
-           (Style => Gtk_New (Stroke => (0.27, 0.5, 0.7, 1.0),
-                              Line_Width => 2.0),
-            Width => 8.0, Height => 8.0);
+           (Style => S.Circle, Width => 8.0, Height => 8.0);
          V.Add_Child (V.Circle);
 
-         Contents := Gtk_New_Text
-           (Style => Gtk_New (Stroke => Null_RGBA,
-                              Fill => Create_Rgba_Pattern
-                                ((1.0, 1.0, 1.0, 0.6)),
-                              Font   => (Name => From_String ("sans 8"),
-                                         others => <>)),
-            Text  => Project.Name);
+         Contents := Gtk_New_Text (Style => S.Label, Text  => Project.Name);
          V.Add_Child (Contents, Margin => (0.0, 0.0, 0.0, 3.0));
       else
          V.Initialize_Rect (Style => S.Item, Radius => 5.0);
-
-         Left := new Show_Importing_Projects_Button;
-         Initialize (Left);
-
-         Right := new Show_Imported_Projects_Button;
-         Initialize (Right);
-
          Setup_Titlebar
-           (V, Browser, Name => Project.Name, Left => Left, Right => Right);
+           (V, Browser, Name => Project.Name,
+            Left  => new Show_Importing_Projects_Button,
+            Right => new Show_Imported_Projects_Button);
 
          if Project.Is_Aggregate_Project then
             Contents := Gtk_New_Text (S.Text_Font, "<<aggregate>>");
@@ -453,7 +385,8 @@ package body Browsers.Projects is
    procedure Examine_Project_Hierarchy
      (Browser   : not null access Project_Browser_Record'Class;
       Project   : Project_Type;
-      Recursive : Boolean)
+      Recursive : Boolean;
+      Rescale   : Boolean)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Browser);
       pragma Unreferenced (Kernel);
@@ -524,7 +457,7 @@ package body Browsers.Projects is
          Browser.Get_View.Scroll_Into_View (Src);
       end if;
 
-      Browser.Refresh_Layout;
+      Browser.Refresh_Layout (Rescale => Rescale);
    end Examine_Project_Hierarchy;
 
    ----------------------------------------
@@ -533,7 +466,8 @@ package body Browsers.Projects is
 
    procedure Examine_Ancestor_Project_Hierarchy
      (Browser : not null access Project_Browser_Record'Class;
-      Project : Project_Type)
+      Project : Project_Type;
+      Rescale : Boolean)
    is
       Src, Dest : Project_Item;
       Iter      : Project_Iterator;
@@ -555,7 +489,7 @@ package body Browsers.Projects is
          Next (Iter);
       end loop;
 
-      Browser.Refresh_Layout;
+      Browser.Refresh_Layout (Rescale => Rescale);
    end Examine_Ancestor_Project_Hierarchy;
 
    --------------
@@ -570,7 +504,8 @@ package body Browsers.Projects is
       Prj : constant Project_Item := Project_Item (Self.Get_Toplevel_Item);
    begin
       Examine_Project_Hierarchy
-        (Prj.Browser, Project_Of (Prj), Recursive => False);
+        (Project_Browser (Prj.Browser), Project_Of (Prj), Recursive => False,
+         Rescale => False);
    end On_Click;
 
    --------------
@@ -585,75 +520,22 @@ package body Browsers.Projects is
       Prj : constant Project_Item := Project_Item (Self.Get_Toplevel_Item);
    begin
       Examine_Ancestor_Project_Hierarchy
-        (Browser => Prj.Browser,
-         Project => Project_Of (Prj));
+        (Browser => Project_Browser (Prj.Browser),
+         Project => Project_Of (Prj),
+         Rescale => False);
    end On_Click;
 
    -----------------
    -- Set_Context --
    -----------------
 
-   procedure Set_Context
-     (Item    : not null access Project_Item_Record'Class;
+   overriding procedure Set_Context
+     (Item    : not null access Project_Item_Record;
       Context : in out Selection_Context)
    is
    begin
       Set_File_Information (Context, Project => Item.Project_Of);
    end Set_Context;
-
-   --------------------------
-   -- On_Selection_Changed --
-   --------------------------
-
-   procedure On_Selection_Changed
-     (Self  : not null access GObject_Record'Class;
-      Item  : Abstract_Item)
-   is
-      Browser  : constant General_Browser := General_Browser (Self);
-      Selected : Boolean;
-
-      procedure On_Link (Link : not null access Abstract_Item_Record'Class);
-      procedure On_Link (Link : not null access Abstract_Item_Record'Class) is
-         It   : GPS_Link;
-         Dest : Abstract_Item;
-      begin
-         if Link.all in GPS_Link_Record'Class then
-            It := GPS_Link (Link);
-            if not It.Invisible then
-               if Selected then
-                  It.Set_Style (Browser.Get_Styles.Selected_Link);
-               else
-                  It.Set_Style (It.Default_Style);
-               end if;
-            end if;
-
-            Dest := Get_From (It);
-            if Dest /= Item then
-               Project_Item (Dest).Highlighted := Selected;
-            end if;
-
-            Dest := Get_To (It);
-            if Dest /= Item then
-               Project_Item (Dest).Highlighted := Selected;
-            end if;
-         end if;
-      end On_Link;
-
-      S : Item_Sets.Set;
-
-   begin
-      if Item = null then
-         --  clear selection
-         Selected := False;
-         Browser.Get_View.Model.For_Each_Item
-           (On_Link'Access, Filter => Kind_Link);
-      else
-         Selected := Browser.Get_View.Model.Is_Selected (Item);
-         S.Include (Item);
-         Browser.Get_View.Model.For_Each_Link
-           (On_Link'Access, From_Or_To => S);
-      end if;
-   end On_Selection_Changed;
 
    ----------------
    -- Initialize --
@@ -663,41 +545,16 @@ package body Browsers.Projects is
      (View   : access Project_Browser_Record'Class)
       return Gtk_Widget
    is
-      Id : Handler_Id;
-      pragma Unreferenced (Id);
    begin
-      Initialize
-        (View,
-         Create_Toolbar => False,
-         Use_Canvas_View => True);
+      Initialize (View, Use_Canvas_View => True);
       Register_Contextual_Menu
         (Kernel          => View.Kernel,
          Event_On_Widget => View,
          Object          => View,
          ID              => Project_Views.Get_Module,
          Context_Func    => Default_Browser_Context_Factory'Access);
-
-      Id := View.Get_View.Model.On_Selection_Changed
-        (On_Selection_Changed'Access, View);
-
       return Gtk_Widget (View);
    end Initialize;
-
-   ------------------------
-   -- Contextual_Factory --
-   ------------------------
-
-   overriding procedure Contextual_Factory
-     (Self    : not null access Project_Browser_Record;
-      Context : in out GPS.Kernel.Selection_Context;
-      Details : Gtkada.Canvas_View.Canvas_Event_Details)
-   is
-      pragma Unreferenced (Self);
-   begin
-      if Details.Toplevel_Item /= null then
-         Project_Item (Details.Toplevel_Item).Set_Context (Context);
-      end if;
-   end Contextual_Factory;
 
    -----------------------------
    -- Default_Context_Factory --
@@ -711,22 +568,8 @@ package body Browsers.Projects is
       pragma Unreferenced (Module);
       Browser : constant Project_Browser :=
         Project_Views.View_From_Widget (Child);
-      Topmost_Selected : Abstract_Item;
-
-      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
-      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
-      begin
-         Topmost_Selected := Abstract_Item (Item);
-      end On_Item;
-
    begin
-      Browser.Get_View.Model.For_Each_Item
-        (Callback      => On_Item'Unrestricted_Access,
-         Selected_Only => True);
-
-      if Topmost_Selected /= null then
-         Project_Item (Topmost_Selected).Set_Context (Context);
-      end if;
+      Browser.Set_Context (Context);
    end Default_Context_Factory;
 
    ----------------------------
@@ -829,12 +672,14 @@ package body Browsers.Projects is
       if Command.Show_Ancestors then
          Examine_Ancestor_Project_Hierarchy
            (Browser,
-            Project_Information (Context.Context));
+            Project_Information (Context.Context),
+            Rescale => True);
       else
          Examine_Project_Hierarchy
            (Browser,
             Project_Information (Context.Context),
-            Recursive => Command.Recursive);
+            Recursive => Command.Recursive,
+            Rescale => True);
       end if;
       return Commands.Success;
    end Execute;

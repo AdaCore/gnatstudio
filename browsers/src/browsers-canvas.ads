@@ -56,23 +56,6 @@ package Browsers.Canvas is
    --  Encapsulates a browser, based either on Gtkada.Canvas or
    --  Gtk.Canvas_View.
 
-   type Styles is record
-      Item        : Drawing_Style; --  Style to draw the item itself
-      Title       : Drawing_Style; --  Style to use the background of the title
-      Title_Font  : Drawing_Style; --  Style to draw the title itself
-      Text_Font   : Drawing_Style; --  Style to draw the contents of the box
-      Link_Label  : Drawing_Style; --  Style to draw labels on links
-      Link        : Drawing_Style; --  Style to draw the links themselves
-      Link2       : Drawing_Style; --  Style to draw other links
-      Highlight   : Drawing_Style; --  Parents or children of selected items
-
-      Selected_Link  : Drawing_Style; --  link to selected items
-      Invisible_Link : Drawing_Style;
-   end record;
-   function Get_Styles
-     (Self : not null access General_Browser_Record'Class) return Styles;
-   --  The styles to use when drawing items
-
    overriding procedure Create_Toolbar
      (View    : not null access General_Browser_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
@@ -103,7 +86,7 @@ package Browsers.Canvas is
 
    procedure Initialize
      (Browser         : access General_Browser_Record'Class;
-      Create_Toolbar  : Boolean;
+      Create_Toolbar  : Boolean := False;
       Parents_Pixmap  : String := Gtk.Stock.Stock_Go_Back;
       Children_Pixmap : String := Gtk.Stock.Stock_Go_Forward;
       Use_Canvas_View : Boolean := False);
@@ -138,8 +121,7 @@ package Browsers.Canvas is
      (Browser : access General_Browser_Record)
       return Gtkada.Canvas.Interactive_Canvas;
    function Get_View
-     (Browser : access General_Browser_Record)
-      return Gtkada.Canvas_View.Canvas_View;
+     (Browser : access General_Browser_Record) return GPS_Canvas_View;
    --  Return the canvas embedded in Browser
 
    function Get_Kernel (Browser : access General_Browser_Record)
@@ -158,8 +140,12 @@ package Browsers.Canvas is
    --  If Force is true, then even the items that have been moved manually by
    --  the user are recomputed.
 
-   procedure Refresh_Layout (Self : not null access General_Browser_Record);
+   procedure Refresh_Layout
+     (Self    : not null access General_Browser_Record;
+      Rescale : Boolean := False);
    --  Recompute the position of all items.
+   --  If Rescale is true, the scaling factor and position of the canvas are
+   --  modified to show as many items as possible
 
    procedure Refresh_Layout_Orientation
      (Browser : access General_Browser_Record);
@@ -208,6 +194,39 @@ package Browsers.Canvas is
    --  contextual menus, and also allows hiding the links to and from this
    --  item.
 
+   type GPS_Item_Record is abstract new Gtkada.Canvas_View.Rect_Item_Record
+   with record
+      Highlighted : Boolean := False;
+      --  Whether the item should be highlighted with an outline (because it
+      --  is linked to one of the selected items).
+
+      Browser     : General_Browser;
+      --  The browser in which the item is displayed.
+
+      Left, Right : Gtkada.Canvas_View.Abstract_Item;
+      --  left and right arrows in the title bar (if any)
+   end record;
+   type GPS_Item is access all GPS_Item_Record'Class;
+
+   procedure Set_Context
+     (Item    : not null access GPS_Item_Record;
+      Context : in out GPS.Kernel.Selection_Context) is abstract;
+   --  Set the GPS context from a selected item.
+
+   procedure Set_Context
+     (Browser : not null access General_Browser_Record;
+      Context : in out GPS.Kernel.Selection_Context);
+   --  Set the context from the topmost selected item
+
+   overriding procedure Draw
+     (Self    : not null access GPS_Item_Record;
+      Context : Gtkada.Canvas_View.Draw_Context);
+
+   function Has_Link
+     (Browser   : not null access General_Browser_Record'Class;
+      Src, Dest : not null access GPS_Item_Record'Class) return Boolean;
+   --  Whether there is already a link between the two items
+
    package Item_Cb is new Gtk.Handlers.User_Callback
      (Gtk.Widget.Gtk_Widget_Record, Browser_Item);
 
@@ -229,10 +248,6 @@ package Browsers.Canvas is
       Browser : access General_Browser_Record'Class;
       Event   : Gdk.Event.Gdk_Event;
       Menu    : Gtk.Menu.Gtk_Menu) is null;
-   procedure Contextual_Factory
-     (Browser : not null access General_Browser_Record;
-      Context : in out GPS.Kernel.Selection_Context;
-      Details : Gtkada.Canvas_View.Canvas_Event_Details) is null;
    --  Return the selection context to use when an item is clicked on.
    --  The coordinates in Event are relative to the upper-left corner of the
    --  item.
@@ -355,14 +370,21 @@ package Browsers.Canvas is
    --  this is done automatically.
 
    procedure Setup_Titlebar
-     (Item    : not null access Gtkada.Canvas_View.Container_Item_Record'Class;
+     (Item    : not null access GPS_Item_Record'Class;
       Browser : not null access General_Browser_Record'Class;
       Name    : String;
-      Left, Right : access Gtkada.Canvas_View.Container_Item_Record'Class :=
-        null);
+      Left    : access Left_Arrow_Record'Class := null;
+      Right   : access Right_Arrow_Record'Class := null);
    --  Add the title bar items (title, arrows, close button,...)
    --  The two arrows should have been created and passed as argument, so that
-   --  the proper callback is set on them
+   --  the proper callback is set on them. There Initialize primitive operation
+   --  is automatically called.
+
+   procedure Show_Left_Arrow (Self : not null access GPS_Item_Record);
+   procedure Show_Right_Arrow (Self : not null access GPS_Item_Record);
+   procedure Hide_Left_Arrow (Self : not null access GPS_Item_Record);
+   procedure Hide_Right_Arrow (Self : not null access GPS_Item_Record);
+   --  Control the visibility of the arrows in an item's title bar
 
    procedure Reset
      (Item : access Browser_Item_Record;
@@ -377,6 +399,11 @@ package Browsers.Canvas is
    function Get_Browser
      (Item : access Browser_Item_Record'Class) return General_Browser;
    --  Return the browser associated with this item
+
+   procedure Highlight_Related_Items
+     (Self   : not null access GPS_Canvas_View_Record'Class;
+      Item   : access Gtkada.Canvas_View.Abstract_Item_Record'Class := null);
+   --  Mark related items specially so that they are outlined on the display.
 
    procedure Add_Active_Area
      (Item      : access Browser_Item_Record;
@@ -601,7 +628,6 @@ private
 
       View       : GPS_Canvas_View;
       Model      : List_Rtree.Rtree_Model;
-      The_Styles : Styles;
 
       Canvas        : Gtkada.Canvas.Interactive_Canvas;
       Selected_Item : Gtkada.Canvas.Canvas_Item;
