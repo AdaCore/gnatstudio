@@ -594,6 +594,16 @@ KP-60-N129-021 WB: "Toggle Breakpoint" not working in Workbench-3.3.5
               in the Debug perspective, use the "Run > Toggle Breakpoint
               Ctrl+Shift+B)" menu.
 
+KP-60-N128-043 GPS: presence of TABs cause wrong highlighting
+
+  Problem:    The plugin auto_highlight_occurrences does not highlight
+              correctly files that contain TABs.
+
+  Status:     This was fixed in 6.1 on 2014-07-21
+
+  Workaround: Deactivate the plugin auto_highlight_occurrences or change
+              the color for "unknown" to a transparent color.
+
 KP-60-N116-040 GPS: Completion mechanism crashes GPS
 
   Problem:    When using dynamic completion in some specific scenarios, the
