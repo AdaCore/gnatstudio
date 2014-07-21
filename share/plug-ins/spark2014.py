@@ -1036,6 +1036,9 @@ class GNATprove_Parser(tool_output.OutputParser):
                     extra = self.extra_info[full_id]
                     self.act_on_extra_info(m, extra, objdir, command)
 
+        if self.child is not None:
+            self.child.on_exit(status, command)
+
     def on_stdout(self, text, command):
         """for each gnatprove message, check for a msg_id tag of the form
            [#id] where id is a number. If no such tag is found, just pass the
