@@ -318,7 +318,7 @@ package body Browsers.Canvas is
       Item   : access Gtkada.Canvas_View.Abstract_Item_Record'Class := null)
    is
       Styles   : constant access Browser_Styles := Self.Get_Styles;
-      Selected : Boolean;
+      Selected : Outline_Mode;
 
       procedure On_Link (Link : not null access Abstract_Item_Record'Class);
       procedure On_Link (Link : not null access Abstract_Item_Record'Class) is
@@ -328,21 +328,23 @@ package body Browsers.Canvas is
          if Link.all in GPS_Link_Record'Class then
             It := GPS_Link (Link);
             if not It.Invisible then
-               if Selected then
-                  It.Set_Style (Styles.Selected_Link);
-               else
-                  It.Set_Style (It.Default_Style);
-               end if;
+               case Selected is
+                  when Outline_None =>
+                     It.Set_Style (It.Default_Style);
+
+                  when Outline_As_Linked | Outline_As_Match =>
+                     It.Set_Style (Styles.Selected_Link);
+               end case;
             end if;
 
             Dest := Get_From (It);
             if Dest /= Item then
-               GPS_Item (Dest).Highlighted := Selected;
+               GPS_Item (Dest).Outline := Selected;
             end if;
 
             Dest := Get_To (It);
             if Dest /= Item then
-               GPS_Item (Dest).Highlighted := Selected;
+               GPS_Item (Dest).Outline := Selected;
             end if;
          end if;
       end On_Link;
@@ -352,10 +354,15 @@ package body Browsers.Canvas is
    begin
       if Item = null then
          --  clear selection
-         Selected := False;
+         Selected := Outline_None;
          Self.Model.For_Each_Item (On_Link'Access, Filter => Kind_Link);
       else
-         Selected := Self.Model.Is_Selected (Item);
+         if Self.Model.Is_Selected (Item) then
+            Selected := Outline_As_Linked;
+         else
+            Selected := Outline_None;
+         end if;
+
          S.Include (Item);
          Self.Model.For_Each_Link (On_Link'Access, From_Or_To => S);
       end if;
@@ -3042,9 +3049,18 @@ package body Browsers.Canvas is
       Rect_Item_Record (Self.all).Draw (Context);  --  inherited
       Restore (Context.Cr);
 
-      if Self.Highlighted then
-         Self.Draw_Outline (Self.Browser.Get_View.Styles.Highlight, Context);
-      end if;
+      case Self.Outline is
+         when Outline_None =>
+            null;
+
+         when Outline_As_Linked =>
+            Self.Draw_Outline
+              (Self.Browser.Get_View.Styles.Highlight, Context);
+
+         when Outline_As_Match =>
+            Self.Draw_Outline
+              (Self.Browser.Get_View.Styles.Search, Context);
+      end case;
    end Draw;
 
 end Browsers.Canvas;

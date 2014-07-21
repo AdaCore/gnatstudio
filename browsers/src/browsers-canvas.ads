@@ -72,18 +72,6 @@ package Browsers.Canvas is
    --  The type of links that are put in the canvas. These are automatically
    --  highlighted if they connect a selected item to another one.
 
-   type GPS_Link_Record is new Gtkada.Canvas_View.Canvas_Link_Record with
-      record
-         Default_Style : Drawing_Style;
-         --  The default style to use for the item. This is overriden either
-         --  when the link is made invisible by the user, or is a link to a
-         --  selected item.
-
-         Invisible     : Boolean := False;
-         --  Whether the link is current invisible
-      end record;
-   type GPS_Link is access all GPS_Link_Record'Class;
-
    procedure Initialize
      (Browser         : access General_Browser_Record'Class;
       Create_Toolbar  : Boolean := False;
@@ -187,18 +175,13 @@ package Browsers.Canvas is
    -- Items --
    -----------
 
-   type Browser_Item_Record is new Gtkada.Canvas.Canvas_Item_Record
-     with private;
-   type Browser_Item is access all Browser_Item_Record'Class;
-   --  The type of items that are put in the canvas. They are associated with
-   --  contextual menus, and also allows hiding the links to and from this
-   --  item.
+   type Outline_Mode is (Outline_None, Outline_As_Linked, Outline_As_Match);
+   --  Whether the item should be highlighted with an outline (because it
+   --  is linked to one of the selected items).
 
    type GPS_Item_Record is abstract new Gtkada.Canvas_View.Rect_Item_Record
    with record
-      Highlighted : Boolean := False;
-      --  Whether the item should be highlighted with an outline (because it
-      --  is linked to one of the selected items).
+      Outline : Outline_Mode := Outline_None;
 
       Browser     : General_Browser;
       --  The browser in which the item is displayed.
@@ -213,14 +196,21 @@ package Browsers.Canvas is
       Context : in out GPS.Kernel.Selection_Context) is abstract;
    --  Set the GPS context from a selected item.
 
+   overriding procedure Draw
+     (Self    : not null access GPS_Item_Record;
+      Context : Gtkada.Canvas_View.Draw_Context);
+
+   type Browser_Item_Record is new Gtkada.Canvas.Canvas_Item_Record
+     with private;
+   type Browser_Item is access all Browser_Item_Record'Class;
+   --  The type of items that are put in the canvas. They are associated with
+   --  contextual menus, and also allows hiding the links to and from this
+   --  item.
+
    procedure Set_Context
      (Browser : not null access General_Browser_Record;
       Context : in out GPS.Kernel.Selection_Context);
    --  Set the context from the topmost selected item
-
-   overriding procedure Draw
-     (Self    : not null access GPS_Item_Record;
-      Context : Gtkada.Canvas_View.Draw_Context);
 
    function Has_Link
      (Browser   : not null access General_Browser_Record'Class;

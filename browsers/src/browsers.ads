@@ -43,6 +43,7 @@ package Browsers is
 
       Circle      : Drawing_Style; --  For items with a circle
       Label       : Drawing_Style; --  semi-transparent white
+      Search      : Drawing_Style; --  matches for local search and filters
 
       Invisible      : Drawing_Style; --  Invisible item
       Selected_Link  : Drawing_Style; --  link to selected items
@@ -66,6 +67,10 @@ package Browsers is
      (Self    : not null access GPS_Canvas_View_Record;
       Context : Gtkada.Canvas_View.Draw_Context;
       Area    : Gtkada.Canvas_View.Model_Rectangle);
+
+   -----------
+   -- Items --
+   -----------
 
    type Clickable_Item is interface;
    procedure On_Click
@@ -97,6 +102,22 @@ package Browsers is
    procedure Initialize (Self : not null access Right_Arrow_Record'Class);
    --  Right-pointing arrow in title bars.
    --  You must override On_Click to use this.
+
+   -----------
+   -- Links --
+   -----------
+
+   type GPS_Link_Record is new Gtkada.Canvas_View.Canvas_Link_Record with
+      record
+         Default_Style : Gtkada.Style.Drawing_Style;
+         --  The default style to use for the item. This is overriden either
+         --  when the link is made invisible by the user, or is a link to a
+         --  selected item.
+
+         Invisible     : Boolean := False;
+         --  Whether the link is current invisible
+      end record;
+   type GPS_Link is access all GPS_Link_Record'Class;
 
 private
 

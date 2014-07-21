@@ -255,6 +255,9 @@ package body Browsers is
          Highlight  =>  Gtk_New
            (Stroke     => Parent_Linked_Item_Color.Get_Pref,
             Line_Width => 2.0),
+         Search     => Gtk_New
+           (Stroke     => (0.8, 0.0, 0.0, 0.7),
+            Line_Width => 2.0),
          Circle     => Gtk_New
            (Stroke     => (0.27, 0.5, 0.7, 1.0),
             Line_Width => 2.0),

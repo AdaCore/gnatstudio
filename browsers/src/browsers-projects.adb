@@ -19,12 +19,13 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
 
-with Generic_Views;
+with Generic_Views;          use Generic_Views;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GPS.Kernel;             use GPS.Kernel;
@@ -33,13 +34,11 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Search;
+with GPS.Search;             use GPS.Search;
 with GPS.Intl;               use GPS.Intl;
 with Projects;               use Projects;
 with Browsers.Canvas;        use Browsers.Canvas;
-with Find_Utils;             use Find_Utils;
 with Commands.Interactive;   use Commands, Commands.Interactive;
-with Vsearch;                use Vsearch;
 
 package body Browsers.Projects is
 
@@ -47,23 +46,19 @@ package body Browsers.Projects is
 
    type Project_Browser_Module is new Module_ID_Record with null record;
 
-   type Browser_Search_Context is new Root_Search_Context with null record;
-   type Browser_Search_Context_Access is access all Browser_Search_Context;
-
-   overriding function Context_Look_In
-     (Self : Browser_Search_Context) return String;
-   overriding procedure Default_Context_Factory
-     (Module  : access Project_Browser_Module;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject);
-   --  See inherited documentation
-
    ---------------------
    -- Project_Browser --
    ---------------------
 
    type Project_Browser_Record is new Browsers.Canvas.General_Browser_Record
    with null record;
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Browser_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Project_Browser_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access);
 
    function Initialize
      (View   : access Project_Browser_Record'Class)
@@ -83,6 +78,21 @@ package body Browsers.Projects is
       Group                  => Group_Default);
    subtype Project_Browser is Project_Views.View_Access;
    use type Project_Browser;
+
+   procedure Examine_Project_Hierarchy
+     (Browser   : not null access Project_Browser_Record'Class;
+      Project   : Project_Type;
+      Recursive : Boolean;
+      Rescale : Boolean);
+   --  Display the project hierarchy for Project in the canvas.
+   --  If Recursive is True, then the projects imported indirectly are also
+   --  displayed.
+
+   procedure Examine_Ancestor_Project_Hierarchy
+     (Browser : not null access Project_Browser_Record'Class;
+      Project : Project_Type;
+      Rescale : Boolean);
+   --  Add to the browser all the projects that with Project
 
    --------------
    -- Commands --
@@ -116,74 +126,27 @@ package body Browsers.Projects is
       Project : Project_Type);
    --  Create a new project vertex
 
+   function Add_Project_If_Not_Present
+     (Browser : not null access Project_Browser_Record'Class;
+      Project : Project_Type) return Project_Item;
+   --  Add a new item for Project if there is currently none in the browser
+
    function Project_Of
      (Self : not null access Project_Item_Record'Class) return Project_Type;
    --  Return the project associated with Item
-
-   overriding procedure Set_Context
-     (Item    : not null access Project_Item_Record;
-      Context : in out Selection_Context);
-   --  Set the GPS context from a selected item.
-
-   -------------------
-   -- Browser links --
-   -------------------
-
-   procedure Gtk_New_Link
-     (L               : out Canvas_Link;
-      Browser         : not null access Project_Browser_Record'Class;
-      Src, Dest       : not null access Abstract_Item_Record'Class;
-      Is_Limited_With : Boolean := False;
-      Extending       : Boolean := False);
-   --  Create a new link
-
-   ----------
-   -- Misc --
-   ----------
-
-   procedure Examine_Project_Hierarchy
-     (Browser   : not null access Project_Browser_Record'Class;
-      Project   : Project_Type;
-      Recursive : Boolean;
-      Rescale : Boolean);
-   --  Display the project hierarchy for Project in the canvas.
-   --  If Recursive is True, then the projects imported indirectly are also
-   --  displayed.
-
-   function Browser_Search_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
-   --  Create a new search context for the explorer
-
-   overriding procedure Search
-     (Context         : access Browser_Search_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean);
-   --  Search the next occurrence in the explorer
 
    function Find_Project
      (Browser      : not null access Project_Browser_Record'Class;
       Project_Name : String) return Project_Item;
    --  Return the first item representing Project_Name
 
-   function Add_Project_If_Not_Present
-     (Browser : not null access Project_Browser_Record'Class;
-      Project : Project_Type) return Project_Item;
-   --  Add a new item for Project if there is currently none in the browser
-
-   procedure Examine_Ancestor_Project_Hierarchy
-     (Browser : not null access Project_Browser_Record'Class;
-      Project : Project_Type;
-      Rescale : Boolean);
-   --  Add to the browser all the projects that with Project
+   overriding procedure Set_Context
+     (Item    : not null access Project_Item_Record;
+      Context : in out Selection_Context);
+   --  Set the GPS context from a selected item.
 
    type Show_Importing_Projects_Button is new Left_Arrow_Record
-      with null record;
+   with null record;
    overriding procedure On_Click
      (Self : not null access Show_Importing_Projects_Button;
       View : not null access GPS_Canvas_View_Record'Class);
@@ -194,11 +157,41 @@ package body Browsers.Projects is
      (Self : not null access Show_Imported_Projects_Button;
       View : not null access GPS_Canvas_View_Record'Class);
 
+   -------------------
+   -- Browser links --
+   -------------------
+
+   procedure Gtk_New_Link
+     (L               : out GPS_Link;
+      Browser         : not null access Project_Browser_Record'Class;
+      Src, Dest       : not null access Abstract_Item_Record'Class;
+      Is_Limited_With : Boolean := False;
+      Extending       : Boolean := False);
+   --  Create a new link
+
    procedure Add_Link_If_Not_Present
      (Browser      : not null access Project_Browser_Record'Class;
       Src, Dest    : Project_Item;
       Limited_With : Boolean);
    --  Add a link between the two items
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Project_Browser_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+   begin
+      General_Browser_Record (View.all).Create_Toolbar (Toolbar); --  inherited
+      View.Build_Filter
+        (Toolbar     => Toolbar,
+         Hist_Prefix => "project_browser",
+         Tooltip     => -"Filter the contents of the project browser",
+         Placeholder => -"filter",
+         Options   => Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
+   end Create_Toolbar;
 
    ----------------
    -- Project_Of --
@@ -261,7 +254,7 @@ package body Browsers.Projects is
    ------------------
 
    procedure Gtk_New_Link
-     (L               : out Canvas_Link;
+     (L               : out GPS_Link;
       Browser         : not null access Project_Browser_Record'Class;
       Src, Dest       : not null access Abstract_Item_Record'Class;
       Is_Limited_With : Boolean := False;
@@ -303,7 +296,7 @@ package body Browsers.Projects is
             Anchor_To   => (X => 0.0, others => <>),
             Style       => L2.Default_Style);
       end if;
-      L := Canvas_Link (L2);
+      L := L2;
    end Gtk_New_Link;
 
    -----------------------------
@@ -315,7 +308,7 @@ package body Browsers.Projects is
       Src, Dest    : Project_Item;
       Limited_With : Boolean)
    is
-      L      : Canvas_Link;
+      L      : GPS_Link;
       P1, P2 : Project_Type;
       S1, S2 : access Abstract_Item_Record'Class;
 
@@ -556,107 +549,67 @@ package body Browsers.Projects is
       return Gtk_Widget (View);
    end Initialize;
 
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
+   --------------------
+   -- Filter_Changed --
+   --------------------
 
-   overriding procedure Default_Context_Factory
-     (Module  : access Project_Browser_Module;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject)
+   overriding procedure Filter_Changed
+     (Self    : not null access Project_Browser_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access)
    is
-      pragma Unreferenced (Module);
-      Browser : constant Project_Browser :=
-        Project_Views.View_From_Widget (Child);
-   begin
-      Browser.Set_Context (Context);
-   end Default_Context_Factory;
+      use Item_Sets;
 
-   ----------------------------
-   -- Browser_Search_Factory --
-   ----------------------------
+      Show_On_Match : constant Boolean := False;
+      --  If True: when items do not match, they are left visible.
+      --  Otherwise, they are hidden, along with their related links.
 
-   function Browser_Search_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
-   is
-      pragma Unreferenced (Kernel, All_Occurences, Extra_Information);
-      Context : Browser_Search_Context_Access;
-   begin
-      Context := new Browser_Search_Context;
-      return Root_Search_Context_Access (Context);
-   end Browser_Search_Factory;
-
-   ------------
-   -- Search --
-   ------------
-
-   overriding procedure Search
-     (Context         : access Browser_Search_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean)
-   is
-      pragma Unreferenced (Search_Backward, Give_Focus);
-      First_Match  : Canvas_Item;
-
-      Saw_Selected : Boolean := False;
-      --  We need to search after the currently selected item, so that Next
-      --  works properly
-
-      Browser : constant Project_Browser :=
-        Project_Views.Retrieve_View (Kernel);
+      To_Hide : Item_Sets.Set;
 
       procedure On_Item (Item : not null access Abstract_Item_Record'Class);
       procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+         It : constant Project_Item := Project_Item (Item);
       begin
-         if not Saw_Selected
-           and then Browser.Get_View.Model.Is_Selected (Item)
-         then
-            Saw_Selected := True;
-            return;
-         end if;
-
-         if not Found
-           and then Item.all in Project_Item_Record'Class
-           and then not GPS.Search.Failed
-             (Match (Context, To_String (Project_Item (Item).Name)))
-         then
-            --  If we are searching after the current selection, select the
-            --  new item and we are done. Otherwise we'll have to loop
-            if Saw_Selected then
-               Found := True;
-               Browser.Get_View.Model.Clear_Selection;
-               Browser.Get_View.Model.Add_To_Selection (Item);
-            elsif First_Match = null then
-               First_Match := Canvas_Item (Item);
-            end if;
+         if Pattern.Start (To_String (It.Name)) = GPS.Search.No_Match then
+            Self.Get_View.Model.Include_Related_Items (Item, To_Hide);
          end if;
       end On_Item;
 
+      procedure Set_Visible
+        (Item : not null access Abstract_Item_Record'Class);
+      procedure Set_Visible
+        (Item : not null access Abstract_Item_Record'Class)
+      is
+      begin
+         if To_Hide.Contains (Abstract_Item (Item)) then
+            if Show_On_Match then
+               Item.Hide;
+            elsif Item.all in GPS_Item_Record'Class then
+               GPS_Item (Item).Outline := Outline_None;
+            end if;
+         elsif Pattern = null then
+            if Show_On_Match then
+               Item.Show;
+            elsif Item.all in GPS_Item_Record'Class then
+               GPS_Item (Item).Outline := Outline_None;
+            end if;
+         else
+            if Show_On_Match then
+               Item.Show;
+            elsif Item.all in GPS_Item_Record'Class then
+               GPS_Item (Item).Outline := Outline_As_Match;
+            end if;
+         end if;
+      end Set_Visible;
+
    begin
-      Found := False;
-
-      if Browser = null then
-         Continue := False;
-         return;
+      if Pattern /= null then
+         Self.Get_View.Model.For_Each_Item
+           (On_Item'Access, Filter => Kind_Item);
       end if;
 
-      Browser.Get_View.Model.For_Each_Item
-        (On_Item'Access, Filter => Kind_Item);
-
-      if not Found and then First_Match /= null then
-         Browser.Get_View.Model.Clear_Selection;
-         Browser.Get_View.Model.Add_To_Selection (First_Match);
-         Found := True;
-      end if;
-
-      Continue := Found;
-   end Search;
+      Self.Get_View.Model.For_Each_Item (Set_Visible'Access);
+      Self.Get_View.Queue_Draw;
+   end Filter_Changed;
 
    -------------
    -- Execute --
@@ -691,7 +644,6 @@ package body Browsers.Projects is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Name    : constant String := "Project Browser";
       Command : Interactive_Command_Access;
       Project_Browser_Module_ID : Module_ID;
    begin
@@ -723,26 +675,6 @@ package body Browsers.Projects is
          Stock_Image => Stock_Go_Back,
          Action => Command,
          Filter => Lookup_Filter (Kernel, "Project only"));
-
-      Register_Search_Function
-        (Kernel  => Kernel,
-         Label   => Name,
-         Factory => Browser_Search_Factory'Access,
-         Id      => Project_Views.Get_Module,
-         Mask    => All_Options and not Supports_Replace
-            and not Search_Backward and not All_Occurrences);
    end Register_Module;
-
-   ---------------------
-   -- Context_Look_In --
-   ---------------------
-
-   overriding function Context_Look_In
-     (Self : Browser_Search_Context) return String
-   is
-      pragma Unreferenced (Self);
-   begin
-      return -"project browser";
-   end Context_Look_In;
 
 end Browsers.Projects;
