@@ -24,7 +24,7 @@ class PopupParser(tool_output.OutputParser):
 
         GPS.MDI.dialog ("Build complete!")
         if self.child != None:
-            self.child.on_stdout (status,command)
+            self.child.on_exit (status,command)
 
 To add custom parser to a target insert next line to target description:
 
@@ -59,20 +59,20 @@ class OutputParser(object):
         self.child = child
 
     def on_stdout(self, text, command):
-        if self.child != None:
+        if self.child is not None:
             self.child.on_stdout(text, command)
 
     def on_stderr(self, text, command):
-        if self.child != None:
+        if self.child is not None:
             self.child.on_stderr(text, command)
 
     def on_exit(self, status, command):
-        if self.child != None:
+        if self.child is not None:
             self.child.on_exit(status, command)
 
 
 def create_parser(name, child=None):
-    if OutputParserMetaClass.registered.has_key(name):
+    if name in OutputParserMetaClass.registered:
         return OutputParserMetaClass.registered[name](child)
     else:
         return None
