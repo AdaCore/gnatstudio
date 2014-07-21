@@ -192,6 +192,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
 
                 # Find the tokens on the current line
                 index = 0
+                visible_column = 0
 
                 while index < s_len:
                     if s[index].isalpha():
@@ -205,15 +206,23 @@ class Current_Entity_Highlighter(Location_Highlighter):
                                 start=GPS.EditorLocation(
                                     buffer,
                                     start.line(),
-                                    start.column() + index),
+                                    start.column() + visible_column),
                                 end=GPS.EditorLocation(
                                     buffer,
                                     start.line(),
-                                    start.column() + end_index - 1))
+                                    start.column() +
+                                    visible_column + len(self.word) - 1))
 
+                        visible_column += end_index - index
                         index = end_index
 
                     else:
+                        visible_column += 1
+
+                        if s[index] == '\t':
+                            visible_column = (visible_column
+                                              + 8 - (visible_column % 8))
+
                         index += 1
 
                 start = end_loc + 1
