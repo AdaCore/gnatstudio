@@ -98,6 +98,7 @@ package body Browsers.Canvas is
    Hist_Align_On_Grid : constant History_Key := "browsers-align-on-grid";
    Hist_Straight_Links : constant History_Key := "browsers-straight-links";
    Hist_Draw_Grid : constant History_Key := "browsers-display-grid";
+   Hist_Add_Waypoints : constant History_Key := "browsers-add-waypoints";
 
    Zoom_Duration : constant := 0.25;
    --  Duration of the zoom animation
@@ -186,6 +187,9 @@ package body Browsers.Canvas is
 
    procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class);
    --  Toggle the layout of links
+
+   procedure Toggle_Waypoints (Browser : access Gtk_Widget_Record'Class);
+   --  Toggle when the user choses to use waypoints or not
 
    procedure Toggle_Draw_Grid (Browser : access Gtk_Widget_Record'Class);
    --  Toggle the drawing of the grid, and refresh the canvas.
@@ -679,17 +683,34 @@ package body Browsers.Canvas is
         (Check, Gtk.Check_Menu_Item.Signal_Toggled,
          Toggle_Draw_Grid'Access, View);
 
-      Gtk_New (Check, Label => -"Straight links");
-      Check.Set_Tooltip_Text
-        (-("Whether to force only horizontal and vertical links, or allow"
-         & " straight lines"));
-      Associate
-        (Get_History (View.Kernel).all, Hist_Straight_Links,
-         Check, Default => True);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-         Toggle_Orthogonal'Access, View);
+      if not View.Use_Canvas_View then
+         Gtk_New (Check, Label => -"Straight links");
+         Check.Set_Tooltip_Text
+           (-("Whether to force only horizontal and vertical links, or allow"
+            & " straight lines"));
+         Associate
+           (Get_History (View.Kernel).all, Hist_Straight_Links,
+            Check, Default => True);
+         Menu.Append (Check);
+         Widget_Callback.Object_Connect
+           (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+            Toggle_Orthogonal'Access, View);
+      end if;
+
+      if View.Use_Canvas_View then
+         Gtk_New (Check, Label => -"Use waypoints");
+         Check.Set_Tooltip_Text
+           (-("Whether to insert waypoints in long edges when performing the"
+            & " layout of the graph. This might result in less edge crossings"
+            & " but is sometimes harder to use interactively"));
+         Menu.Append (Check);
+         Associate
+           (Get_History (View.Kernel).all, Hist_Add_Waypoints, Check,
+            Default => False);
+         Widget_Callback.Object_Connect
+           (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+            Toggle_Waypoints'Access, View);
+      end if;
    end Create_Menu;
 
    --------------
@@ -1125,6 +1146,8 @@ package body Browsers.Canvas is
          Gtkada.Canvas_View.Models.Layers.Layout
            (Self.View.Model,
             Horizontal           => True,
+            Add_Waypoints        =>
+              Get_History (Get_History (Self.Kernel).all, Hist_Add_Waypoints),
             Space_Between_Items  => 10.0,
             Space_Between_Layers => 30.0);
 
@@ -1207,6 +1230,16 @@ package body Browsers.Canvas is
          Refresh_Canvas (Get_Canvas (View));
       end if;
    end Toggle_Orthogonal;
+
+   ----------------------
+   -- Toggle_Waypoints --
+   ----------------------
+
+   procedure Toggle_Waypoints (Browser : access Gtk_Widget_Record'Class) is
+      View  : constant General_Browser := General_Browser (Browser);
+   begin
+      Refresh_Layout (View);
+   end Toggle_Waypoints;
 
    ----------------------
    -- Toggle_Draw_Grid --
