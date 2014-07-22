@@ -403,6 +403,12 @@ D.1.
 This aspect is equivalent to pragma `Invariant'. It is a synonym for
 the language defined aspect `Type_Invariant' except that it is
 separately controllable using pragma `Assertion_Policy'.
+
+Aspect Invariant'Class
+
+This aspect is equivalent to pragma `Type_Invariant_Class'. It is a
+synonym for the language defined aspect `Type_Invariant'Class' except
+that it is separately controllable using pragma `Assertion_Policy'.
       </DOC>
    </ASPECT>
 
