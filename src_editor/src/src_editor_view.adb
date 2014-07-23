@@ -2427,8 +2427,10 @@ package body Src_Editor_View is
 
       Draw_Line_Info
         (Src_Buffer, View.Top_Line, View.Bottom_Line,
+         Buffer_Line_Type (View.Current_Line),
          Gtk_Text_View (View),
          Num_Color,
+         View.Current_Line_Color,
          Layout, Cr);
 
       Unref (Layout);

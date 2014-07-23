@@ -979,15 +979,17 @@ package body Src_Editor_Buffer.Line_Information is
    --------------------
 
    procedure Draw_Line_Info
-     (Buffer      : access Source_Buffer_Record'Class;
-      Top_Line    : Buffer_Line_Type;
-      Bottom_Line : Buffer_Line_Type;
-      View        : Gtk_Text_View;
-      Color       : Gdk_RGBA;
-      Layout      : Pango_Layout;
-      Cr          : Cairo.Cairo_Context)
+     (Buffer       : access Source_Buffer_Record'Class;
+      Top_Line     : Buffer_Line_Type;
+      Bottom_Line  : Buffer_Line_Type;
+      Current_Line : Buffer_Line_Type;
+      View         : Gtk_Text_View;
+      Color        : Gdk_RGBA;
+      Line_Color   : Gdk_RGBA;
+      Layout       : Pango_Layout;
+      Cr           : Cairo.Cairo_Context)
    is
-      Current_Line    : Buffer_Line_Type;
+      L               : Buffer_Line_Type;
       Editable_Line   : Editable_Line_Type;
       Iter            : Gtk_Text_Iter;
       Y_In_Buffer     : Gint;
@@ -1075,13 +1077,13 @@ package body Src_Editor_Buffer.Line_Information is
       end Draw_Info;
 
    begin
-      Current_Line := Top_Line;
-      Get_Iter_At_Line (Buffer, Iter, Gint (Current_Line - 1));
+      L := Top_Line;
+      Get_Iter_At_Line (Buffer, Iter, Gint (L - 1));
 
       Set_Source_RGBA (Cr, Color);
 
       Drawing_Loop :
-      while Current_Line <= Bottom_Line loop
+      while L <= Bottom_Line loop
 
          Get_Line_Yrange (View, Iter, Y_In_Buffer, Line_Height);
 
@@ -1092,16 +1094,25 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer_X => 0, Buffer_Y => Y_In_Buffer,
             Window_X => Dummy_Gint, Window_Y => Y_Pix_In_Window);
 
-         Editable_Line := Get_Editable_Line (Buffer, Current_Line);
+         if L = Current_Line then
+            --  Draw the current line color
+
+            Set_Source_RGBA (Cr, Line_Color);
+
+            Cairo.Rectangle
+              (Cr, 0.0, Gdouble (Y_Pix_In_Window),
+               Gdouble (Buffer.Total_Column_Width), Gdouble (Line_Height));
+            Cairo.Fill (Cr);
+            Set_Source_RGBA (Cr, Color);
+         end if;
+
+         Editable_Line := Get_Editable_Line (Buffer, L);
 
          if BL.all /= null
-           and then Buffer.Line_Data
-             (Current_Line).Side_Info_Data /= null
+           and then Buffer.Line_Data (L).Side_Info_Data /= null
          then
             for Col in BL.all'Range loop
-               Line_Info :=
-                 Buffer.Line_Data
-                   (Current_Line).Side_Info_Data (Col);
+               Line_Info := Buffer.Line_Data (L).Side_Info_Data (Col);
 
                Draw_Info
                  (Gint (Buffer.Line_Numbers_Width
@@ -1123,7 +1134,7 @@ package body Src_Editor_Buffer.Line_Information is
 
          exit Drawing_Loop when not More_Lines;
 
-         Current_Line := Current_Line + 1;
+         L := L + 1;
       end loop Drawing_Loop;
    end Draw_Line_Info;
 

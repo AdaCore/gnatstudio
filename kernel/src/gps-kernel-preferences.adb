@@ -756,7 +756,7 @@ package body GPS.Kernel.Preferences is
       Current_Line_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Current-Line-Color",
-         Default => "rgba(231, 237, 255, 0.6)",
+         Default => "rgba(226,226,226,0.4)",
          Doc     => -("Color for highlighting the current line. White means"
                       & " transparent"),
          Label   => -"Current line color",

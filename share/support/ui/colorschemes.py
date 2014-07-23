@@ -87,7 +87,7 @@ default = gps_utils.Chainmap(light_common, {
     "@editor_bg_selection": "rgb(74,144,217)",
     "General-Default-Style": ("${font}", "rgb(0,0,0)", "rgb(255,255,255)"),
     "Debugger-Editor-Current-Line":   "rgba(125,236,57,0.6)",
-    "Src-Editor-Current-Line-Color":  "rgb(209,220,252)",
+    "Src-Editor-Current-Line-Color":  "rgba(226,226,226,0.4)",
     "Src-Editor-Reference-Style": (
         "${editorfont}", "rgb(0,0,0)", "rgb(255,255,255)"),
     "Src-Editor-Hyper-Links-Variant": (
@@ -199,7 +199,7 @@ iplastic = gps_utils.Chainmap(light_common, {
                                               "rgb(0,0,0)",
                                               "rgb(238,238,238)"),
     "Debugger-Editor-Current-Line":          "rgba(125,236,57,0.6)",
-    "Src-Editor-Current-Line-Color":         "rgb(140,140,140)",
+    "Src-Editor-Current-Line-Color":         "rgba(226,226,226,0.4)",
     "Src-Editor-Reference-Style":            ("${editorfont}",
                                               "rgb(0,0,0)",
                                               "rgb(238,238,238)"),

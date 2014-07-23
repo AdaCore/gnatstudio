@@ -86,13 +86,15 @@ package Src_Editor_Buffer.Line_Information is
    --  Return the side information for the given line
 
    procedure Draw_Line_Info
-     (Buffer      : access Source_Buffer_Record'Class;
-      Top_Line    : Buffer_Line_Type;
-      Bottom_Line : Buffer_Line_Type;
-      View        : Gtk_Text_View;
-      Color       : Gdk.RGBA.Gdk_RGBA;
-      Layout      : Pango_Layout;
-      Cr          : Cairo.Cairo_Context);
+     (Buffer       : access Source_Buffer_Record'Class;
+      Top_Line     : Buffer_Line_Type;
+      Bottom_Line  : Buffer_Line_Type;
+      Current_Line : Buffer_Line_Type;
+      View         : Gtk_Text_View;
+      Color        : Gdk.RGBA.Gdk_RGBA;
+      Line_Color   : Gdk.RGBA.Gdk_RGBA;
+      Layout       : Pango_Layout;
+      Cr           : Cairo.Cairo_Context);
    --  Draw side info from Top_Line to Bottom_Line on Drawable.
    --  Layout should be used to draw text.
 
