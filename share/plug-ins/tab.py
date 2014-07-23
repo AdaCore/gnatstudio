@@ -99,7 +99,7 @@ def python_parse_tab(e, beginning, end):
 
     previous_indent = 0
     level = 0
-
+    indent = 0
     # if more than 1 lines' text:
     # modify previous_indent and level according to prefixes in codes
 
@@ -116,8 +116,8 @@ def python_parse_tab(e, beginning, end):
         # case : enter subprogram, innermost level decides
         if tmphead.endswith(":"):
             level = 1
-            group = ["if", "else", "for", "while", "def", "class"]
-
+            group = ["if", "else", "for", "while",
+                     "def", "class", "try", "except"]
         else:
             # case: return to a function, previous def decides
             if tmphead.startswith("return"):
@@ -148,11 +148,11 @@ def python_parse_tab(e, beginning, end):
                     previous_indent = len(source[begin].split(prefix)[0])
                     break
 
-    # 3 find the correct indent number
-    # print "line %d level %d previous_indent %d current %d" % \
-    #      (end, level, previous_indent, current)
-    level = 0 if level < 0 else level
-    indent = previous_indent + level*4
+        # 3 find the correct indent number
+        # print "line %d level %d previous_indent %d current %d" % \
+        #      (end, level, previous_indent, current)
+        level = 0 if level < 0 else level
+        indent = previous_indent + level*4
 
     # 4 make corrections
     d = indent - current
