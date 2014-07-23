@@ -61,9 +61,12 @@ def smart_tab():
     # Otherwise, reformat the current selection
 
     if editor.file().language() == "python":
-        python_parse_tab(editor,
-                         editor.selection_start().line(),
-                         editor.selection_end().line())
+        o = editor.selection_end().column()
+        d = python_parse_tab(editor,
+                             editor.selection_start().line(),
+                             editor.selection_end().line())
+        for c in editor.cursors():
+            c.move(editor.at(editor.selection_end().line(), d+o))
     else:
         action = GPS.Action("Autoindent selection")
         if not action.execute_if_possible():
@@ -72,7 +75,7 @@ def smart_tab():
 
 def python_parse_tab(e, beginning, end):
     """
-       pase the text when for python files when hitting tab
+       parse the text for python files when hitting tab
        return the correction of number of whitespaces needed
        e is a GPS.EditorBuffer object
        beginning and end are selection area's line numbers
@@ -81,8 +84,8 @@ def python_parse_tab(e, beginning, end):
     # if multiple lines selected, indent each one in order
     if beginning != end:
         for i in range(beginning, end+1):
-            python_parse_tab(e, i, i)
-        return
+            d = python_parse_tab(e, i, i)
+        return d
 
     source = e.get_chars().splitlines()
 
@@ -157,6 +160,8 @@ def python_parse_tab(e, beginning, end):
         e.insert(e.at(end, 1), " "*d)
     if d < 0:
         e.delete(e.at(end, 1), e.at(end, -d))
+
+    return d
 
 
 @interactive(name='smart escape',
