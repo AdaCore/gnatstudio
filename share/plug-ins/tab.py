@@ -60,9 +60,103 @@ def smart_tab():
 
     # Otherwise, reformat the current selection
 
-    action = GPS.Action("Autoindent selection")
-    if not action.execute_if_possible():
-        editor.insert(editor.current_view().cursor(), "\t")
+    if editor.file().language() == "python":
+        python_parse_tab(editor,
+                         editor.selection_start().line(),
+                         editor.selection_end().line())
+    else:
+        action = GPS.Action("Autoindent selection")
+        if not action.execute_if_possible():
+            editor.insert(editor.current_view().cursor(), "\t")
+
+
+def python_parse_tab(e, beginning, end):
+    """
+       pase the text when for python files when hitting tab
+       return the correction of number of whitespaces needed
+       e is a GPS.EditorBuffer object
+       beginning and end are selection area's line numbers
+    """
+
+    # if multiple lines selected, indent each one in order
+    if beginning != end:
+        for i in range(beginning, end+1):
+            python_parse_tab(e, i, i)
+        return
+
+    source = e.get_chars().splitlines()
+
+    # get current indent number
+
+    last = source[end-1]
+    current = len(last) - len(last.lstrip(" "))
+
+    # 0 if at line 1 no indentation needed
+    # default: previous_indent is 0, next indent level is 0
+
+    previous_indent = 0
+    level = 0
+
+    # if more than 1 lines' text:
+    # modify previous_indent and level according to prefixes in codes
+
+    if end > 1:
+
+        # 1 find the next indent level
+        # default: no level change, previous line decides
+        group = []
+        prev = source[end-2]
+        previous_indent = len(prev) - len(prev.lstrip(" "))
+
+        tmphead = prev.lstrip(" ")
+
+        # case : enter subprogram, innermost level decides
+        if tmphead.endswith(":"):
+            level = 1
+            group = ["if", "else", "for", "while", "def", "class"]
+
+        else:
+            # case: return to a function, previous def decides
+            if tmphead.startswith("return"):
+                level = -2
+                group = ["def"]
+
+            # case: break out loops, innermost loop decides
+            if tmphead.startswith("break") or \
+               tmphead.startswith("continue"):
+                level = -1
+                group = ["for", "while"]
+
+        # 2 find prev indent quantity (# of whitespaces)
+        prefix = ""
+        begin = 0
+
+        # not for the case that no indentation needed
+        if level != 0:
+            for i in range(end-2, -1, -1):
+                for pref in group:
+                    if source[i].lstrip(" ").startswith(pref):
+                        begin = i
+                        prefix = pref
+                        break
+
+                # if hit the prefix during loop, modify previous_indent
+                if prefix is not "":
+                    previous_indent = len(source[begin].split(prefix)[0])
+                    break
+
+    # 3 find the correct indent number
+    # print "line %d level %d previous_indent %d current %d" % \
+    #      (end, level, previous_indent, current)
+    level = 0 if level < 0 else level
+    indent = previous_indent + level*4
+
+    # 4 make corrections
+    d = indent - current
+    if d > 0:
+        e.insert(e.at(end, 1), " "*d)
+    if d < 0:
+        e.delete(e.at(end, 1), e.at(end, -d))
 
 
 @interactive(name='smart escape',

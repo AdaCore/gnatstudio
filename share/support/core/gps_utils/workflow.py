@@ -82,7 +82,7 @@ def make_button_for_action(button_name, button_id):
         def on_click(button):
             action.execute_if_possible()
 
-        # create the button
+        # create the button and append it to the toolbar
         b = GPS.Button(button_id, button_name, on_click)
         GPS.Toolbar().append(b)
 
