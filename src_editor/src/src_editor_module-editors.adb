@@ -810,7 +810,8 @@ package body Src_Editor_Module.Editors is
       File        : Virtual_File;
       Force       : Boolean := False;
       Open_Buffer : Boolean := False;
-      Open_View   : Boolean := True) return Editor_Buffer'Class
+      Open_View   : Boolean := True;
+      Focus       : Boolean := True) return Editor_Buffer'Class
    is
       --  Search the view from any project, we do not have more information
       Project : constant Project_Type := No_Project;
@@ -830,7 +831,7 @@ package body Src_Editor_Module.Editors is
          if Open_View then
             Box := Open_File
               (This.Kernel, File, Project,
-               Line => 0, Column => 0, Column_End => 0);
+               Line => 0, Column => 0, Column_End => 0, Focus => Focus);
          else
             Box := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Box;
             if Box = null then
@@ -1569,7 +1570,8 @@ package body Src_Editor_Module.Editors is
               (Get_File (This.Mark.Mark),
                Force       => False,
                Open_Buffer => False,
-               Open_View   => Open);
+               Open_View   => Open,
+               Focus       => False);
          begin
             if Buf = Nil_Editor_Buffer then
                return Nil_Editor_Location;

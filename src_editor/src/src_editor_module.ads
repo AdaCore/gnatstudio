@@ -321,6 +321,8 @@ private
       --  Contains a list of registered categories
 
       Editors               : Editors_Hash.Instance;
+      Last_Focused_Editor   : Gtkada.MDI.MDI_Child;
+      --  Pointer to editor that lost focus last
 
       Highlighting_Manager : System.Address := System.Null_Address;
       --  The highlighting manager

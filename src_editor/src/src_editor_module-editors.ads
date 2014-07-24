@@ -33,7 +33,8 @@ package Src_Editor_Module.Editors is
       File        : Virtual_File;
       Force       : Boolean := False;
       Open_Buffer : Boolean := False;
-      Open_View   : Boolean := True) return Editor_Buffer'Class;
+      Open_View   : Boolean := True;
+      Focus       : Boolean := True) return Editor_Buffer'Class;
    overriding function Get_New
      (This : Src_Editor_Buffer_Factory) return Editor_Buffer'Class;
    overriding function New_Mark

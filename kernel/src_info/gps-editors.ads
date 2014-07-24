@@ -706,7 +706,8 @@ package GPS.Editors is
       File        : Virtual_File;
       Force       : Boolean := False;
       Open_Buffer : Boolean := False;
-      Open_View   : Boolean := True) return Editor_Buffer'Class is abstract;
+      Open_View   : Boolean := True;
+      Focus       : Boolean := True) return Editor_Buffer'Class is abstract;
    --  If file is not specified, the current editor is returned, ie the last
    --  one that had the keyboard focus.
    --
@@ -716,8 +717,8 @@ package GPS.Editors is
    --           - if Open_Buffer is True, open a buffer but not a view
    --           - if Open_Buffer is False, open nothing
    --
-   --  When a new editor is opened, it receives the focus. But if the editor
-   --  already existed, it is not raised explicitly, and you need to do it
+   --  When a new editor is opened and Focus = True, it receives the focus.
+   --  Otherwise, it is not raised explicitly, and you need to do it
    --  yourself.
    --
    --  If force is set to true, a reload is forced in case the file is already

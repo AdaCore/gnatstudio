@@ -394,6 +394,10 @@ package body Src_Editor_Module is
       E  : Element;
    begin
       if Id /= null then
+         if Id.Last_Focused_Editor = Child then
+            Id.Last_Focused_Editor := null;
+         end if;
+
          Editors_Hash.Get_First (Id.Editors, I);
          E := Editors_Hash.Get_Element (I);
 
@@ -987,8 +991,18 @@ package body Src_Editor_Module is
    -------------------------
 
    function Find_Current_Editor
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child is
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
+   is
+      Id : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
+      if Is_Source_Box (Child) then
+         return Child;
+      elsif Id /= null and then Id.Last_Focused_Editor /= null then
+         return Id.Last_Focused_Editor;
+      end if;
+
       return Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Source_Editor_Box_Record'Tag);
    end Find_Current_Editor;
@@ -1384,7 +1398,9 @@ package body Src_Editor_Module is
          Widget_Callback.Connect
            (Child, Signal_Destroy, On_Editor_Destroy'Access);
 
-         Raise_Child (Child, Focus);
+         if Focus then
+            Raise_Child (Child, Focus);
+         end if;
 
          Jump_To_Location;
 
@@ -2876,6 +2892,7 @@ package body Src_Editor_Module is
         Source_Editor_Module (Src_Editor_Module_Id);
    begin
       Editors_Hash.Set (Id.Editors, File, (Child => Child));
+      Id.Last_Focused_Editor := Child;
    end On_Ed_View_Focus_Lost;
 
    ----------------------

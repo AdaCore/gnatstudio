@@ -26,7 +26,6 @@ with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
 
 with GNATCOLL.Xref;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Src_Editor_Box;            use Src_Editor_Box;
@@ -520,7 +519,7 @@ package body Src_Editor_Module.Markers is
    procedure Push_Current_Editor_Location_In_History
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Child  : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
       Box    : Source_Editor_Box;
       Line   : Editable_Line_Type;
       Column : Visible_Column_Type;
