@@ -29,6 +29,7 @@ import ast
 import os.path
 import gps_utils
 from constructs import *
+import tab
 
 try:
     from gi.repository import Gtk
@@ -225,9 +226,37 @@ documentation for the standard python library. It is accessed through the
             filter='Python file',
             contextual='Python/Import & Reload')
 
+        gps_utils.make_interactive(
+            callback=self.indent_on_new_line,
+            name="Python Auto Indentation",
+            filter='Python file')
+
         self.pydoc_proc = None
         GPS.Hook("project_view_changed").add(self._project_recomputed)
         GPS.Hook("before_exit_action_hook").add(self._before_exit)
+
+    def indent_on_new_line(self):
+        """
+        This action parse the code (if it's python) and move cursor to
+        the desired indentation level.
+        """
+        # print "indent_on_new_line called!"
+        editor = GPS.EditorBuffer.get()
+        start = editor.selection_start()
+        end = editor.selection_end()
+
+        # if a block is selected, delete the block
+        if start.line() != end.line() or start.column() != end.column():
+            editor.delete(start, end)
+
+        # place the cursor at the head of a new line
+        editor.insert(start, "\n")
+        for c in editor.cursors():
+            c.move(editor.at(start.line()+1, 1))
+        start = editor.selection_start()
+        # print "parse on: %d, %d" % (start.line(), start.column())
+        # do indentation
+        d = tab.python_parse_tab(editor, start.line(), start.line())
 
     def reload_file(self):
         """

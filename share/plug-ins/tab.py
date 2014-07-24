@@ -9,11 +9,12 @@ This function is available in GPS through the action
 """
 
 import GPS
-from gps_utils import interactive, in_editor
+from gps_utils import interactive, make_interactive, in_editor
 import pygps
 import aliases
 import align
 from gi.repository import Gtk
+
 
 if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
     tabs_align_selection = GPS.Preference("Editor/tabs_align_selection")
@@ -65,8 +66,8 @@ def smart_tab():
         d = python_parse_tab(editor,
                              editor.selection_start().line(),
                              editor.selection_end().line())
-        for c in editor.cursors():
-            c.move(editor.at(editor.selection_end().line(), d+o))
+        # for c in editor.cursors():
+        #    c.move(editor.at(editor.selection_end().line(), d+o))
     else:
         action = GPS.Action("Autoindent selection")
         if not action.execute_if_possible():

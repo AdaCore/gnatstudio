@@ -55,6 +55,7 @@
   <key action="Move block left">control-alt-less</key>
   <key action="Format selection">Tab</key>
   <key action="smart escape">Escape</key>
+  <key action="Python Auto Indentation">Return</key>
 
   <key action="increase text size">control-plus</key>
   <key action="decrease text size">control-alt-plus</key>
