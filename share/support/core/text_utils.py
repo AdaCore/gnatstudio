@@ -616,7 +616,35 @@ def forward_delete():
 
 @interactive("Editor", "Source editor", name="backward delete")
 def backward_delete():
+    e = GPS.EditorBuffer.get()
+    cursor = e.selection_start()
+    end = e.selection_end()
+    if e.file().language() == "python":
+        if end.line() == cursor.line() and end.column() == cursor.column():
+            try:
+                did = python_forward_indent(e, cursor)
+            except:
+                did = False
+            if did:
+                return
     delete(forward=False)
+
+
+def python_forward_indent(e, cursor):
+    """
+       Indent with backspace in the leading white spaces with 4
+       e is EditorBuffer, cursor is EditorLocation of cursor
+    """
+    line = e.get_chars(cursor.beginning_of_line(), cursor.end_of_line())
+    spaces_len = len(line) - len(line.lstrip(" "))
+    # if cursor is in the middle of the leading whitespaces
+    if spaces_len >= cursor.column()-1:
+        d = 4 if spaces_len > 4 else spaces_len
+        e.delete(e.at(cursor.line(), 1), e.at(cursor.line(), d))
+        for c in e.cursors():
+            c.move(e.at(cursor.line(), cursor.column()-d))
+        return True
+    return False
 
 
 def delete(forward=True):
