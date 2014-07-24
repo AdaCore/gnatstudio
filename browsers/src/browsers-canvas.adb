@@ -99,6 +99,7 @@ package body Browsers.Canvas is
    Hist_Straight_Links : constant History_Key := "browsers-straight-links";
    Hist_Draw_Grid : constant History_Key := "browsers-display-grid";
    Hist_Add_Waypoints : constant History_Key := "browsers-add-waypoints";
+   Hist_Vertical      : constant History_Key := "browsers-vertical";
 
    Zoom_Duration : constant := 0.25;
    --  Duration of the zoom animation
@@ -188,7 +189,7 @@ package body Browsers.Canvas is
    procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class);
    --  Toggle the layout of links
 
-   procedure Toggle_Waypoints (Browser : access Gtk_Widget_Record'Class);
+   procedure Force_Refresh (Browser : access Gtk_Widget_Record'Class);
    --  Toggle when the user choses to use waypoints or not
 
    procedure Toggle_Draw_Grid (Browser : access Gtk_Widget_Record'Class);
@@ -698,6 +699,17 @@ package body Browsers.Canvas is
       end if;
 
       if View.Use_Canvas_View then
+         Gtk_New (Check, Label => -"Vertical layout");
+         Check.Set_Tooltip_Text
+           (-("General orientation of the layout: either from left to right,"
+            & " or from top to bottom"));
+         Menu.Append (Check);
+         Associate
+           (Get_History (View.Kernel).all, Hist_Vertical, Check);
+         Widget_Callback.Object_Connect
+           (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+            Force_Refresh'Access, View);
+
          Gtk_New (Check, Label => -"Use waypoints");
          Check.Set_Tooltip_Text
            (-("Whether to insert waypoints in long edges when performing the"
@@ -709,7 +721,7 @@ package body Browsers.Canvas is
             Default => False);
          Widget_Callback.Object_Connect
            (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-            Toggle_Waypoints'Access, View);
+            Force_Refresh'Access, View);
       end if;
    end Create_Menu;
 
@@ -1146,7 +1158,8 @@ package body Browsers.Canvas is
          Gtkada.Canvas_View.Models.Layers.Layout
            (Self.View.Model,
             View                 => Self.View,  --  animate
-            Horizontal           => True,
+            Horizontal           =>
+              not Get_History (Get_History (Self.Kernel).all, Hist_Vertical),
             Add_Waypoints        =>
               Get_History (Get_History (Self.Kernel).all, Hist_Add_Waypoints),
             Space_Between_Items  => 10.0,
@@ -1233,15 +1246,15 @@ package body Browsers.Canvas is
       end if;
    end Toggle_Orthogonal;
 
-   ----------------------
-   -- Toggle_Waypoints --
-   ----------------------
+   -------------------
+   -- Force_Refresh --
+   -------------------
 
-   procedure Toggle_Waypoints (Browser : access Gtk_Widget_Record'Class) is
+   procedure Force_Refresh (Browser : access Gtk_Widget_Record'Class) is
       View  : constant General_Browser := General_Browser (Browser);
    begin
       Refresh_Layout (View);
-   end Toggle_Waypoints;
+   end Force_Refresh;
 
    ----------------------
    -- Toggle_Draw_Grid --
