@@ -22,6 +22,7 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Models.Layers; use Gtkada.Canvas_View.Models.Layers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
 
@@ -128,7 +129,8 @@ package body Browsers.Projects is
 
    function Add_Project_If_Not_Present
      (Browser : not null access Project_Browser_Record'Class;
-      Project : Project_Type) return Project_Item;
+      Project : Project_Type;
+      Pos     : Gtkada.Style.Point) return Project_Item;
    --  Add a new item for Project if there is currently none in the browser
 
    function Project_Of
@@ -236,13 +238,14 @@ package body Browsers.Projects is
 
    function Add_Project_If_Not_Present
      (Browser : not null access Project_Browser_Record'Class;
-      Project : Project_Type) return Project_Item
+      Project : Project_Type;
+      Pos     : Gtkada.Style.Point) return Project_Item
    is
       V : Project_Item := Find_Project (Browser, Project.Name);
    begin
       if V = null then
          Gtk_New (V, Browser, Project);
-         V.Set_Position ((0.0, 0.0));  --  ???
+         V.Set_Position (Pos);
          Browser_Model (Browser.Get_View.Model).Add (V);
       end if;
 
@@ -381,8 +384,7 @@ package body Browsers.Projects is
       Recursive : Boolean;
       Rescale   : Boolean)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Browser);
-      pragma Unreferenced (Kernel);
+      Src : Project_Item;
 
       procedure Process_Project (Local : Project_Type; Src : Project_Item);
       --  Display all the imported projects from Local.
@@ -402,7 +404,8 @@ package body Browsers.Projects is
          Iter := Start (Local, Recursive => True, Direct_Only => True);
          while Current (Iter) /= No_Project loop
             if Current (Iter) /= Local then
-               Dest := Add_Project_If_Not_Present (Browser, Current (Iter));
+               Dest := Add_Project_If_Not_Present
+                 (Browser, Current (Iter), Src.Position);
                Add_Link_If_Not_Present
                  (Browser, Src, Dest, Limited_With => Is_Limited_With (Iter));
             end if;
@@ -410,7 +413,7 @@ package body Browsers.Projects is
          end loop;
       end Process_Project;
 
-      Src, Src2        : Project_Item;
+      Src2             : Project_Item;
       Item_Was_Present : Boolean;
       Iter             : Project_Iterator;
 
@@ -422,13 +425,14 @@ package body Browsers.Projects is
       Item_Was_Present := Src /= null;
 
       if Src = null then
-         Src := Add_Project_If_Not_Present (Browser, Project);
+         Src := Add_Project_If_Not_Present (Browser, Project, No_Position);
       end if;
 
       if Recursive then
          Iter := Start (Project, Recursive => True, Direct_Only => False);
          while Current (Iter) /= No_Project loop
-            Src2 := Add_Project_If_Not_Present (Browser, Current (Iter));
+            Src2 := Add_Project_If_Not_Present
+              (Browser, Current (Iter), Src.Position);
             Process_Project (Current (Iter), Src2);
             Next (Iter);
          end loop;
@@ -467,7 +471,7 @@ package body Browsers.Projects is
    begin
       Trace (Me, "Examine_Ancestor_Project_Hierarchy for " & Project.Name);
 
-      Dest := Add_Project_If_Not_Present (Browser, Project);
+      Dest := Add_Project_If_Not_Present (Browser, Project, No_Position);
 
       Iter := Find_All_Projects_Importing
         (Project      => Project,
@@ -475,7 +479,8 @@ package body Browsers.Projects is
          Direct_Only  => True);
 
       while Current (Iter) /= No_Project loop
-         Src := Add_Project_If_Not_Present (Browser, Current (Iter));
+         Src := Add_Project_If_Not_Present
+           (Browser, Current (Iter), Dest.Position);
          Add_Link_If_Not_Present
            (Browser, Src, Dest,
             Limited_With => Is_Limited_With (Iter));

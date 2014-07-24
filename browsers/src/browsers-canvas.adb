@@ -1141,10 +1141,11 @@ package body Browsers.Canvas is
          --  Recompute the size of all boxes
          Self.View.Model.Refresh_Layout;
 
-         --  Now compute the position of the boxes
+         --  Now compute the position of the boxes.
 
          Gtkada.Canvas_View.Models.Layers.Layout
            (Self.View.Model,
+            View                 => Self.View,  --  animate
             Horizontal           => True,
             Add_Waypoints        =>
               Get_History (Get_History (Self.Kernel).all, Hist_Add_Waypoints),
@@ -1152,7 +1153,8 @@ package body Browsers.Canvas is
             Space_Between_Layers => 30.0);
 
          if Rescale then
-            Self.View.Scale_To_Fit (Min_Scale => 0.5, Max_Scale => 2.0);
+            Self.View.Scale_To_Fit
+              (Min_Scale => 0.5, Max_Scale => 2.0, Duration => 0.8);
          end if;
 
       else

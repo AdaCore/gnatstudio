@@ -37,6 +37,7 @@ with Glib;                          use Glib;
 with Gtk.Enums;                     use Gtk.Enums;
 with Gtk.Widget;                    use Gtk.Widget;
 with Gtkada.Canvas_View;            use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Models.Layers; use Gtkada.Canvas_View.Models.Layers;
 with Gtkada.MDI;                    use Gtkada.MDI;
 with Histories;                     use Histories;
 with Std_Dialogs;                   use Std_Dialogs;
@@ -171,6 +172,7 @@ package body Browsers.Call_Graph is
    procedure Add_Entity_If_Not_Present
      (Browser : access Call_Graph_Browser_Record'Class;
       Entity  : Root_Entity'Class;
+      At_Pos  : Gtkada.Style.Point;
       Item    : out Entity_Item;
       Newly_Created : out Boolean);
    --  Add a new entity to the browser, if not already there.
@@ -277,6 +279,7 @@ package body Browsers.Call_Graph is
    procedure Add_Entity_If_Not_Present
      (Browser : access Call_Graph_Browser_Record'Class;
       Entity  : Root_Entity'Class;
+      At_Pos  : Gtkada.Style.Point;
       Item    : out Entity_Item;
       Newly_Created : out Boolean)
    is
@@ -284,7 +287,7 @@ package body Browsers.Call_Graph is
       Item := Browser.Find_Entity (Entity);
       if Item = null then
          Gtk_New (Item, Browser, Entity);
-         Item.Set_Position ((0.0, 0.0));
+         Item.Set_Position (At_Pos);
          Browser_Model (Browser.Get_View.Model).Add (Item);
          Newly_Created := True;
       else
@@ -308,7 +311,8 @@ package body Browsers.Call_Graph is
       Newly_Added : Boolean;
       Data        : Examine_Ancestors_Data_Access;
    begin
-      Add_Entity_If_Not_Present (Browser, Entity, Item, Newly_Added);
+      Add_Entity_If_Not_Present
+        (Browser, Entity, No_Position, Item, Newly_Added);
       Data := new Examine_Ancestors_Data'
         (Commands_User_Data_Record with
            Browser        => Browser,
@@ -403,9 +407,11 @@ package body Browsers.Call_Graph is
       Newly_Added : Boolean;
    begin
       if Data.Link_From_Item then
-         Add_Entity_If_Not_Present (Data.Browser, Entity, It, Newly_Added);
+         Add_Entity_If_Not_Present
+           (Data.Browser, Entity, Data.Item.Position, It, Newly_Added);
       else
-         Add_Entity_If_Not_Present (Data.Browser, Parent, It, Newly_Added);
+         Add_Entity_If_Not_Present
+           (Data.Browser, Parent, Data.Item.Position, It, Newly_Added);
       end if;
 
       if Newly_Added then
@@ -463,7 +469,8 @@ package body Browsers.Call_Graph is
       It            : Entity_Item;
       Newly_Added   : Boolean;
    begin
-      Add_Entity_If_Not_Present (Browser, Entity, It, Newly_Added);
+      Add_Entity_If_Not_Present
+        (Browser, Entity, No_Position, It, Newly_Added);
       Data := new Examine_Ancestors_Data'
         (Commands_User_Data_Record with
          Browser        => Browser,
