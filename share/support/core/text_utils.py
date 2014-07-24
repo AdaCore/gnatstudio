@@ -638,7 +638,7 @@ def python_forward_indent(e, cursor):
     line = e.get_chars(cursor.beginning_of_line(), cursor.end_of_line())
     spaces_len = len(line) - len(line.lstrip(" "))
     # if cursor is in the middle of the leading whitespaces
-    if spaces_len >= cursor.column()-1:
+    if spaces_len > 0 and spaces_len >= cursor.column()-1:
         d = 4 if spaces_len > 4 else spaces_len
         e.delete(e.at(cursor.line(), 1), e.at(cursor.line(), d))
         for c in e.cursors():
