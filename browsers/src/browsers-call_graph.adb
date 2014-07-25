@@ -115,7 +115,6 @@ package body Browsers.Call_Graph is
    procedure Create_Or_Find_Entity
      (Browser : access Call_Graph_Browser_Record'Class;
       Entity  : Root_Entity'Class;
-      At_Pos  : Gtkada.Style.Point;
       Item    : out Entity_Item;
       Newly_Created : out Boolean);
    --  Retrieve an existing item for the entity, or create a new item.
@@ -220,7 +219,6 @@ package body Browsers.Call_Graph is
    procedure Create_Or_Find_Entity
      (Browser : access Call_Graph_Browser_Record'Class;
       Entity  : Root_Entity'Class;
-      At_Pos  : Gtkada.Style.Point;
       Item    : out Entity_Item;
       Newly_Created : out Boolean)
    is
@@ -263,7 +261,7 @@ package body Browsers.Call_Graph is
                Decl.File.Display_Base_Name & ':' & Image (Decl.Line));
             Item.Add_Child (Text, Margin => (2.0, 2.0, 2.0, 2.0));
 
-            Item.Set_Position (At_Pos);
+            Item.Set_Position (No_Position);
          end;
          Newly_Created := True;
       else
@@ -287,8 +285,7 @@ package body Browsers.Call_Graph is
       Newly_Added : Boolean;
       Data        : Examine_Ancestors_Data_Access;
    begin
-      Create_Or_Find_Entity
-        (Browser, Entity, No_Position, Item, Newly_Added);
+      Create_Or_Find_Entity (Browser, Entity, Item, Newly_Added);
       Data := new Examine_Ancestors_Data'
         (Commands_User_Data_Record with
          Browser        => Browser,
@@ -323,6 +320,9 @@ package body Browsers.Call_Graph is
          else
             Dir := (if Data.Link_From_Item then Down else Up);
          end if;
+
+         Data.Browser.Get_View.Model.Clear_Selection;
+         Data.Browser.Get_View.Model.Add_To_Selection (Data.Item);
 
          Insert_And_Layout_Items
            (Data.Browser.Get_View,
@@ -401,13 +401,11 @@ package body Browsers.Call_Graph is
       Newly_Added : Boolean;
    begin
       if Data.Link_From_Item then
-         Create_Or_Find_Entity
-           (Data.Browser, Entity, Data.Item.Position, It, Newly_Added);
+         Create_Or_Find_Entity (Data.Browser, Entity, It, Newly_Added);
          Add_Link_If_Not_Present
            (Data.Browser, Data.Item, It, Is_Renaming => Is_Renaming);
       else
-         Create_Or_Find_Entity
-           (Data.Browser, Parent, Data.Item.Position, It, Newly_Added);
+         Create_Or_Find_Entity (Data.Browser, Parent, It, Newly_Added);
          Add_Link_If_Not_Present
            (Data.Browser, It, Data.Item, Is_Renaming => Is_Renaming);
       end if;
@@ -457,7 +455,7 @@ package body Browsers.Call_Graph is
       It            : Entity_Item;
       Newly_Added   : Boolean;
    begin
-      Create_Or_Find_Entity (Browser, Entity, No_Position, It, Newly_Added);
+      Create_Or_Find_Entity (Browser, Entity, It, Newly_Added);
       Data := new Examine_Ancestors_Data'
         (Commands_User_Data_Record with
          Browser        => Browser,

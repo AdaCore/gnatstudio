@@ -22,6 +22,7 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
 
@@ -82,16 +83,14 @@ package body Browsers.Projects is
    procedure Examine_Project_Hierarchy
      (Browser   : not null access Project_Browser_Record'Class;
       Project   : Project_Type;
-      Recursive : Boolean;
-      Rescale : Boolean);
+      Recursive : Boolean);
    --  Display the project hierarchy for Project in the canvas.
    --  If Recursive is True, then the projects imported indirectly are also
    --  displayed.
 
    procedure Examine_Ancestor_Project_Hierarchy
      (Browser : not null access Project_Browser_Record'Class;
-      Project : Project_Type;
-      Rescale : Boolean);
+      Project : Project_Type);
    --  Add to the browser all the projects that with Project
 
    --------------
@@ -128,8 +127,7 @@ package body Browsers.Projects is
 
    function Add_Project_If_Not_Present
      (Browser : not null access Project_Browser_Record'Class;
-      Project : Project_Type;
-      Pos     : Gtkada.Style.Point) return Project_Item;
+      Project : Project_Type) return Project_Item;
    --  Add a new item for Project if there is currently none in the browser
 
    function Project_Of
@@ -237,14 +235,13 @@ package body Browsers.Projects is
 
    function Add_Project_If_Not_Present
      (Browser : not null access Project_Browser_Record'Class;
-      Project : Project_Type;
-      Pos     : Gtkada.Style.Point) return Project_Item
+      Project : Project_Type) return Project_Item
    is
       V : Project_Item := Find_Project (Browser, Project.Name);
    begin
       if V = null then
          Gtk_New (V, Browser, Project);
-         V.Set_Position (Pos);
+         V.Set_Position (No_Position);
          Browser_Model (Browser.Get_View.Model).Add (V);
       end if;
 
@@ -380,10 +377,10 @@ package body Browsers.Projects is
    procedure Examine_Project_Hierarchy
      (Browser   : not null access Project_Browser_Record'Class;
       Project   : Project_Type;
-      Recursive : Boolean;
-      Rescale   : Boolean)
+      Recursive : Boolean)
    is
-      Src : Project_Item;
+      Src   : Project_Item;
+      Items : Items_Lists.List;
 
       procedure Process_Project (Local : Project_Type; Src : Project_Item);
       --  Display all the imported projects from Local.
@@ -394,8 +391,8 @@ package body Browsers.Projects is
       ---------------------
 
       procedure Process_Project (Local : Project_Type; Src : Project_Item) is
-         Dest : Project_Item;
          Iter : Project_Iterator;
+         Dest : Project_Item;
       begin
          --  If we are displaying the recursive hierarchy for the root project,
          --  we know that there won't be remaining ancestor projects, so we can
@@ -403,8 +400,8 @@ package body Browsers.Projects is
          Iter := Start (Local, Recursive => True, Direct_Only => True);
          while Current (Iter) /= No_Project loop
             if Current (Iter) /= Local then
-               Dest := Add_Project_If_Not_Present
-                 (Browser, Current (Iter), Src.Position);
+               Dest := Add_Project_If_Not_Present (Browser, Current (Iter));
+               Items.Append (Abstract_Item (Dest));
                Add_Link_If_Not_Present
                  (Browser, Src, Dest, Limited_With => Is_Limited_With (Iter));
             end if;
@@ -412,48 +409,42 @@ package body Browsers.Projects is
          end loop;
       end Process_Project;
 
-      Src2             : Project_Item;
-      Item_Was_Present : Boolean;
-      Iter             : Project_Iterator;
+      Src2 : Project_Item;
+      Iter : Project_Iterator;
 
    begin
       Trace (Me, "Examine_Project_Hierarchy for " & Project.Name
              & " Recursive=" & Recursive'Img);
 
-      Src := Find_Project (Browser, Project.Name);
-      Item_Was_Present := Src /= null;
-
-      if Src = null then
-         Src := Add_Project_If_Not_Present (Browser, Project, No_Position);
-      end if;
+      Src := Add_Project_If_Not_Present (Browser, Project);
 
       if Recursive then
          Iter := Start (Project, Recursive => True, Direct_Only => False);
          while Current (Iter) /= No_Project loop
-            Src2 := Add_Project_If_Not_Present
-              (Browser, Current (Iter), Src.Position);
+            Src2 := Add_Project_If_Not_Present (Browser, Current (Iter));
+            Items.Append (Abstract_Item (Src2));
             Process_Project (Current (Iter), Src2);
             Next (Iter);
          end loop;
-
       else
          Process_Project (Project, Src);
       end if;
 
-      if Item_Was_Present then
-         --  Need to select the item as well: this doesn't impact the
-         --  contextual menus, since the item is already selected anyway, but
-         --  is necessary when displaying the browser from the explorer's
-         --  contextual menu.
-         --
-         --  As a side effect, this also refreshes the canvas
+      Browser.Get_View.Model.Clear_Selection;
+      Browser.Get_View.Model.Add_To_Selection (Src);
 
-         Browser.Get_View.Model.Clear_Selection;
-         Browser.Get_View.Model.Add_To_Selection (Src);
-         Browser.Get_View.Scroll_Into_View (Src);
+      if Recursive then
+         Browser.Get_View.Model.Refresh_Layout;
+      else
+         Insert_And_Layout_Items
+           (Browser.Get_View,
+            Ref         => Src,
+            Items       => Items,
+            Direction   => (if Browser.Horizontal_Layout then Right else Down),
+            Space_Between_Items  => Space_Between_Items,
+            Space_Between_Layers => Space_Between_Layers,
+            Duration             => 0.3);
       end if;
-
-      Browser.Refresh_Layout (Rescale => Rescale);
    end Examine_Project_Hierarchy;
 
    ----------------------------------------
@@ -462,15 +453,15 @@ package body Browsers.Projects is
 
    procedure Examine_Ancestor_Project_Hierarchy
      (Browser : not null access Project_Browser_Record'Class;
-      Project : Project_Type;
-      Rescale : Boolean)
+      Project : Project_Type)
    is
       Src, Dest : Project_Item;
       Iter      : Project_Iterator;
+      Items     : Items_Lists.List;
    begin
       Trace (Me, "Examine_Ancestor_Project_Hierarchy for " & Project.Name);
 
-      Dest := Add_Project_If_Not_Present (Browser, Project, No_Position);
+      Dest := Add_Project_If_Not_Present (Browser, Project);
 
       Iter := Find_All_Projects_Importing
         (Project      => Project,
@@ -478,15 +469,25 @@ package body Browsers.Projects is
          Direct_Only  => True);
 
       while Current (Iter) /= No_Project loop
-         Src := Add_Project_If_Not_Present
-           (Browser, Current (Iter), Dest.Position);
+         Src := Add_Project_If_Not_Present (Browser, Current (Iter));
+         Items.Append (Abstract_Item (Src));
          Add_Link_If_Not_Present
            (Browser, Src, Dest,
             Limited_With => Is_Limited_With (Iter));
          Next (Iter);
       end loop;
 
-      Browser.Refresh_Layout (Rescale => Rescale);
+      Browser.Get_View.Model.Clear_Selection;
+      Browser.Get_View.Model.Add_To_Selection (Dest);
+
+      Insert_And_Layout_Items
+        (Browser.Get_View,
+         Ref               => Dest,
+         Items             => Items,
+         Direction         => (if Browser.Horizontal_Layout then Left else Up),
+         Space_Between_Items  => Space_Between_Items,
+         Space_Between_Layers => Space_Between_Layers,
+         Duration             => 0.3);
    end Examine_Ancestor_Project_Hierarchy;
 
    --------------
@@ -501,8 +502,7 @@ package body Browsers.Projects is
       Prj : constant Project_Item := Project_Item (Self.Get_Toplevel_Item);
    begin
       Examine_Project_Hierarchy
-        (Project_Browser (Prj.Browser), Project_Of (Prj), Recursive => False,
-         Rescale => False);
+        (Project_Browser (Prj.Browser), Project_Of (Prj), Recursive => False);
    end On_Click;
 
    --------------
@@ -518,8 +518,7 @@ package body Browsers.Projects is
    begin
       Examine_Ancestor_Project_Hierarchy
         (Browser => Project_Browser (Prj.Browser),
-         Project => Project_Of (Prj),
-         Rescale => False);
+         Project => Project_Of (Prj));
    end On_Click;
 
    -----------------
@@ -629,14 +628,12 @@ package body Browsers.Projects is
       if Command.Show_Ancestors then
          Examine_Ancestor_Project_Hierarchy
            (Browser,
-            Project_Information (Context.Context),
-            Rescale => True);
+            Project_Information (Context.Context));
       else
          Examine_Project_Hierarchy
            (Browser,
             Project_Information (Context.Context),
-            Recursive => Command.Recursive,
-            Rescale => True);
+            Recursive => Command.Recursive);
       end if;
       return Commands.Success;
    end Execute;
