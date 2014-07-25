@@ -1271,7 +1271,8 @@ package body Browsers.Canvas is
 
    procedure Toggle_Draw_Grid (Browser : access Gtk_Widget_Record'Class) is
       View  : constant General_Browser := General_Browser (Browser);
-      Grid            : Guint := Gtkada.Canvas.Default_Grid_Size;
+      Draw_Grid : constant Boolean :=
+        Get_History (Get_History (View.Kernel).all, Hist_Draw_Grid);
       Annotation_Font : Pango_Font_Description;
    begin
       Annotation_Font := Copy (Preferences.Default_Font.Get_Pref_Font);
@@ -1279,14 +1280,11 @@ package body Browsers.Canvas is
         (Annotation_Font,
          Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
 
-      if not Get_History (Get_History (View.Kernel).all, Hist_Draw_Grid) then
-         Grid := 0;
-      end if;
-
       if View.Use_Canvas_View then
-         View.View.Set_Grid_Size (Size => Model_Coordinate (Grid));
+         View.View.Set_Grid_Size
+           (Size => Model_Coordinate (Gtkada.Canvas.Default_Grid_Size));
 
-         if Grid = 0 then
+         if not Draw_Grid then
             View.View.Background := Background_Color;
          else
             View.View.Background := Background_Grid_Lines;
@@ -1301,7 +1299,8 @@ package body Browsers.Canvas is
          Configure
            (View.Canvas,
             Annotation_Font => Annotation_Font,
-            Grid_Size       => Grid,
+            Grid_Size       =>
+              (if Draw_Grid then Gtkada.Canvas.Default_Grid_Size else 0),
             Background      => Browsers_Bg_Color.Get_Pref);
       end if;
 
