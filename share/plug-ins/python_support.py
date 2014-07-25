@@ -251,10 +251,11 @@ documentation for the standard python library. It is accessed through the
 
         # place the cursor at the head of a new line
         editor.insert(start, "\n")
-        for c in editor.cursors():
-            c.move(editor.at(start.line()+1, 1))
+        editor.main_cursor().move(editor.at(start.line()+1, 1))
         start = editor.selection_start()
+
         # print "parse on: %d, %d" % (start.line(), start.column())
+
         # do indentation
         d = tab.python_parse_tab(editor, start.line(), start.line())
 

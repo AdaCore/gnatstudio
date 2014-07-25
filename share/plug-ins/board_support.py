@@ -1,5 +1,5 @@
 """
-This plug-in is to create a button on the toolbar
+This plug-in is to create buttons on the toolbar
 that triggers compile, load, and run for ada projects
 onto a bare STM32F4 board.
 
@@ -21,6 +21,93 @@ from modules import Module
 import gps_utils.workflow as workflow
 import gps_utils.promises as promise
 import sys
+
+
+def is_loadable():
+    p = GPS.Project.root()
+    s = p.get_attribute_as_string(package="Builder",
+                                  attribute="Default_Switches",
+                                  index="Ada") + \
+        p.get_attribute_as_string(package="Builder",
+                                  attribute="Switches",
+                                  index="Ada")
+    if "stm32f4" in s:
+        return True
+    GPS.Console("Messages").write(
+        "\nProgram not STM32F compatibale. Exit Loading.\n")
+    return False
+
+
+def msg_is(msg):
+    GPS.Console("Messages").write(msg)
+
+
+@workflow.make_button_for_action("Flash to Board", "Flash_to_Board")
+@workflow.make_action_from_workflow(
+    "flushing", "General",
+    "build, load and run(without debugger)",
+    is_loadable)
+def flushing_workflow():
+    """
+    Create the button that load and run a program onto STM32F board
+    without the debugger  -- I'm a workflow
+    """
+
+    # STEP 1 add hook to compiler, and compile the program
+    msg_is("\nBoard_Loader_STEP: Building Main...")
+    builder = promise.TargetWrapper("Build All")
+    r0 = yield builder.wait_on_execute()
+    if r0 is not 0:
+        msg_is("Compilation Error.\nExit Board Loading.\n")
+        return
+
+    msg_is("Build Complete!\n")
+
+    # STEP 2 make binary executable
+    msg_is("\nBoard_Loader_STEP: Creating binary executable...")
+    f = GPS.Project.root().get_attribute_as_list("main")[0]
+    b = GPS.Project.root().get_executable_name(GPS.File(f))
+    d = GPS.Project.root().object_dirs()[0]
+    obj = d+b
+    binary = obj+".bin"
+    cmd = ["arm-eabi-objcopy", "-O", "binary", obj, binary]
+    try:
+        con = promise.ProcessWrapper(cmd)
+    except:
+        msg_is("Can't create executatble from object file." +
+               "Exit Board Loading.\n")
+        return
+    r1 = yield con.wait_until_terminate()
+    if r1 is not 0:
+        msg_is("arm-eabi-objcopy Error. Exit Board Loading.\n")
+        return
+
+    msg_is("Complete!\n")
+
+    # STEP 3 load to mainboard
+    msg_is("\nBoard_Loader_STEP: Connecting to board...")
+    cmd = ["st-flash", "write", binary, "0x8000000"]
+    try:
+        con = promise.ProcessWrapper(cmd)
+    except:
+        msg_is("Can't call st-flash. Exit Board Loading.\n")
+        return
+
+    r2 = yield con.wait_until_match(
+        "Starting verification of write complete",
+        15000)
+    r3 = yield con.wait_until_match(
+        "Flash written and verified! jolly good!",
+        500)
+
+    if not (r2 and r3):
+        msg_is("Connection Error. Exit Board Loading.\n")
+        con.get().kill()
+        return
+
+    msg_is("Complete!\n")
+
+    msg_is("\nRunning on board...")
 
 
 class BoardLoader(Module):
