@@ -15,10 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Glib;
 with Gtkada.Canvas_View;
 with Gtkada.Style;        use Gtkada.Style;
 
 package Browsers is
+
+   Space_Between_Items  : constant Glib.Gdouble := 10.0;
+   Space_Between_Layers : constant Glib.Gdouble := 30.0;
+   --  Controlling the layout algorithm
 
    type Background_Type is
      (Background_None,

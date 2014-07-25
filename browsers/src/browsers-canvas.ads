@@ -121,6 +121,10 @@ package Browsers.Canvas is
       return General_Browser;
    --  Return the browser that contains Canvas
 
+   function Horizontal_Layout
+     (Self : not null access General_Browser_Record) return Boolean;
+   --  Whether the layout should be horizontal
+
    procedure Layout
      (Browser : access General_Browser_Record;
       Force   : Boolean := False);

@@ -1140,6 +1140,16 @@ package body Browsers.Canvas is
           Format  => Export_SVG));
    end On_Export_To_SVG;
 
+   -----------------------
+   -- Horizontal_Layout --
+   -----------------------
+
+   function Horizontal_Layout
+     (Self : not null access General_Browser_Record) return Boolean is
+   begin
+      return not Get_History (Get_History (Self.Kernel).all, Hist_Vertical);
+   end Horizontal_Layout;
+
    --------------------
    -- Refresh_Layout --
    --------------------
@@ -1158,12 +1168,11 @@ package body Browsers.Canvas is
          Gtkada.Canvas_View.Models.Layers.Layout
            (Self.View.Model,
             View                 => Self.View,  --  animate
-            Horizontal           =>
-              not Get_History (Get_History (Self.Kernel).all, Hist_Vertical),
+            Horizontal           => Self.Horizontal_Layout,
             Add_Waypoints        =>
               Get_History (Get_History (Self.Kernel).all, Hist_Add_Waypoints),
-            Space_Between_Items  => 10.0,
-            Space_Between_Layers => 30.0);
+            Space_Between_Items  => Space_Between_Items,
+            Space_Between_Layers => Space_Between_Layers);
 
          if Rescale then
             Self.View.Scale_To_Fit
