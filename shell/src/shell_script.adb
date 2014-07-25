@@ -137,6 +137,7 @@ package body Shell_Script is
    begin
       Initialize
         (Console      => Console,
+         Kernel       => Console.Kernel,
          Prompt       => "GPS> ",
          User_Data    => Console.Kernel.all'Address,
          History_List => Get_History (Console.Kernel),
