@@ -47,7 +47,6 @@ with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Main_Window.Debug;  use GPS.Main_Window.Debug;
-with GVD.Preferences;        use GVD.Preferences;
 with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with GVD.Views;              use GVD.Views;
@@ -56,7 +55,8 @@ with Histories;              use Histories;
 with Interactive_Consoles;   use Interactive_Consoles;
 with Process_Proxies;        use Process_Proxies;
 with String_List_Utils;      use String_List_Utils;
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with Default_Preferences;    use Default_Preferences;
 
 package body GVD.Consoles is
    Me : constant Trace_Handle := Create ("CONSOLES");
@@ -422,6 +422,7 @@ package body GVD.Consoles is
    begin
       Initialize
         (Console,
+         Kernel,
          Handler             => Interpret_Command_Handler'Access,
          User_Data           => Console.all'Address,
          Prompt              => "",
@@ -436,7 +437,7 @@ package body GVD.Consoles is
       Allow_Duplicates
         (Get_History (Kernel).all, "gvd_console", True, True);
 
-      Set_Highlight_Color    (Console, Debugger_Highlight_Color.Get_Pref);
+      Set_Highlight_Color    (Console, Preference (Comments_Style));
       Set_Completion_Handler
         (Console, Complete_Command'Access, System.Null_Address);
       Widget_Callback.Object_Connect
@@ -518,12 +519,11 @@ package body GVD.Consoles is
 
    function Initialize
      (Console : access Debuggee_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget
-   is
-      pragma Unreferenced (Kernel);
+      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget is
    begin
       Initialize
         (Console,
+         Kernel,
          Prompt      => "",
          Handler     => Debuggee_Console_Handler'Access,
          User_Data   => Console.all'Address,

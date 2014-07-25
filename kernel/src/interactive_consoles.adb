@@ -38,6 +38,7 @@ with Gdk.Keyval;          use Gdk.Keyval;
 with Gdk.Types;           use Gdk, Gdk.Types;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Event;           use Gdk.Event;
+with Gdk.RGBA;            use Gdk.RGBA;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;
@@ -63,7 +64,8 @@ with String_List_Utils;   use String_List_Utils;
 with GUI_Utils;           use GUI_Utils;
 with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
 with GNATCOLL.Iconv;      use GNATCOLL.Iconv;
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with GPS.Kernel.MDI;   use GPS.Kernel.MDI;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 
 package body Interactive_Consoles is
    Me : constant Trace_Handle := Create ("Console");
@@ -229,6 +231,15 @@ package body Interactive_Consoles is
    procedure Replace_Zeros (S : in out String);
    pragma Inline (Replace_Zeros);
    --  Replace ASCII.NULs in S.
+
+   type Preferences_Hook_Record is new Function_With_Args with record
+      Console : Interactive_Console;
+   end record;
+   type Preferences_Hook is access all Preferences_Hook_Record'Class;
+   overriding procedure Execute
+     (Hook   : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
 
    ---------
    -- Ref --
@@ -1437,19 +1448,20 @@ package body Interactive_Consoles is
 
    procedure Gtk_New
      (Console             : out Interactive_Console;
+      Kernel              : access Kernel_Handle_Record'Class;
       Prompt              : String;
       Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
-      Highlight           : Gdk_RGBA := Null_RGBA;
+      Highlight           : Preference := null;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
       Manage_Prompt       : Boolean := True) is
    begin
       Console := new Interactive_Console_Record;
-      Initialize (Console, Prompt, Handler, User_Data,
+      Initialize (Console, Kernel, Prompt, Handler, User_Data,
                   History_List, Key, Highlight, Wrap_Mode,
                   Empty_Equals_Repeat, ANSI_Support, Manage_Prompt);
    end Gtk_New;
@@ -1460,12 +1472,13 @@ package body Interactive_Consoles is
 
    procedure Initialize
      (Console             : access Interactive_Console_Record'Class;
+      Kernel              : access Kernel_Handle_Record'Class;
       Prompt              : String;
       Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
-      Highlight           : Gdk_RGBA := Null_RGBA;
+      Highlight           : Preference := null;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
@@ -1473,6 +1486,7 @@ package body Interactive_Consoles is
    is
       Iter : Gtk_Text_Iter;
       Term : Gtkada_Terminal;
+      Hook : Preferences_Hook;
    begin
       --  Initialize the text buffer and the text view
 
@@ -1522,11 +1536,7 @@ package body Interactive_Consoles is
          Gtk.Text_Tag.Style_Property,
          Pango_Style_Normal);
 
-      if Console.Highlight /= Null_RGBA then
-         Set_Property
-           (Console.Tags (Highlight_Tag), Foreground_Rgba_Property,
-            Console.Highlight);
-      end if;
+      Set_Highlight_Color (Console, Highlight);
 
       Console.Scrolled.Add (Console.View);
 
@@ -1590,6 +1600,12 @@ package body Interactive_Consoles is
       Console.Internal_Insert := False;
 
       Console.Empty_Equals_Repeat := Empty_Equals_Repeat;
+
+      Hook := new Preferences_Hook_Record'
+        (Function_With_Args with Console => Interactive_Console (Console));
+      Add_Hook (Kernel, Preference_Changed_Hook, Hook,
+                Name  => "interactive_consoles.preferences_changed",
+                Watch => GObject (Console.View));
    end Initialize;
 
    -------------------------
@@ -1661,11 +1677,39 @@ package body Interactive_Consoles is
 
    procedure Set_Highlight_Color
      (Console : access Interactive_Console_Record'Class;
-      Color   : Gdk_RGBA) is
+      Pref    : Preference := null)
+   is
+      Foreground : Gdk_RGBA;
+      Background : Gdk_RGBA;
    begin
-      Console.Highlight := Color;
-      Set_Property
-        (Console.Tags (Highlight_Tag), Foreground_Rgba_Property, Color);
+      Console.Highlight := Pref;
+
+      if Pref = null then
+         return;
+      end if;
+
+      if Pref.all in Variant_Preference_Record'Class then
+         Foreground := Variant_Preference (Pref).Get_Pref_Fg_Color;
+         Background := Variant_Preference (Pref).Get_Pref_Bg_Color;
+      elsif Pref.all in Style_Preference_Record'Class then
+         Foreground := Style_Preference (Pref).Get_Pref_Fg;
+         Background := Style_Preference (Pref).Get_Pref_Bg;
+      elsif Pref.all in Color_Preference_Record'Class then
+         Foreground := Color_Preference (Pref).Get_Pref;
+         Background := Null_RGBA;
+      end if;
+
+      if Foreground /= Null_RGBA then
+         Set_Property
+           (Console.Tags (Highlight_Tag),
+            Foreground_Rgba_Property, Foreground);
+      end if;
+
+      if Background /= Null_RGBA then
+         Set_Property
+           (Console.Tags (Highlight_Tag),
+            Background_Rgba_Property, Background);
+      end if;
    end Set_Highlight_Color;
 
    ---------------
@@ -2282,5 +2326,21 @@ package body Interactive_Consoles is
    begin
       return Self.Console.Get_Or_Create_Virtual_Console;
    end Get_Virtual_Console;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Hook   : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel, Data);
+   begin
+      if Hook.Console.Highlight /= null then
+         Set_Highlight_Color (Hook.Console, Hook.Console.Highlight);
+      end if;
+   end Execute;
 
 end Interactive_Consoles;

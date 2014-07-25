@@ -50,6 +50,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Stock_Icons;        use GPS.Stock_Icons;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
+with Default_Preferences;    use Default_Preferences;
 
 package body GPS.Kernel.Console is
    Me : constant Trace_Handle := Create ("CONSOLE");
@@ -413,8 +414,6 @@ package body GPS.Kernel.Console is
       if Console /= null then
          Set_Font_And_Colors
            (Get_View (Console), Fixed_Font => True, Pref => Get_Pref (Data));
-
-         Console.Set_Highlight_Color (Message_Highlight.Get_Pref);
       end if;
    end On_Preferences_Changed;
 
@@ -448,10 +447,11 @@ package body GPS.Kernel.Console is
 
       Initialize
         (Console,
+         Console.Kernel,
          "",
          null,
          Console.Kernel.all'Address,
-         Highlight    => Message_Highlight.Get_Pref,
+         Highlight    => Preference (Message_Highlight),
          History_List => null,
          ANSI_Support => Host /= Windows, --  ANSI_Support does not work
                                           --  well under Windows ???

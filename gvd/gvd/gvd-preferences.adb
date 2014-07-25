@@ -153,14 +153,6 @@ package body GVD.Preferences is
          Doc      => -("Assembly line on which a breakpoint is set"),
          Default  => "#FF0000");
 
-      Debugger_Highlight_Color := Create
-        (Manager  => Prefs,
-         Name     => XML_Prefix & "Highlight-Color",
-         Page     => General,
-         Label    => -"Color highlighting",
-         Doc      => -"Color used for highlighting in the debugger console",
-         Default  => "#0000FF");
-
       Xref_Color := Create
         (Manager  => Prefs,
          Name     => XML_Prefix & "Xref-Color",

@@ -64,9 +64,6 @@ package GVD.Preferences is
    Max_Item_Width                : Integer_Preference;
    Max_Item_Height               : Integer_Preference;
 
-   -- Command Window --
-   Debugger_Highlight_Color      : Color_Preference;
-
    -- Memory Window --
    Memory_View_Color             : Color_Preference;
    Memory_Highlighted_Color      : Color_Preference;

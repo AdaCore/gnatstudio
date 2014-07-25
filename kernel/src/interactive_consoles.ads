@@ -24,7 +24,6 @@ with GNAT.Regpat;
 with GNATCOLL.Scripts;
 with GNAT.Strings;
 
-with Gdk.RGBA; use Gdk.RGBA;
 with Gdk.Types;
 with Glib;
 with Glib.Main;
@@ -41,6 +40,8 @@ with GUI_Utils;
 with String_List_Utils;
 with GPS.Kernel.MDI;
 with GPS.Messages_Windows;
+with Default_Preferences; use Default_Preferences;
+with GPS.Kernel; use GPS.Kernel;
 
 package Interactive_Consoles is
 
@@ -88,12 +89,13 @@ package Interactive_Consoles is
 
    procedure Gtk_New
      (Console             : out Interactive_Console;
+      Kernel              : access Kernel_Handle_Record'Class;
       Prompt              : String;
       Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
-      Highlight           : Gdk_RGBA := Null_RGBA;
+      Highlight           : Preference := null;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
@@ -115,15 +117,18 @@ package Interactive_Consoles is
    --  If _ANSI_Support_ is True, the console will recognize, and either handle
    --  or hide the escape sequences generates by application to move cursor,
    --  change colors or text attributes,...
+   --  Highlight can be a Color_Preference, a Variant_Preference or a
+   --  Style_Preference.
 
    procedure Initialize
      (Console             : access Interactive_Console_Record'Class;
+      Kernel              : access Kernel_Handle_Record'Class;
       Prompt              : String;
       Handler             : Command_Handler := Default_Command_Handler'Access;
       User_Data           : System.Address;
       History_List        : Histories.History;
       Key                 : Histories.History_Key;
-      Highlight           : Gdk_RGBA := Null_RGBA;
+      Highlight           : Preference := null;
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
@@ -241,7 +246,7 @@ package Interactive_Consoles is
 
    procedure Set_Highlight_Color
      (Console : access Interactive_Console_Record'Class;
-      Color   : Gdk_RGBA);
+      Pref    : Preference := null);
    --  Set the color used for highlighting tags
 
    function Get_Chars
@@ -461,7 +466,7 @@ private
       --  Whether an empty command should be equivalent to repeating the
       --  last command.
 
-      Highlight    : Gdk_RGBA := Null_RGBA;
+      Highlight : Preference;
       --  The color used for highlighting
 
       Waiting_For_Input : Boolean := False;

@@ -292,6 +292,12 @@ package Default_Preferences is
    function Get_Pref_Font
      (Pref     : access Variant_Preference_Record)
       return Pango.Font.Pango_Font_Description;
+   function Get_Pref_Fg_Color
+     (Pref     : access Variant_Preference_Record)
+      return Gdk.RGBA.Gdk_RGBA;
+   function Get_Pref_Bg_Color
+     (Pref     : access Variant_Preference_Record)
+      return Gdk.RGBA.Gdk_RGBA;
 
    function Get_Pref (Pref : access Enum_Preference_Record) return Integer;
    --  Get the value for a preference. The default value is returned if the

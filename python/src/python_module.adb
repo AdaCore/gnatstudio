@@ -129,7 +129,9 @@ package body Python_Module is
       Hist : constant History_Key := "python_console";
    begin
       Interactive_Consoles.Initialize
-        (Console, Prompt => "", Handler => Default_Command_Handler'Access,
+        (Console,
+         Console.Kernel,
+         Prompt => "", Handler => Default_Command_Handler'Access,
          User_Data       => System.Null_Address,
          History_List    => Get_History (Console.Kernel),
          Wrap_Mode       => Wrap_Char,

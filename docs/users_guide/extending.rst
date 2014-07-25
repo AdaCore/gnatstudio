@@ -464,8 +464,8 @@ arrow, as seen in the screenshot above).
 
     * :guilabel:`Comments`
 
-      Font variant and colors used to highlight comments.  Setting the
-      color to white sets the color as transparent.
+      Font variant and colors used to highlight comments.
+      Also used to display the prompt in the debugger console.
 
     * :guilabel:`SPARK Annotations`
 
@@ -920,12 +920,6 @@ arrow, as seen in the screenshot above).
   * :guilabel:`Current assembly line`
 
     Color used to highlight the assembly code for the current line.
-
-  * :guilabel:`Color highlighting`
-
-    .. index:: color
-
-    Color used for highlighting in the debugger console.
 
   * :guilabel:`Clickable item`
 

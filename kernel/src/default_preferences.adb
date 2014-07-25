@@ -745,6 +745,28 @@ package body Default_Preferences is
       return Pref.Font_Descr;
    end Get_Pref_Font;
 
+   -----------------------
+   -- Get_Pref_Fg_Color --
+   -----------------------
+
+   function Get_Pref_Fg_Color
+     (Pref     : access Variant_Preference_Record)
+      return Gdk.RGBA.Gdk_RGBA is
+   begin
+      return Pref.Fg_Color;
+   end Get_Pref_Fg_Color;
+
+   -----------------------
+   -- Get_Pref_Bg_Color --
+   -----------------------
+
+   function Get_Pref_Bg_Color
+     (Pref     : access Variant_Preference_Record)
+      return Gdk.RGBA.Gdk_RGBA is
+   begin
+      return Pref.Bg_Color;
+   end Get_Pref_Bg_Color;
+
    -----------------
    -- Get_Pref_Fg --
    -----------------
