@@ -38,7 +38,6 @@ with Gtk.Enums;                     use Gtk.Enums;
 with Gtk.Widget;                    use Gtk.Widget;
 with Gtkada.Canvas_View;            use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views;      use Gtkada.Canvas_View.Views;
-with Gtkada.Canvas_View.Models.Layers; use Gtkada.Canvas_View.Models.Layers;
 with Gtkada.MDI;                    use Gtkada.MDI;
 with Histories;                     use Histories;
 with Std_Dialogs;                   use Std_Dialogs;
@@ -251,6 +250,8 @@ package body Browsers.Call_Graph is
             Item.Browser := General_Browser (Browser);
             Item.Entity.Replace_Element (Entity);
 
+            Browser_Model (Browser.Get_View.Model).Add (Item);
+
             Item.Initialize_Rect (Style => S.Item, Radius => 5.0);
             Setup_Titlebar
               (Item, Browser,
@@ -312,167 +313,25 @@ package body Browsers.Call_Graph is
      (Data : in out Examine_Ancestors_Data; Cancelled : Boolean)
    is
       pragma Unreferenced (Cancelled);
-
       Horizontal : constant Boolean := Data.Browser.Horizontal_Layout;
-
-      Context : constant Draw_Context := Data.Browser.Get_View.Build_Context;
-
-      use Items_Lists;
-      C     : Items_Lists.Cursor;
-      Total : Gdouble := 0.0;   --  total space for children
-      Max   : Gdouble := 0.0;
-      Box   : Item_Rectangle;   --  size of the parent box
-      CBox  : Item_Rectangle;   --  size of the current child box
-      MBox  : Model_Rectangle;
-      Pos   : Gtkada.Style.Point;
-      Child : Gtkada.Style.Point; --  coordinates of first child
-      Coord : Gtkada.Style.Point; --  coordinates of current child
-      It    : Entity_Item;
+      Dir   : Specific_Direction;
    begin
       --  If we are finishing processing the toplevel entity
-      if Data.Parent = null
-        and then not Data.Items.Is_Empty
-      then
-         --  Compute the size we need for the children
-
-         C := Data.Items.First;
-         while Has_Element (C) loop
-            Element (C).Refresh_Layout (Context); --  Compute its size
-            CBox := Element (C).Bounding_Box;
-            if Horizontal then
-               Total := Total + CBox.Height;
-               Max := Gdouble'Max (Max, CBox.Width);
-            else
-               Total := Total + CBox.Width;
-               Max := Gdouble'Max (Max, CBox.Height);
-            end if;
-            Next (C);
-         end loop;
-
-         Total := Total + Space_Between_Items * Gdouble (Data.Items.Length);
-
-         --  Now insert (if needed) the parent item, below or to the right of
-         --  the existing model elements, and centered with regards to its
-         --  future children
-
-         Pos := Data.Item.Position;
-
-         if Pos = No_Position then
-            Browser_Model (Data.Browser.Get_View.Model).Add (Data.Item);
-
-            Data.Item.Refresh_Layout (Context);  --  Compute its size
-            Box := Data.Item.Bounding_Box;
-            MBox := Data.Browser.Get_View.Model.Bounding_Box;
-
-            if Horizontal then
-               Child.Y := MBox.Y + MBox.Height;
-               Pos.Y := Child.Y + (Total - MBox.Height) / 2.0;
-               if Data.Link_From_Item then
-                  Pos.X   := MBox.X;
-                  Child.X := Pos.X + Box.Width + Space_Between_Layers;
-               else
-                  Child.X := MBox.X;
-                  Pos.X   := Child.X + Max + Space_Between_Layers;
-               end if;
-
-            else
-               Child.X := MBox.X + MBox.Width;
-               Pos.X := Child.X + (Total - MBox.Width) / 2.0;
-               if Data.Link_From_Item then
-                  Pos.Y   := MBox.Y;
-                  Child.Y := Pos.Y + Box.Height + Space_Between_Layers;
-               else
-                  Child.Y := MBox.Y;
-                  Pos.Y   := Child.Y + Max + Space_Between_Layers;
-               end if;
-            end if;
-
-            Data.Item.Set_Position (Pos);
-
-         else
-            Box := Data.Item.Bounding_Box;
-            if Horizontal then
-               Child.Y := Pos.Y + (Box.Height - Total) / 2.0;
-               if Data.Link_From_Item then
-                  Child.X := Pos.X + Box.Width + Space_Between_Layers;
-               else
-                  Child.X := Pos.X - Max - Space_Between_Layers;
-               end if;
-            else
-               Child.X := Pos.X + (Box.Width - Total) / 2.0;
-               if Data.Link_From_Item then
-                  Child.Y := Pos.Y + Box.Height + Space_Between_Items;
-               else
-                  Child.Y := Pos.Y - Max - Space_Between_Items;
-               end if;
-            end if;
-         end if;
-
-         --  Reserve space for the children by moving existing items aside.
-
+      if Data.Parent = null then
          if Horizontal then
-            Reserve_Space
-              (Data.Browser.Get_View,
-               (Child.X, Child.Y, Max, Total),
-               Direction => Gtkada.Canvas_View.Views.Horizontal,
-               Duration  => 0.3);
+            Dir := (if Data.Link_From_Item then Right else Left);
          else
-            Reserve_Space
-              (Data.Browser.Get_View,
-               (Child.X, Child.Y, Total, Max),
-               Direction => Gtkada.Canvas_View.Views.Vertical,
-               Duration  => 0.3);
+            Dir := (if Data.Link_From_Item then Down else Up);
          end if;
 
-         --  Now add the children, and create the links
-
-         C := Data.Items.First;
-         Coord := Child;
-         while Has_Element (C) loop
-            It := Entity_Item (Element (C));
-
-            It.Set_Position (Pos);  --  position of the parent initially
-            Animate_Position (It, Coord, Duration => 0.3)
-               .Start (Data.Browser.Get_View);
-
-            Browser_Model (Data.Browser.Get_View.Model).Add (It);
-            if Data.Link_From_Item then
-               Add_Link_If_Not_Present
-                 (Data.Browser, Data.Item, It, Is_Renaming => False);
-            else
-               Add_Link_If_Not_Present
-                 (Data.Browser, It, Data.Item, Is_Renaming => False);
-            end if;
-
-            CBox := It.Bounding_Box;
-            if Horizontal then
-               Coord.Y := Coord.Y + CBox.Height + Space_Between_Items;
-            else
-               Coord.X := Coord.X + CBox.Width + Space_Between_Items;
-            end if;
-
-            Next (C);
-         end loop;
-
-         Data.Browser.Get_View.Model.Refresh_Layout;  --  for links
-
-         if Horizontal then
-            Data.Browser.Get_View.Scroll_Into_View
-              ((Gdouble'Min (Child.X, Pos.X),
-                Gdouble'Min (Child.Y, Pos.Y),
-                Max + Space_Between_Layers + Box.Width,
-                Gdouble'Max (Total, Box.Height)),
-               Duration  => 0.5);
-         else
-            Data.Browser.Get_View.Scroll_Into_View
-              ((Gdouble'Min (Child.X, Pos.X),
-                Gdouble'Min (Child.Y, Pos.Y),
-                Gdouble'Max (Total, Box.Width),
-                Max + Space_Between_Layers + Box.Height),
-               Duration => 0.5);
-         end if;
-
-         Data.Browser.Get_View.Queue_Draw;
+         Insert_And_Layout_Items
+           (Data.Browser.Get_View,
+            Ref                  => Data.Item,
+            Items                => Data.Items.all,
+            Direction            => Dir,
+            Space_Between_Items  => Space_Between_Items,
+            Space_Between_Layers => Space_Between_Layers,
+            Duration             => 0.3);
       end if;
    end Destroy;
 
@@ -528,16 +387,20 @@ package body Browsers.Call_Graph is
       Through_Dispatching : Boolean;
       Is_Renaming         : Boolean) return Boolean
    is
-      pragma Unreferenced (Ref, Through_Dispatching, Is_Renaming);
+      pragma Unreferenced (Ref, Through_Dispatching);
       It : Entity_Item;
       Newly_Added : Boolean;
    begin
       if Data.Link_From_Item then
          Create_Or_Find_Entity
            (Data.Browser, Entity, Data.Item.Position, It, Newly_Added);
+         Add_Link_If_Not_Present
+           (Data.Browser, Data.Item, It, Is_Renaming => Is_Renaming);
       else
          Create_Or_Find_Entity
            (Data.Browser, Parent, Data.Item.Position, It, Newly_Added);
+         Add_Link_If_Not_Present
+           (Data.Browser, It, Data.Item, Is_Renaming => Is_Renaming);
       end if;
 
       if Newly_Added then
