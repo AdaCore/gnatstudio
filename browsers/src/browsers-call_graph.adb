@@ -321,10 +321,12 @@ package body Browsers.Call_Graph is
       C     : Items_Lists.Cursor;
       Total : Gdouble := 0.0;   --  total space for children
       Max   : Gdouble := 0.0;
-      Box   : Item_Rectangle;
+      Box   : Item_Rectangle;   --  size of the parent box
+      CBox  : Item_Rectangle;   --  size of the current child box
       MBox  : Model_Rectangle;
       Pos   : Gtkada.Style.Point;
-      Child : Gtkada.Style.Point;
+      Child : Gtkada.Style.Point; --  coordinates of first child
+      Coord : Gtkada.Style.Point; --  coordinates of current child
       It    : Entity_Item;
    begin
       --  If we are finishing processing the toplevel entity
@@ -336,13 +338,13 @@ package body Browsers.Call_Graph is
          C := Data.Items.First;
          while Has_Element (C) loop
             Element (C).Refresh_Layout (Context); --  Compute its size
-            Box := Element (C).Bounding_Box;
+            CBox := Element (C).Bounding_Box;
             if Horizontal then
-               Total := Total + Box.Height;
-               Max := Gdouble'Max (Max, Box.Width);
+               Total := Total + CBox.Height;
+               Max := Gdouble'Max (Max, CBox.Width);
             else
-               Total := Total + Box.Width;
-               Max := Gdouble'Max (Max, Box.Height);
+               Total := Total + CBox.Width;
+               Max := Gdouble'Max (Max, CBox.Height);
             end if;
             Next (C);
          end loop;
@@ -412,24 +414,25 @@ package body Browsers.Call_Graph is
             Reserve_Space
               (Data.Browser.Get_View,
                (Child.X, Child.Y, Max, Total),
-               Direction => (if Data.Link_From_Item then Right else Left),
+               Direction => Gtkada.Canvas_View.Views.Horizontal,
                Duration  => 0.3);
          else
             Reserve_Space
               (Data.Browser.Get_View,
                (Child.X, Child.Y, Total, Max),
-               Direction => (if Data.Link_From_Item then Down else Up),
+               Direction => Gtkada.Canvas_View.Views.Vertical,
                Duration  => 0.3);
          end if;
 
          --  Now add the children, and create the links
 
          C := Data.Items.First;
+         Coord := Child;
          while Has_Element (C) loop
             It := Entity_Item (Element (C));
 
             It.Set_Position (Pos);  --  position of the parent initially
-            Animate_Position (It, Child, Duration => 0.3)
+            Animate_Position (It, Coord, Duration => 0.3)
                .Start (Data.Browser.Get_View);
 
             Browser_Model (Data.Browser.Get_View.Model).Add (It);
@@ -441,18 +444,34 @@ package body Browsers.Call_Graph is
                  (Data.Browser, It, Data.Item, Is_Renaming => False);
             end if;
 
-            Box := It.Bounding_Box;
+            CBox := It.Bounding_Box;
             if Horizontal then
-               Child.Y := Child.Y + Box.Height + Space_Between_Items;
+               Coord.Y := Coord.Y + CBox.Height + Space_Between_Items;
             else
-               Child.X := Child.X + Box.Width + Space_Between_Items;
+               Coord.X := Coord.X + CBox.Width + Space_Between_Items;
             end if;
 
             Next (C);
          end loop;
 
          Data.Browser.Get_View.Model.Refresh_Layout;  --  for links
-         Data.Browser.Get_View.Scroll_Into_View (Data.Item);
+
+         if Horizontal then
+            Data.Browser.Get_View.Scroll_Into_View
+              ((Gdouble'Min (Child.X, Pos.X),
+                Gdouble'Min (Child.Y, Pos.Y),
+                Max + Space_Between_Layers + Box.Width,
+                Gdouble'Max (Total, Box.Height)),
+               Duration  => 0.5);
+         else
+            Data.Browser.Get_View.Scroll_Into_View
+              ((Gdouble'Min (Child.X, Pos.X),
+                Gdouble'Min (Child.Y, Pos.Y),
+                Gdouble'Max (Total, Box.Width),
+                Max + Space_Between_Layers + Box.Height),
+               Duration => 0.5);
+         end if;
+
          Data.Browser.Get_View.Queue_Draw;
       end if;
    end Destroy;
