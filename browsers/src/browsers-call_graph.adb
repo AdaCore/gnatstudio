@@ -345,9 +345,18 @@ package body Browsers.Call_Graph is
       Is_Renaming         : Boolean)
    is
       Styles : constant access Browser_Styles := Browser.Get_View.Get_Styles;
-      L                : GPS_Link;
+      L      : GPS_Link;
+      F, T   : Anchor_Attachment;
    begin
       if not Browser.Has_Link (Src, Dest) then
+         if Browser.Horizontal_Layout then
+            F := (X => 1.0, Y => 0.5, others => <>);
+            T := (X => 0.0, Y => 0.5, others => <>);
+         else
+            F := (X => 0.5, Y => 1.0, others => <>);
+            T := (X => 0.5, Y => 0.0, others => <>);
+         end if;
+
          L := new GPS_Link_Record;
          if Is_Renaming then
             L.Default_Style := Styles.Link2;
@@ -357,8 +366,8 @@ package body Browsers.Call_Graph is
                To      => Dest,
                Routing => Curve,
                Label  => Gtk_New_Text (Styles.Title, "renames"),
-               Anchor_From => (X => 1.0, others => <>),
-               Anchor_To   => (X => 0.0, others => <>),
+               Anchor_From => F,
+               Anchor_To   => T,
                Style       => L.Default_Style);
          else
             L.Default_Style := Styles.Link;
@@ -367,8 +376,8 @@ package body Browsers.Call_Graph is
                From    => Src,
                To      => Dest,
                Routing => Curve,
-               Anchor_From => (X => 1.0, others => <>),
-               Anchor_To   => (X => 0.0, others => <>),
+               Anchor_From => F,
+               Anchor_To   => T,
                Style       => L.Default_Style);
          end if;
          Browser_Model (Browser.Get_View.Model).Add (L);
