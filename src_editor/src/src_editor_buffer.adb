@@ -529,6 +529,18 @@ package body Src_Editor_Buffer is
       End_Line   : Editable_Line_Type) return Selection_Context;
    --  Create a selection context for the given lines
 
+   procedure Set_Trailing_Space_Policy
+     (Buffer : access Source_Buffer_Record;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Trailing_Spaces_Found : Boolean);
+   --  Detect and set strip trailing space policy for Buffer
+
+   procedure Set_Trailing_Lines_Policy
+     (Buffer               : access Source_Buffer_Record;
+      File                 : GNATCOLL.VFS.Virtual_File;
+      Trailing_Lines_Found : Boolean);
+   --  Detect and set strip trailing empty lines policy for Buffer
+
    -----------
    -- Hooks --
    -----------
@@ -3788,7 +3800,82 @@ package body Src_Editor_Buffer is
    procedure Load_Empty_File (Buffer : access Source_Buffer_Record) is
    begin
       Buffer.Original_Text_Inserted := True;
+      Set_Trailing_Lines_Policy (Buffer, No_File, False);
+      Set_Trailing_Space_Policy (Buffer, No_File, False);
    end Load_Empty_File;
+
+   -------------------------------
+   -- Set_Trailing_Space_Policy --
+   -------------------------------
+
+   procedure Set_Trailing_Space_Policy
+     (Buffer : access Source_Buffer_Record;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Trailing_Spaces_Found : Boolean)
+   is
+      Found   : Boolean;
+      Prop    : GPS.Properties.String_Property;
+      Default : constant Strip_Trailing_Blanks_Policy :=
+        Strip_Blanks.Get_Pref;
+   begin
+      if File /= GNATCOLL.VFS.No_File then
+         GPS.Properties.Get_Property
+           (Prop, File, Strip_Blanks_Property_Name, Found);
+
+         if Found then
+            Buffer.Strip_Trailing_Blanks :=
+              Boolean'Value (Prop.Value.all);
+
+            return;
+         end if;
+      end if;
+
+      case Default is
+         when Always =>
+            Set_Strip_Trailing_Blanks (Buffer, True);
+         when Never =>
+            Set_Strip_Trailing_Blanks (Buffer, False);
+         when Autodetect =>
+            Set_Strip_Trailing_Blanks
+              (Buffer, not Trailing_Spaces_Found);
+      end case;
+   end Set_Trailing_Space_Policy;
+
+   -------------------------------
+   -- Set_Trailing_Lines_Policy --
+   -------------------------------
+
+   procedure Set_Trailing_Lines_Policy
+     (Buffer               : access Source_Buffer_Record;
+      File                 : GNATCOLL.VFS.Virtual_File;
+      Trailing_Lines_Found : Boolean)
+   is
+      Found   : Boolean;
+      Prop    : GPS.Properties.String_Property;
+      Default : constant Strip_Trailing_Blanks_Policy :=
+        Strip_Lines.Get_Pref;
+   begin
+      if File /= GNATCOLL.VFS.No_File then
+         GPS.Properties.Get_Property
+           (Prop, File, Strip_Lines_Property_Name, Found);
+
+         if Found then
+            Buffer.Strip_Trailing_Lines :=
+              Boolean'Value (Prop.Value.all);
+            return;
+         end if;
+      end if;
+
+      case Default is
+         when Always =>
+            Set_Strip_Trailing_Lines (Buffer, True);
+         when Never =>
+            Set_Strip_Trailing_Lines (Buffer, False);
+         when Autodetect =>
+            Set_Strip_Trailing_Lines
+              (Buffer, not Trailing_Lines_Found);
+      end case;
+   end Set_Trailing_Lines_Policy;
 
    ---------------
    -- Load_File --
@@ -3806,18 +3893,6 @@ package body Src_Editor_Buffer is
 
       procedure Reset_Buffer (Buffer : access Source_Buffer_Record);
       --  Reset all data associated with Buffer
-
-      procedure Set_Trailing_Space_Policy
-        (Buffer : access Source_Buffer_Record;
-         File   : GNATCOLL.VFS.Virtual_File;
-         Trailing_Spaces_Found : Boolean);
-      --  Detect and set strip trailing space policy for Buffer
-
-      procedure Set_Trailing_Lines_Policy
-        (Buffer  : access Source_Buffer_Record;
-         File    : GNATCOLL.VFS.Virtual_File);
-      --  Detect and set strip trailing empty lines policy for Buffer
-
       ------------------
       -- Reset_Buffer --
       ------------------
@@ -3875,80 +3950,6 @@ package body Src_Editor_Buffer is
          Buffer.Hidden_Lines := 0;
          Buffer.Block_Highlighting_Column := -1;
       end Reset_Buffer;
-
-      -------------------------------
-      -- Set_Trailing_Space_Policy --
-      -------------------------------
-
-      procedure Set_Trailing_Space_Policy
-        (Buffer : access Source_Buffer_Record;
-         File   : GNATCOLL.VFS.Virtual_File;
-         Trailing_Spaces_Found : Boolean)
-      is
-         Found   : Boolean;
-         Prop    : GPS.Properties.String_Property;
-         Default : constant Strip_Trailing_Blanks_Policy :=
-           Strip_Blanks.Get_Pref;
-      begin
-         if File /= GNATCOLL.VFS.No_File then
-            GPS.Properties.Get_Property
-              (Prop, File, Strip_Blanks_Property_Name, Found);
-
-            if Found then
-               Buffer.Strip_Trailing_Blanks :=
-                 Boolean'Value (Prop.Value.all);
-
-               return;
-            end if;
-
-            case Default is
-               when Always =>
-                  Set_Strip_Trailing_Blanks (Buffer, True);
-               when Never =>
-                  Set_Strip_Trailing_Blanks (Buffer, False);
-               when Autodetect =>
-                  Set_Strip_Trailing_Blanks
-                    (Buffer, not Trailing_Spaces_Found);
-            end case;
-         else
-            Buffer.Strip_Trailing_Blanks := False;
-         end if;
-      end Set_Trailing_Space_Policy;
-
-      -------------------------------
-      -- Set_Trailing_Lines_Policy --
-      -------------------------------
-
-      procedure Set_Trailing_Lines_Policy
-        (Buffer  : access Source_Buffer_Record;
-         File    : GNATCOLL.VFS.Virtual_File)
-      is
-         Found   : Boolean;
-         Prop    : GPS.Properties.String_Property;
-         Default : constant Strip_Trailing_Blanks_Policy :=
-           Strip_Lines.Get_Pref;
-      begin
-         if File /= GNATCOLL.VFS.No_File then
-            GPS.Properties.Get_Property
-              (Prop, File, Strip_Lines_Property_Name, Found);
-
-            if Found then
-               Buffer.Strip_Trailing_Lines :=
-                 Boolean'Value (Prop.Value.all);
-               return;
-            end if;
-
-            case Default is
-               when Always =>
-                  Set_Strip_Trailing_Lines (Buffer, True);
-               when Never =>
-                  Set_Strip_Trailing_Lines (Buffer, False);
-               when Autodetect =>
-                  Set_Strip_Trailing_Lines
-                    (Buffer, not Props.Trailing_Lines_Found);
-            end case;
-         end if;
-      end Set_Trailing_Lines_Policy;
 
       F, L          : Gtk_Text_Iter;
       Recovering    : Boolean := False;
@@ -4027,7 +4028,8 @@ package body Src_Editor_Buffer is
          Set_Charset (Buffer, Get_File_Charset (Filename));
          Set_Trailing_Space_Policy
            (Buffer, Filename, Props.Trailing_Spaces_Found);
-         Set_Trailing_Lines_Policy (Buffer, Filename);
+         Set_Trailing_Lines_Policy
+           (Buffer, Filename, Props.Trailing_Lines_Found);
 
          if Props.NUL_Found then
             Buffer.Kernel.Insert
