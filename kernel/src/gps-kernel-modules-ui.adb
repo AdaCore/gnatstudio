@@ -2703,6 +2703,19 @@ package body GPS.Kernel.Modules.UI is
                      A.Proxy.Hide;
                   else
                      A.Proxy.Show;
+
+                     --  If this is a tool button that we are just showing,
+                     --  it is possible that the stock id was set at a time
+                     --  when the actual stock was not defined: in this case,
+                     --  force a refresh.
+                     if Action.Stock_Id /= null
+                       and then A.Proxy.all in Action_Tool_Button_Record'Class
+                       and then not Action_Tool_Button (A.Proxy).Forced_Stock
+                     then
+                        Action_Tool_Button (A.Proxy).Set_Stock_Id
+                          (Action.Stock_Id.all);
+                     end if;
+
                      A.Proxy.Set_Sensitive (Available);
                   end if;
                end if;
