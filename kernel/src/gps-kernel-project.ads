@@ -151,14 +151,6 @@ package GPS.Kernel.Project is
    --  that future calls are fast.
    --  See also the signal "variable_changed" for the kernel.
 
-   function Scenario_Variables_Cmd_Line
-     (Handle : access Kernel_Handle_Record'Class;
-      Prefix : String) return String;
-   --  Return the command line to use to set up the scenario variables when
-   --  calling an external tool that handles project files.
-   --  For a Makefile, set Prefix to "", for gnatmake set prefix to "-X".
-   --  This function returns a concatenation of Prefix & "VAR=VALUE".
-
    ----------------
    -- Attributes --
    ----------------

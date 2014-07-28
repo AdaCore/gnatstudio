@@ -214,7 +214,6 @@ package body GPS.Kernel.Scripts is
    Module_Cst     : aliased constant String := "module";
    Xml_Cst        : aliased constant String := "xml";
    Action_Cst     : aliased constant String := "action";
-   Prefix_Cst     : aliased constant String := "prefix";
    Sensitive_Cst  : aliased constant String := "sensitive";
    Force_Cst      : aliased constant String := "force";
    Value_Cst      : aliased constant String := "value";
@@ -243,8 +242,6 @@ package body GPS.Kernel.Scripts is
                                 (1 => Xml_Cst'Access);
    Exec_Action_Parameters   : constant Cst_Argument_List :=
                                 (1 => Action_Cst'Access);
-   Scenar_Var_Parameters    : constant Cst_Argument_List :=
-                                (1 => Prefix_Cst'Access);
    Set_Sensitive_Parameters : constant Cst_Argument_List :=
                                 (1 => Sensitive_Cst'Access);
    Set_Scenario_Parameters  : constant Cst_Argument_List :=
@@ -449,18 +446,6 @@ package body GPS.Kernel.Scripts is
             end if;
          end;
 
-      elsif Command = "scenario_variables" then
-         declare
-            Vars : constant Scenario_Variable_Array :=
-                     Scenario_Variables (Kernel);
-         begin
-            for V in Vars'Range loop
-               Set_Return_Value (Data, Value (Vars (V)));
-               Set_Return_Value_Key
-                 (Data, External_Name (Vars (V)));
-            end loop;
-         end;
-
       elsif Command = "set_scenario_variable" then
          Name_Parameters (Data, Set_Scenario_Parameters);
          declare
@@ -472,38 +457,6 @@ package body GPS.Kernel.Scripts is
             Set_Value (Var, Value);
             Get_Registry (Kernel).Tree.Change_Environment ((1 => Var));
             Run_Hook (Kernel, Variable_Changed_Hook);
-         end;
-
-      elsif Command = "scenario_variables_cmd_line" then
-         Name_Parameters (Data, Scenar_Var_Parameters);
-         declare
-            Prefix : constant String := Nth_Arg (Data, 1, "");
-         begin
-            Set_Return_Value
-              (Data, Scenario_Variables_Cmd_Line (Kernel, Prefix));
-         end;
-
-      elsif Command = "scenario_variables_values" then
-         declare
-            Vars : constant Scenario_Variable_Array :=
-                     Scenario_Variables (Kernel);
-         begin
-            for V in Vars'Range loop
-               declare
-                  use String_List_Utils.String_List;
-
-                  Name   : constant String := External_Name (Vars (V));
-                  Values : String_List :=
-                    Get_Registry (Kernel).Tree.Possible_Values_Of (Vars (V));
-               begin
-                  for Iter in Values'Range loop
-                     Set_Return_Value (Data, Values (Iter).all);
-                     Set_Return_Value_Key (Data, Name, True);
-                  end loop;
-
-                  Free (Values);
-               end;
-            end loop;
          end;
 
       elsif Command = "xref_db" then
@@ -1397,29 +1350,10 @@ package body GPS.Kernel.Scripts is
          Handler      => Default_Command_Handler'Access);
 
       Register_Command
-        (Kernel, "scenario_variables",
-         Class         => Get_Project_Class (Kernel),
-         Static_Method => True,
-         Handler       => Default_Command_Handler'Access);
-      Register_Command
         (Kernel, "set_scenario_variable",
          Class         => Get_Project_Class (Kernel),
          Minimum_Args  => 2,
          Maximum_Args  => 2,
-         Static_Method => True,
-         Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "scenario_variables_cmd_line",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class         => Get_Project_Class (Kernel),
-         Static_Method => True,
-         Handler       => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "scenario_variables_values",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
-         Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
 
