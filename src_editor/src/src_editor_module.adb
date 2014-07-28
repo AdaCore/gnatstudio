@@ -1062,7 +1062,7 @@ package body Src_Editor_Module is
          P_Full_Name : constant String :=
            (if P /= No_Project and then
                Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
-            then ASCII.LF & "Project: " & P.Project_Path.Display_Full_Name
+            then " - Project: " & P.Project_Path.Display_Full_Name
             else "");
       begin
          Create_New_View
@@ -1415,8 +1415,7 @@ package body Src_Editor_Module is
                P_Full_Name   : constant String :=
                  (if P /= No_Project and then
                   Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
-                  then ASCII.LF
-                  & "Project : " & P.Project_Path.Display_Full_Name
+                  then " - Project : " & P.Project_Path.Display_Full_Name
                   else "");
             begin
                if Is_Local (File) then
