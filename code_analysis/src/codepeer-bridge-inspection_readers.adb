@@ -75,7 +75,11 @@ package body CodePeer.Bridge.Inspection_Readers is
            (Self.Root_Inspection.all).Object_Races.Append (Self.Object_Race);
          Self.Object_Race :=
            (Name         => null,
-            Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector);
+            Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector,
+            File         => GNATCOLL.VFS.No_File,
+            Line         => 0,
+            Column       => 0,
+            Message      => null);
 
       elsif Qname = Entry_Point_Access_Tag then
          Self.Object_Race.Entry_Points.Append (Self.Object_Accesses);
@@ -128,6 +132,21 @@ package body CodePeer.Bridge.Inspection_Readers is
       Messages := Self.Messages;
    end Parse;
 
+   --------------------
+   -- Start_Document --
+   --------------------
+
+   overriding procedure Start_Document (Self : in out Reader) is
+   begin
+      Self.Object_Race :=
+        (Name         => null,
+         Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector,
+         File         => GNATCOLL.VFS.No_File,
+         Line         => 0,
+         Column       => 0,
+         Message      => null);
+   end Start_Document;
+
    -------------------
    -- Start_Element --
    -------------------
@@ -169,6 +188,13 @@ package body CodePeer.Bridge.Inspection_Readers is
       function Get_Optional_Column return Positive;
       --  Returns value of "column" attribute is specified and 1 instead.
 
+      function Get_Optional_File return GNATCOLL.VFS.Virtual_File;
+      --  Returns value of "file" attribute if specified; overwise returns
+      --  No_File.
+
+      function Get_Optional_Line return Natural;
+      --  Returns value of "line" attribute if specified, overwise returns 0.
+
       ------------
       -- Checks --
       ------------
@@ -202,14 +228,42 @@ package body CodePeer.Bridge.Inspection_Readers is
          end if;
       end Computed_Ranking;
 
+      -----------------------
+      -- Get_Optional_File --
+      -----------------------
+
+      function Get_Optional_File return GNATCOLL.VFS.Virtual_File is
+      begin
+         return
+           GPS.Kernel.Create (+Attrs.Get_Value (File_Attribute), Self.Kernel);
+      end Get_Optional_File;
+
+      -----------------------
+      -- Get_Optional_Line --
+      -----------------------
+
+      function Get_Optional_Line return Natural is
+         Index : constant Integer := Attrs.Get_Index (Line_Attribute);
+
+      begin
+         if Index /= -1 then
+            return Natural'Value (Attrs.Get_Value (Index));
+
+         else
+            return 0;
+         end if;
+      end Get_Optional_Line;
+
       -------------------------
       -- Get_Optional_Column --
       -------------------------
 
       function Get_Optional_Column return Positive is
+         Index : constant Integer := Attrs.Get_Index (Column_Attribute);
+
       begin
-         if Attrs.Get_Index (Column_Attribute) /= -1 then
-            return Integer'Value (Attrs.Get_Value (Column_Attribute));
+         if Index /= -1 then
+            return Integer'Value (Attrs.Get_Value (Index));
 
          else
             return 1;
@@ -547,6 +601,9 @@ package body CodePeer.Bridge.Inspection_Readers is
       elsif Qname = Object_Race_Tag then
          Self.Object_Race.Name :=
            new String'(Attrs.Get_Value (Name_Attribute));
+         Self.Object_Race.File := Get_Optional_File;
+         Self.Object_Race.Line := Get_Optional_Line;
+         Self.Object_Race.Column := Get_Optional_Column;
          --  Object race information is added to data in the End_Element
          --  callback.
 

@@ -91,4 +91,6 @@ private
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence);
 
+   overriding procedure Start_Document (Self : in out Reader);
+
 end CodePeer.Bridge.Inspection_Readers;

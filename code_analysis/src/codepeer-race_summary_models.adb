@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-with System;
+with System.Address_To_Access_Conversions;
 
 with Gtk.Tree_Model.Utils;
 with GPS.Kernel.Project;
@@ -28,6 +28,10 @@ package body CodePeer.Race_Summary_Models is
    function To_Iter (Index : Natural) return Gtk.Tree_Model.Gtk_Tree_Iter;
 
    function From_Iter (Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Natural;
+
+   package Message_Conversions is
+     new System.Address_To_Access_Conversions
+       (GPS.Kernel.Messages.Abstract_Message'Class);
 
    ---------------
    -- From_Iter --
@@ -60,10 +64,11 @@ package body CodePeer.Race_Summary_Models is
 
    begin
       case Index is
-         when Object_Name_Column
-            | First_Errors_Column
-            =>
+         when Object_Name_Column =>
             return Glib.GType_String;
+
+         when Message_Column =>
+            return Glib.GType_Pointer;
 
          when others =>
             return Glib.GType_Invalid;
@@ -126,10 +131,8 @@ package body CodePeer.Race_Summary_Models is
    is
       pragma Unreferenced (Self);
 
-      use type Glib.Gint;
-
    begin
-      return First_Errors_Column + 1;
+      return Total_Columns;
    end Get_N_Columns;
 
    --------------
@@ -178,14 +181,13 @@ package body CodePeer.Race_Summary_Models is
                Glib.Values.Set_String
                  (Value, Self.Data.Element (Index).Name.all);
 
-            when First_Errors_Column =>
---                 Glib.Values.Init (Value, Glib.GType_Int);
---                 Glib.Values.Set_Int
---                   (Value,
---                 Self.Object_Races.Element (J).Entry_Points.Element
---                   (K).Object_Accesses.
-               --              Glib.Values.Init (Value, Glib.GType_String);
-               null;
+            when Message_Column =>
+               Glib.Values.Init (Value, Glib.GType_Pointer);
+               Glib.Values.Set_Address
+                 (Value,
+                  Message_Conversions.To_Address
+                    (Message_Conversions.Object_Pointer
+                         (Self.Data (Index).Message)));
 
             when others =>
                null;

@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with System.Address_To_Access_Conversions;
+
 with Glib.Values;
 with Gdk.Event;
 with Gtk.Cell_Renderer_Text;
@@ -25,9 +27,7 @@ with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
-with GPS.Location_View;          use GPS.Location_View;
-
-with CodePeer.Module;
+with GPS.Location_View;
 
 package body CodePeer.Race_Condition_Reports is
 
@@ -40,6 +40,10 @@ package body CodePeer.Race_Condition_Reports is
       Event : Gdk.Event.Gdk_Event;
       Self  : Race_Condition_Report) return Boolean;
    --  Handles click on summary view
+
+   package Message_Conversions is
+     new System.Address_To_Access_Conversions
+       (GPS.Kernel.Messages.Abstract_Message'Class);
 
    -------------
    -- Gtk_New --
@@ -150,14 +154,15 @@ package body CodePeer.Race_Condition_Reports is
       use type Gdk.Event.Gdk_Event_Type;
       use type Gtk.Tree_Model.Gtk_Tree_Path;
 
-      X, Y   : Glib.Gint;
-      Path   : Gtk.Tree_Model.Gtk_Tree_Path;
-      Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Cell_X : Glib.Gint;
-      Cell_Y : Glib.Gint;
-      Found  : Boolean;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Value  : Glib.Values.GValue;
+      X, Y    : Glib.Gint;
+      Path    : Gtk.Tree_Model.Gtk_Tree_Path;
+      Column  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Cell_X  : Glib.Gint;
+      Cell_Y  : Glib.Gint;
+      Found   : Boolean;
+      Iter    : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Value   : Glib.Values.GValue;
+      Message : GPS.Kernel.Messages.Message_Access;
 
    begin
       if Gdk.Event.Get_Button (Event) = 1
@@ -175,13 +180,18 @@ package body CodePeer.Race_Condition_Reports is
               (Self.Summary_Model.Get_Entry_Points (Iter));
 
             Self.Summary_Model.Get_Value
-              (Iter, CodePeer.Race_Summary_Models.Object_Name_Column, Value);
+              (Iter, CodePeer.Race_Summary_Models.Message_Column, Value);
+            Message :=
+              GPS.Kernel.Messages.Message_Access
+                (Message_Conversions.To_Pointer
+                   (Glib.Values.Get_Address (Value)));
+            Glib.Values.Unset (Value);
 
-            Expand_Category
-              (Get_Or_Create_Location_View (Self.Kernel),
-               CodePeer.Module.Race_Condition_Category
-                 (Glib.Values.Get_String (Value)),
-               Goto_First => False);
+            GPS.Location_View.Expand_File
+              (GPS.Location_View.Get_Or_Create_Location_View (Self.Kernel),
+               Ada.Strings.Unbounded.To_String (Message.Get_Category),
+               Message.Get_File,
+               False);
          end if;
       end if;
 

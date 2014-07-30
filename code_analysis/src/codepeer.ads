@@ -205,6 +205,10 @@ package CodePeer is
    type Object_Race_Information is record
       Name         : GNAT.Strings.String_Access;
       Entry_Points : Entry_Point_Object_Access_Vectors.Vector;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Line         : Natural;
+      Column       : Natural;
+      Message      : GPS.Kernel.Messages.Message_Access;
    end record;
 
    package Object_Race_Vectors is

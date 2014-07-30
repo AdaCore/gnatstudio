@@ -81,14 +81,7 @@ package CodePeer.Module is
    function Get_Color
      (Ranking : CodePeer.Message_Ranking_Level) return Gdk.RGBA.Gdk_RGBA;
 
-   function Race_Condition_Category (Name : String) return String;
-   --  Constructs name of the object race condition category for messages.
-
-   CodePeer_Category_Prefix : constant String := "CodePeer: ";
-   --  Names of all CodePeer's categories should start from this prefix to
-   --  suppress destruction of messages by the messages container.
-   CodePeer_Category_Name   : constant String :=
-     CodePeer_Category_Prefix & "messages";
+   CodePeer_Category_Name : constant String := "CodePeer: messages";
 
 private
 
@@ -125,7 +118,6 @@ private
       Message_Colors         : Message_Ranking_Color_Preference_Array;
       Message_Styles         : Message_Ranking_Style_Array;
       Listener               : CodePeer.Listeners.Listener_Access;
-      Object_Race_Categories : String_Sets.Set;
 
       --  Global messages filter
 

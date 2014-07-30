@@ -45,6 +45,7 @@ with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Styles;                 use GPS.Styles;
 with GPS.Styles.UI;              use GPS.Styles.UI;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Xref;
 
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
@@ -299,105 +300,54 @@ package body CodePeer.Module is
    begin
       Self.Kernel.Set_Build_Mode (To_String (Self.Mode));
    end Finalize;
+
    -----------------------
    -- Fill_Object_Races --
    -----------------------
 
    procedure Fill_Object_Races (Self : access Module_Id_Record'Class) is
-
-      procedure Process_Object_Race
-        (Position : CodePeer.Object_Race_Vectors.Cursor);
-
       Data : CodePeer.Project_Data'Class
-      renames CodePeer.Project_Data'Class
-        (Self.Tree.Element
-           (GPS.Kernel.Project.Get_Project
-              (Self.Kernel)).Analysis_Data.CodePeer_Data.all);
-
-      -------------------------
-      -- Process_Object_Race --
-      -------------------------
-
-      procedure Process_Object_Race
-        (Position : CodePeer.Object_Race_Vectors.Cursor)
-      is
-         Element  : constant Object_Race_Information :=
-                      Object_Race_Vectors.Element (Position);
-         Category : constant String :=
-                      Race_Condition_Category (Element.Name.all);
-
-         procedure Process_Entry_Point
-           (Position : Entry_Point_Object_Access_Vectors.Cursor);
-
-         -------------------------
-         -- Process_Entry_Point --
-         -------------------------
-
-         procedure Process_Entry_Point
-           (Position : Entry_Point_Object_Access_Vectors.Cursor)
-         is
-            Element     : constant Entry_Point_Object_Access_Information :=
-              Entry_Point_Object_Access_Vectors.Element (Position);
-            Entry_Point : constant String := Element.Entry_Point.Name.all;
-
-            procedure Process_Object_Access
-              (Position : Object_Access_Vectors.Cursor);
-
-            ---------------------------
-            -- Process_Object_Access --
-            ---------------------------
-
-            procedure Process_Object_Access
-              (Position : Object_Access_Vectors.Cursor)
-            is
-               function Image (Item : Object_Access_Information) return String;
-               --  Returns text of message for the specified object access
-
-               -----------
-               -- Image --
-               -----------
-
-               function Image
-                 (Item : Object_Access_Information) return String is
-               begin
-                  case Item.Kind is
-                     when Read =>
-                        return "read by " & Entry_Point;
-
-                     when Update =>
-                        return "update by " & Entry_Point;
-                  end case;
-               end Image;
-
-               Element : constant Object_Access_Information :=
-                 Object_Access_Vectors.Element (Position);
-               Ignore  : Simple_Message_Access;
-               pragma Unreferenced (Ignore);
-
-            begin
-               Ignore :=
-                 Create_Simple_Message
-                   (Get_Messages_Container (Self.Kernel),
-                    Category,
-                    Element.File,
-                    Element.Line,
-                    Basic_Types.Visible_Column_Type (Element.Column),
-                    Image (Element),
-                    0,
-                    Race_Message_Flags);
-            end Process_Object_Access;
-
-         begin
-            Element.Object_Accesses.Iterate (Process_Object_Access'Access);
-         end Process_Entry_Point;
-
-      begin
-         Self.Object_Race_Categories.Include (Category);
-         Element.Entry_Points.Iterate (Process_Entry_Point'Access);
-      end Process_Object_Race;
+        renames CodePeer.Project_Data'Class
+          (Self.Tree.Element
+             (GPS.Kernel.Project.Get_Project
+                (Self.Kernel)).Analysis_Data.CodePeer_Data.all);
 
    begin
-      Data.Object_Races.Iterate (Process_Object_Race'Access);
+      for Object of Data.Object_Races loop
+         if Object.Message = null then
+            Object.Message :=
+              GPS.Kernel.Messages.Message_Access
+                (Create_Simple_Message
+                   (Get_Messages_Container (Self.Kernel),
+                    CodePeer_Category_Name,
+                    Object.File,
+                    Object.Line,
+                    GNATCOLL.Xref.Visible_Column (Object.Column),
+                    Object.Name.all & " race condition",
+                    0,
+                    Race_Message_Flags,
+                    True));
+
+         else
+            Object.Message.Set_Flags (Race_Message_Flags);
+         end if;
+
+         for Entry_Point of Object.Entry_Points loop
+            for Object_Access of Entry_Point.Object_Accesses loop
+               Create_Simple_Message
+                 (Object.Message,
+                  Object_Access.File,
+                  Object_Access.Line,
+                  Basic_Types.Visible_Column_Type (Object_Access.Column),
+                  (case Object_Access.Kind is
+                      when Read =>
+                         "read by " & Entry_Point.Entry_Point.Name.all,
+                      when Update =>
+                         "update by " & Entry_Point.Entry_Point.Name.all),
+                  Race_Message_Flags);
+            end loop;
+         end loop;
+      end loop;
    end Fill_Object_Races;
 
    ---------------
@@ -1423,21 +1373,6 @@ package body CodePeer.Module is
 
       procedure Process_File (Position : Code_Analysis.File_Maps.Cursor);
 
-      procedure Process_Category (Position : String_Sets.Cursor);
-      --  Removes all messages of the category from messages container
-
-      ----------------------
-      -- Process_Category --
-      ----------------------
-
-      procedure Process_Category (Position : String_Sets.Cursor) is
-         Category : constant String := String_Sets.Element (Position);
-
-      begin
-         Get_Messages_Container (Context.Module.Kernel).Remove_Category
-           (Category, Empty_Message_Flags);
-      end Process_Category;
-
       ------------------
       -- Process_File --
       ------------------
@@ -1477,7 +1412,6 @@ package body CodePeer.Module is
 
       Get_Messages_Container (Context.Module.Kernel).Remove_Category
         (CodePeer_Category_Name, Empty_Message_Flags);
-      Context.Module.Object_Race_Categories.Iterate (Process_Category'Access);
 
       --  Cleanup filter criteria
 
@@ -1668,27 +1602,11 @@ package body CodePeer.Module is
    procedure Remove_Codepeer_Messages
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Container  : constant GPS.Kernel.Messages.Messages_Container_Access :=
-                     Get_Messages_Container (Kernel);
-      Categories : constant GPS.Kernel.Messages.Unbounded_String_Array :=
-                     Container.Get_Categories;
-      Category   : Ada.Strings.Unbounded.Unbounded_String;
+      Container : constant GPS.Kernel.Messages.Messages_Container_Access :=
+                    Get_Messages_Container (Kernel);
 
    begin
-      for J in Categories'Range loop
-         Category := Categories (J);
-
-         if Ada.Strings.Unbounded.Length (Category)
-              >= CodePeer_Category_Prefix'Length
-           and then Ada.Strings.Unbounded.Slice
-                      (Category, 1, CodePeer_Category_Prefix'Length)
-                          = CodePeer_Category_Prefix
-         then
-            Container.Remove_Category
-              (Ada.Strings.Unbounded.To_String (Category),
-               Empty_Message_Flags);
-         end if;
-      end loop;
+      Container.Remove_Category (CodePeer_Category_Name, Empty_Message_Flags);
    end Remove_Codepeer_Messages;
 
    --------------------
@@ -2083,15 +2001,6 @@ package body CodePeer.Module is
 
       Self.Filter_Criteria.Files.Iterate (Process_File'Access);
    end Update_Location_View;
-
-   -----------------------------
-   -- Race_Condition_Category --
-   -----------------------------
-
-   function Race_Condition_Category (Name : String) return String is
-   begin
-      return CodePeer_Category_Prefix & Name & " race condition";
-   end Race_Condition_Category;
 
    ---------------------
    -- Register_Module --

@@ -43,8 +43,9 @@ package CodePeer.Race_Summary_Models is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
       return CodePeer.Entry_Point_Object_Access_Vectors.Vector;
 
-   Object_Name_Column  : constant Glib.Gint := 0;
-   First_Errors_Column : constant Glib.Gint := 1;
+   Object_Name_Column : constant Glib.Gint := 0;
+   Message_Column     : constant Glib.Gint := 1;
+   Total_Columns      : constant Glib.Gint := 2;
 
 private
 

@@ -31,11 +31,7 @@ package body CodePeer.Listeners is
       Category : constant String := Message.Get_Category;
 
    begin
-      if Category'Length >= CodePeer.Module.CodePeer_Category_Prefix'Length
-        and then Category
-          (1 .. CodePeer.Module.CodePeer_Category_Prefix'Length)
-          = CodePeer.Module.CodePeer_Category_Prefix
-      then
+      if Category = CodePeer.Module.CodePeer_Category_Name then
          return Self.Cleanup;
 
       else
