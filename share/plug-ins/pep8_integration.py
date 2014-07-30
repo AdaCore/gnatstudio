@@ -68,16 +68,22 @@ class Pep8_Module(Module):
            When GPS start, if imported success:
            register hook for format checker
         """
-        GPS.Hook("before_file_saved").add(self.on_file_saved)
+        pass
 
-    def on_file_saved(self, hook, f):
+    def file_edited(self, f):
         """
-           When file is saved, check the format
+        When file is open, check the format
         """
         self.__format_check(f)
 
     def buffer_edited(self, f):
         """
-           When user stop editing, check the format
+        When user stop editing, check the format
+        """
+        self.__format_check(f)
+
+    def on_file_saved(self, f):
+        """
+        When file is saved, check the format
         """
         self.__format_check(f)
