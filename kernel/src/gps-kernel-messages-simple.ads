@@ -50,6 +50,15 @@ package GPS.Kernel.Messages.Simple is
       Allow_Auto_Jump_To_First : Boolean := True);
    --  Creates new instance of primary Simple_Message.
 
+   function Create_Simple_Message
+     (Parent : not null Message_Access;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Line   : Natural;
+      Column : Basic_Types.Visible_Column_Type;
+      Text   : String;
+      Flags  : Message_Flags) return Simple_Message_Access;
+   --  Creates new instance of secondary Simple_Message.
+
    procedure Create_Simple_Message
      (Parent : not null Message_Access;
       File   : GNATCOLL.VFS.Virtual_File;
