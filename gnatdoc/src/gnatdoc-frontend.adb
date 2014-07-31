@@ -3756,7 +3756,7 @@ package body GNATdoc.Frontend is
                                       Line    => Sloc_Start.Line,
                                       Column  =>
                                         To_Visible_Column
-                                          (Buffer.all,
+                                          (Buffer_Body.all,
                                            Sloc_Start.Column,
                                            Sloc_Start.Index));
                               begin
