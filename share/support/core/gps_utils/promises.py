@@ -272,11 +272,17 @@ class DebuggerWrapper():
            Called in timers to remove both: prepare for new timer registration
         """
         if self.__deadline is not None:
-            self.__deadline.remove()
+            try:
+                self.__deadline.remove()
+            except:
+                pass
             self.__deadline = None
 
         if self.__timer is not None:
-            self.__timer.remove()
+            try:
+                self.__timer.remove()
+            except:
+                pass
             self.__timer = None
 
     def wait_and_send(self, cmd="", timeout=0, block=False):

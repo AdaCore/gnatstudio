@@ -66,8 +66,6 @@ def smart_tab():
         d = python_parse_tab(editor,
                              editor.selection_start(),
                              editor.selection_end())
-        # for c in editor.cursors():
-        #    c.move(editor.at(editor.selection_end().line(), d+o))
     else:
         action = GPS.Action("Autoindent selection")
         if not action.execute_if_possible():
@@ -77,15 +75,18 @@ def smart_tab():
 def python_parse_tab(e, beginning, end):
     """
        parse the text for python files when hitting tab
-       return the correction of number of whitespaces needed
-       e is a GPS.EditorBuffer object
-       beginning and end are selection area's line numbers
+       * return the correction of number of whitespaces needed
+       * e is a GPS.EditorBuffer object
+       * beginning and end are selection area's GPS.EditorBuffer.Location
+       * cursor position correced after return
     """
 
-    # if multiple lines selected, indent each one in order
+    # if multiple lines selected, indent each one by order
     if beginning.line() != end.line():
         for i in range(beginning.line(), end.line()+1):
-            d = python_parse_tab(e, i, i)
+            d = python_parse_tab(e,
+                                 e.at(i, beginning.column()),
+                                 e.at(i, end.column()))
         return d
 
     if (end.line() == e.lines_count() and
@@ -154,17 +155,26 @@ def python_parse_tab(e, beginning, end):
                     break
 
         # 3 find the correct indent number
-        # print "line %d level %d previous_indent %d current %d" % \
-        #      (end, level, previous_indent, current)
         level = 0 if level < 0 else level
         indent = previous_indent + level*4
 
-    # 4 make corrections
+    # 4 make corrections for cursor
     d = indent - current
-    if d > 0:
-        e.insert(e.at(end.line(), 1), " "*d)
-    if d < 0:
-        e.delete(e.at(end.line(), 1), e.at(end.line(), -d))
+
+    if d == 0:
+        # if indent quantity is correct, and cursor at a wild place
+        # move it to the indentation end
+        if current == len(last):
+            e.main_cursor().move(end.end_of_line())
+    else:
+        # under-indent: add blank
+        if d > 0:
+            e.insert(e.at(end.line(), 1), " "*d)
+        # over-indent: delete blank
+        if d < 0:
+            e.delete(e.at(end.line(), 1), e.at(end.line(), -d))
+        # adjust cursor position by relative quantity
+        e.main_cursor().move(e.at(end.line(), end.column()+d))
 
     return d
 

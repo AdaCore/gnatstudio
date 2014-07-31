@@ -619,31 +619,54 @@ def backward_delete():
     e = GPS.EditorBuffer.get()
     cursor = e.selection_start()
     end = e.selection_end()
+
+    # if it's python code and no block is selected
+
     if e.file().language() == "python":
         if end.line() == cursor.line() and end.column() == cursor.column():
-            try:
-                did = python_forward_indent(e, cursor)
-            except:
-                did = False
+
+            did = False
+
+            # not include the first position
+            if cursor.column() != 1:
+
+                # see if I should forward deletion by 4
+                try:
+                    did = python_forward_indent(e, cursor)
+                except:
+                    pass
+
+            # if justice(auto indent by 4) has been done
             if did:
                 return
+
+    # otherwise python-indent not done, behave normally
     delete(forward=False)
 
 
 def python_forward_indent(e, cursor):
     """
        Indent with backspace in the leading white spaces with 4
-       e is EditorBuffer, cursor is EditorLocation of cursor
+       * e is EditorBuffer
+       * cursor is EditorLocation of cursor
     """
     line = e.get_chars(cursor.beginning_of_line(), cursor.end_of_line())
     spaces_len = len(line) - len(line.lstrip(" "))
+
     # if cursor is in the middle of the leading whitespaces
+
     if spaces_len > 0 and spaces_len >= cursor.column()-1:
+
+        # remove 4 blanks if possible
         d = 4 if spaces_len > 4 else spaces_len
         e.delete(e.at(cursor.line(), 1), e.at(cursor.line(), d))
+
+        # adjust cursor position
         for c in e.cursors():
             c.move(e.at(cursor.line(), cursor.column()-d))
+
         return True
+
     return False
 
 

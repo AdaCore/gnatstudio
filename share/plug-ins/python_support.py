@@ -240,7 +240,6 @@ documentation for the standard python library. It is accessed through the
         This action parse the code (if it's python) and move cursor to
         the desired indentation level.
         """
-        # print "indent_on_new_line called!"
         editor = GPS.EditorBuffer.get()
         start = editor.selection_start()
         end = editor.selection_end()
@@ -254,7 +253,7 @@ documentation for the standard python library. It is accessed through the
         for c in editor.cursors():
             c.move(editor.at(start.line()+1, 1))
         start = editor.selection_start()
-        # print "parse on: %d, %d" % (start.line(), start.column())
+
         # do indentation
         d = tab.python_parse_tab(editor, start, start)
 
