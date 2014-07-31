@@ -233,9 +233,17 @@ package body CodePeer.Bridge.Inspection_Readers is
       -----------------------
 
       function Get_Optional_File return GNATCOLL.VFS.Virtual_File is
+         Index : constant Integer := Attrs.Get_Index (File_Attribute);
+
       begin
-         return
-           GPS.Kernel.Create (+Attrs.Get_Value (File_Attribute), Self.Kernel);
+         if Index /= -1 then
+            return
+              GPS.Kernel.Create
+                (+Attrs.Get_Value (File_Attribute), Self.Kernel);
+
+         else
+            return GNATCOLL.VFS.No_File;
+         end if;
       end Get_Optional_File;
 
       -----------------------
