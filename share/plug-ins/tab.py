@@ -64,8 +64,8 @@ def smart_tab():
     if editor.file().language() == "python":
         o = editor.selection_end().column()
         d = python_parse_tab(editor,
-                             editor.selection_start().line(),
-                             editor.selection_end().line())
+                             editor.selection_start(),
+                             editor.selection_end())
         # for c in editor.cursors():
         #    c.move(editor.at(editor.selection_end().line(), d+o))
     else:
@@ -83,16 +83,20 @@ def python_parse_tab(e, beginning, end):
     """
 
     # if multiple lines selected, indent each one in order
-    if beginning != end:
-        for i in range(beginning, end+1):
+    if beginning.line() != end.line():
+        for i in range(beginning.line(), end.line()+1):
             d = python_parse_tab(e, i, i)
         return d
+
+    if (end.line() == e.lines_count() and
+            e.get_chars(end.beginning_of_line(), end.end_of_line()) is ""):
+        return 0
 
     source = e.get_chars().splitlines()
 
     # get current indent number
 
-    last = source[end-1]
+    last = source[end.line()-1]
     current = len(last) - len(last.lstrip(" "))
 
     # 0 if at line 1 no indentation needed
@@ -104,12 +108,12 @@ def python_parse_tab(e, beginning, end):
     # if more than 1 lines' text:
     # modify previous_indent and level according to prefixes in codes
 
-    if end > 1:
+    if end.line() > 1:
 
         # 1 find the next indent level
         # default: no level change, previous line decides
         group = []
-        prev = source[end-2]
+        prev = source[end.line()-2]
         previous_indent = len(prev) - len(prev.lstrip(" "))
 
         tmphead = prev.lstrip(" ")
@@ -137,7 +141,7 @@ def python_parse_tab(e, beginning, end):
 
         # not for the case that no indentation needed
         if level != 0:
-            for i in range(end-2, -1, -1):
+            for i in range(end.line()-2, -1, -1):
                 for pref in group:
                     if source[i].lstrip(" ").startswith(pref):
                         begin = i
@@ -158,9 +162,9 @@ def python_parse_tab(e, beginning, end):
     # 4 make corrections
     d = indent - current
     if d > 0:
-        e.insert(e.at(end, 1), " "*d)
+        e.insert(e.at(end.line(), 1), " "*d)
     if d < 0:
-        e.delete(e.at(end, 1), e.at(end, -d))
+        e.delete(e.at(end.line(), 1), e.at(end.line(), -d))
 
     return d
 

@@ -256,7 +256,7 @@ documentation for the standard python library. It is accessed through the
         start = editor.selection_start()
         # print "parse on: %d, %d" % (start.line(), start.column())
         # do indentation
-        d = tab.python_parse_tab(editor, start.line(), start.line())
+        d = tab.python_parse_tab(editor, start, start)
 
     def reload_file(self):
         """
