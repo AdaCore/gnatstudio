@@ -1,5 +1,5 @@
 # Header
-Name: Led Demostration Project
+Name: LED demo project
 Category: STM32F4 compatible
 Project: @_project_name_@.gpr
 
@@ -9,5 +9,5 @@ Main_Name: main: The name of the main file.
 
 # Description
 [Description]
-A program that demostrate led lights on a STM32F board.
-A STM32F needs to be connected or use emulator.
+A program that demonstrates LED lights on a STM32F board.
+Supports the GNATemulator and a real board.
