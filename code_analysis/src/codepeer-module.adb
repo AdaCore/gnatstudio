@@ -334,17 +334,19 @@ package body CodePeer.Module is
 
          for Entry_Point of Object.Entry_Points loop
             for Object_Access of Entry_Point.Object_Accesses loop
-               Create_Simple_Message
-                 (Object.Message,
-                  Object_Access.File,
-                  Object_Access.Line,
-                  Basic_Types.Visible_Column_Type (Object_Access.Column),
-                  (case Object_Access.Kind is
-                      when Read =>
-                         "read by " & Entry_Point.Entry_Point.Name.all,
-                      when Update =>
-                         "update by " & Entry_Point.Entry_Point.Name.all),
-                  Race_Message_Flags);
+               Object_Access.Message :=
+                 GPS.Kernel.Messages.Message_Access
+                   (Create_Simple_Message
+                      (Object.Message,
+                       Object_Access.File,
+                       Object_Access.Line,
+                       Basic_Types.Visible_Column_Type (Object_Access.Column),
+                       (case Object_Access.Kind is
+                           when Read =>
+                              "read by " & Entry_Point.Entry_Point.Name.all,
+                           when Update =>
+                              "update by " & Entry_Point.Entry_Point.Name.all),
+                       Race_Message_Flags));
             end loop;
          end loop;
       end loop;
@@ -682,7 +684,8 @@ package body CodePeer.Module is
                GPS.Kernel.Kernel_Handle (Self.Kernel),
                Self.Tree,
                Messages,
-               Self.Version);
+               Self.Version,
+               Self.Race_Category);
             Input_Sources.File.Close (Input);
          end;
 
@@ -752,8 +755,8 @@ package body CodePeer.Module is
          --  Update location view
 
          Editors.Show_Annotations_In_Opened_Editors (Self);
-         Self.Update_Location_View;
          Self.Fill_Object_Races;
+         Self.Update_Location_View;
 
          Raise_Locations_Window (Self.Kernel);
 
@@ -1995,11 +1998,42 @@ package body CodePeer.Module is
          File.Subprograms.Iterate (Process_Subprogram'Access);
       end Process_File;
 
+      Data : CodePeer.Project_Data'Class
+        renames CodePeer.Project_Data'Class
+          (Self.Tree.Element
+             (GPS.Kernel.Project.Get_Project
+                (Self.Kernel)).Analysis_Data.CodePeer_Data.all);
+
    begin
       Get_Messages_Container (Self.Kernel).Set_Sort_Order_Hint
         (CodePeer_Category_Name, Alphabetical);
 
       Self.Filter_Criteria.Files.Iterate (Process_File'Access);
+
+      --  Update state of race condition messages
+
+      if Self.Filter_Criteria.Categories.Contains (Self.Race_Category) then
+         for Object of Data.Object_Races loop
+            Object.Message.Set_Flags (Race_Message_Flags);
+
+            for Entry_Point of Object.Entry_Points loop
+               for Object_Access of Entry_Point.Object_Accesses loop
+                  Object_Access.Message.Set_Flags (Race_Message_Flags);
+               end loop;
+            end loop;
+         end loop;
+
+      else
+         for Object of Data.Object_Races loop
+            for Entry_Point of Object.Entry_Points loop
+               for Object_Access of Entry_Point.Object_Accesses loop
+                  Object_Access.Message.Set_Flags (Empty_Message_Flags);
+               end loop;
+            end loop;
+
+            Object.Message.Set_Flags (Empty_Message_Flags);
+         end loop;
+      end if;
    end Update_Location_View;
 
    ---------------------

@@ -30,12 +30,13 @@ package CodePeer.Bridge.Inspection_Readers is
    type Reader is new Sax.Readers.Reader with private;
 
    procedure Parse
-     (Self     : in out Reader;
-      Input    : in out Input_Sources.Input_Source'Class;
-      Kernel   : GPS.Kernel.Kernel_Handle;
-      Tree     : out Code_Analysis.Code_Analysis_Tree;
-      Messages : out CodePeer.Message_Maps.Map;
-      Version  : out Supported_Format_Version);
+     (Self          : in out Reader;
+      Input         : in out Input_Sources.Input_Source'Class;
+      Kernel        : GPS.Kernel.Kernel_Handle;
+      Tree          : out Code_Analysis.Code_Analysis_Tree;
+      Messages      : out CodePeer.Message_Maps.Map;
+      Version       : out Supported_Format_Version;
+      Race_Category : out CodePeer.Message_Category_Access);
 
 private
 
@@ -76,6 +77,7 @@ private
       Object_Accesses       : CodePeer.Entry_Point_Object_Access_Information;
       Messages              : CodePeer.Message_Maps.Map;
       Current_Message       : CodePeer.Message_Access;
+      Race_Category         : CodePeer.Message_Category_Access;
    end record;
 
    overriding procedure Start_Element

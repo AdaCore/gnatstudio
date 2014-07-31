@@ -20,6 +20,8 @@ with GNATCOLL.Utils;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 
+with CodePeer.Module;
+
 package body CodePeer.Bridge.Inspection_Readers is
 
    Inspection_Tag          : constant String := "inspection";
@@ -102,12 +104,13 @@ package body CodePeer.Bridge.Inspection_Readers is
    -----------
 
    procedure Parse
-     (Self     : in out Reader;
-      Input    : in out Input_Sources.Input_Source'Class;
-      Kernel   : GPS.Kernel.Kernel_Handle;
-      Tree     : out Code_Analysis.Code_Analysis_Tree;
-      Messages : out CodePeer.Message_Maps.Map;
-      Version  : out Supported_Format_Version)
+     (Self          : in out Reader;
+      Input         : in out Input_Sources.Input_Source'Class;
+      Kernel        : GPS.Kernel.Kernel_Handle;
+      Tree          : out Code_Analysis.Code_Analysis_Tree;
+      Messages      : out CodePeer.Message_Maps.Map;
+      Version       : out Supported_Format_Version;
+      Race_Category : out CodePeer.Message_Category_Access)
    is
       Root_Project : Code_Analysis.Project_Access;
 
@@ -127,9 +130,10 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       Self.Parse (Input);
 
-      Tree     := Self.Projects;
-      Version  := Self.Version;
-      Messages := Self.Messages;
+      Tree          := Self.Projects;
+      Version       := Self.Version;
+      Messages      := Self.Messages;
+      Race_Category := Self.Race_Category;
    end Parse;
 
    --------------------
@@ -607,6 +611,15 @@ package body CodePeer.Bridge.Inspection_Readers is
            (Integer'Value (Attrs.Get_Value ("identifier")), Entry_Point);
 
       elsif Qname = Object_Race_Tag then
+         if Self.Race_Category = null then
+            Self.Race_Category :=
+              new CodePeer.Message_Category'
+                (Name => new String'(CodePeer.Module.Race_Condition_Category));
+            CodePeer.Project_Data'Class
+              (Self.Root_Inspection.all).Warning_Subcategories.Include
+              (Self.Race_Category);
+         end if;
+
          Self.Object_Race.Name :=
            new String'(Attrs.Get_Value (Name_Attribute));
          Self.Object_Race.File := Get_Optional_File;
@@ -626,13 +639,14 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       elsif Qname = Object_Access_Tag then
          Object_Access :=
-           (Kind   =>
+           (Kind    =>
               Object_Access_Kinds'Value (Attrs.Get_Value (Kind_Attribute)),
-            File   =>
+            File    =>
               GPS.Kernel.Create
                 (+Attrs.Get_Value (File_Attribute), Self.Kernel),
-            Line   => Natural'Value (Attrs.Get_Value (Line_Attribute)),
-            Column => Get_Optional_Column);
+            Line    => Natural'Value (Attrs.Get_Value (Line_Attribute)),
+            Column  => Get_Optional_Column,
+            Message => null);
          Self.Object_Accesses.Object_Accesses.Append (Object_Access);
 
       else

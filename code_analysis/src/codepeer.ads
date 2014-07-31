@@ -168,10 +168,11 @@ package CodePeer is
    type Object_Access_Kinds is (Read, Update);
 
    type Object_Access_Information is record
-      Kind   : Object_Access_Kinds;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Line   : Positive;
-      Column : Positive;
+      Kind    : Object_Access_Kinds;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Line    : Positive;
+      Column  : Positive;
+      Message : GPS.Kernel.Messages.Message_Access;
    end record;
 
    package Object_Access_Vectors is

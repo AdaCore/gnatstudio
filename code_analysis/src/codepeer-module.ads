@@ -81,7 +81,8 @@ package CodePeer.Module is
    function Get_Color
      (Ranking : CodePeer.Message_Ranking_Level) return Gdk.RGBA.Gdk_RGBA;
 
-   CodePeer_Category_Name : constant String := "CodePeer: messages";
+   CodePeer_Category_Name  : constant String := "CodePeer: messages";
+   Race_Condition_Category : constant String := "race condition";
 
 private
 
@@ -111,6 +112,7 @@ private
       Version                : Supported_Format_Version;
       --  Used version of format of interchange files.
       Tree                   : Code_Analysis.Code_Analysis_Tree;
+      Race_Category          : CodePeer.Message_Category_Access;
       Report_Subwindow       : GPS.Kernel.MDI.GPS_MDI_Child;
       Report                 : CodePeer.Reports.Report;
       Annotation_Style       : GPS.Styles.UI.Style_Access;
