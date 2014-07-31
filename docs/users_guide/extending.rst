@@ -4858,6 +4858,24 @@ following child tags:
   Whether GPS should launch targets of this model with the shell pointed to
   by the :file:`SHELL` environment variable.
 
+* :file:`<uses-python>` (default :command:`False`)
+
+  When this is set to :command`True`, launch a Python command rather than an
+  external process. In this case, the arguments in the command line
+  are first process using the macro replacement mechanism, and then 
+  concatenated to form the string which is interpreted. For instance the 
+  following::
+
+       <command-line>
+          <arg>GPS.Console("Messages").write("</arg>
+          <arg>%PP</arg>
+          <arg>")</arg>
+       </command-line>
+
+  Is interpreted as::
+
+       GPS.Console("Messages").write("<full path to the project>")
+
 * :file:`<command-line>` (required)
 
   Contains :file:`<arg>` child tags, each containing an argument of the

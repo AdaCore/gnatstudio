@@ -321,11 +321,20 @@ XML = r"""<?xml version="1.0" ?>
    </switches>
 </target-model>
 
-<!-- This is a minimal XML model, used for launching custom commands -->
+<!-- This is a minimal XML model, used for launching executables -->
 <target-model name="custom" category="">
    <description>Launch a custom build command</description>
    <icon>gps-custom-build</icon>
    <uses-shell>TRUE</uses-shell>
+   <switches command="">
+   </switches>
+</target-model>
+
+<!-- This is a minimal XML model, used for launching python scripts -->
+<target-model name="python" category="">
+   <description>Launch a custom build command</description>
+   <icon>gps-custom-build</icon>
+   <uses-python>TRUE</uses-python>
    <switches command="">
    </switches>
 </target-model>

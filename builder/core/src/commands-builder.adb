@@ -276,33 +276,62 @@ package body Commands.Builder is
          CL := Result.Full.Args;
       end if;
 
-      if Synchronous then
-         Builder.Kernel.Process_Launcher.Launch_Process
-           (CL              => CL,
-            Server          => Server,
-            Directory       => Result.Full.Dir,
-            Output_Parser   => Output_Parser,
-            Show_Command_To => Result.Console,
-            Success         => Success);
+      if Uses_Python (Build.Target) then
+         --  Interpret as a Python script execution
+         declare
+            P : constant Scripting_Language :=
+              Builder.Kernel.Scripts.Lookup_Scripting_Language ("Python");
+            E : aliased Boolean;
+            C : Unbounded_String;
+         begin
+            --  Construct the string to launch
+            for J in 0 .. Args_Length (CL) loop
+               Append (C, Unbounded_String'(Nth_Arg (CL, J)));
+            end loop;
+
+            --  Launch
+            declare
+               Output : constant String := GNATCOLL.Scripts.Execute_Command
+                 (Script  => P,
+                  Command => To_String (C),
+                  Errors  => E'Access);
+               pragma Unreferenced (Output);
+            begin
+               null;
+            end;
+         end;
+
       else
-         Builder.Kernel.Process_Launcher.Launch_Process_In_Background
-           (CL              => CL,
-            Server          => Server,
-            Directory       => Result.Full.Dir,
-            Output_Parser   => Output_Parser,
-            Show_Command_To => Result.Console,
-            Success         => Success,
-            Show_In_Task_Manager => not Build.Background,
-            Name_In_Task_Manager => To_String (Cmd_Name),
-            Block_Exit           => not (Build.Shadow
-              or else Build.Background
-              or else Build.Quiet),
-            Created_Command      => Created_Command);
+         --  Interpret as an executable run
 
-         --  ??? check value of Success
+         if Synchronous then
+            Builder.Kernel.Process_Launcher.Launch_Process
+              (CL              => CL,
+               Server          => Server,
+               Directory       => Result.Full.Dir,
+               Output_Parser   => Output_Parser,
+               Show_Command_To => Result.Console,
+               Success         => Success);
+         else
+            Builder.Kernel.Process_Launcher.Launch_Process_In_Background
+              (CL              => CL,
+               Server          => Server,
+               Directory       => Result.Full.Dir,
+               Output_Parser   => Output_Parser,
+               Show_Command_To => Result.Console,
+               Success         => Success,
+               Show_In_Task_Manager => not Build.Background,
+               Name_In_Task_Manager => To_String (Cmd_Name),
+               Block_Exit           => not (Build.Shadow
+                 or else Build.Background
+                 or else Build.Quiet),
+               Created_Command      => Created_Command);
 
-         if Success and then Build.Background then
-            Background_Build_Started (Builder, Created_Command);
+            --  ??? check value of Success
+
+            if Success and then Build.Background then
+               Background_Build_Started (Builder, Created_Command);
+            end if;
          end if;
       end if;
    end Launch_Build_Command;
