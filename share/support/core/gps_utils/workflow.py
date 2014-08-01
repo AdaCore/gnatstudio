@@ -7,6 +7,19 @@
 import sys
 import GPS
 
+registered_workflows = {}
+
+
+def run_registered_workflows(workflow_name):
+    # find workflow in registed table provided the workflow name
+    # and then run it with the driver
+    try:
+        wf = registered_workflows[workflow_name]()
+        driver(wf)
+    except KeyError:
+        GPS.Console("Messages").write(
+            "\nError: Workflow name not registered.\n")
+
 
 def driver(w):
     def go(gowith=None):
@@ -87,5 +100,36 @@ def make_button_for_action(button_name, button_id):
         GPS.Toolbar().append(b)
 
         return action
+
+    return wrap
+
+
+def create_target_from_workflow(target_name, workflow_name):
+    """
+    Create a Target under the category Workflow from a workflow --
+    to be feed by user.
+    By building this target, the workflow is driven (executed).
+    * target_name and workflow_name are all strings
+    """
+
+    # going to store the feeded workflow in a global variable
+    global registered_workflows
+
+    def wrap(wf):
+        # the workflow is globally accessible
+        registered_workflows[workflow_name] = wf
+
+        XML = """<target model="python" category="Workflow" name="%s">
+        <in-toolbar>TRUE</in-toolbar>
+        <icon>gtk-print</icon>
+        <launch-mode>MANUALLY</launch-mode>
+        <read-only>TRUE</read-only>
+        <target-type>main</target-type>
+        <command-line>
+           <arg>gps_utils.workflow.run_registered_workflows("%s")</arg>
+        </command-line>
+        </target>
+        """ % (target_name, workflow_name)
+        GPS.parse_xml(XML)
 
     return wrap
