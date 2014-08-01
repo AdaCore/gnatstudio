@@ -288,9 +288,6 @@ package body GPS.Kernel.Scripts is
       elsif Command = "get_home_dir" then
          Set_Return_Value (Data, +Get_Home_Dir (Kernel).Full_Name);
 
-      elsif Command = "reset_xref_db" then
-         Kernel.Databases.Reset;
-
       elsif Command = "debug_memory_usage" then
          GNATCOLL.Memory.Dump
            (Size   => Nth_Arg (Data, 1, 3),
@@ -457,16 +454,6 @@ package body GPS.Kernel.Scripts is
             Set_Value (Var, Value);
             Get_Registry (Kernel).Tree.Change_Environment ((1 => Var));
             Run_Hook (Kernel, Variable_Changed_Hook);
-         end;
-
-      elsif Command = "xref_db" then
-         declare
-            F : constant Virtual_File :=
-              Kernel.Databases.Xref_Database_Location;
-         begin
-            if F /= No_File then
-               Set_Return_Value (Data, F.Display_Full_Name);
-            end if;
          end;
 
       elsif Command = "freeze_prefs" then
@@ -1284,9 +1271,6 @@ package body GPS.Kernel.Scripts is
         (Kernel, "get_home_dir",
          Handler => Default_Command_Handler'Access);
       Register_Command
-        (Kernel, "reset_xref_db",
-         Handler => Default_Command_Handler'Access);
-      Register_Command
         (Kernel, "insmod",
          Minimum_Args => 2,
          Maximum_Args => 2,
@@ -1329,18 +1313,6 @@ package body GPS.Kernel.Scripts is
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "xref_db",
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "freeze_xref",
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "thaw_xref",
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "xref_frozen",
-         Handler      => Default_Command_Handler'Access);
 
       Register_Command
         (Kernel, "freeze_prefs",
@@ -1375,12 +1347,6 @@ package body GPS.Kernel.Scripts is
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "update_xref",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Create_Project_Command_Handler'Access);
 
       if Active (Testsuite_Handle) then
          Register_Command

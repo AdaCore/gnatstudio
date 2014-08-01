@@ -19,13 +19,17 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Commands.Generic_Asynchronous;  use Commands;
 with Commands;                       use Commands;
+with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.SQL.Exec;              use GNATCOLL.SQL.Exec;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GPS.Intl;                       use GPS.Intl;
+with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
+with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
 with GPS.Kernel;                     use GPS.Kernel;
 with Glib.Convert;                   use Glib.Convert;
 with Glib.Object;                    use Glib.Object;
@@ -97,6 +101,46 @@ package body GPS.Kernel.Xref is
    overriding procedure On_Database_Corrupted
      (Self       : in out SQL_Error_Reporter;
       Connection : access Database_Connection_Record'Class);
+
+   procedure Default_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the default commands
+
+   procedure On_Project_Changed
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   procedure On_Project_View_Changed
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Hooks
+
+   ------------------------
+   -- On_Project_Changed --
+   ------------------------
+
+   procedure On_Project_Changed
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Standard.Xref.Project_Changed (Kernel.Databases);
+   end On_Project_Changed;
+
+   -----------------------------
+   -- On_Project_View_Changed --
+   -----------------------------
+
+   procedure On_Project_View_Changed
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Standard.Xref.Project_View_Changed
+        (Kernel.Databases, Get_Project_Tree (Kernel));
+
+      if not Kernel.Databases.Allow_Queries then
+         Insert
+           (Kernel,
+            -"The file '"
+            & Kernel.Databases.Xref_Database_Location.Display_Full_Name
+            & "' cannot be written. Cross-references are disabled.");
+      end if;
+
+   end On_Project_View_Changed;
 
    --------------
    -- On_Error --
@@ -922,5 +966,80 @@ package body GPS.Kernel.Xref is
          end;
       end if;
    end Documentation;
+
+   -----------------------------
+   -- Default_Command_Handler --
+   -----------------------------
+
+   procedure Default_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+   begin
+      if Command = "reset_xref_db" then
+         Kernel.Databases.Reset;
+
+      elsif Command = "xref_db" then
+         declare
+            F : constant Virtual_File :=
+              Kernel.Databases.Xref_Database_Location;
+         begin
+            if F /= No_File then
+               Set_Return_Value (Data, F.Display_Full_Name);
+            end if;
+         end;
+      end if;
+   end Default_Command_Handler;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      --  Force the creation of a database in any case, to avoid
+      --  internal errors even if an invalid project is loaded
+      Standard.Xref.Project_Changed (Kernel.Databases);
+
+      Register_Command
+        (Kernel, "reset_xref_db",
+         Handler => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "xref_db",
+         Handler      => Default_Command_Handler'Access);
+
+      GPS.Kernel.Hooks.Add_Hook
+        (Kernel,
+         GPS.Kernel.Project_Changed_Hook,
+         GPS.Kernel.Hooks.Wrapper (On_Project_Changed'Access),
+         "xref.project_changed");
+
+      GPS.Kernel.Hooks.Add_Hook
+        (Kernel,
+         GPS.Kernel.Project_View_Changed_Hook,
+         GPS.Kernel.Hooks.Wrapper (On_Project_View_Changed'Access),
+         "xref.project_changed");
+
+      --  The following are not implemented
+      --  ??? Are we keeping them for API compatibility?
+
+      Register_Command
+        (Kernel, "freeze_xref",
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "thaw_xref",
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "xref_frozen",
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "update_xref",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Default_Command_Handler'Access);
+   end Register_Module;
 
 end GPS.Kernel.Xref;

@@ -83,7 +83,7 @@ class Sqlite_Cross_References(object):
 
         # The testsuite can disable gnatinspect in some cases.
         # Similarly if the DB xref is frozen, do nothing.
-        if self.disable_gnatinspect or GPS.xref_frozen():
+        if self.disable_gnatinspect:
             return
 
         # The project might not exist, for instance when GPS is loading the

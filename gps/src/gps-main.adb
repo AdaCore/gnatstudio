@@ -94,6 +94,7 @@ with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles.Shell;
 with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
+with GPS.Kernel.Xref;
 with GPS.Stock_Icons;
 with GPS.Main_Window;                  use GPS.Main_Window;
 with GPS.Menu;
@@ -1903,6 +1904,9 @@ procedure GPS.Main is
       end if;
 
       Register_Default_Script_Commands (GPS_Main.Kernel);
+
+      GPS.Kernel.Xref.Register_Module (GPS_Main.Kernel);
+
       GPS.Kernel.Messages.Shell.Register_Commands (GPS_Main.Kernel);
       GPS.Kernel.Styles.Shell.Register_Commands (GPS_Main.Kernel);
 

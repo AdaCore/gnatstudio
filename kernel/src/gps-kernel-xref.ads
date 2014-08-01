@@ -145,6 +145,10 @@ package GPS.Kernel.Xref is
    --  Check_Constructs should be False to disable the use of the constructs
    --  database.
 
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the Xref actions and hooks.
+
 private
 
    type GPS_General_Xref_Database_Record is new General_Xref_Database_Record

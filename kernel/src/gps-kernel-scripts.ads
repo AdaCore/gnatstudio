@@ -25,7 +25,6 @@ with GNATCOLL.Scripts.Projects;
 with GPS.Scripts.Entities;
 with GPS.Scripts.Files;
 with GPS.Scripts.File_Locations;
-with Xref;
 
 package GPS.Kernel.Scripts is
 
