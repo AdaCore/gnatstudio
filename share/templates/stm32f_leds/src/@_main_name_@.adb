@@ -40,10 +40,10 @@ with Last_Chance_Handler;  pragma Unreferenced (Last_Chance_Handler);
 
 with System;
 
-procedure Demo is
+procedure @_Main_Name_@ is
    pragma Priority (System.Priority'First);
 begin
    loop
       null;
    end loop;
-end Demo;
+end @_Main_Name_@;
