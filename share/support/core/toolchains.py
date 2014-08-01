@@ -102,6 +102,7 @@ XML = r"""<?xml version="1.0" ?>
   </toolchain>
 
   <toolchain name="powerpc-elf-lynxos"/>
+  <toolchain name="powerpc-elf-lynxos178e"/>
 
   <toolchain name="powerpc-xcoff-lynxos"/>
   <toolchain name="powerpc-xcoff-lynxos178"/>
