@@ -4348,9 +4348,9 @@ package body GNATdoc.Frontend is
                return Sloc_Start.Line = Loc.Line
                  and then Sloc_End.Line = Loc.Line
                  and then Loc.Column >= To_Visible_Column
-                   (Buffer.all, Sloc_Start.Column, Sloc_Start.Index)
+                   (Buffer_Body.all, Sloc_Start.Column, Sloc_Start.Index)
                  and then Loc.Column <= To_Visible_Column
-                   (Buffer.all, Sloc_End.Column, Sloc_End.Index);
+                   (Buffer_Body.all, Sloc_End.Column, Sloc_End.Index);
             end In_Next_Entity;
 
             -------------------
