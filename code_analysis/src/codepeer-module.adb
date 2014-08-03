@@ -311,16 +311,22 @@ package body CodePeer.Module is
           (Self.Tree.Element
              (GPS.Kernel.Project.Get_Project
                 (Self.Kernel)).Analysis_Data.CodePeer_Data.all);
+      File : GNATCOLL.VFS.Virtual_File;
 
    begin
       for Object of Data.Object_Races loop
          if Object.Message = null then
+            File :=
+              (if Object.File /= No_File
+               then Object.File
+               else GNATCOLL.VFS.Create ("race conditions"));
+
             Object.Message :=
               GPS.Kernel.Messages.Message_Access
                 (Create_Simple_Message
                    (Get_Messages_Container (Self.Kernel),
                     CodePeer_Category_Name,
-                    Object.File,
+                    File,
                     Object.Line,
                     GNATCOLL.Xref.Visible_Column (Object.Column),
                     Object.Name.all & " race condition",
