@@ -502,6 +502,14 @@ clause.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "0" name = "Obsolescent" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This aspect is equivalent to an `Obsolescent' pragma. Note that the
+evaluation of this aspect happens at the point of occurrence, it is not
+delayed until the freeze point.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "39/3" name = "Output" origin = "Ada RM" category = "unknown">
       <DOC>
 Procedure to write a value to a stream for a given type,
