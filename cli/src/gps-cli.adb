@@ -30,7 +30,7 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GPS.CLI_Utils;     use GPS.CLI_Utils;
 with GPS.CLI_Kernels;   use GPS.CLI_Kernels;
 
-with Xref;              use Xref;
+with Xref.Lifecycle;    use Xref.Lifecycle;
 
 procedure GPS.CLI is
    -------------------

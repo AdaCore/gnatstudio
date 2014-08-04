@@ -176,12 +176,6 @@ package Xref is
    --  that should be looked for in the file.
    --  Should return No_Root_Entity if the user has cancelled the action.
 
-   function Xref_Database_Location
-     (Self    : not null access General_Xref_Database_Record)
-      return GNATCOLL.VFS.Virtual_File;
-   --  Location of the sqlite file that contains the xref database on which
-   --  GPS is currently working.
-
    function Allow_Queries
      (Self : not null access General_Xref_Database_Record) return Boolean;
    --  Whether SQL queries can be performed in the database
@@ -827,18 +821,6 @@ package Xref is
    function From_Constructs
      (Db     : General_Xref_Database;
       Entity : Language.Tree.Database.Entity_Access) return General_Entity;
-
-   procedure Project_Changed (Self : General_Xref_Database);
-   --  The project has changed, we need to reset the xref database. This is
-   --  called at least once prior to calls to Project_View_Changed.
-   --  At this stage, the view of the project hasn't been computed, so you can
-   --  not do any query on the project itself.
-
-   procedure Project_View_Changed
-     (Self   : General_Xref_Database;
-      Tree   : GNATCOLL.Projects.Project_Tree_Access);
-   --  The view of the project has changed, we need to refresh the xref
-   --  databases.
 
    package Root_Entity_Reference_Refs
    is new Ada.Containers.Indefinite_Holders (Root_Entity_Reference'Class);
