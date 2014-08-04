@@ -10,6 +10,7 @@ This function is available in GPS through the action
 
 import GPS
 from gps_utils import interactive, make_interactive, in_editor
+import text_utils
 import pygps
 import aliases
 import align
@@ -59,124 +60,40 @@ def smart_tab():
                 align.align_use_clauses()
                 align.align_assignments()
 
+    # if it's a python code, do it in python way
+    if editor.file().language() == "python":
+        d = python_tab_indent(editor,
+                              editor.selection_start(),
+                              editor.selection_end())
+
     # Otherwise, reformat the current selection
 
-    if editor.file().language() == "python":
-        o = editor.selection_end().column()
-        d = python_parse_tab(editor,
-                             editor.selection_start(),
-                             editor.selection_end())
     else:
         action = GPS.Action("Autoindent selection")
         if not action.execute_if_possible():
             editor.insert(editor.current_view().cursor(), "\t")
 
 
-def python_parse_tab(e, beginning, end):
+def python_tab_indent(e, beginning, end):
     """
-       parse the text for python files when hitting tab
-       * return the correction of number of whitespaces needed
-       * e is a GPS.EditorBuffer object
-       * beginning and end are selection area's GPS.EditorBuffer.Location
-       * cursor position correced after return
+    Indent python code when tab is pressed
+    1 if performed on line, indent line by 4, move cursor relatively
+    2 if performed on block, indent each non-empty line, move cursor
+      to the end of selection area after finish
     """
 
     # if multiple lines selected, indent each one by order
     if beginning.line() != end.line():
         for i in range(beginning.line(), end.line()+1):
-            d = python_parse_tab(e,
-                                 e.at(i, beginning.column()),
-                                 e.at(i, end.column()))
-        return d
-
-    if (end.line() == e.lines_count() and
-            e.get_chars(end.beginning_of_line(), end.end_of_line()) is ""):
-        return 0
-
-    source = e.get_chars().splitlines()
-
-    # get current indent number
-
-    last = source[end.line()-1]
-    current = len(last) - len(last.lstrip(" "))
-
-    # 0 if at line 1 no indentation needed
-    # default: previous_indent is 0, next indent level is 0
-
-    previous_indent = 0
-    level = 0
-    indent = 0
-    # if more than 1 lines' text:
-    # modify previous_indent and level according to prefixes in codes
-
-    if end.line() > 1:
-
-        # 1 find the next indent level
-        # default: no level change, previous line decides
-        group = []
-        prev = source[end.line()-2]
-        previous_indent = len(prev) - len(prev.lstrip(" "))
-
-        tmphead = prev.lstrip(" ")
-
-        # case : enter subprogram, innermost level decides
-        if tmphead.endswith(":"):
-            level = 1
-            group = ["if", "else", "for", "while",
-                     "def", "class", "try", "except"]
-        else:
-            # case: return to a function, previous def decides
-            if tmphead.startswith("return"):
-                level = -2
-                group = ["def"]
-
-            # case: break out loops, innermost loop decides
-            if tmphead.startswith("break") or \
-               tmphead.startswith("continue"):
-                level = -1
-                group = ["for", "while"]
-
-        # 2 find prev indent quantity (# of whitespaces)
-        prefix = ""
-        begin = 0
-
-        # not for the case that no indentation needed
-        if level != 0:
-            for i in range(end.line()-2, -1, -1):
-                for pref in group:
-                    if source[i].lstrip(" ").startswith(pref):
-                        begin = i
-                        prefix = pref
-                        break
-
-                # if hit the prefix during loop, modify previous_indent
-                if prefix is not "":
-                    previous_indent = len(source[begin].split(prefix)[0])
-                    break
-
-        # 3 find the correct indent number
-        level = 0 if level < 0 else level
-        indent = previous_indent + level*4
-
-    # 4 make corrections for cursor
-    d = indent - current
-
-    if d == 0:
-        # if indent quantity is correct, and cursor at a wild place
-        # move it to the indentation end
-        if current == len(last):
-            e.main_cursor().move(end.end_of_line())
+            d = python_tab_indent(e, e.at(i, 0), e.at(i, end.column()))
     else:
-        # under-indent: add blank
-        if d > 0:
-            e.insert(e.at(end.line(), 1), " "*d)
-        # over-indent: delete blank
-        if d < 0:
-            e.delete(e.at(end.line(), 1), e.at(end.line(), -d))
-        # adjust cursor position by relative quantity
-        e.main_cursor().move(e.at(end.line(), end.column()+d))
+        tmp = e.get_chars(end.beginning_of_line(), end.end_of_line())
+        # if line is not empty, indent by 4
+        if tmp.strip("\n").strip(" ") is not "":
+            e.insert(e.at(end.line(), 1), " "*4)
 
-    return d
+    e.main_cursor().move(e.at(end.line(), end.column()+4))
+    return
 
 
 @interactive(name='smart escape',

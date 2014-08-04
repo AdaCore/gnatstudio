@@ -42,6 +42,51 @@ GPS.Preference("Plugins/emacs/bgcolor").create(
     "yellow")
 
 
+def parse_parentheses(editor, begin=None, end=None):
+    """
+    Parse parentheses of editor
+    range: begin to end inclusive.
+    Returns the parenthesis stack. Each element is parentheses: location int
+    """
+    # set the default begin and end if not provided
+    if begin is None:
+        begin = editor.beginning_of_buffer()
+    if end is None:
+        end = editor.end_of_buffer()
+
+    pairs = {"(": ")", "[": "]", "{": "}"}
+    h = pairs.keys()
+    t = pairs.values()
+    stack = []
+    source = editor.get_chars(begin, end).rstrip("\n").splitlines()
+    last = end.line()-1
+
+    # parse all parentheses, find open parentheses
+    for i in range(0, len(source)):
+        for j, c in enumerate(source[i]):
+            if c in h:
+                stack.append((i, j))
+            elif c in t:
+                    if stack is []:
+                        continue
+                    elif pairs[source[stack[-1][0]][stack[-1][1]]] == c:
+                        # when parenthesis is closed, remember its line number
+                        last = stack.pop()[0]
+
+    # get the last char of parsed text
+    tail = editor.at(end.line(), end.end_of_line().column()-1).get_char()
+
+    # if the parsed text is ending a parenthesis -->
+    # last char is a closing parentheses, then the cursor should
+    # return to where the openning counterparts's line start
+    if tail in t and len(stack) == 0:
+        tmp = source[last]
+        start = len(tmp) - len(tmp.lstrip(" "))
+        stack.append((last, start-1))
+
+    return stack
+
+
 def forward_until(loc, pred,
                   skip_first_char=False,
                   stop_at_eol=False,
