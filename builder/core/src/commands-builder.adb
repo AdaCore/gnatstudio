@@ -223,12 +223,12 @@ package body Commands.Builder is
          Free (CL_Mode);
       end Expand_Command_Line;
 
-      Result   : Build_Information;
-      CL       : Arg_List;
-      Success  : Boolean := False;
-      Cmd_Name : Unbounded_String;
+      Result          : Build_Information;
+      CL              : Arg_List;
+      Success         : Boolean := False;
+      Cmd_Name        : Unbounded_String;
       Created_Command : Command_Access;
-      Output_Parser  : Tools_Output_Parser_Access;
+      Output_Parser   : Tools_Output_Parser_Access;
    begin
       --  Store last build information into Builder
       Builder.Set_Last_Build (Build);
