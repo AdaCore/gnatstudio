@@ -2408,6 +2408,15 @@ package body Src_Editor_Module is
 
       --  Register the message listener for editors
       Src_Editor_Module.Messages.Register (Kernel);
+
+      --  Create highlighting categories preemptively for builder styles, so
+      --  that errors always have higher priority than warnings, etc..
+
+      Line_Highlighting.Add_Category (Builder_Styles (Errors));
+      Line_Highlighting.Add_Category (Builder_Styles (Warnings));
+      Line_Highlighting.Add_Category (Builder_Styles (Style));
+      Line_Highlighting.Add_Category (Builder_Styles (Info));
+
    end Register_Module;
 
    -------------------------
