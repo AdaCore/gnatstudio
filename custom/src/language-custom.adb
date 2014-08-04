@@ -79,6 +79,25 @@ package body Language.Custom is
       return Naming_Editors.Language_Naming_Editor;
    --  Create the naming scheme editor page
 
+   function Language_Category_Value (S : String) return Language_Category;
+   --  Same as Language_Category'Value ("Cat_" & S), not relying on
+   --  Constraint_Error, returning Cat_Custom if S does not match.
+
+   -----------------------------
+   -- Language_Category_Value --
+   -----------------------------
+
+   function Language_Category_Value (S : String) return Language_Category is
+      Upper : constant String := "CAT_" & To_Upper (S);
+   begin
+      for L in Language_Category loop
+         if L'Img = Upper then
+            return L;
+         end if;
+      end loop;
+      return Cat_Custom;
+   end Language_Category_Value;
+
    ---------------------
    -- Array_Item_Name --
    ---------------------
@@ -659,11 +678,10 @@ package body Language.Custom is
             declare
                Name : constant String := Get_Field (Node, "Name").all;
             begin
-               Category := Language_Category'Value ("Cat_" & Name);
-            exception
-               when Constraint_Error =>
-                  Category := Cat_Custom;
+               Category := Language_Category_Value (Name);
+               if Category = Cat_Custom then
                   Category_Name := Find (Kernel.Symbols, Name);
+               end if;
             end;
 
             Index := Integer'Value (Get_Field (Node, "Index").all);
