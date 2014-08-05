@@ -261,8 +261,7 @@ documentation for the standard python library. It is accessed through the
            * text is edited with cursor at indentation level after returned
            * end is position of cursor
         """
-        source = e.get_chars(to=end).rstrip("\n").splitlines()
-
+        source = e.get_chars(to=end).splitlines()
         # if source is empty
         if len(source) == 0:
             return 0
@@ -298,7 +297,6 @@ documentation for the standard python library. It is accessed through the
         # 2 find prev indent quantity (# of whitespaces)
         prefix = ""
         begin = 0
-
         # parse parenthesis for level = 0:
         if level == 0:
             stack = text_utils.parse_parentheses(e, end=end)
