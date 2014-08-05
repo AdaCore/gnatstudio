@@ -348,6 +348,8 @@ many cores as available on the machine)." />
                 column="2" tip="(Re)generate SCIL files if needed" />
          <check label="Analyze root project" switch="-root-only"
                 column="3" tip="Analyze root project only" />
+         <hidden switch="-dbg-on" separator=" "/>
+         <hidden switch="-dbg-off" separator=" "/>
        </switches>
     </target-model>
 
