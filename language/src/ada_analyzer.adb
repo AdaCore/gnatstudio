@@ -2303,8 +2303,9 @@ package body Ada_Analyzer is
                     | Tok_Function | Tok_Procedure | Tok_Colon
                   and then Num_Parens = 0)
                  or else (Top_Token.Token in Tok_Task | Tok_Protected
-                          and then Prev_Prev_Token
-                            in Tok_Protected | Tok_Task | Tok_Type)
+                          and then (Prev_Prev_Token
+                                      in Tok_Protected | Tok_Task | Tok_Type
+                                    or else Prev_Token = Tok_Right_Paren))
                  or else (Top_Token.Token = No_Token
                           and then Prev_Token
                             not in Tok_Semicolon | Tok_Limited |
