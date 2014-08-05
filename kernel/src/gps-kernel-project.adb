@@ -40,6 +40,7 @@ with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with Xref;
 
 package body GPS.Kernel.Project is
 
@@ -540,6 +541,7 @@ package body GPS.Kernel.Project is
          --  in the locations view when it is opened, since they are stored in
          --  a GUI independent model.
 
+         Xref.Project_Changed (Kernel.Databases);
          Recompute_View (Kernel);
 
          --  Reload the desktop, in case there is a project-specific setup
@@ -556,6 +558,8 @@ package body GPS.Kernel.Project is
                         & Display_Full_Name (Project) & ASCII.LF,
                         Mode => Error, Add_LF => False);
          Ignore := Load_Desktop (Kernel);
+
+         Xref.Project_Changed (Kernel.Databases);
       end if;
       Decrease_Indent (Me);
    end Load_Project;

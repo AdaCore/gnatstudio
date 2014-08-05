@@ -35,7 +35,6 @@ with GPS.CLI_Kernels;       use GPS.CLI_Kernels;
 
 with GNATdoc;               use GNATdoc;
 with Xref;                  use Xref;
-with Xref.Lifecycle;        use Xref.Lifecycle;
 with String_List_Utils;     use String_List_Utils;
 
 procedure GNATdoc_Main is
@@ -196,7 +195,7 @@ procedure GNATdoc_Main is
       Append (Args, "--encoding=" & Encoding.all);
       Append (Args, "-P" & (+Project_File.Full_Name.all));
       Append (Args, "--db=" &
-         (+Xref_Database_Location (Kernel.Databases).Full_Name.all));
+         (+Kernel.Databases.Xref_Database_Location.Full_Name.all));
 
       Add_X_Switches (Args);
 

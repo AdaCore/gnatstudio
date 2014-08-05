@@ -48,8 +48,6 @@ with Gtk.Widget;                     use Gtk.Widget;
 with Gtkada.Handlers;                use Gtkada.Handlers;
 with System;                         use System;
 
-with Xref.Lifecycle; use Xref.Lifecycle;
-
 package body GPS.Kernel.Xref is
    use Xref;
    use Root_Entity_Refs;
@@ -121,7 +119,7 @@ package body GPS.Kernel.Xref is
    procedure On_Project_Changed
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Standard.Xref.Lifecycle.Project_Changed (Kernel.Databases);
+      Standard.Xref.Project_Changed (Kernel.Databases);
    end On_Project_Changed;
 
    -----------------------------
@@ -131,14 +129,14 @@ package body GPS.Kernel.Xref is
    procedure On_Project_View_Changed
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Standard.Xref.Lifecycle.Project_View_Changed
+      Standard.Xref.Project_View_Changed
         (Kernel.Databases, Get_Project_Tree (Kernel));
 
       if not Kernel.Databases.Allow_Queries then
          Insert
            (Kernel,
             -"The file '"
-            & Xref_Database_Location (Kernel.Databases).Display_Full_Name
+            & Kernel.Databases.Xref_Database_Location.Display_Full_Name
             & "' cannot be written. Cross-references are disabled.");
       end if;
 
@@ -985,7 +983,7 @@ package body GPS.Kernel.Xref is
       elsif Command = "xref_db" then
          declare
             F : constant Virtual_File :=
-              Xref_Database_Location (Kernel.Databases);
+              Kernel.Databases.Xref_Database_Location;
          begin
             if F /= No_File then
                Set_Return_Value (Data, F.Display_Full_Name);
@@ -1003,7 +1001,7 @@ package body GPS.Kernel.Xref is
    begin
       --  Force the creation of a database in any case, to avoid
       --  internal errors even if an invalid project is loaded
-      Standard.Xref.Lifecycle.Project_Changed (Kernel.Databases);
+      Standard.Xref.Project_Changed (Kernel.Databases);
 
       Register_Command
         (Kernel, "reset_xref_db",
