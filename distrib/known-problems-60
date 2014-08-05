@@ -36,6 +36,17 @@ KP-60-N801-015 GPS: cannot assign a key shortcut to debug a main
   Workaround: although this can be implemented as a simple
               plugin which will launch the debugger and load the executable.
 
+KP-60-N729-034 Wrong highlighting of tasks with aspects and discriminants
+
+  Problem:    When declaring a task type with disciminants and Ada 2012
+              aspects, GPS does not highlight the aspects as such, and may
+              be confused also in e.g. displaying block highlighting.
+
+  Status:     this was fixed in 6.1 on 2014-08-05
+
+  Workaround: Either ignore this visual glitch or replace aspects with their
+              equivalent pragmas.
+
 KP-60-N715-048 GPS: Navigation Arrows after 'Find All References to'
 
   Problem:    Navigation history misses cursor position changes after
