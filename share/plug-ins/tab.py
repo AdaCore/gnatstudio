@@ -85,12 +85,13 @@ def python_tab_indent(e, beginning, end):
     # if multiple lines selected, indent each one by order
     if beginning.line() != end.line():
         for i in range(beginning.line(), end.line()+1):
-            d = python_tab_indent(e, e.at(i, 0), e.at(i, end.column()))
+            tmp = e.get_chars(e.at(i, 1), e.at(i, 1).end_of_line())
+
+            # if line is not empty, indent by 4
+            if tmp.strip("\n").strip(" ") is not "":
+                d = python_tab_indent(e, e.at(i, 0), e.at(i, end.column()))
     else:
-        tmp = e.get_chars(end.beginning_of_line(), end.end_of_line())
-        # if line is not empty, indent by 4
-        if tmp.strip("\n").strip(" ") is not "":
-            e.insert(e.at(end.line(), 1), " "*4)
+        e.insert(e.at(end.line(), 1), " "*4)
 
     e.main_cursor().move(e.at(end.line(), end.column()+4))
     return
