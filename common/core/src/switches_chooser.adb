@@ -330,6 +330,25 @@ package body Switches_Chooser is
       Add_To_Getopt (Config, Switch, Sep);
    end Add_Field;
 
+   ----------------
+   -- Add_Hidden --
+   ----------------
+
+   procedure Add_Hidden
+     (Config    : Switches_Editor_Config;
+      Switch    : String;
+      Separator : String := "")
+   is
+      Sep : Character := ASCII.NUL;
+
+   begin
+      if Separator /= "" then
+         Sep := Separator (Separator'First);
+      end if;
+
+      Add_To_Getopt (Config, Switch, Sep);
+   end Add_Hidden;
+
    --------------
    -- Add_Spin --
    --------------

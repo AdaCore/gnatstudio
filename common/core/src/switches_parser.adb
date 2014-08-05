@@ -77,8 +77,9 @@ package body Switches_Parser is
       procedure Process_Dependency_Node (N : Node_Ptr);
       procedure Process_Default_Value_Dependency_Node (N : Node_Ptr);
       procedure Process_Expansion_Node  (N : Node_Ptr);
+      procedure Process_Hidden_Node (N : Node_Ptr);
       --  Process a child node (resp. <title>, <check>, <spin>, <radio>,
-      --  <combo>, <popup>, <dependency>, <expansion>)
+      --  <combo>, <popup>, <dependency>, <expansion>, <hidden>)
 
       procedure Process_Radio_Entry_Nodes
         (Parent : Node_Ptr; Radio : Radio_Switch);
@@ -412,6 +413,30 @@ package body Switches_Parser is
             Popup     => Popup);
       end Process_Combo_Node;
 
+      -------------------------
+      -- Process_Hidden_Node --
+      -------------------------
+
+      procedure Process_Hidden_Node (N : Node_Ptr) is
+         Switch : constant String := Get_Attribute (N, "switch");
+
+      begin
+         if Switch = "" then
+            Log_Error (-("Invalid <hidden> node in custom file,"
+                       & " 'switch' attribute is required"));
+            return;
+         end if;
+
+         if Check_Space_In_Switch (Switch) then
+            return;
+         end if;
+
+         Add_Hidden
+           (Config    => Current_Tool_Config,
+            Switch    => Switch,
+            Separator => Get_Attribute (N, "separator", Default_Sep));
+      end Process_Hidden_Node;
+
       ------------------------
       -- Process_Field_Node --
       ------------------------
@@ -626,6 +651,8 @@ package body Switches_Parser is
                null;
             elsif N2.Tag.all = "expansion" then
                Process_Expansion_Node (N2);
+            elsif N2.Tag.all = "hidden" then
+               Process_Hidden_Node (N2);
             else
                Log_Error
                  (-"Invalid xml tag child for <switches>: "

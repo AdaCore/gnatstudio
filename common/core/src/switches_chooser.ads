@@ -207,6 +207,12 @@ package Switches_Chooser is
    --  package.
    --  (Lines, Columns) are the number of lines and columns in the popup.
 
+   procedure Add_Hidden
+     (Config    : Switches_Editor_Config;
+      Switch    : String;
+      Separator : String := "");
+   --  Add switch which is not visible for user but handled by switch editor.
+
    procedure Add_Dependency
      (Config         : Switches_Editor_Config;
       Switch         : String;
