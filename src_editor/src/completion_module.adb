@@ -963,6 +963,12 @@ package body Completion_Module is
       end if;
 
       return Commands.Success;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Completion_Module.Has_Smart_Completion := False;
+         return Commands.Success;
    end Smart_Complete;
 
    -------------
