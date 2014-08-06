@@ -41,7 +41,7 @@ class Pep8_Module(Module):
                 m.remove()
 
             # parse text in buffer and catches stdout
-            source = [i + "\n" for i in
+            source = [i.rstrip(" ") + "\n" for i in
                       GPS.EditorBuffer.get(file=file, open=False).
                       get_chars().lstrip("\n").splitlines()]
 
