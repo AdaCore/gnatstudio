@@ -90,7 +90,7 @@ def parse_parentheses(editor, begin=None, end=None):
 def forward_until(loc, pred,
                   skip_first_char=False,
                   stop_at_eol=False,
-                  backwards=False):
+                  backwards=False, give_up=True):
     step = -1 if backwards else 1
     cur_loc = loc
 
@@ -98,12 +98,13 @@ def forward_until(loc, pred,
         cur_loc = cur_loc.forward_char(step)
 
     while not pred(cur_loc.get_char()):
-
         if cur_loc.get_char() == "\n" and stop_at_eol:
             return loc
 
         if cur_loc == cur_loc.forward_char(step):
-            return loc
+            if give_up:
+                return loc
+            return cur_loc
 
         cur_loc = cur_loc.forward_char(step)
     return cur_loc
@@ -782,6 +783,47 @@ def goto_word_end(loc, underscore_is_word=True):
                 # Probably an invalid position.
                 return loc.buffer().end_of_buffer()
         return loc
+
+
+def isword(a):
+    # test if a (a char) is a word
+    return (a.isalpha() or a.isdigit() or a == "_")
+
+
+@interactive("Editor", "", name="go to next word")
+def move_to_next_word():
+    b = GPS.EditorBuffer.get()
+    loc = b.selection_end()
+    if loc.forward_char() == b.end_of_buffer():
+        return
+    if isword(loc.get_char()):
+        loc = forward_until(loc, lambda x: not isword(x),
+                            True, True, False)
+        loc = forward_until(loc, lambda x: not x.isspace(),
+                            False, True, False)
+    else:
+        loc = forward_until(loc, lambda x: isword(x) or x in ["\n", "\"", "'"],
+                            True, False, False)
+
+    b.main_cursor().move(loc)
+
+
+@interactive("Editor", "", name="go to previous word")
+def move_to_previous_word():
+    b = GPS.EditorBuffer.get()
+    loc = b.selection_start()
+    if loc == b.beginning_of_buffer():
+        return
+    loc = forward_until(loc, lambda x: x != " ", True, False, True)
+    if loc.get_char() not in ["\n", "\"", "'"]:
+        if isword(loc.get_char()):
+            loc = forward_until(loc, lambda x: not isword(x),
+                                True, True, True, False)
+        else:
+            loc = forward_until(loc, lambda x: isword(x) or x.isspace(),
+                                True, False, True, False)
+        loc = loc.forward_char() if loc != b.beginning_of_buffer() else loc
+    b.main_cursor().move(loc)
 
 
 def delete_spaces(backward=True, forward=True, leave_one=False):
