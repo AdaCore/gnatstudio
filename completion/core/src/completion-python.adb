@@ -340,4 +340,36 @@ package body Completion.Python is
       return R;
    end Create;
 
+   ---------------------------------
+   -- Get_Initial_Completion_List --
+   ---------------------------------
+
+   overriding function Get_Initial_Completion_List
+     (Manager : access Generic_Completion_Manager;
+      Context : Completion_Context)
+      return Completion_List
+   is
+      It       : Completion_Resolver_List_Pckg.Cursor;
+      Result   : Completion_List;
+
+      New_Context : constant Completion_Context :=
+        new Completion_Context_Record;
+   begin
+      New_Context.all := Context.all;
+      Append (Manager.Contexts, New_Context);
+
+      It := First (Manager.Ordered_Resolvers);
+      while It /= Completion_Resolver_List_Pckg.No_Element loop
+         Completion.Get_Completion_Root
+           (Resolver => Element (It),
+            Offset   => 0,
+            Context  => New_Context,
+            Result   => Result);
+
+         It := Next (It);
+      end loop;
+
+      return Result;
+   end Get_Initial_Completion_List;
+
 end Completion.Python;

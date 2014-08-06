@@ -24,6 +24,14 @@ with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 package Completion.Python is
 
+   type Generic_Completion_Manager is new Completion_Manager with null record;
+
+   overriding function Get_Initial_Completion_List
+     (Manager : access Generic_Completion_Manager;
+      Context : Completion_Context)
+      return Completion_List;
+   --  See inherited documentation
+
    --------------
    -- Resolver --
    --------------

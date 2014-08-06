@@ -848,7 +848,9 @@ package body Completion_Module is
                     Current_File   => Get_Filename (Buffer),
                     Current_Buffer => Data.The_Text);
 
-            else
+            elsif Lang = C_Lang
+              or else Lang = Cpp_Lang
+            then
 
                Data.Manager := new C_Completion_Manager;
 
@@ -864,16 +866,20 @@ package body Completion_Module is
                           Current_File => Get_Filename (Buffer));
                   end if;
                end if;
+            else
+               Data.Manager := new Generic_Completion_Manager;
             end if;
 
             for R of Data.Python_Resolvers loop
                Register_Resolver (Data.Manager, R);
             end loop;
 
-            Register_Resolver
-              (Data.Manager, Completion_Module.Completion_History);
-            Register_Resolver
-              (Data.Manager, Completion_Module.Completion_Keywords);
+            if Lang = Ada_Lang then
+               Register_Resolver
+                 (Data.Manager, Completion_Module.Completion_History);
+               Register_Resolver
+                 (Data.Manager, Completion_Module.Completion_Keywords);
+            end if;
 
             if Data.Constructs_Resolver /= null then
                Register_Resolver (Data.Manager, Data.Constructs_Resolver);
