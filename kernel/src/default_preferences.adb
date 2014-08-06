@@ -609,18 +609,16 @@ package body Default_Preferences is
 
       if Has_Element (Old) then
          Old_Pref := Element (Old);
+         Delete (Manager.Preferences, Old);
+
          if Old_Pref /= Preference (Pref) then
-            Delete (Manager.Preferences, Old);
             Free (Old_Pref);
-            Append
-              (Container => Manager.Preferences,
-               New_Item  => Preference (Pref));
          end if;
-      else
-         Append
-           (Container => Manager.Preferences,
-            New_Item  => Preference (Pref));
       end if;
+
+      Append
+        (Container => Manager.Preferences,
+         New_Item  => Preference (Pref));
    end Register;
 
    --------------
