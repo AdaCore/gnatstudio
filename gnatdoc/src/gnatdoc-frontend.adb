@@ -260,9 +260,9 @@ package body GNATdoc.Frontend is
    end Scopes_Stack;
    use Scopes_Stack;
 
-   ---------------------------------
-   -- Append_Comments_And_Sources --
-   ---------------------------------
+   ------------------------------------
+   -- Add_Documentation_From_Sources --
+   ------------------------------------
 
    function Add_Documentation_From_Sources
      (Context       : access constant Docgen_Context;
@@ -4885,6 +4885,8 @@ package body GNATdoc.Frontend is
      (Context : access constant Docgen_Context;
       Root    : Entity_Id)
    is
+      Private_Entities_List : aliased EInfo_List.Vector;
+
       procedure Error
         (Entity  : Entity_Id;
          Msg     : String);
@@ -4938,6 +4940,10 @@ package body GNATdoc.Frontend is
       --  Parse_Doc, Parse_Enumeration_Comments, Parse_Record_Comments,
       --  and Parse_Subprogram_Comments.
 
+      procedure Remove_Private_Entities;
+      --  Private entities are those annotated with the private tag. This
+      --  routine takes care of removing them from the tree.
+
       -----------
       -- Error --
       -----------
@@ -4990,7 +4996,8 @@ package body GNATdoc.Frontend is
 
             --  GNATdoc enhancements
            or else Tag = "field"
-           or else Tag = "value";
+           or else Tag = "value"
+           or else Tag = "private";
       end Is_Custom_Tag;
 
       -----------------------
@@ -5287,9 +5294,11 @@ package body GNATdoc.Frontend is
             end if;
 
             declare
-               Field_Tag : constant String := "field";
-               Param_Tag : constant String := "param";
-               Value_Tag : constant String := "value";
+               Field_Tag   : constant String := "field";
+               Param_Tag   : constant String := "param";
+               Private_Tag : constant String := "private";
+               Value_Tag   : constant String := "value";
+
                Tag_Text  : constant String :=
                              To_Lower (S (Tag_Loc.First + 1 .. Tag_Loc.Last));
                Attr_Loc  : Location;
@@ -5320,6 +5329,10 @@ package body GNATdoc.Frontend is
                   pragma Assert (J > S'Last or else S (J) = ASCII.LF);
 
                   Check_Tag (Tag_Text);
+
+                  if Tag_Text = Private_Tag then
+                     Private_Entities_List.Append (E);
+                  end if;
 
                   if Tag_Text = Field_Tag
                     or else Tag_Text = Param_Tag
@@ -5408,7 +5421,7 @@ package body GNATdoc.Frontend is
                         end;
                      end if;
 
-                     --  Opening tag
+                  --  Opening tag
 
                   else
 
@@ -5717,7 +5730,11 @@ package body GNATdoc.Frontend is
                   Tag_Text     := To_Unbounded_String ("param");
                   Is_Param_Tag := True;
                else
-                  Tag_Text := To_Unbounded_String (Tag);
+                  Tag_Text := To_Unbounded_String (To_Lower (Tag));
+               end if;
+
+               if Tag_Text = "private" then
+                  Private_Entities_List.Append (E);
                end if;
 
                --  Treat closing tags; missing check???
@@ -5880,8 +5897,60 @@ package body GNATdoc.Frontend is
          return OK;
       end Process_Node;
 
+      -----------------------------
+      -- Remove_Private_Entities --
+      -----------------------------
+
+      procedure Remove_Private_Entities is
+      begin
+         for E of Private_Entities_List loop
+
+            --  Tagged type primitives must be removed from the list of
+            --  primitives of its corresponding tagged type
+
+            if LL.Is_Primitive (E) then
+
+               --  Search for the tagged type traversing the formals
+
+               for Formal of Get_Entities (E).all loop
+                  declare
+                     Typ : constant Entity_Id := Get_Etype (Formal);
+                  begin
+                     if Present (Typ)
+                       and then Is_Tagged (Typ)
+                       and then Get_Scope (Typ) = Get_Scope (E)
+                       and then Get_Methods (Typ).Contains (E)
+                     then
+                        Remove_From_List (Get_Methods (Typ), E);
+                     end if;
+                  end;
+               end loop;
+
+               --  Check functions dispatching on their result type
+
+               if Get_Kind (E) = E_Function
+                 and then Present (Get_Etype (E))
+                 and then Is_Tagged (Get_Etype (E))
+                 and then Get_Scope (Get_Etype (E)) = Get_Scope (E)
+                 and then Get_Methods (Get_Etype (E)).Contains (E)
+               then
+                  Remove_From_List (Get_Methods (Get_Etype (E)), E);
+               end if;
+            end if;
+
+            Remove_From_Scope (E);
+         end loop;
+
+         Private_Entities_List.Clear;
+      end Remove_Private_Entities;
+
+      use type Ada.Containers.Count_Type;
    begin
       Traverse_Tree (Root, Process_Node'Access);
+
+      if Private_Entities_List.Length > 0 then
+         Remove_Private_Entities;
+      end if;
    end Build_Structured_Comments;
 
    ----------------
