@@ -414,8 +414,8 @@ this case, the tag *@param* is not required::
    --     if Minutes = 0 or Minutes > 300 if Minutes = 0
    --  @return True iff the alarm was successfully registered
 
-Undocumenting entities
-----------------------
+Excluding entities
+------------------
 
 The tag *@private* notifies GNATdoc that no documentation must be generated
 on a given entity. For example::
