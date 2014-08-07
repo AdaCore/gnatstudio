@@ -41,9 +41,13 @@ class Pep8_Module(Module):
                 m.remove()
 
             # parse text in buffer and catches stdout
-            source = [i.rstrip(" ") + "\n" for i in
-                      GPS.EditorBuffer.get(file=file, open=False).
-                      get_chars().lstrip("\n").splitlines()]
+            s = GPS.EditorBuffer.get(file=file,
+                                     open=False).get_chars().lstrip("\n")
+            if (GPS.Preference("Src-Editor-Strip-Trailing-Blanks").get()
+                    != "Never"):
+                source = [i.rstrip(" ") + "\n" for i in s.splitlines()]
+            else:
+                source = [i + "\n" for i in s.splitlines()]
 
             with Catch_Stdout() as output:
                 m = pep8.Checker(filename=None, lines=source, report=False)
