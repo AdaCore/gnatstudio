@@ -80,8 +80,6 @@ package body GPS.Kernel.Messages.Tools_Output is
       Loc                    : Location;
       Node                   : Locations_List.List_Node;
       Has_Secondary_Location : Boolean := False;
-      Highlight_Style        : Style_Access;
-
       Returned               : Message_Access;
    begin
       --  Looking for existent message
@@ -162,17 +160,11 @@ package body GPS.Kernel.Messages.Tools_Output is
             Returned := Primary;
 
             if Highlight_Category /= null then
-               Highlight_Style :=
-                 Get_Or_Create_Style_Copy
-                   (Kernel_Handle (Container.Kernel),
-                    Get_Name (Highlight_Category) & '/' & Category,
-                    Highlight_Category);
-
                if Length = 0 then
-                  Primary.Set_Highlighting (Highlight_Style);
+                  Primary.Set_Highlighting (Highlight_Category);
 
                else
-                  Primary.Set_Highlighting (Highlight_Style, Length);
+                  Primary.Set_Highlighting (Highlight_Category, Length);
                end if;
             end if;
          end if;
