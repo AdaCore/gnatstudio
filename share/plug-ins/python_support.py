@@ -254,55 +254,83 @@ documentation for the standard python library. It is accessed through the
         # do indentation
         d = self.python_parse_indent(editor, start)
 
-    def python_parse_indent(self, e, end):
+    def python_parse_indent(self, e, start):
         """
            parse the text and predict python indentation when hitting return
            * return the indentation (int)
            * text is edited with cursor at indentation level after returned
            * end is position of cursor
         """
-        source = e.get_chars(to=end).splitlines()
-        # if source is empty
-        if len(source) == 0:
-            return 0
 
-        # default: same as last line, no indentation level change
-        last = source[-1]
-        previous_indent = len(last) - len(last.lstrip(" "))
-        level = 0
-        indent = 0
-        group = []
+        def find_level(on_this_string):
+            """
+            Find relatively level change for a given string
+            Return relative level change and prefix to search
+            """
 
-        # modify indentation level according to prefixes in codes
+            # by default, no level change, no prefix to search
+            level, group = 0, []
 
-        tmphead = last.lstrip(" ")
+            # case : enter subprogram, innermost level decides
+            if on_this_string.endswith(":"):
+                level = 1
+                group = ["if", "else", "for", "while",
+                         "def", "class", "try", "except"]
+            else:
+                # case: return to a function, previous def decides
+                if on_this_string.startswith("return"):
+                    level = -2
+                    group = ["def"]
 
-        # case : enter subprogram, innermost level decides
-        if tmphead.endswith(":"):
-            level = 1
-            group = ["if", "else", "for", "while",
-                     "def", "class", "try", "except"]
+                # case: break out loops, innermost loop decides
+                if on_this_string.startswith("break") or \
+                   on_this_string.startswith("continue"):
+                    level = -1
+                    group = ["for", "while"]
+
+            return (level, group)
+
+        source = e.get_chars(to=start).splitlines()
+
+        # initialize
+        last = source[0]
+        end = start
+        previous_indent = 0
+
+        for i in range(len(source)-1, -1, -1):
+            # ident is same as last non-comment not-empty line, no level change
+            tmpstring = source[i].lstrip(" ")
+            if tmpstring != "" and not tmpstring.startswith("#"):
+                last = source[i]
+                previous_indent = len(last) - len(tmpstring)
+                end = e.at(i+1, 1).end_of_line()
+                break
+
+        # STEP 1 parse parenthesis
+        level, group = 0, []
+
+        result = text_utils.parse_parentheses(e, end=end)
+        stack = result[0]
+
+        # go to responsible parentheses' line, if exists
+        if len(stack) > 0:
+            last_loc = stack.pop()
+            previous_indent = last_loc[1] + 1
+
+            # closing a (), same line responsible for level change
+            if result[1]:
+                level, group = find_level(source[last_loc[0]].lstrip(" "))
+
+        # else the last line is responsible
         else:
-            # case: return to a function, previous def decides
-            if tmphead.startswith("return"):
-                level = -2
-                group = ["def"]
+            tmphead = last.lstrip(" ")
+            level, group = find_level(tmphead)
 
-            # case: break out loops, innermost loop decides
-            if tmphead.startswith("break") or \
-               tmphead.startswith("continue"):
-                level = -1
-                group = ["for", "while"]
-
-        # 2 find prev indent quantity (# of whitespaces)
+        # STEP 2 find prev indent quantity (number of whitespaces)
         prefix = ""
         begin = 0
-        # parse parenthesis for level = 0:
-        if level == 0:
-            stack = text_utils.parse_parentheses(e, end=end)
-            if len(stack) > 0:
-                previous_indent = stack.pop()[1] + 1
-        else:
+        # only when level changes
+        if level != 0:
             for i in range(end.line()-1, -1, -1):
                 for pref in group:
                     if source[i].lstrip(" ").startswith(pref):
@@ -315,13 +343,13 @@ documentation for the standard python library. It is accessed through the
                     previous_indent = len(source[begin].split(prefix)[0])
                     break
 
-        # 3 find the correct indent number
+        # STEP 3 find the correct indent number
         level = 0 if level < 0 else level
         indent = previous_indent + level*4
 
-        # do indentation, move the cursor
-        e.insert(e.at(end.line()+1, 1), " "*indent)
-        e.main_cursor().move(e.at(end.line()+1, indent+1))
+        # STEP 4 do indentation and move the cursor
+        e.insert(e.at(start.line()+1, 1), " "*indent)
+        e.main_cursor().move(e.at(start.line()+1, indent+1))
         return indent
 
     def reload_file(self):

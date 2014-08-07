@@ -17,7 +17,6 @@ except ImportError:
     import jedi
 
 import GPS
-from text_utils import forward_until
 from completion import CompletionResolver, CompletionProposal
 import completion
 from modules import Module

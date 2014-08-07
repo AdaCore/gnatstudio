@@ -63,6 +63,8 @@ def parse_parentheses(editor, begin=None, end=None):
 
     # parse all parentheses, find open parentheses
     for i in range(0, len(source)):
+        if source[i].lstrip(" ").startswith("#"):
+            source[i] = ""
         for j, c in enumerate(source[i]):
             if c in h:
                 stack.append((i, j))
@@ -73,24 +75,26 @@ def parse_parentheses(editor, begin=None, end=None):
                         # when parenthesis is closed, remember its line number
                         last = stack.pop()[0]
 
+    closed = (len(stack) == 0)
     # get the last char of parsed text
     tail = editor.at(end.line(), end.end_of_line().column()-1).get_char()
 
     # if the parsed text is ending a parenthesis -->
     # last char is a closing parentheses, then the cursor should
     # return to where the openning counterparts's line start
-    if tail in t and len(stack) == 0:
+    if tail in t and closed:
         tmp = source[last]
         start = len(tmp) - len(tmp.lstrip(" "))
         stack.append((last, start-1))
-
-    return stack
+    return (stack, closed)
 
 
 def forward_until(loc, pred,
                   skip_first_char=False,
                   stop_at_eol=False,
-                  backwards=False, give_up=True):
+                  backwards=False,
+                  give_up=True):
+
     step = -1 if backwards else 1
     cur_loc = loc
 
@@ -99,7 +103,9 @@ def forward_until(loc, pred,
 
     while not pred(cur_loc.get_char()):
         if cur_loc.get_char() == "\n" and stop_at_eol:
-            return loc
+            if give_up:
+                return loc
+            return cur_loc
 
         if cur_loc == cur_loc.forward_char(step):
             if give_up:
@@ -792,29 +798,28 @@ def isword(a):
 
 @interactive("Editor", "", name="go to next word")
 def move_to_next_word():
+    """
+    Jump to beginning of the next word / the end of this word
+    [word)[word)jump_here[word)...
+    par"""
     b = GPS.EditorBuffer.get()
     loc = b.selection_end()
-    if loc.forward_char() == b.end_of_buffer():
-        return
     if isword(loc.get_char()):
         loc = forward_until(loc, lambda x: not isword(x),
-                            True, True, False)
-        loc = forward_until(loc, lambda x: not x.isspace(),
-                            False, True, False)
+                            True, True, False, False)
     else:
         loc = forward_until(loc, lambda x: isword(x) or x in ["\n", "\"", "'"],
-                            True, False, False)
-
+                            True, False, False, False)
+    if loc.get_char() not in ["\n", "\"", "'"]:
+        loc = forward_until(loc, lambda x: x != " ", False, True, False, False)
     b.main_cursor().move(loc)
 
 
 @interactive("Editor", "", name="go to previous word")
 def move_to_previous_word():
     b = GPS.EditorBuffer.get()
-    loc = b.selection_start()
-    if loc == b.beginning_of_buffer():
-        return
-    loc = forward_until(loc, lambda x: x != " ", True, False, True)
+    loc = b.selection_start().forward_char(-1)
+    loc = forward_until(loc, lambda x: x != " ", False, True, True)
     if loc.get_char() not in ["\n", "\"", "'"]:
         if isword(loc.get_char()):
             loc = forward_until(loc, lambda x: not isword(x),
