@@ -414,6 +414,21 @@ this case, the tag *@param* is not required::
    --     if Minutes = 0 or Minutes > 300 if Minutes = 0
    --  @return True iff the alarm was successfully registered
 
+Undocumenting entities
+----------------------
+
+The tag *@private* notifies GNATdoc that no documentation must be generated
+on a given entity. For example::
+
+   type Calculator is tagged ...
+   procedure Add (Obj : Calculator; Value : Natural);
+   --  Addition of a value to the previus result
+   --  @param Obj The actual calculator
+   --  @param Value The added value
+   procedure Dump_State (Obj : Calculator);
+   --  @private No information is generated in the output about this
+   --  primitive because it is internally used for debugging.
+
 Adding images
 -------------
 
