@@ -609,7 +609,22 @@ package body GNATdoc.Frontend.Builder is
             for J in Index_Types'Range loop
                Get_Unique_Entity
                  (Etype, Context, File, Index_Types (J).all, Forced => True);
-               Append_Array_Index_Type (E, Etype);
+
+               --  Workaround an Xref problem: in string subtypes the parent
+               --  type is returned by Xref as its last index.
+
+               --  Another Xref problem is that when the components of the
+               --  array are of predefined types no entity is provided by
+               --  Xref through its service Xref.Component()
+
+               if LL.Is_Predefined_Entity (Etype)
+                 and then Get_Kind (Etype) = E_Array_Type
+                 and then Get_Full_Name (Etype) = "String"
+               then
+                  null;
+               else
+                  Append_Array_Index_Type (E, Etype);
+               end if;
             end loop;
 
             Free (Index_Types);

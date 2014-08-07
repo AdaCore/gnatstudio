@@ -1322,7 +1322,6 @@ package body GNATdoc.Atree is
          New_E.Xref.Is_Abstract  := Xref.Is_Abstract (E);
 
          if LL.Is_Type (New_E) then
-            New_E.Xref.Is_Predef := Xref.Is_Predefined_Entity (E);
             New_E.Xref.Is_Array  := Xref.Is_Array (E);
 
             if LL.Is_Array (New_E) then

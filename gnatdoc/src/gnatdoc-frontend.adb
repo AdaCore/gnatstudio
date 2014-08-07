@@ -1312,6 +1312,9 @@ package body GNATdoc.Frontend is
          In_Type_Definition   : Boolean := False;
          --  Set to true when we see the token "is"
 
+         In_Derived_Type_Definition : Boolean := False;
+         --  Set to true when we see the sequence of tokens "is new"
+
          In_Item_Decl     : Boolean := False;
          --  Set to true when we see "procedure", "function" or "entry"
 
@@ -1356,6 +1359,7 @@ package body GNATdoc.Frontend is
             Aggr_Begin_Line := 0;
 
             In_Type_Definition := False;
+            In_Derived_Type_Definition := False;
             In_Item_Decl    := False;
 
             In_Parent_Part  := False;
@@ -1969,6 +1973,8 @@ package body GNATdoc.Frontend is
                               In_Parent_Part := True;
                            elsif Get_Kind (Scope) = E_Enumeration_Type then
                               Set_Is_Subtype (Scope);
+                           else
+                              In_Derived_Type_Definition := True;
                            end if;
                         end;
                      end if;
@@ -2058,6 +2064,13 @@ package body GNATdoc.Frontend is
 
                            Decorate_Renaming (E);
                         end;
+
+                     --  No action yet on derived type definitions but this
+                     --  is the right place to complete their decoration.
+                     --  More work needed in this area???
+
+                     elsif In_Derived_Type_Definition then
+                        null;
                      end if;
 
                   when Tok_Semicolon =>
@@ -3195,6 +3208,7 @@ package body GNATdoc.Frontend is
 
                            In_Item_Decl := False;
                            In_Type_Definition := False;
+                           In_Derived_Type_Definition := False;
                         end if;
                      end if;
 
