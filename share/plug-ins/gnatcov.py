@@ -264,6 +264,28 @@ class GNATcovPlugin(object):
           type="color" />
     """
 
+    GNATCOV_DOCUMENTATION_XML = """
+      <doc_path>share/doc/gnatcoverage/html</doc_path>
+
+      <documentation_file>
+        <name>gnatcov.html</name>
+        <descr>GNATcoverage User's Guide</descr>
+        <category>GNATcoverage</category>
+        <menu before="About">/Help/GNATcoverage/GNATcoverage User's Guide</menu>
+      </documentation_file>
+    """
+
+    GNATEMU_DOCUMENTATION_XML = """
+      <doc_path>share/doc/gnatemu/html</doc_path>
+
+      <documentation_file>
+        <name>gnatemulator.html</name>
+        <descr>GNATemulator Documentation</descr>
+        <category>GNATcoverage</category>
+        <menu before="About">/Help/GNATcoverage/GNATemulator Documentation</menu>
+      </documentation_file>
+    """
+
     def __init__(self):
         # Create the GNATcov menu entry before loading targets and so on, so
         # that we master where the entry is inserted.
@@ -277,6 +299,8 @@ class GNATcovPlugin(object):
         GPS.parse_xml(self.PROJECT_SUPPORT_XML)
         GPS.parse_xml(self.PREFERENCES_XML)
         GPS.parse_xml(self.BUILD_TARGETS_AND_MODES_XML)
+        GPS.parse_xml(self.GNATCOV_DOCUMENTATION_XML)
+        GPS.parse_xml(self.GNATEMU_DOCUMENTATION_XML)
 
     def on_gps_started(self, hook):
 
