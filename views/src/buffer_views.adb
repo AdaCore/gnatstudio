@@ -338,7 +338,7 @@ package body Buffer_Views is
       Trace (Me, "Button_Press X=" & Event.X'Img & " Y=" & Event.Y'Img
              & " State=" & Event.State'Img);
 
-      if Event.State /= 0 then
+      if (Event.State and (Shift_Mask or Control_Mask)) /= 0 then
          --  If there is a ctrl or shift key modifier present, grab the focus
          --  on the tree so that ctrl-clicking and shift-clicking extend the
          --  multiple selection as expected.
