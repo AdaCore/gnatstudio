@@ -941,14 +941,24 @@ class GNATprove_Parser(tool_output.OutputParser):
                                              1))
         return lines
 
+    def handle_entry(self, unit, list):
+        """code do handle one entry of the JSON file. See [parsejson] for the
+           details of the format.
+        """
+        for entry in list:
+            if 'msg_id' in entry:
+                full_id = unit, entry['msg_id']
+                self.extra_info[full_id] = entry
+
     def parsejson(self, unit, file):
         """parse the json file "file", which belongs to unit "unit" and fill
            the "extra_info" mapping for any entry.
-           The json file, if it exists and is a valid JSON value, is a list of
-           dictionaries. Some of these dictionaries have the field "msg_id",
-           these dictionaries are extra information for the corresponding
-           message for the current unit. For those messages, we simply build
-           up a mapping
+           The json file, if it exists and is a valid JSON value, is a dict
+           with two entries "flow" and "proof" (both entries may be absent).
+           Each entry is mapped to a list of dictionaries. Some of these
+           dictionaries have the field "msg_id", these dictionaries are extra
+           information for the corresponding message for the current unit. For
+           those messages, we simply build up a mapping
              (unit, id) -> extra_info
            which is later used to act on this extra information for each
            message.
@@ -956,11 +966,11 @@ class GNATprove_Parser(tool_output.OutputParser):
         if os.path.isfile(file):
             with open(file, 'r') as f:
                 try:
-                    list = json.load(f)
-                    for entry in list:
-                        if 'msg_id' in entry:
-                            full_id = unit, entry['msg_id']
-                            self.extra_info[full_id] = entry
+                    dict = json.load(f)
+                    if 'flow' in dict:
+                        self.handle_entry(unit, dict['flow'])
+                    if 'proof' in dict:
+                        self.handle_entry(unit, dict['proof'])
                 except ValueError:
                     pass
 
@@ -1028,8 +1038,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                 unit = os.path.splitext(file)[0]
                 full_id = unit, id
                 if unit not in imported_units:
-                    self.parsejson(unit, os.path.join(objdir, unit + ".flow"))
-                    self.parsejson(unit, os.path.join(objdir, unit + ".proof"))
+                    self.parsejson(unit, os.path.join(objdir, unit + ".spark"))
                     imported_units.add(unit)
                 extra = {}
                 if full_id in self.extra_info:
