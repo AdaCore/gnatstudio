@@ -6,38 +6,42 @@
 
 import sys
 import GPS
+from gps_utils import promises
 
 registered_workflows = {}
 
 
-def run_registered_workflows(workflow_name):
+def run_registered_workflows(workflow_name, workflow_arg=None):
     # find workflow in registed table provided the workflow name
     # and then run it with the driver
     try:
         wf = registered_workflows[workflow_name]()
-        driver(wf)
+        driver(wf, workflow_arg)
     except KeyError:
         GPS.Console("Messages").write(
             "\nError: Workflow name not registered.\n")
 
 
-def driver(w):
+def driver(w, workflow_arg=None):
     def go(gowith=None):
-        # before the iteration ends, do:
         try:
-            # if there's returned feedback from promise.solve
-            # tell the generator about it
+            # if there's feedback from previous event, tell the generator
             if gowith is not None:
-                p = w.send(gowith)
+                    p = w.send(gowith)
+            # otherwise just goto the next step
             else:
-                # otherwise goto the next step
                 p = w.next()
-            # if none is get instead of a promise,
-            # go ahead
-            if p is None:
-                go()
-            else:
+
+            # if promise instance is got from workflow, "then" it
+            if isinstance(p, promises.Promise):
                 p.then(go)
+            # otherwise, continue to the next object by go()
+            else:
+                if p == "give_me_arg":
+                    print "driver: got your message asking arg, give you"
+                    go(workflow_arg)
+                else:
+                    go()
         # when hits the end, exit
         except StopIteration:
             # print sys.exc_info()[0]
@@ -104,7 +108,7 @@ def make_button_for_action(button_name, button_id):
     return wrap
 
 
-def create_target_from_workflow(target_name, workflow_name):
+def create_target_from_workflow(target_name, workflow_name, workflow):
     """
     Create a Target under the category Workflow from a workflow --
     to be feed by user.
@@ -115,21 +119,24 @@ def create_target_from_workflow(target_name, workflow_name):
     # going to store the feeded workflow in a global variable
     global registered_workflows
 
-    def wrap(wf):
-        # the workflow is globally accessible
-        registered_workflows[workflow_name] = wf
+    registered_workflows[workflow_name] = workflow
 
-        XML = """<target model="python" category="Workflow" name="%s">
-        <in-toolbar>TRUE</in-toolbar>
-        <icon>gtk-print</icon>
-        <launch-mode>MANUALLY</launch-mode>
-        <read-only>TRUE</read-only>
-        <target-type>main</target-type>
-        <command-line>
-           <arg>gps_utils.workflow.run_registered_workflows("%s")</arg>
-        </command-line>
-        </target>
-        """ % (target_name, workflow_name)
-        GPS.parse_xml(XML)
+    xml1 = """
+<target model="python" category="Workflow" name="%s">
+<in-toolbar>TRUE</in-toolbar>
+<icon>gtk-print</icon>
+<launch-mode>MANUALLY</launch-mode>
+<read-only>TRUE</read-only>
+<target-type>main</target-type>
+<command-line>
+    <arg>gps_utils.workflow.run_registered_workflows("%s", "</arg>
+    """ % (target_name, workflow_name)
 
-    return wrap
+    xml2 = """
+    <arg>%T</arg>
+    <arg>")</arg>
+</command-line>
+</target>
+    """
+    XML = xml1+xml2
+    GPS.parse_xml(XML)

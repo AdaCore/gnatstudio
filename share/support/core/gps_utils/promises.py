@@ -332,14 +332,16 @@ class TargetWrapper():
         # promise about building this target
         self.__promise = None
 
-    def wait_on_execute(self):
+    def wait_on_execute(self, main_name=""):
         """
            Called by the user. Will execute the target and return a promise.
            Promises made here will be answered with: exit status of building
         """
 
         self.__promise = Promise()
-        self.__target.execute(synchronous=False, on_exit=self.__on_exit)
+        self.__target.execute(main_name=main_name,
+                              synchronous=False,
+                              on_exit=self.__on_exit)
 
         return self.__promise
 

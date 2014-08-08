@@ -32,7 +32,11 @@ def msg_is(msg):
 
 class BoardLoader(Module):
 
-    __buttons = [None, None, None, None]
+    __targets = ["Flash to Board",
+                 "Run with Emulator",
+                 "Debug with Emulator",
+                 "Debug on Board"]
+    __buttons = []
 
     def __error_exit(self, msg="", reset_refresh=False, reset_loading=False):
         GPS.Console("Messages").write(msg)
@@ -46,7 +50,7 @@ class BoardLoader(Module):
         if self.__connection is not None and connection_delete:
             self.__connection.get().kill()
             self.__connection = None
-        interest = ["st-util", "arm-eabi-gnatemu", "arm-eabi-gnatemu"][id-2]
+        interest = ["st-util", "arm-eabi-gnatemu"][id]
         for i in GPS.Task.list():
             if interest in i.name():
                 i.interrupt()
@@ -54,16 +58,19 @@ class BoardLoader(Module):
         self.__is_loading = False
 
     def __check_task(self, id):
+        """
+        Back up method to check if task exists
+        """
         r = False
-        interest = ["st-util", "arm-eabi-gnatemu", "arm-eabi-gnatemu"][id-2]
+        interest = ["st-util", "arm-eabi-gnatemu"][id]
         for i in GPS.Task.list():
             if interest in i.name():
                 r = True
         return r
 
-    def __add_button(self):
+    def __show_button(self):
         """
-           Add_button when criteria meets.
+           Show buttons when criteria meets.
            Initialize parameters.
 
            criteria = the program is written and can be built for
@@ -72,17 +79,7 @@ class BoardLoader(Module):
         # make loading a critical region
         self.__is_loading, self.__refresh = False, False
 
-        # destroy the button if it exists
-        for b in self.__buttons:
-            if b is not None:
-                b.destroy()
-        self.__buttons = [None, None, None, None]
-
-        # reset
-        self.__manager, self.__connection = None, None
-
-        # create a button and add it to the toolbar
-        # if the following criteria meets:
+        # show button if the following criteria meets:
         p = GPS.Project.root()
         s = p.get_attribute_as_string(package="Builder",
                                       attribute="Default_Switches",
@@ -91,63 +88,16 @@ class BoardLoader(Module):
                                       attribute="Switches",
                                       index="Ada")
         if "stm32f4" in s:
-            self.__buttons[0] = GPS.Button("flash-to-board",
-                                           "Flash To Board",
-                                           self.__load)
-            self.__buttons[0].id = 1
-
-            self.__buttons[1] = GPS.Button("load-on-board",
-                                           "Load On Board",
-                                           self.__load)
-            self.__buttons[1].id = 2
-
-            self.__buttons[2] = GPS.Button("run-with-emulator",
-                                           "Run With Emulator",
-                                           self.__load)
-            self.__buttons[2].id = 3
-
-            self.__buttons[3] = GPS.Button("debug-with-emulator",
-                                           "Debug With Emulator",
-                                           self.__load)
-            self.__buttons[3].id = 4
-
             for b in self.__buttons:
-                GPS.Toolbar().append(b)
+                b.show()
+        else:
+            for b in self.__buttons:
+                b.hide()
 
-    def __load(self, button):
-        """
-           A trigger. Called by GPS when button is clicked
-        """
-        # 1 check if I'm loading a workflow already, if so, exit
-        if self.__is_loading:
-            return
+        # reset
+        self.__manager, self.__connection = None, None
 
-        # create the workflow from corresponding generator
-        if button.id == 1:
-            w = self.__flash_wf()
-
-        if button.id == 3:
-            self.__reset_all(button.id)
-            w = self.__emu_wf()
-
-        if button.id == 2:
-            # verify connections
-            if self.__refresh and (not self.__check_task(button.id)):
-                self.__error_exit(
-                    "Disconnect: please ensure USB connection and restart."
-                    + "Exit.\n")
-                self.__reset_all(button.id)
-                return
-            w = self.__debug_wf()
-
-        if button.id == 4:
-            if self.__refresh:
-                self.__reset_all(id=button.id, manager_delete=False)
-                self.__refresh = True
-            w = self.__emu_debug_wf()
-
-        workflow.driver(w)
-
+    # The followings are workflows/generators
     def __flash_wf(self):
         """
         BUILD FLASH program to REAL BOARD -- Yes, I'm a workflow.
@@ -155,19 +105,26 @@ class BoardLoader(Module):
 
         self.__is_loading = True
 
-        # STEP 1 add hook to compiler, and compile the program
+        # STEP 1.0 get main name
+        f = yield "give_me_arg"
+        print "f-main is:", f
+        if f is None:
+            self.__error_exit(msg="Main name ?")
+            return
+
+        # STEP 1.5 Build it
         msg_is("\nBoard_Loader_STEP: Building Main...")
-        builder = promise.TargetWrapper("Build All")
-        r0 = yield builder.wait_on_execute()
+        builder = promise.TargetWrapper("Build Main")
+        r0 = yield builder.wait_on_execute(f)
+        print "r0 is:", r0
         if r0 is not 0:
             self.__error_exit(msg="Compilation Error.\nExit.\n")
             return
 
         msg_is("Build Complete!\n")
 
-        # STEP 2 make binary executable
+        # STEP 2 ma"give_me_arg"xecutable
         msg_is("\nBoard_Loader_STEP: Creating binary executable...")
-        f = GPS.Project.root().get_attribute_as_list("main")[0]
         b = GPS.Project.root().get_executable_name(GPS.File(f))
         d = GPS.Project.root().object_dirs()[0]
         obj = d+b
@@ -221,10 +178,16 @@ class BoardLoader(Module):
 
         self.__is_loading = True
 
-        # STEP 1 add hook to compiler, and compile the program
+        # STEP 1.0 get main name
+        f = yield "give_me_arg"
+        if f is None:
+            self.__error_exit(msg="Main name ?")
+            return
+
+        # STEP 1.5 Build it
         msg_is("\nEmulator_STEP: Building Main...")
-        builder = promise.TargetWrapper("Build All")
-        r0 = yield builder.wait_on_execute()
+        builder = promise.TargetWrapper("Build Main")
+        r0 = yield builder.wait_on_execute(f)
         if r0 is not 0:
             self.__error_exit(msg="Compilation Error.\nExit Emulator.\n")
             return
@@ -233,7 +196,7 @@ class BoardLoader(Module):
 
         # STEP 2 load with Emulator
         msg_is("\nEmulator_STEP: Initialize emulator...")
-        f = GPS.Project.root().get_attribute_as_list("main")[0]
+
         b = GPS.Project.root().get_executable_name(GPS.File(f))
         d = GPS.Project.root().object_dirs()[0]
         obj = d + b
@@ -269,10 +232,16 @@ class BoardLoader(Module):
             # if there is not a debugger running, reset the parameters
             self.__refresh = False
 
-        # STEP 1 add hook to compiler, and compile the program
+        # STEP 1.0 get main name
+        f = yield "give_me_arg"
+        if f is None:
+            self.__error_exit(msg="Main name ?")
+            return
+
+        # STEP 1.5 Build it
         msg_is("\nEmulator_STEP: Building Main...")
-        builder = promise.TargetWrapper("Build All")
-        r0 = yield builder.wait_on_execute()
+        builder = promise.TargetWrapper("Build Main")
+        r0 = yield builder.wait_on_execute(f)
         if r0 is not 0:
             self.__error_exit(msg="Compilation Error.\nExit Emulator.\n")
             return
@@ -281,7 +250,6 @@ class BoardLoader(Module):
 
         # STEP 2 load with Emulator
         msg_is("\nEmulator_STEP: Initialize emulator...")
-        f = GPS.Project.root().get_attribute_as_list("main")[0]
         b = GPS.Project.root().get_executable_name(GPS.File(f))
         d = GPS.Project.root().object_dirs()[0]
         obj = d + b
@@ -296,10 +264,6 @@ class BoardLoader(Module):
 
         # STEP 3.1 launch debugger
 
-        f = GPS.Project.root().get_attribute_as_list("main")[0]
-        b = GPS.Project.root().get_executable_name(GPS.File(f))
-        d = GPS.Project.root().object_dirs()[0]
-        obj = d+b
         if not self.__refresh:
             msg_is("Emulator_STEP: initializing debugger...")
             self.__manager = promise.DebuggerWrapper(GPS.File(b))
@@ -308,7 +272,7 @@ class BoardLoader(Module):
             if not r3:
                 self.__error_exit("Debugger has error. Exit.\n")
                 r3 = yield self.__manager.wait_and_send(cmd="", block=True)
-                self.__reset_all()
+                self.__reset_all
                 return
             msg_is("Complete!\n")
 
@@ -321,7 +285,7 @@ class BoardLoader(Module):
 
         if interest not in r3:
             self.__error_exit("Fail to get target. Exit.\n")
-            self.__reset_all()
+            self.__reset_all(1)
             return
 
         msg_is("Complete!\n")
@@ -352,12 +316,16 @@ class BoardLoader(Module):
             # if there is not a debugger running, reset the parameters
             self.__refresh = False
 
-        # STEP 1 add hook to compiler, and compile the program
+        # STEP 1.0 get main name
+        f = yield "give_me_arg"
+        if f is None:
+            self.__error_exit(msg="Main name ?")
+            return
+
+        # STEP 1.5 Build it
         msg_is("\nBoard_Loader_STEP: Building Main...")
-
-        builder = promise.TargetWrapper("Build All")
-
-        r0 = yield builder.wait_on_execute()
+        builder = promise.TargetWrapper("Build Main")
+        r0 = yield builder.wait_on_execute(f)
         if r0 is not 0:
             self.__error_exit("Compilation Error. Exit.\n")
             return
@@ -390,7 +358,6 @@ class BoardLoader(Module):
         # STEP 3 begin debugger-> load and run
         msg_is("Board_Loader_STEP: Loading executable file...")
 
-        f = GPS.Project.root().get_attribute_as_list("main")[0]
         b = GPS.Project.root().get_executable_name(GPS.File(f))
         d = GPS.Project.root().object_dirs()[0]
         obj = d+b
@@ -413,7 +380,7 @@ class BoardLoader(Module):
                               + "Please ensure USB connection and restart. "
                               + "Exit.\n")
             r3 = yield self.__manager.wait_and_send(cmd="", block=True)
-            self.__reset_all()
+            self.__reset_all(0)
             return
 
         msg_is("Complete!\n")
@@ -430,18 +397,37 @@ class BoardLoader(Module):
         """
         When GPS start, add button (include cireteria there)
         """
-        self.__add_button()
+        # add hooks
         GPS.Hook("debugger_terminated").add(self.debugger_terminated)
+
+        # Create targets * 4:
+        workflow.create_target_from_workflow("Flash to Board",
+                                             "flash-to-board",
+                                             self.__flash_wf)
+        workflow.create_target_from_workflow("Run with Emulator",
+                                             "run-with-emulator",
+                                             self.__emu_wf)
+        workflow.create_target_from_workflow("Debug with Emulator",
+                                             "debug-with-emulator",
+                                             self.__emu_debug_wf)
+        workflow.create_target_from_workflow("Debug on Board",
+                                             "debug-on-board",
+                                             self.__debug_wf)
+        for i in range(0, 4):
+            b = GPS.BuildTarget(self.__targets[i])
+            self.__buttons.append(b)
+
+        self.__show_button()
 
     def project_view_changed(self):
         """
         When project view changes, add button (include cireteria there)
         """
-        self.__add_button()
+        self.__show_button()
 
     def debugger_terminated(self, hookname, debugger):
         """
         When debugger terminates, kill connection.
         """
-        self.__reset_all(id=2)
-        self.__reset_all(id=3)
+        self.__reset_all(id=1)
+        self.__reset_all(id=0)
