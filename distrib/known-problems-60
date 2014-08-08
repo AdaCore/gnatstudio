@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N807-030 GPS: clicking on entries in Windows not working with modifiers
+
+  Problem:    When a keyboard modifier such as Caps Lock or Num Lock is
+              engaged, clicking on entries in the Windows view does not open
+              the corresponding window.
+
+  Status:     This was fixed in 6.1 on 2014-08-08
+
+  Workaround: Disengage the keyboard modifier.
+
 KP-60-N801-015 GPS: cannot assign a key shortcut to debug a main
 
   Problem:    There is no entry in the Key Shortcut manager that will
