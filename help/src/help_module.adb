@@ -1018,6 +1018,12 @@ package body Help_Module is
             Insert (Kernel,
                     -"<documentation_file> must have a <menu> child",
                     Mode => Error);
+
+         elsif Descr = null then
+            Kernel.Insert
+              (-"<documentation_file> must have a <descr> child",
+               Mode => Error);
+
          elsif Name /= null then
             declare
                URL : constant String := Create_URL (Name.Value.all, Kernel);
