@@ -868,6 +868,16 @@ KP-60-MA29-023 GPS: Goto declaration/body with a floating window
 
   Workaround: Use "goto declaration/body" with non floating windows.
 
+KP-60-MA03-010 GPS: paste selection in search dialog
+
+  Problem:    Paste selected text with middle mouse button in Search dialog
+              fields does not work as expected.
+
+  Status:     This was fixed in 6.1 on 2013-11-28
+
+  Workaround: Use 'Paste' popup menu or Ctrl+v key shortcust to paste text
+              from clipboard.
+
 KP-60-M918-001 Wrong indentation of complex entry
 
   Problem:    When indenting entries with parametrized conditions such as
