@@ -89,6 +89,15 @@ KP-60-N705-002 GB: Cannot run Ada commands on some workspace's resource.
                 source)
               - Remove resources duplication using multiple workspaces.
 
+KP-60-N628-007 GPS: plugin preferences out-of-order
+
+  Problem:    Sometimes the order of the plugin preferences with non-default
+              values is scrambled.
+
+  Status:     This was fixed in 6.1 on 2014-08-06
+
+  Workaround: None.
+
 KP-60-N620-015 GB: allow GNAT project file change from GNATbench properties
 
   Problem:    Changing the GNAT project file form the GNATbench properties
