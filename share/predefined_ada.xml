@@ -8379,6 +8379,28 @@ in Ada 2005.
       </DOC>
    </PRAGMA>
 
+   <PRAGMA id = "0" name = "Prefix_Exception_Messages" origin = "GNAT RM">
+      <DOC>
+Syntax:
+
+pragma Prefix_Exception_Messages;
+
+This is an implementation-defined configuration pragma that affects the
+behavior of raise statements with a message given as a static string
+constant (typically a string literal). In such cases, the string will
+be automatically prefixed by the name of the enclosing entity (giving
+the package and subprogram containing the raise statement). This helps
+to identify where messages are coming from, and this mode is automatic
+for the run-time library.
+
+The pragma has no effect if the message is computed with an
+expression other than a static string constant, since the assumption in
+this case is that the program computes exactly the string it wants. If
+you still want the prefixing in this case, you can always call
+`GNAT.Source_Info.Enclosing_Entity' and prepend the string manually.
+      </DOC>
+   </PRAGMA>
+
    <PRAGMA id = "0" name = "Priority" origin = "Ada RM">
       <DOC>
 Syntax:
