@@ -7159,11 +7159,11 @@ class MDI(object):
 
     .. seealso:: :class:`GPS.MDIWindow`
 
-    If you have installed the pygobject package (see GPS's documentation},
-    GPS will export a few more functions to Python so that it is easier to
-    interact with GPS itself. In particular, the :func:`GPS.MDI.add` function
-    allows you to put a widget created by pygobject under control of GPS's
-    MDI, so users can interact with it as with all other GPS windows.
+    If the pygobject package is installed, GPS will export a few more functions
+    to Python so that it is easier to interact with GPS itself. In particular,
+    the :func:`GPS.MDI.add` function allows you to put a widget created by
+    pygobject under control of GPS's MDI, so users can interact with it as with
+    all other GPS windows.
 
     .. code-block:: python
 
