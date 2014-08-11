@@ -9091,7 +9091,7 @@ and enable style checks, but you want to know about any other use of
 implementation pragmas:
 
 pragma Restriction_Warnings (No_Implementation_Pragmas);
-pragma Warnings (Off, "violation of*No_Implementation_Pragmas*");
+(Off, "violation of*No_Implementation_Pragmas*");
 pragma Ada_95;
 pragma Style_Checks ("2bfhkM160");
 pragma Warnings (On, "violation of*No_Implementation_Pragmas*");
@@ -10500,7 +10500,8 @@ where it occurs till the end of the extended scope of the variable
 (similar to the scope of `Suppress'). This form cannot be used as a
 configuration pragma.
 
-The form with a single static_string_EXPRESSION argument (and
+In the case where the first argument is other than `ON' or `OFF',
+the third form with a single static_string_EXPRESSION argument (and
 possible reason) provides more precise control over which warnings are
 active. The string is a list of letters specifying which warnings are
 to be activated and which deactivated. The code for these letters is
