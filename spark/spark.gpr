@@ -8,4 +8,13 @@ project SPARK is
 
    package IDE renames Shared.IDE;
    package Compiler renames Shared.Compiler;
+
+   package Builder is
+      case Shared.Build is
+         when "Debug" =>
+            for Global_Configuration_Pragmas use "../gps/gnat_debug.adc";
+         when "Production" =>
+            for Global_Configuration_Pragmas use "../gps/gnat.adc";
+      end case;
+   end Builder;
 end SPARK;
