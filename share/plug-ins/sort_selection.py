@@ -29,7 +29,7 @@ def sort_selection_revert():
 def sort_selection(revert=False):
     """Sorts the current selection, in ascending order"""
     context = GPS.current_context()
-    ed = GPS.EditorBuffer.get(context.file())
+    ed = GPS.EditorBuffer.get()   # current editor, always
     start = ed.selection_start()
     to = ed.selection_end()
 
@@ -47,7 +47,14 @@ def sort_selection(revert=False):
     lines = string.split(selection, "\n")
     # strip off extraneous trailing "" line
     lines = lines[:-1]
-    lines.sort()
+
+    case_sensitive = ed.file().language().lower() not in ("ada", )
+
+    if case_sensitive:
+        lines.sort()
+    else:
+        lines.sort(key=str.lower)
+
     if revert:
         lines.reverse()
     ed.start_undo_group()

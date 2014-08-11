@@ -35,6 +35,14 @@ KP-60-N807-030 GPS: clicking on entries in Windows not working with modifiers
 
   Workaround: Disengage the keyboard modifier.
 
+KP-60-N804-037 GPS: sorting should be case insensitive for Ada files
+
+  Problem:    When sorting lines of Ada code, the sorting is case sensitive.
+
+  Status:     This was fixed in 6.1 on 2014-08-11
+
+  Workaround: Swap the lines manually within the editor.
+
 KP-60-N801-015 GPS: cannot assign a key shortcut to debug a main
 
   Problem:    There is no entry in the Key Shortcut manager that will
