@@ -45,12 +45,15 @@ try:
 
     def click_in_tree(view, path=None, column=0, button=1,
                       events=pygps.single_click_events, process_events=True,
-                      control=False, alt=False, shift=False):
+                      control=False, alt=False, shift=False,
+                      modifier=None):
         """Simulate a click in the TreeView on the given path and column.
            This event is sent asynchronously, and you should check its
            result in an idle callback, or call process_all_events() immediately
            after the call to click_in_tree.
            If path is none, the event is sent to the first selected row.
+
+           modifier is a Gdk.ModifierType, overriding control, alt or shift.
 
            If you are using the third button to display a contextual menu, see
            also activate_contextual()
@@ -61,7 +64,8 @@ try:
             GPS.Logger("TESTSUITE").log("click_in_tree: view is not realized")
             return
 
-        if os.name == 'nt' and button == 3 and events == pygps.single_click_events:
+        if (os.name == 'nt'
+                and button == 3 and events == pygps.single_click_events):
             # ??? work around
             # On Windows sending a BUTTON_PRESS followed by a
             # BUTTON_RELEASE event when opening a contextual menu does
@@ -82,18 +86,21 @@ try:
             event.x = float(rect.x + rect.width / 2)
             event.y = float(rect.y + rect.height / 2)
 
-            state = Gdk.ModifierType(0)
-            if control:
-                if sys.platform == 'darwin':
-                    # on Mac, we need to also pass the Command key
-                    state |= Gdk.ModifierType.MOD2_MASK
-                else:
-                    state |= Gdk.ModifierType.CONTROL_MASK
+            if modifier is not None:
+                state = modifier
+            else:
+                state = Gdk.ModifierType(0)
+                if control:
+                    if sys.platform == 'darwin':
+                        # on Mac, we need to also pass the Command key
+                        state |= Gdk.ModifierType.MOD2_MASK
+                    else:
+                        state |= Gdk.ModifierType.CONTROL_MASK
 
-            if shift:
-                state |= Gdk.ModifierType.SHIFT_MASK
-            if alt:
-                state |= Gdk.ModifierType.MOD1_MASK
+                if shift:
+                    state |= Gdk.ModifierType.SHIFT_MASK
+                if alt:
+                    state |= Gdk.ModifierType.MOD1_MASK
 
             event.state = state
             event.put()
