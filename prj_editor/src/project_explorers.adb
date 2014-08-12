@@ -1926,6 +1926,9 @@ package body Project_Explorers is
             File   => No_File,
             Name   => "runtime",
             Add_Dummy => True);
+
+         Remove_Child_Nodes (Self.Tree.Model, Parent => Child);
+         Append_Dummy_Iter (Self.Tree.Model, Child);
       end if;
 
       --  Insert non-expanded nodes for imported projects
