@@ -63,16 +63,33 @@ package body GPS.Kernel.Project is
       Errors : Error_Report := null);
    --  See inherited documentation
 
-   type GPS_Project_Environment is new Project_Environment with null record;
+   type GPS_Project_Environment is new Project_Environment with record
+      Kernel : access Kernel_Handle_Record'Class;
+   end record;
    overriding procedure Spawn_Gnatls
      (Self         : GPS_Project_Environment;
       Fd           : out GNAT.Expect.Process_Descriptor_Access;
       Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
       Errors       : Error_Report);
+   overriding procedure Set_GNAT_Version
+     (Self         : GPS_Project_Environment;
+      Version      : String);
 
    procedure Do_Subdirs_Cleanup (Tree : Project_Tree'Class);
    --  Cleanup empty subdirs created when opening a project with prj.subdirs
    --  set.
+
+   ----------------------
+   -- Set_GNAT_Version --
+   ----------------------
+
+   overriding procedure Set_GNAT_Version
+     (Self         : GPS_Project_Environment;
+      Version      : String) is
+   begin
+      Free (Self.Kernel.GNAT_Version);
+      Self.Kernel.GNAT_Version := new String'(Version);
+   end Set_GNAT_Version;
 
    ------------------
    -- Spawn_Gnatls --
@@ -135,7 +152,8 @@ package body GPS.Kernel.Project is
    is
       Tree : constant Project_Tree_Access := new GPS_Project_Tree;
       Env  : constant Project_Environment_Access :=
-         new GPS_Project_Environment;
+         new GPS_Project_Environment'
+            (Project_Environment with Kernel => Handle);
    begin
       GPS_Project_Tree (Tree.all).Handle := Kernel_Handle (Handle);
       Result := Projects.Create (Tree => Tree, Env => Env);
