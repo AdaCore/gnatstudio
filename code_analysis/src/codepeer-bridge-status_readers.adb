@@ -17,11 +17,12 @@
 
 package body CodePeer.Bridge.Status_Readers is
 
-   Status_Tag              : constant String := "status";
-   Message_Tag             : constant String := "message";
+   Status_Tag            : constant String := "status";
+   Message_Tag           : constant String := "message";
 
-   Identifier_Attribute    : constant String := "identifier";
-   Status_Attribute        : constant String := "status";
+   Editable_Attribute    : constant String := "editable";
+   Identifier_Attribute  : constant String := "identifier";
+   Status_Attribute      : constant String := "status";
 
    -----------------
    -- End_Element --
@@ -69,6 +70,26 @@ package body CodePeer.Bridge.Status_Readers is
    is
       pragma Unreferenced (Namespace_URI, Local_Name);
 
+      function Get_Optional_Editable return Boolean;
+      --  Returns value of "editable" attribute if it is specified,
+      --  otherwise returns True.
+
+      ---------------------------
+      -- Get_Optional_Editable --
+      ---------------------------
+
+      function Get_Optional_Editable return Boolean is
+         Index : constant Integer := Attrs.Get_Index (Editable_Attribute);
+
+      begin
+         if Index /= -1 then
+            return Boolean'Value (Attrs.Get_Value (Index));
+
+         else
+            return True;
+         end if;
+      end Get_Optional_Editable;
+
    begin
       if Self.Ignore_Depth /= 0 then
          Self.Ignore_Depth := Self.Ignore_Depth + 1;
@@ -77,10 +98,17 @@ package body CodePeer.Bridge.Status_Readers is
          null;
 
       elsif Qname = Message_Tag then
-         Self.Messages
-           (Natural'Value (Attrs.Get_Value (Identifier_Attribute))).Status :=
-           CodePeer.Audit_Status_Kinds'Value
-             (Attrs.Get_Value (Status_Attribute));
+         declare
+            Message : constant Message_Access :=
+              Self.Messages
+                (Natural'Value (Attrs.Get_Value (Identifier_Attribute)));
+
+         begin
+            Message.Status :=
+              CodePeer.Audit_Status_Kinds'Value
+                (Attrs.Get_Value (Status_Attribute));
+            Message.Status_Editable := Get_Optional_Editable;
+         end;
 
       else
          --  Activate ignore of nested XML elements to be able to load data

@@ -479,6 +479,7 @@ package body CodePeer.Bridge.Inspection_Readers is
                     CodePeer.Message_Ranking_Level'Value
                       (Attrs.Get_Value ("probability")),
                     Unclassified,
+                    True,
                     new String'(Attrs.Get_Value ("text")),
                     False,
                     CodePeer.Audit_V2_Vectors.Empty_Vector,
@@ -504,6 +505,7 @@ package body CodePeer.Bridge.Inspection_Readers is
                     CodePeer.Message_Ranking_Level'Value
                       (Attrs.Get_Value (Rank_Attribute)),
                     Unclassified,
+                    True,
                     new String'(Attrs.Get_Value ("text")),
                     False,
                     CodePeer.Audit_V2_Vectors.Empty_Vector,

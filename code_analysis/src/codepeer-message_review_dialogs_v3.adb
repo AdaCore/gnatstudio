@@ -241,87 +241,91 @@ package body CodePeer.Message_Review_Dialogs_V3 is
       Text_Entry.Set_Text (Status_Image (Message.Status));
       Table.Attach (Text_Entry, 1, 2, 1, 2);
 
-      --  New status combobox and underling model
+      if Message.Status_Editable then
+         --  New status combobox and underling model
 
-      Gtk.Label.Gtk_New (Label, "New status:");
-      Table.Attach (Label, 0, 1, 2, 3);
+         Gtk.Label.Gtk_New (Label, "New status:");
+         Table.Attach (Label, 0, 1, 2, 3);
 
-      Gtk.Tree_Store.Gtk_New (Store, Status_Model_Types);
+         Gtk.Tree_Store.Gtk_New (Store, Status_Model_Types);
 
-      Gtk.Combo_Box.Gtk_New_With_Model (Self.New_Status, +Store);
-      Table.Attach (Self.New_Status, 1, 2, 2, 3);
+         Gtk.Combo_Box.Gtk_New_With_Model (Self.New_Status, +Store);
+         Table.Attach (Self.New_Status, 1, 2, 2, 3);
 
-      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-      Gtk.Cell_Layout.Pack_Start
-        (Gtk.Combo_Box."+" (Self.New_Status), Text_Renderer, True);
-      Gtk.Cell_Layout.Add_Attribute
-        (Gtk.Combo_Box."+" (Self.New_Status),
-         Text_Renderer,
-         "text",
-         Status_Model_Label_Column);
+         Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+         Gtk.Cell_Layout.Pack_Start
+           (Gtk.Combo_Box."+" (Self.New_Status), Text_Renderer, True);
+         Gtk.Cell_Layout.Add_Attribute
+           (Gtk.Combo_Box."+" (Self.New_Status),
+            Text_Renderer,
+            "text",
+            Status_Model_Label_Column);
 
-      Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-      Store.Set (Iter, Status_Model_Label_Column, -"Unclassified");
-      Store.Set
-        (Iter,
-         Status_Model_Value_Column,
-         Audit_Status_Kinds'Pos (Unclassified));
-      Self.New_Status.Set_Active_Iter (Iter);
+         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
+         Store.Set (Iter, Status_Model_Label_Column, -"Unclassified");
+         Store.Set
+           (Iter,
+            Status_Model_Value_Column,
+            Audit_Status_Kinds'Pos (Unclassified));
+         Self.New_Status.Set_Active_Iter (Iter);
 
-      Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-      Store.Set (Iter, Status_Model_Label_Column, -"Pending");
-      Store.Set
-        (Iter, Status_Model_Value_Column, Audit_Status_Kinds'Pos (Pending));
+         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
+         Store.Set (Iter, Status_Model_Label_Column, -"Pending");
+         Store.Set
+           (Iter, Status_Model_Value_Column, Audit_Status_Kinds'Pos (Pending));
 
-      Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-      Store.Set (Iter, Status_Model_Label_Column, -"Not a bug");
-      Store.Set
-        (Iter, Status_Model_Value_Column, Audit_Status_Kinds'Pos (Not_A_Bug));
+         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
+         Store.Set (Iter, Status_Model_Label_Column, -"Not a bug");
+         Store.Set
+           (Iter,
+            Status_Model_Value_Column,
+            Audit_Status_Kinds'Pos (Not_A_Bug));
 
-      Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-      Store.Set (Iter, Status_Model_Label_Column, -"False positive");
-      Store.Set
-        (Iter,
-         Status_Model_Value_Column,
-         Audit_Status_Kinds'Pos (False_Positive));
+         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
+         Store.Set (Iter, Status_Model_Label_Column, -"False positive");
+         Store.Set
+           (Iter,
+            Status_Model_Value_Column,
+            Audit_Status_Kinds'Pos (False_Positive));
 
-      Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-      Store.Set (Iter, Status_Model_Label_Column, -"Intentional");
-      Store.Set
-        (Iter,
-         Status_Model_Value_Column,
-         Audit_Status_Kinds'Pos (Intentional));
+         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
+         Store.Set (Iter, Status_Model_Label_Column, -"Intentional");
+         Store.Set
+           (Iter,
+            Status_Model_Value_Column,
+            Audit_Status_Kinds'Pos (Intentional));
 
-      Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-      Store.Set (Iter, Status_Model_Label_Column, -"Bug");
-      Store.Set
-        (Iter, Status_Model_Value_Column, Audit_Status_Kinds'Pos (Bug));
+         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
+         Store.Set (Iter, Status_Model_Label_Column, -"Bug");
+         Store.Set
+           (Iter, Status_Model_Value_Column, Audit_Status_Kinds'Pos (Bug));
 
-      --  "Approved by" entry
+         --  "Approved by" entry
 
-      Gtk.Label.Gtk_New (Label, "Approved by");
-      Table.Attach (Label, 0, 1, 3, 4);
+         Gtk.Label.Gtk_New (Label, "Approved by");
+         Table.Attach (Label, 0, 1, 3, 4);
 
-      Gtk.GEntry.Gtk_New (Self.Approved_Entry);
-      Table.Attach (Self.Approved_Entry, 1, 2, 3, 4);
+         Gtk.GEntry.Gtk_New (Self.Approved_Entry);
+         Table.Attach (Self.Approved_Entry, 1, 2, 3, 4);
 
-      --  Comment field
+         --  Comment field
 
-      Gtk.Label.Gtk_New (Label, "Comment");
-      Label.Set_Alignment (0.0, 0.5);
-      Self.Get_Content_Area.Pack_Start (Label, False, False);
+         Gtk.Label.Gtk_New (Label, "Comment");
+         Label.Set_Alignment (0.0, 0.5);
+         Self.Get_Content_Area.Pack_Start (Label, False, False);
 
-      Gtk.Scrolled_Window.Gtk_New (Scrolled);
-      Scrolled.Set_Size_Request (Height => 200);
-      Scrolled.Set_Policy
-        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
+         Gtk.Scrolled_Window.Gtk_New (Scrolled);
+         Scrolled.Set_Size_Request (Height => 200);
+         Scrolled.Set_Policy
+           (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+         Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
 
-      Gtk.Text_View.Gtk_New (Text_View);
-      Text_View.Set_Wrap_Mode (Gtk.Enums.Wrap_Word);
-      Scrolled.Add (Text_View);
+         Gtk.Text_View.Gtk_New (Text_View);
+         Text_View.Set_Wrap_Mode (Gtk.Enums.Wrap_Word);
+         Scrolled.Add (Text_View);
 
-      Self.Comment_Buffer := Text_View.Get_Buffer;
+         Self.Comment_Buffer := Text_View.Get_Buffer;
+      end if;
 
       --  History view and underling model
 
@@ -373,13 +377,15 @@ package body CodePeer.Message_Review_Dialogs_V3 is
 
       --  Dialog buttons
 
-      Dummy_W :=
-        Self.Add_Button (Gtk.Stock.Stock_Ok, Gtk.Dialog.Gtk_Response_OK);
-      Message_Review_Callbacks.Connect
-        (Dummy_W,
-         Gtk.Button.Signal_Clicked,
-         Message_Review_Callbacks.To_Marshaller (On_Ok'Access),
-         Message_Review_Dialog (Self));
+      if Message.Status_Editable then
+         Dummy_W :=
+           Self.Add_Button (Gtk.Stock.Stock_Ok, Gtk.Dialog.Gtk_Response_OK);
+         Message_Review_Callbacks.Connect
+           (Dummy_W,
+            Gtk.Button.Signal_Clicked,
+            Message_Review_Callbacks.To_Marshaller (On_Ok'Access),
+            Message_Review_Dialog (Self));
+      end if;
 
       Dummy_W :=
         Self.Add_Button

@@ -109,6 +109,8 @@ package CodePeer is
       Computed_Ranking : Message_Ranking_Level;  --  V2 only
       Ranking          : Message_Ranking_Level;
       Status           : Audit_Status_Kinds;
+      Status_Editable  : Boolean;                --  V3 only
+      --  True means that audit status can be changed by review.
       Text             : GNAT.Strings.String_Access;
       Audit_Loaded     : Boolean;
       Audit_V2         : Audit_V2_Vectors.Vector;
