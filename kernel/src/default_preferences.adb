@@ -1657,11 +1657,14 @@ package body Default_Preferences is
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
+      W : Gtk_Widget;
    begin
-      return Gtk_Widget
+      W := Gtk_Widget
         (Create_Box_For_Font
            (Manager, Preference (Pref),
-            Get_Pref (Font_Preference (Pref)), -"Browse"));
+            Get_Pref (Font_Preference (Pref)), -"..."));
+      Set_Tooltip_Text (W, -"Click on ... to display the font selector");
+      return W;
    end Edit;
 
    ----------
