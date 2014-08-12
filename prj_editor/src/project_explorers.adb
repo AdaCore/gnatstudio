@@ -1085,11 +1085,25 @@ package body Project_Explorers is
       Self        : Project_Explorer) return Boolean
    is
       File   : Virtual_File;
+      Show_Empty : Boolean;
+
    begin
       case Get_Node_Type (-Child_Model, Iter) is
-         when Project_Node_Types | Directory_Node_Types | File_Node =>
+         when Project_Node_Types | File_Node =>
             File := Get_File_From_Node (-Child_Model, Iter);
             return Is_Visible (Self.Filter, File) /= Hide;
+
+         when Directory_Node_Types =>
+            Show_Empty :=
+              Get_History (Get_History (Self.Kernel).all, Show_Empty_Dirs);
+            if Show_Empty
+              or else Has_Child (Child_Model, Iter)
+            then
+               File := Get_File_From_Node (-Child_Model, Iter);
+               return Is_Visible (Self.Filter, File) /= Hide;
+            else
+               return False;
+            end if;
 
          when Category_Node | Entity_Node | Dummy_Node | Runtime_Node =>
             return True;
