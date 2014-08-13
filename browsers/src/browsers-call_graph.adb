@@ -15,9 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
+with Basic_Types;                   use Basic_Types;
 with Browsers.Canvas;               use Browsers.Canvas;
 with Commands.Interactive;          use Commands, Commands.Interactive;
 with GNAT.Strings;                  use GNAT.Strings;
+with Ada.Strings.Hash;
 with GNATCOLL.Projects;             use GNATCOLL.Projects;
 with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
@@ -42,6 +46,8 @@ with Gtkada.MDI;                    use Gtkada.MDI;
 with Histories;                     use Histories;
 with Std_Dialogs;                   use Std_Dialogs;
 with String_Utils;                  use String_Utils;
+with System.Address_Image;
+with XML_Utils;                     use XML_Utils;
 with Xref;                          use Xref;
 
 package body Browsers.Call_Graph is
@@ -62,6 +68,12 @@ package body Browsers.Call_Graph is
      (View   : access Call_Graph_Browser_Record'Class)
       return Gtk_Widget;
    --  Initialize the browser, and return the focus widget
+
+   overriding procedure Save_To_XML
+     (View : access Call_Graph_Browser_Record;
+      XML  : in out XML_Utils.Node_Ptr);
+   overriding procedure Load_From_XML
+     (View : access Call_Graph_Browser_Record; XML : XML_Utils.Node_Ptr);
 
    package Callgraph_Views is new Generic_Views.Simple_Views
      (Module_Name            => Call_Graph_Module_Name,
@@ -116,7 +128,8 @@ package body Browsers.Call_Graph is
      (Browser : access Call_Graph_Browser_Record'Class;
       Entity  : Root_Entity'Class;
       Item    : out Entity_Item;
-      Newly_Created : out Boolean);
+      Newly_Created : out Boolean;
+      Force_Create  : Boolean := False);
    --  Retrieve an existing item for the entity, or create a new item.
    --  The new item is not added to the model automatically.
 
@@ -175,7 +188,7 @@ package body Browsers.Call_Graph is
    --  Display the list of subprograms that call Entity
 
    procedure Add_Link_If_Not_Present
-     (Browser             : Call_Graph_Browser;
+     (Browser             : not null access Call_Graph_Browser_Record'Class;
       Src, Dest           : Entity_Item;
       Is_Renaming         : Boolean);
    --  Add Entity, and possibly a link to Cb.Item to Cb.Browser
@@ -193,6 +206,118 @@ package body Browsers.Call_Graph is
    overriding procedure On_Click
      (Self : not null access Show_Children_Button;
       View : not null access GPS_Canvas_View_Record'Class);
+
+   -----------------
+   -- Save_To_XML --
+   -----------------
+
+   overriding procedure Save_To_XML
+     (View : access Call_Graph_Browser_Record;
+      XML  : in out XML_Utils.Node_Ptr)
+   is
+      procedure On_Item (It : not null access Abstract_Item_Record'Class);
+      procedure On_Link (It : not null access Abstract_Item_Record'Class);
+
+      procedure On_Item (It : not null access Abstract_Item_Record'Class) is
+         E    : constant Entity_Item := Entity_Item (It);
+         Decl : constant General_Entity_Declaration :=
+           E.Entity.Element.Get_Declaration;
+         N    : constant Node_Ptr := new Node;
+         Pos  : constant Point := It.Position;
+      begin
+         N.Tag := new String'("entity");
+         Set_Attribute (N, "id", System.Address_Image (It.all'Address));
+         Set_Attribute (N, "name", To_String (Decl.Name));
+         Set_Attribute (N, "file", Decl.Loc.File.Display_Full_Name);
+         Set_Attribute (N, "line", Decl.Loc.Line'Img);
+         Set_Attribute (N, "col", Decl.Loc.Column'Img);
+         Set_Attribute (N, "x", Pos.X'Img);
+         Set_Attribute (N, "y", Pos.Y'Img);
+         Add_Child (XML, N);
+      end On_Item;
+
+      procedure On_Link (It : not null access Abstract_Item_Record'Class) is
+         L : constant GPS_Link := GPS_Link (It);
+         N : constant Node_Ptr := new Node;
+      begin
+         N.Tag := new String'("link");
+         Set_Attribute
+           (N, "from", System.Address_Image (L.Get_From.all'Address));
+         Set_Attribute
+           (N, "to", System.Address_Image (L.Get_To.all'Address));
+         Add_Child (XML, N, Append => True);
+      end On_Link;
+
+      Area : constant Model_Rectangle := View.Get_View.Get_Visible_Area;
+   begin
+      View.Get_View.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+      View.Get_View.Model.For_Each_Item (On_Link'Access, Filter => Kind_Link);
+
+      Set_Attribute (XML, "scale", View.Get_View.Get_Scale'Img);
+      Set_Attribute (XML, "top", Gdouble'Image (Area.Y));
+      Set_Attribute (XML, "left", Gdouble'Image (Area.X));
+   end Save_To_XML;
+
+   -------------------
+   -- Load_From_XML --
+   -------------------
+
+   overriding procedure Load_From_XML
+     (View : access Call_Graph_Browser_Record; XML : XML_Utils.Node_Ptr)
+   is
+      package Addr_To_Items is new Ada.Containers.Indefinite_Hashed_Maps
+        (Key_Type        => String,
+         Hash            => Ada.Strings.Hash,
+         Element_Type    => Entity_Item,
+         Equivalent_Keys => "=");
+
+      Items         : Addr_To_Items.Map;
+      C             : Node_Ptr;
+      It, It2       : Entity_Item;
+      Newly_Created : Boolean;
+   begin
+      if Get_Attribute (XML, "scale") = "" then
+         --  No contents was saved
+         return;
+      end if;
+
+      C := XML.Child;
+      while C /= null loop
+         if C.Tag.all = "entity" then
+            View.Create_Or_Find_Entity
+              (Entity => View.Kernel.Databases.Get_Entity
+                 (Name => Get_Attribute (C, "name"),
+                  Loc  =>
+                    (File    => Create (+Get_Attribute (C, "file")),
+                     Project => <>,
+                     Line    => Integer'Value (Get_Attribute (C, "line")),
+                     Column  =>
+                       Visible_Column_Type'Value (Get_Attribute (C, "col")))),
+               Item   => It,
+               Newly_Created => Newly_Created,
+               Force_Create  => True);
+
+            It.Set_Position
+              ((X => Gdouble'Value (Get_Attribute (C, "x")),
+                Y => Gdouble'Value (Get_Attribute (C, "y"))));
+            Items.Include (Get_Attribute (C, "id"), It);
+
+         else
+            It := Items.Element (Get_Attribute (C, "from"));
+            It2 := Items.Element (Get_Attribute (C, "to"));
+            View.Add_Link_If_Not_Present (It, It2, Is_Renaming => False);
+         end if;
+
+         C := C.Next;
+      end loop;
+
+      View.Get_View.Model.Refresh_Layout;
+
+      View.Get_View.Set_Scale (Gdouble'Value (Get_Attribute (XML, "scale")));
+      View.Get_View.Set_Topleft
+        ((X => Gdouble'Value (Get_Attribute (XML, "left")),
+          Y => Gdouble'Value (Get_Attribute (XML, "top"))));
+   end Load_From_XML;
 
    ----------------
    -- Initialize --
@@ -220,7 +345,8 @@ package body Browsers.Call_Graph is
      (Browser : access Call_Graph_Browser_Record'Class;
       Entity  : Root_Entity'Class;
       Item    : out Entity_Item;
-      Newly_Created : out Boolean)
+      Newly_Created : out Boolean;
+      Force_Create : Boolean := False)
    is
       procedure On_Item (It : not null access Abstract_Item_Record'Class);
       procedure On_Item (It : not null access Abstract_Item_Record'Class) is
@@ -233,8 +359,12 @@ package body Browsers.Call_Graph is
       end On_Item;
 
    begin
-      Browser.Get_View.Model.For_Each_Item
-        (On_Item'Access, Filter => Kind_Item);
+      Item := null;
+
+      if not Force_Create then
+         Browser.Get_View.Model.For_Each_Item
+           (On_Item'Access, Filter => Kind_Item);
+      end if;
 
       if Item = null then
          declare
@@ -340,7 +470,7 @@ package body Browsers.Call_Graph is
    -----------------------------
 
    procedure Add_Link_If_Not_Present
-     (Browser             : Call_Graph_Browser;
+     (Browser             : not null access Call_Graph_Browser_Record'Class;
       Src, Dest           : Entity_Item;
       Is_Renaming         : Boolean)
    is
