@@ -170,7 +170,7 @@ PROJECT_DEFS = """<?xml version='1.0' ?>
      package="GMC"
      index="Simulink">
       <language>Simulink</language>
-      <switches lines="3">
+      <switches>
         <title line="1">Files</title>
         <title line="2">Generation</title>
         <title line="3">Output</title>

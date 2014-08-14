@@ -47,8 +47,6 @@ package Switches_Chooser is
      (Default_Separator : String;
       Switch_Char       : Character := '-';
       Scrolled_Window   : Boolean := False;
-      Lines             : Positive := 1;
-      Columns           : Positive := 1;
       Show_Command_Line : Boolean := True;
       Sections          : String := "") return Switches_Editor_Config;
    --  A switches editor can be split into several lines and columns. Each cell
@@ -62,6 +60,13 @@ package Switches_Chooser is
    --  Sections contains the list of sections defined for the tool's command
    --  line.
    --   for example: "cargs bargs largs"
+
+   procedure Set_Size
+     (Self      : not null access Switches_Editor_Config_Record'Class;
+      Lines     : Integer;
+      Columns   : Integer;
+      For_Popup : Popup_Index := Main_Window);
+   --  Set the size of teh config
 
    procedure Free (Config : in out Switches_Editor_Config);
    --  Free the memory associated with Config.
@@ -196,8 +201,6 @@ package Switches_Chooser is
    function Add_Popup
      (Config        : Switches_Editor_Config;
       Label         : String;
-      Lines         : Positive := 1;
-      Columns       : Positive := 1;
       Line          : Positive := 1;
       Column        : Positive := 1;
       Popup         : Popup_Index := Main_Window) return Popup_Index;

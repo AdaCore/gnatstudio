@@ -392,7 +392,7 @@ xmlCompilerHead = """
    <tool name="Builder" package="Builder" index="ada">
       <language>Ada</language>
       <initial-cmd-line></initial-cmd-line>
-      <switches columns="2">
+      <switches>
          <title column="1" line="1" >Dependencies</title>
          <title column="2" line="1" >Compilation</title>
          <check label="Recompile if switches changed" switch="-s"
@@ -415,7 +415,7 @@ xmlCompilerHead = """
    <tool name="Ada" package="Compiler" index="ada" override="true">
       <language>Ada</language>
       <initial-cmd-line>-g -gnatQ</initial-cmd-line>
-      <switches lines="4" columns="2">
+      <switches>
          <title line="1" column="1" >Code generation</title>
          <title line="1" column="2" >Run-time checks</title>
          <title line="2" column="1" line-span="2" >Messages</title>
@@ -621,7 +621,7 @@ xmlCompilerTrailer = """
 
    <tool name="Binder" package="Binder" index="ada">
       <language>Ada</language>
-      <switches lines="1">
+      <switches>
          <check label="Store call stack in exceptions" switch="-E"
                 tip="Store tracebacks in exception occurrences when the target supports it" />
          <check label="List possible restrictions" switch="-r" />
@@ -632,7 +632,7 @@ xmlCompilerTrailer = """
    <tool name="Ada Linker" package="Linker" index="ada">
       <language>Ada</language>
       <initial-cmd-line>-g</initial-cmd-line>
-      <switches lines="1">
+      <switches>
          <check label="Strip symbols" switch="-s" />
          <check label="Debug information" switch="-g" />
          <dependency master-page="Builder" slave-page="Ada Linker"

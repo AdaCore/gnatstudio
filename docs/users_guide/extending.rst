@@ -5315,12 +5315,6 @@ allow a user to specify the desired switch value.
 
 This tag accepts the following attributes:
 
-* :file:`lines` (default :command:`1`), :file:`columns` (default :command:`1`)
-
-  Switches in the project properties editor are organized into boxes, each
-  surrounded by a frame, optionally with a title. These attribute specify
-  the number of rows or columns (respectively) of such frames.
-
 * :file:`separator`
 
   Default character placed between a switch and its value, for example,

@@ -21,7 +21,7 @@ XML = r"""<?xml version="1.0" ?>
 <GPS>
    <tool name="C" package="Compiler" index="c" >
       <language>C</language>
-      <switches lines="2" columns="2">
+      <switches>
         <title line="1" column="1" >Code generation</title>
         <title line="1" column="2" >Debugging</title>
         <title line="2" column="1" >Messages</title>
@@ -70,7 +70,7 @@ XML = r"""<?xml version="1.0" ?>
 
    <tool name="C++" package="Compiler" index="c++" >
       <language>C++</language>
-      <switches lines="2" columns="2">
+      <switches>
         <title line="1" column="1" >Code generation</title>
         <title line="1" column="2" >Debugging</title>
         <title line="2" column="1" >Messages</title>
@@ -122,7 +122,7 @@ XML = r"""<?xml version="1.0" ?>
 
    <tool name="C Linker" package="Linker" index="c">
       <language>C</language>
-      <switches lines="1">
+      <switches>
          <check label="Strip symbols" switch="-s" />
          <check label="Debug information" switch="-g" />
          <check label="Code coverage" switch="-fprofile-generate"
@@ -139,7 +139,7 @@ XML = r"""<?xml version="1.0" ?>
 
    <tool name="C++ Linker" package="Linker" index="c++">
       <language>C++</language>
-      <switches lines="1">
+      <switches>
          <check label="Strip symbols" switch="-s" />
          <check label="Debug information" switch="-g" />
          <check label="Code coverage" switch="-fprofile-generate"

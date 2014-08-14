@@ -343,7 +343,7 @@ xml_gnatprove = """<?xml version="1.0"?>
   <GNATPROVE>
     <tool name="GNATprove" package="Prove" attribute="switches" index="">
       <language>Ada</language>
-      <switches columns="2" lines="3" switch_char="-">
+      <switches switch_char="-">
         <title line="1">Proof</title>
          <combo label="Main mode" switch="--mode" noswitch="all"
                separator="=" column="1"
@@ -425,7 +425,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>-P%PP</arg>
        </command-line>
        <icon>gps-build-all</icon>
-       <switches command="%(tool_name)s" columns="2" lines="4">
+       <switches command="%(tool_name)s">
          <title column="1" line="1" >General</title>
          <check
            label="Force re-analysis"

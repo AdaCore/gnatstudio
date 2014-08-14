@@ -48,7 +48,7 @@ if tool != "":
   <!--  Support for GNATStack's switches in Project Properties Editor  -->
 
   <tool name="GNATStack" package="Stack" attribute="switches" index="">
-    <switches lines="4">
+    <switches>
       <title line="1" column="1">Entry points</title>
       <field line="1" column="1" switch="-e" separator=" " label="use specific list of subprograms as entry points (e1,e2,...)"/>
       <field line="1" column="1" switch="-r" separator=" " label="use all subprograms matching reg-exp as entry points"/>

@@ -54,7 +54,7 @@ XML = u"""<?xml version="1.0" ?>
 
    <tool name="Pretty Printer" package="Pretty_Printer" index="Ada" >
       <language>Ada</language>
-      <switches lines="3" columns="2">
+      <switches>
          <title line="1" column="1">Spacing</title>
          <title line="2" column="1">Casing</title>
          <title line="3" column="1">Layout</title>

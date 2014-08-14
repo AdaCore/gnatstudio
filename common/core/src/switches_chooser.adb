@@ -102,6 +102,36 @@ package body Switches_Chooser is
       end if;
    end Free;
 
+   --------------
+   -- Set_Size --
+   --------------
+
+   procedure Set_Size
+     (Self      : not null access Switches_Editor_Config_Record'Class;
+      Lines     : Integer;
+      Columns   : Integer;
+      For_Popup : Popup_Index := Main_Window)
+   is
+      C : Switch_Description_Vectors.Cursor;
+   begin
+      if For_Popup = Main_Window then
+         Self.Lines := Lines;
+         Self.Columns := Columns;
+      else
+         C := First (Self.Switches);
+         while Has_Element (C) loop
+            if Element (C).Typ = Switch_Popup
+              and then Element (C).To_Popup = For_Popup
+            then
+               Self.Switches.Reference (C).Lines := Lines;
+               Self.Switches.Reference (C).Columns := Columns;
+               exit;
+            end if;
+            Next (C);
+         end loop;
+      end if;
+   end Set_Size;
+
    ------------
    -- Create --
    ------------
@@ -110,8 +140,6 @@ package body Switches_Chooser is
      (Default_Separator : String;
       Switch_Char       : Character := '-';
       Scrolled_Window   : Boolean := False;
-      Lines             : Positive := 1;
-      Columns           : Positive := 1;
       Show_Command_Line : Boolean := True;
       Sections          : String := "") return Switches_Editor_Config
    is
@@ -119,8 +147,8 @@ package body Switches_Chooser is
       Start, Stop : Natural;
    begin
       Config := new Switches_Editor_Config_Record'
-        (Lines             => Lines,
-         Columns           => Columns,
+        (Lines             => 1,
+         Columns           => 1,
          Default_Separator => To_Unbounded_String (Default_Separator),
          Scrolled_Window   => Scrolled_Window,
          Switch_Char       => Switch_Char,
@@ -453,8 +481,6 @@ package body Switches_Chooser is
    function Add_Popup
      (Config  : Switches_Editor_Config;
       Label   : String;
-      Lines   : Positive := 1;
-      Columns : Positive := 1;
       Line    : Positive := 1;
       Column  : Positive := 1;
       Popup   : Popup_Index := Main_Window) return Popup_Index
@@ -472,8 +498,8 @@ package body Switches_Chooser is
             Separator => ASCII.NUL,
             Line      => Line,
             Column    => Column,
-            Lines     => Lines,
-            Columns   => Columns,
+            Lines     => 1,
+            Columns   => 1,
             Add_First => False,
             Popup     => Popup,
             To_Popup  => Config.Max_Popup));

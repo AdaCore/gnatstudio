@@ -49,6 +49,10 @@ package body Switches_Parser is
       Finder              : Other_Config_Finder;
       Node                : XML_Utils.Node_Ptr)
    is
+      Lines   : Integer := 1;
+      Columns : Integer := 1;
+      --  Size of the grid for this tool.
+
       Char        : constant String :=
                       Get_Attribute (Node, "switch_char", "-");
       Default_Sep : constant String :=
@@ -128,7 +132,10 @@ package body Switches_Parser is
       is
       begin
          Line := Safe_Value (Get_Attribute (N, "line", "1"));
+         Lines := Integer'Max (Lines, Line);
+
          Col  := Safe_Value (Get_Attribute (N, "column", "1"));
+         Columns := Integer'Max (Columns, Col);
       end Coordinates_From_Node;
 
       ------------------------
@@ -352,6 +359,8 @@ package body Switches_Parser is
          Line, Col : Natural;
          Label     : constant String := Get_Attribute (N, "label");
          Pop       : Popup_Index;
+         Saved_Lines : constant Integer := Lines;
+         Saved_Columns : constant Integer := Columns;
       begin
          Coordinates_From_Node (N, Line, Col);
          if Label = "" then
@@ -361,11 +370,12 @@ package body Switches_Parser is
             return;
          end if;
 
+         Lines := 1;
+         Columns := 1;
+
          Pop := Add_Popup
            (Config  => Current_Tool_Config,
             Label   => Label,
-            Lines   => Safe_Value (Get_Attribute (N, "lines", "1")),
-            Columns => Safe_Value (Get_Attribute (N, "columns", "1")),
             Line    => Line,
             Column  => Col,
             Popup   => Popup);
@@ -373,6 +383,10 @@ package body Switches_Parser is
          Parse_Popup_Or_Main
            (N     => N,
             Popup => Pop);
+
+         Current_Tool_Config.Set_Size (Lines, Columns, For_Popup => Pop);
+         Lines := Saved_Lines;
+         Columns := Saved_Columns;
       end Process_Popup_Node;
 
       ------------------------
@@ -704,12 +718,11 @@ package body Switches_Parser is
          Switch_Char       => Char (Char'First),
          Scrolled_Window   => Scrolled_Window,
          Show_Command_Line => Show_Command_Line,
-         Lines             => Safe_Value (Get_Attribute (Node, "lines", "1")),
-         Columns           =>
-           Safe_Value (Get_Attribute (Node, "columns", "1")),
          Sections          => Get_Attribute (Node, "sections"));
 
       Parse_Popup_Or_Main (Node, Main_Window);
+
+      Current_Tool_Config.Set_Size (Lines, Columns);
    end Parse_Switches_Node;
 
 end Switches_Parser;

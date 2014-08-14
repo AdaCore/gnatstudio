@@ -392,7 +392,7 @@ def on_gps_started(hook_name):
     GPS.parse_xml("""
   <tool name="GnatCheck" package="Check" index="Ada" override="false">
      <language>Ada</language>
-     <switches lines="1" sections="-rules">
+     <switches sections="-rules">
         <check label="process RTL units" switch="-a" line="1"/>
         <check label="debug mode" switch="-d" line="1"/>
         <field label="Coding standard file" switch="-from" separator="=" as-file="true" line="1" section="-rules"/>
