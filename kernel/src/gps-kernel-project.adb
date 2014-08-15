@@ -71,6 +71,8 @@ package body GPS.Kernel.Project is
       Fd           : out GNAT.Expect.Process_Descriptor_Access;
       Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
       Errors       : Error_Report);
+   overriding function Gnatls_Host
+     (Self : GPS_Project_Environment) return String;
    overriding procedure Set_GNAT_Version
      (Self         : GPS_Project_Environment;
       Version      : String);
@@ -111,6 +113,18 @@ package body GPS.Kernel.Project is
          Spawn_Gnatls (Project_Environment (Self), Fd, Gnatls_Args, Errors);
       end if;
    end Spawn_Gnatls;
+
+   -----------------
+   -- Gnatls_Host --
+   -----------------
+
+   overriding function Gnatls_Host
+     (Self : GPS_Project_Environment) return String
+   is
+      pragma Unreferenced (Self);
+   begin
+      return Get_Nickname (Build_Server);
+   end Gnatls_Host;
 
    ------------------------
    -- Do_Subdirs_Cleanup --
