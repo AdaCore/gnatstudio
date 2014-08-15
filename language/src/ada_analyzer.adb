@@ -2660,7 +2660,8 @@ package body Ada_Analyzer is
 
          elsif (Reserved in Tok_Function | Tok_Procedure | Tok_Protected
                 and then Top_Token.Token /= Tok_Type)
-           or else Reserved in Tok_Package | Tok_Task | Tok_Entry
+           or else (Reserved in Tok_Package | Tok_Task | Tok_Entry
+                    and then Prev_Token /= Tok_Is)
          then
             if In_Generic and then Prev_Token /= Tok_With then
                --  unindent after a generic declaration, e.g:
