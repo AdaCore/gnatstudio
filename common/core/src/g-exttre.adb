@@ -42,6 +42,8 @@ package body GNAT.Expect.TTY.Remote is
 
    Finalized : Boolean := False;
 
+   Remote_Process_Died : exception;
+
    type Compiled_Regexp_Array_Access is access Compiled_Regexp_Array;
 
    Test_Echo_Cmd : constant String := "echo foo";
@@ -90,6 +92,14 @@ package body GNAT.Expect.TTY.Remote is
    pragma Precondition (Descriptor.Terminated and not Descriptor.Session_Died);
    --  Retrieve the status code of a terminated descriptor, and set the
    --  underlying session state to READY.
+
+   procedure Handle_Pre_Disconnect
+     (Descriptor : Remote_Process_Descriptor;
+      Timeout    : in out Integer);
+   procedure Handle_Post_Disconnect
+     (Descriptor : Remote_Process_Descriptor;
+      Result : Expect_Match);
+   --  Handle descriptor termination
 
    ---------
    -- Log --
@@ -1278,9 +1288,8 @@ package body GNAT.Expect.TTY.Remote is
 
       if not Desc.Busy
         and then Desc.Terminated
-        and then Desc.Buffer'Length = 0
       then
-         raise Process_Died;
+         raise Remote_Process_Died;
       end if;
    end Filter_Out;
 
@@ -1621,17 +1630,9 @@ package body GNAT.Expect.TTY.Remote is
          return False;
    end Is_Ready_Session;
 
-   ------------
-   -- Expect --
-   ------------
-
-   procedure Handle_Pre_Disconnect
-     (Descriptor : Remote_Process_Descriptor;
-      Timeout    : in out Integer);
-   procedure Handle_Post_Disconnect
-     (Descriptor : Remote_Process_Descriptor;
-      Result : Expect_Match);
-   --  Handle descriptor termination
+   ---------------------------
+   -- Handle_Pre_Disconnect --
+   ---------------------------
 
    procedure Handle_Pre_Disconnect
      (Descriptor : Remote_Process_Descriptor;
@@ -1658,6 +1659,10 @@ package body GNAT.Expect.TTY.Remote is
       end if;
    end Handle_Pre_Disconnect;
 
+   ----------------------------
+   -- Handle_Post_Disconnect --
+   ----------------------------
+
    procedure Handle_Post_Disconnect
      (Descriptor : Remote_Process_Descriptor;
       Result     : Expect_Match) is
@@ -1673,6 +1678,10 @@ package body GNAT.Expect.TTY.Remote is
       end if;
    end Handle_Post_Disconnect;
 
+   ------------
+   -- Expect --
+   ------------
+
    overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
@@ -1691,10 +1700,25 @@ package body GNAT.Expect.TTY.Remote is
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
+      when Remote_Process_Died =>
+         --  When the remote process died, we need to call expect one more
+         --  time with a timeout value of 0 to check if any non-analyzed
+         --  buffer value matches the regexp.
+         Expect (TTY_Process_Descriptor (Descriptor),
+                 Result,
+                 Regexp,
+                 0,
+                 Full_Buffer);
+      Handle_Post_Disconnect (Descriptor, Result);
+
       when Process_Died =>
          Internal_Handle_Exceptions (Descriptor);
          raise;
    end Expect;
+
+   ------------
+   -- Expect --
+   ------------
 
    overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
@@ -1714,10 +1738,22 @@ package body GNAT.Expect.TTY.Remote is
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
+      when Remote_Process_Died =>
+         Expect (TTY_Process_Descriptor (Descriptor),
+                 Result,
+                 Regexp,
+                 0,
+                 Full_Buffer);
+         Handle_Post_Disconnect (Descriptor, Result);
+
       when Process_Died =>
          Internal_Handle_Exceptions (Descriptor);
          raise;
    end Expect;
+
+   ------------
+   -- Expect --
+   ------------
 
    overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
@@ -1739,10 +1775,23 @@ package body GNAT.Expect.TTY.Remote is
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
+      when Remote_Process_Died =>
+         Expect (TTY_Process_Descriptor (Descriptor),
+                 Result,
+                 Regexp,
+                 Matched,
+                 0,
+                 Full_Buffer);
+         Handle_Post_Disconnect (Descriptor, Result);
+
       when Process_Died =>
          Internal_Handle_Exceptions (Descriptor);
          raise;
    end Expect;
+
+   ------------
+   -- Expect --
+   ------------
 
    overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
@@ -1764,10 +1813,23 @@ package body GNAT.Expect.TTY.Remote is
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
+      when Remote_Process_Died =>
+         Expect (TTY_Process_Descriptor (Descriptor),
+                 Result,
+                 Regexp,
+                 Matched,
+                 0,
+                 Full_Buffer);
+         Handle_Post_Disconnect (Descriptor, Result);
+
       when Process_Died =>
          Internal_Handle_Exceptions (Descriptor);
          raise;
    end Expect;
+
+   ------------
+   -- Expect --
+   ------------
 
    overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
@@ -1787,10 +1849,22 @@ package body GNAT.Expect.TTY.Remote is
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
+      when Remote_Process_Died =>
+         Expect (TTY_Process_Descriptor (Descriptor),
+                 Result,
+                 Regexps,
+                 0,
+                 Full_Buffer);
+         Handle_Post_Disconnect (Descriptor, Result);
+
       when Process_Died =>
          Internal_Handle_Exceptions (Descriptor);
          raise;
    end Expect;
+
+   ------------
+   -- Expect --
+   ------------
 
    overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
@@ -1810,10 +1884,22 @@ package body GNAT.Expect.TTY.Remote is
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
+      when Remote_Process_Died =>
+         Expect (TTY_Process_Descriptor (Descriptor),
+                 Result,
+                 Regexps,
+                 0,
+                 Full_Buffer);
+         Handle_Post_Disconnect (Descriptor, Result);
+
       when Process_Died =>
          Internal_Handle_Exceptions (Descriptor);
          raise;
    end Expect;
+
+   ------------
+   -- Expect --
+   ------------
 
    overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
@@ -1835,10 +1921,22 @@ package body GNAT.Expect.TTY.Remote is
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
+      when Remote_Process_Died =>
+         Expect (TTY_Process_Descriptor (Descriptor),
+                 Result,
+                 Regexps,
+                 Matched,
+                 0,
+                 Full_Buffer);
+         Handle_Post_Disconnect (Descriptor, Result);
       when Process_Died =>
          Internal_Handle_Exceptions (Descriptor);
          raise;
    end Expect;
+
+   ------------
+   -- Expect --
+   ------------
 
    overriding procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
@@ -1860,6 +1958,15 @@ package body GNAT.Expect.TTY.Remote is
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
+      when Remote_Process_Died =>
+         Expect (TTY_Process_Descriptor (Descriptor),
+                 Result,
+                 Regexps,
+                 Matched,
+                 0,
+                 Full_Buffer);
+         Handle_Post_Disconnect (Descriptor, Result);
+
       when Process_Died =>
          Internal_Handle_Exceptions (Descriptor);
          raise;
