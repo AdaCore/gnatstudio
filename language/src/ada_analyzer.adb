@@ -1316,6 +1316,7 @@ package body Ada_Analyzer is
            or else Prev_Token in Tok_Colon_Equal | Tok_Access | Tok_Of
            or else (Prev_Token = Tok_Protected
                     and then Prev_Prev_Token = Tok_Access)
+           or else (Prev_Token = Tok_When and then Token = Tok_Others)
            or else (Prev_Token = Tok_Exit and then Token = Tok_When)
            or else (Prev_Token = Tok_Null and then Token = Tok_Record)
            or else (Prev_Prev_Token = Tok_And
@@ -1419,6 +1420,7 @@ package body Ada_Analyzer is
 
          elsif Top (Tokens).Colon_Col /= 0
            and then Continuation_Val = 0
+           and then Num_Parens = 0
            and then (Prev_Token = Tok_Colon_Equal
                      or else Prev_Token = Tok_Renames
                      or else Is_Operator (Prev_Token)
@@ -3217,9 +3219,23 @@ package body Ada_Analyzer is
             Next_Tok     : Token_Stack.Generic_Type_Access;
 
          begin
-            Do_Indent (P, L, Num_Spaces);
-            Prev_Token := Tok_Arrow;
+            if Num_Parens > 0
+              and then Analyze_Ada_Source.Prev_Prev_Token
+                         in Tok_When | Tok_Dot_Dot
+            then
+               --  Handle case expression:
+               --     (case X is
+               --         when 1
+               --            =>
 
+               Compute_Indentation
+                 (Tok_Arrow, Prev_Token, Prev_Prev_Token,
+                  P, L, Num_Spaces);
+            else
+               Do_Indent (P, L, Num_Spaces);
+            end if;
+
+            Prev_Token := Tok_Arrow;
             Next_Tok := Next (Tokens);
 
             if (Local_Top_Token.Token = Tok_When
@@ -3388,13 +3404,20 @@ package body Ada_Analyzer is
 
                if Indent_Comments then
                   if First_Indent
+                    and then not Indent_Done
                     and then
                       ((Prev_Token in Reserved_Token_Type
                         and then Prev_Token not in Token_Class_No_Cont)
                        or else (Prev_Token = Tok_Right_Paren
-                                and then Top (Tokens).Token /= No_Token))
+                                and then Top (Tokens).Token /= No_Token)
+                       or else (Num_Parens > 0 and then Continuation_Val /= 0))
                   then
                      --  Add simple handling of comment and continuation lines
+
+                     if Num_Parens > 0 then
+                        Continuation_Val := Continuation_Val - Indent_Continue;
+                     end if;
+
                      Do_Indent (P, L, Ref_Indent, Continuation => True);
                      Ref_Indent := Ref_Indent + Continuation_Val;
                      Continuation_Val := 0;
@@ -4227,12 +4250,14 @@ package body Ada_Analyzer is
 
                   if (Num_Parens = 0
                       or else Prev_Token = Tok_Vertical_Bar
-                      or else Prev_Prev_Token = Tok_Arrow)
+                      or else Prev_Prev_Token
+                                in Tok_Arrow | Tok_Then | Tok_Else)
                     and then Local_Top_Token.Token /= Tok_When
                   then
-                     --  If we're not inside parens or a when statement,
-                     --  then handle continuation lines here. Otherwise,
-                     --  continuation lines are already handled separately.
+                     --  If we're not inside parens or if we're in a
+                     --  conditional expression, then handle continuation
+                     --  lines here. Otherwise, continuation lines are already
+                     --  handled separately.
 
                      Compute_Indentation
                        (Prev_Token, Prev_Prev_Token, Prev3_Token,
