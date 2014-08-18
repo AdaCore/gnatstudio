@@ -52,7 +52,7 @@ class ProcessWrapper():
            2 the process is terminated by GPS.
     """
 
-    def __init__(self, cmdargs=[]):
+    def __init__(self, cmdargs=[], messages=True):
         """
            Initialize and run a process with no promises,
            no user-defined pattern to match,

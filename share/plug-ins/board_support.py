@@ -33,9 +33,9 @@ def msg_is(msg):
 class BoardLoader(Module):
 
     __targets = ["Flash to Board",
+                 "Debug on Board",
                  "Run with Emulator",
-                 "Debug with Emulator",
-                 "Debug on Board"]
+                 "Debug with Emulator"]
     __buttons = []
 
     def __error_exit(self, msg="", reset_refresh=False, reset_loading=False):
@@ -403,16 +403,21 @@ class BoardLoader(Module):
         # Create targets * 4:
         workflow.create_target_from_workflow("Flash to Board",
                                              "flash-to-board",
-                                             self.__flash_wf)
-        workflow.create_target_from_workflow("Run with Emulator",
-                                             "run-with-emulator",
-                                             self.__emu_wf)
-        workflow.create_target_from_workflow("Debug with Emulator",
-                                             "debug-with-emulator",
-                                             self.__emu_debug_wf)
+                                             self.__flash_wf,
+                                             "gps-boardloading")
         workflow.create_target_from_workflow("Debug on Board",
                                              "debug-on-board",
-                                             self.__debug_wf)
+                                             self.__debug_wf,
+                                             "gps-boardloading-debug")
+        workflow.create_target_from_workflow("Run with Emulator",
+                                             "run-with-emulator",
+                                             self.__emu_wf,
+                                             "gps-emulatorloading")
+        workflow.create_target_from_workflow("Debug with Emulator",
+                                             "debug-with-emulator",
+                                             self.__emu_debug_wf,
+                                             "gps-emulatorloading-debug")
+
         for i in range(0, 4):
             b = GPS.BuildTarget(self.__targets[i])
             self.__buttons.append(b)

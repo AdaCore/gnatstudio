@@ -108,7 +108,8 @@ def make_button_for_action(button_name, button_id):
     return wrap
 
 
-def create_target_from_workflow(target_name, workflow_name, workflow):
+def create_target_from_workflow(target_name, workflow_name, workflow,
+                                icon_name="gtk-print"):
     """
     Create a Target under the category Workflow from a workflow --
     to be feed by user.
@@ -124,13 +125,13 @@ def create_target_from_workflow(target_name, workflow_name, workflow):
     xml1 = """
 <target model="python" category="Workflow" name="%s">
 <in-toolbar>TRUE</in-toolbar>
-<icon>gtk-print</icon>
+<icon>%s</icon>
 <launch-mode>MANUALLY</launch-mode>
 <read-only>TRUE</read-only>
 <target-type>main</target-type>
 <command-line>
     <arg>gps_utils.workflow.run_registered_workflows("%s", "</arg>
-    """ % (target_name, workflow_name)
+    """ % (target_name, icon_name, workflow_name)
 
     xml2 = """
     <arg>%T</arg>

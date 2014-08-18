@@ -83,6 +83,11 @@ def add_icons():
     Icon("gps-configMenu", "", "svg/menu.svg",
          alt_local_toolbar="svg/menu-12.svg")
 
+    Icon("gps-boardloading", "", "svg/run_green.svg")
+    Icon("gps-boardloading-debug", "", "svg/run_green_d.svg")
+    Icon("gps-emulatorloading", "", "svg/run_blue.svg")
+    Icon("gps-emulatorloading-debug", "", "svg/run_blue_d.svg")
+
     Icon("gps-stopTask", "", "svg/close.svg")
     Icon("gps-expandAll", "", "9px/expand_12.png")
     Icon("gps-collapseAll", "", "9px/collapse_12.png")
