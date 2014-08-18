@@ -38,11 +38,11 @@ class Pep8_Module(Module):
         # only check python file
         if file.language() == "python":
             for m in GPS.Message.list(category="Pep8"):
-                m.remove()
+                if m.get_file() == file:
+                    m.remove()
 
             # parse text in buffer and catches stdout
-            s = GPS.EditorBuffer.get(file=file,
-                                     open=False).get_chars().lstrip("\n")
+            s = GPS.EditorBuffer.get(file=file, open=False).get_chars()
             if (GPS.Preference("Src-Editor-Strip-Trailing-Blanks").get()
                     != "Never"):
                 source = [i.rstrip(" ") + "\n" for i in s.splitlines()]
@@ -72,7 +72,8 @@ class Pep8_Module(Module):
            When GPS start, if imported success:
            register hook for format checker
         """
-        pass
+        for e in GPS.EditorBuffer.list():
+            self.__format_check(e.file())
 
     def file_edited(self, f):
         """
