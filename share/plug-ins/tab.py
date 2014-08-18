@@ -74,7 +74,7 @@ def smart_tab():
             editor.insert(editor.current_view().cursor(), "\t")
 
 
-def python_tab_indent(e, beginning, end):
+def python_tab_indent(e, beginning, end, indenting_block=False):
     """
     Indent python code when tab is pressed
     1 if performed on line, indent line by 4, move cursor relatively
@@ -89,12 +89,18 @@ def python_tab_indent(e, beginning, end):
 
             # if line is not empty, indent by 4
             if tmp.strip("\n").strip(" ") is not "":
-                d = python_tab_indent(e, e.at(i, 0), e.at(i, end.column()))
+                indent = python_tab_indent(e, e.at(i, 0),
+                                           e.at(i, end.column()), True)
     else:
-        e.insert(e.at(end.line(), 1), " "*4)
+        s = e.get_chars(end.beginning_of_line(), end.end_of_line())
+        n = len(s) - len(s.lstrip(" "))
+        indent = 4 - n % 4
+        if indenting_block and n % 4 != 0:
+            indent += 4
+        e.insert(e.at(end.line(), 1), " "*indent)
 
-    e.main_cursor().move(e.at(end.line(), end.column()+4))
-    return
+    e.main_cursor().move(e.at(end.line(), end.column() + indent))
+    return indent
 
 
 @interactive(name='smart escape',
