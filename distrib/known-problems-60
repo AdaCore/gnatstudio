@@ -76,6 +76,15 @@ KP-60-N729-034 Wrong highlighting of tasks with aspects and discriminants
   Workaround: Either ignore this visual glitch or replace aspects with their
               equivalent pragmas.
 
+KP-60-N716-014 GPS: delay at startup with the remote mode
+
+  Problem:    A 10 second delay slows down the GPS startup when using the
+              remote mode.
+
+  Status:     This was fixed in 6.1 on 2014-08-19
+
+  Workaround: Not a blocking issue.
+
 KP-60-N715-048 GPS: Navigation Arrows after 'Find All References to'
 
   Problem:    Navigation history misses cursor position changes after
