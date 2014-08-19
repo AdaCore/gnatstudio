@@ -24,6 +24,8 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 with Glib.Main;                 use Glib, Glib.Main;
 with Glib.Object;               use Glib.Object;
+with Gdk.Device_Manager;        use Gdk.Device_Manager;
+with Gdk.Display;               use Gdk.Display;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 with Gtk.Widget;                use Gtk.Widget;
@@ -420,7 +422,10 @@ package body KeyManager_Module.Macros is
    begin
       if Current_Event /= null then
          Ignore := Play_Event
-           (Current_Event.all, Gtk_Widget (Get_Main_Window (Kernel)));
+           (Current_Event.all,
+            Device         =>
+              Get_Device_Manager (Gdk.Display.Get_Default).Get_Client_Pointer,
+            Default_Widget => Gtk_Widget (Get_Main_Window (Kernel)));
 
          --  Compute proper timeout value, taking into account the time
          --  spent to handle each event manually.

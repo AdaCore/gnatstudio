@@ -584,6 +584,7 @@ package body Gtkada.Macro is
 
    overriding function Play_Event
      (Item           : Macro_Item_Mouse;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean
    is
       pragma Unreferenced (Default_Widget);
@@ -702,20 +703,27 @@ package body Gtkada.Macro is
 
       Gdk_New (E, Item.Event_Type);
       E.Button.Window := Win;
+      Gdk.Window.Ref (Win);
       E.Button.X := Gdouble (Item.X);
       E.Button.Y := Gdouble (Item.Y);
       E.Button.X_Root := Gdouble (Item.X_Root);
       E.Button.Y_Root := Gdouble (Item.Y_Root);
       E.Button.Button := Item.Button;
       E.Button.State := Item.State;
+      Set_Device (E, Device);
       Put (E);
       Free (E);
 
       return True;
    end Play_Event;
 
+   ----------------
+   -- Play_Event --
+   ----------------
+
    overriding function Play_Event
      (Item           : Macro_Item_Key;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean
    is
       E       : Gdk_Event;
@@ -739,17 +747,24 @@ package body Gtkada.Macro is
 
       Gdk_New (E, Item.Event_Type);
       E.Key.Window := Get_Window (Widget);
+      Gdk.Window.Ref (E.Key.Window);
       E.Key.State := Item.State;
       E.Key.Keyval := Item.Keyval;
       E.Key.Group := Item.Group;
+      Set_Device (E, Device);
       E.Key.Hardware_Keycode := Item.Hardware_Keycode;
       Put (E);
       Free (E);
       return True;
    end Play_Event;
 
+   ----------------
+   -- Play_Event --
+   ----------------
+
    overriding function Play_Event
      (Item           : Macro_Item_Motion;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean
    is
       pragma Unreferenced (Default_Widget);
@@ -764,16 +779,23 @@ package body Gtkada.Macro is
 
       Gdk_New (E, Item.Event_Type);
       E.Motion.Window := Win;
+      Gdk.Window.Ref (E.Motion.Window);
       E.Motion.X := Gdouble (Item.X - X);
       E.Motion.Y := Gdouble (Item.Y - Y);
       E.Motion.State := Item.State;
+      Set_Device (E, Device);
       Put (E);
       Free (E);
       return True;
    end Play_Event;
 
+   ----------------
+   -- Play_Event --
+   ----------------
+
    overriding function Play_Event
      (Item           : Macro_Item_Crossing;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean
    is
       pragma Unreferenced (Default_Widget);
@@ -789,6 +811,7 @@ package body Gtkada.Macro is
          Gdk.Window.At_Pointer (X, Y, Win);
          Gdk_New (E, Item.Event_Type);
          E.Crossing.Window := Win;
+         Gdk.Window.Ref (E.Crossing.Window);
          E.Crossing.X := Gdouble (Item.X - X);
          E.Crossing.Y := Gdouble (Item.Y - Y);
          E.Crossing.X_Root := Gdouble (Item.X);
@@ -796,6 +819,7 @@ package body Gtkada.Macro is
          E.Crossing.Mode  := Item.Mode;
          E.Crossing.Detail := Item.Detail;
          E.Crossing.State := Item.State;
+         Set_Device (E, Device);
          Put (E);
          Free (E);
       end if;
@@ -803,8 +827,13 @@ package body Gtkada.Macro is
       return True;
    end Play_Event;
 
+   ----------------
+   -- Play_Event --
+   ----------------
+
    overriding function Play_Event
      (Item           : Macro_Item_Scroll;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean
    is
       pragma Unreferenced (Default_Widget);
@@ -819,12 +848,14 @@ package body Gtkada.Macro is
 
       Gdk_New (E, Item.Event_Type);
       E.Scroll.Window := Win;
+      Gdk.Window.Ref (E.Scroll.Window);
       E.Scroll.X := Gdouble (Item.X - X);
       E.Scroll.Y := Gdouble (Item.Y - Y);
       E.Scroll.X_Root := Gdouble (Item.X);
       E.Scroll.Y_Root := Gdouble (Item.Y);
       E.Scroll.State := Item.State;
       E.Scroll.Direction := Item.Direction;
+      Set_Device (E, Device);
       Put (E);
       Free (E);
 

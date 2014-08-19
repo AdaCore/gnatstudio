@@ -17,10 +17,11 @@
 
 --  This package provides low level support for event recording and replay.
 
-with Glib; use Glib;
+with Glib;         use Glib;
+with Gdk.Device;   use Gdk.Device;
 with Gdk.Event;
 with Gdk.Types;
-with Gtk.Widget; use Gtk.Widget;
+with Gtk.Widget;   use Gtk.Widget;
 with GNAT.Strings;
 with Ada.Text_IO;
 
@@ -82,6 +83,7 @@ package Gtkada.Macro is
 
    function Play_Event
      (Item           : Macro_Item;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean is abstract;
    --  Play the event stored in item.
    --  Default_Widget is the default widget, if any, where the event should be
@@ -132,11 +134,10 @@ package Gtkada.Macro is
 
    overriding function Play_Event
      (Item           : Macro_Item_Mouse;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean;
-
    overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type; Item : Macro_Item_Mouse);
-
    overriding procedure Load_Macro
      (File : access File_Buffer; Item : out Macro_Item_Mouse);
 
@@ -158,12 +159,11 @@ package Gtkada.Macro is
 
    overriding function Play_Event
      (Item           : Macro_Item_Key;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean;
-
    overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Key);
-
    overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Key);
@@ -183,12 +183,11 @@ package Gtkada.Macro is
 
    overriding function Play_Event
      (Item           : Macro_Item_Motion;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean;
-
    overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Motion);
-
    overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Motion);
@@ -210,12 +209,11 @@ package Gtkada.Macro is
 
    overriding function Play_Event
      (Item           : Macro_Item_Crossing;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean;
-
    overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type;
       Item : Macro_Item_Crossing);
-
    overriding procedure Load_Macro
      (File : access File_Buffer;
       Item : out Macro_Item_Crossing);
@@ -236,11 +234,10 @@ package Gtkada.Macro is
 
    overriding function Play_Event
      (Item           : Macro_Item_Scroll;
+      Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean;
-
    overriding procedure Save_To_Disk
      (File : Ada.Text_IO.File_Type; Item : Macro_Item_Scroll);
-
    overriding procedure Load_Macro
      (File : access File_Buffer; Item : out Macro_Item_Scroll);
 
