@@ -78,12 +78,12 @@ KP-60-N729-034 Wrong highlighting of tasks with aspects and discriminants
 
 KP-60-N716-014 GPS: delay at startup with the remote mode
 
-  Problem:    A 10 second delay slows down the GPS startup when using the
+  Problem:    A 10 second delay might slow down the GPS startup when using the
               remote mode.
 
   Status:     This was fixed in 6.1 on 2014-08-19
 
-  Workaround: Not a blocking issue.
+  Workaround: Wait for the timeout, keep GPS running.
 
 KP-60-N715-048 GPS: Navigation Arrows after 'Find All References to'
 
