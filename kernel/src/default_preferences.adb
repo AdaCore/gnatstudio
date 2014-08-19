@@ -64,7 +64,6 @@ package body Default_Preferences is
    Me : constant Trace_Handle := Create ("Default_Prefs");
 
    use Preferences_Maps;
-   use type Gdk.Gdk_Font;
 
    ------------------
    -- Saved_Params --
