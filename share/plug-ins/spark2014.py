@@ -1076,8 +1076,8 @@ def is_file_context(self):
 
 # It's more convenient to define these callbacks outside of the plugin class
 
-def generic_on_analyze(target):
-    GPS.BuildTarget(target).execute(synchronous=False)
+def generic_on_analyze(target, args=[]):
+    GPS.BuildTarget(target).execute(extra_args=args, synchronous=False)
 
 
 def on_examine_all(self):
@@ -1105,15 +1105,20 @@ def on_prove_file(self):
 
 
 def on_prove_line(self):
+    args = []
+    lsparg = build_limit_subp_string(self)
+    if lsparg is not None:
+        args.append(lsparg)
+    target = ""
     if isinstance(self, GPS.MessageContext):
         llarg = "--limit-line=" \
                 + os.path.basename(self.message().get_file().name()) \
                 + ":" + str(self.message().get_line())
-        GPS.BuildTarget(prove_line_loc).execute(extra_args=[llarg],
-                                                synchronous=False)
-
+        args.append(llarg)
+        target = prove_line_loc
     else:
-        generic_on_analyze(prove_line)
+        target = prove_line
+    generic_on_analyze(target, args=args)
 
 
 def on_show_report(self):
@@ -1186,6 +1191,14 @@ def compute_subp_sloc(self):
         return None
 
 
+def build_limit_subp_string(self):
+    loc = compute_subp_sloc(self)
+    if loc is not None:
+        return '--limit-subp=' + mk_loc_string(loc)
+    else:
+        return None
+
+
 def inside_subp_context(self):
     """Return True if the context is inside a subprogram declaration or body"""
 
@@ -1206,13 +1219,13 @@ def generic_action_on_subp(self, action):
     # The argument --limit-subp is not defined in the examine_subp/prove_subp
     # build targets, because we have no means of designating the proper
     # location at that point.  A mild consequence is that --limit-subp does not
-    # appear in the editable box shown to the user, even if appears in the
+    # appear in the editable box shown to the user, even if it appears in the
     # uneditable argument list displayed below it.
 
-    loc = compute_subp_sloc(self)
-    if loc is not None:
+    arg = build_limit_subp_string(self)
+    if arg is not None:
         target = GPS.BuildTarget(action)
-        target.execute(extra_args='--limit-subp=' + mk_loc_string(loc),
+        target.execute(extra_args=arg,
                        synchronous=False)
 
 
