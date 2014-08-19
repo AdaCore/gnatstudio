@@ -2889,7 +2889,6 @@ package body GPS.Kernel.Modules.UI is
       Reader : Tree_Reader;
       Doc    : Document;
       N      : Node;
-      N2     : Node;
    begin
       if Globals.Symbols = No_Symbol_Table then
          Globals.Symbols := Allocate;
@@ -2908,11 +2907,6 @@ package body GPS.Kernel.Modules.UI is
          if Node_Name (N) = "menubar" then
             Process_Menu_Bar (N);
          elsif Node_Name (N) = "toolbar" then
-            N2 := Clone_Node (N, Deep => True);
-            if N2 = null then
-               raise Program_Error with "N2 is null";
-            end if;
-
             Globals.Toolbar_Descriptions.Include
               (Get_Attribute (N, "id"), Clone_Node (N, Deep => True));
          end if;
