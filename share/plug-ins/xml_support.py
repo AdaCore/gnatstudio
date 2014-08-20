@@ -96,7 +96,7 @@ def quote_selection(menu):
     text = xml.sax.saxutils.escape(text)
     buffer.delete(min, max)
     buffer.insert(min, text)
-    buffer.end_undo_group()
+    buffer.finish_undo_group()
 
 
 def view_as_tree(menu):
