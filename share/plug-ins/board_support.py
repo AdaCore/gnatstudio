@@ -133,8 +133,7 @@ class BoardLoader(Module):
         try:
             con = promise.ProcessWrapper(cmd)
         except:
-            self.__error_exit("Fail to create executatble from object file." +
-                              "Exit.\n")
+            self.__error_exit("st-flash not installed/callable. Exit.\n")
             return
 
         r1 = yield con.wait_until_terminate()
@@ -204,7 +203,7 @@ class BoardLoader(Module):
         try:
             self.__connection = promise.ProcessWrapper(cmd)
         except:
-            msg_is("Fail to call emulator. Exit.\n")
+            msg_is("Emulator: arm-eabi-gantemu not installed. Exit.\n")
             return
 
         msg_is("Complete!\n")
@@ -257,7 +256,7 @@ class BoardLoader(Module):
         try:
             self.__connection = promise.ProcessWrapper(cmd)
         except:
-            msg_is("Fail to call emulator. Exit.\n")
+            msg_is("Emulator: arm-eabi-gnatemu not installed. Exit.\n")
             return
 
         msg_is("Complete!\n")
@@ -341,7 +340,7 @@ class BoardLoader(Module):
             try:
                 con = promise.ProcessWrapper(cmd)
             except:
-                self.__error_exit("Can't call stlink. Exit.\n")
+                self.__error_exit("st-util not installed/callable.\n")
                 return
 
             r1 = yield con.wait_until_match("Device connected is", 2000)
