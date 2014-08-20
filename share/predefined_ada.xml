@@ -10476,6 +10476,9 @@ pragma Warnings (On | Off, static_string_EXPRESSION [,REASON]);
 
 REASON ::= Reason =&gt; STRING_LITERAL {&amp; STRING_LITERAL}
 
+Note: in Ada 83 mode, a string literal may be used in place of
+a static string expression (which does not exist in Ada 83).
+
 Normally warnings are enabled, with the output being controlled by the
 command line switch.  Warnings (`Off') turns off generation of warnings
 until a Warnings (`On') is encountered or the end of the current unit.
