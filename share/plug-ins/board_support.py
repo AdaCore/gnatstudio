@@ -203,7 +203,7 @@ class BoardLoader(Module):
         try:
             self.__connection = promise.ProcessWrapper(cmd)
         except:
-            msg_is("Emulator: arm-eabi-gantemu not installed. Exit.\n")
+            msg_is("Emulator: arm-eabi-gnatemu not installed. Exit.\n")
             return
 
         msg_is("Complete!\n")
