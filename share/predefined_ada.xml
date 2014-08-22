@@ -59,13 +59,13 @@ Communication Subsystem, even if they are local. See E.2.3.
 
    <ASPECT id = "0" name = "Async_Readers" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Async_Readers'.
+This boolean aspect is equivalent to pragma `Async_Readers'.
       </DOC>
    </ASPECT>
 
    <ASPECT id = "0" name = "Async_Writers" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Async_Writers'.
+This boolean aspect is equivalent to pragma `Async_Writers'.
       </DOC>
    </ASPECT>
 
@@ -316,7 +316,7 @@ Unique identifier for a tagged type in streams. See 13.3.
 
    <ASPECT id = "0" name = "Favor_Top_Level" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Favor_Top_Level'.
+This boolean aspect is equivalent to pragma `Favor_Top_Level'.
       </DOC>
    </ASPECT>
 
@@ -373,7 +373,7 @@ See 6.3.2.
 
    <ASPECT id = "0" name = "Inline_Always" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Inline_Always'.
+This boolean aspect is equivalent to pragma `Inline_Always'.
       </DOC>
    </ASPECT>
 
@@ -471,7 +471,7 @@ This aspect is equivalent to an `Linker_Section' pragma.
 
    <ASPECT id = "0" name = "Lock_Free" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Lock_Free'.
+This boolean aspect is equivalent to pragma `Lock_Free'.
       </DOC>
    </ASPECT>
 
@@ -531,7 +531,7 @@ This aspect is equivalent to pragma `Part_Of'.
 
    <ASPECT id = "0" name = "Persistent_BSS" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Persistent_BSS'.
+This boolean aspect is equivalent to pragma `Persistent_BSS'.
       </DOC>
    </ASPECT>
 
@@ -613,7 +613,7 @@ This aspect is equivalent to pragma `Pure_12'.
 
    <ASPECT id = "0" name = "Pure_Function" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Pure_Function'.
+This boolean aspect is equivalent to pragma `Pure_Function'.
       </DOC>
    </ASPECT>
 
@@ -699,8 +699,8 @@ definition clause.
 
    <ASPECT id = "0" name = "Shared" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Shared', and is thus a synonym for
-aspect `Atomic'.
+This booleanaspect is equivalent to pragma `Shared', and is thus a
+synonym for aspect `Atomic'.
       </DOC>
    </ASPECT>
 
@@ -720,7 +720,7 @@ definition clause.
 
    <ASPECT id = "0" name = "Simple_Storage_Pool_Type" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Simple_Storage_Pool_Type'.
+This boolean aspect is equivalent to pragma `Simple_Storage_Pool_Type'.
       </DOC>
    </ASPECT>
 
@@ -778,7 +778,7 @@ See 13.13.2.
 
    <ASPECT id = "0" name = "Suppress_Debug_Info" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Suppress_Debug_Info'.
+This boolean aspect is equivalent to pragma `Suppress_Debug_Info'.
       </DOC>
    </ASPECT>
 
@@ -807,7 +807,7 @@ specified using an aspect_specification.
 
    <ASPECT id = "0" name = "Thread_Local_Storage" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Thread_Local_Storage'.
+This boolean aspect is equivalent to pragma `Thread_Local_Storage'.
       </DOC>
    </ASPECT>
 
@@ -832,7 +832,7 @@ Type is used to interface to a C union type. See B.3.3.
 
    <ASPECT id = "0" name = "Universal_Aliasing" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Universal_Aliasing'.
+This boolean aspect is equivalent to pragma `Universal_Aliasing'.
       </DOC>
    </ASPECT>
 
@@ -844,19 +844,19 @@ This aspect is equivalent to pragma `Universal_Data'.
 
    <ASPECT id = "0" name = "Unmodified" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Unmodified'.
+This boolean aspect is equivalent to pragma `Unmodified'.
       </DOC>
    </ASPECT>
 
    <ASPECT id = "0" name = "Unreferenced" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Unreferenced'.
+This boolean aspect is equivalent to pragma `Unreferenced'.
       </DOC>
    </ASPECT>
 
    <ASPECT id = "0" name = "Unreferenced_Objects" origin = "GNAT RM" category = "unknown">
       <DOC>
-This aspect is equivalent to pragma `Unreferenced_Objects'.
+This boolean aspect is equivalent to pragma `Unreferenced_Objects'.
       </DOC>
    </ASPECT>
 
