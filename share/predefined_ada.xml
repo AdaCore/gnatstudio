@@ -782,6 +782,12 @@ This boolean aspect is equivalent to pragma `Suppress_Debug_Info'.
       </DOC>
    </ASPECT>
 
+   <ASPECT id = "0" name = "Suppress_Initialization" origin = "GNAT RM" category = "unknown">
+      <DOC>
+This boolean aspect is equivalent to pragma `Suppress_Initialization'.
+      </DOC>
+   </ASPECT>
+
    <ASPECT id = "62/3" name = "Synchronization" origin = "Ada RM" category = "unknown">
       <DOC>
 Defines whether a given primitive operation of a synchronized
@@ -850,7 +856,9 @@ This boolean aspect is equivalent to pragma `Unmodified'.
 
    <ASPECT id = "0" name = "Unreferenced" origin = "GNAT RM" category = "unknown">
       <DOC>
-This boolean aspect is equivalent to pragma `Unreferenced'.
+This boolean aspect is equivalent to pragma `Unreferenced'. Note that
+in the case of formal parameters, it is not permitted to have aspects
+for a formal parameter, so in this case the pragma form must be used.
       </DOC>
    </ASPECT>
 
@@ -9759,12 +9767,15 @@ compiled in normal mode without it.
       <DOC>
 Syntax:
 
-pragma Suppress_Initialization ([Entity =&gt;] subtype_Name);
+pragma Suppress_Initialization ([Entity =&gt;] variable_or_subtype_Name);
 
-Here subtype_Name is the name introduced by a type declaration or
-subtype declaration.  This pragma suppresses any implicit or explicit
-initialization for all variables of the given type or subtype,
-including initialization resulting from the use of pragmas
+Here variable_or_subtype_Name is the name introduced by a type
+declaration or subtype declaration or the name of a variable introduced
+by an object declaration.
+
+In the case of a type or subtype this pragma suppresses any implicit
+or explicit initialization for all variables of the given type or
+subtype, including initialization resulting from the use of pragmas
 Normalize_Scalars or Initialize_Scalars.
 
 This is considered a representation item, so it cannot be given after
@@ -9781,6 +9792,10 @@ for discriminated types, and tags for tagged types. In these cases, you
 will have to use some non-portable mechanism (e.g. address overlays or
 unchecked conversion) to achieve required initialization of these
 fields before accessing any object of the corresponding type.
+
+For the variable case, implicit initialization for the named variable
+is suppressed, just as though its subtype had been given in a pragma
+Suppress_Initialization, as described above.
       </DOC>
    </PRAGMA>
 
