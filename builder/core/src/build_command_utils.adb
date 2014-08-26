@@ -1706,6 +1706,7 @@ package body Build_Command_Utils is
                By   => Default_Parser_Names));
       end if;
       loop
+         exit when Last >= Parser_List'Last;
          Find_Token (Parser_List, Space, Last + 1, Outside, First, Last);
          exit when First > Last;
          Prepend (Result, Parser_List (First .. Last));
