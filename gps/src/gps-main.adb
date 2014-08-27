@@ -393,6 +393,15 @@ procedure GPS.Main is
       end;
 
       declare
+         Tmp : constant String :=
+           Command_Line.Getenv ("GPS_STARTUP_DYLD_FALLBACK_LIBRARY_PATH");
+      begin
+         if Tmp /= "" then
+            Setenv ("DYLD_FALLBACK_LIBRARY_PATH", Tmp);
+         end if;
+      end;
+
+      declare
          Charset : constant String := Command_Line.Getenv ("CHARSET");
       begin
          if Charset = "" then
