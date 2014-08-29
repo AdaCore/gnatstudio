@@ -45,6 +45,15 @@ KP-60-N828-009 Go to end of line and extend selection broken in entries
 
   Workaround: Select with mouse.
 
+KP-60-N813-019 Crash replaying macros several times
+
+  Problem:    When replaying a macro a number of times, GPS might end up
+              crashing
+
+  Status:     This was fixed in 6.1 on 2014-08-19
+
+  Workaround: None.
+
 KP-60-N812-034 Bad indentation after generic formal task interface
 
   Problem:    When declaring code such as:
