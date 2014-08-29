@@ -344,7 +344,7 @@
             <menu label="St_op Recording"             action="macro stop"/>
             <menu label="_Play"                       action="macro play"/>
             <menu label="Load..."                    action="macro load"/>
-            <!--  <menu label="Save As..."                 action="macro save"/> -->
+            <menu label="Save As..."                 action="macro save"/>
          </menu>
          <menu label="_Metrics">
             <menu label="Compute Metrics on Current _File"

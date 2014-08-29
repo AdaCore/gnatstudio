@@ -40,6 +40,7 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -279,6 +280,7 @@ package body KeyManager_Module.Macros is
          Free (Keymanager_Macro_Module.Current_Macro);
          Keymanager_Macro_Module.Current_Macro :=
            Record_Macro (Get_Kernel (Data), All_Keyboard_Events);
+         Update_Menus_And_Buttons (Get_Kernel (Data));
       end if;
 
    exception
@@ -336,6 +338,7 @@ package body KeyManager_Module.Macros is
                Free (Keymanager_Macro_Module.Current_Macro);
                Keymanager_Macro_Module.Current_Macro := Record_Macro
                  (Kernel, All_Keyboard_Events);
+               Update_Menus_And_Buttons (Kernel);
             end if;
 
          when Action_Start_Mouse =>
@@ -350,6 +353,7 @@ package body KeyManager_Module.Macros is
                Free (Keymanager_Macro_Module.Current_Macro);
                Keymanager_Macro_Module.Current_Macro := Record_Macro
                  (Kernel, All_Keyboard_Events or All_Mouse_Events);
+               Update_Menus_And_Buttons (Kernel);
             end if;
 
          when Action_Stop =>
@@ -358,6 +362,12 @@ package body KeyManager_Module.Macros is
                Keymanager_Macro_Module.Recording := False;
                Remove_Event_Handler
                  (Kernel, General_Event_Handler'Access);
+
+               --  We need to recompute the context, not reuse Context.Context,
+               --  since it is already caching some of the In_Macro filter and
+               --  thus would not recompute them even though the state has
+               --  changed.
+               Update_Menus_And_Buttons (Kernel);
             end if;
 
          when Action_Play =>
