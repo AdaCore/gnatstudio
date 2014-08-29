@@ -22,6 +22,10 @@ UNEXPECTED_EXCEPTIONS=yes
 
 OVERRIDE_MIDDLE_CLICK_PASTE = yes
 
+--  Whether to use a system menu bar
+
+SYSTEM_MENUS = yes
+
 --  Select the modules that should be loaded
 
 --  MODULE.DOCGEN             = yes

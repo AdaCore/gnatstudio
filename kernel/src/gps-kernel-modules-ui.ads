@@ -60,8 +60,10 @@
 
 with GNAT.Strings;
 with Gdk.Event;
+with Glib.Action;
 with Glib.Object;
 with Glib.Values;
+with Gtk.Application;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Menu_Item;
@@ -94,6 +96,19 @@ package GPS.Kernel.Modules.UI is
 
    package Context_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Selection_Context);
+
+   --------------
+   -- GActions --
+   --------------
+   --  This type is used to create a link between gtk+ actions (GAction) which
+   --  are used for menus in a GtkApplication, and the actions defined by GPS,
+   --  which provide more advanced features (multi-key bindings, automatic
+   --  filters, icons,...)
+
+   function New_G_Action
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Action : String) return Glib.Action.Gaction;
+   --  Creates a new GAction that will execute the given GPS action
 
    ----------------------
    -- Contextual menus --
@@ -331,8 +346,9 @@ package GPS.Kernel.Modules.UI is
    -----------
 
    procedure Install_Menus
-      (Kernel      : not null access Kernel_Handle_Record'Class;
-       Description : GNATCOLL.VFS.Virtual_File);
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      App       : not null access Gtk.Application.Gtk_Application_Record'Class;
+      Description : GNATCOLL.VFS.Virtual_File);
    --  Load an XML description of the menubar, and create it.
 
    procedure Start_Monitoring_Menus
@@ -496,5 +512,36 @@ package GPS.Kernel.Modules.UI is
    --  (for a Location_Marker and is used to restore a marker from a previous
    --  session.
    --  null is returned if no Location_Marker could be created.
+
+private
+
+   type Action_Proxy is abstract tagged record
+      Kernel   : access Kernel_Handle_Record'Class;
+      Action   : GNAT.Strings.String_Access;
+
+      Optional : Boolean;
+      --  If True and the action is not found, the widget will be hidden.
+
+      Hide     : Boolean;
+      --  If true, the widget is hidden when the filter does not match.
+
+      Looked_Up : access Action_Record;
+      --  A field that must be used only to compare the current action with the
+      --  one we previously looked up. Do not use to access the action itself,
+      --  since this might be a dangling pointer if the action was
+      --  unregistered. Use Lookup_Action instead.
+   end record;
+   --  Data required for all widgets that encapsulate an action.
+   --  A widget must never store a direct Action_Record_Access, since the
+   --  action might be unregistered at any point.
+   --  This type also provides support for setting various properties of the
+   --  widget based on the contents of the action.
+
+   procedure Set_Active
+     (Self   : in out Action_Proxy;
+      Active : Boolean;
+      Object : not null access Glib.Object.GObject_Record'Class) is null;
+   --  Called whenever we recompute the status (enabled/disabled) of the
+   --  action in the background.
 
 end GPS.Kernel.Modules.UI;

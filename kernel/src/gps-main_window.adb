@@ -30,7 +30,7 @@ with Gdk.Screen;                use Gdk.Screen;
 
 with Glib;                      use Glib;
 with Glib.Error;                use Glib.Error;
-with Glib.Object;
+with Glib.Object;               use Glib.Object;
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 
@@ -537,10 +537,16 @@ package body GPS.Main_Window is
    is
       Vbox      : Gtk_Vbox;
       Menu_Item : Gtk_Menu_Item;
+--        Menubar   : GObject;
+--        Builder   : Gtk_Builder;
+--        Tmp       : Guint;
+--        Error     : aliased GError;
+--        pragma Unreferenced (Tmp);
 
    begin
       --  Initialize the window first, so that it can be used while creating
       --  the kernel, in particular calls to Push_State
+
       Glib.Object.Initialize_Class_Record
         (Ancestor     => Gtk.Application_Window.Get_Type,
          Signals      => Signals,
@@ -633,8 +639,12 @@ package body GPS.Main_Window is
 
       Install_Menus
         (Main_Window.Kernel,
+         Application,
          Create_From_Base
            ("menus.xml", Get_Share_Dir (Main_Window.Kernel).Full_Name.all));
+
+      --  Make the /Window menu dynamic.
+      --  ??? This does not work with GtkApplication menu
       Menu_Item := Find_Menu_Item (Main_Window.Kernel, -"/Window");
       Set_Submenu
         (Menu_Item, Kernel_Desktop.Create_Menu

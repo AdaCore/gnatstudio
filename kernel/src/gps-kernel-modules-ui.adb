@@ -22,6 +22,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
@@ -33,11 +34,18 @@ with Gdk.Drag_Contexts;         use Gdk.Drag_Contexts;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
 
+with Glib.Action;               use Glib.Action;
 with Glib.Convert;              use Glib.Convert;
+with Glib.Error;                use Glib.Error;
 with Glib.Main;                 use Glib.Main;
+with Glib.Menu_Model;           use Glib.Menu_Model;
 with Glib.Object;               use Glib.Object;
+with Glib.Properties.Creation;  use Glib.Properties.Creation;
+with Glib.Simple_Action;        use Glib.Simple_Action;
 with Glib.Values;               use Glib.Values;
+with Glib.Variant;              use Glib.Variant;
 
+with Gtk.Builder;               use Gtk.Builder;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -93,6 +101,9 @@ package body GPS.Kernel.Modules.UI is
 
    Me : constant Trace_Handle :=
      Create ("GPS.Kernel.Modules.UI", GNATCOLL.Traces.Off);
+
+   System_Menus : constant Trace_Handle :=
+     Create ("SYSTEM_MENUS", GNATCOLL.Traces.Off);
 
    type Contextual_Menu_User_Data is record
       Object       : GObject;
@@ -252,33 +263,11 @@ package body GPS.Kernel.Modules.UI is
    -- proxies for actions --
    -------------------------
 
-   type Action_Proxy is record
-      Kernel   : access Kernel_Handle_Record'Class;
-      Action   : GNAT.Strings.String_Access;
-
-      Optional : Boolean;
-      --  If True and the action is not found, the widget will be hidden.
-
-      Hide     : Boolean;
-      --  If true, the widget is hidden when the filter does not match.
-
-      Looked_Up : access Action_Record;
-      --  A field that must be used only to compare the current action with the
-      --  one we previously looked up. Do not use to access the action itself,
-      --  since this might be a dangling pointer if the action was
-      --  unregistered. Use Lookup_Action instead.
-   end record;
-   --  Data required for all widgets that encapsulate an action.
-   --  A widget must never store a direct Action_Record_Access, since the
-   --  action might be unregistered at any point.
-   --  This type also provides support for setting various properties of the
-   --  widget based on the contents of the action.
-
    function Get_Data
-     (Self : not null access Gtk_Widget_Record'Class)
-     return access Action_Proxy;
+     (Self : not null access GObject_Record'Class)
+     return access Action_Proxy'Class;
    function Lookup_Action
-     (Self : not null access Gtk_Widget_Record'Class)
+     (Self : not null access GObject_Record'Class)
      return access Action_Record;
    --  Lookup the action associated with the given widget.
    --  Self should be one of Action_Menu_Item or Action_Tool_Button.
@@ -288,17 +277,105 @@ package body GPS.Kernel.Modules.UI is
    --  updated, and Looked_Up will be set to the new value.
 
    procedure Execute_Action
-     (Self          : not null access Gtk_Widget_Record'Class;
-      Data          : Action_Proxy;
+     (Self          : not null access GObject_Record'Class;
+      Data          : Action_Proxy'Class;
       In_Foreground : Boolean := False);
    --  Execute the action associated with the proxy
+
+   -------------
+   -- GAction --
+   -------------
+
+   type GPS_Action_Proxy is new Action_Proxy with record
+      Active   : Boolean := True;
+      --  Whether the action was enabled the last time we checked in the
+      --  background
+   end record;
+   overriding procedure Set_Active
+     (Self   : in out GPS_Action_Proxy;
+      Active : Boolean;
+      Object : not null access GObject_Record'Class);
+
+   type GPS_Action_Record is new Gsimple_Action_Record with record
+      Data : aliased GPS_Action_Proxy;
+   end record;
+   type GPS_Action is access all GPS_Action_Record'Class;
+
+   GPS_Action_CR : aliased Glib.Object.Ada_GObject_Class :=
+     Glib.Object.Uninitialized_Class;
+
+   function GPS_Action_Get_Type return Glib.GType;
+   --  Return the gtk+ type to use for actions that link GAction and GPS action
+
+   procedure GPS_Action_Class_Init (Self : GObject_Class)
+     with Convention => C;
+   --  Initial properties for a GPS_Action class
+
+   procedure Init_GAction_Iface
+     (Iface : Action_Interface_Descr;
+      Data  : System.Address)
+     with Convention => C;
+   --  Initialize the interface fields for GPS_Action
+
+   procedure On_GPS_Action_Activate (Self : Gaction; P : System.Address);
+   pragma Convention (C, On_GPS_Action_Activate);
+
+   procedure On_GPS_Action_Change_State (Self : Gaction; Val : System.Address)
+   is null;
+   pragma Convention (C, On_GPS_Action_Change_State);
+
+   function On_GPS_Action_Get_Enabled (Self : Gaction) return Gboolean;
+   pragma Convention (C, On_GPS_Action_Get_Enabled);
+
+   function On_GPS_Action_Get_Name (Self : Gaction) return chars_ptr;
+   pragma Convention (C, On_GPS_Action_Get_Name);
+
+   function On_GPS_Action_Get_Parameter_Type
+     (Self : Gaction) return Gvariant_Type is (null);
+   pragma Convention (C, On_GPS_Action_Get_Parameter_Type);
+
+   function On_GPS_Action_Get_State
+     (Self : Gaction) return System.Address is (System.Null_Address);
+   pragma Convention (C, On_GPS_Action_Get_State);
+
+   function On_GPS_Action_Get_State_Hint
+     (Self : Gaction) return System.Address is (System.Null_Address);
+   pragma Convention (C, On_GPS_Action_Get_State_Hint);
+
+   function On_GPS_Action_Get_State_Type
+     (Self : Gaction) return Gvariant_Type is (null);
+   pragma Convention (C, On_GPS_Action_Get_State_Type);
+
+   Property_Name           : constant Property_Id := 1;
+   Property_Enabled        : constant Property_Id := 2;
+   Property_Parameter_Type : constant Property_Id := 3;
+   Property_State          : constant Property_Id := 4;
+   Property_State_Type     : constant Property_Id := 5;
+
+   procedure GPS_Action_Set_Property
+     (Object        : access Glib.Object.GObject_Record'Class;
+      Prop_Id       : Property_Id;
+      Value         : Glib.Values.GValue;
+      Property_Spec : Param_Spec);
+   procedure GPS_Action_Get_Property
+     (Object        : access Glib.Object.GObject_Record'Class;
+      Prop_Id       : Property_Id;
+      Value         : out Glib.Values.GValue;
+      Property_Spec : Param_Spec);
+   --  Handling of properties for GPS_Action
 
    ------------------------
    -- Action_Tool_Button --
    ------------------------
 
+   type Widget_Action_Proxy is new Action_Proxy with null record;
+   overriding procedure Set_Active
+     (Self   : in out Widget_Action_Proxy;
+      Active : Boolean;
+      Object : not null access GObject_Record'Class);
+
    type Action_Tool_Button_Record is new Gtk_Tool_Button_Record with record
-      Data : aliased Action_Proxy;
+      Data : aliased Widget_Action_Proxy;
       Forced_Stock : Boolean := False;
    end record;
    type Action_Tool_Button is access all Action_Tool_Button_Record'Class;
@@ -322,7 +399,7 @@ package body GPS.Kernel.Modules.UI is
    ----------------------
 
    type Action_Menu_Item_Record is new Gtk_Image_Menu_Item_Record with record
-      Data : aliased Action_Proxy;
+      Data : aliased Widget_Action_Proxy;
    end record;
    type Action_Menu_Item is access all Action_Menu_Item_Record'Class;
 
@@ -335,7 +412,7 @@ package body GPS.Kernel.Modules.UI is
    ----------------------------------------------
 
    type Proxy_And_Filter is record
-      Proxy  : access Gtk_Widget_Record'Class;
+      Proxy  : access GObject_Record'Class;
       Filter : access Action_Filter_Record'Class;
    end record;
    package Proxy_Lists is new Ada.Containers.Doubly_Linked_Lists
@@ -345,18 +422,16 @@ package body GPS.Kernel.Modules.UI is
    --  has a filter. This is needed to dynamically deactivate menus and buttons
    --  whenever the current context changes
 
-   package Widget_Kernel_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Kernel_Handle);
-
    procedure Add_To_Global_Proxies
-     (Item   : not null access Gtk_Widget_Record'Class;
+     (Item   : not null access GObject_Record'Class;
       Kernel : not null access Kernel_Handle_Record'Class;
       Filter : access Action_Filter_Record'Class);
    --  Store items when they might need to be filtered when the context changes
 
    procedure On_Delete_Proxy
-     (Item   : access Gtk_Widget_Record'Class;
-      Kernel : Kernel_Handle);
+     (Kernel : System.Address;
+      Item   : System.Address)
+     with Convention => C;
    --  Called when a proxied item is deleted. This frees some data from
    --  the proxy's data, so must only be called when the item is destroyed.
 
@@ -948,7 +1023,7 @@ package body GPS.Kernel.Modules.UI is
                   end if;
 
                   Action_Callback.Connect
-                    (Item, Signal_Activate,
+                    (Item, Gtk.Menu_Item.Signal_Activate,
                      Contextual_Action'Access,
                      User_Data   => C);
                else
@@ -1305,13 +1380,15 @@ package body GPS.Kernel.Modules.UI is
    --------------
 
    function Get_Data
-     (Self : not null access Gtk_Widget_Record'Class)
-      return access Action_Proxy is
+     (Self : not null access GObject_Record'Class)
+      return access Action_Proxy'Class is
    begin
       if Self.all in Action_Menu_Item_Record'Class then
          return Action_Menu_Item (Self).Data'Access;
       elsif Self.all in Action_Tool_Button_Record'Class then
          return Action_Tool_Button (Self).Data'Access;
+      elsif Self.all in GPS_Action_Record'Class then
+         return GPS_Action (Self).Data'Access;
       else
          return null;
       end if;
@@ -1371,7 +1448,7 @@ package body GPS.Kernel.Modules.UI is
    -------------------
 
    function Lookup_Action
-     (Self : not null access Gtk_Widget_Record'Class)
+     (Self : not null access GObject_Record'Class)
      return access Action_Record
    is
       Label : Gtk_Accel_Label;
@@ -1379,7 +1456,7 @@ package body GPS.Kernel.Modules.UI is
       Mods  : Gdk_Modifier_Type;
       Pix   : Gtk_Image;
       Action : access Action_Record;
-      Data   : constant access Action_Proxy := Get_Data (Self);
+      Data   : constant access Action_Proxy'Class := Get_Data (Self);
 
    begin
       if Data = null then
@@ -1404,21 +1481,25 @@ package body GPS.Kernel.Modules.UI is
                  (Action, Create_Menu_Path (Gtk_Menu_Item (Self)));
             end if;
 
-            Self.Set_Tooltip_Markup
-              (Escape_Text (Action.Description.all)
-               & ASCII.LF & ASCII.LF
-               & "<b>Action:</b> "
-               & Escape_Text (Action.Name.all) & ASCII.LF
-               & "<b>Category:</b> "
-               & Escape_Text
-                 ((if Action.Category = null then ""
-                  else Action.Category.all))
-               & ASCII.LF
-               & "<b>Shortcut:</b> "
-               & Data.Kernel.Get_Shortcut
-                 (Action          => Action.Name.all,
-                  Use_Markup      => True,
-                  Return_Multiple => True));
+            if Self.all in Gtk_Widget_Record'Class then
+               Gtk_Widget (Self).Set_Tooltip_Markup
+                 (Escape_Text (Action.Description.all)
+                  & ASCII.LF & ASCII.LF
+                  & "<b>Action:</b> "
+                  & Escape_Text (Action.Name.all) & ASCII.LF
+                  & "<b>Category:</b> "
+                  & Escape_Text
+                    ((if Action.Category = null then ""
+                     else Action.Category.all))
+                  & ASCII.LF
+                  & "<b>Shortcut:</b> "
+                  & Data.Kernel.Get_Shortcut
+                    (Action          => Action.Name.all,
+                     Use_Markup      => True,
+                     Return_Multiple => True));
+               Get_Style_Context (Gtk_Widget (Self)).Remove_Class
+                 ("nogpsaction");
+            end if;
 
             --  Update the image if the action has one
 
@@ -1451,12 +1532,10 @@ package body GPS.Kernel.Modules.UI is
                end if;
             end if;
 
-            Get_Style_Context (Self).Remove_Class ("nogpsaction");
-
-         else
-            Self.Set_Tooltip_Markup
+         elsif Self.all in Gtk_Widget_Record'Class then
+            Gtk_Widget (Self).Set_Tooltip_Markup
               ("Action not found: " & Escape_Text (Data.Action.all));
-            Get_Style_Context (Self).Add_Class ("nogpsaction");
+            Get_Style_Context (Gtk_Widget (Self)).Add_Class ("nogpsaction");
          end if;
       end if;
 
@@ -1468,8 +1547,8 @@ package body GPS.Kernel.Modules.UI is
    --------------------
 
    procedure Execute_Action
-     (Self          : not null access Gtk_Widget_Record'Class;
-      Data          : Action_Proxy;
+     (Self          : not null access GObject_Record'Class;
+      Data          : Action_Proxy'Class;
       In_Foreground : Boolean := False)
    is
       Context : constant Selection_Context :=
@@ -1545,17 +1624,17 @@ package body GPS.Kernel.Modules.UI is
    ---------------------------
 
    procedure Add_To_Global_Proxies
-     (Item   : not null access Gtk_Widget_Record'Class;
+     (Item   : not null access GObject_Record'Class;
       Kernel : not null access Kernel_Handle_Record'Class;
       Filter : access Action_Filter_Record'Class)
    is
    begin
       Globals.Proxy_Items.Append (Proxy_And_Filter'(Item, Filter));
-      Widget_Kernel_Callback.Connect
+
+      Weak_Ref
         (Item,
-         Signal_Destroy,
-         On_Delete_Proxy'Access,
-         Kernel);
+         Notify => On_Delete_Proxy'Access,
+         Data   => Kernel.all'Address);
 
       --  If the background updating of menus was taking place, we need to
       --  restart it since it's iterators are now invalid.
@@ -1570,12 +1649,17 @@ package body GPS.Kernel.Modules.UI is
    ---------------------
 
    procedure On_Delete_Proxy
-     (Item   : access Gtk_Widget_Record'Class;
-      Kernel : Kernel_Handle)
+     (Kernel : System.Address;
+      Item   : System.Address)
    is
-      It : Proxy_And_Filter;
-      C  : Proxy_Lists.Cursor := Globals.Proxy_Items.First;
-      Data : constant access Action_Proxy := Get_Data (Item);
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Kernel_Handle);
+      K    : constant Kernel_Handle := Convert (Kernel);
+      Obj  : constant GObject := Get_User_Data_Or_Null (Item);
+
+      It   : Proxy_And_Filter;
+      C    : Proxy_Lists.Cursor := Globals.Proxy_Items.First;
+      Data : constant access Action_Proxy := Get_Data (Obj);
    begin
       if Data /= null then
          Free (Data.Action);
@@ -1583,13 +1667,13 @@ package body GPS.Kernel.Modules.UI is
 
       while Has_Element (C) loop
          It := Element (C);
-         if Gtk_Widget (It.Proxy) = Gtk_Widget (Item) then
+         if Get_Object (It.Proxy) = Item then
             Globals.Proxy_Items.Delete (C);
 
             --  Update cursor in the background updating, if needed
 
             if Globals.Update_Menus_Idle_Id /= No_Source_Id then
-               Update_Menus_And_Buttons (Kernel);
+               Update_Menus_And_Buttons (K);
             end if;
 
             exit;
@@ -2504,6 +2588,30 @@ package body GPS.Kernel.Modules.UI is
       Globals.Update_Menus_Idle_Id := No_Source_Id;
    end Destroy;
 
+   ----------------
+   -- Set_Active --
+   ----------------
+
+   overriding procedure Set_Active
+     (Self   : in out Widget_Action_Proxy;
+      Active : Boolean;
+      Object : not null access GObject_Record'Class)
+   is
+      W : constant Gtk_Widget := Gtk_Widget (Object);
+   begin
+      if Active then
+         W.Show;  --  in case it was hidden earlier
+         W.Set_Sensitive (True);
+
+      else
+         if Self.Optional then
+            W.Hide;
+         else
+            W.Set_Sensitive (False);
+         end if;
+      end if;
+   end Set_Active;
+
    ------------------------------------
    -- Update_Menus_And_Buttons_Chunk --
    ------------------------------------
@@ -2620,7 +2728,7 @@ package body GPS.Kernel.Modules.UI is
          end if;
       end Cleanup_Toolbar_Separators;
 
-      D : access Action_Proxy;
+      D : access Action_Proxy'Class;
    begin
       loop
          if not Has_Element (Data.Current) then
@@ -2643,26 +2751,20 @@ package body GPS.Kernel.Modules.UI is
          end if;
 
          A := Element (Data.Current);
+         D := Get_Data (A.Proxy);
 
          if A.Filter /= null then
-            A.Proxy.Set_Sensitive (Filter_Matches (A.Filter, Data.Context));
+            D.Set_Active (Filter_Matches (A.Filter, Data.Context), A.Proxy);
          else
             Action := Lookup_Action (A.Proxy);
-            D := Get_Data (A.Proxy);
 
             if Action = null then
-               --  The action is still unknown
-               if D.Optional then
-                  A.Proxy.Hide;
-               else
-                  A.Proxy.Set_Sensitive (False);
-               end if;
+               D.Set_Active (False, A.Proxy);
 
             else
-               A.Proxy.Show;  --  in case it was hidden earlier
-
                if Action.Filter = null then
-                  A.Proxy.Set_Sensitive (True);
+                  D.Set_Active (True, A.Proxy);
+
                   --  The item is already active, and will remain so, so
                   --  nothing to do here. We thus remove the item from the list
                   --  since there will be nothing to do with it anymore,
@@ -2698,25 +2800,19 @@ package body GPS.Kernel.Modules.UI is
                   --  filter matches.
 
                   Available := Filter_Matches (Action.Filter, Data.Context);
+                  D.Set_Active (Available, A.Proxy);
 
-                  if D.Hide and then not Available then
-                     A.Proxy.Hide;
-                  else
-                     A.Proxy.Show;
-
-                     --  If this is a tool button that we are just showing,
-                     --  it is possible that the stock id was set at a time
-                     --  when the actual stock was not defined: in this case,
-                     --  force a refresh.
-                     if Action.Stock_Id /= null
-                       and then A.Proxy.all in Action_Tool_Button_Record'Class
-                       and then not Action_Tool_Button (A.Proxy).Forced_Stock
-                     then
-                        Action_Tool_Button (A.Proxy).Set_Stock_Id
-                          (Action.Stock_Id.all);
-                     end if;
-
-                     A.Proxy.Set_Sensitive (Available);
+                  --  If this is a tool button that we are just showing,
+                  --  it is possible that the stock id was set at a time
+                  --  when the actual stock was not defined: in this case,
+                  --  force a refresh.
+                  if Available
+                    and then Action.Stock_Id /= null
+                    and then A.Proxy.all in Action_Tool_Button_Record'Class
+                    and then not Action_Tool_Button (A.Proxy).Forced_Stock
+                  then
+                     Action_Tool_Button (A.Proxy).Set_Stock_Id
+                       (Action.Stock_Id.all);
                   end if;
                end if;
             end if;
@@ -2795,11 +2891,14 @@ package body GPS.Kernel.Modules.UI is
    -------------------
 
    procedure Install_Menus
-      (Kernel      : not null access Kernel_Handle_Record'Class;
-       Description : GNATCOLL.VFS.Virtual_File)
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      App       : not null access Gtk.Application.Gtk_Application_Record'Class;
+      Description : GNATCOLL.VFS.Virtual_File)
    is
       procedure Process_Menu_Bar (Menubar_Node : Node);
       --  Process a <menubar> node
+
+      Builder_XML : Unbounded_String;
 
       procedure Process_Menu
         (Parent_Path : String;
@@ -2841,9 +2940,28 @@ package body GPS.Kernel.Modules.UI is
             Item := Register_Menu
               (Kernel, Parent_Path & "/" & Label,
                Action, Optional => Optional, Use_Mnemonics => True);
+
+            if Active (System_Menus) then
+               App.Add_Action (New_G_Action (Kernel, Action));
+               Append (Builder_XML,
+                       "<item><attribute name='label'>"
+                       & XML_Utils.Protect (Label)
+                       & "</attribute>"
+                       & "<attribute name='action'>app."
+                       & XML_Utils.Protect (Action)
+                       & "</attribute></item>" & ASCII.LF);
+            end if;
          else
             Gtk_New_With_Mnemonic (Item, Label);
             Parent.Append (Item);
+
+            if Active (System_Menus) then
+               Append (Builder_XML,
+                       "<submenu>"
+                       & "<attribute name='label'>" & XML_Utils.Protect (Label)
+                       & "</attribute>" & ASCII.LF
+                       & " <section>");
+            end if;
          end if;
 
          N := First_Child (Menu_Node);
@@ -2861,9 +2979,17 @@ package body GPS.Kernel.Modules.UI is
                elsif Node_Name (N) = "separator" then
                   Gtk_New (Sep);
                   Menu.Append (Sep);
+
+                  if Active (System_Menus) then
+                     Append (Builder_XML, "</section><section>");
+                  end if;
                end if;
                N := Next_Sibling (N);
             end loop;
+         end if;
+
+         if Active (System_Menus) and then Action = "" then
+            Append (Builder_XML, "</section></submenu>" & ASCII.LF);
          end if;
       end Process_Menu;
 
@@ -2894,6 +3020,8 @@ package body GPS.Kernel.Modules.UI is
          Globals.Symbols := Allocate;
       end if;
 
+      Builder_XML := To_Unbounded_String ("<interface><menu id='menubar'>");
+
       Open (Description.Display_Full_Name, Input);
       Reader.Set_Symbol_Table (Globals.Symbols);
       Parse (Reader, Input);
@@ -2915,5 +3043,194 @@ package body GPS.Kernel.Modules.UI is
       end loop;
 
       Free (Reader);
+
+      if Active (System_Menus) then
+         Append (Builder_XML, "</menu></interface>");
+
+         declare
+            Menubar   : GObject;
+            Builder   : Gtk_Builder;
+            Tmp       : Guint;
+            Error     : aliased GError;
+         begin
+            Gtk_New (Builder);
+            Tmp := Builder.Add_From_String
+              (To_String (Builder_XML), Error => Error'Access);
+            if Tmp /= 0 then
+               Menubar := Builder.Get_Object ("menubar");
+               App.Set_Menubar (Gmenu_Model (Menubar));
+            end if;
+            Unref (Builder);
+         end;
+      end if;
    end Install_Menus;
+
+   ----------------------------
+   -- On_GPS_Action_Activate --
+   ----------------------------
+
+   procedure On_GPS_Action_Activate (Self : Gaction; P : System.Address) is
+      pragma Unreferenced (P);
+      S : constant GPS_Action := GPS_Action (To_Object (Self));
+   begin
+      Execute_Action (S, S.Data);
+   end On_GPS_Action_Activate;
+
+   ----------------------------
+   -- On_GPS_Action_Get_Name --
+   ----------------------------
+
+   function On_GPS_Action_Get_Name (Self : Gaction) return chars_ptr is
+      S : constant GPS_Action := GPS_Action (To_Object (Self));
+   begin
+      return New_String (S.Data.Action.all);  --  ??? memory leak
+   end On_GPS_Action_Get_Name;
+
+   -------------------------------
+   -- On_GPS_Action_Get_Enabled --
+   -------------------------------
+
+   function On_GPS_Action_Get_Enabled (Self : Gaction) return Gboolean is
+      S : constant GPS_Action := GPS_Action (To_Object (Self));
+   begin
+      return (if S.Data.Active then 1 else 0);
+   end On_GPS_Action_Get_Enabled;
+
+   ------------------------
+   -- Init_GAction_Iface --
+   ------------------------
+
+   procedure Init_GAction_Iface
+     (Iface : Action_Interface_Descr;
+      Data  : System.Address)
+   is
+      pragma Unreferenced (Data);
+   begin
+      Set_Activate (Iface, On_GPS_Action_Activate'Access);
+      Set_Change_State (Iface, On_GPS_Action_Change_State'Access);
+      Set_Get_Enabled (Iface, On_GPS_Action_Get_Enabled'Access);
+      Set_Get_Name (Iface, On_GPS_Action_Get_Name'Access);
+      Set_Get_Parameter_Type (Iface, On_GPS_Action_Get_Parameter_Type'Access);
+      Set_Get_State (Iface, On_GPS_Action_Get_State'Access);
+      Set_Get_State_Hint (Iface, On_GPS_Action_Get_State_Hint'Access);
+      Set_Get_State_Type (Iface, On_GPS_Action_Get_State_Type'Access);
+   end Init_GAction_Iface;
+
+   -----------------------------
+   -- GPS_Action_Set_Property --
+   -----------------------------
+
+   procedure GPS_Action_Set_Property
+     (Object        : access Glib.Object.GObject_Record'Class;
+      Prop_Id       : Property_Id;
+      Value         : Glib.Values.GValue;
+      Property_Spec : Param_Spec)
+   is
+      pragma Unreferenced (Object, Value, Property_Spec);
+   begin
+      Trace (Me, "Unimplemented: Set_Property " & Prop_Id'Img);
+   end GPS_Action_Set_Property;
+
+   -----------------------------
+   -- GPS_Action_Get_Property --
+   -----------------------------
+
+   procedure GPS_Action_Get_Property
+     (Object        : access Glib.Object.GObject_Record'Class;
+      Prop_Id       : Property_Id;
+      Value         : out Glib.Values.GValue;
+      Property_Spec : Param_Spec)
+   is
+      pragma Unreferenced (Object, Value, Property_Spec);
+   begin
+      Trace (Me, "Unimplemented: Get_Property " & Prop_Id'Img);
+   end GPS_Action_Get_Property;
+
+   ---------------------------
+   -- GPS_Action_Class_Init --
+   ---------------------------
+
+   procedure GPS_Action_Class_Init (Self : GObject_Class) is
+   begin
+      Set_Properties_Handlers
+        (Self,
+         Set_Property => GPS_Action_Set_Property'Access,
+         Get_Property => GPS_Action_Get_Property'Access);
+
+      Override_Property (Self, Property_Name, "name");
+      Override_Property (Self, Property_Enabled, "enabled");
+      Override_Property (Self, Property_Parameter_Type, "parameter-type");
+      Override_Property (Self, Property_State, "state");
+      Override_Property (Self, Property_State_Type, "state-type");
+   end GPS_Action_Class_Init;
+
+   -------------------------
+   -- GPS_Action_Get_Type --
+   -------------------------
+
+   function GPS_Action_Get_Type return Glib.GType is
+      Info : access GInterface_Info;
+   begin
+      if Glib.Object.Initialize_Class_Record
+        (Ancestor     => GType_Object,
+         Class_Record => GPS_Action_CR'Access,
+         Type_Name    => "GPSAction",
+         Class_Init   => GPS_Action_Class_Init'Access)
+      then
+         Info := new GInterface_Info'
+           (Interface_Init     => Init_GAction_Iface'Access,
+            Interface_Finalize => null,
+            Interface_Data     => System.Null_Address);
+         Glib.Object.Add_Interface
+           (GPS_Action_CR,
+            Iface  => Glib.Action.Get_Type,
+            Info   => Info);
+      end if;
+      return GPS_Action_CR.The_Type;
+   end GPS_Action_Get_Type;
+
+   ----------------
+   -- Set_Active --
+   ----------------
+
+   overriding procedure Set_Active
+     (Self   : in out GPS_Action_Proxy;
+      Active : Boolean;
+      Object : not null access GObject_Record'Class)
+   is
+   begin
+      if Self.Active /= Active then
+         Self.Active := Active;
+         Notify (Object, "enabled");
+      end if;
+   end Set_Active;
+
+   ------------------
+   -- New_G_Action --
+   ------------------
+
+   function New_G_Action
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Action : String) return Glib.Action.Gaction
+   is
+      Act : GPS_Action;
+   begin
+      --  one action per GPS action, so that they each have their own handling
+      --  of enabled. We unfortunately can't use a generic action with a target
+      --  name that would be the GPS action name.
+
+      Act := new GPS_Action_Record;
+      G_New (Act, GPS_Action_Get_Type);
+
+      Act.Data := (Action    => new String'(Action),
+                   Kernel    => Kernel,
+                   Optional  => False,
+                   Hide      => False,
+                   Active    => True,
+                   Looked_Up => null);
+      Add_To_Global_Proxies (Act, Kernel, Filter => null);
+
+      return +Act;
+   end New_G_Action;
+
 end GPS.Kernel.Modules.UI;
