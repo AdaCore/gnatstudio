@@ -96,6 +96,15 @@ KP-60-N729-034 Wrong highlighting of tasks with aspects and discriminants
   Workaround: Either ignore this visual glitch or replace aspects with their
               equivalent pragmas.
 
+KP-60-N728-017 Outline view displaying incorrect profile
+
+  Problem:    When in a file where a subprogram profile would contain an "&"
+              character, the profile would be displayed as another profile.
+
+  Status:     This was fixed in 6.1 on 2014-08-29
+
+  Workaround: Do not use the outline for navigation.
+
 KP-60-N716-014 GPS: delay at startup with the remote mode
 
   Problem:    A 10 second delay might slow down the GPS startup when using the

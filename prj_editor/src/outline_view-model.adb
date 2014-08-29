@@ -32,6 +32,7 @@ with GPS.Search;                  use GPS.Search;
 with Language.Profile_Formaters;  use Language.Profile_Formaters;
 with Language.Icons;              use Language.Icons;
 with Project_Explorers_Common;    use Project_Explorers_Common;
+with XML_Utils; use XML_Utils;
 
 package body Outline_View.Model is
    Me : constant Trace_Handle := Create ("OUTLINE");
@@ -756,8 +757,9 @@ package body Outline_View.Model is
                   Set_String
                     (Value, Escape_Text (Get (Get_Construct (It).Name).all)
                      & " <span foreground=""#A0A0A0"">"
-                     & Profile (Profile'First ..
-                         Integer'Min (Profile'Last, Profile'First + 500))
+                     & Protect
+                       (Profile (Profile'First ..
+                            Integer'Min (Profile'Last, Profile'First + 500)))
                      & "</span>");
                end;
             else
