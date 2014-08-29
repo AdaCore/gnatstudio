@@ -612,11 +612,20 @@ def _goto_line_bound(beginning, extend_selection):
     gtk_ed_view = get_widgets_by_type(
         Gtk.TextView, ed.current_view().pywidget())[0]
 
-    if type(widget) is Gtk.Entry:
-        if beginning:
-            widget.set_position(0)
+    if isinstance(widget, Gtk.Entry):
+        bounds = widget.get_selection_bounds()
+        cursor_pos = widget.get_position()
+        if bounds:
+            start_pos = bounds[0] if bounds[1] == cursor_pos else bounds[1]
         else:
-            widget.set_position(widget.get_text_length())
+            start_pos = widget.get_position()
+        end_pos = 0 if beginning else widget.get_text_length()
+
+        if extend_selection:
+            widget.select_region(start_pos, end_pos)
+        else:
+            widget.set_position(end_pos)
+
     elif gtk_ed_view != widget:
         b = widget.get_buffer()
         it = b.get_iter_at_mark(b.get_mark("insert"))
