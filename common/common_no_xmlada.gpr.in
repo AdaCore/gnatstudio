@@ -5,7 +5,7 @@ with "../shared";
 project Common is
 
    for Languages use ("Ada", "C");
-   for Source_Dirs use ("core/src", "tests");
+   for Source_Dirs use ("core/src");
    for Object_Dir use "core/obj";
 
    package Compiler is
