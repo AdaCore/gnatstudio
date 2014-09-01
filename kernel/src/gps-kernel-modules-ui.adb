@@ -2604,7 +2604,7 @@ package body GPS.Kernel.Modules.UI is
          W.Set_Sensitive (True);
 
       else
-         if Self.Optional then
+         if Self.Optional or else Self.Hide then
             W.Hide;
          else
             W.Set_Sensitive (False);
