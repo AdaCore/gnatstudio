@@ -116,7 +116,6 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
             if current_code != "":
                 if (block_first == 0
                         or (block_first < current_line < block_last)):
-                    print "LOLWUT"
                     mark = srcbuf.add_special_line(current_line + 1,
                                                    current_code,
                                                    highlighting, "Style "
