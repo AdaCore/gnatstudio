@@ -281,7 +281,7 @@ def existing_style(pref_name, name="", prio=20):
     :rtype: Style
     """
     try:
-        from highlighter.engine import Style
+        from highlighter.engine import Style, HighlighterModule
         style_id = "{0}_hl".format(name if name else pref_name)
         pref = GPS.Preference(pref_name)
         pref.tag = None
@@ -301,5 +301,5 @@ def register_highlighter(language, spec):
        highlighter.
     :param tuple spec: The spec of the highlighter.
     """
-    from highlighter.engine import Highlighter
+    from highlighter.engine import Highlighter, HighlighterModule
     HighlighterModule.highlighters[language] = Highlighter(spec)
