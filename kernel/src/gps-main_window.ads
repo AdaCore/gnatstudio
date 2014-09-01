@@ -58,22 +58,15 @@ package GPS.Main_Window is
    type GPS_Window is access all GPS_Window_Record'Class;
 
    procedure Gtk_New
-     (Main_Window      : out GPS_Window;
-      Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File;
-      Application      : Gtkada_Application);
+     (Main_Window : out GPS_Window;
+      Application : Gtkada_Application;
+      Kernel      : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Menubar     : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class);
    --  Create a new main window.
    --  Home_Dir is the home directory (e.g ~/.gps) under which configuration
    --  files will be saved.
    --  Prefix_Directory is the prefix where GPS is installed (e.g /opt/gps).
    --  Application is the GPS Application instance
-
-   procedure Initialize
-     (Main_Window      : access GPS_Window_Record'Class;
-      Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File;
-      Application      : Gtkada_Application);
-   --  Internal initialization function
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class);
    --  Register the key bindings associated with the window
