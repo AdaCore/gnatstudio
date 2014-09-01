@@ -7,7 +7,12 @@ These themes are inspired from:
 """
 
 import GPS
-from gi.repository import Gtk, Gdk
+
+try:
+    from gi.repository import Gtk, Gdk
+except ImportError:
+    pass
+
 import gps_utils
 
 STYLE_WARNING = GPS.Style("editor-warnings")

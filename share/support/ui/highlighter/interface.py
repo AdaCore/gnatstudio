@@ -129,11 +129,7 @@ API Documentation
 
 """
 from functools import partial
-
-from highlighter.engine import Style, HighlighterModule, Highlighter, \
-    RegionMatcher, RegionRef, SimpleMatcher
 import GPS
-import colorschemes
 
 
 ##############################
@@ -148,7 +144,11 @@ def simple(regexp_string, tag):
     :param str regexp_string: The regular expression for this matcher
     :rtype: SimpleMatcher
     """
-    return SimpleMatcher(tag, regexp_string)
+    try:
+        from highlighter.engine import SimpleMatcher
+        return SimpleMatcher(tag, regexp_string)
+    except Exception:
+        pass
 
 
 def words(words_list, **kwargs):
@@ -179,6 +179,7 @@ def region(start_re, end_re, tag=None, name="", highlighter=(),
       region, they must have an higher priority than this one !
     :rtype: RegionMatcher
     """
+    from highlighter.engine import RegionMatcher
     return RegionMatcher(tag, start_re, end_re, highlighter, matchall, name)
 
 
@@ -208,6 +209,7 @@ def region_ref(name):
     :param name: The name of the region.
     :rtype: RegionRef
     """
+    from highlighter.engine import RegionRef
     return RegionRef(name)
 
 
@@ -240,23 +242,29 @@ def new_style(lang, name, foreground_colors,
 
     :rtype: Style
     """
-    style_id = "{0}_{1}".format(lang, name)
-    pref_name = "Editor/{0}/{1}".format(lang, name)
-    pref = GPS.Preference(pref_name)
-    doc = "Style for '{0}'".format(name)
-    pref.create_style(doc, doc, foreground_colors[0], background_colors[0],
-                      font_style)
+    try:
+        from highlighter.engine import Style, HighlighterModule
+        import colorschemes
 
-    colorschemes.dark_common[pref_name] = (font_style.upper(),
-                                           foreground_colors[1],
-                                           background_colors[1])
+        style_id = "{0}_{1}".format(lang, name)
+        pref_name = "Editor/{0}/{1}".format(lang, name)
+        pref = GPS.Preference(pref_name)
+        doc = "Style for '{0}'".format(name)
+        pref.create_style(doc, doc, foreground_colors[0], background_colors[0],
+                          font_style)
 
-    colorschemes.light_common[pref_name] = (font_style.upper(),
-                                            foreground_colors[0],
-                                            background_colors[0])
-    pref.tag = None
-    HighlighterModule.preferences[style_id] = pref
-    return Style(style_id, prio, pref)
+        colorschemes.dark_common[pref_name] = (font_style.upper(),
+                                               foreground_colors[1],
+                                               background_colors[1])
+
+        colorschemes.light_common[pref_name] = (font_style.upper(),
+                                                foreground_colors[0],
+                                                background_colors[0])
+        pref.tag = None
+        HighlighterModule.preferences[style_id] = pref
+        return Style(style_id, prio, pref)
+    except Exception:
+        pass
 
 
 def existing_style(pref_name, name="", prio=20):
@@ -272,12 +280,16 @@ def existing_style(pref_name, name="", prio=20):
       priority styles will take precedence over lower priority ones.
     :rtype: Style
     """
-    style_id = "{0}_hl".format(name if name else pref_name)
-    pref = GPS.Preference(pref_name)
-    pref.tag = None
-    HighlighterModule.preferences[style_id] = pref
+    try:
+        from highlighter.engine import Style
+        style_id = "{0}_hl".format(name if name else pref_name)
+        pref = GPS.Preference(pref_name)
+        pref.tag = None
+        HighlighterModule.preferences[style_id] = pref
 
-    return Style(style_id, prio, pref)
+        return Style(style_id, prio, pref)
+    except Exception:
+        pass
 
 
 def register_highlighter(language, spec):
@@ -289,4 +301,5 @@ def register_highlighter(language, spec):
        highlighter.
     :param tuple spec: The spec of the highlighter.
     """
+    from highlighter.engine import Highlighter
     HighlighterModule.highlighters[language] = Highlighter(spec)

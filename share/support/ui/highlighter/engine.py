@@ -1,6 +1,11 @@
 import GPS
 from modules import Module
-from gi.repository import Gtk, GLib, Gdk, Pango
+
+try:
+    from gi.repository import Gtk, GLib, Gdk, Pango
+except ImportError:
+    pass
+
 from pygps import get_gtk_buffer, is_editor_visible
 import re
 from time import time
