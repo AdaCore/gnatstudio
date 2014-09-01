@@ -58,8 +58,6 @@ with Gtk.Application;                  use Gtk.Application;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Handlers;
-with Gtk.Menu_Bar;                     use Gtk.Menu_Bar;
-with Gtk.Menu_Item;                    use Gtk.Menu_Item;
 with Gtk.Settings;                     use Gtk.Settings;
 with Gtk.Style_Provider;               use Gtk.Style_Provider;
 with Gtk.Window;                       use Gtk.Window;
@@ -307,7 +305,7 @@ procedure GPS.Main is
    --  Handler for the ::command-line signal, emited by the application
 
    procedure Initialize_Environment_Variables
-     (Command_Line : access Gapplication_Command_Line_Record'Class);
+     (Command_Line : not null access Gapplication_Command_Line_Record'Class);
    --  Sanitize, sets and take into account various environment variables, and
    --  initialize GPS according to them.
 
@@ -359,49 +357,12 @@ procedure GPS.Main is
    --------------------------------------
 
    procedure Initialize_Environment_Variables
-     (Command_Line : access Gapplication_Command_Line_Record'Class)
+     (Command_Line : not null access Gapplication_Command_Line_Record'Class)
    is
-      function Getenv (Var : String) return String;
-      function Get_Cwd return String;
-      function Get_Environ return GNAT.Strings.String_List;
-         --  proxies for the services in the command line, usable even when no
-      --  command line is passed
-
-      function Getenv (Var : String) return String is
-         Str : String_Access;
-      begin
-         if Command_Line = null then
-            Str := GNAT.OS_Lib.Getenv (Var);
-            return S : constant String := Str.all do
-               Free (Str);
-            end return;
-         else
-            return Command_Line.Getenv (Var);
-         end if;
-      end Getenv;
-
-      function Get_Cwd return String is
-      begin
-         if Command_Line = null then
-            return Get_Current_Dir.Display_Full_Name;
-         else
-            return Command_Line.Get_Cwd;
-         end if;
-      end Get_Cwd;
-
-      function Get_Environ return GNAT.Strings.String_List is
-      begin
-         if Command_Line = null then
-            return (1 .. 0 => null);
-         else
-            return Command_Line.Get_Environ;
-         end if;
-      end Get_Environ;
-
    begin
       declare
-         Tmp  : constant String := Getenv ("GPS_MEMORY_MONITOR");
-         Tmp2 : constant String := Getenv ("GPS_MEMORY_CHECK");
+         Tmp  : constant String := Command_Line.Getenv ("GPS_MEMORY_MONITOR");
+         Tmp2 : constant String := Command_Line.Getenv ("GPS_MEMORY_CHECK");
 
       begin
          GNATCOLL.Memory.Configure
@@ -414,7 +375,8 @@ procedure GPS.Main is
       --  point to the right libraries
 
       declare
-         Tmp : constant String := Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
+         Tmp : constant String :=
+           Command_Line.Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
       begin
          if Tmp /= "" then
             Setenv ("LD_LIBRARY_PATH", Tmp);
@@ -422,7 +384,8 @@ procedure GPS.Main is
       end;
 
       declare
-         Tmp : constant String := Getenv ("GPS_STARTUP_DYLD_LIBRARY_PATH");
+         Tmp : constant String :=
+           Command_Line.Getenv ("GPS_STARTUP_DYLD_LIBRARY_PATH");
       begin
          if Tmp /= "" then
             Setenv ("DYLD_LIBRARY_PATH", Tmp);
@@ -431,7 +394,7 @@ procedure GPS.Main is
 
       declare
          Tmp : constant String :=
-           Getenv ("GPS_STARTUP_DYLD_FALLBACK_LIBRARY_PATH");
+           Command_Line.Getenv ("GPS_STARTUP_DYLD_FALLBACK_LIBRARY_PATH");
       begin
          if Tmp /= "" then
             Setenv ("DYLD_FALLBACK_LIBRARY_PATH", Tmp);
@@ -439,7 +402,7 @@ procedure GPS.Main is
       end;
 
       declare
-         Charset : constant String := Getenv ("CHARSET");
+         Charset : constant String := Command_Line.Getenv ("CHARSET");
       begin
          if Charset = "" then
             --  Gtk+ does not like if CHARSET is not defined.
@@ -450,7 +413,7 @@ procedure GPS.Main is
          end if;
       end;
 
-      Startup_Dir := new String'(Get_Cwd);
+      Startup_Dir := new String'(Command_Line.Get_Cwd);
 
       --  Set the TERM variable to a dummy value, since we only know how to
       --  handle simple terminals
@@ -458,7 +421,7 @@ procedure GPS.Main is
       Setenv ("TERM", "dumb");
 
       declare
-         Home : constant String := Getenv ("GPS_HOME");
+         Home : constant String := Command_Line.Getenv ("GPS_HOME");
       begin
          if Home /= "" then
             Home_Dir := Create (+Home);
@@ -471,7 +434,7 @@ procedure GPS.Main is
       Ensure_Directory (GPS_Home_Dir);
 
       declare
-         Prefix : constant String := Getenv ("GPS_ROOT");
+         Prefix : constant String := Command_Line.Getenv ("GPS_ROOT");
       begin
          if Prefix /= "" then
             Prefix_Dir := Create (+Prefix);
@@ -497,7 +460,7 @@ procedure GPS.Main is
       end if;
 
       declare
-         Tmp     : constant String := Getenv ("PATH");
+         Tmp     : constant String := Command_Line.Getenv ("PATH");
          Prefix  : constant String := Prefix_Dir.Display_Full_Name;
          Bin     : constant String :=
            Prefix &
@@ -529,7 +492,7 @@ procedure GPS.Main is
       --  Python startup path
 
       declare
-         Python_Path : constant String := Getenv ("PYTHONPATH");
+         Python_Path : constant String := Command_Line.Getenv ("PYTHONPATH");
          New_Val : String_Access;
       begin
          if Python_Path = "" then
@@ -549,7 +512,7 @@ procedure GPS.Main is
 
       declare
          Equal  : Natural;  --  Position of '=' in NAME=VALUE env string
-         List   : GNAT.Strings.String_List := Get_Environ;
+         List   : GNAT.Strings.String_List := Command_Line.Get_Environ;
          Prefix : constant String := "GPS_STARTUP_";
       begin
          Env := new Environment_Record;
@@ -565,7 +528,7 @@ procedure GPS.Main is
                   Env.Append
                     (Name        => Name,
                      Users_Value => List (J) (Equal + 1 .. List (J)'Last),
-                     GPS_Value   => Getenv (Name));
+                     GPS_Value   => Command_Line.Getenv (Name));
                end;
             end if;
          end loop;
@@ -1320,8 +1283,6 @@ procedure GPS.Main is
    is
       Status_Code : Glib.Gint;
       Do_Exit     : Boolean;
-      Kernel      : Kernel_Handle;
-      Menubar     : Gtk_Menu_Bar;
 
    begin
       Application.Hold;
@@ -1330,7 +1291,7 @@ procedure GPS.Main is
       --  them
       Initialize_Environment_Variables (Command_Line);
 
-      --  Now perform the low level initializations
+      --  Now permorm the low level initializations
       Initialize_Low_Level (Status_Code);
 
       if Status_Code /= 0 then
@@ -1346,39 +1307,14 @@ procedure GPS.Main is
          return Status_Code;
       end if;
 
-      --  Create the kernel and prepare the menu model
-
-      Gtk_New
-        (Kernel, Gtkada_Application (Application), GPS_Home_Dir, Prefix_Dir);
-      Create_MDI_Preferences (Kernel);
-      Install_Menus
-        (Kernel,
-         Gtkada_Application (Application),
-         Create_From_Base ("menus.xml", Get_Share_Dir (Kernel).Full_Name.all),
-         Menubar => Menubar);
-
       --  Finally create the main window, and setup the project
 
       GPS.Main_Window.Gtk_New
-        (GPS_Main, Gtkada_Application (Application), Kernel, Menubar);
+        (GPS_Main, GPS_Home_Dir, Prefix_Dir,
+         Gtkada_Application (Application));
 
       GPS.Stock_Icons.Register_Stock_Icons (GPS_Main.Kernel, Prefix_Dir);
       GPS_Main.Kernel.Set_Environment (Env);
-
-      --  Make the /Window menu dynamic.
-      --  ??? This does not work with GtkApplication menu
-
-      declare
-         Menu_Item : Gtk_Menu_Item;
-      begin
-         Menu_Item := Find_Menu_Item (Kernel, -"/Window");
-         Set_Submenu
-           (Menu_Item, Kernel_Desktop.Create_Menu
-              (GPS_Main.MDI,
-               User         => Kernel,
-               Registration =>
-                 GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
-      end;
 
       --  We can now release the Application, as the main window took a
       --  hold on it

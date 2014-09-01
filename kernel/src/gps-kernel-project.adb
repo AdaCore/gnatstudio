@@ -30,7 +30,7 @@ with Remote;                           use Remote;
 with Prj;
 with Types;                            use Types;
 
-with Gtk.Window;        use Gtk.Window;
+with Gtk.Icon_Factory;  use Gtk.Icon_Factory;
 
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
@@ -201,7 +201,7 @@ package body GPS.Kernel.Project is
       --  If we are in the process of creating the kernel, no need to do
       --  anything else here
       --  ??? It would be nice to rely on a better indicator than this
-      if Self.Handle.Get_Main_Window = null then
+      if Get_Icon_Factory (Self.Handle) = null then
          return;
       end if;
 

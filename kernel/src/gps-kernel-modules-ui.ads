@@ -66,7 +66,6 @@ with Glib.Values;
 with Gtk.Application;
 with Gtk.Handlers;
 with Gtk.Menu;
-with Gtk.Menu_Bar;
 with Gtk.Menu_Item;
 with Gtk.Target_List;
 with Gtk.Toolbar;
@@ -349,8 +348,7 @@ package GPS.Kernel.Modules.UI is
    procedure Install_Menus
      (Kernel    : not null access Kernel_Handle_Record'Class;
       App       : not null access Gtk.Application.Gtk_Application_Record'Class;
-      Description : GNATCOLL.VFS.Virtual_File;
-      Menubar   : out Gtk.Menu_Bar.Gtk_Menu_Bar);
+      Description : GNATCOLL.VFS.Virtual_File);
    --  Load an XML description of the menubar, and create it.
 
    procedure Start_Monitoring_Menus
@@ -369,8 +367,7 @@ package GPS.Kernel.Modules.UI is
       Item        : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Filter      : Action_Filter  := null;
-      Menubar     : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class := null);
+      Filter      : Action_Filter  := null);
    --  Add new menu items to the menu bar, as a child of Parent_Path.
    --
    --  Parent_Path should have a form like "/main_main/submenu". Underscores
@@ -380,8 +377,6 @@ package GPS.Kernel.Modules.UI is
    --  Menus will be created if they don't exist.
    --  This is considered as an absolute path, as if it always started with
    --  a '/'.
-   --
-   --  Menubar will default to the main window's menubar.
    --
    --  Item might be null, in which case only the parent menu items are
    --  created, and Add_Before applies to the deepest one instead of Item.
@@ -414,9 +409,7 @@ package GPS.Kernel.Modules.UI is
       Ref_Item      : String := "";
       Add_Before    : Boolean := True;
       Optional      : Boolean := False;
-      Use_Mnemonics : Boolean := True;
-      Menubar       : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class := null)
-      return Gtk.Menu_Item.Gtk_Menu_Item;
+      Use_Mnemonics : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Append a menu binding a GPS action. The action need not exist when the
    --  menu is created (but the menu will always be greyd out if the action
    --  does not exist).

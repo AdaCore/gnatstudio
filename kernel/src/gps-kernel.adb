@@ -109,6 +109,12 @@ package body GPS.Kernel is
       Data   : access Hooks_Data'Class);
    --  Called when the preferences change
 
+   procedure On_Main_Window_Destroyed
+     (Kernel : System.Address; Main_Window : System.Address);
+   pragma Convention (C, On_Main_Window_Destroyed);
+   --  Called when the main window is destroyed, so that the kernel no longer
+   --  points to an invalid window
+
    type GPS_Refactoring_Factory_Context
      is new Refactoring.Factory_Context_Record with record
       Kernel : Kernel_Handle;
@@ -258,6 +264,20 @@ package body GPS.Kernel is
          return False;
    end Require_GNAT_Date;
 
+   ------------------------------
+   -- On_Main_Window_Destroyed --
+   ------------------------------
+
+   procedure On_Main_Window_Destroyed
+     (Kernel : System.Address; Main_Window : System.Address)
+   is
+      pragma Unreferenced (Main_Window);
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Kernel_Handle);
+   begin
+      Convert (Kernel).Main_Window := null;
+   end On_Main_Window_Destroyed;
+
    ---------------------
    -- Create_Registry --
    ---------------------
@@ -291,7 +311,7 @@ package body GPS.Kernel is
 
    procedure Gtk_New
      (Handle           : out Kernel_Handle;
-      Application      : not null access Gtk_Application_Record'Class;
+      Main_Window      : Gtk.Window.Gtk_Window;
       Home_Dir         : Virtual_File;
       Prefix_Directory : Virtual_File) is
    begin
@@ -300,8 +320,11 @@ package body GPS.Kernel is
       Handle.Prefix   := Prefix_Directory;
       Handle.Launcher.Kernel := GPS.Core_Kernels.Core_Kernel (Handle);
       Handle.Env := new GPS.Environments.Environment_Record;
-      Handle.Application := Application;
-      Handle.Main_Window := 0;
+
+      Handle.Main_Window  := Main_Window;
+      Weak_Ref (Handle.Main_Window,
+                On_Main_Window_Destroyed'Access,
+                Handle.all'Address);
 
       GPS.Core_Kernels.Initialize (Handle);
 
@@ -337,17 +360,6 @@ package body GPS.Kernel is
          Wrapper (On_Preferences_Changed'Access),
          Name => "kernel.preferences_changed");
    end Gtk_New;
-
-   ---------------------
-   -- Set_Main_Window --
-   ---------------------
-
-   procedure Set_Main_Window
-     (Self : not null access Kernel_Handle_Record;
-      Id   : Guint) is
-   begin
-      Self.Main_Window := Id;
-   end Set_Main_Window;
 
    ----------------------------
    -- On_Preferences_Changed --
@@ -942,7 +954,7 @@ package body GPS.Kernel is
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window is
    begin
-      return Handle.Application.Get_Window_By_Id (Handle.Main_Window);
+      return Handle.Main_Window;
    end Get_Main_Window;
 
    ------------------

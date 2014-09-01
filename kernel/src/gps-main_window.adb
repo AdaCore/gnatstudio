@@ -303,6 +303,21 @@ package body GPS.Main_Window is
       return Success;
    end Execute;
 
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Main_Window      : out GPS_Window;
+      Home_Dir         : Virtual_File;
+      Prefix_Directory : Virtual_File;
+      Application      : Gtkada_Application) is
+   begin
+      Main_Window := new GPS_Window_Record;
+      GPS.Main_Window.Initialize
+        (Main_Window, Home_Dir, Prefix_Directory, Application);
+   end Gtk_New;
+
    ----------
    -- Quit --
    ----------
@@ -510,19 +525,28 @@ package body GPS.Main_Window is
       return False;
    end On_Focus_In;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Gtk_New
-     (Main_Window : out GPS_Window;
-      Application : Gtkada_Application;
-      Kernel      : not null access Kernel_Handle_Record'Class;
-      Menubar     : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class)
+   procedure Initialize
+     (Main_Window      : access GPS_Window_Record'Class;
+      Home_Dir         : Virtual_File;
+      Prefix_Directory : Virtual_File;
+      Application      : Gtkada_Application)
    is
       Vbox      : Gtk_Vbox;
+      Menu_Item : Gtk_Menu_Item;
+--        Menubar   : GObject;
+--        Builder   : Gtk_Builder;
+--        Tmp       : Guint;
+--        Error     : aliased GError;
+--        pragma Unreferenced (Tmp);
+
    begin
-      Main_Window := new GPS_Window_Record;
+      --  Initialize the window first, so that it can be used while creating
+      --  the kernel, in particular calls to Push_State
+
       Glib.Object.Initialize_Class_Record
         (Ancestor     => Gtk.Application_Window.Get_Type,
          Signals      => Signals,
@@ -533,8 +557,12 @@ package body GPS.Main_Window is
       Main_Window.Application := Application;
       Application.Add_Window (Main_Window);
 
-      Main_Window.Kernel := Kernel_Handle (Kernel);
-      Kernel.Set_Main_Window (Main_Window.Get_Id);
+      Gtk_New
+        (Main_Window.Kernel,
+         Gtk_Window (Main_Window),
+         Home_Dir, Prefix_Directory);
+
+      Create_MDI_Preferences (Main_Window.Kernel);
 
       Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
         (Get_Preferences (Main_Window.Kernel),
@@ -565,7 +593,7 @@ package body GPS.Main_Window is
       Gtk_New_Vbox (Vbox, False, 0);
       Add (Main_Window, Vbox);
 
-      Main_Window.Menu_Bar := Gtk_Menu_Bar (Menubar);
+      Gtk_New (Main_Window.Menu_Bar);
       Pack_Start (Vbox, Main_Window.Menu_Bar, False);
 
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
@@ -609,11 +637,26 @@ package body GPS.Main_Window is
       User_Interface_Tools.Set_User_Interface
         (new User_Interface'(Main_Window => Gtk_Window (Main_Window)));
 
+      Install_Menus
+        (Main_Window.Kernel,
+         Application,
+         Create_From_Base
+           ("menus.xml", Get_Share_Dir (Main_Window.Kernel).Full_Name.all));
+
+      --  Make the /Window menu dynamic.
+      --  ??? This does not work with GtkApplication menu
+      Menu_Item := Find_Menu_Item (Main_Window.Kernel, -"/Window");
+      Set_Submenu
+        (Menu_Item, Kernel_Desktop.Create_Menu
+           (Main_Window.MDI,
+            User         => Main_Window.Kernel,
+            Registration => GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
+
       Main_Window.Toolbar := Create_Toolbar (Main_Window.Kernel, Id => "main");
       Main_Window.Toolbar_Box.Pack_Start (Main_Window.Toolbar);
 
       Preferences_Changed (Main_Window.Kernel, Data => null);
-   end Gtk_New;
+   end Initialize;
 
    -------------------
    -- Register_Keys --
