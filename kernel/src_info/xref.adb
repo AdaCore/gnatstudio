@@ -1708,23 +1708,40 @@ package body Xref is
    overriding function Parameters
      (Entity : General_Entity) return Parameter_Array
    is
-      All_Params : Parameter_Array (1 .. 100);
-      Count      : Integer := All_Params'First - 1;
-   begin
-      declare
-         Curs : Parameters_Cursor :=
-           Entity.Db.Xref.Parameters (Entity.Entity);
-      begin
-         while Curs.Has_Element loop
-            Count := Count + 1;
-            All_Params (Count) :=
-              (Kind => Curs.Element.Kind,
-               Parameter => From_New (Entity.Db, Curs.Element.Parameter));
-            Curs.Next;
-         end loop;
-      end;
+      --  We can't use a Vector in the specs, since the size of
+      --  General_Parameter is unknown at that point. So we have to use an
+      --  array and grow it.
 
-      return All_Params (All_Params'First .. Count);
+      type Parameter_Array_Access is access all Parameter_Array;
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (Parameter_Array, Parameter_Array_Access);
+
+      All_Params : Parameter_Array_Access := new Parameter_Array (1 .. 100);
+      Tmp        : Parameter_Array_Access;
+      Count      : Integer := All_Params'First - 1;
+      Curs : Parameters_Cursor :=
+        Entity.Db.Xref.Parameters (Entity.Entity);
+   begin
+      while Curs.Has_Element loop
+         Count := Count + 1;
+         if Count > All_Params'Last then
+            Tmp := All_Params;
+            All_Params := new Parameter_Array (1 .. All_Params'Last * 2);
+            All_Params (Tmp'Range) := Tmp.all;
+            Unchecked_Free (Tmp);
+         end if;
+
+         All_Params (Count) :=
+           (Kind => Curs.Element.Kind,
+            Parameter => From_New (Entity.Db, Curs.Element.Parameter));
+         Curs.Next;
+      end loop;
+
+      return R : constant Parameter_Array :=
+         All_Params (All_Params'First .. Count)
+      do
+         Unchecked_Free (All_Params);
+      end return;
    end Parameters;
 
    ---------------------

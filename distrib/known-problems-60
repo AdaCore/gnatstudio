@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N829-003 GPS.Entity.parameters with more than 100 parameters
+
+  Problem:    Calling the python function parameters() when the entity has
+              more than 100 parameters will result in an internal error, and
+              thus a python exception.
+
+  Status:     This was fixed in 6.1 on 2014-09-01
+
+  Workaround: add a try..catch.. block around the call to parameters()
+
 KP-60-N828-010 /Tools/Macro/Play not enabled after stopping a recording
 
   Problem:    When recording a macro and then selecting Stop Recording, the
