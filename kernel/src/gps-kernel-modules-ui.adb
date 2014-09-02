@@ -774,7 +774,7 @@ package body GPS.Kernel.Modules.UI is
               "Contextual_Action called on freed context");
       Context.Event :=
         GPS_Window
-          (Action.Kernel.Main_Window).Last_Event_For_Contextual;
+          (Action.Kernel.Get_Main_Window).Last_Event_For_Contextual;
       --   Event will be deep-copied in the call to Create_Proxy below
 
       case Action.Menu_Type is
@@ -1205,6 +1205,7 @@ package body GPS.Kernel.Modules.UI is
    is
       Context : Selection_Context := New_Context;
       Menu    : Gtk_Menu := null;
+      Win    : constant GPS_Window := GPS_Window (User.Kernel.Get_Main_Window);
    begin
       --  Create the menu and add all the modules information
       Menu := new GPS_Contextual_Menu_Record;
@@ -1229,14 +1230,11 @@ package body GPS.Kernel.Modules.UI is
       User.Kernel.Last_Context_For_Contextual := Context;
       User.Kernel.Last_Context_From_Contextual := True;
 
-      if GPS_Window (User.Kernel.Main_Window).Last_Event_For_Contextual
-        /= null
-      then
-         Free (GPS_Window (User.Kernel.Main_Window).Last_Event_For_Contextual);
+      if Win.Last_Event_For_Contextual /= null then
+         Free (Win.Last_Event_For_Contextual);
       end if;
 
-      GPS_Window (User.Kernel.Main_Window).Last_Event_For_Contextual :=
-        Copy (Event);
+      Win.Last_Event_For_Contextual := Copy (Event);
 
       --  Override the previous value. No Ref is taken explicitly, so we do not
       --  need to Unref either. This field is automatically reset to null when
@@ -1285,13 +1283,15 @@ package body GPS.Kernel.Modules.UI is
 
    function Find_Menu_Item
      (Kernel : access Kernel_Handle_Record'Class;
-      Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item is
+      Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item
+   is
+      Win : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
    begin
-      if Kernel.Main_Window = null then
+      if Win = null then
          return null;
       else
          return Find_Or_Create_Menu_Tree
-           (Menu_Bar      => GPS_Window (Kernel.Main_Window).Menu_Bar,
+           (Menu_Bar      => Win.Menu_Bar,
             Menu          => null,
             Path          => Path,
             Accelerators  => Get_Default_Accelerators (Kernel),
@@ -1310,15 +1310,20 @@ package body GPS.Kernel.Modules.UI is
       Item        : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Filter      : Action_Filter  := null)
+      Filter      : Action_Filter  := null;
+      Menubar     : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class := null)
    is
       Parent, Pred : Gtk_Menu_Item;
       Parent_Menu  : Gtk_Menu;
       Index        : Gint;
+      Win : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
+
+      Bar : constant Gtk_Menu_Bar :=
+        (if Menubar = null then Win.Menu_Bar else Gtk_Menu_Bar (Menubar));
 
    begin
       Parent := Find_Or_Create_Menu_Tree
-        (Menu_Bar     => GPS_Window (Kernel.Main_Window).Menu_Bar,
+        (Menu_Bar     => Bar,
          Menu         => null,
          Path         => Parent_Path,
          Accelerators => Get_Default_Accelerators (Kernel),
@@ -1339,14 +1344,14 @@ package body GPS.Kernel.Modules.UI is
 
       if Item /= null then
          Find_Menu_Item_By_Name
-           (Menu_Bar => GPS_Window (Kernel.Main_Window).Menu_Bar,
-            Menu => Parent_Menu,
-            Name => Ref_Item,
+           (Menu_Bar  => Bar,
+            Menu      => Parent_Menu,
+            Name      => Ref_Item,
             Menu_Item => Pred,
-            Index => Index);
+            Index     => Index);
 
          Add_Menu (Parent     => Parent_Menu,
-                   Menu_Bar   => GPS_Window (Kernel.Main_Window).Menu_Bar,
+                   Menu_Bar   => Bar,
                    Item       => Item,
                    Index      => Index,
                    Add_Before => Add_Before);
@@ -1713,7 +1718,9 @@ package body GPS.Kernel.Modules.UI is
       Ref_Item      : String := "";
       Add_Before    : Boolean := True;
       Optional      : Boolean := False;
-      Use_Mnemonics : Boolean := True) return Gtk.Menu_Item.Gtk_Menu_Item
+      Use_Mnemonics : Boolean := True;
+      Menubar       : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class := null)
+      return Gtk.Menu_Item.Gtk_Menu_Item
    is
       Self : Action_Menu_Item;
       Full_Path : constant String := Create_Menu_Path ("/", Path);
@@ -1749,7 +1756,8 @@ package body GPS.Kernel.Modules.UI is
       --  escaping and would use '\' as a separator.
 
       Register_Menu
-        (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before);
+        (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before,
+         Menubar => Menubar);
 
       Add_To_Global_Proxies (Self, Kernel, null);
 
@@ -2735,7 +2743,7 @@ package body GPS.Kernel.Modules.UI is
             --  no more items
 
             Menu_Bar := GPS_Window
-              (Get_Kernel (Data.Context).Main_Window).Menu_Bar;
+              (Get_Kernel (Data.Context).Get_Main_Window).Menu_Bar;
             Propagate_Visibility (Menu_Bar, Menu_Bar);
 
             Tool_Bar := Get_Toolbar (Get_Kernel (Data.Context));
@@ -2893,7 +2901,8 @@ package body GPS.Kernel.Modules.UI is
    procedure Install_Menus
      (Kernel    : not null access Kernel_Handle_Record'Class;
       App       : not null access Gtk.Application.Gtk_Application_Record'Class;
-      Description : GNATCOLL.VFS.Virtual_File)
+      Description : GNATCOLL.VFS.Virtual_File;
+      Menubar   : out Gtk.Menu_Bar.Gtk_Menu_Bar)
    is
       procedure Process_Menu_Bar (Menubar_Node : Node);
       --  Process a <menubar> node
@@ -2939,7 +2948,8 @@ package body GPS.Kernel.Modules.UI is
          if Action /= "" then
             Item := Register_Menu
               (Kernel, Parent_Path & "/" & Label,
-               Action, Optional => Optional, Use_Mnemonics => True);
+               Action, Optional => Optional, Use_Mnemonics => True,
+               Menubar => Menubar);
 
             if Active (System_Menus) then
                App.Add_Action (New_G_Action (Kernel, Action));
@@ -2999,8 +3009,6 @@ package body GPS.Kernel.Modules.UI is
 
       procedure Process_Menu_Bar (Menubar_Node : Node) is
          N    : Node := First_Child (Menubar_Node);
-         Menubar : constant Gtk_Menu_Bar :=
-           GPS_Window (Kernel.Main_Window).Menu_Bar;
       begin
          while N /= null loop
             if Node_Name (N) = "menu" then
@@ -3019,6 +3027,8 @@ package body GPS.Kernel.Modules.UI is
       if Globals.Symbols = No_Symbol_Table then
          Globals.Symbols := Allocate;
       end if;
+
+      Gtk_New (Menubar);
 
       Builder_XML := To_Unbounded_String ("<interface><menu id='menubar'>");
 

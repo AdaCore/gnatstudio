@@ -235,7 +235,7 @@ package body GPS.Kernel.MDI is
    function Get_MDI
      (Handle : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Window
    is
-      Top : constant GPS_Window := GPS_Window (Handle.Main_Window);
+      Top : constant GPS_Window := GPS_Window (Handle.Get_Main_Window);
    begin
       if Top = null then
          return null;
@@ -1049,7 +1049,7 @@ package body GPS.Kernel.MDI is
       end Get_Project_Name;
 
       Main_Window : constant Gdk.Gdk_Window :=
-                      Get_Window (Handle.Main_Window);
+                      Get_Window (Handle.Get_Main_Window);
       MDI          : constant MDI_Window := Get_MDI (Handle);
       File_Name    : constant Virtual_File :=
                        Create_From_Dir (Handle.Home_Dir, Desktop_Name);
@@ -1181,7 +1181,7 @@ package body GPS.Kernel.MDI is
                                     (Handle.Home_Dir, Desktop_Name);
       Project                 : constant Project_Type := Get_Project (Handle);
       Main_Window             : constant GPS_Window :=
-                                  GPS_Window (Handle.Main_Window);
+                                  GPS_Window (Handle.Get_Main_Window);
       Predefined_Desktop      : constant Virtual_File :=
                                   Create_From_Dir
                                     (Get_System_Dir (Handle),
@@ -1470,9 +1470,15 @@ package body GPS.Kernel.MDI is
 
    function Get_Default_Accelerators
      (Handle : access Kernel_Handle_Record'Class)
-      return Gtk.Accel_Group.Gtk_Accel_Group is
+      return Gtk.Accel_Group.Gtk_Accel_Group
+   is
+      Win : constant GPS_Window := GPS_Window (Handle.Get_Main_Window);
    begin
-      return GPS_Window (Handle.Main_Window).Main_Accel_Group;
+      if Win = null then
+         return null;
+      else
+         return Win.Main_Accel_Group;
+      end if;
    end Get_Default_Accelerators;
 
    ----------------------
@@ -1483,7 +1489,7 @@ package body GPS.Kernel.MDI is
      (Handle : access Kernel_Handle_Record'Class)
       return Gtk.Icon_Factory.Gtk_Icon_Factory is
    begin
-      return GPS_Window (Handle.Main_Window).Icon_Factory;
+      return GPS_Window (Handle.Get_Main_Window).Icon_Factory;
    end Get_Icon_Factory;
 
    -----------------
@@ -1492,10 +1498,13 @@ package body GPS.Kernel.MDI is
 
    function Get_Toolbar
      (Handle : access Kernel_Handle_Record'Class)
-      return Gtk.Toolbar.Gtk_Toolbar is
+      return Gtk.Toolbar.Gtk_Toolbar
+   is
+      Win : constant access Gtk_Window_Record'Class :=
+        Handle.Get_Main_Window;
    begin
-      if Handle.Main_Window /= null then
-         return GPS_Window (Handle.Main_Window).Toolbar;
+      if Win /= null then
+         return GPS_Window (Win).Toolbar;
       else
          return null;
       end if;

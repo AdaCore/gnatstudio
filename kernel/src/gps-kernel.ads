@@ -35,8 +35,9 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Xref; use GNATCOLL.Xref;
 
 with Glib.Main;
-with Glib.Object;  use Glib;
+with Glib.Object;       use Glib;
 with Gdk.Types;
+with Gtk.Application;   use Gtk.Application;
 with Gtk.Dialog;
 with Gtk.Widget;
 with Gtk.Window;
@@ -85,12 +86,18 @@ package GPS.Kernel is
 
    procedure Gtk_New
      (Handle           : out Kernel_Handle;
-      Main_Window      : Gtk.Window.Gtk_Window;
+      Application      : not null access Gtk_Application_Record'Class;
       Home_Dir         : Virtual_File;
       Prefix_Directory : Virtual_File);
    --  Create a new GPS kernel.
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
+
+   procedure Set_Main_Window
+     (Self : not null access Kernel_Handle_Record;
+      Id   : Guint);
+   --  Set the main window for GPS. Id is the result of calling
+   --  Gtk.Application_Window.Get_Id.
 
    procedure Load_Preferences (Handle : access Kernel_Handle_Record);
    --  Load the preferences from the user's file ~/.gps/preferences
@@ -1159,7 +1166,8 @@ private
       All_Action_Filters : Action_Filters_List.List;
       --  The action contexts registered in the kernel
 
-      Main_Window : Gtk.Window.Gtk_Window;
+      Application : access Gtk_Application_Record'Class;
+      Main_Window : Guint;
       --  The main GPS window
 
       GNAT_Version : GNAT.Strings.String_Access;

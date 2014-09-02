@@ -662,7 +662,8 @@ package body Generic_Views is
          Child        : out GPS_MDI_Child;
          View         : out View_Access)
       is
-         T    : Ada.Tags.Tag;
+         T   : Ada.Tags.Tag;
+         MDI : MDI_Window;
       begin
          if Local_Toolbar or else Local_Config then
             T := Toplevel_Box'Tag;
@@ -670,11 +671,14 @@ package body Generic_Views is
             T := Formal_View_Record'Tag;
          end if;
 
-         Child := GPS_MDI_Child (Get_MDI (Kernel).Find_MDI_Child_By_Tag (T));
-         if Child /= null then
-            View := View_From_Widget (Child.Get_Widget);
-         else
-            View := null;
+         MDI := Get_MDI (Kernel);
+         View := null;
+
+         if MDI /= null then
+            Child := GPS_MDI_Child (MDI.Find_MDI_Child_By_Tag (T));
+            if Child /= null then
+               View := View_From_Widget (Child.Get_Widget);
+            end if;
          end if;
       end Find;
 
