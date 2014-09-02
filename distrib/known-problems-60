@@ -75,6 +75,16 @@ KP-60-N812-034 Bad indentation after generic formal task interface
 
   Workaround: Fix the indentation by hand, or avoid this construct.
 
+KP-60-N811-041 GPS: Filtering empty dirs in Project view does not work
+
+  Problem:    Empty directories (those that contain no source files) are still
+              visible in the Project view even when the setting is set to hide
+              them.
+
+  Status:     This was fixed in 6.1 on 2014-08-12
+
+  Workaround: Edit the project file and change the Source_Dirs attribute.
+
 KP-60-N807-030 GPS: clicking on entries in Windows not working with modifiers
 
   Problem:    When a keyboard modifier such as Caps Lock or Num Lock is
@@ -183,6 +193,15 @@ KP-60-N628-007 GPS: plugin preferences out-of-order
   Status:     This was fixed in 6.1 on 2014-08-06
 
   Workaround: None.
+
+KP-60-N625-031 GPS: Missing highlighting in project files
+
+  Problem:    Some keywords like 'aggregate project' are not correctly
+              highlighted when editing .gpr files.
+
+  Status:     This was fixed in 6.1 on 2014-06-30
+
+  Workaround: This is cosmetic only.
 
 KP-60-N620-015 GB: allow GNAT project file change from GNATbench properties
 
@@ -449,6 +468,16 @@ KP-60-N402-044 GPS: exception from highlightinh plugin
   Status:     Fixed in 6.1 on 2014-04-03.
 
   Workaround: Deactivate auto_highlight_occurrences.py plugin.
+
+KP-60-N402-032 GPS: Unexpected growth of xref database
+
+  Problem:    In some cases, obsolete information is not properly purged from
+              the gnatinspect.db database, resulting in an unexpected growth
+
+  Status:     Fixed in 6.1 on 2014-08-18.
+
+  Workaround: You can periodically remove gnatinspect.db manually, and GPS
+              will recreate it.
 
 KP-60-N331-023 GPS: CodePeer report is not dispayed
 
