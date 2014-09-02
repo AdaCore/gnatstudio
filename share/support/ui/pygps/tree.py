@@ -84,7 +84,7 @@ try:
 
             event.window = view.get_bin_window()
             event.device = pygps.default_event_device()
-            event.button.button = button
+            event.button = button
             event.button.x = float(rect.x + rect.width / 2)
             event.button.y = float(rect.y + rect.height / 2)
 
