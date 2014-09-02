@@ -91,17 +91,10 @@ try:
     # The following functions provide wrappers around pygobject functions, to
     # make their use easier
 
-    device = None  # The current event device
-
     def default_event_device():
         """ Retrieve and cache the default event device """
-        global device
-        if not device:
-            scr = Gdk.Screen.get_default()
-            dis = scr.get_display()
-            device = dis.list_devices()[0]
-
-        return device
+        return Gdk.Display.get_default(
+            ).get_device_manager().get_client_pointer()
 
     def process_all_events():
         """
@@ -338,8 +331,8 @@ try:
             GObject.idle_add(lambda: internal_on_open(on_open, widgets,
                                                       windows, args, kwargs))
         else:
-            GObject.timeout_add(timeout, lambda: internal_on_open(on_open,
-                                                                  widgets, windows, args, kwargs))
+            GObject.timeout_add(timeout, lambda: internal_on_open(
+                on_open, widgets, windows, args, kwargs))
         GPS.Menu.get(menu).pywidget().activate()
 
     # ###############
@@ -386,16 +379,14 @@ try:
                 return
 
         def _synthesize(type, keyval):
-            event = Gdk.EventKey()
-            event.type = type
+            event = Gdk.Event.new(type)
             event.window = window
-            event.keyval = keyval
+            event.key.keyval = keyval
             event.send_event = 0
-            event.length = 1
-            event.is_modifier = 0
-            event.group = 0
+            event.key.length = 1
+            event.key.is_modifier = 0
+            event.key.group = 0
             event.state = Gdk.ModifierType(0)
-            # event.device = None    # No device for key events
 
             if hardware_keycode:
                 event.hardware_keycode = hardware_keycode
