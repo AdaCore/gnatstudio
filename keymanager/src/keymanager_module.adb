@@ -2064,14 +2064,30 @@ package body KeyManager_Module is
             Shift   : constant Boolean := Nth_Arg (Data, 5, False);
             Control : constant Boolean := Nth_Arg (Data, 6, False);
             Event   : Gdk_Event;
-            List    : Widget_List.Glist;
+            List, List2    : Widget_List.Glist;
             Win     : Gtk_Widget;
             Device  : Gdk_Device;
          begin
             if Window = null then
                List := List_Toplevels;
-               Win := Get_Data (List);
-               Window := Get_Window (Win);
+               List2 := List;
+               while List2 /= Null_List loop
+                  Win := Get_Data (List2);
+                  if Win /= null
+                    and then Gtk_Window (Win).Has_Toplevel_Focus
+                  then
+                     Window := Get_Window (Win);
+                     exit;
+
+                  elsif Win /= null
+                    and then Get_Window (Win) /= null
+                  then
+                     Window := Get_Window (Win);
+                  end if;
+
+                  List2 := Next (List2);
+               end loop;
+
                Free (List);
             end if;
 
