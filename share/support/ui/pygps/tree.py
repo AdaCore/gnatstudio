@@ -85,8 +85,8 @@ try:
             event.window = view.get_bin_window()
             event.device = pygps.default_event_device()
             event.button = button
-            event.button.x = float(rect.x + rect.width / 2)
-            event.button.y = float(rect.y + rect.height / 2)
+            event.x = float(rect.x + rect.width / 2)
+            event.y = float(rect.y + rect.height / 2)
 
             if modifier is not None:
                 state = modifier
