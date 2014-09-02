@@ -520,6 +520,10 @@ package body Buffer_Views is
       pragma Unreferenced (Column);
 
    begin
+      if Get_MDI (V.Kernel) = null then
+         return;
+      end if;
+
       Clear (Model);
 
       if Show_Notebooks then
