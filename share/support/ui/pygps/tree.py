@@ -78,7 +78,10 @@ try:
         rect = view.get_cell_area(path, view.get_column(column))
 
         for t in events:
-            event = Gdk.Event.new(t)
+            #event = Gdk.Event.new(t)
+            event = Gdk.EventButton()
+            event.type = t
+
             event.window = view.get_bin_window()
             event.device = pygps.default_event_device()
             event.button.button = button

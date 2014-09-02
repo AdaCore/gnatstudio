@@ -379,13 +379,15 @@ try:
                 return
 
         def _synthesize(type, keyval):
-            event = Gdk.Event.new(type)
+            event = Gdk.EventKey()
+            event.type = type
+
             event.window = window
-            event.key.keyval = keyval
+            event.keyval = keyval
             event.send_event = 0
-            event.key.length = 1
-            event.key.is_modifier = 0
-            event.key.group = 0
+            event.length = 1
+            event.is_modifier = 0
+            event.group = 0
             event.state = Gdk.ModifierType(0)
 
             if hardware_keycode:
