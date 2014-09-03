@@ -259,12 +259,14 @@ package body VCS_View.Explorer is
          Get_First (Explorer.Hidden, Iter);
 
          while Get_Element (Iter) /= 1 loop
-
             Status.File := Create (+Get_Key (Iter));
-
             Display_File_Status
-              (Explorer.Kernel, Status, Explorer.VCS,
-               False, True, Displayed => Displayed);
+              (Kernel         => Explorer.Kernel,
+               File_Status    => Status,
+               VCS_Identifier => Explorer.VCS,
+               Override_Cache => False,
+               Force_Display  => True,
+               Displayed      => Displayed);
 
             if Displayed then
                Remove (Explorer.Hidden, Get_Key (Iter));
@@ -526,6 +528,10 @@ package body VCS_View.Explorer is
 
       Remove_Empty_Root (Explorer);
    end Display_File_Status;
+
+   -------------------------
+   -- Display_File_Status --
+   -------------------------
 
    procedure Display_File_Status
      (Kernel         : not null access Kernel_Handle_Record'Class;
