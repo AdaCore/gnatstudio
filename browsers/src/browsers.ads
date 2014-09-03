@@ -21,8 +21,8 @@ with Gtkada.Style;        use Gtkada.Style;
 
 package Browsers is
 
-   Space_Between_Items  : constant Glib.Gdouble := 10.0;
-   Space_Between_Layers : constant Glib.Gdouble := 30.0;
+   Default_Space_Between_Items  : constant Glib.Gdouble := 10.0;
+   Default_Space_Between_Layers : constant Glib.Gdouble := 30.0;
    --  Controlling the layout algorithm
 
    type Background_Type is

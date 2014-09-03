@@ -332,7 +332,7 @@ package body Browsers.Call_Graph is
         (Kernel          => View.Kernel,
          Event_On_Widget => View,
          Object          => View,
-         ID              => Call_Graph_Module_Id,
+         ID              => Callgraph_Views.Get_Module,
          Context_Func    => Default_Browser_Context_Factory'Access);
       return Gtk_Widget (View);
    end Initialize;
@@ -459,8 +459,8 @@ package body Browsers.Call_Graph is
             Ref                  => Data.Item,
             Items                => Data.Items.all,
             Direction            => Dir,
-            Space_Between_Items  => Space_Between_Items,
-            Space_Between_Layers => Space_Between_Layers,
+            Space_Between_Items  => Default_Space_Between_Items,
+            Space_Between_Layers => Default_Space_Between_Layers,
             Duration             => 0.3);
       end if;
    end Destroy;

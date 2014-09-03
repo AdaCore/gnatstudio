@@ -19,8 +19,6 @@ with Ada.Containers;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Browsers.Canvas;           use Browsers.Canvas;
-with Cairo;                     use Cairo;
-with Cairo.Region;              use Cairo.Region;
 with Default_Preferences;       use Default_Preferences;
 with Generic_Views;
 with Glib;                      use Glib;
@@ -34,9 +32,8 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Tools_Output;          use GPS.Tools_Output;
 with GPS.Intl;                  use GPS.Intl;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Canvas;             use Gtkada.Canvas;
+with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
 with Gtkada.MDI;                use Gtkada.MDI;
-with Pango.Layout;              use Pango.Layout;
 
 with Elaboration_Cycles;        use Elaboration_Cycles;
 with Browsers.Elaborations.Cycle_Parser;
@@ -74,36 +71,18 @@ package body Browsers.Elaborations is
       Local_Toolbar          => True,
       Local_Config           => True,
       Position               => Position_Automatic,
-      Group                  => Group_Graphs);
+      Group                  => Group_Default);
    subtype Elaboration_Browser is Elaboration_Views.View_Access;
 
    --  Node to represent compilation unit in browser
-   type Unit_Item_Record is new Browsers.Canvas.Browser_Item_Record with record
+   type Unit_Item_Record is new GPS_Item_Record with record
       Name : Unbounded_String;
    end record;
    type Unit_Item is access all Unit_Item_Record'Class;
 
-   procedure Gtk_New
-     (Item    : out Unit_Item;
-      Name    : String;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class);
-   --  Open a new item in the browser that represents unit.
-
-   procedure Initialize
-     (Item    : access Unit_Item_Record'Class;
-      Name    : String;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class);
-   --  Internal initialization function
-
-   overriding procedure Destroy (Item : in out Unit_Item_Record) is null;
-   --  See doc for inherited subprograms
-
-   overriding procedure Compute_Size
-     (Item          : not null access Unit_Item_Record;
-      Layout        : not null access Pango_Layout_Record'Class;
-      Width, Height : out Glib.Gint;
-      Title_Box     : in out Cairo_Rectangle_Int);
-   --  See doc for inherited subprograms
+   overriding procedure Set_Context
+     (Item    : not null access Unit_Item_Record;
+      Context : in out Selection_Context) is null;
 
    procedure On_Compilation_Finished
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -120,15 +99,6 @@ package body Browsers.Elaborations is
       Unit_Name : String) return Unit_Item;
    --  Find or create unit in Browser
 
-   procedure Fill_Elaborate_All
-     (Browser       : Elaboration_Browser;
-      Item_After    : Unit_Item;
-      Elaborate_All : Dependency);
-   --  Put all units of Elaborate_All dependency in browser
-
-   function Strip_Unit_Kind (Unit_Name : String) return String;
-   --  Strip (spec) and (body) from Unit_Name
-
    --------------
    -- Get_Unit --
    --------------
@@ -137,59 +107,54 @@ package body Browsers.Elaborations is
      (Browser   : Elaboration_Browser;
       Unit_Name : String) return Unit_Item
    is
-      Unit_Without_Kind : constant String := Strip_Unit_Kind (Unit_Name);
-      Iter : Item_Iterator := Start (Get_Canvas (Browser));
-      Item : Unit_Item;
-   begin
-      loop
-         exit when Get (Iter) = null;
+      function Strip_Unit_Kind (Unit_Name : String) return String;
+      --  Strip (spec) and (body) from Unit_Name
 
-         if Get (Iter).all in Unit_Item_Record
-           and then Unit_Item (Get (Iter)).Name = Unit_Without_Kind
-         then
-            Item := Unit_Item (Get (Iter));
-            exit;
+      ---------------------
+      -- Strip_Unit_Kind --
+      ---------------------
+
+      function Strip_Unit_Kind (Unit_Name : String) return String is
+         Space : constant Natural := Ada.Strings.Fixed.Index
+           (Unit_Name, " ", Ada.Strings.Backward);
+      begin
+         if Space in Unit_Name'Range then
+            return Unit_Name (Unit_Name'First .. Space - 1);
+         else
+            return Unit_Name;
          end if;
+      end Strip_Unit_Kind;
 
-         Next (Iter);
-      end loop;
+      Unit_Without_Kind : constant String := Strip_Unit_Kind (Unit_Name);
+      Item : Unit_Item := null;
+      S    : constant access Browser_Styles := Browser.Get_View.Get_Styles;
+
+      procedure On_Item (It : not null access Abstract_Item_Record'Class);
+      procedure On_Item (It : not null access Abstract_Item_Record'Class) is
+      begin
+         if Unit_Item (It).Name = Unit_Without_Kind then
+            Item := Unit_Item (It);
+         end if;
+      end On_Item;
+
+   begin
+      Browser.Get_View.Model.For_Each_Item
+        (On_Item'Access, Filter => Kind_Item);
 
       if Item = null then
-         Gtk_New (Item, Unit_Without_Kind, Browser);
-         Put (Get_Canvas (Browser), Item);
+         Item         := new Unit_Item_Record;
+         Item.Name    := To_Unbounded_String (Unit_Without_Kind);
+         Item.Browser := General_Browser (Browser);
+
+         Browser_Model (Browser.Get_View.Model).Add (Item);
+         Item.Set_Position (No_Position);
+
+         Item.Initialize_Rect (Style => S.Item, Radius => 5.0);
+         Setup_Titlebar (Item, Browser, Name => "Unit: " & Unit_Without_Kind);
       end if;
 
       return Item;
    end Get_Unit;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Item    : out Unit_Item;
-      Name    : String;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class) is
-   begin
-      Item := new Unit_Item_Record;
-      Elaborations.Initialize (Item, Name, Browser);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Item    : access Unit_Item_Record'Class;
-      Name    : String;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class) is
-   begin
-      Item.Name := To_Unbounded_String (Name);
-
-      Initialize (Item, Browser);
-      Set_Title (Item, Name);
-      Recompute_Size (Item);
-   end Initialize;
 
    ----------------
    -- Initialize --
@@ -199,9 +164,10 @@ package body Browsers.Elaborations is
      (View   : access Elaboration_Browser_Record'Class)
       return Gtk_Widget is
    begin
-      Initialize (View, Create_Toolbar  => True);
-
-      --  Register menu with default actions
+      Initialize
+        (View,
+         Create_Toolbar  => True,
+         Use_Canvas_View => True);
       Register_Contextual_Menu
         (Kernel          => View.Kernel,
          Event_On_Widget => View,
@@ -211,16 +177,30 @@ package body Browsers.Elaborations is
       return Gtk_Widget (View);
    end Initialize;
 
-   ------------------------
-   -- Fill_Elaborate_All --
-   ------------------------
+   ------------------
+   -- Fill_Browser --
+   ------------------
 
-   procedure Fill_Elaborate_All
-     (Browser       : Elaboration_Browser;
-      Item_After    : Unit_Item;
-      Elaborate_All : Dependency)
+   procedure Fill_Browser
+     (Kernel : Kernel_Handle;
+      Cycle  : Elaboration_Cycles.Cycle)
    is
+      use type Ada.Containers.Count_Type;
+
+      Browser : constant Elaboration_Browser :=
+        Elaboration_Views.Get_Or_Create_View (Kernel, Focus => True);
+      Styles : constant access Browser_Styles :=
+        Browser.Get_View.Get_Styles;
+
+      procedure Fill_Elaborate_All
+        (Item_After    : Unit_Item;
+         Elaborate_All : Dependency);
+      --  Put all units of Elaborate_All dependency in browser
+
       function Kind_Image (Kind : Link_Kind) return String;
+      --  Return the label to use for a link of that kind.
+
+      procedure Add_Link (It1, It2 : Unit_Item; Descr : String);
 
       ----------------
       -- Kind_Image --
@@ -236,79 +216,93 @@ package body Browsers.Elaborations is
          end case;
       end Kind_Image;
 
-      Prev_Unit : Unit_Item := Item_After;
-   begin
-      for J in reverse 1 .. Links_Count (Elaborate_All) loop
-         if Kind (Element (Elaborate_All, J)) = Withed then
-            declare
-               Next      : constant Link := Element (Elaborate_All, J);
-               Next_Unit : constant Unit_Item
-                 := Get_Unit (Browser, "Unit: " & Unit_Name (Next));
-               Link      : constant Browser_Link := new Browser_Link_Record;
-            begin
-               Add_Link
-                 (Get_Canvas (Browser),
-                  Link,
-                  Prev_Unit,
-                  Next_Unit,
-                  Descr => Kind_Image (Kind (Next)));
-               Browser.Get_Canvas.Refresh (Next_Unit);
-               Prev_Unit := Next_Unit;
-            end;
+      --------------
+      -- Add_Link --
+      --------------
+
+      procedure Add_Link (It1, It2 : Unit_Item; Descr : String) is
+         Link   : constant GPS_Link := new GPS_Link_Record;
+         Offset : constant Natural := Browser.Count_Links (It1, It2);
+      begin
+         Link.Default_Style := Styles.Link;
+
+         if False and then Offset = 0 then
+            Initialize
+              (Link,
+               From    => It1,
+               To      => It2,
+               Routing => Curve,
+               Label   => Gtk_New_Text (Styles.Label, Descr),
+               Style   => Link.Default_Style);
+         else
+            Initialize
+              (Link,
+               From    => It1,
+               To      => It2,
+               Routing => Arc,
+               Label   => Gtk_New_Text (Styles.Label, Descr),
+               Style   => Link.Default_Style);
+
+            if Offset mod 2 = 1 then
+               Link.Set_Offset (Gdouble ((Offset + 1) / 2) * 10.0);
+            else
+               Link.Set_Offset (Gdouble (-Offset / 2 + 1) * 10.0);
+            end if;
          end if;
-      end loop;
 
-      Browser.Get_Canvas.Refresh (Item_After);
-   end Fill_Elaborate_All;
+         Browser_Model (Browser.Get_View.Model).Add (Link);
+      end Add_Link;
 
-   ------------------
-   -- Fill_Browser --
-   ------------------
+      ------------------------
+      -- Fill_Elaborate_All --
+      ------------------------
 
-   procedure Fill_Browser
-     (Kernel : Kernel_Handle;
-      Cycle  : Elaboration_Cycles.Cycle)
-   is
-      use type Ada.Containers.Count_Type;
-      Browser : constant Elaboration_Browser :=
-        Elaboration_Views.Get_Or_Create_View (Kernel, Focus => True);
+      procedure Fill_Elaborate_All
+        (Item_After    : Unit_Item;
+         Elaborate_All : Dependency)
+      is
+         Prev_Unit : Unit_Item := Item_After;
+      begin
+         for J in reverse 1 .. Links_Count (Elaborate_All) loop
+            if Kind (Element (Elaborate_All, J)) = Withed then
+               declare
+                  Next      : constant Link := Element (Elaborate_All, J);
+                  Next_Unit : constant Unit_Item :=
+                    Get_Unit (Browser, Unit_Name (Next));
+               begin
+                  Add_Link (Prev_Unit, Next_Unit, Kind_Image (Kind (Next)));
+                  Prev_Unit := Next_Unit;
+               end;
+            end if;
+         end loop;
+      end Fill_Elaborate_All;
+
    begin
       Browser.Cycle := Cycle;
-
-      Clear (Get_Canvas (Browser));
+      Browser_Model (Browser.Get_View.Model).Clear;
 
       for J in 1 .. Dependencies_Count (Cycle) loop
          declare
             Dep    : constant Dependency := Element (Cycle, J);
-            Item_A : constant Unit_Item
-              := Get_Unit (Browser, "Unit: " & After_Unit_Name (Dep));
-            Item_B : constant Unit_Item
-              := Get_Unit (Browser, "Unit: " & Before_Unit_Name (Dep));
+            Item_A : constant Unit_Item :=
+              Get_Unit (Browser, After_Unit_Name (Dep));
+            Item_B : constant Unit_Item :=
+              Get_Unit (Browser, Before_Unit_Name (Dep));
          begin
             if Reason (Dep) in
               Pragma_Elaborate_All .. Elaborate_All_Desirable
             then
-               Fill_Elaborate_All (Browser, Item_A, Dep);
+               Fill_Elaborate_All (Item_A, Dep);
             else
-               declare
-                  Link : constant Browser_Link := new Browser_Link_Record;
-               begin
-                  Add_Link
-                    (Get_Canvas (Browser),
-                     Link,
-                     Item_A,
-                     Item_B,
-                     Descr => Image (Reason (Dep)));
-               end;
+               Add_Link (Item_A, Item_B, Image (Reason (Dep)));
             end if;
-
-            Browser.Get_Canvas.Refresh (Item_A);
-            Browser.Get_Canvas.Refresh (Item_B);
          end;
       end loop;
 
-      Layout (Browser);
-      Refresh_Canvas (Get_Canvas (Browser));
+      Browser.Refresh_Layout
+        (Rescale => True,
+         Space_Between_Items  => 40.0,
+         Space_Between_Layers => 60.0);  --  long labels in this browser
    end Fill_Browser;
 
    -----------------------------
@@ -373,37 +367,5 @@ package body Browsers.Elaborations is
    begin
       Last_Elaboration_Cycle := Value;
    end Set_Elaboration_Cycle;
-
-   ---------------------
-   -- Strip_Unit_Kind --
-   ---------------------
-
-   function Strip_Unit_Kind (Unit_Name : String) return String is
-      Space : constant Natural := Ada.Strings.Fixed.Index
-        (Unit_Name, " ", Ada.Strings.Backward);
-   begin
-      if Space in Unit_Name'Range then
-         return Unit_Name (Unit_Name'First .. Space - 1);
-      else
-         return Unit_Name;
-      end if;
-   end Strip_Unit_Kind;
-
-   ------------------
-   -- Compute_Size --
-   ------------------
-
-   overriding procedure Compute_Size
-     (Item          : not null access Unit_Item_Record;
-      Layout        : not null access Pango_Layout_Record'Class;
-      Width, Height : out Glib.Gint;
-      Title_Box     : in out Cairo_Rectangle_Int) is
-   begin
-      Compute_Size
-        (Browser_Item_Record (Item.all)'Access, Layout, Width, Height,
-         Title_Box);
-      Width := Title_Box.Width;
-      Height := Height + 10;
-   end Compute_Size;
 
 end Browsers.Elaborations;

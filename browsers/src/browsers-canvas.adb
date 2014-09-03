@@ -754,6 +754,37 @@ package body Browsers.Canvas is
       return Exists;
    end Has_Link;
 
+   -----------------
+   -- Count_Links --
+   -----------------
+
+   function Count_Links
+     (Browser   : not null access General_Browser_Record'Class;
+      Src, Dest : not null access GPS_Item_Record'Class;
+      Oriented  : Boolean := True) return Natural
+   is
+      Count : Natural := 0;
+
+      procedure On_Link (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Link (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         if Item.all in GPS_Link_Record'Class and then
+           (GPS_Link (Item).Get_To = Abstract_Item (Dest)
+           or else
+           (Oriented and then GPS_Link (Item).Get_From = Abstract_Item (Dest)))
+         then
+            Count := Count + 1;
+         end if;
+      end On_Link;
+
+      S : Item_Sets.Set;
+
+   begin
+      S.Include (Abstract_Item (Src));
+      Browser.Get_View.Model.For_Each_Link (On_Link'Access, From_Or_To => S);
+      return Count;
+   end Count_Links;
+
    -------------------------------------
    -- Default_Browser_Context_Factory --
    -------------------------------------
@@ -1155,8 +1186,10 @@ package body Browsers.Canvas is
    --------------------
 
    procedure Refresh_Layout
-     (Self    : not null access General_Browser_Record;
-      Rescale : Boolean := False)
+     (Self                 : not null access General_Browser_Record;
+      Rescale              : Boolean := False;
+      Space_Between_Items  : Gdouble := Default_Space_Between_Items;
+      Space_Between_Layers : Gdouble := Default_Space_Between_Layers)
    is
    begin
       if Self.Use_Canvas_View then

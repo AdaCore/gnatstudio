@@ -133,8 +133,10 @@ package Browsers.Canvas is
    --  the user are recomputed.
 
    procedure Refresh_Layout
-     (Self    : not null access General_Browser_Record;
-      Rescale : Boolean := False);
+     (Self                 : not null access General_Browser_Record;
+      Rescale              : Boolean := False;
+      Space_Between_Items  : Glib.Gdouble := Default_Space_Between_Items;
+      Space_Between_Layers : Glib.Gdouble := Default_Space_Between_Layers);
    --  Recompute the position of all items.
    --  If Rescale is true, the scaling factor and position of the canvas are
    --  modified to show as many items as possible
@@ -219,6 +221,10 @@ package Browsers.Canvas is
    function Has_Link
      (Browser   : not null access General_Browser_Record'Class;
       Src, Dest : not null access GPS_Item_Record'Class) return Boolean;
+   function Count_Links
+     (Browser   : not null access General_Browser_Record'Class;
+      Src, Dest : not null access GPS_Item_Record'Class;
+      Oriented  : Boolean := True) return Natural;
    --  Whether there is already a link between the two items
 
    package Item_Cb is new Gtk.Handlers.User_Callback

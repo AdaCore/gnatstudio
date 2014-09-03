@@ -441,8 +441,8 @@ package body Browsers.Projects is
             Ref         => Src,
             Items       => Items,
             Direction   => (if Browser.Horizontal_Layout then Right else Down),
-            Space_Between_Items  => Space_Between_Items,
-            Space_Between_Layers => Space_Between_Layers,
+            Space_Between_Items  => Default_Space_Between_Items,
+            Space_Between_Layers => Default_Space_Between_Layers,
             Duration             => 0.3);
       end if;
    end Examine_Project_Hierarchy;
@@ -485,8 +485,8 @@ package body Browsers.Projects is
          Ref               => Dest,
          Items             => Items,
          Direction         => (if Browser.Horizontal_Layout then Left else Up),
-         Space_Between_Items  => Space_Between_Items,
-         Space_Between_Layers => Space_Between_Layers,
+         Space_Between_Items  => Default_Space_Between_Items,
+         Space_Between_Layers => Default_Space_Between_Layers,
          Duration             => 0.3);
    end Examine_Ancestor_Project_Hierarchy;
 
