@@ -49,52 +49,51 @@ class PythonResolver(CompletionResolver):
            Overriden method.
            Returns a list of completion objects for GPS.
         """
-        # check current char, return when empty
-        if loc.forward_char(-1).get_char().endswith(" "):
+
+        # this works only on Python files
+        if loc.buffer().file().language() != "python":
             return []
 
-        if loc.buffer().file().language() == "python":
-            # Only parse the source text when:
-            # The curretly editing buffer is of language "python"
-            # This ensures that the resolver returns completion object
-            # only for python file.
-            # check in the current directory
-            sys_path_backup = list(sys.path)
-            self.source_dirs.update([loc.buffer().file().directory()])
-            sys.path = sys.path + list(self.source_dirs)
+        # check if the current char can belong to an identifier
+        current_char = loc.forward_char(-1).get_char()
+        if not (current_char
+                and (current_char == '_' or current_char.isalnum())):
+            return []
 
-            try:
-                # filter out ^L in source text
-                text = loc.buffer().get_chars()
-                # text = text.replace('\x0c', ' ')
-                # Feed Jedi API
-                script = jedi.Script(
-                    source=text,
-                    line=loc.line(),
-                    column=loc.column() - 1,
-                )
+        sys_path_backup = list(sys.path)
+        self.source_dirs.update([loc.buffer().file().directory()])
+        sys.path = sys.path + list(self.source_dirs)
 
-                # Sort, filter results
-                result = sorted((CompletionProposal(
-                    name=i.name,
-                    label=i.name,
-                    documentation=i.docstring(),
-                    language_category=TYPE_LABELS.get(
-                        i.type, completion.CAT_UNKNOWN))
-                    for i in script.complete()
-                    if i.name.startswith(self.__prefix)),
-                    key=lambda d: d.name)
-            except:
-                jedi_log = GPS.Logger("JEDI_PARSING")
-                jedi_log.log("jedi fails to parse:" +
-                             loc.buffer().file().name())
-                result = []
+        try:
+            # filter out ^L in source text
+            text = loc.buffer().get_chars()
+            # text = text.replace('\x0c', ' ')
+            # Feed Jedi API
+            script = jedi.Script(
+                source=text,
+                line=loc.line(),
+                column=loc.column() - 1,
+            )
 
-            # restore sys.path before exit
-            sys.path = sys_path_backup
-            return result
+            # Sort, filter results
+            result = sorted((CompletionProposal(
+                name=i.name,
+                label=i.name,
+                documentation=i.docstring(),
+                language_category=TYPE_LABELS.get(
+                    i.type, completion.CAT_UNKNOWN))
+                for i in script.complete()
+                if i.name.startswith(self.__prefix)),
+                key=lambda d: d.name)
+        except:
+            jedi_log = GPS.Logger("JEDI_PARSING")
+            jedi_log.log("jedi fails to parse:" +
+                         loc.buffer().file().name())
+            result = []
 
-        return []
+        # restore sys.path before exit
+        sys.path = sys_path_backup
+        return result
 
     def get_completion_prefix(self, loc):
         """
