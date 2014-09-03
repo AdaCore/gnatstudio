@@ -24,7 +24,7 @@ OVERRIDE_MIDDLE_CLICK_PASTE = yes
 
 --  Whether to use a system menu bar
 
-SYSTEM_MENUS = yes
+SYSTEM_MENUS = no
 
 --  Select the modules that should be loaded
 
