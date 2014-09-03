@@ -402,7 +402,8 @@ try:
             return event
 
         if not window:
-            window = Gtk.Window.list_toplevels()[0]
+            window = [w for w in Gtk.Window.list_toplevels()
+                      if w.get_window()][0]
         if isinstance(window, Gtk.TextView):
             window = window.get_window(Gtk.TextWindowType.TEXT)
         if not isinstance(window, Gdk.Window):
