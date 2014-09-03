@@ -673,6 +673,7 @@ package body Project_Explorers is
 
       Gtk_New (Explorer.Tree, Columns_Types, Filtered => True);
       Set_Headers_Visible (Explorer.Tree, False);
+      Explorer.Tree.Set_Enable_Search (False);
       Set_Column_Types (Gtk_Tree_View (Explorer.Tree));
 
       Set_Visible_Funcs.Set_Visible_Func
