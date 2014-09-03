@@ -57,7 +57,7 @@ class PythonResolver(CompletionResolver):
         # check if the current char can belong to an identifier
         current_char = loc.forward_char(-1).get_char()
         if not (current_char
-                and (current_char == '_' or current_char.isalnum())):
+                and (current_char in ['_', '.'] or current_char.isalnum())):
             return []
 
         sys_path_backup = list(sys.path)
