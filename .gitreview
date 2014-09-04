@@ -1,0 +1,5 @@
+[gerrit]
+host = review.eu.adacore.com
+port = 29418
+project = gps
+defaultbranch = master
