@@ -1,6 +1,6 @@
-[submodule "design"]
-	path = design
-	url = review:gps-internal
 [submodule "gnatlib"]
 	path = gnatlib
-	url = review:gnatcoll
+	url = ssh://briot@review.eu.adacore.com:29418/gnatcoll
+[submodule "design"]
+	path = design
+	url = ssh://briot@review.eu.adacore.com:29418/gps-internal
