@@ -1324,16 +1324,17 @@ package body C_Analyzer is
          Prev      : Natural := Index;
          Temp      : Extended_Token;
          Top_Token : Token_Stack.Generic_Type_Access;
+         C         : Wide_Wide_Character;
 
       begin
          Pop_To_Construct (Tokens, Top_Token);
          First := Index;
          Start_Char := Char_In_Line;
 
-         while Index < Buffer'Last
-           and then Is_Entity_Letter
-                (UTF8_Get_Char (Buffer (Index .. Buffer'Last)))
-         loop
+         while Index < Buffer'Last loop
+            C := UTF8_Get_Char (Buffer (Index .. Buffer'Last));
+            exit when C /= '$' and then not Is_Entity_Letter (C);
+
             Prev := Index;
             Next_Char;
          end loop;
