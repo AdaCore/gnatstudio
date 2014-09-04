@@ -1,0 +1,3 @@
+# Disabled temporarily, since cvs-check does not accept our format
+# yet (too old an install)
+distrib/known-problems-*   no-precommit-check
