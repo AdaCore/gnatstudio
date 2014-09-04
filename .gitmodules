@@ -1,3 +1,6 @@
 [submodule "design"]
 	path = design
 	url = review:gps-internal
+[submodule "gnatlib"]
+	path = gnatlib
+	url = review:gnatcoll
