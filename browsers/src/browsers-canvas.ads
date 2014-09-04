@@ -148,6 +148,12 @@ package Browsers.Canvas is
    --  read from the preferences, although by overriding this subprogram a
    --  default orientation can be forced
 
+   procedure Force_Refresh
+     (Browser : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Toggle when the user choses to use waypoints or not.
+   --  This is suitable for use as callback (for instance when the callback
+   --  modifies one of the settings for the browser)
+
    ------------------
    -- Active areas --
    ------------------

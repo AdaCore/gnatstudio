@@ -189,9 +189,6 @@ package body Browsers.Canvas is
    procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class);
    --  Toggle the layout of links
 
-   procedure Force_Refresh (Browser : access Gtk_Widget_Record'Class);
-   --  Toggle when the user choses to use waypoints or not
-
    procedure Toggle_Draw_Grid (Browser : access Gtk_Widget_Record'Class);
    --  Toggle the drawing of the grid, and refresh the canvas.
 
