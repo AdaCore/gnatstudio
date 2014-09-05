@@ -4,3 +4,7 @@
 [submodule "design"]
 	path = design
 	url = ssh://review.eu.adacore.com:29418/gps-internal
+[submodule "gps-internal"]
+	branch = master
+[submodule "gnatcoll"]
+	branch = master
