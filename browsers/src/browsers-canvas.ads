@@ -15,9 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with Cairo.Region;
-with GNAT.Strings;
 with GPS.Kernel;
 with Gdk.Event;
 with Gdk.Pixbuf;
@@ -174,15 +172,6 @@ package Browsers.Canvas is
    --  Should return True if the event was handled, False otherwise. In the
    --  latter case, the even is transmitted to the parent area
 
-   type Active_Area_Cb_Array is array (Natural range <>) of Active_Area_Cb;
-   Empty_Cb_Array : constant Active_Area_Cb_Array;
-
-   procedure Destroy (Callback : in out Active_Area_Callback);
-   --  Destroy the callback
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Active_Area_Callback'Class, Active_Area_Cb);
-
    -----------
    -- Items --
    -----------
@@ -337,43 +326,10 @@ package Browsers.Canvas is
    --  preconfigured with the correct font, and is passed for efficiency reason
    --  to avoid creating a layout every time.
 
-   procedure Draw_Title_Bar_Button
-     (Item   : access Browser_Item_Record;
-      Cr     : Cairo.Cairo_Context;
-      Num    : Glib.Gint;
-      Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
-      Cb     : Active_Area_Callback'Class);
-   --  Draw the nth title bar button. They are numbered from right to left:
-   --       |--------------------------|
-   --       |  Title         [2][1][0] |
-   --       |--------------------------|
-   --  You can draw as many buttons as you want. However, make sure you have
-   --  reserved enough space (through Get_Last_Button_Number) or the buttons
-   --  will override the title itself.  Cb is called when the button is
-   --  pressed.
-   --
-   --  An item should use button numbers from the parent's
-   --  Get_Last_Button_Number + 1 upward.
-   --
-   --  The button (and its callback) will be destroyed the next time
-   --  Resize_And_Draw is called for the item.
-   --  All buttons are assumed to have the size Gtk.Enums.Icon_Size_Menu.
-   --
-   --  No button is drawn if no title was set for the item.
-
    function Get_Last_Button_Number (Item : access Browser_Item_Record)
       return Glib.Gint;
    --  Return the last number of the button set by this item. This function is
    --  used to make sure that no two items set the same button.
-
-   procedure Redraw_Title_Bar
-     (Item : access Browser_Item_Record;
-      Cr   : Cairo.Cairo_Context);
-   --  This function should redraw the title bar buttons, after calling the
-   --  inherited subprogram.
-   --
-   --  This procedure doesn't need to reset the active areas for the buttons,
-   --  this is done automatically.
 
    procedure Setup_Titlebar
      (Item    : not null access GPS_Item_Record'Class;
@@ -410,163 +366,6 @@ package Browsers.Canvas is
      (Self   : not null access GPS_Canvas_View_Record'Class;
       Item   : access Gtkada.Canvas_View.Abstract_Item_Record'Class := null);
    --  Mark related items specially so that they are outlined on the display.
-
-   procedure Add_Active_Area
-     (Item      : access Browser_Item_Record;
-      Rectangle : Gdk.Rectangle.Gdk_Rectangle;
-      Callback  : Active_Area_Callback'Class);
-   --  Define a new clickable active area in the item. Callback will be called
-   --  whenever the user clicks in Rectangle, provided there is no smaller area
-   --  that also contains the click location.
-
-   function Activate
-     (Item  : access Browser_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
-   --  Calls the callback that is activated when the user clicks in the
-   --  item. The coordinates returned by Get_X and Get_Y in Event should be
-   --  relative to the top-left corner of the Item.
-
-   procedure Reset_Active_Areas
-     (Item            : in out Browser_Item_Record;
-      Title_Bar_Areas : Boolean := True;
-      Other_Areas     : Boolean := True);
-   --  Remove all active areas in Item.
-   --  If Title_Bar_Areas is False, then the areas that are in the title bar
-   --  (supposedly buttons) are not removed
-   --  If Other_Areas is False, then the areas that are not in the title bar
-   --  are not removed.
-
-   -----------------
-   -- Xrefs lists --
-   -----------------
-   --  This type comes as an addition to the active areas. These are a simple
-   --  way to prepare a the lines to display in an item, along with hyper
-   --  links. The recommended use is to use in Resize_And_Draw subprograms:
-   --  First pass is to prepare the lines through these Xref lists, then
-   --  compute the total size of the item, call the parent's Resize_And_Draw,
-   --  and finally draw the xrefs list on the item.
-
-   type Xref_List is private;
-
-   procedure Add_Line
-     (List     : in out Xref_List;
-      Str      : String;
-      Length1  : Natural              := Natural'Last;
-      Callback : Active_Area_Cb_Array := Empty_Cb_Array);
-   --  Add a new line that will be displayed in a layout.
-   --  Str can contain any number of substrings delimited by @...@. When the
-   --  user clicks on that zone, the matching callback will be called. It must
-   --  be UTF8-encoded.
-   --  Length1 is the number of characters in the first column. The first
-   --  character in the second column will always be aligned. Set to
-   --  Natural'Last if there is only one column.
-
-   procedure Expand_Line
-     (List     : in out Xref_List;
-      Num      : Positive;
-      Str      : String;
-      Callback : Active_Area_Cb_Array := Empty_Cb_Array;
-      Check_Duplicates : Boolean);
-   --  Add some contents to an existing line.
-   --  A new line is appended if there is no such line already.
-   --  If Check_Duplicates is true, then the new contents is not added if any
-   --  of the xref in Str is already found on the existing line (it is
-   --  recommended that a single xref be added at a time).
-
-   procedure Display_Lines
-     (Item          : access Browser_Item_Record'Class;
-      Cr            : Cairo.Cairo_Context;
-      List          : Xref_List;
-      X             : Glib.Gint;
-      Y             : in out Glib.Gint;
-      Second_Column : Glib.Gint;
-      Layout        : access Pango.Layout.Pango_Layout_Record'Class);
-   --  Display the lines from List into Pixmap, starting at X, Y, and setup
-   --  appropriate callbacks.
-   --  Layout is used while drawing the strings. It has to be provided for
-   --  efficiency reasons, so that it doesn't need to be recreated every time.
-   --  The first characters of the second column (if any) will all be displayed
-   --  at X coordinate (Second_Column + X).
-
-   procedure Free (List : in out Xref_List);
-   --  Free the data in List.
-   --  This doesn't free any of the callbacks, since these are still in use for
-   --  the hyper links. They will be freed when Reset_Active_Areas is called.
-
-   procedure Get_Pixel_Size
-     (Browser   : access General_Browser_Record'Class;
-      List      : Xref_List;
-      W1, W2, H : out Glib.Gint;
-      Layout    : access Pango.Layout.Pango_Layout_Record'Class);
-   --  Compute the approximate pixels size for List.
-   --  W1, W2 are the widths of the two columns (depending on how each line was
-   --  split).
-   --  Layout is used while computing the length, and has to be provided for
-   --  efficiency issues, to avoid recreating it every time.
-
-   procedure Get_Line
-     (List        : Xref_List;
-      Num         : Positive;
-      Num_In_Line : Positive := 1;
-      Callback    : out Active_Area_Cb;
-      Text        : out GNAT.Strings.String_Access);
-   --  Return the contents of the Nth line in the list in Text. This is set to
-   --  null if there is no such line. Do not free Text.
-   --  It also returns the num_in_line-th link in this line in Callback or null
-   --  if there is no such callback
-
-   procedure Remove_Line (List : in out Xref_List; Num : Positive);
-   --  Remove the Nth line from List
-
-   ---------------
-   -- Item area --
-   ---------------
-
-   type Item_Active_Callback is access
-     procedure (Event : Gdk.Event.Gdk_Event_Button;
-                User  : access Browser_Item_Record'Class);
-   type Item_Active_Area_Callback is new Active_Area_Callback with private;
-   --  A special instanciation of the callback for cases where the user data is
-   --  a widget.
-
-   function Build
-     (Cb   : Item_Active_Callback;
-      User : access Browser_Item_Record'Class)
-      return Item_Active_Area_Callback'Class;
-   --  Build a new callback
-
-   -----------------
-   -- Arrow_Items --
-   -----------------
-   --  This specialized type of items has a title bar with at least two
-   --  buttons, to show the parents or the children of the items.
-   --  You should override Resize_And_Draw to indicate what the contents of the
-   --  item is.
-
-   type Arrow_Item_Record is new Browser_Item_Record with private;
-   type Arrow_Item is access all Arrow_Item_Record'Class;
-
-   type Arrow_Item_Callback is access procedure
-     (Item : access Arrow_Item_Record'Class);
-
-   procedure Initialize
-     (Item                    : access Arrow_Item_Record'Class;
-      Browser                 : access General_Browser_Record'Class;
-      Title                   : String;
-      Parents_Cb, Children_Cb : Arrow_Item_Callback);
-   --  Initialize a new item. Title is displayed in the title bar.
-   --  Parents_Cb and Children_Cb are called when the two title bar buttons are
-   --  pressed.
-
-   function Parents_Shown (Item : access Arrow_Item_Record) return Boolean;
-   function Children_Shown (Item : access Arrow_Item_Record) return Boolean;
-   --  Return True if either all the parents or all the children are shown
-
-   procedure Set_Parents_Shown
-     (Item : access Arrow_Item_Record; All_Shown : Boolean);
-   procedure Set_Children_Shown
-     (Item : access Arrow_Item_Record; All_Shown : Boolean);
-   --  Inidicate wether all the parents or all the children are shown
 
    -----------
    -- Links --
@@ -639,20 +438,7 @@ private
       Selected_Item : Gtkada.Canvas.Canvas_Item;
    end record;
 
-   type Active_Area_Tree_Record;
-   type Active_Area_Tree is access Active_Area_Tree_Record;
-   type Active_Area_Tree_Array is array (Natural range <>) of Active_Area_Tree;
-   type Active_Area_Tree_Array_Access is access Active_Area_Tree_Array;
-   type Active_Area_Tree_Record is record
-      Rectangle : Gdk.Rectangle.Gdk_Rectangle;
-      Callback  : Active_Area_Cb;
-      Children  : Active_Area_Tree_Array_Access;
-   end record;
-
    overriding procedure Destroy (Item : in out Browser_Item_Record);
-   overriding function On_Button_Click
-     (Item  : access Browser_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
    overriding procedure Selected
      (Item        : access Browser_Item_Record;
       Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
@@ -670,55 +456,6 @@ private
       --  Handling of the title bar. No title bar is shown if no title was
       --  set. In this case, Title_Layout is null.
 
-      Active_Areas : Active_Area_Tree;
-
       Title_Coord  : Gdk.Rectangle.Gdk_Rectangle;
    end record;
-
-   type Arrow_Item_Record is new Browser_Item_Record with record
-      Parents_Shown, Children_Shown : Boolean := False;
-      Parents_Cb, Children_Cb : Arrow_Item_Callback;
-   end record;
-
-   overriding procedure Redraw_Title_Bar
-     (Item : access Arrow_Item_Record;
-      Cr   : Cairo.Cairo_Context);
-   overriding function Get_Last_Button_Number
-     (Item : access Arrow_Item_Record) return Glib.Gint;
-   overriding procedure Reset
-     (Item : access Arrow_Item_Record;
-      Parent_Removed, Child_Removed : Boolean);
-
-   type Item_Active_Area_Callback is new Active_Area_Callback with record
-      User_Data : Browser_Item;
-      Cb        : Item_Active_Callback;
-   end record;
-   overriding function Call
-     (Callback : Item_Active_Area_Callback;
-      Event    : Gdk.Event.Gdk_Event_Button) return Boolean;
-   --  See doc for inherited Call
-
-   type Active_Area_Cb_Array_Access is access Active_Area_Cb_Array;
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Active_Area_Cb_Array, Active_Area_Cb_Array_Access);
-
-   Empty_Cb_Array : constant Active_Area_Cb_Array (1 .. 0) := (others => null);
-
-   type Xref_Line is record
-      Text      : GNAT.Strings.String_Access;
-      Callbacks : Active_Area_Cb_Array_Access;
-      Length    : Natural;
-   end record;
-   type Xref_Line_Array is array (Natural range <>) of Xref_Line;
-   type Xref_Line_Array_Access is access Xref_Line_Array;
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Xref_Line_Array, Xref_Line_Array_Access);
-
-   type Xref_List is record
-      Lines : Xref_Line_Array_Access;
-   end record;
-
-   pragma Inline (Get_Canvas);
 end Browsers.Canvas;
