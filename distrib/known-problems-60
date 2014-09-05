@@ -44,7 +44,7 @@ KP-60-N829-003 GPS.Entity.parameters with more than 100 parameters
 
   Status:     This was fixed in 6.1 on 2014-09-01
 
-  Workaround: add a try..catch.. block around the call to parameters()
+  Workaround: add a try..catch.. block around the call to parameters().
 
 KP-60-N828-010 /Tools/Macro/Play not enabled after stopping a recording
 
