@@ -231,6 +231,9 @@ package Generic_Views is
       --  position of the floating window are saved and restored automatically.
 
    package Simple_Views is
+      M_Name : constant String := Module_Name;
+      --  So that it can be referenced from the outside, for instance to create
+      --  filters.
 
       type View_Access is access all Formal_View_Record'Class;
 

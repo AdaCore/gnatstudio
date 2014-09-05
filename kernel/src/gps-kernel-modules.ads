@@ -83,6 +83,7 @@ package GPS.Kernel.Modules is
    Dependency_Browser_Module_Name : constant String := "Dependency_Browser";
    Project_Browser_Module_Name    : constant String := "Project_Browser";
    Revision_View_Module_Name      : constant String := "Revision_Views";
+   Entity_Browser_Module_Name : constant String := "Entity_Browser";
    --  Names for the internal modules.
    --  Changing these might also impact the contents of the saved perspectives
    --  files.

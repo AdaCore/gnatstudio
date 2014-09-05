@@ -211,7 +211,7 @@ package body Browsers is
       Selected : constant Gdk_RGBA := Selected_Item_Color.Get_Pref;
       F        : constant Pango_Font_Description :=
         GPS.Kernel.Preferences.Default_Font.Get_Pref_Font;
-      F2, F3   : Pango_Font_Description;
+      F2, F3, F4 : Pango_Font_Description;
 
    begin
       --  ??? Should update the style properties directly, to refresh
@@ -223,6 +223,9 @@ package body Browsers is
 
       F3 := Copy (F);
       Set_Size (F3, Get_Size (F) - 2 * Pango_Scale);
+
+      F4 := Copy (F);
+      Set_Size (F4, Get_Size (F) - 2 * Pango_Scale);
 
       Self.Styles :=
         (Item => Gtk_New
@@ -236,6 +239,12 @@ package body Browsers is
          Text_Font  => Gtk_New
            (Font   => (Name => F2, others => <>),
             Stroke => Null_RGBA),
+         Hyper_Link  => Gtk_New
+           (Font      => (Name => F4,
+                          Color     => Browsers_Hyper_Link_Color.Get_Pref,
+                          Underline => Pango_Underline_Single,
+                          others => <>),
+            Stroke    => Null_RGBA),
          Link_Label => Gtk_New (Font => (Name => F3, others => <>)),
          Link       => Gtk_New
            (Stroke   => Unselected_Link_Color.Get_Pref,

@@ -2033,8 +2033,9 @@ package body Src_Editor_Module is
          Label  => -"Goto declaration of %ef",
          Filter => (not Is_Dispatching)
             and ((not Line_Numbers_Area_Filter
-              and Create (Module => Src_Editor_Module_Name))
-              or Has_Type));
+                  and Create (Module => Src_Editor_Module_Name))
+                 or Create (Module => Entity_Browser_Module_Name)
+                 or Has_Type));
 
       Submenu := new Goto_Dispatch_Declaration_Submenu;
       Register_Contextual_Submenu
@@ -2043,8 +2044,9 @@ package body Src_Editor_Module is
          Submenu => Submenu,
          Filter  => Is_Dispatching
             and ((not Line_Numbers_Area_Filter
-              and Create (Module => Src_Editor_Module_Name))
-              or Has_Type));
+                  and Create (Module => Src_Editor_Module_Name))
+                 or Create (Module => Entity_Browser_Module_Name)
+                 or Has_Type));
 
       Command := new Goto_Next_Body_Command;
       Filter  := new Has_Body_Filter;

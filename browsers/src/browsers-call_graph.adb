@@ -495,7 +495,7 @@ package body Browsers.Call_Graph is
                From    => Src,
                To      => Dest,
                Routing => Curve,
-               Label  => Gtk_New_Text (Styles.Title, "renames"),
+               Label  => Gtk_New_Text (Styles.Label, "renames"),
                Anchor_From => F,
                Anchor_To   => T,
                Style       => L.Default_Style);

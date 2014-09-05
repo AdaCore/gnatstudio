@@ -45,6 +45,7 @@ package Browsers is
       Link        : Drawing_Style; --  Style to draw the links themselves
       Link2       : Drawing_Style; --  Style to draw other links
       Highlight   : Drawing_Style; --  Parents or children of selected items
+      Hyper_Link  : Drawing_Style; --  Style to draw hyper links
 
       Circle      : Drawing_Style; --  For items with a circle
       Label       : Drawing_Style; --  semi-transparent white

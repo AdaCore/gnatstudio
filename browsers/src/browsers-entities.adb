@@ -16,20 +16,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-with Ada.Numerics.Generic_Elementary_Functions;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Xref;             use GNATCOLL.Xref;
-with GNAT.Strings;              use GNAT.Strings;
 
-with Cairo;                     use Cairo;
-with Cairo.Region;              use Cairo.Region;
-
-with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Window;                use Gdk.Window;
 
 with Glib;                      use Glib;
@@ -37,21 +30,12 @@ with Glib.Main;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Style;                 use Gtk.Style;
-with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Widget;                use Gtk.Widget;
 
-with Gtkada.Canvas;             use Gtkada.Canvas;
+with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
-with Gtkada.Types;
-
-with Pango.Layout;              use Pango.Layout;
-
-with Basic_Types;
 
 with Browsers.Canvas;           use Browsers.Canvas;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -63,55 +47,19 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with Xref;                      use Xref;
-with Ada.Unchecked_Deallocation;
 
 package body Browsers.Entities is
    Me : constant Trace_Handle := Create ("Browser.Entities");
-
-   package Num is new Ada.Numerics.Generic_Elementary_Functions (Gdouble);
-   use Num;
 
    package Entity_Arrays is new Ada.Containers.Indefinite_Doubly_Linked_Lists
       (Root_Entity'Class);
    use Entity_Arrays;
 
-   type Entity_Browser_Module_Record is new Module_ID_Record with null record;
-   Entity_Browser_Module : Module_ID;
-
-   Left_Margin : constant := 20;
-   --  Indentation for the attributes and methods layouts
-
    UML_Abstract : constant String := "{Abstract}";
+   UML_Generic  : constant String := "{Generic}";
    --  String used in UML to indicate that an entity is abstract
-
-   Generic_Item_Box_Width_Right : constant := 10;
-   Generic_Item_Box_Width      : constant := Generic_Item_Box_Width_Right + 30;
-   --  The position of the templates parameters box for generic items.
-   --  Right refers to the position from the right side of the item.
-
-   Generic_Item_Box_Height_Top : constant := 10;
-   Generic_Item_Box_Height     : constant := Generic_Item_Box_Height_Top + 17;
-   --  Height of the top-rigth box for generic items
-
-   Include_Inherited : aliased constant String := "include_inherited";
-   Methods_Cmd_Parameters : constant Cst_Argument_List :=
-     (2 => Include_Inherited'Access);
-
-   overriding procedure Default_Context_Factory
-     (Module  : access Entity_Browser_Module_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject);
-   --  See inherited documentation
-
-   type Entity_Browser_Action_Context is new GPS.Kernel.Action_Filter_Record
-     with null record;
-   overriding function Filter_Matches_Primitive
-     (Context : access Entity_Browser_Action_Context;
-      Ctxt : GPS.Kernel.Selection_Context) return Boolean;
-   --  A context that matches if the current widget is an entity browser
 
    ------------------
    -- Type browser --
@@ -122,8 +70,6 @@ package body Browsers.Entities is
       Primitive_Button : Gdk.Pixbuf.Gdk_Pixbuf;
       Idle_Id          : Glib.Main.G_Source_Id := 0;
    end record;
-   overriding procedure Refresh_Layout_Orientation
-     (Browser : access Type_Browser_Record);
    --  See inherited documentation
 
    function Initialize
@@ -132,7 +78,7 @@ package body Browsers.Entities is
    --  Creates the dependency browser and returns the focus widget
 
    package Entities_Views is new Generic_Views.Simple_Views
-     (Module_Name            => "Entity_Browser",
+     (Module_Name            => Entity_Browser_Module_Name,
       View_Name              => -"Entity Browser",
       Formal_View_Record     => Type_Browser_Record,
       Formal_MDI_Child       => GPS_MDI_Child_Record,
@@ -141,162 +87,66 @@ package body Browsers.Entities is
       Local_Toolbar          => True,
       Local_Config           => True,
       Position               => Position_Automatic,
-      Group                  => Group_Graphs);
+      Group                  => Group_Default);
    subtype Type_Browser is Entities_Views.View_Access;
 
    ---------------
    -- Type item --
    ---------------
 
-   type Type_Item_Record is new Browsers.Canvas.Arrow_Item_Record with record
+   type Type_Item_Record is new GPS_Item_Record with record
       Entity                : Root_Entity_Ref;
       Might_Have_Primitives : Boolean := True;
       Inherited_Primitives  : Boolean := False;
-      General_Lines,
-      Attr_Lines,
-      Meth_Lines           : Xref_List;
-
-      Layout_W1, Meth_Layout_W1 : Gint;
-      Layout_H, Meth_Layout_H : Gint;
-      --  Width of the column in the two areas of the item
    end record;
    type Type_Item is access all Type_Item_Record'Class;
 
-   procedure Gtk_New
-     (Item    : out Type_Item;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Root_Entity'Class);
-   --  Open a new item in the browser that represents Entity.
-   --  A copy of Entity is made, thus the caller should free Entity.
-
-   procedure Initialize
-     (Item    : access Type_Item_Record'Class;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Root_Entity'Class);
-   --  Internal initialization function
-
-   overriding procedure Destroy (Item : in out Type_Item_Record);
-   --  Free the memory occupied by the item. This is called automatically when
-   --  the item is removed from the canvas.
-
-   overriding procedure Compute_Size
-     (Item          : not null access Type_Item_Record;
-      Layout        : not null access Pango_Layout_Record'Class;
-      Width, Height : out Glib.Gint;
-      Title_Box     : in out Cairo.Region.Cairo_Rectangle_Int);
-   overriding procedure Resize_And_Draw
-     (Item             : access Type_Item_Record;
-      Cr               : Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
-   overriding procedure Contextual_Factory
-     (Item    : access Type_Item_Record;
-      Context : in out Selection_Context;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu);
-   overriding function Get_Last_Button_Number
-     (Item : access Type_Item_Record) return Glib.Gint;
-   overriding procedure Redraw_Title_Bar
-     (Item : access Type_Item_Record;
-      Cr   : Cairo_Context);
-   --  See doc for inherited subprograms
-
-   ------------------
-   -- Generic item --
-   ------------------
-   --  This type is used to represent generic items
-
-   type Generic_Item_Record is new Type_Item_Record with null record;
-
-   overriding procedure Compute_Size
-     (Item          : not null access Generic_Item_Record;
-      Layout        : not null access Pango_Layout_Record'Class;
-      Width, Height : out Glib.Gint;
-      Title_Box     : in out Cairo.Region.Cairo_Rectangle_Int);
-   overriding procedure Resize_And_Draw
-     (Item             : access Generic_Item_Record;
-      Cr               : Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
-   overriding function Point_In_Item
-     (Item   : access Generic_Item_Record;
-      X, Y   : Glib.Gint) return Boolean;
-   overriding procedure Draw
-     (Item   : access Generic_Item_Record;
-      Cr     : Cairo_Context);
-   overriding procedure Clip_Line
-     (Src   : access Generic_Item_Record;
-      Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
-      To_X  : Gint;
-      To_Y  : Gint;
-      X_Pos : Gfloat;
-      Y_Pos : Gfloat;
-      Side  : out Item_Side;
-      X_Out : out Gint;
-      Y_Out : out Gint);
-   --  See doc for inherited subprograms
-
-   -----------------
-   -- Parent link --
-   -----------------
-
-   type Parent_Link_Record is new Browsers.Canvas.Browser_Link_Record
-     with null record;
-
-   overriding procedure Draw_Straight_Line
-     (Link        : access Parent_Link_Record;
-      Cr          : Cairo.Cairo_Context;
-      Parent_Side : Gtkada.Canvas.Item_Side;
-      X1, Y1      : Glib.Gdouble;
-      Child_Side  : Gtkada.Canvas.Item_Side;
-      X2, Y2      : Glib.Gdouble);
-   --  See doc for inherited subprogram
+   overriding procedure Set_Context
+     (Item    : not null access Type_Item_Record;
+      Context : in out Selection_Context);
 
    ----------
    -- Misc --
    ----------
 
-   function Add_Or_Select_Item
-     (Browser : access Type_Browser_Record'Class;
-      Entity  : Root_Entity'Class) return Type_Item;
+   procedure Find_Or_Create_Item
+     (Browser     : not null access Type_Browser_Record'Class;
+      Entity      : Root_Entity'Class;
+      Item        : out Type_Item;
+      Newly_Added : out Boolean);
    --  Create (or return an existing) item displaying the information for
-   --  Entity.
+   --  Entity. The position of the item is not computed
 
-   procedure Add_Item_And_Link
-     (Item         : access Type_Item_Record'Class;
-      Entity       : Root_Entity'Class;
+   procedure Add_And_Layout
+     (Self   : not null access Type_Browser_Record'Class;
+      Entity : Root_Entity'Class);
+   --  Similar to Find_Or_Create_Item, but recompute the whole layout of the
+   --  canvas to add the item.
+
+   procedure Add_Link
+     (Item         : not null access Type_Item_Record'Class;
+      Item2        : not null access Type_Item_Record'Class;
       Link_Name    : String;
-      Parent_Link  : Boolean;
-      Reverse_Link : Boolean := False);
+      Parent_Link  : Boolean);
    --  Create a new item displaying the information for Entity, and link it
-   --  with Item. If Reverse_Link is False, link goes from Item to Entity,
-   --  otherwise it goes in the opposite direction.
+   --  with Item.
    --  If Parent_Link is true, then the link used is a Parent_Link_Record.
 
-   type Show_Entity_Callback is new Active_Area_Callback with record
-      Item      : Browser_Item;
+   type Entity_Ref_Record is new Text_Item_Record and Clickable_Item
+   with record
       Entity    : Root_Entity_Ref;
-      Link_Name : GNAT.Strings.String_Access;
+      Link_Name : Unbounded_String;
    end record;
-
-   overriding function Call
-     (Callback : Show_Entity_Callback;
-      Event    : Gdk.Event.Gdk_Event_Button) return Boolean;
-   overriding procedure Destroy (Callback : in out Show_Entity_Callback);
-   --  See inherated doc
-
-   function Build
-     (Item      : access Browser_Item_Record'Class;
+   type Entity_Ref is access Entity_Ref_Record'Class;
+   function Gtk_New_Entity
+     (Self      : not null access Type_Browser_Record'Class;
       Entity    : Root_Entity'Class;
-      Link_Name : String := "") return Active_Area_Cb;
-   --  Build a new callback to display entities
+      Link_Name : String := "") return Entity_Ref;
+   overriding procedure On_Click
+     (Self : not null access Entity_Ref_Record;
+      View : not null access GPS_Canvas_View_Record'Class);
+   --  A text item that represents an entity. Clicking on it will display the
+   --  entity in the browser, with a link from
 
    procedure Show_Entity_Command_Handler
      (Data    : in out Callback_Data'Class;
@@ -304,165 +154,130 @@ package body Browsers.Entities is
    --  Command handler for this module (in the shell window)
 
    procedure Add_Primitive_Operations
-     (Kernel : access Kernel_Handle_Record'Class;
-      List   : in out Xref_List;
-      Item   : access Type_Item_Record'Class);
+     (Item   : access Type_Item_Record'Class);
    --  Add the sorted list of primitive operations for Entity at the end of
    --  Meth_Layout.
 
-   procedure Add_Parameters
-     (List : in out Xref_List;
-      Item : access Type_Item_Record'Class);
+   procedure Add_Parameters (Item : access Type_Item_Record'Class);
    --  Add the list of parameters for a subprogram entity to the end of
    --  an cross-reference list.
 
-   procedure Add_Fields
-     (List : in out Xref_List;
-      Item : access Type_Item_Record'Class);
+   procedure Add_Fields (Item : not null access Type_Item_Record'Class);
    --  Add the list of fields for a record-like entity to the end of
    --  a cross-reference list.
    --  This is also usable to get the enumeration literals for an enumeration
    --  type.
 
    procedure Add_Package_Contents
-     (Kernel       : access Kernel_Handle_Record'Class;
-      General_List : in out Xref_List;
-      Attr_List    : in out Xref_List;
-      Meth_List    : in out Xref_List;
-      Item         : access Type_Item_Record'Class);
+     (Item : not null access Type_Item_Record'Class);
    --  Add the parent package information for an entity at the end of its
    --  cross-reference lists.
 
-   procedure On_Show_Source
-     (Browser : access Gtk_Widget_Record'Class; Item : Browser_Item);
-   --  Display a source editor to show the declaration of the entity
+   type Show_Parents_Button is new Left_Arrow_Record with null record;
+   overriding procedure On_Click
+     (Self : not null access Show_Parents_Button;
+      View : not null access GPS_Canvas_View_Record'Class);
 
-   procedure Find_Parent_Types (Item : access Arrow_Item_Record'Class);
-   --  Display the parent types for the item
-
-   procedure Find_Child_Types (Item : access Arrow_Item_Record'Class);
-   --  Display the children types for the item
-
-   procedure Find_Parent_Or_Child_Types
-     (Item    : access Arrow_Item_Record'Class;
-      Members : Xref.Entity_Array;
-      Parents : Boolean);
-   --  Display the parent/child types for the item
-
-   procedure Hide_Show_Inherited
-     (Event : Gdk_Event_Button;
-      Item  : access Browser_Item_Record'Class);
-   --  Change the status of inherited primitive operations (shown or hidden)
+   type Show_Children_Button is new Right_Arrow_Record with null record;
+   overriding procedure On_Click
+     (Self : not null access Show_Children_Button;
+      View : not null access GPS_Canvas_View_Record'Class);
 
    procedure Add_Type
-     (List     : in out Xref_List;
-      Item     : access Type_Item_Record'Class;
-      Entity   : Root_Entity'Class;
-      Prefix   : String);
-   --  Add a new line in List, starting with prefix and followed by an
+     (Item   : not null access Type_Item_Record'Class;
+      Entity : Root_Entity'Class;
+      Prefix : String);
+   --  Add a new line in the item, starting with "prefix : " and followed by an
    --  hyper link for the type of Entity.
 
    procedure Add_Array_Type
-     (List       : in out Xref_List;
-      Item       : access Type_Item_Record'Class;
+     (Item       : not null access Type_Item_Record'Class;
       Entity     : Root_Entity'Class;
-      Info_Added : out Boolean);
+      Prefix     : String);
    --  Add the information for an array type
 
    procedure Add_Access_Type
-     (List       : in out Xref_List;
-      Item       : access Type_Item_Record'Class;
+     (Item       : not null access Type_Item_Record'Class;
       Entity     : Root_Entity'Class;
-      Info_Added : out Boolean);
+      Prefix     : String);
    --  Add the information for an access type
 
-   function Entity_As_Link
-     (Kernel : access Kernel_Handle_Record'Class;
-      Ent    : Root_Entity'Class) return String;
-   --  Return a string that contains the entity name, as an hyper link. If
-   --  Entity is in fact a predefined entity, no link is setup.
-
    procedure Add_Subprogram
-     (Kernel : access Kernel_Handle_Record'Class;
-      List   : in out Xref_List;
-      Item   : access Type_Item_Record'Class;
+     (Item   : not null access Type_Item_Record'Class;
       Entity : Root_Entity'Class);
    --  Add a line that describes the subprogram Entity.
-   --  Entity should not be freed by the caller
 
    procedure Sort
      (Db  : access General_Xref_Database_Record'Class;
       Arr : in out Entity_Arrays.List);
    --  Sort the array alphabetically
 
-   --------------
-   -- Commands --
-   --------------
-
    type Examine_Entity_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Examine_Entity_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   --------------------------------
-   -- Refresh_Layout_Orientation --
-   --------------------------------
+   --------------
+   -- On_Click --
+   --------------
 
-   overriding procedure Refresh_Layout_Orientation
-     (Browser : access Type_Browser_Record)
+   overriding procedure On_Click
+     (Self : not null access Entity_Ref_Record;
+      View : not null access GPS_Canvas_View_Record'Class)
    is
+      pragma Unreferenced (View);
+      Item     : constant Type_Item := Type_Item (Self.Get_Toplevel_Item);
+      B        : constant Type_Browser := Type_Browser (Item.Browser);
+      New_Item : Type_Item;
+      Added    : Boolean;
+      Items    : Items_Lists.List;
    begin
-      --  Always force a vertical layout
-      Set_Layout_Orientation (Get_Canvas (Browser), Vertical_Layout => True);
-   end Refresh_Layout_Orientation;
+      Find_Or_Create_Item (B, Self.Entity.Element, New_Item, Added);
+      Add_Link
+        (Item        => Item,
+         Item2       => New_Item,
+         Link_Name   => To_String (Self.Link_Name),
+         Parent_Link => False);
 
-   ----------
-   -- Call --
-   ----------
-
-   overriding function Call
-     (Callback : Show_Entity_Callback;
-      Event    : Gdk.Event.Gdk_Event_Button) return Boolean is
-   begin
-      if Event.Button = 1
-        and then Event.The_Type = Button_Press
-      then
-         Add_Item_And_Link
-           (Type_Item (Callback.Item), Callback.Entity.Element,
-            Callback.Link_Name.all, Parent_Link => False);
-         Layout (Get_Browser (Callback.Item), Force => False);
-         return True;
+      if Added then
+         Items.Append (Abstract_Item (New_Item));
+         Insert_And_Layout_Items
+           (B.Get_View,
+            Ref       => Item,
+            Items     => Items,
+            Direction => (if B.Horizontal_Layout then Right else Down),
+            Space_Between_Items  => Default_Space_Between_Items,
+            Space_Between_Layers => Default_Space_Between_Layers,
+            Duration             => 0.3);
+      else
+         B.Get_View.Model.Refresh_Layout;  --  for the link
       end if;
-      return False;
-   end Call;
+   end On_Click;
 
-   -------------
-   -- Destroy --
-   -------------
+   --------------------
+   -- Add_And_Layout --
+   --------------------
 
-   overriding procedure Destroy (Callback : in out Show_Entity_Callback) is
-   begin
-      Free (Callback.Link_Name);
-   end Destroy;
-
-   -----------
-   -- Build --
-   -----------
-
-   function Build
-     (Item      : access Browser_Item_Record'Class;
-      Entity    : Root_Entity'Class;
-      Link_Name : String := "") return Active_Area_Cb
+   procedure Add_And_Layout
+     (Self   : not null access Type_Browser_Record'Class;
+      Entity : Root_Entity'Class)
    is
-      H : Root_Entity_Ref;
+      Ignore  : Type_Item;
+      Added   : Boolean;
+      pragma Unreferenced (Ignore);
    begin
-      H.Replace_Element (Entity);
-      return new Show_Entity_Callback'
-        (Active_Area_Callback with
-         Item      => Browser_Item (Item),
-         Link_Name => new String'(Link_Name),
-         Entity    => H);
-   end Build;
+      Self.Find_Or_Create_Item
+        (Entity      => Entity,
+         Item        => Ignore,
+         Newly_Added => Added);
+
+      if Added then
+         Self.Refresh_Layout
+           (Rescale              => False,
+            Space_Between_Items  => Default_Space_Between_Items,
+            Space_Between_Layers => Default_Space_Between_Layers);
+      end if;
+   end Add_And_Layout;
 
    -------------
    -- Execute --
@@ -472,16 +287,11 @@ package body Browsers.Entities is
      (Command : access Examine_Entity_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
       View : constant Type_Browser := Entities_Views.Get_Or_Create_View
         (Get_Kernel (Context.Context));
-      Ignore  : Type_Item;
-      pragma Unreferenced (Ignore);
+      pragma Unreferenced (Command);
    begin
-      Ignore := Add_Or_Select_Item
-        (Browser => View,
-         Entity  => Get_Entity (Context.Context));
-      Layout (View, Force => False);
+      Add_And_Layout (View, Get_Entity (Context.Context));
       return Commands.Success;
    end Execute;
 
@@ -493,11 +303,8 @@ package body Browsers.Entities is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command : Interactive_Command_Access;
-      Entity_Browser_Context  : constant Action_Filter :=
-                                  new Entity_Browser_Action_Context;
    begin
-      Entity_Browser_Module := new Entity_Browser_Module_Record;
-      Entities_Views.Register_Module (Kernel, Entity_Browser_Module);
+      Entities_Views.Register_Module (Kernel);
 
       Command := new Examine_Entity_Command;
 
@@ -507,7 +314,7 @@ package body Browsers.Entities is
          Action     => Command,
          Ref_Item   => "Entity called by in browser",
          Add_Before => False,
-         Filter     => not Entity_Browser_Context);
+         Filter     => not Create (Module => Entities_Views.M_Name));
       Register_Command
         (Kernel, "show",
          Class   => Get_Entity_Class (Kernel),
@@ -533,17 +340,15 @@ package body Browsers.Entities is
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel, "methods",
+        (Kernel.Scripts, "methods",
          Class   => Get_Entity_Class (Kernel),
-         Minimum_Args => 0,
-         Maximum_Args => 1,
+         Params  => (2 => Param ("include_inherited", Optional => True)),
          Handler => Show_Entity_Command_Handler'Access);
       Register_Command
-        (Kernel, "documentation",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Show_Entity_Command_Handler'Access,
-         Minimum_Args => 0,
-         Maximum_Args => 1);
+        (Kernel.Scripts, "documentation",
+         Class       => Get_Entity_Class (Kernel),
+         Handler     => Show_Entity_Command_Handler'Access,
+         Params      => (2 => Param ("include_inherited", Optional => True)));
       Register_Command
         (Kernel, "return_type",
          Class   => Get_Entity_Class (Kernel),
@@ -580,16 +385,14 @@ package body Browsers.Entities is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Entity : constant Root_Entity'Class := Get_Data (Data, 1);
-      View   : Type_Browser;
       Ignore : Type_Item;
       pragma Unreferenced (Ignore);
    begin
       if Entity /= No_Root_Entity then
          if Command = "show" then
-            View := Entities_Views.Get_Or_Create_View (Kernel, Focus => True);
-            Ignore := Add_Or_Select_Item
-              (Browser => View,
-               Entity  => Entity);
+            Add_And_Layout
+              (Entities_Views.Get_Or_Create_View (Kernel, Focus => True),
+               Entity => Entity);
 
          elsif Command = "discriminants" then
             declare
@@ -631,8 +434,6 @@ package body Browsers.Entities is
             end;
 
          elsif Command = "methods" then
-            Name_Parameters (Data, Methods_Cmd_Parameters);
-
             declare
                Methods : Xref.Entity_Array :=
                  Entity.Methods
@@ -760,101 +561,17 @@ package body Browsers.Entities is
 
    function Initialize
      (View   : access Type_Browser_Record'Class)
-      return Gtk_Widget
-   is
-      i_page_xpm : aliased Gtkada.Types.Chars_Ptr_Array (0 .. 0);
-      pragma Import (C, i_page_xpm, "i_page_xpm");
-
+      return Gtk_Widget is
    begin
-      Initialize
-        (View,
-         Create_Toolbar  => False,
-         Parents_Pixmap  => Stock_Go_Up,
-         Children_Pixmap => Stock_Go_Down);
-
-      --  ??? Should be freed when browser is destroyed
-      View.Primitive_Button := Gdk_New_From_Xpm_Data (i_page_xpm);
-
+      Initialize (View, Use_Canvas_View => True);
       Register_Contextual_Menu
         (Kernel          => View.Kernel,
          Event_On_Widget => View,
          Object          => View,
          ID              => Entities_Views.Get_Module,
          Context_Func    => Default_Browser_Context_Factory'Access);
-
       return Gtk_Widget (View);
    end Initialize;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Item    : out Type_Item;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Root_Entity'Class) is
-   begin
-      if Entity.Is_Generic then
-         Item := new Generic_Item_Record;
-      else
-         Item := new Type_Item_Record;
-      end if;
-      Initialize (Item, Browser, Entity);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Item    : access Type_Item_Record'Class;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Entity  : Root_Entity'Class)
-   is
-      Name : constant String := Entity.Qualified_Name;
-   begin
-      if Entity.Is_Abstract then
-         Initialize
-           (Item, Browser,
-            Name & ASCII.LF & "   " & UML_Abstract,
-            Find_Parent_Types'Access, Find_Child_Types'Access);
-      else
-         Initialize
-           (Item, Browser, Name,
-            Find_Parent_Types'Access, Find_Child_Types'Access);
-      end if;
-      Item.Entity.Replace_Element (Entity);
-      Recompute_Size (Item);
-   end Initialize;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Item : in out Type_Item_Record) is
-   begin
-      Free (Item.General_Lines);
-      Free (Item.Attr_Lines);
-      Free (Item.Meth_Lines);
-   end Destroy;
-
-   --------------------
-   -- Entity_As_Link --
-   --------------------
-
-   function Entity_As_Link
-     (Kernel : access Kernel_Handle_Record'Class;
-      Ent    : Root_Entity'Class) return String
-   is
-      pragma Unreferenced (Kernel);
-      Name : constant String := Ent.Get_Name;
-   begin
-      if Ent.Is_Predefined_Entity then
-         return Name;
-      else
-         return '@' & Name & '@';
-      end if;
-   end Entity_As_Link;
 
    ----------
    -- Sort --
@@ -885,11 +602,9 @@ package body Browsers.Entities is
    -- Add_Primitive_Operations --
    ------------------------------
 
-   procedure Add_Primitive_Operations
-     (Kernel : access Kernel_Handle_Record'Class;
-      List   : in out Xref_List;
-      Item   : access Type_Item_Record'Class)
-   is
+   procedure Add_Primitive_Operations (Item : access Type_Item_Record'Class) is
+      B    : constant Type_Browser := Type_Browser (Item.Browser);
+
       use Entity_Arrays;
       Methods : Xref.Entity_Array :=
         Item.Entity.Element.Methods
@@ -910,91 +625,75 @@ package body Browsers.Entities is
 
       Free (Methods);
 
-      Sort (Kernel.Databases, Arr);
-
-      if not Item.Inherited_Primitives then
-         --  For each inherited operation, remove it from the list of
-         --  operations to display.
-         --  ??? Would be more efficient if GNAT simply didn't give that
-         --  information initially, we can easily get it from the
-         --  parent's list.
-         --  This step isn't needed for C++.
-
-         declare
-            Parents     : constant Xref.Entity_Array :=
-              Item.Entity.Element.Parent_Types (Recursive => False);
-            Op          : Root_Entity_Access;
-         begin
-            for Parent in Parents'Range loop
-               declare
-                  Parent_Methods : Xref.Entity_Array :=
-                    Parents (Parent).Methods (Include_Inherited => False);
-               begin
-                  for M in Parent_Methods'Range loop
-                     Op := Parent_Methods (M);
-
-                     for A of Arr loop
-                        if A = Op.all then
-                           A := No_Root_Entity;
-                           exit;
-                        end if;
-                     end loop;
-                  end loop;
-
-                  Free (Parent_Methods);
-               end;
-            end loop;
-         end;
-      end if;
+      Sort (B.Get_Kernel.Databases, Arr);
 
       for A of Arr loop
          if A /= No_Root_Entity then
-            Add_Subprogram (Kernel, List, Item, A);
+            Add_Subprogram (Item, A);
          end if;
       end loop;
    end Add_Primitive_Operations;
+
+   --------------------
+   -- Gtk_New_Entity --
+   --------------------
+
+   function Gtk_New_Entity
+     (Self      : not null access Type_Browser_Record'Class;
+      Entity    : Root_Entity'Class;
+      Link_Name : String := "") return Entity_Ref
+   is
+      S   : constant access Browser_Styles := Self.Get_View.Get_Styles;
+      Ent : constant Entity_Ref := new Entity_Ref_Record;
+   begin
+      Ent.Entity.Replace_Element (Entity);
+      Ent.Link_Name := To_Unbounded_String (Link_Name);
+      Ent.Initialize_Text (S.Hyper_Link, Entity.Get_Name);
+      return Ent;
+   end Gtk_New_Entity;
 
    --------------------
    -- Add_Subprogram --
    --------------------
 
    procedure Add_Subprogram
-     (Kernel : access Kernel_Handle_Record'Class;
-      List   : in out Xref_List;
-      Item   : access Type_Item_Record'Class;
-      Entity : Root_Entity'Class) is
+     (Item   : not null access Type_Item_Record'Class;
+      Entity : Root_Entity'Class)
+   is
+      B    : constant Type_Browser := Type_Browser (Item.Browser);
+      S    : constant access Browser_Styles := B.Get_View.Get_Styles;
+      Rect : constant Rect_Item := Gtk_New_Rect (S.Invisible);
    begin
-      Add_Line
-        (List,
-         Entity_As_Link (Kernel, Entity) & " ("
-         & Entity.Get_Display_Kind & ')',
-         Callback => (1 => Build (Item, Entity)));
-      --  Do not free Entity, it's needed for callbacks
+      Rect.Set_Child_Layout (Horizontal_Stack);
+      Rect.Add_Child (Gtk_New_Entity (B, Entity));
+      Rect.Add_Child
+        (Gtk_New_Text (S.Text_Font, " (" & Entity.Get_Display_Kind & ")"));
+      Item.Add_Child (Rect);
    end Add_Subprogram;
 
    --------------------
    -- Add_Parameters --
    --------------------
 
-   procedure Add_Parameters
-     (List : in out Xref_List;
-      Item : access Type_Item_Record'Class)
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
-      Params : constant Parameter_Array :=
-        Item.Entity.Element.Parameters;
-
-      Typ : Root_Entity_Access;
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Root_Entity'Class, Root_Entity_Access);
-
-      Returned    : constant Root_Entity'Class :=
+   procedure Add_Parameters (Item : access Type_Item_Record'Class) is
+      B        : constant Type_Browser := Type_Browser (Item.Browser);
+      S        : constant access Browser_Styles := B.Get_View.Get_Styles;
+      Params   : constant Parameter_Array := Item.Entity.Element.Parameters;
+      Returned : constant Root_Entity'Class :=
         Item.Entity.Element.Returned_Type;
+      Rect  : Rect_Item;
    begin
       for P in Params'Range loop
          declare
             Parameter : constant Root_Entity'Class := Params (P).Parameter;
+            Name      : constant String := Parameter.Get_Name;
          begin
+            Rect := Gtk_New_Rect (S.Invisible);
+            Rect.Set_Child_Layout (Horizontal_Stack);
+            Rect.Add_Child
+              (Gtk_New_Text
+                 (S.Text_Font, Name & " : " & Image (Params (P).Kind)));
+            Item.Add_Child (Rect);
 
             --  In some cases, access parameters reference their pointed type
             --  through Pointed_Type. However, if that access type is a
@@ -1002,41 +701,29 @@ package body Browsers.Entities is
             --  if Pointed_Type didn't return anything.
 
             if Params (P).Kind = Access_Parameter then
-               Typ := new Root_Entity'Class'(Parameter.Pointed_Type);
+               declare
+                  E : constant Root_Entity'Class := Parameter.Pointed_Type;
+               begin
+                  if E = No_Root_Entity then
+                     Rect.Add_Child
+                       (Gtk_New_Entity (B, Parameter.Get_Type_Of));
+                  else
+                     Rect.Add_Child (Gtk_New_Entity (B, E));
+                  end if;
+               end;
             else
-               Typ := new Root_Entity'Class'(No_Root_Entity);
+               Rect.Add_Child (Gtk_New_Entity (B, Parameter.Get_Type_Of));
             end if;
 
-            if Typ.all = No_Root_Entity then
-               Unchecked_Free (Typ);
-               Typ := new Root_Entity'Class'(Parameter.Get_Type_Of);
-            end if;
-
-            declare
-               Name : constant String := Parameter.Get_Name;
-            begin
-               Add_Line
-                 (List,
-                  Name & " : " &
-                    Image (Params (P).Kind) & " " &
-                    Entity_As_Link (Kernel, Typ.all),
-                  Length1  => Name'Length + 1,
-                  Callback => (1 => Build (Item, Typ.all)));
-            end;
-
-            Unchecked_Free (Typ);
-
-            --  Do not free Typ, it is needed for callbacks
          end;
       end loop;
 
       if Returned /= No_Root_Entity then
-         Add_Line
-           (List,
-            "return " & Entity_As_Link (Kernel, Returned),
-            Length1  => 7,
-            Callback => (1 => Build (Item, Returned)));
-         --  Do not free Returned, it is needed for callbacks
+         Rect := Gtk_New_Rect (S.Invisible);
+         Rect.Set_Child_Layout (Horizontal_Stack);
+         Rect.Add_Child (Gtk_New_Text (S.Text_Font, "return "));
+         Rect.Add_Child (Gtk_New_Entity (B, Returned));
+         Item.Add_Child (Rect);
       end if;
    end Add_Parameters;
 
@@ -1044,27 +731,23 @@ package body Browsers.Entities is
    -- Add_Package_Contents --
    --------------------------
 
-   --------------------------
-   -- Add_Package_Contents --
-   --------------------------
-
    procedure Add_Package_Contents
-     (Kernel       : access Kernel_Handle_Record'Class;
-      General_List : in out Xref_List;
-      Attr_List    : in out Xref_List;
-      Meth_List    : in out Xref_List;
-      Item         : access Type_Item_Record'Class)
+     (Item : not null access Type_Item_Record'Class)
    is
       use Entity_Arrays;
+      B      : constant Type_Browser := Type_Browser (Item.Browser);
+      S      : constant access Browser_Styles := B.Get_View.Get_Styles;
       Parent : constant Root_Entity'Class :=
         Item.Entity.Element.Parent_Package;
       Arr    : Entity_Arrays.List;
-
+      Rect  : Rect_Item;
    begin
       if Parent /= No_Root_Entity then
-         Add_Line (General_List, "Parent: " & Entity_As_Link (Kernel, Parent),
-                   Callback => (1 => Build (Item, Parent)));
-         --  Do not destroy parent, needed for callbacks
+         Rect := Gtk_New_Rect (S.Invisible);
+         Rect.Set_Child_Layout (Horizontal_Stack);
+         Rect.Add_Child (Gtk_New_Text (S.Text_Font, "Parent: "));
+         Rect.Add_Child (Gtk_New_Entity (B, Parent));
+         Item.Add_Child (Rect);
       end if;
 
       declare
@@ -1075,7 +758,6 @@ package body Browsers.Entities is
             declare
                Called : constant Root_Entity'Class := Get (Iter);
             begin
-
                if Called /= No_Root_Entity then
                   Append (Arr, Called);
                end if;
@@ -1085,21 +767,18 @@ package body Browsers.Entities is
          end loop;
       end;
 
-      Sort (Kernel.Databases, Arr);
+      Sort (B.Get_Kernel.Databases, Arr);
 
       for Current of Arr loop
          if Is_Subprogram (Current) then
-            Add_Subprogram (Kernel, Meth_List, Item, Current);
+            Add_Subprogram (Item, Current);
 
          elsif Is_Type (Current) then
-            declare
-               Name : constant String := Entity_As_Link (Kernel, Current);
-            begin
-               Add_Line
-                 (Attr_List, Name & "(type)",
-                  Length1 => Name'Length,
-                  Callback => (1 => Build (Item, Current, "")));
-            end;
+            Rect := Gtk_New_Rect (S.Invisible);
+            Rect.Set_Child_Layout (Horizontal_Stack);
+            Rect.Add_Child (Gtk_New_Entity (B, Current));
+            Rect.Add_Child (Gtk_New_Text (S.Text_Font, " (type)"));
+            Item.Add_Child (Rect);
 
          --  We want to show variables declared in this package, but not the
          --  parameters to subprograms.
@@ -1111,9 +790,7 @@ package body Browsers.Entities is
                if Subp = No_Root_Entity
                  and then Current.Caller_At_Declaration = Item.Entity.Element
                then
-                  Add_Type
-                    (Attr_List, Item, Current,
-                     Current.Get_Name);
+                  Item.Add_Type (Current, Prefix => Current.Get_Name);
                end if;
             end;
          end if;
@@ -1124,17 +801,16 @@ package body Browsers.Entities is
    -- Add_Fields --
    ----------------
 
-   procedure Add_Fields
-     (List : in out Xref_List;
-      Item : access Type_Item_Record'Class)
-   is
+   procedure Add_Fields (Item : not null  access Type_Item_Record'Class) is
       use Entity_Arrays;
+      B     : constant Type_Browser := Type_Browser (Item.Browser);
+      S     : constant access Browser_Styles := B.Get_View.Get_Styles;
       Literals : Xref.Entity_Array := Item.Entity.Element.Literals;
-
    begin
       if Literals'Length /= 0 then
          for F in Literals'Range loop
-            Add_Line (List, Get_Name (Literals (F).all));
+            Item.Add_Child
+              (Gtk_New_Text (S.Text_Font, Get_Name (Literals (F).all)));
          end loop;
 
       else
@@ -1143,15 +819,13 @@ package body Browsers.Entities is
             Discrs : Xref.Entity_Array := Item.Entity.Element.Discriminants;
          begin
             for D in Discrs'Range loop
-               Add_Type (List, Item, Discrs (D).all,
-                         -"Discriminant: "
-                         & Get_Name (Discrs (D).all));
+               Item.Add_Type
+                 (Discrs (D).all,
+                  -"Discriminant: " & Get_Name (Discrs (D).all));
             end loop;
 
             for F in Fields'Range loop
-               Add_Type
-                 (List, Item, Fields (F).all,
-                  Get_Name (Fields (F).all));
+               Item.Add_Type (Fields (F).all, Get_Name (Fields (F).all));
             end loop;
 
             Free (Fields);
@@ -1167,38 +841,33 @@ package body Browsers.Entities is
    --------------
 
    procedure Add_Type
-     (List   : in out Xref_List;
-      Item   : access Type_Item_Record'Class;
+     (Item   : not null access Type_Item_Record'Class;
       Entity : Root_Entity'Class;
       Prefix : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
+      B     : constant Type_Browser := Type_Browser (Item.Browser);
+      S     : constant access Browser_Styles := B.Get_View.Get_Styles;
       Typ   : constant Root_Entity'Class := Entity.Get_Type_Of;
-      Info_Added : Boolean := False;
+      Rect  : Rect_Item;
    begin
       if Typ = No_Root_Entity then
          --  Special handling for anonymous types, as generated by GNAT
 
          if Entity.Is_Array then
-            Add_Array_Type (List, Item, Entity, Info_Added);
+            Item.Add_Array_Type (Entity, Prefix);
          elsif Entity.Is_Access then
-            Add_Access_Type (List, Item, Entity, Info_Added);
+            Item.Add_Access_Type (Entity, Prefix);
+         else
+            Item.Add_Child
+              (Gtk_New_Text (S.Text_Font, Prefix & " : <anonymous>"));
          end if;
 
-         if Info_Added then
-            Add_Line
-              (List, Prefix & " <anonymous>",
-               Length1 => Prefix'Length + 12);
-         else
-            Add_Line (List, Prefix & " ???", Length1 => Prefix'Length + 1);
-         end if;
       else
-         Add_Line
-           (List,
-            Prefix & ": " & Entity_As_Link (Kernel, Typ),
-            Length1  => Prefix'Length + 2,
-            Callback => (1 => Build (Item, Typ, Prefix)));
-         --  Do not free Typ, needed for callbacks
+         Rect := Gtk_New_Rect (S.Invisible);
+         Rect.Set_Child_Layout (Horizontal_Stack);
+         Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : "));
+         Rect.Add_Child (Gtk_New_Entity (B, Typ, Prefix));
+         Item.Add_Child (Rect);
       end if;
    end Add_Type;
 
@@ -1207,50 +876,44 @@ package body Browsers.Entities is
    --------------------
 
    procedure Add_Array_Type
-     (List       : in out Xref_List;
-      Item       : access Type_Item_Record'Class;
+     (Item       : not null access Type_Item_Record'Class;
       Entity     : Root_Entity'Class;
-      Info_Added : out Boolean)
+      Prefix     : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
-      Typ : constant Root_Entity'Class := Entity.Component_Type;
+      B       : constant Type_Browser := Type_Browser (Item.Browser);
+      S       : constant access Browser_Styles := B.Get_View.Get_Styles;
+      Typ     : constant Root_Entity'Class := Entity.Component_Type;
       Indexes : Xref.Entity_Array := Entity.Index_Types;
+      Rect    : Rect_Item;
    begin
       if Typ /= No_Root_Entity then
-         Add_Line (List, "array ");
+         Rect := Gtk_New_Rect (S.Invisible);
+         Item.Add_Child (Rect);
+         Rect.Set_Child_Layout (Horizontal_Stack);
+         Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : array "));
+
          for Ind in Indexes'Range loop
             if Ind = Indexes'First then
-               if Ind = Indexes'Last then
-                  Add_Line
-                    (List, "  ("
-                     & Entity_As_Link (Kernel, Indexes (Ind).all) & ")",
-                     Callback => (1 => Build (Item, Indexes (Ind).all)));
-               else
-                  Add_Line
-                    (List, "  ("
-                     & Entity_As_Link (Kernel, Indexes (Ind).all) & ",",
-                     Callback => (1 => Build (Item, Indexes (Ind).all)));
-               end if;
-            elsif Ind = Indexes'Last then
-               Add_Line
-                 (List, "   "
-                  & Entity_As_Link (Kernel, Indexes (Ind).all) & ")",
-                  Callback => (1 => Build (Item, Indexes (Ind).all)));
+               Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " ("));
             else
-               Add_Line
-                 (List, "   "
-                  & Entity_As_Link (Kernel, Indexes (Ind).all) & ",",
-                  Callback => (1 => Build (Item, Indexes (Ind).all)));
+               Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " "));
+            end if;
+
+            Rect.Add_Child (Gtk_New_Entity (B, Indexes (Ind).all));
+
+            if Ind = Indexes'Last then
+               Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & ")"));
+            else
+               Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & ","));
             end if;
          end loop;
 
          Free (Indexes);
 
-         Add_Line (List, "of " & Entity_As_Link (Kernel, Typ),
-                   Callback => (1 => Build (Item, Typ)));
-         Info_Added := True;
+         Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " of "));
+         Rect.Add_Child (Gtk_New_Entity (B, Typ));
       else
-         Info_Added := False;
+         Item.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : ???"));
       end if;
    end Add_Array_Type;
 
@@ -1259,425 +922,224 @@ package body Browsers.Entities is
    ---------------------
 
    procedure Add_Access_Type
-     (List       : in out Xref_List;
-      Item       : access Type_Item_Record'Class;
+     (Item       : not null access Type_Item_Record'Class;
       Entity     : Root_Entity'Class;
-      Info_Added : out Boolean)
+      Prefix     : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
+      B   : constant Type_Browser := Type_Browser (Item.Browser);
+      S   : constant access Browser_Styles := B.Get_View.Get_Styles;
       Typ : constant Root_Entity'Class := Pointed_Type (Entity);
+      Rect    : Rect_Item;
    begin
       if Typ /= No_Root_Entity then
-         Add_Line
-           (List, "access to " & Entity_As_Link (Kernel, Typ),
-            Callback => (1 => Build (Item, Typ)));
-         --  Do not destroy Typ, needed for callbacks
-         Info_Added := True;
+         Rect := Gtk_New_Rect (S.Invisible);
+         Item.Add_Child (Rect);
+         Rect.Set_Child_Layout (Horizontal_Stack);
+         Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : access "));
+         Rect.Add_Child (Gtk_New_Entity (B, Typ));
       else
-         Info_Added := False;
+         Item.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : ???"));
       end if;
    end Add_Access_Type;
 
-   -----------------------
-   -- Add_Item_And_Link --
-   -----------------------
+   --------------
+   -- Add_Link --
+   --------------
 
-   procedure Add_Item_And_Link
-     (Item         : access Type_Item_Record'Class;
-      Entity       : Root_Entity'Class;
+   procedure Add_Link
+     (Item         : not null access Type_Item_Record'Class;
+      Item2        : not null access Type_Item_Record'Class;
       Link_Name    : String;
-      Parent_Link  : Boolean;
-      Reverse_Link : Boolean := False)
+      Parent_Link  : Boolean)
    is
-      Canvas   : constant Interactive_Canvas :=
-                   Get_Canvas (Get_Browser (Item));
-      New_Item : Type_Item;
-      Link     : Canvas_Link;
+      Browser : constant Type_Browser := Type_Browser (Item.Browser);
+      Styles  : constant access Browser_Styles := Browser.Get_View.Get_Styles;
+      Link     : GPS_Link;
+      Label    : Text_Item;
    begin
-      New_Item := Add_Or_Select_Item
-        (Type_Browser (Get_Browser (Item)), Entity);
-
-      if Parent_Link then
-         if Reverse_Link then
-            if not Has_Link (Canvas, Item, New_Item, Link_Name) then
-               Link := new Parent_Link_Record;
-               Add_Link (Canvas, Link, Item, New_Item, Descr => Link_Name,
-                         Arrow => No_Arrow);
-
-               --  Force the link to be connected to the bottom of the parent,
-               --  and the top of the child
-               --  Set_Src_Pos  (Link, 0.5, Y_Pos => 0.0);
-               --  Set_Dest_Pos (Link, 0.5, Y_Pos => 1.0);
-            end if;
-         elsif not Has_Link (Canvas, New_Item, Item, Link_Name) then
-            Link := new Parent_Link_Record;
-            Add_Link (Canvas, Link, New_Item, Item, Descr => Link_Name,
-                      Arrow => No_Arrow);
+      if not Browser.Has_Link (Item, Item2) then
+         if Link_Name /= "" then
+            Label := Gtk_New_Text (Styles.Label, Link_Name);
          end if;
 
-      elsif Reverse_Link then
-         if not Has_Link (Canvas, New_Item, Item, Link_Name) then
-            Link := new Browser_Link_Record;
-            Browser_Link (Link).Orthogonal := True;
-            Add_Link (Canvas, Link, New_Item, Item, Descr => Link_Name);
-         end if;
-
-      elsif not Has_Link (Canvas, Item, New_Item, Link_Name) then
-         Link := new Browser_Link_Record;
-         Browser_Link (Link).Orthogonal := True;
-         Add_Link (Canvas, Link, Item, New_Item, Descr => Link_Name);
+         Link := new GPS_Link_Record;
+         Link.Default_Style :=
+           (if Parent_Link then Styles.Link2 else Styles.Link);
+         Browser_Model (Browser.Get_View.Model).Add (Link);
+         Initialize
+           (Link,
+            From    => Item,
+            To      => Item2,
+            Routing => (if Parent_Link then Orthogonal else Curve),
+            Label   => Label,
+            Style   => Link.Default_Style);
       end if;
+   end Add_Link;
 
-      Canvas.Refresh (New_Item);
-   end Add_Item_And_Link;
+   --------------
+   -- On_Click --
+   --------------
 
-   --------------------------------
-   -- Find_Parent_Or_Child_Types --
-   --------------------------------
-
-   procedure Find_Parent_Or_Child_Types
-     (Item    : access Arrow_Item_Record'Class;
-      Members : Xref.Entity_Array;
-      Parents : Boolean)
+   overriding procedure On_Click
+     (Self : not null access Show_Parents_Button;
+      View : not null access GPS_Canvas_View_Record'Class)
    is
-      B  : constant Type_Browser := Type_Browser (Get_Browser (Item));
-      It : constant Type_Item := Type_Item (Item);
+      Item     : constant Type_Item := Type_Item (Self.Get_Toplevel_Item);
+      B        : constant Type_Browser := Type_Browser (Item.Browser);
+      Parents  : Xref.Entity_Array :=
+        Parent_Types (Item.Entity.Element, Recursive => False);
+      It       : Type_Item;
+      Added    : Boolean;
+      Items    : Items_Lists.List;
    begin
-      for P in Members'Range loop
-         Add_Item_And_Link
-           (It, Members (P).all, "",
-            Parent_Link => True,
-            Reverse_Link => not Parents);
+      for P in Parents'Range loop
+         Find_Or_Create_Item (B, Parents (P).all, It, Added);
+         Add_Link (It, Item, "", Parent_Link => True);
+         if Added then
+            Items.Append (Abstract_Item (It));
+         end if;
       end loop;
 
-      if Parents then
-         Set_Parents_Shown (It, True);
-      else
-         Set_Children_Shown (It, True);
-      end if;
+      Insert_And_Layout_Items
+        (View,
+         Ref       => Item,
+         Items     => Items,
+         Direction => (if Item.Browser.Horizontal_Layout then Up else Left),
+         Space_Between_Items  => Default_Space_Between_Items,
+         Space_Between_Layers => Default_Space_Between_Layers,
+         Duration  => 0.3);
 
-      Layout (B, Force => False);
-      Refresh_Canvas (B.Get_Canvas);
+      Free (Parents);
+   end On_Click;
 
-   exception
-      when E : others => Trace (Me, E);
-   end Find_Parent_Or_Child_Types;
+   --------------
+   -- On_Click --
+   --------------
 
-   -----------------------
-   -- Find_Parent_Types --
-   -----------------------
-
-   procedure Find_Parent_Types (Item  : access Arrow_Item_Record'Class) is
-   begin
-      Find_Parent_Or_Child_Types
-        (Item,
-         Parent_Types (Type_Item (Item).Entity.Element, Recursive => False),
-         Parents => True);
-   exception
-      when E : others => Trace (Me, E);
-   end Find_Parent_Types;
-
-   ----------------------
-   -- Find_Child_Types --
-   ----------------------
-
-   procedure Find_Child_Types (Item  : access Arrow_Item_Record'Class) is
+   overriding procedure On_Click
+     (Self : not null access Show_Children_Button;
+      View : not null access GPS_Canvas_View_Record'Class)
+   is
+      Item     : constant Type_Item := Type_Item (Self.Get_Toplevel_Item);
+      B        : constant Type_Browser := Type_Browser (Item.Browser);
       Children : Xref.Entity_Array :=
-        Child_Types (Type_Item (Item).Entity.Element, Recursive => False);
+        Child_Types (Item.Entity.Element, Recursive => False);
+      Items    : Items_Lists.List;
+      It       : Type_Item;
+      Added    : Boolean;
    begin
       for C in Children'Range loop
-         Add_Item_And_Link
-           (Type_Item (Item), Children (C).all, "",
-            Parent_Link => True,
-            Reverse_Link => True);
+         Find_Or_Create_Item (B, Children (C).all, It, Added);
+         Add_Link (Item, It, "", Parent_Link => True);
+         if Added then
+            Items.Append (Abstract_Item (It));
+         end if;
       end loop;
+
+      Insert_And_Layout_Items
+        (View,
+         Ref       => Item,
+         Items     => Items,
+         Direction => (if Item.Browser.Horizontal_Layout then Down else Right),
+         Space_Between_Items  => Default_Space_Between_Items,
+         Space_Between_Layers => Default_Space_Between_Layers,
+         Duration             => 0.3);
 
       Free (Children);
-
-      Set_Children_Shown (Type_Item (Item), True);
-      Layout (Type_Browser (Get_Browser (Item)), Force => False);
-      Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
-
-   exception
-      when E : others => Trace (Me, E);
-   end Find_Child_Types;
+   end On_Click;
 
    -------------------------
-   -- Hide_Show_Inherited --
+   -- Find_Or_Create_Item --
    -------------------------
 
-   procedure Hide_Show_Inherited
-     (Event : Gdk_Event_Button;
-      Item  : access Browser_Item_Record'Class)
+   procedure Find_Or_Create_Item
+     (Browser     : not null access Type_Browser_Record'Class;
+      Entity      : Root_Entity'Class;
+      Item        : out Type_Item;
+      Newly_Added : out Boolean)
    is
-      It : constant Type_Item := Type_Item (Item);
-      Canvas : constant Interactive_Canvas :=
-        Get_Canvas (Get_Browser (It));
+      procedure On_Item (It : not null access Abstract_Item_Record'Class);
+      procedure On_Item (It : not null access Abstract_Item_Record'Class) is
+      begin
+         if Item = null and then Type_Item (It).Entity.Element = Entity then
+            Item := Type_Item (It);
+         end if;
+      end On_Item;
+
+      S : constant access Browser_Styles := Browser.Get_View.Get_Styles;
+      Title : Unbounded_String;
    begin
-      if Event.Button = 1
-        and then Event.The_Type = Button_Release
-      then
-         It.Inherited_Primitives := not It.Inherited_Primitives;
-         Trace (Me, "Hide_Show_Inherited => "
-                & It.Inherited_Primitives'Img);
+      Item := null;
+      Newly_Added := False;
+      Browser.Get_View.Model.For_Each_Item
+        (On_Item'Access, Filter => Kind_Item);
 
-         Canvas.Refresh (It);
-         Item_Updated (Canvas, It);
+      if Item = null and then Entity /= No_Root_Entity then
+         Newly_Added := True;
+         Item := new Type_Item_Record;
+         Item.Browser := General_Browser (Browser);
+         Item.Entity.Replace_Element (Entity);
+
+         Browser_Model (Browser.Get_View.Model).Add (Item);
+
+         Item.Initialize_Rect (Style => S.Item, Radius => 5.0);
+
+         Title := To_Unbounded_String (Entity.Qualified_Name);
+         if Entity.Is_Abstract then
+            Append (Title, ASCII.LF & "   " & UML_Abstract);
+         end if;
+         if Entity.Is_Generic then
+            Append (Title, ASCII.LF & "   " & UML_Generic);
+         end if;
+
+         Setup_Titlebar
+           (Item, Browser,
+            Name  => To_String (Title),
+            Left  => new Show_Parents_Button,
+            Right => new Show_Children_Button);
+
+         Item.Add_Child
+           (Gtk_New_Text
+              (S.Text_Font, Get_Display_Kind (Item.Entity.Element)));
+
+         if not Is_Type (Entity) then
+            Item.Add_Type (Entity, "of type");
+
+         elsif Is_Access (Entity) then
+            Item.Add_Access_Type (Entity, "");
+
+         elsif Is_Array (Entity) then
+            Item.Add_Array_Type (Entity, "");
+
+         elsif Is_Subprogram (Entity) then
+            Item.Add_Parameters;
+
+         elsif Has_Methods (Entity) then
+            Item.Might_Have_Primitives := True;
+            Item.Add_Fields;
+            Item.Add_Primitive_Operations;
+
+         elsif Is_Container (Entity) then
+            Item.Add_Package_Contents;
+            Item.Add_Fields;
+
+         else
+            --  Enumerations, in particular
+            Item.Add_Fields;
+         end if;
       end if;
-   end Hide_Show_Inherited;
+   end Find_Or_Create_Item;
 
-   ------------------
-   -- Compute_Size --
-   ------------------
+   -----------------
+   -- Set_Context --
+   -----------------
 
-   overriding procedure Compute_Size
-     (Item          : not null access Type_Item_Record;
-      Layout        : not null access Pango_Layout_Record'Class;
-      Width, Height : out Glib.Gint;
-      Title_Box     : in out Cairo.Region.Cairo_Rectangle_Int)
+   overriding procedure Set_Context
+     (Item    : not null access Type_Item_Record;
+      Context : in out Selection_Context)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
-      Xoffset : constant Gint := 0;
-      W, H                           : Gint;
-      Layout_H, Layout_W1, Layout_W2 : Gint;
-      Meth_Layout_W1, Meth_Layout_W2 : Gint;
-      Meth_Layout_H                  : Gint;
-      General_Lines                  : Xref_List;
-      Attr_Lines                     : Xref_List;
-      Meth_Lines                     : Xref_List;
-      Added                          : Boolean;
-   begin
-      Add_Line (General_Lines, Get_Display_Kind (Item.Entity.Element));
-
-      if not Is_Type (Item.Entity.Element) then
-         Add_Type (Attr_Lines, Item, Item.Entity.Element, "of type");
-
-      elsif Is_Access (Item.Entity.Element) then
-         Add_Access_Type (Attr_Lines, Item, Item.Entity.Element, Added);
-
-      elsif Is_Array (Item.Entity.Element) then
-         Add_Array_Type (Attr_Lines, Item, Item.Entity.Element, Added);
-
-      elsif Is_Subprogram (Item.Entity.Element) then
-         Add_Parameters (Attr_Lines, Item);
-         Set_Children_Shown (Item, True);
-
-      elsif Has_Methods (Item.Entity.Element) then
-         Item.Might_Have_Primitives := True;
-         Add_Primitive_Operations (Kernel, Meth_Lines, Item);
-         Add_Fields (Attr_Lines, Item);
-
-      elsif Is_Container (Item.Entity.Element) then
-         Add_Package_Contents
-           (Kernel, General_Lines, Attr_Lines, Meth_Lines, Item);
-         Add_Fields (Attr_Lines, Item);
-
-      else
-         --  Enumerations, in particular
-         Add_Fields (Attr_Lines, Item);
-      end if;
-
-      if not Parents_Shown (Item) then
-         declare
-            Parents : Xref.Entity_Array :=
-              Parent_Types (Item.Entity.Element, Recursive => False);
-         begin
-            Set_Parents_Shown (Item, Parents'Length = 0);
-            Free (Parents);
-         end;
-      end if;
-
-      Get_Pixel_Size
-        (Get_Browser (Item), General_Lines, Layout_W1, Layout_W2, Layout_H,
-         Layout);
-      W := Gint'Max (Width, Layout_W1 + Layout_W2);
-      H := Layout_H;
-
-      Get_Pixel_Size
-        (Get_Browser (Item), Attr_Lines, Layout_W1, Layout_W2, Layout_H,
-         Layout);
-      W := Gint'Max
-        (W, Layout_W1 + Layout_W2 + Left_Margin + Xoffset + 2 * Margin);
-
-      Get_Pixel_Size
-        (Get_Browser (Item), Meth_Lines, Meth_Layout_W1, Meth_Layout_W2,
-         Meth_Layout_H, Layout);
-      W := Gint'Max
-        (W, Meth_Layout_W1 + Meth_Layout_W2
-         + 2 * Margin + Xoffset + Left_Margin);
-      H := H + Layout_H + 2 * Margin + Meth_Layout_H;
-
-      Item.Layout_W1 := Layout_W1;
-      Item.Layout_H  := Layout_H;
-      Item.Meth_Layout_W1 := Meth_Layout_W1;
-      Item.Meth_Layout_H  := Meth_Layout_H;
-
-      Width := Gint'Max (W, Title_Box.Width);
-      Title_Box.Width := Width;
-      Height := H;
-
-      Free (Item.General_Lines);
-      Free (Item.Attr_Lines);
-      Free (Item.Meth_Lines);
-
-      Item.General_Lines := General_Lines;
-      Item.Attr_Lines    := Attr_Lines;
-      Item.Meth_Lines    := Meth_Lines;
-   end Compute_Size;
-
-   ---------------------
-   -- Resize_And_Draw --
-   ---------------------
-
-   overriding procedure Resize_And_Draw
-     (Item             : access Type_Item_Record;
-      Cr               : Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
-   is
-      Y : Gint;
-      Style_Context : Gtk_Style_Context;
-      Border : Gtk.Style.Gtk_Border;
-
-   begin
-      Resize_And_Draw
-        (Arrow_Item_Record (Item.all)'Access, Cr, Width, Height,
-         Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
-
-      Y := Margin + Yoffset;
-
-      Display_Lines
-        (Item, Cr, Item.General_Lines, Margin + Xoffset, Y, 0, Layout);
-      Display_Lines
-        (Item, Cr, Item.Attr_Lines, Margin + Xoffset + Left_Margin, Y,
-         Item.Layout_W1, Layout);
-
-      if Item.Layout_H /= 0 and then Item.Meth_Layout_H /= 0 then
-         Y := Y + 2;
-
-         Style_Context := Get_Style_Context (Get_Browser (Item));
-         Style_Context.Get_Border (Gtk_State_Flag_Normal, Border);
-
-         --  We used to use Gtk.Style.X_Thickness to determine the width of
-         --  the line.  Now we'll use the thickness of the bottom border
-         --  instead.
-
-         Draw_Line
-           (Cr,
-            Color    => Shade (White_RGBA, 0.3),
-            X1       => Gint (Border.Bottom),
-            Y1       => Y,
-            X2       => Get_Coord (Item).Width - Gint (Border.Bottom) - 1,
-            Y2       => Y);
-         Y := Y + 1;
-      end if;
-
-      Display_Lines
-        (Item, Cr, Item.Meth_Lines, Margin + Xoffset + Left_Margin, Y,
-         Item.Meth_Layout_W1, Layout);
-   end Resize_And_Draw;
-
-   ----------------------
-   -- Redraw_Title_Bar --
-   ----------------------
-
-   overriding procedure Redraw_Title_Bar
-     (Item : access Type_Item_Record;
-      Cr   : Cairo_Context)
-   is
-   begin
-      Redraw_Title_Bar (Arrow_Item_Record (Item.all)'Access, Cr);
-
-      if Item.Might_Have_Primitives
-        and then Is_Type (Item.Entity.Element)
-      then
-         --  ??? Should use a different icon depending on
-         --  Item.Inherited_Primitives.
-         Draw_Title_Bar_Button
-           (Item, Cr,
-            Num    => Get_Last_Button_Number (Item),
-            Pixbuf => Type_Browser (Get_Browser (Item)).Primitive_Button,
-            Cb     => Build (Hide_Show_Inherited'Access, Item));
-      end if;
-   end Redraw_Title_Bar;
-
-   ------------------------
-   -- Add_Or_Select_Item --
-   ------------------------
-
-   function Add_Or_Select_Item
-     (Browser : access Type_Browser_Record'Class;
-      Entity  : Root_Entity'Class) return Type_Item
-   is
-      Found : Type_Item;
-      Iter  : Item_Iterator := Start (Get_Canvas (Browser));
-   begin
-      --  Check if there is already an item displaying Entity
-      loop
-         Found := Type_Item (Get (Iter));
-         exit when Found = null
-           or else Found.Entity.Element = Entity;
-         Next (Iter);
-      end loop;
-
-      if Found = null and then Entity /= No_Root_Entity then
-         Gtk_New (Found, Browser, Entity);
-         Put (Get_Canvas (Browser), Found);
-      end if;
-
-      --  Need to always refresh the canvas so that the links are correctly
-      --  displayed.
-      Refresh_Canvas (Get_Canvas (Browser));
-
-      return Found;
-   end Add_Or_Select_Item;
-
-   --------------------
-   -- On_Show_Source --
-   --------------------
-
-   procedure On_Show_Source
-     (Browser : access Gtk_Widget_Record'Class;
-      Item    : Browser_Item)
-   is
-      B  : constant Type_Browser := Type_Browser (Browser);
-      It : constant Type_Item    := Type_Item (Item);
-      Loc : constant General_Location :=
-        Get_Declaration (It.Entity.Element).Loc;
-      Name : constant String := Get_Name (It.Entity.Element);
-
-      use Basic_Types;
-   begin
-      Add_Navigation_Location (Get_Kernel (B), -"Entity Browser");
-
-      Open_File_Editor
-        (Kernel     => Get_Kernel (B),
-         Filename   => Loc.File,
-         Project    => Loc.Project,
-         Line       => Loc.Line,
-         Column     => Loc.Column,
-         Column_End => Loc.Column + Basic_Types.Visible_Column_Type
-             (Name'Length));
-   end On_Show_Source;
-
-   ------------------------
-   -- Contextual_Factory --
-   ------------------------
-
-   overriding procedure Contextual_Factory
-     (Item    : access Type_Item_Record;
-      Context : in out Selection_Context;
-      Browser : access General_Browser_Record'Class;
-      Event   : Gdk.Event.Gdk_Event;
-      Menu    : Gtk.Menu.Gtk_Menu)
-   is
-      pragma Unreferenced (Event);
-      Mitem : Gtk_Menu_Item;
-      Loc   : constant General_Location := Get_Declaration
-        (Item.Entity.Element).Loc;
+      Loc   : constant General_Location :=
+        Get_Declaration (Item.Entity.Element).Loc;
    begin
       Set_Entity_Information
         (Context       => Context,
@@ -1690,246 +1152,6 @@ package body Browsers.Entities is
       --  We need to set the file information, even though it will also display
       --  some contextual menus (file dependencies,...), otherwise the call
       --  graph will not work.
-
-      if Menu /= null then
-         Gtk_New (Mitem, -"Show source");
-         Add (Menu, Mitem);
-         Item_Cb.Object_Connect
-           (Mitem, Signal_Activate, On_Show_Source'Access,
-            Slot_Object => Browser,
-            User_Data   => Browser_Item (Item));
-      end if;
-   end Contextual_Factory;
-
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
-
-   overriding procedure Default_Context_Factory
-     (Module  : access Entity_Browser_Module_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject)
-   is
-      pragma Unreferenced (Module);
-      Browser : constant Type_Browser :=
-        Entities_Views.View_From_Widget (Child);
-      Iter    : constant Item_Iterator :=
-        Start (Get_Canvas (Browser), Selected_Only => True);
-   begin
-      --  If there is no selection, or more than one item, nothing we can do
-      if Get (Iter) /= null
-        and then Get (Next (Iter)) = null
-      then
-         Contextual_Factory
-           (Browser_Item (Get (Iter)), Context, Browser, null, null);
-      end if;
-   end Default_Context_Factory;
-
-   ----------------------------
-   -- Get_Last_Button_Number --
-   ----------------------------
-
-   overriding function Get_Last_Button_Number (Item : access Type_Item_Record)
-      return Gint is
-   begin
-      return Get_Last_Button_Number (Arrow_Item_Record (Item.all)'Access) + 1;
-   end Get_Last_Button_Number;
-
-   ------------------------
-   -- Draw_Straight_Line --
-   ------------------------
-
-   overriding procedure Draw_Straight_Line
-     (Link        : access Parent_Link_Record;
-      Cr          : Cairo_Context;
-      Parent_Side : Gtkada.Canvas.Item_Side;
-      X1, Y1      : Glib.Gdouble;
-      Child_Side  : Gtkada.Canvas.Item_Side;
-      X2, Y2      : Glib.Gdouble)
-   is
-      Width : constant := 5.0;
-      pragma Unreferenced (Link, Child_Side, Parent_Side);
-      Length : constant Gdouble := Sqrt ((X1 - X2) ** 2 + (Y1 - Y2) ** 2);
-   begin
-      Cairo.Save (Cr);
-      Cairo.Translate (Cr, X2, Y2);
-      if Y1 /= Y2 then
-         Cairo.Rotate (Cr, Arctan (Y1 - Y2, X1 - X2));
-      end if;
-
-      Move_To (Cr, 0.5, 0.5);
-      Line_To (Cr, Length - Width * 2.0 - 0.5, 0.0);
-      Cairo.Stroke (Cr);
-
-      --  Draw the arrow head
-      Move_To (Cr, Length - Width * 2.0 - 0.5, -Width + 0.5);
-      Line_To (Cr, Length - 0.5, 0.5);
-      Line_To (Cr, Length - Width * 2.0 - 0.5, Width + 0.5);
-      Close_Path (Cr);
-      Cairo.Stroke (Cr);
-      Cairo.Restore (Cr);
-   end Draw_Straight_Line;
-
-   ------------------
-   -- Compute_Size --
-   ------------------
-
-   overriding procedure Compute_Size
-     (Item          : not null access Generic_Item_Record;
-      Layout        : not null access Pango_Layout_Record'Class;
-      Width, Height : out Glib.Gint;
-      Title_Box     : in out Cairo_Rectangle_Int)
-   is
-   begin
-      Compute_Size
-        (Type_Item_Record (Item.all)'Access, Layout, Width, Height,
-         Title_Box);
-      Height := Height + Generic_Item_Box_Height_Top;
-
-      Width := Gint'Max (Width, Title_Box.Width);
-      Title_Box.Width := Width;
-      Width := Width + 4;  --  for the extra top-right rectangle
-      Title_Box.Y := Title_Box.Y + Generic_Item_Box_Height_Top;
-   end Compute_Size;
-
-   ---------------------
-   -- Resize_And_Draw --
-   ---------------------
-
-   overriding procedure Resize_And_Draw
-     (Item             : access Generic_Item_Record;
-      Cr               : Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
-   is
-   begin
-      Set_Source_Color (Cr, White_RGBA);
-      Cairo.Rectangle
-        (Cr,
-         X      =>
-           Gdouble (Get_Coord (Item).Width - Generic_Item_Box_Width + 1),
-         Y      => 1.0,
-         Width  => Gdouble (Generic_Item_Box_Width - 2),
-         Height => Gdouble (Generic_Item_Box_Height - 2));
-      Fill_Preserve (Cr);
-      Set_Source_Color (Cr, Shade (White_RGBA, 0.3));
-      Stroke (Cr);
-
-      Yoffset := 0;
-      Xoffset := 0;
-      Resize_And_Draw
-        (Type_Item_Record (Item.all)'Access, Cr,
-         Width, Height,
-         Width_Offset  => Width_Offset + 4,
-         Height_Offset => Height_Offset,
-         Xoffset       => Xoffset,
-         Yoffset       => Yoffset,
-         Layout        => Layout);
-   end Resize_And_Draw;
-
-   ----------
-   -- Draw --
-   ----------
-
-   overriding procedure Draw
-     (Item   : access Generic_Item_Record;
-      Cr     : Cairo_Context)
-   is
-      Item_Width : constant Gint := Get_Coord (Item).Width;
-      Item_Height : constant Gint := Get_Coord (Item).Height;
-   begin
-      Cairo.Set_Fill_Rule (Cr, Cairo_Fill_Rule_Winding);
-      Cairo.Rectangle
-        (Cr,
-         0.0,
-         Gdouble (Generic_Item_Box_Height_Top),
-         Gdouble (Item_Width - Generic_Item_Box_Width_Right),
-         Gdouble (Item_Height));
-      Cairo.Rectangle
-        (Cr,
-         Gdouble (Item_Width - Generic_Item_Box_Width),
-         0.0,
-         Gdouble (Generic_Item_Box_Width),
-         Gdouble (Generic_Item_Box_Height));
-      Cairo.Clip (Cr);
-      Draw (Type_Item_Record (Item.all)'Access, Cr);
-   end Draw;
-
-   -------------------
-   -- Point_In_Item --
-   -------------------
-
-   overriding function Point_In_Item
-     (Item : access Generic_Item_Record;
-      X, Y : Glib.Gint) return Boolean is
-   begin
-      if (Y < Get_Coord (Item).Y + Generic_Item_Box_Height_Top
-          and then X - Get_Coord (Item).X <
-            Get_Coord (Item).Width - Generic_Item_Box_Width)
-        or else (X - Get_Coord (Item).X >
-                   Get_Coord (Item).Width - Generic_Item_Box_Width_Right
-                 and then Y - Get_Coord (Item).Y > Generic_Item_Box_Height)
-      then
-         return False;
-      else
-         return Point_In_Item (Canvas_Item_Record (Item.all)'Access, X, Y);
-      end if;
-   end Point_In_Item;
-
-   ---------------
-   -- Clip_Line --
-   ---------------
-
-   overriding procedure Clip_Line
-     (Src   : access Generic_Item_Record;
-      Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
-      To_X  : Gint;
-      To_Y  : Gint;
-      X_Pos : Gfloat;
-      Y_Pos : Gfloat;
-      Side  : out Item_Side;
-      X_Out : out Gint;
-      Y_Out : out Gint)
-   is
-      Coord : constant Gdk_Rectangle := Get_Coord (Src);
-   begin
-      Clip_Line (Type_Item_Record (Src.all)'Access, Canvas,
-                 To_X, To_Y, X_Pos, Y_Pos, Side, X_Out, Y_Out);
-
-      case Side is
-         when North =>
-            if X_Out < Coord.X + Coord.Width - Generic_Item_Box_Width then
-               Y_Out := Y_Out + Generic_Item_Box_Height_Top;
-            end if;
-
-         when East =>
-            if Y_Out > Coord.Y + Generic_Item_Box_Height then
-               X_Out := X_Out - Generic_Item_Box_Width_Right;
-            end if;
-
-         when others =>
-            null;
-      end case;
-   end Clip_Line;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Context : access Entity_Browser_Action_Context;
-      Ctxt    : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Context);
-   begin
-      --  Do not check the current focus widget ourselves. Instead, we know
-      --  it has been properly checked when the context was created, and we
-      --  just check the current module from there.
-      return GPS.Kernel.Modules.Module_ID (Get_Creator (Ctxt)) =
-        Entity_Browser_Module;
-   end Filter_Matches_Primitive;
+   end Set_Context;
 
 end Browsers.Entities;
