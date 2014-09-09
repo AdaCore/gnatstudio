@@ -252,11 +252,11 @@ xml_codepeer = """<?xml version="1.0"?>
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
        <command-line>
-          <arg>codepeer-gnatmake</arg>
+          <arg>codepeer-gprbuild</arg>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
-          <arg>-gnatcC</arg>
+          <arg>--codepeer</arg>
           <arg>%X</arg>
        </command-line>
        <icon>gps-build-all</icon>
@@ -293,13 +293,12 @@ creating/updating the database" />
       <supported-model filter="--subdirs=">gprclean</supported-model>
       <server>Tools_Server</server>
       <substitutions>
-        <substitute src="%builder" dest="codepeer-gnatmake"/>
+        <substitute src="%builder" dest="codepeer-gprbuild"/>
       </substitutions>
       <extra-args>
         <arg>-margs</arg>
-        <arg>--subdirs=%subdir</arg>
         <arg>-k</arg>
-        <arg>-gnatcC</arg>
+        <arg>--codepeer</arg>
       </extra-args>
     </builder-mode>
 
@@ -397,11 +396,11 @@ messages. Full: same as normal, plus run-time checks related messages">
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>codepeer-gnatmake</arg>
+          <arg>codepeer-gprbuild</arg>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
-          <arg>-gnatcC</arg>
+          <arg>--codepeer</arg>
           <arg>%X</arg>
        </command-line>
     </target>
@@ -465,15 +464,15 @@ messages. Full: same as normal, plus run-time checks related messages">
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>codepeer-gnatmake</arg>
+          <arg>codepeer-gprbuild</arg>
           <arg>-c</arg>
           <arg>-f</arg>
           <arg>-u</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>-gnatcC</arg>
           <arg>--subdirs=codepeer-file</arg>
+          <arg>--codepeer</arg>
           <arg>-gnateC</arg>
           <arg>%fp</arg>
        </command-line>
@@ -487,13 +486,13 @@ messages. Full: same as normal, plus run-time checks related messages">
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>codepeer-gnatmake</arg>
+          <arg>codepeer-gprbuild</arg>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>-gnatcC</arg>
           <arg>--subdirs=codepeer-file</arg>
+          <arg>--codepeer</arg>
           <arg>-gnateC</arg>
        </command-line>
     </target>

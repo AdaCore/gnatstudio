@@ -1155,7 +1155,6 @@ package body CodePeer.Module is
          CodePeer.Shell_Commands.Build_Target
            (Kernel, "Run CodePeer File"),
          Force       => True,
-         Build_Mode  => "codepeer",
          Synchronous => False);
       return Commands.Success;
    end Execute;
@@ -1176,7 +1175,6 @@ package body CodePeer.Module is
          CodePeer.Shell_Commands.Build_Target
            (Kernel, "Run CodePeer File By File"),
          Force       => False,
-         Build_Mode  => "codepeer",
          Synchronous => False);
       return Commands.Success;
    end Execute;
@@ -1197,7 +1195,6 @@ package body CodePeer.Module is
         (Kernel,
          CodePeer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
          Force       => False,
-         Build_Mode  => "codepeer",
          Synchronous => False);
       return Commands.Success;
    end Execute;
