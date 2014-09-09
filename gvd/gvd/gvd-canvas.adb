@@ -17,6 +17,7 @@
 
 with Gdk.Pixbuf;              use Gdk.Pixbuf;
 with Gdk.Event;               use Gdk.Event;
+with Gdk.RGBA;                use Gdk.RGBA;
 with Gdk.Window;              use Gdk.Window;
 with Gdk;                     use Gdk;
 with Glib;                    use Glib;
@@ -29,14 +30,15 @@ with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Radio_Menu_Item;     use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
 with Gtk.Widget;              use Gtk.Widget;
-with Gtkada.Canvas;           use Gtkada.Canvas;
+with Gtkada.Canvas_View;      use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
-with Pango.Enums;             use Pango.Enums;
+with Gtkada.Style;            use Gtkada.Style;
 with Pango.Font;              use Pango.Font;
-with Pango.Layout;            use Pango.Layout;
 
-with Browsers.Canvas;        use Browsers.Canvas;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Browsers.Canvas;        use Browsers, Browsers.Canvas;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 with Debugger;               use Debugger;
 with Display_Items;          use Display_Items;
@@ -51,7 +53,6 @@ with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;  use GPS.Kernel.Properties;
 with GPS.Main_Window;        use GPS.Main_Window;
 with GVD.Generic_View;
@@ -59,13 +60,10 @@ with GVD.Memory_View;        use GVD.Memory_View;
 with GVD.Menu;               use GVD.Menu;
 with GVD_Module;             use GVD_Module;
 with GVD.Preferences;        use GVD.Preferences;
-with GVD.Process;            use GVD.Process;
 with GVD.Scripts;            use GVD.Scripts;
 with GVD.Trace;
 with GVD.Types;
-with Items;                  use Items;
 with Items.Simples;          use Items.Simples;
-with Language;               use Language;
 with Pixmaps_IDE;            use Pixmaps_IDE;
 with Std_Dialogs;            use Std_Dialogs;
 with String_Utils;           use String_Utils;
@@ -74,6 +72,9 @@ with XML_Utils;              use XML_Utils;
 
 package body GVD.Canvas is
    Me : constant Trace_Handle := Create ("Canvas");
+
+   Float_Re : constant String := "([+-]?\d+(?:\.\d+E[+-]\d+))";
+   --  regexp for a float number
 
    Graph_Cmd_Format : constant Pattern_Matcher := Compile
      ("("                  --  paren 1: whole command except dynamic attributes
@@ -86,7 +87,7 @@ package body GVD.Canvas is
       & "(\s+dependent\s+on\s+(\d+))?"    --  parenthesis 7 .. 8
       & "(\s+link_name\s+(\S+))?"         --  parenthesis 9 .. 10
       & ")"                               --  end of paren 1
-      & "(\s+at\s+(\d+),\s*(\d+))?"       --  parenthesis 11 .. 13
+      & "(\s+at\s+" & Float_Re & ",\s*" & Float_Re & ")?" --  parens 11 .. 13
       & "(\s+num\s+(\d+))?"               --  parenthesis 14 .. 15
       & "(\s+alias_of\s+\d+)?",           --  parenthesis 16
       Case_Insensitive);
@@ -119,23 +120,17 @@ package body GVD.Canvas is
      (Gtk_Check_Menu_Item_Record, General_Browser);
 
    package Browser_Views is new GVD.Generic_View
-     (Base_Type                     => General_Browser_Record,
-      Base_Type_Access              => General_Browser,
+     (Base_Type                     => Debugger_Data_View_Record,
+      Base_Type_Access              => Debugger_Data_View,
       Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
       Visual_Debugger               => GVD.Process.Visual_Debugger);
 
    type GVD_Canvas_Record is new Browser_Views.Process_View_Record with
       record
-         Detect_Aliases : Boolean;
-         Item_Num       : Integer := 0;
-
-         --  The graphic contexts used to draw the canvas and its items
-         Item_Context    : Items.Drawing_Context;
-         Box_Context     : Box_Drawing_Context;
-         Tooltip_Context : Items.Drawing_Context;
-
-         Selected_Item           : Browser_Item := null;
-         Selected_Component      : Items.Generic_Type_Access := null;
+         Detect_Aliases     : Boolean;
+         Item_Num           : Integer := 0;
+         Selected_Item      : Display_Item := null;
+         Selected_Component : Items.Generic_Type_Access := null;
       end record;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
 
@@ -161,12 +156,9 @@ package body GVD.Canvas is
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
    --  Create a new data window in the MDI
 
-   function Get_Canvas
-     (Process : access Visual_Debugger_Record'Class)
-      return General_Browser;
    procedure Set_Canvas
      (Process : access Visual_Debugger_Record'Class;
-      Canvas  : General_Browser);
+      Canvas  : Debugger_Data_View);
    --  Get or set the data window associated with Process
 
    package Canvas_Views is new Browser_Views.Simple_Views
@@ -181,10 +173,6 @@ package body GVD.Canvas is
       Local_Toolbar      => True,
       Initialize         => Initialize);
 
-   procedure On_Realize (Canvas : access Gtk_Widget_Record'Class);
-   --  Initializes all the internal graphic contexts needed for the canvas.
-   --  The canvas should have been realized before calling this procedure.
-
    procedure Set_Detect_Aliases
      (Canvas   : access GVD_Canvas_Record'Class;
       Activate : Boolean);
@@ -195,14 +183,6 @@ package body GVD.Canvas is
      (Command : access Data_Window_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Data->Data Window
-
-   procedure Preferences_Changed
-     (Canvas  : access GVD_Canvas_Record'Class);
-   --  Called when the preferences have changed, and the canvas should be
-   --  redisplayed with the new setup.
-
-   procedure Initialize_GC (Canvas : access GVD_Canvas_Record'Class);
-   --  Initialize the graphic contexts based on the preferences
 
    function Get_Next_Item_Num
      (Debugger  : access GVD.Process.Visual_Debugger_Record'Class;
@@ -226,20 +206,10 @@ package body GVD.Canvas is
      (Menu           : Gtk.Menu.Gtk_Menu;
       Debugger       : access GVD.Process.Visual_Debugger_Record'Class;
       Item           : access Display_Items.Display_Item_Record'Class;
-      Component      : Items.Generic_Type_Access;
-      Component_Name : String);
+      Component      : Component_Item);
    --  Fill the contextual menu when clicking on an item.
    --  Note that Component can be null if the user has clicked for instance
    --  on the title bar.
-
-   procedure Unselect_All
-     (Canvas  : access GVD_Canvas_Record'Class);
-   --  Unselect all selected elements
-
-   procedure On_Background_Click
-     (Canvas : access Glib.Object.GObject_Record'Class;
-      Event  : Gdk.Event.Gdk_Event);
-   --  Handles left-clicking in the background of the canvas
 
    ----------------
    -- Properties --
@@ -268,14 +238,13 @@ package body GVD.Canvas is
    -- Local Types --
    -----------------
 
-   type Item_Record (Name_Length : Natural) is record
+   type Item_Record is record
       Canvas         : GVD_Canvas;
       Item           : Display_Item;
       Mode           : Display_Mode;
       Format         : Value_Format;
       Zoom           : Guint;
-      Component      : Items.Generic_Type_Access;
-      Component_Name : String (1 .. Name_Length);
+      Component      : Component_Item;
    end record;
 
    --------------------
@@ -354,10 +323,6 @@ package body GVD.Canvas is
       Item    : Item_Record);
    --  Toggle between "auto_refresh" and "frozen" modes
 
-   procedure Allocate_Fonts (Canvas : access GVD_Canvas_Record'Class);
-   --  Reallocate all the fonts, with the appropriate size given the current
-   --  zoom
-
    procedure On_Data_Refresh (Canvas : access Gtk_Widget_Record'Class);
    --  "Refresh" contextual menu
 
@@ -371,8 +336,39 @@ package body GVD.Canvas is
       Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel, Data);
+      Canvas : constant access GVD_Canvas_Record'Class := Hook.Canvas;
+      Styles : constant access Browser_Styles := Get_Styles (Canvas.Get_View);
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         Display_Item (Item).Update_Display;
+      end On_Item;
+
    begin
-      Preferences_Changed (Hook.Canvas);
+      Set_Detect_Aliases (Canvas, Default_Detect_Aliases.Get_Pref);
+
+      --  If we are not attached to a process, this means the canvas is empty
+      --  and nothing needs to be done anyway
+      if Get_Process (Canvas) /= null then
+         Recompute_All_Aliases (Get_Process (Canvas));
+      end if;
+
+      Canvas.Modified := Gtk_New
+        (Stroke  => Null_RGBA,
+         Font    =>
+           (Name   => Copy (Styles.Text_Font.Get_Font.Name),
+            Color  => Change_Color.Get_Pref,
+            others => <>));
+
+      Canvas.Freeze := Gtk_New
+        (Stroke  => Styles.Item.Get_Stroke,
+         Shadow  => Styles.Item.Get_Shadow,
+         Fill    => Create_Rgba_Pattern (Freeze_Bg_Color.Get_Pref));
+
+      Canvas.Get_View.Model.For_Each_Item
+        (On_Item'Access, Filter => Kind_Item);
+      Canvas.Get_View.Model.Refresh_Layout;  --  resize items and links
    end Execute;
 
    ----------
@@ -436,6 +432,11 @@ package body GVD.Canvas is
               (Visual_Debugger (Process), Property.Items (Item).all,
                Mode => GVD.Types.Internal);
          end loop;
+
+         --   ??? Should have saved position in the desktop
+         Terminate_Animation (Process.Data.Get_View);
+         Process.Data.Get_View.Scale_To_Fit
+           (Duration => 0.3, Max_Scale => 1.0);
       end if;
    end Load_Items_From_Property;
 
@@ -460,7 +461,7 @@ package body GVD.Canvas is
       Property : GVD_Items_Property_Record;
       Found    : Boolean;
    begin
-      Clear (Get_Canvas (Canvas));
+      Browser_Model (Canvas.Get_View.Model).Clear;
       Canvas.Item_Num := 0;
 
       if Preserve_State_On_Exit.Get_Pref then
@@ -493,9 +494,9 @@ package body GVD.Canvas is
 
    function Get_Canvas
      (Process : access Visual_Debugger_Record'Class)
-      return General_Browser is
+      return Debugger_Data_View is
    begin
-      return General_Browser (Process.Data);
+      return Process.Data;
    end Get_Canvas;
 
    ----------------
@@ -504,54 +505,37 @@ package body GVD.Canvas is
 
    procedure Set_Canvas
      (Process : access Visual_Debugger_Record'Class;
-      Canvas  : General_Browser)
+      Canvas  : Debugger_Data_View)
    is
       Old      : constant GVD_Canvas := GVD_Canvas (Process.Data);
-      Iter     : Item_Iterator;
       Property : GVD_Items_Property;
-      Count    : Natural := 0;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+         Cmd : constant String := Get_Graph_Cmd (Display_Item (Item));
+      begin
+         if Cmd /= "" then
+            if Property = null then
+               Property := new GVD_Items_Property_Record;
+            end if;
+            Append (Property.Items, Cmd);
+         end if;
+      end On_Item;
+
    begin
       --  Save the currently displayed items, if any
 
       if Old /= null and then Process.Debugger /= null then
          if Preserve_State_On_Exit.Get_Pref then
-            Iter := Start (Get_Canvas (Old));
+            Old.Get_View.Model.For_Each_Item
+              (On_Item'Access, Filter => Kind_Item);
 
-            while Get (Iter) /= null loop
-               if Get_Graph_Cmd (Display_Item (Get (Iter))) /= "" then
-                  Count := Count + 1;
-               end if;
-
-               Next (Iter);
-            end loop;
-
-            if Count = 0 then
+            if Property = null then
                Remove_Property
                  (Kernel => Get_Kernel (Old),
                   File   => Get_Executable (Process.Debugger),
                   Name   => "debugger_items");
-
             else
-               Property := new GVD_Items_Property_Record;
-               Property.Items := new GNAT.Strings.String_List (1 .. Count);
-               Count := Property.Items'First;
-
-               Iter := Start (Get_Canvas (Old));
-
-               while Get (Iter) /= null loop
-                  declare
-                     S : constant String :=
-                           Get_Graph_Cmd (Display_Item (Get (Iter)));
-                  begin
-                     if S /= "" then
-                        Property.Items (Count) := new String'(S);
-                        Count := Count + 1;
-                     end if;
-                  end;
-
-                  Next (Iter);
-               end loop;
-
                GNATCOLL.Traces.Trace (Me, "Saving debugger canvas properties");
                Set_Property
                  (Kernel     => Get_Kernel (Old),
@@ -570,26 +554,11 @@ package body GVD.Canvas is
       if Canvas = null
         and then Process.Data /= null
       then
-         Clear (Get_Canvas (GVD_Canvas (Process.Data)));
+         Browser_Model (Process.Data.Get_View.Model).Clear;
       end if;
 
-      Process.Data := Gtk_Widget (Canvas);
+      Process.Data := Canvas;
    end Set_Canvas;
-
-   ----------------
-   -- Get_Canvas --
-   ----------------
-
-   function Get_Canvas
-     (Process : access GVD.Process.Visual_Debugger_Record'Class)
-      return Gtkada.Canvas.Interactive_Canvas is
-   begin
-      if Process.Data = null then
-         return null;
-      else
-         return Get_Canvas (GVD_Canvas (Process.Data));
-      end if;
-   end Get_Canvas;
 
    -----------------------
    -- Process_Graph_Cmd --
@@ -607,9 +576,10 @@ package body GVD.Canvas is
       First     : Natural;
       Link_Name : GNAT.Strings.String_Access;
       Link_From : Display_Item;
-      X, Y      : Gint := Gint'First;
       Num       : Integer := -1;
       Entity    : Generic_Type_Access;
+      Rect      : Model_Rectangle;
+      Pos       : Point := No_Position;
 
    begin
       --  graph (print|display) expression [dependent on display_num]
@@ -633,8 +603,7 @@ package body GVD.Canvas is
                     .. Matched (Graph_Cmd_Dependent_Paren).Last),
                -1);
             if Num /= -1 then
-               Link_From := Find_Item
-                 (Get_Canvas (GVD_Canvas (Process.Data)), Num);
+               Link_From := Find_Item (Process.Data, Num);
             end if;
          end if;
 
@@ -647,12 +616,21 @@ package body GVD.Canvas is
 
          --  Do we have any 'at' expression
          if Matched (Graph_Cmd_At_Paren) /= No_Match then
-            X := Gint (Safe_Value
-               (Cmd (Matched (Graph_Cmd_X_Paren).First
-                     .. Matched (Graph_Cmd_X_Paren).Last), Integer'First));
-            Y := Gint (Safe_Value
-               (Cmd (Matched (Graph_Cmd_Y_Paren).First
-                     .. Matched (Graph_Cmd_Y_Paren).Last), Integer'First));
+            begin
+               Pos.X := Gdouble'Value
+                 (Cmd (Matched (Graph_Cmd_X_Paren).First
+                  .. Matched (Graph_Cmd_X_Paren).Last));
+            exception
+               when Constraint_Error => null;
+            end;
+
+            begin
+               Pos.Y := Gdouble'Value
+                 (Cmd (Matched (Graph_Cmd_Y_Paren).First
+                  .. Matched (Graph_Cmd_Y_Paren).Last));
+            exception
+               when Constraint_Error => null;
+            end;
          end if;
 
          --  Do we have any 'num' expression
@@ -660,7 +638,6 @@ package body GVD.Canvas is
             Num := Safe_Value
                 (Cmd (Matched (Graph_Cmd_Num_Paren).First
                       .. Matched (Graph_Cmd_Num_Paren).Last), -1);
-            Num := Get_Next_Item_Num (Process, Num);
          else
             Num := Get_Next_Item_Num (Process);
          end if;
@@ -686,60 +663,57 @@ package body GVD.Canvas is
             Last  := Matched (Graph_Cmd_Variable_Paren).Last;
          end if;
 
-         --  No link ?
-
-         if Link_From = null then
-            Gtk_New
-              (Item,
-               Browser        => GVD_Canvas (Process.Data),
-               Graph_Cmd      => Cmd (Matched
-                 (Graph_Cmd_Cmd_Paren).First
-                 .. Matched (Graph_Cmd_Cmd_Paren).Last),
-               Variable_Name  => Cmd (First .. Last),
-               Debugger       => Visual_Debugger (Process),
-               Auto_Refresh   => Enable,
-               Num            => Num,
-               Default_Entity => Entity);
-         else
-            if Link_Name = null then
-               Link_Name := new String'(Cmd (First .. Last));
-            end if;
-
-            Gtk_New
-              (Item,
-               Browser        => GVD_Canvas (Process.Data),
-               Graph_Cmd      => Cmd (Matched
-                 (Graph_Cmd_Cmd_Paren).First
-                 .. Matched (Graph_Cmd_Cmd_Paren).Last),
-               Variable_Name  => Cmd (First .. Last),
-               Debugger       => Visual_Debugger (Process),
-               Auto_Refresh   => Enable,
-               Default_Entity => Entity,
-               Num            => Num,
-               Link_From      => Link_From,
-               Link_Name      => Link_Name.all);
+         if Link_Name = null then
+            Link_Name := new String'(Cmd (First .. Last));
          end if;
 
-         --  Might be null if it was already on the canvas
-         if Item /= null then
-            Put (Get_Canvas (GVD_Canvas (Process.Data)), Item, X, Y);
+         Gtk_New
+           (Item,
+            Browser        => GVD_Canvas (Process.Data),
+            Graph_Cmd      => Cmd (Matched
+              (Graph_Cmd_Cmd_Paren).First
+              .. Matched (Graph_Cmd_Cmd_Paren).Last),
+            Variable_Name  => Cmd (First .. Last),
+            Debugger       => Visual_Debugger (Process),
+            Auto_Refresh   => Enable,
+            Default_Entity => Entity,
+            Is_Dereference => Link_From /= null,
+            Num            => Num);
 
-            if Link_From /= null then
-               Recompute_All_Aliases (Process, Recompute_Values => False);
-            end if;
-
-            --  We need to do a layout in all cases, so that the newly added
-            --  item is put at a correct place.
-            Layout (GVD_Canvas (Process.Data), Force => False);
-            Refresh_Canvas (Get_Canvas (GVD_Canvas (Process.Data)));
-            Align_Item
-              (Get_Canvas (GVD_Canvas (Process.Data)), Item, 0.4, 0.4);
-
-            --  Show the item last, one the scrollbars have been computed
-            Show_Item (Get_Canvas (GVD_Canvas (Process.Data)), Item);
+         if Link_From /= null then
+            Create_Link (Process.Data, Link_From, Item, Link_Name.all);
+            Recompute_All_Aliases (Process, Recompute_Values => False);
          end if;
 
          Free (Link_Name);
+
+         if Item.Position = No_Position then
+            if Pos.X /= No_Position.X and then Pos.Y /= No_Position.Y then
+               Item.Set_Position (Pos);
+
+            elsif Link_From /= null then
+               --  make space for it to the right
+               declare
+                  L : Items_Lists.List;
+               begin
+                  L.Append (Abstract_Item (Item));
+                  Insert_And_Layout_Items
+                    (Process.Data.Get_View,
+                     Ref       => Link_From,
+                     Items     => L,
+                     Direction => Right,
+                     Duration  => 0.3);
+               end;
+            else
+               Rect := Process.Data.Get_View.Model.Bounding_Box;
+               Pos.X := Rect.X + Rect.Width + Default_Space_Between_Items;
+               Pos.Y := Rect.Y;
+               Item.Set_Position (Pos);
+            end if;
+         end if;
+
+         Process.Data.Get_View.Model.Refresh_Layout;  --  recompute links
+         Process.Data.Get_View.Scroll_Into_View (Item, Duration => 0.3);
 
       else
          --  Is this an enable/disable command ?
@@ -759,9 +733,7 @@ package body GVD.Canvas is
                Num := Safe_Value (Cmd (Index .. Last - 1), -1);
 
                if Num /= -1 then
-                  Item := Find_Item
-                    (Get_Canvas (GVD_Canvas (Process.Data)), Num);
-
+                  Item := Find_Item (Process.Data, Num);
                   if Item /= null then
                      --  We update the value when changing from disable to
                      --  enable. No need to do so otherwise since the value is
@@ -792,12 +764,9 @@ package body GVD.Canvas is
                   Num := Safe_Value (Cmd (Index .. Last - 1), -1);
 
                   if Num /= -1 then
-                     Item :=
-                       Find_Item
-                         (Get_Canvas (GVD_Canvas (Process.Data)), Num);
-
+                     Item := Find_Item (Process.Data, Num);
                      if Item /= null then
-                        Free (Item);
+                        Process.Data.Get_View.Model.Remove (Item);
                      end if;
                   end if;
 
@@ -824,7 +793,7 @@ package body GVD.Canvas is
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class) is
    begin
       if Debugger.Data /= null then
-         Refresh_Canvas (Get_Canvas (GVD_Canvas (Debugger.Data)));
+         Debugger.Data.Get_View.Model.Refresh_Layout;
       end if;
    end Refresh_Data_Window;
 
@@ -834,93 +803,17 @@ package body GVD.Canvas is
 
    procedure On_Data_Refresh (Canvas : access Gtk_Widget_Record'Class) is
       C    : constant GVD_Canvas := GVD_Canvas (Canvas);
-      Iter : Item_Iterator;
-      Item : Canvas_Item;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         Display_Item (Item).Update;
+      end On_Item;
 
    begin
-      Iter := Start (Get_Canvas (C));
-      loop
-         Item := Get (Iter);
-         exit when Item = null;
-
-         Display_Items.Update (Display_Item (Item), Redisplay_Canvas => False);
-
-         Next (Iter);
-      end loop;
-
-      Refresh_Canvas (Get_Canvas (C));
-
-   exception
-      when E : others =>
-         GNATCOLL.Traces.Trace (Me, E);
+      C.Get_View.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+      C.Get_View.Model.Refresh_Layout;  --  for links
    end On_Data_Refresh;
-
-   -----------------
-   -- Select_Item --
-   -----------------
-
-   procedure Select_Item
-     (Process   : access Visual_Debugger_Record'Class;
-      Item      : access Display_Item_Record'Class;
-      Component : Generic_Type_Access)
-   is
-      Canvas            : constant GVD_Canvas := GVD_Canvas (Process.Data);
-      Has_New_Selection : constant Boolean :=
-                            Canvas.Selected_Item /= Browser_Item (Item)
-                              or else Canvas.Selected_Component /= Component;
-   begin
-      --  Unselect the current selection
-
-      if Has_New_Selection then
-         if Canvas.Selected_Component /= null
-           and then Canvas.Selected_Item /= null
-         then
-            Set_Selected (Canvas.Selected_Component, False);
-            Update_Component
-              (Display_Item (Canvas.Selected_Item), Canvas.Selected_Component);
-
-            --  Avoid refreshing the same item twice, if we're going to do it
-            --  in the second part of this procedure anyway.
-            if Canvas.Selected_Item /= Browser_Item (Item)
-              or else Component = null
-            then
-               Item_Updated (Get_Canvas (Canvas), Canvas.Selected_Item);
-            end if;
-         end if;
-
-         if Component /= null then
-            --  Select the new one
-            Set_Selected (Component, not Get_Selected (Component));
-
-            Update_Component (Item, Component);
-            Item_Updated (Get_Canvas (Canvas), Item);
-
-            if Get_Selected (Component) then
-               Canvas.Selected_Item := Browser_Item (Item);
-               Canvas.Selected_Component := Component;
-            else
-               Canvas.Selected_Item := null;
-            end if;
-         else
-            Canvas.Selected_Item := null;
-         end if;
-      end if;
-   end Select_Item;
-
-   --------------
-   -- Unselect --
-   --------------
-
-   procedure Unselect
-     (Process : access GVD.Process.Visual_Debugger_Record'Class;
-      Item    : access Display_Items.Display_Item_Record'Class)
-   is
-      Canvas : constant GVD_Canvas := GVD_Canvas (Process.Data);
-   begin
-      if Canvas.Selected_Item = Browser_Item (Item) then
-         Canvas.Selected_Item := null;
-      end if;
-   end Unselect;
 
    ---------------------------
    -- Change_Detect_Aliases --
@@ -934,11 +827,8 @@ package body GVD.Canvas is
       C : constant GVD_Canvas := GVD_Canvas (Canvas);
    begin
       Set_Detect_Aliases (C, not C.Detect_Aliases);
-
-      --  Recompute all the aliases
-      Recompute_All_Aliases (Get_Process (C));
-
-      Refresh_Data_Window (Get_Process (C));
+      Recompute_All_Aliases (Get_Process (C), Recompute_Values => True);
+      Canvas.Get_View.Model.Refresh_Layout;  --  for links
    end Change_Detect_Aliases;
 
    ------------------------
@@ -983,14 +873,13 @@ package body GVD.Canvas is
      (Canvas : access GVD_Canvas_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
-      pragma Unreferenced (Kernel);
-      Annotation_Font : Pango_Font_Description;
       Hook            : Preferences_Hook;
    begin
       Assert (Me, Canvas.Kernel /= null,
               "Canvas' kernel not initialized");
       Browsers.Canvas.Initialize
-        (Canvas, Create_Toolbar => False);
+        (Canvas, Create_Toolbar => False, Use_Canvas_View => True);
+      Canvas.Get_View.Model.Set_Selection_Mode (Selection_Single);
       Canvas.Detect_Aliases := Default_Detect_Aliases.Get_Pref;
 
       Register_Contextual_Menu
@@ -1000,12 +889,8 @@ package body GVD.Canvas is
          ID              => Debugger_Module_ID,
          Context_Func    => GVD_Canvas_Context_Factory'Access);
 
-      Widget_Callback.Object_Connect
-        (Get_Canvas (Canvas), Signal_Realize, On_Realize'Access, Canvas);
-      Object_Callback.Object_Connect
-        (Get_Canvas (Canvas), Signal_Background_Click,
-         Object_Callback.To_Marshaller (On_Background_Click'Access),
-         Canvas);
+      Canvas.Hidden_Pixmap  := Gdk.Pixbuf.Gdk_New_From_Xpm_Data (box_xpm);
+      Canvas.Unknown_Pixmap := Gdk.Pixbuf.Gdk_New_From_Xpm_Data (trash_xpm);
 
       Hook := new Preferences_Hook_Record'
         (Function_With_Args with Canvas => GVD_Canvas (Canvas));
@@ -1014,71 +899,10 @@ package body GVD.Canvas is
          Name  => "canvas.preferences_changed",
          Watch => GObject (Canvas));
 
-      --  Initialize the canvas
-
-      Annotation_Font :=
-        Copy (GPS.Kernel.Preferences.Default_Font.Get_Pref_Font);
-      Set_Size
-        (Annotation_Font,
-         Gint'Max (Pango_Scale,
-           Get_Size (Annotation_Font) - 2 * Pango_Scale));
-      Configure (Get_Canvas (Canvas), Annotation_Font => Annotation_Font);
-      Free (Annotation_Font);
+      Hook.Execute (Kernel, null);
 
       return Gtk_Widget (Canvas);
    end Initialize;
-
-   -------------------
-   -- Initialize_GC --
-   -------------------
-
-   procedure Initialize_GC (Canvas : access GVD_Canvas_Record'Class) is
-   begin
-      Canvas.Item_Context.Foreground := Black_RGBA;
-      Canvas.Tooltip_Context.Foreground := Black_RGBA;
-
-      Canvas.Item_Context.Xref_Color := Xref_Color.Get_Pref;
-      Canvas.Tooltip_Context.Xref_Color := Xref_Color.Get_Pref;
-
-      Canvas.Item_Context.Modified_Color := Change_Color.Get_Pref;
-      Canvas.Tooltip_Context.Modified_Color := Change_Color.Get_Pref;
-
-      Canvas.Item_Context.Selection_Color := Selected_Item_Color.Get_Pref;
-      Canvas.Tooltip_Context.Selection_Color := Selected_Item_Color.Get_Pref;
-
-      Canvas.Box_Context.Black_Color := Black_RGBA;
-      Canvas.Box_Context.Grey_Color := Title_Color.Get_Pref;
-      Canvas.Box_Context.Thaw_Bg_Color := Thaw_Bg_Color.Get_Pref;
-      Canvas.Box_Context.Freeze_Bg_Color := Freeze_Bg_Color.Get_Pref;
-   end Initialize_GC;
-
-   ----------------
-   -- On_Realize --
-   ----------------
-
-   procedure On_Realize (Canvas : access Gtk_Widget_Record'Class) is
-      C   : constant GVD_Canvas := GVD_Canvas (Canvas);
-      Win : constant Gdk.Gdk_Window := Get_Window (Get_Canvas (C));
-   begin
-      pragma Assert (Win /= null);
-      if C.Box_Context.Close_Pixmap = null then
-         C.Box_Context.Close_Pixmap :=
-           Gdk.Pixbuf.Gdk_New_From_Xpm_Data (cancel_xpm);
-         C.Box_Context.Locked_Pixmap :=
-           Gdk.Pixbuf.Gdk_New_From_Xpm_Data (lock_xpm);
-         C.Box_Context.Auto_Display_Pixmap :=
-           Gdk.Pixbuf.Gdk_New_From_Xpm_Data (display_small_xpm);
-         C.Item_Context.Hidden_Pixmap :=
-           Gdk.Pixbuf.Gdk_New_From_Xpm_Data (box_xpm);
-         C.Item_Context.Unknown_Pixmap :=
-           Gdk.Pixbuf.Gdk_New_From_Xpm_Data (trash_xpm);
-         Preferences_Changed (C);
-      end if;
-
-      --  Create graphic contexts
-
-      Initialize_GC (C);
-   end On_Realize;
 
    ---------------------------
    -- Attach_To_Data_Window --
@@ -1105,87 +929,6 @@ package body GVD.Canvas is
       end if;
       return GVD_Canvas (Debugger.Data).Item_Num;
    end Get_Next_Item_Num;
-
-   --------------------
-   -- Allocate_Fonts --
-   --------------------
-
-   procedure Allocate_Fonts (Canvas : access GVD_Canvas_Record'Class) is
-      Iter : Item_Iterator := Start (Get_Canvas (Canvas));
-      Item : Canvas_Item;
-      Hide : constant Boolean := Hide_Big_Items.Get_Pref;
-   begin
-      loop
-         Item := Get (Iter);
-         exit when Item = null;
-
-         Update_Resize_Display
-           (Display_Item (Item), True, Hide, Redisplay_Canvas => False);
-         Next (Iter);
-      end loop;
-   end Allocate_Fonts;
-
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
-
-   procedure Preferences_Changed
-     (Canvas : access GVD_Canvas_Record'Class)
-   is
-      Item : Canvas_Item;
-      Iter : Item_Iterator;
-      Hide : constant Boolean := Hide_Big_Items.Get_Pref;
-
-   begin
-      Set_Detect_Aliases (Canvas, Default_Detect_Aliases.Get_Pref);
-
-      --  If we are not attached to a process, this means the canvas is empty
-      --  and nothing needs to be done anyway
-      if Get_Process (Canvas) /= null then
-         Recompute_All_Aliases (Get_Process (Canvas));
-      end if;
-
-      Initialize_GC (Canvas);
-
-      --  The drawing context for the items
-
-      Items.Set_Max_Height (Max_Item_Height.Get_Pref);
-      Items.Set_Max_Width  (Max_Item_Width.Get_Pref);
-
-      if Canvas.Item_Context.Text_Layout /= null then
-         Unref (Canvas.Item_Context.Text_Layout);
-         Unref (Canvas.Item_Context.Type_Layout);
-      end if;
-
-      Canvas.Item_Context.Line_Height := To_Pixels
-        (Get_Size (View_Fixed_Font.Get_Pref));
-
-      Canvas.Item_Context.Big_Item_Height := Gint (Big_Item_Height.Get_Pref);
-
-      Canvas.Item_Context.Text_Layout :=
-        Create_Pango_Layout (Get_Canvas (Canvas));
-      Set_Font_Description
-        (Canvas.Item_Context.Text_Layout, View_Fixed_Font.Get_Pref);
-
-      Canvas.Item_Context.Type_Layout :=
-        Create_Pango_Layout (Get_Canvas (Canvas));
-      Set_Font_Description
-        (Canvas.Item_Context.Type_Layout, Type_Font.Get_Pref);
-
-      Allocate_Fonts (Canvas);
-
-      Iter := Start (Get_Canvas (Canvas));
-      loop
-         Item := Get (Iter);
-         exit when Item = null;
-
-         Update_Resize_Display
-           (Display_Item (Item), True, Hide, Redisplay_Canvas => False);
-         Next (Iter);
-      end loop;
-
-      Refresh_Canvas (Get_Canvas (Canvas));
-   end Preferences_Changed;
 
    -------------------------
    -- Change_Display_Mode --
@@ -1230,7 +973,7 @@ package body GVD.Canvas is
       if Is_A_Variable (Item.Item) then
          Process_User_Command
            (Get_Debugger (Item.Item),
-            "graph display " & Item.Component_Name,
+            "graph display " & To_String (Item.Component.Name),
             Output_Command => True);
       else
          Process_User_Command
@@ -1239,46 +982,6 @@ package body GVD.Canvas is
             Output_Command => True);
       end if;
    end Clone_Component;
-
-   ------------------
-   -- Unselect_All --
-   ------------------
-
-   procedure Unselect_All
-     (Canvas : access GVD_Canvas_Record'Class) is
-   begin
-      if Canvas.Selected_Component /= null
-        and then Canvas.Selected_Item /= null
-      then
-         Set_Selected (Canvas.Selected_Component, False);
-         Update_Component
-           (Display_Item (Canvas.Selected_Item), Canvas.Selected_Component);
-         Item_Updated (Get_Canvas (Canvas), Canvas.Selected_Item);
-         Canvas.Selected_Component := null;
-         Canvas.Selected_Item := null;
-         GNATCOLL.Traces.Trace (Me, "Unselect_All");
-      end if;
-   end Unselect_All;
-
-   -------------------------
-   -- On_Background_Click --
-   -------------------------
-
-   procedure On_Background_Click
-     (Canvas : access Glib.Object.GObject_Record'Class;
-      Event  : Gdk.Event.Gdk_Event)
-   is
-      C : constant GVD_Canvas := GVD_Canvas (Canvas);
-   begin
-      if Get_Button (Event) = 1 then
-         if Get (Start (Get_Canvas (C))) /= null then
-            Unselect_All (C);
-         end if;
-      end if;
-
-      --  third mouse button handled by GVD_Canvas_Context_Factory as part of
-      --  the standard contextual menu handling
-   end On_Background_Click;
 
    --------------------------------
    -- GVD_Canvas_Context_Factory --
@@ -1296,19 +999,15 @@ package body GVD.Canvas is
       Mitem   : Gtk_Menu_Item;
       Sep     : Gtk_Separator_Menu_Item;
       Check   : Gtk_Check_Menu_Item;
-      Xr, Yr  : Gint;
-      CItem   : Canvas_Item;
-      Item    : Display_Item;
+      Details : Canvas_Event_Details;
    begin
       Default_Browser_Context_Factory
         (Context, Kernel, Event_Widget, Object, Event, Menu);
 
-      if Get_Event_Type (Event) in Button_Press .. Button_Release then
-         Item_At_Coordinates (Get_Canvas (Canvas), Event, CItem, Xr, Yr);
-         Item := Display_Item (CItem);
-      end if;
+      --   ??? Already computed in Default_Browser_Context_Factory
+      Canvas.Get_View.Set_Details (Details, Event.Button);
 
-      if Item = null then
+      if Details.Toplevel_Item = null then
          Gtk_New (Sep);
          Append (Menu, Sep);
 
@@ -1331,20 +1030,19 @@ package body GVD.Canvas is
            (Mitem, Signal_Activate, On_Data_Refresh'Access, Canvas);
 
       else
-         declare
-            Component : aliased Generic_Type_Access;
-            Name      : constant String := Get_Component
-              (Item, X => Xr, Y => Yr, Component => Component'Access);
-         begin
-            if Component /= null then
-               Item_Contextual_Menu
-                 (Menu,
-                  Debugger       => Get_Process (Canvas),
-                  Item           => Item,
-                  Component      => Component,
-                  Component_Name => Name);
-            end if;
-         end;
+         while Details.Item /= null
+           and then Details.Item.all not in Component_Item_Record'Class
+         loop
+            Details.Item := Details.Item.Parent;
+         end loop;
+
+         if Details.Item /= null then
+            Item_Contextual_Menu
+              (Menu,
+               Debugger       => Get_Process (Canvas),
+               Item           => Display_Item (Details.Toplevel_Item),
+               Component      => Component_Item (Details.Item));
+         end if;
       end if;
    end GVD_Canvas_Context_Factory;
 
@@ -1356,8 +1054,7 @@ package body GVD.Canvas is
      (Menu           : Gtk_Menu;
       Debugger       : access GVD.Process.Visual_Debugger_Record'Class;
       Item           : access Display_Items.Display_Item_Record'Class;
-      Component      : Items.Generic_Type_Access;
-      Component_Name : String)
+      Component      : Component_Item)
    is
       Canvas  : constant GVD_Canvas := GVD_Canvas (Debugger.Data);
       Mitem   : Gtk_Menu_Item;
@@ -1365,6 +1062,7 @@ package body GVD.Canvas is
       Radio   : Gtk_Radio_Menu_Item;
       Check   : Gtk_Check_Menu_Item;
       Submenu : Gtk_Menu;
+      Component_Name : constant String := To_String (Component.Name);
 
    begin
       --  Display "Close" option
@@ -1373,11 +1071,9 @@ package body GVD.Canvas is
       Item_Handler.Connect
         (Mitem, Signal_Activate,
          Item_Handler.To_Marshaller (Undisplay_Item'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Canvas,
+         Item_Record'(Canvas         => Canvas,
                       Item           => Display_Item (Item),
                       Component      => Component,
-                      Component_Name => Component_Name,
                       Mode           => Value,
                       Format         => Default_Format,
                       Zoom           => 100));
@@ -1393,11 +1089,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (Hide_All'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Default_Format,
                          Zoom           => 100));
@@ -1407,11 +1101,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (Show_All'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Default_Format,
                          Zoom           => 100));
@@ -1421,11 +1113,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (Dereference_All'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Default_Format,
                          Zoom           => 100));
@@ -1440,11 +1130,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (Clone_Component'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Default_Format,
                          Zoom           => 100));
@@ -1455,11 +1143,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (View_Into_Memory'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Default_Format,
                          Zoom           => 100));
@@ -1469,11 +1155,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Mitem, Signal_Activate,
             Item_Handler.To_Marshaller (Set_Value'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Default_Format,
                          Zoom           => 100));
@@ -1484,11 +1168,9 @@ package body GVD.Canvas is
       Item_Handler.Connect
         (Mitem, Signal_Activate,
          Item_Handler.To_Marshaller (Update_Variable'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Canvas,
+         Item_Record'(Canvas         => Canvas,
                       Item           => Display_Item (Item),
                       Component      => Component,
-                      Component_Name => Component_Name,
                       Mode           => Value,
                       Format         => Default_Format,
                       Zoom           => 100));
@@ -1509,11 +1191,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Display_Mode'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Default_Format,
                          Zoom           => 100));
@@ -1524,11 +1204,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Display_Mode'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Type_Only,
                          Format         => Default_Format,
                          Zoom           => 100));
@@ -1539,11 +1217,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Display_Mode'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Type_Value,
                          Format         => Default_Format,
                          Zoom           => 100));
@@ -1558,11 +1234,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Format'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Default_Format,
                          Zoom           => 100));
@@ -1573,11 +1247,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Format'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Decimal,
                          Zoom           => 100));
@@ -1588,11 +1260,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Format'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Hexadecimal,
                          Zoom           => 100));
@@ -1603,11 +1273,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Format'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Octal,
                          Zoom           => 100));
@@ -1618,11 +1286,9 @@ package body GVD.Canvas is
          Item_Handler.Connect
            (Radio, Signal_Activate,
             Item_Handler.To_Marshaller (Change_Format'Access),
-            Item_Record'(Name_Length    => Component_Name'Length,
-                         Canvas         => Canvas,
+            Item_Record'(Canvas         => Canvas,
                          Item           => Display_Item (Item),
                          Component      => Component,
-                         Component_Name => Component_Name,
                          Mode           => Value,
                          Format         => Binary,
                          Zoom           => 100));
@@ -1641,38 +1307,14 @@ package body GVD.Canvas is
       Item_Handler.Connect
         (Check, Signal_Activate,
          Item_Handler.To_Marshaller (Toggle_Refresh_Mode'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Canvas,
+         Item_Record'(Canvas         => Canvas,
                       Item           => Display_Item (Item),
                       Component      => Component,
-                      Component_Name => Component_Name,
                       Mode           => Value,
                       Format         => Default_Format,
                       Zoom           => 100));
       Append (Menu, Check);
    end Item_Contextual_Menu;
-
-   ----------------------
-   -- Get_Item_Context --
-   ----------------------
-
-   function Get_Item_Context
-     (Debugger : access Visual_Debugger_Record'Class)
-      return Items.Drawing_Context is
-   begin
-      return GVD_Canvas (Debugger.Data).Item_Context;
-   end Get_Item_Context;
-
-   ---------------------
-   -- Get_Box_Context --
-   ---------------------
-
-   function Get_Box_Context
-     (Debugger : access Visual_Debugger_Record'Class)
-      return Box_Drawing_Context is
-   begin
-      return GVD_Canvas (Debugger.Data).Box_Context;
-   end Get_Box_Context;
 
    --------------
    -- Hide_All --
@@ -1684,8 +1326,8 @@ package body GVD.Canvas is
    is
       pragma Unreferenced (Widget);
    begin
-      Set_Visibility (Item.Component, False, Recursive => True);
-      Update_Resize_Display (Item.Item, True);
+      Set_Visibility (Item.Component.Component, False, Recursive => True);
+      Update_Display (Item.Item);
    end Hide_All;
 
    ---------------
@@ -1696,19 +1338,19 @@ package body GVD.Canvas is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record)
    is
+      Name : constant String := To_String (Item.Component.Name);
       S : constant String :=
         Simple_Entry_Dialog
         (Parent   => Get_Debugger (Item.Item).Window,
-         Title    => -"Setting value of " & Item.Component_Name,
-         Message  => -"Setting value of " & Item.Component_Name & ':',
+         Title    => -"Setting value of " & Name,
+         Message  => -"Setting value of " & Name & ':',
          Position => Win_Pos_Mouse,
          History  => Get_History (Get_Kernel (Item.Canvas)),
          Key      => "gvd_set_value_dialog");
 
    begin
       if S /= "" and then S (S'First) /= ASCII.NUL then
-         Set_Variable
-           (Get_Debugger (Item.Item).Debugger, Item.Component_Name, S);
+         Set_Variable (Get_Debugger (Item.Item).Debugger, Name, S);
          Update_Variable (Widget, Item);
       end if;
    end Set_Value;
@@ -1723,8 +1365,8 @@ package body GVD.Canvas is
    is
       pragma Unreferenced (Widget);
    begin
-      Set_Visibility (Item.Component, True, Recursive => True);
-      Update_Resize_Display (Item.Item, True);
+      Set_Visibility (Item.Component.Component, True, Recursive => True);
+      Item.Item.Update_Display;
    end Show_All;
 
    ---------------------
@@ -1736,39 +1378,23 @@ package body GVD.Canvas is
       Item    : Item_Record)
    is
       pragma Unreferenced (Widget);
-      Lang : constant Language_Access := Get_Language (Item.Item);
 
-      procedure Dereference_In_Comp
-        (Component : Generic_Type_Access; Name : String);
-      --  Dereference recursively all pointers found in Component
-
-      procedure Dereference_In_Comp
-        (Component : Generic_Type_Access; Name : String)
+      procedure On_Child (Child : not null access Container_Item_Record'Class);
+      procedure On_Child
+        (Child : not null access Container_Item_Record'Class)
       is
-         Iter : Generic_Iterator'Class := Start (Component);
-         Comp : Generic_Type_Access;
       begin
-         while not At_End (Iter) loop
-            Comp := Data (Iter);
-            if Comp.all in Access_Type'Class then
-               Dereference_Item
-                 (Item            => Item.Item,
-                  Deref_Component => Comp,
-                  Component_Name  => Get_Component_Name
-                    (Component, Lang, Name, Comp),
-                  Link_Name       => Get_Component_Name
-                    (Component, Lang, Item_Name_In_Link, Comp));
-            else
-               Dereference_In_Comp
-                 (Comp, Get_Component_Name (Component, Lang, Name, Comp));
-            end if;
-
-            Next (Iter);
-         end loop;
-      end Dereference_In_Comp;
+         if Child.all in Component_Item_Record'Class
+           and then Component_Item (Child).Component.all in Access_Type'Class
+         then
+            Dereference_Item
+              (Item      => Item.Item,
+               Component => Component_Item (Child));
+         end if;
+      end On_Child;
 
    begin
-      Dereference_In_Comp (Get_Entity (Item.Item), Get_Name (Item.Item));
+      Item.Item.For_Each_Child (On_Child'Access);
    end Dereference_All;
 
    ----------------------
@@ -1782,8 +1408,8 @@ package body GVD.Canvas is
       pragma Unreferenced (Widget);
    begin
       Display_Memory
-        (Kernel => Get_Kernel (Item.Canvas),
-         Address => Item.Component_Name);
+        (Kernel  => Get_Kernel (Item.Canvas),
+         Address => To_String (Item.Component.Name));
    end View_Into_Memory;
 
    ---------------------
@@ -1796,7 +1422,7 @@ package body GVD.Canvas is
    is
       pragma Unreferenced (Widget);
    begin
-      Display_Items.Update (Item.Item, Redisplay_Canvas => True);
+      Item.Item.Update;
    end Update_Variable;
 
    --------------------

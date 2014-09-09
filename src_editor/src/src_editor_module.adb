@@ -38,7 +38,6 @@ with Gtk.Window;                        use Gtk.Window;
 
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Handlers;                   use Gtkada.Handlers;
-with Gtkada.Types;                      use Gtkada.Types;
 
 with Pango.Layout;                      use Pango.Layout;
 
@@ -102,9 +101,6 @@ package body Src_Editor_Module is
    Underscore : constant Gunichar := UTF8_Get_Char ("_");
    Space      : constant Gunichar := UTF8_Get_Char (" ");
    Backspace  : constant Gunichar := 8;
-
-   close_block_xpm  : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, close_block_xpm, "close_block_xpm");
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
    overriding procedure Tab_Contextual
@@ -2402,8 +2398,6 @@ package body Src_Editor_Module is
 
       Register_Editor_Hooks (Kernel);
 
-      Remove_Blank_Lines_Pixbuf := Gdk_New_From_Xpm_Data (close_block_xpm);
-
       Completion_Module.Register_Module (Kernel);
 
       Register_Hook_No_Return (Kernel, Buffer_Modified_Hook, File_Hook_Type);
@@ -2568,10 +2562,6 @@ package body Src_Editor_Module is
       --  these values are not initialized.
 
       --  Destroy graphics
-      if Remove_Blank_Lines_Pixbuf /= null then
-         Unref (Remove_Blank_Lines_Pixbuf);
-      end if;
-
       if Hide_Block_Pixbuf /= null then
          Unref (Hide_Block_Pixbuf);
       end if;

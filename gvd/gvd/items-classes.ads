@@ -71,10 +71,6 @@ package Items.Classes is
    --  If Draw is True (the default for new items), a border is drawn around
    --  the item when it is displayed on the screen.
 
-   overriding procedure Propagate_Width
-     (Item  : in out Class_Type;
-      Width : Glib.Gint);
-
 private
 
    type Class_Type_Array is array (Positive range <>) of Class_Type_Access;
@@ -91,32 +87,12 @@ private
    overriding procedure Clone_Dispatching
      (Item  : Class_Type;
       Clone : in out Generic_Type_Access);
-   overriding procedure Paint
-     (Item    : in out Class_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo.Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Glib.Gint := 0);
-   overriding procedure Size_Request
-     (Item           : in out Class_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False);
-   overriding function Get_Component_Name
-     (Item : access Class_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      X, Y : Glib.Gint) return String;
-   overriding function Get_Component_Name
-     (Item : access Class_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      Comp : Generic_Type_Access) return String;
-   overriding function Get_Component
-     (Item : access Class_Type;
-      X, Y : Glib.Gint) return Generic_Type_Access;
+   overriding function Build_Display
+     (Self   : not null access Class_Type;
+      Name   : String;
+      View   : not null access Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : Display_Mode) return Component_Item;
    overriding function Replace
      (Parent       : access Class_Type;
       Current      : access Generic_Type'Class;

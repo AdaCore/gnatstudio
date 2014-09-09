@@ -100,10 +100,6 @@ package Items.Records is
       Field : Positive) return Generic_Type_Access;
    --  Same as above, but for a specific field index.
 
-   procedure Propagate_Width
-     (Item  : access Record_Type;
-      Width : Glib.Gint);
-
    procedure Draw_Border
      (Item : access Record_Type;
       Draw : Boolean := True);
@@ -169,32 +165,12 @@ private
    overriding procedure Clone_Dispatching
      (Item  : Record_Type;
       Clone : in out Generic_Type_Access);
-   overriding procedure Paint
-     (Item    : in out Record_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo.Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Glib.Gint := 0);
-   overriding procedure Size_Request
-     (Item           : in out Record_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False);
-   overriding function Get_Component_Name
-     (Item : access Record_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      X, Y : Glib.Gint) return String;
-   overriding function Get_Component_Name
-     (Item : access Record_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      Comp : Generic_Type_Access) return String;
-   overriding function Get_Component
-     (Item : access Record_Type;
-      X, Y : Glib.Gint) return Generic_Type_Access;
+   overriding function Build_Display
+     (Self   : not null access Record_Type;
+      Name   : String;
+      View   : not null access Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : Display_Mode) return Component_Item;
    overriding function Replace
      (Parent       : access Record_Type;
       Current      : access Generic_Type'Class;

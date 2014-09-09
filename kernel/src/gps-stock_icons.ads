@@ -25,6 +25,23 @@
 --  which can be used to define standard icons.
 --  However, the corresponding icons do not have a corresponding string
 --  constant.
+--
+--  In general, the stock_id can be used as is when creating widgets like
+--  buttons, since gtk+ supports them out of the box. When you want to use them
+--  in browsers, things are more complex (in fact, it seems that the svg are
+--  displayed at a low resolution and then scaled, losing the advantage of
+--  vector drawing...). Two solutions that have been used in the past:
+--
+--      P : Gdk_Pixbuf;
+--      Error : GError;
+--      Path : Virtual_File := Create ("svg/refresh.svg");
+--      Icon_To_Absolute_Path (Kernel, Path);
+--      Gdk_New_From_File (P, Path.Display_Full_Name, Error);
+--
+--  or
+--
+--      P := Widget.Render_Icon_Pixbuf
+--         (Stock_Id => ..., Size => Icon_Size_Button);
 
 with Gtk.Enums;
 with Gtk.Icon_Set;
@@ -106,5 +123,11 @@ package GPS.Stock_Icons is
    --  File is either an absolute file name, or relative to the icons directory
    --  in the GPS install.
    --  The second version can be used to add variants for specific sizes.
+
+   procedure Icon_To_Absolute_Path
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Filename : in out GNATCOLL.VFS.Virtual_File);
+   --  Return the proper location for an icon
+   --  Sets Filename to No_File if the file is not found.
 
 end GPS.Stock_Icons;

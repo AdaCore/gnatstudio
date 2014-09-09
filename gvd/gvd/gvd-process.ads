@@ -19,9 +19,9 @@ with Glib;
 with Glib.Main;
 with Glib.Object;
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with GNAT.Regpat; use GNAT.Regpat;
-with GNAT.Expect; use GNAT.Expect;
+with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with GNAT.Regpat;  use GNAT.Regpat;
+with GNAT.Expect;  use GNAT.Expect;
 
 with Gtk.Dialog;
 with Gtk.Widget;
@@ -35,7 +35,7 @@ with GVD.Histories;
 pragma Elaborate_All (GVD.Histories);
 with GNATCOLL.Projects;    use GNATCOLL.Projects;
 with GNATCOLL.VFS;
-
+with Items;                use Items;
 with Interactive_Consoles; use Interactive_Consoles;
 
 package GVD.Process is
@@ -84,7 +84,7 @@ package GVD.Process is
       Threads                 : Gtk.Widget.Gtk_Widget;
       Tasks                   : Gtk.Widget.Gtk_Widget;
       PDs                     : Gtk.Widget.Gtk_Widget;
-      Data                    : Gtk.Widget.Gtk_Widget;
+      Data                    : Debugger_Data_View;
       Assembly                : Gtk.Widget.Gtk_Widget;
       Breakpoints_Editor      : Gtk.Widget.Gtk_Widget;
       Memory_View             : Gtk.Widget.Gtk_Widget;

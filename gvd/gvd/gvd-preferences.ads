@@ -52,14 +52,11 @@ package GVD.Preferences is
    Assembly_Range_Size           : Integer_Preference;
 
    -- Data Window --
-   Xref_Color                    : Color_Preference;
    Change_Color                  : Color_Preference;
    Thaw_Bg_Color                 : Color_Preference;
    Freeze_Bg_Color               : Color_Preference;
    Title_Font                    : Font_Preference;
    Type_Font                     : Font_Preference;
-   Hide_Big_Items                : Boolean_Preference;
-   Big_Item_Height               : Integer_Preference;
    Default_Detect_Aliases        : Boolean_Preference;
    Max_Item_Width                : Integer_Preference;
    Max_Item_Height               : Integer_Preference;

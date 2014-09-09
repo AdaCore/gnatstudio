@@ -15,25 +15,22 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;
-with Browsers.Canvas;
-with Glib;
-with Items;
-with GVD.Process;
-with Gdk.Event;
-with Gtkada.Canvas;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Browsers.Canvas;       use Browsers, Browsers.Canvas;
 with Debugger;
+with Glib;
+with GNAT.Strings;
+with Gtkada.Canvas_View;    use Gtkada.Canvas_View;
+with GVD.Process;           use GVD.Process;
+with Items;                 use Items;
 with Language;
-with Cairo;
 
 package Display_Items is
 
-   type Display_Item_Record is new
-     Browsers.Canvas.Browser_Item_Record with private;
+   type Display_Item_Record is new GPS_Item_Record with private;
    type Display_Item is access all Display_Item_Record'Class;
 
-   type GVD_Link_Record is new Browsers.Canvas.Browser_Link_Record
-      with private;
+   type GVD_Link_Record is new GPS_Link_Record with private;
    type GVD_Link is access all GVD_Link_Record'Class;
 
    Item_Name_In_Link : constant String := "@";
@@ -42,16 +39,17 @@ package Display_Items is
 
    procedure Gtk_New
      (Item           : out Display_Item;
-      Browser        : access Browsers.Canvas.General_Browser_Record'Class;
+      Browser        : not null access Debugger_Data_View_Record'Class;
       Graph_Cmd      : String;
       Variable_Name  : String;
       Num            : Integer;
       Debugger       : access GVD.Process.Visual_Debugger_Record'Class;
       Auto_Refresh   : Boolean := True;
-      Default_Entity : Items.Generic_Type_Access := null;
-      Link_From      : Display_Item := null;
-      Link_Name      : String := "");
-   --  Create a new item to display the value of Variable_Name.
+      Is_Dereference : Boolean := False;
+      Default_Entity : Items.Generic_Type_Access := null);
+   --  Create a new item to display the value of Variable_Name (or return an
+   --  existing item if one matches).
+   --
    --  Auto_Refresh should be set to True if the value of Variable should
    --  be parsed again whenever the debugger stops. This is the default
    --  behavior, that can be changed by the user.
@@ -65,21 +63,27 @@ package Display_Items is
    --  Default_Entity can be used to initialize the entity associated with the
    --  item. This will be used instead of Variable_Name if not null.
    --
-   --  If Link_From is not null, the new item is directly inserted in the
-   --  canvas, and a link is created between the new item and Link_From.
-   --  Link_Name is the label used for the link between the two items.
-   --
    --  Debugger can be null. In this case, the item will never be computed
    --
    --  Num must be specified, and is the number of the item
-   --
-   --  If the item already existed in the canvas, Item is set to null
 
-   procedure Free
+   procedure Update_Display (Item : not null access Display_Item_Record'Class);
+   --  Recompute the GUI rendering for the item.
+   --  This does not refresh the value read from the debugger, only its
+   --  display.
+
+   procedure Create_Link
+     (Browser    : not null access Debugger_Data_View_Record'Class;
+      From, To   : access Display_Item_Record'Class;
+      Name       : String;
+      Alias_Link : Boolean := False);
+   --  Add a new link between two items.
+   --  The link is not created if there is already a similar one.
+
+   procedure Remove_With_Aliases
      (Item : access Display_Item_Record;
-      Remove_Aliases : Boolean := True);
-   --  Remove the item from the canvas and free the memory occupied by it,
-   --  including its type description.
+      Remove_Aliases : Boolean);
+   --  Remove the item from the canvas.
    --  If Remove_Aliases is True, then all the items on the canvas that are
    --  aliases of Item are also removed.
 
@@ -87,14 +91,9 @@ package Display_Items is
    --  Return the "graph display..." command used to create the item
 
    function Find_Item
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+     (Canvas : not null access Debugger_Data_View_Record'Class;
       Num    : Integer) return Display_Item;
    --  Return the item whose identifier is Num, or null if there is none
-
-   overriding function On_Button_Click
-     (Item   : access Display_Item_Record;
-      Event  : Gdk.Event.Gdk_Event_Button) return Boolean;
-   --  React to button clicks on an item.
 
    procedure Set_Auto_Refresh
      (Item          : access Display_Item_Record;
@@ -114,59 +113,22 @@ package Display_Items is
    --  Recompute all the aliases, and reparse the values for all the
    --  displayed items if Recompute_Values is True
 
-   function Update_On_Auto_Refresh
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
-      Item   : access Gtkada.Canvas.Canvas_Item_Record'Class) return Boolean;
-   --  Update the value of a specific item in the canvas. The new value is
-   --  read from the debugger, parsed, and redisplayed.
-   --  Do nothing if the auto-refresh status of Item is set to false.
-   --  The general prototype for this function must be compatible with
-   --  Gtkada.Canvas.Item_Processor.
-   --  This does not redraw the canvas or the item on the canvas.
-
-   procedure Update
-     (Item             : access Display_Item_Record'Class;
-      Redisplay_Canvas : Boolean := False);
+   procedure Update (Item : not null access Display_Item_Record'Class);
    --  Unconditionally update the value of Item after parsing the new value.
    --  This does not redraw the canvas or the item on the canvas, unless
    --  Redisplay_Canvas is True
 
-   overriding procedure Draw
-     (Item : access Display_Item_Record;
-      Cr   : Cairo.Cairo_Context);
-   --  See imherited documentation
-
-   function Get_Component
-     (Item      : access Display_Item_Record;
-      X, Y      : Glib.Gint;
-      Component : access Items.Generic_Type_Access) return String;
-   --  Get the component selected when clicking in (X, Y) in the item. This
-   --  also returns the name of the component.
-
-   procedure Update_Component
-     (Item      : access Display_Item_Record'Class;
-      Component : Items.Generic_Type_Access := null);
-   --  Update a specific component of a complex item.
-   --  The item must have been displayed at least once before the last time
-   --  its visibility state changed.
-   --  If Component is null, the whole item is redraw, otherwise only the
-   --  specific Component is updated.
-
    procedure Dereference_Item
-     (Item            : access Display_Item_Record;
-      Deref_Component : Items.Generic_Type_Access;
-      Component_Name  : String;
-      Link_Name       : String);
+     (Item      : access Display_Item_Record;
+      Component : not null access Component_Item_Record'Class);
    --  Dereference a component of Item ("graph display" on it with a link from
-   --  the item). Link_Name is dereferenced per language rule (ie in Ada .all
-   --  is added).
+   --  the item).
 
    procedure Reset_Recursive (Item : access Display_Item_Record'Class);
-   --  Calls Reset_Recursive for the entity represented by the item.
+   --  Mark the corresponding entity as up-to-date (i.e. no longer display
+   --  in red).
 
-   function Is_Alias_Of
-     (Item : access Display_Item_Record) return Display_Item;
-   --  Return the item for which Item is an alias, or null if there is none.
+   --  Calls Reset_Recursive for the entity represented by the item.
 
    function Get_Name (Item : access Display_Item_Record) return String;
    --  Return the name of Item, or "" if there is no such name.
@@ -211,21 +173,13 @@ package Display_Items is
      (Item : access Display_Item_Record) return Debugger.Value_Format;
    --  Get the display format for item
 
-   procedure Update_Resize_Display
-     (Item             : access Display_Item_Record'Class;
-      Was_Visible      : Boolean := False;
-      Hide_Big         : Boolean := False;
-      Redisplay_Canvas : Boolean := True);
-   --  Recompute the size and update the contents of item.
-   --  Was_Visible indicates whether the item was initially visible
-   --  It also warns the canvas that the item has changed.
-   --  If Hide_Big_Items, then components higher than a specific limit are
-   --  forced to hidden state.
+   overriding procedure Destroy
+     (Self     : not null access Display_Item_Record;
+      In_Model : not null access Canvas_Model_Record'Class);
 
 private
 
-   type Display_Item_Record is new Browsers.Canvas.Browser_Item_Record with
-   record
+   type Display_Item_Record is new GPS_Item_Record with record
       Num          : Integer;
       Graph_Cmd    : GNAT.Strings.String_Access := null;
       Name         : GNAT.Strings.String_Access := null;
@@ -265,11 +219,13 @@ private
         Standard.Debugger.Default_Format;
    end record;
 
-   type GVD_Link_Record is new Browsers.Canvas.Browser_Link_Record with record
+   type GVD_Link_Record is new GPS_Link_Record with record
       Alias_Link : Boolean := False;
       --  True if this Link was created as a result of an aliasing operation.
       --  Such links are always deleted before each update, and recreated
       --  whenever an aliasing is detected.
+
+      Name : Unbounded_String;
 
       Source_Component : Items.Generic_Type_Access := null;
       --  Component of the source item to which the link is attached (generally

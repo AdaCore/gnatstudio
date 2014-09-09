@@ -15,20 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.IO;         use GNAT.IO;
 with Ada.Tags;        use Ada.Tags;
-
 with Glib;            use Glib;
-with Pango.Layout;    use Pango.Layout;
-
-with Gtkada.Style;    use Gtkada.Style;
-
-with Language;        use Language;
+with GNAT.IO;         use GNAT.IO;
+with GNAT.Strings;    use GNAT.Strings;
 with Items.Repeats;   use Items.Repeats;
+with Language;        use Language;
 
 package body Items.Arrays is
-
-   use type GNAT.Strings.String_Access;
 
    function Index_String
      (Item    : Array_Type;
@@ -163,9 +157,7 @@ package body Items.Arrays is
       Tmp       : Array_Item_Array_Access;
       To_Insert : Generic_Type_Access;
       Index     : Positive;
-
    begin
-
       --  Create the real new value (ie including the Repeat_Num)
 
       if Repeat_Num = 1 then
@@ -495,10 +487,7 @@ package body Items.Arrays is
          end if;
       end loop;
 
-      Put (")");
-      --  Print (Value.Item_Type.all);
-
-      Put ("= (");
+      Put (") = (");
       New_Line;
       Put (String'(1 .. Indent + 3 => ' '));
 
@@ -557,357 +546,67 @@ package body Items.Arrays is
       R.Item_Type := Items.Clone (Item.Item_Type.all);
    end Clone_Dispatching;
 
-   -----------
-   -- Paint --
-   -----------
+   -------------------
+   -- Build_Display --
+   -------------------
 
-   overriding procedure Paint
-     (Item    : in out Array_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo.Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Gint := 0)
+   overriding function Build_Display
+     (Self : not null access Array_Type;
+      Name : String;
+      View : not null access Debugger_Data_View_Record'Class;
+      Lang : Language.Language_Access;
+      Mode : Display_Mode) return Component_Item
    is
-      Current_Y : Gint := Y + Border_Spacing;
-      W, H : Gint;
-
+      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
+      R    : Rect_Item;
+      Rect : constant Component_Item :=
+        New_Component_Item (Styles, Self, Name);
    begin
-      Item.X := X;
-      Item.Y := Y;
-
       --  If we have a real empty array (ie the dimensions were not considered
       --  as dynamic
-
-      if Item.Dimensions (1).First > Item.Dimensions (1).Last
-        and then Item.Dimensions (1).First /= Long_Integer'Last
-        and then Item.Dimensions (1).Last /= Long_Integer'First
-        and then Item.Values = null
       --  In case we were able to parse the value despite the range information
+
+      if Self.Dimensions (1).First > Self.Dimensions (1).Last
+        and then Self.Dimensions (1).First /= Long_Integer'Last
+        and then Self.Dimensions (1).Last /= Long_Integer'First
+        and then Self.Values = null
       then
-         return;
-      end if;
+         null;
 
-      if not Item.Valid then
-         Draw_Pixbuf (Cr, Context.Unknown_Pixmap, X + Left_Border, Y);
-         return;
-      end if;
+      elsif not Self.Visible then
+         Rect.Add_Child
+           (Gtk_New_Image (Styles.Item, Image => View.Hidden_Pixmap));
 
-      if not Item.Visible then
-         Draw_Pixbuf (Cr, Context.Hidden_Pixmap, X + Left_Border, Y);
-         return;
-      end if;
-
-      if Item.Selected then
-         Draw_Rectangle
-           (Cr, Context.Selection_Color,
-            Filled => True,
-            X      => X,
-            Y      => Y,
-            Width  => Item.Width,
-            Height => Item.Height);
-      end if;
-
-      if Show_Type (Mode)
-        and then Item.Type_Name /= null
-      then
-         Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
-         Draw_Layout
-           (Cr, Context.Foreground,
-            X        => X,
-            Y        => Current_Y,
-            Layout   => Context.Type_Layout);
-         Get_Pixel_Size (Context.Type_Layout, W, H);
-         Current_Y := Current_Y + H;
-      end if;
-
-      if Show_Value (Mode) and then Item.Values /= null then
-         for V in Item.Values'Range loop
-            Set_Text
-              (Context.Text_Layout, Index_String
-               (Item, Item.Values (V).Index, Item.Num_Dimensions)
-               & ASCII.HT & " => ");
-            Draw_Layout
-              (Cr, Context.Foreground,
-               X        => X,
-               Y        => Current_Y,
-               Layout   => Context.Text_Layout);
-
-            Paint
-              (Item.Values (V).Value.all, Context, Cr, Lang, Mode,
-               X + Left_Border + Border_Spacing + Item.Index_Width,
-               Current_Y);
-            Current_Y :=
-              Current_Y + Item.Values (V).Value.Height + Line_Spacing;
-         end loop;
-      end if;
-
-      --  Draw a border
-      Draw_Rectangle
-        (Cr, Context.Foreground,
-         Filled => False,
-         X      => X,
-         Y      => Y,
-         Width  => Item.Width - 1,
-         Height => Item.Height - 1);
-   end Paint;
-
-   ------------------
-   -- Size_Request --
-   ------------------
-
-   overriding procedure Size_Request
-     (Item           : in out Array_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False)
-   is
-      Total_Height, Total_Width : Gint := 0;
-      W, H : Gint;
-   begin
-      if not Item.Valid then
-         Item.Width := Get_Width (Context.Unknown_Pixmap);
-         Item.Height := Get_Height (Context.Unknown_Pixmap);
-
-         return;
-      end if;
-
-      --  If we have a real empty array (ie the dimensions were not considered
-      --  as dynamic
-
-      if Item.Dimensions (1).First > Item.Dimensions (1).Last
-        and then Item.Dimensions (1).First /= Long_Integer'Last
-        and then Item.Dimensions (1).Last /= Long_Integer'First
-        and then Item.Values = null --  Sometimes (ex/ Unbounded_Strings), we
-                                    --  could parse the value anyway
-      then
-         Item.Width := 20;
-         Item.Height := 0;
-         return;
-      end if;
-
-      if Item.Visible then
+      else
          if Show_Type (Mode)
-           and then Item.Type_Name /= null
+           and then Self.Type_Name /= null
          then
-            Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
-            Get_Pixel_Size (Context.Type_Layout, Total_Width, Total_Height);
-            Item.Type_Height := Total_Height;
-         else
-            Item.Type_Height := 0;
+            Rect.Add_Child
+              (Gtk_New_Text (Styles.Text_Font, Self.Get_Type_Name (Lang)));
          end if;
 
-         if Show_Value (Mode) then
-            Item.Index_Width := 20;  --  minimal width
+         if Show_Value (Mode) and then Self.Values /= null then
+            for V in 1 .. Self.Last_Value loop
+               R := Gtk_New_Rect (Styles.Invisible);
+               R.Set_Child_Layout (Horizontal_Stack);
+               Rect.Add_Child (R);
 
-            if Item.Values /= null then
-               for V in Item.Values'Range loop
-                  Set_Text
-                    (Context.Text_Layout, Index_String
-                     (Item, Item.Values (V).Index, Item.Num_Dimensions)
-                     & ASCII.HT & " => ");
-                  Get_Pixel_Size (Context.Text_Layout, W, H);
-                  Item.Index_Width := Gint'Max (Item.Index_Width, W);
-
-                  Size_Request
-                    (Item.Values (V).Value.all, Context, Lang, Mode,
-                     Hide_Big_Items);
-                  Total_Width  :=
-                    Gint'Max (Total_Width, Item.Values (V).Value.Width);
-                  Total_Height := Total_Height + Item.Values (V).Value.Height;
-               end loop;
-
-               Total_Height :=
-                 Total_Height + (Item.Values'Length - 1) * Line_Spacing;
-            end if;
-         end if;
-
-         --  Keep enough space for the border (Border_Spacing on each side)
-
-         Item.Width := Total_Width + Item.Index_Width + Left_Border +
-           2 * Border_Spacing;
-         Item.Height := Total_Height + 2 * Border_Spacing;
-
-         --  Hide big items for efficiency
-         if Hide_Big_Items
-           and then Item.Height > Context.Big_Item_Height
-         then
-            Item.Visible := False;
+               declare
+                  Idx : constant String := Index_String
+                    (Self.all, Self.Values (V).Index, Self.Num_Dimensions);
+               begin
+                  R.Add_Child
+                    (Gtk_New_Text (Styles.Text_Font, Idx & ASCII.HT & " => "));
+                  R.Add_Child
+                    (Self.Values (V).Value.Build_Display
+                     (Array_Item_Name (Lang, Name, Idx), View, Lang, Mode));
+               end;
+            end loop;
          end if;
       end if;
 
-      if not Item.Visible then
-         Item.Index_Width := 0;
-         Item.Width :=
-           Get_Width (Context.Hidden_Pixmap) +
-           Left_Border + 2 * Border_Spacing;
-         Item.Height :=
-           Get_Height (Context.Hidden_Pixmap) + 2 * Border_Spacing;
-      end if;
-   end Size_Request;
-
-   ---------------------
-   -- Propagate_Width --
-   ---------------------
-
-   overriding procedure Propagate_Width
-     (Item  : in out Array_Type; Width : Glib.Gint)
-   is
-      W : constant Gint := Width - Item.Index_Width - 2 * Border_Spacing -
-        Left_Border;
-   begin
-      Item.Width := Width;
-
-      if Item.Visible and then Item.Values /= null then
-         for V in Item.Values'Range loop
-            if Item.Values (V).Value /= null then
-               Propagate_Width (Item.Values (V).Value.all, W);
-            end if;
-         end loop;
-      end if;
-   end Propagate_Width;
-
-   ------------------------
-   -- Get_Component_Name --
-   ------------------------
-
-   overriding function Get_Component_Name
-     (Item : access Array_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      Comp : Generic_Type_Access) return String
-   is
-   begin
-      for C in Item.Values'Range loop
-         if Item.Values (C).Value = Comp then
-            return Array_Item_Name
-              (Lang, Name, Index_String
-                 (Item.all, Item.Values (C).Index, Item.Num_Dimensions));
-         end if;
-      end loop;
-      return Name;
-   end Get_Component_Name;
-
-   ------------------------
-   -- Get_Component_Name --
-   ------------------------
-
-   overriding function Get_Component_Name
-     (Item : access Array_Type;
-      Lang : access Language_Root'Class;
-      Name : String;
-      X, Y : Glib.Gint) return String
-   is
-      Total_Height : Gint := Border_Spacing + Item.Type_Height;
-      Tmp_Height   : Gint;
-      Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
-      Field_Start  : constant Gint := Field_Name_Start + Item.Index_Width;
-   begin
-      if not Item.Visible then
-         return Name;
-      end if;
-
-      --  Click in the left column ? => Select the whole item
-
-      if X < Field_Name_Start
-        or else Item.Values = null
-      then
-         return Name;
-      end if;
-
-      --  Did we click the type of the item
-
-      if Y < Item.Type_Height then
-         return Name;
-      end if;
-
-      --  Else, find the relevant item
-
-      for V in Item.Values'Range loop
-         Tmp_Height := Total_Height + Item.Values (V).Value.Height +
-           Line_Spacing;
-
-         if Y <= Tmp_Height then
-            declare
-               Item_Name : constant String :=
-                 Array_Item_Name
-                 (Lang, Name, Index_String
-                  (Item.all, Item.Values (V).Index, Item.Num_Dimensions));
-
-            begin
-               --  ??? Should be able to get a range of values (ie all the
-               --  values that are displayed in a single box).
-
-               if X < Field_Start then
-                  return Item_Name;
-               end if;
-
-               return Get_Component_Name
-                 (Item.Values (V).Value, Lang, Item_Name,
-                  X - Field_Start, Y - Total_Height);
-            end;
-         end if;
-
-         Total_Height := Tmp_Height;
-      end loop;
-
-      return Name;
-   end Get_Component_Name;
-
-   -------------------
-   -- Get_Component --
-   -------------------
-
-   overriding function Get_Component
-     (Item : access Array_Type; X, Y : Glib.Gint) return Generic_Type_Access
-   is
-      Total_Height : Gint := Border_Spacing + Item.Type_Height;
-      Tmp_Height   : Gint;
-      Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
-      Field_Start  : constant Gint := Field_Name_Start + Item.Index_Width;
-
-   begin
-      if not Item.Valid or else not Item.Visible then
-         return Generic_Type_Access (Item);
-      end if;
-
-      --  Click in the left column ? => Select the whole item
-
-      if X < Field_Name_Start
-        or else Item.Values = null
-      then
-         return Generic_Type_Access (Item);
-      end if;
-
-      --  Did we click the type of the item
-
-      if Y < Item.Type_Height then
-         return Generic_Type_Access (Item);
-      end if;
-
-      --  Else, find the relevant item
-
-      for V in Item.Values'Range loop
-         Tmp_Height := Total_Height + Item.Values (V).Value.Height +
-           Line_Spacing;
-
-         if Y <= Tmp_Height then
-            if X < Field_Start then
-               return Generic_Type_Access (Item);
-            end if;
-
-            return Get_Component
-              (Item.Values (V).Value,
-               X - Field_Start,
-               Y - Total_Height);
-         end if;
-
-         Total_Height := Tmp_Height;
-      end loop;
-
-      return Generic_Type_Access (Item);
-   end Get_Component;
+      return Rect;
+   end Build_Display;
 
    -------------
    -- Replace --

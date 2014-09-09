@@ -39,7 +39,13 @@ package Items.Simples is
 
    procedure Set_Value (Item : in out Simple_Type; Value : String);
    --  Assign a new value to Item.
-   --  String is copied internally.
+
+   overriding function Build_Display
+     (Self   : not null access Simple_Type;
+      Name   : String;
+      View   : not null access Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : Display_Mode) return Component_Item;
 
    -----------------
    -- Range Types --
@@ -76,6 +82,13 @@ package Items.Simples is
    function New_Access_Type return Generic_Type_Access;
    --  Create a new access type.
 
+   overriding function Build_Display
+     (Self   : not null access Access_Type;
+      Name   : String;
+      View   : not null access Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : Display_Mode) return Component_Item;
+
    ----------------
    -- Enum Types --
    ----------------
@@ -93,7 +106,7 @@ package Items.Simples is
    -- Debugger types --
    --------------------
 
-   type Debugger_Output_Type is new Simple_Type with private;
+   type Debugger_Output_Type is new Generic_Type with private;
    type Debugger_Output_Type_Access is access all Debugger_Output_Type'Class;
    --  General types, used to display directly the output of the debugger
    --  (no processing is done in that case).
@@ -105,14 +118,27 @@ package Items.Simples is
    function Refresh_Command (Item : Debugger_Output_Type) return String;
    --  Return the command to send to the debugger to refresh the value.
 
-   overriding procedure Set_Value
-     (Item : in out Debugger_Output_Type; Value : String);
-   --  Set a new value for Item.
-   --  Since there is no pre-processing done on Value, we filter out ^Ms for
-   --  Value as well.
+   procedure Set_Value (Item : in out Debugger_Output_Type; Value : String);
+   --  Set the value to be displayed
+
+   overriding function Build_Display
+     (Self   : not null access Debugger_Output_Type;
+      Name   : String;
+      View   : not null access Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : Display_Mode) return Component_Item;
 
 private
-   type Simple_Type is new Generic_Type with record
+
+   type Base_Simple_Type is abstract new Generic_Type with null record;
+   overriding function Replace
+     (Parent       : access Base_Simple_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+      return Generic_Type_Access
+   is (null);
+
+   type Simple_Type is new Base_Simple_Type with record
       Value : GNAT.Strings.String_Access := null;
       --  The value, as displayed by the debugger
 
@@ -127,36 +153,6 @@ private
    overriding procedure Clone_Dispatching
      (Item  : Simple_Type;
       Clone : in out Generic_Type_Access);
-   overriding procedure Paint
-     (Item    : in out Simple_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo.Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Glib.Gint := 0);
-   overriding procedure Size_Request
-     (Item           : in out Simple_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False);
-   overriding function Get_Component_Name
-     (Item : access Simple_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      X, Y : Glib.Gint) return String;
-   overriding function Get_Component_Name
-     (Item : access Simple_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      Comp : Generic_Type_Access) return String;
-   overriding function Get_Component
-     (Item : access Simple_Type;
-      X, Y : Glib.Gint) return Generic_Type_Access;
-   overriding function Replace
-     (Parent       : access Simple_Type;
-      Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class) return Generic_Type_Access;
    overriding procedure Reset_Recursive (Item : access Simple_Type);
    overriding function Structurally_Equivalent
      (Item1 : access Simple_Type; Item2 : access Generic_Type'Class)
@@ -183,13 +179,6 @@ private
    type Access_Type is new Simple_Type with null record;
    overriding procedure Print (Value : Access_Type; Indent : Natural := 0);
    --  Free is inherited from Simple_Type.
-   overriding procedure Paint
-     (Item    : in out Access_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo.Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Glib.Gint := 0);
    overriding function Structurally_Equivalent
      (Item1 : access Access_Type; Item2 : access Generic_Type'Class)
      return Boolean;
@@ -201,7 +190,8 @@ private
      return Boolean;
    --  Free is inherited from Simple_Type.
 
-   type Debugger_Output_Type is new Simple_Type with record
+   type Debugger_Output_Type is new Base_Simple_Type with record
+      Value       : GNAT.Strings.String_List_Access;
       Refresh_Cmd : GNAT.Strings.String_Access;
    end record;
    --  Since Value can be a multiple-line string, and we want to consider each
@@ -214,21 +204,8 @@ private
    overriding procedure Clone_Dispatching
      (Item  : Debugger_Output_Type;
       Clone : in out Generic_Type_Access);
-   overriding procedure Free (Item : access Debugger_Output_Type;
-                   Only_Value : Boolean := False);
-   overriding procedure Size_Request
-     (Item           : in out Debugger_Output_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False);
-   overriding procedure Paint
-     (Item    : in out Debugger_Output_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo.Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Glib.Gint := 0);
+   overriding procedure Free
+     (Item : access Debugger_Output_Type; Only_Value : Boolean := False);
    overriding procedure Reset_Recursive (Item : access Debugger_Output_Type);
    overriding function Structurally_Equivalent
      (Item1 : access Debugger_Output_Type; Item2 : access Generic_Type'Class)

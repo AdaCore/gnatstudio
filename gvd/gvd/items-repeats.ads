@@ -64,33 +64,12 @@ private
      (Item  : Repeat_Type;
       Clone : in out Generic_Type_Access);
 
-   overriding procedure Paint
-     (Item    : in out Repeat_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo.Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Glib.Gint := 0);
-
-   overriding procedure Size_Request
-     (Item           : in out Repeat_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False);
-   overriding function Get_Component_Name
-     (Item : access Repeat_Type;
-      Lang : access Language.Language_Root'Class;
+   overriding function Build_Display
+     (Self : not null access Repeat_Type;
       Name : String;
-      X, Y : Glib.Gint) return String;
-   overriding function Get_Component_Name
-     (Item : access Repeat_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      Comp : Generic_Type_Access) return String;
-   overriding function Get_Component
-     (Item : access Repeat_Type;
-      X, Y : Glib.Gint) return Generic_Type_Access;
+      View : not null access Debugger_Data_View_Record'Class;
+      Lang : Language.Language_Access;
+      Mode : Display_Mode) return Component_Item;
    overriding function Replace
      (Parent       : access Repeat_Type;
       Current      : access Generic_Type'Class;

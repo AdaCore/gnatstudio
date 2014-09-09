@@ -17,15 +17,15 @@
 
 --  Generic items used to display things in the canvas.
 
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with Browsers;               use Browsers;
+with Browsers.Canvas;        use Browsers.Canvas;
+with Gdk.Pixbuf;             use Gdk.Pixbuf;
 with GNAT.Strings;
-
 with Glib;
-with Cairo;
-with Pango.Layout;
-with Gdk.RGBA;
-with Gdk.Pixbuf;    use Gdk.Pixbuf;
-
+with Gtkada.Canvas_View;     use Gtkada.Canvas_View;
+with Gtkada.Style;           use Gtkada.Style;
 with Language;
 
 package Items is
@@ -43,6 +43,23 @@ package Items is
    --  the description of the type and its current value. Whereas the type
    --  itself is never freed, the values are deleted every time we need to
    --  parse a new value.
+
+   --------------------
+   --  The Data view --
+   --------------------
+
+   type Debugger_Data_View_Record is new Browsers.Canvas.General_Browser_Record
+   with record
+      Modified : Drawing_Style;  --  when value has changed
+      Freeze   : Drawing_Style;  --  item's value is not refreshed
+
+      Unknown_Pixmap  : Gdk.Pixbuf.Gdk_Pixbuf;
+      Hidden_Pixmap   : Gdk.Pixbuf.Gdk_Pixbuf;
+      --  Settings to draw items
+      --  Modified_Color: used to highlight the items whose value has changed
+      --    since the last update.
+   end record;
+   type Debugger_Data_View is access all Debugger_Data_View_Record'Class;
 
    ------------------
    -- Generic_Type --
@@ -90,44 +107,35 @@ package Items is
    function Show_Type (Mode : Display_Mode) return Boolean;
    --  Whether we should display the type of the item
 
-   type Drawing_Context is record
-      Foreground      : Gdk.RGBA.Gdk_RGBA;
-      Xref_Color      : Gdk.RGBA.Gdk_RGBA;
-      Modified_Color  : Gdk.RGBA.Gdk_RGBA;
-      Selection_Color : Gdk.RGBA.Gdk_RGBA;
-
-      Unknown_Pixmap : Gdk.Pixbuf.Gdk_Pixbuf;
-      Hidden_Pixmap  : Gdk.Pixbuf.Gdk_Pixbuf;
-
-      Text_Layout    : Pango.Layout.Pango_Layout;
-      Type_Layout    : Pango.Layout.Pango_Layout;
-
-      Line_Height     : Glib.Gint;
-      Big_Item_Height : Glib.Gint;
-   end record;
-   --  This structure contains all the information needed to draw items on
-   --  the canvas.
-   --  GC is the standard graphic context used to draw text and boxes.
-   --  Xref_GC is used for fields that can be clicked on by the user to display
-   --  new items (such as access types).
-   --  Modified_GC is the graphic context used to highlight the items whose
-   --  value has changed since the last update.
-   --  Font is the default font to use, Type_Font is used to display the
-   --  font information, and Command_Font for items that come directly from the
-   --  output of the debugger.
-   --  Pixmap is the pixmap to draw to.
-   --  Trash_Pixmap and Trash_Mask are the icon to draw when the value of an
-   --  item is unknown.
-   --  Hidden_Pixmap and Hidden_Mask are the icon to draw when part of an item
-   --  has been folded and is hidden.
-   --  Text should be displayed through Layout.
-   --
-   --  All the contexts should be reset to their initial settings on exit of
-   --  the Paint subprograms.
-
    -----------------------------
    -- Printing and Displaying --
    -----------------------------
+
+   type Component_Item_Record is new Rect_Item_Record with record
+      Name      : Ada.Strings.Unbounded.Unbounded_String;
+      Component : Generic_Type_Access;
+   end record;
+   type Component_Item is access all Component_Item_Record'Class;
+   --  The GUI representation of a Generic_Type
+
+   function New_Component_Item
+     (Styles    : not null access Browser_Styles;
+      Component : not null access Generic_Type'Class;
+      Name      : String) return Component_Item;
+   procedure Initialize_Component_Item
+     (Self      : not null access Component_Item_Record'Class;
+      Styles    : not null access Browser_Styles;
+      Component : not null access Generic_Type'Class;
+      Name      : String);
+   --  Build a new component item
+
+   function Build_Display
+     (Self   : not null access Generic_Type;
+      Name   : String;
+      View   : not null access Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : Display_Mode) return Component_Item is abstract;
+   --  Build the contents of the item, to show Self.
 
    procedure Print
      (Value  : Generic_Type;
@@ -135,38 +143,6 @@ package Items is
    --  Print Value on Standard_Output.
    --  Indent is the indentation level.
    --  This function is intended for debug purposes only.
-
-   procedure Paint
-     (Item    : in out Generic_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo.Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Glib.Gint := 0) is abstract;
-   --  Paint the item on the pixmap, that will be used to show the item in the
-   --  canvas.
-   --  The item should be drawn so that its upper-left corner is at coordinates
-   --  (X, Y) in Pixmap.
-   --  Xref_GC is the graphic context to use when the text being displayed
-   --  is clickable by the user.
-
-   procedure Size_Request
-     (Item           : in out Generic_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False) is abstract;
-   --  Compute the size that Item needs to display itself on the screen.
-   --  The two fields Width and Height are initialized by this function.
-   --  This function is always guaranteed to be called when an item is resized,
-   --  its value is changed, or the font is changed.
-   --  If Hide_Big_Items is True, then items bigger than a certain limit will
-   --  be automatically hidden before their size is computed.
-
-   procedure Constraint_Size (Item : in out Generic_Type);
-   --  Constraint the size of the item so that it can be fully displayed in
-   --  the canvas. Items that are too big (>50000 pixels wide for instance)
-   --  can not be drawn.
 
    --------------------------------
    -- Manipulating the structure --
@@ -182,22 +158,6 @@ package Items is
    function Clone (Item : Generic_Type'Class) return Generic_Type_Access;
    --  return a deep copy of Item.
 
-   function Get_Width (Item : Generic_Type) return Glib.Gint;
-   --  Return the width that Item needs to display itself on the screen.
-
-   function Get_Height (Item : Generic_Type) return Glib.Gint;
-   --  Return the height that Item needs to display itself on the screen.
-
-   function Get_X (Item : Generic_Type) return Glib.Gint;
-   --  Return the coordinates in the pixmap where the item was displayed.
-
-   function Get_Y (Item : Generic_Type) return Glib.Gint;
-   --  Return the coordinates in the pixmap where the item was displayed.
-
-   procedure Set_Max_Height (Height : Positive);
-   procedure Set_Max_Width  (Width  : Positive);
-   --  Set the maximum size of an item
-
    procedure Set_Visibility
      (Item      : access Generic_Type;
       Visible   : Boolean;
@@ -208,66 +168,6 @@ package Items is
 
    function Get_Visibility (Item : Generic_Type) return Boolean;
    --  Return the visibility state of an item.
-
-   procedure Component_Is_Visible
-     (Item       : access Generic_Type;
-      Component  : access Generic_Type'Class;
-      Is_Visible : out Boolean;
-      Found      : out Boolean);
-   --  Return True if Component (A child or grand-child of Item) is currently
-   --  displayed on the screen.
-   --  Found is set to False if Component is not part of the item hierarchy. In
-   --  that case, Is_Visible's value is irrelevant.
-
-   procedure Propagate_Width
-     (Item  : in out Generic_Type;
-      Width : Glib.Gint);
-   --  Set a specific width for the item.
-   --  This width is propagated, with appropriate modifications, to the
-   --  children of Item.
-
-   function Get_Component_Name
-     (Item : access Generic_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      Comp : Generic_Type_Access) return String is abstract;
-   --  Return a string that describes the field Comp of Item.
-   --  Name is the name of the item itself as it will appear in the resulting
-   --  string.
-   --  For instance, clicking on a record field of an an array might return
-   --  something like (for the Ada language):  "Name (3, 2).Field"
-   --  The resulting string can be used as is by a debugger that understands
-   --  Lang.
-   --  Comp must be a direct child of Item, ie returned by the
-   --  Generic_Iterator for Item.
-
-   function Get_Component_Name
-     (Item : access Generic_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      X, Y : Glib.Gint) return String is abstract;
-   --  Same as above but gets the component from its coordinates in the box.
-   --  (X, Y) must be relative to the upper-left corner of item.
-   --
-   --  Note also that only visible fields are returned, and that the selected
-   --  field is not necessarily the innermost one (if you click for instance
-   --  in a record box, outside of any field, then the record itself is
-   --  returned).
-
-   function Get_Component
-     (Item : access Generic_Type;
-      X, Y : Glib.Gint) return Generic_Type_Access is abstract;
-   --  As above, but return the component itself.
-
-   procedure Set_Selected
-     (Item     : access Generic_Type;
-      Selected : Boolean := True);
-   --  Set the selected status of item.
-   --  If Selected if False, then all the children are also unselected.
-   --  The item is not redrawn.
-
-   function Get_Selected (Item : access Generic_Type) return Boolean;
-   --  Return the selected status of Item.
 
    procedure Set_Valid
      (Item  : access Generic_Type;
@@ -343,29 +243,10 @@ package Items is
 
 private
 
---     procedure Display_Pixmap
---       (On_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
---        GC        : Gdk.GC.Gdk_GC;
---        Pixmap    : Gdk.Pixmap.Gdk_Pixmap;
---        Mask      : Gdk.Bitmap.Gdk_Bitmap;
---        X, Y      : Glib.Gint);
-   --  Display a masked pixmap at specific coordinates.
-
    type Generic_Type is abstract tagged record
-      Width, Height : Glib.Gint := 0;
-      --  These two fields are allocated by calls to Size_Request
-
-      X, Y : Glib.Gint := Glib.Gint'Last;
-      --  The coordinates in the top-level entity window where a component
-      --  was displayed. This is used when we need to redraw a single component
-      --  for instance when it was selected.
-
       Visible : Boolean := True;
       --  Whether the item's contents is shown or hidden. Note that some
       --  types (Simple_Type'Class) can not be hidden.
-
-      Selected : Boolean := False;
-      --  Whether the item is selected.
 
       Valid    : Boolean := False;
       --  Whether the value stored is valid, ie there was no error from the

@@ -19,6 +19,7 @@ with Cairo;                    use Cairo;
 with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Types;                use Gdk.Types;
 with Glib.Object;              use Glib, Glib.Object;
+with Gtk.Enums;                use Gtk.Enums;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
@@ -47,15 +48,21 @@ package body Browsers is
      (Self    : not null access GObject_Record'Class;
       Details : Event_Details_Access) return Boolean
    is
+      It : Abstract_Item;
    begin
       if Details.Event_Type = Button_Release
         and then Details.Button = 1
-        and then Details.Item /= null
-        and then Details.Item.all in Clickable_Item'Class
       then
-         Clickable_Item'Class (Details.Item.all).On_Click
-           (GPS_Canvas_View (Self));
-         return True;
+         --  propagate event up, if needed
+
+         It := Details.Item;
+         while It /= null loop
+            if It.all in Clickable_Item'Class then
+               Clickable_Item'Class (It.all).On_Click (GPS_Canvas_View (Self));
+               return True;
+            end if;
+            It := It.Parent;
+         end loop;
       end if;
       return False;
    end On_Click;
@@ -159,7 +166,7 @@ package body Browsers is
       Self.Initialize_Text
         (Gtk_New (Stroke => Null_RGBA,
                   Font => (Name => From_String ("sans 12"), others => <>)),
-         "x");
+         "X");
    end Gtk_New;
 
    --------------

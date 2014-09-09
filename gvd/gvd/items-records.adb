@@ -16,13 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.IO;         use GNAT.IO;
-
-with Cairo;           use Cairo;
 with Glib;            use Glib;
-with Pango.Layout;    use Pango.Layout;
-
-with Gtkada.Style;    use Gtkada.Style;
-
 with Language;        use Language;
 
 package body Items.Records is
@@ -382,442 +376,80 @@ package body Items.Records is
       end loop;
    end Clone_Dispatching;
 
-   -----------
-   -- Paint --
-   -----------
+   -------------------
+   -- Build_Display --
+   -------------------
 
-   overriding procedure Paint
-     (Item    : in out Record_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Gint := 0)
+   overriding function Build_Display
+     (Self   : not null access Record_Type;
+      Name   : String;
+      View   : not null access Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : Display_Mode) return Component_Item
    is
-      procedure Print_Field_Name (F : Integer);
-      --  Print the name of the field F and an arrow
-
-      Current_Y : Gint := Y + Item.Border_Spacing;
-      --  Arrow_Pos : constant Gint :=
-      --    X + Left_Border + Item.Border_Spacing + Item.Gui_Fields_Width -
-      --    GVD_Text_Width (Context.Font, String'(" => "));
-
-      ----------------------
-      -- Print_Field_Name --
-      ----------------------
-
-      procedure Print_Field_Name (F : Integer) is
-         use Gdk;
-      begin
-         Set_Text (Context.Text_Layout,
-                   Item.Fields (F).Name.all & ASCII.HT & " => ");
-         Draw_Layout
-           (Cr, Context.Foreground,
-            X        => X + Left_Border + Item.Border_Spacing,
-            Y        => Current_Y,
-            Layout   => Context.Text_Layout);
-      end Print_Field_Name;
-
-      W, H : Gint;
+      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
+      Rect   : constant Component_Item :=
+        New_Component_Item (Styles, Self, Name);
+      R : Rect_Item;
    begin
-      Item.X := X;
-      Item.Y := Y;
-
-      if not Item.Valid then
-         Draw_Pixbuf (Cr, Context.Unknown_Pixmap, X + Left_Border, Y);
-         return;
-      end if;
+      if not Self.Valid then
+         Rect.Add_Child
+           (Gtk_New_Image (Styles.Item, View.Unknown_Pixmap));
 
       --  A null record ?
+      elsif Self.Num_Fields = 0 then
+         null;
 
-      if Item.Num_Fields = 0 then
-         return;
-      end if;
+      elsif not Self.Visible then
+         Rect.Add_Child (Gtk_New_Image (Styles.Item, View.Hidden_Pixmap));
 
-      if not Item.Visible then
-         Draw_Pixbuf (Cr, Context.Hidden_Pixmap, X + Left_Border, Current_Y);
-         return;
-      end if;
-
-      if Item.Selected then
-         Draw_Rectangle
-           (Cr, Context.Selection_Color,
-            Filled => True,
-            X      => X,
-            Y      => Y,
-            Width  => Item.Width,
-            Height => Item.Height);
-      end if;
-
-      if Show_Type (Mode)
-        and then Item.Type_Name /= null
-      then
-         Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
-         Draw_Layout
-           (Cr, Context.Foreground,
-            X        => X + Left_Border + Item.Border_Spacing,
-            Y        => Current_Y,
-            Layout   => Context.Type_Layout);
-         Get_Pixel_Size (Context.Type_Layout, W, H);
-         Current_Y := Current_Y + H;
-      end if;
-
-      for F in Item.Fields'Range loop
-         --  not a variant part ?
-
-         if Item.Fields (F).Value /= null then
-            Paint
-              (Item.Fields (F).Value.all, Context, Cr, Lang, Mode,
-               X + Left_Border + Item.Border_Spacing
-               + Item.Gui_Fields_Width,
-               Current_Y);
-            Print_Field_Name (F);
-            Current_Y :=
-              Current_Y + Item.Fields (F).Value.Height + Line_Spacing;
-         end if;
-
-         --  a variant part ?
-
-         if Item.Fields (F).Variant_Part /= null then
-            for V in Item.Fields (F).Variant_Part'Range loop
-               if Item.Fields (F).Variant_Part (V).Valid then
-                  Paint
-                    (Item.Fields (F).Variant_Part (V).all, Context, Cr,
-                     Lang, Mode, X + Left_Border + Item.Border_Spacing
-                     + Item.Gui_Fields_Width,
-                     Current_Y);
-                  if Item.Fields (F).Variant_Part (V).Num_Fields > 0 then
-                     Print_Field_Name (F);
-                  end if;
-                  Current_Y := Current_Y +
-                    Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
-               end if;
-            end loop;
-         end if;
-      end loop;
-
-      --  Draw a border
-      if Item.Border_Spacing /= 0 then
-         Draw_Rectangle
-           (Cr, Context.Foreground,
-            Filled => False,
-            X      => X,
-            Y      => Y,
-            Width  => Item.Width - 1,
-            Height => Item.Height - 1);
-      end if;
-   end Paint;
-
-   ------------------
-   -- Size_Request --
-   ------------------
-
-   overriding procedure Size_Request
-     (Item           : in out Record_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False)
-   is
-      Total_Height, Total_Width : Gint := 0;
-      H : Gint;
-      Largest_Name : GNAT.Strings.String_Access := null;
-
-   begin
-      if not Item.Valid then
-         Item.Width := Get_Width (Context.Unknown_Pixmap);
-         Item.Height := Get_Height (Context.Unknown_Pixmap);
-         return;
-      end if;
-
-      --  null record ?
-
-      if Item.Fields'Length = 0 then
-         Item.Gui_Fields_Width := 0;
-         Item.Width := 0;
-         Item.Height := 0;
-         return;
-      end if;
-
-      if Show_Type (Mode)
-        and then Item.Type_Name /= null
-      then
-         Set_Text (Context.Type_Layout, Get_Type_Name (Item'Access, Lang));
-         Get_Pixel_Size (Context.Type_Layout, Total_Width, Total_Height);
-         Item.Type_Height := Total_Height;
       else
-         Item.Type_Height := 0;
-      end if;
+         if Show_Type (Mode)
+           and then Self.Type_Name /= null
+         then
+            Rect.Add_Child
+              (Gtk_New_Text (Styles.Text_Font, Self.Get_Type_Name (Lang)));
+         end if;
 
-      if Item.Visible then
-         for F in Item.Fields'Range loop
-            if Largest_Name = null
-              or else Item.Fields (F).Name.all'Length > Largest_Name'Length
-            then
-               Largest_Name := Item.Fields (F).Name;
-            end if;
-
+         for F in Self.Fields'Range loop
             --  not a variant part ?
 
-            if Item.Fields (F).Value /= null then
-               Size_Request
-                 (Item.Fields (F).Value.all, Context, Lang, Mode,
-                  Hide_Big_Items);
-
-               Total_Width  :=
-                 Gint'Max (Total_Width, Item.Fields (F).Value.Width);
-
-               --  Keep at least enough space to print the field name
-
-               Item.Fields (F).Value.Height := Gint'Max
-                 (Item.Fields (F).Value.Height, Context.Line_Height);
-               Total_Height := Total_Height + Item.Fields (F).Value.Height;
+            if Self.Fields (F).Value /= null then
+               R := Gtk_New_Rect (Styles.Invisible);
+               R.Set_Child_Layout (Horizontal_Stack);
+               Rect.Add_Child (R);
+               R.Add_Child
+                 (Gtk_New_Text
+                    (Styles.Text_Font, Self.Fields (F).Name.all & " => "));
+               R.Add_Child
+                 (Self.Fields (F).Value.Build_Display
+                    (Record_Field_Name (Lang, Name, Self.Fields (F).Name.all),
+                     View, Lang, Mode));
             end if;
 
             --  a variant part ?
 
-            if Item.Fields (F).Variant_Part /= null then
-               for V in Item.Fields (F).Variant_Part'Range loop
-                  if Item.Fields (F).Variant_Part (V).Valid then
-                     Size_Request
-                       (Item.Fields (F).Variant_Part (V).all, Context, Lang,
-                        Mode, Hide_Big_Items);
-                     Total_Width  := Gint'Max
-                       (Total_Width,
-                        Item.Fields (F).Variant_Part (V).Width);
-                     Total_Height := Total_Height +
-                       Item.Fields (F).Variant_Part (V).Height;
+            if Self.Fields (F).Variant_Part /= null then
+               for V in Self.Fields (F).Variant_Part'Range loop
+                  if Self.Fields (F).Variant_Part (V).Valid then
+                     R := Gtk_New_Rect (Styles.Invisible);
+                     R.Set_Child_Layout (Horizontal_Stack);
+                     Rect.Add_Child (R);
+                     R.Add_Child
+                       (Gtk_New_Text
+                          (Styles.Text_Font,
+                           Self.Fields (F).Name.all & " => "));
+                     R.Add_Child
+                       (Self.Fields (F).Variant_Part (V).Build_Display
+                        (Name, View, Lang, Mode));
                   end if;
                end loop;
             end if;
          end loop;
-
-         Total_Height := Total_Height +
-           (Item.Fields'Length - 1) * Line_Spacing;
-
-         if Largest_Name = null then
-            Set_Text (Context.Text_Layout, " => ");
-         else
-            Set_Text
-              (Context.Text_Layout, Largest_Name.all & ASCII.HT & " => ");
-         end if;
-
-         Get_Pixel_Size (Context.Text_Layout, Item.Gui_Fields_Width, H);
-
-         --  Keep enough space for the border (Border_Spacing on each side)
-         Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border
-           + 2 * Item.Border_Spacing;
-         Item.Height := Total_Height + 2 * Item.Border_Spacing;
-
-         if Hide_Big_Items
-           and then Item.Height > Context.Big_Item_Height
-         then
-            Item.Visible := False;
-         end if;
       end if;
 
-      if not Item.Visible then
-         Item.Gui_Fields_Width := 0;
-         Item.Width := Left_Border + 2 * Item.Border_Spacing +
-           Get_Width (Context.Hidden_Pixmap);
-         Item.Height := 2 * Item.Border_Spacing +
-           Get_Height (Context.Hidden_Pixmap);
-      end if;
-   end Size_Request;
-
-   ---------------------
-   -- Propagate_Width --
-   ---------------------
-
-   procedure Propagate_Width
-     (Item  : access Record_Type;
-      Width : Glib.Gint)
-   is
-      W : constant Gint := Width - Item.Gui_Fields_Width - Left_Border
-        - 2 * Item.Border_Spacing;
-      Iter : Generic_Iterator'Class := Start (Item);
-      It   : Generic_Type_Access;
-   begin
-      Item.Width := Width;
-
-      if Item.Visible then
-         while not At_End (Iter) loop
-            It := Data (Iter);
-
-            if It /= null then
-               Propagate_Width (It.all, W);
-            end if;
-
-            Next (Iter);
-         end loop;
-      end if;
-   end Propagate_Width;
-
-   ------------------------
-   -- Get_Component_Name --
-   ------------------------
-
-   overriding function Get_Component_Name
-     (Item : access Record_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      Comp : Generic_Type_Access) return String
-   is
-   begin
-      for F in Item.Fields'Range loop
-         if Item.Fields (F).Value = Comp then
-            return Record_Field_Name (Lang, Name, Item.Fields (F).Name.all);
-
-         elsif Item.Fields (F).Variant_Part /= null then
-            for V in Item.Fields (F).Variant_Part'Range loop
-               if Generic_Type_Access (Item.Fields (F).Variant_Part (V)) =
-                 Comp
-               then
-                  return Get_Component_Name
-                    (Item.Fields (F).Variant_Part (V),
-                     Lang,
-                     Name,
-                     Comp);
-               end if;
-            end loop;
-         end if;
-      end loop;
-      return Name;
-   end Get_Component_Name;
-
-   ------------------------
-   -- Get_Component_Name --
-   ------------------------
-
-   overriding function Get_Component_Name
-     (Item : access Record_Type;
-      Lang : access Language_Root'Class;
-      Name : String;
-      X, Y : Glib.Gint) return String
-   is
-      Total_Height : Gint := Item.Border_Spacing + Item.Type_Height;
-      Tmp_Height   : Gint;
-      Field_Name_Start : constant Gint := Left_Border + Item.Border_Spacing;
-      Field_Start  : constant Gint := Field_Name_Start + Item.Gui_Fields_Width;
-   begin
-      if not Item.Visible then
-         return Name;
-      end if;
-
-      --  Click in the left column ? => Select the whole item
-
-      if X < Field_Name_Start then
-         return Name;
-      end if;
-
-      --  Did we click the type of the item
-
-      if Y < Item.Type_Height then
-         return Name;
-      end if;
-
-      --  Else, find the relevant item
-
-      for F in Item.Fields'Range loop
-         if Item.Fields (F).Value /= null then
-            Tmp_Height := Total_Height + Item.Fields (F).Value.Height +
-              Line_Spacing;
-
-            if Y <= Tmp_Height then
-               declare
-                  Field_Name : constant String :=
-                    Record_Field_Name (Lang, Name, Item.Fields (F).Name.all);
-               begin
-                  if X < Field_Start then
-                     return Field_Name;
-                  end if;
-
-                  return Get_Component_Name
-                    (Item.Fields (F).Value, Lang, Field_Name,
-                     X - Field_Start, Y - Total_Height);
-               end;
-            end if;
-
-            Total_Height := Tmp_Height;
-         end if;
-
-         if Item.Fields (F).Variant_Part /= null then
-            for V in Item.Fields (F).Variant_Part'Range loop
-               Tmp_Height := Total_Height +
-                 Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
-
-               if Y <= Tmp_Height then
-                  if X < Field_Start then
-                     return Name;
-                  end if;
-
-                  return Get_Component_Name
-                    (Item.Fields (F).Variant_Part (V), Lang, Name,
-                     X - Field_Start, Y - Total_Height);
-               end if;
-
-               Total_Height := Tmp_Height;
-            end loop;
-         end if;
-      end loop;
-
-      return Name;
-   end Get_Component_Name;
-
-   -------------------
-   -- Get_Component --
-   -------------------
-
-   overriding function Get_Component
-     (Item : access Record_Type; X, Y : Glib.Gint) return Generic_Type_Access
-   is
-      Total_Height : Gint := Item.Border_Spacing + Item.Type_Height;
-      Tmp_Height   : Gint;
-      Field_Name_Start : constant Gint := Left_Border + Item.Border_Spacing;
-      Field_Start  : constant Gint := Field_Name_Start + Item.Gui_Fields_Width;
-      Iter         : Generic_Iterator'Class := Start (Item);
-      It           : Generic_Type_Access;
-   begin
-      if not Item.Valid or else not Item.Visible then
-         return Generic_Type_Access (Item);
-      end if;
-
-      --  Click in the left column ? => Select the whole item
-
-      if X < Field_Name_Start then
-         return Generic_Type_Access (Item);
-      end if;
-
-      --  Did we click the type of the item
-
-      if Y < Item.Type_Height then
-         return Generic_Type_Access (Item);
-      end if;
-
-      --  Else, find the relevant item
-
-      while not At_End (Iter) loop
-         It := Data (Iter);
-
-         if It /= null then
-            Tmp_Height := Total_Height + It.Height + Line_Spacing;
-
-            if Y <= Tmp_Height then
-               if X < Field_Start then
-                  return It;
-               end if;
-
-               return Get_Component (It, X - Field_Start, Y - Total_Height);
-            end if;
-
-            Total_Height := Tmp_Height;
-         end if;
-
-         Next (Iter);
-      end loop;
-
-      return Generic_Type_Access (Item);
-   end Get_Component;
+      return Rect;
+   end Build_Display;
 
    -------------
    -- Replace --

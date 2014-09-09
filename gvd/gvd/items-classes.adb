@@ -15,15 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.IO;         use GNAT.IO;
-
-with Cairo;           use Cairo;
 with Glib;            use Glib;
-
-with Gtkada.Style;    use Gtkada.Style;
-
-with Language;        use Language;
+with GNAT.IO;         use GNAT.IO;
 with Items.Records;   use Items.Records;
+with Language;        use Language;
 
 package body Items.Classes is
 
@@ -170,252 +165,59 @@ package body Items.Classes is
       R.Child := Record_Type_Access (Items.Clone (Item.Child.all));
    end Clone_Dispatching;
 
-   -----------
-   -- Paint --
-   -----------
+   -------------------
+   -- Build_Display --
+   -------------------
 
-   overriding procedure Paint
-     (Item    : in out Class_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo.Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Glib.Gint := 0)
+   overriding function Build_Display
+     (Self   : not null access Class_Type;
+      Name   : String;
+      View   : not null access Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : Display_Mode) return Component_Item
    is
-      Current_Y : Gint := Y + Item.Border_Spacing;
+      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
+      Rect   : constant Component_Item :=
+        New_Component_Item (Styles, Self, Name);
+      R      : Rect_Item;
    begin
-      Item.X := X;
-      Item.Y := Y;
-
-      if not Item.Valid
-        or else (Item.Ancestors'Length = 0
-                 and then not Is_Valid (Item.Child))
+      if not Self.Valid
+        or else (Self.Ancestors'Length = 0
+                 and then not Is_Valid (Self.Child))
       then
-         Draw_Pixbuf
-           (Cr, Context.Unknown_Pixmap,
-            X + Left_Border, Y + Item.Border_Spacing);
-         return;
-      end if;
+         Rect.Add_Child
+           (Gtk_New_Image (Styles.Item, Image => View.Unknown_Pixmap));
 
-      if not Item.Visible then
-         Draw_Pixbuf (Cr, Context.Hidden_Pixmap, X + Left_Border, Current_Y);
-         return;
-      end if;
+      elsif not Self.Visible then
+         Rect.Add_Child
+           (Gtk_New_Image (Styles.Item, Image => View.Hidden_Pixmap));
 
-      if Item.Selected then
-         Draw_Rectangle
-           (Cr, Context.Selection_Color,
-            Filled => True,
-            X      => X,
-            Y      => Y,
-            Width  => Item.Width,
-            Height => Item.Height);
-      end if;
+      else
+         for A in Self.Ancestors'Range loop
 
-      for A in Item.Ancestors'Range loop
+            --  Draw the ancestor if it isn't a null record.
 
-         --  Draw the ancestor if it isn't a null record.
+            if Self.Ancestors (A) /= null then
+               R := Gtk_New_Rect (Styles.Invisible);
+               R.Set_Child_Layout (Horizontal_Stack);
+               Rect.Add_Child (R);
 
-         if Item.Ancestors (A) /= null
-           and then Item.Ancestors (A).Height > 0
-         then
-            --  Do not add Left_Border to X, since each of the ancestor is
-            --  itself a Class_Type and will already draw it.
-            Paint (Item.Ancestors (A).all, Context, Cr, Lang, Mode,
-                   X + Item.Border_Spacing, Current_Y);
-            Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing;
+               R.Add_Child
+                 (Self.Ancestors (A).Build_Display (Name, View, Lang, Mode));
 
-            if Item.Ancestors (A).Child /= null
-              and then Num_Fields (Item.Ancestors (A).Child.all) > 0
-            then
-               Save (Cr);
-               Set_Dash (Cr, (1 .. 2 => 2.0), 0.0);
-               Set_Line_Cap (Cr, Cairo_Line_Cap_Butt);
-               Set_Line_Join (Cr, Cairo_Line_Join_Miter);
-               Draw_Line (Cr, Context.Foreground,
-                          X + Item.Border_Spacing,
-                          Current_Y,
-                          X + Item.Width - Item.Border_Spacing,
-                          Current_Y);
-               Restore (Cr);
-               Current_Y := Current_Y + 2;
-            end if;
-
-         end if;
-      end loop;
-
-      if Get_Height (Item.Child.all) > 2 * Item.Border_Spacing then
-         Paint (Item.Child.all, Context, Cr, Lang, Mode, X + Left_Border
-                + Item.Border_Spacing, Current_Y);
-      end if;
-
-      --  Draw a border
-      if Item.Border_Spacing /= 0 then
-         Draw_Rectangle
-           (Cr, Context.Foreground,
-            Filled => False,
-            X      => X,
-            Y      => Y,
-            Width  => Item.Width - 1,
-            Height => Item.Height - 1);
-      end if;
-   end Paint;
-
-   ------------------
-   -- Size_Request --
-   ------------------
-
-   overriding procedure Size_Request
-     (Item           : in out Class_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False)
-   is
-      Total_Height, Total_Width : Gint := 0;
-   begin
-      if not Item.Valid then
-         Item.Width := Get_Width (Context.Unknown_Pixmap);
-         Item.Height := Get_Height (Context.Unknown_Pixmap);
-         return;
-      end if;
-
-      if Item.Visible then
-         for A in Item.Ancestors'Range loop
-            if Item.Ancestors (A) /= null then
-               Size_Request
-                 (Item.Ancestors (A).all, Context, Lang, Mode,
-                  Hide_Big_Items);
-
-               --  If we don't have an null record
-               if Item.Ancestors (A).Height /= 0 then
-                  Total_Height := Total_Height + Item.Ancestors (A).Height +
-                    Line_Spacing;
-
-                  --  Keep some space for the dashed line
-                  if Item.Ancestors (A).Child /= null
-                    and then Num_Fields (Item.Ancestors (A).Child.all) > 0
-                  then
-                     Total_Height := Total_Height + 2;
-                  end if;
-
+               if Self.Ancestors (A).Child /= null
+                 and then Num_Fields (Self.Ancestors (A).Child.all) > 0
+               then
+                  Rect.Add_Child (Gtk_New_Hr (Styles.Link2));
                end if;
-
-               Total_Width := Gint'Max (Total_Width, Item.Ancestors (A).Width);
             end if;
          end loop;
 
-         Size_Request (Item.Child.all, Context, Lang, Mode, Hide_Big_Items);
-
-         Total_Width :=
-           Gint'Max (Total_Width, Get_Width (Item.Child.all)) + Left_Border;
-         Propagate_Width (Item.Child.all, Total_Width);
-
-         --  Dont print an extra border around, since each ancestors and child
-         --  are records and already have their own borders.
-         Item.Width  := Total_Width + 2 * Item.Border_Spacing;
-         Item.Height := Total_Height + Get_Height (Item.Child.all)
-           + 2 * Item.Border_Spacing;
-
-         if Hide_Big_Items
-           and then Item.Height > Context.Big_Item_Height
-         then
-            Item.Visible := False;
-         end if;
+         R.Add_Child (Self.Child.Build_Display (Name, View, Lang, Mode));
       end if;
 
-      if not Item.Visible then
-         Item.Width := Left_Border + 2 * Item.Border_Spacing +
-           Get_Width (Context.Hidden_Pixmap);
-         Item.Height := 2 * Item.Border_Spacing +
-           Get_Height (Context.Hidden_Pixmap);
-      end if;
-   end Size_Request;
-
-   ------------------------
-   -- Get_Component_Name --
-   ------------------------
-
-   overriding function Get_Component_Name
-     (Item : access Class_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      Comp : Generic_Type_Access) return String
-   is
-      pragma Unreferenced (Item, Lang, Comp);
-   begin
-      --  Comp is either one of the ancestors or the child, but in any case
-      --  it doesn't have its own name.
-
-      return Name;
-   end Get_Component_Name;
-
-   ------------------------
-   -- Get_Component_Name --
-   ------------------------
-
-   overriding function Get_Component_Name
-     (Item : access Class_Type;
-      Lang : access Language_Root'Class;
-      Name : String;
-      X, Y : Glib.Gint) return String
-   is
-      Total_Height : Gint := 0;
-   begin
-      if not Item.Visible then
-         return Name;
-      end if;
-
-      --  Click in the left column ? => Select the whole item
-
-      if X <= Left_Border then
-         return Name;
-      end if;
-
-      for A in Item.Ancestors'Range loop
-         if Y <= Total_Height + Item.Ancestors (A).Height then
-            --  Do not substract Left_Border from X, since the ancestor is
-            --  a Class_Type and already has it.
-            return Get_Component_Name
-              (Item.Ancestors (A), Lang, Name, X, Y - Total_Height);
-         end if;
-
-         Total_Height := Total_Height + Item.Ancestors (A).Height;
-      end loop;
-
-      return Get_Component_Name
-        (Item.Child, Lang, Name, X - Left_Border, Y - Total_Height);
-   end Get_Component_Name;
-
-   -------------------
-   -- Get_Component --
-   -------------------
-
-   overriding function Get_Component
-     (Item : access Class_Type;
-      X, Y : Glib.Gint) return Generic_Type_Access
-   is
-      Total_Height : Gint := 0;
-   begin
-      if not Item.Valid or else not Item.Visible then
-         return Generic_Type_Access (Item);
-      end if;
-
-      --  Click in the left column ? => Select the whole item
-
-      if X < Left_Border then
-         return Generic_Type_Access (Item);
-      end if;
-
-      for A in Item.Ancestors'Range loop
-         if Y <= Total_Height + Item.Ancestors (A).Height then
-            return Get_Component (Item.Ancestors (A), X, Y - Total_Height);
-         end if;
-         Total_Height := Total_Height + Item.Ancestors (A).Height;
-      end loop;
-
-      return Get_Component (Item.Child, X - Left_Border, Y - Total_Height);
-   end Get_Component;
+      return Rect;
+   end Build_Display;
 
    -------------
    -- Replace --
@@ -442,26 +244,6 @@ package body Items.Classes is
 
       return null;
    end Replace;
-
-   ---------------------
-   -- Propagate_Width --
-   ---------------------
-
-   overriding procedure Propagate_Width
-     (Item  : in out Class_Type;
-      Width : Glib.Gint) is
-   begin
-      Item.Width := Width;
-
-      if Item.Visible then
-         for A in Item.Ancestors'Range loop
-            Propagate_Width
-              (Item.Ancestors (A).all, Width - 2 * Item.Border_Spacing);
-         end loop;
-         Propagate_Width
-           (Item.Child.all, Width - Left_Border - 2 * Item.Border_Spacing);
-      end if;
-   end Propagate_Width;
 
    -----------
    -- Start --

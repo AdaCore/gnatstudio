@@ -15,16 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.RGBA; use Gdk.RGBA;
-with Gdk.Pixbuf;
-
-with Gtkada.Canvas;
-
 with GPS.Kernel;
-with GVD.Process;
-
-with Display_Items;
-with Items;
+with GVD.Process;     use GVD.Process;
+with Items;           use Items;
 
 package GVD.Canvas is
 
@@ -59,55 +52,14 @@ package GVD.Canvas is
    --  The following types and subprograms are used when drawing items in the
    --  canvas.
 
-   type Box_Drawing_Context is record
-      Black_Color          : Gdk.RGBA.Gdk_RGBA := Black_RGBA;
-      Refresh_Button_Color : Gdk.RGBA.Gdk_RGBA := (0.5, 0.5, 0.5, 1.0);
-      Grey_Color           : Gdk.RGBA.Gdk_RGBA := (0.7, 0.7, 0.7, 1.0);
-      Thaw_Bg_Color        : Gdk.RGBA.Gdk_RGBA := White_RGBA;
-      Freeze_Bg_Color      : Gdk.RGBA.Gdk_RGBA := (0.9, 0.5, 0.5, 1.0);
-
-      Close_Pixmap        : Gdk.Pixbuf.Gdk_Pixbuf;
-      Locked_Pixmap       : Gdk.Pixbuf.Gdk_Pixbuf;
-      Auto_Display_Pixmap : Gdk.Pixbuf.Gdk_Pixbuf;
-   end record;
-   --  Structure that holds all the required information to draw the boxes
-   --  around each item in the canvas, including the title. Note that this
-   --  doesn't include the necessary information to draw the contents of the
-   --  item (see Items.Drawing_Context instead)
-
-   function Get_Item_Context
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class)
-      return Items.Drawing_Context;
-   --  Return the drawing context associated with the items on the canvas.
-
-   function Get_Box_Context
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class)
-      return Box_Drawing_Context;
-   --  Return the drawing context associated with the box around each
-   --  item on the canvas.
-
    function Get_Detect_Aliases
      (Process : access GVD.Process.Visual_Debugger_Record'Class)
       return Boolean;
    --  Return True if aliases detection has been activated.
 
    function Get_Canvas
-     (Process : access GVD.Process.Visual_Debugger_Record'Class)
-      return Gtkada.Canvas.Interactive_Canvas;
+     (Process : access Visual_Debugger_Record'Class)
+      return Debugger_Data_View;
    --  Return the canvas on which the drawing is done
-
-   procedure Select_Item
-     (Process   : access GVD.Process.Visual_Debugger_Record'Class;
-      Item      : access Display_Items.Display_Item_Record'Class;
-      Component : Items.Generic_Type_Access);
-   --  Select a specific Component in Item, after unselecting the current
-   --  selection.
-   --  If Component is null, no new selection is made, but the current one is
-   --  released.
-
-   procedure Unselect
-     (Process : access GVD.Process.Visual_Debugger_Record'Class;
-      Item    : access Display_Items.Display_Item_Record'Class);
-   --  Unselect Item if it is currently selected
 
 end GVD.Canvas;

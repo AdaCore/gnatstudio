@@ -16,55 +16,42 @@
 ------------------------------------------------------------------------------
 
 with Glib;              use Glib;
+with GNAT.Strings;      use GNAT.Strings;
 with Language;          use Language;
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
 
 package body Items is
 
-   use type GNAT.Strings.String_Access;
+   ------------------------
+   -- New_Component_Item --
+   ------------------------
 
-   Max_Item_Width : Positive;
-   --  Maximal width (in pixels) an item can have
-
-   Max_Item_Height : Positive;
-   --  Maximal height (in pixels) an item can have
-
-   ---------------
-   -- Get_Width --
-   ---------------
-
-   function Get_Width (Item : Generic_Type) return Glib.Gint is
+   function New_Component_Item
+     (Styles    : not null access Browser_Styles;
+      Component : not null access Generic_Type'Class;
+      Name      : String) return Component_Item
+   is
+      R : constant Component_Item := new Component_Item_Record;
    begin
-      return Item.Width;
-   end Get_Width;
+      R.Initialize_Component_Item (Styles, Component, Name);
+      return R;
+   end New_Component_Item;
 
-   ----------------
-   -- Get_Height --
-   ----------------
+   -------------------------------
+   -- Initialize_Component_Item --
+   -------------------------------
 
-   function Get_Height (Item : Generic_Type) return Glib.Gint is
+   procedure Initialize_Component_Item
+     (Self      : not null access Component_Item_Record'Class;
+      Styles    : not null access Browser_Styles;
+      Component : not null access Generic_Type'Class;
+      Name      : String) is
    begin
-      return Item.Height;
-   end Get_Height;
-
-   -----------
-   -- Get_X --
-   -----------
-
-   function Get_X (Item : Generic_Type) return Glib.Gint is
-   begin
-      return Item.X;
-   end Get_X;
-
-   -----------
-   -- Get_Y --
-   -----------
-
-   function Get_Y (Item : Generic_Type) return Glib.Gint is
-   begin
-      return Item.Y;
-   end Get_Y;
+      Self.Initialize_Rect (Styles.Invisible);
+      Self.Component := Generic_Type_Access (Component);
+      Self.Name      := To_Unbounded_String (Name);
+   end Initialize_Component_Item;
 
    ---------------
    -- Set_Valid --
@@ -114,88 +101,6 @@ package body Items is
    begin
       return Item.Visible;
    end Get_Visibility;
-
-   --------------------------
-   -- Component_Is_Visible --
-   --------------------------
-
-   procedure Component_Is_Visible
-     (Item       : access Generic_Type;
-      Component  : access Generic_Type'Class;
-      Is_Visible : out Boolean;
-      Found      : out Boolean)
-   is
-      Iter : Generic_Iterator'Class := Start (Generic_Type_Access (Item));
-      F    : Boolean;
-   begin
-      if Generic_Type_Access (Component) = Generic_Type_Access (Item) then
-         Is_Visible := Item.Visible;
-         Found := True;
-         return;
-      end if;
-
-      while not At_End (Iter) loop
-         Component_Is_Visible
-           (Data (Iter), Component, Is_Visible, F);
-         if F then
-            Is_Visible := Is_Visible and then Item.Visible;
-            Found := True;
-            return;
-         end if;
-         Next (Iter);
-      end loop;
-
-      Found := False;
-   end Component_Is_Visible;
-
---     --------------------
---     -- Display_Pixmap --
---     --------------------
---
---     procedure Display_Pixmap
---       (On_Pixmap : Gdk_Pixmap;
---        GC        : Gdk_GC;
---        Pixmap    : Gdk_Pixmap;
---        Mask      : Gdk_Bitmap;
---        X, Y      : Gint) is
---     begin
---        Set_Clip_Mask (GC, Mask);
---        Set_Clip_Origin (GC, X, Y);
---        Draw_Pixmap (On_Pixmap, GC, Pixmap, 0, 0, X, Y);
---        Set_Clip_Mask (GC, Null_Pixmap);
---        Set_Clip_Origin (GC, 0, 0);
---     end Display_Pixmap;
-
-   ---------------------
-   -- Propagate_Width --
-   ---------------------
-
-   procedure Propagate_Width
-     (Item  : in out Generic_Type;
-      Width : Glib.Gint) is
-   begin
-      Item.Width := Width;
-   end Propagate_Width;
-
-   ------------------
-   -- Set_Selected --
-   ------------------
-
-   procedure Set_Selected
-     (Item     : access Generic_Type;
-      Selected : Boolean := True) is
-   begin
-      Item.Selected := Selected;
-   end Set_Selected;
-
-   ------------------
-   -- Get_Selected --
-   ------------------
-
-   function Get_Selected (Item : access Generic_Type) return Boolean is
-   begin
-      return Item.Selected;
-   end Get_Selected;
 
    -------------------
    -- Set_Type_Name --
@@ -374,38 +279,5 @@ package body Items is
          Next (Iter);
       end loop;
    end Reset_Recursive;
-
-   ---------------------
-   -- Constraint_Size --
-   ---------------------
-
-   procedure Constraint_Size (Item : in out Generic_Type) is
-   begin
-      if Item.Width > Gint (Max_Item_Width) then
-         Item.Width := Gint (Max_Item_Width);
-      end if;
-
-      if Item.Height > Gint (Max_Item_Height) then
-         Item.Height := Gint (Max_Item_Height);
-      end if;
-   end Constraint_Size;
-
-   --------------------
-   -- Set_Max_Height --
-   --------------------
-
-   procedure Set_Max_Height (Height : Positive) is
-   begin
-      Max_Item_Height := Height;
-   end Set_Max_Height;
-
-   -------------------
-   -- Set_Max_Width --
-   -------------------
-
-   procedure Set_Max_Width  (Width : Positive) is
-   begin
-      Max_Item_Width := Width;
-   end Set_Max_Width;
 
 end Items;

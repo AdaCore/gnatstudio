@@ -194,7 +194,7 @@ package Browsers.Canvas is
 
    procedure Set_Context
      (Item    : not null access GPS_Item_Record;
-      Context : in out GPS.Kernel.Selection_Context) is abstract;
+      Context : in out GPS.Kernel.Selection_Context) is null;
    --  Set the GPS context from a selected item.
 
    overriding procedure Draw
@@ -331,16 +331,24 @@ package Browsers.Canvas is
    --  Return the last number of the button set by this item. This function is
    --  used to make sure that no two items set the same button.
 
+   type Button_Array
+     is array (Natural range <>)
+     of access Gtkada.Canvas_View.Container_Item_Record'Class;
+   No_Buttons : constant Button_Array := (1 .. 0 => null);
+
    procedure Setup_Titlebar
      (Item    : not null access GPS_Item_Record'Class;
       Browser : not null access General_Browser_Record'Class;
       Name    : String;
       Left    : access Left_Arrow_Record'Class := null;
-      Right   : access Right_Arrow_Record'Class := null);
+      Right   : access Right_Arrow_Record'Class := null;
+      Buttons : Button_Array := No_Buttons);
    --  Add the title bar items (title, arrows, close button,...)
    --  The two arrows should have been created and passed as argument, so that
    --  the proper callback is set on them. There Initialize primitive operation
    --  is automatically called.
+   --  Extra buttons can be added through the Buttons parameter. They must all
+   --  have been initialized already, but not put in the model.
 
    procedure Show_Left_Arrow (Self : not null access GPS_Item_Record);
    procedure Show_Right_Arrow (Self : not null access GPS_Item_Record);

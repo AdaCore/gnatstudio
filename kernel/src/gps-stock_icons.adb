@@ -30,12 +30,6 @@ with GPS.Kernel.MDI;    use GPS.Kernel, GPS.Kernel.MDI;
 package body GPS.Stock_Icons is
    Me : constant Trace_Handle := Create ("STOCK");
 
-   procedure To_Absolute_Path
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Filename : in out GNATCOLL.VFS.Virtual_File);
-   --  Return the proper location for the icon.
-   --  Sets Filename to No_File if the file is not found.
-
    --------------------------
    -- Register_Stock_Icons --
    --------------------------
@@ -84,11 +78,11 @@ package body GPS.Stock_Icons is
         (Kernel, GPS_Stock_Config_Menu, "", Create (+"svg/menu.svg"));
    end Register_Stock_Icons;
 
-   ----------------------
-   -- To_Absolute_Path --
-   ----------------------
+   ---------------------------
+   -- Icon_To_Absolute_Path --
+   ---------------------------
 
-   procedure To_Absolute_Path
+   procedure Icon_To_Absolute_Path
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Filename : in out GNATCOLL.VFS.Virtual_File)
    is
@@ -122,7 +116,7 @@ package body GPS.Stock_Icons is
          Trace (Me, "File not found " & Filename.Display_Full_Name);
          Filename := No_File;
       end if;
-   end To_Absolute_Path;
+   end Icon_To_Absolute_Path;
 
    --------------
    -- Set_Icon --
@@ -140,7 +134,7 @@ package body GPS.Stock_Icons is
       Pic_File : GNATCOLL.VFS.Virtual_File := File;
       Stock    : Gtk_Stock_Item;
    begin
-      To_Absolute_Path (Kernel, Pic_File);
+      Icon_To_Absolute_Path (Kernel, Pic_File);
 
       if Pic_File /= No_File then
          Gtk_New (Set);
@@ -176,7 +170,7 @@ package body GPS.Stock_Icons is
       Source   : Gtk_Icon_Source;
       Pic_File : GNATCOLL.VFS.Virtual_File := File;
    begin
-      To_Absolute_Path (Kernel, Pic_File);
+      Icon_To_Absolute_Path (Kernel, Pic_File);
 
       if Pic_File /= No_File then
          Gtk_New (Source);

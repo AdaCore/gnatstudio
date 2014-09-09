@@ -108,10 +108,6 @@ package Items.Arrays is
    --  minimal size.
    --  This is never mandatory, but saves some memory in some cases.
 
-   overriding procedure Propagate_Width
-     (Item  : in out Array_Type;
-      Width : Glib.Gint);
-
 private
 
    --  The structure for arrays is slightly complex, since we need to be able
@@ -155,6 +151,12 @@ private
    --    - Values'Last = Last_Value, so that one can use 'Range for easier
    --      access
 
+   overriding function Build_Display
+     (Self : not null access Array_Type;
+      Name : String;
+      View : not null access Debugger_Data_View_Record'Class;
+      Lang : Language.Language_Access;
+      Mode : Display_Mode) return Component_Item;
    overriding procedure Print (Value : Array_Type; Indent : Natural := 0);
    overriding procedure Free
      (Item : access Array_Type;
@@ -162,32 +164,6 @@ private
    overriding procedure Clone_Dispatching
      (Item  : Array_Type;
       Clone : in out Generic_Type_Access);
-   overriding procedure Paint
-     (Item    : in out Array_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo.Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Glib.Gint := 0);
-   overriding procedure Size_Request
-     (Item           : in out Array_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False);
-   overriding function Get_Component_Name
-     (Item : access Array_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      X, Y : Glib.Gint) return String;
-   overriding function Get_Component_Name
-     (Item : access Array_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      Comp : Generic_Type_Access) return String;
-   overriding function Get_Component
-     (Item : access Array_Type;
-      X, Y : Glib.Gint) return Generic_Type_Access;
    overriding function Replace
      (Parent       : access Array_Type;
       Current      : access Generic_Type'Class;

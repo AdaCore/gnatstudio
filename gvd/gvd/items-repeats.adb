@@ -17,10 +17,6 @@
 
 with GNAT.IO;         use GNAT.IO;
 with Glib;            use Glib;
-with Cairo;           use Cairo;
-with Pango.Layout;    use Pango.Layout;
-with Gtkada.Style;    use Gtkada.Style;
-
 with Language;        use Language;
 
 package body Items.Repeats is
@@ -127,140 +123,27 @@ package body Items.Repeats is
       Repeat_Type_Access (Clone).Value := Items.Clone (Item.Value.all);
    end Clone_Dispatching;
 
-   -----------
-   -- Paint --
-   -----------
-
-   overriding procedure Paint
-     (Item    : in out Repeat_Type;
-      Context : Drawing_Context;
-      Cr      : Cairo_Context;
-      Lang    : Language.Language_Access;
-      Mode    : Display_Mode;
-      X, Y    : Gint := 0)
-   is
-      Str : constant String :=
-        "<repeat" & Integer'Image (Item.Repeat_Num) & "> ";
-
-      use Gdk;
-
-   begin
-      Item.X := X;
-      Item.Y := Y;
-
-      if not Item.Valid then
-         Draw_Pixbuf (Cr, Context.Unknown_Pixmap, X + Border_Spacing, Y);
-         return;
-      end if;
-
-      if Item.Selected then
-         Draw_Rectangle
-           (Cr, Context.Selection_Color,
-            Filled => True,
-            X      => X,
-            Y      => Y,
-            Width  => Item.Width,
-            Height => Item.Height);
-      end if;
-
-      Set_Text (Context.Text_Layout, Str);
-      Draw_Layout
-        (Cr, Context.Foreground,
-         X        => X + Border_Spacing,
-         Y        => Y + Border_Spacing,
-         Layout   => Context.Text_Layout);
-
-      Paint (Item.Value.all, Context, Cr, Lang, Mode,
-             X + Item.Repeat_Str_Width, Y + Border_Spacing);
-
-      --  Draw a border
-      Draw_Rectangle
-        (Cr, Context.Foreground,
-         Filled => False,
-         X      => X,
-         Y      => Y,
-         Width  => Item.Width - 1,
-         Height => Item.Height - 1);
-   end Paint;
-
-   ------------------
-   -- Size_Request --
-   ------------------
-
-   overriding procedure Size_Request
-     (Item           : in out Repeat_Type;
-      Context        : Drawing_Context;
-      Lang           : Language.Language_Access;
-      Mode           : Display_Mode;
-      Hide_Big_Items : Boolean := False)
-   is
-      Str : constant String :=
-        "<repeat" & Integer'Image (Item.Repeat_Num) & "> ";
-   begin
-      if not Item.Valid then
-         Item.Width := Get_Width (Context.Unknown_Pixmap);
-         Item.Height := Get_Height (Context.Unknown_Pixmap);
-      else
-         Size_Request (Item.Value.all, Context, Lang, Mode, Hide_Big_Items);
-         Set_Text (Context.Text_Layout, Str);
-         Get_Pixel_Size
-           (Context.Text_Layout, Item.Repeat_Str_Width, Item.Height);
-         Item.Width :=
-           Item.Value.Width + Item.Repeat_Str_Width + 2 * Border_Spacing;
-         Item.Height := Gint'Max (Item.Value.Height, Item.Height)
-           + 2 * Border_Spacing;
-      end if;
-   end Size_Request;
-
-   ------------------------
-   -- Get_Component_Name --
-   ------------------------
-
-   overriding function Get_Component_Name
-     (Item : access Repeat_Type;
-      Lang : access Language.Language_Root'Class;
-      Name : String;
-      Comp : Generic_Type_Access) return String
-   is
-   begin
-      --  Comp is necessarily Item.Item.Value
-
-      return Get_Component_Name (Item.Value, Lang, Name, Comp);
-   end Get_Component_Name;
-
-   ------------------------
-   -- Get_Component_Name --
-   ------------------------
-
-   overriding function Get_Component_Name
-     (Item : access Repeat_Type;
-      Lang : access Language_Root'Class;
-      Name : String;
-      X, Y : Glib.Gint) return String is
-   begin
-      if X < Item.Repeat_Str_Width then
-         return Name;
-      end if;
-
-      return Get_Component_Name
-        (Item.Value, Lang, Name, X - Item.Repeat_Str_Width, Y);
-   end Get_Component_Name;
-
    -------------------
-   -- Get_Component --
+   -- Build_Display --
    -------------------
 
-   overriding function Get_Component
-     (Item : access Repeat_Type;
-      X, Y : Glib.Gint) return Generic_Type_Access is
+   overriding function Build_Display
+     (Self : not null access Repeat_Type;
+      Name : String;
+      View : not null access Debugger_Data_View_Record'Class;
+      Lang : Language.Language_Access;
+      Mode : Display_Mode) return Component_Item
+   is
+      Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
+      Str : constant String :=
+        "<repeat" & Integer'Image (Self.Repeat_Num) & "> ";
+      Rect : constant Component_Item :=
+        New_Component_Item (Styles, Self, Name);
    begin
-      if X < Item.Repeat_Str_Width then
-         return Generic_Type_Access (Item);
-      end if;
-
-      return Get_Component
-        (Item.Value, X - Item.Repeat_Str_Width, Y);
-   end Get_Component;
+      Rect.Add_Child (Gtk_New_Text (Styles.Text_Font, Str));
+      Rect.Add_Child (Self.Value.Build_Display (Name, View, Lang, Mode));
+      return Rect;
+   end Build_Display;
 
    -------------
    -- Replace --

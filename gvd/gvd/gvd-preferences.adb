@@ -153,14 +153,6 @@ package body GVD.Preferences is
          Doc      => -("Assembly line on which a breakpoint is set"),
          Default  => "#FF0000");
 
-      Xref_Color := Create
-        (Manager  => Prefs,
-         Name     => XML_Prefix & "Xref-Color",
-         Page     => General,
-         Label    => -"Clickable item",
-         Doc      => -"Color used for the data items that are clickable",
-         Default  => "#0000FF");
-
       Change_Color := Create
         (Manager  => Prefs,
          Name     => XML_Prefix & "Change-Color",
@@ -187,25 +179,6 @@ package body GVD.Preferences is
            -("Background color for the items that are never recomputed"),
          Page     => "",
          Default  => "#AAAAAA");
-
-      Hide_Big_Items := Create
-        (Manager  => Prefs,
-         Name     => XML_Prefix & "Hide-Big-Items",
-         Label    => -"Fold big items",
-         Doc      => -("True if items higher than a Big Item Height should"
-                       & " be folded initially"),
-         Page     => "",
-         Default  => True);
-
-      Big_Item_Height := Create
-        (Manager  => Prefs,
-         Name     => XML_Prefix & "Big-Item-Height",
-         Label    => -"Big item height",
-         Doc      => -"See Fold big items",
-         Page     => "",
-         Minimum  => 0,
-         Maximum  => 100000,
-         Default  => 150);
 
       Memory_View_Color := Create
         (Manager  => Prefs,

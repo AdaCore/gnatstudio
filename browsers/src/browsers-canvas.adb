@@ -1982,11 +1982,11 @@ package body Browsers.Canvas is
       Browser : not null access General_Browser_Record'Class;
       Name    : String;
       Left    : access Left_Arrow_Record'Class := null;
-      Right   : access Right_Arrow_Record'Class := null)
+      Right   : access Right_Arrow_Record'Class := null;
+      Buttons : Button_Array := No_Buttons)
    is
-      Text  : Text_Item;
-      Title : Rect_Item;
-      Close : Close_Button;
+      Text   : Text_Item;
+      Title  : Rect_Item;
       Styles : constant access Browser_Styles := Browser.Get_View.Get_Styles;
    begin
       Title := Gtk_New_Rect (Styles.Title);
@@ -2008,10 +2008,10 @@ package body Browsers.Canvas is
          Title.Add_Child (Right);
       end if;
 
-      if False then
-         Gtk_New (Close);
-         Title.Add_Child (Close);
-      end if;
+      for B in reverse Buttons'Range loop
+         Title.Add_Child
+           (Buttons (B), Align => Align_Center, Pack_End => True);
+      end loop;
    end Setup_Titlebar;
 
    ---------------------

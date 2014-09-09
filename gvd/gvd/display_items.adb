@@ -15,39 +15,33 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;              use Glib;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash_Case_Insensitive;
+with Glib;                     use Glib;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
+with Gtkada.Style;             use Gtkada.Style;
 
-with Cairo;             use Cairo;
-with Pango.Cairo;       use Pango.Cairo;
-with Pango.Layout;      use Pango.Layout;
+with Debugger;             use Debugger;
+with Language;             use Language;
+with Items.Simples;        use Items.Simples;
 
-with Gdk.Rectangle;     use Gdk.Rectangle;
-with Gdk.Event;         use Gdk.Event;
-
-with Gtk.Enums;         use Gtk.Enums;
-with Gtkada.Canvas;     use Gtkada.Canvas;
-with Gtkada.Style;      use Gtkada.Style;
-
-with Debugger;          use Debugger;
-with Language;          use Language;
-with Items;             use Items;
-with Items.Simples;     use Items.Simples;
-
-with Browsers.Canvas;     use Browsers.Canvas;
-with GPS.Intl;            use GPS.Intl;
-with GVD.Canvas;          use GVD.Canvas;
-with Default_Preferences; use Default_Preferences;
-with GVD.Preferences;     use GVD.Preferences;
-with GVD.Process;         use GVD.Process;
+with GNAT.Strings;         use GNAT.Strings;
+with GVD.Canvas;           use GVD.Canvas;
+with Default_Preferences;  use Default_Preferences;
+with GVD.Preferences;      use GVD.Preferences;
 with GVD.Types;
-with Ada.Exceptions;      use Ada.Exceptions;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with Ada.Exceptions;       use Ada.Exceptions;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
 
 package body Display_Items is
 
-   use type GNAT.Strings.String_Access;
-
    Me : constant Trace_Handle := Create ("Display_Items");
+
+   package String_To_Items is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Display_Item, Ada.Strings.Hash_Case_Insensitive, "=", "=");
+   use String_To_Items;
 
    ---------------------
    -- Local Constants --
@@ -64,23 +58,6 @@ package body Display_Items is
    --
    --  <->: Spacing
    --  Each of the two Buttons has a width and height of Buttons_Size.
-
-   Spacing : constant Gint := 2;
-   --  Space on each sides of the title
-
-   Buttons_Size : constant Gint := 16;
-   --  Size of the buttons in the title bar of the items
-
-   Border_Spacing : constant Gint := 2;
-   --  Space left on each side of the value
-
-   Num_Buttons : constant := 2;
-   --  Number of buttons in the title bar.
-   --  This is not user-configurable.
-
-   Attach_Links_To_Components : constant Boolean := False;
-   --  If True, then the links are attached to the middle of the actual
-   --  component that was dereferenced, not to the middle of the item.
 
    Typed_Aliases : constant Boolean := True;
    --  If True, then two items are aliases only if they have the same address
@@ -123,26 +100,6 @@ package body Display_Items is
    --  different object. This is needed, otherwise it is mostly impossible to
    --  properly display a String parameter correctly.
 
-   procedure Initialize
-     (Item    : access Display_Item_Record'Class;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Context : Drawing_Context);
-   --  Item.Entity must have been parsed already
-
-   procedure Dereference_Item
-     (Item            : access Display_Item_Record;
-      Deref_Component : Generic_Type_Access;
-      X               : Gint;
-      Y               : Gint);
-   --  Create a new item (or reference an existing one) that dereference
-   --  the field pointed to by (X, Y) in Item.
-   --  (X, Y) are relative to the top-left corner of item.
-   --  Deref_Component is the component on which the user has clicked and
-   --  that is being derefenced.
-
-   procedure Compute_Size (Item : access Display_Item_Record'Class);
-   --  Recompute the size needed by the item
-
    function Search_Item
      (Process : access Visual_Debugger_Record'Class;
       Id      : String;
@@ -150,36 +107,10 @@ package body Display_Items is
    --  Search for an item whose Id is Id in the canvas.
    --  If Name is not the empty string, the name must also match
 
-   procedure Create_Link
-     (Canvas     : access Interactive_Canvas_Record'Class;
-      From, To   : access Canvas_Item_Record'Class;
-      Name       : String;
-      Arrow      : Arrow_Type := End_Arrow;
-      Alias_Link : Boolean := False);
-   --  Add a new link between two items.
-   --  The link is not created if there is already a similar one.
-
-   function Recompute_Address
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean;
-   --  Recompute the address of the item, and make it an alias of other
-   --  items if required.
-
-   procedure Duplicate_Links
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class);
-   --  Create a temporary version of all the links to and from Item, and
-   --  insert the copies in the canvas. Any reference to Item is replaced
-   --  by a reference to Item.Is_Alias_Of (so that the temporary links
-   --  point to the alias)
-
-   procedure Compute_Link_Pos (Link : access GVD_Link_Record'Class);
-   --  Compute the attachment of the link in its source item.
-   --  The position is based on the Source_Component field of the link.
-
    procedure Change_Visibility
      (Item      : access Display_Item_Record'Class;
       Component : Generic_Type_Access);
+   pragma Unreferenced (Change_Visibility);
    --  Change the visibility status of a specific component in the item
 
    function Is_Alias_Of
@@ -190,22 +121,6 @@ package body Display_Items is
    --  Return True if Item is an alias of the entity with name Name and
    --  whose Id is Id.
    --  Deref_Name should be the dereferenced version of Name
-
-   function Recompute_Sizes
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean;
-   --  Recomput the sizes and positions for all the items that are aliases
-   --  of other items.
-
-   function Remove_Aliases
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean;
-   --  Remove all the aliases currently set up
-
-   function Remove_Temporary
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Link   : access Canvas_Link_Record'Class) return Boolean;
-   --  Remove all temporary links from the canvas
 
    procedure Parse_Type (Item : access Display_Item_Record'Class);
    --  Parse the type of the entity associated with Item. If the type is
@@ -269,20 +184,20 @@ package body Display_Items is
 
    procedure Gtk_New
      (Item           : out Display_Item;
-      Browser        : access Browsers.Canvas.General_Browser_Record'Class;
+      Browser        : not null access Debugger_Data_View_Record'Class;
       Graph_Cmd      : String;
       Variable_Name  : String;
       Num            : Integer;
       Debugger       : access Visual_Debugger_Record'Class;
       Auto_Refresh   : Boolean := True;
-      Default_Entity : Items.Generic_Type_Access := null;
-      Link_From      : Display_Item := null;
-      Link_Name      : String := "")
+      Is_Dereference : Boolean := False;
+      Default_Entity : Items.Generic_Type_Access := null)
    is
-      Context    : constant Drawing_Context := Get_Item_Context (Debugger);
+      Styles : constant access Browser_Styles := Browser.Get_View.Get_Styles;
       Alias_Item : Display_Item;
    begin
       Item                := new Display_Item_Record;
+      Item.Browser        := General_Browser (Browser);
       Item.Graph_Cmd      := new String'(Graph_Cmd);
       Item.Entity         := Default_Entity;
       Item.Is_A_Variable  := Default_Entity = null;
@@ -290,7 +205,7 @@ package body Display_Items is
       Item.Debugger       := Visual_Debugger (Debugger);
       Item.Name           := new String'(Variable_Name);
       Item.Auto_Refresh   := Auto_Refresh;
-      Item.Is_Dereference := False;
+      Item.Is_Dereference := Is_Dereference;
 
       --  We need the information on the type, so that we detect aliases only
       --  for structurally equivalent types. If we have an error at this level,
@@ -331,18 +246,11 @@ package body Display_Items is
                     or else
                       Structurally_Equivalent (Alias_Item.Entity, Item.Entity))
                then
-                  Select_Item (Debugger, Alias_Item, Alias_Item.Entity);
-                  Show_Item (Get_Canvas (Debugger), Alias_Item);
-
-                  if Link_From /= null then
-                     Create_Link
-                       (Get_Canvas (Debugger),
-                        Link_From, Alias_Item, Link_Name);
-                     Refresh_Data_Window (Debugger);
-                  end if;
-
-                  Free (Item, Remove_Aliases => False);
-                  Item := null;
+                  Browser.Get_View.Model.Add_To_Selection (Alias_Item);
+                  Browser.Get_View.Scroll_Into_View
+                    (Alias_Item, Duration => 0.3);
+                  Destroy (Item, In_Model => Browser.Get_View.Model);
+                  Item := Alias_Item;
                   return;
                end if;
             end if;
@@ -351,66 +259,53 @@ package body Display_Items is
          Parse_Value (Item);
       end if;
 
-      Display_Items.Initialize (Item, Browser, Context);
+      Item.Initialize_Rect (Styles.Item);
+      Browser_Model (Browser.Get_View.Model).Add (Item);
+      Item.Set_Position (No_Position);
 
-      if Link_From /= null then
-         Item.Is_Dereference := True;
-         Create_Link (Get_Canvas (Debugger), Link_From, Item, Link_Name);
-      end if;
+      Item.Update_Display;
+
+      --  ??? Should be changed when preferences are changed
+      Item.Set_Size_Range
+        (Max_Width  => Gdouble (Max_Item_Width.Get_Pref),
+         Max_Height => Gdouble (Max_Item_Height.Get_Pref));
 
       if Get_Detect_Aliases (Debugger) then
          Recompute_All_Aliases (Debugger, False);
       end if;
-
-   exception
-      when others =>
-         Item := null;
-         raise;
    end Gtk_New;
 
-   ----------------
-   -- Initialize --
-   ----------------
+   --------------------
+   -- Update_Display --
+   --------------------
 
-   procedure Initialize
-     (Item    : access Display_Item_Record'Class;
-      Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Context : Drawing_Context)
+   procedure Update_Display
+     (Item : not null access Display_Item_Record'Class)
    is
-      Lang : constant Language.Language_Access :=
-               Get_Language (Item.Debugger.Debugger);
+      Close   : Close_Button;
    begin
-      Browsers.Canvas.Initialize (Item, Browser);
+      Item.Clear (In_Model => Item.Browser.Get_View.Model);
 
-      if not Is_Visible (Item) then
-         return;
+      if Item.Auto_Refresh then
+         Item.Set_Style (Item.Browser.Get_View.Get_Styles.Item);
+      else
+         Item.Set_Style (Debugger_Data_View (Item.Browser).Freeze);
       end if;
 
-      --  Compute the size, hidding if necessary the big components. However,
-      --  we never want the top level item to be hidden, so we force it to
-      --  visible (and possibly recalculate the size).
+      Gtk_New (Close);
+      Item.Setup_Titlebar
+        (Browser => Item.Browser,
+         Name    => Integer'Image (Item.Num) & ": " & Item.Name.all,
+         Buttons => (1  => Close));
 
-      if Item.Entity /= null
-        and then Is_Valid (Item.Entity)
-      then
-         Size_Request
-           (Item.Entity.all,
-            Context,
-            Lang,
-            Mode           => Item.Mode,
-            Hide_Big_Items => Get_Pref (Hide_Big_Items));
-
-         if not Get_Visibility (Item.Entity.all) then
-            Set_Visibility (Item.Entity, True);
-            Size_Request (Item.Entity.all, Context, Lang, Item.Mode);
-         end if;
-
-         Constraint_Size (Item.Entity.all);
+      if Item.Entity /= null then
+         Item.Add_Child
+           (Item.Entity.Build_Display
+              (Item.Name.all,
+               Debugger_Data_View (Item.Browser),
+               Get_Language (Item), Item.Mode));
       end if;
-
-      Compute_Size (Item);
-      Refresh_Data_Window (Item.Debugger);
-   end Initialize;
+   end Update_Display;
 
    -------------------
    -- Get_Graph_Cmd --
@@ -419,18 +314,19 @@ package body Display_Items is
    function Get_Graph_Cmd
      (Item : access Display_Item_Record) return String
    is
-      Rect : Gdk_Rectangle;
+      Rect : Point;
    begin
       --  ??? Should memorize auto-refresh state ("graph print" vs "display")
       if Item.Graph_Cmd /= null then
-         Rect := Get_Coord (Item);
+         Rect := Item.Position;
          if Item.Is_Alias_Of = null then
             return Item.Graph_Cmd.all & " at"
-              & Gint'Image (Rect.X) & "," & Gint'Image (Rect.Y)
+              & Gdouble'Image (Rect.X)
+              & "," & Gdouble'Image (Rect.Y)
               & " num" & Integer'Image (Item.Num);
          else
             return Item.Graph_Cmd.all & " at"
-              & Gint'Image (Rect.X) & "," & Gint'Image (Rect.Y)
+              & Gdouble'Image (Rect.X) & "," & Gdouble'Image (Rect.Y)
               & " num" & Integer'Image (Item.Num)
               & " alias_of" & Integer'Image (Item.Is_Alias_Of.Num);
          end if;
@@ -468,211 +364,23 @@ package body Display_Items is
    ---------------
 
    function Find_Item
-     (Canvas : access Interactive_Canvas_Record'Class;
+     (Canvas : not null access Debugger_Data_View_Record'Class;
       Num    : Integer) return Display_Item
    is
       Found : Display_Item;
-      Iter  : Item_Iterator := Start (Canvas);
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         if Display_Item (Item).Num = Num then
+            Found := Display_Item (Item);
+         end if;
+      end On_Item;
    begin
-      loop
-         Found := Display_Item (Get (Iter));
-         exit when Found = null or else Found.Num = Num;
-         Next (Iter);
-      end loop;
+      Canvas.Get_View.Model.For_Each_Item
+        (On_Item'Access, Filter => Kind_Item);
       return Found;
    end Find_Item;
-
-   ------------------
-   -- Compute_Size --
-   ------------------
-
-   procedure Compute_Size (Item : access Display_Item_Record'Class) is
-      Context                   : constant Drawing_Context :=
-                                    Get_Item_Context (Item.Debugger);
-      Valid                     : constant Boolean :=
-                                    Item.Entity /= null
-                                    and then Is_Valid (Item.Entity);
-      Layout                    : Pango_Layout;
-      Alloc_Width               : Gint;
-      Alloc_Height              : Gint;
-      Title_Height, Title_Width : Gint;
-   begin
-      Layout := Create_Pango_Layout
-        (Get_Canvas (Item.Debugger),
-         Integer'Image (Item.Num) & ": " & Item.Name.all);
-      Set_Font_Description (Layout, Get_Pref (Title_Font));
-
-      --  Compute the width and height of the title bar
-
-      Get_Pixel_Size (Layout, Title_Width, Title_Height);
-      Title_Width := Title_Width + (5 + Num_Buttons) * Spacing
-        + Num_Buttons * Buttons_Size;
-      Title_Height := Gint'Max (Title_Height, Buttons_Size)
-        + 2 * Spacing;
-      Item.Title_Height := Title_Height;
-
-      --  Compute the required size for the value itself
-
-      if Valid then
-         Alloc_Width  := Get_Width  (Item.Entity.all) + 2 * Border_Spacing;
-         Alloc_Height := Get_Height (Item.Entity.all) + 2 * Border_Spacing;
-      else
-         Set_Text (Context.Text_Layout, -"Unknown variable");
-         Get_Pixel_Size (Context.Text_Layout, Alloc_Width, Alloc_Height);
-         Alloc_Width  := Alloc_Width + 2 * Border_Spacing;
-         Alloc_Height := Alloc_Height + 2 * Border_Spacing;
-      end if;
-
-      --  Finally, we can find the total size for the display item
-
-      Alloc_Width  := Gint'Max (Alloc_Width, Title_Width);
-      Alloc_Width  := Gint'Max (Alloc_Width, 40);
-      Alloc_Height := Title_Height + Alloc_Height;
-
-      if Valid then
-         Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Border_Spacing);
-      end if;
-
-      --  Force a minimal size, so that the item is at least visible
-      Alloc_Width := Gint'Max (50, Alloc_Width);
-      Alloc_Height := Gint'Max (20, Alloc_Height);
-
-      Set_Screen_Size (Item, Alloc_Width + 1, Alloc_Height + 1);
-
-      Unref (Layout);
-   end Compute_Size;
-
-   ----------
-   -- Draw --
-   ----------
-
-   overriding procedure Draw
-     (Item : access Display_Item_Record;
-      Cr   : Cairo.Cairo_Context)
-   is
-      Context                   : constant Drawing_Context :=
-                                    Get_Item_Context (Item.Debugger);
-      Box_Context               : constant Box_Drawing_Context :=
-                                    Get_Box_Context (Item.Debugger);
-      Valid                     : constant Boolean :=
-                                    Item.Entity /= null
-                                    and then Is_Valid (Item.Entity);
-      Layout                    : Pango_Layout;
-      Alloc_Width               : constant Gint := Get_Coord (Item).Width;
-      Alloc_Height              : constant Gint := Get_Coord (Item).Height;
-
-      use Gdk;
-
-   begin
-      Layout := Create_Pango_Layout
-        (Get_Canvas (Item.Debugger),
-         Integer'Image (Item.Num) & ": " & Item.Name.all);
-      Set_Font_Description (Layout, Get_Pref (Title_Font));
-
-      if Item.Auto_Refresh then
-         Draw_Rectangle
-           (Cr, Box_Context.Thaw_Bg_Color,
-            Filled => True,
-            X      => 0,
-            Y      => Item.Title_Height,
-            Width  => Alloc_Width,
-            Height => Alloc_Height - Item.Title_Height);
-
-      else
-         Draw_Rectangle
-           (Cr, Box_Context.Freeze_Bg_Color,
-            Filled => True,
-            X      => 0,
-            Y      => Item.Title_Height,
-            Width  => Alloc_Width,
-            Height => Alloc_Height - Item.Title_Height);
-      end if;
-
-      Draw_Rectangle
-        (Cr, Box_Context.Grey_Color,
-         Filled => True,
-         X      => 0,
-         Y      => 0,
-         Width  => Alloc_Width - 1,
-         Height => Item.Title_Height);
-
-      Draw_Shadow
-        (Cr, Get_Canvas (Item.Debugger),
-         Shadow_Type => Shadow_Out,
-         X           => 0,
-         Y           => 0,
-         Width       => Alloc_Width + 1,
-         Height      => Alloc_Height + 1);
-
-      Draw_Line
-        (Cr, Box_Context.Black_Color,
-         X1     => 0,
-         Y1     => Item.Title_Height,
-         X2     => Alloc_Width - 1,
-         Y2     => Item.Title_Height);
-
-      Set_Source_Color (Cr, Box_Context.Black_Color);
-      Move_To (Cr, Gdouble (Spacing), Gdouble (Spacing));
-      Pango.Cairo.Show_Layout (Cr, Layout);
-
-      --  First button
-
-      Draw_Rectangle
-        (Cr, Box_Context.Grey_Color,
-         Filled => True,
-         X      => Alloc_Width - 2 * Buttons_Size - 2 * Spacing,
-         Y      => Spacing,
-         Width  => Buttons_Size,
-         Height => Buttons_Size);
-
-      if Item.Auto_Refresh then
-         Draw_Pixbuf
-           (Cr, Box_Context.Auto_Display_Pixmap,
-            Alloc_Width - 2 * Buttons_Size - 2 * Spacing, Spacing);
-      else
-         Draw_Pixbuf
-           (Cr, Box_Context.Locked_Pixmap,
-            Alloc_Width - 2 * Buttons_Size - 2 * Spacing, Spacing);
-      end if;
-
-      --  Second button
-
-      Draw_Pixbuf (Cr, Box_Context.Close_Pixmap,
-                   Alloc_Width - Buttons_Size - Spacing,
-                   Spacing);
-
-      if Valid then
-         Paint
-           (Item.Entity.all,
-            Context, Cr,
-            Lang   => Get_Language (Item.Debugger.Debugger),
-            Mode   => Item.Mode,
-            X      => Border_Spacing,
-            Y      => Item.Title_Height + Border_Spacing);
-      else
-         Context.Text_Layout.Set_Text (-"Unknown variable");
-         Set_Source_Color (Cr, Context.Foreground);
-         Move_To
-           (Cr, Gdouble (Border_Spacing),
-            Gdouble (Item.Title_Height + Border_Spacing));
-         Pango.Cairo.Show_Layout (Cr, Context.Text_Layout);
-      end if;
-
-      Unref (Layout);
-   end Draw;
-
-   ----------------------
-   -- Update_Component --
-   ----------------------
-
-   procedure Update_Component
-     (Item      : access Display_Item_Record'Class;
-      Component : Generic_Type_Access := null)
-   is
-      pragma Unreferenced (Component);
-   begin
-      Item.Get_Browser.Get_Canvas.Refresh (Item);
-   end Update_Component;
 
    -----------------
    -- Search_Item --
@@ -686,67 +394,38 @@ package body Display_Items is
       Alias_Item : Display_Item := null;
       Deref_Name : constant String := Dereference_Name
         (Get_Language (Process.Debugger), Name);
-      Iter       : Item_Iterator;
-      Item       : Display_Item;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+         It : constant Display_Item := Display_Item (Item);
+      begin
+         if Alias_Item = null  --  not found yet
+           and then (Name = "" or else It.Name.all = Name)
+           and then Is_Alias_Of (It, Id, Name, Deref_Name)
+         then
+            if It.Is_Alias_Of /= null then
+               Alias_Item := It.Is_Alias_Of;
+            else
+               Alias_Item := It;
+            end if;
+         end if;
+      end On_Item;
+
    begin
       --  Always search if we have a special name to look for, so as to avoid
       --  creating the same item multiple times
       if Name /= "" or else Get_Detect_Aliases (Process) then
-         Iter := Start (Get_Canvas (Process));
-         loop
-            Item := Display_Item (Get (Iter));
-            exit when Item = null;
-
-            if (Name = "" or else Item.Name.all = Name)
-              and then Is_Alias_Of (Item, Id, Name, Deref_Name)
-            then
-               if Item.Is_Alias_Of /= null then
-                  Alias_Item := Item.Is_Alias_Of;
-               else
-                  Alias_Item := Item;
-               end if;
-               exit;
-            end if;
-
-            Next (Iter);
-         end loop;
+         Process.Data.Get_View.Model.For_Each_Item
+           (On_Item'Access, Filter => Kind_Item);
       end if;
-
       return Alias_Item;
    end Search_Item;
-
-   ----------------------------
-   -- Update_On_Auto_Refresh --
-   ----------------------------
-
-   function Update_On_Auto_Refresh
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Canvas);
-   begin
-      --  Only update when the item is not an alias of something else (and thus
-      --  is hidden).
-
-      if Display_Item (Item).Auto_Refresh
-        and then Display_Item (Item).Is_Alias_Of = null
-      then
-         Update (Display_Item (Item));
-      end if;
-
-      return True;
-   end Update_On_Auto_Refresh;
 
    ------------
    -- Update --
    ------------
 
-   procedure Update
-     (Item             : access Display_Item_Record'Class;
-      Redisplay_Canvas : Boolean := False)
-   is
-      Was_Visible : Boolean;
-
+   procedure Update (Item : not null access Display_Item_Record'Class) is
    begin
       if Item.Is_A_Variable
         and then Item.Entity = null
@@ -755,8 +434,6 @@ package body Display_Items is
       end if;
 
       if Item.Entity /= null then
-         Was_Visible := Get_Visibility (Item.Entity.all);
-
          --  Parse the value
 
          if Item.Entity.all in Debugger_Output_Type'Class then
@@ -770,138 +447,55 @@ package body Display_Items is
          elsif Item.Name /= null then
             Parse_Value (Item);
          end if;
-
-         Update_Resize_Display
-           (Item, Was_Visible, Get_Pref (Hide_Big_Items),
-            Redisplay_Canvas => Redisplay_Canvas);
       end if;
+
+      Item.Update_Display;
    end Update;
-
-   ---------------------------
-   -- Update_Resize_Display --
-   ---------------------------
-
-   procedure Update_Resize_Display
-     (Item             : access Display_Item_Record'Class;
-      Was_Visible      : Boolean := False;
-      Hide_Big         : Boolean := False;
-      Redisplay_Canvas : Boolean := True)
-   is
-      Context : constant Drawing_Context :=
-                  Get_Item_Context (Item.Debugger);
-   begin
-      --  Update graphically.
-      --  Note that we should not change the visibility status of item
-      --  and its children.
-
-      if Item.Entity /= null then
-         Size_Request
-           (Item.Entity.all,
-            Context,
-            Lang           => Get_Language (Item.Debugger.Debugger),
-            Mode           => Item.Mode,
-            Hide_Big_Items => not Was_Visible and then Hide_Big);
-
-         Constraint_Size (Item.Entity.all);
-         Compute_Size (Item);
-      end if;
-
-      if Redisplay_Canvas then
-         Refresh_Data_Window (Item.Debugger);
-      end if;
-   end Update_Resize_Display;
 
    -----------------
    -- Create_Link --
    -----------------
 
    procedure Create_Link
-     (Canvas     : access Interactive_Canvas_Record'Class;
-      From, To   : access Canvas_Item_Record'Class;
+     (Browser    : not null access Debugger_Data_View_Record'Class;
+      From, To   : access Display_Item_Record'Class;
       Name       : String;
-      Arrow      : Arrow_Type := End_Arrow;
       Alias_Link : Boolean := False)
    is
+      Styles : constant access Browser_Styles := Get_Styles (Browser.Get_View);
       L : GVD_Link;
    begin
-      if not Has_Link (Canvas, From, To, Name) then
+      if not Browser.Has_Link (From, To) then
          L := new GVD_Link_Record;
          L.Alias_Link := Alias_Link;
-         Add_Link (Canvas, L, From, To, Arrow, Name);
+         L.Default_Style := (if Alias_Link then Styles.Link2 else Styles.Link);
+         L.Name := To_Unbounded_String (Name);
+         L.Initialize
+           (From     => From,
+            To       => To,
+            Style    => L.Default_Style,
+            Routing  => Curve,
+            Label    => Gtk_New_Text (Styles.Label, Name));
+         Browser_Model (Browser.Get_View.Model).Add (L);
       end if;
    end Create_Link;
-
-   ----------------------
-   -- Compute_Link_Pos --
-   ----------------------
-
-   procedure Compute_Link_Pos (Link : access GVD_Link_Record'Class) is
-      X          : constant Gint :=
-                     Get_X (Link.Source_Component.all) +
-                     Get_Width (Link.Source_Component.all) / 2;
-      Y          : constant Gint :=
-                     Get_Y (Link.Source_Component.all) +
-                     Get_Height (Link.Source_Component.all) / 2;
-      Xpos, Ypos : Gfloat;
-      F          : Boolean;
-      Visible    : Boolean;
-
-   begin
-      Component_Is_Visible
-        (Display_Item (Get_Src (Link)).Entity, Link.Source_Component,
-         Visible, F);
-
-      if Visible and F then
-         Xpos := Gfloat (X)
-           / Gfloat (Get_Coord (Canvas_Item (Get_Src (Link))).Width);
-         Ypos := Gfloat (Y)
-           / Gfloat (Get_Coord (Canvas_Item (Get_Src (Link))).Height);
-         Set_Src_Pos (Link, Xpos, Ypos);
-
-      else
-         Set_Src_Pos (Link, 0.5, 0.5);
-      end if;
-   end Compute_Link_Pos;
 
    ----------------------
    -- Dereference_Item --
    ----------------------
 
    procedure Dereference_Item
-     (Item            : access Display_Item_Record;
-      Deref_Component : Generic_Type_Access;
-      Component_Name  : String;
-      Link_Name       : String)
+     (Item      : access Display_Item_Record;
+      Component : not null access Component_Item_Record'Class)
    is
-      New_Name : constant String :=
+      Link_Name : constant String := To_String (Component.Name);
+      New_Name  : constant String :=
                    Dereference_Name
-                     (Get_Language (Item.Debugger.Debugger), Component_Name);
-      Link     : constant String :=
+                         (Get_Language (Item.Debugger.Debugger),
+                          To_String (Component.Name));
+      Link      : constant String :=
                    Dereference_Name
                      (Get_Language (Item.Debugger.Debugger), Link_Name);
-
-      function Set_Link_Pos
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean;
-      --  Set the attachment position of the newly created link.
-      --  The link is attached to the middle of the component that was
-      --  dereferenced.
-
-      ------------------
-      -- Set_Link_Pos --
-      ------------------
-
-      function Set_Link_Pos
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-      begin
-         GVD_Link (Link).Source_Component := Deref_Component;
-         Compute_Link_Pos (GVD_Link (Link));
-         --  Only the first one
-         return False;
-      end Set_Link_Pos;
 
    begin
       --  The newly created item should have the same auto-refresh state as
@@ -920,35 +514,6 @@ package body Display_Items is
             & Integer'Image (Item.Num) & " link_name " & Link,
             Output_Command => True);
       end if;
-
-      if Attach_Links_To_Components then
-         For_Each_Link
-           (Get_Canvas (Item.Debugger), Set_Link_Pos'Unrestricted_Access);
-      end if;
-   end Dereference_Item;
-
-   ----------------------
-   -- Dereference_Item --
-   ----------------------
-
-   procedure Dereference_Item
-     (Item            : access Display_Item_Record;
-      Deref_Component : Generic_Type_Access;
-      X               : Gint;
-      Y               : Gint) is
-   begin
-      Dereference_Item
-        (Item, Deref_Component,
-         Component_Name => Get_Component_Name
-           (Item.Entity,
-            Get_Language (Item),
-            Item.Name.all,
-            X, Y),
-         Link_Name      => Get_Component_Name
-           (Item.Entity,
-            Get_Language (Item),
-            Item_Name_In_Link,
-            X, Y));
    end Dereference_Item;
 
    ------------------
@@ -964,227 +529,15 @@ package body Display_Items is
       return Get_Language (Item.Debugger.Debugger);
    end Get_Language;
 
-   -------------------
-   -- Get_Component --
-   -------------------
-
-   function Get_Component
-     (Item      : access Display_Item_Record;
-      X, Y      : Gint;
-      Component : access Generic_Type_Access) return String
-   is
-   begin
-      if Item.Entity = null then
-         Component.all := null;
-         return "";
-      end if;
-
-      Component.all := Get_Component
-        (Item.Entity, X, Y - Item.Title_Height - Border_Spacing);
-      return Get_Component_Name
-        (Item.Entity,
-         Get_Language (Item.Debugger.Debugger),
-         Item.Name.all,
-         X,
-         Y - Item.Title_Height - Border_Spacing);
-   end Get_Component;
-
-   ---------------------
-   -- On_Button_Click --
-   ---------------------
-
-   overriding function On_Button_Click
-     (Item  : access Display_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button) return Boolean
-   is
-      Buttons_Start : constant Gint :=
-                        Get_Coord (Item).Width -
-                          Num_Buttons * Buttons_Size -
-                            Num_Buttons * Spacing + 1;
-      Component     : Generic_Type_Access;
-      X             : Gint;
-
-   begin
-      --  Click on a button ?
-
-      if Event.Button = 1
-        and then Event.The_Type = Button_Press
-        and then Gint (Event.Y) > Spacing
-        and then Gint (Event.Y) <= Spacing + Buttons_Size
-      then
-         X := Buttons_Start;
-
-         for B in 0 .. Num_Buttons - 1 loop
-            if Gint (Event.X) >= X
-              and then Gint (Event.X) <= X + Buttons_Size
-            then
-               --  Just inform the caller that we handle the click
-               return True;
-            end if;
-
-            X := X + Buttons_Size + Spacing;
-         end loop;
-
-         return False;
-
-      elsif Event.Button = 1
-        and then Event.The_Type = Button_Release
-        and then Gint (Event.Y) > Spacing
-        and then Gint (Event.Y) <= Spacing + Buttons_Size
-      then
-         X := Buttons_Start;
-
-         for B in 0 .. Num_Buttons - 1 loop
-            if Gint (Event.X) >= X
-              and then Gint (Event.X) <= X + Buttons_Size
-            then
-               case B is
-                  when 0 =>
-                     if Item.Auto_Refresh then
-                        Process_User_Command
-                          (Item.Debugger,
-                           "graph disable display"
-                             & Integer'Image (Item.Num),
-                           Output_Command => True);
-
-                     else
-                        Process_User_Command
-                          (Item.Debugger,
-                           "graph enable display"
-                             & Integer'Image (Item.Num),
-                           Output_Command => True);
-                     end if;
-
-                  when 1 =>
-                     Process_User_Command
-                       (Item.Debugger,
-                        "graph undisplay" & Integer'Image (Item.Num),
-                        Output_Command => True);
-               end case;
-
-               return True;
-            end if;
-
-            X := X + Buttons_Size + Spacing;
-         end loop;
-
-         return False;
-      end if;
-
-      --  Raise or lower the item
-
-      if Event.Button = 1
-        and then Event.The_Type = Button_Press
-        and then Gint (Event.Y) <= Item.Title_Height
-      then
-         if Is_On_Top (Get_Canvas (Item.Debugger), Item) then
-            Lower_Item (Get_Canvas (Item.Debugger), Item);
-         else
-            Raise_Item (Get_Canvas (Item.Debugger), Item);
-         end if;
-      end if;
-
-      --  Get the selected component
-
-      if Item.Entity = null then
-         return False;
-      end if;
-
-      Component := Get_Component
-        (Item.Entity, Gint (Event.X),
-         Gint (Event.Y) - Item.Title_Height - Border_Spacing);
-
-      --  Dereferencing access types
-
-      if Event.Button = 1
-        and then Event.The_Type = Gdk_2button_Press
-        and then Gint (Event.Y) >= Item.Title_Height + Border_Spacing
-        and then Component.all in Access_Type'Class
-      then
-         Dereference_Item
-           (Item,
-            Component,
-            Gint (Event.X),
-            Gint (Event.Y) - Item.Title_Height - Border_Spacing);
-
-         return True;
-
-      --  Hiding a component
-
-      elsif Event.Button = 1
-        and then Event.The_Type = Gdk_2button_Press
-        and then Gint (Event.Y) >= Item.Title_Height + Border_Spacing
-      then
-         Change_Visibility (Item, Component);
-
-         return True;
-
-      --  Selecting a component
-
-      elsif Event.Button = 1
-        and then Event.The_Type = Button_Press
-        and then Gint (Event.Y) > Item.Title_Height
-      then
-         Select_Item (Item.Debugger, Item, Component);
-
-         return True;
-      end if;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end On_Button_Click;
-
    -----------------------
    -- Change_Visibility --
    -----------------------
 
    procedure Change_Visibility
      (Item      : access Display_Item_Record'Class;
-      Component : Generic_Type_Access)
-   is
-      function Reattach_All_Links
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean;
-      --  Recompute the position of all the links attached to Item
-
-      ------------------------
-      -- Reattach_All_Links --
-      ------------------------
-
-      function Reattach_All_Links
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-      begin
-         if Canvas_Item (Get_Src (Link)) = Canvas_Item (Item)
-           and then GVD_Link (Link).Source_Component /= null
-         then
-            Compute_Link_Pos (GVD_Link (Link));
-         end if;
-
-         return True;
-      end Reattach_All_Links;
-
+      Component : Generic_Type_Access) is
    begin
       Set_Visibility (Component, not Get_Visibility (Component.all));
-      --  Need to recompute the positions of the components first
-      Update_Resize_Display
-        (Item,
-         Was_Visible      => False,
-         Hide_Big         => False,
-         Redisplay_Canvas => False);
-
-      --  If needed, recompute the position of the links
-      if Attach_Links_To_Components then
-         For_Each_Link
-           (Get_Canvas (Item.Debugger),
-            Reattach_All_Links'Unrestricted_Access);
-      end if;
 
       --  Redraw the canvas
       Refresh_Data_Window (Item.Debugger);
@@ -1206,18 +559,11 @@ package body Display_Items is
          --  If we moved back to the auto-refresh state, force an
          --  update of the value.
 
-         if Item.Auto_Refresh then
-            Update (Item);
-            Refresh_Data_Window (Item.Debugger);
-         else
-            --  Redisplay the item, so that no field is displayed
-            --  in red anymore.
-            Reset_Recursive (Item);
-            Item_Updated (Get_Canvas (Item.Debugger), Item);
-         end if;
+         Reset_Recursive (Item);
+         Update (Item);
       end if;
 
-      Item.Get_Browser.Get_Canvas.Refresh (Item);
+      Item.Browser.Get_View.Model.Refresh_Layout;  --  for links
    end Set_Auto_Refresh;
 
    ----------------------
@@ -1230,327 +576,78 @@ package body Display_Items is
       return Item.Auto_Refresh;
    end Get_Auto_Refresh;
 
-   ----------
-   -- Free --
-   ----------
+   -------------
+   -- Destroy --
+   -------------
 
-   procedure Free
-     (Item           : access Display_Item_Record;
-      Remove_Aliases : Boolean := True)
+   overriding procedure Destroy
+     (Self     : not null access Display_Item_Record;
+      In_Model : not null access Canvas_Model_Record'Class)
    is
-      Canvas : constant Interactive_Canvas :=
-                 Get_Canvas (Item.Debugger);
-      Iter   : Item_Iterator;
-      It     : Display_Item;
    begin
-      Unselect (Item.Debugger, Item);
+      if Self.Entity /= null then
+         Free (Self.Entity);
+      end if;
 
+      GNAT.Strings.Free (Self.Name);
+      GNAT.Strings.Free (Self.Id);
+
+      GPS_Item_Record (Self.all).Destroy (In_Model);  --  inherited
+   end Destroy;
+
+   -------------------------
+   -- Remove_With_Aliases --
+   -------------------------
+
+   procedure Remove_With_Aliases
+     (Item : access Display_Item_Record;
+      Remove_Aliases : Boolean)
+   is
+      Canvas : constant Debugger_Data_View := Item.Debugger.Data;
+      To_Remove : Item_Sets.Set;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+         It : constant Display_Item := Display_Item (Item);
+      begin
+         --  If It is an alias of Item, and it wasn't displayed explicitly
+         --  by the user, then remove it from the canvas as well.  Also
+         --  remove It if it is currently hidden (alias detection), and was
+         --  linked to Item. The user probably expects it to be killed as
+         --  well
+
+         if It.Is_Alias_Of = Display_Item (Item)
+           and then It.Is_Dereference
+         then
+            To_Remove.Include (Abstract_Item (It));
+
+            --  If It is hidden, and was linked to Item
+         elsif It.Is_Alias_Of /= null
+           and then Canvas.Has_Link (GPS_Item (Item), GPS_Item (It))
+         then
+            To_Remove.Include (Abstract_Item (It));
+         end if;
+
+      end On_Item;
+
+   begin
       --  Should recompute aliases (delete all the items that we aliased
       --  to this one, since the user was probably expecting them not to be
       --  visible any more).
 
+      To_Remove.Include (Abstract_Item (Item));
+
       if Remove_Aliases then
-         Iter := Start (Canvas);
-         loop
-            It := Display_Item (Get (Iter));
-            exit when It = null;
-
-            Next (Iter);
-
-            --  If It is an alias of Item, and it wasn't displayed explicitly
-            --  by the user, then remove it from the canvas as well.  Also
-            --  remove It if it is currently hidden (alias detection), and was
-            --  linked to Item. The user probably expects it to be killed as
-            --  well
-
-            if It.Is_Alias_Of = Display_Item (Item)
-              and then It.Is_Dereference
-            then
-               Free (It, Remove_Aliases => False);
-
-            --  If It is hidden, and was linked to Item
-            elsif It.Is_Alias_Of /= null
-              and then Has_Link (Canvas, Item, It)
-            then
-               Free (It, Remove_Aliases => False);
-            end if;
-         end loop;
+         Canvas.Get_View.Model.For_Each_Item
+           (On_Item'Access, Filter => Kind_Item);
       end if;
 
-      if Item.Entity /= null then
-         Free (Item.Entity);
+      if Remove_Aliases then
+         Recompute_All_Aliases (Item.Debugger, Recompute_Values => False);
       end if;
 
-      GNAT.Strings.Free (Item.Name);
-      GNAT.Strings.Free (Item.Id);
-
-      declare
-         Debugger : constant GVD.Process.Visual_Debugger := Item.Debugger;
-      begin
-         Remove (Canvas, Item);
-         --  Warning: the memory has been freed after Remove
-
-         if Remove_Aliases then
-            Recompute_All_Aliases (Debugger, Recompute_Values => False);
-         end if;
-      end;
-   end Free;
-
-   -----------------------
-   -- Recompute_Address --
-   -----------------------
-
-   function Recompute_Address
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean
-   is
-      It            : Display_Item := Display_Item (Item);
-      It_Deref_Name : constant String :=
-                        Dereference_Name
-                          (Get_Language (It.Debugger.Debugger), It.Name.all);
-
-      function Clean_Alias_Chain
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Avoid alias chains in the canvas (ie every Item was an alias of It,
-      --  it becomes an alias of It.Is_Alias_Of instead).
-      --  This way, all the Is_Alias_Of fields always reference real visible
-      --  items on the canvas.
-
-      function Has_Alias
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  True if Item is a possible alias of It.
-      --  We only check the items before It in the list of items
-
-      -----------------------
-      -- Clean_Alias_Chain --
-      -----------------------
-
-      function Clean_Alias_Chain
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-      begin
-         if Display_Item (Item).Is_Alias_Of = It then
-            Display_Item (Item).Is_Alias_Of := It.Is_Alias_Of;
-         end if;
-
-         return True;
-      end Clean_Alias_Chain;
-
-      ---------------
-      -- Has_Alias --
-      ---------------
-
-      function Has_Alias
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         It2 : constant Display_Item := Display_Item (Item);
-      begin
-         --  Stop iterating when we saw It, since we only want to check the
-         --  items before it.
-
-         if It2 = It then
-            return False;
-         end if;
-
-         --  Frozen items can not be part of an alias detection
-
-         if not It2.Auto_Refresh then
-            return False;
-         end if;
-
-         if It.Id /= null
-           and then It2.Is_Alias_Of = null
-           and then Is_Alias_Of (It2, It.Id.all, It.Name.all, It_Deref_Name)
-           and then (not Typed_Aliases
-                     or else Structurally_Equivalent (It2.Entity, It.Entity))
-         then
-            --  Keep only one of them:
-            --   - if none are the result of a dereference, keep them both
-            --   - if only one is the result of a dereference, keep the other
-            --   - otherwise keep the one with the shortest name
-
-            if It2.Is_Dereference and then not It.Is_Dereference then
-               It2.Is_Alias_Of := It;
-               It := It2;
-               For_Each_Item (Canvas, Clean_Alias_Chain'Unrestricted_Access);
-               return False;
-
-            elsif It.Is_Dereference and then not It2.Is_Dereference then
-               It.Is_Alias_Of := It2;
-               For_Each_Item (Canvas, Clean_Alias_Chain'Unrestricted_Access);
-               return False;
-
-            elsif It.Is_Dereference and then It2.Is_Dereference then
-               --  The last item inserted in the canvas will always be the
-               --  alias and invisible one (so that, when inserting a new item
-               --  in the canvas, we do not disturb the current layout).
-               It2.Is_Alias_Of := It;
-               It := It2;
-               For_Each_Item
-                 (Canvas, Clean_Alias_Chain'Unrestricted_Access);
-               return False;
-
-            --  They both were explicitly displayed by the user. Print a
-            --  special link to reflect that fact.
-
-            else
-               Create_Link
-                 (Canvas, It, It2, "<=>", Both_Arrow, Alias_Link => True);
-            end if;
-         end if;
-
-         return True;
-      end Has_Alias;
-
-   begin
-      --  If this is not an item associated with a variable, ignore it
-      if It.Name = null then
-         return True;
-      end if;
-
-      --  Only detect aliases if we have an auto_refresh item
-      if not It.Auto_Refresh
-        or else not Is_A_Variable (It)
-      then
-         return True;
-      end if;
-
-      --  Else recompute the id for the item
-      GNAT.Strings.Free (It.Id);
-
-      declare
-         Id : constant String :=
-           Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);
-      begin
-         if Id /= "" then
-            It.Id := new String'(Id);
-         end if;
-      end;
-
-      --  Search if there is an alias related to this new item
-      For_Each_Item (Canvas, Has_Alias'Unrestricted_Access);
-
-      --  Keep processing the next items
-      return True;
-   end Recompute_Address;
-
-   ---------------------
-   -- Duplicate_Links --
-   ---------------------
-
-   procedure Duplicate_Links
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class)
-   is
-      function Duplicate
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean;
-      --  Duplicate Link if it is bound to Item and is not a temporary link
-
-      ---------------
-      -- Duplicate --
-      ---------------
-
-      function Duplicate
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean
-      is
-         Src, Dest : Canvas_Item;
-         Replace   : Boolean;
-
-      begin
-         if not GVD_Link (Link).Alias_Link then
-            Src := Canvas_Item (Get_Src (Link));
-            Dest := Canvas_Item (Get_Dest (Link));
-            Replace := False;
-
-            if Canvas_Item (Get_Src (Link)) = Canvas_Item (Item) then
-               Src := Canvas_Item (Display_Item (Item).Is_Alias_Of);
-               Replace := True;
-            end if;
-
-            if Canvas_Item (Get_Dest (Link)) = Canvas_Item (Item) then
-               Dest := Canvas_Item (Display_Item (Item).Is_Alias_Of);
-               Replace := True;
-            end if;
-
-            if Replace then
-               Create_Link
-                 (Canvas, Src, Dest, Get_Descr (Link), Alias_Link => True);
-            end if;
-         end if;
-
-         return True;
-      end Duplicate;
-
-   begin
-      if Display_Item (Item).Is_Alias_Of /= null then
-         For_Each_Link (Canvas, Duplicate'Unrestricted_Access);
-      end if;
-   end Duplicate_Links;
-
-   --------------------
-   -- Remove_Aliases --
-   --------------------
-
-   function Remove_Aliases
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Canvas);
-
-      It : constant Display_Item := Display_Item (Item);
-   begin
-      It.Was_Alias := It.Is_Alias_Of /= null;
-      It.Is_Alias_Of := null;
-      Set_Visibility (It, True);
-      return True;
-   end Remove_Aliases;
-
-   ----------------------
-   -- Remove_Temporary --
-   ----------------------
-
-   function Remove_Temporary
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Link   : access Canvas_Link_Record'Class) return Boolean is
-   begin
-      if GVD_Link (Link).Alias_Link then
-         Remove_Link (Canvas, Link);
-      end if;
-
-      return True;
-   end Remove_Temporary;
-
-   ---------------------
-   -- Recompute_Sizes --
-   ---------------------
-
-   function Recompute_Sizes
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean
-   is
-      It : constant Display_Item := Display_Item (Item);
-   begin
-      if It.Is_Alias_Of /= null then
-         Set_Visibility (It, False);
-
-         --  Duplicate the links if required
-         Duplicate_Links (Canvas, Item);
-
-      --  If we broke the alias, move the item back to some new coordinates
-      elsif It.Was_Alias then
-         Move_To (Canvas, It);
-         Layout (Canvas);
-      end if;
-
-      return True;
-   end Recompute_Sizes;
+      Canvas.Get_View.Model.Remove (To_Remove);
+   end Remove_With_Aliases;
 
    ---------------------------
    -- Recompute_All_Aliases --
@@ -1558,25 +655,231 @@ package body Display_Items is
 
    procedure Recompute_All_Aliases
      (Process          : access Visual_Debugger_Record'Class;
-      Recompute_Values : Boolean := True) is
+      Recompute_Values : Boolean := True)
+   is
+      procedure Remove_Temporary
+        (Item : not null access Abstract_Item_Record'Class);
+      --  Remove all temporary links from the canvas
+
+      procedure Recompute_Address
+        (Item : not null access Abstract_Item_Record'Class);
+      --  Recompute the address of the item, and identify which ones should be
+      --  displayed and which ones should be hidden as aliases
+
+      procedure Build_Aliases
+        (Item : not null access Abstract_Item_Record'Class);
+      --  Using the result of Recompute_Address, compute which items should be
+      --  aliases
+
+      procedure Make_Visible
+        (Item : not null access Abstract_Item_Record'Class);
+      --  Make the item visible
+
+      procedure Update_Value
+        (Item : not null access Abstract_Item_Record'Class);
+      --  Update the value of a specific item in the canvas. The new value is
+      --  read from the debugger, parsed, and redisplayed.
+      --  Do nothing if the auto-refresh status of Item is set to false.
+
+      To_Remove : Item_Sets.Set;
+      To_Hide   : Item_Sets.Set;
+
+      Addresses : String_To_Items.Map;
+      --  Maps addresses to items, to identify aliases
+
+      ------------------
+      -- Make_Visible --
+      ------------------
+
+      procedure Make_Visible
+        (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         Item.Show;
+      end Make_Visible;
+
+      ----------------------
+      -- Remove_Temporary --
+      ----------------------
+
+      procedure Remove_Temporary
+        (Item : not null access Abstract_Item_Record'Class)
+      is
+         Link : constant GVD_Link := GVD_Link (Item);
+      begin
+         if Link.Alias_Link then
+            To_Remove.Include (Abstract_Item (Item));
+         else
+            Link.Show;  --  in case it was hidden before
+         end if;
+      end Remove_Temporary;
+
+      -----------------------
+      -- Recompute_Address --
+      -----------------------
+
+      procedure Recompute_Address
+        (Item : not null access Abstract_Item_Record'Class)
+      is
+         It            : constant Display_Item := Display_Item (Item);
+         Keeper : Display_Item;
+      begin
+         It.Show;
+         It.Was_Alias := It.Is_Alias_Of /= null;
+         It.Is_Alias_Of := null;
+
+         --  If this is not an item associated with a variable, ignore it
+         --  Only detect aliases if we have an auto_refresh item
+         if It.Name = null
+           or else not It.Auto_Refresh
+           or else not Is_A_Variable (It)
+         then
+            return;
+         end if;
+
+         --  Else recompute the id for the item
+         GNAT.Strings.Free (It.Id);
+
+         declare
+            Id : constant String :=
+              Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);
+         begin
+            if Id /= "" then
+               It.Id := new String'(Id);
+
+               if Addresses.Contains (Id) then
+                  --  We want to hide dereferences when possible, and keep all
+                  --  items explicitly display
+                  Keeper := Addresses.Element (Id);
+                  if Keeper.Is_Dereference and then not It.Is_Dereference then
+                     Addresses.Include (Id, It);
+                  end if;
+               else
+                  Addresses.Include (Id, It);
+               end if;
+            end if;
+         end;
+      end Recompute_Address;
+
+      -------------------
+      -- Build_Aliases --
+      -------------------
+
+      procedure Build_Aliases
+        (Item : not null access Abstract_Item_Record'Class)
+      is
+         It : constant Display_Item := Display_Item (Item);
+         Keeper : Display_Item;
+         S      : Item_Sets.Set;
+
+         procedure Duplicate_Links
+           (Link : not null access Abstract_Item_Record'Class);
+         --  Duplicate the links that go to an item that is being hidden
+
+         procedure Duplicate_Links
+           (Link : not null access Abstract_Item_Record'Class)
+         is
+            Src, Dest : Display_Item;
+            Replace   : Boolean;
+         begin
+            if not GVD_Link (Link).Alias_Link then
+               Src := Display_Item (GVD_Link (Link).Get_From);
+               Dest := Display_Item (GVD_Link (Link).Get_To);
+               Replace := False;
+
+               if Src = It then
+                  Src := It.Is_Alias_Of;
+                  Replace := True;
+               elsif Dest = It then
+                  Dest := It.Is_Alias_Of;
+                  Replace := True;
+               end if;
+
+               if Replace then
+                  Create_Link
+                    (Process.Data, Src, Dest,
+                     Name       => To_String (GVD_Link (Link).Name),
+                     Alias_Link => True);
+               end if;
+            end if;
+         end Duplicate_Links;
+
+         List : Items_Lists.List;
+      begin
+         if It.Id /= null and then Addresses.Contains (It.Id.all) then
+            Keeper := Addresses.Element (It.Id.all);
+            if It = Keeper then
+               null;  --  nothing to do
+
+            elsif It.Is_Dereference then
+               Process.Data.Get_View.Model.Include_Related_Items (It, To_Hide);
+               It.Is_Alias_Of := Keeper;
+
+               S.Include (Abstract_Item (It));
+               Process.Data.Get_View.Model.For_Each_Link
+                 (Duplicate_Links'Access,
+                  From_Or_To => S);
+
+            else
+               --  not a dereference, so Keeper is not a dereference either
+               Create_Link
+                 (Process.Data, It, Keeper, "<=>", Alias_Link => True);
+            end if;
+         end if;
+
+         --  If we broke the alias, move the item back to some new coordinates
+         if It.Is_Alias_Of = null
+           and then It.Was_Alias
+         then
+            List.Append (Abstract_Item (It));
+            Insert_And_Layout_Items
+              (Process.Data.Get_View,
+               Ref       => It,
+               Items     => List,
+               Direction => Right,
+               Duration  => 0.3);
+         end if;
+      end Build_Aliases;
+
+      ------------------
+      -- Update_Value --
+      ------------------
+
+      procedure Update_Value
+        (Item : not null access Abstract_Item_Record'Class)
+      is
+         It : constant Display_Item := Display_Item (Item);
+      begin
+         if It.Auto_Refresh and then It.Is_Alias_Of = null then
+            Update (It);
+         end if;
+      end Update_Value;
+
    begin
-      --  Remove all the temporary links and aliases
-      For_Each_Link (Get_Canvas (Process), Remove_Temporary'Access);
-      For_Each_Item (Get_Canvas (Process), Remove_Aliases'Access);
+      Process.Data.Get_View.Model.For_Each_Item
+        (Remove_Temporary'Access, Filter => Kind_Link);
+      Process.Data.Get_View.Model.Remove (To_Remove);
+      To_Remove.Clear;
 
       --  First: Recompile all the addresses, and detect the aliases
       if Get_Detect_Aliases (Process) then
-         For_Each_Item (Get_Canvas (Process), Recompute_Address'Access);
+         Process.Data.Get_View.Model.For_Each_Item
+           (Recompute_Address'Access, Filter => Kind_Item);
+         Process.Data.Get_View.Model.For_Each_Item
+           (Build_Aliases'Access, Filter => Kind_Item);
+      else
+         Process.Data.Get_View.Model.For_Each_Item
+           (Make_Visible'Access, Filter => Kind_Item);
       end if;
+
+      for L of To_Hide loop
+         L.Hide;
+      end loop;
 
       --  Then re-parse the value of each item and display them again
       if Recompute_Values then
-         For_Each_Item (Get_Canvas (Process), Update_On_Auto_Refresh'Access);
+         Process.Data.Get_View.Model.For_Each_Item
+           (Update_Value'Access, Filter => Kind_Item);
       end if;
-
-      --  Now that everything has been resized, we can finish to
-      --  manipulate the aliases
-      For_Each_Item (Get_Canvas (Process), Recompute_Sizes'Access);
    end Recompute_All_Aliases;
 
    ---------------------
@@ -1589,16 +892,6 @@ package body Display_Items is
          Reset_Recursive (Item.Entity);
       end if;
    end Reset_Recursive;
-
-   -----------------
-   -- Is_Alias_Of --
-   -----------------
-
-   function Is_Alias_Of
-     (Item : access Display_Item_Record) return Display_Item is
-   begin
-      return Item.Is_Alias_Of;
-   end Is_Alias_Of;
 
    --------------
    -- Get_Name --
@@ -1651,11 +944,8 @@ package body Display_Items is
       Mode : Items.Display_Mode) is
    begin
       Item.Mode := Mode;
-
-      --  Hide_Big is set to False, since we don't want to change the
-      --  visibility state of the item.
-      Update_Resize_Display
-        (Item, Get_Visibility (Item.Entity.all), Hide_Big => False);
+      Update (Item);
+      Item.Browser.Get_View.Model.Refresh_Layout;
    end Set_Display_Mode;
 
    ----------------------
@@ -1678,7 +968,8 @@ package body Display_Items is
    begin
       if Format /= Item.Format then
          Item.Format := Format;
-         Update (Item, True);
+         Update (Item);
+         Item.Browser.Get_View.Model.Refresh_Layout;
       end if;
    end Set_Format;
 
