@@ -1154,7 +1154,7 @@ package body Browsers.Scripts is
       elsif Command = "set_min_size" then
          Inst := Nth_Arg (Data, 1);
 
-         Container_Item (Get_Item (Inst)).Set_Min_Size
+         Container_Item (Get_Item (Inst)).Set_Size_Range
            (Min_Width  => Gdouble (Nth_Arg (Data, 2, 1.0)),
             Min_Height => Gdouble (Nth_Arg (Data, 3, 1.0)));
 
