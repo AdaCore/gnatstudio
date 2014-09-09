@@ -75,13 +75,13 @@ package body CodePeer.Reports is
       Gtk.Label.Gtk_New (Baseline_Inspection, "baseline");
       Baseline_Inspection.Set_Alignment (0.1, 0.0);
       Baseline_Inspection.Set_Label
-        ("Baseline review #"
+        ("Base run #"
          & Trim (Natural'Image (Project_Data.Baseline_Inspection), Both));
       Inspections_Box.Pack_Start (Baseline_Inspection);
       Gtk.Label.Gtk_New (Current_Inspection, "current");
       Current_Inspection.Set_Alignment (0.9, 0.0);
       Current_Inspection.Set_Label
-        ("Current review #"
+        ("Current run #"
          & Trim (Natural'Image (Project_Data.Current_Inspection), Both));
       Inspections_Box.Pack_End (Current_Inspection);
 
