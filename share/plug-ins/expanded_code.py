@@ -107,36 +107,34 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
     txt = f.read()
     f.close()
 
-    current_code = ""
+    current_code = []
     current_line = 1
     lines = 0
 
     for line in txt.split("\n"):
         if line.startswith("-- "):
-            if current_code != "":
+            if current_code:
                 if (block_first == 0
                         or (block_first < current_line < block_last)):
                     mark = srcbuf.add_special_line(current_line + 1,
-                                                   current_code,
-                                                   highlighting, "Style "
-                                                                 "errors")
+                                                   "\n".join(current_code),
+                                                   highlighting)
 
                     # Add mark to the list of marks
 
+                    mark_num = (mark, len(current_code))
+
                     if source_filename in expanded_code_marks:
-                        expanded_code_marks[source_filename] += [(mark, lines)]
+                        expanded_code_marks[source_filename] += [mark_num]
                     else:
-                        expanded_code_marks[source_filename] = [(mark, lines)]
+                        expanded_code_marks[source_filename] = [mark_num]
 
             current_line = int(line[3:line.find(":")])
-            current_code = ""
+            current_code = []
         else:
             if line != "":
                 lines += 1
-                if current_code == "":
-                    current_code = line
-                else:
-                    current_code = current_code + "\n" + line
+                current_code.append(line)
 
 
 # noinspection PyUnusedLocal
@@ -178,11 +176,9 @@ def show_gnatdg(for_subprogram=False, in_external_editor=False):
     dg = os.path.join(objdir, os.path.basename(local_file)) + '.dg'
 
     if distutils.dep_util.newer(local_file, dg):
-        gnatmake = GPS.Project.root(
-        ).get_attribute_as_string("compiler_command",
-                                  package="ide", index="ada")
-        cmd = gnatmake + " -q" + prj + \
-            ' -f -c -u -gnatcdx -gnatws -gnatGL """' + file + '"""'
+        cmd = 'gprbuild -q %s -f -c -u -gnatcdx -gnatws -gnatGL """%s"""' % (
+            prj, file)
+
         GPS.Console("Messages").write("Generating " + dg + "...\n")
         proc = GPS.Process(cmd, on_exit=on_exit, remote_server="Build_Server")
         proc.source_filename = local_file
