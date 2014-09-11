@@ -187,7 +187,7 @@ package body GPS.CLI_Utils is
       Kernel       : access GPS.CLI_Kernels.CLI_Kernel_Record)
    is
       procedure Local_Parse_Command_Line (Switch, Parameter, Section : String);
-      --  Allow to manage every occurance of -X switch for scenario variable.
+      --  Allow to manage every occurrence of -X switch for scenario variable.
 
       ------------------------
       -- Parse_Command_Line --

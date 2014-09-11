@@ -58,7 +58,7 @@ package GPS.CLI_Utils is
 
    function Project_File_Path_Exists
      (Path : in out GNAT.Strings.String_Access) return Boolean;
-   --  Check existance of the given Path. Add the project file extension if
+   --  Check existence of the given Path. Add the project file extension if
    --  not mentionned in the Path string.
    --
    --  Return: Wheter the file exists or not.
