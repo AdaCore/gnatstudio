@@ -784,7 +784,7 @@ package body MI.Utils is
             Pair := Result_Pair_Lists.Element (Cursor);
 
             --  Every element of this pair list is supposed to be a
-            --  String_Value so we can procede to a general check.
+            --  String_Value so we can proceed to a general check.
 
             Check_Is_String_Value_Or_Die (Pair.Variable.all, Pair.Value.all);
 

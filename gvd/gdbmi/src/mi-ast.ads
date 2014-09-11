@@ -21,7 +21,7 @@
 --  the most natural interface for a GDB/MI user.  Higher level tools are
 --  provided in this API to manipulate these types and extract relevant
 --  information.  This package also provide the visitor interface to walk
---  throught the AST.
+--  through the AST.
 
 with Ada.Containers.Doubly_Linked_Lists; use Ada.Containers;
 with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;

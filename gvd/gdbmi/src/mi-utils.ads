@@ -100,9 +100,9 @@ package MI.Utils is
       null;  -- ???
    end record;
 
-   ------------------------------
-   -- Memory managment helpers --
-   ------------------------------
+   -------------------------------
+   -- Memory management helpers --
+   -------------------------------
 
    procedure Clear_Var_Obj (Var_Obj : in out Var_Obj_Type);
    --  Releases the memory allocated by a given Var_Obj_Type object, i.e.
@@ -131,7 +131,7 @@ package MI.Utils is
    --  Releases the memory allocated by a given Frame_Type object, i.e.  frees
    --  inner structures.
 
-   --  Note about this package's memory managment policy: The following
+   --  Note about this package's memory management policy: The following
    --  subprograms work on the result of the MI scanner/parser.  For commodity
    --  reasons, they always return new elements which means that both the
    --  scanner/parser structures and these results need to be freed by the
