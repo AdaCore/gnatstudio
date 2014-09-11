@@ -294,17 +294,17 @@ procedure GPS.Main is
 
    procedure Startup_Callback
      (Application : access Gapplication_Record'Class);
-   --  Handler for the ::startup signal, emited by the application
+   --  Handler for the ::startup signal, emitted by the application
 
    procedure Activate_Callback
      (Application : access Gapplication_Record'Class);
-   --  Handler for the ::activate signal, emited by the application
+   --  Handler for the ::activate signal, emitted by the application
 
    function Command_Line_Callback
      (Application  : access Gapplication_Record'Class;
       Command_Line : not null access Gapplication_Command_Line_Record'Class)
    return Glib.Gint;
-   --  Handler for the ::command-line signal, emited by the application
+   --  Handler for the ::command-line signal, emitted by the application
 
    procedure Initialize_Environment_Variables
      (Command_Line : access Gapplication_Command_Line_Record'Class);
@@ -326,7 +326,7 @@ procedure GPS.Main is
    procedure File_Open_Callback
      (Application : Gtkada.Application.Gtkada_Application;
       Files       : Gtkada.Application.GFile_Array);
-   --  Handler for the ::open signal, emited by the application
+   --  Handler for the ::open signal, emitted by the application
 
    procedure Shutdown_Callback
      (Application : access Gapplication_Record'Class);
