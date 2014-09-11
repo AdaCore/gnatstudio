@@ -1,5 +1,4 @@
 --  The part of the kernel that depends on the GUI
-with "../gnat";
 with "gtkada";
 with "kernel_core";
 with "shared";

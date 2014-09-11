@@ -12,7 +12,6 @@ with "../completion/ui/completion_ui";
 with "../cpp_module/cpp_module";
 with "../custom/custom";
 with "../distrib";
-with "../docgen2/docgen2";
 with "../docs/docs";
 with "../gnattest/gnattest";
 with "../gvd/gvd";
