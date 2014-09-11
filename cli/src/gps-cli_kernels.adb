@@ -107,4 +107,24 @@ package body GPS.CLI_Kernels is
       return Self.Launcher'Access;
    end Process_Launcher;
 
+   ----------------
+   -- Get_Target --
+   ----------------
+
+   overriding function Get_Target
+     (Kernel : not null access CLI_Kernel_Record) return String is
+   begin
+      return Kernel.Registry.Tree.Root_Project.Get_Target;
+   end Get_Target;
+
+   -----------------
+   -- Get_Runtime --
+   -----------------
+
+   overriding function Get_Runtime
+     (Kernel : not null access CLI_Kernel_Record) return String is
+   begin
+      return Kernel.Registry.Tree.Root_Project.Get_Runtime;
+   end Get_Runtime;
+
 end GPS.CLI_Kernels;

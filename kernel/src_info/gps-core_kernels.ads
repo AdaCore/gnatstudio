@@ -121,6 +121,14 @@ package GPS.Core_Kernels is
      (Self : not null access Core_Kernel_Record) return String;
    --  Returns the current build mode.
 
+   function Get_Target
+     (Self : not null access Core_Kernel_Record) return String is abstract;
+   --  Returns the current target
+
+   function Get_Runtime
+     (Self : not null access Core_Kernel_Record) return String is abstract;
+   --  Return the current runtime
+
    function Get_Toolchains_Manager
      (Self : not null access Core_Kernel_Record)
       return Toolchains.Toolchain_Manager;

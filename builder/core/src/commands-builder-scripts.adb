@@ -335,6 +335,12 @@ package body Commands.Builder.Scripts is
 
       elsif Command = "get_build_mode" then
          Set_Return_Value (Data, Kernel.Get_Build_Mode);
+
+      elsif Command = "get_target" then
+         Set_Return_Value (Data, Kernel.Get_Target);
+
+      elsif Command = "get_runtime" then
+         Set_Return_Value (Data, Kernel.Get_Runtime);
       end if;
    end Shell_Handler;
 
@@ -389,8 +395,14 @@ package body Commands.Builder.Scripts is
 
       Register_Command (Kernel.Scripts,
                         Command       => "get_build_mode",
-                        Minimum_Args  => 0,
-                        Maximum_Args  => 0,
+                        Handler       => Shell_Handler'Access);
+
+      Register_Command (Kernel.Scripts,
+                        Command       => "get_target",
+                        Handler       => Shell_Handler'Access);
+
+      Register_Command (Kernel.Scripts,
+                        Command       => "get_runtime",
                         Handler       => Shell_Handler'Access);
    end Register_Commands;
 

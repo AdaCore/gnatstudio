@@ -918,6 +918,14 @@ package GPS.Kernel is
    --  the builder module, so this function is a convenient to retrieve that
    --  property.
 
+   overriding function Get_Target
+     (Self : not null access Kernel_Handle_Record) return String;
+   --  Return the current target
+
+   overriding function Get_Runtime
+     (Self : not null access Kernel_Handle_Record) return String;
+   --  Return the current runtime
+
    subtype Abstract_Module_ID        is Abstract_Module;
    subtype Abstract_Module_ID_Record is Abstract_Module_Record;
    --  Type aliases for compability

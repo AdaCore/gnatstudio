@@ -64,4 +64,10 @@ private
      (Kernel : not null access CLI_Kernel_Record)
       return GPS.Editors.Editor_Buffer_Factory_Access;
 
+   overriding function Get_Target
+     (Kernel : not null access CLI_Kernel_Record) return String;
+
+   overriding function Get_Runtime
+     (Kernel : not null access CLI_Kernel_Record) return String;
+
 end GPS.CLI_Kernels;

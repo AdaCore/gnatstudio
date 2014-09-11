@@ -10939,6 +10939,24 @@ def get_build_mode():
     pass  # implemented in Ada
 
 
+def get_target():
+    """
+    Returns the target currently set in the project or the GPS interface.
+
+    :return: a string
+    """
+    pass  # implemented in Ada
+
+
+def get_runtime():
+    """
+    Returns the runtime currently set in the project or the GPS interface.
+
+    :return: a string
+    """
+    pass  # implemented in Ada
+
+
 def get_build_output(target_name, shadow, background, as_string):
     """
     Returns the result of the last compilation command.
