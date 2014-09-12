@@ -23,39 +23,28 @@ with Glib.Main;                         use Glib.Main;
 with Glib.Object;                       use Glib.Object;
 
 with Cairo;                             use Cairo;
-with Cairo.PDF;                         use Cairo.PDF;
-with Cairo.Png;                         use Cairo.Png;
-with Cairo.Surface;                     use Cairo.Surface;
-with Cairo.SVG;                         use Cairo.SVG;
 
 with Pango.Enums;                       use Pango.Enums;
 with Pango.Font;                        use Pango.Font;
-with Pango.Layout;                      use Pango.Layout;
 
 with Gdk;                               use Gdk;
 with Gdk.Event;                         use Gdk.Event;
-with Gdk.Pixbuf;                        use Gdk.Pixbuf;
 with Gdk.RGBA;                          use Gdk.RGBA;
-with Gdk.Rectangle;                     use Gdk.Rectangle;
 with Gdk.Window;                        use Gdk.Window;
 
 with Gtk.Box;                           use Gtk.Box;
 with Gtk.Check_Menu_Item;               use Gtk.Check_Menu_Item;
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.Handlers;                      use Gtk.Handlers;
-with Gtk.Hbutton_Box;                   use Gtk.Hbutton_Box;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Menu_Tool_Button;              use Gtk.Menu_Tool_Button;
 with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
 with Gtk.Stock;                         use Gtk.Stock;
-with Gtk.Style;                         use Gtk.Style;
-with Gtk.Style_Context;                 use Gtk.Style_Context;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Tool_Button;                   use Gtk.Tool_Button;
 with Gtk.Widget;                        use Gtk.Widget;
 
-with Gtkada.Canvas;                     use Gtkada.Canvas;
 with Gtkada.Canvas_View;                use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Models.Layers; use Gtkada.Canvas_View.Models.Layers;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
@@ -76,7 +65,6 @@ with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
-with Layouts;                           use Layouts;
 with XML_Utils;                         use XML_Utils;
 
 package body Browsers.Canvas is
@@ -94,9 +82,6 @@ package body Browsers.Canvas is
    Hist_Add_Waypoints : constant History_Key := "browsers-add-waypoints";
    Hist_Vertical      : constant History_Key := "browsers-vertical";
 
-   Zoom_Duration : constant := 0.25;
-   --  Duration of the zoom animation
-
    type Export_Idle_Data is record
       Browser : General_Browser;
       Format  : Gtkada.Canvas_View.Export_Format;
@@ -107,7 +92,6 @@ package body Browsers.Canvas is
 
    type Cb_Data is record
       Browser       : General_Browser;
-      Item          : Gtkada.Canvas.Canvas_Item;
       Zoom          : Gdouble;
       Keep_Selected : Boolean;
    end record;
@@ -176,9 +160,6 @@ package body Browsers.Canvas is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Toggle the display of links for the item
 
-   procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class);
-   --  Toggle the layout of links
-
    procedure Toggle_Draw_Grid (Browser : access Gtk_Widget_Record'Class);
    --  Toggle the drawing of the grid, and refresh the canvas.
 
@@ -198,9 +179,6 @@ package body Browsers.Canvas is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove all selected items
 
-   procedure Destroyed (Browser : access Gtk_Widget_Record'Class);
-   --  Called when the browser is destroyed
-
    type Preferences_Hook_Record is new Function_With_Args with record
       Browser : General_Browser;
    end record;
@@ -210,15 +188,6 @@ package body Browsers.Canvas is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed
-
-   type Image_Canvas_Record is new
-     Gtkada.Canvas.Interactive_Canvas_Record with null record;
-   type Image_Canvas is access all Image_Canvas_Record'Class;
-
-   overriding function Get_Window
-     (Canvas : access Image_Canvas_Record) return Gdk.Gdk_Window;
-   --  Override Gtk.Widget.Get_Window, so that a different Window can be
-   --  returned if needed (e.g. when exporting the canvas).
 
    procedure On_Selection_Changed
      (Self  : not null access GObject_Record'Class;
@@ -257,16 +226,6 @@ package body Browsers.Canvas is
    function Create_Browser_Marker
      (Browser_Name : String) return Browser_Marker;
    --  Create a new marker that will bring the user back to the browser
-
-   ----------------
-   -- Get_Window --
-   ----------------
-
-   overriding function Get_Window
-     (Canvas : access Image_Canvas_Record) return Gdk.Gdk_Window is
-   begin
-      return Get_Window (Gtk_Widget_Record (Canvas.all)'Access);
-   end Get_Window;
 
    --------------------------
    -- On_Selection_Changed --
@@ -370,15 +329,10 @@ package body Browsers.Canvas is
    ----------------
 
    procedure Initialize
-     (Browser         : access General_Browser_Record'Class;
-      Create_Toolbar  : Boolean := False;
-      Parents_Pixmap  : String := Stock_Go_Back;
-      Children_Pixmap : String := Stock_Go_Forward;
-      Use_Canvas_View : Boolean := False)
+     (Browser         : access General_Browser_Record'Class)
    is
       Hook     : Preferences_Hook;
       Scrolled : Gtk_Scrolled_Window;
-      Canvas   : Image_Canvas;
       Id       : Handler_Id;
       pragma Unreferenced (Id);
    begin
@@ -389,42 +343,13 @@ package body Browsers.Canvas is
 
       Pack_Start (Browser, Scrolled, Expand => True, Fill => True);
 
-      Browser.Use_Canvas_View := Use_Canvas_View;
+      List_Rtree.Gtk_New (Browser.Model);
+      Browser.Model.Set_Selection_Mode (Selection_Multiple);
+      Gtk_New (Browser.View, Browser.Model);
+      Scrolled.Add (Browser.View);
 
-      if Browser.Use_Canvas_View then
-         List_Rtree.Gtk_New (Browser.Model);
-         Browser.Model.Set_Selection_Mode (Selection_Multiple);
-         Gtk_New (Browser.View, Browser.Model);
-         Scrolled.Add (Browser.View);
-
-         Id := Browser.Get_View.Model.On_Selection_Changed
-           (On_Selection_Changed'Access, Browser);
-
-      else
-         Canvas := new Image_Canvas_Record;
-         Gtkada.Canvas.Initialize (Canvas);
-         Browser.Canvas := Interactive_Canvas (Canvas);
-         Scrolled.Add (Browser.Canvas);
-         Canvas.Add_Events (Key_Press_Mask);
-         Set_Layout_Algorithm (Browser.Canvas, Simple_Layout'Access);
-         Set_Auto_Layout (Browser.Canvas, False);
-      end if;
-
-      if Create_Toolbar then
-         Gtk_New (Browser.Toolbar);
-         Set_Layout (Browser.Toolbar, Buttonbox_Spread);
-         Pack_Start (Browser, Browser.Toolbar, Expand => False);
-      end if;
-
-      Browser.Up_Arrow := Render_Icon
-        (Browser, Parents_Pixmap, Icon_Size_Menu);
-      Browser.Down_Arrow := Render_Icon
-        (Browser, Children_Pixmap, Icon_Size_Menu);
-      Browser.Close_Pixmap := Render_Icon
-        (Browser, Stock_Close, Icon_Size_Menu);
-
-      Widget_Callback.Object_Connect
-        (Browser, Signal_Destroy, Destroyed'Access, Browser);
+      Id := Browser.Get_View.Model.On_Selection_Changed
+        (On_Selection_Changed'Access, Browser);
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Browser.Kernel).all,
@@ -441,29 +366,7 @@ package body Browsers.Canvas is
       Execute (Hook.all, Browser.Kernel, Data => null);
 
       Change_Align_On_Grid (Browser);
-      Toggle_Orthogonal (Browser);
    end Initialize;
-
-   ---------------
-   -- Destroyed --
-   ---------------
-
-   procedure Destroyed (Browser : access Gtk_Widget_Record'Class) is
-      B : constant General_Browser := General_Browser (Browser);
-
-   begin
-      if B.Up_Arrow /= null then
-         Unref (B.Up_Arrow);
-      end if;
-
-      if B.Down_Arrow /= null then
-         Unref (B.Down_Arrow);
-      end if;
-
-      if B.Close_Pixmap /= null then
-         Unref (B.Close_Pixmap);
-      end if;
-   end Destroyed;
 
    -------------
    -- Execute --
@@ -475,73 +378,11 @@ package body Browsers.Canvas is
       Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel, Data);
-      Iter : Item_Iterator;
       B    : constant General_Browser := Hook.Browser;
-      F    : Pango_Font_Description;
-
    begin
-      Refresh_Layout_Orientation (B);
-
-      if B.Use_Canvas_View then
-         Create_Styles (B.View);
-
-         --  ??? Unused preference Child_Linked_Item_Color
-
-      else
-         F := GPS.Kernel.Preferences.Default_Font.Get_Pref_Font;
-
-         Iter := Start (B.Canvas);
-         while Get (Iter) /= null loop
-            declare
-               Item   : constant Browser_Item := Browser_Item (Get (Iter));
-               Layout : constant Pango.Layout.Pango_Layout :=
-                 Item.Title_Layout;
-            begin
-               if Layout /= null then
-                  Set_Font_Description (Layout, Copy (F));
-               end if;
-            end;
-
-            Next (Iter);
-         end loop;
-      end if;
-
+      Create_Styles (B.View);
       Toggle_Draw_Grid (B);
    end Execute;
-
-   --------------------------------
-   -- Refresh_Layout_Orientation --
-   --------------------------------
-
-   procedure Refresh_Layout_Orientation
-     (Browser : access General_Browser_Record) is
-   begin
-      if not Browser.Use_Canvas_View then
-         Set_Layout_Orientation
-           (Browser.Canvas,
-            Vertical_Layout => Browsers_Vertical_Layout.Get_Pref);
-      end if;
-   end Refresh_Layout_Orientation;
-
-   -----------------
-   -- Get_Toolbar --
-   -----------------
-
-   function Get_Toolbar (Browser : access General_Browser_Record)
-      return Gtk.Hbutton_Box.Gtk_Hbutton_Box is
-   begin
-      return Browser.Toolbar;
-   end Get_Toolbar;
-
-   ----------------
-   -- Get_Canvas --
-   ----------------
-
-   function Get_Canvas (Browser : access General_Browser_Record)
-      return Interactive_Canvas is
-   begin
-      return Browser.Canvas;
-   end Get_Canvas;
 
    --------------
    -- Get_View --
@@ -577,7 +418,6 @@ package body Browsers.Canvas is
          Contextual_Cb.Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Zoom_Level'Access,
             (Browser => General_Browser (View),
-             Item    => null,
              Keep_Selected => True,
              Zoom    => Zoom_Levels (J)));
       end loop;
@@ -590,7 +430,6 @@ package body Browsers.Canvas is
       Contextual_Cb.Connect
         (Menu, Gtk.Tool_Button.Signal_Clicked, Zoom_Level'Access,
          (Browser => General_Browser (View),
-          Item    => null,
           Keep_Selected => True,
           Zoom    => 1.0));
 
@@ -650,45 +489,29 @@ package body Browsers.Canvas is
         (Check, Gtk.Check_Menu_Item.Signal_Toggled,
          Toggle_Draw_Grid'Access, View);
 
-      if not View.Use_Canvas_View then
-         Gtk_New (Check, Label => -"Straight links");
-         Check.Set_Tooltip_Text
-           (-("Whether to force only horizontal and vertical links, or allow"
-            & " straight lines"));
-         Associate
-           (Get_History (View.Kernel).all, Hist_Straight_Links,
-            Check, Default => True);
-         Menu.Append (Check);
-         Widget_Callback.Object_Connect
-           (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-            Toggle_Orthogonal'Access, View);
-      end if;
+      Gtk_New (Check, Label => -"Vertical layout");
+      Check.Set_Tooltip_Text
+        (-("General orientation of the layout: either from left to right,"
+         & " or from top to bottom"));
+      Menu.Append (Check);
+      Associate
+        (Get_History (View.Kernel).all, Hist_Vertical, Check);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+         Force_Refresh'Access, View);
 
-      if View.Use_Canvas_View then
-         Gtk_New (Check, Label => -"Vertical layout");
-         Check.Set_Tooltip_Text
-           (-("General orientation of the layout: either from left to right,"
-            & " or from top to bottom"));
-         Menu.Append (Check);
-         Associate
-           (Get_History (View.Kernel).all, Hist_Vertical, Check);
-         Widget_Callback.Object_Connect
-           (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-            Force_Refresh'Access, View);
-
-         Gtk_New (Check, Label => -"Use waypoints");
-         Check.Set_Tooltip_Text
-           (-("Whether to insert waypoints in long edges when performing the"
-            & " layout of the graph. This might result in less edge crossings"
-            & " but is sometimes harder to use interactively"));
-         Menu.Append (Check);
-         Associate
-           (Get_History (View.Kernel).all, Hist_Add_Waypoints, Check,
-            Default => False);
-         Widget_Callback.Object_Connect
-           (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-            Force_Refresh'Access, View);
-      end if;
+      Gtk_New (Check, Label => -"Use waypoints");
+      Check.Set_Tooltip_Text
+        (-("Whether to insert waypoints in long edges when performing the"
+         & " layout of the graph. This might result in less edge crossings"
+         & " but is sometimes harder to use interactively"));
+      Menu.Append (Check);
+      Associate
+        (Get_History (View.Kernel).all, Hist_Add_Waypoints, Check,
+         Default => False);
+      Widget_Callback.Object_Connect
+        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
+         Force_Refresh'Access, View);
    end Create_Menu;
 
    --------------
@@ -763,37 +586,15 @@ package body Browsers.Canvas is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
    is
-      pragma Unreferenced (Event_Widget, Kernel);
+      pragma Unreferenced (Event_Widget, Kernel, Menu);
       B            : constant General_Browser := General_Browser (Object);
-      Item         : Gtkada.Canvas.Canvas_Item;
-      Xr, Yr       : Gint;
-      Xroot, Yroot : Gdouble;
-      Xsave, Ysave : Gdouble;
       Details      : Canvas_Event_Details;
 
    begin
       if Get_Event_Type (Event) in Button_Press .. Button_Release then
-         if B.Use_Canvas_View then
-            B.View.Set_Details (Details, Event.Button);
-            if Details.Toplevel_Item /= null then
-               GPS_Item (Details.Toplevel_Item).Set_Context (Context);
-            end if;
-         else
-            Get_Origin (Get_Window (B.Canvas), Xr, Yr);
-            Get_Root_Coords (Event, Xroot, Yroot);
-            Event.Button.X := Xroot - Gdouble (Xr);
-            Event.Button.Y := Yroot - Gdouble (Yr);
-            Item := Item_At_Coordinates (B.Canvas, Event);
-
-            if Item /= null then
-               Get_Coords (Event, Xsave, Ysave);
-               Event.Button.X := Xsave - Gdouble (Get_Coord (Item).X);
-               Event.Button.Y := Ysave - Gdouble (Get_Coord (Item).Y);
-               Contextual_Factory
-                 (Browser_Item (Item), Context, B, Event, Menu);
-               Event.Button.X := Xsave;
-               Event.Button.Y := Ysave;
-            end if;
+         B.View.Set_Details (Details, Event.Button);
+         if Details.Toplevel_Item /= null then
+            GPS_Item (Details.Toplevel_Item).Set_Context (Context);
          end if;
       end if;
    end Default_Browser_Context_Factory;
@@ -808,8 +609,6 @@ package body Browsers.Canvas is
    is
       pragma Unreferenced (Self);
       B : constant General_Browser := Browser_From_Context (Context.Context);
-      Iter : Item_Iterator;
-      Item : Gtkada.Canvas.Canvas_Item;
       To_Remove : Item_Sets.Set;
 
       procedure On_Item (Item : not null access Abstract_Item_Record'Class);
@@ -821,35 +620,10 @@ package body Browsers.Canvas is
       end On_Item;
 
    begin
-      if B.Use_Canvas_View then
-         B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
-         B.Model.Remove (To_Remove);
-         B.Model.Refresh_Layout;
-         B.View.Queue_Draw;
-      else
-         Iter := Start (B.Canvas);
-         loop
-            Item := Get (Iter);
-            exit when Item = null;
-
-            Next (Iter);
-
-            if Is_Selected (B.Canvas, Item) then
-               Remove (B.Canvas, Item);
-            else
-               Reset (Browser_Item (Item), True, True);
-            end if;
-         end loop;
-
-         Layout (B);
-         Refresh_Canvas (B.Canvas);
-
-         Iter := Start (B.Canvas);
-         Item := Get (Iter);
-         if Item /= null then
-            Show_Item (B.Canvas, Item);
-         end if;
-      end if;
+      B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+      B.Model.Remove (To_Remove);
+      B.Model.Refresh_Layout;
+      B.View.Queue_Draw;
       return Commands.Success;
    end Execute;
 
@@ -863,8 +637,6 @@ package body Browsers.Canvas is
    is
       pragma Unreferenced (Self);
       B : constant General_Browser := Browser_From_Context (Context.Context);
-      Iter : Item_Iterator;
-      Item : Gtkada.Canvas.Canvas_Item;
       To_Remove : Item_Sets.Set;
 
       procedure On_Item (Item : not null access Abstract_Item_Record'Class);
@@ -876,36 +648,10 @@ package body Browsers.Canvas is
       end On_Item;
 
    begin
-      if B.Use_Canvas_View then
-         B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
-         B.Model.Remove (To_Remove);
-         B.Model.Refresh_Layout;
-         B.View.Queue_Draw;
-      else
-         Iter := Start (B.Canvas);
-         loop
-            Item := Get (Iter);
-            exit when Item = null;
-
-            Next (Iter);
-
-            if not Is_Selected (B.Canvas, Item) then
-               Remove (B.Canvas, Item);
-            else
-               Reset (Browser_Item (Item), True, True);
-            end if;
-         end loop;
-
-         Layout (B);
-         Refresh_Canvas (B.Canvas);
-
-         Iter := Start (B.Canvas);
-         Item := Get (Iter);
-         if Item /= null then
-            Show_Item (B.Canvas, Item);
-         end if;
-      end if;
-
+      B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+      B.Model.Remove (To_Remove);
+      B.Model.Refresh_Layout;
+      B.View.Queue_Draw;
       return Commands.Success;
    end Execute;
 
@@ -919,8 +665,6 @@ package body Browsers.Canvas is
    is
       pragma Unreferenced (Self);
       B : constant General_Browser := Browser_From_Context (Context.Context);
-      Iter : Item_Iterator;
-      Item : Gtkada.Canvas.Canvas_Item;
       S    : Item_Sets.Set;
       Is_First_Link : Boolean := True;
       Make_Invisible : Boolean;
@@ -951,24 +695,10 @@ package body Browsers.Canvas is
       end On_Link;
 
    begin
-      if B.Use_Canvas_View then
-         B.Model.For_Each_Item
-           (On_Item'Access, Filter => Kind_Item, Selected_Only => True);
-         B.View.Model.For_Each_Link (On_Link'Access, From_Or_To => S);
-         B.View.Queue_Draw;
-
-      else
-         Iter := Start (B.Canvas);
-         loop
-            Item := Get (Iter);
-            exit when Item = null;
-
-            Browser_Item (Item).Hide_Links :=
-              not Browser_Item (Item).Hide_Links;
-            Next (Iter);
-         end loop;
-         Refresh_Canvas (B.Canvas);
-      end if;
+      B.Model.For_Each_Item
+        (On_Item'Access, Filter => Kind_Item, Selected_Only => True);
+      B.View.Model.For_Each_Link (On_Link'Access, From_Or_To => S);
+      B.View.Queue_Draw;
       return Commands.Success;
    end Execute;
 
@@ -1030,59 +760,14 @@ package body Browsers.Canvas is
                        Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
                        Kind              => Save_File,
                        History           => Get_History (Kernel));
-         Surface : Cairo_Surface;
-         Width   : Gdouble;
-         Height  : Gdouble;
-         Cr      : Cairo_Context;
-         Status  : Cairo_Status;
          Success : Boolean;
-         Canvas  : Interactive_Canvas;
-
       begin
          if Name /= GNATCOLL.VFS.No_File then
-            if Data.Browser.Use_Canvas_View then
-               Success := Data.Browser.View.Export
-                 (Filename          => Name.Display_Full_Name,
-                  Page              => A4_Landscape,
-                  Format            => Data.Format,
-                  Visible_Area_Only => True);
-            else
-               Canvas := Get_Canvas (Data.Browser);
-               Gtkada.Canvas.Get_Bounding_Box (Canvas, Width, Height);
-
-               case Data.Format is
-               when Export_PNG =>
-                  Surface := Create_Similar_Surface
-                    (Get_Window (Canvas), Cairo.Cairo_Content_Color_Alpha,
-                     Gint (Width), Gint (Height));
-               when Export_PDF =>
-                  Surface := Cairo.PDF.Create
-                    (+Full_Name (Name), Width, Height);
-               when Export_SVG =>
-                  Surface := Cairo.SVG.Create
-                    (+Full_Name (Name), Width, Height);
-               end case;
-
-               Status := Cairo.Surface.Status (Surface);
-
-               if Status = Cairo_Status_Success then
-                  Cr := Create (Surface);
-                  Set_Line_Width (Cr, 0.5);
-                  Canvas.Draw_All (Cr);
-                  Destroy (Cr);
-               end if;
-
-               case Data.Format is
-               when Export_PNG =>
-                  Status :=
-                    Cairo.Png.Write_To_Png (Surface, +Full_Name (Name));
-               when Export_PDF | Export_SVG =>
-                  Status := Cairo.Surface.Status (Surface);
-               end case;
-
-               Destroy (Surface);
-               Success := Status = Cairo_Status_Success;
-            end if;
+            Success := Data.Browser.View.Export
+              (Filename          => Name.Display_Full_Name,
+               Page              => A4_Landscape,
+               Format            => Data.Format,
+               Visible_Area_Only => True);
 
             if not Success then
                Kernel.Insert
@@ -1158,31 +843,23 @@ package body Browsers.Canvas is
       Space_Between_Layers : Gdouble := Default_Space_Between_Layers)
    is
    begin
-      if Self.Use_Canvas_View then
-         --  Recompute the size of all boxes
-         Self.View.Model.Refresh_Layout;
+      --  Recompute the size of all boxes
+      Self.View.Model.Refresh_Layout;
 
-         --  Now compute the position of the boxes.
+      --  Now compute the position of the boxes.
 
-         Gtkada.Canvas_View.Models.Layers.Layout
-           (Self.View.Model,
-            View                 => Self.View,  --  animate
-            Horizontal           => Self.Horizontal_Layout,
-            Add_Waypoints        =>
-              Get_History (Get_History (Self.Kernel).all, Hist_Add_Waypoints),
-            Space_Between_Items  => Space_Between_Items,
-            Space_Between_Layers => Space_Between_Layers);
+      Gtkada.Canvas_View.Models.Layers.Layout
+        (Self.View.Model,
+         View                 => Self.View,  --  animate
+         Horizontal           => Self.Horizontal_Layout,
+         Add_Waypoints        =>
+           Get_History (Get_History (Self.Kernel).all, Hist_Add_Waypoints),
+         Space_Between_Items  => Space_Between_Items,
+         Space_Between_Layers => Space_Between_Layers);
 
-         if Rescale then
-            Self.View.Scale_To_Fit
-              (Min_Scale => 0.5, Max_Scale => 2.0, Duration => 0.8);
-         end if;
-
-      else
-         Set_Layout_Algorithm (Self.Canvas, Layer_Layout'Access);
-         Layout (Self, Force => True);
-         Refresh_Canvas (Get_Canvas (Self));
-         Set_Layout_Algorithm (Self.Canvas, Simple_Layout'Access);
+      if Rescale then
+         Self.View.Scale_To_Fit
+           (Min_Scale => 0.5, Max_Scale => 2.0, Duration => 0.8);
       end if;
    end Refresh_Layout;
 
@@ -1212,12 +889,8 @@ package body Browsers.Canvas is
       pragma Unreferenced (Self);
       B : constant General_Browser := Browser_From_Context (Context.Context);
    begin
-      if B.Use_Canvas_View then
-         Browser_Model (B.View.Model).Clear;
-         Browser_Model (B.View.Model).Refresh_Layout;
-      else
-         B.Canvas.Clear;
-      end if;
+      Browser_Model (B.View.Model).Clear;
+      Browser_Model (B.View.Model).Refresh_Layout;
       return Commands.Success;
    end Execute;
 
@@ -1230,29 +903,10 @@ package body Browsers.Canvas is
       Align : constant Boolean :=
         Get_History (Get_History (View.Kernel).all, Hist_Align_On_Grid);
    begin
-      if View.Use_Canvas_View then
-         View.View.Set_Snap
-           (Snap_To_Grid   => Align,
-            Snap_To_Guides => False);
-      else
-         Align_On_Grid (Get_Canvas (View), Align);
-      end if;
+      View.View.Set_Snap
+        (Snap_To_Grid   => Align,
+         Snap_To_Guides => False);
    end Change_Align_On_Grid;
-
-   -----------------------
-   -- Toggle_Orthogonal --
-   -----------------------
-
-   procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class) is
-      View  : constant General_Browser := General_Browser (Browser);
-      Straight : constant Boolean :=
-        Get_History (Get_History (View.Kernel).all, Hist_Straight_Links);
-   begin
-      if not View.Use_Canvas_View then
-         Set_Orthogonal_Links (Get_Canvas (View), not Straight);
-         Refresh_Canvas (Get_Canvas (View));
-      end if;
-   end Toggle_Orthogonal;
 
    -------------------
    -- Force_Refresh --
@@ -1279,37 +933,23 @@ package body Browsers.Canvas is
         (Annotation_Font,
          Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
 
-      if View.Use_Canvas_View then
-         View.View.Set_Grid_Size
-           (Size => Model_Coordinate (Gtkada.Canvas.Default_Grid_Size));
+      View.View.Set_Grid_Size (Size => 15.0);
 
-         if not Draw_Grid then
-            View.View.Background := Background_Color;
-         else
-            View.View.Background := Background_Grid_Lines;
-         end if;
-
-         View.View.Grid_Style := Gtk_New
-           (Stroke     => (0.9, 0.9, 0.9, 0.5),   --  the grid color
-            Line_Width => 1.0,                    --  the grid line width
-            Fill       => Create_Rgba_Pattern
-              (Browsers_Bg_Color.Get_Pref));  --  the background color
+      if not Draw_Grid then
+         View.View.Background := Background_Color;
       else
-         Configure
-           (View.Canvas,
-            Annotation_Font => Annotation_Font,
-            Grid_Size       =>
-              (if Draw_Grid then Gtkada.Canvas.Default_Grid_Size else 0),
-            Background      => Browsers_Bg_Color.Get_Pref);
+         View.View.Background := Background_Grid_Lines;
       end if;
+
+      View.View.Grid_Style := Gtk_New
+        (Stroke     => (0.9, 0.9, 0.9, 0.5),   --  the grid color
+         Line_Width => 1.0,                    --  the grid line width
+         Fill       => Create_Rgba_Pattern
+           (Browsers_Bg_Color.Get_Pref));  --  the background color
 
       Free (Annotation_Font);
 
-      if View.Use_Canvas_View then
-         View.View.Queue_Draw;
-      else
-         Refresh_Canvas (Get_Canvas (View));
-      end if;
+      View.View.Queue_Draw;
    end Toggle_Draw_Grid;
 
    -------------
@@ -1324,21 +964,13 @@ package body Browsers.Canvas is
       B : constant General_Browser := Browser_From_Context (Context.Context);
       Z : Gdouble;
    begin
-      if B.Use_Canvas_View then
-         Z := B.View.Get_Scale;
-      else
-         Z := Get_Zoom (B.Canvas);
-      end if;
+      Z := B.View.Get_Scale;
 
       for J in Zoom_Levels'First .. Zoom_Levels'Last - 1 loop
          if Zoom_Levels (J) <= Z
            and then Z < Zoom_Levels (J + 1)
          then
-            if B.Use_Canvas_View then
-               B.View.Set_Scale (Zoom_Levels (J + 1));
-            else
-               Zoom (B.Canvas, Zoom_Levels (J + 1), Zoom_Duration);
-            end if;
+            B.View.Set_Scale (Zoom_Levels (J + 1));
          end if;
       end loop;
       return Commands.Success;
@@ -1356,21 +988,13 @@ package body Browsers.Canvas is
       B : constant General_Browser := Browser_From_Context (Context.Context);
       Z : Gdouble;
    begin
-      if B.Use_Canvas_View then
-         Z := B.View.Get_Scale;
-      else
-         Z := Get_Zoom (B.Canvas);
-      end if;
+      Z := B.View.Get_Scale;
 
       for J in Zoom_Levels'First + 1 .. Zoom_Levels'Last loop
          if Zoom_Levels (J - 1) < Z
            and then Z <= Zoom_Levels (J)
          then
-            if B.Use_Canvas_View then
-               B.View.Set_Scale (Zoom_Levels (J - 1));
-            else
-               Zoom (B.Canvas, Zoom_Levels (J - 1), Zoom_Duration);
-            end if;
+            B.View.Set_Scale (Zoom_Levels (J - 1));
          end if;
       end loop;
       return Commands.Success;
@@ -1385,60 +1009,8 @@ package body Browsers.Canvas is
    is
       pragma Unreferenced (Item);
    begin
-      if Data.Browser.Use_Canvas_View then
-         Data.Browser.View.Set_Scale (Data.Zoom);
-      else
-         Zoom (Data.Browser.Canvas, Data.Zoom, 0.0);
-      end if;
+      Data.Browser.View.Set_Scale (Data.Zoom);
    end Zoom_Level;
-
-   ---------------
-   -- To_Brower --
-   ---------------
-
-   function To_Browser
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class)
-      return General_Browser is
-   begin
-      return General_Browser (Get_Parent (Get_Parent (Canvas)));
-   end To_Browser;
-
-   ---------------
-   -- Draw_Link --
-   ---------------
-
-   overriding procedure Draw_Link
-     (Canvas      : access Interactive_Canvas_Record'Class;
-      Link        : access Browser_Link_Record;
-      Cr          : Cairo_Context;
-      Edge_Number : Glib.Gint;
-      Show_Annotation : Boolean := True)
-   is
-   begin
-      if not Show_Annotation then
-         Set_Source_Color (Cr, Black_RGBA);
-         Draw_Link (Canvas, Canvas_Link_Access (Link), Cr, Edge_Number, False);
-
-         return;
-      end if;
-
-      if not Browser_Item (Get_Src (Link)).Hide_Links
-        and then not Browser_Item (Get_Dest (Link)).Hide_Links
-      then
-         if not Is_Selected
-           (Canvas, Gtkada.Canvas.Canvas_Item (Get_Src (Link)))
-           and then not Is_Selected
-             (Canvas, Gtkada.Canvas.Canvas_Item (Get_Dest (Link)))
-         then
-            Set_Source_Color (Cr, Black_RGBA);
-         else
-            Set_Source_Color (Cr, Selected_Link_Color.Get_Pref);
-         end if;
-
-         Draw_Link
-           (Canvas, Canvas_Link_Access (Link), Cr, Edge_Number, True);
-      end if;
-   end Draw_Link;
 
    ----------------
    -- Get_Kernel --
@@ -1449,282 +1021,6 @@ package body Browsers.Canvas is
    begin
       return Browser.Kernel;
    end Get_Kernel;
-
-   -----------
-   -- Reset --
-   -----------
-
-   procedure Reset
-     (Item    : access Browser_Item_Record;
-      Parent_Removed, Child_Removed : Boolean)
-   is
-      pragma Unreferenced (Item, Parent_Removed, Child_Removed);
-   begin
-      null;
-   end Reset;
-
-   ---------------
-   -- Set_Title --
-   ---------------
-
-   procedure Set_Title
-     (Item : access Browser_Item_Record'Class; Title : String := "") is
-   begin
-      if Title = "" then
-         if Item.Title_Layout /= null then
-            Unref (Item.Title_Layout);
-            Item.Title_Layout := null;
-         end if;
-      else
-         if Item.Title_Layout = null then
-            Item.Title_Layout := Create_Pango_Layout (Item.Browser, Title);
-            Set_Font_Description
-              (Item.Title_Layout, Preferences.Default_Font.Get_Pref_Font);
-         else
-            Set_Text (Item.Title_Layout, Title);
-         end if;
-      end if;
-   end Set_Title;
-
-   ----------------------------
-   -- Get_Last_Button_Number --
-   ----------------------------
-
-   function Get_Last_Button_Number (Item : access Browser_Item_Record)
-      return Gint
-   is
-      pragma Unreferenced (Item);
-   begin
-      return 0;
-   end Get_Last_Button_Number;
-
-   ---------------------
-   -- Resize_And_Draw --
-   ---------------------
-
-   procedure Resize_And_Draw
-     (Item             : access Browser_Item_Record;
-      Cr               : Cairo_Context;
-      Width, Height    : Glib.Gint;
-      Width_Offset     : Glib.Gint;
-      Height_Offset    : Glib.Gint;
-      Xoffset, Yoffset : in out Glib.Gint;
-      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
-   is
-      pragma Unreferenced (Layout, Width, Height);
-   begin
-      Cairo.Rectangle
-        (Cr,
-         Gdouble (Xoffset),
-         Gdouble (Item.Title_Coord.Y + Item.Title_Coord.Height + Yoffset),
-         Gdouble (Item.Get_Coord.Width - Width_Offset),
-         Gdouble (Item.Get_Coord.Height - Item.Title_Coord.Height
-           - Item.Title_Coord.Y - Height_Offset));
-
-      Set_Source_Color (Cr, White_RGBA);
-      Fill_Preserve (Cr);
-
-      Set_Line_Width (Cr, 1.0);
-      Set_Source_Color (Cr, Shade (White_RGBA, 0.3));
-      Stroke (Cr);
-
-      if Item.Title_Layout /= null then
-         Yoffset := Yoffset + Item.Title_Coord.Height + 1;
-      end if;
-   end Resize_And_Draw;
-
-   -----------------
-   -- Get_Browser --
-   -----------------
-
-   function Get_Browser (Item : access Browser_Item_Record'Class)
-      return General_Browser is
-   begin
-      return Item.Browser;
-   end Get_Browser;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Item    : access Browser_Item_Record'Class;
-      Browser : access General_Browser_Record'Class) is
-   begin
-      Item.Browser := General_Browser (Browser);
-   end Initialize;
-
-   --------------
-   -- Selected --
-   --------------
-
-   overriding procedure Selected
-     (Item        : access Browser_Item_Record;
-      Canvas      : access Interactive_Canvas_Record'Class;
-      Is_Selected : Boolean)
-   is
-      pragma Unreferenced (Item, Is_Selected);
-      --  Call Highlight on Item and all its siblings. If the selection status
-      --  has changed, this will result in a change of background color for
-      --  these items.
-   begin
-      --  We need to redraw the whole canvas, so that the links are correctly
-      --  updated. If multiple items are selected, this isn't a problem since
-      --  gtk+ will coalesce the two events anyway.
-      Refresh_Canvas (Canvas);
-   end Selected;
-
-   -------------------
-   -- Draw_Selected --
-   -------------------
-
-   overriding procedure Draw_Selected
-     (Item : access Browser_Item_Record;
-      Cr   : Cairo.Cairo_Context) is
-   begin
-      --  Just use the regular Draw method, as hilighting is handled in the
-      --  Selected procedure above.
-      Draw (Browser_Item_Record'Class (Item.all)'Access, Cr);
-   end Draw_Selected;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Item : in out Browser_Item_Record) is
-   begin
-      Destroy (Gtkada.Canvas.Canvas_Item_Record (Item));
-   end Destroy;
-
-   ------------------
-   -- Compute_Size --
-   ------------------
-
-   procedure Compute_Size
-     (Item   : not null access Browser_Item_Record;
-      Layout : not null access Pango.Layout.Pango_Layout_Record'Class;
-      Width, Height : out Glib.Gint;
-      Title_Box     : in out Cairo.Region.Cairo_Rectangle_Int)
-   is
-      pragma Unreferenced (Item, Layout, Title_Box);
-   begin
-      Width := 0;
-      Height := 0;
-   end Compute_Size;
-
-   --------------------
-   -- Recompute_Size --
-   --------------------
-
-   procedure Recompute_Size
-     (Item   : not null access Browser_Item_Record'Class)
-   is
-      Num_Buttons   : constant Gint := 1 + Get_Last_Button_Number
-        (Browser_Item (Item));  --  dispatching call
-      Button_Width  : constant Gint := Get_Width (Item.Browser.Close_Pixmap);
-      Button_Height : constant Gint := Get_Height (Item.Browser.Close_Pixmap);
-
-      Layout : Pango_Layout;
-      Width, Height  : Gint;
-      W, H     : Gint := 0;
-      Border : Gtk.Style.Gtk_Border;
-      Layout_H : Gint := 0;
-
-   begin
-      Layout := Create_Pango_Layout (Get_Browser (Item), "");
-      Set_Font_Description (Layout, Preferences.Default_Font.Get_Pref_Font);
-
-      Get_Style_Context (Get_Browser (Item)).Get_Border
-        (Gtk_State_Flag_Normal, Border);
-
-      if Item.Title_Layout /= null then
-         Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
-         W := W + 2 * Margin + Num_Buttons * (Margin + Button_Width);
-         Item.Title_Coord :=
-           (X      => Gint (Border.Right),
-            Y      => Gint (Border.Top),
-            Width  => W - Gint (Border.Left + Border.Right),
-            Height =>
-              Gint'Max
-                (Layout_H, Button_Height + Gint (Border.Top + Border.Bottom)));
-      else
-         Item.Title_Coord := (others => 0);
-      end if;
-
-      Compute_Size (Item, Layout, Width, Height, Item.Title_Coord);
-      Unref (Layout);
-
-      H := Item.Title_Coord.Height + 1 + Height +
-        Gint (Border.Top + Border.Bottom);
-
-      Set_Screen_Size (Browser_Item (Item), Width, H);
-   end Recompute_Size;
-
-   ----------
-   -- Draw --
-   ----------
-
-   overriding procedure Draw
-     (Item : access Browser_Item_Record;
-      Cr   : Cairo.Cairo_Context)
-   is
-      Xoffset, Yoffset : Gint := 0;
-      Layout           : Pango_Layout;
-   begin
-      Layout := Create_Pango_Layout (Get_Browser (Item), "");
-      Set_Font_Description (Layout, Preferences.Default_Font.Get_Pref_Font);
-
-      Resize_And_Draw
-        (Browser_Item_Record'Class (Item.all)'Access,
-         Cr, 0, 0, 0, 0, Xoffset, Yoffset, Layout);
-
-      Unref (Layout);
-   end Draw;
-
-   --------------------------
-   -- Refresh_Linked_Items --
-   --------------------------
-
-   procedure Refresh_Linked_Items
-     (Item             : access Browser_Item_Record'Class;
-      Refresh_Parents  : Boolean := False;
-      Refresh_Children : Boolean := False)
-   is
-      pragma Unreferenced (Refresh_Parents, Refresh_Children);
-   begin
-      Refresh_Canvas (Get_Canvas (Get_Browser (Item)));
-   end Refresh_Linked_Items;
-
-   ------------
-   -- Layout --
-   ------------
-
-   procedure Layout
-     (Browser : access General_Browser_Record;
-      Force : Boolean := False) is
-   begin
-      Layout (Get_Canvas (Browser), Force => Force);
-   end Layout;
-
-   -----------------------
-   -- Get_Parents_Arrow --
-   -----------------------
-
-   function Get_Parents_Arrow
-     (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf is
-   begin
-      return Browser.Up_Arrow;
-   end Get_Parents_Arrow;
-
-   ------------------------
-   -- Get_Children_Arrow --
-   ------------------------
-
-   function Get_Children_Arrow
-     (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf is
-   begin
-      return Browser.Down_Arrow;
-   end Get_Children_Arrow;
 
    -----------------------------
    -- Add_Navigation_Location --
@@ -1838,15 +1134,6 @@ package body Browsers.Canvas is
       return Location_Marker (Create_Browser_Marker (Marker.Title.all));
    end Clone;
 
-   --------------------
-   -- Get_Orthogonal --
-   --------------------
-
-   function Get_Orthogonal (E : access Browser_Link_Record) return Boolean is
-   begin
-      return E.Orthogonal;
-   end Get_Orthogonal;
-
    ----------------------
    -- Register_Actions --
    ----------------------
@@ -1952,11 +1239,7 @@ package body Browsers.Canvas is
       end On_Item;
 
    begin
-      if B.Use_Canvas_View then
-         B.View.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
-      else
-         Select_All (B.Canvas);
-      end if;
+      B.View.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
       return Commands.Success;
    end Execute;
 

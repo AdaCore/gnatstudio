@@ -327,7 +327,7 @@ package body Browsers.Call_Graph is
      (View   : access Call_Graph_Browser_Record'Class)
       return Gtk_Widget is
    begin
-      Initialize (View, Use_Canvas_View => True);
+      Browsers.Canvas.Initialize (View);
       Register_Contextual_Menu
         (Kernel          => View.Kernel,
          Event_On_Widget => View,

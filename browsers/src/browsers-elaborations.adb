@@ -164,10 +164,7 @@ package body Browsers.Elaborations is
      (View   : access Elaboration_Browser_Record'Class)
       return Gtk_Widget is
    begin
-      Initialize
-        (View,
-         Create_Toolbar  => True,
-         Use_Canvas_View => True);
+      Browsers.Canvas.Initialize (View);
       Register_Contextual_Menu
         (Kernel          => View.Kernel,
          Event_On_Widget => View,

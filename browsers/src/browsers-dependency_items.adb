@@ -392,7 +392,7 @@ package body Browsers.Dependency_Items is
      (View   : access Dependency_Browser_Record'Class)
       return Gtk_Widget is
    begin
-      Initialize (View, Use_Canvas_View => True);
+      Browsers.Canvas.Initialize (View);
       Register_Contextual_Menu
         (Kernel          => View.Kernel,
          Event_On_Widget => View,

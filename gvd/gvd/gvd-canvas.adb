@@ -877,8 +877,7 @@ package body GVD.Canvas is
    begin
       Assert (Me, Canvas.Kernel /= null,
               "Canvas' kernel not initialized");
-      Browsers.Canvas.Initialize
-        (Canvas, Create_Toolbar => False, Use_Canvas_View => True);
+      Browsers.Canvas.Initialize (Canvas);
       Canvas.Get_View.Model.Set_Selection_Mode (Selection_Single);
       Canvas.Detect_Aliases := Default_Detect_Aliases.Get_Pref;
 
