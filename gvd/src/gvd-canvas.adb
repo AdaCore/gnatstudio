@@ -355,14 +355,6 @@ package body GVD.Canvas is
    --  Add a new link between two items.
    --  The link is not created if there is already a similar one.
 
-   procedure Remove_With_Aliases
-     (Item : access Display_Item_Record'Class;
-      Remove_Aliases : Boolean);
-   pragma Unreferenced (Remove_With_Aliases);
-   --  Remove the item from the canvas.
-   --  If Remove_Aliases is True, then all the items on the canvas that are
-   --  aliases of Item are also removed.
-
    function Get_Graph_Cmd
      (Item : access Display_Item_Record'Class) return String;
    --  Return the "graph display..." command used to create the item
@@ -2027,7 +2019,25 @@ package body GVD.Canvas is
      (Self     : not null access Display_Item_Record;
       In_Model : not null access Canvas_Model_Record'Class)
    is
+      To_Remove : Item_Sets.Set;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+         It : constant Display_Item := Display_Item (Item);
+      begin
+         if It.Is_Alias_Of = Display_Item (Self) then
+            It.Is_Alias_Of := null;
+            Include_Related_Items (In_Model, It, To_Remove);
+         end if;
+      end On_Item;
+
    begin
+      --  Remove all items that are aliases of Self (since they are currently
+      --  invisible, the user means to close them at the same time).
+
+      In_Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+      In_Model.Remove (To_Remove);
+
       if Self.Entity /= null then
          Free (Self.Entity);
       end if;
@@ -2037,60 +2047,6 @@ package body GVD.Canvas is
 
       GPS_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
-
-   -------------------------
-   -- Remove_With_Aliases --
-   -------------------------
-
-   procedure Remove_With_Aliases
-     (Item : access Display_Item_Record'Class;
-      Remove_Aliases : Boolean)
-   is
-      Canvas : constant Debugger_Data_View := Item.Debugger.Data;
-      To_Remove : Item_Sets.Set;
-
-      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
-      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
-         It : constant Display_Item := Display_Item (Item);
-      begin
-         --  If It is an alias of Item, and it wasn't displayed explicitly
-         --  by the user, then remove it from the canvas as well.  Also
-         --  remove It if it is currently hidden (alias detection), and was
-         --  linked to Item. The user probably expects it to be killed as
-         --  well
-
-         if It.Is_Alias_Of = Display_Item (Item)
-           and then It.Is_Dereference
-         then
-            To_Remove.Include (Abstract_Item (It));
-
-            --  If It is hidden, and was linked to Item
-         elsif It.Is_Alias_Of /= null
-           and then Canvas.Has_Link (GPS_Item (Item), GPS_Item (It))
-         then
-            To_Remove.Include (Abstract_Item (It));
-         end if;
-
-      end On_Item;
-
-   begin
-      --  Should recompute aliases (delete all the items that we aliased
-      --  to this one, since the user was probably expecting them not to be
-      --  visible any more).
-
-      To_Remove.Include (Abstract_Item (Item));
-
-      if Remove_Aliases then
-         Canvas.Get_View.Model.For_Each_Item
-           (On_Item'Access, Filter => Kind_Item);
-      end if;
-
-      if Remove_Aliases then
-         Recompute_All_Aliases (Item.Debugger, Recompute_Values => False);
-      end if;
-
-      Canvas.Get_View.Model.Remove (To_Remove);
-   end Remove_With_Aliases;
 
    ---------------------------
    -- Recompute_All_Aliases --
