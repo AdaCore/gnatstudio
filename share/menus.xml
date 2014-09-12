@@ -540,4 +540,5 @@
    <toolbar id='Elaboration Circularities' inherit='Browser'/>
    <toolbar id='Entity Browser' inherit='Browser'/>
    <toolbar id='Project Browser' inherit='Browser'/>
+   <toolbar id='Debugger Data' inherit='Browser'/>
 </GPS>
