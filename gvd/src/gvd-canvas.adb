@@ -1297,11 +1297,15 @@ package body GVD.Canvas is
             end;
          end if;
 
-         Gtk_New (Mitem, Label => -"Update Value");
-         Item_Handler.Connect
-           (Mitem, Signal_Activate,
-            Item_Handler.To_Marshaller (Update_Variable'Access), Base);
-         Append (Menu, Mitem);
+         --  Updating the value is only interesting when the item is not
+         --  auto-refreshed, otherwise the value is already up-to-date.
+         if not Item.Auto_Refresh then
+            Gtk_New (Mitem, Label => -"Update Value");
+            Item_Handler.Connect
+              (Mitem, Signal_Activate,
+               Item_Handler.To_Marshaller (Update_Variable'Access), Base);
+            Append (Menu, Mitem);
+         end if;
 
          if Item.Is_A_Variable then
             --  Display a separator
