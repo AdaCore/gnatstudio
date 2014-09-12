@@ -57,7 +57,6 @@ package GVD.Preferences is
    Freeze_Bg_Color               : Color_Preference;
    Title_Font                    : Font_Preference;
    Type_Font                     : Font_Preference;
-   Default_Detect_Aliases        : Boolean_Preference;
    Max_Item_Width                : Integer_Preference;
    Max_Item_Height               : Integer_Preference;
 

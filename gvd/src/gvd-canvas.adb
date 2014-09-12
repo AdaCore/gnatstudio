@@ -63,6 +63,8 @@ with GVD.Preferences;        use GVD.Preferences;
 with GVD.Scripts;            use GVD.Scripts;
 with GVD.Trace;
 with GVD.Types;
+with Histories;              use Histories;
+with Items;                  use Items;
 with Items.Simples;          use Items.Simples;
 with Pixmaps_IDE;            use Pixmaps_IDE;
 with Std_Dialogs;            use Std_Dialogs;
@@ -72,6 +74,8 @@ with XML_Utils;              use XML_Utils;
 
 package body GVD.Canvas is
    Me : constant Trace_Handle := Create ("Canvas");
+
+   Detect_Aliases : constant History_Key := "gvd-detect-aliases";
 
    Float_Re : constant String := "([+-]?\d+(?:\.\d+E[+-]\d+))";
    --  regexp for a float number
@@ -116,9 +120,6 @@ package body GVD.Canvas is
      ("graph\s+undisplay\s+(.*)", Case_Insensitive);
    --  Third possible set of commands
 
-   package Check_Canvas_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Check_Menu_Item_Record, General_Browser);
-
    package Browser_Views is new GVD.Generic_View
      (Base_Type                     => Debugger_Data_View_Record,
       Base_Type_Access              => Debugger_Data_View,
@@ -127,12 +128,13 @@ package body GVD.Canvas is
 
    type GVD_Canvas_Record is new Browser_Views.Process_View_Record with
       record
-         Detect_Aliases     : Boolean;
          Item_Num           : Integer := 0;
-         Selected_Item      : Display_Item := null;
-         Selected_Component : Items.Generic_Type_Access := null;
       end record;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
+
+   overriding procedure Create_Menu
+     (View    : not null access GVD_Canvas_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    type Preferences_Hook_Record is new Function_With_Args with record
       Canvas : GVD_Canvas;
@@ -159,7 +161,10 @@ package body GVD.Canvas is
    procedure Set_Canvas
      (Process : access Visual_Debugger_Record'Class;
       Canvas  : Debugger_Data_View);
-   --  Get or set the data window associated with Process
+   function Get_Canvas
+     (Process : access Visual_Debugger_Record'Class)
+      return Debugger_Data_View;
+   --  Return the canvas on which the drawing is done
 
    package Canvas_Views is new Browser_Views.Simple_Views
      (Module_Name        => "Debugger_Data",
@@ -172,11 +177,6 @@ package body GVD.Canvas is
       Local_Config       => True,
       Local_Toolbar      => True,
       Initialize         => Initialize);
-
-   procedure Set_Detect_Aliases
-     (Canvas   : access GVD_Canvas_Record'Class;
-      Activate : Boolean);
-   --  Change the status of aliases detection in the canvas
 
    type Data_Window_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -249,9 +249,7 @@ package body GVD.Canvas is
    -- Local Procedures --
    ----------------------
 
-   procedure Change_Detect_Aliases
-     (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : General_Browser);
+   procedure Change_Detect_Aliases (Browser : access Gtk_Widget_Record'Class);
    --  Callback for the "detect aliases" contextual menu item
 
    procedure Change_Display_Mode
@@ -332,14 +330,6 @@ package body GVD.Canvas is
       end On_Item;
 
    begin
-      Set_Detect_Aliases (Canvas, Default_Detect_Aliases.Get_Pref);
-
-      --  If we are not attached to a process, this means the canvas is empty
-      --  and nothing needs to be done anyway
-      if Get_Process (Canvas) /= null then
-         Recompute_All_Aliases (Get_Process (Canvas));
-      end if;
-
       Canvas.Modified := Gtk_New
         (Stroke  => Null_RGBA,
          Font    =>
@@ -531,9 +521,6 @@ package body GVD.Canvas is
                   Persistent => True);
             end if;
          end if;
-
-         Old.Selected_Item := null;
-         Old.Selected_Component := null;
       end if;
 
       --  If we are detaching, clear the old view
@@ -801,20 +788,39 @@ package body GVD.Canvas is
       C.Get_View.Model.Refresh_Layout;  --  for links
    end On_Data_Refresh;
 
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access GVD_Canvas_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Check : Gtk_Check_Menu_Item;
+   begin
+      General_Browser_Record (View.all).Create_Menu (Menu);  --  inherited
+
+      Gtk_New (Check, Label => -"Detect aliases");
+      Check.Set_Tooltip_Text
+        (-("When two variables are at the same location in memory, a single it"
+           & ", a single box is displayed if alias detection is enabled."));
+      Associate (Get_History (View.Kernel).all, Detect_Aliases, Check);
+      Append (Menu, Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Change_Detect_Aliases'Access, View);
+   end Create_Menu;
+
    ---------------------------
    -- Change_Detect_Aliases --
    ---------------------------
 
    procedure Change_Detect_Aliases
-     (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : General_Browser)
+     (Browser : access Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Item);
-      C : constant GVD_Canvas := GVD_Canvas (Canvas);
+      View : constant GVD_Canvas := GVD_Canvas (Browser);
    begin
-      Set_Detect_Aliases (C, not C.Detect_Aliases);
-      Recompute_All_Aliases (Get_Process (C), Recompute_Values => True);
-      Canvas.Get_View.Model.Refresh_Layout;  --  for links
+      Recompute_All_Aliases (Get_Process (View), Recompute_Values => True);
+      View.Get_View.Model.Refresh_Layout;  --  for links
    end Change_Detect_Aliases;
 
    ------------------------
@@ -834,22 +840,9 @@ package body GVD.Canvas is
      (Process : access GVD.Process.Visual_Debugger_Record'Class)
       return Boolean is
    begin
-      return GVD_Canvas (Process.Data).Detect_Aliases;
+      return Get_History
+        (Get_History (Get_Kernel (Process)).all, Detect_Aliases);
    end Get_Detect_Aliases;
-
-   ------------------------
-   -- Set_Detect_Aliases --
-   ------------------------
-
-   procedure Set_Detect_Aliases
-     (Canvas   : access GVD_Canvas_Record'Class;
-      Activate : Boolean) is
-   begin
-      --  ??? We should modify the items displayed so as to remove currently
-      --  detected aliases. This is part of the whole aliases detection
-      --  implementation.
-      Canvas.Detect_Aliases := Activate;
-   end Set_Detect_Aliases;
 
    ----------------
    -- Initialize --
@@ -865,7 +858,6 @@ package body GVD.Canvas is
               "Canvas' kernel not initialized");
       Browsers.Canvas.Initialize (Canvas);
       Canvas.Get_View.Model.Set_Selection_Mode (Selection_Single);
-      Canvas.Detect_Aliases := Default_Detect_Aliases.Get_Pref;
 
       Register_Contextual_Menu
         (Kernel          => Canvas.Kernel,
@@ -1010,14 +1002,6 @@ package body GVD.Canvas is
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, Signal_Activate, Display_Expression'Access, Canvas);
-
-         Gtk_New (Check, Label => -"Detect Aliases");
-         Set_Active (Check, Canvas.Detect_Aliases);
-         Append (Menu, Check);
-         Check_Canvas_Handler.Connect
-           (Check, Signal_Activate,
-            Check_Canvas_Handler.To_Marshaller (Change_Detect_Aliases'Access),
-            General_Browser (Canvas));
 
          Gtk_New (Mitem, Label => -"Recompute");
          Append (Menu, Mitem);
@@ -1380,6 +1364,9 @@ package body GVD.Canvas is
         (Kernel, "open debugger data window", new Data_Window_Command,
          Description => -"Open the Data Window for the debugger",
          Category => -"Views");
+
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Detect_Aliases, Default_Value => True);
 
       Canvas_Views.Register_Desktop_Functions (Kernel);
    end Register_Module;

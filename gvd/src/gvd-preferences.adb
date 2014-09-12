@@ -112,16 +112,6 @@ package body GVD.Preferences is
          Page      => General,
          Default   => False);
 
-      Default_Detect_Aliases := Create
-        (Manager  => Prefs,
-         Name     => XML_Prefix & "Default-Detect-Aliases",
-         Label    => -"Detect aliases",
-         Page     => General,
-         Doc      => -("True if we shouldn't create new items in the data "
-                       & "window when an item at the same address already "
-                       & "exists"),
-         Default  => True);
-
       Assembly_Range_Size := Create
         (Manager  => Prefs,
          Name     => XML_Prefix & "Assembly-Range-Size",

@@ -17,7 +17,6 @@
 
 with GPS.Kernel;
 with GVD.Process;     use GVD.Process;
-with Items;           use Items;
 
 package GVD.Canvas is
 
@@ -56,10 +55,5 @@ package GVD.Canvas is
      (Process : access GVD.Process.Visual_Debugger_Record'Class)
       return Boolean;
    --  Return True if aliases detection has been activated.
-
-   function Get_Canvas
-     (Process : access Visual_Debugger_Record'Class)
-      return Debugger_Data_View;
-   --  Return the canvas on which the drawing is done
 
 end GVD.Canvas;
