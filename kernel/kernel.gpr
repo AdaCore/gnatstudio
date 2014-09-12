@@ -1,7 +1,7 @@
 --  The part of the kernel that depends on the GUI
 with "gtkada";
 with "kernel_core";
-with "shared";
+with "../shared";
 with "../widgets/widgets";
 with "../language/language_ui";
 with "../gnatlib/src/gnatcoll_gtk";
