@@ -143,8 +143,9 @@ package body Browsers.Entities is
       Entity    : Root_Entity'Class;
       Link_Name : String := "") return Entity_Ref;
    overriding procedure On_Click
-     (Self : not null access Entity_Ref_Record;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Entity_Ref_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
    --  A text item that represents an entity. Clicking on it will display the
    --  entity in the browser, with a link from
 
@@ -175,13 +176,15 @@ package body Browsers.Entities is
 
    type Show_Parents_Button is new Left_Arrow_Record with null record;
    overriding procedure On_Click
-     (Self : not null access Show_Parents_Button;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Show_Parents_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    type Show_Children_Button is new Right_Arrow_Record with null record;
    overriding procedure On_Click
-     (Self : not null access Show_Children_Button;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Show_Children_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    procedure Add_Type
      (Item   : not null access Type_Item_Record'Class;
@@ -222,11 +225,12 @@ package body Browsers.Entities is
    --------------
 
    overriding procedure On_Click
-     (Self : not null access Entity_Ref_Record;
-      View : not null access GPS_Canvas_View_Record'Class)
+     (Self    : not null access Entity_Ref_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
    is
       pragma Unreferenced (View);
-      Item     : constant Type_Item := Type_Item (Self.Get_Toplevel_Item);
+      Item     : constant Type_Item := Type_Item (Details.Toplevel_Item);
       B        : constant Type_Browser := Type_Browser (Item.Browser);
       New_Item : Type_Item;
       Added    : Boolean;
@@ -981,10 +985,12 @@ package body Browsers.Entities is
    --------------
 
    overriding procedure On_Click
-     (Self : not null access Show_Parents_Button;
-      View : not null access GPS_Canvas_View_Record'Class)
+     (Self    : not null access Show_Parents_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
    is
-      Item     : constant Type_Item := Type_Item (Self.Get_Toplevel_Item);
+      pragma Unreferenced (Self);
+      Item     : constant Type_Item := Type_Item (Details.Toplevel_Item);
       B        : constant Type_Browser := Type_Browser (Item.Browser);
       Parents  : Xref.Entity_Array :=
         Parent_Types (Item.Entity.Element, Recursive => False);
@@ -1017,10 +1023,12 @@ package body Browsers.Entities is
    --------------
 
    overriding procedure On_Click
-     (Self : not null access Show_Children_Button;
-      View : not null access GPS_Canvas_View_Record'Class)
+     (Self    : not null access Show_Children_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
    is
-      Item     : constant Type_Item := Type_Item (Self.Get_Toplevel_Item);
+      pragma Unreferenced (Self);
+      Item     : constant Type_Item := Type_Item (Details.Toplevel_Item);
       B        : constant Type_Browser := Type_Browser (Item.Browser);
       Children : Xref.Entity_Array :=
         Child_Types (Item.Entity.Element, Recursive => False);

@@ -80,8 +80,9 @@ package Browsers is
 
    type Clickable_Item is interface;
    procedure On_Click
-     (Self : not null access Clickable_Item;
-      View : not null access GPS_Canvas_View_Record'Class) is abstract;
+     (Self    : not null access Clickable_Item;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access) is abstract;
    --  All clickable items should implement this interface, so that the
    --  view automatically call their On_Click primitive op.
 
@@ -91,8 +92,9 @@ package Browsers is
    type Close_Button is access all Close_Button_Record'Class;
    procedure Gtk_New (Self : out Close_Button);
    overriding procedure On_Click
-     (Self : not null access Close_Button_Record;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Close_Button_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
    --  A button that closes the corresponding toplevel item
 
    type Left_Arrow_Record

@@ -390,7 +390,7 @@ package body Items.Records is
       Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
       Rect   : constant Component_Item :=
         New_Component_Item (Styles, Self, Name);
-      R : Rect_Item;
+      R : Collapsible_Item;
    begin
       if not Self.Valid then
          Rect.Add_Child
@@ -401,7 +401,7 @@ package body Items.Records is
          null;
 
       elsif not Self.Visible then
-         Rect.Add_Child (Gtk_New_Image (Styles.Item, View.Hidden_Pixmap));
+         Rect.Add_Child (View.Item_Hidden);
 
       else
          if Show_Type (Mode)
@@ -415,7 +415,9 @@ package body Items.Records is
             --  not a variant part ?
 
             if Self.Fields (F).Value /= null then
-               R := Gtk_New_Rect (Styles.Invisible);
+               R := new Collapsible_Item_Record;
+               R.For_Component := Self.Fields (F).Value;
+               R.Initialize_Rect (Styles.Invisible);
                R.Set_Child_Layout (Horizontal_Stack);
                Rect.Add_Child (R);
                R.Add_Child
@@ -432,7 +434,9 @@ package body Items.Records is
             if Self.Fields (F).Variant_Part /= null then
                for V in Self.Fields (F).Variant_Part'Range loop
                   if Self.Fields (F).Variant_Part (V).Valid then
-                     R := Gtk_New_Rect (Styles.Invisible);
+                     R := new Collapsible_Item_Record;
+                     R.For_Component := Self.Fields (F).Variant_Part (V);
+                     R.Initialize_Rect (Styles.Invisible);
                      R.Set_Child_Layout (Horizontal_Stack);
                      Rect.Add_Child (R);
                      R.Add_Child

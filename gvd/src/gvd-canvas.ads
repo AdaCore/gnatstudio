@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Gtkada.Canvas_View;    use Gtkada.Canvas_View;
 with GPS.Kernel;
 with GVD.Process;           use GVD.Process;
 with Items;                 use Items;
@@ -45,5 +46,10 @@ package GVD.Canvas is
      (Component : not null access Component_Item_Record'Class);
    --  Dereference a component of Item ("graph display" on it with a link from
    --  the item).
+
+   procedure Change_Visibility
+     (Item      : not null access Gtkada.Canvas_View.Canvas_Item_Record'Class;
+      Component : not null access Generic_Type'Class);
+   --  Change the visibility status of a specific component in the item
 
 end GVD.Canvas;

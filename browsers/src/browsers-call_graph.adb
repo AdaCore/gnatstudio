@@ -199,13 +199,15 @@ package body Browsers.Call_Graph is
 
    type Show_Ancestors_Button is new Left_Arrow_Record with null record;
    overriding procedure On_Click
-     (Self : not null access Show_Ancestors_Button;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Show_Ancestors_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    type Show_Children_Button is new Right_Arrow_Record with null record;
    overriding procedure On_Click
-     (Self : not null access Show_Children_Button;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Show_Children_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    -----------------
    -- Save_To_XML --
@@ -609,10 +611,12 @@ package body Browsers.Call_Graph is
    --------------
 
    overriding procedure On_Click
-     (Self : not null access Show_Ancestors_Button;
-      View : not null access GPS_Canvas_View_Record'Class)
+     (Self    : not null access Show_Ancestors_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
    is
-      It : constant Entity_Item := Entity_Item (Self.Get_Toplevel_Item);
+      pragma Unreferenced (Self);
+      It : constant Entity_Item := Entity_Item (Details.Toplevel_Item);
    begin
       Examine_Ancestors_Call_Graph
         (Get_Kernel (It.Browser), It.Entity.Element);
@@ -626,10 +630,12 @@ package body Browsers.Call_Graph is
    --------------
 
    overriding procedure On_Click
-     (Self : not null access Show_Children_Button;
-      View : not null access GPS_Canvas_View_Record'Class)
+     (Self    : not null access Show_Children_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
    is
-      It : constant Entity_Item := Entity_Item (Self.Get_Toplevel_Item);
+      pragma Unreferenced (Self);
+      It : constant Entity_Item := Entity_Item (Details.Toplevel_Item);
    begin
       Examine_Entity_Call_Graph
         (Get_Kernel (It.Browser), It.Entity.Element, Recursive => False);

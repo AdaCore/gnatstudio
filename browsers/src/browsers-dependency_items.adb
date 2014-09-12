@@ -88,13 +88,15 @@ package body Browsers.Dependency_Items is
 
    type Show_Importing_Button is new Left_Arrow_Record with null record;
    overriding procedure On_Click
-     (Self : not null access Show_Importing_Button;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Show_Importing_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    type Show_Imported_Button is new Right_Arrow_Record with null record;
    overriding procedure On_Click
-     (Self : not null access Show_Imported_Button;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Show_Imported_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    ------------------------
    -- Dependency browser --
@@ -407,11 +409,12 @@ package body Browsers.Dependency_Items is
    --------------
 
    overriding procedure On_Click
-     (Self : not null access Show_Importing_Button;
-      View : not null access GPS_Canvas_View_Record'Class)
+     (Self    : not null access Show_Importing_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
    is
-      pragma Unreferenced (View);
-      It : constant File_Item := File_Item (Self.Get_Toplevel_Item);
+      pragma Unreferenced (Self, View);
+      It : constant File_Item := File_Item (Details.Toplevel_Item);
    begin
       Examine_From_Dependencies
         (Get_Kernel (It.Browser), It.Source, It.Project);
@@ -422,11 +425,12 @@ package body Browsers.Dependency_Items is
    --------------
 
    overriding procedure On_Click
-     (Self : not null access Show_Imported_Button;
-      View : not null access GPS_Canvas_View_Record'Class)
+     (Self    : not null access Show_Imported_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
    is
-      pragma Unreferenced (View);
-      It : constant File_Item := File_Item (Self.Get_Toplevel_Item);
+      pragma Unreferenced (Self, View);
+      It : constant File_Item := File_Item (Details.Toplevel_Item);
    begin
       Examine_Dependencies (Get_Kernel (It.Browser), It.Source, It.Project);
    end On_Click;

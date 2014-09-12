@@ -61,6 +61,11 @@ package Items is
    end record;
    type Debugger_Data_View is access all Debugger_Data_View_Record'Class;
 
+   function Item_Hidden
+     (View : not null access Debugger_Data_View_Record'Class)
+      return Container_Item;
+   --  Return the item that shows when an item is hidden
+
    ------------------
    -- Generic_Type --
    ------------------
@@ -143,6 +148,18 @@ package Items is
    --  Print Value on Standard_Output.
    --  Indent is the indentation level.
    --  This function is intended for debug purposes only.
+
+   type Collapsible_Item_Record is new Rect_Item_Record
+     and Clickable_Item with record
+         For_Component : access Generic_Type'Class;
+     end record;
+   type Collapsible_Item is access all Collapsible_Item_Record'Class;
+   overriding procedure On_Click
+     (Self    : not null access Collapsible_Item_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
+   --  An box that can be double-clicked to be hidden, and thus save screen
+   --  estate
 
    --------------------------------
    -- Manipulating the structure --

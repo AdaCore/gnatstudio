@@ -52,7 +52,6 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Radio_Menu_Item;      use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
 with Gtk.Widget;               use Gtk.Widget;
-with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
@@ -319,12 +318,6 @@ package body GVD.Canvas is
       Name    : String) return Display_Item;
    --  Search for an item whose Id is Id in the canvas.
    --  If Name is not the empty string, the name must also match
-
-   procedure Change_Visibility
-     (Item      : access Display_Item_Record'Class;
-      Component : Generic_Type_Access);
-   pragma Unreferenced (Change_Visibility);
-   --  Change the visibility status of a specific component in the item
 
    function Is_Alias_Of
      (Item : access Display_Item_Record'Class;
@@ -809,7 +802,8 @@ package body GVD.Canvas is
                  (Cmd (Matched (Graph_Cmd_X_Paren).First
                   .. Matched (Graph_Cmd_X_Paren).Last));
             exception
-               when Constraint_Error => null;
+               when Constraint_Error =>
+                  Pos := No_Position;
             end;
 
             begin
@@ -817,7 +811,8 @@ package body GVD.Canvas is
                  (Cmd (Matched (Graph_Cmd_Y_Paren).First
                   .. Matched (Graph_Cmd_Y_Paren).Last));
             exception
-               when Constraint_Error => null;
+               when Constraint_Error =>
+                  Pos := No_Position;
             end;
          end if;
 
@@ -1243,8 +1238,6 @@ package body GVD.Canvas is
                Component_Name : constant String :=
                  To_String (Base.Component.Name);
             begin
-               --  Display a separator
-
                Gtk_New (Sep);
                Append (Menu, Sep);
 
@@ -1265,8 +1258,6 @@ package body GVD.Canvas is
                  (Mitem, Signal_Activate,
                   Item_Handler.To_Marshaller (Dereference_All'Access), Base);
                Append (Menu, Mitem);
-
-               --  Display a separator
 
                Gtk_New (Sep);
                Append (Menu, Sep);
@@ -1308,7 +1299,6 @@ package body GVD.Canvas is
          end if;
 
          if Item.Is_A_Variable then
-            --  Display a separator
             Gtk_New (Sep);
             Append (Menu, Sep);
 
@@ -1352,7 +1342,6 @@ package body GVD.Canvas is
                             others         => <>));
             Append (Submenu, Radio);
 
-            --  Display a separator
             Gtk_New (Sep);
             Append (Submenu, Sep);
 
@@ -1444,6 +1433,7 @@ package body GVD.Canvas is
    begin
       Set_Visibility (Item.Component.Component, False, Recursive => True);
       Update_Display (Item.Item);
+      Item.Canvas.Get_View.Model.Refresh_Layout;  --  resize items and links
    end Hide_All;
 
    ---------------
@@ -1483,6 +1473,7 @@ package body GVD.Canvas is
    begin
       Set_Visibility (Item.Component.Component, True, Recursive => True);
       Item.Item.Update_Display;
+      Item.Canvas.Get_View.Model.Refresh_Layout;  --  resize items and links
    end Show_All;
 
    ---------------------
@@ -1983,13 +1974,14 @@ package body GVD.Canvas is
    -----------------------
 
    procedure Change_Visibility
-     (Item      : access Display_Item_Record'Class;
-      Component : Generic_Type_Access) is
+     (Item      : not null access Gtkada.Canvas_View.Canvas_Item_Record'Class;
+      Component : not null access Generic_Type'Class)
+   is
+      It : constant Display_Item := Display_Item (Item.Get_Toplevel_Item);
    begin
-      Set_Visibility (Component, not Get_Visibility (Component.all));
-
-      --  Redraw the canvas
-      Refresh_Data_Window (Item.Debugger);
+      Component.Set_Visibility (not Component.Get_Visibility);
+      It.Update_Display;
+      It.Debugger.Data.Get_View.Model.Refresh_Layout;  --  for links
    end Change_Visibility;
 
    ----------------------

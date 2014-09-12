@@ -45,8 +45,9 @@ package body Items.Simples is
         null;
      end record;
    overriding procedure On_Click
-     (Self : not null access Xref_Item_Record;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Xref_Item_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    ---------------------
    -- New_Simple_Type --
@@ -170,18 +171,22 @@ package body Items.Simples is
       S      : constant Drawing_Style :=
         (if Self.Has_Changed then View.Modified else Styles.Text_Font);
    begin
-      if Show_Type (Mode)
-        and then Self.Type_Name /= null
-      then
-         T := Gtk_New_Text (S, Self.Get_Type_Name (Lang));
-         T.Set_Size_Range (Min_Height => 10.0);
-         Rect.Add_Child (T);
-      end if;
+      if not Self.Visible then
+         Rect.Add_Child (View.Item_Hidden);
+      else
+         if Show_Type (Mode)
+           and then Self.Type_Name /= null
+         then
+            T := Gtk_New_Text (S, Self.Get_Type_Name (Lang));
+            T.Set_Size_Range (Min_Height => 10.0);
+            Rect.Add_Child (T);
+         end if;
 
-      if Show_Value (Mode) and then Self.Value /= null then
-         T := Gtk_New_Text (S, Self.Value.all);
-         T.Set_Size_Range (Min_Height => 10.0);
-         Rect.Add_Child (T);
+         if Show_Value (Mode) and then Self.Value /= null then
+            T := Gtk_New_Text (S, Self.Value.all);
+            T.Set_Size_Range (Min_Height => 10.0);
+            Rect.Add_Child (T);
+         end if;
       end if;
 
       return Rect;
@@ -192,10 +197,11 @@ package body Items.Simples is
    --------------
 
    overriding procedure On_Click
-     (Self : not null access Xref_Item_Record;
-      View : not null access GPS_Canvas_View_Record'Class)
+     (Self    : not null access Xref_Item_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
    is
-      pragma Unreferenced (View);
+      pragma Unreferenced (View, Details);
    begin
       Dereference_Item (Self);
    end On_Click;
@@ -219,18 +225,22 @@ package body Items.Simples is
    begin
       Rect.Initialize_Component_Item (Styles, Self, Name);
 
-      if Show_Type (Mode)
-        and then Self.Type_Name /= null
-      then
-         T := Gtk_New_Text (S, Self.Get_Type_Name (Lang));
-         T.Set_Size_Range (Min_Height => 10.0);
-         Rect.Add_Child (T);
-      end if;
+      if not Self.Visible then
+         Rect.Add_Child (View.Item_Hidden);
+      else
+         if Show_Type (Mode)
+           and then Self.Type_Name /= null
+         then
+            T := Gtk_New_Text (S, Self.Get_Type_Name (Lang));
+            T.Set_Size_Range (Min_Height => 10.0);
+            Rect.Add_Child (T);
+         end if;
 
-      if Show_Value (Mode) then
-         T := Gtk_New_Text (S, Self.Value.all);
-         T.Set_Size_Range (Min_Height => 10.0);
-         Rect.Add_Child (T);
+         if Show_Value (Mode) then
+            T := Gtk_New_Text (S, Self.Value.all);
+            T.Set_Size_Range (Min_Height => 10.0);
+            Rect.Add_Child (T);
+         end if;
       end if;
 
       return Rect;
@@ -430,13 +440,17 @@ package body Items.Simples is
       Rect   : constant Component_Item :=
         New_Component_Item (Styles, Self, Name);
    begin
-      for L in Self.Value'Range loop
-         Rect.Add_Child
-           (Gtk_New_Text
-              ((if Self.Value (L) (Self.Value (L)'First) = Line_Highlighted
-               then View.Modified else Styles.Text_Font),
-               Self.Value (L).all));
-      end loop;
+      if not Self.Visible then
+         Rect.Add_Child (View.Item_Hidden);
+      else
+         for L in Self.Value'Range loop
+            Rect.Add_Child
+              (Gtk_New_Text
+                 ((if Self.Value (L) (Self.Value (L)'First) = Line_Highlighted
+                  then View.Modified else Styles.Text_Font),
+                  Self.Value (L).all));
+         end loop;
+      end if;
 
       return Rect;
    end Build_Display;

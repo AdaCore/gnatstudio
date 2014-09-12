@@ -189,8 +189,7 @@ package body Items.Classes is
            (Gtk_New_Image (Styles.Item, Image => View.Unknown_Pixmap));
 
       elsif not Self.Visible then
-         Rect.Add_Child
-           (Gtk_New_Image (Styles.Item, Image => View.Hidden_Pixmap));
+         Rect.Add_Child (View.Item_Hidden);
 
       else
          for A in Self.Ancestors'Range loop

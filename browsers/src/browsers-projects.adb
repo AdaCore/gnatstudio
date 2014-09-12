@@ -147,14 +147,16 @@ package body Browsers.Projects is
    type Show_Importing_Projects_Button is new Left_Arrow_Record
    with null record;
    overriding procedure On_Click
-     (Self : not null access Show_Importing_Projects_Button;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Show_Importing_Projects_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    type Show_Imported_Projects_Button is new Right_Arrow_Record
    with null record;
    overriding procedure On_Click
-     (Self : not null access Show_Imported_Projects_Button;
-      View : not null access GPS_Canvas_View_Record'Class);
+     (Self    : not null access Show_Imported_Projects_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    -------------------
    -- Browser links --
@@ -495,11 +497,12 @@ package body Browsers.Projects is
    --------------
 
    overriding procedure On_Click
-     (Self : not null access Show_Imported_Projects_Button;
-      View : not null access GPS_Canvas_View_Record'Class)
+     (Self    : not null access Show_Imported_Projects_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
    is
-      pragma Unreferenced (View);
-      Prj : constant Project_Item := Project_Item (Self.Get_Toplevel_Item);
+      pragma Unreferenced (Self, View);
+      Prj : constant Project_Item := Project_Item (Details.Toplevel_Item);
    begin
       Examine_Project_Hierarchy
         (Project_Browser (Prj.Browser), Project_Of (Prj), Recursive => False);
@@ -510,11 +513,12 @@ package body Browsers.Projects is
    --------------
 
    overriding procedure On_Click
-     (Self : not null access Show_Importing_Projects_Button;
-      View : not null access GPS_Canvas_View_Record'Class)
+     (Self    : not null access Show_Importing_Projects_Button;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
    is
-      pragma Unreferenced (View);
-      Prj : constant Project_Item := Project_Item (Self.Get_Toplevel_Item);
+      pragma Unreferenced (Self, View);
+      Prj : constant Project_Item := Project_Item (Details.Toplevel_Item);
    begin
       Examine_Ancestor_Project_Hierarchy
         (Browser => Project_Browser (Prj.Browser),

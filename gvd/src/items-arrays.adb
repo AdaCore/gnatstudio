@@ -558,7 +558,7 @@ package body Items.Arrays is
       Mode : Display_Mode) return Component_Item
    is
       Styles : constant access Browser_Styles := View.Get_View.Get_Styles;
-      R    : Rect_Item;
+      R    : Collapsible_Item;
       Rect : constant Component_Item :=
         New_Component_Item (Styles, Self, Name);
    begin
@@ -574,8 +574,7 @@ package body Items.Arrays is
          null;
 
       elsif not Self.Visible then
-         Rect.Add_Child
-           (Gtk_New_Image (Styles.Item, Image => View.Hidden_Pixmap));
+         Rect.Add_Child (View.Item_Hidden);
 
       else
          if Show_Type (Mode)
@@ -587,7 +586,9 @@ package body Items.Arrays is
 
          if Show_Value (Mode) and then Self.Values /= null then
             for V in 1 .. Self.Last_Value loop
-               R := Gtk_New_Rect (Styles.Invisible);
+               R := new Collapsible_Item_Record;
+               R.For_Component := Self.Values (V).Value;
+               R.Initialize_Rect (Styles.Invisible);
                R.Set_Child_Layout (Horizontal_Stack);
                Rect.Add_Child (R);
 

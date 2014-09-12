@@ -17,6 +17,7 @@
 
 with Glib;              use Glib;
 with GNAT.Strings;      use GNAT.Strings;
+with GVD.Canvas;        use GVD.Canvas;
 with Language;          use Language;
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
@@ -53,6 +54,20 @@ package body Items is
       Self.Name      := To_Unbounded_String (Name);
    end Initialize_Component_Item;
 
+   -----------------
+   -- Item_Hidden --
+   -----------------
+
+   function Item_Hidden
+     (View : not null access Debugger_Data_View_Record'Class)
+      return Container_Item is
+   begin
+      return Container_Item
+        (Gtk_New_Image
+           (View.Get_View.Get_Styles.Item,
+            View.Hidden_Pixmap, Allow_Rescale => False));
+   end Item_Hidden;
+
    ---------------
    -- Set_Valid --
    ---------------
@@ -71,6 +86,22 @@ package body Items is
    begin
       return Item.Valid;
    end Is_Valid;
+
+   --------------
+   -- On_Click --
+   --------------
+
+   overriding procedure On_Click
+     (Self    : not null access Collapsible_Item_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
+   is
+      pragma Unreferenced (View);
+   begin
+      if Details.Event_Type = Double_Click then
+         Change_Visibility (Self, Self.For_Component);
+      end if;
+   end On_Click;
 
    --------------------
    -- Set_Visibility --

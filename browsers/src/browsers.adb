@@ -50,7 +50,8 @@ package body Browsers is
    is
       It : Abstract_Item;
    begin
-      if Details.Event_Type = Button_Release
+      if (Details.Event_Type = Button_Release
+          or else Details.Event_Type = Double_Click)
         and then Details.Button = 1
       then
          --  propagate event up, if needed
@@ -58,7 +59,8 @@ package body Browsers is
          It := Details.Item;
          while It /= null loop
             if It.all in Clickable_Item'Class then
-               Clickable_Item'Class (It.all).On_Click (GPS_Canvas_View (Self));
+               Clickable_Item'Class (It.all).On_Click
+                 (GPS_Canvas_View (Self), Details);
                return True;
             end if;
             It := It.Parent;
@@ -175,7 +177,10 @@ package body Browsers is
 
    overriding procedure On_Click
      (Self : not null access Close_Button_Record;
-      View : not null access GPS_Canvas_View_Record'Class) is
+      View : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
+   is
+      pragma Unreferenced (Details);
    begin
       View.Model.Remove (Self.Get_Toplevel_Item);
       View.Model.Refresh_Layout;
