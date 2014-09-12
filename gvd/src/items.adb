@@ -64,7 +64,7 @@ package body Items is
    begin
       return Container_Item
         (Gtk_New_Image
-           (View.Get_View.Get_Styles.Item,
+           (View.Get_View.Get_Styles.Invisible,
             View.Hidden_Pixmap, Allow_Rescale => False));
    end Item_Hidden;
 
