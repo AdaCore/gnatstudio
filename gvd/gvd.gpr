@@ -2,12 +2,11 @@ with "gtkada";
 with "../shared";
 with "../kernel/kernel";
 with "../browsers/browsers";
-with "gdbmi/gdbmi";
 
 project GVD is
 
    for Languages use ("C", "Ada");
-   for Source_Dirs use ("gvd", "pixmaps");
+   for Source_Dirs use ("src");
    for Object_Dir use Shared'Object_Dir;
 
    package Builder is
