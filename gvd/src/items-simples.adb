@@ -17,10 +17,10 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Browsers;                use Browsers;
-with Display_Items;           use Display_Items;
 with GNAT.IO;                 use GNAT.IO;
 with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with GVD.Canvas;              use GVD.Canvas;
 with Language;                use Language;
 with String_Utils;            use String_Utils;
 
@@ -196,9 +196,8 @@ package body Items.Simples is
       View : not null access GPS_Canvas_View_Record'Class)
    is
       pragma Unreferenced (View);
-      Item : constant Display_Item := Display_Item (Self.Get_Toplevel_Item);
    begin
-      Item.Dereference_Item (Self);
+      Dereference_Item (Self);
    end On_Click;
 
    -------------------

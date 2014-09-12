@@ -15,62 +15,64 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Pixbuf;              use Gdk.Pixbuf;
-with Gdk.Event;               use Gdk.Event;
-with Gdk.RGBA;                use Gdk.RGBA;
-with Gdk.Window;              use Gdk.Window;
-with Gdk;                     use Gdk;
-with Glib;                    use Glib;
-with Glib.Object;             use Glib.Object;
-with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
-with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Handlers;            use Gtk.Handlers;
-with Gtk.Menu;                use Gtk.Menu;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Radio_Menu_Item;     use Gtk.Radio_Menu_Item;
-with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
-with Gtk.Widget;              use Gtk.Widget;
-with Gtkada.Canvas_View;      use Gtkada.Canvas_View;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash_Case_Insensitive;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Browsers.Canvas;          use Browsers, Browsers.Canvas;
+with Commands.Interactive;     use Commands, Commands.Interactive;
+with Debugger;                 use Debugger;
+with Default_Preferences;      use Default_Preferences;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Pixbuf;               use Gdk.Pixbuf;
+with Gdk.RGBA;                 use Gdk.RGBA;
+with Gdk.Window;               use Gdk.Window;
+with Gdk;                      use Gdk;
+with Glib.Object;              use Glib.Object;
+with Glib;                     use Glib;
+with GNAT.Regpat;              use GNAT.Regpat;
+with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Properties;    use GPS.Kernel.Properties;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Main_Window;          use GPS.Main_Window;
+with GPS.Properties;           use GPS.Properties;
+with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Radio_Menu_Item;      use Gtk.Radio_Menu_Item;
+with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
-with Gtkada.Handlers;         use Gtkada.Handlers;
-with Gtkada.MDI;              use Gtkada.MDI;
-with Gtkada.Style;            use Gtkada.Style;
-with Pango.Font;              use Pango.Font;
-
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with Browsers.Canvas;        use Browsers, Browsers.Canvas;
-with Commands.Interactive;   use Commands, Commands.Interactive;
-with Debugger;               use Debugger;
-with Display_Items;          use Display_Items;
-with GNAT.Regpat;            use GNAT.Regpat;
-with GNAT.Strings;           use GNAT.Strings;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Properties;         use GPS.Properties;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Properties;  use GPS.Kernel.Properties;
-with GPS.Main_Window;        use GPS.Main_Window;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Style;             use Gtkada.Style;
 with GVD.Generic_View;
-with GVD.Memory_View;        use GVD.Memory_View;
-with GVD.Menu;               use GVD.Menu;
-with GVD_Module;             use GVD_Module;
-with GVD.Preferences;        use GVD.Preferences;
-with GVD.Scripts;            use GVD.Scripts;
+with GVD.Memory_View;          use GVD.Memory_View;
+with GVD.Menu;                 use GVD.Menu;
+with GVD.Preferences;          use GVD.Preferences;
+with GVD.Scripts;              use GVD.Scripts;
 with GVD.Trace;
 with GVD.Types;
-with Histories;              use Histories;
-with Items;                  use Items;
-with Items.Simples;          use Items.Simples;
-with Pixmaps_IDE;            use Pixmaps_IDE;
-with Std_Dialogs;            use Std_Dialogs;
-with String_Utils;           use String_Utils;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with XML_Utils;              use XML_Utils;
+with GVD_Module;               use GVD_Module;
+with Histories;                use Histories;
+with Items.Simples;            use Items.Simples;
+with Language;                 use Language;
+with Pango.Font;               use Pango.Font;
+with Pixmaps_IDE;              use Pixmaps_IDE;
+with Std_Dialogs;              use Std_Dialogs;
+with String_Utils;             use String_Utils;
+with XML_Utils;                use XML_Utils;
 
 package body GVD.Canvas is
    Me : constant Trace_Handle := Create ("Canvas");
@@ -119,6 +121,47 @@ package body GVD.Canvas is
    Graph_Cmd_Format3 : constant Pattern_Matcher := Compile
      ("graph\s+undisplay\s+(.*)", Case_Insensitive);
    --  Third possible set of commands
+
+   Typed_Aliases : constant Boolean := True;
+   --  If True, then two items are aliases only if they have the same address
+   --  *and* they are structurally equivalent. If False, only the addresses
+   --  are checked.
+
+   --  Aliases detection
+   --  ==================
+   --
+   --  This package provides a complete aliases detection, ie when some items
+   --  are found at the same location in memory. Each item has a uniq id,
+   --  which most often is an address in memory, but can also be different for
+   --  instance on the Java Virtual Machine.
+   --  Every time a new item is inserted in the canvas, either as a result of
+   --  a "graph print" or "graph display" command, or when the user clicks on
+   --  an access type to dereference it, this package will test that there is
+   --  not already an item on the canvas with the same Id.
+   --  In every case, the new item is created (with possibly a link to it if it
+   --  was a dereference). However, if there was already an item with the same
+   --  id then the new item is set to be hidden (ie will not be displayed,
+   --  nor any link to or from it).
+   --  The links to and from an alias (hidden item) are automatically
+   --  duplicated to reference the visible item, so that they are correctly
+   --  visible and moved on the canvas. These temporary links have a special
+   --  attribute Alias_Link set.
+   --
+   --  Just before the next update of the canvas, all these temporary links are
+   --  removed, all aliases are cancelled and all items are made visible. Then
+   --  we recompute the list of aliases before redrawing the canvas. It is
+   --  worth noting that when we have an hidden item, we do not waste time
+   --  reparsing its value.
+   --
+   --  Note also that for simplicity we do not create chains of aliases, ie
+   --  an item is an alias to a second, which in turn in an alias to a third.
+   --  Instead, both the first and the second will refer the same third. It is
+   --  thus much easier to deal with aliases.
+   --
+   --  To improve the support for strings in Ada, an extra rule is added:
+   --  X.all can not be an alias of X. It is always considered to be a
+   --  different object. This is needed, otherwise it is mostly impossible to
+   --  properly display a String parameter correctly.
 
    package Browser_Views is new GVD.Generic_View
      (Base_Type                     => Debugger_Data_View_Record,
@@ -193,6 +236,26 @@ package body GVD.Canvas is
    --  Candidate is a suggested candidate, and will be returned if no
    --  other item matches that number. It is ignored if unspecified
 
+   procedure Refresh_Data_Window
+     (Debugger : access GVD.Process.Visual_Debugger_Record'Class);
+   --  Refresh the contents of the data window (if any) associated with
+   --  Debugger
+
+   function Get_Detect_Aliases
+     (Process : access GVD.Process.Visual_Debugger_Record'Class)
+      return Boolean;
+   --  Return True if aliases detection has been activated.
+
+   type GVD_Link_Record is new GPS_Link_Record with record
+      Alias_Link : Boolean := False;
+      --  True if this Link was created as a result of an aliasing operation.
+      --  Such links are always deleted before each update, and recreated
+      --  whenever an aliasing is detected.
+
+      Name : Unbounded_String;
+   end record;
+   type GVD_Link is access all GVD_Link_Record'Class;
+
    procedure GVD_Canvas_Context_Factory
      (Context      : in out GPS.Kernel.Selection_Context;
       Kernel       : access Kernel_Handle_Record'Class;
@@ -201,6 +264,166 @@ package body GVD.Canvas is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu);
    --  Build the context and contextual menu when right clicking in the canvas
+
+   type Display_Item_Record;
+   type Display_Item is access all Display_Item_Record;
+   type Display_Item_Record is new GPS_Item_Record with record
+      Num          : Integer;
+      Graph_Cmd    : GNAT.Strings.String_Access := null;
+      Name         : GNAT.Strings.String_Access := null;
+      Entity       : Items.Generic_Type_Access := null;
+      Auto_Refresh : Boolean := True;
+      Debugger     : GVD.Process.Visual_Debugger;
+
+      Is_A_Variable : Boolean := True;
+      --  Set to False if the item is not related to a variable
+
+      Id           : GNAT.Strings.String_Access := null;
+      --  Uniq ID used for the variable.
+      --  This Id is returned by the debugger, and can be the address of a
+      --  variable (in Ada or C), or simply the name of the variable (in
+      --  Java) when no overloading exists and addresses don't have any
+      --  meaning. This is used to detect aliases.
+
+      Is_Alias_Of  : Display_Item := null;
+      --  Item for which we are an alias.
+
+      Is_Dereference : Boolean := False;
+      --  True if the item was created as a result of a derefence of an
+      --  access type. Such items can be hidden as a result of aliases
+      --  detection, whereas items explicitly displayed by the user are
+      --  never hidden.
+
+      Was_Alias      : Boolean := False;
+      --  Memorize whether the item was an alias in the previous display, so
+      --  that we can compute a new position for it.
+
+      Mode           : Items.Display_Mode := Items.Value;
+      --  Whether we should display the mode itself.
+
+      Format         : Standard.Debugger.Value_Format :=
+        Standard.Debugger.Default_Format;
+   end record;
+
+   overriding procedure Destroy
+     (Self     : not null access Display_Item_Record;
+      In_Model : not null access Canvas_Model_Record'Class);
+
+   package String_To_Items is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Display_Item, Ada.Strings.Hash_Case_Insensitive, "=", "=");
+   use String_To_Items;
+
+   function Search_Item
+     (Process : access Visual_Debugger_Record'Class;
+      Id      : String;
+      Name    : String) return Display_Item;
+   --  Search for an item whose Id is Id in the canvas.
+   --  If Name is not the empty string, the name must also match
+
+   procedure Change_Visibility
+     (Item      : access Display_Item_Record'Class;
+      Component : Generic_Type_Access);
+   pragma Unreferenced (Change_Visibility);
+   --  Change the visibility status of a specific component in the item
+
+   function Is_Alias_Of
+     (Item : access Display_Item_Record'Class;
+      Id   : String;
+      Name : String;
+      Deref_Name : String) return Boolean;
+   --  Return True if Item is an alias of the entity with name Name and
+   --  whose Id is Id.
+   --  Deref_Name should be the dereferenced version of Name
+
+   procedure Parse_Type (Item : access Display_Item_Record'Class);
+   --  Parse the type of the entity associated with Item. If the type is
+   --  already known, nothing is done
+
+   procedure Parse_Value (Item : access Display_Item_Record'Class);
+   --  Parse the value of the entity
+
+   procedure Update_Display (Item : not null access Display_Item_Record'Class);
+   --  Recompute the GUI rendering for the item.
+   --  This does not refresh the value read from the debugger, only its
+   --  display.
+
+   procedure Create_Link
+     (Browser    : not null access Debugger_Data_View_Record'Class;
+      From, To   : access Display_Item_Record'Class;
+      Name       : String;
+      Alias_Link : Boolean := False);
+   --  Add a new link between two items.
+   --  The link is not created if there is already a similar one.
+
+   procedure Remove_With_Aliases
+     (Item : access Display_Item_Record'Class;
+      Remove_Aliases : Boolean);
+   pragma Unreferenced (Remove_With_Aliases);
+   --  Remove the item from the canvas.
+   --  If Remove_Aliases is True, then all the items on the canvas that are
+   --  aliases of Item are also removed.
+
+   function Get_Graph_Cmd
+     (Item : access Display_Item_Record'Class) return String;
+   --  Return the "graph display..." command used to create the item
+
+   function Find_Item
+     (Canvas : not null access Debugger_Data_View_Record'Class;
+      Num    : Integer) return Display_Item;
+   --  Return the item whose identifier is Num, or null if there is none
+
+   procedure Set_Auto_Refresh
+     (Item          : access Display_Item_Record'Class;
+      Auto_Refresh  : Boolean;
+      Update_Value  : Boolean := False);
+   --  Change the auto refresh status of the item, and update its pixmap.
+   --  If Update_Value is True, then the value of the item is recomputed
+   --  if necessary.
+
+   procedure Recompute_All_Aliases
+     (Process          : access GVD.Process.Visual_Debugger_Record'Class;
+      Recompute_Values : Boolean := True);
+   --  Recompute all the aliases, and reparse the values for all the
+   --  displayed items if Recompute_Values is True
+
+   procedure Update (Item : not null access Display_Item_Record'Class);
+   --  Unconditionally update the value of Item after parsing the new value.
+   --  This does not redraw the canvas or the item on the canvas, unless
+   --  Redisplay_Canvas is True
+
+   procedure Reset_Recursive (Item : access Display_Item_Record'Class);
+   --  Mark the corresponding entity as up-to-date (i.e. no longer display
+   --  in red).
+
+   procedure Gtk_New
+     (Item           : out Display_Item;
+      Browser        : not null access Debugger_Data_View_Record'Class;
+      Graph_Cmd      : String;
+      Variable_Name  : String;
+      Num            : Integer;
+      Debugger       : access GVD.Process.Visual_Debugger_Record'Class;
+      Auto_Refresh   : Boolean := True;
+      Is_Dereference : Boolean := False;
+      Default_Entity : Items.Generic_Type_Access := null);
+   --  Create a new item to display the value of Variable_Name (or return an
+   --  existing item if one matches).
+   --
+   --  Auto_Refresh should be set to True if the value of Variable should
+   --  be parsed again whenever the debugger stops. This is the default
+   --  behavior, that can be changed by the user.
+   --
+   --  Graph_Cmd is the "graph" command that was used to create the item. This
+   --  is the command that is saved across GVD sessions so that we can restore
+   --  the displayed variables the next time the debugger is started.
+   --
+   --  If Variable_Name is "", then no parsing is done to get the type and
+   --  or value of the variable.
+   --  Default_Entity can be used to initialize the entity associated with the
+   --  item. This will be used instead of Variable_Name if not null.
+   --
+   --  Debugger can be null. In this case, the item will never be computed
+   --
+   --  Num must be specified, and is the number of the item
 
    ----------------
    -- Properties --
@@ -916,9 +1139,11 @@ package body GVD.Canvas is
       Item   : Item_Record) is
    begin
       if Get_Active (Gtk_Radio_Menu_Item (Widget))
-        and then Get_Display_Mode (Item.Item) /= Item.Mode
+        and then Item.Item.Mode /= Item.Mode
       then
-         Set_Display_Mode (Item.Item, Item.Mode);
+         Item.Item.Mode := Item.Mode;
+         Update (Item.Item);
+         Item.Item.Browser.Get_View.Model.Refresh_Layout;
       end if;
    end Change_Display_Mode;
 
@@ -931,9 +1156,11 @@ package body GVD.Canvas is
       Item   : Item_Record) is
    begin
       if Get_Active (Gtk_Radio_Menu_Item (Widget))
-        and then Get_Format (Item.Item) /= Item.Format
+        and then Item.Item.Format /= Item.Format
       then
-         Set_Format (Item.Item, Item.Format);
+         Item.Item.Format := Item.Format;
+         Update (Item.Item);
+         Item.Item.Browser.Get_View.Model.Refresh_Layout;
       end if;
    end Change_Format;
 
@@ -947,15 +1174,15 @@ package body GVD.Canvas is
    is
       pragma Unreferenced (Widget);
    begin
-      if Is_A_Variable (Item.Item) then
+      if Item.Item.Is_A_Variable then
          Process_User_Command
-           (Get_Debugger (Item.Item),
+           (Item.Item.Debugger,
             "graph display " & To_String (Item.Component.Name),
             Output_Command => True);
       else
          Process_User_Command
-           (Get_Debugger (Item.Item),
-            "graph display `" & Get_Name (Item.Item) & "`",
+           (Item.Item.Debugger,
+            "graph display `" & Item.Item.Name.all & "`",
             Output_Command => True);
       end if;
    end Clone_Component;
@@ -1019,7 +1246,7 @@ package body GVD.Canvas is
          Base.Item      := Item;
          Base.Component := Component_Item (Details.Item);
 
-         if Base.Component /= null and then Is_A_Variable (Item) then
+         if Base.Component /= null and then Item.Is_A_Variable then
             declare
                Component_Name : constant String :=
                  To_String (Base.Component.Name);
@@ -1054,7 +1281,7 @@ package body GVD.Canvas is
 
                --  We can't clone an auto-refreshed item, since it would reuse
                --  the same box.
-               if not Item.Get_Auto_Refresh then
+               if not Item.Auto_Refresh then
                   Gtk_New (Mitem, Label => -"Clone" & " " & Component_Name);
                   Item_Handler.Connect
                     (Mitem, Signal_Activate,
@@ -1084,7 +1311,7 @@ package body GVD.Canvas is
             Item_Handler.To_Marshaller (Update_Variable'Access), Base);
          Append (Menu, Mitem);
 
-         if Is_A_Variable (Item) then
+         if Item.Is_A_Variable then
             --  Display a separator
             Gtk_New (Sep);
             Append (Menu, Sep);
@@ -1095,7 +1322,7 @@ package body GVD.Canvas is
             Append (Menu, Mitem);
 
             Gtk_New (Radio, Widget_SList.Null_List, -"Show Value");
-            Set_Active (Radio, Get_Display_Mode (Item) = Value);
+            Set_Active (Radio, Item.Mode = Value);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Display_Mode'Access),
@@ -1106,7 +1333,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Show Type");
-            Set_Active (Radio, Get_Display_Mode (Item) = Type_Only);
+            Set_Active (Radio, Item.Mode = Type_Only);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Display_Mode'Access),
@@ -1118,7 +1345,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Show Value + Type");
-            Set_Active (Radio, Get_Display_Mode (Item) = Type_Value);
+            Set_Active (Radio, Item.Mode = Type_Value);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Display_Mode'Access),
@@ -1134,7 +1361,7 @@ package body GVD.Canvas is
             Append (Submenu, Sep);
 
             Gtk_New (Radio, Widget_SList.Null_List, -"Default");
-            Set_Active (Radio, Get_Format (Item) = Default_Format);
+            Set_Active (Radio, Item.Format = Default_Format);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Format'Access),
@@ -1145,7 +1372,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Decimal");
-            Set_Active (Radio, Get_Format (Item) = Decimal);
+            Set_Active (Radio, Item.Format = Decimal);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Format'Access),
@@ -1157,7 +1384,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Hexadecimal");
-            Set_Active (Radio, Get_Format (Item) = Hexadecimal);
+            Set_Active (Radio, Item.Format = Hexadecimal);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Format'Access),
@@ -1169,7 +1396,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Octal");
-            Set_Active (Radio, Get_Format (Item) = Octal);
+            Set_Active (Radio, Item.Format = Octal);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Format'Access),
@@ -1181,7 +1408,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Binary");
-            Set_Active (Radio, Get_Format (Item) = Binary);
+            Set_Active (Radio, Item.Format = Binary);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Format'Access),
@@ -1201,7 +1428,7 @@ package body GVD.Canvas is
          --  Display "Toggle auto-refresh" option
 
          Gtk_New (Check, "Auto refresh");
-         Set_Active (Check, Get_Auto_Refresh (Base.Item));
+         Set_Active (Check, Base.Item.Auto_Refresh);
          Item_Handler.Connect
            (Check, Signal_Activate,
             Item_Handler.To_Marshaller (Toggle_Refresh_Mode'Access), Base);
@@ -1234,7 +1461,7 @@ package body GVD.Canvas is
       Name : constant String := To_String (Item.Component.Name);
       S : constant String :=
         Simple_Entry_Dialog
-        (Parent   => Get_Debugger (Item.Item).Window,
+        (Parent   => Item.Item.Debugger.Window,
          Title    => -"Setting value of " & Name,
          Message  => -"Setting value of " & Name & ':',
          Position => Win_Pos_Mouse,
@@ -1243,7 +1470,7 @@ package body GVD.Canvas is
 
    begin
       if S /= "" and then S (S'First) /= ASCII.NUL then
-         Set_Variable (Get_Debugger (Item.Item).Debugger, Name, S);
+         Set_Variable (Item.Item.Debugger.Debugger, Name, S);
          Update_Variable (Widget, Item);
       end if;
    end Set_Value;
@@ -1280,9 +1507,7 @@ package body GVD.Canvas is
          if Child.all in Component_Item_Record'Class
            and then Component_Item (Child).Component.all in Access_Type'Class
          then
-            Dereference_Item
-              (Item      => Item.Item,
-               Component => Component_Item (Child));
+            Dereference_Item (Component => Component_Item (Child));
          end if;
       end On_Child;
 
@@ -1330,7 +1555,7 @@ package body GVD.Canvas is
    begin
       Set_Auto_Refresh
         (Item.Item,
-         not Get_Auto_Refresh (Item.Item),
+         not Item.Item.Auto_Refresh,
          True);
    end Toggle_Refresh_Mode;
 
@@ -1370,5 +1595,745 @@ package body GVD.Canvas is
 
       Canvas_Views.Register_Desktop_Functions (Kernel);
    end Register_Module;
+
+   ----------------
+   -- Parse_Type --
+   ----------------
+
+   procedure Parse_Type (Item : access Display_Item_Record'Class) is
+   begin
+      if Item.Is_A_Variable and then Item.Entity = null then
+         begin
+            Item.Entity := Parse_Type (Item.Debugger.Debugger, Item.Name.all);
+         exception
+            when E : Language.Unexpected_Type | Constraint_Error =>
+               GNATCOLL.Traces.Trace (Me, E);
+               Item.Entity := null;
+         end;
+
+         if Item.Entity = null then
+            GNATCOLL.Traces.Trace (Me, "Result of Parse_Type is null");
+         end if;
+      end if;
+   end Parse_Type;
+
+   -----------------
+   -- Parse_Value --
+   -----------------
+
+   procedure Parse_Value (Item : access Display_Item_Record'Class) is
+      Value_Found : Boolean;
+   begin
+      if Item.Entity /= null and then Item.Is_A_Variable then
+         begin
+            Parse_Value
+              (Item.Debugger.Debugger,
+               Item.Name.all,
+               Item.Entity,
+               Format      => Item.Format,
+               Value_Found => Value_Found);
+            Set_Valid (Item.Entity, Value_Found);
+
+         exception
+            when Language.Unexpected_Type | Constraint_Error =>
+               Set_Valid (Item.Entity, False);
+         end;
+      elsif Item.Entity /= null then
+         Set_Valid (Item.Entity, True);
+      end if;
+   end Parse_Value;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Item           : out Display_Item;
+      Browser        : not null access Debugger_Data_View_Record'Class;
+      Graph_Cmd      : String;
+      Variable_Name  : String;
+      Num            : Integer;
+      Debugger       : access Visual_Debugger_Record'Class;
+      Auto_Refresh   : Boolean := True;
+      Is_Dereference : Boolean := False;
+      Default_Entity : Items.Generic_Type_Access := null)
+   is
+      Styles : constant access Browser_Styles := Browser.Get_View.Get_Styles;
+      Alias_Item : Display_Item;
+   begin
+      Item                := new Display_Item_Record;
+      Item.Browser        := General_Browser (Browser);
+      Item.Graph_Cmd      := new String'(Graph_Cmd);
+      Item.Entity         := Default_Entity;
+      Item.Is_A_Variable  := Default_Entity = null;
+      Item.Num            := Num;
+      Item.Debugger       := Visual_Debugger (Debugger);
+      Item.Name           := new String'(Variable_Name);
+      Item.Auto_Refresh   := Auto_Refresh;
+      Item.Is_Dereference := Is_Dereference;
+
+      --  We need the information on the type, so that we detect aliases only
+      --  for structurally equivalent types. If we have an error at this level,
+      --  the variable might not be known yet, and we will simply try to
+      --  refresh over and over again until we can parse the type
+
+      Parse_Type (Item);
+
+      if Item.Entity /= null then
+         Set_Valid (Item.Entity, False);
+      end if;
+
+      --  If an auto-updated similar item is on the canvas, we simply show
+      --  and select it.
+
+      if Item.Entity /= null then
+         if Variable_Name /= "" then
+            Item.Id :=
+              new String'(Get_Uniq_Id (Debugger.Debugger, Variable_Name));
+         end if;
+
+         if Item.Is_A_Variable then
+            if Auto_Refresh then
+               --  Avoid creating the same item twice if it already exists in
+               --  the canvas
+
+               Alias_Item :=
+                 Search_Item (Debugger, Item.Id.all, Variable_Name);
+
+               --  Two structures are aliased only if they have the same
+               --  address and the same structure. The latter is to handle
+               --  cases like "struct A {struct B {int field}} where A, B and
+               --  field have the same address and would be considered as
+               --  aliases otherwise.
+               if Alias_Item /= null
+                 and then
+                   (not Typed_Aliases
+                    or else
+                    Structurally_Equivalent (Alias_Item.Entity, Item.Entity))
+               then
+                  Browser.Get_View.Model.Add_To_Selection (Alias_Item);
+                  Browser.Get_View.Scroll_Into_View
+                    (Alias_Item, Duration => 0.3);
+                  Destroy (Item, In_Model => Browser.Get_View.Model);
+                  Item := Alias_Item;
+                  return;
+               end if;
+            end if;
+         end if;
+
+         Parse_Value (Item);
+      end if;
+
+      Item.Initialize_Rect (Styles.Item);
+      Browser_Model (Browser.Get_View.Model).Add (Item);
+      Item.Set_Position (No_Position);
+
+      Item.Update_Display;
+
+      --  ??? Should be changed when preferences are changed
+      Item.Set_Size_Range
+        (Max_Width  => Gdouble (Max_Item_Width.Get_Pref),
+         Max_Height => Gdouble (Max_Item_Height.Get_Pref));
+
+      if Get_Detect_Aliases (Debugger) then
+         Recompute_All_Aliases (Debugger, False);
+      end if;
+   end Gtk_New;
+
+   --------------------
+   -- Update_Display --
+   --------------------
+
+   procedure Update_Display
+     (Item : not null access Display_Item_Record'Class)
+   is
+      Close   : Close_Button;
+   begin
+      Item.Clear (In_Model => Item.Browser.Get_View.Model);
+
+      if Item.Auto_Refresh then
+         Item.Set_Style (Item.Browser.Get_View.Get_Styles.Item);
+      else
+         Item.Set_Style (Debugger_Data_View (Item.Browser).Freeze);
+      end if;
+
+      Gtk_New (Close);
+      Item.Setup_Titlebar
+        (Browser => Item.Browser,
+         Name    => Integer'Image (Item.Num) & ": " & Item.Name.all,
+         Buttons => (1  => Close));
+
+      if Item.Entity /= null then
+         Item.Add_Child
+           (Item.Entity.Build_Display
+              (Item.Name.all,
+               Debugger_Data_View (Item.Browser),
+               Get_Language (Item.Debugger.Debugger), Item.Mode));
+      end if;
+   end Update_Display;
+
+   -------------------
+   -- Get_Graph_Cmd --
+   -------------------
+
+   function Get_Graph_Cmd
+     (Item : access Display_Item_Record'Class) return String
+   is
+      Rect : Point;
+   begin
+      --  ??? Should memorize auto-refresh state ("graph print" vs "display")
+      if Item.Graph_Cmd /= null then
+         Rect := Item.Position;
+         if Item.Is_Alias_Of = null then
+            return Item.Graph_Cmd.all & " at"
+              & Gdouble'Image (Rect.X)
+              & "," & Gdouble'Image (Rect.Y)
+              & " num" & Integer'Image (Item.Num);
+         else
+            return Item.Graph_Cmd.all & " at"
+              & Gdouble'Image (Rect.X) & "," & Gdouble'Image (Rect.Y)
+              & " num" & Integer'Image (Item.Num)
+              & " alias_of" & Integer'Image (Item.Is_Alias_Of.Num);
+         end if;
+      else
+         return "";
+      end if;
+   end Get_Graph_Cmd;
+
+   -----------------
+   -- Is_Alias_Of --
+   -----------------
+
+   function Is_Alias_Of
+     (Item       : access Display_Item_Record'Class;
+      Id         : String;
+      Name       : String;
+      Deref_Name : String) return Boolean is
+   begin
+      --  Do not detect aliases that are already aliases, so as to
+      --  avoid chains of aliases.
+      --  Note also that X.all can not be an alias of X, so as to properly
+      --  display string parameters in Ada (they appear otherwise as access
+      --  types, which, once dereferenced, would point to themselves).
+
+      return Item.Id /= null
+        and then Item.Auto_Refresh
+        and then Item.Id.all = Id
+        and then Item.Name.all /= Deref_Name
+        and then Name /= Dereference_Name
+          (Get_Language (Item.Debugger.Debugger), Item.Name.all);
+   end Is_Alias_Of;
+
+   ---------------
+   -- Find_Item --
+   ---------------
+
+   function Find_Item
+     (Canvas : not null access Debugger_Data_View_Record'Class;
+      Num    : Integer) return Display_Item
+   is
+      Found : Display_Item;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         if Display_Item (Item).Num = Num then
+            Found := Display_Item (Item);
+         end if;
+      end On_Item;
+   begin
+      Canvas.Get_View.Model.For_Each_Item
+        (On_Item'Access, Filter => Kind_Item);
+      return Found;
+   end Find_Item;
+
+   -----------------
+   -- Search_Item --
+   -----------------
+
+   function Search_Item
+     (Process : access Visual_Debugger_Record'Class;
+      Id      : String;
+      Name    : String) return Display_Item
+   is
+      Alias_Item : Display_Item := null;
+      Deref_Name : constant String := Dereference_Name
+        (Get_Language (Process.Debugger), Name);
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+         It : constant Display_Item := Display_Item (Item);
+      begin
+         if Alias_Item = null  --  not found yet
+           and then (Name = "" or else It.Name.all = Name)
+           and then Is_Alias_Of (It, Id, Name, Deref_Name)
+         then
+            if It.Is_Alias_Of /= null then
+               Alias_Item := It.Is_Alias_Of;
+            else
+               Alias_Item := It;
+            end if;
+         end if;
+      end On_Item;
+
+   begin
+      --  Always search if we have a special name to look for, so as to avoid
+      --  creating the same item multiple times
+      if Name /= "" or else Get_Detect_Aliases (Process) then
+         Process.Data.Get_View.Model.For_Each_Item
+           (On_Item'Access, Filter => Kind_Item);
+      end if;
+      return Alias_Item;
+   end Search_Item;
+
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (Item : not null access Display_Item_Record'Class) is
+   begin
+      if Item.Is_A_Variable
+        and then Item.Entity = null
+      then
+         Parse_Type (Item);
+      end if;
+
+      if Item.Entity /= null then
+         --  Parse the value
+
+         if Item.Entity.all in Debugger_Output_Type'Class then
+            Set_Value
+              (Debugger_Output_Type (Item.Entity.all),
+               Process_User_Command
+                 (Item.Debugger,
+                  Refresh_Command (Debugger_Output_Type (Item.Entity.all)),
+                  Mode => GVD.Types.Internal));
+
+         elsif Item.Name /= null then
+            Parse_Value (Item);
+         end if;
+      end if;
+
+      Item.Update_Display;
+   end Update;
+
+   -----------------
+   -- Create_Link --
+   -----------------
+
+   procedure Create_Link
+     (Browser    : not null access Debugger_Data_View_Record'Class;
+      From, To   : access Display_Item_Record'Class;
+      Name       : String;
+      Alias_Link : Boolean := False)
+   is
+      Styles : constant access Browser_Styles := Get_Styles (Browser.Get_View);
+      L : GVD_Link;
+   begin
+      if not Browser.Has_Link (From, To) then
+         L := new GVD_Link_Record;
+         L.Alias_Link := Alias_Link;
+         L.Default_Style := (if Alias_Link then Styles.Link2 else Styles.Link);
+         L.Name := To_Unbounded_String (Name);
+         L.Initialize
+           (From     => From,
+            To       => To,
+            Style    => L.Default_Style,
+            Routing  => Curve,
+            Label    => Gtk_New_Text (Styles.Label, Name));
+         Browser_Model (Browser.Get_View.Model).Add (L);
+      end if;
+   end Create_Link;
+
+   ----------------------
+   -- Dereference_Item --
+   ----------------------
+
+   procedure Dereference_Item
+     (Component : not null access Component_Item_Record'Class)
+   is
+      Item : constant Display_Item :=
+        Display_Item (Component.Get_Toplevel_Item);
+      Link_Name : constant String := To_String (Component.Name);
+      New_Name  : constant String :=
+        Dereference_Name
+          (Get_Language (Item.Debugger.Debugger),
+           To_String (Component.Name));
+      Link      : constant String :=
+        Dereference_Name
+          (Get_Language (Item.Debugger.Debugger), Link_Name);
+
+   begin
+      --  The newly created item should have the same auto-refresh state as
+      --  the one we are dereferencing
+
+      if Item.Auto_Refresh then
+         Process_User_Command
+           (Item.Debugger,
+            "graph display """ & New_Name & """ dependent on"
+            & Integer'Image (Item.Num) & " link_name " & Link,
+            Output_Command => True);
+      else
+         Process_User_Command
+           (Item.Debugger,
+            "graph print """ & New_Name & """ dependent on"
+            & Integer'Image (Item.Num) & " link_name " & Link,
+            Output_Command => True);
+      end if;
+   end Dereference_Item;
+
+   -----------------------
+   -- Change_Visibility --
+   -----------------------
+
+   procedure Change_Visibility
+     (Item      : access Display_Item_Record'Class;
+      Component : Generic_Type_Access) is
+   begin
+      Set_Visibility (Component, not Get_Visibility (Component.all));
+
+      --  Redraw the canvas
+      Refresh_Data_Window (Item.Debugger);
+   end Change_Visibility;
+
+   ----------------------
+   -- Set_Auto_Refresh --
+   ----------------------
+
+   procedure Set_Auto_Refresh
+     (Item         : access Display_Item_Record'Class;
+      Auto_Refresh : Boolean;
+      Update_Value : Boolean := False)
+   is
+   begin
+      Item.Auto_Refresh := Auto_Refresh;
+
+      if Update_Value then
+         --  If we moved back to the auto-refresh state, force an
+         --  update of the value.
+
+         Reset_Recursive (Item);
+         Update (Item);
+      end if;
+
+      Item.Browser.Get_View.Model.Refresh_Layout;  --  for links
+   end Set_Auto_Refresh;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Self     : not null access Display_Item_Record;
+      In_Model : not null access Canvas_Model_Record'Class)
+   is
+   begin
+      if Self.Entity /= null then
+         Free (Self.Entity);
+      end if;
+
+      GNAT.Strings.Free (Self.Name);
+      GNAT.Strings.Free (Self.Id);
+
+      GPS_Item_Record (Self.all).Destroy (In_Model);  --  inherited
+   end Destroy;
+
+   -------------------------
+   -- Remove_With_Aliases --
+   -------------------------
+
+   procedure Remove_With_Aliases
+     (Item : access Display_Item_Record'Class;
+      Remove_Aliases : Boolean)
+   is
+      Canvas : constant Debugger_Data_View := Item.Debugger.Data;
+      To_Remove : Item_Sets.Set;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+         It : constant Display_Item := Display_Item (Item);
+      begin
+         --  If It is an alias of Item, and it wasn't displayed explicitly
+         --  by the user, then remove it from the canvas as well.  Also
+         --  remove It if it is currently hidden (alias detection), and was
+         --  linked to Item. The user probably expects it to be killed as
+         --  well
+
+         if It.Is_Alias_Of = Display_Item (Item)
+           and then It.Is_Dereference
+         then
+            To_Remove.Include (Abstract_Item (It));
+
+            --  If It is hidden, and was linked to Item
+         elsif It.Is_Alias_Of /= null
+           and then Canvas.Has_Link (GPS_Item (Item), GPS_Item (It))
+         then
+            To_Remove.Include (Abstract_Item (It));
+         end if;
+
+      end On_Item;
+
+   begin
+      --  Should recompute aliases (delete all the items that we aliased
+      --  to this one, since the user was probably expecting them not to be
+      --  visible any more).
+
+      To_Remove.Include (Abstract_Item (Item));
+
+      if Remove_Aliases then
+         Canvas.Get_View.Model.For_Each_Item
+           (On_Item'Access, Filter => Kind_Item);
+      end if;
+
+      if Remove_Aliases then
+         Recompute_All_Aliases (Item.Debugger, Recompute_Values => False);
+      end if;
+
+      Canvas.Get_View.Model.Remove (To_Remove);
+   end Remove_With_Aliases;
+
+   ---------------------------
+   -- Recompute_All_Aliases --
+   ---------------------------
+
+   procedure Recompute_All_Aliases
+     (Process          : access Visual_Debugger_Record'Class;
+      Recompute_Values : Boolean := True)
+   is
+      procedure Remove_Temporary
+        (Item : not null access Abstract_Item_Record'Class);
+      --  Remove all temporary links from the canvas
+
+      procedure Recompute_Address
+        (Item : not null access Abstract_Item_Record'Class);
+      --  Recompute the address of the item, and identify which ones should be
+      --  displayed and which ones should be hidden as aliases
+
+      procedure Build_Aliases
+        (Item : not null access Abstract_Item_Record'Class);
+      --  Using the result of Recompute_Address, compute which items should be
+      --  aliases
+
+      procedure Make_Visible
+        (Item : not null access Abstract_Item_Record'Class);
+      --  Make the item visible
+
+      procedure Update_Value
+        (Item : not null access Abstract_Item_Record'Class);
+      --  Update the value of a specific item in the canvas. The new value is
+      --  read from the debugger, parsed, and redisplayed.
+      --  Do nothing if the auto-refresh status of Item is set to false.
+
+      To_Remove : Item_Sets.Set;
+      To_Hide   : Item_Sets.Set;
+
+      Addresses : String_To_Items.Map;
+      --  Maps addresses to items, to identify aliases
+
+      ------------------
+      -- Make_Visible --
+      ------------------
+
+      procedure Make_Visible
+        (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         Item.Show;
+      end Make_Visible;
+
+      ----------------------
+      -- Remove_Temporary --
+      ----------------------
+
+      procedure Remove_Temporary
+        (Item : not null access Abstract_Item_Record'Class)
+      is
+         Link : constant GVD_Link := GVD_Link (Item);
+      begin
+         if Link.Alias_Link then
+            To_Remove.Include (Abstract_Item (Item));
+         else
+            Link.Show;  --  in case it was hidden before
+         end if;
+      end Remove_Temporary;
+
+      -----------------------
+      -- Recompute_Address --
+      -----------------------
+
+      procedure Recompute_Address
+        (Item : not null access Abstract_Item_Record'Class)
+      is
+         It            : constant Display_Item := Display_Item (Item);
+         Keeper : Display_Item;
+      begin
+         It.Show;
+         It.Was_Alias := It.Is_Alias_Of /= null;
+         It.Is_Alias_Of := null;
+
+         --  If this is not an item associated with a variable, ignore it
+         --  Only detect aliases if we have an auto_refresh item
+         if It.Name = null
+           or else not It.Auto_Refresh
+           or else not It.Is_A_Variable
+         then
+            return;
+         end if;
+
+         --  Else recompute the id for the item
+         GNAT.Strings.Free (It.Id);
+
+         declare
+            Id : constant String :=
+              Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);
+         begin
+            if Id /= "" then
+               It.Id := new String'(Id);
+
+               if Addresses.Contains (Id) then
+                  --  We want to hide dereferences when possible, and keep all
+                  --  items explicitly display
+                  Keeper := Addresses.Element (Id);
+                  if Keeper.Is_Dereference and then not It.Is_Dereference then
+                     Addresses.Include (Id, It);
+                  end if;
+               else
+                  Addresses.Include (Id, It);
+               end if;
+            end if;
+         end;
+      end Recompute_Address;
+
+      -------------------
+      -- Build_Aliases --
+      -------------------
+
+      procedure Build_Aliases
+        (Item : not null access Abstract_Item_Record'Class)
+      is
+         It : constant Display_Item := Display_Item (Item);
+         Keeper : Display_Item;
+         S      : Item_Sets.Set;
+
+         procedure Duplicate_Links
+           (Link : not null access Abstract_Item_Record'Class);
+         --  Duplicate the links that go to an item that is being hidden
+
+         procedure Duplicate_Links
+           (Link : not null access Abstract_Item_Record'Class)
+         is
+            Src, Dest : Display_Item;
+            Replace   : Boolean;
+         begin
+            if not GVD_Link (Link).Alias_Link then
+               Src := Display_Item (GVD_Link (Link).Get_From);
+               Dest := Display_Item (GVD_Link (Link).Get_To);
+               Replace := False;
+
+               if Src = It then
+                  Src := It.Is_Alias_Of;
+                  Replace := True;
+               elsif Dest = It then
+                  Dest := It.Is_Alias_Of;
+                  Replace := True;
+               end if;
+
+               if Replace then
+                  Create_Link
+                    (Process.Data, Src, Dest,
+                     Name       => To_String (GVD_Link (Link).Name),
+                     Alias_Link => True);
+               end if;
+            end if;
+         end Duplicate_Links;
+
+         List : Items_Lists.List;
+      begin
+         if It.Id /= null and then Addresses.Contains (It.Id.all) then
+            Keeper := Addresses.Element (It.Id.all);
+            if It = Keeper then
+               null;  --  nothing to do
+
+            elsif It.Is_Dereference then
+               Process.Data.Get_View.Model.Include_Related_Items (It, To_Hide);
+               It.Is_Alias_Of := Keeper;
+
+               S.Include (Abstract_Item (It));
+               Process.Data.Get_View.Model.For_Each_Link
+                 (Duplicate_Links'Access,
+                  From_Or_To => S);
+
+            else
+               --  not a dereference, so Keeper is not a dereference either
+               Create_Link
+                 (Process.Data, It, Keeper, "<=>", Alias_Link => True);
+            end if;
+         end if;
+
+         --  If we broke the alias, move the item back to some new coordinates
+         if It.Is_Alias_Of = null
+           and then It.Was_Alias
+         then
+            List.Append (Abstract_Item (It));
+            Insert_And_Layout_Items
+              (Process.Data.Get_View,
+               Ref       => It,
+               Items     => List,
+               Direction => Right,
+               Duration  => 0.3);
+         end if;
+      end Build_Aliases;
+
+      ------------------
+      -- Update_Value --
+      ------------------
+
+      procedure Update_Value
+        (Item : not null access Abstract_Item_Record'Class)
+      is
+         It : constant Display_Item := Display_Item (Item);
+      begin
+         if It.Auto_Refresh and then It.Is_Alias_Of = null then
+            Update (It);
+         end if;
+      end Update_Value;
+
+   begin
+      Process.Data.Get_View.Model.For_Each_Item
+        (Remove_Temporary'Access, Filter => Kind_Link);
+      Process.Data.Get_View.Model.Remove (To_Remove);
+      To_Remove.Clear;
+
+      --  First: Recompile all the addresses, and detect the aliases
+      if Get_Detect_Aliases (Process) then
+         Process.Data.Get_View.Model.For_Each_Item
+           (Recompute_Address'Access, Filter => Kind_Item);
+         Process.Data.Get_View.Model.For_Each_Item
+           (Build_Aliases'Access, Filter => Kind_Item);
+      else
+         Process.Data.Get_View.Model.For_Each_Item
+           (Make_Visible'Access, Filter => Kind_Item);
+      end if;
+
+      for L of To_Hide loop
+         L.Hide;
+      end loop;
+
+      --  Then re-parse the value of each item and display them again
+      if Recompute_Values then
+         Process.Data.Get_View.Model.For_Each_Item
+           (Update_Value'Access, Filter => Kind_Item);
+      end if;
+   end Recompute_All_Aliases;
+
+   ---------------------
+   -- Reset_Recursive --
+   ---------------------
+
+   procedure Reset_Recursive (Item : access Display_Item_Record'Class) is
+   begin
+      if Item.Entity /= null then
+         Reset_Recursive (Item.Entity);
+      end if;
+   end Reset_Recursive;
 
 end GVD.Canvas;

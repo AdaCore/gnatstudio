@@ -16,7 +16,8 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;
-with GVD.Process;     use GVD.Process;
+with GVD.Process;           use GVD.Process;
+with Items;                 use Items;
 
 package GVD.Canvas is
 
@@ -35,25 +36,14 @@ package GVD.Canvas is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the data windows
 
-   procedure Refresh_Data_Window
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class);
-   --  Refresh the contents of the data window (if any) associated with
-   --  Debugger
-
    procedure Process_Graph_Cmd
      (Process : access GVD.Process.Visual_Debugger_Record'Class;
       Cmd     : String);
    --  Parse and process a "graph print" or "graph display" command
 
-   -------------------
-   -- Items support --
-   -------------------
-   --  The following types and subprograms are used when drawing items in the
-   --  canvas.
-
-   function Get_Detect_Aliases
-     (Process : access GVD.Process.Visual_Debugger_Record'Class)
-      return Boolean;
-   --  Return True if aliases detection has been activated.
+   procedure Dereference_Item
+     (Component : not null access Component_Item_Record'Class);
+   --  Dereference a component of Item ("graph display" on it with a link from
+   --  the item).
 
 end GVD.Canvas;
