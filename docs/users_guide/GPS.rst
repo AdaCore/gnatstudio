@@ -32,7 +32,9 @@ Functions
 .. autofunction:: get_build_mode
 .. autofunction:: get_build_output
 .. autofunction:: get_home_dir
+.. autofunction:: get_runtime
 .. autofunction:: get_system_dir
+.. autofunction:: get_target
 .. autofunction:: get_tmp_dir
 .. autofunction:: insmod
 .. autofunction:: is_server_local
