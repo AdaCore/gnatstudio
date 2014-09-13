@@ -487,7 +487,7 @@ package body Items.Arrays is
          end if;
       end loop;
 
-      Put (") = (");
+      Put (")= (");
       New_Line;
       Put (String'(1 .. Indent + 3 => ' '));
 

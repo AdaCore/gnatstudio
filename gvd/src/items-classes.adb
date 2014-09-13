@@ -212,7 +212,9 @@ package body Items.Classes is
             end if;
          end loop;
 
-         R.Add_Child (Self.Child.Build_Display (Name, View, Lang, Mode));
+         if Self.Child /= null then
+            R.Add_Child (Self.Child.Build_Display (Name, View, Lang, Mode));
+         end if;
       end if;
 
       return Rect;
