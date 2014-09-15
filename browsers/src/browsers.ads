@@ -36,6 +36,9 @@ package Browsers is
    with private;
    type GPS_Canvas_View is access all GPS_Canvas_View_Record'Class;
 
+   Margin : constant Gtkada.Canvas_View.Margins := (4.0, 4.0, 4.0, 4.0);
+   --  Margins on all sides of a nested item
+
    type Browser_Styles is record
       Item        : Drawing_Style; --  Style to draw the item itself
       Title       : Drawing_Style; --  Style to use the background of the title
@@ -50,6 +53,8 @@ package Browsers is
       Circle      : Drawing_Style; --  For items with a circle
       Label       : Drawing_Style; --  semi-transparent white
       Search      : Drawing_Style; --  matches for local search and filters
+
+      Nested      : Drawing_Style; --  A nested item (with border)
 
       Invisible      : Drawing_Style; --  Invisible item
       Selected_Link  : Drawing_Style; --  link to selected items

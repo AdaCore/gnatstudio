@@ -1282,7 +1282,7 @@ package body Browsers.Canvas is
       if Left /= null then
          Item.Left := Abstract_Item (Left);
          Initialize (Left);
-         Title.Add_Child (Left);
+         Title.Add_Child (Left, Align => Align_Center);
       end if;
 
       Text := Gtk_New_Text (Styles.Title_Font, Name);
@@ -1291,12 +1291,13 @@ package body Browsers.Canvas is
       if Right /= null then
          Item.Right := Abstract_Item (Right);
          Initialize (Right);
-         Title.Add_Child (Right);
+         Title.Add_Child (Right, Align => Align_Center, Pack_End => True);
       end if;
 
       for B in reverse Buttons'Range loop
          Title.Add_Child
-           (Buttons (B), Align => Align_Center, Pack_End => True);
+           (Buttons (B), Align => Align_Center, Pack_End => True,
+            Margin => (0.0, 2.0, 0.0, 0.0));
       end loop;
    end Setup_Titlebar;
 

@@ -451,7 +451,7 @@ debugger console.
 In each of these cases, a box is displayed in the data browser with the
 following information:
 
-.. image:: canvas.jpg
+.. image:: debugger-canvas.png
 
 * A title bar containing:
 
@@ -595,7 +595,7 @@ Most of the items are displayed using several colors, each conveying a
 special meaning.  The default meaning of each colors is as follows
 (the colors can be changed through the preferences dialog):
 
-.. image:: colors.jpg
+.. image:: debugger-canvas-colors.png
 
 *black*
 

@@ -404,11 +404,14 @@ package body Items.Records is
          Rect.Add_Child (View.Item_Hidden);
 
       else
+         Rect.Set_Style (Styles.Nested);
+
          if Show_Type (Mode)
            and then Self.Type_Name /= null
          then
             Rect.Add_Child
-              (Gtk_New_Text (Styles.Text_Font, Self.Get_Type_Name (Lang)));
+              (Gtk_New_Text (Styles.Text_Font, Self.Get_Type_Name (Lang)),
+               Margin => Margin);
          end if;
 
          for F in Self.Fields'Range loop
@@ -419,7 +422,7 @@ package body Items.Records is
                R.For_Component := Self.Fields (F).Value;
                R.Initialize_Rect (Styles.Invisible);
                R.Set_Child_Layout (Horizontal_Stack);
-               Rect.Add_Child (R);
+               Rect.Add_Child (R, Margin => Margin);
                R.Add_Child
                  (Gtk_New_Text
                     (Styles.Text_Font, Self.Fields (F).Name.all & " => "));
@@ -438,7 +441,7 @@ package body Items.Records is
                      R.For_Component := Self.Fields (F).Variant_Part (V);
                      R.Initialize_Rect (Styles.Invisible);
                      R.Set_Child_Layout (Horizontal_Stack);
-                     Rect.Add_Child (R);
+                     Rect.Add_Child (R, Margin => Margin);
                      R.Add_Child
                        (Gtk_New_Text
                           (Styles.Text_Font,

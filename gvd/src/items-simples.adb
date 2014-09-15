@@ -236,7 +236,7 @@ package body Items.Simples is
             Rect.Add_Child (T);
          end if;
 
-         if Show_Value (Mode) then
+         if Self.Value /= null and then Show_Value (Mode) then
             T := Gtk_New_Text (S, Self.Value.all);
             T.Set_Size_Range (Min_Height => 10.0);
             Rect.Add_Child (T);

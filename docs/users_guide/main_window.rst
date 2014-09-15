@@ -96,14 +96,12 @@ Browsers provide the following additional capabilities:
   hide only a subset of links. Even when links are hidden, if you select a
   box, boxes linked to it are still highlighted.
 
-  Enable the :guilabel:`straight links` local settings menu in
-  browsers if you want to avoid diagonal links.
-
 * Scrolling
 
   When many boxes are displayed, the currently visible area may be too
   small for all of them.  When that happens, GPS adds scrollbars. You can
-  also scroll using the arrow keys.
+  also scroll using the arrow keys, or by dragging the background while
+  pressing the left mouse button.
 
 * Layout
 
@@ -119,17 +117,14 @@ Browsers provide the following additional capabilities:
 
 * Moving boxes
 
-  Move boxes with your mouse. Drag the box by clicking on its title
+  Move boxes with the mouse. Drag the box by clicking on its title
   bar. The box's links are still displayed during the move, so you can see
   whether it overlaps any other box. If you try to move the box outside the
   visible part of the browser, it is scrolled.
 
 * Selecting boxes
 
-  Select a box by clicking it.  Select multiple boxes by holding the
-  :kbd:`control` key while clicking each box.  Or create a rectangle using
-  your mouse; all boxes within the rectangle when the mouse is released are
-  selected.
+  Select a box by clicking it.
 
   The title bar of selected boxes is a different color.  All boxes linked
   to them also use a different title bar color and so do the links. This is
@@ -145,6 +140,9 @@ Browsers provide the following additional capabilities:
   :guilabel:`zoom in`, :guilabel:`zoom out`, and :guilabel:`zoom` buttons in
   the local toolbar to change the level and use the latter to explicitly
   select the level you want.
+
+  You can also press the :keys:`alt` key and use the mouse wheel to zoom in
+  or out.
 
   This capability is generally useful when many boxes are displayed in the
   browser to allow you to get an overview of the layout and the
@@ -1271,7 +1269,6 @@ Callgraph browser
 -----------------
 
 .. image:: callgraph.png
-.. image:: callgraph_orth.png
 
 The :guilabel:`Callgraph` browser graphically displays the relationship
 between subprogram callers and callees. A link between two items indicates
@@ -1629,7 +1626,7 @@ See also :ref:`browsers_features` for more capabilities of GPS browsers.
 The :guilabel:`Elaboration Circularities` browser
 =================================================
 
-.. image:: elaboration-graph.jpg
+.. image:: elaboration-graph.png
 
 GPS detects elaboration cycles reported by build processes and constructs a
 visual representation of elaboration dependencies in an
