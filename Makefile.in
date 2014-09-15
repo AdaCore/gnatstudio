@@ -64,7 +64,7 @@ endif
 	${RM} ${sharedir}/gps/perspectives.xml
 	$(RMDIR) $(sharedir)/gps/templates
 # update runtime.xml before copying the plug-ins files.
-	-(cd distrib; $(PERL) from_impunit.pl)
+	cd distrib; $(PERL) from_impunit.pl
 # update light icon set
 	$(MKDIR) share/icons/light/svg
 	(cd distrib; $(PYTHON) iconsets.py)

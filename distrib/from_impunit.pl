@@ -7,7 +7,7 @@
 $expand_hierarchies = 1;
 
 $output ="../share/support/core/runtime.py";
-$impunit="../gnatlib/gnat_src/impunit.adb";
+$impunit="../gnat/impunit.adb";
 
 open (OUT, '>' . $output);
 open (IMPUNIT, $impunit) || die "File $impunit not found";
