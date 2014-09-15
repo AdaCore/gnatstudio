@@ -1088,7 +1088,7 @@ package body GVD.Canvas is
 
       Hook.Execute (Kernel, null);
 
-      return Gtk_Widget (Canvas);
+      return Gtk_Widget (Canvas.Get_View);
    end Initialize;
 
    ---------------------------

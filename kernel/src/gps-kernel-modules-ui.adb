@@ -559,6 +559,7 @@ package body GPS.Kernel.Modules.UI is
    function Get_Current_Module
      (Kernel : access Kernel_Handle_Record'Class) return Module_ID
    is
+      F : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
       C : MDI_Child;
       W : Gtk_Widget;
    begin
@@ -576,7 +577,7 @@ package body GPS.Kernel.Modules.UI is
          --  The focus is moved asynchronously, but we know it will go back to
          --  the MDI at this point, and thus the current MDI child is the focus
          --  one
-         C := Get_Focus_Child (Get_MDI (Kernel));
+         C := F;
 
       else
          --  We have an explicit widget with the keyboard focus. Check whether
@@ -589,9 +590,7 @@ package body GPS.Kernel.Modules.UI is
          C := Find_MDI_Child_From_Widget (W);
       end if;
 
-      if C = null
-        or else C /= Get_Focus_Child (Get_MDI (Kernel))
-      then
+      if C = null or else C /= F then
          return null;
       else
          return Get_Module_From_Child (C);

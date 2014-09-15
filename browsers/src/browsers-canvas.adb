@@ -56,12 +56,14 @@ with Commands;                          use Commands;
 with Commands.Interactive;              use Commands.Interactive;
 with Default_Preferences;               use Default_Preferences;
 with Generic_Views;                     use Generic_Views;
+with GPS.Core_Kernels;                  use GPS.Core_Kernels;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
@@ -1253,7 +1255,8 @@ package body Browsers.Canvas is
    is
       pragma Unreferenced (Filter);
    begin
-      return Browser_From_Context (Context) /= null;
+      return Get_Creator (Context) /= null
+        and then Browser_From_Context (Context) /= null;
    end Filter_Matches_Primitive;
 
    --------------------

@@ -401,7 +401,7 @@ package body Browsers.Dependency_Items is
          Object          => View,
          ID              => Dependency_Views.Get_Module,
          Context_Func    => Context_Factory'Access);
-      return Gtk_Widget (View);
+      return Gtk_Widget (View.Get_View);
    end Initialize;
 
    --------------

@@ -45,6 +45,7 @@ with Gtkada.MDI;              use Gtkada.MDI;
 with Ada.Tags;                  use Ada.Tags;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Kernel;                use GPS.Kernel;
@@ -60,6 +61,7 @@ with Histories;                 use Histories;
 with System;
 
 package body Generic_Views is
+   Me : constant Trace_Handle := Create ("Views");
 
    function Has_Toolbar_Separator
      (Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
@@ -801,6 +803,19 @@ package body Generic_Views is
                On_Display_Local_Config_Access, View);
             Button.Show_All;
          end if;
+
+         --  A simple check that the widget can indeed get the keyboard focus.
+         --  If it can't, this might result in surprising behavior: for
+         --  instance, clicking on a MDI tab will send a "child_selected"
+         --  event with no module information set, and the current focus
+         --  widget will not have changed, thus the menus are not correctly
+         --  refreshed.
+
+         Assert
+           (Me,
+            Focus_Widget = null or else Focus_Widget.Get_Can_Focus,
+            "Focus_Widget cannot in fact receive keyboard focus",
+            Raise_Exception => False);
 
          --  Child does not exist yet, create it
          Child := new Local_Formal_MDI_Child;

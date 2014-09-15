@@ -553,7 +553,7 @@ package body Browsers.Projects is
          Object          => View,
          ID              => Project_Views.Get_Module,
          Context_Func    => Default_Browser_Context_Factory'Access);
-      return Gtk_Widget (View);
+      return Gtk_Widget (View.Get_View);
    end Initialize;
 
    --------------------
