@@ -436,7 +436,7 @@ package body Browsers.Projects is
       Browser.Get_View.Model.Add_To_Selection (Src);
 
       if Recursive then
-         Browser.Get_View.Model.Refresh_Layout;
+         Browser.Refresh_Layout;
       else
          Insert_And_Layout_Items
            (Browser.Get_View,
