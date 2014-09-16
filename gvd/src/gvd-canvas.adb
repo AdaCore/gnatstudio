@@ -1007,8 +1007,12 @@ package body GVD.Canvas is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       Check : Gtk_Check_Menu_Item;
+      Sep   : Gtk_Separator_Menu_Item;
    begin
       General_Browser_Record (View.all).Create_Menu (Menu);  --  inherited
+
+      Gtk_New (Sep);
+      Menu.Append (Sep);
 
       Gtk_New (Check, Label => -"Detect aliases");
       Check.Set_Tooltip_Text

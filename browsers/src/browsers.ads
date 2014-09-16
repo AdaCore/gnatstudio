@@ -40,9 +40,6 @@ package Browsers is
    Margin : constant Gtkada.Canvas_View.Margins := (4.0, 4.0, 4.0, 4.0);
    --  Margins on all sides of a nested item
 
-   Horiz_Margin : constant Gtkada.Canvas_View.Margins := (1.0, 4.0, 1.0, 4.0);
-   --  Adds margins to the left and right sides of an item
-
    type Browser_Styles is record
       Item        : Drawing_Style; --  Style to draw the item itself
       Title       : Drawing_Style; --  Style to use the background of the title

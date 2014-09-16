@@ -31,10 +31,16 @@ with Glib.Main;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
+with Pango.Enums;               use Pango.Enums;
+with Pango.Font;                use Pango.Font;
 
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
 
@@ -50,6 +56,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
+with Histories;                 use Histories;
 with Xref;                      use Xref;
 
 package body Browsers.Entities is
@@ -63,6 +70,9 @@ package body Browsers.Entities is
    UML_Generic  : constant String := "{Generic}";
    --  String used in UML to indicate that an entity is abstract
 
+   Show_Qualified_Name : constant History_Key :=
+     "browser-entities-qualified-names";
+
    ------------------
    -- Type browser --
    ------------------
@@ -71,9 +81,14 @@ package body Browsers.Entities is
    with record
       Primitive_Button : Gdk.Pixbuf.Gdk_Pixbuf;
       Idle_Id          : Glib.Main.G_Source_Id := 0;
+
+      Compartment_Title : Drawing_Style;
    end record;
    --  See inherited documentation
 
+   overriding procedure Create_Menu
+     (View    : not null access Type_Browser_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding function Load_From_XML
      (Self : not null access Type_Browser_Record;
       Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class;
@@ -100,14 +115,28 @@ package body Browsers.Entities is
       Group                  => Group_Default);
    subtype Type_Browser is Entities_Views.View_Access;
 
+   type Compartment_Item_Record is
+     new Rect_Item_Record and Clickable_Item
+   with record
+      Folded : Boolean := False;
+   end record;
+   type Compartment_Item is access all Compartment_Item_Record'Class;
+
+   overriding procedure On_Click
+     (Self    : not null access Compartment_Item_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
+
    ---------------
    -- Type item --
    ---------------
 
    type Type_Item_Record is new GPS_Item_Record with record
-      Entity                : Root_Entity_Ref;
-      Might_Have_Primitives : Boolean := True;
-      Inherited_Primitives  : Boolean := False;
+      Entity     : Root_Entity_Ref;
+
+      Attrs, Ops : Compartment_Item;
+      --  Those are children of the type_item, so destroyed automatically when
+      --  the item is destroyed.
    end record;
    type Type_Item is access all Type_Item_Record'Class;
 
@@ -117,6 +146,24 @@ package body Browsers.Entities is
    overriding procedure Set_Context
      (Item    : not null access Type_Item_Record;
       Context : in out Selection_Context);
+
+   procedure Add_Attrs
+     (Self   : not null access Type_Item_Record'Class;
+      Child  : access Container_Item_Record'Class;
+      Folded : Boolean := False);
+   procedure Add_Ops
+     (Self   : not null access Type_Item_Record'Class;
+      Child  : access Container_Item_Record'Class;
+      Folded : Boolean := True);
+   --  Add a child to each of the compartments.
+   --  The compartment is created as needed, using the specified Folded state.
+   --  If the Child is null, the compartment is created but no child added.
+
+   procedure Reset (Self : not null access Type_Item_Record'Class);
+   --  Recompute what an item should display
+
+   procedure Reset_All_Items (Browser : access Gtk_Widget_Record'Class);
+   --  Redraw all items
 
    -----------
    -- Links --
@@ -322,6 +369,49 @@ package body Browsers.Entities is
                 Parent_Link => Get_Attribute (Node, "parent") = "1");
    end Load_From_XML;
 
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Type_Browser_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Check : Gtk_Check_Menu_Item;
+      Sep   : Gtk_Separator_Menu_Item;
+   begin
+      General_Browser_Record (View.all).Create_Menu (Menu);  --  inherited
+
+      Gtk_New (Sep);
+      Menu.Append (Sep);
+
+      Gtk_New (Check, Label => -"Show qualified names");
+      Check.Set_Tooltip_Text
+        (-("Whether the title bars should show a fully qualified name"));
+      Associate (Get_History (View.Kernel).all, Show_Qualified_Name, Check);
+      Menu.Append (Check);
+      Widget_Callback.Object_Connect
+        (Check, Signal_Toggled, Reset_All_Items'Access, View);
+   end Create_Menu;
+
+   --------------
+   -- On_Click --
+   --------------
+
+   overriding procedure On_Click
+     (Self    : not null access Compartment_Item_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
+   is
+      Item : constant Type_Item := Type_Item (Details.Toplevel_Item);
+   begin
+      if Details.Event_Type = Double_Click then
+         Self.Folded := not Self.Folded;
+         Item.Reset;
+         View.Model.Refresh_Layout;  --  position of links
+      end if;
+   end On_Click;
+
    --------------
    -- On_Click --
    --------------
@@ -413,6 +503,10 @@ package body Browsers.Entities is
       Entities_Views.Register_Module (Kernel);
 
       Command := new Examine_Entity_Command;
+
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, Show_Qualified_Name,
+         Default_Value => False);
 
       Register_Contextual_Menu
         (Kernel, "Examine entity",
@@ -676,6 +770,12 @@ package body Browsers.Entities is
          Object          => View,
          ID              => Entities_Views.Get_Module,
          Context_Func    => Default_Browser_Context_Factory'Access);
+
+      View.Compartment_Title := Gtk_New
+        (Font  => (Name   => From_String ("sans bold 9"),
+                   Halign => Pango.Enums.Pango_Align_Center,
+                   others => <>));
+
       return Gtk_Widget (View.Get_View);
    end Initialize;
 
@@ -713,14 +813,10 @@ package body Browsers.Entities is
 
       use Entity_Arrays;
       Methods : Xref.Entity_Array :=
-        Item.Entity.Element.Methods
-          (Include_Inherited => Item.Inherited_Primitives);
+        Item.Entity.Element.Methods (Include_Inherited => False);
 
       Arr  : Entity_Arrays.List;
    begin
-      Trace (Me, "Add_Primitive_Operations: Inherited_Primitives="
-             & Item.Inherited_Primitives'Img);
-
       --  Store all primitive operations in an array, so that we can display
       --  them sorted, and possibly filter them out.
       --  ??? Not very efficient, since we already have such an array.
@@ -758,6 +854,66 @@ package body Browsers.Entities is
       return Ent;
    end Gtk_New_Entity;
 
+   ---------------
+   -- Add_Attrs --
+   ---------------
+
+   procedure Add_Attrs
+     (Self   : not null access Type_Item_Record'Class;
+      Child  : access Container_Item_Record'Class;
+      Folded : Boolean := False)
+   is
+      B : constant Type_Browser := Type_Browser (Self.Browser);
+   begin
+      if Self.Attrs = null then
+         Self.Attrs := new Compartment_Item_Record;
+         Self.Attrs.Folded := Folded;
+         Self.Attrs.Initialize_Rect (Self.Browser.Get_View.Get_Styles.Nested);
+         Self.Add_Child (Self.Attrs);
+
+         if Folded then
+            Self.Attrs.Add_Child
+              (Gtk_New_Text
+                 (B.Compartment_Title, "attributes (double-click to view)"));
+         end if;
+      end if;
+
+      if Child /= null and then not Self.Attrs.Folded then
+         Self.Attrs.Add_Child
+           (Child, Margin => (1.0, 4.0, 0.0, 10.0));
+      end if;
+   end Add_Attrs;
+
+   -------------
+   -- Add_Ops --
+   -------------
+
+   procedure Add_Ops
+     (Self   : not null access Type_Item_Record'Class;
+      Child  : access Container_Item_Record'Class;
+      Folded : Boolean := True)
+   is
+      B : constant Type_Browser := Type_Browser (Self.Browser);
+   begin
+      if Self.Ops = null then
+         Self.Ops := new Compartment_Item_Record;
+         Self.Ops.Folded := Folded;
+         Self.Ops.Initialize_Rect (Self.Browser.Get_View.Get_Styles.Nested);
+         Self.Add_Child (Self.Ops);
+
+         if Folded then
+            Self.Ops.Add_Child
+              (Gtk_New_Text
+                 (B.Compartment_Title, "operations (double-click to view)"));
+         end if;
+      end if;
+
+      if Child /= null and then not Self.Ops.Folded then
+         Self.Ops.Add_Child
+           (Child, Margin => (1.0, 4.0, 0.0, 10.0));
+      end if;
+   end Add_Ops;
+
    --------------------
    -- Add_Subprogram --
    --------------------
@@ -774,7 +930,7 @@ package body Browsers.Entities is
       Rect.Add_Child (Gtk_New_Entity (B, Entity));
       Rect.Add_Child
         (Gtk_New_Text (S.Text_Font, " (" & Entity.Get_Display_Kind & ")"));
-      Item.Add_Child (Rect, Margin => Horiz_Margin);
+      Item.Add_Ops (Rect);
    end Add_Subprogram;
 
    --------------------
@@ -799,7 +955,7 @@ package body Browsers.Entities is
             Rect.Add_Child
               (Gtk_New_Text
                  (S.Text_Font, Name & " : " & Image (Params (P).Kind)));
-            Item.Add_Child (Rect, Margin => Horiz_Margin);
+            Item.Add_Attrs (Rect);
 
             --  In some cases, access parameters reference their pointed type
             --  through Pointed_Type. However, if that access type is a
@@ -829,7 +985,7 @@ package body Browsers.Entities is
          Rect.Set_Child_Layout (Horizontal_Stack);
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, "return "));
          Rect.Add_Child (Gtk_New_Entity (B, Returned));
-         Item.Add_Child (Rect, Margin => Horiz_Margin);
+         Item.Add_Attrs (Rect);
       end if;
    end Add_Parameters;
 
@@ -853,7 +1009,7 @@ package body Browsers.Entities is
          Rect.Set_Child_Layout (Horizontal_Stack);
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, "Parent: "));
          Rect.Add_Child (Gtk_New_Entity (B, Parent));
-         Item.Add_Child (Rect, Margin => Horiz_Margin);
+         Item.Add_Attrs (Rect);
       end if;
 
       declare
@@ -884,7 +1040,7 @@ package body Browsers.Entities is
             Rect.Set_Child_Layout (Horizontal_Stack);
             Rect.Add_Child (Gtk_New_Entity (B, Current));
             Rect.Add_Child (Gtk_New_Text (S.Text_Font, " (type)"));
-            Item.Add_Child (Rect, Margin => Horiz_Margin);
+            Item.Add_Attrs (Rect);
 
          --  We want to show variables declared in this package, but not the
          --  parameters to subprograms.
@@ -915,9 +1071,8 @@ package body Browsers.Entities is
    begin
       if Literals'Length /= 0 then
          for F in Literals'Range loop
-            Item.Add_Child
-              (Gtk_New_Text (S.Text_Font, Get_Name (Literals (F).all)),
-               Margin => Horiz_Margin);
+            Item.Add_Attrs
+              (Gtk_New_Text (S.Text_Font, Get_Name (Literals (F).all)));
          end loop;
 
       else
@@ -963,9 +1118,9 @@ package body Browsers.Entities is
          if Entity.Is_Array then
             Item.Add_Array_Type (Entity, Prefix);
          elsif Entity.Is_Access then
-            Item.Add_Access_Type (Entity, Prefix);
+            Item.Add_Access_Type (Entity, Prefix & " : ");
          else
-            Item.Add_Child
+            Item.Add_Attrs
               (Gtk_New_Text (S.Text_Font, Prefix & " : <anonymous>"));
          end if;
 
@@ -974,7 +1129,7 @@ package body Browsers.Entities is
          Rect.Set_Child_Layout (Horizontal_Stack);
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : "));
          Rect.Add_Child (Gtk_New_Entity (B, Typ, Prefix));
-         Item.Add_Child (Rect, Margin => Horiz_Margin);
+         Item.Add_Attrs (Rect);
       end if;
    end Add_Type;
 
@@ -995,7 +1150,7 @@ package body Browsers.Entities is
    begin
       if Typ /= No_Root_Entity then
          Rect := Gtk_New_Rect (S.Invisible);
-         Item.Add_Child (Rect, Margin => Horiz_Margin);
+         Item.Add_Attrs (Rect);
          Rect.Set_Child_Layout (Horizontal_Stack);
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : array "));
 
@@ -1020,9 +1175,7 @@ package body Browsers.Entities is
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " of "));
          Rect.Add_Child (Gtk_New_Entity (B, Typ));
       else
-         Item.Add_Child
-           (Gtk_New_Text (S.Text_Font, Prefix & " : ???"),
-            Margin => Horiz_Margin);
+         Item.Add_Attrs (Gtk_New_Text (S.Text_Font, Prefix & " : ???"));
       end if;
    end Add_Array_Type;
 
@@ -1042,14 +1195,12 @@ package body Browsers.Entities is
    begin
       if Typ /= No_Root_Entity then
          Rect := Gtk_New_Rect (S.Invisible);
-         Item.Add_Child (Rect, Margin => Horiz_Margin);
+         Item.Add_Attrs (Rect);
          Rect.Set_Child_Layout (Horizontal_Stack);
-         Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : access "));
+         Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & "access "));
          Rect.Add_Child (Gtk_New_Entity (B, Typ));
       else
-         Item.Add_Child
-           (Gtk_New_Text (S.Text_Font, Prefix & " : ???"),
-            Margin => Horiz_Margin);
+         Item.Add_Attrs (Gtk_New_Text (S.Text_Font, Prefix & "???"));
       end if;
    end Add_Access_Type;
 
@@ -1165,6 +1316,104 @@ package body Browsers.Entities is
       Free (Children);
    end On_Click;
 
+   ---------------------
+   -- Reset_All_Items --
+   ---------------------
+
+   procedure Reset_All_Items (Browser : access Gtk_Widget_Record'Class) is
+      B : constant Type_Browser := Type_Browser (Browser);
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         Type_Item (Item).Reset;
+      end On_Item;
+   begin
+      B.Get_View.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+      B.Get_View.Model.Refresh_Layout;
+   end Reset_All_Items;
+
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Self : not null access Type_Item_Record'Class) is
+      B : constant Type_Browser := Type_Browser (Self.Browser);
+      E : constant Root_Entity'Class := Self.Entity.Element;
+
+      Has_Attrs    : constant Boolean := Self.Attrs /= null;
+      Attrs_Folded : constant Boolean :=
+        Self.Attrs /= null and then Self.Attrs.Folded;
+      Has_Ops      : constant Boolean := Self.Ops /= null;
+      Ops_Folded   : constant Boolean :=
+        Self.Ops = null or else Self.Ops.Folded;
+
+      Title : Unbounded_String;
+   begin
+      Self.Clear (B.Get_View.Model);
+      Self.Attrs := null;  --  were destroyed
+      Self.Ops   := null;
+
+      --  Now compute the contents of the item
+
+      if Get_History (Get_History (B.Kernel).all, Show_Qualified_Name) then
+         Title := To_Unbounded_String (E.Qualified_Name);
+      else
+         Title := To_Unbounded_String (E.Get_Name);
+      end if;
+
+      if E.Is_Abstract then
+         Title :=  UML_Abstract & ASCII.LF & Title;
+      end if;
+      if E.Is_Generic then
+         Title := UML_Generic & ASCII.LF & Title;
+      end if;
+
+      --  ??? This meta-type does not provide much information to the user,
+      --  since the granularity is that of the ALI file, too coarse.
+      --     Append (Title, ASCII.LF & "{"
+      --       & Get_Display_Kind (Item.Entity.Element) & "}");
+
+      Setup_Titlebar
+        (Self, B,
+         Name  => To_String (Title),
+         Left  => new Show_Parents_Button,
+         Right => new Show_Children_Button);
+
+      if Has_Attrs then
+         Self.Add_Attrs (null, Folded => Attrs_Folded);
+      end if;
+
+      if Has_Ops then
+         Self.Add_Ops (null, Folded => Ops_Folded);
+      end if;
+
+      if not Is_Type (E) then
+         Self.Add_Type (E, "of type");
+
+      elsif Is_Access (E) then
+         Self.Add_Access_Type (E, "");
+
+      elsif Is_Array (E) then
+         Self.Add_Array_Type (E, "");
+
+      elsif Is_Subprogram (E) then
+         Self.Add_Parameters;
+
+      elsif Has_Methods (E) then
+         Self.Add_Fields;
+         Self.Add_Primitive_Operations;
+
+      elsif Is_Container (E) then
+         Self.Add_Package_Contents;
+         Self.Add_Fields;
+
+      else
+         --  Enumerations, in particular
+         Self.Add_Fields;
+      end if;
+   end Reset;
+
    -------------------------
    -- Find_Or_Create_Item --
    -------------------------
@@ -1184,7 +1433,6 @@ package body Browsers.Entities is
       end On_Item;
 
       S : constant access Browser_Styles := Browser.Get_View.Get_Styles;
-      Title : Unbounded_String;
    begin
       Item := null;
       Newly_Added := False;
@@ -1200,51 +1448,7 @@ package body Browsers.Entities is
          Browser_Model (Browser.Get_View.Model).Add (Item);
 
          Item.Initialize_Rect (Style => S.Item, Radius => 5.0);
-
-         Title := To_Unbounded_String (Entity.Qualified_Name);
-         if Entity.Is_Abstract then
-            Append (Title, ASCII.LF & "   " & UML_Abstract);
-         end if;
-         if Entity.Is_Generic then
-            Append (Title, ASCII.LF & "   " & UML_Generic);
-         end if;
-
-         Setup_Titlebar
-           (Item, Browser,
-            Name  => To_String (Title),
-            Left  => new Show_Parents_Button,
-            Right => new Show_Children_Button);
-
-         Item.Add_Child
-           (Gtk_New_Text
-              (S.Text_Font, Get_Display_Kind (Item.Entity.Element)),
-            Margin => Margin);
-
-         if not Is_Type (Entity) then
-            Item.Add_Type (Entity, "of type");
-
-         elsif Is_Access (Entity) then
-            Item.Add_Access_Type (Entity, "");
-
-         elsif Is_Array (Entity) then
-            Item.Add_Array_Type (Entity, "");
-
-         elsif Is_Subprogram (Entity) then
-            Item.Add_Parameters;
-
-         elsif Has_Methods (Entity) then
-            Item.Might_Have_Primitives := True;
-            Item.Add_Fields;
-            Item.Add_Primitive_Operations;
-
-         elsif Is_Container (Entity) then
-            Item.Add_Package_Contents;
-            Item.Add_Fields;
-
-         else
-            --  Enumerations, in particular
-            Item.Add_Fields;
-         end if;
+         Item.Reset;
       end if;
    end Find_Or_Create_Item;
 

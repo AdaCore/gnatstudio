@@ -220,7 +220,9 @@ package body Browsers is
          return Gtk_New
            (Fill   => P,
             Stroke => Null_RGBA,
-            Font   => (Name => From_String ("sans 8"), others => <>));
+            Font   => (Name   => From_String ("sans 8"),
+                       Halign => Pango.Enums.Pango_Align_Center,
+                       others => <>));
       end Create_Title_Style;
 
       Selected : constant Gdk_RGBA := Selected_Item_Color.Get_Pref;
@@ -251,7 +253,9 @@ package body Browsers is
          Title      =>
            Create_Title_Style (White_RGBA),
          Title_Font => Gtk_New
-           (Font   => (Name => Copy (F), others => <>),
+           (Font   => (Name   => Copy (F),
+                       Halign => Pango.Enums.Pango_Align_Center,
+                       others => <>),
             Stroke => Null_RGBA),
          Text_Font  => Gtk_New
            (Font   => (Name => F2, others => <>),
