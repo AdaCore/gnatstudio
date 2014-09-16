@@ -19,7 +19,6 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Xref;             use GNATCOLL.Xref;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
@@ -60,7 +59,6 @@ with Histories;                 use Histories;
 with Xref;                      use Xref;
 
 package body Browsers.Entities is
-   Me : constant Trace_Handle := Create ("Browser.Entities");
 
    package Entity_Arrays is new Ada.Containers.Indefinite_Doubly_Linked_Lists
       (Root_Entity'Class);
@@ -515,64 +513,16 @@ package body Browsers.Entities is
          Ref_Item   => "Entity called by in browser",
          Add_Before => False,
          Filter     => not Create (Module => Entities_Views.M_Name));
+
       Register_Command
         (Kernel, "show",
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "discriminants",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "fields",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "literals",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "is_predefined",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "parameters",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel.Scripts, "methods",
-         Class   => Get_Entity_Class (Kernel),
-         Params  => (2 => Param ("include_inherited", Optional => True)),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel.Scripts, "documentation",
-         Class       => Get_Entity_Class (Kernel),
-         Handler     => Show_Entity_Command_Handler'Access,
-         Params      => (2 => Param ("include_inherited", Optional => True)));
-      Register_Command
-        (Kernel, "return_type",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "pointed_type",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "derived_types",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "parent_types",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "primitive_of",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
-      Register_Command
-        (Kernel, "type",
-         Class   => Get_Entity_Class (Kernel),
-         Handler => Show_Entity_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("documentation",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Show_Entity_Command_Handler'Access,
+         Params       => (2 => Param ("include_inherited", Optional => True)));
    end Register_Module;
 
    ---------------------------------
@@ -585,28 +535,12 @@ package body Browsers.Entities is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Entity : constant Root_Entity'Class := Get_Data (Data, 1);
-      Ignore : Type_Item;
-      pragma Unreferenced (Ignore);
    begin
       if Entity /= No_Root_Entity then
          if Command = "show" then
             Add_And_Layout
               (Entities_Views.Get_Or_Create_View (Kernel, Focus => True),
                Entity => Entity);
-
-         elsif Command = "discriminants" then
-            declare
-               Discrs : Xref.Entity_Array := Discriminants (Entity);
-            begin
-               Set_Return_Value_As_List (Data);
-
-               for D in Discrs'Range loop
-                  Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), Discrs (D).all));
-               end loop;
-
-               Free (Discrs);
-            end;
 
          elsif Command = "documentation" then
             declare
@@ -620,139 +554,8 @@ package body Browsers.Entities is
                      Entity => Entity,
                      Raw_Format => not Extended));
             end;
-
-         elsif Command = "parameters" then
-            declare
-               Params : constant Parameter_Array := Parameters (Entity);
-            begin
-               Set_Return_Value_As_List (Data);
-               for P in Params'Range loop
-                  Set_Return_Value
-                    (Data, Create_Entity
-                       (Get_Script (Data), Params (P).Parameter));
-               end loop;
-            end;
-
-         elsif Command = "methods" then
-            declare
-               Methods : Xref.Entity_Array :=
-                 Entity.Methods
-                   (Include_Inherited => Nth_Arg (Data, 2, False));
-            begin
-               Set_Return_Value_As_List (Data);
-
-               for M in Methods'Range loop
-                  Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), Methods (M).all));
-               end loop;
-
-               Free (Methods);
-            end;
-
-         elsif Command = "return_type" then
-            Set_Return_Value
-              (Data, Create_Entity (Get_Script (Data), Entity.Returned_Type));
-
-         elsif Command = "primitive_of" then
-            declare
-               Arr : Xref.Entity_Array := Entity.Is_Primitive_Of;
-            begin
-               Set_Return_Value_As_List (Data);
-               for A in Arr'Range loop
-                  Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), Arr (A).all));
-               end loop;
-
-               Free (Arr);
-            end;
-
-         elsif Command = "pointed_type" then
-            declare
-               Result : Root_Entity'Class := Entity.Pointed_Type;
-            begin
-               if Result = No_Root_Entity then
-                  Result := Entity.Get_Type_Of;
-                  if Result /= No_Root_Entity then
-                     Result := Result.Pointed_Type;
-                  end if;
-               end if;
-               Set_Return_Value
-                 (Data, Create_Entity (Get_Script (Data), Result));
-            end;
-
-         elsif Command = "type" then
-            Set_Return_Value
-              (Data, Create_Entity (Get_Script (Data), Entity.Get_Type_Of));
-
-         elsif Command = "is_predefined" then
-            Set_Return_Value
-              (Data, Entity.Is_Predefined_Entity);
-
-         elsif Command = "fields" then
-            declare
-               F : Xref.Entity_Array := Entity.Fields;
-            begin
-               Set_Return_Value_As_List (Data);
-
-               for F2 in F'Range loop
-                  Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), F (F2).all));
-               end loop;
-
-               Free (F);
-            end;
-
-         elsif Command = "literals" then
-            declare
-               F : Xref.Entity_Array := Entity.Literals;
-            begin
-               Set_Return_Value_As_List (Data);
-
-               for F2 in F'Range loop
-                  Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), F (F2).all));
-               end loop;
-
-               Free (F);
-            end;
-
-         elsif Command = "derived_types" then
-            declare
-               Children : Xref.Entity_Array :=
-                 Entity.Child_Types (Recursive => False);
-            begin
-               Set_Return_Value_As_List (Data);
-
-               for C in Children'Range loop
-                  Set_Return_Value
-                    (Data, Create_Entity
-                       (Get_Script (Data), Children (C).all));
-               end loop;
-
-               Free (Children);
-            end;
-
-         elsif Command = "parent_types" then
-            declare
-               Parents : Xref.Entity_Array :=
-                 Entity.Parent_Types (Recursive => False);
-            begin
-               Set_Return_Value_As_List (Data);
-
-               for C in Parents'Range loop
-                  Set_Return_Value
-                    (Data, Create_Entity (Get_Script (Data), Parents (C).all));
-               end loop;
-
-               Free (Parents);
-            end;
-
          end if;
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
-         Set_Error_Msg (Data, -"Internal error");
    end Show_Entity_Command_Handler;
 
    ----------------
