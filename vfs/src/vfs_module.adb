@@ -32,6 +32,7 @@ with Glib.Convert;              use Glib.Convert;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 with GUI_Utils;                 use GUI_Utils;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -472,13 +473,6 @@ package body VFS_Module is
            (Get_Registry (Get_Kernel (Context.Context)).Tree, File);
 
          if Project /= No_Project then
-            Res := Gtkada.Dialogs.Message_Dialog
-              (-"A file or directory belonging to the project "
-               & Project.Name
-               & (-" has been deleted.") & ASCII.LF &
-               (-"The project might require modifications."),
-               Gtkada.Dialogs.Warning,
-               Gtkada.Dialogs.Button_Yes);
             Reload_Project_If_Needed (Get_Kernel (Context.Context));
             Recompute_View (Get_Kernel (Context.Context));
          end if;
@@ -722,9 +716,20 @@ package body VFS_Module is
             W_File : GNATCOLL.VFS.Writable_File;
          begin
             if Res /= "" then
+               --  ??? Should fill it with a template when appropriate
                File := Create_From_Dir (Dir, +Res);
                W_File := GNATCOLL.VFS.Write_File (File);
                GNATCOLL.VFS.Close (W_File);
+
+               --  now open the new file
+               declare
+                  Buf : constant Editor_Buffer'Class :=
+                    Get_Buffer_Factory (Get_Kernel (Context.Context)).Get
+                      (File => File);
+                  pragma Unreferenced (Buf);
+               begin
+                  null;
+               end;
             end if;
          exception
             when others =>
@@ -797,7 +802,8 @@ package body VFS_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       File_View_Filter : constant Action_Filter :=
-        Lookup_Filter (Kernel, "File_View");
+        Lookup_Filter (Kernel, "File_View")
+        or Create (Module => Explorer_Module_Name);
       File_Filter      : constant Action_Filter := new File_Filter_Record;
       Dir_Filter       : constant Action_Filter := new Dir_Filter_Record;
       Command          : Interactive_Command_Access;
