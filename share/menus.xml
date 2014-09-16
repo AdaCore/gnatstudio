@@ -298,7 +298,6 @@
             <menu label="Project"                   action="open project browser"/>
          </menu>
          <menu label="Consoles">
-            <menu label="_GPS Shell"                 action="open shell"/>
             <menu label="_Python"                    action="open python"/>
             <menu label="OS Shell"                   action="open os shell"/>
             <menu label="_Auxiliary Builds"          action="open auxiliary builds"/>

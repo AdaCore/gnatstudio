@@ -358,6 +358,18 @@ NF-61-L810-013 GPS: Clear locations view for an individual file (2014-05-29)
   New contextual menu added to clear Location View from messages for current
   file only. Corresponding action allows binding key shortcut.
 
+NF-61-L621-013 GPS: remove the GPS Shell console (2014-09-16)
+
+  Although the GPS shell scripting is still supported for this language, the
+  console itself has been removed. We recommend using the Python console
+  instead. Most commands are available there, with the following replacements
+  possible:
+            GPS Shell         |    Python
+                cd            | os.chdir('...')
+                pwd           | os.getcwd()
+                ls            | os.listdir('...')
+                help          | help(...)
+
 NF-61-KB22-012 GPS: auto-load plugin (2014-08-15)
 
   GPS now loads project-specific plugin named <project>.ide.py when
