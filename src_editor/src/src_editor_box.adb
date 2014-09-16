@@ -605,7 +605,7 @@ package body Src_Editor_Box is
          Unref (Box.Source_Buffer);
       end if;
 
-      Create_Tooltips (Box).Set_Tooltip (Box.Source_View);
+      Create_Tooltips (Box).Set_Tooltip (Box);
 
       --  The status bar, at the bottom of the window...
 

@@ -19,6 +19,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;
 
 with Glib;                      use Glib;
+with Gdk;                       use Gdk;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Window;                use Gdk.Window;
@@ -143,7 +144,10 @@ package body Src_Editor_Box.Tooltips is
       Area             : Gdk_Rectangle;
       Image            : Gtk_Image;
       HBox             : Gtk_Box;
+      LX, LY           : Gint;
+      --  The coordinates relative to the view, not the box
 
+      In_Side_Area     : Boolean;
    begin
       if not Display_Tooltip.Get_Pref then
          return null;
@@ -153,15 +157,25 @@ package body Src_Editor_Box.Tooltips is
 
       Get_Geometry (Window, Win_X, Win_Y, Window_Width, Window_Height);
 
-      if X < Win_X
-        and then Y > Win_Y
-        and then Win_X + Window_Width > X
-        and then Win_Y + Window_Height > Y
-      then
+      --  Convert box coordinates to view coordinates
+      declare
+         Box_Win  : constant Gdk_Window := Box.Get_Window;
+         View_Win : constant Gdk_Window := View.Get_Window;
+         Box_X, Box_Y : Gint;
+         View_X, View_Y : Gint;
+      begin
+         Get_Origin (Box_Win, Box_X, Box_Y);
+         Get_Origin (View_Win, View_X, View_Y);
+         LX := X + Box_X - View_X;
+         LY := Y + Box_Y - View_Y;
+         In_Side_Area := LX < (View_X - Box_X);
+      end;
+
+      if In_Side_Area then
          --  In the side column, see if a tooltip information is to be
          --  displayed.
          Window_To_Buffer_Coords
-           (View, Win_X, Y, Line, Col, Out_Of_Bounds);
+           (View, LX, LY, Line, Col, Out_Of_Bounds);
 
          declare
             Content       : Unbounded_String;
@@ -223,8 +237,8 @@ package body Src_Editor_Box.Tooltips is
 
       Window_To_Buffer_Coords
         (View,
-         X - Get_Border_Window_Size (View, Text_Window_Left),
-         Y - Get_Border_Window_Size (View, Text_Window_Top),
+         LX - Get_Border_Window_Size (View, Text_Window_Left),
+         LY - Get_Border_Window_Size (View, Text_Window_Top),
          Line, Col, Out_Of_Bounds);
 
       if Out_Of_Bounds then
