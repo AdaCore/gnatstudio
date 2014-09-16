@@ -21,6 +21,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Xref;             use GNATCOLL.Xref;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Window;                use Gdk.Window;
@@ -37,6 +38,7 @@ with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
 
+with Basic_Types;               use Basic_Types;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Generic_Views;
@@ -72,6 +74,14 @@ package body Browsers.Entities is
    end record;
    --  See inherited documentation
 
+   overriding function Load_From_XML
+     (Self : not null access Type_Browser_Record;
+      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class;
+   overriding procedure Load_From_XML
+     (Self     : not null access Type_Browser_Record;
+      Node     : XML_Utils.Node_Ptr;
+      From, To : not null access GPS_Item_Record'Class);
+
    function Initialize
      (View   : access Type_Browser_Record'Class)
       return Gtk_Widget;
@@ -101,9 +111,26 @@ package body Browsers.Entities is
    end record;
    type Type_Item is access all Type_Item_Record'Class;
 
+   overriding function Save_To_XML
+     (Self : not null access Type_Item_Record)
+      return XML_Utils.Node_Ptr;
    overriding procedure Set_Context
      (Item    : not null access Type_Item_Record;
       Context : in out Selection_Context);
+
+   -----------
+   -- Links --
+   -----------
+
+   type Entity_Link_Record is new GPS_Link_Record with record
+      Parent_Link  : Boolean := False;
+      Name         : Unbounded_String;
+   end record;
+   type Entity_Link is access all Entity_Link_Record'Class;
+
+   overriding procedure Save_To_XML
+     (Self : not null access Entity_Link_Record;
+      Node : not null XML_Utils.Node_Ptr);
 
    ----------
    -- Misc --
@@ -219,6 +246,81 @@ package body Browsers.Entities is
    overriding function Execute
      (Command : access Examine_Entity_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
+
+   -----------------
+   -- Save_To_XML --
+   -----------------
+
+   overriding function Save_To_XML
+     (Self : not null access Type_Item_Record)
+      return XML_Utils.Node_Ptr
+   is
+      Decl : constant General_Entity_Declaration :=
+        Self.Entity.Element.Get_Declaration;
+      N : constant Node_Ptr := new Node;
+   begin
+      N.Tag := new String'("entity");
+      Set_Attribute (N, "name", To_String (Decl.Name));
+      Set_Attribute (N, "file", Decl.Loc.File.Display_Full_Name);
+      Set_Attribute (N, "line", Decl.Loc.Line'Img);
+      Set_Attribute (N, "col",  Decl.Loc.Column'Img);
+      return N;
+   end Save_To_XML;
+
+   -----------------
+   -- Save_To_XML --
+   -----------------
+
+   overriding procedure Save_To_XML
+     (Self : not null access Entity_Link_Record;
+      Node : not null XML_Utils.Node_Ptr)
+   is
+   begin
+      Set_Attribute (Node, "name", To_String (Self.Name));
+      if Self.Parent_Link then
+         Set_Attribute (Node, "parent", "1");
+      end if;
+   end Save_To_XML;
+
+   -------------------
+   -- Load_From_XML --
+   -------------------
+
+   overriding function Load_From_XML
+     (Self : not null access Type_Browser_Record;
+      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class
+   is
+      E : constant Root_Entity'Class :=
+        Self.Kernel.Databases.Get_Entity
+          (Name => Get_Attribute (Node, "name"),
+           Loc  =>
+             (File    => Create (+Get_Attribute (Node, "file")),
+              Project => <>,
+              Line    => Integer'Value (Get_Attribute (Node, "line")),
+              Column  =>
+                Visible_Column_Type'Value (Get_Attribute (Node, "col"))));
+      It : Type_Item;
+      Newly_Added : Boolean;
+   begin
+      Self.Find_Or_Create_Item (E, It, Newly_Added);
+      return It;
+   end Load_From_XML;
+
+   -------------------
+   -- Load_From_XML --
+   -------------------
+
+   overriding procedure Load_From_XML
+     (Self     : not null access Type_Browser_Record;
+      Node     : XML_Utils.Node_Ptr;
+      From, To : not null access GPS_Item_Record'Class)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Add_Link (Type_Item (From), Type_Item (To),
+                Link_Name   => Get_Attribute (Node, "name"),
+                Parent_Link => Get_Attribute (Node, "parent") = "1");
+   end Load_From_XML;
 
    --------------
    -- On_Click --
@@ -958,7 +1060,7 @@ package body Browsers.Entities is
    is
       Browser : constant Type_Browser := Type_Browser (Item.Browser);
       Styles  : constant access Browser_Styles := Browser.Get_View.Get_Styles;
-      Link     : GPS_Link;
+      Link     : Entity_Link;
       Label    : Text_Item;
    begin
       if not Browser.Has_Link (Item, Item2) then
@@ -966,7 +1068,9 @@ package body Browsers.Entities is
             Label := Gtk_New_Text (Styles.Label, Link_Name);
          end if;
 
-         Link := new GPS_Link_Record;
+         Link := new Entity_Link_Record;
+         Link.Parent_Link := Parent_Link;
+         Link.Name := To_Unbounded_String (Link_Name);
          Link.Default_Style :=
            (if Parent_Link then Styles.Link2 else Styles.Link);
          Browser_Model (Browser.Get_View.Model).Add (Link);

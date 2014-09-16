@@ -15,8 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
 with GNAT.Strings;                      use GNAT.Strings;
 with GNATCOLL.VFS;                      use GNATCOLL.VFS;
+with System.Address_Image;
 
 with Glib;                              use Glib;
 with Glib.Main;                         use Glib.Main;
@@ -1376,5 +1379,111 @@ package body Browsers.Canvas is
               (Self.Browser.Get_View.Styles.Search, Context);
       end case;
    end Draw;
+
+   -----------------
+   -- Save_To_XML --
+   -----------------
+
+   overriding procedure Save_To_XML
+     (View : access General_Browser_Record;
+      XML  : in out XML_Utils.Node_Ptr)
+   is
+      procedure On_Item (It : not null access Abstract_Item_Record'Class);
+      procedure On_Link (It : not null access Abstract_Item_Record'Class);
+
+      procedure On_Item (It : not null access Abstract_Item_Record'Class) is
+         E    : constant GPS_Item := GPS_Item (It);
+         N    : constant Node_Ptr := E.Save_To_XML;
+         Pos  : constant Point := It.Position;
+      begin
+         if N /= null then
+            Set_Attribute (N, "id", System.Address_Image (E.all'Address));
+            Set_Attribute (N, "x", Pos.X'Img);
+            Set_Attribute (N, "y", Pos.Y'Img);
+            Add_Child (XML, N);
+         end if;
+      end On_Item;
+
+      procedure On_Link (It : not null access Abstract_Item_Record'Class) is
+         L : constant GPS_Link := GPS_Link (It);
+         N : Node_Ptr;
+      begin
+         N := new Node;
+         N.Tag := new String'("link");
+         Set_Attribute
+           (N, "from", System.Address_Image (L.Get_From.all'Address));
+         Set_Attribute
+           (N, "to", System.Address_Image (L.Get_To.all'Address));
+         Add_Child (XML, N, Append => True);
+      end On_Link;
+
+      Area : constant Model_Rectangle := View.Get_View.Get_Visible_Area;
+   begin
+      View.Get_View.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+      View.Get_View.Model.For_Each_Item (On_Link'Access, Filter => Kind_Link);
+
+      Set_Attribute (XML, "scale", View.Get_View.Get_Scale'Img);
+      Set_Attribute (XML, "top", Gdouble'Image (Area.Y));
+      Set_Attribute (XML, "left", Gdouble'Image (Area.X));
+   end Save_To_XML;
+
+   -------------------
+   -- Load_From_XML --
+   -------------------
+
+   overriding procedure Load_From_XML
+     (View : access General_Browser_Record; XML : XML_Utils.Node_Ptr)
+   is
+      package Addr_To_Items is new Ada.Containers.Indefinite_Hashed_Maps
+        (Key_Type        => String,
+         Hash            => Ada.Strings.Hash,
+         Element_Type    => GPS_Item,
+         Equivalent_Keys => "=");
+      use Addr_To_Items;
+
+      Items         : Addr_To_Items.Map;
+      Elem          : Addr_To_Items.Cursor;
+      C             : Node_Ptr;
+      It, It2       : GPS_Item;
+   begin
+      if Get_Attribute (XML, "scale") = "" then
+         --  No contents was saved
+         return;
+      end if;
+
+      C := XML.Child;
+      while C /= null loop
+         if C.Tag.all /= "link" then
+            It := General_Browser (View).Load_From_XML (C);
+            if It /= null then
+               It.Set_Position
+                 ((X => Gdouble'Value (Get_Attribute (C, "x")),
+                   Y => Gdouble'Value (Get_Attribute (C, "y"))));
+               Items.Include (Get_Attribute (C, "id"), It);
+            end if;
+
+         else
+            Elem := Items.Find (Get_Attribute (C, "from"));
+            if Has_Element (Elem) then
+               It := Element (Elem);
+
+               Elem := Items.Find (Get_Attribute (C, "to"));
+               if Has_Element (Elem) then
+                  It2 := Element (Elem);
+                  General_Browser (View).Load_From_XML (C, It, It2);
+               end if;
+            end if;
+         end if;
+
+         C := C.Next;
+      end loop;
+
+      View.Get_View.Model.Refresh_Layout;
+
+      View.Get_View.Set_Scale (Gdouble'Value (Get_Attribute (XML, "scale")));
+      View.Get_View.Set_Topleft
+        ((X => Gdouble'Value (Get_Attribute (XML, "left")),
+          Y => Gdouble'Value (Get_Attribute (XML, "top"))));
+   end Load_From_XML;
 
 end Browsers.Canvas;

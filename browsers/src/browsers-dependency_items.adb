@@ -111,6 +111,13 @@ package body Browsers.Dependency_Items is
    overriding procedure Create_Menu
      (View    : not null access Dependency_Browser_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding function Load_From_XML
+     (Self : not null access Dependency_Browser_Record;
+      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class;
+   overriding procedure Load_From_XML
+     (Self     : not null access Dependency_Browser_Record;
+      Node     : XML_Utils.Node_Ptr;
+      From, To : not null access GPS_Item_Record'Class);
 
    function Initialize
      (View   : access Dependency_Browser_Record'Class)
@@ -158,6 +165,9 @@ package body Browsers.Dependency_Items is
    end record;
    type File_Item is access all File_Item_Record'Class;
 
+   overriding function Save_To_XML
+     (Self : not null access File_Item_Record)
+      return XML_Utils.Node_Ptr;
    overriding procedure Set_Context
      (Item    : not null access File_Item_Record;
       Context : in out Selection_Context);
@@ -171,6 +181,10 @@ package body Browsers.Dependency_Items is
       Explicit : Boolean;
    end record;
    type Dependency_Link is access all Dependency_Link_Record'Class;
+
+   overriding procedure Save_To_XML
+     (Self : not null access Dependency_Link_Record;
+      Node : not null XML_Utils.Node_Ptr);
 
    procedure Add_Link
      (Self     : not null access Dependency_Browser_Record'Class;
@@ -212,7 +226,7 @@ package body Browsers.Dependency_Items is
    --  Layout is recomputed on exit if Recompute_Layout is true
 
    procedure Find_Or_Create_File
-     (Self        : not null access General_Browser_Record'Class;
+     (Self        : not null access Dependency_Browser_Record'Class;
       Filename    : Virtual_File;
       Project     : Project_Type;
       Item        : out File_Item;
@@ -248,6 +262,72 @@ package body Browsers.Dependency_Items is
 
    procedure Refresh_Browser (Browser : access Gtk_Widget_Record'Class);
    --  Refresh the browser after the settings have changed
+
+   -----------------
+   -- Save_To_XML --
+   -----------------
+
+   overriding function Save_To_XML
+     (Self : not null access File_Item_Record)
+      return XML_Utils.Node_Ptr
+   is
+      N : constant Node_Ptr := new Node;
+   begin
+      N.Tag := new String'("file");
+      Set_Attribute (N, "file", Self.Source.Display_Full_Name);
+      Set_Attribute
+        (N, "project", Self.Project.Project_Path.Display_Full_Name);
+      return N;
+   end Save_To_XML;
+
+   -----------------
+   -- Save_To_XML --
+   -----------------
+
+   overriding procedure Save_To_XML
+     (Self : not null access Dependency_Link_Record;
+      Node : not null XML_Utils.Node_Ptr)
+   is
+   begin
+      if Self.Explicit then
+         Set_Attribute (Node, "explicit", "1");
+      end if;
+   end Save_To_XML;
+
+   -------------------
+   -- Load_From_XML --
+   -------------------
+
+   overriding function Load_From_XML
+     (Self : not null access Dependency_Browser_Record;
+      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class
+   is
+      It          : File_Item;
+      Newly_Added : Boolean;
+   begin
+      Self.Find_Or_Create_File
+        (Filename => Create (+Get_Attribute (Node, "file")),
+         Project  => Get_Project_Tree (Self.Kernel).Project_From_Path
+         (Create (+Get_Attribute (Node, "project"))),
+         Item     => It,
+         Newly_Added => Newly_Added);
+      return It;
+   end Load_From_XML;
+
+   -------------------
+   -- Load_From_XML --
+   -------------------
+
+   overriding procedure Load_From_XML
+     (Self     : not null access Dependency_Browser_Record;
+      Node     : XML_Utils.Node_Ptr;
+      From, To : not null access GPS_Item_Record'Class)
+   is
+   begin
+      Self.Add_Link
+        (File_Item (From), File_Item (To),
+         Explicit => Get_Attribute (Node, "explicit") = "1");
+   end Load_From_XML;
 
    ---------------------
    -- Refresh_Browser --
@@ -612,7 +692,7 @@ package body Browsers.Dependency_Items is
    -------------------------
 
    procedure Find_Or_Create_File
-     (Self        : not null access General_Browser_Record'Class;
+     (Self        : not null access Dependency_Browser_Record'Class;
       Filename    : Virtual_File;
       Project     : Project_Type;
       Item        : out File_Item;

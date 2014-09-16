@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -29,6 +28,7 @@ with Gtkada.Style;              use Gtkada.Style;
 with Generic_Views;          use Generic_Views;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
@@ -37,7 +37,6 @@ with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Search;             use GPS.Search;
 with GPS.Intl;               use GPS.Intl;
-with Projects;               use Projects;
 with Browsers.Canvas;        use Browsers.Canvas;
 with Commands.Interactive;   use Commands, Commands.Interactive;
 
@@ -60,6 +59,13 @@ package body Browsers.Projects is
    overriding procedure Filter_Changed
      (Self    : not null access Project_Browser_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
+   overriding function Load_From_XML
+     (Self : not null access Project_Browser_Record;
+      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class;
+   overriding procedure Load_From_XML
+     (Self     : not null access Project_Browser_Record;
+      Node     : XML_Utils.Node_Ptr;
+      From, To : not null access GPS_Item_Record'Class);
 
    function Initialize
      (View   : access Project_Browser_Record'Class)
@@ -110,7 +116,7 @@ package body Browsers.Projects is
    ------------------
 
    type Project_Item_Record is new GPS_Item_Record with record
-      Name : Ada.Strings.Unbounded.Unbounded_String;
+      Path  : Virtual_File;
       --  Store the name, and not the project, in case the latter becomes
       --  invalid after we reload a project
 
@@ -135,14 +141,26 @@ package body Browsers.Projects is
    --  Return the project associated with Item
 
    function Find_Project
-     (Browser      : not null access Project_Browser_Record'Class;
-      Project_Name : String) return Project_Item;
+     (Browser : not null access Project_Browser_Record'Class;
+      Path    : Virtual_File) return Project_Item;
    --  Return the first item representing Project_Name
 
+   overriding function Save_To_XML
+     (Self : not null access Project_Item_Record)
+      return XML_Utils.Node_Ptr;
    overriding procedure Set_Context
      (Item    : not null access Project_Item_Record;
       Context : in out Selection_Context);
    --  Set the GPS context from a selected item.
+
+   type Project_Link_Record is new GPS_Link_Record with record
+      Limited_With : Boolean := False;
+   end record;
+   type Project_Link is access all Project_Link_Record'Class;
+
+   overriding procedure Save_To_XML
+     (Self : not null access Project_Link_Record;
+      Node : not null XML_Utils.Node_Ptr);
 
    type Show_Importing_Projects_Button is new Left_Arrow_Record
    with null record;
@@ -163,7 +181,7 @@ package body Browsers.Projects is
    -------------------
 
    procedure Gtk_New_Link
-     (L               : out GPS_Link;
+     (L               : out Project_Link;
       Browser         : not null access Project_Browser_Record'Class;
       Src, Dest       : not null access Abstract_Item_Record'Class;
       Is_Limited_With : Boolean := False;
@@ -175,6 +193,64 @@ package body Browsers.Projects is
       Src, Dest    : Project_Item;
       Limited_With : Boolean);
    --  Add a link between the two items
+
+   -----------------
+   -- Save_To_XML --
+   -----------------
+
+   overriding function Save_To_XML
+     (Self : not null access Project_Item_Record)
+      return XML_Utils.Node_Ptr
+   is
+      N : constant Node_Ptr := new Node;
+   begin
+      N.Tag := new String'("project");
+      Set_Attribute (N, "path", Self.Path.Display_Full_Name);
+      return N;
+   end Save_To_XML;
+
+   -----------------
+   -- Save_To_XML --
+   -----------------
+
+   overriding procedure Save_To_XML
+     (Self : not null access Project_Link_Record;
+      Node : not null XML_Utils.Node_Ptr)
+   is
+   begin
+      if Self.Limited_With then
+         Set_Attribute (Node, "limited_with", "1");
+      end if;
+   end Save_To_XML;
+
+   -------------------
+   -- Load_From_XML --
+   -------------------
+
+   overriding function Load_From_XML
+     (Self : not null access Project_Browser_Record;
+      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class
+   is
+      P : constant Project_Type :=
+        Get_Project_Tree (Self.Kernel).Project_From_Path
+        (Create (+Get_Attribute (Node, "path")));
+   begin
+      return Self.Add_Project_If_Not_Present (P);
+   end Load_From_XML;
+
+   -------------------
+   -- Load_From_XML --
+   -------------------
+
+   overriding procedure Load_From_XML
+     (Self     : not null access Project_Browser_Record;
+      Node     : XML_Utils.Node_Ptr;
+      From, To : not null access GPS_Item_Record'Class) is
+   begin
+      Self.Add_Link_If_Not_Present
+        (Project_Item (From), Project_Item (To),
+         Limited_With => Get_Attribute (Node, "limited_with") = "1");
+   end Load_From_XML;
 
    --------------------
    -- Create_Toolbar --
@@ -201,8 +277,8 @@ package body Browsers.Projects is
    function Project_Of (Self : not null access Project_Item_Record'Class)
       return Project_Type is
    begin
-      return Get_Registry (Self.Browser.Kernel).Tree
-        .Project_From_Name (To_String (Self.Name));
+      return Get_Project_Tree (Self.Browser.Kernel)
+        .Project_From_Path (Self.Path);
    end Project_Of;
 
    ------------------
@@ -210,8 +286,8 @@ package body Browsers.Projects is
    ------------------
 
    function Find_Project
-     (Browser      : not null access Project_Browser_Record'Class;
-      Project_Name : String) return Project_Item
+     (Browser : not null access Project_Browser_Record'Class;
+      Path    : Virtual_File) return Project_Item
    is
       Result : Project_Item;
 
@@ -219,7 +295,7 @@ package body Browsers.Projects is
       procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
       begin
          if Item.all in Project_Item_Record'Class
-           and then Project_Item (Item).Name = Project_Name
+           and then Project_Item (Item).Path = Path
          then
             Result := Project_Item (Item);
          end if;
@@ -239,7 +315,7 @@ package body Browsers.Projects is
      (Browser : not null access Project_Browser_Record'Class;
       Project : Project_Type) return Project_Item
    is
-      V : Project_Item := Find_Project (Browser, Project.Name);
+      V : Project_Item := Find_Project (Browser, Project.Project_Path);
    begin
       if V = null then
          Gtk_New (V, Browser, Project);
@@ -255,49 +331,50 @@ package body Browsers.Projects is
    ------------------
 
    procedure Gtk_New_Link
-     (L               : out GPS_Link;
+     (L               : out Project_Link;
       Browser         : not null access Project_Browser_Record'Class;
       Src, Dest       : not null access Abstract_Item_Record'Class;
       Is_Limited_With : Boolean := False;
       Extending       : Boolean := False)
    is
       S  : constant access Browser_Styles := Browser.Get_View.Get_Styles;
-      L2 : constant GPS_Link := new GPS_Link_Record;
    begin
+      L := new Project_Link_Record;
+      L.Limited_With := Is_Limited_With;
+
       if Is_Limited_With then
-         L2.Default_Style := S.Link2;
+         L.Default_Style := S.Link2;
          Initialize
-           (L2,
+           (L,
             From        => Src,
             To          => Dest,
             Routing     => Curve,
             Label       => Gtk_New_Text (S.Title, "limited"),
             Anchor_From => (X => 1.0, others => <>),
             Anchor_To   => (X => 0.0, others => <>),
-            Style       => L2.Default_Style);
+            Style       => L.Default_Style);
       elsif Extending then
-         L2.Default_Style := S.Link2;
+         L.Default_Style := S.Link2;
          Initialize
-           (L2,
+           (L,
             From        => Src,
             To          => Dest,
             Routing     => Curve,
             Label       => Gtk_New_Text (S.Title, "extending"),
             Anchor_From => (X => 1.0, others => <>),
             Anchor_To   => (X => 0.0, others => <>),
-            Style       => L2.Default_Style);
+            Style       => L.Default_Style);
       else
-         L2.Default_Style := S.Link;
+         L.Default_Style := S.Link;
          Initialize
-           (L2,
+           (L,
             From        => Src,
             To          => Dest,
             Routing     => Curve,
             Anchor_From => (X => 1.0, others => <>),
             Anchor_To   => (X => 0.0, others => <>),
-            Style       => L2.Default_Style);
+            Style       => L.Default_Style);
       end if;
-      L := L2;
    end Gtk_New_Link;
 
    -----------------------------
@@ -309,7 +386,7 @@ package body Browsers.Projects is
       Src, Dest    : Project_Item;
       Limited_With : Boolean)
    is
-      L      : GPS_Link;
+      L      : Project_Link;
       P1, P2 : Project_Type;
       S1, S2 : access Abstract_Item_Record'Class;
 
@@ -343,7 +420,7 @@ package body Browsers.Projects is
    begin
       V := new Project_Item_Record;
       V.Browser := General_Browser (Browser);
-      V.Name := To_Unbounded_String (Project.Name);
+      V.Path := Project.Project_Path;
 
       if True then
          V.Initialize_Rect (Style => S.Invisible);
@@ -576,7 +653,9 @@ package body Browsers.Projects is
       procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
          It : constant Project_Item := Project_Item (Item);
       begin
-         if Pattern.Start (To_String (It.Name)) = GPS.Search.No_Match then
+         if Pattern.Start (It.Path.Display_Base_Name)
+           = GPS.Search.No_Match
+         then
             Self.Get_View.Model.Include_Related_Items (Item, To_Hide);
          end if;
       end On_Item;

@@ -24,6 +24,7 @@ with Gtk.Toolbar;
 with Gtk.Widget;
 with Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Models;
+with XML_Utils;
 
 package Browsers.Canvas is
 
@@ -48,6 +49,11 @@ package Browsers.Canvas is
    overriding procedure Create_Menu
      (View    : not null access General_Browser_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Save_To_XML
+     (View : access General_Browser_Record;
+      XML  : in out XML_Utils.Node_Ptr);
+   overriding procedure Load_From_XML
+     (View : access General_Browser_Record; XML : XML_Utils.Node_Ptr);
 
    procedure Initialize
      (Browser         : access General_Browser_Record'Class);
@@ -114,6 +120,15 @@ package Browsers.Canvas is
       Context : in out GPS.Kernel.Selection_Context) is null;
    --  Set the GPS context from a selected item.
 
+   function Save_To_XML
+     (Self : not null access GPS_Item_Record)
+      return XML_Utils.Node_Ptr is (null);
+   --  Override this function to save an item in the GPS desktop, so that it
+   --  is restored in the next GPS session.
+   --  By default, items are not saved in the desktop, so a browser is restored
+   --  empty.
+   --  You will also need to override the browser's Load_From_ML
+
    overriding procedure Draw
      (Self    : not null access GPS_Item_Record;
       Context : Gtkada.Canvas_View.Draw_Context);
@@ -122,6 +137,17 @@ package Browsers.Canvas is
      (Browser : not null access General_Browser_Record;
       Context : in out GPS.Kernel.Selection_Context);
    --  Set the context from the topmost selected item
+
+   function Load_From_XML
+     (Self : not null access General_Browser_Record;
+      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class is (null);
+   procedure Load_From_XML
+     (Self     : not null access General_Browser_Record;
+      Node     : XML_Utils.Node_Ptr;
+      From, To : not null access GPS_Item_Record'Class) is null;
+   --  Recreates an item from information saved in the desktop.
+   --  In both cases, the item or the link *must* be added to the browser
+   --  before returning. This allows the reuse of existing items and links.
 
    function Has_Link
      (Browser   : not null access General_Browser_Record'Class;

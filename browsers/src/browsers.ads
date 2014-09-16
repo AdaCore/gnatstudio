@@ -18,6 +18,7 @@
 with Glib;
 with Gtkada.Canvas_View;
 with Gtkada.Style;        use Gtkada.Style;
+with XML_Utils;           use XML_Utils;
 
 package Browsers is
 
@@ -131,6 +132,13 @@ package Browsers is
          --  Whether the link is current invisible
       end record;
    type GPS_Link is access all GPS_Link_Record'Class;
+
+   procedure Save_To_XML
+     (Self : not null access GPS_Link_Record;
+      Node : not null XML_Utils.Node_Ptr) is null;
+   --  Override this function to save special properties when saving a link
+   --  to the desktop.
+   --  You will also need to override the browser's Load_From_ML
 
 private
 
