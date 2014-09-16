@@ -774,7 +774,7 @@ package body Browsers.Entities is
       Rect.Add_Child (Gtk_New_Entity (B, Entity));
       Rect.Add_Child
         (Gtk_New_Text (S.Text_Font, " (" & Entity.Get_Display_Kind & ")"));
-      Item.Add_Child (Rect);
+      Item.Add_Child (Rect, Margin => Horiz_Margin);
    end Add_Subprogram;
 
    --------------------
@@ -799,7 +799,7 @@ package body Browsers.Entities is
             Rect.Add_Child
               (Gtk_New_Text
                  (S.Text_Font, Name & " : " & Image (Params (P).Kind)));
-            Item.Add_Child (Rect);
+            Item.Add_Child (Rect, Margin => Horiz_Margin);
 
             --  In some cases, access parameters reference their pointed type
             --  through Pointed_Type. However, if that access type is a
@@ -829,7 +829,7 @@ package body Browsers.Entities is
          Rect.Set_Child_Layout (Horizontal_Stack);
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, "return "));
          Rect.Add_Child (Gtk_New_Entity (B, Returned));
-         Item.Add_Child (Rect);
+         Item.Add_Child (Rect, Margin => Horiz_Margin);
       end if;
    end Add_Parameters;
 
@@ -853,7 +853,7 @@ package body Browsers.Entities is
          Rect.Set_Child_Layout (Horizontal_Stack);
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, "Parent: "));
          Rect.Add_Child (Gtk_New_Entity (B, Parent));
-         Item.Add_Child (Rect);
+         Item.Add_Child (Rect, Margin => Horiz_Margin);
       end if;
 
       declare
@@ -884,7 +884,7 @@ package body Browsers.Entities is
             Rect.Set_Child_Layout (Horizontal_Stack);
             Rect.Add_Child (Gtk_New_Entity (B, Current));
             Rect.Add_Child (Gtk_New_Text (S.Text_Font, " (type)"));
-            Item.Add_Child (Rect);
+            Item.Add_Child (Rect, Margin => Horiz_Margin);
 
          --  We want to show variables declared in this package, but not the
          --  parameters to subprograms.
@@ -907,7 +907,7 @@ package body Browsers.Entities is
    -- Add_Fields --
    ----------------
 
-   procedure Add_Fields (Item : not null  access Type_Item_Record'Class) is
+   procedure Add_Fields (Item : not null access Type_Item_Record'Class) is
       use Entity_Arrays;
       B     : constant Type_Browser := Type_Browser (Item.Browser);
       S     : constant access Browser_Styles := B.Get_View.Get_Styles;
@@ -916,7 +916,8 @@ package body Browsers.Entities is
       if Literals'Length /= 0 then
          for F in Literals'Range loop
             Item.Add_Child
-              (Gtk_New_Text (S.Text_Font, Get_Name (Literals (F).all)));
+              (Gtk_New_Text (S.Text_Font, Get_Name (Literals (F).all)),
+               Margin => Horiz_Margin);
          end loop;
 
       else
@@ -973,7 +974,7 @@ package body Browsers.Entities is
          Rect.Set_Child_Layout (Horizontal_Stack);
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : "));
          Rect.Add_Child (Gtk_New_Entity (B, Typ, Prefix));
-         Item.Add_Child (Rect);
+         Item.Add_Child (Rect, Margin => Horiz_Margin);
       end if;
    end Add_Type;
 
@@ -994,7 +995,7 @@ package body Browsers.Entities is
    begin
       if Typ /= No_Root_Entity then
          Rect := Gtk_New_Rect (S.Invisible);
-         Item.Add_Child (Rect);
+         Item.Add_Child (Rect, Margin => Horiz_Margin);
          Rect.Set_Child_Layout (Horizontal_Stack);
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : array "));
 
@@ -1019,7 +1020,9 @@ package body Browsers.Entities is
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " of "));
          Rect.Add_Child (Gtk_New_Entity (B, Typ));
       else
-         Item.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : ???"));
+         Item.Add_Child
+           (Gtk_New_Text (S.Text_Font, Prefix & " : ???"),
+            Margin => Horiz_Margin);
       end if;
    end Add_Array_Type;
 
@@ -1039,12 +1042,14 @@ package body Browsers.Entities is
    begin
       if Typ /= No_Root_Entity then
          Rect := Gtk_New_Rect (S.Invisible);
-         Item.Add_Child (Rect);
+         Item.Add_Child (Rect, Margin => Horiz_Margin);
          Rect.Set_Child_Layout (Horizontal_Stack);
          Rect.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : access "));
          Rect.Add_Child (Gtk_New_Entity (B, Typ));
       else
-         Item.Add_Child (Gtk_New_Text (S.Text_Font, Prefix & " : ???"));
+         Item.Add_Child
+           (Gtk_New_Text (S.Text_Font, Prefix & " : ???"),
+            Margin => Horiz_Margin);
       end if;
    end Add_Access_Type;
 
@@ -1212,7 +1217,8 @@ package body Browsers.Entities is
 
          Item.Add_Child
            (Gtk_New_Text
-              (S.Text_Font, Get_Display_Kind (Item.Entity.Element)));
+              (S.Text_Font, Get_Display_Kind (Item.Entity.Element)),
+            Margin => Margin);
 
          if not Is_Type (Entity) then
             Item.Add_Type (Entity, "of type");
