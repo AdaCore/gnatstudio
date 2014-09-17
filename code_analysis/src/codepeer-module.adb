@@ -842,8 +842,12 @@ package body CodePeer.Module is
             Project.Name);
       end if;
 
-      Context.Module.Filter_Criteria.Files.Include (File);
-      Context.Module.Update_Location_View;
+      if File /= null
+        and then not Context.Module.Filter_Criteria.Files.Contains (File)
+      then
+         Context.Module.Filter_Criteria.Files.Include (File);
+         Context.Module.Update_Location_View;
+      end if;
 
    exception
       when E : others =>
