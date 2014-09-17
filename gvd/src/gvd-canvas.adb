@@ -1775,17 +1775,10 @@ package body GVD.Canvas is
       --  ??? Should memorize auto-refresh state ("graph print" vs "display")
       if Item.Graph_Cmd /= null then
          Rect := Item.Position;
-         if Item.Is_Alias_Of = null then
-            return Item.Graph_Cmd.all & " at"
-              & Gdouble'Image (Rect.X)
-              & "," & Gdouble'Image (Rect.Y)
-              & " num" & Integer'Image (Item.Num);
-         else
-            return Item.Graph_Cmd.all & " at"
-              & Gdouble'Image (Rect.X) & "," & Gdouble'Image (Rect.Y)
-              & " num" & Integer'Image (Item.Num)
-              & " alias_of" & Integer'Image (Item.Is_Alias_Of.Num);
-         end if;
+         return Item.Graph_Cmd.all & " at"
+           & Gdouble'Image (Rect.X)
+           & "," & Gdouble'Image (Rect.Y)
+           & " num" & Integer'Image (Item.Num);
       else
          return "";
       end if;
