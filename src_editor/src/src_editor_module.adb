@@ -2772,28 +2772,6 @@ package body Src_Editor_Module is
       null;
    end Free;
 
-   --------------------
-   -- Autosaved_File --
-   --------------------
-
-   function Autosaved_File (File : Virtual_File) return Virtual_File is
-   begin
-      --  Implementation must be in sync with Is_Auto_Save below
-      return Create_From_Dir (Dir (File), ".#" & Base_Name (File) & "#");
-   end Autosaved_File;
-
-   ------------------
-   -- Is_Auto_Save --
-   ------------------
-
-   function Is_Auto_Save (File : GNATCOLL.VFS.Virtual_File) return Boolean is
-      Base : constant String := +Base_Name (File);
-   begin
-      return Base'Length >= 2
-        and then Base (Base'First .. Base'First + 1) = ".#"
-        and then Base (Base'Last) = '#';
-   end Is_Auto_Save;
-
    ---------------------------------
    -- Line_Number_Character_Width --
    ---------------------------------

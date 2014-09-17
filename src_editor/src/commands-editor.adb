@@ -14,7 +14,10 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNAT.Strings;              use GNAT.Strings;
+with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Interfaces.C;
 
 with Src_Editor_Box;            use Src_Editor_Box;
@@ -22,7 +25,6 @@ with Src_Editor_Module;         use Src_Editor_Module;
 with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use  Src_Editor_Buffer.Line_Information;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 package body Commands.Editor is
 
@@ -55,16 +57,9 @@ package body Commands.Editor is
    -------------
 
    overriding function Execute
-     (Command : access Check_Modified_State_Type) return Command_Return_Type
-   is
-      New_Status : constant Status_Type := Get_Status (Command.Buffer);
+     (Command : access Check_Modified_State_Type) return Command_Return_Type is
    begin
-      if New_Status /= Get_Last_Status (Command.Buffer) then
-         Status_Changed (Command.Buffer);
-      end if;
-
-      Set_Last_Status (Command.Buffer, New_Status);
-
+      Set_Last_Status (Command.Buffer, Get_Status (Command.Buffer));
       return Success;
    end Execute;
 
@@ -281,16 +276,17 @@ package body Commands.Editor is
      (Command : access Editor_Command_Type) return Command_Return_Type
    is
       First  : constant Natural := Command.Current_Text'First;
-      Editor : Source_Editor_Box;
-      View   : Source_View;
       C      : constant Cursor := Command.Linked_Cursor.Element;
       MC_Sync_Save : Cursors_Sync_Type;
 
-      procedure Set_Cursor_Position (Loc, Sel_Loc : Loc_T);
+      procedure Set_Cursor_Position
+        (Loc, Sel_Loc : Loc_T; View : Source_View);
       --  Set the action's cursor at the right place whether it is a multi
       --  cursor or the main cursor
 
-      procedure Set_Cursor_Position (Loc, Sel_Loc : Loc_T) is
+      procedure Set_Cursor_Position
+        (Loc, Sel_Loc : Loc_T; View : Source_View)
+      is
          Iter : Gtk_Text_Iter;
          Mark : Gtk_Text_Mark;
          Sync : constant Cursors_Sync_Type
@@ -339,11 +335,12 @@ package body Commands.Editor is
                Command.Buffer.Move_Mark (Mark, Iter);
             end if;
 
-            Scroll_To_Cursor_Location (View);
+            if View /= null then
+               Scroll_To_Cursor_Location (View);
+            end if;
          end if;
 
          Set_Cursors_Sync (Command.Buffer, Sync);
-
       end Set_Cursor_Position;
 
       User_Executed : constant Boolean := Command.User_Executed;
@@ -358,14 +355,28 @@ package body Commands.Editor is
             then Command.Locs.Start_Loc
             else Command.Locs.End_Loc));
 
+      Editor : Source_Editor_Box;
+      View   : Source_View;
+
    begin
       if Command.User_Executed then
          Command.User_Executed := False;
 
       else
          Editor := Get_Source_Box_From_MDI
-           (Find_Current_Editor (Get_Kernel (Command.Buffer)));
-         View := Get_View (Editor);
+           (Find_Editor
+              (Kernel  => Get_Kernel (Command.Buffer),
+               File    => Command.Buffer.Get_Filename,
+               Project => GNATCOLL.Projects.No_Project));
+--           (Find_Current_Editor (Get_Kernel (Command.Buffer)));
+         if Editor /= null then
+            --  Might not have an editor yet when this is called as part of
+            --  the initial loading of the file.
+            View := Get_View (Editor);
+            if View.Get_Buffer /= Gtk_Text_Buffer (Command.Buffer) then
+               View := null;
+            end if;
+         end if;
 
          MC_Sync_Save := Get_Cursors_Sync (Command.Buffer);
 
@@ -377,8 +388,7 @@ package body Commands.Editor is
          if not Avoid_Move_Cursor (Command)
            and then not User_Executed
          then
-            Set_Cursor_Position
-              (First_Loc, First_Loc);
+            Set_Cursor_Position (First_Loc, First_Loc, View);
          end if;
 
          case Command.Edition_Mode is
@@ -409,7 +419,7 @@ package body Commands.Editor is
            and then Command.Locs.End_Loc /= (0, 0)
          then
             Set_Cursor_Position
-              (Command.Locs.End_Loc, Command.Locs.End_Sel_Loc);
+              (Command.Locs.End_Loc, Command.Locs.End_Sel_Loc, View);
          end if;
 
          Set_Cursors_Sync (Command.Buffer, MC_Sync_Save);

@@ -143,17 +143,6 @@ package Src_Editor_Module is
    function Get_Undo_Redo_Queue return Standard.Commands.Command_Queue;
    --  Return the current Undo/Redo queue
 
-   ---------------------
-   -- Automatic saves --
-   ---------------------
-
-   function Autosaved_File
-     (File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
-   --  Return the autosaved file corresponding to File
-
-   function Is_Auto_Save (File : GNATCOLL.VFS.Virtual_File) return Boolean;
-   --  Return True if File is an autosave file
-
    --------------------------------
    -- Data common to all editors --
    --------------------------------

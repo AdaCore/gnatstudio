@@ -58,7 +58,6 @@ with GPS.Core_Kernels; use GPS.Core_Kernels;
 with Gtk.Clipboard;
 
 package Src_Editor_Buffer is
-
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
    type Source_Buffer is access all Source_Buffer_Record'Class;
 
@@ -680,6 +679,13 @@ package Src_Editor_Buffer is
    procedure Add_Listener_Factory
      (Factory : Editor_Listener_Factory_Access);
 
+   ---------------------
+   -- Automatic saves --
+   ---------------------
+
+   function Is_Auto_Save (File : GNATCOLL.VFS.Virtual_File) return Boolean;
+   --  Return True if File is an autosave file
+
    -------------------
    -- Buffer Status --
    -------------------
@@ -695,14 +701,10 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class);
    --  Emit the "status_changed" signal
 
-   function Get_Last_Status
-     (Buffer : access Source_Buffer_Record'Class) return Status_Type;
-   --  Return the last calculated status
-
    procedure Set_Last_Status
      (Buffer : access Source_Buffer_Record'Class;
       Status : Status_Type);
-   --  Set the last calculated status
+   --  Set the last calculated status.
 
    function Needs_To_Be_Saved
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
@@ -1502,9 +1504,6 @@ private
 
       Saved_Position  : Integer := 0;
       --  The saved position in the command queue
-
-      Restored_From_Autosave : Boolean := False;
-      --  Set to True when the file was recovered from auto-save.
 
       Current_Command : Command_Access := null;
       --  The current editor command. Belongs to Queue, defined above
