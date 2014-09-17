@@ -2015,7 +2015,9 @@ package body CodePeer.Module is
 
       --  Update state of race condition messages
 
-      if Self.Filter_Criteria.Categories.Contains (Self.Race_Category) then
+      if Self.Race_Category /= null
+        and then Self.Filter_Criteria.Categories.Contains (Self.Race_Category)
+      then
          for Object of Data.Object_Races loop
             Object.Message.Set_Flags (Race_Message_Flags);
 
