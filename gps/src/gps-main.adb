@@ -58,6 +58,7 @@ with Gtk.Application;                  use Gtk.Application;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Handlers;
+with Gtk.Main;
 with Gtk.Menu_Bar;                     use Gtk.Menu_Bar;
 with Gtk.Menu_Item;                    use Gtk.Menu_Item;
 with Gtk.Settings;                     use Gtk.Settings;
@@ -291,6 +292,20 @@ procedure GPS.Main is
    Button                 : Message_Dialog_Buttons;
    Timeout_Id             : Glib.Main.G_Source_Id;
    pragma Unreferenced (Button, Timeout_Id);
+
+   function Local_Command_Line
+      (Self        : System.Address;
+       Arguments   : access Interfaces.C.Strings.chars_ptr_array;
+       Exit_Status : access Glib.Gint) return Glib.Gboolean;
+   pragma Convention (C, Local_Command_Line);
+   --  override gtk+ builtin virtual method for an application.
+   --  This makes sure that we can do our own handling of --hep
+
+   procedure Application_Class_Init (Self : GObject_Class);
+   pragma Convention (C, Application_Class_Init);
+
+   Application_Class_Record : aliased Glib.Object.Ada_GObject_Class;
+   --  A custom child of GtkApplication
 
    procedure Startup_Callback
      (Application : access Gapplication_Record'Class);
@@ -2540,21 +2555,64 @@ procedure GPS.Main is
       end if;
    end Error_Message;
 
+   ------------------------
+   -- Local_Command_Line --
+   ------------------------
+
+   function Local_Command_Line
+      (Self        : System.Address;
+       Arguments   : access Interfaces.C.Strings.chars_ptr_array;
+       Exit_Status : access Glib.Gint) return Glib.Gboolean
+   is
+      pragma Unreferenced (Self, Arguments, Exit_Status);
+   begin
+      --  Do nothing, all switches are handled in On_Command_Line
+      return 0;
+   end Local_Command_Line;
+
+   ----------------------------
+   -- Application_Class_Init --
+   ----------------------------
+
+   procedure Application_Class_Init (Self : GObject_Class) is
+   begin
+      Set_Local_Command_Line (Self, Local_Command_Line'Unrestricted_Access);
+   end Application_Class_Init;
+
    Dead        : Boolean;
    Status      : Glib.Gint;
    pragma Unreferenced (Dead);
 
 begin
-   --  Create and setup a Gtk Application
+   --  Create and setup a Gtk Application. We create our own class so that we
+   --  can override the local_command_Line virtual method, and thus do our own
+   --  handling of --help. Otherwise, since we haven't yet registered our
+   --  switches, --help would not be able to list them
 
-   Application := Gtk_Application_New
+   Gtk.Main.Init;
+   Glib.Object.Initialize_Class_Record
+      (Ancestor     => Gtk.Application.Get_Type,
+       Class_Record => Application_Class_Record,
+       Type_Name    => "GPSApplication",
+       Class_Init   => Application_Class_Init'Unrestricted_Access);
+
+   Application := new Gtkada_Application_Record;
+   G_New (Application, Application_Class_Record.The_Type);
+   Application.Initialize
      ("com.adacore.GPS",
       Glib.Application.G_Application_Handles_Open +
+
+        --  Arguments are handled at two levels:
+        --  - locally in Application.Run (and local_command_line)
+        --  - remotely in Command_Line_Callback
         Glib.Application.G_Application_Handles_Command_Line +
         Glib.Application.G_Application_Send_Environment +
         Glib.Application.G_Application_Non_Unique,
+
+      --  Files specified on the command line are opened via On_Open below
       Gtkada_Application_Handles_Open +
         Gtkada_Application_OSX_FullScreen);
+
    Application.Set_Default;
 
    if Config.Host = Config.Unix and then not Config.Darwin_Target then
