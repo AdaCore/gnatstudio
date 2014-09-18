@@ -1,3 +1,7 @@
+# submodules
+/design
+/gnatlib
+
 *.a
 *.ali
 *.gli
