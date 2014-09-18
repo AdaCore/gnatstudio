@@ -1062,6 +1062,10 @@ package body Code_Analysis.Tree_Models is
                   File.Subprograms.Insert (Index, Subprogram);
                   Self.Row_Inserted (Project, File, Subprogram);
 
+                  if File.Subprograms.Length = 1 then
+                     Self.Row_Has_Child_Toggled (Project, File);
+                  end if;
+
                elsif Self.Is_Changed (Project, File, Subprogram) then
                   Self.Row_Changed (Project, File, Subprogram);
                end if;
@@ -1072,6 +1076,10 @@ package body Code_Analysis.Tree_Models is
                if not Hidden then
                   Self.Row_Deleted (Project, File, Subprogram);
                   File.Subprograms.Delete (Index);
+
+                  if File.Subprograms.Is_Empty then
+                     Self.Row_Has_Child_Toggled (Project, File);
+                  end if;
                end if;
 
                Free (Subprogram);
@@ -1120,6 +1128,10 @@ package body Code_Analysis.Tree_Models is
                   Project.Files.Insert (Index, File);
                   Self.Row_Inserted (Project, File);
 
+                  if Project.Files.Length = 1 then
+                     Self.Row_Has_Child_Toggled (Project);
+                  end if;
+
                elsif Self.Is_Changed (Project, File) then
                   Self.Row_Changed (Project, File);
                end if;
@@ -1131,6 +1143,10 @@ package body Code_Analysis.Tree_Models is
                if not Hidden then
                   Self.Row_Deleted (Project, File);
                   Project.Files.Delete (Index);
+
+                  if Project.Files.Is_Empty then
+                     Self.Row_Has_Child_Toggled (Project);
+                  end if;
                end if;
 
                Free (File);
@@ -1151,6 +1167,7 @@ package body Code_Analysis.Tree_Models is
          Project  : Project_Item_Access;
          Index    : Positive := 1;
          Hidden   : Boolean;
+         Path     : Gtk_Tree_Path;
 
       begin
          for J in Sort_Arr'Range loop
@@ -1177,6 +1194,13 @@ package body Code_Analysis.Tree_Models is
                   Self.Projects.Insert (Index, Project);
                   Self.Row_Inserted (Project);
 
+                  if Self.Projects.Length = 1 then
+                     Path := Gtk_Tree_Path_New;
+                     Row_Has_Child_Toggled
+                       (To_Interface (Self), Path, Null_Iter);
+                     Path_Free (Path);
+                  end if;
+
                elsif Self.Is_Changed (Project) then
                   Self.Row_Changed (Project);
                end if;
@@ -1188,6 +1212,13 @@ package body Code_Analysis.Tree_Models is
                if not Hidden then
                   Self.Row_Deleted (Project);
                   Self.Projects.Delete (Index);
+
+                  if Self.Projects.Is_Empty then
+                     Path := Gtk_Tree_Path_New;
+                     Row_Has_Child_Toggled
+                       (To_Interface (Self), Path, Null_Iter);
+                     Path_Free (Path);
+                  end if;
                end if;
 
                Free (Project);
@@ -1237,6 +1268,25 @@ package body Code_Analysis.Tree_Models is
       Row_Deleted (To_Interface (Self), Path);
       Gtk.Tree_Model.Path_Free (Path);
    end Row_Deleted;
+
+   ---------------------------
+   -- Row_Has_Child_Toggled --
+   ---------------------------
+
+   procedure Row_Has_Child_Toggled
+     (Self       : access Filterable_Tree_Model_Record'Class;
+      Project    : Project_Item_Access;
+      File       : File_Item_Access       := null;
+      Subprogram : Subprogram_Item_Access := null)
+   is
+      Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+               Self.Create_Tree_Iter (Project, File, Subprogram);
+      Path : constant Gtk.Tree_Model.Gtk_Tree_Path := Self.Get_Path (Iter);
+
+   begin
+      Row_Has_Child_Toggled (To_Interface (Self), Path, Iter);
+      Gtk.Tree_Model.Path_Free (Path);
+   end Row_Has_Child_Toggled;
 
    ------------------
    -- Row_Inserted --

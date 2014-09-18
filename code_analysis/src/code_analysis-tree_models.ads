@@ -308,4 +308,11 @@ private
       Subprogram : Subprogram_Item_Access := null);
    --  Emit "row_deleted" signal
 
+   procedure Row_Has_Child_Toggled
+     (Self       : access Filterable_Tree_Model_Record'Class;
+      Project    : Project_Item_Access;
+      File       : File_Item_Access       := null;
+      Subprogram : Subprogram_Item_Access := null);
+   --  Emit "row_has_child_toggled" signal
+
 end Code_Analysis.Tree_Models;
