@@ -257,9 +257,9 @@ package body GPS.Kernel.Properties is
                Key  : constant String := Get_Key (Iter);
                Pos  : constant Integer := Ada.Strings.Fixed.Index (Key, Sep);
                Src  : Node_Ptr;
-               Dst  : Node_Ptr;
             begin
                if Descr.Value = null then
+
                   --  Descr.Unparsed.Value might be null if the properties is
                   --  represented by XML children instead
                   if Descr.Unparsed.Value /= null then
@@ -283,14 +283,7 @@ package body GPS.Kernel.Properties is
 
                   Src := Descr.Unparsed.Child;
                   while Src /= null loop
-                     if Dst = null then
-                        Prop.Child := Deep_Copy (Src);
-                        Dst := Prop.Child;
-                     else
-                        Dst.Next := Deep_Copy (Src);
-                        Dst := Dst.Next;
-                     end if;
-
+                     Add_Child (Prop, Deep_Copy (Src), Append => True);
                      Src := Src.Next;
                   end loop;
 

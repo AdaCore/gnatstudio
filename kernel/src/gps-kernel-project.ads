@@ -140,6 +140,11 @@ package GPS.Kernel.Project is
    --  scenario variables.
    --  This emits the "project_view_changed" signal.
 
+   procedure Save_Scenario_Vars_On_Exit
+     (Handle : not null access Kernel_Handle_Record'Class);
+   --  Save the value of scenario variables for the current project, on exit.
+   --  This must be called while the project is still loaded.
+
    ---------------
    -- Scenarios --
    ---------------

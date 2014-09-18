@@ -1013,6 +1013,7 @@ package body GPS.Kernel is
         (Refactoring.Factory_Context_Record'Class,
          Refactoring.Factory_Context);
    begin
+      Save_Scenario_Vars_On_Exit (Handle);
       Reset_Properties (Handle);
 
       Save (Handle.History.all,

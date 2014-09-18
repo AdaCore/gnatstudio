@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
@@ -30,16 +32,19 @@ with Remote;                           use Remote;
 with Prj;
 with Types;                            use Types;
 
-with Gtk.Window;        use Gtk.Window;
+with Gtk.Window;                       use Gtk.Window;
 
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with GPS.Properties;                   use GPS.Properties;
+with XML_Utils;                        use XML_Utils;
 with Xref;
 
 package body GPS.Kernel.Project is
@@ -56,6 +61,7 @@ package body GPS.Kernel.Project is
    type GPS_Project_Tree is new Project_Tree with record
       Handle : Kernel_Handle;
    end record;
+   type GPS_Project_Tree_Access is access all GPS_Project_Tree'Class;
    overriding function Data_Factory
      (Self : GPS_Project_Tree) return Project_Data_Access;
    overriding procedure Recompute_View
@@ -80,6 +86,166 @@ package body GPS.Kernel.Project is
    procedure Do_Subdirs_Cleanup (Tree : Project_Tree'Class);
    --  Cleanup empty subdirs created when opening a project with prj.subdirs
    --  set.
+
+   package String_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,   --  "section#key"
+      Element_Type    => String,
+      Hash            => Ada.Strings.Hash,
+      Equivalent_Keys => "=",
+      "="             => "=");
+   type Scenario_Vars_Property is new Property_Record with record
+      Map : String_Maps.Map;
+   end record;
+   overriding procedure Save
+     (Self : access Scenario_Vars_Property;
+      Node : in out XML_Utils.Node_Ptr);
+   overriding procedure Load
+     (Self : in out Scenario_Vars_Property;
+      Node : XML_Utils.Node_Ptr);
+   --  A property used to store the current scenario for the next GPS session.
+
+   procedure Restore_Scenario_Vars
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : Virtual_File);
+   procedure Save_Scenario_Vars
+     (Self    : not null access GPS_Project_Tree'Class);
+   --  Restore the scenario variables set in previous sessions.
+   --  They get their value from the following sources:
+   --    1 - command line -Xvar=value switches
+   --    2 - environment variables
+   --    3 - saved value from previous GPS sessions
+   --    4 - default from project
+   --    5 - first valid value for the variable.
+   --
+   --  So here we set their value only if it doesn't exist yet in the
+   --  environment (where it would be from 1 or 2).
+
+   ----------
+   -- Save --
+   ----------
+
+   overriding procedure Save
+     (Self : access Scenario_Vars_Property;
+      Node : in out XML_Utils.Node_Ptr)
+   is
+      use String_Maps;
+      C  : String_Maps.Cursor := Self.Map.First;
+      N  : Node_Ptr;
+   begin
+      while Has_Element (C) loop
+         N := new XML_Utils.Node;
+         N.Tag := new String'("var");
+         Set_Attribute (N, "name", Key (C));
+         Set_Attribute (N, "value", Element (C));
+         Add_Child (Node, N);
+         Next (C);
+      end loop;
+   end Save;
+
+   ----------
+   -- Load --
+   ----------
+
+   overriding procedure Load
+     (Self : in out Scenario_Vars_Property;
+      Node : XML_Utils.Node_Ptr)
+   is
+      N : Node_Ptr := Node.Child;
+   begin
+      while N /= null loop
+         if N.Tag.all = "var" then
+            Self.Map.Include
+              (Get_Attribute (N, "name"),
+               Get_Attribute (N, "value"));
+         end if;
+         N := N.Next;
+      end loop;
+   end Load;
+
+   ---------------------------
+   -- Restore_Scenario_Vars --
+   ---------------------------
+
+   procedure Restore_Scenario_Vars
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : Virtual_File)
+   is
+      use String_Maps;
+      C     : String_Maps.Cursor;
+      Found : Boolean;
+      Vars  : Scenario_Vars_Property;
+      Known_Vars : constant Scenario_Variable_Array :=
+        Kernel.Registry.Tree.Scenario_Variables;
+
+   begin
+      Get_Property (Vars, Project, "scenario", Found);
+      if Found then
+         C := Vars.Map.First;
+         while Has_Element (C) loop
+            declare
+               Name    : constant String := Key (C);
+               Value   : constant String := Element (C);
+               Replace : Boolean := True;
+            begin
+               for V in Known_Vars'Range loop
+                  if External_Name (Known_Vars (V)) = Name then
+                     Replace := False;
+                     exit;
+                  end if;
+               end loop;
+               if Replace then
+                  Trace (Me, "Restoring environment var: "
+                         & Name & "=" & Value);
+                  Kernel.Registry.Environment.Change_Environment
+                    (Name  => Name,
+                     Value => Value);
+               end if;
+               Next (C);
+            end;
+         end loop;
+      end if;
+   end Restore_Scenario_Vars;
+
+   ------------------------
+   -- Save_Scenario_Vars --
+   ------------------------
+
+   procedure Save_Scenario_Vars
+     (Self : not null access GPS_Project_Tree'Class)
+   is
+      Vars : access Scenario_Vars_Property;
+      Known_Vars : constant Scenario_Variable_Array := Self.Scenario_Variables;
+   begin
+      --  Save existing scenario in the properties, so that we can restore it
+      --  when the project is reloaded
+
+      if Self.Status = From_File then
+         Vars := new Scenario_Vars_Property;
+         for V in Known_Vars'Range loop
+            Vars.Map.Include
+              (External_Name (Known_Vars (V)),
+               Value (Known_Vars (V)));
+         end loop;
+         Set_Property
+           (Kernel     => Self.Handle,
+            File       => Self.Root_Project.Project_Path,
+            Name       => "scenario",
+            Property   => Vars,
+            Persistent => True);
+      end if;
+   end Save_Scenario_Vars;
+
+   --------------------------------
+   -- Save_Scenario_Vars_On_Exit --
+   --------------------------------
+
+   procedure Save_Scenario_Vars_On_Exit
+     (Handle : not null access Kernel_Handle_Record'Class)
+   is
+   begin
+      Save_Scenario_Vars
+        (GPS_Project_Tree_Access (Get_Registry (Handle).Tree));
+   end Save_Scenario_Vars_On_Exit;
 
    ----------------------
    -- Set_GNAT_Version --
@@ -461,6 +627,8 @@ package body GPS.Kernel.Project is
          if Clear then
             Kernel.Clear_Messages;
          end if;
+
+         Save_Scenario_Vars (GPS_Project_Tree_Access (Kernel.Registry.Tree));
       end if;
 
       if Is_Regular_File (Project) then
@@ -500,6 +668,8 @@ package body GPS.Kernel.Project is
 
          Get_Messages_Container (Kernel).Remove_Category
            (Location_Category, Location_Message_Flags);
+
+         Restore_Scenario_Vars (Kernel, Local_Project);
 
          --  Always force a call to gnatls.
          --  This is also used to get the value of ADA_PROJECT_PATH. and the
@@ -546,7 +716,8 @@ package body GPS.Kernel.Project is
                   Kernel.Registry.Tree.Load
                     (Root_Project_Path => Local_Project,
                      Errors            => Report_Error'Unrestricted_Access,
-                     Env               => Kernel.Registry.Environment);
+                     Env               => Kernel.Registry.Environment,
+                     Recompute_View    => False);
                   New_Project_Loaded := True;
 
                exception
