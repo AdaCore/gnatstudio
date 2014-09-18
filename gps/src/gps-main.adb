@@ -1161,8 +1161,7 @@ procedure GPS.Main is
                         Arg_Data        => On_Switch'Address,
                         Description     => ICS.New_String
                           ("Execute a command written in the language " &
-                           "lang. This is executed before the --load " &
-                           "command"),
+                           "lang (before --load)"),
                         Arg_Description => ICS.New_String ("lang:cmd"));
       Opt_Readonly : constant Glib.Option.GOption_Entry :=
                        (Long_Name       => ICS.New_String ("readonly"),
@@ -1259,15 +1258,17 @@ procedure GPS.Main is
       Status_Code := 0;
 
       Opt_Context := Glib.Option.G_New
-        ("[-Pproject-file] [-XScenarioVar=Value] [[+line1] source1] " &
+        ("[-Xvar=value] [[+line1] source1] " &
            "[[+line2] source2] ...");
 
       Opt_Context.Set_Summary
-        ("source1, source2, ..." &
-           ASCII.LF &
-           "    Name of files to load. Start with '=' to load from project" &
-           ASCII.LF &
-           "    and use +line to go to <line> directly, e.g. +40 source1");
+        ("source1, source2, ..." & ASCII.LF
+           & "    Name of files to load. Start with '=' to load from project"
+           & ASCII.LF
+           & "    and use +line to go to <line> directly, e.g. +40 source1"
+           & ASCII.LF
+           & "-Xvar=value" & ASCII.LF
+           & "    Sets the value of a scenario variable");
 
       Opt_Context.Add_Group (Get_Gtk_Option_Group (1));
       Opt_Context.Add_Main_Entries (Opt_Entries, "gps");
