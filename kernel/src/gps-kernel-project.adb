@@ -174,9 +174,6 @@ package body GPS.Kernel.Project is
       C     : String_Maps.Cursor;
       Found : Boolean;
       Vars  : Scenario_Vars_Property;
-      Known_Vars : constant Scenario_Variable_Array :=
-        Kernel.Registry.Tree.Scenario_Variables;
-
    begin
       Get_Property (Vars, Project, "scenario", Found);
       if Found then
@@ -185,15 +182,8 @@ package body GPS.Kernel.Project is
             declare
                Name    : constant String := Key (C);
                Value   : constant String := Element (C);
-               Replace : Boolean := True;
             begin
-               for V in Known_Vars'Range loop
-                  if External_Name (Known_Vars (V)) = Name then
-                     Replace := False;
-                     exit;
-                  end if;
-               end loop;
-               if Replace then
+               if Kernel.Registry.Environment.Value (Name) = "" then
                   Trace (Me, "Restoring environment var: "
                          & Name & "=" & Value);
                   Kernel.Registry.Environment.Change_Environment
