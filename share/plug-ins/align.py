@@ -125,6 +125,7 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
 
     if not replace_with:
         replace_with = sep
+
     sep_re = re.compile(sep)
     pos = 0
     replace_len = 0
@@ -153,7 +154,7 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
             break
 
     # special case when in and out are used
-    if fin == True and fout == True:
+    if fin and fout:
         replace_len = 10
 
     if pos != 0:
@@ -170,56 +171,54 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
                     sub = matched.group(sep_group)
                 width2 = replace_len - len(sub)
 
-                # special case for out parameters, spaces before only if there is
-                # also some in parameters.
-                if sub == " : out " and fin == True:
+                # special case for out parameters, spaces before only if there
+                # is also some in parameters.
+                if sub == " : out " and fin:
                     sub = " :    out "
                     width2 = width2 - 3
 
                 top.buffer().delete(line, line.end_of_line())
                 # do not left-strip if a single char as this will remove the \n
                 if len(chars[matched.end(sep_group):]) == 1:
-                    top.buffer().insert \
-                        (line, chars[:matched.start(sep_group)].rstrip()
-                            + (' ' * width) + sub + (' ' * width2)
-                         + chars[matched.end(sep_group):])
+                    top.buffer().insert(
+                        line,
+                        chars[:matched.start(sep_group)].rstrip()
+                        + (' ' * width) + sub + (' ' * width2)
+                        + chars[matched.end(sep_group):])
                 else:
-                    top.buffer().insert \
-                        (line, chars[:matched.start(sep_group)].rstrip()
-                         + (' ' * width) + sub + (' ' * width2)
-                         + chars[matched.end(sep_group):].lstrip())
+                    top.buffer().insert(
+                        line, chars[:matched.start(sep_group)].rstrip()
+                        + (' ' * width) + sub + (' ' * width2)
+                        + chars[matched.end(sep_group):].lstrip())
             prev = line
             line = line.forward_line()
             if prev == line:
                 break
 
 
+@with_save_excursion
 def buffer_align_on(sep, replace_with=None, buffer=None, sep_group=0):
-    """Align the current selection in buffer, based on the separator sep.
-       See the description for range_align_on"""
+    """
+    Align the current selection in buffer, based on the separator sep.
+    See the description for range_align_on.
+    """
+
     if not buffer:
         buffer = GPS.EditorBuffer.get()
     top = buffer.selection_start()
     bottom = buffer.selection_end()
-    tmark = top.create_mark("top")
-    bmark = bottom.create_mark("bottom")
     if top == bottom:
         GPS.MDI.dialog(
             "You must first select the intended text (at least two lines)")
-        return False
-    try:
-        buffer.start_undo_group()
+    else:
+        tmark = top.create_mark()
+        bmark = bottom.create_mark(left_gravity=False)
         buffer.indent(top, bottom)
-        top = buffer.get_mark("top").location()
-        bottom = buffer.get_mark("bottom").location()
-        range_align_on(top, bottom, sep, replace_with, sep_group=sep_group)
-        # re-select the region to be able to call back this routine
-        top = buffer.get_mark("top").location()
-        bottom = buffer.get_mark("bottom").location()
-        buffer.select(top, bottom)
-    finally:
-        top.buffer().finish_undo_group()
-    return True
+        range_align_on(
+            tmark.location(), bmark.location(), sep,
+            replace_with, sep_group=sep_group)
+        tmark.delete()
+        bmark.delete()
 
 
 def get_comas(l):
@@ -256,14 +255,22 @@ def in_rw_ada_file(context):
 @interactive("Ada", in_rw_ada_file, contextual="Align/Colons",
              name="Align colons")
 def align_colons():
-    """Aligns colons (eg in object and record type declarations) and trailing text in current selection"""
+    """
+    Aligns colons (eg in object and record type declarations) and trailing
+    text in current selection.
+    """
+
     buffer_align_on(sep=":(?!=)", replace_with=" : ")
 
 
 @interactive("Ada", in_rw_ada_file, contextual="Align/Comas",
              name="Align comas")
 def align_comas():
-    """Aligns comas (eg actual parameters or arguments in pragmas) in current selection"""
+    """
+    Aligns comas (eg actual parameters or arguments in pragmas) in
+    current selection.
+    """
+
     buffer = GPS.EditorBuffer.get()
     top = buffer.selection_start()
     bottom = buffer.selection_end()
@@ -326,11 +333,17 @@ def align_comas():
 @interactive("Ada", in_rw_ada_file, contextual="Align/Reserved word 'is'",
              name="Align reserved is")
 def align_reserved_is():
-    """Aligns reserved word 'is' (eg in type declarations) in current selection"""
+    """
+    Aligns reserved word 'is' (eg in type declarations) in
+    current selection.
+    """
+
     buffer_align_on(sep=" is ")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Reserved word 'renames'", name="Align reserved renames")
+@interactive("Ada", in_rw_ada_file,
+             contextual="Align/Reserved word 'renames'",
+             name="Align reserved renames")
 def align_renaming():
     """Aligns reserved word 'renames' in current selection"""
     buffer_align_on(sep=" renames ")
@@ -345,6 +358,7 @@ def align_use_clauses():
 
 @interactive("Ada", in_rw_ada_file, contextual="Align/Arrow symbols",
              name="Align arrows")
+@with_save_excursion
 def align_arrows():
     """Aligns Ada arrow symbol '=>' in current selection"""
     # The algorithm is the following:
@@ -380,7 +394,10 @@ def align_arrows():
                     level = level + 1
                 elif k + 8 < len(chars) and chars[k:k + 8] == "end case":
                     level = level - 1
-                elif level == lr and k + 2 < len(chars) and chars[k:k + 2] == "=>" and not found:
+                elif (level == lr
+                      and k + 2 < len(chars)
+                      and chars[k:k + 2] == "=>"
+                      and not found):
                     chars = chars[:k] + "@>" + chars[k + 2:]
                     found = True
             buffer.delete(top, bottom)

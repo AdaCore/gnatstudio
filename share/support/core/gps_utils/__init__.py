@@ -151,7 +151,7 @@ def save_excursion(f, args, kwargs, undo_group=True):
     view = buffer.current_view()
     cursor = view.cursor()
     start = buffer.selection_start().create_mark()
-    end = buffer.selection_end().create_mark()
+    end = buffer.selection_end().create_mark(left_gravity=False)
 
     if undo_group:
         buffer.start_undo_group()
@@ -326,7 +326,7 @@ def freeze_prefs():
 ############################################################
 # Some predefined filters
 # These are filters that can be used when creating new menus, contextual
-## menus or actions
+# menus or actions
 ############################################################
 
 def in_ada_file(context):

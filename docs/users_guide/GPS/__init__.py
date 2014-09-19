@@ -4249,16 +4249,19 @@ class EditorLocation(object):
         """
         pass  # implemented in Ada
 
-    def create_mark(self, name=''):
+    def create_mark(self, name='', left_gravity=True):
         """
         Creates a mark at that location in the buffer. The mark will stay
         permanently at that location, and follows it if the buffer is
-        modified. If ``name`` is specified, this creates a named mark, which
-        can be retrieved through a call to
-        :func:`GPS.EditorBuffer.get_mark`. If a mark with the same name
-        already exists, it's moved to the new location and then returned.
+        modified.
 
-        :param name: A string
+        :param str name: The name of the mark. If specified, this creates a
+           named mark, which can later be retrieved through a call to
+           :func:`GPS.EditorBuffer.get_mark`. If a mark with the same name
+           already exists, it is moved to the new location and then returned.
+        :param bool left_gravity: decides whether the mark is moved towards
+           the left or the right when text that contains the mark is deleted,
+           or some text is inserted at that location.
         :return: An instance of :class:`GPS.EditorMark`
 
         .. seealso:: :func:`GPS.EditorBuffer.get_mark`
