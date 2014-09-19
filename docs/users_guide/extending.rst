@@ -6088,6 +6088,11 @@ GPS starts responding to user's requests. Do this if you want to preform
 some initializations of the environment. It can also be used as a command
 line interface to GPS, if your script's last command is to exit GPS.
 
+The name of the language is optional, and defaults to python::
+
+   gps --load=script.py
+
+
 .. index:: --eval
 
 You can also specify in-line commands directly on the command line through
@@ -6097,6 +6102,8 @@ For example, if you want to analyze an entity in the entity browser from
 the command line, you would pass the following command switches::
 
   gps --eval=shell:'Entity entity_name file_name; Entity.show %1'
+
+The language defaults to python, as for :command:`--load`.
 
 See the section :ref:`Customizing_through_XML_and_Python_files` on how to
 bind key shortcuts to shell commands.

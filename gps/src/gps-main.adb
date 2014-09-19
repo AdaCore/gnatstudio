@@ -2446,53 +2446,56 @@ procedure GPS.Main is
    -------------------
 
    procedure Execute_Batch (Batch : String; As_File : Boolean) is
-      Executed : Boolean := False;
       Script   : Scripting_Language;
       Errors   : Boolean;
+      Start    : Integer := Batch'First;
    begin
       Trace (Me, "Execute_Batch: " & Batch);
       for J in Batch'Range loop
          if Batch (J) = ':' then
             Script := Lookup_Scripting_Language
-            (Get_Scripts (GPS_Main.Kernel), Batch (Batch'First .. J - 1));
+              (Get_Scripts (GPS_Main.Kernel), Batch (Batch'First .. J - 1));
+            Start := J + 1;
 
             if Script = null then
-               exit;
+               if As_File then
+                  Insert
+                    (GPS_Main.Kernel,
+                     -"Language unknown for --load command line switch",
+                     Mode => Error);
+               else
+                  Insert
+                    (GPS_Main.Kernel,
+                     -"Language unknown for --script command line switch",
+                     Mode => Error);
+               end if;
+               return;
             end if;
 
-            if As_File then
-               Execute_File
-                 (Script   => Script,
-                  Filename => Normalize_Pathname
-                     (Batch (J + 1 .. Batch'Last), Startup_Dir.all),
-                  Show_Command => False,
-                  Errors   => Errors);
-            else
-               GNATCOLL.Scripts.Execute_Command
-                 (Script   => Script,
-                  CL       => Parse_String
-                    (Batch (J + 1 .. Batch'Last),
-                     Command_Line_Treatment (Script)),
-                  Errors   => Errors);
-            end if;
-
-            Executed := True;
             exit;
          end if;
       end loop;
 
-      if not Executed then
-         if As_File then
-            Insert
-              (GPS_Main.Kernel,
-               -"Language unknown for --load command line switch",
-               Mode => Error);
-         else
-            Insert
-              (GPS_Main.Kernel,
-               -"Language unknown for --script command line switch",
-               Mode => Error);
-         end if;
+      if Script = null then
+         --  Assume language is python
+         Script := Lookup_Scripting_Language
+           (Get_Scripts (GPS_Main.Kernel), "python");
+      end if;
+
+      if As_File then
+         Execute_File
+           (Script   => Script,
+            Filename => Normalize_Pathname
+              (Batch (Start .. Batch'Last), Startup_Dir.all),
+            Show_Command => False,
+            Errors   => Errors);
+      else
+         GNATCOLL.Scripts.Execute_Command
+           (Script   => Script,
+            CL       => Parse_String
+              (Batch (Start .. Batch'Last),
+               Command_Line_Treatment (Script)),
+                  Errors   => Errors);
       end if;
 
    exception
