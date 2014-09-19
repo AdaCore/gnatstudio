@@ -58,7 +58,6 @@ with Gtk.Application;                  use Gtk.Application;
 with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Handlers;
-with Gtk.Main;
 with Gtk.Menu_Bar;                     use Gtk.Menu_Bar;
 with Gtk.Menu_Item;                    use Gtk.Menu_Item;
 with Gtk.Settings;                     use Gtk.Settings;
@@ -2590,7 +2589,6 @@ begin
    --  handling of --help. Otherwise, since we haven't yet registered our
    --  switches, --help would not be able to list them
 
-   Gtk.Main.Init;
    Glib.Object.Initialize_Class_Record
       (Ancestor     => Gtk.Application.Get_Type,
        Class_Record => Application_Class_Record,
