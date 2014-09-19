@@ -779,10 +779,16 @@ package body C_Analyzer is
 
                when Tok_Struct =>
                   Constructs.Current.Category := Cat_Structure;
+                  Constructs.Current.Name := Symbols.Find
+                    (Buffer (Value.Name_Start .. Value.Name_End));
                when Tok_Union =>
                   Constructs.Current.Category := Cat_Union;
+                  Constructs.Current.Name := Symbols.Find
+                    (Buffer (Value.Name_Start .. Value.Name_End));
                when Tok_Class =>
                   Constructs.Current.Category := Cat_Class;
+                  Constructs.Current.Name := Symbols.Find
+                    (Buffer (Value.Name_Start .. Value.Name_End));
                when Tok_Enum =>
                   Constructs.Current.Category := Cat_Type;
                when others =>
@@ -1413,13 +1419,21 @@ package body C_Analyzer is
 
             when Tok_Identifier =>
                if Curly_Level = 0
-                 or else Top_Token.Token = Tok_Class
-                 or else Top_Token.Token = Tok_Struct
+                 or else Top_Token.Token in Tok_Class | Tok_Struct | Tok_Union
                then
                   --  Only record identifier outside function body, we only
                   --  record them to be able to retrieve subprogram name.
 
                   Push (Tokens, Temp);
+
+                  --  save the name of the struct in the Struct token itself
+                  if Curly_Level = 0
+                    and then Top_Token.Token
+                      in Tok_Struct | Tok_Class | Tok_Union
+                  then
+                     Top_Token.Name_Start := Temp.Name_Start;
+                     Top_Token.Name_End   := Temp.Name_End;
+                  end if;
                end if;
 
                Do_Indent (Index, Indent);
