@@ -378,15 +378,6 @@ Classes
 
    .. automethod:: GPS.Console.write_with_links
 
-:class:`GPS.ConstructsList`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: ConstructsList
-
-   
-
-   .. automethod:: GPS.ConstructsList.add_construct
-
 :class:`GPS.Context`
 ^^^^^^^^^^^^^^^^^^^^
 

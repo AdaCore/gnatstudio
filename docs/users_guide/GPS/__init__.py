@@ -10499,20 +10499,6 @@ class Language(object):
         pass
 
 
-class ConstructsList(object):
-    """
-    Internal class, represents an opaque construct list that will be used by
-    GPS for internal purposes.
-    """
-
-    def add_constructs(self, category, is_declaration, visibility, name,
-                       profile, sloc_start, sloc_end, sloc_entity):
-        """
-        WIP: Add documentation for add_constructs
-        """
-        pass
-
-
 ###########################################################
 # Globals
 ###########################################################

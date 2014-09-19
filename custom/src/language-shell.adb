@@ -25,7 +25,7 @@ with GPS.Scripts.Files;
 package body Language.Shell is
    pragma Warnings (Off);
 
-   Construct_List_Class_Name : constant String := "ConstructsList";
+   Construct_List_Class_Name : constant String := "__ConstructsList";
    Language_Class_Name       : constant String := "Language";
 
    type Construct_List_Properties_Record is new Instance_Property_Record
