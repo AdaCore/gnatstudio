@@ -10,6 +10,11 @@ import GPS
 
 def on_file_saved(hook, file):
     buf = GPS.EditorBuffer.get()
+    if buf.file().language() == "python":
+        # Deactivate on Python files: the formatting action
+        # indents the entire selection - this is intended for user
+        # selection, but it is not suitable to do this automatically.
+        return
 
     # Save the cursor location
     view = buf.current_view()
