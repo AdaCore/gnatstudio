@@ -7,7 +7,7 @@ class Inspect(object):
     """An inspector for a given module"""
 
     module_header = """Scripting API reference for `%(module)s`
-===================================
+==========================================
 
 .. automodule:: %(module)s
 

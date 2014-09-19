@@ -1021,25 +1021,6 @@ package body GPS.Kernel.Xref is
          GPS.Kernel.Project_View_Changed_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Project_View_Changed'Access),
          "xref.project_changed");
-
-      --  The following are not implemented
-      --  ??? Are we keeping them for API compatibility?
-
-      Register_Command
-        (Kernel, "freeze_xref",
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "thaw_xref",
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "xref_frozen",
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "update_xref",
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Class        => Get_Project_Class (Kernel),
-         Handler      => Default_Command_Handler'Access);
    end Register_Module;
 
 end GPS.Kernel.Xref;

@@ -141,7 +141,7 @@ Browsers provide the following additional capabilities:
   the local toolbar to change the level and use the latter to explicitly
   select the level you want.
 
-  You can also press the :keys:`alt` key and use the mouse wheel to zoom in
+  You can also press the :kbd:`alt` key and use the mouse wheel to zoom in
   or out.
 
   This capability is generally useful when many boxes are displayed in the
