@@ -720,16 +720,6 @@ package body VFS_Module is
                File := Create_From_Dir (Dir, +Res);
                W_File := GNATCOLL.VFS.Write_File (File);
                GNATCOLL.VFS.Close (W_File);
-
-               --  now open the new file
-               declare
-                  Buf : constant Editor_Buffer'Class :=
-                    Get_Buffer_Factory (Get_Kernel (Context.Context)).Get
-                      (File => File);
-                  pragma Unreferenced (Buf);
-               begin
-                  null;
-               end;
             end if;
          exception
             when others =>
@@ -747,6 +737,22 @@ package body VFS_Module is
 
       if Project /= No_Project then
          Recompute_View (Get_Kernel (Context.Context));
+      end if;
+
+      --  Now that we have recomputed the view, we can open the file, which
+      --  will be associated with the right project. Otherwise, it would be
+      --  associated with No_Project, and clicking on its name in the project
+      --  view would open a new editor for it.
+
+      if not Command.Create_Dir then
+         declare
+            Buf : constant Editor_Buffer'Class :=
+              Get_Buffer_Factory (Get_Kernel (Context.Context)).Get
+                (File => File);
+            pragma Unreferenced (Buf);
+         begin
+            null;
+         end;
       end if;
 
       return Commands.Success;
