@@ -119,9 +119,27 @@ package body Tooltips is
       Widget : Gtk_Widget;
       Win_Width, Win_Height : Gint;
       X, Y, W, H : Gint;
+      Toplevel : Gtk_Widget;
    begin
       if Global_Tooltip /= null then
          Global_Tooltip.Timeout_Id := 0;
+      end if;
+
+      --  Right before displaying the tooltip, check that the toplevel window
+      --  is still active. This prevents tooltips from appearing in the
+      --  following cases:
+      --    - when the user has switched using the window manager key shortcuts
+      --      (for instance alt-tab, or the key to hide or minimize)
+      --    - when a contextual menu has been created
+      --  Both cases are difficult to detect by listening to events purely
+      --  on the On_Widget
+
+      Toplevel := Global_Tooltip.On_Widget.Get_Toplevel;
+
+      if Toplevel.all in Gtk_Window_Record'Class
+        and then not Gtk_Window (Toplevel).Is_Active
+      then
+         return False;
       end if;
 
       Widget := Global_Tooltip.Tip.Create_Contents
