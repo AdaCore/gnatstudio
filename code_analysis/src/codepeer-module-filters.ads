@@ -17,16 +17,13 @@
 
 package CodePeer.Module.Filters is
 
-   type Ada_Generic_Filter_Record is
-     new GPS.Kernel.Action_Filter_Record with private;
-
-private
-
-   type Ada_Generic_Filter_Record is
+   type Ada_Generic_Or_Separate_Filter_Record is
      new GPS.Kernel.Action_Filter_Record with null record;
+   --  A filter that matches when the current file is either a generic or
+   --  a separate Ada package.
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Ada_Generic_Filter_Record;
+     (Filter  : access Ada_Generic_Or_Separate_Filter_Record;
       Context : Selection_Context) return Boolean;
    --  Whether the context matches Filter.
 

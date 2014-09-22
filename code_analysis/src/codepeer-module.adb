@@ -2100,7 +2100,7 @@ package body CodePeer.Module is
            or GPS.Kernel.Lookup_Filter (Kernel, "In project"),
          Submenu => Submenu_Factory);
 
-      Filter := new Filters.Ada_Generic_Filter_Record;
+      Filter := new Filters.Ada_Generic_Or_Separate_Filter_Record;
 
       Register_Action
         (Kernel, "codepeer analyze all", new Analyze_All_Command);

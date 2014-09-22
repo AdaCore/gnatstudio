@@ -15,10 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Symbols;
-with Basic_Types;
-with GPS.Kernel.Contexts;
-with Language;
+with GNATCOLL.Projects;        use GNATCOLL.Projects;
+with GNATCOLL.Symbols;         use GNATCOLL.Symbols;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with Basic_Types;              use Basic_Types;
+with GPS.Kernel.Contexts;      use GPS.Kernel, GPS.Kernel.Contexts;
+with Language;                 use Language;
 with Language_Handlers;        use Language_Handlers;
 with Language_Utils;           use Language_Utils;
 with Xref;                     use Xref;
@@ -30,25 +32,25 @@ package body CodePeer.Module.Filters is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Ada_Generic_Filter_Record;
+     (Filter  : access Ada_Generic_Or_Separate_Filter_Record;
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-
-      use type Language.Language_Category;
-      use type GNATCOLL.Symbols.Symbol;
-      use type Language.Construct_Access;
-
-      Kernel     : constant GPS.Kernel.Kernel_Handle :=
-        GPS.Kernel.Get_Kernel (Context);
-      File_Name  : constant GNATCOLL.VFS.Virtual_File :=
-        GPS.Kernel.Contexts.File_Information (Context);
-      Languages  : constant Language_Handlers.Language_Handler :=
-        GPS.Kernel.Get_Language_Handler (Kernel);
-      Constructs : Language.Construct_List;
-      Unit       : Language.Construct_Access;
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context);
+      File_Name  : constant Virtual_File := File_Information (Context);
+      Languages  : constant Language_Handler := Get_Language_Handler (Kernel);
+      Constructs : Construct_List;
+      Unit       : Construct_Access;
 
    begin
+      --  Quick check on whether we have a separate:
+
+      if Kernel.Registry.Tree.Info (File_Name).Unit_Part = Unit_Separate then
+         return True;
+      end if;
+
+      --  Otherwise check if we have a generic
+
       Parse_File_Constructs
         (Get_Language_From_File (Languages, File_Name),
          File_Name,
@@ -66,14 +68,14 @@ package body CodePeer.Module.Filters is
                   or Constructs.Current.Category = Language.Cat_Function)
          then
             Unit := Constructs.Current;
+            exit;
          end if;
 
          Constructs.Current := Constructs.Current.Next;
       end loop;
 
       if Unit = null then
-         Language.Free (Constructs);
-
+         Free (Constructs);
          return False;
       end if;
 
@@ -81,16 +83,14 @@ package body CodePeer.Module.Filters is
 
       declare
          Entity : constant Root_Entity'Class := Kernel.Databases.Get_Entity
-           (Name => "",
+           (Name => Get (Unit.Name).all,
             Loc  => (File   => File_Name,
-                     Project =>
-                        GPS.Kernel.Contexts.Project_Information (Context),
+                     Project => Project_Information (Context),
                      Line   => Unit.Sloc_Entity.Line,
-                     Column => Basic_Types.Visible_Column_Type
-                       (Unit.Sloc_Entity.Column
-                        + GNATCOLL.Symbols.Get (Unit.Name)'Length - 1)));
+                     Column => Visible_Column_Type
+                       (Unit.Sloc_Entity.Column)));
       begin
-         Language.Free (Constructs);
+         Free (Constructs);
 
          if Entity = No_Root_Entity then
             return False;
@@ -98,7 +98,6 @@ package body CodePeer.Module.Filters is
 
          return Is_Generic (Entity);
       end;
-
    end Filter_Matches_Primitive;
 
 end CodePeer.Module.Filters;
