@@ -58,6 +58,7 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Main_Window.Debug;     use GPS.Main_Window.Debug;
 with GPS.Main_Window;           use GPS.Main_Window;
+
 with GUI_Utils;                 use GUI_Utils;
 with GVD.Assembly_View;         use GVD.Assembly_View;
 with GVD.Call_Stack;            use GVD.Call_Stack;
@@ -204,6 +205,61 @@ package body GVD_Module is
    --  exec dir of the program is also provided, similar to the Build->Run
    --  dialog.
 
+   -----------------
+   -- Dbg_Command --
+   -----------------
+
+   --  This subpackage defines a new Debugger_Command type, that is used as a
+   --  basis for every debugger command type
+
+   package Dbg_Command is
+      type Debugger_Command is abstract new Interactive_Command
+      with null record;
+      --  Abstract type that is the basis for debugger commands. Will take care
+      --  of some boilerplate code, like checking that the debugger is active,
+      --  and checking wether the command has been issued from the debugger
+      --  console Debugger commands don't need to override Execute, as is
+      --  usual with Interactive_Commands, but Execute_Dbg
+
+      type Debugger_Command_Access is access all Debugger_Command'Class;
+
+      overriding function Execute
+        (Command : access Debugger_Command;
+         Context : Interactive_Command_Context) return Command_Return_Type;
+      --  Overriden Execute primitive to take care of Debugger_Command
+      --  boilerplate, do not override
+
+      function Execute_Dbg
+        (Command : access Debugger_Command;
+         Process : Visual_Debugger) return Command_Return_Type is abstract;
+      --  Types derived from Debugger_Command need to override this primitive
+      --  Process is the process of the active debugger for the command.
+
+   end Dbg_Command;
+
+   package body Dbg_Command is
+      overriding function Execute
+        (Command : access Debugger_Command;
+         Context : Interactive_Command_Context) return Command_Return_Type
+      is
+         Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+         Top     : constant GPS_Window :=
+           GPS_Window (Get_Main_Window (Kernel));
+         Process : constant Visual_Debugger := Get_Current_Process (Top);
+      begin
+         if Process = null or else Process.Debugger = null then
+            return Commands.Failure;
+         end if;
+
+         if Process.Debugger_Text.Get_View.Has_Focus then
+            Process.Is_From_Dbg_Console := True;
+         end if;
+
+         return Debugger_Command_Access (Command).Execute_Dbg
+           (Process);
+      end Execute;
+   end Dbg_Command;
+
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -252,22 +308,24 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Detach
 
-   type Kill_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Kill_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Kill_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Debug->Kill
 
-   type Local_Vars_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Local_Vars_Command is new Dbg_Command.Debugger_Command
+   with null record;
+
+   overriding function Execute_Dbg
      (Command : access Local_Vars_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Data->Display Local Variables
 
-   type Arguments_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Arguments_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Arguments_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Data->Display Arguments
 
    type Registers_Command is new Interactive_Command with null record;
@@ -288,46 +346,46 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Run... menu
 
-   type Step_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Step_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Step_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Step menu
 
-   type Stepi_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Stepi_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Stepi_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Step Instruction menu
 
-   type Next_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Next_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Next_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Next menu
 
-   type Nexti_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Nexti_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Nexti_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Next Instruction menu
 
-   type Finish_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Finish_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Finish_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Finish menu
 
-   type Continue_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Continue_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Continue_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Continue menu
 
-   type Interrupt_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Interrupt_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Interrupt_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Interrupt
 
    type Terminate_Command is new Interactive_Command with null record;
@@ -342,15 +400,15 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Terminate
 
-   type Up_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Up_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Up_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
 
-   type Down_Command is new Interactive_Command with null record;
-   overriding function Execute
+   type Down_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
      (Command : access Down_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+      Process : Visual_Debugger) return Command_Return_Type;
 
    --------------------
    -- Misc Callbacks --
@@ -688,130 +746,83 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Step_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
       Step_Into (Process.Debugger, Mode => GVD.Types.Visible);
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Stepi_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
       Step_Into_Instruction (Process.Debugger, Mode => GVD.Types.Visible);
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Next_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
       Step_Over (Process.Debugger, Mode => GVD.Types.Visible);
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Nexti_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
       Step_Over_Instruction (Process.Debugger, Mode => GVD.Types.Visible);
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Finish_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
 
       Finish (Process.Debugger, Mode => GVD.Types.Visible);
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Continue_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
 
       if Is_Started (Process.Debugger) then
          Continue (Process.Debugger, Mode => GVD.Types.Visible);
@@ -821,49 +832,32 @@ package body GVD_Module is
       end if;
 
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Kill_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
       Kill_Process (Process.Debugger, Mode => GVD.Types.Visible);
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Interrupt_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
       --  Give some visual feedback to the user
 
       Output_Text (Process, "<^C>" & ASCII.LF, Is_Command => True);
@@ -893,60 +887,43 @@ package body GVD_Module is
       --  tricky when handling an internal command.
 
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Local_Vars_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
       --  ???? won't work with GDB/MI
       Process_User_Command
         (Process,
          "graph display `" & Info_Locals (Process.Debugger) & '`',
          Output_Command => True);
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Arguments_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-
    begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
       --  ???? won't work with GDB/MI
       Process_User_Command
         (Process,
          "graph display `" & Info_Args (Process.Debugger) & '`',
          Output_Command => True);
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
@@ -1817,39 +1794,29 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Up_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Process /= null and then Process.Debugger /= null then
-         Stack_Up (Process.Debugger, Mode => GVD.Types.Visible);
-      end if;
+      Stack_Up (Process.Debugger, Mode => GVD.Types.Visible);
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding function Execute_Dbg
      (Command : access Down_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+      Process : Visual_Debugger) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
    begin
-      if Process /= null and then Process.Debugger /= null then
-         Stack_Down (Process.Debugger, Mode => GVD.Types.Visible);
-      end if;
+      Stack_Down (Process.Debugger, Mode => GVD.Types.Visible);
       return Commands.Success;
-   end Execute;
+   end Execute_Dbg;
 
    ---------------------------
    -- On_Executable_Changed --

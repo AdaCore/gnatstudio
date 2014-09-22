@@ -116,9 +116,10 @@ package GVD.Process is
       Exiting                 : Boolean := False;
       --  True if the debugger is exiting.
 
-      Interactive_Command    : Boolean := False;
-      --  True if the current command was typed manually by the user in the
-      --  console.
+      Is_From_Dbg_Console     : Boolean := False;
+      --  True if the current command was issued by the user from the console.
+      --  Valid both for command typed manually, and for commands issued by
+      --  shortcuts while the focus is in the console
 
       ------------
       --  private fields

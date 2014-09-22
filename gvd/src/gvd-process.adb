@@ -736,13 +736,13 @@ package body GVD.Process is
 
       --  Preserve the focus in the console for interactive execution
 
-      if Process.Interactive_Command then
+      if Process.Is_From_Dbg_Console then
          if Process.Debugger_Text /= null then
             Set_Focus_Child
               (Find_MDI_Child (Process.Window.MDI, Process.Debugger_Text));
          end if;
 
-         Process.Interactive_Command := False;
+         Process.Is_From_Dbg_Console := False;
       end if;
    end Final_Post_Process;
 
@@ -1482,7 +1482,7 @@ package body GVD.Process is
             Send
               (Debugger.Debugger,
                Command, Wait_For_Prompt => False, Mode => Mode,
-               Force_Send => Debugger.Interactive_Command);
+               Force_Send => Debugger.Is_From_Dbg_Console);
          else
             if Output = null then
                --  Force_Send is always false so that commands are queue. We

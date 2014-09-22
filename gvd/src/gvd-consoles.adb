@@ -380,7 +380,7 @@ package body GVD.Consoles is
       C   : constant Debugger_Console := Debugger_Console (Console);
    begin
       if Get_Process (C) /= null then
-         Get_Process (C).Interactive_Command := True;
+         Get_Process (C).Is_From_Dbg_Console := True;
          Process_User_Command (Get_Process (C), Input, Mode => User);
       end if;
 
