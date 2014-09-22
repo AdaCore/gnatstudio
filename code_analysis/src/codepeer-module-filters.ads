@@ -15,6 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  ??? This seems to be of general interest, not specific to CodePeer,
+--  it could be moved elsewhere.
+
 package CodePeer.Module.Filters is
 
    type Ada_Generic_Or_Separate_Filter_Record is
