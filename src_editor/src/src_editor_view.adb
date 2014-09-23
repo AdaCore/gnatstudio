@@ -2133,9 +2133,14 @@ package body Src_Editor_View is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Result : Boolean;
+      Focus_Widget : Gtk_Widget;
       pragma Unreferenced (Result);
    begin
       External_End_Action (Buffer);
+
+      --  Save the focus widget before acquiring the focus, in case we need
+      --  it for the middle-mouse-paste function
+      Focus_Widget := Get_Current_Focus_Widget (View.Kernel);
 
       View.Acquire_Focus;
 
@@ -2186,9 +2191,7 @@ package body Src_Editor_View is
                   --  On UNIX we intercept this to use our own paste function,
                   --  because the default one pastes the tags, which we do not
                   --  want.
-                  Copy_Clipboard
-                    (Get_Clipboard (View.Kernel),
-                     Get_Current_Focus_Widget (View.Kernel));
+                  Copy_Clipboard (Get_Clipboard (View.Kernel), Focus_Widget);
 
                   declare
                      L, C    : Gint;
