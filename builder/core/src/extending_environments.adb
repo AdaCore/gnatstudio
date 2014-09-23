@@ -141,7 +141,10 @@ package body Extending_Environments is
          Dest : Writable_File :=
            Create (Filesystem_String (Env.File.Display_Full_Name)).Write_File;
       begin
-         Write (Dest, Get_Buffer_Factory (Kernel).Get (Source).Get_Chars);
+         Write
+           (Dest,
+            Get_Buffer_Factory (Kernel).Get
+            (Source, Open_View => False).Get_Chars);
          Close (Dest);
       end;
 
