@@ -25,7 +25,7 @@ XML = u"""<?xml version="1.0" ?>
       <shell>Project.root</shell>
       <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
       <external output=""
-       server="tools_server">%1 pretty -rf %pps %3 "%F"</external>
+       server="tools_server">%1 pretty -rf %PPs %3 "%F"</external>
       <on-failure>
         <shell>Locations.parse "%1 " "Pretty printer"</shell>
       </on-failure>
@@ -45,7 +45,7 @@ XML = u"""<?xml version="1.0" ?>
       <shell>Project.root</shell>
       <shell>Project.get_attribute_as_string %1 "gnat" "ide"</shell>
       <external output=""
-       server="tools_server">%1 pretty -rf %pps %3 "%F"</external>
+       server="tools_server">%1 pretty -rf %PPs %3 "%F"</external>
       <on-failure>
         <shell>Locations.parse "%1 " "Pretty printer"</shell>
       </on-failure>
