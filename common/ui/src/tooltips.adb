@@ -134,12 +134,15 @@ package body Tooltips is
       --  Both cases are difficult to detect by listening to events purely
       --  on the On_Widget
 
-      Toplevel := Global_Tooltip.On_Widget.Get_Toplevel;
+      if not Global_Tooltip.On_Widget.In_Destruction then
+         Toplevel := Global_Tooltip.On_Widget.Get_Toplevel;
 
-      if Toplevel.all in Gtk_Window_Record'Class
-        and then not Gtk_Window (Toplevel).Is_Active
-      then
-         return False;
+         if Toplevel /= null
+           and then Toplevel.all in Gtk_Window_Record'Class
+           and then not Gtk_Window (Toplevel).Is_Active
+         then
+            return False;
+         end if;
       end if;
 
       Widget := Global_Tooltip.Tip.Create_Contents
