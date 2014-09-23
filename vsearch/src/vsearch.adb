@@ -876,14 +876,14 @@ package body Vsearch is
          then
             if All_Occurrences then
                Vsearch.Last_Search_All_Context.Set_Pattern
-                 (Pattern         => Pattern,
+                 (Pattern        => Pattern,
                   Case_Sensitive => Case_Sensitive,
                   Whole_Word     => Whole_Word,
                   Kind           => Kind);
                Reset (Vsearch.Last_Search_All_Context, Vsearch.Kernel);
             else
                Vsearch.Last_Search_Context.Set_Pattern
-                 (Pattern         => Pattern,
+                 (Pattern        => Pattern,
                   Case_Sensitive => Case_Sensitive,
                   Whole_Word     => Whole_Word,
                   Kind           => Kind);

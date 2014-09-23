@@ -2319,7 +2319,9 @@ package body Src_Contexts is
      (Context     : access File_Search_Context'Class;
       Replacement : Replacement_Pattern;
       Matches     : Match_Result_Array_Access;
-      Buffer      : Src_Editor_Buffer.Source_Buffer) is
+      Buffer      : Src_Editor_Buffer.Source_Buffer)
+   is
+      Last_Replaced : Natural := 0;
    begin
       --  Replace starting from the end, so as to preserve lines and
       --  columns
@@ -2329,22 +2331,29 @@ package body Src_Contexts is
       Buffer.Disable_Highlighting;
 
       for M in reverse Matches'Range loop
-         declare
-            Text : constant String := Get_Text
-              (Buffer,
-               Editable_Line_Type (Matches (M).Start.Line),
-               Matches (M).Start.Column,
-               Editable_Line_Type (Matches (M).Finish.Line),
-               Matches (M).Finish.Column + 1);
-         begin
-            Replace_Slice
-              (Buffer,
-               Editable_Line_Type (Matches (M).Start.Line),
-               Matches (M).Start.Column,
-               Editable_Line_Type (Matches (M).Finish.Line),
-               Matches (M).Finish.Column + 1,
-               Context.Replacement_Text (Matches (M), Replacement, Text));
-         end;
+         --  Check if current match doesn't overlap with previous replace
+         if Last_Replaced = 0 or else
+           Matches (M).Finish.Index < Matches (Last_Replaced).Start.Index
+         then
+            declare
+               Text : constant String := Get_Text
+                 (Buffer,
+                  Editable_Line_Type (Matches (M).Start.Line),
+                  Matches (M).Start.Column,
+                  Editable_Line_Type (Matches (M).Finish.Line),
+                  Matches (M).Finish.Column + 1);
+            begin
+               Replace_Slice
+                 (Buffer,
+                  Editable_Line_Type (Matches (M).Start.Line),
+                  Matches (M).Start.Column,
+                  Editable_Line_Type (Matches (M).Finish.Line),
+                  Matches (M).Finish.Column + 1,
+                  Context.Replacement_Text (Matches (M), Replacement, Text));
+
+               Last_Replaced := M;
+            end;
+         end if;
       end loop;
 
       Buffer.Enable_Highlighting;
