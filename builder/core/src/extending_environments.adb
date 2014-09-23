@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Editors; use GPS.Editors;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 package body Extending_Environments is
