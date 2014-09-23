@@ -1601,7 +1601,6 @@ package body Src_Editor_Module is
       Source : Source_Editor_Box;
       Edit   : Source_Editor_Box;
       Tmp    : Boolean;
-      pragma Unreferenced (Tmp);
 
    begin
       if D.Line = -1 then
@@ -1627,6 +1626,12 @@ package body Src_Editor_Module is
             Column           => D.Column,
             Column_End       => D.Column_End,
             Areas            => D.Areas);
+
+         if D.Force_Reload then
+            Source.Get_Buffer.Load_File
+              (Filename        => D.File,
+               Success         => Tmp);
+         end if;
 
          --  This used to be done in Open_File_Editor itself, before we call
          --  the Hook, but then we wouldn't have access to Create_File_Marker.
