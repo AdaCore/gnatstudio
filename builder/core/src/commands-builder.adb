@@ -74,11 +74,9 @@ package body Commands.Builder is
          Shadow     : Boolean;
          Background : Boolean)
       is
-
          Server         : Server_Type;
          Background_Env : Extending_Environment;
          Category_Name  : Unbounded_String;
-
          The_Exit       : Subprogram_Type;
 
       begin
