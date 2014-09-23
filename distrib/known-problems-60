@@ -25,6 +25,20 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.1 / GNATbench 2.9
 -----------------------------------------------
 
+KP-60-N922-042 GB: support viewing ada files from git history view
+
+  Problem:    When opening from history view a git commit version of an ada
+              file, multiple NullPointerException problems are logged and
+              displayed in a dialog.
+
+  Status:     This was fixed in 2.9 on 2014-09-23
+
+  Workaround: Ignore the problem dialog.
+              Or set ada files associated default editor to "Text Editor"
+              instead of "AdaCore's Ada Editor" when viewing from History
+              view a git commit version.
+              See Window/Preferences General/Editors/File Associations
+
 KP-60-N903-008 GPS: support for $ in C identifier names
 
   Problem:    Although illegal in the C standard, some compilers allow dollar
