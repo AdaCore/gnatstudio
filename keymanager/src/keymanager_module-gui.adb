@@ -135,7 +135,7 @@ package body KeyManager_Module.GUI is
       Commands_Category  => -"Views",
       Add_Close_Button_On_Float => True,
       MDI_Flags          =>
-         All_Buttons or Float_As_Dialog or Always_Destroy_Float,
+         All_Buttons or Float_To_Main or Always_Destroy_Float,
       Position           => Position_Float,
       Initialize         => Initialize);
    use Keys_Editor_Views;
