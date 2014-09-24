@@ -183,8 +183,8 @@ package body GPS.Search is
       M : constant Integer := Integer'Max
         (Context.Start.Index, Context.Finish.Index);
    begin
+      --  Ref should be before any (Start, Finish) to update them correctly
       if Context.Ref = Unknown_Position
-        --  Ref should be before any (Start, Finish) to update them corrctly
         or else Context.Ref.Index > Integer'Min
           (Context.Start.Index, Context.Finish.Index)
       then
