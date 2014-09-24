@@ -39,6 +39,18 @@ KP-60-N922-042 GB: support viewing ada files from git history view
               view a git commit version.
               See Window/Preferences General/Editors/File Associations
 
+KP-60-N912-014 GPS: replace all not working
+
+  Problem:    Replace All could fail if replaced pieces of text overlapped
+              with one another. This may cause damage to text around
+              replace position. An example is replacing two spaces with
+              one when there is long sequence of spaces in the text.
+
+  Status:     This was fixed in 6.1 on 2014-09-23
+
+  Workaround: If possible use regexp pattern to avoid overlapping replaces.
+              To replace sequence of spaces by one space use ' *' regexp.
+
 KP-60-N903-008 GPS: support for $ in C identifier names
 
   Problem:    Although illegal in the C standard, some compilers allow dollar
