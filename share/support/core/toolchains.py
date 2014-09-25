@@ -57,6 +57,10 @@ XML = r"""<?xml version="1.0" ?>
     <compiler lang="c++">c++ppc</compiler>
   </toolchain>
 
+  <toolchain name="powerpc-wrs-vxworks7">
+    <debugger/>
+  </toolchain>
+
   <toolchain name="powerpc-wrs-linux"/>
 
   <toolchain name="powerpc-sysgo-pikeos"/>
@@ -71,6 +75,10 @@ XML = r"""<?xml version="1.0" ?>
     <cpp_filt>c++filtpentium</cpp_filt>
     <compiler lang="c">ccpentium</compiler>
     <compiler lang="c++">c++pentium</compiler>
+  </toolchain>
+
+  <toolchain name="i586-wrs-vxworks7">
+    <debugger/>
   </toolchain>
 
   <toolchain name="i586-wrs-linux"/>
@@ -91,6 +99,10 @@ XML = r"""<?xml version="1.0" ?>
     <cpp_filt>c++filtppc</cpp_filt>
     <compiler lang="c">ccppc</compiler>
     <compiler lang="c++">c++ppc</compiler>
+  </toolchain>
+
+  <toolchain name="e500v2-wrs-vxworks7">
+    <debugger/>
   </toolchain>
 
   <toolchain name="e500v2-wrs-linux"/>
