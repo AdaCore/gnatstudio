@@ -79,6 +79,8 @@ project GPS is
       end case;
       for Default_Switches ("Ada") use Linker'Default_Switches ("Ada")
          & Shared.Linker'Default_Switches ("Ada");
+
+      for Trailing_Switches("Ada") use ("-shared-libgcc");
       --  for Default_Switches ("Ada") use ("-lgmem");
       --  for Default_Switches ("Ada") use ("-pg");
    end Linker;
