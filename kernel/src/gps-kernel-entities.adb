@@ -21,6 +21,7 @@ with Basic_Types;
 with Commands.Generic_Asynchronous; use Commands;
 with Commands.Interactive;          use Commands, Commands.Interactive;
 with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
+with Glib.Convert;
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Button;                    use Gtk.Button;
 with Gtk.Check_Button;              use Gtk.Check_Button;
@@ -631,7 +632,7 @@ package body GPS.Kernel.Entities is
               Col,
               "<b>" & Name & "</b> ["
               & Get_Display_Kind (Ref) & "] in: "
-              & Qualified_Name (Get_Caller (Ref)),
+              & Glib.Convert.Escape_Text (Qualified_Name (Get_Caller (Ref))),
               0,
               Call_Graph_Message_Flags);
 

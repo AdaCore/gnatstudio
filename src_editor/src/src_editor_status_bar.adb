@@ -29,6 +29,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;
 with Glib; use Glib;
@@ -221,7 +222,8 @@ package body Src_Editor_Status_Bar is
             --  We cannot control the underline from the theme unfortunately.
             Val := To_Unbounded_String
               ("<span underline='none'><a href='" & Block.First_Line'Img & "'>"
-               & Get (Block.Name).all & "</a></span>");
+               & Glib.Convert.Escape_Text (Get (Block.Name).all)
+               & "</a></span>");
 
             Iter := Get_Parent_Scope (Block.Tree, Block.Iter);
             while Iter /= Null_Construct_Tree_Iterator loop
