@@ -51,6 +51,17 @@ KP-60-N912-014 GPS: replace all not working
   Workaround: If possible use regexp pattern to avoid overlapping replaces.
               To replace sequence of spaces by one space use ' *' regexp.
 
+KP-60-N909-015 Bad handling of comments inside aspect clauses
+
+  Problem:    When writing comments in the middle of an aspect clause, the
+              highlighting or automatic casing incorrectly consider the comment
+              as regular text.
+
+  Status:     This was fixed in 6.1 on 2014-09-29
+
+  Workaround: Write the comment after the aspect clause, or ignore the visual
+              glitch.
+
 KP-60-N903-008 GPS: support for $ in C identifier names
 
   Problem:    Although illegal in the C standard, some compilers allow dollar
