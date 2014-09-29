@@ -150,7 +150,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
                               First     => Index,
                               Entity    => Entity,
                               Next_Char => Ignore);
-                  In_Comment := Entity = Comment_Text;
+                  In_Comment := Entity in Comment_Text | Aspect_Comment_Text;
                end if;
             end;
          end if;
@@ -204,6 +204,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
                   when Keyword_Text
                      | Annotated_Keyword_Text
                      | Aspect_Keyword_Text
+                     | Aspect_Comment_Text
                      | Comment_Text
                      | Annotated_Comment_Text
                      | Aspect_Text

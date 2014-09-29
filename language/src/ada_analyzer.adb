@@ -4496,8 +4496,10 @@ package body Ada_Analyzer is
             case Entity is
                when Keyword_Text =>
                   Ent := Aspect_Keyword_Text;
+               when Comment_Text | Annotated_Comment_Text =>
+                  Ent := Aspect_Comment_Text;
                when others =>
-                  --  Highlight everything else with Annotated_Comment_Text,
+                  --  Highlight everything else with Aspect_Text,
                   --  which will be done next time Call_Callback is called.
                   return False;
             end case;

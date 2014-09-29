@@ -90,6 +90,12 @@ private package GNATdoc.Backend.HTML.Source_Code is
       Last     : Language.Source_Location;
       Continue : in out Boolean);
 
+   not overriding procedure Aspect_Comment_Text
+     (Self     : in out Source_Code_Printer;
+      First    : Language.Source_Location;
+      Last     : Language.Source_Location;
+      Continue : in out Boolean);
+
    not overriding procedure Annotated_Keyword_Text
      (Self     : in out Source_Code_Printer;
       First    : Language.Source_Location;

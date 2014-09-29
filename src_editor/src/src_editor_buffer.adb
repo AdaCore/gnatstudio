@@ -3495,6 +3495,7 @@ package body Src_Editor_Buffer is
       end if;
 
       return Has_Tag (Pos, Buffer.Syntax_Tags (Comment_Text))
+        or else Has_Tag (Pos, Buffer.Syntax_Tags (Aspect_Comment_Text))
         or else Has_Tag (Pos, Buffer.Syntax_Tags (Annotated_Comment_Text))
         or else Has_Tag (Pos, Buffer.Syntax_Tags (Annotated_Keyword_Text));
    end Is_In_Comment;
@@ -3674,6 +3675,12 @@ package body Src_Editor_Buffer is
             Fore_Color => Comments_Style.Get_Pref_Fg,
             Back_Color => Comments_Style.Get_Pref_Bg,
             Font_Desc  => Comments_Style.Get_Pref_Font);
+         New_Tag
+           (B.Syntax_Tags (Aspect_Comment_Text),
+            Aspect_Comment_Color_Tag_Name,
+            Fore_Color => Aspects_Style.Get_Pref_Fg,
+            Back_Color => Aspects_Style.Get_Pref_Bg,
+            Font_Desc  => Comments_Style.Get_Pref_Font);
       end if;
 
       if Pref = null
@@ -3710,6 +3717,12 @@ package body Src_Editor_Buffer is
             Fore_Color => Aspects_Style.Get_Pref_Fg,
             Back_Color => Aspects_Style.Get_Pref_Bg,
             Font_Desc  => Keywords_Style.Get_Pref_Font);
+         New_Tag
+           (B.Syntax_Tags (Aspect_Comment_Text),
+            Aspect_Comment_Color_Tag_Name,
+            Fore_Color => Aspects_Style.Get_Pref_Fg,
+            Back_Color => Aspects_Style.Get_Pref_Bg,
+            Font_Desc  => Comments_Style.Get_Pref_Font);
       end if;
 
       if Pref = null

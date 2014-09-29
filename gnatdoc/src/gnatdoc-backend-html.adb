@@ -248,6 +248,9 @@ package body GNATdoc.Backend.HTML is
             when Comment_Text =>
                Printer.Comment_Text (Sloc_Start, Sloc_End, Continue);
 
+            when Aspect_Comment_Text =>
+               Printer.Aspect_Comment_Text (Sloc_Start, Sloc_End, Continue);
+
             when Annotated_Keyword_Text =>
                Printer.Annotated_Keyword_Text (Sloc_Start, Sloc_End, Continue);
 
@@ -486,6 +489,9 @@ package body GNATdoc.Backend.HTML is
 
             when Comment_Text =>
                Printer.Comment_Text (Sloc_Start, Sloc_End, Continue);
+
+            when Aspect_Comment_Text =>
+               Printer.Aspect_Comment_Text (Sloc_Start, Sloc_End, Continue);
 
             when Annotated_Keyword_Text =>
                Printer.Annotated_Keyword_Text (Sloc_Start, Sloc_End, Continue);

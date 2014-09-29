@@ -88,6 +88,7 @@ package Language is
       Annotated_Keyword_Text,
       Annotated_Comment_Text,
       Aspect_Keyword_Text,
+      Aspect_Comment_Text,
       Aspect_Text,
       Character_Text,
       String_Text,

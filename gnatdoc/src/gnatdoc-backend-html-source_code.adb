@@ -34,6 +34,16 @@ package body GNATdoc.Backend.HTML.Source_Code is
    --  Returns True when Entity located in private part of currently processed
    --  scope.
 
+   -------------------------
+   -- Aspect_Comment_Text --
+   -------------------------
+
+   not overriding procedure Aspect_Comment_Text
+     (Self     : in out Source_Code_Printer;
+      First    : Language.Source_Location;
+      Last     : Language.Source_Location;
+      Continue : in out Boolean) renames Comment_Text;
+
    ----------------------------
    -- Annotated_Comment_Text --
    ----------------------------

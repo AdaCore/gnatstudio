@@ -42,6 +42,7 @@ package Src_Highlighting is
    Annotated_Keyword_Color_Tag_Name : constant String := "annotated-keyword";
    Annotated_Comment_Color_Tag_Name : constant String := "annotated-comment";
    Aspect_Keyword_Color_Tag_Name    : constant String := "aspect-keyword";
+   Aspect_Comment_Color_Tag_Name    : constant String := "aspect-comment";
    Aspect_Color_Tag_Name            : constant String := "aspect";
    String_Color_Tag_Name            : constant String := "string";
    Character_Color_Tag_Name         : constant String := "character";

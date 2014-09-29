@@ -3111,9 +3111,7 @@ package body GNATdoc.Frontend is
                Update_Prev_Known_Token;
 
                case Entity is
-
-                  when Block_Text      |
-                       Identifier_Text =>
+                  when Block_Text | Identifier_Text =>
                      Token := Tok_Id;
 
                   when Character_Text =>
@@ -3218,6 +3216,7 @@ package body GNATdoc.Frontend is
                     Comment_Text            |
                     Annotated_Keyword_Text  |
                     Annotated_Comment_Text  |
+                    Aspect_Comment_Text     |
                     Aspect_Keyword_Text     |
                     Aspect_Text             =>
                   Token := Tok_Unknown;
@@ -4261,9 +4260,7 @@ package body GNATdoc.Frontend is
                end if;
 
                case Entity is
-
-                  when Block_Text      |
-                       Identifier_Text =>
+                  when Block_Text | Identifier_Text =>
                      Token := Tok_Id;
 
                      if In_Next_Entity then
@@ -4332,6 +4329,7 @@ package body GNATdoc.Frontend is
                     Comment_Text            |
                     Annotated_Keyword_Text  |
                     Annotated_Comment_Text  |
+                    Aspect_Comment_Text     |
                     Aspect_Keyword_Text     |
                     Aspect_Text             |
                     Character_Text          |
