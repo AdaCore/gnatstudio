@@ -68,7 +68,7 @@ dark_common = {
     'Plugins/isearch/bgcolor': 'rgb(77,19,19)',
 
     "Search-Src-Highlight-Color": "rgb(0,113,128)",
-    "Messages-Highlight-Color": "rgb(84,42,42)",
+    "Messages-Highlight-Color": "rgb(200,42,42)",
     "Errors-Src-Highlight-Color": "rgb(75,34,34)",
     "Warnings-Src-Highlight-Color": "rgb(85,52,18)",
     "Style-Src-Highlight-Color": "rgb(68,12,42)",
