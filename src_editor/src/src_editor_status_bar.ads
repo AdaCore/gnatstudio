@@ -38,12 +38,12 @@ package Src_Editor_Status_Bar is
 
    procedure Gtk_New
      (Bar    : out Source_Editor_Status_Bar;
-      Box    : Gtk_Hbox;
+      Box    : Gtk_Event_Box;
       View   : Source_View;
       Buffer : Source_Buffer);
    procedure Initialize
      (Bar    : not null access Source_Editor_Status_Bar_Record'Class;
-      Box    : Gtk_Hbox;
+      Box    : Gtk_Event_Box;
       View   : Source_View;
       Buffer : Source_Buffer);
    --  Initialize a status bar
@@ -77,7 +77,7 @@ private
       View          : Src_Editor_View.Source_View;
       Buffer        : Src_Editor_Buffer.Source_Buffer;
 
-      Box    : Gtk_Hbox;
+      Box    : Gtk_Event_Box;
 
       Function_Label       : Gtk.Label.Gtk_Label;
       Read_Only_Label      : Gtk.Image.Gtk_Image;

@@ -459,7 +459,7 @@ package body Src_Editor_Status_Bar is
 
    procedure Gtk_New
      (Bar    : out Source_Editor_Status_Bar;
-      Box    : Gtk_Hbox;
+      Box    : Gtk_Event_Box;
       View   : Source_View;
       Buffer : Source_Buffer)
    is
@@ -474,7 +474,7 @@ package body Src_Editor_Status_Bar is
 
    procedure Initialize
      (Bar    : not null access Source_Editor_Status_Bar_Record'Class;
-      Box    : Gtk_Hbox;
+      Box    : Gtk_Event_Box;
       View   : Source_View;
       Buffer : Source_Buffer)
    is

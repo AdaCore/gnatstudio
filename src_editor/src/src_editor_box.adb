@@ -41,6 +41,7 @@ with Gtk;                        use Gtk;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
@@ -543,12 +544,14 @@ package body Src_Editor_Box is
       Success        : Boolean;
 
    begin
-      Initialize_Vbox (Box, Homogeneous => False);
+      Event_Box.Initialize (Box);
+      Gtk_New_Vbox (Box.Box, Homogeneous => False);
+      Add (Box, Box.Box);
 
       Box.Kernel := Kernel;
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox, Expand => True, Fill => True);
+      Pack_Start (Box.Box, Hbox, Expand => True, Fill => True);
 
       Gtk_New (Drawing_Area);
       Hbox.Pack_Start (Drawing_Area, Expand => False, Fill => False);
@@ -609,11 +612,12 @@ package body Src_Editor_Box is
 
       --  The status bar, at the bottom of the window...
 
-      Gtk_New (Box.Status_Bar, Box, Box.Source_View, Box.Source_Buffer);
+      Gtk_New (Box.Status_Bar, Gtk_Event_Box (Box),
+               Box.Source_View, Box.Source_Buffer);
 
       Gtk_New (Frame);
       Frame.Set_Shadow_Type (Shadow_None);
-      Pack_Start (Box, Frame, Expand => False, Fill => False);
+      Pack_Start (Box.Box, Frame, Expand => False, Fill => False);
 
       Frame.Add (Box.Status_Bar);
 

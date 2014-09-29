@@ -29,6 +29,7 @@ with Glib.Object;
 with Gdk.Event;
 
 with Gtk.Box;
+with Gtk.Event_Box;
 with Gtk.Menu;
 with Gtk.Handlers;
 with Gtk.Text_Mark;
@@ -48,7 +49,7 @@ with Xref;
 
 package Src_Editor_Box is
 
-   type Source_Editor_Box_Record is new Gtk.Box.Gtk_Box_Record
+   type Source_Editor_Box_Record is new Gtk.Event_Box.Gtk_Event_Box_Record
      with private;
    type Source_Editor_Box is access all Source_Editor_Box_Record;
 
@@ -358,7 +359,10 @@ private
    --  Convert a column number in the Source Buffer to a column number
    --  in the Source Box. Same rationale as in To_Box_Line.
 
-   type Source_Editor_Box_Record is new Gtk.Box.Gtk_Box_Record with record
+   type Source_Editor_Box_Record is new
+     Gtk.Event_Box.Gtk_Event_Box_Record
+   with record
+      Box                  : Gtk.Box.Gtk_Box;
       Kernel               : GPS.Kernel.Kernel_Handle;
 
       Source_View          : Src_Editor_View.Source_View;
