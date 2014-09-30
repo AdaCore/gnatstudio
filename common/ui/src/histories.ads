@@ -97,6 +97,13 @@ package Histories is
    --  The default is not to allow duplicates (more convenient for combo
    --  boxes).
 
+   procedure Set_Persistent
+     (Hist  : in out History_Record;
+      Key   : History_Key;
+      Value : Boolean);
+   --  Mark Key as persistent or not-persistent. Only persistent keys are saved
+   --  to file. By default a key is persistent.
+
    function Get_History
      (Hist : History_Record; Key : History_Key)
       return GNAT.Strings.String_List_Access;
@@ -219,7 +226,8 @@ private
    procedure Free (Notifier : in out Changed_Notifier_Record) is null;
 
    type History_Key_Record (Typ : History_Key_Type := Strings) is record
-      Notifier : Changed_Notifier;
+      Notifier   : Changed_Notifier;
+      Persistent : Boolean := True;
 
       case Typ is
          when Strings =>

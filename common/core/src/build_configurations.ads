@@ -640,6 +640,9 @@ private
       Default_Command_Line : GNAT.OS_Lib.Argument_List_Access;
       --  The command line to use when creating targets of this model
 
+      Persistent_History   : Boolean := True;
+      --  Keep command line history over GPS session
+
       Server               : Server_Type      := Build_Server;
       --  The server used for executing this target
 

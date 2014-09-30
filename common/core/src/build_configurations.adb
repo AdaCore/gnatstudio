@@ -362,6 +362,9 @@ package body Build_Configurations is
             elsif Child.Tag.all = "uses-python" then
                Model.Uses_Python := Boolean'Value (Child.Value.all);
 
+            elsif Child.Tag.all = "persistent-history" then
+               Model.Persistent_History := Boolean'Value (Child.Value.all);
+
             elsif Child.Tag.all = "output-parsers" then
                --  handled elsewhere
                null;

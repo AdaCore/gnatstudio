@@ -1527,6 +1527,11 @@ package body Build_Configurations.Gtkada is
               (History.all,
                Target_To_Key (UI.Target_UI.Target),
                Get_Text (Get_Entry (UI.Target_UI.Editor)));
+
+            Set_Persistent
+              (History.all,
+               Target_To_Key (UI.Target_UI.Target),
+               UI.Target_UI.Target.Model.Persistent_History);
          end if;
       end if;
 

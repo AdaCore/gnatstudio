@@ -416,6 +416,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>--mode=flow</arg>
        </command-line>
        <icon>gps-build-all</icon>
+       <persistent-history>False</persistent-history>
     </target-model>
 
     <target-model name="gnatprove-prove">
@@ -468,6 +469,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          <field label="Alternate prover" switch="--prover=" column="2"
                 tip="Alternate prover to use instead of Alt-Ergo" />
        </switches>
+       <persistent-history>False</persistent-history>
     </target-model>
 
     <target model="gnatprove-examine" name="Examine All" category="GNATprove">
@@ -704,6 +706,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>-P%PP</arg>
        </command-line>
        <icon>gps-build-all</icon>
+       <persistent-history>False</persistent-history>
     </target-model>
 
     <target model="gnatprove_clean" name="Clean Proofs" category="GNATprove">

@@ -4881,6 +4881,12 @@ following child tags:
   Contains :file:`<arg>` child tags, each containing an argument of the
   default command line for this model, beginning with the executable name.
 
+* :file:`<persistent-history>` (default :command:`True`)
+
+  Whether GPS should keep command line history over GPS sessions. If set to
+  False, GPS provide history of command lines during current session only and
+  will reset command line to default value after restart.
+
 .. highlight:: xml
 
 * :file:`<switches>`

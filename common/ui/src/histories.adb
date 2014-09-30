@@ -208,6 +208,21 @@ package body Histories is
       Current.Merge_First := Merge_First;
    end Allow_Duplicates;
 
+   --------------------
+   -- Set_Persistent --
+   --------------------
+
+   procedure Set_Persistent
+     (Hist  : in out History_Record;
+      Key   : History_Key;
+      Value : Boolean)
+   is
+      Current : constant History_Key_Access :=
+                  Create_New_Key_If_Necessary (Hist, Key, Strings);
+   begin
+      Current.Persistent := Value;
+   end Set_Persistent;
+
    ----------
    -- Load --
    ----------
@@ -384,7 +399,9 @@ package body Histories is
                Add_Child (Key, N);
          end case;
 
-         Add_Child (File, Key);
+         if Value.Persistent then
+            Add_Child (File, Key);
+         end if;
 
          Get_Next (Hist.Table.all, Iter);
       end loop;
