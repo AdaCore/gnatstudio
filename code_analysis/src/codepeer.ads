@@ -32,7 +32,7 @@ package CodePeer is
    type Format_Version is new Positive;
    --  Version of format of interchange files.
 
-   subtype Supported_Format_Version is Format_Version range 2 .. 3;
+   subtype Supported_Format_Version is Format_Version range 3 .. 3;
    --  Range of suppoted versions of format of interchange file.
 
    ----------------
@@ -64,24 +64,6 @@ package CodePeer is
    package Message_Category_Sets is new Ada.Containers.Hashed_Sets
      (Message_Category_Access, Hash, "=");
 
-   type Audit_Record_V2 (Ranking_Changed : Boolean) is record
-      Timestamp   : Ada.Strings.Unbounded.Unbounded_String;
-      Comment     : Ada.Strings.Unbounded.Unbounded_String;
-
-      case Ranking_Changed is
-         when True =>
-            Ranking : Message_Ranking_Level;
-
-         when False =>
-            null;
-      end case;
-   end record;
-
-   type Audit_Record_V2_Access is access all Audit_Record_V2;
-
-   package Audit_V2_Vectors is
-     new Ada.Containers.Vectors (Positive, Audit_Record_V2_Access);
-
    type Audit_Record_V3 is record
       Timestamp   : Ada.Strings.Unbounded.Unbounded_String;
       Comment     : Ada.Strings.Unbounded.Unbounded_String;
@@ -106,14 +88,12 @@ package CodePeer is
       Category         : Message_Category_Access;
       Is_Check         : Boolean;
       --  True means this message is check.
-      Computed_Ranking : Message_Ranking_Level;  --  V2 only
       Ranking          : Message_Ranking_Level;
       Status           : Audit_Status_Kinds;
-      Status_Editable  : Boolean;                --  V3 only
+      Status_Editable  : Boolean;
       --  True means that audit status can be changed by review.
       Text             : GNAT.Strings.String_Access;
       Audit_Loaded     : Boolean;
-      Audit_V2         : Audit_V2_Vectors.Vector;
       Audit_V3         : Audit_V3_Vectors.Vector;
       From_File        : GNATCOLL.VFS.Virtual_File;
       From_Line        : Positive;

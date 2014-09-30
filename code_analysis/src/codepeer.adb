@@ -166,21 +166,12 @@ package body CodePeer is
            new Ada.Unchecked_Deallocation (Message, Message_Access);
          procedure Free is
            new Ada.Unchecked_Deallocation
-             (Audit_Record_V2, Audit_Record_V2_Access);
-         procedure Free is
-           new Ada.Unchecked_Deallocation
              (Audit_Record_V3, Audit_Record_V3_Access);
 
          Element : Message_Access := Message_Vectors.Element (Position);
 
       begin
          GNAT.Strings.Free (Element.Text);
-
-         for J of Element.Audit_V2 loop
-            Free (J);
-         end loop;
-
-         Element.Audit_V2.Clear;
 
          for J of Element.Audit_V3 loop
             Free (J);

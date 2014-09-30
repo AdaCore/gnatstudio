@@ -830,79 +830,71 @@ package body CodePeer.Messages_Reports is
 
       --  Message review status
 
-      case Self.Version is
-         when 2 =>
-            --  There is no message review status support in this version.
+      Gtk.Separator.Gtk_New_Hseparator (Separator);
+      Filter_Box.Pack_Start (Separator, False);
 
-            null;
+      Gtk.Label.Gtk_New (Label, -"Message review status");
+      Filter_Box.Pack_Start (Label, False);
 
-         when 3 =>
-            Gtk.Separator.Gtk_New_Hseparator (Separator);
-            Filter_Box.Pack_Start (Separator, False);
+      Gtk.Check_Button.Gtk_New (Check, -"unclassified");
+      Check.Set_Active (Self.Show_Status (Unclassified));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Unclassified_Messages_Toggled'Access),
+         Messages_Report (Self));
 
-            Gtk.Label.Gtk_New (Label, -"Message review status");
-            Filter_Box.Pack_Start (Label, False);
+      Gtk.Check_Button.Gtk_New (Check, -"pending");
+      Check.Set_Active (Self.Show_Status (Pending));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Pending_Messages_Toggled'Access),
+         Messages_Report (Self));
 
-            Gtk.Check_Button.Gtk_New (Check, -"unclassified");
-            Check.Set_Active (Self.Show_Status (Unclassified));
-            Filter_Box.Pack_Start (Check, False);
-            Check_Button_Report_Callbacks.Connect
-              (Check,
-               Gtk.Toggle_Button.Signal_Toggled,
-               Check_Button_Report_Callbacks.To_Marshaller
-                 (On_Show_Unclassified_Messages_Toggled'Access),
-               Messages_Report (Self));
+      Gtk.Check_Button.Gtk_New (Check, -"not a bug");
+      Check.Set_Active (Self.Show_Status (Not_A_Bug));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Not_A_Bug_Messages_Toggled'Access),
+         Messages_Report (Self));
 
-            Gtk.Check_Button.Gtk_New (Check, -"pending");
-            Check.Set_Active (Self.Show_Status (Pending));
-            Filter_Box.Pack_Start (Check, False);
-            Check_Button_Report_Callbacks.Connect
-              (Check,
-               Gtk.Toggle_Button.Signal_Toggled,
-               Check_Button_Report_Callbacks.To_Marshaller
-                 (On_Show_Pending_Messages_Toggled'Access),
-               Messages_Report (Self));
+      Gtk.Check_Button.Gtk_New (Check, -"false positive");
+      Check.Set_Active (Self.Show_Status (False_Positive));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_False_Positive_Messages_Toggled'Access),
+         Messages_Report (Self));
 
-            Gtk.Check_Button.Gtk_New (Check, -"not a bug");
-            Check.Set_Active (Self.Show_Status (Not_A_Bug));
-            Filter_Box.Pack_Start (Check, False);
-            Check_Button_Report_Callbacks.Connect
-              (Check,
-               Gtk.Toggle_Button.Signal_Toggled,
-               Check_Button_Report_Callbacks.To_Marshaller
-                 (On_Show_Not_A_Bug_Messages_Toggled'Access),
-               Messages_Report (Self));
+      Gtk.Check_Button.Gtk_New (Check, -"intentional");
+      Check.Set_Active (Self.Show_Status (Intentional));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Intentional_Messages_Toggled'Access),
+         Messages_Report (Self));
 
-            Gtk.Check_Button.Gtk_New (Check, -"false positive");
-            Check.Set_Active (Self.Show_Status (False_Positive));
-            Filter_Box.Pack_Start (Check, False);
-            Check_Button_Report_Callbacks.Connect
-              (Check,
-               Gtk.Toggle_Button.Signal_Toggled,
-               Check_Button_Report_Callbacks.To_Marshaller
-                 (On_Show_False_Positive_Messages_Toggled'Access),
-               Messages_Report (Self));
-
-            Gtk.Check_Button.Gtk_New (Check, -"intentional");
-            Check.Set_Active (Self.Show_Status (Intentional));
-            Filter_Box.Pack_Start (Check, False);
-            Check_Button_Report_Callbacks.Connect
-              (Check,
-               Gtk.Toggle_Button.Signal_Toggled,
-               Check_Button_Report_Callbacks.To_Marshaller
-                 (On_Show_Intentional_Messages_Toggled'Access),
-               Messages_Report (Self));
-
-            Gtk.Check_Button.Gtk_New (Check, -"bug");
-            Check.Set_Active (Self.Show_Status (Bug));
-            Filter_Box.Pack_Start (Check, False);
-            Check_Button_Report_Callbacks.Connect
-              (Check,
-               Gtk.Toggle_Button.Signal_Toggled,
-               Check_Button_Report_Callbacks.To_Marshaller
-                 (On_Show_Bug_Messages_Toggled'Access),
-               Messages_Report (Self));
-      end case;
+      Gtk.Check_Button.Gtk_New (Check, -"bug");
+      Check.Set_Active (Self.Show_Status (Bug));
+      Filter_Box.Pack_Start (Check, False);
+      Check_Button_Report_Callbacks.Connect
+        (Check,
+         Gtk.Toggle_Button.Signal_Toggled,
+         Check_Button_Report_Callbacks.To_Marshaller
+           (On_Show_Bug_Messages_Toggled'Access),
+         Messages_Report (Self));
 
       Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
 
@@ -1259,22 +1251,14 @@ package body CodePeer.Messages_Reports is
 
    procedure Update_Criteria
      (Self     : access Messages_Report_Record'Class;
-      Criteria : in out CodePeer.Message_Filter_Criteria)
-   is
+      Criteria : in out CodePeer.Message_Filter_Criteria) is
    begin
       Criteria.Categories :=
         Self.Warning_Categories_Editor.Get_Visible_Categories.Union
           (Self.Check_Categories_Editor.Get_Visible_Categories);
       Criteria.Rankings   := Self.Show_Ranking;
       Criteria.Lineages   := Self.Lifeage_Editor.Get_Visible_Lifeages;
-
-      case Self.Version is
-         when 2 =>
-            Criteria.Statuses := (others => True);
-
-         when 3 =>
-            Criteria.Statuses := Self.Show_Status;
-      end case;
+      Criteria.Statuses   := Self.Show_Status;
    end Update_Criteria;
 
 end CodePeer.Messages_Reports;

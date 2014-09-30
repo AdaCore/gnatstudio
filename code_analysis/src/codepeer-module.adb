@@ -50,7 +50,6 @@ with GNATCOLL.Xref;
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
 with CodePeer.Bridge.Status_Readers;
-with CodePeer.Message_Review_Dialogs_V2;
 with CodePeer.Message_Review_Dialogs_V3;
 with CodePeer.Messages_Reports;
 with CodePeer.Module.Bridge;
@@ -1637,7 +1636,7 @@ package body CodePeer.Module is
          --  Load inspection information
 
          Input_Sources.File.Open (+File.Full_Name, Input);
-         Reader.Parse (Input, Message.Audit_V2, Message.Audit_V3);
+         Reader.Parse (Input, Message.Audit_V3);
          Input_Sources.File.Close (Input);
          Message.Audit_Loaded := True;
          Module.Review_Message (Message);
@@ -1658,7 +1657,6 @@ package body CodePeer.Module is
      (Self    : access Module_Id_Record'Class;
       Message : CodePeer.Message_Access)
    is
-      Review_V2 : CodePeer.Message_Review_Dialogs_V2.Message_Review_Dialog;
       Review_V3 : CodePeer.Message_Review_Dialogs_V3.Message_Review_Dialog;
 
    begin
@@ -1669,27 +1667,14 @@ package body CodePeer.Module is
       else
          --  Create and show review dialog
 
-         case Self.Version is
-            when 2 =>
-               CodePeer.Message_Review_Dialogs_V2.Gtk_New (Review_V2, Message);
-               Review_V2.Set_Transient_For (Self.Kernel.Get_Main_Window);
-               Review_V2.Show_All;
-               Context_CB.Connect
-                 (Review_V2,
-                  CodePeer.Message_Review_Dialogs_V2.Signal_Ok_Activated,
-                  Context_CB.To_Marshaller (On_Message_Reviewed'Access),
-                  (CodePeer_Module_Id (Self), null, null, Message));
-
-            when 3 =>
-               CodePeer.Message_Review_Dialogs_V3.Gtk_New (Review_V3, Message);
-               Review_V3.Set_Transient_For (Self.Kernel.Get_Main_Window);
-               Review_V3.Show_All;
-               Context_CB.Connect
-                 (Review_V3,
-                  CodePeer.Message_Review_Dialogs_V3.Signal_Ok_Activated,
-                  Context_CB.To_Marshaller (On_Message_Reviewed'Access),
-                  (CodePeer_Module_Id (Self), null, null, Message));
-         end case;
+         CodePeer.Message_Review_Dialogs_V3.Gtk_New (Review_V3, Message);
+         Review_V3.Set_Transient_For (Self.Kernel.Get_Main_Window);
+         Review_V3.Show_All;
+         Context_CB.Connect
+           (Review_V3,
+            CodePeer.Message_Review_Dialogs_V3.Signal_Ok_Activated,
+            Context_CB.To_Marshaller (On_Message_Reviewed'Access),
+            (CodePeer_Module_Id (Self), null, null, Message));
       end if;
    end Review_Message;
 

@@ -47,7 +47,6 @@ package body CodePeer.Bridge.Inspection_Readers is
    Line_Attribute           : constant String := "line";
    Name_Attribute           : constant String := "name";
    Previous_Attribute       : constant String := "previous";
-   Rank_Attribute           : constant String := "rank";
    Category_Attribute       : constant String := "category";
    Primary_Checks_Attribute : constant String := "primary_checks";
 
@@ -178,10 +177,6 @@ package body CodePeer.Bridge.Inspection_Readers is
       --  Returns set of merged messages as specified in 'merged_messages'
       --  attribute. Returns empty set when attribute is not specified.
 
-      function Computed_Ranking return Message_Ranking_Level;
-      --  Returns value of "computed_probability" attribute if any, otherwise
-      --  returns value of "probability" attribute.
-
       function Checks return Natural;
       --  Returns value of "checks" attribiute if any, otherwise returns zero.
 
@@ -214,23 +209,6 @@ package body CodePeer.Bridge.Inspection_Readers is
             return Natural'Value (Attrs.Get_Value (Index));
          end if;
       end Checks;
-
-      ----------------------
-      -- Computed_Ranking --
-      ----------------------
-
-      function Computed_Ranking return Message_Ranking_Level is
-         Index : constant Integer := Attrs.Get_Index ("computed_probability");
-
-      begin
-         if Index = -1 then
-            return
-              Message_Ranking_Level'Value (Attrs.Get_Value ("probability"));
-
-         else
-            return Message_Ranking_Level'Value (Attrs.Get_Value (Index));
-         end if;
-      end Computed_Ranking;
 
       -----------------------
       -- Get_Optional_File --
@@ -372,11 +350,8 @@ package body CodePeer.Bridge.Inspection_Readers is
          CodePeer.Project_Data'Class
            (Self.Root_Inspection.all).Baseline_Inspection :=
            Natural'Value (Attrs.Get_Value (Previous_Attribute));
-
-         if Attrs.Get_Index (Format_Attribute) /= -1 then
-            Self.Version :=
-              Format_Version'Value (Attrs.Get_Value (Format_Attribute));
-         end if;
+         Self.Version :=
+           Format_Version'Value (Attrs.Get_Value (Format_Attribute));
 
       elsif Qname = Message_Category_Tag then
          Message_Category :=
@@ -463,94 +438,62 @@ package body CodePeer.Bridge.Inspection_Readers is
              (Self.Subprogram_Node.Analysis_Data.CodePeer_Data);
 
       elsif Qname = Message_Tag then
-         case Self.Version is
-            when 2 =>
-               Self.Current_Message :=
-                 new CodePeer.Message'
-                   (Positive'Value (Attrs.Get_Value ("identifier")),
-                    Merged,
-                    Lifeage,
-                    Positive'Value (Attrs.Get_Value ("line")),
-                    Positive'Value (Attrs.Get_Value ("column")),
-                    Self.Message_Categories.Element
-                      (Positive'Value (Attrs.Get_Value ("category"))),
-                    Is_Check,
-                    Computed_Ranking,
-                    CodePeer.Message_Ranking_Level'Value
-                      (Attrs.Get_Value ("probability")),
-                    Unclassified,
-                    True,
-                    new String'(Attrs.Get_Value ("text")),
-                    False,
-                    CodePeer.Audit_V2_Vectors.Empty_Vector,
-                    CodePeer.Audit_V3_Vectors.Empty_Vector,
-                    GNATCOLL.VFS.No_File,
-                    1,
-                    1,
-                    null,
-                    Message_Category_Sets.Empty_Set);
+         Self.Current_Message :=
+           new CodePeer.Message'
+             (Positive'Value (Attrs.Get_Value ("identifier")),
+              Merged,
+              Lifeage,
+              Positive'Value (Attrs.Get_Value ("line")),
+              Positive'Value (Attrs.Get_Value ("column")),
+              Self.Message_Categories.Element
+                (Positive'Value (Attrs.Get_Value (Category_Attribute))),
+              Is_Check,
+              CodePeer.High,
+              Unclassified,
+              True,
+              new String'(Attrs.Get_Value ("text")),
+              False,
+              CodePeer.Audit_V3_Vectors.Empty_Vector,
+              GNATCOLL.VFS.No_File,
+              1,
+              1,
+              null,
+              Message_Category_Sets.Empty_Set);
 
-            when 3 =>
-               Self.Current_Message :=
-                 new CodePeer.Message'
-                   (Positive'Value (Attrs.Get_Value ("identifier")),
-                    Merged,
-                    Lifeage,
-                    Positive'Value (Attrs.Get_Value ("line")),
-                    Positive'Value (Attrs.Get_Value ("column")),
-                    Self.Message_Categories.Element
-                      (Positive'Value (Attrs.Get_Value (Category_Attribute))),
-                    Is_Check,
-                    CodePeer.High,
-                    CodePeer.Message_Ranking_Level'Value
-                      (Attrs.Get_Value (Rank_Attribute)),
-                    Unclassified,
-                    True,
-                    new String'(Attrs.Get_Value ("text")),
-                    False,
-                    CodePeer.Audit_V2_Vectors.Empty_Vector,
-                    CodePeer.Audit_V3_Vectors.Empty_Vector,
-                    GNATCOLL.VFS.No_File,
-                    1,
-                    1,
-                    null,
-                    Message_Category_Sets.Empty_Set);
+         --  Only primary checks need to be displayed.
 
-               --  Only primary checks need to be displayed.
+         if Attrs.Get_Index (Primary_Checks_Attribute) /= -1 then
+            declare
+               Checks : GNAT.Strings.String_List_Access :=
+                 GNATCOLL.Utils.Split
+                   (Attrs.Get_Value (Primary_Checks_Attribute),
+                    ' ',
+                    True);
 
-               if Attrs.Get_Index (Primary_Checks_Attribute) /= -1 then
-                  declare
-                     Checks : GNAT.Strings.String_List_Access :=
-                       GNATCOLL.Utils.Split
-                         (Attrs.Get_Value (Primary_Checks_Attribute),
-                          ' ',
-                          True);
+            begin
+               for Index in Checks'Range loop
+                  Message_Category :=
+                    Self.Message_Categories
+                      (Natural'Value (Checks (Index).all));
+                  Self.Current_Message.Checks.Insert (Message_Category);
+               end loop;
 
-                  begin
-                     for Index in Checks'Range loop
-                        Message_Category :=
-                          Self.Message_Categories
-                            (Natural'Value (Checks (Index).all));
-                        Self.Current_Message.Checks.Insert (Message_Category);
-                     end loop;
+               GNAT.Strings.Free (Checks);
+            end;
+         end if;
 
-                     GNAT.Strings.Free (Checks);
-                  end;
-               end if;
+         if Self.Messages.Contains (Self.Current_Message.Id) then
+            Self.Kernel.Insert
+              (Text   =>
+                 "CodePeer: duplicate message"
+               & Natural'Image (Self.Current_Message.Id),
+               Add_LF => False,
+               Mode   => GPS.Kernel.Error);
 
-               if Self.Messages.Contains (Self.Current_Message.Id) then
-                  Self.Kernel.Insert
-                    (Text   =>
-                       "CodePeer: duplicate message"
-                       & Natural'Image (Self.Current_Message.Id),
-                     Add_LF => False,
-                     Mode   => GPS.Kernel.Error);
-
-               else
-                  Self.Messages.Insert
-                    (Self.Current_Message.Id, Self.Current_Message);
-               end if;
-         end case;
+         else
+            Self.Messages.Insert
+              (Self.Current_Message.Id, Self.Current_Message);
+         end if;
 
          if Attrs.Get_Index ("from_file") /= -1 then
             Self.Current_Message.From_File :=
