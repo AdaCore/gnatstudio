@@ -24,7 +24,8 @@ package GPS.Kernel.Messages.Shell is
    --  Register the shell commands used to handle messages
 
    function Create_Message_Instance
-     (Script  : GNATCOLL.Scripts.Scripting_Language;
+     (Script  :
+        not null access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Message : not null Message_Access)
       return GNATCOLL.Scripts.Class_Instance;
    --  Create new instance of specified message.

@@ -94,7 +94,7 @@ package body GPS.Kernel.Messages.Shell is
    -----------------------------
 
    function Create_Message_Instance
-     (Script  : Scripting_Language;
+     (Script  : not null access Scripting_Language_Record'Class;
       Message : not null Message_Access) return Class_Instance is
    begin
       return Result : constant Class_Instance :=
