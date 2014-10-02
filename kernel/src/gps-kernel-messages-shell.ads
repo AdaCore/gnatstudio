@@ -30,4 +30,9 @@ package GPS.Kernel.Messages.Shell is
       return GNATCOLL.Scripts.Class_Instance;
    --  Create new instance of specified message.
 
+   function Get_Data
+     (Instance : GNATCOLL.Scripts.Class_Instance)
+      return GPS.Kernel.Messages.Message_Access;
+   --  Returns message associated with instance.
+
 end GPS.Kernel.Messages.Shell;

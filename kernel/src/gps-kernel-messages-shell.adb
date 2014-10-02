@@ -104,6 +104,29 @@ package body GPS.Kernel.Messages.Shell is
       end return;
    end Create_Message_Instance;
 
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Instance : GNATCOLL.Scripts.Class_Instance)
+      return GPS.Kernel.Messages.Message_Access
+   is
+      Data : Instance_Property;
+
+   begin
+      if Instance /= No_Class_Instance then
+         Data := Get_Data (Instance, Class);
+      end if;
+
+      if Data = null then
+         return null;
+
+      else
+         return Message_Property_Record (Data.all).Message.Message;
+      end if;
+   end Get_Data;
+
    -------------
    -- Execute --
    -------------
