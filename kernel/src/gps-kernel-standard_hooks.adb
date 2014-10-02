@@ -15,13 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
-with System;             use System;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with System;                    use System;
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with OS_Utils;           use OS_Utils;
-with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Messages.Shell; use GPS.Kernel.Messages.Shell;
+with OS_Utils;                  use OS_Utils;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body GPS.Kernel.Standard_Hooks is
 
@@ -86,6 +87,8 @@ package body GPS.Kernel.Standard_Hooks is
    function From_Callback_Data_Preference
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    function From_Callback_Data_File_Status_Changed
+     (Data : Callback_Data'Class) return Hooks_Data'Class;
+   function From_Callback_Data_Message
      (Data : Callback_Data'Class) return Hooks_Data'Class;
    --  Convert some shell arguments into suitable hooks_data
 
@@ -633,6 +636,17 @@ package body GPS.Kernel.Standard_Hooks is
          Column => Nth_Arg (Data, 4));
    end From_Callback_Data_File_Location;
 
+   --------------------------------
+   -- From_Callback_Data_Message --
+   --------------------------------
+
+   function From_Callback_Data_Message
+     (Data : Callback_Data'Class) return Hooks_Data'Class is
+   begin
+      return Message_Hooks_Args'
+        (Hooks_Data with Message => Get_Data (Nth_Arg (Data, 2)));
+   end From_Callback_Data_Message;
+
    --------------------------------------------
    -- From_Callback_Data_File_Changed_Status --
    --------------------------------------------
@@ -1084,6 +1098,25 @@ package body GPS.Kernel.Standard_Hooks is
       return D;
    end Create_Callback_Data;
 
+   --------------------------
+   -- Create_Callback_Data --
+   --------------------------
+
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Message_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access
+   is
+      D : constant Callback_Data_Access :=
+        new Callback_Data'Class'(Create (Script, 2));
+
+   begin
+      Set_Nth_Arg (D.all, 1, To_String (Hook));
+      Set_Nth_Arg (D.all, 2, Create_Message_Instance (Script, Data.Message));
+      return D;
+   end Create_Callback_Data;
+
    ---------------------
    -- Run_String_Hook --
    ---------------------
@@ -1191,6 +1224,10 @@ package body GPS.Kernel.Standard_Hooks is
          Args_Creator => From_Callback_Data_Preference'Access);
 
       Register_Hook_No_Args (Kernel, Stop_Macro_Action_Hook);
+
+      Register_Hook_Data_Type
+        (Kernel, Message_Hook_Type,
+         Args_Creator => From_Callback_Data_Message'Access);
    end Register_Action_Hooks;
 
    --------------

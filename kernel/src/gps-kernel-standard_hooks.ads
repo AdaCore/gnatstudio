@@ -20,13 +20,14 @@ with System;
 
 with Gtkada.MDI;
 
-with GNATCOLL.Projects;  use GNATCOLL.Projects;
-with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
+with GNATCOLL.Projects;            use GNATCOLL.Projects;
+with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with Basic_Types;
 with Default_Preferences;
-with GPS.Editors;        use GPS.Editors;
+with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
 
 package GPS.Kernel.Standard_Hooks is
 
@@ -514,6 +515,24 @@ package GPS.Kernel.Standard_Hooks is
       File   : GNATCOLL.VFS.Virtual_File;
       Status : File_Status);
    --  Call the file_status_changed hook
+
+   ---------------------------
+   -- Message_Selected_Hook --
+   ---------------------------
+
+   Message_Hook_Type : constant Hook_Type := "message_hook_type";
+
+   type Message_Hooks_Args is new Hooks_Data with record
+      Message : GPS.Kernel.Messages.Message_Access;
+   end record;
+   overriding function Create_Callback_Data
+     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Hook   : Hook_Name;
+      Data   : access Message_Hooks_Args)
+      return GNATCOLL.Scripts.Callback_Data_Access;
+
+   Message_Selected_Hook : constant Hook_Name :=
+                             To_Hook_Name ("message_selected_hook");
 
 private
 
