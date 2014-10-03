@@ -27,8 +27,7 @@ created or edited manually, and you can manually edit project files created
 by GPS.  Most features of project files can be accessed without using GPS.
 
 The detailed syntax and semantics of project files is fully described in
-the GNAT Pro User's Guide (`gnat_ug.html <gnat_ug.html>`_) and GNAT Pro
-Reference Manual (`gnat_rm.html <gnat_rm.html>`_).  Read these sections if
+the GNAT Pro User's Guide and GNAT Pro Reference Manual.  Read these sections if
 you want to use the more advanced capabilities of project files that are not
 supported by GPS's graphical interface.
 
