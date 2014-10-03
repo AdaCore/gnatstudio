@@ -153,6 +153,11 @@ package body GPS.Location_View is
    --  Idle callback used to expand nodes of category and its first or defined
    --  file; select first message and the open first location if requested.
 
+   procedure Run_Message_Selected_Hook
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Message : Message_Access);
+   --  Runs 'message_selected' hook.
+
    -------------
    -- Actions --
    -------------
@@ -959,6 +964,12 @@ package body GPS.Location_View is
                Locations.View.Get_Selection.Select_Iter (Message_Iter);
                Locations.View.Scroll_To_Cell (Path, null, False, 0.1, 0.1);
                Path_Free (Path);
+
+               --  Notify about change of selected message
+
+               Run_Message_Selected_Hook
+                 (Locations.Kernel,
+                  Get_Message (Model, Message_Iter, Message_Column));
             end if;
          end if;
       end if;
@@ -1084,12 +1095,20 @@ package body GPS.Location_View is
          Mark     : constant Editor_Mark'Class :=
            Get_Mark (Gtk.Tree_Model."-" (Self.View.Get_Model),
                      Iter, Node_Mark_Column);
+         Message  : constant Message_Access :=
+           Get_Message (Self.View.Get_Model, Iter, Message_Column);
 --           File     : constant Virtual_File :=
 --             Get_File (Gtk.Tree_Model."-" (Self.View.Get_Model),
 --                       Iter, File_Column);
          Location : constant Editor_Location'Class := Mark.Location (True);
 
       begin
+         --  Notify about change of selected message
+
+         if Message /= null then
+            Run_Message_Selected_Hook (Self.Kernel, Message);
+         end if;
+
          if Mark /= Nil_Editor_Mark then
             Location.Buffer.Current_View.Cursor_Goto (Location, True);
 
@@ -1291,11 +1310,30 @@ package body GPS.Location_View is
          Stock_Id => GPS_Collapse_All,
          Category => -"Locations");
 
+      Register_Hook_No_Return
+        (Kernel, Message_Selected_Hook, Message_Hook_Type);
+
       Get_Messages_Container (Kernel).Register_Listener
         (Listener_Access (Manager),
          (Editor_Side => False,
           GPS.Kernel.Messages.Locations => True));
    end Register_Module;
+
+   -------------------------------
+   -- Run_Message_Selected_Hook --
+   -------------------------------
+
+   procedure Run_Message_Selected_Hook
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Message : Message_Access)
+   is
+      Data : aliased Message_Hooks_Args :=
+        (Hooks_Data with Message => Message);
+
+   begin
+      Run_Hook (Kernel, Message_Selected_Hook, Data'Unchecked_Access);
+      Data.Destroy;
+   end Run_Message_Selected_Hook;
 
    -----------------------
    -- Register_Commands --
