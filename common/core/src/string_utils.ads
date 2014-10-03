@@ -21,8 +21,16 @@
 with GNAT.Strings;
 with Interfaces.C.Strings;
 with Basic_Types; use Basic_Types;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package String_Utils is
+
+   function "+"
+     (S : String) return Unbounded_String renames To_Unbounded_String;
+
+   function "+"
+     (S : Unbounded_String) return String renames To_String;
+   --  Utility conversion operators from String to Unbounded_String
 
    function Hex_Value (Hex : String) return Natural;
    --  Return the value for the hexadecimal number Hex. Raises

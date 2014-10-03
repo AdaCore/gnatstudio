@@ -21,6 +21,7 @@
 with GPS.Kernel;       use GPS.Kernel;
 with Gtk.Widget;
 with Language.Tree.Database; use Language.Tree.Database;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Xref;
 
 package Entities_Tooltips is
@@ -34,7 +35,7 @@ package Entities_Tooltips is
 
    function Draw_Tooltip
      (Kernel      : access Kernel_Handle_Record'Class;
-      Entity      : Entity_Access;
+      Entity      : Semantic_Node'Class;
       Draw_Border : Boolean;
       Guess       : Boolean := False)
       return Gtk.Widget.Gtk_Widget;

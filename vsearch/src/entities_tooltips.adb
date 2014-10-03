@@ -88,22 +88,20 @@ package body Entities_Tooltips is
 
    function Draw_Tooltip
      (Kernel      : access Kernel_Handle_Record'Class;
-      Entity      : Entity_Access;
+      Entity      : Semantic_Node'Class;
       Draw_Border : Boolean;
       Guess       : Boolean := False) return Gtk_Widget
    is
-      pragma Unreferenced (Guess);
-      Construct : constant access Simple_Construct_Information :=
-        Get_Construct (Entity);
+      pragma Unreferenced (Guess, Kernel);
    begin
       return Draw_Tooltip
-        (Guess  => False,
-         Header => Get_Tooltip_Header (Entity),
+        (Guess       => False,
+         Header      => Entity.Documentation_Header,
          Draw_Border => Draw_Border,
-         Doc      => Get_Tooltip_Documentation (Kernel, Entity),
-         Stock_Id => Stock_From_Category
-           (Construct.Is_Declaration, Construct.Visibility,
-            Construct.Category));
+         Doc         => Entity.Documentation_Body,
+         Stock_Id    =>
+           Stock_From_Category (Entity.Is_Declaration,
+             Entity.Visibility, Entity.Category));
    end Draw_Tooltip;
 
    ------------------

@@ -48,7 +48,6 @@ with Commands;
 with Generic_List;
 with HTables;
 with Language_Handlers;
-with Language.Tree.Database;
 with Projects;
 with String_Hash;
 with Default_Preferences;
@@ -67,6 +66,7 @@ with GPS.Messages_Windows;
 with GPS.Process_Launchers;
 with GPS.Process_Launchers.Implementation;
 use GPS.Process_Launchers.Implementation;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package GPS.Kernel is
 
@@ -303,15 +303,6 @@ package GPS.Kernel is
    --  Return whether File or Directory identified by its Base_Name should be
    --  considered as hidden for all GUI purposes, such as the Project/File
    --  explorer or the VCS operations.
-
-   -------------
-   -- Queries --
-   -------------
-
-   function Get_Construct_Database
-     (Kernel : access Kernel_Handle_Record)
-      return Language.Tree.Database.Construct_Database_Access;
-   --  Return the database storing the construct information
 
    --------------
    -- Contexts --
@@ -627,6 +618,10 @@ package GPS.Kernel is
 
    function Refactoring_Context
      (Kernel : access Kernel_Handle_Record) return Refactoring.Factory_Context;
+
+   overriding function Default_Language_Tree_Provider
+     (Kernel : not null access Kernel_Handle_Record)
+      return Semantic_Tree_Provider_Access;
 
    ---------------------
    -- Messages window --
@@ -1277,6 +1272,10 @@ private
 
       Env : Environment;
       --  List of environment variables overwritten by GPS
+
+      Construct_Tree : Semantic_Tree_Provider_Access;
+      --  Handle to the default language tree in GPS kernel, which is a
+      --  construct tree at the moment
    end record;
 
    package Kernel_Sources is new Glib.Main.Generic_Sources (Kernel_Handle);

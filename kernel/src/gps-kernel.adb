@@ -79,6 +79,7 @@ with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
 with Xref;                      use Xref;
+with Language.Abstract_Construct_Tree; use Language.Abstract_Construct_Tree;
 
 package body GPS.Kernel is
 
@@ -332,6 +333,9 @@ package body GPS.Kernel is
 
       Create_Clipboard (Handle);
 
+      Handle.Construct_Tree :=
+        Language.Abstract_Construct_Tree.Create (Handle);
+
       Add_Hook
         (Handle, Preference_Changed_Hook,
          Wrapper (On_Preferences_Changed'Access),
@@ -384,17 +388,6 @@ package body GPS.Kernel is
       end if;
    end On_Preferences_Changed;
 
-   ----------------------------
-   -- Get_Construct_Database --
-   ----------------------------
-
-   function Get_Construct_Database
-     (Kernel : access Kernel_Handle_Record)
-      return Language.Tree.Database.Construct_Database_Access is
-   begin
-      return Kernel.Databases.Constructs;
-   end Get_Construct_Database;
-
    ----------------------
    -- Preferences_File --
    ----------------------
@@ -426,6 +419,17 @@ package body GPS.Kernel is
    begin
       return Handle.Preferences;
    end Get_Preferences;
+
+   ---------------------------
+   -- Default_Language_Tree --
+   ---------------------------
+
+   overriding function Default_Language_Tree_Provider
+     (Kernel : not null access Kernel_Handle_Record)
+      return Semantic_Tree_Provider_Access is
+   begin
+      return Kernel.Construct_Tree;
+   end Default_Language_Tree_Provider;
 
    ------------------------
    -- Get_Buffer_Factory --

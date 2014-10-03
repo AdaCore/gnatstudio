@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 
 with System; use System;
+with String_Utils; use String_Utils;
 
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
@@ -29,30 +29,17 @@ with Basic_Types;                 use Basic_Types;
 with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Search;                  use GPS.Search;
-with Language.Profile_Formaters;  use Language.Profile_Formaters;
 with Language.Icons;              use Language.Icons;
-with Project_Explorers_Common;    use Project_Explorers_Common;
 with XML_Utils; use XML_Utils;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
+with Ada.Containers.Bounded_Hashed_Maps;
+with Ada.Strings.Hash_Case_Insensitive;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Outline_View.Model is
    Me : constant Trace_Handle := Create ("OUTLINE");
 
-   use Construct_Annotations_Pckg;
    use Sorted_Node_Set;
-
-   type Entity_Sort_Annotation is new
-     Construct_Annotations_Pckg.General_Annotation_Record
-   with record
-      Is_Spec : Boolean;
-      Node    : Sorted_Node_Access;
-   end record;
-   --  Is_Spec is needed so that Free knows which entity has been freed, since
-   --  a node can be associated with multiple entities.
-
-   overriding procedure Free (Obj : in out Entity_Sort_Annotation);
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Sorted_Node, Sorted_Node_Access);
 
    --  This array provide a way of sorting / grouping entities when order
    --  is required.
@@ -64,14 +51,17 @@ package body Outline_View.Model is
       Data_Category       => 5,
       others              => 99);
 
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Sorted_Node, Sorted_Node_Access);
+
    function Construct_Filter
-     (Model     : not null access Outline_Model_Record'Class;
-      Construct : access Simple_Construct_Information) return Boolean;
+     (Model : not null access Outline_Model_Record'Class;
+      Node  : Semantic_Node'Class) return Boolean;
    --  Return False if the construct should be filtered out
 
    procedure Add_Recursive
-     (Model   : access Outline_Model_Record'Class;
-      New_Obj : Construct_Tree_Iterator);
+     (Model           : access Outline_Model_Record'Class;
+      Sem_Node, Sem_Parent : Semantic_Node'Class);
    --  Add new nodes for New_Obj and its nested entities
 
    function Get_Sorted_Node
@@ -98,15 +88,11 @@ package body Outline_View.Model is
 
    function Get_Node
      (Model  : access Outline_Model_Record'Class;
-      Entity : Entity_Access) return Sorted_Node_Access;
-   function Get_Node
-     (Model  : access Outline_Model_Record'Class;
-      It     : Construct_Tree_Iterator) return Sorted_Node_Access;
-   --  Return the node for the corresponding entity, or null if there is none.
+      Node   : Semantic_Node'Class) return Sorted_Node_Access;
 
    function Get_Node_Next_Part
-     (Model  : access Outline_Model_Record'Class;
-      Entity : Entity_Access) return Sorted_Node_Access;
+     (Model    : access Outline_Model_Record'Class;
+      Node     : Semantic_Node'Class) return Sorted_Node_Access;
    --  Same as Get_Node, but for the body or full view of the entity.
 
    --------------
@@ -115,33 +101,13 @@ package body Outline_View.Model is
 
    function Get_Node
      (Model  : access Outline_Model_Record'Class;
-      Entity : Entity_Access) return Sorted_Node_Access is
-   begin
-      return Get_Node (Model, To_Construct_Tree_Iterator (Entity));
-   end Get_Node;
-
-   --------------
-   -- Get_Node --
-   --------------
-
-   function Get_Node
-     (Model  : access Outline_Model_Record'Class;
-      It     : Construct_Tree_Iterator) return Sorted_Node_Access
+      Node     : Semantic_Node'Class) return Sorted_Node_Access
    is
-      Tree : constant Construct_Tree := Get_Tree (Model.File);
-      Annot : Annotation (Other_Kind);
+      use Sem_To_Tree_Maps;
+      C : constant Sem_To_Tree_Maps.Cursor := Model.Sem_To_Tree_Nodes.Find
+        (Node.Unique_Id);
    begin
-      if Is_Set
-        (Get_Annotation_Container (Tree, It).all, Model.Annotation_Key)
-      then
-         Get_Annotation
-           (Get_Annotation_Container (Tree, It).all,
-            Model.Annotation_Key,
-            Annot);
-         return Entity_Sort_Annotation (Annot.Other_Val.all).Node;
-      else
-         return null;
-      end if;
+      return (if C = Sem_To_Tree_Maps.No_Element then null else Element (C));
    end Get_Node;
 
    ------------------------
@@ -150,129 +116,109 @@ package body Outline_View.Model is
 
    function Get_Node_Next_Part
      (Model  : access Outline_Model_Record'Class;
-      Entity : Entity_Access) return Sorted_Node_Access
+      Node     : Semantic_Node'Class) return Sorted_Node_Access
    is
-      E : Entity_Access;
+      C : constant Semantic_Node'Class := Node.Counterpart;
    begin
-      if Model.Filter.Group_Spec_And_Body then
-         E := Find_Next_Part (Get_Tree_Language (Get_File (Entity)), Entity);
-         if E /= Null_Entity_Access
-           and then Get_File (E) = Model.File
-         then
-            return Get_Node (Model, E);
-         end if;
-      end if;
-      return null;
+      return (if Model.Filter.Group_Spec_And_Body
+              and then C.Is_Valid
+              and then C.File = Node.File
+              then Get_Node (Model, C)
+              else null);
    end Get_Node_Next_Part;
 
-   ----------
-   -- Free --
-   ----------
+   procedure Clean_Node (Model : Outline_Model;
+                         Node  : in out Sorted_Node_Access);
 
-   overriding procedure Free (Obj : in out Entity_Sort_Annotation) is
-      Model : constant Outline_Model := Obj.Node.Model;
-      Path  : constant Gtk_Tree_Path := Get_Path (Model, Obj.Node);
-      Keep  : constant Boolean :=
-        (Obj.Is_Spec
-         and then Obj.Node.Body_Entity /= Null_Entity_Persistent_Access)
-        or else
-          (not Obj.Is_Spec
-           and then Obj.Node.Spec_Entity /= Null_Entity_Persistent_Access);
-      Cur : Sorted_Node_Access;
+   ----------------
+   -- Clean_Node --
+   ----------------
+
+   procedure Clean_Node
+     (Model : Outline_Model;
+      Node  : in out Sorted_Node_Access)
+   is
+      Path : constant Gtk_Tree_Path := Get_Path (Model, Node);
+      Cur  : Sorted_Node_Access;
    begin
-      if Keep then
-         --  ??? Should we update the sloc ?
+      --  Kill the children if any
+      Clear_Nodes (Model, Node);
 
-         if Path /= Null_Gtk_Tree_Path then
-            Row_Changed (+Model, Path, Get_Iter (+Model, Path));
-         end if;
+      --  Remove the semantic to tree node mapping from the model
+      if Node.Spec_Info /= No_Node_Info then
+         Model.Sem_To_Tree_Nodes.Exclude (+Node.Spec_Info.Unique_Id);
+      end if;
+      if Node.Body_Info /= No_Node_Info then
+         Model.Sem_To_Tree_Nodes.Exclude (+Node.Body_Info.Unique_Id);
+      end if;
 
-      else
-         --  Kill the children if any
-         Clear_Nodes (Model, Obj.Node);
+      --  Then update next siblings
+      if Node.Prev /= null then
+         Node.Prev.Next := Node.Next;
+      end if;
 
-         --  Then update next siblings
+      if Node.Next /= null then
+         Node.Next.Prev := Node.Prev;
 
-         if Obj.Node.Prev /= null then
-            Obj.Node.Prev.Next := Obj.Node.Next;
-         end if;
+         Cur := Node.Next;
+         while Cur /= null loop
+            Cur.Index_In_Siblings := Cur.Index_In_Siblings - 1;
+            Cur := Cur.Next;
+         end loop;
+      end if;
 
-         if Obj.Node.Next /= null then
-            Obj.Node.Next.Prev := Obj.Node.Prev;
+      --  Finally, free this node
+      if Node.Parent /= null then
+         Node.Parent.Children.Delete (Node);
+      end if;
 
-            Cur := Obj.Node.Next;
-            while Cur /= null loop
-               Cur.Index_In_Siblings := Cur.Index_In_Siblings - 1;
-               Cur := Cur.Next;
-            end loop;
-         end if;
-
-         --  Finally, free this node
-
-         if Obj.Node.Parent /= null then
-            Obj.Node.Parent.Children.Delete (Obj.Node);
-         end if;
-
-         --  Now unlink & destroy this node
-
-         if Path /= Null_Gtk_Tree_Path then
-            Row_Deleted (+Model, Path);
-         end if;
+      --  Now unlink & destroy this node
+      if Path /= Null_Gtk_Tree_Path then
+         Row_Deleted (+Model, Path);
       end if;
 
       Path_Free (Path);
-
-      if Obj.Is_Spec then
-         Unref (Obj.Node.Spec_Entity);
-         Obj.Node.Spec_Entity := Null_Entity_Persistent_Access;
-      else
-         Unref (Obj.Node.Body_Entity);
-         Obj.Node.Body_Entity := Null_Entity_Persistent_Access;
-      end if;
-
-      if not Keep then
-         Free (Obj.Node);
-      end if;
-   end Free;
+      Free (Node);
+   end Clean_Node;
 
    ----------------------
    -- Construct_Filter --
    ----------------------
 
    function Construct_Filter
-     (Model     : not null access Outline_Model_Record'Class;
-      Construct : access Simple_Construct_Information) return Boolean is
+     (Model : not null access Outline_Model_Record'Class;
+      Node  : Semantic_Node'Class) return Boolean is
    begin
       --  No "with", "use", "#include"
       --  No constructs ("loop", "if", ...)
 
-      case Construct.Category is
+      case Node.Category is
          when Cat_Package .. Cat_Entry
             | Cat_Field | Cat_Variable
             | Type_Category =>
 
             if Model.Filter.Hide_Types
-              and then Construct.Category in Type_Category
+              and then Node.Category in Type_Category
             then
                return False;
             end if;
 
             if Model.Filter.Hide_Objects
-              and then Construct.Category in Data_Category
+              and then Node.Category in Data_Category
             then
                return False;
             end if;
 
             if Model.Filter.Hide_Tasks
-              and then (Construct.Category = Cat_Task
-                          or Construct.Category = Cat_Protected)
+              and then (Node.Category = Cat_Task
+                          or Node.Category = Cat_Protected)
             then
                return False;
             end if;
 
-            if Construct.Category in Subprogram_Category
+            if Node.Category in Subprogram_Category
               and then Model.Filter.Hide_Declarations
-              and then Construct.Is_Declaration
+              and then Node.Is_Declaration
             then
                return False;
             end if;
@@ -286,13 +232,13 @@ package body Outline_View.Model is
             return False;
       end case;
 
-      if Construct.Name = No_Symbol then
+      if Node.Name = No_Symbol then
          return False;
       end if;
 
       if Model.Filter_Pattern /= null then
          return Model.Filter_Pattern.Start
-           (Get (Construct.Name).all) /= No_Match;
+           (Get (Node.Name).all) /= No_Match;
       end if;
 
       return True;
@@ -338,35 +284,42 @@ package body Outline_View.Model is
 
       Comparison : Integer;
 
+      Left_Info  : Semantic_Node_Info renames Get_Info (Left.all);
+      Right_Info : Semantic_Node_Info renames Get_Info (Right.all);
    begin
       if Left = Right then
          return False;
-
       elsif Left.Model.Filter.Sorted then
          --  Alphabetical sort
-         if Sort_Entities (Left.Category) < Sort_Entities (Right.Category) then
-            return True;
-
-         elsif Sort_Entities (Left.Category)
-           = Sort_Entities (Right.Category)
+         if Sort_Entities (Left_Info.Category)
+           < Sort_Entities (Right_Info.Category)
          then
-            Comparison := Compare (Get (Left.Name).all, Get (Right.Name).all);
+            return True;
+         elsif Sort_Entities (Left_Info.Category)
+           = Sort_Entities (Right_Info.Category)
+         then
+            Comparison := Compare (Get (Left_Info.Name).all,
+                                   Get (Right_Info.Name).all);
             if Comparison = -1 then
                return True;
             elsif Comparison = 0 then
-               --  We need to have a clear and definite way to differenciate
-               --  constructs, otherwise we'll have errors when adding them
-               --  to the set. If we can't do that alphabetically, then
-               --  we fall back to the sloc comparison.
-               return Left.Sloc < Right.Sloc;
+               Comparison := Compare (+Left_Info.Unique_Id,
+                                      +Right_Info.Unique_Id);
+               if Comparison = -1 then
+                  return True;
+               elsif Comparison = 0 then
+                  --  We need to have a clear and definite way to differenciate
+                  --  constructs, otherwise we'll have errors when adding them
+                  --  to the set. If we can't do that alphabetically, then we
+                  --  fall back to the sloc comparison.
+                  return Left_Info.Sloc_Start < Right_Info.Sloc_Start;
+               end if;
             end if;
          end if;
-
          return False;
-
       else
          --  Positional sort
-         return Left.Sloc < Right.Sloc;
+         return Left_Info.Sloc_Start < Right_Info.Sloc_Start;
       end if;
    end "<";
 
@@ -375,191 +328,179 @@ package body Outline_View.Model is
    -------------------
 
    procedure Add_Recursive
-     (Model   : access Outline_Model_Record'Class;
-      New_Obj : Construct_Tree_Iterator)
+     (Model      : access Outline_Model_Record'Class;
+      Sem_Node,
+      Sem_Parent : Semantic_Node'Class)
    is
-      Parent : Construct_Tree_Iterator;
       Parent_Node : Sorted_Node_Access;
       Root   : Sorted_Node_Access;  --  node for New_Obj
-      It     : Construct_Tree_Iterator;
       Dummy  : Sorted_Node_Access;
       Path   : Gtk_Tree_Path;
-      E      : Entity_Access;
       Position : Sorted_Node_Set.Cursor;
       Inserted : Boolean;
-      Construct : constant access Simple_Construct_Information :=
-        Get_Construct (New_Obj);
-      Annot    : Annotation (Other_Kind);
-      Is_Spec  : Boolean := True;
-
+      use Sem_Tree_Holders;
+      Sem_Unique_Id : constant String := Sem_Node.Unique_Id;
    begin
-      if Model = null or else Model.File = null then
+      pragma Assert (Sem_Unique_Id /= "", "Cannot add a tree node with no Id");
+
+      if Model = null
+        or else Model.Semantic_Tree = Sem_Tree_Holders.Empty_Holder
+      then
          return;
       end if;
 
-      Root := Get_Node (Model, New_Obj);
+      Root := Get_Node (Model, Sem_Node);
 
-      if Root = null then
-         --  Issue: if we have children that would match, we still need to
-         --  insert them. Depending on Group_Spec_And_Body, this might mean
-         --  adding the current node as well.
-         if Construct_Filter (Model, Construct) then
-            --  Compute parent node
+      --  Issue: if we have children that would match, we still need to
+      --  insert them. Depending on Group_Spec_And_Body, this might mean
+      --  adding the current node as well.
 
-            if Model.Filter.Flat_View then
+      if Root = null
+        and then Construct_Filter (Model, Sem_Node)
+      then
+
+         if Model.Filter.Flat_View then
+            Parent_Node := Model.Phantom_Root'Access;
+         elsif Sem_Node.Category = Cat_With then
+            --  Place any with-clause into top with-root node
+            Parent_Node := Model.Root_With;
+         else
+            if Sem_Parent = No_Semantic_Node then
                Parent_Node := Model.Phantom_Root'Access;
-            elsif Construct.Category = Cat_With then
-               --  Place any with-clause into top with-root node
-               Parent_Node := Model.Root_With;
-            else
-               Parent := Get_Parent_Scope (Get_Tree (Model.File), New_Obj);
-               if Parent = Null_Construct_Tree_Iterator then
-                  Parent_Node := Model.Phantom_Root'Access;
-               elsif Get_Node (Model, New_Obj) = null then
-                  Parent_Node := Get_Node (Model, Parent);
-                  if Model.Filter.Group_Spec_And_Body
-                    and then Parent_Node = null
-                  then
-                     Parent_Node := Get_Node_Next_Part
-                       (Model, To_Entity_Access (Model.File, Parent));
-                  end if;
-               end if;
-
-               if Parent_Node = null then
-                  --  Parent node might have been filtered
-                  Parent_Node := Model.Phantom_Root'Access;
+            elsif Get_Node (Model, Sem_Node) = null then
+               Parent_Node := Get_Node (Model, Sem_Parent);
+               if Model.Filter.Group_Spec_And_Body
+                 and then Parent_Node = null
+               then
+                  Parent_Node := Get_Node_Next_Part (Model, Sem_Parent);
                end if;
             end if;
 
-            --  Add the node for the new object
+            if Parent_Node = null then
+               --  Parent node might have been filtered
+               Parent_Node := Model.Phantom_Root'Access;
+            end if;
+         end if;
 
-            E := To_Entity_Access (Model.File, New_Obj);
-            if Model.Filter.Group_Spec_And_Body then
-               Root := Get_Node_Next_Part (Model, E);
+         --  Add the node for the new object
+
+         if Model.Filter.Group_Spec_And_Body then
+            --  In that case we want only one node for the spec entity and for
+            --  the body entity, so we get the next part for New_Node
+            Root := Get_Node_Next_Part (Model, Sem_Node);
+
+            --  If it does exist, it means that we already have a node for this
+            --  entity's counterpart in the tree, so use it.
+            if Root /= null then
+               if Sem_Node.Is_Declaration then
+                  if Root.Spec_Info = No_Node_Info then
+                     Root.Spec_Info := Sem_Node.Info;
+                  else
+                     Root := null;  --  should not happen, create new node
+                  end if;
+               else
+                  if Root.Body_Info = No_Node_Info then
+                     Root.Body_Info := Sem_Node.Info;
+                  else
+                     Root := null;  --  should not happen, create new node
+                  end if;
+               end if;
 
                if Root /= null then
-                  if Construct.Is_Declaration then
-                     if Root.Spec_Entity /= Null_Entity_Persistent_Access then
-                        Root := null;  --  should not happen, create new node
-                     else
-                        Root.Spec_Entity := To_Entity_Persistent_Access (E);
-                        Is_Spec := True;
-                     end if;
-                  else
-                     if Root.Body_Entity /= Null_Entity_Persistent_Access then
-                        Root := null;  --  should not happen, create new node
-                     else
-                        Root.Body_Entity := To_Entity_Persistent_Access (E);
-                        Is_Spec := False;
-                     end if;
-                  end if;
-
-                  if Root /= null then
-                     --  ??? Should we also update the SLOC ?
-
-                     Path := Get_Path (Model, Root);
-                     Row_Changed (+Model, Path, New_Iter (Root));
-                     Path_Free (Path);
-                  end if;
-               end if;
-            end if;
-
-            if Root = null then
-               Root := new Sorted_Node;
-
-               if not Model.Filter.Group_Spec_And_Body
-                 or else Construct.Is_Declaration
-               then
-                  Root.Spec_Entity := To_Entity_Persistent_Access (E);
-                  Is_Spec := True;
-               else
-                  Root.Body_Entity := To_Entity_Persistent_Access (E);
-                  Is_Spec := False;
-               end if;
-
-               Root.Category := Construct.Category;
-               Root.Name     := Construct.Name;
-               Root.Sloc     := Construct.Sloc_Start;
-               Root.Parent   := Parent_Node;
-               Root.Model    := Outline_Model (Model);
-
-               --  ??? Ordered_Index is only used to do the sorting of the
-               --  tree, perhaps we could be more efficient.
-               Insert
-                 (Container => Root.Parent.Children,
-                  New_Item  => Root,
-                  Position  => Position,
-                  Inserted  => Inserted);
-
-               if Inserted then
-                  if Previous (Position) = Sorted_Node_Set.No_Element then
-                     Root.Index_In_Siblings := 0;
-                  else
-                     Dummy := Element (Previous (Position));
-                     Dummy.Next := Root;
-                     Root.Prev := Dummy;
-                     Root.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
-                  end if;
-
-                  if Has_Element (Next (Position)) then
-                     Dummy := Element (Next (Position));
-                     Root.Next := Dummy;
-                     Dummy.Prev := Root;
-
-                     --  Adjust the indexes for the node and its siblings, to
-                     --  preserve sorting
-                     while Dummy /= null loop
-                        Dummy.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
-                        Dummy := Dummy.Next;
-                     end loop;
-                  end if;
-
-                  --  Notify the model of the change
+                  --  ??? Should we also update the SLOC ?
 
                   Path := Get_Path (Model, Root);
-                  Row_Inserted (+Model, Path, New_Iter (Root));
+                  Row_Changed (+Model, Path, New_Iter (Root));
                   Path_Free (Path);
                end if;
             end if;
-
-            --  Always set the annotation on the entity, even when reusing the
-            --  node.
-
-            Annot.Other_Val := new Entity_Sort_Annotation'
-              (Construct_Annotations_Pckg.General_Annotation_Record
-               with Node => Root, Is_Spec => Is_Spec);
-            Construct_Annotations_Pckg.Set_Annotation
-              (Get_Annotation_Container (Get_Tree (Model.File), New_Obj).all,
-               Model.Annotation_Key,
-               Annot);
          end if;
+
+         if Root = null then
+            Root := new Sorted_Node;
+
+            if not Model.Filter.Group_Spec_And_Body
+              or else Sem_Node.Is_Declaration
+            then
+               Root.Spec_Info := Sem_Node.Info;
+            else
+               Root.Body_Info := Sem_Node.Info;
+            end if;
+
+            Root.Parent   := Parent_Node;
+            Root.Model    := Outline_Model (Model);
+
+            --  ??? Ordered_Index is only used to do the sorting of the
+            --  tree, perhaps we could be more efficient.
+            Insert
+              (Container => Root.Parent.Children,
+               New_Item  => Root,
+               Position  => Position,
+               Inserted  => Inserted);
+
+            if Inserted then
+               if Previous (Position) = Sorted_Node_Set.No_Element then
+                  Root.Index_In_Siblings := 0;
+               else
+                  Dummy := Element (Previous (Position));
+                  Dummy.Next := Root;
+                  Root.Prev := Dummy;
+                  Root.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
+               end if;
+
+               if Has_Element (Next (Position)) then
+                  Dummy := Element (Next (Position));
+                  Root.Next := Dummy;
+                  Dummy.Prev := Root;
+
+                  --  Adjust the indexes for the node and its siblings, to
+                  --  preserve sorting
+                  while Dummy /= null loop
+                     Dummy.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
+                     Dummy := Dummy.Next;
+                  end loop;
+               end if;
+
+               --  Notify the model of the change
+
+               Path := Get_Path (Model, Root);
+               Row_Inserted (+Model, Path, New_Iter (Root));
+               Path_Free (Path);
+            end if;
+         end if;
+
+         Model.Sem_To_Tree_Nodes.Include (Sem_Unique_Id, Root);
       end if;
 
-      --  Then add all its children recursively
+      if Model.Filter.Flat_View
+        or else Construct_Filter (Model, Sem_Node)
+        or else Model.Filter_Pattern /= null
+        --  If there is a text filter on the model, we want to recurse on
+        --  children no matter if the current node is shown or not
+      then
+         --  Then add all its children recursively
+         declare
+            A : constant Semantic_Node_Array'Class := Sem_Node.Children;
+         begin
+            for J in 1 .. A.Length loop
+               Add_Recursive (Model, A.Get (J), Sem_Node);
+            end loop;
+         end;
+      end if;
 
-      It := Next (Get_Tree (Model.File), New_Obj, Jump_Into);
-      while It /= Null_Construct_Tree_Iterator
-        and then Is_Parent_Scope (New_Obj, It)
-      loop
-         Add_Recursive (Model, It);
-         It := Next (Get_Tree (Model.File), It, Jump_Over);
-      end loop;
    end Add_Recursive;
 
    --------------
    -- Set_File --
    --------------
 
-   procedure Set_File
-     (Model  : not null access Outline_Model_Record'Class;
-      File   : Structured_File_Access;
-      Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Filter : Tree_Filter)
+   procedure Set_Tree
+     (Model    : not null access Outline_Model_Record'Class;
+      Sem_Tree : Semantic_Tree'Class;
+      Filter   : Tree_Filter)
    is
       procedure Add_Root_With;
       --  Create Root_With node and append it to model
-
-      It : Construct_Tree_Iterator;
 
       -------------------
       -- Add_Root_With --
@@ -575,8 +516,8 @@ package body Outline_View.Model is
          Model.Root_With := new Sorted_Node;
          Model.Root_With.Parent := Model.Phantom_Root'Access;
          Model.Root_With.Model := Outline_Model (Model);
-         Model.Root_With.Category := Cat_With;
          Model.Root_With.Index_In_Siblings := 0;
+         Model.Root_With.Body_Info.Category := Cat_With;
 
          Insert
            (Container => Model.Phantom_Root.Children,
@@ -592,33 +533,31 @@ package body Outline_View.Model is
       --  be changing the ordering and therefore all operations on .Children
       --  would not find the nodes and clearing the tree would not work well.
       Model.Clear_Nodes (Model.Phantom_Root'Access);
-
       Model.Filter := Filter;
-      Model.Annotation_Key := Key;
-
       Add_Root_With;
 
-      --  Order is important here, in case File=Model.File. This whole blocks
-      --  also needs to be called after we clear the tree.
-      Ref (File);
-      Unref (Model.File);
-      Model.File := File;
+      Model.Semantic_Tree := Sem_Tree_Holders.To_Holder (Sem_Tree);
+      if Sem_Tree = No_Semantic_Tree then
+         return;
+      end if;
 
-      It := First (Get_Tree (Model.File));
-      while It /= Null_Construct_Tree_Iterator loop
-         Add_Recursive (Model, It);
-         It := Next (Get_Tree (Model.File), It, Jump_Over);
-      end loop;
-   end Set_File;
+      declare
+         A : constant Semantic_Node_Array'Class := Sem_Tree.Root_Nodes;
+      begin
+         for J in 1 .. A.Length loop
+            Add_Recursive (Model, A.Get (J), No_Semantic_Node);
+         end loop;
+      end;
+   end Set_Tree;
 
    --------------
    -- Get_File --
    --------------
 
-   function Get_File (Model : Outline_Model) return Structured_File_Access is
+   function Get_Tree (Model : Outline_Model) return Semantic_Tree'Class is
    begin
-      return Model.File;
-   end Get_File;
+      return Model.Semantic_Tree.Element;
+   end Get_Tree;
 
    -------------------
    -- Get_N_Columns --
@@ -706,6 +645,16 @@ package body Outline_View.Model is
       return Get_Path (Self, Get_Sorted_Node (Iter));
    end Get_Path;
 
+   -------------------
+   -- Icon_For_Node --
+   -------------------
+
+   function Icon_For_Node (SN : Semantic_Node_Info) return String
+   is (Stock_From_Category
+       (Is_Declaration => SN.Is_Decl,
+        Visibility     => SN.Visibility,
+        Category       => SN.Category));
+
    ---------------
    -- Get_Value --
    ---------------
@@ -716,18 +665,16 @@ package body Outline_View.Model is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      Entity   : constant Entity_Access := Get_Entity (Self, Iter, Column);
-      It       : Construct_Tree_Iterator;
-      Formater : aliased Text_Profile_Formater;
+      Info   : constant Semantic_Node_Info := Get_Info (Self, Iter, Column);
    begin
+
       if Column = Spec_Pixbuf_Column
          or else Column = Body_Pixbuf_Column
       then
          Init (Value, GType_String);
 
-         if Entity /= Null_Entity_Access then
-            It := To_Construct_Tree_Iterator (Entity);
-            Set_String (Value, Entity_Icon_Of (Get_Construct (It).all));
+         if Info /= No_Node_Info then
+            Set_String (Value, Icon_For_Node (Info));
          elsif Iter /= Null_Iter
            and then Get_Sorted_Node (Iter) = Self.Root_With
          then
@@ -739,32 +686,26 @@ package body Outline_View.Model is
          end if;
 
       elsif Column = Display_Name_Column then
-         It := To_Construct_Tree_Iterator (Entity);
          Init (Value, GType_String);
 
-         if Get_Construct (It).Name /= No_Symbol then
+         if Info.Name /= No_Symbol then
             if Self.Filter.Show_Profile
-              and then Get_Construct (It).Category in Subprogram_Category
+              and then Info.Category in Subprogram_Category
             then
-               Get_Profile
-                 (Lang         => Get_Tree_Language (Self.File),
-                  Entity       => Entity,
-                  Formater     => Formater'Access);
-
                declare
-                  Profile : constant String := Formater.Get_Text;
+                  Profile : constant String := +Info.Profile;
                begin
                   Set_String
-                    (Value, Escape_Text (Get (Get_Construct (It).Name).all)
+                    (Value, Escape_Text (Get (Info.Name).all)
                      & " <span foreground=""#A0A0A0"">"
-                     & Protect
+                     & XML_Utils.Protect
                        (Profile (Profile'First ..
                             Integer'Min (Profile'Last, Profile'First + 500)))
                      & "</span>");
                end;
             else
                Set_String
-                 (Value, Escape_Text (Get (Get_Construct (It).Name).all));
+                 (Value, Escape_Text (Get (Info.Name).all));
             end if;
 
          elsif Get_Sorted_Node (Iter) = Self.Root_With then
@@ -940,44 +881,39 @@ package body Outline_View.Model is
       Free (Model.Filter_Pattern);
       Model.Filter_Pattern := Pattern;
    end Set_Filter;
+   --------------
+   -- Get_Info --
+   --------------
 
-   ----------------
-   -- Get_Entity --
-   ----------------
-
-   function Get_Entity
+   function Get_Info
      (Self   : not null access Outline_Model_Record'Class;
       Iter   : Gtk_Tree_Iter;
-      Column : Gint := Display_Name_Column) return Entity_Access
+      Column : Gint := Display_Name_Column) return Semantic_Node_Info
    is
       pragma Unreferenced (Self);
       Node   : Sorted_Node_Access;
-      E      : Entity_Persistent_Access;
+      Info      : Semantic_Node_Info;
    begin
       if Iter = Null_Iter then
-         return Null_Entity_Access;
+         return No_Node_Info;
       end if;
 
       Node := Get_Sorted_Node (Iter);
 
       if Column = Body_Pixbuf_Column then
-         E := Node.Body_Entity;
+         Info := Node.Body_Info;
       elsif Column = Spec_Pixbuf_Column then
-         E := Node.Spec_Entity;
+         Info := Node.Spec_Info;
       else
-         if Node.Spec_Entity /= Null_Entity_Persistent_Access then
-            E := Node.Spec_Entity;
+         if Node.Spec_Info /= No_Node_Info then
+            Info := Node.Spec_Info;
          else
-            E := Node.Body_Entity;
+            Info := Node.Body_Info;
          end if;
       end if;
 
-      if E = Null_Entity_Persistent_Access or else not Exists (E) then
-         return Null_Entity_Access;
-      end if;
-
-      return To_Entity_Access (E);
-   end Get_Entity;
+      return Info;
+   end Get_Info;
 
    ---------------------
    -- Get_Sorted_Node --
@@ -1022,70 +958,13 @@ package body Outline_View.Model is
    procedure Clear_Nodes
      (Model : access Outline_Model_Record'Class; Root : Sorted_Node_Access)
    is
-
-      procedure Delete_Root_With (Root : Sorted_Node_Access);
-      --  Destroy Model.Root_With phantom node
-
-      ----------------------
-      -- Delete_Root_With --
-      ----------------------
-
-      procedure Delete_Root_With (Root : Sorted_Node_Access) is
-         Path : constant Gtk_Tree_Path := Get_Path (Model, Root);
-      begin
-         --  Kill the children if any
-         Clear_Nodes (Model, Root);
-
-         --  Finally, free this node
-         Root.Parent.Children.Delete (Root);
-
-         --  Now unlink & destroy this node
-
-         if Path /= Null_Gtk_Tree_Path then
-            Row_Deleted (+Model, Path);
-         end if;
-
-         Free (Model.Root_With);
-         Path_Free (Path);
-      end Delete_Root_With;
-
       It        : Sorted_Node_Access;
-      BE        : Entity_Persistent_Access;
-      Construct : Construct_Tree_Iterator;
-      Tree      : constant Construct_Tree := Get_Tree (Model.File);
    begin
       while not Root.Children.Is_Empty loop
          --  Start from the last element, so that the loop in Free which
          --  reindexes the elements has no effect
-
          It := Root.Children.Last_Element;
-
-         --  We delete the annotations, which will also free the node when
-         --  both entities have been deleted. In case there is only a spec
-         --  entity, the node will be freed before we do the test for the body,
-         --  so we need to capture the body first.
-
-         BE := It.Body_Entity;
-
-         if It.Spec_Entity /= Null_Entity_Persistent_Access then
-            Construct := To_Construct_Tree_Iterator
-              (To_Entity_Access (It.Spec_Entity));
-            Construct_Annotations_Pckg.Free_Annotation
-              (Get_Annotation_Container (Tree, Construct).all,
-               Model.Annotation_Key);
-         end if;
-
-         if BE /= Null_Entity_Persistent_Access then
-            Construct := To_Construct_Tree_Iterator (To_Entity_Access (BE));
-            Construct_Annotations_Pckg.Free_Annotation
-              (Get_Annotation_Container (Tree, Construct).all,
-               Model.Annotation_Key);
-         end if;
-
-         if Model.Root_With = It then
-            --  Delete phantom root of with clauses, because it hasn't annot.
-            Delete_Root_With (Model.Root_With);
-         end if;
+         Clean_Node (Outline_Model (Model), It);
       end loop;
    end Clear_Nodes;
 
@@ -1096,9 +975,6 @@ package body Outline_View.Model is
    procedure Free (Model : access Outline_Model_Record) is
    begin
       Clear_Nodes (Model, Model.Phantom_Root'Access);
-      Unref (Model.File);
-      Model.File := null;
-
       Free (Model.Filter_Pattern);
    end Free;
 
@@ -1107,92 +983,89 @@ package body Outline_View.Model is
    ------------------
 
    procedure File_Updated
-     (Model    : access Outline_Model_Record;
-      File     : Structured_File_Access;
-      Old_Tree : Construct_Tree;
-      Kind     : Update_Kind)
+     (Model    : access Outline_Model_Record)
    is
-      procedure Diff_Callback
-        (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind);
-      --  Analyses differences between the two objects and perform object
-      --  addition & deletion from the model.
 
-      procedure Update_Node (Node : Sorted_Node_Access);
-      --  Update buffered data of the node & children recursively if it exists
+      procedure Update_Nodes
+        (Model_Nodes : Sorted_Node_Set.Set;
+         Sem_Nodes : Semantic_Node_Array'Class;
+         Sem_Parent : Semantic_Node'Class);
 
-      -------------------
-      -- Diff_Callback --
-      -------------------
-
-      procedure Diff_Callback
-        (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind)
+      procedure Update_Nodes
+        (Model_Nodes : Sorted_Node_Set.Set;
+         Sem_Nodes : Semantic_Node_Array'Class;
+         Sem_Parent : Semantic_Node'Class)
       is
-         pragma Unreferenced (Old_Obj);
-      begin
-         case Kind is
-            when Removed =>
-               --  Nothing to be done here - nodes have already been removed
-               --  when the annotation has been freed.
-               null;
-
-            when Added =>
-               Add_Recursive (Model, New_Obj);
-
-            when Preserved =>
-               null;
-         end case;
-      end Diff_Callback;
-
-      -----------------
-      -- Update_Node --
-      -----------------
-
-      procedure Update_Node (Node : Sorted_Node_Access) is
+         New_Nodes : array (1 .. Sem_Nodes.Length) of Boolean
+           := (others => True);
          C   : Sorted_Node_Set.Cursor;
+         To_Remove_Nodes : Sorted_Node_Vector.Vector;
+
+         function Hash (H : Hash_Type) return Hash_Type is (H);
+
+         package Ids_Hash_Map is new Ada.Containers.Bounded_Hashed_Maps
+           (Hash_Type, Natural, Hash, "=", "=");
+         Childs_Map : Ids_Hash_Map.Map (Count_Type (Sem_Nodes.Length), 100);
+
+         function Find_Child_With_Id (Id : String) return Natural;
+
+         function Find_Child_With_Id (Id : String) return Natural is
+            use Ids_Hash_Map;
+            El : constant Ids_Hash_Map.Cursor :=
+              Childs_Map.Find (Ada.Strings.Hash_Case_Insensitive (Id));
+         begin
+            if El /= Ids_Hash_Map.No_Element then
+               return Element (El);
+            else
+               return 0;
+            end if;
+         end Find_Child_With_Id;
+         use type Hash_Type;
       begin
-         if Exists (Node.Spec_Entity) then
-            Node.Sloc := Get_Construct (Node.Spec_Entity).Sloc_Start;
-         elsif Exists (Node.Body_Entity) then
-            Node.Sloc := Get_Construct (Node.Body_Entity).Sloc_Start;
-         end if;
+         for I in 1 .. Sem_Nodes.Length loop
+            Childs_Map.Include
+              (Ada.Strings.Hash_Case_Insensitive
+                 (Sem_Nodes.Get (I).Unique_Id), I);
+         end loop;
 
-         if Node = Model.Phantom_Root'Access
-           or else Node = Model.Root_With
-           or else Exists (Node.Spec_Entity)
-           or else Exists (Node.Body_Entity)
-         then
-            C := Node.Children.First;
-            while Has_Element (C) loop
-               Update_Node (Element (C));
-               Next (C);
-            end loop;
-         end if;
-      end Update_Node;
+         C := Model_Nodes.First;
 
+         while Has_Element (C) loop
+            declare
+               Sem_Child_Idx : constant Natural :=
+                 Find_Child_With_Id (+Get_Info (Element (C).all).Unique_Id);
+               Sem_Child : constant Semantic_Node'Class :=
+                 (if Sem_Child_Idx /= 0
+                  then Sem_Nodes.Get (Positive (Sem_Child_Idx))
+                  else No_Semantic_Node);
+            begin
+               if Sem_Child /= No_Semantic_Node then
+                  New_Nodes (Sem_Child_Idx) := False;
+                  Update_Nodes
+                    (Element (C).Children, Sem_Child.Children, Sem_Child);
+               elsif Element (C) /= Model.Root_With then
+                  To_Remove_Nodes.Append (Element (C));
+               end if;
+            end;
+            Next (C);
+         end loop;
+
+         for I in 1 .. To_Remove_Nodes.Length loop
+            Clean_Node (Outline_Model (Model), To_Remove_Nodes (Positive (I)));
+         end loop;
+
+         for I in 1 .. Sem_Nodes.Length loop
+            if New_Nodes (I)
+              and then Construct_Filter (Model, Sem_Nodes.Get (I))
+            then
+               Add_Recursive (Model, Sem_Nodes.Get (I), Sem_Parent);
+            end if;
+         end loop;
+
+      end Update_Nodes;
    begin
-      if File /= Model.File
-        or else Old_Tree = Null_Construct_Tree
-        or else Kind = Minor_Change
-      then
-         return;
-      end if;
-
-      --  We could simply Reset(Model), although we would need to modify the
-      --  view to avoid flickering.
-
-      --  First, update all the source locations for all the nodes of the
-      --  model. This is needed in order to have proper ordering while
-      --  adding and removing nodes
-
-      Update_Node (Model.Phantom_Root'Access);
-
-      --  Then, run a diff in order to add / remove nodes
-
-      Diff
-        (Lang     => Get_Tree_Language (File),
-         Old_Tree => Old_Tree,
-         New_Tree => Get_Tree (File),
-         Callback => Diff_Callback'Unrestricted_Access);
+      Update_Nodes (Model.Phantom_Root.Children,
+                 Model.Semantic_Tree.Element.Root_Nodes, No_Semantic_Node);
    end File_Updated;
 
    ---------------------------------
@@ -1203,55 +1076,55 @@ package body Outline_View.Model is
      (Model        : access Outline_Model_Record;
       Line, Column : Integer) return Gtk_Tree_Path
    is
-      Tree : constant Construct_Tree := Get_Tree (Model.File);
-      Node : Sorted_Node_Access := null;
-      It   : Construct_Tree_Iterator;
-      Path : Gtk_Tree_Path;
-      E    : Entity_Access;
-
+      Node     : Sorted_Node_Access := null;
+      Path     : Gtk_Tree_Path;
+      use type Sem_Tree_Holders.Holder;
    begin
-      if Model.File = null then
+      if Model.Semantic_Tree = Sem_Tree_Holders.Empty_Holder then
          Gtk_New (Path);
          return Path;
       end if;
 
-      It := Get_Iterator_At
-        (Tree     => Get_Tree (Model.File),
-         Location => To_Location (Line, String_Index_Type (Column)),
-         --  ??? not sure if that conversion is accurate - we don't know
-         --  the type of column here!
-         Position => Enclosing);
-      while It /= Null_Construct_Tree_Iterator loop
-         Node := Get_Node (Model, It);
-         exit when Node /= null;
+      declare
+         Sem_Node : Semantic_Node'Class
+           := Model.Semantic_Tree.Element.Node_At
+             ((Line, Visible_Column_Type (Column), 0));
+      begin
+         while Sem_Node /= No_Semantic_Node loop
+            Node := Get_Node (Model, Sem_Node);
+            exit when Node /= null;
 
-         E := To_Entity_Access (Model.File, It);
-         Node := Get_Node_Next_Part (Model, E);
-         exit when Node /= null;
+            Node := Get_Node_Next_Part (Model, Sem_Node);
+            exit when Node /= null;
 
-         --  When there are several constructs on the same line Get_Iterator_At
-         --  returns last one. Here we iterate over others on the same line
-         --  before search for enclosing constructs.
-         declare
-            Try_Prev : constant Construct_Tree_Iterator :=
-              Prev (Tree, It, Jump_Over);
-         begin
-            if Try_Prev /= Null_Construct_Tree_Iterator
-              and then Get_Construct (Try_Prev).Sloc_Start.Line = Line
-            then
-               It := Try_Prev;
-            else
-               It := Get_Parent_Scope (Tree, It);
-            end if;
-         end;
-      end loop;
+            --  When there are several constructs on the same line
+            --  Get_Iterator_At returns last one. Here we iterate over
+            --  others on the same line before search for enclosing constructs.
+            declare
+               Try_Prev : constant Semantic_Node'Class := Sem_Node.Prev;
+            begin
+               if Try_Prev /= No_Semantic_Node
+                 and then Try_Prev.Sloc_Start.Line = Line
+               then
+                  Sem_Node := Try_Prev;
+               else
+                  declare
+                     Parent : constant Semantic_Node'Class := Sem_Node.Parent;
+                  begin
+                     exit when Parent = No_Semantic_Node;
+                     Sem_Node := Parent;
+                  end;
+               end if;
+            end;
+         end loop;
 
-      if Node = null then
-         Gtk_New (Path);
-         return Path;
-      else
-         return Get_Path (Model, Node);
-      end if;
+         if Node = null then
+            Gtk_New (Path);
+            return Path;
+         else
+            return Get_Path (Model, Node);
+         end if;
+      end;
    end Get_Path_Enclosing_Location;
 
 end Outline_View.Model;

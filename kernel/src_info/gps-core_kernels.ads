@@ -19,6 +19,7 @@
 
 with Ada.Tags;
 with Ada.Containers.Hashed_Maps;
+with Ada.Containers.Doubly_Linked_Lists;
 
 with Language_Handlers;
 with Projects;
@@ -33,8 +34,13 @@ with GNATCOLL.Scripts.Projects;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
 with Toolchains;
-with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Finalization; use Ada.Finalization;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Language; use Language;
+with Ada.Containers; use Ada.Containers;
+with Ada.Strings.Hash;
+with Language.Tree;
+with Language.Tree.Database;
 
 package GPS.Core_Kernels is
 
@@ -59,9 +65,38 @@ package GPS.Core_Kernels is
       return Language_Handlers.Language_Handler;
    --  The type used to convert from file names to languages
 
+   function Get_Construct_Database
+     (Kernel : not null access Core_Kernel_Record)
+      return Language.Tree.Database.Construct_Database_Access;
+   --  Return the database storing the construct information
+
    function Get_Buffer_Factory
      (Kernel : not null access Core_Kernel_Record)
       return GPS.Editors.Editor_Buffer_Factory_Access is abstract;
+   --  Get the buffer factory for this kernel, which will in turn allow you to
+   --  get buffer objects
+
+   function Default_Language_Tree_Provider
+     (Kernel : not null access Core_Kernel_Record)
+      return Semantic_Tree_Provider_Access;
+   --  Will return the default language tree provider. At the time being, this
+   --  is the abstract constructs tree provider.
+
+   procedure Register_Tree_Provider
+     (Kernel   : not null access Core_Kernel_Record;
+      Lang     : Language_Access;
+      Provider : Semantic_Tree_Provider_Access);
+   --  Register a new tree provider for the given language. This is the entry
+   --  point for implementors of the Abstract_Language_Tree API, which will
+   --  register their implementation via this function.
+
+   function Get_Abstract_Tree_For_File
+     (Kernel : not null access Core_Kernel_Record;
+      File   : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;
+   --  Returns the abstract tree for the given file. This is the entry point
+   --  for clients of the Abstract_Language_Tree API. You get the tree for a
+   --  specific file with this function, and the kernel will take care of
+   --  dispatching on the correct underlying implementation of the tree API.
 
    function Registry
      (Kernel : access Core_Kernel_Record'Class)
@@ -195,6 +230,15 @@ private
       Equivalent_Keys => Ada.Tags."=",
       "="             => Abstract_Module_List."=");
 
+   function Language_Hash (L : Language_Access) return Hash_Type is
+     (Ada.Strings.Hash (L.Get_Name));
+
+   package Sem_Tree_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type     => Language_Access,
+      Element_Type => Semantic_Tree_Provider_Access,
+      Hash         => Language_Hash,
+      Equivalent_Keys => "=");
+
    type Core_Kernel_Record is abstract
      new GNATCOLL.Scripts.Projects.Project_Tree_Retriever with
    record
@@ -215,6 +259,9 @@ private
 
       Toolchains_Manager : Toolchains.Toolchain_Manager;
       --  Current toolchain manager
+
+      Semantic_Tree_Providers : Sem_Tree_Maps.Map;
+      --  Map of Language indices -> Semantic tree provider
 
       Modules : Module_Maps.Map;
    end record;

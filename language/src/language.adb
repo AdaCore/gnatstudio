@@ -429,7 +429,8 @@ package body Language is
          Sloc_Start      => Construct.Sloc_Start,
          Sloc_Entity     => Construct.Sloc_Entity,
          Sloc_End        => Construct.Sloc_End,
-         Attributes      => Construct.Attributes);
+         Attributes      => Construct.Attributes,
+         Profile_Cache    => null);
    end To_Simple_Construct_Information;
 
    ------------------

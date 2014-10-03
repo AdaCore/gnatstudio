@@ -217,6 +217,26 @@ package body Language.Tree.Database is
       end if;
    end Get_Profile;
 
+   function Get_Profile
+     (Lang       : access Tree_Language;
+      Entity     : Entity_Access;
+      With_Aspects : Boolean := False) return String
+   is
+      Formater : aliased Text_Profile_Formater;
+      Node   : constant Construct_Tree_Iterator :=
+        To_Construct_Tree_Iterator (Entity);
+      use type Ada.Strings.Unbounded.String_Access;
+   begin
+      if Get_Construct (Node).Profile_Cache /= null then
+         return Get_Construct (Node).Profile_Cache.all;
+      end if;
+
+      Tree_Language_Access (Lang).Get_Profile
+        (Entity, Formater'Access, With_Aspects);
+      Get_Construct (Node).Profile_Cache := new String'(Formater.Get_Text);
+      return Formater.Get_Text;
+   end Get_Profile;
+
    ---------------------
    -- Get_Declaration --
    ---------------------
@@ -1529,6 +1549,16 @@ package body Language.Tree.Database is
          end if;
       end if;
    end "<";
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Entity : Entity_Access) return Hash_Type
+   is
+   begin
+      return Hash_Type (Entity.It.Index);
+   end Hash;
 
    ----------
    -- Free --

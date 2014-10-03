@@ -129,6 +129,7 @@ package body Ada_Module is
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
    begin
       Register_Language (Handler, Ada_Lang, Ada_Tree_Lang);
+
       Register_Default_Language_Extension
         (Get_Registry (Kernel).Environment.all,
          Language_Name       => "Ada",

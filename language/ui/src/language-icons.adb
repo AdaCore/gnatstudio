@@ -23,7 +23,7 @@ package body Language.Icons is
 
    function Stock_From_Category
      (Is_Declaration : Boolean;
-      Visibility     : Construct_Visibility;
+      Visibility     : Semantic_Node_Visibility;
       Category       : Language_Category) return String
    is
       function Get_Name (Suffix : String) return String;
