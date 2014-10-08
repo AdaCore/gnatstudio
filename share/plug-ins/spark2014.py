@@ -428,41 +428,46 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <icon>gps-build-all</icon>
        <switches command="%(tool_name)s">
          <title column="1" line="1" >General</title>
+         <spin label="Multiprocessing" switch="-j" min="0" max="1000"
+          default="1" separator="" column="1"
+          tip="Use N processes to carry out the processing
+               (0 means use as many cores as available on the machine)." />
+         <combo
+           label="Warnings"
+           switch="--warnings" noswitch="continue"
+           separator="=" column="1"
+           tip="Stop analysis after warnings or continue,
+                or do not issue warnings">
+             <combo-entry label="stop after warnings" value="error"
+              tip="Warnings are considered as errors and stop the analysis"/>
+             <combo-entry label="continue when warnings" value="continue"
+              tip="issue warnings, but continue analysis"/>
+             <combo-entry label="do not issue warnings" value="off"
+             tip="Do not issue warnings at all"/>
+         </combo>
          <check
-           label="Force re-analysis"
-           switch="-f"
-           column="1"
+           label="Force re-analysis" switch="-f" column="1"
            tip="Re-start analysis from scratch, ignoring previous results" />
          <check label="Report checks proved" switch="--report=all" column="1"
                 tip="Report the status of all checks, including those proved"
          />
          <title column="2" line="1" >Prover</title>
-<combo
-  label="Proof strategy"
-  switch="--proof" noswitch="per_check"
-  separator="=" column="2"
-  tip="Formulas generated for each check (faster) or each path (more precise)">
-    <combo-entry label="One proof per check" value="per_check"
-                 tip="Generate one formula per check"/>
-    <combo-entry label="One proof per path" value="per_path"
-                 tip="Generate one formula per path for each check"/>
-    <combo-entry
-    label="Progressively split"
-    value="progressive"
-    tip="Start with one formula per check, then split into paths when needed"/>
-</combo>
-<combo
-  label="Warnings"
-  switch="--warnings" noswitch="error"
-  separator="=" column="1"
-  tip="Stop analysis after warnings or continue, or do not issue warnings">
-    <combo-entry label="stop after warnings" value="error"
-                tip="Warnings are considered as errors and stop the analysis"/>
-    <combo-entry label="continue when warnings" value="continue"
-                 tip="issue warnings, but continue analysis"/>
-    <combo-entry label="do not issue warnings" value="off"
-    tip="Do not issue warnings at all"/>
-</combo>
+         <combo
+           label="Proof strategy"
+           switch="--proof" noswitch="per_check"
+           separator="=" column="2"
+           tip="Formulas generated for each check (faster)
+                or each path (more precise)">
+             <combo-entry label="One proof per check" value="per_check"
+                          tip="Generate one formula per check"/>
+             <combo-entry label="One proof per path" value="per_path"
+                          tip="Generate one formula per path for each check"/>
+             <combo-entry
+             label="Progressively split"
+             value="progressive"
+             tip="Start with one formula per check,
+                  then split into paths when needed"/>
+         </combo>
          <spin label="Prover timeout" switch="--timeout=" column="2"
                 default="1" min="1" max="3600"
                 tip="Set the prover timeout (in s) for individual proofs" />
