@@ -505,11 +505,6 @@ package body Src_Editor_Module.Editors is
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
 
-   overriding procedure Get_Constructs
-     (This       : Src_Editor_Buffer;
-      Constructs : out Language.Construct_List;
-      Timestamp  : out Natural);
-
    overriding procedure Add_File_Information
      (This       : Src_Editor_Buffer;
       Identifier : String;
@@ -2373,25 +2368,6 @@ package body Src_Editor_Module.Editors is
 
       Add_Side_Information (This.Contents.Buffer, Identifier, Info.all, 0);
    end Add_File_Information;
-
-   --------------------
-   -- Get_Constructs --
-   --------------------
-
-   overriding procedure Get_Constructs
-     (This       : Src_Editor_Buffer;
-      Constructs : out Language.Construct_List;
-      Timestamp  : out Natural) is
-   begin
-      if This.Contents.Buffer = null then
-         Constructs := (null, null, null, 0);
-         Timestamp := 0;
-         return;
-      end if;
-
-      Constructs := Get_Constructs (This.Contents.Buffer, Exact);
-      Timestamp  := Get_Constructs_Timestamp (This.Contents.Buffer);
-   end Get_Constructs;
 
    ----------
    -- Line --

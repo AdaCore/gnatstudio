@@ -67,6 +67,9 @@ package Language.Abstract_Construct_Tree is
    overriding function Root_Nodes
      (Self : Abstract_Construct_Tree) return Semantic_Node_Array'Class;
 
+   overriding function Root_Iterator
+     (Self : Abstract_Construct_Tree) return Semantic_Tree_Iterator;
+
    overriding function Node_At
      (Self : Abstract_Construct_Tree; Sloc : Sloc_T;
       Category_Filter : Category_Array := Null_Category_Array)
@@ -86,6 +89,9 @@ package Language.Abstract_Construct_Tree is
 
    overriding function Children
      (Self : Construct_Node) return Semantic_Node_Array'Class;
+
+   overriding function First_Child
+     (Self : Construct_Node) return Semantic_Node'Class;
 
    overriding function Name
      (Self : Construct_Node) return GNATCOLL.Symbols.Symbol;

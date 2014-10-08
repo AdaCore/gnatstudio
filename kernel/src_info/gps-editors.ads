@@ -593,18 +593,6 @@ package GPS.Editors is
    --  Indicates whether the user should be able to edit the buffer
    --  interactively (through any view).
 
-   procedure Get_Constructs
-     (This       : Editor_Buffer;
-      Constructs : out Language.Construct_List;
-      Timestamp  : out Natural) is abstract;
-   --  Return the constructs in the current state of the buffer.
-   --  This should be cached in the editor; as a result the caller should not
-   --  free the result.
-   --  Timestamp is a Natural which is increased every time the constructs are
-   --  increased. As a result, if two calls to Get_Constructs return the same
-   --  Timestamp, the caller can assume that the constructs have not changed
-   --  in the meantime.
-
    procedure Apply_Style
      (This  : Editor_Buffer;
       Style : not null access Simple_Style_Record'Class;
@@ -1001,11 +989,6 @@ private
      (This : Dummy_Editor_Buffer; Read_Only : Boolean) is null;
    overriding function Is_Read_Only
      (This : Dummy_Editor_Buffer) return Boolean;
-
-   overriding procedure Get_Constructs
-     (This       : Dummy_Editor_Buffer;
-      Constructs : out Language.Construct_List;
-      Timestamp  : out Natural);
 
    overriding procedure Apply_Style
      (This  : Dummy_Editor_Buffer;

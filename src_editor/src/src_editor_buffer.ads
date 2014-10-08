@@ -56,6 +56,7 @@ with Src_Highlighting;
 with Ada.Strings.Unbounded;
 with GPS.Core_Kernels; use GPS.Core_Kernels;
 with Gtk.Clipboard;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package Src_Editor_Buffer is
    type Source_Buffer_Record is new Gtkada_Text_Buffer_Record with private;
@@ -739,9 +740,12 @@ package Src_Editor_Buffer is
    --  Note: the implementation relies on this type being ordered from least
    --  exact to most exact.
 
-   function Get_Constructs
+   function Get_Tree
+     (Buffer : access Source_Buffer_Record) return Semantic_Tree'Class;
+
+   function Get_Tree_Iterator
      (Buffer         : access Source_Buffer_Record;
-      Required_Level : Constructs_State_Type) return Language.Construct_List;
+      Required_Level : Constructs_State_Type) return Semantic_Tree_Iterator;
    --  Return the current construct cache in the buffer. The returned
    --  list matches at least the level of precision indicated by
    --  Required_Level.
@@ -905,8 +909,7 @@ package Src_Editor_Buffer is
       Color             : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       --  The color to use when highlighting this block
 
-      Tree              : Language.Tree.Construct_Tree;
-      Iter              : Language.Tree.Construct_Tree_Iterator;
+      Tree_Node         : Sem_Node_Holders.Holder;
       --  The iterator representing the current construct. This can only used
       --  until the file is modified, so should never be stored outside of this
       --  block_record
@@ -1307,9 +1310,7 @@ private
 
    New_Block : constant Block_Record :=
      (0, 0, 0, 0, 0, GNATCOLL.Symbols.No_Symbol, Language.Cat_Unknown,
-      Gdk.RGBA.Null_RGBA,
-      Language.Tree.Null_Construct_Tree,
-      Language.Tree.Null_Construct_Tree_Iterator);
+      Gdk.RGBA.Null_RGBA, Sem_Node_Holders.Empty_Holder);
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;

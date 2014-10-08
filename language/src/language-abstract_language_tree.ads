@@ -102,6 +102,8 @@ package Language.Abstract_Language_Tree is
    --  the underlying representation of a node list doesn't matter much. The
    --  starting index is 1
 
+   type Semantic_Tree_Iterator is private;
+
    subtype Semantic_Node_Visibility is Language.Construct_Visibility;
 
    type Semantic_Node_Info is record
@@ -160,6 +162,9 @@ package Language.Abstract_Language_Tree is
    -- Primitives for Semantic_Tree --
    ----------------------------------
 
+   function Root_Iterator
+     (Self : Semantic_Tree) return Semantic_Tree_Iterator is abstract;
+
    function Root_Nodes
      (Self : Semantic_Tree) return Semantic_Node_Array'Class
       is abstract;
@@ -209,6 +214,9 @@ package Language.Abstract_Language_Tree is
       is abstract
      with Pre'Class => (Self.Is_Valid);
    --  Return a collection of children of node
+
+   function First_Child
+     (Self : Semantic_Node) return Semantic_Node'Class is abstract;
 
    function Parent
      (Self : Semantic_Node) return Semantic_Node'Class is abstract;
@@ -292,6 +300,19 @@ package Language.Abstract_Language_Tree is
    --  SN is a function profile in a package specification, it will return the
    --  previous element in the package spec
 
+   -------------------------------------------
+   -- Primitives for Semantic_Tree_Iterator --
+   -------------------------------------------
+
+   function Create (Node : Semantic_Node'Class) return Semantic_Tree_Iterator;
+
+   procedure Next (It : in out Semantic_Tree_Iterator);
+
+   function Element
+     (It : Semantic_Tree_Iterator) return Semantic_Node'Class;
+
+   function Has_Element (It : Semantic_Tree_Iterator) return Boolean;
+
    No_Semantic_Node : constant Semantic_Node'Class;
    No_Semantic_Tree : constant Semantic_Tree'Class;
    No_Semantic_Node_Array : constant Semantic_Node_Array'Class;
@@ -299,7 +320,15 @@ package Language.Abstract_Language_Tree is
    package Sem_Tree_Holders is new Ada.Containers.Indefinite_Holders
      (Semantic_Tree'Class);
 
+   package Sem_Node_Holders is new Ada.Containers.Indefinite_Holders
+     (Semantic_Node'Class);
+
 private
+
+   type Semantic_Tree_Iterator is record
+      Sem_Node         : Sem_Node_Holders.Holder;
+      Visited_Children : Boolean := False;
+   end record;
 
    -------------------------------
    -- Dummy_Semantic_Node_Array --
@@ -321,6 +350,10 @@ private
    -------------------------
 
    type Dummy_Semantic_Node is new Semantic_Node with null record;
+
+   overriding function First_Child
+     (Self : Dummy_Semantic_Node) return Semantic_Node'Class
+   is (No_Semantic_Node);
 
    function Sloc_Def
      (Self : Dummy_Semantic_Node) return Sloc_T is (0, 0, 0);
@@ -400,6 +433,10 @@ private
    -------------------------
 
    type Dummy_Semantic_Tree is new Semantic_Tree with null record;
+
+   function Root_Iterator
+     (Self : Dummy_Semantic_Tree) return Semantic_Tree_Iterator is
+      (Sem_Node_Holders.Empty_Holder, False);
 
    function Root_Nodes
      (Self : Dummy_Semantic_Tree) return Semantic_Node_Array'Class

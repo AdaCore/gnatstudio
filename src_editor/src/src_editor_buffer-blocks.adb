@@ -34,11 +34,10 @@ package body Src_Editor_Buffer.Blocks is
    --------------------
 
    procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class) is
-      Constructs : Construct_List;
-      Current    : Construct_Access;
+      Current    : Semantic_Tree_Iterator;
       Line_Start : Editable_Line_Type;
       Line_End   : Editable_Line_Type;
-      Column     : Integer;
+      Column     : Visible_Column_Type;
       Block      : Block_Access;
    begin
       if Buffer.Lang = null then
@@ -58,86 +57,87 @@ package body Src_Editor_Buffer.Blocks is
          Remove_Block_Folding_Commands (Buffer, False);
       end if;
 
-      Constructs := Get_Constructs (Buffer, Line_Exact);
+      Current := Buffer.Get_Tree_Iterator (Line_Exact);
 
-      Current := Constructs.First;
-
-      while Current /= null loop
-         if Current.Category in Construct_Category
-           or else Current.Category in Enclosing_Entity_Category
-         then
-            Line_Start := Editable_Line_Type (Current.Sloc_Start.Line);
-            Line_End   := Editable_Line_Type (Current.Sloc_End.Line);
-            --  Use the minimal column for the construct, friendlier for
-            --  visual display of blocks
-            Column     := Integer'Min
-              (Current.Sloc_Start.Column, Current.Sloc_End.Column);
-            Block      := new Block_Record'
-              (Indentation_Level => 0,
-               Offset_Start      => Column,
-               Stored_Offset     => 0,
-               First_Line        => Line_Start,
-               Last_Line         => Line_End,
-               Name              => Current.Name,
-               Block_Type        => Current.Category,
-               Tree              => Language.Tree.Null_Construct_Tree,
-               Iter              => Language.Tree.Null_Construct_Tree_Iterator,
-               Color             => Null_RGBA);
-
-            for J in Line_Start + 1 .. Line_End loop
-               if Buffer.Editable_Lines (J).Block = null then
-
-                  --  When freeing (Destroy_Buffer), we assume that the block
-                  --  is always associated with its last line, so make sure
-                  --  this is true here
-                  Block.Last_Line := J;
-
-                  Buffer.Editable_Lines (J).Block := Block;
-               end if;
-            end loop;
-
-            Buffer.Editable_Lines (Line_Start).Block := Block;
-         end if;
-
-         --  Fill the folding information
-         --  ??? This needs to be optimized.
-
-         if Buffer.Block_Folding
-           and then Current.Category not in Cat_Subtype .. Cat_Include
-           and then Current.Sloc_End.Line /= Current.Sloc_Start.Line
-         then
-            --  Do nothing if the block is folded
-
-            if Get_Buffer_Line
-              (Buffer, Editable_Line_Type (Current.Sloc_Start.Line + 1)) /= 0
+      while Has_Element (Current) loop
+         declare
+            Node : constant Semantic_Node'Class := Element (Current);
+         begin
+            if Node.Category in Construct_Category
+              or else Node.Category in Enclosing_Entity_Category
             then
-               declare
-                  Command     : Hide_Editable_Lines_Command;
-                  Iter        : Gtk_Text_Iter;
-                  Buffer_Line : Buffer_Line_Type;
-               begin
-                  Buffer_Line := Get_Buffer_Line
-                    (Buffer, Editable_Line_Type (Current.Sloc_Start.Line));
+               Line_Start := Editable_Line_Type (Node.Sloc_Start.Line);
+               Line_End   := Editable_Line_Type (Node.Sloc_End.Line);
+               --  Use the minimal column for the construct, friendlier for
+               --  visual display of blocks
+               Column     := Visible_Column_Type'Min
+                 (Node.Sloc_Start.Column, Node.Sloc_End.Column);
+               Block      := new Block_Record'
+                 (Indentation_Level => 0,
+                  Offset_Start      => Integer (Column),
+                  Stored_Offset     => 0,
+                  First_Line        => Line_Start,
+                  Last_Line         => Line_End,
+                  Name              => Node.Name,
+                  Block_Type        => Node.Category,
+                  Tree_Node         => Sem_Node_Holders.Empty_Holder,
+                  Color             => Null_RGBA);
 
-                  if Buffer_Line /= 0 then
-                     Command := new Hide_Editable_Lines_Type;
-                     Command.Buffer := Source_Buffer (Buffer);
-                     Get_Iter_At_Line
-                       (Buffer, Iter, Gint (Buffer_Line - 1) + 1);
-                     Command.Number := Editable_Line_Type
-                       (Current.Sloc_End.Line - Current.Sloc_Start.Line);
+               for J in Line_Start + 1 .. Line_End loop
+                  if Buffer.Editable_Lines (J).Block = null then
 
-                     Add_Block_Command
-                       (Buffer,
-                        Editable_Line_Type (Current.Sloc_Start.Line),
-                        Command_Access (Command),
-                        Hide_Block_Pixbuf);
+                     --  When freeing (Destroy_Buffer), we assume that the
+                     --  block is always associated with its last line, so
+                     --  make sure this is true here
+                     Block.Last_Line := J;
+
+                     Buffer.Editable_Lines (J).Block := Block;
                   end if;
-               end;
-            end if;
-         end if;
+               end loop;
 
-         Current := Current.Next;
+               Buffer.Editable_Lines (Line_Start).Block := Block;
+            end if;
+
+            --  Fill the folding information
+            --  ??? This needs to be optimized.
+
+            if Buffer.Block_Folding
+              and then Node.Category not in Cat_Subtype .. Cat_Include
+              and then Node.Sloc_End.Line /= Node.Sloc_Start.Line
+            then
+               --  Do nothing if the block is folded
+
+               if Get_Buffer_Line
+                 (Buffer, Editable_Line_Type (Node.Sloc_Start.Line + 1)) /= 0
+               then
+                  declare
+                     Command     : Hide_Editable_Lines_Command;
+                     Iter        : Gtk_Text_Iter;
+                     Buffer_Line : Buffer_Line_Type;
+                  begin
+                     Buffer_Line := Get_Buffer_Line
+                       (Buffer, Editable_Line_Type (Node.Sloc_Start.Line));
+
+                     if Buffer_Line /= 0 then
+                        Command := new Hide_Editable_Lines_Type;
+                        Command.Buffer := Source_Buffer (Buffer);
+                        Get_Iter_At_Line
+                          (Buffer, Iter, Gint (Buffer_Line - 1) + 1);
+                        Command.Number := Editable_Line_Type
+                          (Node.Sloc_End.Line - Node.Sloc_Start.Line);
+
+                        Add_Block_Command
+                          (Buffer,
+                           Editable_Line_Type (Node.Sloc_Start.Line),
+                           Command_Access (Command),
+                           Hide_Block_Pixbuf);
+                     end if;
+                  end;
+               end if;
+            end if;
+
+         end;
+         Next (Current);
       end loop;
 
       Buffer_Information_Changed (Buffer);
