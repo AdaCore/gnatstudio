@@ -84,6 +84,11 @@ package CodePeer.Module is
    CodePeer_Category_Name  : constant String := "CodePeer: messages";
    Race_Condition_Category : constant String := "race condition";
 
+   function Codepeer_Output_Directory
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
+   --  Returns directory which is used by CodePeer for output inspection
+   --  results.
+
 private
 
    type Message_Ranking_Color_Preference_Array is
@@ -136,11 +141,6 @@ private
       Bridge_Message : Message_Access;
       --  Message used to communicate with gps_codepere_bridge
    end record;
-
-   function Codepeer_Output_Directory
-     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
-   --  Returns directory which is used by CodePeer for output inspection
-   --  results.
 
    function Codepeer_Database_Directory
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
