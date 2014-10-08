@@ -49,6 +49,8 @@ package body CodePeer.Bridge.Inspection_Readers is
    Previous_Attribute       : constant String := "previous";
    Category_Attribute       : constant String := "category";
    Primary_Checks_Attribute : constant String := "primary_checks";
+   Vn_Id_Attribute          : constant String := "vn-id";
+   Vn_Ids_Attribute         : constant String := "vn-ids";
 
    -----------------
    -- End_Element --
@@ -194,6 +196,13 @@ package body CodePeer.Bridge.Inspection_Readers is
       function Get_Optional_Line return Natural;
       --  Returns value of "line" attribute if specified, overwise returns 0.
 
+      function Get_Vns return Natural_Sets.Set;
+      --  Returns value of "vn_ids" attribute if specified, overwise returns
+      --  empty set.
+
+      function Get_Vn return Natural;
+      --  Returns value of "vn_id" attribute if specified, overwise returns 0.
+
       ------------
       -- Checks --
       ------------
@@ -259,6 +268,50 @@ package body CodePeer.Bridge.Inspection_Readers is
             return 1;
          end if;
       end Get_Optional_Column;
+
+      ------------
+      -- Get_Vn --
+      ------------
+
+      function Get_Vn return Natural is
+         Index : constant Integer := Attrs.Get_Index (Vn_Id_Attribute);
+
+      begin
+         if Index /= -1 then
+            return Integer'Value (Attrs.Get_Value (Index));
+
+         else
+            return 0;
+         end if;
+      end Get_Vn;
+
+      -------------
+      -- Get_Vns --
+      -------------
+
+      function Get_Vns return Natural_Sets.Set is
+         Index : constant Integer := Attrs.Get_Index (Vn_Ids_Attribute);
+
+      begin
+         if Index /= -1 then
+            declare
+               List   : constant GNATCOLL.Utils.Unbounded_String_Array :=
+                 GNATCOLL.Utils.Split (Attrs.Get_Value (Index), ' ');
+               Result : Natural_Sets.Set;
+
+            begin
+               for Item of List loop
+                  Result.Insert
+                    (Integer'Value (Ada.Strings.Unbounded.To_String (Item)));
+               end loop;
+
+               return Result;
+            end;
+
+         else
+            return Natural_Sets.Empty_Set;
+         end if;
+      end Get_Vns;
 
       --------------
       -- Is_Check --
@@ -376,7 +429,8 @@ package body CodePeer.Bridge.Inspection_Readers is
          Annotation_Category :=
            new CodePeer.Annotation_Category'
              (Order => Natural'Value (Attrs.Get_Value ("identifier")),
-              Text  => new String'(Attrs.Get_Value ("name")));
+              Text  => new String'(Attrs.Get_Value ("name")),
+              Vn    => Get_Vn);
          CodePeer.Project_Data'Class
            (Self.Root_Inspection.all).Annotation_Categories.Insert
            (Annotation_Category);
@@ -441,6 +495,9 @@ package body CodePeer.Bridge.Inspection_Readers is
          Self.Current_Message :=
            new CodePeer.Message'
              (Positive'Value (Attrs.Get_Value ("identifier")),
+              Self.File_Node.Name,
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Self.Subprogram_Node.Name.all),
               Merged,
               Lifeage,
               Positive'Value (Attrs.Get_Value ("line")),
@@ -458,7 +515,8 @@ package body CodePeer.Bridge.Inspection_Readers is
               1,
               1,
               null,
-              Message_Category_Sets.Empty_Set);
+              Message_Category_Sets.Empty_Set,
+              Get_Vns);
 
          --  Only primary checks need to be displayed.
 

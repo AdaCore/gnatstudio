@@ -81,6 +81,8 @@ package CodePeer is
 
    type Message is record
       Id               : Natural;
+      File             : GNATCOLL.VFS.Virtual_File;
+      Subprogram       : Ada.Strings.Unbounded.Unbounded_String;
       Merged           : Natural_Sets.Set;
       Lifeage          : Lifeage_Kinds;
       Line             : Positive;
@@ -100,6 +102,7 @@ package CodePeer is
       From_Column      : Positive;
       Message          : GPS.Kernel.Messages.Message_Access;
       Checks           : Message_Category_Sets.Set;
+      Vns              : Natural_Sets.Set;
    end record;
 
    type Message_Access is access all Message;
@@ -117,6 +120,7 @@ package CodePeer is
    type Annotation_Category is record
       Order : Positive;
       Text  : GNAT.Strings.String_Access;
+      Vn    : Natural;
    end record;
 
    type Annotation_Category_Access is access all Annotation_Category;
