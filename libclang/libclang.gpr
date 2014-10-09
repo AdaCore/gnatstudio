@@ -1,0 +1,18 @@
+with "gnatcoll";
+with "../shared";
+
+project libclang is
+
+   for Source_Dirs use ("gen", "example", "libclang");
+   for Main use ("test_index");
+
+   for Object_Dir use "obj";
+
+   package Linker is
+      for Switches ("Ada") use ("-lclang", "-lstdc++");
+   end Linker;
+
+   package Compiler renames Shared.Compiler;
+
+end libclang;
+

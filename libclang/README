@@ -1,0 +1,11 @@
+This directory is organized the following way:
+
+   - gen contains the generated thin binding to the C libclang library
+     this should not be checked in but not edited manually
+
+   - libclang contains the thick binding to the C libclang library
+     this is the binding that should be used by GPS
+
+   - the Makefile can be used to regenerate the thin binding
+
+   - example contains an exemple program
