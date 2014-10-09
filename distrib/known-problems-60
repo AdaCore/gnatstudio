@@ -379,6 +379,16 @@ KP-60-N602-060 GPS: saving file via symlink might no longer find it in project
 
   Workaround: Select the menu /Project/Reload.
 
+KP-60-N602-054 GPS: gnatpp does not find files in extended projects
+
+  Problem:    The pretty printer is invoked using the base project of files,
+              rather than the root project. This can cause it to fail finding
+              the right closure in certain project configurations.
+
+  Status:     This was fixed in 6.1 on 2014-09-24
+
+  Workaround: Edit the gnatpp.py plugin, and change "%pps" to "%PPs".
+
 KP-60-N523-013 GPS: no error reported when root object_dir is read-only
 
   Problem:    When the root project has a read-only object directory, GPS
