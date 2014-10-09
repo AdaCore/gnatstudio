@@ -1439,7 +1439,10 @@ package body GPS.Kernel.Modules.UI is
             Mods   => Mods);
          for M in Act.Menus'Range loop
             Item := Find_Menu_Item (Kernel, Act.Menus (M).all);
-            if Item.all in Action_Menu_Item_Record'Class then
+            if Item = null then
+               Trace (Me, "Not updating shortcut for " & Act.Menus (M).all
+                  & " since menu not found");
+            elsif Item.all in Action_Menu_Item_Record'Class then
                Label := Gtk_Accel_Label (Action_Menu_Item (Item).Get_Child);
                Label.Set_Accel (Guint (Key), Mods);
             end if;
