@@ -1004,12 +1004,14 @@ package body GUI_Utils is
                Current := Current + Shift'Length;
             end if;
 
-            if (Mods and Primary_Mod_Mask) /= 0 then
+            if (Mods and Primary_Mod_Mask) /= 0
+               and then Primary_Mod_Mask /= Control_Mask
+            then
                Buffer (Current .. Current + Primary'Length - 1) := Primary;
                Current := Current + Primary'Length;
+            end if;
 
-            elsif (Mods and Control_Mask) /= 0 then
-               --  Exclusive, for case where Control == Primary masks
+            if (Mods and Control_Mask) /= 0 then
                Buffer (Current .. Current + Control'Length - 1) := Control;
                Current := Current + Control'Length;
             end if;
