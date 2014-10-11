@@ -547,33 +547,6 @@ package body CodePeer.Module is
       end if;
    end Codepeer_Database_Directory;
 
-   --------------------------------
-   -- Codepeer_Library_File_Name --
-   --------------------------------
-
-   function Codepeer_Library_File_Name
-     (Project : Project_Type;
-      Suffix  : String := "") return GNATCOLL.VFS.Virtual_File
-   is
-      Name      : constant GNATCOLL.VFS.Filesystem_String :=
-        GNATCOLL.VFS.Filesystem_String
-          (String (Project_Path (Project).Base_Name));
-      Extension : constant GNATCOLL.VFS.Filesystem_String :=
-        Project_Path (Project).File_Extension;
-
-   begin
-      --  J506-031: File name must be synchronized with the name used to run
-      --  'codepeer' from the builder module (see codepeer.py for builder
-      --  models definition).
-
-      return
-        Create_From_Dir
-          (Project.Object_Dir,
-           Name (Name'First .. Name'Last - Extension'Length)
-           & Filesystem_String (Suffix)
-           & ".library");
-   end Codepeer_Library_File_Name;
-
    -------------------------------
    -- Codepeer_Output_Directory --
    -------------------------------
