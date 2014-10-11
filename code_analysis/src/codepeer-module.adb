@@ -67,6 +67,7 @@ package body CodePeer.Module is
    use type GPS.Editors.Editor_Buffer'Class;
 
    Me : constant Trace_Handle := Create ("CodePeer");
+   CodePeer_Subdir : constant Filesystem_String := "codepeer";
 
    type Module_Context is record
       Module  : CodePeer_Module_Id;
@@ -399,7 +400,7 @@ package body CodePeer.Module is
          Force       => Force,
          Build_Mode  => "codepeer",
          Synchronous => False,
-         Dir         => Project.Object_Dir);
+         Dir         => CodePeer_Object_Directory (Project));
    end Review;
 
    --------------------
@@ -542,10 +543,28 @@ package body CodePeer.Module is
       else
          return
            Create_From_Dir
-             (Project.Object_Dir,
+             (CodePeer_Object_Directory (Project),
               Name (Name'First .. Name'Last - Extension'Length) & ".db");
       end if;
    end Codepeer_Database_Directory;
+
+   -------------------------------
+   -- CodePeer_Object_Directory --
+   -------------------------------
+
+   function CodePeer_Object_Directory
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
+   is
+      Object_Dir : constant Virtual_File := Project.Object_Dir;
+
+   begin
+      if Object_Dir /= No_File then
+         return Object_Dir;
+
+      else
+         return Create_From_Dir (Project.Project_Path.Dir, CodePeer_Subdir);
+      end if;
+   end CodePeer_Object_Directory;
 
    -------------------------------
    -- Codepeer_Output_Directory --
@@ -577,7 +596,7 @@ package body CodePeer.Module is
       else
          return
            GNATCOLL.VFS.Create_From_Dir
-             (Project.Object_Dir,
+             (CodePeer_Object_Directory (Project),
               Name (Name'First .. Name'Last - Extension'Length) & ".output");
       end if;
    end Codepeer_Output_Directory;
@@ -953,7 +972,7 @@ package body CodePeer.Module is
       end;
 
       Module.Inspection_File :=
-        Create_From_Dir (Project.Object_Dir, "codepeer.csv");
+        Create_From_Dir (CodePeer_Object_Directory (Project), "codepeer.csv");
       Module.Action := Load_CSV;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel_Handle (Module.Kernel),
@@ -961,7 +980,7 @@ package body CodePeer.Module is
            (Module.Get_Kernel, "Generate CSV Report"),
          Build_Mode  => "codepeer",
          Synchronous => False,
-         Dir         => Project.Object_Dir);
+         Dir         => CodePeer_Object_Directory (Project));
 
       return Commands.Success;
    end Execute;
