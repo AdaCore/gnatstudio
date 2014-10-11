@@ -147,12 +147,6 @@ private
    --  Returns directory which is used by CodePeer for store SQLite database
    --  files.
 
-   function Codepeer_Library_File_Name
-     (Project : Project_Type;
-      Suffix  : String := "") return GNATCOLL.VFS.Virtual_File;
-   --  Returns name of the library description file for CodePeer invocation.
-   --  Append Suffix to name of file.
-
    --  Style names to be used by children packages
 
    Annotation_Style_Name                : constant String
