@@ -54,6 +54,10 @@ package body Tooltips is
    --  Return True if the global tooltip is present, mapped, and the pointer
    --  location given by X,Y is within the area.
 
+   procedure On_Widget_Destroy
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Callback for a destroy event on the On_Widget
+
    function Tooltip_Event_Cb
      (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
       Event   : Gdk.Event.Gdk_Event) return Boolean;
@@ -283,6 +287,18 @@ package body Tooltips is
       end if;
    end Hide_Tooltip;
 
+   -----------------------
+   -- On_Widget_Destroy --
+   -----------------------
+
+   procedure On_Widget_Destroy
+     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Hide_Tooltip;
+   end On_Widget_Destroy;
+
    ----------------------
    -- Tooltip_Event_Cb --
    ----------------------
@@ -318,6 +334,9 @@ package body Tooltips is
         (On_Widget,
          Pointer_Motion_Mask or Enter_Notify_Mask or Focus_Change_Mask
          or Leave_Notify_Mask);
+      Widget_Callback.Connect
+        (On_Widget, Signal_Destroy,
+         Widget_Callback.To_Marshaller (On_Widget_Destroy'Access));
       Return_Callback.Connect
         (On_Widget, Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
