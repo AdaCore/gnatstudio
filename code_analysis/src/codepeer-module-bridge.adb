@@ -69,7 +69,7 @@ package body CodePeer.Module.Bridge is
 
       --  Compute name of object directory and request file
 
-      Object_Directory  := Project.Object_Dir;
+      Object_Directory  := CodePeer_Object_Directory (Project);
       Command_File_Name :=
         Create_From_Dir (Object_Directory, Add_Audit_File_Name);
 
@@ -98,7 +98,8 @@ package body CodePeer.Module.Bridge is
    procedure Inspection (Module : CodePeer.Module.CodePeer_Module_Id) is
       Project           : constant Project_Type :=
         GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory  : constant Virtual_File := Project.Object_Dir;
+      Object_Directory  : constant Virtual_File :=
+        CodePeer_Object_Directory (Project);
       Command_File_Name : constant Virtual_File :=
         Create_From_Dir (Object_Directory, Inspection_Request_File_Name);
       Reply_File_Name   : constant Virtual_File :=
@@ -158,7 +159,8 @@ package body CodePeer.Module.Bridge is
    is
       Project           : constant Project_Type :=
                             GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory  : constant Virtual_File := Project.Object_Dir;
+      Object_Directory  : constant Virtual_File :=
+                            CodePeer_Object_Directory (Project);
       Reply_File_Name   : constant Virtual_File :=
                             Create_From_Dir
                               (Object_Directory, Inspection_Reply_File_Name);
@@ -197,7 +199,7 @@ package body CodePeer.Module.Bridge is
 
       --  Compute directories' and files' names.
 
-      Object_Directory := Project.Object_Dir;
+      Object_Directory := CodePeer_Object_Directory (Project);
       Command_File_Name :=
         Create_From_Dir
           (Object_Directory, Audit_Request_File_Name);

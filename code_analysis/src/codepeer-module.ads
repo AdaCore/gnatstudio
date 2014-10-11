@@ -147,6 +147,10 @@ private
    --  Returns directory which is used by CodePeer for store SQLite database
    --  files.
 
+   function CodePeer_Object_Directory
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
+   --  Returns object directory in 'codepeer' mode.
+
    --  Style names to be used by children packages
 
    Annotation_Style_Name                : constant String
