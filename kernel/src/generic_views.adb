@@ -606,8 +606,12 @@ package body Generic_Views is
       procedure Close
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       is
+         View : constant View_Access := Retrieve_View (Kernel);
+
       begin
-         Close_Child (Child_From_View (Retrieve_View (Kernel)));
+         if View /= null then
+            Close_Child (Child_From_View (View));
+         end if;
       end Close;
 
       ---------------------
