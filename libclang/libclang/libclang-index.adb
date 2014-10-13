@@ -18,6 +18,7 @@
 with System; use System;
 
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 
 with Interfaces.C;         use Interfaces.C;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
@@ -80,8 +81,9 @@ package body Libclang.Index is
       Source_Filename       : String;
       Command_Line_Args     : GNATCOLL.Utils.Unbounded_String_Array;
       Unsaved_Files         : Unsaved_File_Array := No_Unsaved_Files;
-      Options               : Clang_Translation_Unit_Flags := None)
-      return Clang_Translation_Unit'Class
+      Options               : Clang_Translation_Unit_Flags :=
+        No_Translation_Unit_Flags)
+      return Clang_Translation_Unit_Access
    is
       TU : Clang_Translation_Unit;
 
@@ -139,7 +141,7 @@ package body Libclang.Index is
          Free (CL (J));
       end loop;
 
-      return TU;
+      return new Clang_Translation_Unit'(TU);
    end Parse_Translation_Unit;
 
    ------------------------------
@@ -149,7 +151,8 @@ package body Libclang.Index is
    function Reparse_Translation_Unit
      (TU            : Clang_Translation_Unit;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
-      Options       : Clang_Translation_Unit_Flags := None) return Boolean
+      Options       : Clang_Translation_Unit_Flags :=
+        No_Translation_Unit_Flags) return Boolean
    is
 
       function local_clang_reparseTranslationUnit
@@ -184,9 +187,17 @@ package body Libclang.Index is
    -- Dispose --
    -------------
 
-   procedure Dispose (TU : Clang_Translation_Unit) is
+   procedure Dispose (TU : in out Clang_Translation_Unit_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Clang_Translation_Unit'Class, Clang_Translation_Unit_Access);
    begin
+      if TU = null then
+         return;
+      end if;
+
       clang_disposeTranslationUnit (TU.CX_Translation_Unit);
+      Unchecked_Free (TU);
+      TU := null;
    end Dispose;
 
    -----------------
@@ -200,7 +211,7 @@ package body Libclang.Index is
       Column        : Natural;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
       Options       : Clang_Code_Complete_Flags := 0)
-      return Clang_Complete_Results'Class
+      return Clang_Complete_Results_Access
    is
       C_Filename : chars_ptr;
       C_Unsaved_Files     : System.Address;
@@ -242,7 +253,7 @@ package body Libclang.Index is
       Free (C_Filename);
 
       if C_Returned = System.Null_Address then
-         Result := No_Completion_Results;
+         return null;
       else
          Result.CXCodeCompleteResults := Convert (C_Returned);
 
@@ -250,21 +261,25 @@ package body Libclang.Index is
 
       end if;
 
-      return Result;
+      return new Clang_Complete_Results'(Result);
    end Complete_At;
 
    -------------
    -- Dispose --
    -------------
 
-   procedure Dispose (Results : in out Clang_Complete_Results) is
+   procedure Dispose (Results : in out Clang_Complete_Results_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Clang_Complete_Results'Class, Clang_Complete_Results_Access);
    begin
-      if Results = No_Completion_Results then
-         --  nothing to do
+      if Results = null then
          return;
-      else
-         clang_disposeCodeCompleteResults (Results.CXCodeCompleteResults);
       end if;
+
+      clang_disposeCodeCompleteResults (Results.CXCodeCompleteResults);
+
+      Unchecked_Free (Results);
+      Results := null;
    end Dispose;
 
    -----------------
@@ -364,5 +379,33 @@ package body Libclang.Index is
 
       return Returned;
    end Spelling;
+
+   -------------------------
+   -- Create_Unsaved_File --
+   -------------------------
+
+   function Create_Unsaved_File
+     (Filename : String;
+      Buffer   : String_Access) return Unsaved_File
+   is
+      Returned : Unsaved_File;
+      C_Filename : chars_ptr;
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, chars_ptr);
+   begin
+      C_Filename := New_String (Filename);
+      --  ??? Who frees this?
+      Returned.Filename := C_Filename;
+
+      if Buffer = null then
+         Returned.Contents := Convert (System.Null_Address);
+         Returned.Length := 0;
+      else
+         Returned.Contents := Convert (Buffer (Buffer'First)'Address);
+         Returned.Length := Buffer'Length;
+      end if;
+
+      return Returned;
+   end Create_Unsaved_File;
 
 end Libclang.Index;

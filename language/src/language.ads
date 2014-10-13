@@ -29,7 +29,7 @@ with GNATCOLL.VFS;
 package Language is
 
    Clang_Support : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
-     ("libclang_backend", GNATCOLL.Traces.Off);
+     ("libclang_backend", GNATCOLL.Traces.On);
 
    type Language_Root is abstract tagged limited private;
    type Language_Access is access all Language_Root'Class;

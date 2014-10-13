@@ -78,7 +78,7 @@ project GPS is
             null;
       end case;
       for Default_Switches ("Ada") use Linker'Default_Switches ("Ada")
-         & Shared.Linker'Default_Switches ("Ada");
+         & Shared.Linker'Default_Switches ("Ada") & ("-lclang", "-lstdc++");
 
       --  for Default_Switches ("Ada") use ("-lgmem");
       --  for Default_Switches ("Ada") use ("-pg");

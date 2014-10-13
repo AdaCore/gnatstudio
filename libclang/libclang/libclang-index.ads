@@ -28,6 +28,8 @@ package Libclang.Index is
 
    type Clang_Index is tagged private;
 
+   No_Index : constant Clang_Index;
+
    function Create_Index
      (Exclude_Declarations_From_PCH : Boolean;
       Display_Diagnostics           : Boolean) return Clang_Index;
@@ -79,19 +81,33 @@ package Libclang.Index is
    -- Unsaved files --
    -------------------
 
-   type Unsaved_File_Array is array (Natural range <>)
-     of clang_c_Index_h.CXUnsavedFile;
+   type Unsaved_File is new clang_c_Index_h.CXUnsavedFile;
+   No_Unsaved_File : constant Unsaved_File :=
+     (Filename => <>,
+      Contents => <>,
+      Length   => 0);
 
-   No_Unsaved_Files : constant Unsaved_File_Array (1 .. 0) := (others => <>);
+   function Create_Unsaved_File
+     (Filename : String;
+      Buffer   : String_Access) return Unsaved_File;
+   --  Create an Unsaved file.
+   --  If Length = -1, do not consider it, but compute the length of Buffer.
+
+   type Unsaved_File_Array is array (Natural range <>) of Unsaved_File;
+
+   No_Unsaved_Files : constant Unsaved_File_Array (1 .. 0) :=
+     (others => No_Unsaved_File);
 
    -----------------------
    -- Translation units --
    -----------------------
 
    type Clang_Translation_Unit is tagged private;
+   type Clang_Translation_Unit_Access is access
+     all Clang_Translation_Unit'Class;
 
    type Clang_Translation_Unit_Flags is mod 2 ** Integer'Size;
-   None                         : constant Clang_Translation_Unit_Flags := 0;
+   No_Translation_Unit_Flags    : constant Clang_Translation_Unit_Flags := 0;
    Detailedpreprocessingrecord  : constant Clang_Translation_Unit_Flags := 1;
    Incomplete                   : constant Clang_Translation_Unit_Flags := 2;
    Precompiledpreamble          : constant Clang_Translation_Unit_Flags := 4;
@@ -107,8 +123,9 @@ package Libclang.Index is
       Source_Filename       : String;
       Command_Line_Args     : GNATCOLL.Utils.Unbounded_String_Array;
       Unsaved_Files         : Unsaved_File_Array := No_Unsaved_Files;
-      Options               : Clang_Translation_Unit_Flags := None)
-      return Clang_Translation_Unit'Class;
+      Options               : Clang_Translation_Unit_Flags :=
+        No_Translation_Unit_Flags)
+      return Clang_Translation_Unit_Access;
   --  \brief Parse the given source file and the translation unit corresponding
   --  to that file.
   --
@@ -156,7 +173,8 @@ package Libclang.Index is
    function Reparse_Translation_Unit
      (TU            : Clang_Translation_Unit;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
-      Options       : Clang_Translation_Unit_Flags := None) return Boolean;
+      Options       : Clang_Translation_Unit_Flags :=
+        No_Translation_Unit_Flags) return Boolean;
   --  \brief Reparse the source files that produced this translation unit.
   --
   --  This routine can be used to re-parse the source files that originally
@@ -196,7 +214,7 @@ package Libclang.Index is
   --  clang_disposeTranslationUnit(TU). The error codes returned by this
   --  routine are described by the \c CXErrorCode enum. /
 
-   procedure Dispose (TU : Clang_Translation_Unit);
+   procedure Dispose (TU : in out Clang_Translation_Unit_Access);
    --  Free TU
 
    ----------------
@@ -211,9 +229,10 @@ package Libclang.Index is
    type Clang_Complete_Results is tagged private;
    --  A set of completion results
 
-   No_Completion_Results : constant Clang_Complete_Results;
+   type Clang_Complete_Results_Access is
+     access all Clang_Complete_Results'Class;
 
-   procedure Dispose (Results : in out Clang_Complete_Results);
+   procedure Dispose (Results : in out Clang_Complete_Results_Access);
    --  Free memory associated to Results
 
    function Complete_At
@@ -223,7 +242,7 @@ package Libclang.Index is
       Column        : Natural;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
       Options       : Clang_Code_Complete_Flags := 0)
-      return Clang_Complete_Results'Class;
+      return Clang_Complete_Results_Access;
    --  Perform code completion at a given location in a translation unit.
    --
    --  This function performs code completion at a particular file, line, and
@@ -289,7 +308,7 @@ package Libclang.Index is
    --  \returns If successful, a new \c CXCodeCompleteResults structure
    --  containing code-completion results, which should eventually be
    --  freed with \c clang_disposeCodeCompleteResults(). If code
-   --  completion fails, returns No_Completion_Results.
+   --  completion fails, returns Null.
 
    type Clang_Completion_Result is tagged private;
    --  One completion result
@@ -323,6 +342,8 @@ private
       CXIndex : clang_c_Index_h.CXIndex;
    end record;
 
+   No_Index : constant Clang_Index := (CXIndex => <>);
+
    type Clang_Translation_Unit is tagged record
       CX_Translation_Unit : clang_c_Index_h.CXTranslationUnit;
    end record;
@@ -330,9 +351,6 @@ private
    type Clang_Complete_Results is tagged record
       CXCodeCompleteResults : access clang_c_Index_h.CXCodeCompleteResults;
    end record;
-
-   No_Completion_Results : constant Clang_Complete_Results :=
-     (CXCodeCompleteResults => <>);
 
    type Clang_Completion_Result is tagged record
       Result : access clang_c_Index_h.CXCompletionResult;

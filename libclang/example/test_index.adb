@@ -54,7 +54,7 @@ begin
    --  Create TU
 
    declare
-      TU : constant Clang_Translation_Unit'Class :=
+      TU : Clang_Translation_Unit_Access :=
         Index.Parse_Translation_Unit
           (Source_Filename   => Source_Filename,
            Command_Line_Args => CL);
@@ -84,7 +84,7 @@ begin
          Completion.Dispose;
       end;
 
-      TU.Dispose;
+      Dispose (TU);
    end;
 
    Index.Dispose;

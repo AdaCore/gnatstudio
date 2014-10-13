@@ -76,6 +76,7 @@ use Completion.Ada.Constructs_Extractor;
 with Completion.C;              use Completion.C;
 with Completion.C.Constructs_Extractor;
 use Completion.C.Constructs_Extractor;
+with Completion.C.Libclang;     use Completion.C.Libclang;
 
 with Language.Ada;              use Language.Ada;
 with Language.C;                use Language.C;
@@ -859,7 +860,12 @@ package body Completion_Module is
                if Lang = C_Lang
                  or else Lang = Cpp_Lang
                then
-                  if not Active (Clang_Support) then
+                  if Active (Clang_Support) then
+                     Data.Constructs_Resolver :=
+                       New_Libclang_Completion_Resolver
+                         (Kernel       => Kernel,
+                          Current_File => Get_Filename (Buffer));
+                  else
                      Data.Constructs_Resolver :=
                        New_C_Construct_Completion_Resolver
                          (Kernel       => Kernel,
