@@ -100,7 +100,7 @@ package body Extending_Environments is
       end Write_Extending_Project;
 
    begin
-      --  Create the temporary directory in the object dir of the projet
+      --  Create the temporary directory in the object dir of the project
 
       declare
          BN : constant Filesystem_String := Source.Base_Name;
