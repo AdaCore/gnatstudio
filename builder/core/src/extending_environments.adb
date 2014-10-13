@@ -103,12 +103,16 @@ package body Extending_Environments is
       --  Create the temporary directory in the object dir of the project
 
       declare
-         BN : constant Filesystem_String := Source.Base_Name;
+         BN           : constant Filesystem_String := Source.Base_Name;
          Tmp_Dir_Name : constant Filesystem_String :=
            BN (BN'First .. Find_Char (String (BN), '.') - 1) & "_Tmp";
+         Object_Dir   : constant Virtual_File := Project.Object_Dir;
+
       begin
          Env.Temporary_Dir := Create_From_Dir
-           (Project.Object_Dir,
+           ((if Object_Dir /= No_File
+            then Object_Dir
+            else Project.Project_Path.Dir),
             Base_Name => Tmp_Dir_Name);
       end;
 
