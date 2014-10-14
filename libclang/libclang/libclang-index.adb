@@ -188,9 +188,12 @@ package body Libclang.Index is
 
    procedure Dispose (TU : in out Clang_Translation_Unit) is
    begin
-      if System.Address (TU.CX_Translation_Unit) /= System.Null_Address then
-         clang_disposeTranslationUnit (TU.CX_Translation_Unit);
+      if TU = No_Translation_Unit then
+         return;
       end if;
+
+      clang_disposeTranslationUnit (TU.CX_Translation_Unit);
+      TU := No_Translation_Unit;
    end Dispose;
 
    -----------------
@@ -246,7 +249,7 @@ package body Libclang.Index is
       Free (C_Filename);
 
       if C_Returned = System.Null_Address then
-         return No_Results;
+         return No_Complete_Results;
       else
          Result.CXCodeCompleteResults := Convert (C_Returned);
 
@@ -263,12 +266,12 @@ package body Libclang.Index is
 
    procedure Dispose (Results : in out Clang_Complete_Results) is
    begin
-      if Results = No_Results then
+      if Results = No_Complete_Results then
          return;
       end if;
 
       clang_disposeCodeCompleteResults (Results.CXCodeCompleteResults);
-      Results := No_Results;
+      Results := No_Complete_Results;
    end Dispose;
 
    -----------------
@@ -329,7 +332,7 @@ package body Libclang.Index is
       end Chunk_Text;
 
    begin
-      if Result = No_Result then
+      if Result = No_Completion_Results then
          return Returned;
       end if;
 
@@ -368,6 +371,16 @@ package body Libclang.Index is
 
       return Returned;
    end Spelling;
+
+   ----------
+   -- Kind --
+   ----------
+
+   function Kind
+     (Result : Clang_Completion_Result) return clang_c_Index_h.CXCursorKind is
+   begin
+      return Result.Result.CursorKind;
+   end Kind;
 
    -------------------------
    -- Create_Unsaved_File --

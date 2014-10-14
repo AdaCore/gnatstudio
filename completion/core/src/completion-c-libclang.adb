@@ -24,6 +24,7 @@ with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
 with GPS.Editors; use GPS.Editors;
 
+with Language;     use Language;
 with Language.Cpp; use Language.Cpp;
 
 with GNATCOLL.Projects; use GNATCOLL.Projects;
@@ -33,6 +34,8 @@ with GNATCOLL.Utils;    use GNATCOLL.Utils;
 with Completion.C.Libclang.Utils; use Completion.C.Libclang.Utils;
 
 with UTF8_Utils; use UTF8_Utils;
+
+with clang_c_Index_h; use clang_c_Index_h;
 
 package body Completion.C.Libclang is
 
@@ -173,18 +176,39 @@ package body Completion.C.Libclang is
      (It : Libclang_Iterator) return Completion_Proposal'Class
    is
       Proposal : Simple_Libclang_Completion_Proposal;
-      Strs     : constant Completion_Strings :=
-        Spelling (Nth_Result (It.Resolver.Completions, It.Next_Num));
+      The_Res  : constant Clang_Completion_Result :=
+        Nth_Result (It.Resolver.Completions, It.Next_Num);
+      Strs     : constant Completion_Strings := Spelling (The_Res);
       --  ??? Break this into steps and add traces
    begin
       Proposal.Resolver := It.Resolver;
       Proposal.Name := new String'(To_String (Strs.Completion));
 
-      Proposal.Category := Cat_Unknown;
-      --  ??? get the kind from libclang
-
       Proposal.Label := Strs.Completion;
       Proposal.Documentation := Strs.Doc;
+
+      case Kind (The_Res) is
+         when CXCursor_EnumDecl | CXCursor_EnumConstantDecl =>
+            Proposal.Category := Cat_Literal;
+
+         when CXCursor_FieldDecl =>
+            Proposal.Category := Cat_Field;
+
+         when CXCursor_FunctionDecl | CXCursor_FunctionTemplate =>
+            Proposal.Category := Cat_Function;
+
+         when CXCursor_ParmDecl =>
+            Proposal.Category := Cat_Parameter;
+
+         when CXCursor_TypedefDecl | CXCursor_TypeAliasDecl =>
+            Proposal.Category := Cat_Type;
+
+         when CXCursor_VarDecl =>
+            Proposal.Category := Cat_Variable;
+
+         when others =>
+            Proposal.Category := Cat_Unknown;
+      end case;
 
       return Proposal;
    end Get;

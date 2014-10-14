@@ -17,6 +17,8 @@
 
 with clang_c_Index_h;
 
+with System;
+
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 
@@ -103,6 +105,8 @@ package Libclang.Index is
    -----------------------
 
    type Clang_Translation_Unit is private;
+
+   No_Translation_Unit : constant Clang_Translation_Unit;
 
    type Clang_Translation_Unit_Flags is mod 2 ** Integer'Size;
    No_Translation_Unit_Flags    : constant Clang_Translation_Unit_Flags := 0;
@@ -227,7 +231,7 @@ package Libclang.Index is
    type Clang_Complete_Results is private;
    --  A set of completion results
 
-   No_Results : constant Clang_Complete_Results;
+   No_Complete_Results : constant Clang_Complete_Results;
 
    procedure Dispose (Results : in out Clang_Complete_Results);
    --  Free memory associated to Results
@@ -310,7 +314,7 @@ package Libclang.Index is
    type Clang_Completion_Result is private;
    --  One completion result
 
-   No_Result : constant Clang_Completion_Result;
+   No_Completion_Results : constant Clang_Completion_Result;
 
    function Num_Results (Results : Clang_Complete_Results) return Natural;
    --  Return the number of results in Results.
@@ -333,6 +337,10 @@ package Libclang.Index is
      (Result : Clang_Completion_Result) return Completion_Strings;
    --  Return the tex1t associated with Result
 
+   function Kind
+     (Result : Clang_Completion_Result) return clang_c_Index_h.CXCursorKind;
+   --  Return the kind of the result
+
 private
 
    type Clang_Index is record
@@ -345,17 +353,22 @@ private
       CX_Translation_Unit : clang_c_Index_h.CXTranslationUnit;
    end record;
 
+   No_Translation_Unit : constant Clang_Translation_Unit :=
+     (CX_Translation_Unit =>
+        clang_c_Index_h.CXTranslationUnit (System.Null_Address));
+
    type Clang_Complete_Results is record
       CXCodeCompleteResults : access clang_c_Index_h.CXCodeCompleteResults;
    end record;
 
-   No_Results : constant Clang_Complete_Results :=
+   No_Complete_Results : constant Clang_Complete_Results :=
      (CXCodeCompleteResults => <>);
 
    type Clang_Completion_Result is record
       Result : access clang_c_Index_h.CXCompletionResult;
    end record;
 
-   No_Result : constant Clang_Completion_Result := (Result => null);
+   No_Completion_Results : constant Clang_Completion_Result :=
+     (Result => null);
 
 end Libclang.Index;
