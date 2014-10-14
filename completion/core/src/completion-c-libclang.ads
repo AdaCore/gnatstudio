@@ -50,6 +50,7 @@ private
       Kernel      : Kernel_Handle;
       TU          : Clang_Translation_Unit_Access;
       Completions : Clang_Complete_Results_Access;
+      Prefix      : String_Access;
    end record;
 
 end Completion.C.Libclang;
