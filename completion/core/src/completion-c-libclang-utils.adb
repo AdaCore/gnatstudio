@@ -28,7 +28,7 @@ with GNATCOLL.Traces;   use GNATCOLL.Traces;
 package body Completion.C.Libclang.Utils is
 
    Me : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG_UTILS", On);
+     GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG.UTILS", On);
 
    ---------------------
    -- Get_Search_Path --

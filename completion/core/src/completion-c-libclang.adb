@@ -42,6 +42,9 @@ package body Completion.C.Libclang is
    Me : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG", On);
 
+   Diagnostics : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG.DIAGNOSTICS", Off);
+
    Indexer : Clang_Index;
    --  ??? This should be shared GPS-wide
 
@@ -246,7 +249,7 @@ package body Completion.C.Libclang is
       R.Kernel  := Kernel;
 
       if Indexer = No_Index then
-         Indexer := Create_Index (True, True);
+         Indexer := Create_Index (True, Active (Diagnostics));
       end if;
 
       return new Libclang_Resolver'(R);
