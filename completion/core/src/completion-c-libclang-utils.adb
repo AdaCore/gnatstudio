@@ -30,9 +30,9 @@ package body Completion.C.Libclang.Utils is
    Me : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG.UTILS", On);
 
-   ---------------------
-   -- Get_Search_Path --
-   ---------------------
+   -------------------------------
+   -- Get_Compiler_Search_Paths --
+   -------------------------------
 
    Last_Project : Project_Type;
    Last_Lang    : GNAT.Strings.String_Access;
@@ -43,7 +43,7 @@ package body Completion.C.Libclang.Utils is
    --  ??? We should cache this seriously, in a hash table indexed by
    --  project/language, cleaned on project/scenario switch.
 
-   function Get_Search_Path
+   function Get_Compiler_Search_Paths
      (Kernel   : Kernel_Handle;
       Project  : Project_Type;
       Language : String) return Unbounded_String_Array
@@ -209,13 +209,85 @@ package body Completion.C.Libclang.Utils is
       --  We are about to return results: cache this
       if Last_Lang /= null then
          GNAT.Strings.Free (Last_Lang);
-         Last_Project := Project;
-         Last_Lang := new String'(Language);
-         Last_Result := Result (1 .. First_Free - 1);
-         Last_Result_Index := First_Free - 1;
       end if;
 
+      Last_Project := Project;
+      Last_Lang := new String'(Language);
+      Last_Result := Result;
+      Last_Result_Index := First_Free - 1;
+
       return Result (1 .. First_Free - 1);
-   end Get_Search_Path;
+   end Get_Compiler_Search_Paths;
+
+   -----------------------------
+   -- Get_Project_Source_Dirs --
+   -----------------------------
+
+   Source_Dirs_Root   : Project_Type;
+   Source_Dirs_Lang   : GNAT.Strings.String_Access;
+   Source_Dirs_Result : Unbounded_String_Array (1 .. 2048);
+   Source_Dirs_Index  : Natural;
+   --  ??? Another horrible cache, this should be reworked
+
+   function Get_Project_Source_Dirs
+     (Kernel   : Kernel_Handle;
+      Project  : Project_Type;
+      Language : String) return Unbounded_String_Array
+   is
+      pragma Unreferenced (Kernel);
+      P    : Project_Type;
+      It   : Project_Iterator;
+
+      Result     : Unbounded_String_Array (1 .. 2048);
+      First_Free : Natural := 1;
+
+      --  ??? We do not support more than 2048 source directories
+   begin
+      if Source_Dirs_Lang /= null
+        and then Source_Dirs_Lang.all = Language
+        and then Source_Dirs_Root = Project
+      then
+         --  Return the cached result
+         return Source_Dirs_Result (1 .. Source_Dirs_Index);
+      end if;
+
+      It := Start (Project,
+                   Recursive        => True,
+                   Direct_Only      => False,
+                   Include_Extended => True);
+
+      P := Current (It);
+
+      while P /= No_Project loop
+         if Has_Language (P, Language) then
+            declare
+               Dirs : constant File_Array :=
+                 Source_Dirs (P, Recursive => False);
+            begin
+               for D in Dirs'Range loop
+                  Result (First_Free) := To_Unbounded_String
+                    ("-I" & (+Dirs (D).Full_Name));
+                  First_Free := First_Free + 1;
+               end loop;
+            end;
+         end if;
+
+         Next (It);
+         P := Current (It);
+      end loop;
+
+      --  Cache the results
+
+      Source_Dirs_Root := Project;
+      if Source_Dirs_Lang /= null then
+         Free (Source_Dirs_Lang);
+      end if;
+
+      Source_Dirs_Lang := new String'(Language);
+      Source_Dirs_Result := Result;
+      Source_Dirs_Index := First_Free - 1;
+
+      return Result;
+   end Get_Project_Source_Dirs;
 
 end Completion.C.Libclang.Utils;

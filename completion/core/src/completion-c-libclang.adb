@@ -382,8 +382,21 @@ package body Completion.C.Libclang is
             Resolver.TU := Parse_Translation_Unit
               (Index             => Indexer,
                Source_Filename   => Filename,
-               Command_Line_Args => The_Switches
-               & Get_Search_Path (Resolver.Kernel, F_Info.Project, Lang),
+               Command_Line_Args =>
+
+               --  We pass to libclang a list of switches made of:
+               --  ... the C/C++ switches specified in this project
+               The_Switches
+
+               --  ... a -I<dir> for each directory in the subprojects
+               --  of this project
+               & Get_Project_Source_Dirs
+                 (Resolver.Kernel, F_Info.Project, Lang)
+
+               --  ... a -I<dir> for each dir in the compiler search path
+               & Get_Compiler_Search_Paths
+                 (Resolver.Kernel, F_Info.Project, Lang),
+
                Unsaved_Files     => Unsaved_Files,
                Options           => No_Translation_Unit_Flags);
 
@@ -398,7 +411,6 @@ package body Completion.C.Libclang is
             Line          => Loc.Line,
             Column        => Integer (Loc.Column),
             Unsaved_Files => Unsaved_Files);
-         --  ??? this is definitely not the right column - we need better
       end;
 
       Completion_List_Pckg.Append (Result.List, Component);

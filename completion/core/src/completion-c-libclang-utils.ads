@@ -24,10 +24,18 @@ with GPS.Kernel; use GPS.Kernel;
 
 package Completion.C.Libclang.Utils is
 
-   function Get_Search_Path
+   function Get_Compiler_Search_Paths
      (Kernel   : Kernel_Handle;
       Project  : Project_Type;
       Language : String) return Unbounded_String_Array;
    --  Return the search path for the given language as a set of "-I" switches
+
+   function Get_Project_Source_Dirs
+     (Kernel   : Kernel_Handle;
+      Project  : Project_Type;
+      Language : String) return Unbounded_String_Array;
+   --  Go through all the source directories in the project hierarchy, and
+   --  return a list of all those who might contain sources of the given
+   --  language. The result array is returned as a set of "-I" switches.
 
 end Completion.C.Libclang.Utils;
