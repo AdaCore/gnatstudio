@@ -37,6 +37,16 @@ KP-60-NA01-019 GB: builder target command cleared on target properties change
               Change the target's properties.
               Paste the target's command.
 
+KP-60-N926-030 GPS: 'goto matching delimiter' command doesn't scroll editor
+
+  Problem:    When using the goto matching delimiter editor command, the editor
+              would not scroll itself when the matching delimiter was not
+              visible in the current editor view
+
+  Status:     This was fixed in 6.1 on 2014-10-14
+
+  Workaround: Scroll the editor manually
+
 KP-60-N922-042 GB: support viewing ada files from git history view
 
   Problem:    When opening from history view a git commit version of an ada
