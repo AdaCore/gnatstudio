@@ -67,7 +67,7 @@ begin
       --  Get completion
 
       declare
-         Completion : Clang_Complete_Results'Class :=
+         Completion : Clang_Complete_Results_Access :=
            TU.Complete_At (Filename      => Source_Filename,
                            Line          => Line,
                            Column        => Column);
@@ -81,7 +81,7 @@ begin
                       & ASCII.HT & To_String (Strings.Doc));
          end loop;
 
-         Completion.Dispose;
+         Dispose (Completion);
       end;
 
       Dispose (TU);
