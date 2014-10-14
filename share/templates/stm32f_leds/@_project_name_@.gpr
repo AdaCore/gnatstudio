@@ -11,18 +11,13 @@ project @_project_name_@ is
    end Compiler;
 
    package Builder is
-      for Default_Switches ("ada") use 
-         ("-g", 
-          -- "--RTS=/GNATPRO/7.2.1/lib/gnat/arm-eabi/ravenscar-sfp-stm32f4");
-          "--RTS=arm-eabi/ravenscar-sfp-stm32f4",
-          "-O0");
+      for Default_Switches ("ada") use ("-g", "-O0");
    end Builder;
 
+   for Runtime ("Ada") use "ravenscar-sfp-stm32f4";
+   for Target use "arm-eabi";
 
    package Ide is
-      for Gnat use "arm-eabi-gnat";
-      for Gnatlist use "arm-eabi-gnatls";
-      for Debugger_Command use "arm-eabi-gdb";
       for Program_Host use "localhost:4242";
       for Communication_Protocol use "remote";
    end Ide;

@@ -86,7 +86,9 @@ class BoardLoader(Module):
                                       index="Ada") + \
             p.get_attribute_as_string(package="Builder",
                                       attribute="Switches",
-                                      index="Ada")
+                                      index="Ada") + \
+            p.get_attribute_as_string("runtime", index="Ada")
+
         if "stm32f4" in s:
             for b in self.__buttons:
                 b.show()
@@ -341,14 +343,6 @@ class BoardLoader(Module):
                 con = promise.ProcessWrapper(cmd)
             except:
                 self.__error_exit("st-util not installed/callable.\n")
-                return
-
-            r1 = yield con.wait_until_match("Device connected is", 2000)
-            r2 = yield con.wait_until_match("Listening at", 500)
-
-            if not (r1 and r2):
-                self.__error_exit("Connection Error. Exit.\n")
-                con.get().kill()
                 return
 
             self.__connection = con
