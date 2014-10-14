@@ -45,7 +45,10 @@ package body CodePeer.Module.Filters is
    begin
       --  Quick check on whether we have a separate:
 
-      if Kernel.Registry.Tree.Info (File_Name).Unit_Part = Unit_Separate then
+      if not Kernel.Registry.Tree.Root_Project.Is_Aggregate_Project
+        and then Kernel.Registry.Tree.Info (File_Name).Unit_Part =
+                   Unit_Separate
+      then
          return True;
       end if;
 
