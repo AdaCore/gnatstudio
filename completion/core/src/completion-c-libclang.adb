@@ -162,7 +162,7 @@ package body Completion.C.Libclang is
 
    overriding function At_End (It : Libclang_Iterator) return Boolean is
    begin
-      return It.Next_Num > It.Resolver.Completions.Num_Results;
+      return It.Next_Num > Num_Results (It.Resolver.Completions);
    end At_End;
 
    ---------
@@ -174,7 +174,7 @@ package body Completion.C.Libclang is
    is
       Proposal : Simple_Libclang_Completion_Proposal;
       Strs     : constant Completion_Strings :=
-        It.Resolver.Completions.Nth_Result (It.Next_Num).Spelling;
+        Spelling (Nth_Result (It.Resolver.Completions, It.Next_Num));
       --  ??? Break this into steps and add traces
    begin
       Proposal.Resolver := It.Resolver;
@@ -352,8 +352,9 @@ package body Completion.C.Libclang is
                The_Switches (J) := To_Unbounded_String (C_Switches (J).all);
             end loop;
 
-            Resolver.TU := Indexer.Parse_Translation_Unit
-              (Source_Filename   => Filename,
+            Resolver.TU := Parse_Translation_Unit
+              (Index             => Indexer,
+               Source_Filename   => Filename,
                Command_Line_Args => The_Switches
                & Get_Search_Path (Resolver.Kernel, F_Info.Project, Lang),
                Unsaved_Files     => Unsaved_Files,
@@ -364,8 +365,9 @@ package body Completion.C.Libclang is
 
          Loc := Loc.Forward_Char (0 - UTF8_Length (Resolver.Prefix.all));
 
-         Resolver.Completions := Resolver.TU.Complete_At
-           (Filename      => +Context.File.Full_Name,
+         Resolver.Completions := Complete_At
+           (Resolver.TU,
+            Filename      => +Context.File.Full_Name,
             Line          => Loc.Line,
             Column        => Integer (Loc.Column),
             Unsaved_Files => Unsaved_Files);

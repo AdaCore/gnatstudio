@@ -54,28 +54,30 @@ begin
    --  Create TU
 
    declare
-      TU : Clang_Translation_Unit_Access :=
-        Index.Parse_Translation_Unit
-          (Source_Filename   => Source_Filename,
+      TU : Clang_Translation_Unit :=
+        Parse_Translation_Unit
+          (Index,
+           Source_Filename   => Source_Filename,
            Command_Line_Args => CL);
 
       Success : Boolean;
       pragma Unreferenced (Success);
    begin
-      Success := TU.Reparse_Translation_Unit;
+      Success := Reparse_Translation_Unit (TU);
 
       --  Get completion
 
       declare
-         Completion : Clang_Complete_Results_Access :=
-           TU.Complete_At (Filename      => Source_Filename,
-                           Line          => Line,
-                           Column        => Column);
+         Completion : Clang_Complete_Results :=
+           Complete_At (TU,
+                        Filename => Source_Filename,
+                        Line     => Line,
+                        Column   => Column);
 
          Strings : Completion_Strings;
       begin
-         for J in 1 .. Completion.Num_Results loop
-            Strings := Completion.Nth_Result (J).Spelling;
+         for J in 1 .. Num_Results (Completion) loop
+            Strings := Spelling (Nth_Result (Completion, J));
 
             Put_Line (To_String (Strings.Completion)
                       & ASCII.HT & To_String (Strings.Doc));
@@ -87,6 +89,5 @@ begin
       Dispose (TU);
    end;
 
-   Index.Dispose;
-
+   Dispose (Index);
 end Test_Index;

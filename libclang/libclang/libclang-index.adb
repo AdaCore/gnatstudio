@@ -18,7 +18,6 @@
 with System; use System;
 
 with Ada.Unchecked_Conversion;
-with Ada.Unchecked_Deallocation;
 
 with Interfaces.C;         use Interfaces.C;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
@@ -83,7 +82,7 @@ package body Libclang.Index is
       Unsaved_Files         : Unsaved_File_Array := No_Unsaved_Files;
       Options               : Clang_Translation_Unit_Flags :=
         No_Translation_Unit_Flags)
-      return Clang_Translation_Unit_Access
+      return Clang_Translation_Unit
    is
       TU : Clang_Translation_Unit;
 
@@ -141,7 +140,7 @@ package body Libclang.Index is
          Free (CL (J));
       end loop;
 
-      return new Clang_Translation_Unit'(TU);
+      return TU;
    end Parse_Translation_Unit;
 
    ------------------------------
@@ -187,17 +186,11 @@ package body Libclang.Index is
    -- Dispose --
    -------------
 
-   procedure Dispose (TU : in out Clang_Translation_Unit_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Clang_Translation_Unit'Class, Clang_Translation_Unit_Access);
+   procedure Dispose (TU : in out Clang_Translation_Unit) is
    begin
-      if TU = null then
-         return;
+      if System.Address (TU.CX_Translation_Unit) /= System.Null_Address then
+         clang_disposeTranslationUnit (TU.CX_Translation_Unit);
       end if;
-
-      clang_disposeTranslationUnit (TU.CX_Translation_Unit);
-      Unchecked_Free (TU);
-      TU := null;
    end Dispose;
 
    -----------------
@@ -211,7 +204,7 @@ package body Libclang.Index is
       Column        : Natural;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
       Options       : Clang_Code_Complete_Flags := 0)
-      return Clang_Complete_Results_Access
+      return Clang_Complete_Results
    is
       C_Filename : chars_ptr;
       C_Unsaved_Files     : System.Address;
@@ -253,7 +246,7 @@ package body Libclang.Index is
       Free (C_Filename);
 
       if C_Returned = System.Null_Address then
-         return null;
+         return No_Results;
       else
          Result.CXCodeCompleteResults := Convert (C_Returned);
 
@@ -261,25 +254,21 @@ package body Libclang.Index is
 
       end if;
 
-      return new Clang_Complete_Results'(Result);
+      return Result;
    end Complete_At;
 
    -------------
    -- Dispose --
    -------------
 
-   procedure Dispose (Results : in out Clang_Complete_Results_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Clang_Complete_Results'Class, Clang_Complete_Results_Access);
+   procedure Dispose (Results : in out Clang_Complete_Results) is
    begin
-      if Results = null then
+      if Results = No_Results then
          return;
       end if;
 
       clang_disposeCodeCompleteResults (Results.CXCodeCompleteResults);
-
-      Unchecked_Free (Results);
-      Results := null;
+      Results := No_Results;
    end Dispose;
 
    -----------------
@@ -297,7 +286,7 @@ package body Libclang.Index is
 
    function Nth_Result
      (Results : Clang_Complete_Results;
-      N       : Positive) return Clang_Completion_Result'Class
+      N       : Positive) return Clang_Completion_Result
    is
       use CXCompletionResult_Pointer;
 

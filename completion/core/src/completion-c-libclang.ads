@@ -48,8 +48,8 @@ private
 
    type Libclang_Resolver is new Completion_Resolver with record
       Kernel      : Kernel_Handle;
-      TU          : Clang_Translation_Unit_Access;
-      Completions : Clang_Complete_Results_Access;
+      TU          : Clang_Translation_Unit;
+      Completions : Clang_Complete_Results;
       Prefix      : String_Access;
    end record;
 
