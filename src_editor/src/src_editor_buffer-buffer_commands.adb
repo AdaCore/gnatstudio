@@ -24,6 +24,7 @@ with Gtk.Widget;      use Gtk.Widget;
 with GPS.Kernel;      use GPS.Kernel;
 with GPS.Kernel.MDI;  use GPS.Kernel.MDI;
 with Src_Editor_View; use Src_Editor_View;
+with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
 
 package body Src_Editor_Buffer.Buffer_Commands is
 
@@ -66,11 +67,11 @@ package body Src_Editor_Buffer.Buffer_Commands is
          Counter_Max => Natural'Last);
 
       if Found > 0 then
-         if Equal (First_Highlight_Iter, On_Cursor_Iter) then
-            Place_Cursor (Buffer, Last_Highlight_Iter);
-         else
-            Place_Cursor (Buffer, First_Highlight_Iter);
-         end if;
+         Move (Get_Main_Cursor (Buffer),
+               (if Equal (First_Highlight_Iter, On_Cursor_Iter)
+                then Last_Highlight_Iter
+                else First_Highlight_Iter), False);
+         View.Scroll_To_Cursor_Location;
       end if;
 
       return Commands.Success;
