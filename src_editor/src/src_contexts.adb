@@ -2319,9 +2319,7 @@ package body Src_Contexts is
      (Context     : access File_Search_Context'Class;
       Replacement : Replacement_Pattern;
       Matches     : Match_Result_Array_Access;
-      Buffer      : Src_Editor_Buffer.Source_Buffer)
-   is
-      Last_Replaced : Natural := 0;
+      Buffer      : Src_Editor_Buffer.Source_Buffer) is
    begin
       --  Replace starting from the end, so as to preserve lines and
       --  columns
