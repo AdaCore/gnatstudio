@@ -2331,29 +2331,22 @@ package body Src_Contexts is
       Buffer.Disable_Highlighting;
 
       for M in reverse Matches'Range loop
-         --  Check if current match doesn't overlap with previous replace
-         if Last_Replaced = 0 or else
-           Matches (M).Finish.Index < Matches (Last_Replaced).Start.Index
-         then
-            declare
-               Text : constant String := Get_Text
-                 (Buffer,
-                  Editable_Line_Type (Matches (M).Start.Line),
-                  Matches (M).Start.Column,
-                  Editable_Line_Type (Matches (M).Finish.Line),
-                  Matches (M).Finish.Column + 1);
-            begin
-               Replace_Slice
-                 (Buffer,
-                  Editable_Line_Type (Matches (M).Start.Line),
-                  Matches (M).Start.Column,
-                  Editable_Line_Type (Matches (M).Finish.Line),
-                  Matches (M).Finish.Column + 1,
-                  Context.Replacement_Text (Matches (M), Replacement, Text));
-
-               Last_Replaced := M;
-            end;
-         end if;
+         declare
+            Text : constant String := Get_Text
+              (Buffer,
+               Editable_Line_Type (Matches (M).Start.Line),
+               Matches (M).Start.Column,
+               Editable_Line_Type (Matches (M).Finish.Line),
+               Matches (M).Finish.Column + 1);
+         begin
+            Replace_Slice
+              (Buffer,
+               Editable_Line_Type (Matches (M).Start.Line),
+               Matches (M).Start.Column,
+               Editable_Line_Type (Matches (M).Finish.Line),
+               Matches (M).Finish.Column + 1,
+               Context.Replacement_Text (Matches (M), Replacement, Text));
+         end;
       end loop;
 
       Buffer.Enable_Highlighting;

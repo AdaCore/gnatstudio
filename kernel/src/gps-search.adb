@@ -769,7 +769,7 @@ package body GPS.Search is
    is
    begin
       Match (Self.Pattern.all, Buffer, Context.Groups,
-             Context.Start.Index + 1, Context.Buffer_End);
+             Context.Finish.Index + 1, Context.Buffer_End);
 
       --  The second test below works around an apparent bug in GNAT.Regpat
 
