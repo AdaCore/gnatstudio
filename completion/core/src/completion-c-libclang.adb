@@ -31,11 +31,11 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
-with Completion.C.Libclang.Utils; use Completion.C.Libclang.Utils;
-
 with UTF8_Utils; use UTF8_Utils;
 
 with clang_c_Index_h; use clang_c_Index_h;
+with Language.Libclang; use Language.Libclang;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package body Completion.C.Libclang is
 
@@ -355,52 +355,9 @@ package body Completion.C.Libclang is
               (Filename,
                Ada.Strings.Unbounded.String_Access (Context.Buffer)));
          --  ??? We should fill other unsaved_files!
-
-         Lang             : constant String :=
-           Resolver.Kernel.Lang_Handler.Get_Language_From_File (Context.File);
-         C_Switches       : String_List_Access;
-         Ignored          : Boolean;
-
-         F_Info : constant File_Info'Class :=
-           File_Info'Class
-             (Resolver.Kernel.Registry.Tree.Info_Set
-                (Context.File).First_Element);
-
       begin
-         --  Retrieve the switches for this file
-         Switches (F_Info.Project,
-                   "compiler", Context.File, Lang, C_Switches, Ignored);
-
-         declare
-            The_Switches : Unbounded_String_Array (C_Switches'Range);
-         begin
-            for J in C_Switches'Range loop
-               The_Switches (J) := To_Unbounded_String (C_Switches (J).all);
-            end loop;
-
-            Resolver.TU := Parse_Translation_Unit
-              (Index             => Indexer,
-               Source_Filename   => Filename,
-               Command_Line_Args =>
-
-               --  We pass to libclang a list of switches made of:
-               --  ... the C/C++ switches specified in this project
-               The_Switches
-
-               --  ... a -I<dir> for each directory in the subprojects
-               --  of this project
-               & Get_Project_Source_Dirs
-                 (Resolver.Kernel, F_Info.Project, Lang)
-
-               --  ... a -I<dir> for each dir in the compiler search path
-               & Get_Compiler_Search_Paths
-                 (Resolver.Kernel, F_Info.Project, Lang),
-
-               Unsaved_Files     => Unsaved_Files,
-               Options           => No_Translation_Unit_Flags);
-
-            Free (C_Switches);
-         end;
+         Resolver.TU := Translation_Unit
+           (Core_Kernel (Resolver.Kernel), Context.File, Unsaved_Files);
 
          Loc := Loc.Forward_Char (0 - UTF8_Length (Resolver.Prefix.all));
 

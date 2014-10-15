@@ -23,9 +23,10 @@ with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 with GNAT.OS_Lib;
 with GNAT.Regpat;     use GNAT.Regpat;
 
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GNAT.Strings; use GNAT.Strings;
 
-package body Completion.C.Libclang.Utils is
+package body Language.Libclang.Utils is
 
    Me : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG.UTILS", On);
@@ -44,7 +45,7 @@ package body Completion.C.Libclang.Utils is
    --  project/language, cleaned on project/scenario switch.
 
    function Get_Compiler_Search_Paths
-     (Kernel   : Kernel_Handle;
+     (Kernel   : Core_Kernel;
       Project  : Project_Type;
       Language : String) return Unbounded_String_Array
    is
@@ -167,7 +168,7 @@ package body Completion.C.Libclang.Utils is
          declare
          begin
             while True loop
-               Expect (Fd, Match, All_Match, Timeout => 1000);
+               GNAT.Expect.TTY.Expect (Fd, Match, All_Match, Timeout => 1000);
 
                declare
                   S : constant String :=
@@ -230,7 +231,7 @@ package body Completion.C.Libclang.Utils is
    --  ??? Another horrible cache, this should be reworked
 
    function Get_Project_Source_Dirs
-     (Kernel   : Kernel_Handle;
+     (Kernel   : Core_Kernel;
       Project  : Project_Type;
       Language : String) return Unbounded_String_Array
    is
@@ -290,4 +291,4 @@ package body Completion.C.Libclang.Utils is
       return Result;
    end Get_Project_Source_Dirs;
 
-end Completion.C.Libclang.Utils;
+end Language.Libclang.Utils;
