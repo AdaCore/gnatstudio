@@ -1850,11 +1850,15 @@ package body GVD.Process is
       Check_Extension (Module);
 
       declare
+         Target      : constant String := Kernel.Get_Target;
+         Default_Gdb : constant String := (if Target = ""
+                                           then "gdb"
+                                           else Target & "-gdb");
          Args : GNAT.OS_Lib.Argument_List_Access :=
                   GNAT.OS_Lib.Argument_String_To_List
                     (Project.Attribute_Value
                        (Debugger_Command_Attribute,
-                        Default => "gdb"));
+                        Default => Default_Gdb));
 
       begin
          Proxy := new GPS_Proxy;

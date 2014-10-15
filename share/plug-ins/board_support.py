@@ -380,7 +380,6 @@ class BoardLoader(Module):
 
         # STEP 3.5 run the program and set __refresh with True
         msg_is("\nBoard_Loader_Complete!\n")
-        self.__manager.get().non_blocking_send("c")
         self.__refresh = True
         self.__is_loading = False
 
