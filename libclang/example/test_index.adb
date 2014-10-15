@@ -31,63 +31,69 @@ with Ada.Text_IO; use Ada.Text_IO;
 ----------------
 
 procedure Test_Index is
-
-   Index : Clang_Index;
-   Source_Filename : constant String := Argument (1);
-   CL : Unbounded_String_Array (4 .. Argument_Count);
-
-   Line, Column : Natural;
 begin
-
-   Index := Create_Index (Exclude_Declarations_From_PCH => False,
-                          Display_Diagnostics           => False);
-
-   --  Parse args
-
-   Line := Integer'Value (Argument (2));
-   Column := Integer'Value (Argument (3));
-
-   for J in 4 .. Argument_Count loop
-      CL (J) := To_Unbounded_String (Argument (J));
-   end loop;
-
-   --  Create TU
+   if Argument_Count < 3 then
+      Put_Line ("Usage : test_index <source_file> <line> <column>"
+                & " <compiler_args*>");
+      return;
+   end if;
 
    declare
-      TU : Clang_Translation_Unit :=
-        Parse_Translation_Unit
-          (Index,
-           Source_Filename   => Source_Filename,
-           Command_Line_Args => CL);
-
-      Success : Boolean;
-      pragma Unreferenced (Success);
+      Index : Clang_Index;
+      Source_Filename : constant String := Argument (1);
+      CL : Unbounded_String_Array (4 .. Argument_Count);
+      Line, Column : Natural;
    begin
-      Success := Reparse_Translation_Unit (TU);
+      Index := Create_Index (Exclude_Declarations_From_PCH => False,
+                             Display_Diagnostics           => False);
 
-      --  Get completion
+      --  Parse args
+
+      Line := Integer'Value (Argument (2));
+      Column := Integer'Value (Argument (3));
+
+      for J in 4 .. Argument_Count loop
+         CL (J) := To_Unbounded_String (Argument (J));
+      end loop;
+
+      --  Create TU
 
       declare
-         Completion : Clang_Complete_Results :=
-           Complete_At (TU,
-                        Filename => Source_Filename,
-                        Line     => Line,
-                        Column   => Column);
+         TU : Clang_Translation_Unit :=
+           Parse_Translation_Unit
+             (Index,
+              Source_Filename   => Source_Filename,
+              Command_Line_Args => CL);
 
-         Strings : Completion_Strings;
+         Success : Boolean;
+         pragma Unreferenced (Success);
       begin
-         for J in 1 .. Num_Results (Completion) loop
-            Strings := Spelling (Nth_Result (Completion, J));
+         Success := Reparse_Translation_Unit (TU);
 
-            Put_Line (To_String (Strings.Completion)
-                      & ASCII.HT & To_String (Strings.Doc));
-         end loop;
+         --  Get completion
 
-         Dispose (Completion);
+         declare
+            Completion : Clang_Complete_Results :=
+              Complete_At (TU,
+                           Filename => Source_Filename,
+                           Line     => Line,
+                           Column   => Column);
+
+            Strings : Completion_Strings;
+         begin
+            for J in 1 .. Num_Results (Completion) loop
+               Strings := Spelling (Nth_Result (Completion, J));
+
+               Put_Line (To_String (Strings.Completion)
+                         & ASCII.HT & To_String (Strings.Doc));
+            end loop;
+
+            Dispose (Completion);
+         end;
+
+         Dispose (TU);
       end;
 
-      Dispose (TU);
+      Dispose (Index);
    end;
-
-   Dispose (Index);
 end Test_Index;
