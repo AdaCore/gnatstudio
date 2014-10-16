@@ -1011,7 +1011,7 @@ arrow, as seen in the screenshot above).
     Print files.  This program is required under Unix systems to print, and
     is set to :program:`a2ps` by default.  If :program:`a2ps` is not
     installed on your system, download it from
-    `ftp://ftp.enst.fr/pub/unix/a2ps/ <ftp://ftp.enst.fr/pub/unix/a2ps/>`_.
+    `https://www.gnu.org/software/a2ps/ <https://www.gnu.org/software/a2ps/>`_.
     You can also specify other programs such as :program:`lp`.
 
     On Windows, this program is optional and the preference is empty by
