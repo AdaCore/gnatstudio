@@ -25,3 +25,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-NA09-055 GPS: replace all not working with overlapped matches
+
+  Problem:    When there are overlapped matches in search Replace All could
+              make changes not expected by the user, because it replaces only
+              last match from sequence of overlapped matches.
+
+  Status:     This was fixed in 6.2 on 2014-10-15
+
+  Workaround: Use Replace & Find to replace each needed occurrence manually.
