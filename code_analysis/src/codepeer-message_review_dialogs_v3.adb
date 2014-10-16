@@ -138,7 +138,7 @@ package body CodePeer.Message_Review_Dialogs_V3 is
         (Probability : CodePeer.Message_Ranking_Level) return String is
       begin
          case Probability is
-            when CodePeer.Informational =>
+            when CodePeer.Info =>
                return "Info";
 
             when CodePeer.Low =>

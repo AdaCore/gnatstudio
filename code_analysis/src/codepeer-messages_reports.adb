@@ -529,7 +529,7 @@ package body CodePeer.Messages_Reports is
       Self.Show_Ranking (CodePeer.Suppressed) :=
         Histories.Get_History
           (Kernel.Get_History.all, Ranking_Suppressed_History);
-      Self.Show_Ranking (CodePeer.Informational) :=
+      Self.Show_Ranking (CodePeer.Info) :=
         Histories.Get_History
           (Kernel.Get_History.all, Ranking_Informational_History);
       Self.Show_Ranking (CodePeer.Low) :=
@@ -789,7 +789,7 @@ package body CodePeer.Messages_Reports is
          Messages_Report (Self));
 
       Gtk.Check_Button.Gtk_New (Check, -"informational");
-      Check.Set_Active (Self.Show_Ranking (CodePeer.Informational));
+      Check.Set_Active (Self.Show_Ranking (CodePeer.Info));
       Filter_Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
@@ -1092,11 +1092,11 @@ package body CodePeer.Messages_Reports is
      (Object : access Gtk.Check_Button.Gtk_Check_Button_Record'Class;
       Self   : Messages_Report) is
    begin
-      Self.Show_Ranking (Informational) := Object.Get_Active;
+      Self.Show_Ranking (Info) := Object.Get_Active;
       Histories.Set_History
         (Self.Kernel.Get_History.all,
          Ranking_Informational_History,
-         Self.Show_Ranking (Informational));
+         Self.Show_Ranking (Info));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Informational_Messages_Toggled;
 

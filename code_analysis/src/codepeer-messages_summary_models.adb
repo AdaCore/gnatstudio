@@ -332,7 +332,7 @@ package body CodePeer.Messages_Summary_Models is
             end if;
 
          when Informational_Current_Count_Column =>
-            Set_Count_Image (CodePeer.Informational);
+            Set_Count_Image (CodePeer.Info);
 
          when Low_Current_Count_Column =>
             Set_Count_Image (CodePeer.Low);

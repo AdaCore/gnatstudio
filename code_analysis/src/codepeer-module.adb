@@ -1569,10 +1569,10 @@ package body CodePeer.Module is
          Module.Message_Styles (CodePeer.Low).Set_Background
            (Module.Message_Colors (CodePeer.Low).Get_Pref);
       elsif P =
-        Preference (Module.Message_Colors (CodePeer.Informational))
+        Preference (Module.Message_Colors (CodePeer.Info))
       then
-         Module.Message_Styles (CodePeer.Informational).Set_Background
-           (Module.Message_Colors (CodePeer.Informational).Get_Pref);
+         Module.Message_Styles (CodePeer.Info).Set_Background
+           (Module.Message_Colors (CodePeer.Info).Get_Pref);
       elsif P = Preference (Module.Message_Colors (CodePeer.Suppressed)) then
          Module.Message_Styles (CodePeer.Suppressed).Set_Background
            (Module.Message_Colors (CodePeer.Suppressed).Get_Pref);
@@ -1989,7 +1989,7 @@ package body CodePeer.Module is
                   when CodePeer.Low =>
                      return Decorate ("low");
 
-                  when CodePeer.Informational =>
+                  when CodePeer.Info =>
                      return "info";
 
                   when CodePeer.Suppressed =>
@@ -2197,7 +2197,7 @@ package body CodePeer.Module is
            -"Color to use for the background of low ranking messages",
            "#FFE87C");
 
-      Module.Message_Colors (CodePeer.Informational) :=
+      Module.Message_Colors (CodePeer.Info) :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
            "CodePeer-Messages-Informational-Background",
@@ -2246,9 +2246,9 @@ package body CodePeer.Module is
          Module.Message_Colors (CodePeer.Low),
          True);
       Initialize_Style
-        (Module.Message_Styles (CodePeer.Informational),
+        (Module.Message_Styles (CodePeer.Info),
          Informational_Probability_Style_Name,
-         Module.Message_Colors (CodePeer.Informational),
+         Module.Message_Colors (CodePeer.Info),
          True);
       Initialize_Style
         (Module.Message_Styles (CodePeer.Suppressed),
