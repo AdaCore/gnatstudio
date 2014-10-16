@@ -197,6 +197,10 @@ package body CodePeer.Bridge.Inspection_Readers is
       function Get_Optional_Line return Natural;
       --  Returns value of "line" attribute if specified, overwise returns 0.
 
+      function Get_Rank return Message_Ranking_Level;
+      --  Returns value of "rank" attribute. Handle old representation of Info
+      --  literal ("INFORMATIONAL").
+
       function Get_Vns return Natural_Sets.Set;
       --  Returns value of "vn_ids" attribute if specified, overwise returns
       --  empty set.
@@ -270,6 +274,21 @@ package body CodePeer.Bridge.Inspection_Readers is
          end if;
       end Get_Optional_Column;
 
+      --------------
+      -- Get_Rank --
+      --------------
+
+      function Get_Rank return Message_Ranking_Level is
+         Image : constant String := Attrs.Get_Value (Rank_Attribute);
+
+      begin
+         if Image = "INFORMATIONAL" then
+            return Info;
+
+         else
+            return Message_Ranking_Level'Value (Image);
+         end if;
+      end Get_Rank;
       ------------
       -- Get_Vn --
       ------------
@@ -506,8 +525,7 @@ package body CodePeer.Bridge.Inspection_Readers is
               Self.Message_Categories.Element
                 (Positive'Value (Attrs.Get_Value (Category_Attribute))),
               Is_Check,
-              CodePeer.Message_Ranking_Level'Value
-                (Attrs.Get_Value (Rank_Attribute)),
+              Get_Rank,
               Unclassified,
               True,
               new String'(Attrs.Get_Value ("text")),
