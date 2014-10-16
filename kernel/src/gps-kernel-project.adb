@@ -310,6 +310,14 @@ package body GPS.Kernel.Project is
             end;
          end loop;
       end;
+
+   exception
+      when Constraint_Error =>
+         --  Object_Path can raise Constraint_Error when project view was not
+         --  computed and aggreate project is loaded. Just ignore it, see
+         --  NA08-021.
+
+         null;
    end Do_Subdirs_Cleanup;
 
    ---------------------
