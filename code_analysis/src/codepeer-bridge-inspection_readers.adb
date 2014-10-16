@@ -36,6 +36,7 @@ package body CodePeer.Bridge.Inspection_Readers is
    Entry_Point_Access_Tag  : constant String := "entry_point_access";
    Object_Access_Tag       : constant String := "object_access";
 
+   Category_Attribute       : constant String := "category";
    Checks_Attribute         : constant String := "checks";
    Column_Attribute         : constant String := "column";
    Entry_Point_Attribute    : constant String := "entry_point";
@@ -47,8 +48,8 @@ package body CodePeer.Bridge.Inspection_Readers is
    Line_Attribute           : constant String := "line";
    Name_Attribute           : constant String := "name";
    Previous_Attribute       : constant String := "previous";
-   Category_Attribute       : constant String := "category";
    Primary_Checks_Attribute : constant String := "primary_checks";
+   Rank_Attribute           : constant String := "rank";
    Vn_Id_Attribute          : constant String := "vn-id";
    Vn_Ids_Attribute         : constant String := "vn-ids";
 
@@ -505,7 +506,8 @@ package body CodePeer.Bridge.Inspection_Readers is
               Self.Message_Categories.Element
                 (Positive'Value (Attrs.Get_Value (Category_Attribute))),
               Is_Check,
-              CodePeer.High,
+              CodePeer.Message_Ranking_Level'Value
+                (Attrs.Get_Value (Rank_Attribute)),
               Unclassified,
               True,
               new String'(Attrs.Get_Value ("text")),
