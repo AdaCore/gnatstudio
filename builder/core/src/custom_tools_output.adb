@@ -182,6 +182,10 @@ package body Custom_Tools_Output is
          Free (Proc);
          Free (Args);
       end;
+
+      if Self.Child /= null then
+         Self.Child.End_Of_Stream (Status, Command);
+      end if;
    end End_Of_Stream;
 
    -------------

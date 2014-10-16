@@ -186,7 +186,10 @@ package body Build_Command_Manager.End_Of_Build is
 
       if Build.Full.Args = Empty_Command_Line then
          Build.Launch := False;
-      elsif Build.Launch and then not Is_Run (Build.Target) then
+      elsif Build.Launch
+        and then not Is_Run (Build.Target)
+        and then not Uses_Python (Build.Target)
+      then
          Build.Launch := GPS.Kernel.Compilation_Starting
            (Handle     => Kernel_Handle (Self.Builder.Kernel),
             Category   => To_String (Build.Category),
