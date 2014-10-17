@@ -372,8 +372,7 @@ package body Completion.C.Libclang is
                    "compiler", Context.File, Lang, C_Switches, Ignored);
 
          declare
-            The_Switches     : Unbounded_String_Array (C_Switches'Range);
-
+            The_Switches : Unbounded_String_Array (C_Switches'Range);
          begin
             for J in C_Switches'Range loop
                The_Switches (J) := To_Unbounded_String (C_Switches (J).all);

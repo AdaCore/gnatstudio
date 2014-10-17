@@ -52,6 +52,22 @@ package Language.Abstract_Construct_Tree is
       Entity         : Entity_Access;
       Kernel         : Kernel_Handle;
    end record;
+
+   type Abstract_Construct_Tree_Iterator
+   is new Semantic_Tree_Iterator with record
+      It : Construct_Tree_Iterator;
+      Kernel : Kernel_Handle;
+      Construct_File : Structured_File_Access;
+   end record;
+
+   overriding procedure Next (Self : in out Abstract_Construct_Tree_Iterator);
+
+   overriding function Element
+     (Self : Abstract_Construct_Tree_Iterator) return Semantic_Node'Class;
+
+   overriding function Has_Element
+     (Self : Abstract_Construct_Tree_Iterator) return Boolean;
+
    type Construct_Node_Access is access all Construct_Node;
 
    ----------------------------------------
@@ -68,7 +84,7 @@ package Language.Abstract_Construct_Tree is
      (Self : Abstract_Construct_Tree) return Semantic_Node_Array'Class;
 
    overriding function Root_Iterator
-     (Self : Abstract_Construct_Tree) return Semantic_Tree_Iterator;
+     (Self : Abstract_Construct_Tree) return Semantic_Tree_Iterator'Class;
 
    overriding function Node_At
      (Self : Abstract_Construct_Tree; Sloc : Sloc_T;
@@ -137,12 +153,6 @@ package Language.Abstract_Construct_Tree is
 
    overriding function Documentation_Header
      (Self : Construct_Node) return String;
-
-   overriding function Next
-     (Self : Construct_Node) return Semantic_Node'Class;
-
-   overriding function Prev
-     (Self : Construct_Node) return Semantic_Node'Class;
 
 private
 

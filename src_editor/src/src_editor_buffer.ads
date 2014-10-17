@@ -745,7 +745,8 @@ package Src_Editor_Buffer is
 
    function Get_Tree_Iterator
      (Buffer         : access Source_Buffer_Record;
-      Required_Level : Constructs_State_Type) return Semantic_Tree_Iterator;
+      Required_Level : Constructs_State_Type)
+      return Semantic_Tree_Iterator'Class;
    --  Return the current construct cache in the buffer. The returned
    --  list matches at least the level of precision indicated by
    --  Required_Level.

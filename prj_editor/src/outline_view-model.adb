@@ -1097,25 +1097,13 @@ package body Outline_View.Model is
             Node := Get_Node_Next_Part (Model, Sem_Node);
             exit when Node /= null;
 
-            --  When there are several constructs on the same line
-            --  Get_Iterator_At returns last one. Here we iterate over
-            --  others on the same line before search for enclosing constructs.
             declare
-               Try_Prev : constant Semantic_Node'Class := Sem_Node.Prev;
+               Parent : constant Semantic_Node'Class := Sem_Node.Parent;
             begin
-               if Try_Prev /= No_Semantic_Node
-                 and then Try_Prev.Sloc_Start.Line = Line
-               then
-                  Sem_Node := Try_Prev;
-               else
-                  declare
-                     Parent : constant Semantic_Node'Class := Sem_Node.Parent;
-                  begin
-                     exit when Parent = No_Semantic_Node;
-                     Sem_Node := Parent;
-                  end;
-               end if;
+               exit when Parent = No_Semantic_Node;
+               Sem_Node := Parent;
             end;
+
          end loop;
 
          if Node = null then

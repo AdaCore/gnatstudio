@@ -8406,7 +8406,8 @@ package body Src_Editor_Buffer is
 
    function Get_Tree_Iterator
      (Buffer         : access Source_Buffer_Record;
-      Required_Level : Constructs_State_Type) return Semantic_Tree_Iterator
+      Required_Level : Constructs_State_Type)
+      return Semantic_Tree_Iterator'Class
    is
    begin
       if Buffer.Constructs_State < Required_Level then

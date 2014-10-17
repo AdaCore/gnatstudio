@@ -102,7 +102,7 @@ package Language.Abstract_Language_Tree is
    --  the underlying representation of a node list doesn't matter much. The
    --  starting index is 1
 
-   type Semantic_Tree_Iterator is private;
+   type Semantic_Tree_Iterator is interface;
 
    subtype Semantic_Node_Visibility is Language.Construct_Visibility;
 
@@ -163,7 +163,7 @@ package Language.Abstract_Language_Tree is
    ----------------------------------
 
    function Root_Iterator
-     (Self : Semantic_Tree) return Semantic_Tree_Iterator is abstract;
+     (Self : Semantic_Tree) return Semantic_Tree_Iterator'Class is abstract;
 
    function Root_Nodes
      (Self : Semantic_Tree) return Semantic_Node_Array'Class
@@ -288,34 +288,22 @@ package Language.Abstract_Language_Tree is
      (SN : Semantic_Node) return String is abstract;
    --  Returns the documentation's header for this node, if applicable
 
-   function Next
-     (SN : Semantic_Node) return Semantic_Node'Class is abstract;
-   --  Return the next node in the tree at the same level. For example, if SN
-   --  is a function profile in a package specification, it will return the
-   --  next element in the package spec
-
-   function Prev
-     (SN : Semantic_Node) return Semantic_Node'Class is abstract;
-   --  Return the previous node in the tree at the same level. For example, if
-   --  SN is a function profile in a package specification, it will return the
-   --  previous element in the package spec
-
    -------------------------------------------
    -- Primitives for Semantic_Tree_Iterator --
    -------------------------------------------
 
-   function Create (Node : Semantic_Node'Class) return Semantic_Tree_Iterator;
-
-   procedure Next (It : in out Semantic_Tree_Iterator);
+   procedure Next (It : in out Semantic_Tree_Iterator) is abstract;
 
    function Element
-     (It : Semantic_Tree_Iterator) return Semantic_Node'Class;
+     (It : Semantic_Tree_Iterator) return Semantic_Node'Class is abstract;
 
-   function Has_Element (It : Semantic_Tree_Iterator) return Boolean;
+   function Has_Element
+     (It : Semantic_Tree_Iterator) return Boolean is abstract;
 
    No_Semantic_Node : constant Semantic_Node'Class;
    No_Semantic_Tree : constant Semantic_Tree'Class;
    No_Semantic_Node_Array : constant Semantic_Node_Array'Class;
+   No_Semantic_Tree_Iterator : constant Semantic_Tree_Iterator'Class;
 
    package Sem_Tree_Holders is new Ada.Containers.Indefinite_Holders
      (Semantic_Tree'Class);
@@ -324,11 +312,6 @@ package Language.Abstract_Language_Tree is
      (Semantic_Node'Class);
 
 private
-
-   type Semantic_Tree_Iterator is record
-      Sem_Node         : Sem_Node_Holders.Holder;
-      Visited_Children : Boolean := False;
-   end record;
 
    -------------------------------
    -- Dummy_Semantic_Node_Array --
@@ -420,13 +403,22 @@ private
    overriding function Unique_Id
      (Self : Dummy_Semantic_Node) return String is ("");
 
-   overriding function Next
-     (SN : Dummy_Semantic_Node) return Semantic_Node'Class is
-     (No_Semantic_Node);
+   ----------------------------------
+   -- Dummy_Semantic_Tree_Iterator --
+   ----------------------------------
 
-   overriding function Prev
-     (SN : Dummy_Semantic_Node) return Semantic_Node'Class is
-     (No_Semantic_Node);
+   type Dummy_Semantic_Tree_Iterator
+   is new Semantic_Tree_Iterator with null record;
+
+   overriding procedure Next
+     (It : in out Dummy_Semantic_Tree_Iterator) is null;
+
+   overriding function Element
+     (It : Dummy_Semantic_Tree_Iterator) return Semantic_Node'Class
+   is (No_Semantic_Node);
+
+   overriding function Has_Element
+     (It : Dummy_Semantic_Tree_Iterator) return Boolean is (False);
 
    -------------------------
    -- Dummy_Semantic_Tree --
@@ -435,8 +427,8 @@ private
    type Dummy_Semantic_Tree is new Semantic_Tree with null record;
 
    function Root_Iterator
-     (Self : Dummy_Semantic_Tree) return Semantic_Tree_Iterator is
-      (Sem_Node_Holders.Empty_Holder, False);
+     (Self : Dummy_Semantic_Tree) return Semantic_Tree_Iterator'Class is
+      (No_Semantic_Tree_Iterator);
 
    function Root_Nodes
      (Self : Dummy_Semantic_Tree) return Semantic_Node_Array'Class
@@ -465,5 +457,8 @@ private
 
    No_Semantic_Node_Array : constant Semantic_Node_Array'Class :=
      Dummy_Semantic_Node_Array'(others => <>);
+
+   No_Semantic_Tree_Iterator : constant Semantic_Tree_Iterator'Class :=
+     Dummy_Semantic_Tree_Iterator'(others => <>);
 
 end Language.Abstract_Language_Tree;

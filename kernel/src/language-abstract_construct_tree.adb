@@ -109,16 +109,14 @@ package body Language.Abstract_Construct_Tree is
    -------------------
 
    overriding function Root_Iterator
-     (Self : Abstract_Construct_Tree) return Semantic_Tree_Iterator
+     (Self : Abstract_Construct_Tree) return Semantic_Tree_Iterator'Class
    is
       It : constant Construct_Tree_Iterator :=
         First (Get_Tree (Self.Construct_File));
-      Node : constant Construct_Node := Construct_Node'
-        (Self.Construct_File,
-         To_Entity_Access (Self.Construct_File, It),
-         Self.Kernel);
+
    begin
-      return Create (Construct_Node'Class (Node));
+      return Abstract_Construct_Tree_Iterator'
+        (It, Self.Kernel, Self.Construct_File);
    end Root_Iterator;
 
    -------------
@@ -141,58 +139,6 @@ package body Language.Abstract_Construct_Tree is
                        Entity => To_Entity_Access (Self.Construct_File, It),
                        Kernel => Self.Kernel);
    end Node_At;
-
-   ----------
-   -- Next --
-   ----------
-
-   overriding function Next
-     (Self : Construct_Node) return Semantic_Node'Class
-   is
-      It : Construct_Tree_Iterator
-        := To_Construct_Tree_Iterator (Self.Entity);
-   begin
-      if It = Null_Construct_Tree_Iterator then
-         return No_Semantic_Node;
-      end if;
-
-      It := Next (Get_Tree (Self.Construct_File), It, Jump_Over);
-
-      if It = Null_Construct_Tree_Iterator then
-         return No_Semantic_Node;
-      end if;
-
-      return Construct_Node'
-        (Construct_File => Self.Construct_File,
-         Entity         => To_Entity_Access (Self.Construct_File, It),
-         Kernel => Self.Kernel);
-   end Next;
-
-   ----------
-   -- Prev --
-   ----------
-
-   overriding function Prev
-     (Self : Construct_Node) return Semantic_Node'Class
-   is
-      It : Construct_Tree_Iterator
-        := To_Construct_Tree_Iterator (Self.Entity);
-   begin
-      if It = Null_Construct_Tree_Iterator then
-         return No_Semantic_Node;
-      end if;
-
-      It := Prev (Get_Tree (Self.Construct_File), It, Jump_Over);
-
-      if It = Null_Construct_Tree_Iterator then
-         return No_Semantic_Node;
-      end if;
-
-      return Construct_Node'
-        (Construct_File => Self.Construct_File,
-         Entity         => To_Entity_Access (Self.Construct_File, It),
-         Kernel => Self.Kernel);
-   end Prev;
 
    ----------
    -- File --
@@ -500,5 +446,47 @@ package body Language.Abstract_Construct_Tree is
    begin
       return Get_File_Path (Self.Construct_File);
    end File;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next
+     (Self : in out Abstract_Construct_Tree_Iterator)
+   is
+   begin
+      if Self.It = Null_Construct_Tree_Iterator then
+         return;
+      end if;
+      Self.It := Next (Get_Tree (Self.Construct_File), Self.It, Jump_Into);
+   end Next;
+
+   -------------
+   -- Element --
+   -------------
+
+   overriding function Element
+     (Self : Abstract_Construct_Tree_Iterator)
+      return Semantic_Node'Class is
+   begin
+      if Self.It = Null_Construct_Tree_Iterator then
+         return No_Semantic_Node;
+      else
+         return Construct_Node'
+           (Self.Construct_File,
+            To_Entity_Access (Self.Construct_File, Self.It),
+            Self.Kernel);
+      end if;
+   end Element;
+
+   --------------
+   -- Has_Next --
+   --------------
+
+   overriding function Has_Element
+     (Self : Abstract_Construct_Tree_Iterator) return Boolean is
+   begin
+      return (Self.It /= Null_Construct_Tree_Iterator);
+   end Has_Element;
 
 end Language.Abstract_Construct_Tree;
