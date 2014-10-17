@@ -237,8 +237,8 @@ class DebuggerWrapper():
         # if the debugger is not busy
         if not self.__debugger.is_busy():
 
-            # remove the regular checker
-            timeout.remove()
+            # remove all timers
+            self.__remove_timers()
 
             # and if there's cmd to run, send it
             if self.__next_cmd is not None:
@@ -291,7 +291,7 @@ class DebuggerWrapper():
            Promise returned here will be answered with: output
 
            This method may also function as a pure block-debugger-and-wait-
-           until-not-busy call, by default and blcok=True.
+           until-not-busy call, when block=True.
            Promise returned for this purpose will be answered with: True/False
         """
 
@@ -345,9 +345,14 @@ class TargetWrapper():
 
         return self.__promise
 
+    def __timeout_after_exit(self, timeout):
+        timeout.remove()
+        self.__promise.resolve(self.__status)
+
     def __on_exit(self, status):
         """
            Called by GPS when target finishes executing.
            Will answer the promise with exiting status.
         """
-        self.__promise.resolve(status)
+        self.__status = status
+        GPS.Timeout(200, self.__timeout_after_exit)

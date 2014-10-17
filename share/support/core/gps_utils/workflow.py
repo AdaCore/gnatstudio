@@ -1,19 +1,25 @@
-"""
-   Driver execute while generating mono-chain program
-   from generators (the parameter), and send execution result
-   (how the promise is fullfilled) back to the generator.
+""" This module defines a framework for writing workflows.
+
+A workflow is a Python generator which can be used to execute
+a chain of asynchronous actions, while retaining a sequential
+structure.
 """
 
 import sys
 import GPS
 from gps_utils import promises
 
+# A table of all registered workflows
 registered_workflows = {}
+
+# Special command that can be yielded by a workflow to get the parameter
+# passed to the driver
+WORKFLOW_PARAMETER = "get_workflow_parameter"
 
 
 def run_registered_workflows(workflow_name, workflow_arg=None):
-    # find workflow in registed table provided the workflow name
-    # and then run it with the driver
+    """ Find workflow and run it with the driver.
+    """
     try:
         wf = registered_workflows[workflow_name]()
         driver(wf, workflow_arg)
@@ -23,6 +29,7 @@ def run_registered_workflows(workflow_name, workflow_arg=None):
 
 
 def driver(w, workflow_arg=None):
+    """ The main driver for workflows """
     def go(gowith=None):
         try:
             # if there's feedback from previous event, tell the generator
@@ -37,12 +44,12 @@ def driver(w, workflow_arg=None):
                 p.then(go)
             # otherwise, continue to the next object by go()
             else:
-                if p == "give_me_arg":
-                    print "driver: got your message asking arg, give you"
+                if p == WORKFLOW_PARAMETER:
                     go(workflow_arg)
                 else:
                     go()
-        # when hits the end, exit
+
+        # indicates the end of the generator: exit cleanly
         except StopIteration:
             # print sys.exc_info()[0]
             return
@@ -53,16 +60,15 @@ def driver(w, workflow_arg=None):
 def make_action_from_workflow(name, category="General",
                               description="", criteria=None):
     """
-       Decorator that wrap a workflow and generate an action
+       Decorator that creates a GPS action from a workflow.
 
        name: string, name of the returning action
        category: category as action object required
        description: string, description of the result action
-       criteria: function that returns boolean, workflow is executed only when
-                 it returns True
+       criteria: function that returns boolean:
+          the workflow is executed only when it returns True
 
-       The input of the decorator = expecting argument for returning wrap
-       = a workflow = a generator that can be driven by driver()
+       The input of the decorator is a workflow.
     """
     # the wrapper function to be returned by decorator
     def wrap(workflow):
@@ -89,7 +95,7 @@ def make_button_for_action(button_name, button_id):
        Decorator that wraps an action and make a button for it on the toolbar
 
        button_name: name of the button
-       button_id: id of the button (kept by GPS)
+       button_id: GPS stock-id of the button
 
        The input of the decorator = expecting argument for returning wrap
        = an action
@@ -111,10 +117,10 @@ def make_button_for_action(button_name, button_id):
 def create_target_from_workflow(target_name, workflow_name, workflow,
                                 icon_name="gtk-print"):
     """
-    Create a Target under the category Workflow from a workflow --
-    to be feed by user.
-    By building this target, the workflow is driven (executed).
-    * target_name and workflow_name are all strings
+    Create a Target under the category Workflow from a given workflow.
+    Executing this target runs the workflow.
+
+    target_name and workflow_name are strings
     """
 
     # going to store the feeded workflow in a global variable

@@ -4,8 +4,8 @@ Category: STM32F4 compatible
 Project: @_project_name_@.gpr
 
 # Variables
-Project_Name: default: The name of the project.
-Main_Name: main: The name of the main file.
+Project_Name: led_demo: The name of the project.
+Main_Name: main: The name of the main subprogram.
 
 # Description
 [Description]
