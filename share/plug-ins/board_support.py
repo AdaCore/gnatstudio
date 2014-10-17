@@ -34,17 +34,12 @@ class BoardLoader(Module):
                  "Debug with Emulator"]
     __buttons = []
 
-    def __error_exit(self, msg="", reset_refresh=False, reset_loading=False):
+    def __error_exit(self, msg=""):
         """ Emit an error and reset the workflows """
         GPS.Console("Messages").write(msg + " [workflow stopped]")
-        self.__refresh = reset_refresh
-        self.__is_loading = reset_loading
 
     def __reset_all(self, id, manager_delete=True, connection_delete=True):
         """ Reset the workflows """
-        if self.__manager is not None and manager_delete:
-            self.__manager.get().non_blocking_send("q")
-            self.__manager = None
         if self.__connection is not None and connection_delete:
             self.__connection.get().kill()
             self.__connection = None
@@ -52,8 +47,6 @@ class BoardLoader(Module):
         for i in GPS.Task.list():
             if interest in i.name():
                 i.interrupt()
-        self.__refresh = False
-        self.__is_loading = False
 
     def __check_task(self, id):
         """ Back up method to check if task exists
@@ -68,9 +61,6 @@ class BoardLoader(Module):
     def __show_button(self):
         """Initialize buttons and parameters.
         """
-        # make loading a critical region
-        self.__is_loading, self.__refresh = False, False
-
         # show button if the following criteria are met:
         # the string "stm32f3" should be found in the runtime;
         # we also look in the "legacy" way of specifying this,
@@ -92,7 +82,7 @@ class BoardLoader(Module):
                 b.hide()
 
         # reset
-        self.__manager, self.__connection = None, None
+        self.__connection = None
 
     ###############################
     # The following are workflows #
@@ -101,8 +91,6 @@ class BoardLoader(Module):
     def __flash_wf(self):
         """Workflow to build and flash the program on the board.
         """
-
-        self.__is_loading = True
 
         # STEP 1.0 get the main name; it should have been passed to the driver
         f = yield WORKFLOW_PARAMETER
@@ -164,14 +152,10 @@ class BoardLoader(Module):
         msg_is("... done.")
         msg_is("Running on board...")
 
-        self.__is_loading = False
-
     def __emu_wf(self):
         """
         Workflow to build and run the program in the emulator.
         """
-
-        self.__is_loading = True
 
         # STEP 1.0 get main name
         f = yield WORKFLOW_PARAMETER
@@ -206,23 +190,10 @@ class BoardLoader(Module):
 
         msg_is("Running in emulator...")
 
-        self.__is_loading = False
-
     def __emu_debug_wf(self):
         """
         Workflow to debug a program under the emulator.
         """
-        # check if there's a debugger running, and if so, interrupt it
-        if self.__manager is not None:
-            try:
-                GPS.execute_action("/Debug/Interrupt")
-            except:
-                self.__refresh = False
-                self.__manager = None
-                pass
-        else:
-            # if there is not a debugger running, reset the parameters
-            self.__refresh = False
 
         # STEP 1.0 get main name
         f = yield WORKFLOW_PARAMETER
@@ -256,22 +227,20 @@ class BoardLoader(Module):
 
         # STEP 3.1 launch debugger
 
-        if not self.__refresh:
-            if self.__manager is None:
-                msg_is("Initializing debugger...")
-                self.__manager = promise.DebuggerWrapper(GPS.File(b))
-            # block execution until debugger is not busy
-            r3 = yield self.__manager.wait_and_send(cmd="", block=False)
-            if not r3:
-                self.__error_exit("Could not initialize the debugger.")
-                r3 = yield self.__manager.wait_and_send(cmd="", block=False)
-                self.__reset_all  # ??? is this the right reset?
-                return
-            msg_is("... done.")
+        debugger_promise = promise.DebuggerWrapper(GPS.File(b))
+
+        # block execution until debugger is free
+        r3 = yield debugger_promise.wait_and_send(cmd="", block=False)
+        if not r3:
+            self.__error_exit("Could not initialize the debugger.")
+            r3 = yield debugger_promise.wait_and_send(cmd="", block=False)
+            self.__reset_all  # ??? is this the right reset?
+            return
+        msg_is("... done.")
 
         # STEP 3.2 target and run the program
         msg_is("Sending debugger command to target the emulator...")
-        r3 = yield self.__manager.wait_and_send(
+        r3 = yield debugger_promise.wait_and_send(
             cmd="target remote localhost:1234",
             timeout=4000)
         interest = "Remote debugging using localhost:1234"
@@ -283,32 +252,10 @@ class BoardLoader(Module):
 
         msg_is("... done.")
 
-        # self.__manager.get().non_blocking_send("c")
-
-        self.__is_loading = False
-        self.__refresh = True
-
     def __debug_wf(self):
         """
         Workflow to build, flash and debug the program on the real board.
         """
-        self.__is_loading = True
-
-        # check if there's a debugger running, and if so, interrupt it
-        if self.__manager is not None:
-            try:
-                GPS.Debugger.get()
-                GPS.execute_action("/Debug/Interrupt")
-                GPS.Console("Messages").write(
-                    "\nRunning Debugger Interrupted.")
-            except:
-                self.__refresh = False
-                self.__manager = None
-                pass
-        else:
-            # if there is not a debugger running, reset the parameters
-            self.__refresh = False
-
         # STEP 1.0 get main name
 
         f = yield WORKFLOW_PARAMETER
@@ -329,18 +276,17 @@ class BoardLoader(Module):
 
         # STEP 2 connect to mainboard
 
-        if not self.__refresh:
-            msg_is("Connecting to board...")
-            cmd = ["st-util"]
+        msg_is("Connecting to board...")
+        cmd = ["st-util"]
 
-            try:
-                con = promise.ProcessWrapper(cmd)
-            except:
-                self.__error_exit("Could not launch st-util.")
-                return
+        try:
+            con = promise.ProcessWrapper(cmd)
+        except:
+            self.__error_exit("Could not launch st-util.")
+            return
 
-            self.__connection = con
-            msg_is("... done.")
+        self.__connection = con
+        msg_is("... done.")
 
         # STEP 3 begin debugger-> load and run
         msg_is("Loading executable file...")
@@ -348,32 +294,21 @@ class BoardLoader(Module):
         b = GPS.Project.root().get_executable_name(GPS.File(f))
         d = GPS.Project.root().object_dirs()[0]
         obj = d+b
-        # if __refresh is True, load the newly compiled obj
-        # else start a debugger with the obj
-        if self.__refresh:
-            m1 = GPS.Console("Debugger Console").get_text()
-            self.__manager.get().non_blocking_send("load "+obj)
-            r3 = yield self.__manager.wait_and_send(cmd="", block=True)
-            m2 = GPS.Console("Debugger Console").get_text()
-            if len(m2) >= len(m1):
-                r3 = not("Error" in m2[len(m1)::])
-        else:
-            self.__manager = promise.DebuggerWrapper(GPS.File(b))
-            # block execution until debugger is not busy
-            r3 = yield self.__manager.wait_and_send(cmd="", block=True)
+
+        debugger_promise = promise.DebuggerWrapper(GPS.File(b))
+        debugger_promise.get().non_blocking_send("load "+obj)
+        r3 = yield debugger_promise.wait_and_send(cmd="", block=True)
 
         if not r3:
             self.__error_exit("Connection Lost. "
                               + "Please check the USB connection and restart.")
-            r3 = yield self.__manager.wait_and_send(cmd="", block=True)
+            r3 = yield debugger_promise.wait_and_send(cmd="", block=True)
             self.__reset_all(0)
             return
 
         msg_is("... done.")
 
-        # STEP 3.5 run the program and set __refresh with True
-        self.__refresh = True
-        self.__is_loading = False
+        # STEP 3.5 run the program
 
     # The followings are hooks:
 

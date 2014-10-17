@@ -205,14 +205,24 @@ class DebuggerWrapper():
     # the debugger is busy, in milliseconds
     __query_interval = 200
 
-    def __init__(self, f):
+    def __init__(self, f, reuse_existing=True):
         """
            Initialize a manager, begin a debugger on the given file
            with no timers, no promises, no command
         """
 
-        # handler for debugger
-        self.__debugger = GPS.Debugger.spawn(f)
+        if reuse_existing:
+            try:
+                # handler for debugger
+                self.__debugger = GPS.Debugger.get()
+
+                # if we reach this, a debugger is running: interrupt it
+                GPS.execute_action("/Debug/Interrupt")
+            except:
+                self.__debugger = GPS.Debugger.spawn(f)
+                pass
+        else:
+            self.__debugger = GPS.Debugger.spawn(f)
 
         # current on waiting promise
         self.__this_promise = None
