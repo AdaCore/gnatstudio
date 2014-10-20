@@ -2296,7 +2296,7 @@ procedure GPS.Main is
          " (" & Config.Source_Date &
          (-") hosted on ") & Config.Target & ASCII.LF &
          (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &
-         "(c) 2001-2013 AdaCore" & ASCII.LF);
+         "(c) 2001-2014 AdaCore" & ASCII.LF);
       Free (About_Contents);
 
       --  Apply the preferences to the MDI. In particular, we want to set the
