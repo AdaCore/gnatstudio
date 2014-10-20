@@ -19,7 +19,8 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
-with GNAT.Expect;
+with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
+with GNAT.Expect;                use GNAT.Expect;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
@@ -908,7 +909,6 @@ package body Help_Module is
                        (Get_System_Dir (Kernel), "/share/gps/about.txt");
       Contents   : GNAT.Strings.String_Access;
       About_Text : Unbounded_String;
-      Status     : aliased Integer;
 
    begin
       Contents := About_File.Read_File;
@@ -923,12 +923,26 @@ package body Help_Module is
          (-"GNAT ") & GNAT_Version (Kernel) & LF);
 
       if Codepeer /= No_File then
-         Append
-           (About_Text,
-            GNAT.Expect.Get_Command_Output
-              (Codepeer.Display_Full_Name, (1 => Verbose'Unchecked_Access),
-               "", Status'Access, Err_To_Out => True));
-         Append (About_Text, (1 => ASCII.LF));
+         declare
+            Fd : TTY_Process_Descriptor;
+            M  : GNAT.Expect.Expect_Match;
+         begin
+            Non_Blocking_Spawn
+              (Descriptor  => Fd,
+               Command     => Codepeer.Display_Full_Name,
+               Args        => (1 => Verbose'Unchecked_Access),
+               Err_To_Out  => True);
+            Expect (Descriptor  => Fd,
+                    Result      => M,
+                    Regexp      => ".+",
+                    Timeout     => 1_000);
+            Append (About_Text, Expect_Out (Fd));
+            Append (About_Text, (1 => ASCII.LF));
+            Close (Fd);
+         exception
+            when Process_Died =>
+               Close (Fd);
+         end;
       end if;
 
       Ignore := Message_Dialog
