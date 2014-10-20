@@ -91,49 +91,40 @@ package body Interactive_Consoles is
 
    overriding procedure Ref
      (Console : access Interactive_Virtual_Console_Record);
-
    overriding procedure Unref
      (Console : access Interactive_Virtual_Console_Record);
-
    overriding procedure Insert_Text
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
-
    overriding procedure Insert_Log
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
-
    overriding procedure Insert_Prompt
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
-
    overriding procedure Insert_Error
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
-
    overriding procedure Grab_Events
      (Console : access Interactive_Virtual_Console_Record; Grab : Boolean);
-
    overriding procedure Set_As_Default_Console
      (Console : access Interactive_Virtual_Console_Record;
       Script  : GNATCOLL.Scripts.Scripting_Language);
-
    overriding procedure Set_Data_Primitive
      (Instance : Class_Instance;
       Console  : access Interactive_Virtual_Console_Record);
-
    overriding function Get_Instance
      (Script  : access Scripting_Language_Record'Class;
       Console : access Interactive_Virtual_Console_Record)
       return Class_Instance;
-
    overriding procedure Process_Pending_Events_Primitive
      (Console : access Interactive_Virtual_Console_Record);
-
    overriding function Read
      (Console    : access Interactive_Virtual_Console_Record;
       Size       : Integer;
       Whole_Line : Boolean) return String;
-
    overriding procedure Clear
      (Console : access Interactive_Virtual_Console_Record);
    --  See inherited subprograms
+
+   type Hyper_Link_Tag_Record is new Gtk_Text_Tag_Record with null record;
+   --  Special tags to highlight hyper links
 
    -----------------------
    -- Local subprograms --
@@ -1975,9 +1966,9 @@ package body Interactive_Consoles is
       Background : String;
       Underline  : Boolean)
    is
-      Tag : Gtk_Text_Tag;
+      Tag : constant Gtk_Text_Tag := new Hyper_Link_Tag_Record;
    begin
-      Gtk_New (Tag);
+      Gtk.Text_Tag.Initialize (Tag);
       Add (Get_Tag_Table (Console.Buffer), Tag);
       if Foreground /= "" then
          Set_Property (Tag, Gtk.Text_Tag.Foreground_Property, Foreground);
@@ -2036,15 +2027,10 @@ package body Interactive_Consoles is
       is
          pragma Unreferenced (Dummy);
       begin
-         --  Dont delete reserved tags saved in Console.Tags
-         for J in Console.Tags'Range loop
-            if Console.Tags (J) = Tag then
-               return;
-            end if;
-         end loop;
-
-         Index := Index + 1;
-         Tags (Index) := Gtk_Text_Tag (Tag);
+         if Tag.all in Hyper_Link_Tag_Record'Class then
+            Index := Index + 1;
+            Tags (Index) := Gtk_Text_Tag (Tag);
+         end if;
       end Get_Tag;
 
       package Foreach_Tag is new Foreach_User_Data (Boolean);
