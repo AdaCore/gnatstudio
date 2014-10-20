@@ -27,7 +27,7 @@ created or edited manually, and you can manually edit project files created
 by GPS.  Most features of project files can be accessed without using GPS.
 
 The detailed syntax and semantics of project files is fully described in
-the GNAT Pro User's Guide and GNAT Pro Reference Manual.  Read these sections if
+the GNAT User's Guide and GNAT Reference Manual.  Read these sections if
 you want to use the more advanced capabilities of project files that are not
 supported by GPS's graphical interface.
 
@@ -99,7 +99,7 @@ subprojects. Each project and subproject is responsible for its own set of
 sources (including compiling them with the appropriate switches and putting
 the resulting files in the correct directories).
 
-Each project file contains the following information (see the GNAT Pro
+Each project file contains the following information (see the GNAT 
 User's Guide for the full list):
 
 * :file:`List of imported projects`

@@ -150,7 +150,7 @@ the search, or continue to the next occurrence, or set options:
   Toggles between strings and regular expressions.  Or you can select the
   arrow to the right of the :guilabel:`Search for:` field.  The grammar
   used by regular expressions is similar to the Perl and Python regular
-  expressions grammar and is documented in the GNAT Pro run time file
+  expressions grammar and is documented in the GNAT run time file
   :file:`g-regpat.ads`. To open it from GPS, use the :ref:`open from
   project <Open_From_Project>` menu (:menuselection:`File --> Open From
   Project...`) and type :file:`g-regpat.ads`.
