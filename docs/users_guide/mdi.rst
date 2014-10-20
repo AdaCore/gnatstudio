@@ -190,9 +190,9 @@ Change the organization of windows at any time by selecting a notebook
 containing several editors or browsers and selecting one of the
 :menuselection:`Split` entries in the :menuselection:`Window` menu.
 
-You can also drag and drop the window anywhere inside GPS.  Select an item
+You can also drag and drop the window within GPS.  Select an item
 to drag by left-clicking in its title bar.  If the window is inside a
-notebook, you can also select the notebook.  In that case, you can also
+notebook, you can also select the notebook tab.  In that case, you can also
 reorder the windows within the notebook: select the tab, then start moving
 left or right to the window's new position.  Your mouse must remain within
 the tab area or GPS will drop the window into another notebook.
@@ -210,6 +210,11 @@ Here are the various places where you can drop a window:
 
   If you drop a window all the way on a side of the area, the window will
   occupy the full width (or height) of the area.
+
+  GPS will however restrict where windows can be placed: editors and most
+  browsers, for instance, must go into the central area (the part that stays
+  common when switching perspectives), whereas other views must stay on the
+  sides (left, right, bottom or top) of that central area.
 
 * System window
 
