@@ -1412,6 +1412,8 @@ package body Gtkada.Terminal is
       pragma Import (C, Replace_Insert_Text, "replace_insert_text");
 
       Iter : Gtk_Text_Iter;
+      Table : Gtk_Text_Tag_Table;
+      F, B  : Gtk_Text_Tag;
    begin
       Initialize_Class_Record
         (Ancestor     => Gtk.Text_Buffer.Get_Type,
@@ -1419,7 +1421,7 @@ package body Gtkada.Terminal is
          Type_Name    => "GtkAdaTerminal",
          Parameters   => Null_Parameter_Types);
       G_New (Self, Class.C_Class);
-      Gtk.Text_Buffer.Initialize (Self);
+      Table := Self.Get_Tag_Table;
 
       Self.Prevent_Cursor_Motion := Prevent_Cursor_Motion_With_Mouse;
       if Self.Prevent_Cursor_Motion then
@@ -1451,7 +1453,7 @@ package body Gtkada.Terminal is
       Gtk_New (Self.Bold_Tag);
       Set_Property
         (Self.Bold_Tag, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
-      Add (Get_Tag_Table (Self), Self.Bold_Tag);
+      Table.Add (Self.Bold_Tag);
       Unref (Self.Bold_Tag);
 
       Gtk_New (Self.Standout_Tag);
@@ -1459,84 +1461,47 @@ package body Gtkada.Terminal is
         (Self.Standout_Tag, Gtk.Text_Tag.Background_Property, "black");
       Set_Property
         (Self.Standout_Tag, Gtk.Text_Tag.Foreground_Property, "white");
-      Add (Get_Tag_Table (Self), Self.Standout_Tag);
+      Table.Add (Self.Standout_Tag);
       Unref (Self.Standout_Tag);
 
       for T in Tag_Array'Range loop
-         Gtk_New (Self.Foreground_Tags (T));
-         Gtk_New (Self.Background_Tags (T));
+         Gtk_New (F);
+         Self.Foreground_Tags (T) := F;
+
+         Gtk_New (B);
+         Self.Background_Tags (T) := B;
 
          case T is
             when 1 =>
-               Set_Property
-                 (Self.Foreground_Tags (T),
-                  Gtk.Text_Tag.Foreground_Property, "black");
-               Set_Property
-                 (Self.Background_Tags (T),
-                  Gtk.Text_Tag.Background_Property, "black");
-
+               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "black");
+               Set_Property (B, Gtk.Text_Tag.Background_Property, "black");
             when 2 =>
-               Set_Property
-                 (Self.Foreground_Tags (T),
-                  Gtk.Text_Tag.Foreground_Property, "red");
-               Set_Property
-                 (Self.Background_Tags (T),
-                  Gtk.Text_Tag.Background_Property, "red");
-
+               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "red");
+               Set_Property (B, Gtk.Text_Tag.Background_Property, "red");
             when 3 =>
-               Set_Property
-                 (Self.Foreground_Tags (T),
-                  Gtk.Text_Tag.Foreground_Property, "green");
-               Set_Property
-                 (Self.Background_Tags (T),
-                  Gtk.Text_Tag.Background_Property, "green");
-
+               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "green");
+               Set_Property (B, Gtk.Text_Tag.Background_Property, "green");
             when 4 =>
-               Set_Property
-                 (Self.Foreground_Tags (T),
-                  Gtk.Text_Tag.Foreground_Property, "yellow");
-               Set_Property
-                 (Self.Background_Tags (T),
-                  Gtk.Text_Tag.Background_Property, "yellow");
-
+               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "yellow");
+               Set_Property (B, Gtk.Text_Tag.Background_Property, "yellow");
             when 5 =>
-               Set_Property
-                 (Self.Foreground_Tags (T),
-                  Gtk.Text_Tag.Foreground_Property, "blue");
-               Set_Property
-                 (Self.Background_Tags (T),
-                  Gtk.Text_Tag.Background_Property, "blue");
-
+               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "blue");
+               Set_Property (B, Gtk.Text_Tag.Background_Property, "blue");
             when 6 =>
-               Set_Property
-                 (Self.Foreground_Tags (T),
-                  Gtk.Text_Tag.Foreground_Property, "magenta");
-               Set_Property
-                 (Self.Background_Tags (T),
-                  Gtk.Text_Tag.Background_Property, "magenta");
-
+               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "magenta");
+               Set_Property (B, Gtk.Text_Tag.Background_Property, "magenta");
             when 7 =>
-               Set_Property
-                 (Self.Foreground_Tags (T),
-                  Gtk.Text_Tag.Foreground_Property, "cyan");
-               Set_Property
-                 (Self.Background_Tags (T),
-                  Gtk.Text_Tag.Background_Property, "cyan");
-
+               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "cyan");
+               Set_Property (B, Gtk.Text_Tag.Background_Property, "cyan");
             when 8 =>
-               Set_Property
-                 (Self.Foreground_Tags (T),
-                  Gtk.Text_Tag.Foreground_Property, "white");
-               Set_Property
-                 (Self.Background_Tags (T),
-                  Gtk.Text_Tag.Background_Property, "white");
+               Set_Property (F, Gtk.Text_Tag.Foreground_Property, "white");
+               Set_Property (B, Gtk.Text_Tag.Background_Property, "white");
          end case;
 
-         Add (Get_Tag_Table (Self), Self.Foreground_Tags (T));
-         Add (Get_Tag_Table (Self), Self.Background_Tags (T));
-
-         Unref (Self.Foreground_Tags (T));
-         Unref (Self.Background_Tags (T));
+         Table.Add (F);
+         Table.Add (B);
+         Unref (F);
+         Unref (B);
       end loop;
    end Initialize;
 end Gtkada.Terminal;
