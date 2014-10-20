@@ -934,7 +934,7 @@ package body Help_Module is
       Ignore := Message_Dialog
         (To_String (About_Text) & LF &
          (-"the GNAT Programming Studio") & LF & Contents.all & LF &
-         "(c) 2001-2013 AdaCore",
+         "(c) 2001-" & Config.Current_Year & " AdaCore",
          Buttons => Button_OK,
          Title   => -"About...",
          Parent  => Get_Current_Window (Kernel));
