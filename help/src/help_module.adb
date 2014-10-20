@@ -19,8 +19,8 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
-with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
-with GNAT.Expect;                use GNAT.Expect;
+with GNAT.Expect.TTY;
+with GNAT.Expect;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Strings;
 
@@ -924,24 +924,24 @@ package body Help_Module is
 
       if Codepeer /= No_File then
          declare
-            Fd : TTY_Process_Descriptor;
+            Fd : GNAT.Expect.TTY.TTY_Process_Descriptor;
             M  : GNAT.Expect.Expect_Match;
          begin
-            Non_Blocking_Spawn
+            GNAT.Expect.Non_Blocking_Spawn
               (Descriptor  => Fd,
                Command     => Codepeer.Display_Full_Name,
                Args        => (1 => Verbose'Unchecked_Access),
                Err_To_Out  => True);
-            Expect (Descriptor  => Fd,
-                    Result      => M,
-                    Regexp      => ".+",
-                    Timeout     => 1_000);
-            Append (About_Text, Expect_Out (Fd));
+            GNAT.Expect.TTY.Expect (Descriptor  => Fd,
+                                    Result      => M,
+                                    Regexp      => ".+",
+                                    Timeout     => 1_000);
+            Append (About_Text, GNAT.Expect.TTY.Expect_Out (Fd));
             Append (About_Text, (1 => ASCII.LF));
-            Close (Fd);
+            GNAT.Expect.TTY.Close (Fd);
          exception
-            when Process_Died =>
-               Close (Fd);
+            when GNAT.Expect.Process_Died =>
+               GNAT.Expect.TTY.Close (Fd);
          end;
       end if;
 
