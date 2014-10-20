@@ -926,6 +926,10 @@ package body Project_Explorers is
                   else
                      return A_Before_B;
                   end if;
+
+               when Obj_Directory_Node =>
+                  return A_Before_B;
+
                when others =>
                   return Alphabetical;
             end case;
