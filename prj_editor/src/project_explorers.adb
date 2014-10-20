@@ -2075,17 +2075,17 @@ package body Project_Explorers is
    is
       Path   : Gtk_Tree_Path;
       Parent : Gtk_Tree_Path;
-      Expand : Boolean;
+      Filter_Path : Gtk_Tree_Path;
 
-      procedure Expand_Recursive (The_Path : Gtk_Tree_Path);
+      procedure Expand_Recursive (Filter_Path : Gtk_Tree_Path);
       --  Expand Path and all parents of Path that are not expanded
 
       ----------------------
       -- Expand_Recursive --
       ----------------------
 
-      procedure Expand_Recursive (The_Path : Gtk_Tree_Path) is
-         Parent : constant Gtk_Tree_Path := Copy (The_Path);
+      procedure Expand_Recursive (Filter_Path : Gtk_Tree_Path) is
+         Parent : constant Gtk_Tree_Path := Copy (Filter_Path);
          Dummy  : Boolean;
          pragma Warnings (Off, Dummy);
       begin
@@ -2098,26 +2098,25 @@ package body Project_Explorers is
          end if;
 
          Path_Free (Parent);
-         Dummy := Expand_Row (Explorer.Tree, The_Path, False);
+         Dummy := Expand_Row (Explorer.Tree, Filter_Path, False);
       end Expand_Recursive;
 
    begin
       Grab_Focus (Explorer.Tree);
 
       Path := Get_Path (Explorer.Tree.Model, Target_Node);
-      Parent := Copy (Path);
-      Expand := Up (Parent);
-
-      if Expand then
+      Filter_Path := Explorer.Tree.Filter.Convert_Child_Path_To_Path (Path);
+      Parent := Copy (Filter_Path);
+      if Up (Parent) then
          Expand_Recursive (Parent);
       end if;
-
       Path_Free (Parent);
-      Set_Cursor (Explorer.Tree, Path, null, False);
 
-      Scroll_To_Cell (Explorer.Tree, Path, null, True, 0.1, 0.1);
+      Set_Cursor (Explorer.Tree, Filter_Path, null, False);
+      Scroll_To_Cell (Explorer.Tree, Filter_Path, null, True, 0.1, 0.1);
 
       Path_Free (Path);
+      Path_Free (Filter_Path);
    end Jump_To_Node;
 
    -------------
@@ -2136,13 +2135,16 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter;
       Success  : Boolean;
       Filter_Path, Path : Gtk_Tree_Path;
-      pragma Unreferenced (Command, Success);
+      pragma Unreferenced (Command);
 
       procedure Select_If_Searched (C : in out Gtk_Tree_Iter);
       procedure Select_If_Searched (C : in out Gtk_Tree_Iter) is
       begin
-         if Get_File_From_Node (View.Tree.Model, C) = File then
-            Jump_To_Node (View, C);
+         if not Success then
+            if Get_File_From_Node (View.Tree.Model, C) = File then
+               Jump_To_Node (View, C);
+               Success := True;
+            end if;
          end if;
       end Select_If_Searched;
 
@@ -2152,13 +2154,14 @@ package body Project_Explorers is
         (View, File_Info (S.First_Element).Project);
 
       if Node /= Null_Iter then
-         --  Expand the project node
+         --  Expand the project node, to compute its files
          Path := View.Tree.Model.Get_Path (Node);
          Filter_Path := View.Tree.Filter.Convert_Child_Path_To_Path (Path);
          Path_Free (Path);
          Success := View.Tree.Expand_Row (Filter_Path, False);
          Path_Free (Filter_Path);
 
+         Success := False;
          For_Each_File_Node (View.Tree.Model, Node, Select_If_Searched'Access);
       end if;
 
