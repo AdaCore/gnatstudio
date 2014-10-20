@@ -32,6 +32,9 @@ package Config is
    -- Constants --
    ---------------
 
+   Current_Year : constant String := "@CURRENT_YEAR@";
+   --  The year to display in copyright notices
+
    Version : constant String := "@GPS_VERSION@";
    --  Version number of this software
 
