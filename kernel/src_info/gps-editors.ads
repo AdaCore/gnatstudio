@@ -414,6 +414,9 @@ package GPS.Editors is
    -- Editor_Buffer --
    -------------------
 
+   function Version
+     (This : Editor_Buffer) return Integer is abstract;
+
    function Has_Slave_Cursors
      (This : Editor_Buffer) return Boolean is abstract;
 
@@ -691,7 +694,7 @@ package GPS.Editors is
 
    function Get
      (This        : Editor_Buffer_Factory;
-      File        : Virtual_File;
+      File        : Virtual_File := No_File;
       Force       : Boolean := False;
       Open_Buffer : Boolean := False;
       Open_View   : Boolean := True;
@@ -897,6 +900,9 @@ private
 
    overriding procedure Newline_And_Indent
      (This : Dummy_Editor_Buffer) is null;
+
+   overriding function Version
+     (This : Dummy_Editor_Buffer) return Integer is (0);
 
    function Get_Main_Cursor
      (This : Dummy_Editor_Buffer) return Editor_Cursor'Class

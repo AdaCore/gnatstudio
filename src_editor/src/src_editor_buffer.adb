@@ -8637,7 +8637,7 @@ package body Src_Editor_Buffer is
    end Get_Typed_Chars;
 
    -------------------
-   -- Get_Timestamp --
+   -- Get_Version --
    -------------------
 
    function Get_Version

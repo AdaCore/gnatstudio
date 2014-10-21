@@ -407,6 +407,12 @@ package body Src_Editor_Module.Editors is
 
    overriding function Current_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
+
+   overriding function Version
+     (This : Src_Editor_Buffer) return Integer
+   is
+     (This.Contents.Buffer.Get_Version);
+
    overriding function Views
      (This : Src_Editor_Buffer) return View_Lists.List;
 

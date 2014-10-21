@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with clang_c_Index_h;
+with clang_c_Index_h; use clang_c_Index_h;
 
 with System;
 
@@ -24,6 +24,10 @@ with Interfaces.C.Strings;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
+with Ada.Containers.Vectors;
+with clang_c_CXString_h;
+with Interfaces.C;
+with Interfaces.C.Strings;
 
 package Libclang.Index is
 
@@ -107,7 +111,7 @@ package Libclang.Index is
    -- Translation units --
    -----------------------
 
-   type Clang_Translation_Unit is private;
+   subtype Clang_Translation_Unit is clang_c_Index_h.CXTranslationUnit;
 
    No_Translation_Unit : constant Clang_Translation_Unit;
 
@@ -344,6 +348,56 @@ package Libclang.Index is
      (Result : Clang_Completion_Result) return clang_c_Index_h.CXCursorKind;
    --  Return the kind of the result
 
+   ------------------------------
+   -- Cursors & Tree traversal --
+   ------------------------------
+
+   type Clang_Cursor is new clang_c_Index_h.CXCursor;
+
+   use type Interfaces.C.unsigned;
+
+   function "=" (Left, Right : Clang_Cursor) return Boolean is
+     (clang_equalCursors (Left, Right) /= 0);
+
+   subtype Clang_Cursor_Kind is clang_c_Index_h.CXCursorKind;
+
+   subtype Clang_Visit_Result is clang_c_Index_h.CXChildVisitResult;
+
+   No_Cursor : constant Clang_Cursor;
+
+   type Clang_Cursor_Visitor is access function
+     (Parent, Child : Clang_Cursor) return Clang_Visit_Result;
+
+   function Root_Cursor
+     (TU : Clang_Translation_Unit) return Clang_Cursor;
+
+   package Cursors_Vectors is new Ada.Containers.Vectors
+     (Positive, Clang_Cursor);
+
+   function Toplevel_Nodes
+     (TU : Clang_Translation_Unit) return Cursors_Vectors.Vector;
+
+   function Get_Children
+     (Cursor : Clang_Cursor) return Cursors_Vectors.Vector;
+
+   function Kind
+     (Cursor : Clang_Cursor) return Clang_Cursor_Kind
+      renames clang_getCursorKind;
+
+   function Spelling
+     (Cursor : Clang_Cursor) return String;
+
+   function Display_Name
+     (Cursor : Clang_Cursor) return String;
+
+   function To_String
+     (Clang_String : clang_c_CXString_h.CXString) return String;
+
+   function Spelling (TU : Clang_Translation_Unit) return String is
+     (To_String (clang_getTranslationUnitSpelling (TU)));
+
+   subtype Clang_Location is CXSourceLocation;
+
 private
 
    type Clang_Index is record
@@ -351,15 +405,10 @@ private
    end record;
 
    No_Index : constant Clang_Index :=
-     (CXIndex => clang_c_Index_h.CXIndex (System.Null_Address));
-
-   type Clang_Translation_Unit is record
-      CX_Translation_Unit : clang_c_Index_h.CXTranslationUnit;
-   end record;
+     (CXIndex => CXIndex (System.Null_Address));
 
    No_Translation_Unit : constant Clang_Translation_Unit :=
-     (CX_Translation_Unit =>
-        clang_c_Index_h.CXTranslationUnit (System.Null_Address));
+        clang_c_Index_h.CXTranslationUnit (System.Null_Address);
 
    type Clang_Complete_Results is record
       CXCodeCompleteResults : access clang_c_Index_h.CXCodeCompleteResults;
@@ -376,7 +425,7 @@ private
          NumResults => Aliased_0);
 
    No_Complete_Results : constant Clang_Complete_Results :=
-       (CXCodeCompleteResults => No_CXCodeCompleteResults'Access);
+     (CXCodeCompleteResults => null);
 
    type Clang_Completion_Result is record
       Result : access clang_c_Index_h.CXCompletionResult;
@@ -384,5 +433,7 @@ private
 
    No_Completion_Results : constant Clang_Completion_Result :=
      (Result => null);
+
+   No_Cursor : constant Clang_Cursor := clang_getNullCursor;
 
 end Libclang.Index;

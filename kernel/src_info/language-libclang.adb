@@ -24,17 +24,33 @@ with Language.Libclang.Utils; use Language.Libclang.Utils;
 with Ada.Strings.Hash;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GPS.Editors; use GPS.Editors;
 
 package body Language.Libclang is
 
    Diagnostics : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG.DIAGNOSTICS", Off);
 
+   function Translation_Unit
+     (Kernel : Core_Kernel;
+      File : GNATCOLL.VFS.Virtual_File;
+      Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files)
+      return Clang_Translation_Unit;
+
    function Hash (Project : Project_Type) return Hash_Type is
      (Ada.Strings.Hash (Project.Name));
 
+--     function "=" (L, R : Clang_Translation_Unit) return Boolean is
+--       (System.Address (L) = System.Address (R));
+
+   type TU_Cache is record
+      TU : Clang_Translation_Unit;
+      Version : Integer := 0;
+   end record;
+   type TU_Cache_Access is access all TU_Cache;
+
    package TU_Maps is new Ada.Containers.Hashed_Maps
-     (Virtual_File, Clang_Translation_Unit, Full_Name_Hash, "=");
+     (Virtual_File, TU_Cache_Access, Full_Name_Hash, "=");
    type Tu_Map_Access is access all TU_Maps.Map;
 
    type Clang_Context is record
@@ -63,6 +79,52 @@ package body Language.Libclang is
       Context.Clang_Indexer := Create_Index (True, Active (Diagnostics));
       Context.TU_Cache := new TU_Maps.Map;
    end Initialize;
+
+   ----------------------
+   -- Translation_Unit --
+   ----------------------
+
+   function Translation_Unit
+     (Kernel : Core_Kernel;
+      File : GNATCOLL.VFS.Virtual_File;
+      Reparse : Boolean := False)
+      return Clang_Translation_Unit
+   is
+      Buffer : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get (File, False, False, False, False);
+      F_Info : constant File_Info'Class :=
+        File_Info'Class
+          (Kernel.Registry.Tree.Info_Set
+             (File).First_Element);
+      Context : Clang_Context;
+      Cache_Val : TU_Cache_Access;
+      TU : Clang_Translation_Unit;
+   begin
+      if Reparse
+        and then Buffer /= Nil_Editor_Buffer
+        and then Global_Cache.Contains (F_Info.Project)
+      then
+         Context := Global_Cache.Element (F_Info.Project);
+         if Context.TU_Cache.Contains (File) then
+            Cache_Val := Context.TU_Cache.Element (File);
+            if Cache_Val.Version < Buffer.Version then
+               declare
+                  Buffer_Text : Ada.Strings.Unbounded.String_Access :=
+                    new String'(Buffer.Get_Chars);
+               begin
+                  TU := Translation_Unit
+                    (Kernel, File,
+                     (0 => Create_Unsaved_File
+                          (String (File.Full_Name.all), Buffer_Text)));
+                  Cache_Val.Version := Buffer.Version;
+                  Free (Buffer_Text);
+                  return TU;
+               end;
+            end if;
+         end if;
+      end if;
+      return Translation_Unit (Kernel, File, No_Unsaved_Files);
+   end Translation_Unit;
 
    ----------------------
    -- Translation_Unit --
@@ -103,7 +165,7 @@ package body Language.Libclang is
          if Unsaved_Files = No_Unsaved_Files
            and then Context.TU_Cache.Contains (File)
          then
-            return Context.TU_Cache.Element (File);
+            return Context.TU_Cache.Element (File).TU;
          end if;
 
          --  Retrieve the switches for this file
@@ -122,13 +184,11 @@ package body Language.Libclang is
             if Context.TU_Cache.Contains (File) then
                --  If the key is in the cache, we know that File_Content is not
                --  null, so we want to reparse
-
-               TU := Context.TU_Cache.Element (File);
+               TU := Context.TU_Cache.Element (File).TU;
                Dummy := Reparse_Translation_Unit (TU, Unsaved_Files);
             else
                --  In the other case, this is the first time we're parsing this
                --  file
-
                TU := Parse_Translation_Unit
                  (Index             => Context.Clang_Indexer,
                   Source_Filename   => String (File.Full_Name.all),
@@ -149,6 +209,9 @@ package body Language.Libclang is
 
                   Unsaved_Files     => Unsaved_Files,
                   Options           => No_Translation_Unit_Flags);
+
+               Context.TU_Cache.Include
+                 (File, new TU_Cache'(TU => TU, Version => 0));
             end if;
 
             GNAT.Strings.Free (C_Switches);

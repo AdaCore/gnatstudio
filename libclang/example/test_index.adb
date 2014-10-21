@@ -23,8 +23,10 @@ with Ada.Command_Line;      use Ada.Command_Line;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.Utils; use GNATCOLL.Utils;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Libclang.Index; use Libclang.Index;
 with Ada.Text_IO; use Ada.Text_IO;
+with GNAT.Strings;
 
 ----------------
 -- Test_Index --
@@ -43,7 +45,12 @@ begin
       Source_Filename : constant String := Argument (1);
       CL : Unbounded_String_Array (4 .. Argument_Count);
       Line, Column : Natural;
+      Source_File : constant GNATCOLL.VFS.Virtual_File :=
+        GNATCOLL.VFS.Create (+Source_Filename);
+      Content : constant GNAT.Strings.String_Access := Source_File.Read_File;
+
    begin
+
       Index := Create_Index (Exclude_Declarations_From_PCH => False,
                              Display_Diagnostics           => False);
 
@@ -65,10 +72,16 @@ begin
               Source_Filename   => Source_Filename,
               Command_Line_Args => CL);
 
+         Unsaved_Files : constant Unsaved_File_Array :=
+           (1 => Create_Unsaved_File
+              (Source_Filename,
+               Ada.Strings.Unbounded.String_Access (Content)));
+
          Success : Boolean;
          pragma Unreferenced (Success);
       begin
-         Success := Reparse_Translation_Unit (TU);
+         Success := Reparse_Translation_Unit (TU, Unsaved_Files);
+         Put_Line (Content.all);
 
          --  Get completion
 
@@ -80,12 +93,10 @@ begin
                            Column   => Column);
 
             Strings : Completion_Strings;
+            pragma Unreferenced (Strings);
          begin
             for J in 1 .. Num_Results (Completion) loop
                Strings := Spelling (Nth_Result (Completion, J));
-
-               Put_Line (To_String (Strings.Completion)
-                         & ASCII.HT & To_String (Strings.Doc));
             end loop;
 
             Dispose (Completion);

@@ -357,7 +357,7 @@ package body Completion.C.Libclang is
          --  ??? We should fill other unsaved_files!
       begin
          Resolver.TU := Translation_Unit
-           (Core_Kernel (Resolver.Kernel), Context.File, Unsaved_Files);
+           (Core_Kernel (Resolver.Kernel), Context.File);
 
          Loc := Loc.Forward_Char (0 - UTF8_Length (Resolver.Prefix.all));
 
@@ -389,7 +389,6 @@ package body Completion.C.Libclang is
 
    overriding procedure Free (This : in out Libclang_Resolver) is
    begin
-      Dispose (This.TU);
       Dispose (This.Completions);
       Free (This.Prefix);
    end Free;

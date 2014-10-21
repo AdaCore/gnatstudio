@@ -22,8 +22,8 @@ with Ada.Unchecked_Conversion;
 with Interfaces.C;         use Interfaces.C;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Interfaces.C.Pointers;
-with clang_c_CXString_h;
-with clang_c_Index_h; use clang_c_Index_h;
+with clang_c_CXString_h; use clang_c_CXString_h;
+with System.Address_To_Access_Conversions;
 
 package body Libclang.Index is
 
@@ -123,7 +123,7 @@ package body Libclang.Index is
 
       C_Source_Filename := New_String (Source_Filename);
 
-      TU.CX_Translation_Unit :=
+      TU :=
         local_clang_parseTranslationUnit
           (C_Idxx                => Index.CXIndex,
            Source_Filename       => C_Source_Filename,
@@ -155,8 +155,8 @@ package body Libclang.Index is
 
       function local_clang_reparseTranslationUnit
         (tu : CXTranslationUnit;
-         Unsaved_Files : System.Address;
          Num_Unsaved_Files : unsigned;
+         Unsaved_Files : System.Address;
          Options : unsigned) return int;
       pragma Import (C, local_clang_reparseTranslationUnit,
                      "clang_reparseTranslationUnit");
@@ -173,7 +173,7 @@ package body Libclang.Index is
 
       C_Result :=
         local_clang_reparseTranslationUnit
-          (tu                    => TU.CX_Translation_Unit,
+          (tu                    => TU,
            Unsaved_Files         => C_Unsaved_Files,
            Num_Unsaved_Files     => Unsaved_Files'Length,
            Options               => unsigned (Options));
@@ -191,7 +191,7 @@ package body Libclang.Index is
          return;
       end if;
 
-      clang_disposeTranslationUnit (TU.CX_Translation_Unit);
+      clang_disposeTranslationUnit (TU);
       TU := No_Translation_Unit;
    end Dispose;
 
@@ -237,7 +237,7 @@ package body Libclang.Index is
 
       C_Returned :=
         local_clang_codeCompleteAt
-          (TU                => TU.CX_Translation_Unit,
+          (TU                => TU,
            complete_filename => C_Filename,
            complete_line     => unsigned (Line),
            complete_column   => unsigned (Column),
@@ -391,22 +391,164 @@ package body Libclang.Index is
    is
       Returned : Unsaved_File;
       C_Filename : chars_ptr;
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, chars_ptr);
    begin
       C_Filename := New_String (Filename);
       --  ??? Who frees this?
       Returned.Filename := C_Filename;
 
       if Buffer = null then
-         Returned.Contents := Convert (System.Null_Address);
+         Returned.Contents := Null_Ptr;
          Returned.Length := 0;
       else
-         Returned.Contents := Convert (Buffer (Buffer'First)'Address);
+         Returned.Contents := New_String (Buffer.all);
          Returned.Length := Buffer'Length;
       end if;
 
       return Returned;
    end Create_Unsaved_File;
+
+   -----------------
+   -- Root_Cursor --
+   -----------------
+
+   function Root_Cursor
+     (TU : Clang_Translation_Unit) return Clang_Cursor is
+   begin
+      return clang_getTranslationUnitCursor (TU);
+   end Root_Cursor;
+
+   type Visitor_Data is record
+      Vec : Cursors_Vectors.Vector;
+   end record;
+
+   package Addr_To_Vis_Data is new System.Address_To_Access_Conversions
+     (Visitor_Data);
+
+   function Get_Children_Visitor
+     (Child  : CXCursor;
+      Parent : CXCursor;
+      UData   : CXClientData) return CXChildVisitResult;
+   pragma Convention (C, Get_Children_Visitor);
+
+   --------------------------
+   -- Get_Children_Visitor --
+   --------------------------
+
+   function Get_Children_Visitor
+     (Child  : CXCursor;
+      Parent : CXCursor;
+      UData  : CXClientData) return CXChildVisitResult
+   is
+      pragma Unreferenced (Parent);
+      Data : constant Addr_To_Vis_Data.Object_Pointer
+        := Addr_To_Vis_Data.To_Pointer (System.Address (UData));
+   begin
+      Data.Vec.Append (Clang_Cursor (Child));
+      return CXChildVisit_Continue;
+   end Get_Children_Visitor;
+
+   ------------------
+   -- Get_Children --
+   ------------------
+
+   function Get_Children
+     (Cursor : Clang_Cursor) return Cursors_Vectors.Vector
+   is
+      V : aliased Visitor_Data;
+      V_Ptr : constant Addr_To_Vis_Data.Object_Pointer := V'Unchecked_Access;
+      Discard : Interfaces.C.unsigned;
+   begin
+      Discard := clang_visitChildren
+        (Cursor, Get_Children_Visitor'Access,
+         CXClientData (Addr_To_Vis_Data.To_Address (V_Ptr)));
+      return V.Vec;
+   end Get_Children;
+
+   function Toplevel_Nodes_Visitor
+     (Child  : CXCursor;
+      Parent : CXCursor;
+      UData   : CXClientData) return CXChildVisitResult;
+   pragma Convention (C, Toplevel_Nodes_Visitor);
+
+   ----------------------------
+   -- Toplevel_Nodes_Visitor --
+   ----------------------------
+
+   function Toplevel_Nodes_Visitor
+     (Child  : CXCursor;
+      Parent : CXCursor;
+      UData  : CXClientData) return CXChildVisitResult
+   is
+      pragma Unreferenced (Parent);
+      Data : constant Addr_To_Vis_Data.Object_Pointer
+        := Addr_To_Vis_Data.To_Pointer (System.Address (UData));
+   begin
+      if clang_Location_isFromMainFile (clang_getCursorLocation (Child)) /= 0
+      then
+         Data.Vec.Append (Clang_Cursor (Child));
+      end if;
+      return CXChildVisit_Continue;
+   end Toplevel_Nodes_Visitor;
+
+   --------------------
+   -- Toplevel_Nodes --
+   --------------------
+
+   function Toplevel_Nodes
+     (TU : Clang_Translation_Unit) return Cursors_Vectors.Vector
+   is
+      V : aliased Visitor_Data;
+      V_Ptr : constant Addr_To_Vis_Data.Object_Pointer := V'Unchecked_Access;
+      Discard : Interfaces.C.unsigned;
+   begin
+      Discard := clang_visitChildren
+        (Root_Cursor (TU), Toplevel_Nodes_Visitor'Access,
+         CXClientData (Addr_To_Vis_Data.To_Address (V_Ptr)));
+      return V.Vec;
+   end Toplevel_Nodes;
+
+   --------------
+   -- Spelling --
+   --------------
+
+   function Spelling
+     (Cursor : Clang_Cursor) return String
+   is
+   begin
+      return To_String (clang_getCursorSpelling (Cursor));
+   end Spelling;
+
+   ------------------
+   -- Display_Name --
+   ------------------
+
+   function Display_Name
+     (Cursor : Clang_Cursor) return String
+   is
+   begin
+      return To_String (clang_getCursorDisplayName (Cursor));
+   end Display_Name;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String
+     (Clang_String : clang_c_CXString_h.CXString) return String
+   is
+      C_String : constant Interfaces.C.Strings.chars_ptr :=
+        clang_getCString (Clang_String);
+   begin
+      if C_String /= Null_Ptr then
+         declare
+            Str : constant String := Interfaces.C.Strings.Value (C_String);
+         begin
+            clang_disposeString (Clang_String);
+            return Str;
+         end;
+      else
+         return "";
+      end if;
+   end To_String;
 
 end Libclang.Index;

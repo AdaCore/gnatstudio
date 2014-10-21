@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2014, AdaCore                        --
+--                     Copyright (C) 2003-2014, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Libclang.Index; use Libclang.Index;
-with GPS.Core_Kernels; use GPS.Core_Kernels;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 
-package Language.Libclang is
-   function Translation_Unit
-     (Kernel : Core_Kernel;
-      File : GNATCOLL.VFS.Virtual_File;
-      Reparse : Boolean := False)
-      return Clang_Translation_Unit;
+package body Libclang.File is
 
-end Language.Libclang;
+   function File
+     (TU : Clang_Translation_Unit; File_Name : String) return Libclang_File
+   is
+      C_File_Name : chars_ptr := New_String (File_Name);
+      Result : constant CXFile := clang_getFile (TU, C_File_Name);
+   begin
+      Free (C_File_Name);
+      return Result;
+   end File;
+
+end Libclang.File;

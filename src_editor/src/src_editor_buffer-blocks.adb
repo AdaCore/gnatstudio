@@ -39,6 +39,8 @@ package body Src_Editor_Buffer.Blocks is
       Column     : Visible_Column_Type;
       Block      : Block_Access;
    begin
+      pragma Warnings (Off);
+      return;
       if Buffer.Lang = null then
          Buffer.Parse_Blocks := False;
          Buffer_Information_Changed (Buffer);

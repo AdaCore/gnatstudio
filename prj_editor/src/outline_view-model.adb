@@ -35,6 +35,7 @@ with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with Ada.Containers.Bounded_Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Outline_View.Model is
    Me : constant Trace_Handle := Create ("OUTLINE");
@@ -341,15 +342,12 @@ package body Outline_View.Model is
       use Sem_Tree_Holders;
       Sem_Unique_Id : constant String := Sem_Node.Unique_Id;
    begin
-      pragma Assert (Sem_Unique_Id /= "", "Cannot add a tree node with no Id");
 
       if Model = null
         or else Model.Semantic_Tree = Sem_Tree_Holders.Empty_Holder
       then
          return;
       end if;
-
-      Root := Get_Node (Model, Sem_Node);
 
       --  Issue: if we have children that would match, we still need to
       --  insert them. Depending on Group_Spec_And_Body, this might mean
@@ -358,6 +356,13 @@ package body Outline_View.Model is
       if Root = null
         and then Construct_Filter (Model, Sem_Node)
       then
+         --  pragma Assert
+         --  (Sem_Unique_Id /= "", "Cannot add a tree node with no Id");
+         if Sem_Unique_Id = "" then
+            Put_Line ("Cannot add a tree node with no Id");
+         end if;
+
+         Root := Get_Node (Model, Sem_Node);
 
          if Model.Filter.Flat_View then
             Parent_Node := Model.Phantom_Root'Access;

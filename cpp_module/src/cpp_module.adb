@@ -38,6 +38,8 @@ with Language_Handlers;          use Language_Handlers;
 with Naming_Editors;             use Naming_Editors;
 with Project_Viewers;            use Project_Viewers;
 with Projects;                   use Projects;
+with Language.Libclang_Tree; use Language.Libclang_Tree;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package body Cpp_Module is
    Me : constant Trace_Handle := Create ("CPP");
@@ -180,6 +182,11 @@ package body Cpp_Module is
          Page    => -"Editor/C & C++",
          Doc     => -"Whether to indent lines with comments only",
          Label   => -"Indent comments");
+
+      Kernel.Register_Tree_Provider
+        (C_Lang, new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
+      Kernel.Register_Tree_Provider
+        (Cpp_Lang, new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
 
       Add_Hook
         (Kernel, Preference_Changed_Hook,
