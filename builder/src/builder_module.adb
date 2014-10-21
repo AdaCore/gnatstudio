@@ -60,7 +60,7 @@ package body Builder_Module is
       if Command = "compute_xref" then
          Launch_Target
            (Builder_Facility_Module.Builder,
-            "Build All", "xref",
+            "Build All", "default",
             GNATCOLL.VFS.No_File,
             Extra_Args  => null,
             Quiet       => True,
@@ -72,7 +72,7 @@ package body Builder_Module is
       elsif Command = "compute_xref_bg" then
          Launch_Target
            (Builder_Facility_Module.Builder,
-            "Build All", "xref",
+            "Build All", "default",
             GNATCOLL.VFS.No_File,
             Extra_Args  => null,
             Quiet       => True,

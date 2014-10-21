@@ -112,44 +112,6 @@ XML = r"""<?xml version="1.0" ?>
   </extra-args>
  </builder-mode>
 
- <builder-mode name="xref">
-  <description>Generate cross-reference information</description>
-  <subdir>.</subdir>
-  <shadow>TRUE</shadow>
-  <supported-model>builder</supported-model>
-  <supported-model>gnatmake</supported-model>
-  <supported-model>gprbuild</supported-model>
-  <supported-model filter="--subdirs=">gprclean</supported-model>
-  <server>Tools_Server</server>
-  <substitutions>
-    <substitute src="%builder" dest="%gprbuild"/>
-    <substitute src="%gnatmake" dest="%gprbuild"/>
-  </substitutions>
-  <extra-args>
-    <arg>-margs</arg>
-    <arg>--subdirs=%subdir</arg>
-    <arg>-U</arg>
-    <arg>-k</arg>
-    <arg>-d</arg>
-    <arg>-ws</arg>
-    <arg>--no-object-check</arg>
-    <arg>-cargs:Ada</arg>
-    <arg>-gnatcQI</arg>
-    <arg>-gnatws</arg>
-    <arg>-gnatyN</arg>
-    <arg>-gnatVn</arg>
-    <arg>-cargs:C</arg>
-    <arg>-w</arg>
-    <arg>-fsyntax-only</arg>
-    <arg>-fdump-xref</arg>
-    <arg>-cargs:C++</arg>
-    <arg>-w</arg>
-    <arg>-fsyntax-only</arg>
-    <arg>-fpermissive</arg>
-    <arg>-fdump-xref</arg>
-  </extra-args>
- </builder-mode>
-
  <target-model name="builder" category="">
    <description>Generic GNAT builder</description>
    <command-line>
