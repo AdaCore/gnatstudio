@@ -214,7 +214,9 @@ Here are the various places where you can drop a window:
   GPS will however restrict where windows can be placed: editors and most
   browsers, for instance, must go into the central area (the part that stays
   common when switching perspectives), whereas other views must stay on the
-  sides (left, right, bottom or top) of that central area.
+  sides (left, right, bottom or top) of that central area. 
+  The color of the highlight during a move (blue or brown) will indicate where
+  the window can be dropped.
 
 * System window
 
