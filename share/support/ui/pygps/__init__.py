@@ -309,8 +309,8 @@ try:
         """
 
         def internal_on_open(on_open, widgets, windows, args, kwargs):
-            dialog = [w for w in Gtk.Window.list_toplevels() if not w
-                      in windows and w.get_mapped()]
+            dialog = [w for w in Gtk.Window.list_toplevels() if w
+                      not in windows and w.get_mapped()]
             if not dialog:
                 # Will try again after same timeout or idle
                 return True
@@ -443,39 +443,42 @@ try:
         if process_events:
             process_all_events()
 
-    def get_notebook(text_box):
+    def get_notebook(widget):
         """
         :type text_box: Gtk.VBox
         :return: Gtk.Notebook
         """
         try:
-            w = text_box
-            for _ in range(4):
+            w = widget
+            while not isinstance(w, Gtk.Notebook):
                 w = w.get_parent()
             return w
         except AttributeError:
             return None
 
-    def get_current_textbox(nb):
+    def get_current_textview(nb):
         """
         :type nb: Gtk.Notebook
-        :return: Gtk.VBox
+        :return: Gtk.TextView
         """
-        return get_widgets_by_type(Gtk.VBox,
-                                   nb.get_nth_page(nb.get_current_page()))[-1]
+        widgets = get_widgets_by_type(
+            Gtk.TextView, nb.get_nth_page(nb.get_current_page()))
+
+        return widgets[-1] if widgets else None
 
     def is_editor_visible(ed_buffer):
         """
         :type ed_buffer: GPS.EditorBuffer
         :return: boolean
         """
-        vbox = ed_buffer.current_view().pywidget()
-        nb = get_notebook(vbox)
+        tv = get_widgets_by_type(
+            Gtk.TextView, ed_buffer.current_view().pywidget())[-1]
+        nb = get_notebook(tv)
         if nb:
-            return get_current_textbox(nb) == vbox and vbox.is_visible()
+            return get_current_textview(nb) == tv and tv.is_visible()
         # If nb is None, the editor is not in a notebook
         else:
-            return vbox.is_visible()
+            return tv.is_visible()
 
 
 except ImportError:
