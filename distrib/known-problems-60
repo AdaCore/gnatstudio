@@ -895,6 +895,16 @@ KP-60-N109-027 GPS: incorrect display of abstract entities in entities browser
                  sqlite3 root_object_dir/gnatinspect.db
                  > update entity_kinds set has_methods="t" where id="H";
 
+KP-60-N107-027 GB: Defining/using aliases with code templates
+
+  Problem:    The Ada editor wouldn't allow the use of common Ada
+              templates to fill in commonly used source patterns
+              while coding.
+
+  Status:     This was fixed in 2.9 on 2014-09-18
+
+  Workaround: None
+
 KP-60-MC16-032 GPS: Source window not scrolling after auto complete
 
   Problem:    When auto-completing manually (via Ctrl+Space, for example), if
