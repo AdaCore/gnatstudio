@@ -71,6 +71,11 @@ begin
      (Cmdline,
       Switch       => "-X:",
       Help         => "Specify an external reference in the project");
+   Define_Switch
+     (Cmdline,
+      Switch       => "-v",
+      Long_Switch  => "--version",
+      Help         => "show the version and exit");
 
    --  Initialize context
    GPS.CLI_Utils.Create_Kernel_Context (Kernel);

@@ -31,6 +31,7 @@ with Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Assistants;
 with Commands.Builder.Scripts;
 with Commands.Builder.Build_Output_Collectors;
+with Config;
 with Build_Command_Utils;
 with Build_Configurations;                     use Build_Configurations;
 with Language.Tree.Database;                   use Language.Tree.Database;
@@ -209,11 +210,24 @@ package body GPS.CLI_Utils is
                  ("Ignoring switch -X, missing name or/and value for: " &
                     Switch & Parameter);
             end if;
+         elsif Switch = "--version" or else Switch = "-v" then
+            Put_Line
+              ("GPS version " &
+               Config.Version & " (" &
+               Config.Source_Date & ") hosted on " &
+               Config.Target);
+            GNAT.OS_Lib.OS_Exit (0);
          end if;
 
       end Local_Parse_Command_Line;
    begin
       Getopt (Command_Line, Local_Parse_Command_Line'Unrestricted_Access);
+   exception
+      when Invalid_Switch =>
+         GNAT.OS_Lib.OS_Exit (1);
+      when GNAT.Command_Line.Invalid_Parameter =>
+         Put_Line ("Missing parameter for -" & Full_Switch);
+         GNAT.OS_Lib.OS_Exit (1);
    end Parse_Command_Line;
 
    -------------------------------
