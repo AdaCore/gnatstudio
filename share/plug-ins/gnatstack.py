@@ -12,7 +12,7 @@ import os.path
 tool = os_utils.locate_exec_on_path("gnatstack")
 
 if tool != "":
-    GPS.parse_xml ("""
+    GPS.parse_xml("""
   <!--  Support for running GNATStack as a build target  -->
 
   <target-model name="gnatstack" category="">
@@ -52,18 +52,29 @@ if tool != "":
   <tool name="GNATStack" package="Stack" attribute="switches" index="">
     <switches>
       <title line="1" column="1">Entry points</title>
-      <field line="1" column="1" switch="-e" separator=" " label="use specific list of subprograms as entry points (e1,e2,...)"/>
-      <field line="1" column="1" switch="-r" separator=" " label="use all subprograms matching reg-exp as entry points"/>
-      <check line="1" column="1" switch="-a" label="use all subprograms as entry points"/>
+      <field line="1" column="1" switch="-e" separator=" "
+       label="use specific list of subprograms as entry points (e1,e2,...)"/>
+      <field line="1" column="1" switch="-r" separator=" "
+             label="use all subprograms matching reg-exp as entry points"/>
+      <check line="1" column="1" switch="-a"
+             label="use all subprograms as entry points"/>
 
       <title line="2" column="1">Stack frame sizes</title>
-      <spin line="2" column="1" switch="-c" separator=" " min="0" max="2147483647" default="0" label="size of frame for cycle entry"/>
-      <spin line="2" column="1" switch="-d" separator=" " min="0" max="2147483647" default="0" label="size of frame for unbounded (dynamic) calls"/>
-      <spin line="2" column="1" switch="-u" separator=" " min="0" max="2147483647" default="0" label="size of frame for unknown (external) calls"/>
+      <spin line="2" column="1" switch="-c" separator=" "
+            min="0" max="2147483647" default="0"
+            label="size of frame for cycle entry"/>
+      <spin line="2" column="1" switch="-d" separator=" "
+            min="0" max="2147483647" default="0"
+            label="size of frame for unbounded (dynamic) calls"/>
+      <spin line="2" column="1" switch="-u" separator=" "
+            min="0" max="2147483647" default="0"
+            label="size of frame for unknown (external) calls"/>
 
       <title line="3" column="1">CI in object files</title>
-      <field line="3" column="1" switch="-s" separator="=" label="name of the section where the .ci is in the object"/>
-      <field line="3" column="1" switch="-oc" separator="=" label="name of the objcopy executable"/>
+      <field line="3" column="1" switch="-s" separator="="
+             label="name of the section where the .ci is in the object"/>
+      <field line="3" column="1" switch="-oc" separator="="
+             label="name of the objcopy executable"/>
 
       <check line="4" column="1" switch="-ca" label="extract all cycles"/>
       <check line="4" column="1" switch="-k" label="keep temporary files"/>
