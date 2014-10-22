@@ -21,6 +21,7 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with Basic_Types;              use Basic_Types;
 with GPS.Kernel.Contexts;      use GPS.Kernel, GPS.Kernel.Contexts;
 with Language;                 use Language;
+with Language.Ada;             use Language.Ada;
 with Language_Handlers;        use Language_Handlers;
 with Language_Utils;           use Language_Utils;
 with Xref;                     use Xref;
@@ -39,10 +40,18 @@ package body CodePeer.Module.Filters is
       Kernel     : constant Kernel_Handle := Get_Kernel (Context);
       File_Name  : constant Virtual_File := File_Information (Context);
       Languages  : constant Language_Handler := Get_Language_Handler (Kernel);
+      Lang       : constant Language_Access :=
+        Get_Language_From_File (Languages, File_Name);
       Constructs : Construct_List;
       Unit       : Construct_Access;
 
    begin
+      --  Quick check on the language
+
+      if Lang /= Ada_Lang then
+         return False;
+      end if;
+
       --  Quick check on whether we have a separate:
 
       if not Kernel.Registry.Tree.Root_Project.Is_Aggregate_Project
@@ -55,7 +64,7 @@ package body CodePeer.Module.Filters is
       --  Otherwise check if we have a generic
 
       Parse_File_Constructs
-        (Get_Language_From_File (Languages, File_Name),
+        (Lang,
          File_Name,
          Constructs);
 
