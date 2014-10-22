@@ -26,6 +26,7 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Text_IO;               use Ada.Text_IO;
 with ALI;
+with Interfaces.C;              use Interfaces.C;
 
 with GNAT.Command_Line;                use GNAT.Command_Line;
 pragma Warnings (Off);
@@ -171,6 +172,8 @@ with Vdiff2_Module;
 with Vsearch;
 
 procedure GPS.Main is
+   package ICS renames Interfaces.C.Strings;
+   use ICS;
    use type Glib.Gint;
 
    Me         : constant Trace_Handle := Create ("GPS");
@@ -330,13 +333,39 @@ procedure GPS.Main is
    --  Initializes the low-level gtk, python, traces layers
    --  This needs to be performed after environment variable initialisation.
 
-   procedure Read_Command_Line
-     (Command_Line : not null access Gapplication_Command_Line_Record'Class;
-      Do_Exit      : out Boolean;
-      Status_Code  : out Glib.Gint);
-   --  Reads and handle the command line as given by the Command_Line object.
-   --  Do_Exit is set to True if GPS needs to immediately exit
-   --  Status_Code gives the status code to return
+   type GPS_Option_Context is record
+      Context : Glib.Option.Goption_Context;
+
+      Do_Exit : Boolean := False;
+      --  Set to True if GPS should exit after parsing command line switches
+
+      Line  : Positive := 1;
+      --  Line to use when opening files from the command line.
+   end record;
+   GPS_Command_Line : GPS_Option_Context;
+   --  Handling of command line
+
+   procedure Build_Command_Line;
+   --  Initialize the variable GPS_Command_Line.
+
+   function On_Switch
+      (Option_Name : ICS.chars_ptr;
+       Value       : ICS.chars_ptr;
+       Data        : System.Address;  --  ignored
+       Error       : access Glib.Error.GError) return Glib.Gboolean;
+   pragma Convention (C, On_Switch);
+   --  General callback for switch handling from GApplication
+
+   function On_File_Switch
+     (Option_Name : ICS.chars_ptr;
+      Value       : ICS.chars_ptr;
+      Data        : System.Address;
+      Error       : access Glib.Error.GError) return Glib.Gboolean;
+   pragma Convention (C, On_File_Switch);
+   --  General callback for file opening handling from GApplication
+
+   procedure Handle_X_Switch (Val : String);
+   --  Handles the -X command line switch
 
    procedure File_Open_Callback
      (Application : Gtkada.Application.Gtkada_Application;
@@ -739,325 +768,244 @@ procedure GPS.Main is
       Status_Code := 0;
    end Initialize_Low_Level;
 
-   -----------------------
-   -- Read_Command_Line --
-   -----------------------
+   ---------------------
+   -- Handle_X_Switch --
+   ---------------------
 
-   procedure Read_Command_Line
-     (Command_Line : not null access Gapplication_Command_Line_Record'Class;
-      Do_Exit      : out Boolean;
-      Status_Code  : out Glib.Gint)
+   procedure Handle_X_Switch (Val : String) is
+      Idx : constant Integer := Ada.Strings.Fixed.Index (Val, "=");
+   begin
+      if Idx >= Val'First then
+         Ada.Environment_Variables.Set
+            (Name  => Val (Val'First .. Idx - 1),
+             Value => Val (Idx + 1 .. Val'Last));
+      else
+         Put_Line ("Invalid value for -X, should be VAR=VALUE");
+         GPS_Command_Line.Do_Exit := True;
+      end if;
+   end Handle_X_Switch;
+
+   ---------------
+   -- On_Switch --
+   ---------------
+
+   function On_Switch
+     (Option_Name : ICS.chars_ptr;
+      Value       : ICS.chars_ptr;
+      Data        : System.Address;
+      Error       : access Glib.Error.GError) return Glib.Gboolean
    is
-      package ICS renames Interfaces.C.Strings;
-      use ICS;
-      use type Glib.Gboolean;
+      pragma Unreferenced (Data, Error);
+      Switch : constant String := ICS.Value (Option_Name);
 
-      Opt_Context : Glib.Option.Goption_Context;
-      Err         : Glib.Error.GError;
-      Success     : Boolean;
-      Line        : Positive := 1;
+   begin
+      if Switch = "--project" or else Switch = "-P" then
+         --  Although this isn't costly, we must not resolve symbolic
+         --  links for project names unless Fast Project Loading mode is
+         --  disabled. Some users (IA27-014) and SCM have local links
+         --  that point to a SCM cache directory (Rational Synergy), but
+         --  directory names are still local. These users should use
+         --  Trusted mode so that we do not resolve symbolic links
 
-      function On_Argument
-        (Param : String) return Boolean;
-      --  Used to parse arguments that do not match the Gtk argument passing
-      --  framework, such as -Pproject (Gtk requires a delimiter between the
-      --  switch and the argument).
+         Passed_Project_Name := new String'(ICS.Value (Value));
 
-      procedure On_Scenario_Variable
-        (Param : String);
-      --  Handles an explicit scenario variable passed from the command line
-
-      function On_Switch
-        (Option_Name : ICS.chars_ptr;
-         Value       : ICS.chars_ptr;
-         Data        : System.Address;
-         Error       : access Glib.Error.GError) return Glib.Gboolean;
-      --  General callback for switch handling from GApplication
-
-      function On_File
-        (Option_Name : ICS.chars_ptr;
-         Value       : ICS.chars_ptr;
-         Data        : System.Address;
-         Error       : access Glib.Error.GError) return Glib.Gboolean;
-      --  General callback for file opening handling from GApplication
-
-      --        Application_Error : exception;
-      function To_Gchar (C : Character) return Glib.Gchar;
-
-      pragma Convention (C, On_Switch);
-      pragma Convention (C, On_File);
-
-      -----------------
-      -- On_Argument --
-      -----------------
-
-      function On_Argument
-        (Param : String) return Boolean
-      is
-      begin
-         if Param'Length > 2
-           and then Param (Param'First) = '-'
-         then
-            case Param (Param'First + 1) is
-               when 'P' =>
-                  Passed_Project_Name :=
-                    new String'(Param (Param'First + 2 .. Param'Last));
-                  return False;
-
-               when 'X' =>
-                  On_Scenario_Variable
-                    (Param (Param'First + 2 .. Param'Last));
-                  return False;
-
-               when others =>
-                  --  Let GOption handle the parameter
-                  return True;
-            end case;
-         end if;
-
-         --  Let GOption handle the parameter
-         return True;
-      end On_Argument;
-
-      --------------------------
-      -- On_Scenario_Variable --
-      --------------------------
-
-      procedure On_Scenario_Variable
-        (Param : String)
-      is
-         Set : Boolean := False;
-      begin
-         for P in Param'First + 1 .. Param'Last - 1 loop
-            if Param (P) = '=' then
-               Set := True;
-               Ada.Environment_Variables.Set
-                 (Name  => Param (Param'First .. P - 1),
-                  Value => Param (P + 1 .. Param'Last));
-               exit;
+      elsif Switch = "--help"
+        or else Switch = "-h"
+        or else Switch = "--help-all"
+      then
+         declare
+            --  Get_Help (False) will also print options that are not
+            --  in the main group (such as Gtk+ options)
+            --  Get_Help (True) will only print options from the main
+            --  group
+            Help : constant String :=
+                     "GPS version " &
+                     Config.Version & " (" &
+                     Config.Source_Date & ") hosted on " &
+                     Config.Target & ASCII.LF &
+                     ASCII.LF &
+                     GPS_Command_Line.Context.Get_Help
+              (Switch /= "--help-all", null);
+         begin
+            if Config.Can_Output then
+               Put_Line (Help);
+            else
+               Button := Message_Dialog
+                 (Help, Information, Button_OK,
+                  Title         => -"Help",
+                  Justification => Justify_Left);
             end if;
-         end loop;
+         end;
 
-         if not Set then
-            raise GNAT.Command_Line.Invalid_Parameter with
-              "Invalid value for -X, should be VAR=VALUE";
-         end if;
-      end On_Scenario_Variable;
+         GPS_Command_Line.Do_Exit := True;
 
-      ---------------
-      -- On_Switch --
-      ---------------
+      elsif Switch = "-X" then
+         Handle_X_Switch (ICS.Value (Value));
 
-      function On_Switch
-        (Option_Name : ICS.chars_ptr;
-         Value       : ICS.chars_ptr;
-         Data        : System.Address;
-         Error       : access Glib.Error.GError) return Glib.Gboolean
-      is
-         pragma Unreferenced (Data, Error);
-         Switch : constant String := ICS.Value (Option_Name);
-
-      begin
-         if Switch = "--project" or else Switch = "-P" then
-            --  Although this isn't costly, we must not resolve symbolic
-            --  links for project names unless Fast Project Loading mode is
-            --  disabled. Some users (IA27-014) and SCM have local links
-            --  that point to a SCM cache directory (Rational Synergy), but
-            --  directory names are still local. These users should use
-            --  Trusted mode so that we do not resolve symbolic links
-
-            Passed_Project_Name := new String'(ICS.Value (Value));
-
-         elsif Switch = "--help"
-           or else Switch = "-h"
-           or else Switch = "--help-all"
-         then
-            declare
-               --  Get_Help (False) will also print options that are not
-               --  in the main group (such as Gtk+ options)
-               --  Get_Help (True) will only print options from the main
-               --  group
-               Help : constant String :=
+      elsif Switch = "--version" or else Switch = "-v" then
+         declare
+            Version : constant String :=
                         "GPS version " &
                         Config.Version & " (" &
                         Config.Source_Date & ") hosted on " &
-                        Config.Target & ASCII.LF &
-                        ASCII.LF &
-                        Opt_Context.Get_Help
-                 (Switch /= "--help-all", null);
-            begin
-               if Config.Can_Output then
-                  Put_Line (Help);
-               else
-                  Button := Message_Dialog
-                    (Help, Information, Button_OK,
-                     Title         => -"Help",
-                     Justification => Justify_Left);
-               end if;
-            end;
-
-            Do_Exit := True;
-
-         elsif Switch = "--version" or else Switch = "-v" then
-            declare
-               Version : constant String :=
-                           "GPS version " &
-                           Config.Version & " (" &
-                           Config.Source_Date & ") hosted on " &
-                           Config.Target;
-            begin
-               if Config.Can_Output then
-                  Put_Line (Version);
-               else
-                  Button := Message_Dialog
-                    (Version,
-                     Information, Button_OK,
-                     Title         => -"Version",
-                     Justification => Justify_Left);
-               end if;
-            end;
-
-            Do_Exit := True;
-
-         elsif Switch = "--debug" then
-            Free (Program_Args);
-
-            if Value /= ICS.Null_Ptr then
-               Program_Args := new String'(ICS.Value (Value));
+                        Config.Target;
+         begin
+            if Config.Can_Output then
+               Put_Line (Version);
             else
-               Program_Args := new String'("");
+               Button := Message_Dialog
+                 (Version,
+                  Information, Button_OK,
+                  Title         => -"Version",
+                  Justification => Justify_Left);
             end if;
+         end;
 
-         elsif Switch = "--debugger" then
-            Free (Debugger_Name);
-            Debugger_Name := new String'(ICS.Value (Value));
+         GPS_Command_Line.Do_Exit := True;
 
-            if Program_Args = null then
-               --  --debugger implies --debug
-               Program_Args := new String'("");
-            end if;
+      elsif Switch = "--debug" then
+         Free (Program_Args);
 
-         elsif Switch = "--hide" then
-            Hide_GPS := True;
-
-         elsif Switch = "--readonly" then
-            Src_Editor_Box.Read_Only_By_Default;
-
-         elsif Switch = "--host" then
-            Free (Tools_Host);
-            Tools_Host := new String'(ICS.Value (Value));
-
-         elsif Switch = "--load" then
-            Free (Batch_File);
-            Batch_File := new String'(ICS.Value (Value));
-
-         elsif Switch = "--eval" then
-            Free (Batch_Script);
-            Batch_Script := new String'(ICS.Value (Value));
-
-         elsif Switch = "--server" then
-            begin
-               Port_Number := Natural'Value (ICS.Value (Value));
-               Server_Mode := True;
-            exception
-               when Constraint_Error =>
-                  return 0;
-            end;
-
-         elsif Switch = "--target" then
-            declare
-               Param  : constant String := ICS.Value (Value);
-               Column : constant Natural :=
-                          Ada.Strings.Fixed.Index
-                            (Param, ":", Ada.Strings.Backward);
-
-            begin
-               --  Param should be of the form target:protocol
-
-               if Column = 0 then
-                  raise Invalid_Switch;
-               end if;
-
-               Free (Target);
-               Free (Protocol);
-               Target   :=
-                 new String '(Param (Param'First .. Column - 1));
-               Protocol :=
-                 new String '(Param (Column + 1 .. Param'Last));
-            end;
-
-         elsif Switch = "--traceon" then
-            GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), True);
-
-         elsif Switch = "--traceoff" then
-            GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), False);
-
-         elsif Switch = "--tracefile" then
-            GNATCOLL.Traces.Parse_Config_File
-              (Filename => Create_From_Base (+ICS.Value (Value)));
-
-         elsif Switch = "--tracelist" then
-            GNATCOLL.Traces.Show_Configuration
-              (Ada.Text_IO.Put_Line'Access);
-
-            Do_Exit := True;
-         end if;
-
-         return 1;
-      end On_Switch;
-
-      -------------
-      -- On_File --
-      -------------
-
-      function On_File
-        (Option_Name : ICS.chars_ptr;
-         Value       : ICS.chars_ptr;
-         Data        : System.Address;
-         Error       : access Glib.Error.GError) return Glib.Gboolean
-      is
-         pragma Unreferenced (Option_Name, Data, Error);
-         FName : constant String := ICS.Value (Value);
-         Item  : File_To_Open;
-
-      begin
-         if FName (FName'First) = '-' then
-            --  Ignore switches
-            return 0;
-
-         elsif FName (FName'First) = '=' then
-            --  =<basename> means open from project
-            Item.File :=
-              To_Unbounded_String (FName (FName'First + 1 .. FName'Last));
-            Item.Line := Line;
-            Line := 1;
-            Item.From_Project := True;
-            Files_To_Open.Append (Item);
-
-         elsif FName (FName'First) = '+' then
-            --  +<line number> means open next file on command line at a
-            --  specific line number
-            Line := Positive'Value (FName (FName'First + 1 .. FName'Last));
-
+         if Value /= ICS.Null_Ptr then
+            Program_Args := new String'(ICS.Value (Value));
          else
-            Item.File := To_Unbounded_String (FName);
-            Item.Line := Line;
-            Line := 1;
-            Files_To_Open.Append (Item);
+            Program_Args := new String'("");
          end if;
 
-         return 1;
-      end On_File;
+      elsif Switch = "--debugger" then
+         Free (Debugger_Name);
+         Debugger_Name := new String'(ICS.Value (Value));
 
-      --------------
-      -- To_Gchar --
-      --------------
+         if Program_Args = null then
+            --  --debugger implies --debug
+            Program_Args := new String'("");
+         end if;
 
+      elsif Switch = "--hide" then
+         Hide_GPS := True;
+
+      elsif Switch = "--readonly" then
+         Src_Editor_Box.Read_Only_By_Default;
+
+      elsif Switch = "--host" then
+         Free (Tools_Host);
+         Tools_Host := new String'(ICS.Value (Value));
+
+      elsif Switch = "--load" then
+         Free (Batch_File);
+         Batch_File := new String'(ICS.Value (Value));
+
+      elsif Switch = "--eval" then
+         Free (Batch_Script);
+         Batch_Script := new String'(ICS.Value (Value));
+
+      elsif Switch = "--server" then
+         begin
+            Port_Number := Natural'Value (ICS.Value (Value));
+            Server_Mode := True;
+         exception
+            when Constraint_Error =>
+               return 0;
+         end;
+
+      elsif Switch = "--target" then
+         declare
+            Param  : constant String := ICS.Value (Value);
+            Column : constant Natural :=
+                       Ada.Strings.Fixed.Index
+                         (Param, ":", Ada.Strings.Backward);
+
+         begin
+            --  Param should be of the form target:protocol
+
+            if Column = 0 then
+               raise Invalid_Switch;
+            end if;
+
+            Free (Target);
+            Free (Protocol);
+            Target   :=
+              new String '(Param (Param'First .. Column - 1));
+            Protocol :=
+              new String '(Param (Column + 1 .. Param'Last));
+         end;
+
+      elsif Switch = "--traceon" then
+         GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), True);
+
+      elsif Switch = "--traceoff" then
+         GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), False);
+
+      elsif Switch = "--tracefile" then
+         GNATCOLL.Traces.Parse_Config_File
+           (Filename => Create_From_Base (+ICS.Value (Value)));
+
+      elsif Switch = "--tracelist" then
+         GNATCOLL.Traces.Show_Configuration
+           (Ada.Text_IO.Put_Line'Access);
+         GPS_Command_Line.Do_Exit := True;
+      end if;
+
+      return 1;
+   end On_Switch;
+
+   --------------------
+   -- On_File_Switch --
+   --------------------
+
+   function On_File_Switch
+     (Option_Name : ICS.chars_ptr;
+      Value       : ICS.chars_ptr;
+      Data        : System.Address;
+      Error       : access Glib.Error.GError) return Glib.Gboolean
+   is
+      pragma Unreferenced (Option_Name, Data, Error);
+      FName : constant String := ICS.Value (Value);
+      Item  : File_To_Open;
+
+   begin
+      if FName (FName'First) = '-' then
+         --  Ignore switches
+         return 0;
+
+      elsif FName (FName'First) = '=' then
+         --  =<basename> means open from project
+         Item.File :=
+           To_Unbounded_String (FName (FName'First + 1 .. FName'Last));
+         Item.Line := GPS_Command_Line.Line;
+         GPS_Command_Line.Line := 1;
+         Item.From_Project := True;
+         Files_To_Open.Append (Item);
+
+      elsif FName (FName'First) = '+' then
+         --  +<line number> means open next file on command line at a
+         --  specific line number
+         GPS_Command_Line.Line :=
+            Positive'Value (FName (FName'First + 1 .. FName'Last));
+
+      else
+         Item.File := To_Unbounded_String (FName);
+         Item.Line := GPS_Command_Line.Line;
+         GPS_Command_Line.Line := 1;
+         Files_To_Open.Append (Item);
+      end if;
+
+      return 1;
+   end On_File_Switch;
+
+   ------------------------
+   -- Build_Command_Line --
+   ------------------------
+
+   procedure Build_Command_Line is
+
+      function To_Gchar (C : Character) return Glib.Gchar;
       function To_Gchar (C : Character) return Glib.Gchar is
       begin
          return Glib.Gchar (Interfaces.C.char'(Interfaces.C.To_C (C)));
       end To_Gchar;
 
+      use type Glib.Gboolean;
       Opt_Project  : constant Glib.Option.GOption_Entry :=
                        (Long_Name       => ICS.New_String ("project"),
                         Short_Name      => To_Gchar ('P'),
@@ -1067,6 +1015,15 @@ procedure GPS.Main is
                         Description     => ICS.New_String
                           ("Load project file project or project.gpr"),
                         Arg_Description => ICS.New_String ("project"));
+      Opt_Scenario  : constant Glib.Option.GOption_Entry :=
+                       (Long_Name       => ICS.New_String ("scenario"),
+                        Short_Name      => To_Gchar ('X'),
+                        Flags           => 0,
+                        Arg             => G_Option_Arg_Callback,
+                        Arg_Data        => On_Switch'Address,
+                        Description     => ICS.New_String
+                          ("Set the value of a scenario variable"),
+                        Arg_Description => ICS.New_String ("var=value"));
       Opt_Help     : constant Glib.Option.GOption_Entry :=
                        (Long_Name       => ICS.New_String ("help"),
                         Short_Name      => To_Gchar ('h'),
@@ -1224,11 +1181,12 @@ procedure GPS.Main is
                          Short_Name      => To_Gchar (ASCII.NUL),
                          Flags           => G_Option_Flag_Filename,
                          Arg             => G_Option_Arg_Callback,
-                         Arg_Data        => On_File'Address,
+                         Arg_Data        => On_File_Switch'Address,
                          Description     => ICS.Null_Ptr,
                          Arg_Description => ICS.Null_Ptr);
       Opt_Entries   : constant Glib.Option.GOption_Entry_Array :=
                         (Opt_Project,
+                         Opt_Scenario,
                          Opt_Help,
                          Opt_Help_All,
                          Opt_Version,
@@ -1254,47 +1212,22 @@ procedure GPS.Main is
       pragma Import (C, Get_Gtk_Option_Group, "gtk_get_option_group");
 
    begin
-      Do_Exit := False;
-      Status_Code := 0;
+      GPS_Command_Line.Context := Glib.Option.G_New
+        ("[[+line1] source1] [[+line2] source2] ...");
 
-      Opt_Context := Glib.Option.G_New
-        ("[-Xvar=value] [[+line1] source1] " &
-           "[[+line2] source2] ...");
-
-      Opt_Context.Set_Summary
+      GPS_Command_Line.Context.Set_Summary
         ("source1, source2, ..." & ASCII.LF
            & "    Name of files to load. Start with '=' to load from project"
            & ASCII.LF
-           & "    and use +line to go to <line> directly, e.g. +40 source1"
-           & ASCII.LF
-           & "-Xvar=value" & ASCII.LF
-           & "    Sets the value of a scenario variable");
+           & "    and use +line to go to <line> directly, e.g. +40 source1");
 
-      Opt_Context.Add_Group (Get_Gtk_Option_Group (1));
-      Opt_Context.Add_Main_Entries (Opt_Entries, "gps");
+      GPS_Command_Line.Context.Add_Group (Get_Gtk_Option_Group (1));
+      GPS_Command_Line.Context.Add_Main_Entries (Opt_Entries, "gps");
 
       --  Default Help implementation immediately returns. We'd like to
       --  perform cleanup beforehand
-      Opt_Context.Set_Help_Enabled (False);
-
-      Opt_Context.Parse
-        (Command_Line, On_Argument'Unrestricted_Access, Success, Err);
-
-      if not Success then
-         --  Special handling for switch -P where the argument may be
-         --  glued with the project file name, as in -Pproject_file
-         Put_Line
-           (Standard_Error, "Error: " & Glib.Error.Get_Message (Err));
-         Put_Line ("Try `gps --help` for more information.");
-
-         Do_Exit := True;
-         Status_Code := 1;
-
-         return;
-      end if;
-
-      Opt_Context.Free;
-   end Read_Command_Line;
+      GPS_Command_Line.Context.Set_Help_Enabled (False);
+   end Build_Command_Line;
 
    ----------------------
    -- Startup_Callback --
@@ -1334,33 +1267,12 @@ procedure GPS.Main is
       Command_Line : not null access Gapplication_Command_Line_Record'Class)
       return Glib.Gint
    is
-      Status_Code : Glib.Gint;
-      Do_Exit     : Boolean;
+      pragma Unreferenced (Command_Line);
       Kernel      : Kernel_Handle;
       Menubar     : Gtk_Menu_Bar;
 
    begin
       Application.Hold;
-
-      --  Sanitize the environment variables, and perform various init from
-      --  them
-      Initialize_Environment_Variables (Command_Line);
-
-      --  Now perform the low level initializations
-      Initialize_Low_Level (Status_Code);
-
-      if Status_Code /= 0 then
-         Application.Release;
-         return Status_Code;
-      end if;
-
-      --  Now parse the switches from the command line
-      Read_Command_Line (Command_Line, Do_Exit, Status_Code);
-
-      if Do_Exit then
-         Application.Release;
-         return Status_Code;
-      end if;
 
       --  Create the kernel and prepare the menu model
 
@@ -2529,17 +2441,22 @@ procedure GPS.Main is
    -------------------
 
    procedure Error_Message (Message : String) is
-      Log_File : constant Virtual_File :=
-                   Create_From_Dir
-                     (Get_Home_Dir (GPS_Main.Kernel),
-                      "log");
-      Pid_File : constant Virtual_File :=
-                   Create_From_Dir
-                     (Get_Home_Dir (GPS_Main.Kernel),
-                      +("log." & Pid_Image));
+      Log_File : Virtual_File;
+      Pid_File : Virtual_File;
       Str      : Virtual_File;
 
    begin
+      --  Error before we created the main window is likely while parsing
+      --  command line switches.
+      if GPS_Main = null then
+         Put_Line (Message);
+         return;
+      end if;
+
+      Log_File := Create_From_Dir (Get_Home_Dir (GPS_Main.Kernel), "log");
+      Pid_File := Create_From_Dir
+         (Get_Home_Dir (GPS_Main.Kernel), +("log." & Pid_Image));
+
       if Is_Regular_File (Pid_File) then
          Str := Pid_File;
       else
@@ -2568,9 +2485,79 @@ procedure GPS.Main is
        Arguments   : access chars_ptr_array_access;
        Exit_Status : access Glib.Gint) return Glib.Gboolean
    is
-      pragma Unreferenced (Self, Arguments, Exit_Status);
+      Application : constant Gapplication :=
+         Gapplication (Get_User_Data_Or_Null (Self));
+      Err     : Glib.Error.GError;
+      Success : Boolean;
+      A       : size_t := 0;
+      B       : size_t := 0;
    begin
-      --  Do nothing, all switches are handled in On_Command_Line
+      --  Sanitize the environment variables, and perform various init from
+      --  them
+      Initialize_Environment_Variables (null);
+
+      --  Now perform the low level initializations
+      Initialize_Low_Level (Exit_Status.all);
+
+      if Exit_Status.all /= 0 then
+         Application.Release;
+         return 1;
+      end if;
+
+      --  Handle switches before we connect to the X11 server
+      Build_Command_Line;
+
+      --  Goption does not handle case of arguments attached to the switch,
+      --  so we need to handle those specially first.
+
+      while Arguments.all (A) /= Null_Ptr loop
+         declare
+            Val : constant String := Value (Arguments.all (A));
+            Handled : Boolean := False;
+         begin
+            --  Ignore when -P is separate, it will be handled later
+            if Val'Length > 2 and then Val (Val'First) = '-' then
+               if Val (Val'First + 1) = 'P' then
+                  Passed_Project_Name :=
+                     new String'(Val (Val'First + 2 .. Val'Last));
+                  Handled := True;
+
+               elsif Val (Val'First + 1) = 'X' then
+                  Handle_X_Switch (Val (Val'First + 2 .. Val'Last));
+                  Handled := True;
+               end if;
+            end if;
+
+            --  Will preserve the argument
+            if not Handled then
+               if A /= B then
+                  Arguments.all (B) := Arguments.all (A);
+               end if;
+               B := B + 1;
+            end if;
+         end;
+         A := A + 1;
+      end loop;
+      Arguments.all (B) := Null_Ptr;
+
+      --  Now the standard parsing
+
+      GPS_Command_Line.Context.Parse (Arguments, Success, Err);
+
+      if not Success then
+         if Err /= null then
+            Put_Line (Get_Message (Err));
+         else
+            Put_Line ("Error parsing command line switches");
+         end if;
+         GPS_Command_Line.Do_Exit := True;
+      end if;
+
+      if GPS_Command_Line.Do_Exit then
+         Application.Release;
+         Exit_Status.all := 0;
+         return 1;  --  Suppress default handling
+      end if;
       return 0;
    end Local_Command_Line;
 
@@ -2601,6 +2588,7 @@ begin
 
    Application := new Gtkada_Application_Record;
    G_New (Application, Application_Class_Record.The_Type);
+   Application.Hold;
    Application.Initialize
      ("com.adacore.GPS",
       Glib.Application.G_Application_Handles_Open +
@@ -2646,9 +2634,13 @@ exception
    when E : others =>
       Unexpected_Exception := True;
       Trace (Me, E);
-      Error_Message
-        ("Unexpected fatal error, GPS is in an inconsistent state"
-         & ASCII.LF
-         & "You will be asked to save modified files before GPS exits");
-      Dead := Save_MDI_Children (GPS_Main.Kernel, Force => False);
+      if GPS_Main /= null then
+         Error_Message
+           ("Unexpected fatal error, GPS is in an inconsistent state"
+            & ASCII.LF
+            & "You will be asked to save modified files before GPS exits");
+         Dead := Save_MDI_Children (GPS_Main.Kernel, Force => False);
+      else
+         Put_Line ("Unexpected fatal error, GPS is in an inconsistent state");
+      end if;
 end GPS.Main;
