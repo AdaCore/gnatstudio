@@ -7,13 +7,22 @@ from gps_utils import *
 from text_utils import goto_word_start, goto_word_end
 import re
 
-mc_on_entity_color = GPS.Preference("Plugins/multi_cursors/mc_on_entity_color")
-
+mc_on_entity_color = GPS.Preference(
+    "Plugins/multi_cursors/multicursor_on_entity_color")
 mc_on_entity_color.create(
     "Color for 'multi cursor on all references'", "color",
     "Color for 'multi cursor on all references'"
     " You must restart gps to take changes into account.",
-    "#3070A0"
+    "#94C3D7"
+)
+
+mc_on_entity_color = GPS.Preference(
+    "Plugins/multi_cursors/multicursor_selection_color")
+mc_on_entity_color.create(
+    "Color for multi cursor selection", "color",
+    "Color for multi cursor selection"
+    " You must restart gps to take changes into account.",
+    "#96C5D9"
 )
 
 

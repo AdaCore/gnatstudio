@@ -40,7 +40,7 @@ package Src_Editor_Buffer.Cursors is
 
    Nil_Cursor : Cursor := (False, null, -1, null);
 
-   function Get_Main_Cursor (B : Source_Buffer) return Cursor;
+   function Get_Main_Cursor (B : Source_Buffer) return Cursor is (True, B);
 
    function Create
      (C : Slave_Cursor_Access; Buffer : Source_Buffer) return Cursor;

@@ -53,6 +53,8 @@ light_common = {
 
     "Plugins/dispatching/color": "rgb(255,243,194)",
     "Plugins/ispell/bgcolor": "rgb(255,255,0)",
+    "Plugins/multi_cursors/multicursor_on_entity_color": "#94C3D7",
+    "Plugins/multi_cursors/multicursor_selection_color": "#96C5D9",
 }
 
 dark_common = {
@@ -81,6 +83,9 @@ dark_common = {
 
     "Plugins/dispatching/color": "rgb(46,52,56)",
     "Plugins/ispell/bgcolor": "rgb(206,92,0)",
+
+    "Plugins/multi_cursors/multicursor_on_entity_color": "#3070A0",
+    "Plugins/multi_cursors/multicursor_selection_color": "#3272A2",
 }
 
 default = gps_utils.Chainmap(light_common, {

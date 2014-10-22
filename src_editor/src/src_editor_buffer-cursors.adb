@@ -17,10 +17,13 @@
 
 with Gtk.Text_Tag; use Gtk.Text_Tag;
 with Glib.Properties;
+with Default_Preferences; use Default_Preferences;
 
 package body Src_Editor_Buffer.Cursors is
 
    Mc_Selection_Tag : constant String := "mc_selection";
+   Selection_Pref_Name : constant String :=
+     "Plugins/multi_cursors/multicursor_selection_color";
 
    procedure Check_Mc_Selection_Tag (Buffer : Source_Buffer);
 
@@ -30,14 +33,15 @@ package body Src_Editor_Buffer.Cursors is
 
    procedure Check_Mc_Selection_Tag (Buffer : Source_Buffer) is
       T : Gtk_Text_Tag := Buffer.Get_Tag_Table.Lookup (Mc_Selection_Tag);
+      P : constant Preference :=
+        Buffer.Kernel.Get_Preferences.Get_Pref_From_Name
+          (Selection_Pref_Name, True);
    begin
       if T = null then
          T := Buffer.Create_Tag (Mc_Selection_Tag);
       end if;
-      Glib.Properties.Set_Property (T, Background_Property, "green");
+      Glib.Properties.Set_Property (T, Background_Property, P.Get_Pref);
    end Check_Mc_Selection_Tag;
-
-   function Get_Main_Cursor (B : Source_Buffer) return Cursor is (True, B);
 
    ------------
    -- Create --

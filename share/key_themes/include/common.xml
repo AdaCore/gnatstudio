@@ -23,6 +23,9 @@
   <key action="backward locations history">alt-Left</key>
   <key action="forward locations history">alt-Right</key>
 
+  <key action="Add multi cursor to all references of entity" >shift-control-E</key>
+  <key action="Add multi cursor to next occurence of selection" >shift-control-N</key>
+
   <key action="Build Main Number 1">F4</key>
   <key action="Run Main Number 1">shift-F2</key>
   <key action="Custom Build...">F9</key>
