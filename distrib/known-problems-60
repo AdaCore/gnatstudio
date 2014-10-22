@@ -91,6 +91,15 @@ KP-60-N922-042 GB: support viewing ada files from git history view
               view a git commit version.
               See Window/Preferences General/Editors/File Associations
 
+KP-60-N919-002 GPS: using the plugin autoformat.py breaks Python files
+
+  Problem:    Activating the autoformat.py plugin will cause GPS to
+              break formatting under Python files.
+
+  Status:     This was fixed in 6.1 on 2914-09-22
+
+  Workaround: Deactivate autoformat.py before editing Python files.
+
 KP-60-N918-029 WB: GNATbench builder leading to headless build failure
 
   Problem:    Adding GNATbench builder to a GNAT project lead to build
