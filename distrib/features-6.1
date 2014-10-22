@@ -42,6 +42,13 @@ NF-61-N918-040 Support for Runtime & Target attributes in projects (2014-10-17)
   These two new attributes are now supported by GPS and should replace the use
   of the IDE'Gnatlist attribute to specify the same information.
 
+NF-61-N918-036 GPS: outline showing C structs and typedefs (2014-09-19)
+
+  The outline will now show entries for the named C structs (i.e. not those
+  defined as part of a typedef). For instance, "struct foo {}" and
+  "typedef struct foo bar" will generated entries, but not
+  "typedef struct { ... } bar"
+
 NF-61-N916-012 GPS: folding compartments in entity view (2014-09-16)
 
   It is now possible to fold the attributes or operations compartment in the
