@@ -25,6 +25,7 @@ if tool != "":
       <arg>-x</arg>
       <arg>-Wa</arg>
       <arg>-P%PP</arg>
+      <arg>%X</arg>
     </command-line>
     <switches>
     </switches>
@@ -42,6 +43,7 @@ if tool != "":
       <arg>-x</arg>
       <arg>-Wa</arg>
       <arg>-P%PP</arg>
+      <arg>%X</arg>
     </command-line>
   </target>
 
