@@ -22,8 +22,6 @@
   <key action="next tag">control-greater</key>
   <key action="backward locations history">alt-Left</key>
   <key action="forward locations history">alt-Right</key>
-  <key action="go to next word">control-Right</key>
-  <key action="go to previous word">control-Left</key>
 
   <key action="Build Main Number 1">F4</key>
   <key action="Run Main Number 1">shift-F2</key>
@@ -35,6 +33,8 @@
 
   <key action="Add multi cursor and go down">shift-alt-Down</key>
   <key action="Add multi cursor and go up">shift-alt-Up</key>
+  <key action="Move to next word">control-Right</key>
+  <key action="Move to previous word">control-Left</key>
   <key action="Move to next word (extend selection)">shift-control-Right</key>
   <key action="Move to previous word (extend selection)">shift-control-Left</key>
   <key action="Move to previous char">Left</key>
