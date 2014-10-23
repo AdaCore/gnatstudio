@@ -66,6 +66,7 @@ with Gtk.Window;                       use Gtk.Window;
 with Gtk_Utils;                        use Gtk_Utils;
 
 with Gtkada.Application;               use Gtkada.Application;
+with Gtkada.Bindings;                  use Gtkada.Bindings;
 with Gtkada.Dialogs;                   use Gtkada.Dialogs;
 with Gtkada.Intl;
 with Gtkada.MDI;                       use Gtkada.MDI;
@@ -294,7 +295,7 @@ procedure GPS.Main is
 
    function Local_Command_Line
       (Self        : System.Address;
-       Arguments   : access Interfaces.C.Strings.chars_ptr_array;
+       Arguments   : access chars_ptr_array_access;
        Exit_Status : access Glib.Gint) return Glib.Gboolean;
    pragma Convention (C, Local_Command_Line);
    --  override gtk+ builtin virtual method for an application.
@@ -2564,7 +2565,7 @@ procedure GPS.Main is
 
    function Local_Command_Line
       (Self        : System.Address;
-       Arguments   : access Interfaces.C.Strings.chars_ptr_array;
+       Arguments   : access chars_ptr_array_access;
        Exit_Status : access Glib.Gint) return Glib.Gboolean
    is
       pragma Unreferenced (Self, Arguments, Exit_Status);
