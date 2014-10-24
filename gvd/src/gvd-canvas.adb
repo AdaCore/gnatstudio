@@ -1237,10 +1237,12 @@ package body GVD.Canvas is
          Base.Item      := Item;
          Base.Component := Component_Item (Details.Item);
 
-         if Base.Component /= null and then Item.Is_A_Variable then
+         if Item.Is_A_Variable then
             declare
                Component_Name : constant String :=
-                 To_String (Base.Component.Name);
+                 (if Base.Component = null
+                  then Item.Name.all
+                  else To_String (Base.Component.Name));
             begin
                Gtk_New (Sep);
                Append (Menu, Sep);
@@ -1284,11 +1286,13 @@ package body GVD.Canvas is
                   Item_Handler.To_Marshaller (View_Into_Memory'Access), Base);
                Append (Menu, Mitem);
 
-               Gtk_New (Mitem, -"Set Value of " & Krunch (Component_Name));
-               Item_Handler.Connect
-                 (Mitem, Signal_Activate,
-                  Item_Handler.To_Marshaller (Set_Value'Access), Base);
-               Append (Menu, Mitem);
+               if Base.Component /= null then
+                  Gtk_New (Mitem, -"Set Value of " & Krunch (Component_Name));
+                  Item_Handler.Connect
+                    (Mitem, Signal_Activate,
+                     Item_Handler.To_Marshaller (Set_Value'Access), Base);
+                  Append (Menu, Mitem);
+               end if;
             end;
          end if;
 
@@ -1434,8 +1438,20 @@ package body GVD.Canvas is
       Item    : Item_Record)
    is
       pragma Unreferenced (Widget);
+      procedure On_Child (C : not null access Container_Item_Record'Class);
+      procedure On_Child (C : not null access Container_Item_Record'Class) is
+      begin
+         if C.all in Component_Item_Record'Class then
+            Set_Visibility
+              (Component_Item (C).Component, False, Recursive => True);
+         end if;
+      end On_Child;
    begin
-      Set_Visibility (Item.Component.Component, False, Recursive => True);
+      if Item.Component = null then
+         Item.Item.For_Each_Child (On_Child'Access);
+      else
+         Set_Visibility (Item.Component.Component, False, Recursive => True);
+      end if;
       Update_Display (Item.Item);
       Item.Canvas.Get_View.Model.Refresh_Layout;  --  resize items and links
    end Hide_All;
@@ -1474,8 +1490,20 @@ package body GVD.Canvas is
       Item   : Item_Record)
    is
       pragma Unreferenced (Widget);
+      procedure On_Child (C : not null access Container_Item_Record'Class);
+      procedure On_Child (C : not null access Container_Item_Record'Class) is
+      begin
+         if C.all in Component_Item_Record'Class then
+            Set_Visibility
+              (Component_Item (C).Component, True, Recursive => True);
+         end if;
+      end On_Child;
    begin
-      Set_Visibility (Item.Component.Component, True, Recursive => True);
+      if Item.Component = null then
+         Item.Item.For_Each_Child (On_Child'Access);
+      else
+         Set_Visibility (Item.Component.Component, False, Recursive => True);
+      end if;
       Item.Item.Update_Display;
       Item.Canvas.Get_View.Model.Refresh_Layout;  --  resize items and links
    end Show_All;
@@ -1518,7 +1546,10 @@ package body GVD.Canvas is
    begin
       Display_Memory
         (Kernel  => Get_Kernel (Item.Canvas),
-         Address => To_String (Item.Component.Name));
+         Address =>
+           (if Item.Component = null
+            then Item.Item.Name.all
+            else To_String (Item.Component.Name)));
    end View_Into_Memory;
 
    ---------------------
