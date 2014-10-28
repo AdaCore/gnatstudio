@@ -548,10 +548,14 @@ package body Project_Explorers_Common is
       while Iter /= Null_Iter loop
          T := Get_Node_Type (Model, Iter);
          if (T = Kind
-             or else (Kind in Modified_Project_Node
+             or else (Kind in Project_Node_Types
                       and then T in Project_Node_Types))
            and then Get_File (Model, Iter, File_Column) = File
          then
+            if T /= Kind then
+               Set_Node_Type (Model, Iter, Kind, False);
+            end if;
+
             return Iter;
          end if;
          Model.Next (Iter);
