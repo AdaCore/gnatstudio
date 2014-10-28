@@ -23,6 +23,18 @@ refer to the text cursor.
 
 The source editor provides an extensive set of features, including:
 
+*Multi cursors*
+
+  You are not limited to edition via a single cursor in GPS. You can create
+  multiple cursors that will all forward the text actions that you enter via
+  your keyboard. This allows you to automate simple repetitive actions, in
+  a similar way to what you would do with text macros, but in a simpler
+  fashion.
+
+  At any time during edition with multiple cursors, you can press :kbd:`Escape`
+  to remove every cursor but the main one, so that you are back to single
+  cursor edition. Using the mouse to move the cursor will have the same effect.
+
 *Title bar*
 
   Displays the full name of the file including path information in the
@@ -303,6 +315,13 @@ There are also several ways to define new key bindings, see
 | :kbd:`Ctrl-delete`      | Delete to the end of the current word.                                   |
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Ctrl-backspace`   | Delete to the beginning of the current word.                             |
++-------------------------+--------------------------------------------------------------------------+
+| :kbd:`Shift-Alt-down`   | Add a cursor to the current location and go down one line                |
++-------------------------+--------------------------------------------------------------------------+
+| :kbd:`Shift-Alt-up`     | Add a cursor to the current location and go up one line                  |
++-------------------------+--------------------------------------------------------------------------+
+| :kbd:`Shift-Ctrl-N`     | Add a cursor selecting the next occurence of the current selection in    |
+|                         | the buffer, if any.                                                      |
 +-------------------------+--------------------------------------------------------------------------+
 
 .. _Menu_Items:
