@@ -25,7 +25,6 @@ with Language;                use Language;
 with String_Utils;            use String_Utils;
 
 package body Items.Simples is
-
    use type GNAT.Strings.String_Access;
 
    Line_Highlighted     : constant Character := '@';
@@ -444,11 +443,15 @@ package body Items.Simples is
          Rect.Add_Child (View.Item_Hidden);
       else
          for L in Self.Value'Range loop
-            Rect.Add_Child
-              (Gtk_New_Text
-                 ((if Self.Value (L) (Self.Value (L)'First) = Line_Highlighted
-                  then View.Modified else Styles.Text_Font),
-                  Self.Value (L).all));
+            declare
+               V : constant String := Self.Value (L).all;
+            begin
+               Rect.Add_Child
+                 (Gtk_New_Text
+                    ((if V (V'First) = Line_Highlighted
+                     then View.Modified else Styles.Text_Font),
+                     V (V'First + 1 .. V'Last)));
+            end;
          end loop;
       end if;
 
@@ -474,13 +477,20 @@ package body Items.Simples is
             Item.Value (L) := new String'(Line_Highlighted & Lines (L).all);
          else
             Index_Old := L - Item.Value'First + Old'First;
-            if Index_Old > Old'Last
-              or else Lines (L).all /= Old (Index_Old).all
-            then
+            if Index_Old > Old'Last then
                Item.Value (L) := new String'(Line_Highlighted & Lines (L).all);
             else
-               Item.Value (L) := new String'
-                 (Line_Not_Highlighted & Lines (L).all);
+               declare
+                  OV : constant String := Old (Index_Old).all;
+               begin
+                  if  Lines (L).all /= OV (OV'First + 1 .. OV'Last) then
+                     Item.Value (L) := new String'
+                       (Line_Highlighted & Lines (L).all);
+                  else
+                     Item.Value (L) := new String'
+                       (Line_Not_Highlighted & Lines (L).all);
+                  end if;
+               end;
             end if;
          end if;
       end loop;
