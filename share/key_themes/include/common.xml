@@ -23,8 +23,6 @@
   <key action="backward locations history">alt-Left</key>
   <key action="forward locations history">alt-Right</key>
 
-  <key action="Add multi cursor to all references of entity" >shift-control-E</key>
-  <key action="Add multi cursor to next occurence of selection" >shift-control-N</key>
 
   <key action="Build Main Number 1">F4</key>
   <key action="Run Main Number 1">shift-F2</key>
@@ -34,8 +32,12 @@
   <key action="open file">F3</key>
   <key action="open from host">control-F3</key>
 
-  <key action="Add multi cursor and go down">shift-alt-Down</key>
-  <key action="Add multi cursor and go up">shift-alt-Up</key>
+  <key action="Add cursor and go down">shift-alt-Down</key>
+  <key action="Add cursor and go up">shift-alt-Up</key>
+  <key action="Add cursors to all references of entity" >shift-control-E</key>
+  <key action="Cursor select next occurence of selection" >shift-control-N</key>
+  <key action="Cursor skip next occurence of selection" >control-alt-n</key>
+
   <key action="Move to next word">control-Right</key>
   <key action="Move to previous word">control-Left</key>
   <key action="Move to next word (extend selection)">shift-control-Right</key>

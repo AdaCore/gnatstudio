@@ -31,6 +31,10 @@ The source editor provides an extensive set of features, including:
   a similar way to what you would do with text macros, but in a simpler
   fashion.
 
+  Most of the text actions described in this documentation will be handled
+  transparently by multi cursors, so you can delete several words at once, or
+  select several pieces of text at once, for example.
+
   At any time during edition with multiple cursors, you can press :kbd:`Escape`
   to remove every cursor but the main one, so that you are back to single
   cursor edition. Using the mouse to move the cursor will have the same effect.
@@ -320,8 +324,10 @@ There are also several ways to define new key bindings, see
 +-------------------------+--------------------------------------------------------------------------+
 | :kbd:`Shift-Alt-up`     | Add a cursor to the current location and go up one line                  |
 +-------------------------+--------------------------------------------------------------------------+
-| :kbd:`Shift-Ctrl-N`     | Add a cursor selecting the next occurence of the current selection in    |
-|                         | the buffer, if any.                                                      |
+| :kbd:`Ctrl-Alt-N`       | jump the main cursor to the next occurence of the selection              |
++-------------------------+--------------------------------------------------------------------------+
+| :kbd:`Shift-Ctrl-N`     | Add a cursor selecting the current selection and jump the main cursor to |
+|                         | the next occurence of the selection                                      |
 +-------------------------+--------------------------------------------------------------------------+
 
 .. _Menu_Items:
