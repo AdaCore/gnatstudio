@@ -3422,15 +3422,47 @@ Adding support for new languages
 
 .. index:: <Language>
 
+You have two ways of defining a new language in GPS:
+
+- Basic support from registering languages in Python is provided.
+- If the support provided in Python is not enough, more extensive support is
+  provided via the XML interface. With time all capabilities will be provided
+  in the Python interface, and the XML facility will be deprecated.
+
+Adding support for a new language via the Python interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can register a new language in Python via the class :class:`GPS.Language`.
+The first step is to define a new subclass of GPS.Language, the second is to
+register it via a call to ``GPS.Language.register``. Here is an example
+
+.. code:: python
+
+    class JavaLang(GPS.Language):
+        def __init(self):
+            pass
+
+    GPS.Language.register(JavaLang(), "java", ".java", "", "", INDENTATION_SIMPLE)
+
+The class is provided to provide the possibility of future further user
+customization for a specific language.
+
+For the moment, the support is rudimentary. This is mostly useful if you want
+to then register an highlighter for the language in question via the new
+highlighters API, see :ref:`Defining_custom_highlighters`.
+
+Adding support for a new language via the XML interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Define new languages in a custom file by using the :file:`<Language>`
 tag. Defining languages gives GPS the ability to perform language-specific
 operations such as highlighting the syntax of a file, exploring a file
 using the :guilabel:`Project` view, and finding files associated with that
 language.
 
-NOTE: The highlighting of syntax via the mechanisms described here are
-deprecated. See :ref:`Defining_custom_highlighters` for the current way to highlight custom
-languages.
+**NOTE**: The highlighting of syntax via the mechanisms described here are
+deprecated. See :ref:`Defining_custom_highlighters` for the current way to
+highlight custom languages.
 
 The following child tags are available:
 

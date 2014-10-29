@@ -25,17 +25,25 @@ In addition to that, you have a set of helpers that will simplify common
 patterns based on those two primitives, or make some additional things
 possible. See the full API doc below for more details.
 
+**IMPORTANT NOTE**: As you will see, the way you register an highlighter is by
+specifying the language it applies to in the call to register_highlighter. If
+you want to highlight a language that is not yet known to GPS, you have to
+register a new language. The way to do that is detailled in the
+:ref:`Adding_support_for_new_languages` section.
+
 First step, creating a dumb highlighter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As a first step, we will just create an highlighter that highlights the
 self symbol in python, as a simple hello world.::
 
+    from highlighter.common import *
+
     register_highlighter(
         language="python",
         spec=(
             # Match self
-            simple("self", tag="keyword"),
+            simple("self", tag=tag_keyword),
         )
     )
 
@@ -47,13 +55,11 @@ The spec parameter is a tuple of matchers. In this case we have only one,
 a simple matcher, as described above, which will match the "self" regexp,
 and apply the "keyword" tag everytime it matches.
 
-The style parameter is the name of the style you want to refer to. GPS has
-a number of built-in styles, but they may not be sufficient, so the user
-has the possibility of creating new styles, a capability that will will talk
+The tag parameter is the name of the tag that will be used to highlight matches
+. GPS has a number of built-in tags for highlighting, that are all defined in
+the :py:mod:`highlighter.common` module. They may not be sufficient, so the
+user has the possibility of creating new styles, a capability that we will talk
 about later on.
-
-The built-in styles are: "keyword", "type", "block", "comment", "string",
-"number".
 
 Second step, discovering our first helper
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -123,6 +129,40 @@ Here are the important points:
   it means the simple matcher will consume both quotes and new lines if they
   are preceded by a backslash, and so they won't be available for the ending
   matcher anymore.
+
+Creating custom style tags
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the style tags predefined in the :py:mod:`highlighter.common` module are not
+enough, you can define new ones with the :func:`new_style` function.
+
+When you define a new style via this function, a corresponding preference will
+be created in the GPS preferences, so that the user can change the color later.
+
+The tag_string_escapes common tag is defined with this function this way::
+
+    tag_string_escapes = new_style(lang="General", name="string_escapes",
+                                   foreground_colors=('#875162', '#DA7495'))
+
+The first parameter is the name of the language for which this applies, or
+"General" if this can potentially apply to several languages. This will be used
+by GPS to choose which preference category will be used for the corresponding
+preference.
+
+The second parameter is the name of the style.
+
+The third parameter is the colors that will be used by default for this style.
+The first color is the one used for light themes, the second color is the one
+used for dark themes.
+
+Going further
+^^^^^^^^^^^^^
+
+All the details of the engine are not yet documented, but if while creating
+your highlighter you find yourself stuck, don't hesitate to look at the C or
+Python highlighters, in the c_highlighter and python_highlighter modules that
+are shipped with your version of GPS. Those are complete real world examples
+that are used by GPS to highlight files in those languages.
 
 API Documentation
 -----------------
@@ -218,7 +258,10 @@ def new_style(lang, name, foreground_colors,
               font_style="default", prio=20):
     """
     Creates a new style to apply when a matcher successfully matches a
-    portion of text.
+    portion of text. A style is the conflation of
+
+    - An editor tag with corresponding text style
+    - A user preference that will be added to the corresponding language page
 
     :param string lang: The language for which this style will be applicable
       . This is used to automatically store the preference associated with
@@ -227,11 +270,13 @@ def new_style(lang, name, foreground_colors,
     :param string name: The name of the style, as will be shown in the
       preferences.
 
-    :param (string, string) foreground_colors: The foreground color of the
-      style, expressed as a CSS-like string, for example "#FF6677".
+    :param foreground_colors: The foreground colors of the style, expressed as
+      a tuple of two CSS-like strings, for example ("#224488", "#FF6677"). The
+      first color is used for light themes, the second is used for dark themes
+    :type foreground_colors: string, string
 
-    :param (string, string) background_colors: The background color of the
-      style.
+    :param  background_colors: The background colors of the style.
+    :type background_colors: string, string
 
     :param string font_style: : The style of the font, one of "default",
           "normal", "bold", "italic" or "bold_italic"
