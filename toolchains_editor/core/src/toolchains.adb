@@ -1077,7 +1077,7 @@ package body Toolchains is
            (+Path, Remote.Get_Nickname (Build_Server)) /= No_File;
       end Locate_Tool;
 
-      Tool : Tool_Record :=
+      Tool : constant Tool_Record :=
                (Command   => To_Unbounded_String (Value),
                 Is_Valid  => Locate_Tool (Value),
                 Origin    => Origin,
@@ -1424,13 +1424,13 @@ package body Toolchains is
      (Manager : access Toolchain_Manager_Record;
       Project : Project_Type) return Toolchain
    is
-      GNAT_List_Str : constant String :=
+      GNAT_List_Str : aliased constant String :=
                         Attribute_Value (Project, Gnatlist_Attribute);
-      GNAT_Str      : constant String :=
+      GNAT_Str      : aliased constant String :=
                         Attribute_Value (Project, GNAT_Attribute);
-      Debugger_Str  : constant String :=
+      Debugger_Str  : aliased constant String :=
                         Attribute_Value (Project, Debugger_Command_Attribute);
-      Gnatmake_Str  : constant String :=
+      Gnatmake_Str  : aliased constant String :=
                         Attribute_Value
                           (Project, Compiler_Command_Attribute, "ada");
       New_Toolchain : Toolchain := Create_Empty_Toolchain (Manager);
@@ -1497,40 +1497,29 @@ package body Toolchains is
       -- Get_Prefix --
       ----------------
 
-      function Get_Prefix return String is
+      function Get_Prefix return String
+      is
+         type S_Access is access constant String;
+
+         Strings : constant array (1 .. 4) of S_Access :=
+           --  The order of those is important, it will determine which
+           --  toolchain definition will take priority. We want Gnatmake_Str
+           --  to be considered before Debugger_Str, because we want the
+           --  compiler's name to take precedence over the debugger's. NA29-046
+           (GNAT_Str'Access,
+            GNAT_List_Str'Access,
+            Gnatmake_Str'Access,
+            Debugger_Str'Access);
       begin
-         declare
-            S : constant String := Get_Prefix (GNAT_Str);
-         begin
-            if S /= "" then
-               return S;
-            end if;
-         end;
-
-         declare
-            S : constant String := Get_Prefix (GNAT_List_Str);
-         begin
-            if S /= "" then
-               return S;
-            end if;
-         end;
-
-         declare
-            S : constant String := Get_Prefix (Debugger_Str);
-         begin
-            if S /= "" then
-               return S;
-            end if;
-         end;
-
-         declare
-            S : constant String := Get_Prefix (Gnatmake_Str);
-         begin
-            if S /= "" then
-               return S;
-            end if;
-         end;
-
+         for Str of Strings loop
+            declare
+               S : constant String := Get_Prefix (Str.all);
+            begin
+               if S /= "" then
+                  return S;
+               end if;
+            end;
+         end loop;
          return "";
       end Get_Prefix;
 
