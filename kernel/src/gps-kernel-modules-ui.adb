@@ -2843,6 +2843,10 @@ package body GPS.Kernel.Modules.UI is
       Ctxt : Selection_Context := Context;
       Data : Update_Menus_Data_Access;
    begin
+      if Kernel.Is_In_Destruction then
+         return;
+      end if;
+
       if Ctxt = No_Context then
          Ctxt := Get_Current_Context (Kernel);
       end if;
