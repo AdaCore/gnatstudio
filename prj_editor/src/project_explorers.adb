@@ -1536,18 +1536,21 @@ package body Project_Explorers is
                  (T, Iter,
                   Flat_View =>
                     Get_History (Get_History (T.Kernel).all, Show_Flat_View));
-               Success := Expand_Row (T.Tree, Filter_Path, False);
+               Success := Expand_Row (T.Tree, Filter_Path, Open_All => False);
             end if;
 
          when File_Node =>
-            Append_File_Info
-              (T.Kernel, T.Tree.Model, Iter,
-               Get_File_From_Node (T.Tree.Model, Iter), Sorted => False);
-            Success := Expand_Row (T.Tree, Filter_Path, False);
+            if Has_Dummy_Iter (T.Tree.Model, Iter) then
+               Append_File_Info
+                 (T.Kernel, T.Tree.Model, Iter,
+                  Get_File_From_Node (T.Tree.Model, Iter), Sorted => False);
+               Success := Expand_Row (T.Tree, Filter_Path, Open_All => False);
+            end if;
 
          when Runtime_Node =>
+            --  Following does nothing if info is aleeady there
             Append_Runtime_Info (T.Kernel, T.Tree.Model, Iter);
-            Success := Expand_Row (T.Tree, Filter_Path, False);
+            Success := Expand_Row (T.Tree, Filter_Path, Open_All => False);
 
          when Directory_Node_Types | Category_Node | Entity_Node
             | Dummy_Node =>
@@ -1575,15 +1578,27 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Filter_Path);
       E : constant Project_Explorer := Project_Explorer (Explorer);
-      Iter : Gtk_Tree_Iter;
+      Iter   : Gtk_Tree_Iter;
+      N_Type : Node_Types;
    begin
       E.Tree.Convert_To_Store_Iter
          (Store_Iter => Iter, Filter_Iter => Filter_Iter);
+
+      N_Type := Get_Node_Type (E.Tree.Model, Iter);
       Set_Node_Type   --  update the icon
-        (E.Tree.Model,
-         Iter,
-         Get_Node_Type (E.Tree.Model, Iter),
-         Expanded => False);
+        (E.Tree.Model, Iter, N_Type, Expanded => False);
+
+      case N_Type is
+         when File_Node =>
+            --  Closing a file node should force a refresh of its
+            --  contents the next time it is opened
+            Remove_Child_Nodes (E.Tree.Model, Parent => Iter);
+            Append_Dummy_Iter (E.Tree.Model, Iter);
+
+         when others =>
+            null;   --  nothing to do
+      end case;
+
    end Collapse_Row_Cb;
 
    -------------
