@@ -382,7 +382,7 @@
          <menu label='_Analyze All'          action='codepeer analyze all' optional='true'/>
          <menu label='Analy_ze...'           action='codepeer analyze...' optional='true'/>
          <separator/>
-         <menu label='Analyze _File'         action='codepeer analyze file' optional='true'/>
+         <menu label='Analyze _File'         action='codepeer analyze file'/>
          <menu label='Analyze File B_y File...' action='codepeer analyze file by file' optional='true'/>
          <separator/>
          <menu label='_Display Code Review'  action='codepeer display code review'
