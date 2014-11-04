@@ -270,7 +270,9 @@ package body GNATStack.Data_Model is
          elsif Item.Qualifier = "UNKNOWN" then
             return " (?)";
 
-         elsif Item.Qualifier = "STATIC" then
+         elsif Item.Qualifier = "STATIC"
+           or else Item.Qualifier = "BOUNDED"
+         then
             return "";
 
          else
