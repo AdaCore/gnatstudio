@@ -126,7 +126,7 @@ capabilities: for instance it can highlight escape sequences in strings.
    :scale: 100%
    :class: screenshot
 
-It is also entirely written in Python and is to extend.
+It is also entirely written in Python and is easy to extend.
 
 Ada support
 -----------
