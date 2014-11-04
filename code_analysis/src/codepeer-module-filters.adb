@@ -32,6 +32,16 @@ package body CodePeer.Module.Filters is
    -- Filter_Matches_Primitive --
    ------------------------------
 
+   --  ??? The performance of the filter below is very bad, and it causes
+   --  GPS to freeze when recomputing the menu validities
+   --  (see automated test H624-007 for a reproducer)
+   --  So we use these global variables as a cache for the latest file.
+   --  We are making the assumption that a given file will not change from
+   --  being not generic/separate to becoming one often. When this happens,
+   --  the filter will fail, which is probably fine.
+   Latest_File_Tested : Virtual_File := No_File;
+   Latest_Result : Boolean := False;
+
    overriding function Filter_Matches_Primitive
      (Filter  : access Ada_Generic_Or_Separate_Filter_Record;
       Context : Selection_Context) return Boolean
@@ -61,6 +71,14 @@ package body CodePeer.Module.Filters is
          return True;
       end if;
 
+      --  Look whether we have this in the immediate cache
+      if File_Name = Latest_File_Tested then
+         return Latest_Result;
+      end if;
+
+      --  We passed the cache test? cache this result.
+      Latest_File_Tested := File_Name;
+
       --  Otherwise check if we have a generic
 
       Parse_File_Constructs
@@ -88,6 +106,7 @@ package body CodePeer.Module.Filters is
 
       if Unit = null then
          Free (Constructs);
+         Latest_Result := False;
          return False;
       end if;
 
@@ -105,10 +124,12 @@ package body CodePeer.Module.Filters is
          Free (Constructs);
 
          if Entity = No_Root_Entity then
+            Latest_Result := False;
             return False;
          end if;
 
-         return Is_Generic (Entity);
+         Latest_Result := Is_Generic (Entity);
+         return Latest_Result;
       end;
    end Filter_Matches_Primitive;
 
