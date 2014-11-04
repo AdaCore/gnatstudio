@@ -65,10 +65,6 @@ package body Outline_View.Model is
       Sem_Node, Sem_Parent : Semantic_Node'Class);
    --  Add new nodes for New_Obj and its nested entities
 
-   function Get_Sorted_Node
-     (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
-   --  Return the node stored in the iter
-
    function New_Iter (Iter : Sorted_Node_Access) return Gtk_Tree_Iter;
    --  Create a new iterator out of a node
 
@@ -424,9 +420,7 @@ package body Outline_View.Model is
          if Root = null then
             Root := new Sorted_Node;
 
-            if not Model.Filter.Group_Spec_And_Body
-              or else Sem_Node.Is_Declaration
-            then
+            if Sem_Node.Is_Declaration then
                Root.Spec_Info := Sem_Node.Info;
             else
                Root.Body_Info := Sem_Node.Info;
@@ -886,6 +880,7 @@ package body Outline_View.Model is
       Free (Model.Filter_Pattern);
       Model.Filter_Pattern := Pattern;
    end Set_Filter;
+
    --------------
    -- Get_Info --
    --------------
@@ -904,11 +899,8 @@ package body Outline_View.Model is
       end if;
 
       Node := Get_Sorted_Node (Iter);
-
       if Column = Body_Pixbuf_Column then
          Info := Node.Body_Info;
-      elsif Column = Spec_Pixbuf_Column then
-         Info := Node.Spec_Info;
       else
          if Node.Spec_Info /= No_Node_Info then
             Info := Node.Spec_Info;
@@ -1037,18 +1029,26 @@ package body Outline_View.Model is
 
          while Has_Element (C) loop
             declare
+               El : constant Sorted_Node_Access := Element (C);
                Sem_Child_Idx : constant Natural :=
-                 Find_Child_With_Id (+Get_Info (Element (C).all).Unique_Id);
+                 Find_Child_With_Id (+Get_Info (El.all).Unique_Id);
                Sem_Child : constant Semantic_Node'Class :=
                  (if Sem_Child_Idx /= 0
                   then Sem_Nodes.Get (Positive (Sem_Child_Idx))
                   else No_Semantic_Node);
             begin
                if Sem_Child /= No_Semantic_Node then
+
+                  if Sem_Child.Is_Declaration then
+                     El.Spec_Info := Sem_Child.Info;
+                  else
+                     El.Body_Info := Sem_Child.Info;
+                  end if;
+
                   New_Nodes (Sem_Child_Idx) := False;
                   Update_Nodes
-                    (Element (C).Children, Sem_Child.Children, Sem_Child);
-               elsif Element (C) /= Model.Root_With then
+                    (El.Children, Sem_Child.Children, Sem_Child);
+               elsif El /= Model.Root_With then
                   To_Remove_Nodes.Append (Element (C));
                end if;
             end;

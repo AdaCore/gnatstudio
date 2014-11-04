@@ -179,6 +179,10 @@ private package Outline_View.Model is
       Line, Column : Integer) return Gtk_Tree_Path;
    --  Return the closest path enclosing the {line, column} from the model
 
+   function Get_Sorted_Node
+     (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
+   --  Return the node stored in the iter
+
 private
 
    function "<" (Left, Right : Sorted_Node_Access) return Boolean;
