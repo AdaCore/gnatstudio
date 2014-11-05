@@ -19,6 +19,9 @@ with clang_c_Index_h;
 
 with System;
 
+with Interfaces.C;
+with Interfaces.C.Strings;
+
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 
@@ -85,8 +88,8 @@ package Libclang.Index is
 
    type Unsaved_File is new clang_c_Index_h.CXUnsavedFile;
    No_Unsaved_File : constant Unsaved_File :=
-     (Filename => <>,
-      Contents => <>,
+     (Filename => Interfaces.C.Strings.Null_Ptr,
+      Contents => Interfaces.C.Strings.Null_Ptr,
       Length   => 0);
 
    function Create_Unsaved_File
@@ -347,7 +350,8 @@ private
       CXIndex : clang_c_Index_h.CXIndex;
    end record;
 
-   No_Index : constant Clang_Index := (CXIndex => <>);
+   No_Index : constant Clang_Index :=
+     (CXIndex => clang_c_Index_h.CXIndex (System.Null_Address));
 
    type Clang_Translation_Unit is record
       CX_Translation_Unit : clang_c_Index_h.CXTranslationUnit;
@@ -361,8 +365,18 @@ private
       CXCodeCompleteResults : access clang_c_Index_h.CXCodeCompleteResults;
    end record;
 
+   Aliased_0 : aliased constant Interfaces.C.unsigned := 0;
+
+   No_CXCompletionResult : aliased clang_c_Index_h.CXCompletionResult
+     := (clang_c_Index_h.CXCursor_UnexposedDecl,
+         clang_c_Index_h.CXCompletionString (System.Null_Address));
+
+   No_CXCodeCompleteResults : aliased clang_c_Index_h.CXCodeCompleteResults
+     := (Results    => No_CXCompletionResult'Access,
+         NumResults => Aliased_0);
+
    No_Complete_Results : constant Clang_Complete_Results :=
-     (CXCodeCompleteResults => <>);
+       (CXCodeCompleteResults => No_CXCodeCompleteResults'Access);
 
    type Clang_Completion_Result is record
       Result : access clang_c_Index_h.CXCompletionResult;

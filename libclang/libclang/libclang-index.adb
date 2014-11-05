@@ -42,8 +42,7 @@ package body Libclang.Index is
      (Index              => Natural,
       Element            => CXCompletionResult,
       Element_Array      => CXCompletionResult_Array,
-      Default_Terminator => (CursorKind => <>,
-                             CompletionString => <>));
+      Default_Terminator => No_CXCompletionResult);
 
    ------------------
    -- Create_Index --
