@@ -1646,7 +1646,10 @@ package body GVD.Canvas is
    procedure Parse_Value (Item : access Display_Item_Record'Class) is
       Value_Found : Boolean;
    begin
-      if Item.Entity /= null and then Item.Is_A_Variable then
+      if Item.Entity /= null
+        and then Item.Is_A_Variable
+        and then Item.Name /= null
+      then
          begin
             Parse_Value
               (Item.Debugger.Debugger,
@@ -1924,7 +1927,7 @@ package body GVD.Canvas is
                   Refresh_Command (Debugger_Output_Type (Item.Entity.all)),
                   Mode => GVD.Types.Internal));
 
-         elsif Item.Name /= null then
+         else
             Parse_Value (Item);
          end if;
       end if;

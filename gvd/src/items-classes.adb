@@ -207,7 +207,7 @@ package body Items.Classes is
                if Self.Ancestors (A).Child /= null
                  and then Num_Fields (Self.Ancestors (A).Child.all) > 0
                then
-                  Rect.Add_Child (Gtk_New_Hr (Styles.Link2));
+                  Rect.Add_Child (Gtk_New_Hr (Styles.Item));
                end if;
             end if;
          end loop;
