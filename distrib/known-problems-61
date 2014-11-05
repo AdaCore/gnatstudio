@@ -24,3 +24,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
+
+Known problems fixed in GPS 6.1.1
+---------------------------------
+
+KP-61-NA27-039 GPS: incorrect highlight of changed value in debugger data
+
+  Problem:    When the debugger refreshes the contents of the data window,
+              some values are left highlighted in red as if they had just
+              been modified, even when they were modified during some previous
+              step.
+
+  Status:     This was fixed in 6.1.1 on 2014-11-05
+
+  Workaround: This only impact the colors, the actual values are correct.

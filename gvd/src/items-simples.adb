@@ -99,16 +99,11 @@ package body Items.Simples is
    ---------------
 
    procedure Set_Value (Item : in out Simple_Type; Value : String) is
+      Q : constant String := Quote_Non_Printable_Characters (Value);
    begin
-      if Item.Value /= null then
-         if Item.Value.all /= Value then
-            Item.Has_Changed := True;
-         end if;
-
-         GNAT.Strings.Free (Item.Value);
-      end if;
-
-      Item.Value := new String'(Quote_Non_Printable_Characters (Value));
+      Item.Has_Changed := Item.Value = null or else Item.Value.all /= Q;
+      GNAT.Strings.Free (Item.Value);
+      Item.Value := new String'(Q);
       Item.Valid := True;
    end Set_Value;
 

@@ -3063,7 +3063,7 @@ package body Debugger.Gdb is
 
             Set_Value (Item       => Array_Type (Result.all),
                        Elem_Value => Simple,
-                       Elem_Index => 0);
+                       Elem_Index => Dim.First);
             Shrink_Values (Array_Type (Result.all));
          end;
 
