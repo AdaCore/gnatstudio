@@ -1227,8 +1227,7 @@ package body Build_Configurations is
                Target := Get_Target_From_Name (Registry, Target_Name);
                Change_Model (Registry, Target_Name, Model);
             else
-               Log (Registry, -"Error: target already registered: "
-                    & Target_Name);
+               Trace (Me, -"Note: target already registered: " & Target_Name);
                return null;
             end if;
 
