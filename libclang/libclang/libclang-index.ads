@@ -26,8 +26,6 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 with Ada.Containers.Vectors;
 with clang_c_CXString_h;
-with Interfaces.C;
-with Interfaces.C.Strings;
 
 package Libclang.Index is
 
