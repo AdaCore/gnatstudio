@@ -1644,7 +1644,7 @@ package body GPS.Kernel.Modules.UI is
          Data   => Kernel.all'Address);
 
       --  If the background updating of menus was taking place, we need to
-      --  restart it since it's iterators are now invalid.
+      --  restart it since its iterators are now invalid.
 
       if Globals.Update_Menus_Idle_Id /= No_Source_Id then
          Update_Menus_And_Buttons (Kernel);
@@ -2842,6 +2842,9 @@ package body GPS.Kernel.Modules.UI is
    is
       Ctxt : Selection_Context := Context;
       Data : Update_Menus_Data_Access;
+
+      Was_Computing_Idle : Boolean := False;
+      --  Whether the idle loop was computing
    begin
       if Kernel.Is_In_Destruction then
          return;
@@ -2852,6 +2855,7 @@ package body GPS.Kernel.Modules.UI is
       end if;
 
       if Globals.Update_Menus_Idle_Id /= No_Source_Id then
+         Was_Computing_Idle := True;
          Remove (Globals.Update_Menus_Idle_Id);
       end if;
 
@@ -2860,9 +2864,20 @@ package body GPS.Kernel.Modules.UI is
          Current => Globals.Proxy_Items.First);
 
       --  Do a first immediate pass, since it might look nicer. This is also
-      --  needed on startup to avoid flickering the toolbars
+      --  needed on startup to avoid flickering the toolbars.
+      --  Never do this first pass if we were already doing a recompute pass
+      --  in the idle loop, to avoid performance locking in the following
+      --  scenario:
+      --      1- Update_Menus_And_Buttons_Chunk is called here
+      --      2- the chunk takes too slow, so an idle is registered
+      --      3- anywhere else in this package, a call to this function
+      --         is made with the purpose to clean up the dangling pointers
+      --         in the globals because the idle is registered
+      --      4- back to step 1
 
-      if Update_Menus_And_Buttons_Chunk (Data) then
+      if Was_Computing_Idle
+        or else Update_Menus_And_Buttons_Chunk (Data)
+      then
          Globals.Update_Menus_Idle_Id := Update_Menus_Idle.Idle_Add
            (Update_Menus_And_Buttons_Chunk'Access,
             Data       => Data,
