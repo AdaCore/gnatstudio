@@ -82,6 +82,9 @@ package Src_Editor_View is
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
 
+   procedure Set_Project
+     (Self    : not null access Source_View_Record'Class;
+      Project : GNATCOLL.Projects.Project_Type := No_Project);
    function Get_Project
      (Self : not null access Source_View_Record'Class)
       return GNATCOLL.Projects.Project_Type;
@@ -89,6 +92,9 @@ package Src_Editor_View is
    --  When using aggregate projects, this can be ambiguous since a given file
    --  can be associated with multiple projects. But this information is also
    --  necessary in a number of contexts like cross-references and completion.
+   --
+   --  Set_Project should not be reserved for internal use in the src_editor
+   --  module. Project will be computed automatically if none is given.
 
    procedure Set_Background_Color
      (Self : not null access Source_View_Record'Class);

@@ -1431,20 +1431,7 @@ package body Src_Editor_View is
       View.Kernel  := Kernel_Handle (Kernel);
       View.Scroll  := Gtk_Scrolled_Window (Scroll);
       View.Area    := Area;
-
-      if Project = No_Project then
-         --  Pick a project at random
-         declare
-            F_Info : constant File_Info'Class :=
-              File_Info'Class
-                (Get_Registry (Kernel).Tree.Info_Set
-                 (Buffer.Get_Filename).First_Element);
-         begin
-            View.Project_Path := F_Info.Project.Project_Path;
-         end;
-      else
-         View.Project_Path := Project.Project_Path;
-      end if;
+      View.Set_Project (Project);
 
       Register_View (Buffer, Add => True);
 
@@ -2743,5 +2730,34 @@ package body Src_Editor_View is
    begin
       return Self.Kernel.Registry.Tree.Project_From_Path (Self.Project_Path);
    end Get_Project;
+
+   -----------------
+   -- Set_Project --
+   -----------------
+
+   procedure Set_Project
+     (Self    : not null access Source_View_Record'Class;
+      Project : GNATCOLL.Projects.Project_Type := No_Project)
+   is
+      Buffer : constant Source_Buffer := Source_Buffer (Self.Get_Buffer);
+   begin
+      if Project = No_Project then
+         --  Pick a project at random
+         declare
+            F_Info : constant File_Info'Class :=
+              File_Info'Class
+                (Get_Registry (Self.Kernel).Tree.Info_Set
+                 (Buffer.Get_Filename).First_Element);
+         begin
+            Self.Project_Path := F_Info.Project.Project_Path;
+         end;
+      else
+         Self.Project_Path := Project.Project_Path;
+      end if;
+
+      --  Force a refresh of the MDI title. This changes for all views of the
+      --  buffer, but it is fast.
+      Buffer.Filename_Changed;
+   end Set_Project;
 
 end Src_Editor_View;

@@ -132,7 +132,7 @@ package body Src_Editor_Box is
      (Buffer : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
       Box    : Source_Editor_Box);
-   --  Reflect the change in buffer filename
+   --  Reflect the change in buffer filename or project information.
 
    procedure On_Box_Destroy
      (Object : access Glib.Object.GObject_Record'Class;
@@ -486,16 +486,30 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box)
    is
       pragma Unreferenced (Buffer, Params);
-      Child : constant MDI_Child := Find_Child (Box.Kernel, Box);
+      Child  : constant MDI_Child := Find_Child (Box.Kernel, Box);
+      File   : constant Virtual_File := Box.Source_Buffer.Get_Filename;
+      P      : constant Project_Type := Get_Project (Box);
+      Show_Project : constant Boolean :=
+        P /= No_Project and then
+        Get_Registry (Box.Kernel).Tree.Root_Project.Is_Aggregate_Project;
+      P_Name : constant String :=
+        (if Show_Project
+         then " (" & P.Project_Path.Display_Base_Name & ')'
+         else "");
+      P_Full_Name   : constant String :=
+        (if Show_Project
+         then " - Project : " & P.Project_Path.Display_Full_Name
+         else "");
    begin
-      --  Update the title
-      Set_Title
-        (Child,
-         Box.Source_Buffer.Get_Filename.Display_Full_Name,
-         Box.Source_Buffer.Get_Filename.Display_Base_Name);
-   exception
-      when E : others =>
-         Trace (Me, E);
+      if Is_Local (File) then
+         Child.Set_Title
+           (File.Display_Full_Name & P_Full_Name,
+            File.Display_Base_Name & P_Name);
+      else
+         Child.Set_Title
+           (File.Get_Host & ":|" & File.Display_Full_Name & P_Full_Name,
+            File.Display_Base_Name & P_Name);
+      end if;
    end Filename_Changed_Handler;
 
    ----------------------------
@@ -1635,6 +1649,15 @@ package body Src_Editor_Box is
                if Success then
                   Save_To_File
                     (Editor.Source_Buffer, Name, Success, Force => Force);
+
+                  if Success
+                    and then Editor.Source_View.Get_Project = No_Project
+                  then
+                     --  Project view was recomputed, we should now update the
+                     --  project information for this editor.
+
+                     Editor.Source_View.Set_Project;
+                  end if;
                end if;
             end;
 
