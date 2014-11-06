@@ -1401,35 +1401,12 @@ package body Src_Editor_Module is
          Jump_To_Location;
 
          if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then
-            declare
-               P : constant Project_Type := Get_Project (Editor);
-               P_Name        : constant String :=
-                 (if P /= No_Project and then
-                  Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
-                  then " (" & P.Project_Path.Display_Base_Name & ')'
-                  else "");
-               P_Full_Name   : constant String :=
-                 (if P /= No_Project and then
-                  Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
-                  then " - Project : " & P.Project_Path.Display_Full_Name
-                  else "");
-            begin
-               if Is_Local (File) then
-                  Set_Title
-                    (Child,
-                     Display_Full_Name (File) & P_Full_Name,
-                     Display_Base_Name (File) & P_Name);
-               else
-                  Set_Title
-                    (Child,
-                     Get_Host (File) & ":|" & Display_Full_Name (File)
-                       & P_Full_Name,
-                     Display_Base_Name (File) & P_Name);
-               end if;
+            --  Force update of MDI titles
+            Editor.Get_Buffer.Filename_Changed;
 
-               File_Edited (Kernel, Get_Filename (MDI_Child (Child)));
-            end;
-
+            --  Report a change of name, so that the titles of the MDI window
+            --  are updated properly
+            File_Edited (Kernel, Get_Filename (MDI_Child (Child)));
          else
             --  Determine the number of "Untitled" files open
 
@@ -1650,11 +1627,7 @@ package body Src_Editor_Module is
 
          if Source /= null then
             Edit := Source;
-         end if;
-
-         if D.Title /= "" then
-            Child := Find_Editor (Kernel, D.File, D.Project);
-            Set_Title (Child, Title => D.Title, Short_Title => D.Title);
+            Source.Get_Buffer.Filename_Changed;  --  force update of MDI title
          end if;
 
          return Edit /= null;
@@ -2624,6 +2597,15 @@ package body Src_Editor_Module is
       Child : MDI_Child;
       Full  : GNATCOLL.VFS.Virtual_File;
 
+      function Project_Matches (Child : MDI_Child) return Boolean is
+        (Project = No_Project
+         or else Get_Project (Child) = No_Project
+         or else Get_Project (Child) = Project);
+      --  Whether the project associated with child matches the expected one.
+      --  This could be because we allow any project (Project=No_Project), or
+      --  because the child is not associated with a project yet, or because it
+      --  indeed is the same project.
+
    begin
       if File = GNATCOLL.VFS.No_File or else Get_MDI (Kernel) = null then
          return null;
@@ -2636,7 +2618,7 @@ package body Src_Editor_Module is
       Child := Get_Focus_Child (Get_MDI (Kernel));
 
       if Get_Filename (Child) = File
-        and then (Project = No_Project or else Get_Project (Child) = Project)
+        and then Project_Matches (Child)
       then
          return Child;
       end if;
@@ -2650,8 +2632,7 @@ package body Src_Editor_Module is
 
       if Child /= null then
          if Get_Filename (Child) = File
-           and then (Project = No_Project
-                     or else Get_Project (Child) = Project)
+           and then Project_Matches (Child)
          then
             return Child;
          else
@@ -2683,8 +2664,7 @@ package body Src_Editor_Module is
                or else Get_File_Identifier (Child) = Full
                --  Handling of file identifiers
                or else Get_Title (Child) = Display_Full_Name (File))
-              and then
-                (Project = No_Project or else Get_Project (Child) = Project));
+              and then Project_Matches (Child));
 
          Next (Iter);
       end loop;

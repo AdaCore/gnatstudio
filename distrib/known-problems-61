@@ -28,6 +28,16 @@ Known problems fixed in GPS 6.2 / GNATbench 2.10
 Known problems fixed in GPS 6.1.1
 ---------------------------------
 
+KP-61-NB05-034 GPS: not reusing existing editor
+
+  Problem:    In some cases, GPS does not reuse an existing editor for a file,
+              but instead opens a new editor. This leads to confusion. This
+              seems to happen mostly when creating and saving new files.
+
+  Status:     This was fixed in 6.1.1 on 2014-11-06
+
+  Workaround: After saving a new file, close the editor and reopen it.
+
 KP-61-NA27-039 GPS: incorrect highlight of changed value in debugger data
 
   Problem:    When the debugger refreshes the contents of the data window,
