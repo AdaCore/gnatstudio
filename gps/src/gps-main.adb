@@ -292,9 +292,8 @@ procedure GPS.Main is
    Splash_Timeout         : Glib.Guint := 1000;
    Env                    : GPS.Environments.Environment;
 
-   Button                 : Message_Dialog_Buttons;
    Timeout_Id             : Glib.Main.G_Source_Id;
-   pragma Unreferenced (Button, Timeout_Id);
+   pragma Unreferenced (Timeout_Id);
 
    function Local_Command_Line
       (Self        : System.Address;
@@ -656,16 +655,11 @@ procedure GPS.Main is
          Gnatinspect_Traces : constant Virtual_File :=
                                 Create_From_Dir (GPS_Home_Dir,
                                                  "gnatinspect_traces.cfg");
-         Dir_Created        : Boolean := False;
          File               : Writable_File;
 
       begin
          if not Is_Directory (GPS_Home_Dir) then
             Make_Dir (GPS_Home_Dir);
-            Button := Message_Dialog
-              ((-"Created config directory ") & GPS_Home_Dir.Display_Full_Name,
-               Information, Button_OK, Justification => Justify_Left);
-            Dir_Created := True;
 
             --  Create a default configuration file for the traces.
             --  This should be left while GPS is considered as not fully
@@ -697,24 +691,13 @@ procedure GPS.Main is
 
          if not Is_Directory (Plug_Ins) then
             Make_Dir (Plug_Ins);
-
-            if not Dir_Created then
-               Button := Message_Dialog
-                 ((-"Created plug-ins directory ") &
-                  Plug_Ins.Display_Full_Name,
-                  Information, Button_OK, Justification => Justify_Left);
-            end if;
          end if;
 
       exception
          when VFS_Directory_Error =>
-            Button := Message_Dialog
-              ((-"Cannot create config directory ") &
-               GPS_Home_Dir.Display_Full_Name & ASCII.LF &
-               (-"Exiting..."),
-               Error, Button_OK,
-               Justification => Justify_Left);
-
+            Put_Line (Standard_Error,
+                      (-"Cannot create config directory ") &
+                      GPS_Home_Dir.Display_Full_Name & ASCII.LF);
             Status_Code := 1;
             return;
       end;
@@ -723,11 +706,9 @@ procedure GPS.Main is
          Tmp : constant Virtual_File := Get_Tmp_Directory;
       begin
          if not Is_Directory (Tmp) then
-            Button := Message_Dialog
-              ((-"Cannot access temporary directory ") &
-               Tmp.Display_Full_Name,
-               Error, Button_OK, Justification => Justify_Left);
-
+            Put_Line (Standard_Error,
+                      (-"Cannot access temporary directory ") &
+                      Tmp.Display_Full_Name);
             Status_Code := 1;
             return;
          end if;
@@ -745,11 +726,8 @@ procedure GPS.Main is
             On_Exception => GNATCOLL.Traces.Deactivate);
       exception
          when others =>
-            Button := Message_Dialog
-              ((-"Cannot access file ") & File.Display_Full_Name & ASCII.LF &
-               (-"Exiting..."),
-               Error, Button_OK, Justification => Justify_Left);
-
+            Put_Line (Standard_Error,
+                      (-"Cannot parse file ") & File.Display_Full_Name);
             Status_Code := 1;
             return;
       end;
@@ -827,14 +805,7 @@ procedure GPS.Main is
                      GPS_Command_Line.Context.Get_Help
               (Switch /= "--help-all", null);
          begin
-            if Config.Can_Output then
-               Put_Line (Help);
-            else
-               Button := Message_Dialog
-                 (Help, Information, Button_OK,
-                  Title         => -"Help",
-                  Justification => Justify_Left);
-            end if;
+            Put_Line (Help);
          end;
 
          GPS_Command_Line.Do_Exit := True;
@@ -850,15 +821,7 @@ procedure GPS.Main is
                         Config.Source_Date & ") hosted on " &
                         Config.Target;
          begin
-            if Config.Can_Output then
-               Put_Line (Version);
-            else
-               Button := Message_Dialog
-                 (Version,
-                  Information, Button_OK,
-                  Title         => -"Version",
-                  Justification => Justify_Left);
-            end if;
+            Put_Line (Version);
          end;
 
          GPS_Command_Line.Do_Exit := True;
@@ -2444,6 +2407,8 @@ procedure GPS.Main is
       Log_File : Virtual_File;
       Pid_File : Virtual_File;
       Str      : Virtual_File;
+      Button   : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
 
    begin
       --  Error before we created the main window is likely while parsing
