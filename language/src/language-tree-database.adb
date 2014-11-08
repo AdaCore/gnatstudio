@@ -169,7 +169,6 @@ package body Language.Tree.Database is
                              Buffer (Type_Start.Index .. Type_End.Index),
                            Default => "");
                      else
-                        null;
                         Formater.Add_Parameter
                           (Name    => Padded_Name,
                            Mode    => "",

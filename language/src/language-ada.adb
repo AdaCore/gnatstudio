@@ -647,6 +647,10 @@ package body Language.Ada is
       Skip_Next_Identifier : Boolean := False;
       Previous_Is          : Boolean := False;
 
+      In_Anonymous_Access_Type : Boolean := False;
+      Anon_Start_Sloc          : Source_Location;
+      Anon_End_Sloc            : Source_Location;
+
       function Token_Callback
         (Entity         : Language_Entity;
          Sloc_Start_Got : Source_Location;
@@ -711,12 +715,39 @@ package body Language.Ada is
                   Has_Reference := True;
                end if;
 
-            elsif Entity = Operator_Text and then Word = ":" then
-               Has_Reference := True;
-               Skip_Next_Identifier := False;
+               if Construct.Category = Cat_Parameter then
+                  if Word = "access" then
+                     In_Anonymous_Access_Type := True;
+                  end if;
 
-            elsif Entity = Operator_Text and then Word = "," then
-               Skip_Next_Identifier := True;
+                  --  For anonymous access types to subprograms the referenced
+                  --  entity corresponds with the full text of the subprogram
+                  --  profile
+
+                  if In_Anonymous_Access_Type
+                    and then Anon_Start_Sloc.Line = 0
+                    and then (Word = "protected"
+                               or else Word = "function"
+                               or else Word = "procedure")
+                  then
+                     Anon_Start_Sloc := Sloc_Start_Got;
+                  end if;
+               end if;
+
+            elsif Entity = Operator_Text then
+               if Word = ":" then
+                  Has_Reference := True;
+                  Skip_Next_Identifier := False;
+
+               elsif Word = "," then
+                  Skip_Next_Identifier := True;
+
+               elsif Word = ";" and then In_Anonymous_Access_Type then
+                  Sloc_Start := Anon_Start_Sloc;
+                  Sloc_End := Anon_End_Sloc;
+                  Success := True;
+                  return True;
+               end if;
             end if;
          end if;
 
@@ -725,7 +756,32 @@ package body Language.Ada is
                Paren_Depth := Paren_Depth + 1;
             elsif Word = ")" then
                Paren_Depth := Paren_Depth - 1;
+
+               if In_Anonymous_Access_Type
+                 and then Paren_Depth <= 0
+               then
+                  Sloc_Start := Anon_Start_Sloc;
+
+                  if Paren_Depth = 0 then
+                     Sloc_End := Sloc_End_Got;
+
+                  --  In an anonymous access to subprogram Paren_Count is -1
+                  --  when the target subprogram has no formals and we are
+                  --  located in the parenthesis of the enclosing profile.
+                  --  For example: procedure P (Q : access procedure)
+
+                  else
+                     Sloc_End := Anon_End_Sloc;
+                  end if;
+
+                  Success := True;
+                  return True;
+               end if;
             end if;
+         end if;
+
+         if In_Anonymous_Access_Type then
+            Anon_End_Sloc := Sloc_End_Got;
          end if;
 
          return False;
