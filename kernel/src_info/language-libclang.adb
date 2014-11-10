@@ -137,6 +137,8 @@ package body Language.Libclang is
       return Clang_Translation_Unit
    is
    begin
+      --  ??? Why is there a declare block here?
+
       declare
          --  ??? We should fill other unsaved_files! ??? Or should we ? I think
          --  that filling the current file as unsaved is enough. We can, at
