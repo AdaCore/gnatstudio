@@ -813,8 +813,13 @@ package body Language.Tree.Database is
          Analyze_Constructs_Identifiers (File.Lang, New_Tree);
          New_Db_Data_Tree := new Construct_Db_Data_Array
            (1 .. New_Tree.Contents'Length);
-         New_Db_Data_Tree.all :=
-           (others => Construct_Db_Trie.Null_Construct_Trie_Index);
+
+         --  Use a loop to avoid an "others =>" construct which blows the
+         --  stack.
+         for J in New_Db_Data_Tree'Range loop
+            New_Db_Data_Tree (J) :=
+              Construct_Db_Trie.Null_Construct_Trie_Index;
+         end loop;
 
          --  Phase 2 : replace previous content by the new one
 
