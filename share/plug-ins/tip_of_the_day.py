@@ -144,10 +144,10 @@ characters such as '<b>.</b>' or '<b>(</b>'.
 
 Tip: Dynamic smart completion
 
-You'd like GPS to make more suggestions automatically to complete identifiers
-while you're typing without having to press control-space? Go to
-Edit->Preferences, Editor and then set the <i>Smart completion</i> preference to
-<i>Dynamic</i>. You might also want to tune the default timeout.
+You'd like GPS to make more suggestions automatically to complete
+identifiers while you're typing without having to press control-space? Go to
+Edit->Preferences, Editor and then set the <i>Smart completion</i> preference
+to <i>Dynamic</i>. You might also want to tune the default timeout.
 
 Tip: Highlight dispatching calls
 
@@ -250,10 +250,10 @@ corresponding to your compiler? Go to Help->GNAT Runtime->Standard.
 
 Tip: Open from project
 
-Did you know that you can quickly open any file defined in your project or
-part of the GNAT run-time by using the File->Open From Project... menu,
-or using the <i>shift-F3</i> key: this will open a dialog where you can type the
-beginning of any file and get automatic completion using the <i>TAB</i> key.
+Did you know that you can quickly open any file defined in your project or part
+of the GNAT run-time by using the File->Open From Project... menu, or using the
+<i>shift-F3</i> key: this will open a dialog where you can type the beginning
+of any file and get automatic completion using the <i>TAB</i> key.
 
 Tip: Support for multiple toolchains
 
@@ -270,11 +270,12 @@ GPS supports GNAT versions as far back as 3.16 up to today's version.
 
 Tip: Remote Programming
 
-Tired of launching GPS on a slow remote machine and display it on your
-local, fast desktop computer via an X connection? The <i>Remote Programming</i>
+Tired of launching GPS on a slow remote machine and display it on your local,
+fast desktop computer via an X connection? The <i>Remote Programming</i>
 capability of GPS is made for you. This mode allows you to run GPS locally
-and drive your remote toolchain automatically via <i>ssh</i>, <i>rsh</i> or <i>telnet</i>.
-See Tools->Views->Remote menu to create your remote configuration.
+and drive your remote toolchain automatically via <i>ssh</i>, <i>rsh</i>
+or <i>telnet</i>. See Tools->Views->Remote menu to create your remote
+configuration.
 
 Tip: Refactoring: name parameters
 
@@ -312,8 +313,8 @@ going to Tools->Plug-ins and enable the <i>copy_paste.py</i> plug-in.
 Tip: Automatic highlighting of occurrences
 
 Leave your cursor on an entity: GPS will automatically highlight all references
-to this entity in the current editor. Also, the color of the highlight gives
-a hint on the category of the entity.
+to this entity in the current editor. Also, the color of the highlight gives a
+hint on the category of the entity.
 
 Tip: Compute dependency path between two units
 
@@ -386,7 +387,7 @@ def display_tip(title, doc, img):
 
     title_label = Gtk.Label()
     title_label.set_use_markup(True)
-    title_label.set_markup ("""<big>%s</big>""" % title)
+    title_label.set_markup("""<big>%s</big>""" % title)
 
     hbox.pack_start(title_label, False, False, 10)
 
@@ -409,7 +410,7 @@ def display_tip(title, doc, img):
     hbox = Gtk.HBox()
     doc_label = Gtk.Label()
     doc_label.set_use_markup(True)
-    doc_label.set_markup ("""%s""" % doc)
+    doc_label.set_markup("""%s""" % doc)
     doc_label.set_selectable(True)
 
     hbox.pack_start(doc_label, False, False, 10)
@@ -436,7 +437,8 @@ class Tip:
         # save the current tip number
 
         GPS.Preference(
-            "Plugins/tip of the day/tip-of-the-day-number").set(self.tip_number)
+            "Plugins/tip of the day/tip-of-the-day-number").set(
+                self.tip_number)
 
         # take into account the checkbox
 
@@ -577,6 +579,7 @@ class Tip:
 
         vbox.pack_start(hbox, False, False, 10)
 
+        close_button.set_can_default(True)
         window.set_default(close_button)
         window.set_focus(close_button)
         window.show_all()
@@ -621,7 +624,8 @@ def on_gps_started(hook):
             return
 
     t = Tip(results, top,
-            GPS.Preference("Plugins/tip of the day/tip-of-the-day-number").get())
+            GPS.Preference(
+                "Plugins/tip of the day/tip-of-the-day-number").get())
     t.on_next_button(None)
 
 GPS.Hook("gps_started").add(on_gps_started)
