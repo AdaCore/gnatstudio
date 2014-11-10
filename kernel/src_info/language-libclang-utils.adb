@@ -235,7 +235,6 @@ package body Language.Libclang.Utils is
       Project  : Project_Type;
       Language : String) return Unbounded_String_Array
    is
-      pragma Unreferenced (Kernel);
       P    : Project_Type;
       It   : Project_Iterator;
 
@@ -252,10 +251,23 @@ package body Language.Libclang.Utils is
          return Source_Dirs_Result (1 .. Source_Dirs_Index);
       end if;
 
-      It := Start (Project,
-                   Recursive        => True,
-                   Direct_Only      => False,
-                   Include_Extended => True);
+      if Project = No_Project then
+         --  We are opening a source file which is not in the project
+         --  hierarchy. This can be the case when the user has navigated
+         --  to the system includes, or if the user has opened a file from
+         --  the disk directly.
+         --  We do not know here which case this is, so we try to be helpful
+         --  and add all -I's corresponding to the loaded hierarchy.
+         It := Start (Kernel.Registry.Tree.Root_Project,
+                      Recursive        => True,
+                      Direct_Only      => False,
+                      Include_Extended => True);
+      else
+         It := Start (Project,
+                      Recursive        => True,
+                      Direct_Only      => False,
+                      Include_Extended => True);
+      end if;
 
       P := Current (It);
 
