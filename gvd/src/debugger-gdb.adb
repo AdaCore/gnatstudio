@@ -1128,6 +1128,13 @@ package body Debugger.Gdb is
          if Command_In_Process (Debugger.Process) then
             Send (Debugger, "n", Wait_For_Prompt => False, Mode => Internal);
             Interrupt (Debugger);
+
+            --  Force the waiting of a prompt between sending the Ctrl-C above
+            --  and sending "quit".
+            Send (Debugger, "",
+                  Wait_For_Prompt => True,
+                  Force_Send      => True,
+                  Mode            => Internal);
          end if;
 
          --  Now exit the debugger
