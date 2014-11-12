@@ -49,12 +49,33 @@ package body BT is
       end case;
    end Readable_Event_Kind;
 
+   --------
+   -- EQ --
+   --------
+
+   function EQ (B1, B2 : BT_Info) return Boolean is
+      use Message_Kinds;
+   begin
+      return B1.Event = B2.Event
+        and then B1.Kind = B2.Kind
+        and then B1.Sloc.Line = B2.Sloc.Line
+        and then B1.Sloc.Column = B2.Sloc.Column;
+   end EQ;
+
+   -----------------
+   -- Same_Srcpos --
+   -----------------
+
    function Same_Srcpos (S1, S2 : Src_Pos_Record) return Boolean is
    begin
       return S1.File_Name = S2.File_Name
         and then S1.Sloc.Line = S2.Sloc.Line
         and then S1.Sloc.Column = S2.Sloc.Column;
    end Same_Srcpos;
+
+   -----------------
+   -- Srcpos_Hash --
+   -----------------
 
    function Srcpos_Hash (S : Src_Pos_Record) return Hash_Type is
    begin
