@@ -31,6 +31,11 @@ package body Language.Libclang is
    Diagnostics : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG.DIAGNOSTICS", Off);
 
+   Clang_Options : constant Clang_Translation_Unit_Flags :=
+     Includebriefcommentsincodecompletion
+     and Precompiledpreamble
+     and Cachecompletionresults;
+
    function Translation_Unit
      (Kernel : Core_Kernel;
       File : GNATCOLL.VFS.Virtual_File;
@@ -187,7 +192,8 @@ package body Language.Libclang is
                --  If the key is in the cache, we know that File_Content is not
                --  null, so we want to reparse
                TU := Context.TU_Cache.Element (File).TU;
-               Dummy := Reparse_Translation_Unit (TU, Unsaved_Files);
+               Dummy := Reparse_Translation_Unit (TU, Unsaved_Files,
+                                                  Options => Clang_Options);
             else
                --  In the other case, this is the first time we're parsing this
                --  file
@@ -210,7 +216,7 @@ package body Language.Libclang is
                     (Kernel, F_Info.Project, Lang),
 
                   Unsaved_Files     => Unsaved_Files,
-                  Options           => No_Translation_Unit_Flags);
+                  Options           => Clang_Options);
 
                Context.TU_Cache.Include
                  (File, new TU_Cache'(TU => TU, Version => 0));
