@@ -173,13 +173,20 @@ package body Outline_View is
       Data   : access Hooks_Data'Class);
    --  Called when the current editor reaches a new location
 
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class; Line, Column : Natural);
+
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      F : GNATCOLL.VFS.Virtual_File);
+
    procedure On_Destroy
      (Outline : access Gtk_Widget_Record'Class);
    --  Called when the outline is destroyed
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
 
-   procedure File_Saved
+   procedure File_Modified
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when a file has been modified
@@ -255,19 +262,33 @@ package body Outline_View is
       return null;
    end Create_Contents;
 
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      F : GNATCOLL.VFS.Virtual_File)
+   is
+      Ed : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get
+          (F, Open_View => False, Focus => False);
+   begin
+      if Ed /= Nil_Editor_Buffer then
+         Location_Changed
+           (Kernel,
+            Natural (Ed.Get_Main_Cursor.Get_Insert_Mark.Line),
+            Natural (Ed.Get_Main_Cursor.Get_Insert_Mark.Column));
+      end if;
+   end Location_Changed;
+
    ----------------------
    -- Location_Changed --
    ----------------------
 
    procedure Location_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class; Line, Column : Natural)
    is
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
       Model   : Outline_Model;
       Path    : Gtk_Tree_Path;
-      Loc     : File_Location_Hooks_Args_Access;
    begin
       if Get_History (Get_History (Kernel).all, Hist_Editor_Link)
         and then Outline /= null
@@ -279,9 +300,7 @@ package body Outline_View is
             return;
          end if;
 
-         Loc := File_Location_Hooks_Args_Access (Data);
-
-         Path := Get_Path_Enclosing_Location (Model, Loc.Line, Loc.Column);
+         Path := Get_Path_Enclosing_Location (Model, Line, Column);
 
          if Get_Depth (Path) >= 1 then
             declare
@@ -302,6 +321,20 @@ package body Outline_View is
 
          Path_Free (Path);
       end if;
+   end Location_Changed;
+
+   ----------------------
+   -- Location_Changed --
+   ----------------------
+
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      Loc : File_Location_Hooks_Args_Access;
+   begin
+      Loc := File_Location_Hooks_Args_Access (Data);
+      Location_Changed (Kernel, Loc.Line, Loc.Column);
    end Location_Changed;
 
    -------------------------
@@ -746,7 +779,7 @@ package body Outline_View is
                 Name  => "outline.location_changed",
                 Watch => GObject (Outline));
       Add_Hook (Outline.Kernel, File_Saved_Hook,
-                Wrapper (File_Saved'Access),
+                Wrapper (File_Modified'Access),
                 Name  => "outline.file_saved",
                 Watch => GObject (Outline));
       Add_Hook (Outline.Kernel, File_Closed_Hook,
@@ -758,7 +791,7 @@ package body Outline_View is
                 Name  => "outline.file_edited",
                 Watch => GObject (Outline));
       Add_Hook (Outline.Kernel, Buffer_Modified_Hook,
-                Wrapper (File_Saved'Access),
+                Wrapper (File_Modified'Access),
                 Name  => "outline.file_modified",
                 Watch => GObject (Outline));
       Add_Hook (Outline.Kernel, Project_View_Changed_Hook,
@@ -817,7 +850,7 @@ package body Outline_View is
    -- File_Saved --
    ----------------
 
-   procedure File_Saved
+   procedure File_Modified
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
@@ -827,8 +860,9 @@ package body Outline_View is
    begin
       if Outline /= null and then Outline.File = D.File then
          Refresh (Outline);
+         Location_Changed (Kernel, D.File);
       end if;
-   end File_Saved;
+   end File_Modified;
 
    -----------------
    -- File_Closed --
@@ -866,6 +900,7 @@ package body Outline_View is
          end if;
 
          Refresh (Outline);
+         Location_Changed (Kernel, D.File);
       end if;
    end File_Edited;
 

@@ -195,6 +195,10 @@ package body Src_Editor_Module is
       Data   : access Hooks_Data'Class);
    --  Callback for the "cursor_stopped" hook
 
+   procedure File_Modified_Cb
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
@@ -664,6 +668,29 @@ package body Src_Editor_Module is
       For_All_Views (Kernel, D.File, On_View'Access);
    end File_Saved_Cb;
 
+   ----------------------
+   -- File_Modified_Cb --
+   ----------------------
+
+   procedure File_Modified_Cb
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      D   : constant File_Hooks_Args :=
+        File_Hooks_Args (Data.all);
+      Id  : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      C   : constant MDI_Child := Find_Editor (Kernel, D.File, No_Project);
+      Box : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (C);
+   begin
+      if Box /= null then
+         if Id.Show_Subprogram_Names then
+            Update_Subprogram_Name (Box);
+         end if;
+      end if;
+   end File_Modified_Cb;
+
    -----------------------
    -- Cursor_Stopped_Cb --
    -----------------------
@@ -674,17 +701,11 @@ package body Src_Editor_Module is
    is
       D   : constant File_Location_Hooks_Args_Access :=
               File_Location_Hooks_Args_Access (Data);
-      Id  : constant Source_Editor_Module :=
-              Source_Editor_Module (Src_Editor_Module_Id);
       C   : constant MDI_Child := Find_Editor (Kernel, D.File, D.Project);
       Box : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (C);
    begin
       if Box /= null then
-         if Id.Show_Subprogram_Names then
-            Update_Subprogram_Name (Box);
-         end if;
-
          if C = Get_MDI (Kernel).Get_Focus_Child then
             Update_Menus_And_Buttons (Kernel);
          end if;
@@ -2290,6 +2311,10 @@ package body Src_Editor_Module is
       Add_Hook (Kernel, Location_Changed_Hook,
                 Wrapper (Cursor_Stopped_Cb'Access),
                 Name => "src_editor.location_changed");
+
+      Add_Hook (Kernel, Buffer_Modified_Hook,
+                Wrapper (File_Modified_Cb'Access),
+                Name => "src_editor.buffer_modified");
 
       Add_Hook (Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
