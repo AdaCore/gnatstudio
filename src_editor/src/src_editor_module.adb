@@ -1627,6 +1627,11 @@ package body Src_Editor_Module is
 
          if Source /= null then
             Edit := Source;
+
+            if D.Title /= "" then
+               Source.Get_Buffer.Set_Title (D.Title);
+            end if;
+
             Source.Get_Buffer.Filename_Changed;  --  force update of MDI title
          end if;
 
