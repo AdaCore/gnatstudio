@@ -269,9 +269,12 @@ package body Language.Libclang_Tree is
    -------------
 
    overriding function Profile
-     (Self : Clang_Node) return String is
+     (Self : Clang_Node) return String
+   is
+      Profile : constant String := Display_Name (Self.Cursor);
+      Name : constant String := GNATCOLL.Symbols.Get (Self.Name).all;
    begin
-      return Display_Name (Self.Cursor);
+      return Profile (Name'Last + 1 .. Profile'Last);
    end Profile;
 
    -----------------
