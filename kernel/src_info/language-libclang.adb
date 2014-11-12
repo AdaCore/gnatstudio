@@ -141,90 +141,85 @@ package body Language.Libclang is
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files)
       return Clang_Translation_Unit
    is
+      --  ??? We should fill other unsaved_files! ??? Or should we ? I think
+      --  that filling the current file as unsaved is enough. We can, at
+      --  least in the first iteration of libclang, ask the user to save
+      --  the other files if he expects to get completion. RA
+
+      Lang             : constant String :=
+        Kernel.Lang_Handler.Get_Language_From_File (File);
+      C_Switches       : GNAT.Strings.String_List_Access;
+      Ignored          : Boolean;
+
+      F_Info : constant File_Info'Class :=
+        File_Info'Class
+          (Kernel.Registry.Tree.Info_Set
+             (File).First_Element);
+
+      Context : Clang_Context;
    begin
-      --  ??? Why is there a declare block here?
+      if not Global_Cache.Contains (F_Info.Project) then
+         Initialize (Context);
+         Global_Cache.Insert (F_Info.Project, Context);
+      else
+         Context := Global_Cache.Element (F_Info.Project);
+      end if;
+
+      if Unsaved_Files = No_Unsaved_Files
+        and then Context.TU_Cache.Contains (File)
+      then
+         return Context.TU_Cache.Element (File).TU;
+      end if;
+
+      --  Retrieve the switches for this file
+      Switches (F_Info.Project,
+                "compiler", File, Lang, C_Switches, Ignored);
 
       declare
-         --  ??? We should fill other unsaved_files! ??? Or should we ? I think
-         --  that filling the current file as unsaved is enough. We can, at
-         --  least in the first iteration of libclang, ask the user to save
-         --  the other files if he expects to get completion. RA
-
-         Lang             : constant String :=
-           Kernel.Lang_Handler.Get_Language_From_File (File);
-         C_Switches       : GNAT.Strings.String_List_Access;
-         Ignored          : Boolean;
-
-         F_Info : constant File_Info'Class :=
-           File_Info'Class
-             (Kernel.Registry.Tree.Info_Set
-                (File).First_Element);
-
-         Context : Clang_Context;
+         The_Switches     : Unbounded_String_Array (C_Switches'Range);
+         TU : Clang_Translation_Unit;
+         Dummy : Boolean;
       begin
-         if not Global_Cache.Contains (F_Info.Project) then
-            Initialize (Context);
-            Global_Cache.Insert (F_Info.Project, Context);
+         for J in C_Switches'Range loop
+            The_Switches (J) := To_Unbounded_String (C_Switches (J).all);
+         end loop;
+
+         if Context.TU_Cache.Contains (File) then
+            --  If the key is in the cache, we know that File_Content is not
+            --  null, so we want to reparse
+            TU := Context.TU_Cache.Element (File).TU;
+            Dummy := Reparse_Translation_Unit (TU, Unsaved_Files,
+                                               Options => Clang_Options);
          else
-            Context := Global_Cache.Element (F_Info.Project);
+            --  In the other case, this is the first time we're parsing this
+            --  file
+            TU := Parse_Translation_Unit
+              (Index             => Context.Clang_Indexer,
+               Source_Filename   => String (File.Full_Name.all),
+               Command_Line_Args =>
+
+               --  We pass to libclang a list of switches made of:
+               --  ... the C/C++ switches specified in this project
+               The_Switches
+
+               --  ... a -I<dir> for each directory in the subprojects
+               --  of this project
+               & Get_Project_Source_Dirs
+                 (Kernel, F_Info.Project, Lang)
+
+               --  ... a -I<dir> for each dir in the compiler search path
+               & Get_Compiler_Search_Paths
+                 (Kernel, F_Info.Project, Lang),
+
+               Unsaved_Files     => Unsaved_Files,
+               Options           => Clang_Options);
+
+            Context.TU_Cache.Include
+              (File, new TU_Cache'(TU => TU, Version => 0));
          end if;
 
-         if Unsaved_Files = No_Unsaved_Files
-           and then Context.TU_Cache.Contains (File)
-         then
-            return Context.TU_Cache.Element (File).TU;
-         end if;
-
-         --  Retrieve the switches for this file
-         Switches (F_Info.Project,
-                   "compiler", File, Lang, C_Switches, Ignored);
-
-         declare
-            The_Switches     : Unbounded_String_Array (C_Switches'Range);
-            TU : Clang_Translation_Unit;
-            Dummy : Boolean;
-         begin
-            for J in C_Switches'Range loop
-               The_Switches (J) := To_Unbounded_String (C_Switches (J).all);
-            end loop;
-
-            if Context.TU_Cache.Contains (File) then
-               --  If the key is in the cache, we know that File_Content is not
-               --  null, so we want to reparse
-               TU := Context.TU_Cache.Element (File).TU;
-               Dummy := Reparse_Translation_Unit (TU, Unsaved_Files,
-                                                  Options => Clang_Options);
-            else
-               --  In the other case, this is the first time we're parsing this
-               --  file
-               TU := Parse_Translation_Unit
-                 (Index             => Context.Clang_Indexer,
-                  Source_Filename   => String (File.Full_Name.all),
-                  Command_Line_Args =>
-
-                  --  We pass to libclang a list of switches made of:
-                  --  ... the C/C++ switches specified in this project
-                  The_Switches
-
-                  --  ... a -I<dir> for each directory in the subprojects
-                  --  of this project
-                  & Get_Project_Source_Dirs
-                    (Kernel, F_Info.Project, Lang)
-
-                  --  ... a -I<dir> for each dir in the compiler search path
-                  & Get_Compiler_Search_Paths
-                    (Kernel, F_Info.Project, Lang),
-
-                  Unsaved_Files     => Unsaved_Files,
-                  Options           => Clang_Options);
-
-               Context.TU_Cache.Include
-                 (File, new TU_Cache'(TU => TU, Version => 0));
-            end if;
-
-            GNAT.Strings.Free (C_Switches);
-            return TU;
-         end;
+         GNAT.Strings.Free (C_Switches);
+         return TU;
       end;
    end Translation_Unit;
 
