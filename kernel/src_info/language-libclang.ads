@@ -19,6 +19,7 @@ with Libclang.Index; use Libclang.Index;
 with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package Language.Libclang is
+
    function Translation_Unit
      (Kernel : Core_Kernel;
       File : GNATCOLL.VFS.Virtual_File;

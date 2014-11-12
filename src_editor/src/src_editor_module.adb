@@ -688,6 +688,7 @@ package body Src_Editor_Module is
          if Id.Show_Subprogram_Names then
             Update_Subprogram_Name (Box);
          end if;
+         Box.Get_View.Queue_Draw;
       end if;
    end File_Modified_Cb;
 
@@ -709,6 +710,7 @@ package body Src_Editor_Module is
          if C = Get_MDI (Kernel).Get_Focus_Child then
             Update_Menus_And_Buttons (Kernel);
          end if;
+         Box.Get_View.Queue_Draw;
       end if;
    end Cursor_Stopped_Cb;
 
