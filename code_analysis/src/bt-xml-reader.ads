@@ -24,11 +24,18 @@
 
 package BT.Xml.Reader is
 
-   procedure Read_File_Xml
+   procedure Read_File_Backtrace_Xml
      (Output_Dir  : String;
       File_Name   : String;
       File_Exists : out Boolean);
-   --  Read the XML corresponding to this source_file name.
+   --  Read the backtrace-XML corresponding to this source_file name.
+   --  Store the results in mappings used for queries
+
+   procedure Read_File_Vals_Xml
+     (Output_Dir  : String;
+      File_Name   : String;
+      File_Exists : out Boolean);
+   --  Read the vals-XML corresponding to this source_file name.
    --  Store the results in mappings used for queries
 
    procedure Get_Vn_Backtraces
@@ -43,6 +50,10 @@ package BT.Xml.Reader is
 
    function Get_Precondition_VN (Bt_Id : Natural) return Natural;
    --  Given a Precondition_Check backtrace, returns the precondition_vn
+
+   function Get_BT_File_Name (Bt_Id : Natural) return String;
+   --  Returns the file_name in which the callee is declared
+   --  (for preconditions).
 
    function Get_Callee_Srcpos (Bt_Id : Natural) return Source_Position;
    --  Returns the line associated with the callee (for preconditions).

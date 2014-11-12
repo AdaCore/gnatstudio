@@ -110,7 +110,7 @@ package body CodePeer.Backtrace_View is
       end if;
 
       Kernel.Set_Build_Mode ("codepeer");
-      BT.Xml.Reader.Read_File_Xml
+      BT.Xml.Reader.Read_File_Backtrace_Xml
         (String
            (CodePeer.Module.Codepeer_Output_Directory
                 (GPS.Kernel.Project.Get_Project (Kernel)).Full_Name.all),

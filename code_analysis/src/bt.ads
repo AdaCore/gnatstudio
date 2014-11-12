@@ -64,10 +64,14 @@ package BT is
       Text   => Null_Unbounded_String,
       Sloc   => (Line => 0, Column => 0));
 
+   function EQ (B1, B2 : BT_Info) return Boolean;
+      --  compare 2 backtrace records
+
    type BT_Seq_Index is new Positive;
    package BT_Info_Seqs is new Ada.Containers.Vectors
      (Element_Type => BT_Info,
-      Index_Type   => BT_Seq_Index);
+      Index_Type   => BT_Seq_Index,
+      "="          => EQ);
 
    type Src_Pos_Record is record
       File_Name : Unbounded_String;
