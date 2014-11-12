@@ -1643,6 +1643,8 @@ package body Src_Editor_Buffer is
       if Buffer.Cursor_Timeout_Registered then
          Glib.Main.Remove (Buffer.Cursor_Timeout);
       end if;
+
+      GNAT.Strings.Free (Buffer.Forced_Title);
    end Destroy_Hook;
 
    ----------
@@ -8794,4 +8796,30 @@ package body Src_Editor_Buffer is
       return Editors_Factory;
    end Get_Global_Editor_Buffer_Factory;
 
+   ---------------
+   -- Set_Title --
+   ---------------
+
+   procedure Set_Title
+      (Buffer : not null access Source_Buffer_Record;
+       Title  : String)
+   is
+   begin
+      GNAT.Strings.Free (Buffer.Forced_Title);
+      Buffer.Forced_Title := new String'(Title);
+   end Set_Title;
+
+   ---------------
+   -- Get_Title --
+   ---------------
+
+   function Get_Title
+      (Buffer : not null access Source_Buffer_Record) return String is
+   begin
+      if Buffer.Forced_Title /= null then
+         return Buffer.Forced_Title.all;
+      else
+         return "";
+      end if;
+   end Get_Title;
 end Src_Editor_Buffer;

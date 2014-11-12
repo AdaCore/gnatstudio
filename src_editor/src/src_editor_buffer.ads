@@ -589,6 +589,13 @@ package Src_Editor_Buffer is
       Name   : GNATCOLL.VFS.Virtual_File);
    --  Set the name of the file associated with Buffer to Name
 
+   procedure Set_Title
+      (Buffer : not null access Source_Buffer_Record;
+       Title  : String);
+   function Get_Title
+      (Buffer : not null access Source_Buffer_Record) return String;
+   --  Force the MDI tabs to use another name than the filename
+
    procedure Set_Initial_Dir
      (Buffer : access Source_Buffer_Record;
       Name   : GNATCOLL.VFS.Virtual_File);
@@ -1470,6 +1477,9 @@ private
 
       Initial_Dir     : GNATCOLL.VFS.Virtual_File;
       --  Where to save the file initially, for editors for empty files
+
+      Forced_Title  : GNAT.Strings.String_Access;
+      --  If set, this title is used for the window, instead of the file name
 
       Lang          : Language.Language_Access;
       Syntax_Tags   : Src_Highlighting.Highlighting_Tags;

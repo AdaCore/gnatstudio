@@ -485,9 +485,10 @@ package body Src_Editor_Box is
       Params : Glib.Values.GValues;
       Box    : Source_Editor_Box)
    is
-      pragma Unreferenced (Buffer, Params);
+      pragma Unreferenced (Params);
+      Buf    : constant Source_Buffer := Source_Buffer (Buffer);
       Child  : constant MDI_Child := Find_Child (Box.Kernel, Box);
-      File   : constant Virtual_File := Box.Source_Buffer.Get_Filename;
+      File   : constant Virtual_File := Buf.Get_Filename;
       P      : constant Project_Type := Get_Project (Box);
       Show_Project : constant Boolean :=
         P /= No_Project and then
@@ -501,7 +502,11 @@ package body Src_Editor_Box is
          then " - Project : " & P.Project_Path.Display_Full_Name
          else "");
    begin
-      if Is_Local (File) then
+      if Buf.Get_Title /= "" then
+         Child.Set_Title
+           (Buf.Get_Title & ASCII.LF & File.Display_Full_Name & P_Full_Name,
+            Buf.Get_Title);
+      elsif Is_Local (File) then
          Child.Set_Title
            (File.Display_Full_Name & P_Full_Name,
             File.Display_Base_Name & P_Name);
