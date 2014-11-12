@@ -104,15 +104,29 @@ package body Libclang.Index is
 
       C_Command_Line_Args : System.Address;
       C_Unsaved_Files     : System.Address;
+
+      First_Free : Natural := CL'First;
    begin
-      for J in CL'Range loop
-         CL (J) := New_String (To_String (Command_Line_Args (J)));
+      for J in Command_Line_Args'Range loop
+         declare
+            Arg : constant String := To_String (Command_Line_Args (J));
+         begin
+            --  Never pass the "-v" argument: this causes libclang to
+            --  output the header search settings to the standard error, which
+            --  is not suitable under Windows where GPS does not have a
+            --  console.
+            if Arg /= "-v" then
+               CL (First_Free) := New_String (Arg);
+               First_Free := First_Free + 1;
+            end if;
+         end;
       end loop;
 
-      if CL'Length = 0 then
-         C_Command_Line_Args := System.Null_Address;
-      else
+      if First_Free > CL'First then
          C_Command_Line_Args := CL (CL'First)'Address;
+      else
+         --  ??? This is wrong, the code won't accept a null address below
+         C_Command_Line_Args := System.Null_Address;
       end if;
 
       if Unsaved_Files'Length = 0 then
@@ -128,14 +142,14 @@ package body Libclang.Index is
           (C_Idxx                => Index.CXIndex,
            Source_Filename       => C_Source_Filename,
            Command_Line_Args     => C_Command_Line_Args,
-           Num_Command_Line_Args => CL'Length,
+           Num_Command_Line_Args => Interfaces.C.int (First_Free - CL'First),
            Unsaved_Files         => C_Unsaved_Files,
            Num_Unsaved_Files     => Unsaved_Files'Length,
            Options               => unsigned (Options));
 
       Free (C_Source_Filename);
 
-      for J in CL'Range loop
+      for J in CL'First .. First_Free - 1 loop
          Free (CL (J));
       end loop;
 

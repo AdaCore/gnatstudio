@@ -201,6 +201,7 @@ package body Language.Libclang.Utils is
                --  Expected at some point
                null;
          end;
+         GNAT.Expect.TTY.Close (Fd);
 
          Tmp_H.Delete (Ignored);
       end;
@@ -300,7 +301,7 @@ package body Language.Libclang.Utils is
       Source_Dirs_Result := Result;
       Source_Dirs_Index := First_Free - 1;
 
-      return Result;
+      return Result (Result'First .. First_Free - 1);
    end Get_Project_Source_Dirs;
 
 end Language.Libclang.Utils;
