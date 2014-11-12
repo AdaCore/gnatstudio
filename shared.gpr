@@ -51,7 +51,8 @@ project Shared is
    end Binder;
 
    package Linker is
-      for Default_Switches ("Ada") use Gnatcoll_Shared.System_Linker_Flags;
+      for Default_Switches ("Ada") use Gnatcoll_Shared.System_Linker_Flags &
+         ("-lclang", "-lstdc++");
    end Linker;
 
 end Shared;
