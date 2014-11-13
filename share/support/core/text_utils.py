@@ -731,23 +731,30 @@ def python_forward_indent(e, cursor):
 
 
 def delete(forward=True):
+    """
+    Helper for backward_delete/forward_delete actions, to factorize common
+    functionality. Will delete the selection if there is one, or one character
+    backward/forward depending on the forward parameter
+    """
     ed = GPS.EditorBuffer.get()
     mc = ed.main_cursor()
-    has_sel = mc.mark().location() == mc.sel_mark().location()
 
     if ed.has_slave_cursors():
         ed.start_undo_group()
 
-    def delete(s, e):
+    def _delete(s, e):
         s, e = (s, e) if s < e else (e, s)
         ed.delete(s, e.forward_char(-1))
 
+    no_selection = mc.mark().location() == mc.sel_mark().location()
     for c in ed.cursors():
-        if has_sel:
-            l = c.mark().location()
-            delete(l, l.forward_char(1 if forward else -1))
+        if no_selection:
+            start = c.mark().location()
+            end = start.forward_char(1 if forward else -1)
+            if start != end:
+                _delete(start, end)
         else:
-            delete(c.mark().location(), c.sel_mark().location())
+            _delete(c.mark().location(), c.sel_mark().location())
 
     if ed.has_slave_cursors():
         ed.finish_undo_group()
