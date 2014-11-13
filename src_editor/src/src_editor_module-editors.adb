@@ -2609,9 +2609,9 @@ package body Src_Editor_Module.Editors is
          Child := Find_MDI_Child_From_Widget (This.Contents.Box);
          if Child /= null then
             if Short then
-               return Get_Title (Child);
-            else
                return Get_Short_Title (Child);
+            else
+               return Get_Title (Child);
             end if;
          end if;
       end if;
