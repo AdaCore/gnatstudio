@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with System; use System;
-with String_Utils; use String_Utils;
+with System;                      use System;
+with String_Utils;                use String_Utils;
 
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
@@ -30,12 +30,11 @@ with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Search;                  use GPS.Search;
 with Language.Icons;              use Language.Icons;
-with XML_Utils; use XML_Utils;
+with XML_Utils;                   use XML_Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with Ada.Containers.Bounded_Hashed_Maps;
-with Ada.Strings.Hash_Case_Insensitive;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Ada.Text_IO;                 use Ada.Text_IO;
 
 package body Outline_View.Model is
    Me : constant Trace_Handle := Create ("OUTLINE");
@@ -1009,7 +1008,7 @@ package body Outline_View.Model is
          function Find_Child_With_Id (Id : String) return Natural is
             use Ids_Hash_Map;
             El : constant Ids_Hash_Map.Cursor :=
-              Childs_Map.Find (Ada.Strings.Hash_Case_Insensitive (Id));
+              Childs_Map.Find (Ada.Strings.Hash (Id));
          begin
             if El /= Ids_Hash_Map.No_Element then
                return Element (El);
@@ -1021,7 +1020,7 @@ package body Outline_View.Model is
       begin
          for I in 1 .. Sem_Nodes.Length loop
             Childs_Map.Include
-              (Ada.Strings.Hash_Case_Insensitive
+              (Ada.Strings.Hash
                  (Sem_Nodes.Get (I).Unique_Id), I);
          end loop;
 

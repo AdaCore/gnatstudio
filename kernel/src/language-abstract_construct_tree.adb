@@ -21,6 +21,7 @@ with GPS.Kernel.Xref; use GPS.Kernel.Xref;
 with Xref; use Xref;
 with Gtkada.Style;
 with Tooltips;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Language.Abstract_Construct_Tree is
 
@@ -280,7 +281,9 @@ package body Language.Abstract_Construct_Tree is
    is
       P : constant Semantic_Node'Class := Self.Parent;
       Base_Id : constant String :=
-        Get (Self.Name).all & Self.Profile & Self.Category'Img
+        To_Lower (Get (Self.Name).all)
+        & To_Lower (Self.Profile)
+        & Self.Category'Img
         & Self.Is_Declaration'Img;
    begin
       return
