@@ -2584,6 +2584,8 @@ procedure GPS.Main is
    end Application_Class_Init;
 
    Dead        : Boolean;
+   Registered  : Boolean;
+   pragma Unreferenced (Registered);
    Status      : Glib.Gint;
    pragma Unreferenced (Dead);
 
@@ -2636,6 +2638,7 @@ begin
    Application.On_Open (File_Open_Callback'Unrestricted_Access);
    Application.On_Shutdown (Shutdown_Callback'Unrestricted_Access);
 
+   Registered := Application.Register (Cancellable => null);
    Status := Application.Run;
 
    if Status /= 0 then
