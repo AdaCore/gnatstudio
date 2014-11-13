@@ -370,7 +370,8 @@ package body Language.Libclang_Tree is
    overriding function Unique_Id
      (Self : Clang_Node) return String is
    begin
-      return To_String (clang_getCursorUSR (Self.Cursor));
+      return To_String (clang_getCursorUSR (Self.Cursor))
+        & Self.Is_Declaration'Img;
    end Unique_Id;
 
    ----------
