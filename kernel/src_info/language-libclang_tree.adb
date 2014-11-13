@@ -274,7 +274,7 @@ package body Language.Libclang_Tree is
       Profile : constant String := Display_Name (Self.Cursor);
       Name : constant String := GNATCOLL.Symbols.Get (Self.Name).all;
    begin
-      return Profile (Name'Last + 1 .. Profile'Last);
+      return Profile (Name'Length + 1 .. Profile'Last);
    end Profile;
 
    -----------------
