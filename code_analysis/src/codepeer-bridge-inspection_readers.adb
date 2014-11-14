@@ -515,9 +515,8 @@ package body CodePeer.Bridge.Inspection_Readers is
          Self.Current_Message :=
            new CodePeer.Message'
              (Positive'Value (Attrs.Get_Value ("identifier")),
-              Self.File_Node.Name,
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Self.Subprogram_Node.Name.all),
+              Self.File_Node,
+              Self.Subprogram_Node,
               Merged,
               Lifeage,
               Positive'Value (Attrs.Get_Value ("line")),
