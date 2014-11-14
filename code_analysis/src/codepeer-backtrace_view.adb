@@ -33,12 +33,10 @@ with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;    use GNATCOLL.VFS.GtkAda;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;
 
 with BT;                     use BT;
 with BT.Xml.Reader;
-with CodePeer.Module;
 
 package body CodePeer.Backtrace_View is
 
@@ -94,7 +92,6 @@ package body CodePeer.Backtrace_View is
       Subprogram : String;
       Set        : Natural_Sets.Set)
    is
-      Mode    : constant String := Kernel.Get_Build_Mode;
       View    : constant Backtrace_View :=
         Backtrace_View (Backtrace_Views.Get_Or_Create_View (Kernel, False));
       Found   : Boolean;
@@ -109,19 +106,13 @@ package body CodePeer.Backtrace_View is
          return;
       end if;
 
-      Kernel.Set_Build_Mode ("codepeer");
       BT.Xml.Reader.Read_File_Backtrace_Xml
-        (String
-           (CodePeer.Module.Codepeer_Output_Directory
-                (GPS.Kernel.Project.Get_Project (Kernel)).Full_Name.all),
-         String (File.Base_Name),
-         Found);
-      Kernel.Set_Build_Mode (Mode);
+        (String (File.Full_Name.all), Found);
 
       if not Found then
          Kernel.Insert
-           ("There is no backtrace information file for "
-            & File.Display_Base_Name & ".",
+           ("There is no backtrace information file "
+            & File.Display_Full_Name & ".",
             Mode => GPS.Kernel.Error);
 
          return;

@@ -42,4 +42,16 @@ package body BT.Xml is
       end if;
    end Xml_File_Name;
 
+   --------------------------------------
+   -- Inspection_Output_Directory_Name --
+   --------------------------------------
+
+   function Inspection_Output_Directory_Name
+     (XML_File_Name : String) return String is
+   begin
+      return
+        Ada.Directories.Containing_Directory
+          (Ada.Directories.Containing_Directory (XML_File_Name));
+   end Inspection_Output_Directory_Name;
+
 end BT.Xml;
