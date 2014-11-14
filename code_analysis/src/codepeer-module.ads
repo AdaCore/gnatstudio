@@ -84,11 +84,6 @@ package CodePeer.Module is
    CodePeer_Category_Name  : constant String := "CodePeer: messages";
    Race_Condition_Category : constant String := "race condition";
 
-   function Codepeer_Output_Directory
-     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
-   --  Returns directory which is used by CodePeer for output inspection
-   --  results.
-
 private
 
    type Message_Ranking_Color_Preference_Array is
@@ -150,6 +145,11 @@ private
    function CodePeer_Object_Directory
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
    --  Returns object directory in 'codepeer' mode.
+
+   function Codepeer_Output_Directory
+     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
+   --  Returns directory which is used by CodePeer for output inspection
+   --  results.
 
    --  Style names to be used by children packages
 
