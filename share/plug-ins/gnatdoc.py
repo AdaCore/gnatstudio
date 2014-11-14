@@ -177,6 +177,8 @@ targets = """
     </command-line>
   </target>
 """
+# This has to be done at GPS start, before the project is actually loaded.
+GPS.parse_xml(project_attributes)
 
 SPAWN_BROWSER_PREF = "Documentation/Doc-Spawn-Browser"
 GPS.Preference(SPAWN_BROWSER_PREF).create(
@@ -246,7 +248,6 @@ GPS.Project.generate_doc = generate_doc_project
 class GNATdoc_Module(modules.Module):
 
     def setup(self):
-        GPS.parse_xml(project_attributes)
         GPS.parse_xml(targets)
         GPS.Hook("compilation_finished").add(self.on_compilation_finished)
 
