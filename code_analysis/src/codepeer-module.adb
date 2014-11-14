@@ -1537,8 +1537,8 @@ package body CodePeer.Module is
          begin
             CodePeer.Backtrace_View.Display_Backtraces
               (Kernel,
-               Message.File,
-               To_String (Message.Subprogram),
+               Message.File.Name,
+               Message.Subprogram.Name.all,
                Message.Vns);
          end;
       end if;

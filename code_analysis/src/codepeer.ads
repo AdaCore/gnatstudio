@@ -80,8 +80,8 @@ package CodePeer is
 
    type Message is record
       Id               : Natural;
-      File             : GNATCOLL.VFS.Virtual_File;
-      Subprogram       : Ada.Strings.Unbounded.Unbounded_String;
+      File             : Code_Analysis.File_Access;
+      Subprogram       : Code_Analysis.Subprogram_Access;
       Merged           : Natural_Sets.Set;
       Lifeage          : Lifeage_Kinds;
       Line             : Positive;
