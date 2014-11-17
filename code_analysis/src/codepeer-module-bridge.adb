@@ -122,6 +122,8 @@ package body CodePeer.Module.Bridge is
          return;
       end if;
 
+      Module.Output_Directory := Output_Directory;
+
       if DB_File_Name.Is_Regular_File
         and then Reply_File_Name.Is_Regular_File
         and then (DB_File_Name.File_Time_Stamp

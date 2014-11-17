@@ -87,10 +87,11 @@ package body CodePeer.Backtrace_View is
    ------------------------
 
    procedure Display_Backtraces
-     (Kernel     : access Kernel_Handle_Record'Class;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Subprogram : String;
-      Set        : Natural_Sets.Set)
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Output_Directory : GNATCOLL.VFS.Virtual_File;
+      File             : GNATCOLL.VFS.Virtual_File;
+      Subprogram       : String;
+      Set              : Natural_Sets.Set)
    is
       View     : constant Backtrace_View :=
         Backtrace_View (Backtrace_Views.Get_Or_Create_View (Kernel, False));
@@ -108,11 +109,13 @@ package body CodePeer.Backtrace_View is
       end if;
 
       BT.Xml.Reader.Read_File_Backtrace_Xml
-        (String (File.Full_Name.all), Found);
+        (String (Output_Directory.Full_Name.all),
+         String (File.Full_Name.all),
+         Found);
 
       if not Found then
          Kernel.Insert
-           ("There is no backtrace information file "
+           ("There is no backtrace information file for "
             & File.Display_Full_Name & ".",
             Mode => GPS.Kernel.Error);
 

@@ -27,10 +27,11 @@ package CodePeer.Backtrace_View is
    type Backtrace_View_Record is new Generic_Views.View_Record with private;
 
    procedure Display_Backtraces
-     (Kernel     : access Kernel_Handle_Record'Class;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Subprogram : String;
-      Set        : Natural_Sets.Set);
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Output_Directory : GNATCOLL.VFS.Virtual_File;
+      File             : GNATCOLL.VFS.Virtual_File;
+      Subprogram       : String;
+      Set              : Natural_Sets.Set);
    --  Fill backtraces view by backtraces of specified VNs
 
    procedure Close_Backtraces_View
