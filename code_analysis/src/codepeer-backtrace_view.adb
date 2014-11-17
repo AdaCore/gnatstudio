@@ -92,12 +92,13 @@ package body CodePeer.Backtrace_View is
       Subprogram : String;
       Set        : Natural_Sets.Set)
    is
-      View    : constant Backtrace_View :=
+      View     : constant Backtrace_View :=
         Backtrace_View (Backtrace_Views.Get_Or_Create_View (Kernel, False));
-      Found   : Boolean;
-      Info    : BT.BT_Info_Seqs.Vector;
-      Vn_Iter : Gtk_Tree_Iter;
-      Bt_Iter : Gtk_Tree_Iter;
+      Found    : Boolean;
+      Info     : BT.BT_Info_Seqs.Vector;
+      Vn_Iter  : Gtk_Tree_Iter;
+      Bt_Iter  : Gtk_Tree_Iter;
+      Src_File : GNATCOLL.VFS.Virtual_File;
 
    begin
       View.Store.Clear;
@@ -128,15 +129,21 @@ package body CodePeer.Backtrace_View is
          BT.Xml.Reader.Get_Vn_Backtraces (Subprogram, Vn, Info);
 
          for Location of Info loop
+            Src_File :=
+              GPS.Kernel.Create
+                (GNATCOLL.VFS.Filesystem_String
+                   (BT.Xml.Reader.Get_BT_File_Name (Location.Bt_Id)),
+                 Kernel);
+
             View.Store.Append (Bt_Iter, Vn_Iter);
             View.Store.Set
               (Bt_Iter,
                Text_Column,
-               File.Display_Base_Name
+               Src_File.Display_Base_Name
                & ':' & Image (Location.Sloc.Line, 1)
                & ':' & Image (Location.Sloc.Column, 1)
                & " - " & To_String (Location.Text));
-            Set_File (View.Store, Bt_Iter, File_Column, File);
+            Set_File (View.Store, Bt_Iter, File_Column, Src_File);
             View.Store.Set (Bt_Iter, Line_Column, Gint (Location.Sloc.Line));
             View.Store.Set
               (Bt_Iter, Column_Column, Gint (Location.Sloc.Column));
