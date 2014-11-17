@@ -111,6 +111,8 @@ private
      new GPS.Kernel.Modules.Module_ID_Record with record
       Version                : Supported_Format_Version;
       --  Used version of format of interchange files.
+      Output_Directory       : GNATCOLL.VFS.Virtual_File;
+      --  CodePeer's output directory for root project.
       Tree                   : Code_Analysis.Code_Analysis_Tree;
       Race_Category          : CodePeer.Message_Category_Access;
       Report_Subwindow       : GPS.Kernel.MDI.GPS_MDI_Child;

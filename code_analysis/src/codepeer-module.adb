@@ -1537,9 +1537,8 @@ package body CodePeer.Module is
          begin
             CodePeer.Backtrace_View.Display_Backtraces
               (Kernel,
-               CodePeer.File_Data
-                 (Message.File.Analysis_Data.CodePeer_Data.all)
-                 .Backtraces_File,
+               Module.Output_Directory,
+               Message.File.Name,
                Message.Subprogram.Name.all,
                (if Message.Is_Check
                 then Message.Vns
