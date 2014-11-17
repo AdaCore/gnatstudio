@@ -1800,8 +1800,27 @@ package body Src_Editor_View is
 
    procedure Scroll_To_Cursor_Location
      (View      : access Source_View_Record;
-      Centering : Centering_Type := Minimal) is
+      Centering : Centering_Type := Minimal)
+   is
+      function Fit (Adj : Gtk.Adjustment.Gtk_Adjustment) return Boolean;
+      --  Check if given adjustment fits whole view
+
+      ------------------
+      -- Visible_Iter --
+      ------------------
+
+      function Fit (Adj : Gtk.Adjustment.Gtk_Adjustment) return Boolean is
+      begin
+         return Adj.Get_Page_Size >= Adj.Get_Upper;
+      end Fit;
    begin
+      --  Don't scroll if whole text is visible inside view window
+      if Fit (View.Scroll.Get_Vadjustment) and then
+        Fit (View.Scroll.Get_Hadjustment)
+      then
+         return;
+      end if;
+
       case Centering is
          when Minimal =>
             --  Perform minimal scrolling
