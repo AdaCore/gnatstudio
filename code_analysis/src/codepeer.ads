@@ -222,10 +222,8 @@ package CodePeer is
    overriding procedure Finalize (Self : access Project_Data);
 
    type File_Data is new Code_Analysis.CodePeer_Data_Root with record
-      Lifeage         : Lifeage_Kinds;
-      Total_Checks    : Natural;
-      Backtraces_File : GNATCOLL.VFS.Virtual_File;
-      Values_File     : GNATCOLL.VFS.Virtual_File;
+      Lifeage      : Lifeage_Kinds;
+      Total_Checks : Natural;
    end record;
 
    type Editor_Mark_Access is access all GPS.Editors.Editor_Mark'Class;

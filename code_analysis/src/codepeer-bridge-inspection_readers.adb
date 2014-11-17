@@ -36,7 +36,6 @@ package body CodePeer.Bridge.Inspection_Readers is
    Entry_Point_Access_Tag  : constant String := "entry_point_access";
    Object_Access_Tag       : constant String := "object_access";
 
-   Backtraces_Attribute     : constant String := "backtraces";
    Category_Attribute       : constant String := "category";
    Checks_Attribute         : constant String := "checks";
    Column_Attribute         : constant String := "column";
@@ -51,7 +50,6 @@ package body CodePeer.Bridge.Inspection_Readers is
    Previous_Attribute       : constant String := "previous";
    Primary_Checks_Attribute : constant String := "primary_checks";
    Rank_Attribute           : constant String := "rank";
-   Values_Attribute         : constant String := "values";
    Vn_Id_Attribute          : constant String := "vn-id";
    Vn_Ids_Attribute         : constant String := "vn-ids";
 
@@ -493,13 +491,7 @@ package body CodePeer.Bridge.Inspection_Readers is
          Self.File_Node.Analysis_Data.CodePeer_Data :=
            new CodePeer.File_Data'
                  (Lifeage      => Lifeage,
-                  Total_Checks => Checks,
-                  Backtraces_File =>
-                    GNATCOLL.VFS.Create_From_UTF8
-                      (Attrs.Get_Value (Backtraces_Attribute)),
-                  Values_File     =>
-                    GNATCOLL.VFS.Create_From_UTF8
-                      (Attrs.Get_Value (Values_Attribute)));
+                  Total_Checks => Checks);
 
       elsif Qname = Subprogram_Tag then
          Self.Subprogram_Node :=

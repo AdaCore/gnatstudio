@@ -124,8 +124,4 @@ package BT.Xml is
    --  Return the path to the xml file holding either the backtraces or
    --  the value_sets, from the given output directory Output_Dir.
 
-   function Inspection_Output_Directory_Name
-     (XML_File_Name : String) return String;
-   --  Returns the inspection output directory for the given XML file.
-
 end BT.Xml;
