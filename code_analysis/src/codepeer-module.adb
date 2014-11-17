@@ -1541,7 +1541,10 @@ package body CodePeer.Module is
                  (Message.File.Analysis_Data.CodePeer_Data.all)
                  .Backtraces_File,
                Message.Subprogram.Name.all,
-               Message.Vns);
+               (if Message.Is_Check
+                then Message.Vns
+                else Natural_Sets.Empty_Set));
+            --  Backtraces are displayed only for 'check' messages.
          end;
       end if;
    end On_Message_Selected_Hook;
