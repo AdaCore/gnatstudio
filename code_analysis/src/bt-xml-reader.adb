@@ -535,49 +535,6 @@ package body BT.Xml.Reader is
       Files_Read.Append (File_To_Read);
    end Read_File_Backtrace_Xml;
 
-   -----------------------------
-   -- Read_File_Backtrace_Xml --
-   -----------------------------
-
-   procedure Read_File_Backtrace_Xml
-     (File_To_Read : String;
-      File_Exists  : out Boolean)
-   is
-      use Input_Sources.File;
-
-      Input  : Input_Sources.File.File_Input;
-      Reader : Backtrace_Reader;
-
-   begin
-      if not Is_Regular_File (File_To_Read) then
-         File_Exists := False;
-         return;
-      end if;
-
-      File_Exists := True;
-
-      if Files_Read.Contains (File_To_Read) then
-         --  already processed
-         return;
-      end if;
-
-      if Inspection_Output_Directory = Null_Unbounded_String then
-         Inspection_Output_Directory :=
-           To_Unbounded_String
-             (Inspection_Output_Directory_Name (File_To_Read));
-      end if;
-
-      Input_Sources.Set_Public_Id
-        (Input_Sources.Input_Source (Input), File_To_Read);
-      Input_Sources.Set_System_Id
-        (Input_Sources.Input_Source (Input), File_To_Read);
-      Input_Sources.File.Open (File_To_Read, Input);
-      Set_Feature (Reader, Validation_Feature, False);
-      Parse (Reader, Input);
-      Close (Input);
-      Files_Read.Append (File_To_Read);
-   end Read_File_Backtrace_Xml;
-
    procedure Read_File_Vals_Xml
      (Output_Dir  : String;
       File_Name   : String;

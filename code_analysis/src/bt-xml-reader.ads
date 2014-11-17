@@ -31,12 +31,6 @@ package BT.Xml.Reader is
    --  Read the backtrace-XML corresponding to this source_file name.
    --  Store the results in mappings used for queries
 
-   procedure Read_File_Backtrace_Xml
-     (File_To_Read : String;
-      File_Exists  : out Boolean);
-   --  Reads the backtrace XML file. Store the result in mappings used for
-   --  queries.
-
    procedure Read_File_Vals_Xml
      (Output_Dir  : String;
       File_Name   : String;
