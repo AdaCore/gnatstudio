@@ -116,7 +116,7 @@ package Language.Libclang_Tree is
    overriding function Is_Valid
      (Self : Clang_Node) return Boolean is (True);
 
-   overriding function Counterpart
+   overriding function Definition
      (Self : Clang_Node) return Semantic_Node'Class;
 
    overriding function Sloc_Def
@@ -171,6 +171,9 @@ private
 
    type Clang_Node_Array is new Semantic_Node_Array with record
       Nodes  : Cursors_Holders.Holder;
+      --  We're using the holder here to give reference semantics to node,
+      --  you can do as many copies of a Clang_Node_Array instance, there
+      --  will always be only one children vector
       Kernel : Core_Kernel;
       File   : GNATCOLL.VFS.Virtual_File;
    end record;

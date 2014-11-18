@@ -351,6 +351,7 @@ package Libclang.Index is
    ------------------------------
 
    type Clang_Cursor is new clang_c_Index_h.CXCursor;
+   subtype Clang_Type is clang_c_Index_h.CXType;
 
    use type Interfaces.C.unsigned;
 
@@ -373,10 +374,17 @@ package Libclang.Index is
      (Positive, Clang_Cursor);
 
    function Toplevel_Nodes
-     (TU : Clang_Translation_Unit) return Cursors_Vectors.Vector;
+     (TU : Clang_Translation_Unit;
+      Filter : access function (C : Clang_Cursor) return Boolean := null)
+      return Cursors_Vectors.Vector;
+
+   type Cursor_Filter is
+     access function (Cursor : Clang_Cursor) return Boolean;
 
    function Get_Children
-     (Cursor : Clang_Cursor) return Cursors_Vectors.Vector;
+     (Cursor : Clang_Cursor;
+      Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
+      return Cursors_Vectors.Vector;
 
    function Kind
      (Cursor : Clang_Cursor) return Clang_Cursor_Kind
@@ -384,6 +392,9 @@ package Libclang.Index is
 
    function Spelling
      (Cursor : Clang_Cursor) return String;
+
+   function Spelling
+     (T : Clang_Type) return String;
 
    function Display_Name
      (Cursor : Clang_Cursor) return String;

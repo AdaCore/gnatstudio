@@ -91,6 +91,16 @@ package body Outline_View.Model is
       Node     : Semantic_Node'Class) return Sorted_Node_Access;
    --  Same as Get_Node, but for the body or full view of the entity.
 
+   function S_Unique_Id
+     (N : Semantic_Node'Class) return String
+   is
+     (N.Unique_Id & (if N.Is_Declaration then "" else "B"));
+
+   function S_Unique_Id
+     (N : Semantic_Node_Info) return String
+   is
+     (+N.Unique_Id & (if N.Is_Decl then "" else "B"));
+
    --------------
    -- Get_Node --
    --------------
@@ -101,7 +111,7 @@ package body Outline_View.Model is
    is
       use Sem_To_Tree_Maps;
       C : constant Sem_To_Tree_Maps.Cursor := Model.Sem_To_Tree_Nodes.Find
-        (Node.Unique_Id);
+        (S_Unique_Id (Node));
    begin
       return (if C = Sem_To_Tree_Maps.No_Element then null else Element (C));
    end Get_Node;
@@ -114,13 +124,28 @@ package body Outline_View.Model is
      (Model  : access Outline_Model_Record'Class;
       Node     : Semantic_Node'Class) return Sorted_Node_Access
    is
-      C : constant Semantic_Node'Class := Node.Counterpart;
+      C : constant Semantic_Node'Class := Node.Definition;
    begin
-      return (if Model.Filter.Group_Spec_And_Body
-              and then C.Is_Valid
-              and then C.File = Node.File
-              then Get_Node (Model, C)
-              else null);
+      if Model.Filter.Group_Spec_And_Body
+        and then C.Is_Valid
+        and then C.File = Node.File
+      then
+         if Node.Is_Declaration then
+            return Get_Node (Model, C);
+         else
+            declare
+               UID : constant String := Node.Unique_Id;
+               use Sem_To_Tree_Maps;
+               C : constant Sem_To_Tree_Maps.Cursor :=
+                 Model.Sem_To_Tree_Nodes.Find (UID);
+            begin
+               return (if C = Sem_To_Tree_Maps.No_Element
+                       then null else Element (C));
+            end;
+         end if;
+      end if;
+
+      return null;
    end Get_Node_Next_Part;
 
    procedure Clean_Node (Model : Outline_Model;
@@ -142,10 +167,10 @@ package body Outline_View.Model is
 
       --  Remove the semantic to tree node mapping from the model
       if Node.Spec_Info /= No_Node_Info then
-         Model.Sem_To_Tree_Nodes.Exclude (+Node.Spec_Info.Unique_Id);
+         Model.Sem_To_Tree_Nodes.Exclude (S_Unique_Id (Node.Spec_Info));
       end if;
       if Node.Body_Info /= No_Node_Info then
-         Model.Sem_To_Tree_Nodes.Exclude (+Node.Body_Info.Unique_Id);
+         Model.Sem_To_Tree_Nodes.Exclude (S_Unique_Id (Node.Body_Info));
       end if;
 
       --  Then update next siblings
@@ -299,8 +324,8 @@ package body Outline_View.Model is
             if Comparison = -1 then
                return True;
             elsif Comparison = 0 then
-               Comparison := Compare (+Left_Info.Unique_Id,
-                                      +Right_Info.Unique_Id);
+               Comparison := Compare (S_Unique_Id (Left_Info),
+                                      S_Unique_Id (Right_Info));
                if Comparison = -1 then
                   return True;
                elsif Comparison = 0 then
@@ -335,9 +360,8 @@ package body Outline_View.Model is
       Position : Sorted_Node_Set.Cursor;
       Inserted : Boolean;
       use Sem_Tree_Holders;
-      Sem_Unique_Id : constant String := Sem_Node.Unique_Id;
+      Sem_Unique_Id : constant String := S_Unique_Id (Sem_Node);
    begin
-
       if Model = null
         or else Model.Semantic_Tree = Sem_Tree_Holders.Empty_Holder
       then
@@ -627,6 +651,7 @@ package body Outline_View.Model is
       Cur  : Sorted_Node_Access := Node;
    begin
       Gtk_New (Path);
+
       while Cur /= null and then Cur /= Self.Phantom_Root'Access loop
          Prepend_Index (Path, Gint (Cur.Index_In_Siblings));
          Cur := Cur.Parent;
@@ -687,9 +712,7 @@ package body Outline_View.Model is
          Init (Value, GType_String);
 
          if Info.Name /= No_Symbol then
-            if Self.Filter.Show_Profile
-              and then Info.Category in Subprogram_Category
-            then
+            if Self.Filter.Show_Profile then
                declare
                   Profile : constant String := +Info.Profile;
                begin
@@ -1017,40 +1040,56 @@ package body Outline_View.Model is
             end if;
          end Find_Child_With_Id;
          use type Hash_Type;
-      begin
-         for I in 1 .. Sem_Nodes.Length loop
-            Childs_Map.Include
-              (Ada.Strings.Hash
-                 (Sem_Nodes.Get (I).Unique_Id), I);
-         end loop;
 
-         C := Model_Nodes.First;
+         El : Sorted_Node_Access;
 
-         while Has_Element (C) loop
+         procedure Process_Node (NI : Semantic_Node_Info);
+         procedure Process_Node (NI : Semantic_Node_Info) is
+         begin
+            if NI = No_Node_Info then
+               return;
+            end if;
             declare
-               El : constant Sorted_Node_Access := Element (C);
+
                Sem_Child_Idx : constant Natural :=
-                 Find_Child_With_Id (+Get_Info (El.all).Unique_Id);
+                 Find_Child_With_Id (S_Unique_Id (NI));
                Sem_Child : constant Semantic_Node'Class :=
                  (if Sem_Child_Idx /= 0
                   then Sem_Nodes.Get (Positive (Sem_Child_Idx))
                   else No_Semantic_Node);
             begin
                if Sem_Child /= No_Semantic_Node then
-
                   if Sem_Child.Is_Declaration then
                      El.Spec_Info := Sem_Child.Info;
                   else
                      El.Body_Info := Sem_Child.Info;
                   end if;
-
                   New_Nodes (Sem_Child_Idx) := False;
                   Update_Nodes
                     (El.Children, Sem_Child.Children, Sem_Child);
-               elsif El /= Model.Root_With then
+               elsif El /= Model.Root_With
+                 and then
+                   (To_Remove_Nodes.Is_Empty
+                    or else To_Remove_Nodes.Last_Element /= Element (C))
+               then
                   To_Remove_Nodes.Append (Element (C));
                end if;
             end;
+         end Process_Node;
+
+      begin
+         for I in 1 .. Sem_Nodes.Length loop
+            Childs_Map.Include
+              (Ada.Strings.Hash
+                 (S_Unique_Id (Sem_Nodes.Get (I))), I);
+         end loop;
+
+         C := Model_Nodes.First;
+
+         while Has_Element (C) loop
+            El := Element (C);
+            Process_Node (El.Spec_Info);
+            Process_Node (El.Body_Info);
             Next (C);
          end loop;
 
@@ -1069,7 +1108,7 @@ package body Outline_View.Model is
       end Update_Nodes;
    begin
       Update_Nodes (Model.Phantom_Root.Children,
-                 Model.Semantic_Tree.Element.Root_Nodes, No_Semantic_Node);
+                    Model.Semantic_Tree.Element.Root_Nodes, No_Semantic_Node);
    end File_Updated;
 
    ---------------------------------

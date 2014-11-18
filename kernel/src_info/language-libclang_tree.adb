@@ -28,6 +28,24 @@ package body Language.Libclang_Tree is
 
    function To_Sloc_T (Arg : CXSourceLocation) return Sloc_T;
 
+   function Filter_Children (C : Clang_Cursor) return Boolean;
+
+   ------------
+   -- Filter --
+   ------------
+
+   function Filter_Children (C : Clang_Cursor) return Boolean
+   is
+      K : constant Clang_Cursor_Kind := Kind (C);
+   begin
+      if K in CXCursor_UnionDecl | CXCursor_StructDecl
+        and then Spelling (C) = ""
+      then
+         return False;
+      end if;
+      return True;
+   end Filter_Children;
+
    ----------------------
    -- Node_From_Cursor --
    ----------------------
@@ -109,7 +127,8 @@ package body Language.Libclang_Tree is
       return
         Clang_Node_Array'
           (Cursors_Holders.To_Holder
-             (Toplevel_Nodes (Self.Tu)), Self.Kernel, Self.File);
+             (Toplevel_Nodes (Self.Tu, Filter_Children'Access)),
+           Self.Kernel, Self.File);
    end Root_Nodes;
 
    -------------------
@@ -236,8 +255,25 @@ package body Language.Libclang_Tree is
    overriding function Children
      (Self : Clang_Node) return Semantic_Node_Array'Class
    is
-      C : constant Cursors_Vectors.Vector := Get_Children (Self.Cursor);
+      C : constant Cursors_Vectors.Vector := Get_Children
+        (Self.Cursor);
    begin
+      if Kind (Self.Cursor) = CXCursor_TypedefDecl
+        and then C.Length = 1
+        and then
+          Kind (C.Element (1)) in CXCursor_StructDecl | CXCursor_UnionDecl
+      then
+         if Spelling (C.Element (1)) = "" then
+            return Clang_Node_Array'
+              (Cursors_Holders.To_Holder
+                 (Get_Children (C.Element (1))),
+               Self.Kernel, Self.File);
+         else
+            return Clang_Node_Array'
+              (Cursors_Holders.To_Holder (Cursors_Vectors.Empty_Vector),
+               Self.Kernel, Self.File);
+         end if;
+      end if;
       return Clang_Node_Array'
         (Cursors_Holders.To_Holder (C),
          Self.Kernel,
@@ -271,22 +307,34 @@ package body Language.Libclang_Tree is
    overriding function Profile
      (Self : Clang_Node) return String
    is
-      Profile : constant String := Display_Name (Self.Cursor);
-      Name : constant String := GNATCOLL.Symbols.Get (Self.Name).all;
+      K : constant Clang_Cursor_Kind := Kind (Self.Cursor);
    begin
-      return Profile (Name'Length + 1 .. Profile'Last);
+      if K in CXCursor_FunctionDecl | CXCursor_FunctionTemplate
+        | CXCursor_ConversionFunction
+      then
+         declare
+            Profile : constant String := Display_Name (Self.Cursor);
+            Name : constant String := GNATCOLL.Symbols.Get (Self.Name).all;
+         begin
+            return Profile (Name'Length + 1 .. Profile'Last);
+         end;
+      elsif K = CXCursor_FieldDecl then
+         return Spelling (clang_getCursorType (Self.Cursor));
+      end if;
+
+      return "";
    end Profile;
 
    -----------------
    -- Counterpart --
    -----------------
 
-   overriding function Counterpart
+   overriding function Definition
      (Self : Clang_Node) return Semantic_Node'Class
    is
    begin
       return Node_From_Cursor (clang_getCursorDefinition (Self.Cursor), Self);
-   end Counterpart;
+   end Definition;
 
    --------------
    -- Sloc_Def --
@@ -370,8 +418,7 @@ package body Language.Libclang_Tree is
    overriding function Unique_Id
      (Self : Clang_Node) return String is
    begin
-      return To_String (clang_getCursorUSR (Self.Cursor))
-        & Self.Is_Declaration'Img;
+      return To_String (clang_getCursorUSR (Self.Cursor));
    end Unique_Id;
 
    ----------

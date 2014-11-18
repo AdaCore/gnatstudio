@@ -25,6 +25,7 @@ with System;            use System;
 with String_Utils;      use String_Utils;
 with UTF8_Utils;        use UTF8_Utils;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Language.Tree.Database is
 
@@ -194,6 +195,8 @@ package body Language.Tree.Database is
             Formater.Add_Result
               (Mode    => "",
                Of_Type => Buffer (Type_Start.Index .. Type_End.Index));
+            Put_Line ("ADDING "
+                      & Buffer (Type_Start.Index .. Type_End.Index) & " PD");
          end if;
 
       elsif Get_Construct (Node).Category in Data_Category then

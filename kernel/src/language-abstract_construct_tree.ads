@@ -118,7 +118,7 @@ package Language.Abstract_Construct_Tree is
    overriding function Is_Valid
      (Self : Construct_Node) return Boolean is (True);
 
-   overriding function Counterpart
+   overriding function Definition
      (Self : Construct_Node) return Semantic_Node'Class;
 
    overriding function Sloc_Def

@@ -247,7 +247,7 @@ package Language.Abstract_Language_Tree is
    --  Return the profile for node, if applicable (typically if node is a
    --  subprogram node)
 
-   function Counterpart
+   function Definition
      (Self : Semantic_Node) return Semantic_Node'Class is abstract
      with Pre'Class => (Self.Is_Valid);
    --  Returns the counterpart of node. If node is an ada type definition with
@@ -389,7 +389,7 @@ private
    overriding function Profile
      (Self : Dummy_Semantic_Node) return String is ("");
 
-   overriding function Counterpart
+   overriding function Definition
      (Self : Dummy_Semantic_Node) return Semantic_Node'Class is
       (No_Semantic_Node);
 

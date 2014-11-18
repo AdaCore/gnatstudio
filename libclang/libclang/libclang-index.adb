@@ -44,6 +44,18 @@ package body Libclang.Index is
       Element_Array      => CXCompletionResult_Array,
       Default_Terminator => No_CXCompletionResult);
 
+   function Visit_And_Filter_Children
+     (C : Clang_Cursor;
+      Visitor : CXCursorVisitor;
+      Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
+      return Cursors_Vectors.Vector;
+
+   function Toplevel_Nodes_Visitor
+     (Child  : CXCursor;
+      Parent : CXCursor;
+      UData   : CXClientData) return CXChildVisitResult;
+   pragma Convention (C, Toplevel_Nodes_Visitor);
+
    ------------------
    -- Create_Index --
    ------------------
@@ -461,28 +473,48 @@ package body Libclang.Index is
       return CXChildVisit_Continue;
    end Get_Children_Visitor;
 
-   ------------------
-   -- Get_Children --
-   ------------------
-
-   function Get_Children
-     (Cursor : Clang_Cursor) return Cursors_Vectors.Vector
+   function Visit_And_Filter_Children
+     (C : Clang_Cursor;
+      Visitor : CXCursorVisitor;
+      Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
+      return Cursors_Vectors.Vector
    is
       V : aliased Visitor_Data;
       V_Ptr : constant Addr_To_Vis_Data.Object_Pointer := V'Unchecked_Access;
       Discard : Interfaces.C.unsigned;
    begin
       Discard := clang_visitChildren
-        (Cursor, Get_Children_Visitor'Access,
+        (C, Visitor,
          CXClientData (Addr_To_Vis_Data.To_Address (V_Ptr)));
-      return V.Vec;
-   end Get_Children;
 
-   function Toplevel_Nodes_Visitor
-     (Child  : CXCursor;
-      Parent : CXCursor;
-      UData   : CXClientData) return CXChildVisitResult;
-   pragma Convention (C, Toplevel_Nodes_Visitor);
+      if Filter /= null then
+         declare
+            Out_Vec : Cursors_Vectors.Vector;
+         begin
+            for I in V.Vec.First_Index .. V.Vec.Last_Index loop
+               if Filter (V.Vec (I)) then
+                  Out_Vec.Append (V.Vec (I));
+               end if;
+            end loop;
+            return Out_Vec;
+         end;
+      end if;
+      return V.Vec;
+   end Visit_And_Filter_Children;
+
+   ------------------
+   -- Get_Children --
+   ------------------
+
+   function Get_Children
+     (Cursor : Clang_Cursor;
+      Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
+      return Cursors_Vectors.Vector
+   is
+   begin
+      return Visit_And_Filter_Children
+        (Cursor, Get_Children_Visitor'Access, Filter);
+   end Get_Children;
 
    ----------------------------
    -- Toplevel_Nodes_Visitor --
@@ -510,17 +542,25 @@ package body Libclang.Index is
    --------------------
 
    function Toplevel_Nodes
-     (TU : Clang_Translation_Unit) return Cursors_Vectors.Vector
+     (TU : Clang_Translation_Unit;
+      Filter : access function (C : Clang_Cursor) return Boolean := null)
+      return Cursors_Vectors.Vector
    is
-      V : aliased Visitor_Data;
-      V_Ptr : constant Addr_To_Vis_Data.Object_Pointer := V'Unchecked_Access;
-      Discard : Interfaces.C.unsigned;
    begin
-      Discard := clang_visitChildren
-        (Root_Cursor (TU), Toplevel_Nodes_Visitor'Access,
-         CXClientData (Addr_To_Vis_Data.To_Address (V_Ptr)));
-      return V.Vec;
+      return Visit_And_Filter_Children
+        (Root_Cursor (TU), Toplevel_Nodes_Visitor'Access, Filter);
    end Toplevel_Nodes;
+
+   --------------
+   -- Spelling --
+   --------------
+
+   function Spelling
+     (T : Clang_Type) return String
+   is
+   begin
+      return To_String (clang_getTypeSpelling (T));
+   end Spelling;
 
    --------------
    -- Spelling --

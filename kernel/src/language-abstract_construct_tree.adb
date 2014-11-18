@@ -22,6 +22,7 @@ with Xref; use Xref;
 with Gtkada.Style;
 with Tooltips;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Language.Abstract_Construct_Tree is
 
@@ -71,6 +72,9 @@ package body Language.Abstract_Construct_Tree is
       It, Parent_It : Construct_Tree_Iterator;
    begin
       It := To_Construct_Tree_Iterator (Self.Entity);
+      if It = Null_Construct_Tree_Iterator then
+         return No_Semantic_Node;
+      end if;
       Parent_It := Get_Parent_Scope (Get_Tree (Self.Construct_File), It);
       if Parent_It = Null_Construct_Tree_Iterator then
          return No_Semantic_Node;
@@ -269,6 +273,10 @@ package body Language.Abstract_Construct_Tree is
                Visibility => Self.Visibility,
                Sloc_Start => Self.Sloc_Start,
                Sloc_Def   => Self.Sloc_Def);
+
+         pragma Assert (if A.Name /= No_Symbol
+                        then A.Unique_Id /= Null_Unbounded_String
+                        else True);
       end return;
    end Info;
 
@@ -283,13 +291,15 @@ package body Language.Abstract_Construct_Tree is
       Base_Id : constant String :=
         To_Lower (Get (Self.Name).all)
         & To_Lower (Self.Profile)
-        & Self.Category'Img
-        & Self.Is_Declaration'Img;
+        & Self.Category'Img;
    begin
-      return
-        (if P = No_Semantic_Node
-         or else Self.Entity = Construct_Node (P).Entity
-         then P.Unique_Id else "") & Base_Id;
+      if P = No_Semantic_Node
+        or else Self.Entity = Construct_Node (P).Entity
+      then
+         return Base_Id;
+      else
+         return P.Unique_Id & Base_Id;
+      end if;
    end Unique_Id;
 
    --------------------
@@ -328,7 +338,7 @@ package body Language.Abstract_Construct_Tree is
    -- Counterpart --
    -----------------
 
-   overriding function Counterpart
+   overriding function Definition
      (Self : Construct_Node) return Semantic_Node'Class
    is
    begin
@@ -342,7 +352,7 @@ package body Language.Abstract_Construct_Tree is
       end if;
 
       return No_Semantic_Node;
-   end Counterpart;
+   end Definition;
 
    ------------------------
    -- Documentation_Body --
