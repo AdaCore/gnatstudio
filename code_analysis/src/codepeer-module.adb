@@ -47,6 +47,7 @@ with GPS.Styles.UI;              use GPS.Styles.UI;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Xref;
 
+with BT.Xml.Reader;
 with CodePeer.Backtrace_View;
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
@@ -671,11 +672,13 @@ package body CodePeer.Module is
          Self.Report_Subwindow.Destroy;
       end if;
 
-      --  Remove messages from the messages container
+      --  Remove messages from the messages container and clear backtraces data
+      --  cache.
 
       Module.Listener.Set_Cleanup_Mode (True);
       Get_Messages_Container (Module.Kernel).Remove_Category
         (CodePeer_Category_Name, Empty_Message_Flags);
+      BT.Xml.Reader.Clear;
       Module.Listener.Set_Cleanup_Mode (False);
 
       --  Load code review information
@@ -1452,6 +1455,10 @@ package body CodePeer.Module is
 
       Code_Analysis.Free_Code_Analysis (Context.Module.Tree);
 
+      --  Clear backtraces data cache.
+
+      BT.Xml.Reader.Clear;
+
       --  Switch listener back to normal mode
 
       Module.Listener.Set_Cleanup_Mode (False);
@@ -1591,10 +1598,17 @@ package body CodePeer.Module is
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Module.Listener.Set_Cleanup_Mode (True);
-      Remove_Codepeer_Messages (Kernel);
+
       --  Remove all messages of all categories starting from
       --  Codepeer_Category_Prefix to be sure that all possible categories are
       --  removed.
+
+      Remove_Codepeer_Messages (Kernel);
+
+      --  Clear backtraces data cache.
+
+      BT.Xml.Reader.Clear;
+
       Module.Listener.Set_Cleanup_Mode (False);
    end On_Project_Changed_Hook;
 

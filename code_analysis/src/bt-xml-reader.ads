@@ -68,4 +68,7 @@ package BT.Xml.Reader is
    --  Given a source position, find all the available vn <-> value_sets pairs
    --  Note that a value_set is actually just a string representing the values
 
+   procedure Clear;
+   --  Clears all cached data
+
 end BT.Xml.Reader;
