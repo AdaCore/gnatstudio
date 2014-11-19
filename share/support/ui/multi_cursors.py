@@ -37,7 +37,7 @@ def mc_down():
     ed.add_cursor(loc)
 
     ed.get_cursors()[0].set_manual_sync()
-    view.goto(ed.at(loc.line() + 1, loc.column()))
+    view.goto(ed.at(min(loc.line() + 1, ed.lines_count()), loc.column()))
     ed.set_cursors_auto_sync()
 
 
