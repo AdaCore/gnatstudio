@@ -17,7 +17,7 @@
 -- The CodePeer technology was originally developed by SofCheck, Inc.       --
 ------------------------------------------------------------------------------
 
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Text_IO;    use Ada.Text_IO;
 
 with Sax.Readers;    use Sax.Readers;
 with Sax.Attributes; use Sax.Attributes;
@@ -30,7 +30,7 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Strings.Unbounded.Hash_Case_Insensitive;
 with Ada.Strings.Unbounded.Equal_Case_Insensitive;
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.OS_Lib;    use GNAT.OS_Lib;
 
 package body BT.Xml.Reader is
 
@@ -184,6 +184,22 @@ package body BT.Xml.Reader is
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence);
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear is
+   begin
+      Inspection_Output_Directory := Null_Unbounded_String;
+      BT_Files.Clear;
+      Proc_Vns.Clear;
+      File_Vals.Clear;
+      Files_Read.Clear;
+      Callee_Mapping.Clear;
+      Current_BT_Seq.Clear;
+      Current_Bt_Id := 0;
+   end Clear;
 
    --------
    -- LT --
