@@ -10,11 +10,9 @@
    @define-color base_color black;
    @define-color bg_color #fff;
    @define-color theme_bg_color green;
-   @define-color theme_tooltip_bg_color yellow;
 */
 
 * {
-  
    /* Reduce the size of the scroll arrows in notebooks */
    -GtkWidget-scroll-arrow-hlength: 8;
    -GtkWidget-scroll-arrow-vlength: 8;
@@ -28,6 +26,11 @@
 .gps-local-toolbar {  /* local toolbar in the panes/views */
 }
 
+*:selected,
+*:selected:focused {
+    background-color: #B4D5FF;
+}
+
 GtkTextView.readonly {
    /* for read-only editors */
    /* background-color: rgb(200,200,200); */
@@ -38,24 +41,85 @@ GtkTextView.readonly {
    opacity: 1.0;
 }
 
-/* Uncomment this if you want to have the same behavior as in previous
- * GPS releases: the active tab of the active notebook gets a blue background
- * to make it quicker to find where keyboard input goes */
-/*
-.notebook.mdifocused tab:active,
-.notebook.mdifocused tab.left:active,
-.notebook.mdifocused tab.right:active {
-   background-image: none;
-   background-color: rgba(0,0,255,0.2);
-}
-*/
+/*********************
+ * Menus
+ *********************/
 
-/* When the MDI tabs are displayed on the left or on the right, we do not
- * want an extra space at the top, before the first tab
- */
+.window-frame {
+   /* gtk+ displays a 4px semi-transparent around menus the first time they
+    * are displayed. Perhaps this is a resize handle ? */
+   box-shadow: none;
+}
+
+/*********************
+ * Panes
+ *********************/
+
+.pane-separator {
+   background-color: @theme_bg_color;
+}
+
+/*********************
+ * Notebooks
+ *********************/
+
 .notebook.leftTabs, .notebook.rightTabs {
+   /* When the MDI tabs are displayed on the left or on the right, we do not
+    * want an extra space at the top, before the first tab */
    -GtkNotebook-initial-gap: 0;
 }
+.notebook.mdi {
+   /* No space between tabs */
+   -GtkNotebook-tab-overlap: 0;
+}
+.notebook.mdi tab.top,
+.notebook.mdi tab.bottom {
+   padding: 8px 2px 8px 6px;
+}
+.notebook.mdi tab.left,
+.notebook.mdi tab.right {
+   padding: 2px 8px 6px 8px;
+}
+.notebook.mdi tab:active {
+   background-color: @theme_base_color;
+}
+.notebook.mdi tab GtkLabel {
+   font-weight: normal;
+}
+
+/* Change the position of the color line that indicates the current tab */
+.notebook.mdi tab.top {
+   border-bottom-width: 0px;
+   border-top-width: 3px;
+}
+.notebook.mdi tab:active.top {
+   border-top-color: @theme_selected_bg_color;
+}
+.notebook.mdi tab.bottom {
+   border-top-width: 0;
+   border-bottom-width: 3px;
+}
+.notebook.mdi tab:active.bottom {
+   border-bottom-color: @theme_selected_bg_color;
+}
+.notebook.mdi tab.left {
+   border-right-width: 0;
+   border-left-width: 3px;
+}
+.notebook.mdi tab:active.left {
+   border-left-color: @theme_selected_bg_color;
+}
+.notebook.mdi tab.right {
+   border-left-width: 0;
+   border-right-width: 3px;
+}
+.notebook.mdi tab:active.right {
+   border-right-color: @theme_selected_bg_color;
+}
+
+/**********************
+ * Toolbars
+ **********************/
 
 /* Let's condense things in the local toolbars of the views */
 .gps-local-toolbar {
@@ -73,8 +137,12 @@ GtkTextView.readonly {
 
 .gps-local-toolbar * {
    margin: 0px;
-   padding: 0px;
+   padding: 2px;
 }
+
+/***************************
+ * Search fields
+ ***************************/
 
 /* Search and filter fields */
 GtkEntry.search {
@@ -144,7 +212,7 @@ GtkEntry.search {
  * Tooltips
  **********************************/
 
-@define-color theme_tooltip_bg_color #ffffee;
+@define-color theme_tooltip_bg_color #fffce2;
 @define-color theme_tooltip_fg_color black;
 .tooltip {
    color: @theme_tooltip_fg_color;
@@ -165,10 +233,6 @@ GtkEntry.search {
 /*
 -GtkWidget-link-color: @link_color;
 -GtkWidget-visited-link-color: @link_color;
-*/
-
-/* Use the following to change the color of the selection
-GtkTextView:selected { background : pink ; color : black }
 */
 
 /**
