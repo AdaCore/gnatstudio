@@ -98,7 +98,6 @@ package body CodePeer.Module.Filters is
                   or Constructs.Current.Category = Language.Cat_Function)
          then
             Unit := Constructs.Current;
-            exit;
          end if;
 
          Constructs.Current := Constructs.Current.Next;
