@@ -75,7 +75,6 @@ with GPS.Main_Window;           use GPS.Main_Window;
 
 with GPS.Editors;              use GPS.Editors;
 with GPS.Editors.GtkAda;
-with GPS.Stock_Icons;          use GPS.Stock_Icons;
 
 with XML_Utils;                 use XML_Utils;
 with XML_Parsers;
@@ -738,7 +737,7 @@ package body GPS.Kernel.MDI is
          Pack_Start (Col, Renderer, False);
          Add_Attribute (Col, Renderer, "text", 1);
 
-         Button := Add_Button (Dialog, GPS_Save, Gtk_Response_Apply);
+         Button := Add_Button (Dialog, "Save", Gtk_Response_Apply);
          Grab_Default (Button);
          Grab_Focus (Button);
 

@@ -63,7 +63,7 @@ class Pep8_Module(Module):
                                 text=a[3],
                                 flags=2)
 
-                m.set_action("", "gps-build-warning", m.get_text())
+                m.set_action("", "gps-emblem-build-warning", m.get_text())
                 m.set_style(colorschemes.STYLE_WARNING, 1)
 
     # The followings are hooks:

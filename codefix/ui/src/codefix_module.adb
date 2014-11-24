@@ -769,15 +769,9 @@ package body Codefix_Module is
         (-"<b>Fix: </b>" & Get_Message (Err));
 
       if Get_Number_Of_Fixes (Error) = 1 then
-         New_Action.Image := Render_Icon
-           (Widget   => Gtk_Widget (Get_Main_Window (Kernel)),
-            Stock_Id => "gps-wrench",
-            Size     => Icon_Size_Menu);
+         New_Action.Image := new String'("gps-codefix");
       else
-         New_Action.Image := Render_Icon
-           (Widget   => Gtk_Widget (Get_Main_Window (Kernel)),
-            Stock_Id => "gps-wrench-multi",
-            Size     => Icon_Size_Menu);
+         New_Action.Image := new String'("gps-codefix-multi");
       end if;
 
       New_Action.Associated_Command := new Codefix_Command;

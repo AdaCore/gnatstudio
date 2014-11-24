@@ -415,7 +415,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>-P%PP</arg>
           <arg>--mode=flow</arg>
        </command-line>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <persistent-history>False</persistent-history>
     </target-model>
 
@@ -425,7 +425,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
        </command-line>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s">
          <title column="1" line="1" >General</title>
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
@@ -479,7 +479,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
 
     <target model="gnatprove-examine" name="Examine All" category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -502,7 +502,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
     <target model="gnatprove-examine" name="Examine All Sources"
             category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -526,7 +526,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
     <target model="gnatprove-examine"
             name="Examine Single File" category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -551,7 +551,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
     <target model="gnatprove-examine" name="Examine Subprogram"
             category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -573,7 +573,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
 
     <target model="gnatprove-prove" name="Prove All" category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -595,7 +595,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
     <target model="gnatprove-prove" name="Prove All Sources"
             category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -617,7 +617,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
 
     <target model="gnatprove-prove" name="Prove File" category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -641,7 +641,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
     <target model="gnatprove-prove" name="Prove Subprogram"
             category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -662,7 +662,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
 
     <target model="gnatprove-prove" name="Prove Line" category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -685,7 +685,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
     <target model="gnatprove-prove" name="Prove Line Location"
             category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -710,13 +710,13 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
        </command-line>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <persistent-history>False</persistent-history>
     </target-model>
 
     <target model="gnatprove_clean" name="Clean Proofs" category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -728,7 +728,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
 
     <target model="gnatprove-prove" name="Prove Check" category="GNATprove">
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -995,7 +995,7 @@ class GNATprove_Parser(tool_output.OutputParser):
             lines = self.parse_trace_file(tracefile)
             if lines != []:
                 m.set_subprogram(lambda m: toggle_trace(m, lines),
-                                 'gps-gnatprove-path',
+                                 'gps-gnatprove-symbolic',
                                  'show path information')
         # We don't want to open hundreds of editors if a Prove All
         # or Prove File was launched with a manual prover.

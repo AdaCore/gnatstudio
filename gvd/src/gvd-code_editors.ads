@@ -35,7 +35,6 @@
 with Glib;
 with Glib.Object;
 with Gtk.Box;
-with Gtkada.Types;
 with GVD.Source_Editor;
 with GVD.Types;
 with Pango.Font;
@@ -90,18 +89,12 @@ package GVD.Code_Editors is
    procedure Configure
      (Editor            : access Code_Editor_Record;
       Source            : GVD.Source_Editor.Source_Editor;
-      Font              : Pango.Font.Pango_Font_Description;
-      Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
-      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array);
+      Font              : Pango.Font.Pango_Font_Description);
    --  Set the various settings of an editor.
    --  Source is the source editor associated with Editor.
    --  Ps_Font_Name is the name of the postscript font that will be used to
    --  display the text. It should be a fixed-width font, which is nice for
    --  source code.
-   --  Default_Icon is used for the icon that can be displayed on the left of
-   --  each line.
-   --  Current_Line_Icon is displayed on the left of the line currently
-   --  "active" (using the procedure Set_Line below).
 
    procedure Preferences_Changed (Editor : access Code_Editor_Record);
    --  Called when the preferences have changed

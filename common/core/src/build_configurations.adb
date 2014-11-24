@@ -211,14 +211,14 @@ package body Build_Configurations is
       return Target_Model.Is_Run;
    end Is_Run;
 
-   --------------
-   -- Get_Icon --
-   --------------
+   -------------------
+   -- Get_Icon_Name --
+   -------------------
 
-   function Get_Icon (Target_Model : Target_Model_Access) return String is
+   function Get_Icon_Name (Target_Model : Target_Model_Access) return String is
    begin
       return To_String (Target_Model.Icon);
-   end Get_Icon;
+   end Get_Icon_Name;
 
    ------------------
    -- Get_Switches --
@@ -345,7 +345,7 @@ package body Build_Configurations is
                Model.Default_Command_Line :=
                  new GNAT.OS_Lib.Argument_List'(XML_To_Command_Line (Child));
 
-            elsif Child.Tag.all = "icon" then
+            elsif Child.Tag.all = "iconname" then
                if Child.Value /= null then
                   Model.Icon := To_Unbounded_String (Child.Value.all);
                end if;
@@ -1087,11 +1087,11 @@ package body Build_Configurations is
       C.Tag := new String'("in-toolbar");
       C.Value := new String'(Target.Properties.In_Toolbar'Img);
 
-      if Target.Properties.Icon /= "" then
+      if Target.Properties.Icon_Name /= "" then
          C.Next := new Node;
          C := C.Next;
-         C.Tag := new String'("icon");
-         C.Value := new String'(To_String (Target.Properties.Icon));
+         C.Tag := new String'("iconname");
+         C.Value := new String'(To_String (Target.Properties.Icon_Name));
       end if;
 
       C.Next := new Node;
@@ -1247,6 +1247,9 @@ package body Build_Configurations is
          end if;
       end;
 
+      --  Default icon is the model's icon.
+      Target.Properties.Icon_Name := Target.Model.Icon;
+
       Child := XML.Child;
 
       while Child /= null loop
@@ -1266,8 +1269,15 @@ package body Build_Configurations is
             Target.Properties.Launch_Mode := Launch_Mode_Type'Value
               (Child.Value.all);
 
+         elsif Child.Tag.all = "iconname" then
+            Target.Properties.Icon_Name :=
+               To_Unbounded_String (Child.Value.all);
+
          elsif Child.Tag.all = "icon" then
-            Target.Properties.Icon := To_Unbounded_String (Child.Value.all);
+            --  obsolete: used to be for stock_id. Replaced with iconname,
+            --  but we should not output a warning when ~/.gps/targets.xml
+            --  is still using it.
+            null;
 
          elsif Child.Tag.all = "visible" then
             Target.Properties.Visible := Boolean'Value (Child.Value.all);
@@ -1310,15 +1320,6 @@ package body Build_Configurations is
 
          Child := Child.Next;
       end loop;
-
-      --  If the target does not have an icon, but the model does have one,
-      --  set the target's icon to the model now, so that the target is
-      --  stored completely in Registry.Original_Targets
-      if Target.Properties.Icon = Null_Unbounded_String
-        and then Target.Model.Icon /= Null_Unbounded_String
-      then
-         Target.Properties.Icon := Target.Model.Icon;
-      end if;
 
       --  At this point, the target data has been updated. If this target is
       --  not from the user configuration, copy it to the original targets.
@@ -1723,27 +1724,27 @@ package body Build_Configurations is
       end if;
    end Get_Server;
 
-   --------------
-   -- Get_Icon --
-   --------------
+   -------------------
+   -- Get_Icon_Name --
+   -------------------
 
-   function Get_Icon (Target : Target_Access) return String is
+   function Get_Icon_Name (Target : Target_Access) return String is
    begin
-      if Target.Properties.Icon = "" then
+      if Target.Properties.Icon_Name = "" then
          return To_String (Target.Model.Icon);
       else
-         return To_String (Target.Properties.Icon);
+         return To_String (Target.Properties.Icon_Name);
       end if;
-   end Get_Icon;
+   end Get_Icon_Name;
 
-   --------------
-   -- Set_Icon --
-   --------------
+   -------------------
+   -- Set_Icon_Name --
+   -------------------
 
-   procedure Set_Icon (Target : Target_Access; Icon : String) is
+   procedure Set_Icon_Name (Target : Target_Access; Icon : String) is
    begin
-      Target.Properties.Icon := To_Unbounded_String (Icon);
-   end Set_Icon;
+      Target.Properties.Icon_Name := To_Unbounded_String (Icon);
+   end Set_Icon_Name;
 
    -------------------------
    -- Is_Registered_Model --

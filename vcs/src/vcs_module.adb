@@ -996,7 +996,7 @@ package body VCS_Module is
       Status := Get_Cache (Get_Status_Cache, D.File).Status;
 
       if Status.File = GNATCOLL.VFS.No_File
-        or else Status.Status.Stock_Id.all = "gps-vcs-unknown"
+        or else Status.Status.Icon_Name.all = Unknown_Stock
       then
          --  If file not found in the cache or the status is not yet known
          Get_Status (Ref, (1 => D.File), False, Local => True);
@@ -1065,8 +1065,8 @@ package body VCS_Module is
          Status.Status.File := D.File;
       end if;
 
-      if Status.Status.Status.Stock_Id.all /= "gps-vcs-added"
-        and then Status.Status.Status.Stock_Id.all /= "gps-vcs-removed"
+      if Status.Status.Status.Icon_Name.all /= Added_Stock
+        and then Status.Status.Status.Icon_Name.all /= Removed_Stock
       then
          --  We do not want to change the status of added or removed files
 
@@ -1076,7 +1076,7 @@ package body VCS_Module is
             --  ??? Status are a bit lousy, a more structured/typed design will
             --  probably benefit the maintenance.
             for K in S'Range loop
-               if S (K).Stock_Id.all = "gps-vcs-modified" then
+               if S (K).Icon_Name.all = Modified_Stock then
                   Status.Status.Status := S (K);
                   exit;
                end if;

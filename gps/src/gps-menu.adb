@@ -19,7 +19,6 @@ with Glib.Object;            use Glib.Object;
 with Glib;                   use Glib;
 
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
-with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 
@@ -39,7 +38,6 @@ with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Main_Window;        use GPS.Main_Window;
-with GPS.Stock_Icons;        use GPS.Stock_Icons;
 with Histories;              use Histories;
 with Projects;               use Projects;
 with File_Utils;             use File_Utils;
@@ -349,12 +347,12 @@ package body GPS.Menu is
    begin
       Register_Action
         (Kernel, "open project dialog", new Open_Project_Command,
-         Stock_Id => Stock_Open,
+         Icon_Name => "gps-open-project-symbolic",
          Description => -"Open the Open Project dialog");
 
       Register_Action
         (Kernel, "open remote project", new Open_From_Host_Command,
-         Stock_Id    => Stock_Open,
+         Icon_Name   => "gps-open-project-symbolic",
          Description => -"Open remote project");
 
       Reopen_Menu := Find_Menu_Item (Kernel, "/Project/Recent");
@@ -372,7 +370,7 @@ package body GPS.Menu is
          Description =>
            -("Recompute the list of source files for the project. This should"
            & " be used whenever you create or remove files outside of GPS"),
-         Stock_Id => GPS_Refresh);
+         Icon_Name => "gps-refresh-symbolic");
 
       Register_Action
         (Kernel, "save files and projects", new Save_All_Command,
@@ -397,14 +395,14 @@ package body GPS.Menu is
       Register_Action
         (Kernel, "Cut to Clipboard", Command,
          Description => -"Cut the current selection to the clipboard",
-         Stock_Id    => Stock_Cut);
+         Icon_Name   => "gps-cut-symbolic");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kind   := Copy;
       Register_Action
         (Kernel, "Copy to Clipboard", Command,
          Description => -"Copy the current selection to the clipboard",
-         Stock_Id    => Stock_Copy);
+         Icon_Name   => "gps-copy-symbolic");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kind   := Paste;
@@ -412,7 +410,7 @@ package body GPS.Menu is
         (Kernel, "Paste From Clipboard", Command,
          Description =>
            -"Paste the contents of the clipboard into the current text area",
-         Stock_Id   => Stock_Paste);
+         Icon_Name  => "gps-paste-symbolic");
 
       Command := new Clipboard_Command;
       Clipboard_Command (Command.all).Kind   := Paste_Previous;
@@ -420,12 +418,12 @@ package body GPS.Menu is
         (Kernel, -"Paste Previous From Clipboard", Command,
          -("Cancel the previous Paste operation, and instead insert the text"
            & " copied before through Copy To Clipboard"),
-         Stock_Id   => Stock_Paste);
+         Icon_Name  => "gps-paste-symbolic");
 
       Register_Action
         (Kernel, "open Preferences", new Preference_Dialog_Command,
          Category    => -"Views",
-         Stock_Id    => Stock_Preferences,
+         Icon_Name   => "gps-settings-symbolic",
          Description => -"Open the preferences dialog");
    end Register_Common_Menus;
 

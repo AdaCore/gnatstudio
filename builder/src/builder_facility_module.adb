@@ -666,7 +666,7 @@ package body Builder_Facility_Module is
                         Name        => To_String (Action),
                         Command     => M,
                         Description => To_String (Action),
-                        Stock_Id    => Get_Icon (Target),
+                        Icon_Name   => Get_Icon_Name (Target),
                         Category    => -"Build");
                      Builder_Module_ID.Actions.Append (Action);
                      Menu_For_Action
@@ -703,7 +703,7 @@ package body Builder_Facility_Module is
                           Name        => N,
                           Command     => C,
                           Description => (-"Build target ") & N,
-                          Stock_Id    => Get_Icon (Target),
+                          Icon_Name   => Get_Icon_Name (Target),
                           Category    => -"Build");
          Builder_Module_ID.Actions.Append (To_Unbounded_String (N));
          Menu_For_Action (Main         => No_File,
@@ -1350,7 +1350,8 @@ package body Builder_Facility_Module is
                Widget : Gtk.Tool_Button.Gtk_Tool_Button;
                Main   : Virtual_File;
             begin
-               Gtk_New_From_Stock (Widget, Get_Icon (Target));
+               Gtk_New (Widget);
+               Widget.Set_Icon_Name (Get_Icon_Name (Target));
                Set_Label (Widget, Name);
 
                if Mains.Length = 0 then
@@ -1375,7 +1376,7 @@ package body Builder_Facility_Module is
             declare
                Widget : Gtkada.Combo_Tool_Button.Gtkada_Combo_Tool_Button;
             begin
-               Gtk_New (Widget, Get_Icon (Target));
+               Gtk_New (Widget, Icon_Name => Get_Icon_Name (Target));
 
                --  Connect to this signal to automatically update the tooltips
                --  when a new main file is selected
@@ -1385,7 +1386,7 @@ package body Builder_Facility_Module is
 
                for J in Mains.List'Range loop
                   Widget.Add_Item
-                    (Mains.List (J).Tuple (2).Str, Get_Icon (Target),
+                    (Mains.List (J).Tuple (2).Str, Get_Icon_Name (Target),
                      new Target_And_Main'
                        (To_Unbounded_String (Name),
                         Create (+Mains.List (J).Tuple (2).Str)));

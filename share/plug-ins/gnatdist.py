@@ -75,7 +75,7 @@ if gnatdist_tool != "":
 
   <target-model name="gnatdist" category="">
     <description>PolyORB distributed application builder</description>
-    <icon>gps-custom-build</icon>
+    <iconname>gps-custom-build-symbolic</iconname>
     <command-line>
       <arg>""" + gnatdist_tool + """</arg>
       <arg>-d</arg>

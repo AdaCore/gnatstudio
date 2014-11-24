@@ -25,7 +25,6 @@ with Default_Preferences;      use Default_Preferences;
 with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Window;               use Gdk.Window;
 with Gdk;                      use Gdk;
-with Gdk.Pixbuf;
 with Glib.Object;              use Glib.Object;
 with Glib;                     use Glib;
 with GNAT.Regpat;              use GNAT.Regpat;
@@ -68,7 +67,6 @@ with Histories;                use Histories;
 with Items.Simples;            use Items.Simples;
 with Language;                 use Language;
 with Pango.Font;               use Pango.Font;
-with Pixmaps_IDE;              use Pixmaps_IDE;
 with Std_Dialogs;              use Std_Dialogs;
 with String_Utils;             use String_Utils;
 with XML_Utils;                use XML_Utils;
@@ -1074,9 +1072,6 @@ package body GVD.Canvas is
         (Kernel          => Canvas.Kernel,
          Event_On_Widget => Canvas,
          Context_Func    => Canvas_Contextual_Factory'Access);
-
-      Canvas.Hidden_Pixmap  := Gdk.Pixbuf.Gdk_New_From_Xpm_Data (box_xpm);
-      Canvas.Unknown_Pixmap := Gdk.Pixbuf.Gdk_New_From_Xpm_Data (trash_xpm);
 
       Hook := new Preferences_Hook_Record'
         (Function_With_Args with Canvas => GVD_Canvas (Canvas));

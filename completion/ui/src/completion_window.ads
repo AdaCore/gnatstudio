@@ -157,7 +157,7 @@ private
    type Information_Record is record
       Markup   : String_Access;
       Text     : String_Access;
-      Stock_Id : String_Access;
+      Icon_Name : String_Access;
       Offset   : Character_Offset_Type;
       --  The offset at which to place the cursor after completion.
       Proposals : Proposals_List.List;
@@ -268,7 +268,7 @@ private
 
    Markup_Column : constant := 0;
    Index_Column  : constant := 1;
-   Icon_Column   : constant := 2;
+   Icon_Name_Column : constant := 2;
    Shown_Column  : constant := 3;
    Completion_Column : constant := 4;
 

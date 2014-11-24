@@ -21,7 +21,6 @@ with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Browsers;               use Browsers;
 with Browsers.Canvas;        use Browsers.Canvas;
-with Gdk.Pixbuf;             use Gdk.Pixbuf;
 with GNAT.Strings;
 with Glib;
 with Gtkada.Canvas_View;     use Gtkada.Canvas_View;
@@ -53,8 +52,6 @@ package Items is
       Modified : Drawing_Style;  --  when value has changed
       Freeze   : Drawing_Style;  --  item's value is not refreshed
 
-      Unknown_Pixmap  : Gdk.Pixbuf.Gdk_Pixbuf;
-      Hidden_Pixmap   : Gdk.Pixbuf.Gdk_Pixbuf;
       --  Settings to draw items
       --  Modified_Color: used to highlight the items whose value has changed
       --    since the last update.

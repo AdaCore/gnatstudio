@@ -19,13 +19,10 @@
 --  NOTE: this should remain independent from the GPS Kernel, so that
 --  it can be reused in a stand-alone executable.
 
-with Gdk.Pixbuf; use Gdk.Pixbuf;
-
 package Project_Templates.GUI is
 
    procedure Install_Template
      (Templates    : Project_Templates_List.List;
-      Header_Image : Gdk_Pixbuf;
       Chosen       : out Project_Template;
       Installed    : out Boolean;
       Dir          : out Virtual_File;

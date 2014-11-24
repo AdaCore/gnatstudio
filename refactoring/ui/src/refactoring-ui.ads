@@ -18,7 +18,6 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with GPS.Kernel;
 with Gtk.Scrolled_Window;
-with Gtk.Stock;
 with Xref;
 
 package Refactoring.UI is
@@ -43,8 +42,8 @@ package Refactoring.UI is
       Title         : String;
       Msg           : String;
       Files         : Source_File_Set;
-      Execute_Label : String := Gtk.Stock.Stock_Execute;
-      Cancel_Label  : String := Gtk.Stock.Stock_Cancel) return Boolean;
+      Execute_Label : String := "Execute";
+      Cancel_Label  : String := "Cancel") return Boolean;
    --  Display a dialog to the user, with two buttons: OK and Cancel.
    --  Msg is displayed at the top, and the list of files below.
    --  True is returned if the user pressed OK.

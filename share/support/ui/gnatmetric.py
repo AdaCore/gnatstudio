@@ -21,7 +21,7 @@ xml_base = ("""
       <arg>-P%pp</arg>
       <arg>%X</arg>
    </command-line>
-   <icon>gps-semantic-check</icon>
+   <iconname>gps-semantic-check-symbolic</iconname>
    <switches command="%(tool_name)s" columns="2" lines="2">
       <title column="1" line="1">Complexity metrics</title>
       <title column="1" line="2">Line metrics</title>

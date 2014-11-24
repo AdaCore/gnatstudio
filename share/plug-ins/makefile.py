@@ -66,7 +66,7 @@ Make_Model = """
       <arg>%attr(make'makefile,Makefile)</arg>
       <arg>%T</arg>
    </command-line>
-   <icon>gps-build-all</icon>
+   <iconname>gps-build-all-symbolic</iconname>
    <switches command="%(tool_name)s" columns="2" lines="2">
      <check label="Keep going" switch="-k"
             tip="Continue as much as possible after a compilation error" />
@@ -81,7 +81,7 @@ On a multiprocessor machine compilations will occur in parallel" />
 
 <target model="make" category="_Makefile" name="Make">
     <in-toolbar>FALSE</in-toolbar>
-    <icon>gps-build-all</icon>
+    <iconname>gps-build-all-symbolic</iconname>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <target-type>make</target-type>
@@ -106,7 +106,7 @@ Ant_Model_Template = """
        <arg>%attr(ant'antfile,build.xml)</arg>
       <arg>%T</arg>
    </command-line>
-   <icon>gps-build-all</icon>
+   <iconname>gps-build-all-symbolic</iconname>
    <switches command="%(tool_name)s" columns="2" lines="2">
      <check label="Keep going" switch="-k"
             tip="Continue as much as possible after a compilation error" />
@@ -121,7 +121,7 @@ On a multiprocess or machine compilations will occur in parallel" />
 
 <target model="ant" category="_Ant" name="Ant">
     <in-toolbar>FALSE</in-toolbar>
-    <icon>gps-build-all</icon>
+    <iconname>gps-build-all-symbolic</iconname>
     <launch-mode>MANUALLY</launch-mode>
     <read-only>TRUE</read-only>
     <target-type>ant</target-type>

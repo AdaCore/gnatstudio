@@ -51,7 +51,7 @@ package body GPS.Kernel.Styles is
         (Style : in out Style_Access;
          Name  : String;
          Desc  : String;
-         Icon  : String;
+         Icon_Name : String;
          Fg    : String := "";
          Bg    : String := "";
          Speedbar : Boolean := False);
@@ -62,7 +62,7 @@ package body GPS.Kernel.Styles is
         (Style : in out Style_Access;
          Name  : String;
          Desc  : String;
-         Icon  : String;
+         Icon_Name : String;
          Fg    : String := "";
          Bg    : String := "";
          Speedbar : Boolean := False) is
@@ -84,8 +84,8 @@ package body GPS.Kernel.Styles is
             Set_In_Speedbar (Style, Speedbar);
          end if;
 
-         if Icon /= "" then
-            Set_Editor_Icon (Style, Icon);
+         if Icon_Name /= "" then
+            Set_Editor_Icon_Name (Style, Icon_Name);
          end if;
       end Init;
    begin
@@ -99,25 +99,25 @@ package body GPS.Kernel.Styles is
       Init (Builder_Styles (Errors),
             -"Builder results",
             -"Color used to highlight the build errors",
-            "gps-build-error",
+            "gps-emblem-build-error",
             Bg => Error_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Styles (Warnings),
             -"Builder warnings",
             -"Color used to highlight the build warnings",
-            "gps-build-warning",
+            "gps-emblem-build-warning",
             Bg => Warning_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Styles (Style),
             -"Style errors",
             -"Color used to highlight the style errors",
-            "gps-build-style",
+            "gps-emblem-build-style",
             Bg => Style_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Styles (Info),
             -"Compiler info",
             -"Color used to highlight the compiler information",
-            "gps-build-info",
+            "gps-emblem-build-info-symbolic",
             Bg => Info_Src_Highlight.Get_Pref, Speedbar => True);
 
       Init (Builder_Background_Style,

@@ -31,7 +31,6 @@ with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.List_Store;           use Gtk.List_Store;
-with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -1457,8 +1456,7 @@ package body GPS.Search.GUI is
 
       P := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
       Register_Provider_And_Action
-        (Kernel, P,
-         Stock_Id   => Stock_Open);
+        (Kernel, P, Icon_Name  => "gps-open-file-symbolic");
 
       P := new GPS.Kernel.Search.Actions.Actions_Search_Provider;
       Register_Provider_And_Action (Kernel, P);

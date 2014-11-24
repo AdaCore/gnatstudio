@@ -52,7 +52,7 @@ with GNATCOLL.Utils; use GNATCOLL.Utils;
 package body Project_Templates.GUI is
 
    Name_Col : constant := 0;
-   Icon_Col : constant := 1;
+   Icon_Name_Col : constant := 1;
    Num_Col  : constant := 2;
    Desc_Col : constant := 3;
 
@@ -270,7 +270,7 @@ package body Project_Templates.GUI is
    function Column_Types return GType_Array is
    begin
       return (Name_Col => GType_String,
-              Icon_Col => GType_String,
+              Icon_Name_Col => GType_String,
               Num_Col  => GType_Int,
               Desc_Col => GType_String);
    end Column_Types;
@@ -281,14 +281,12 @@ package body Project_Templates.GUI is
 
    procedure Install_Template
      (Templates    : Project_Templates_List.List;
-      Header_Image : Gdk_Pixbuf;
       Chosen       : out Project_Template;
       Installed    : out Boolean;
       Dir          : out Virtual_File;
       Project      : out Virtual_File;
       Errors       : out Unbounded_String)
    is
-      pragma Unreferenced (Header_Image);
       Assistant : Gtk_Assistant;
 
       Scroll   : Gtk_Scrolled_Window;
@@ -411,7 +409,7 @@ package body Project_Templates.GUI is
 
             Model.Set (Child, Name_Col, Name);
             Model.Set (Child, Desc_Col, "");
-            Model.Set (Child, Icon_Col, "gtk-directory");
+            Model.Set (Child, Icon_Name_Col, "gps-emblem-directory-symbolic");
             Model.Set (Child, Num_Col, -1);
             return Child;
          end Find_Child;
@@ -502,7 +500,7 @@ package body Project_Templates.GUI is
 
          Model.Set (Iter, Name_Col, To_String (Template.Label));
          Model.Set (Iter, Desc_Col, To_String (Template.Description));
-         Model.Set (Iter, Icon_Col, "gtk-execute");
+         Model.Set (Iter, Icon_Name_Col, "gps-run-symbolic");
          Model.Set (Iter, Num_Col, Page_Num);
       end Add_Template;
 
@@ -663,7 +661,7 @@ package body Project_Templates.GUI is
 
       Gtk_New (Pix);
       Pack_Start (Col, Pix, False);
-      Add_Attribute (Col, Pix, "stock-id", Icon_Col);
+      Add_Attribute (Col, Pix, "icon-name", Icon_Name_Col);
 
       Gtk_New (Rend);
       Pack_Start (Col, Rend, False);

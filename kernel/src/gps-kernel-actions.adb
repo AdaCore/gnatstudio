@@ -57,8 +57,8 @@ package body GPS.Kernel.Actions is
       Free (Action.Category);
       Free (Action.Description);
       Free (Action.Name);
+      Free (Action.Icon_Name);
       Free (Action.Menus);
-      Free (Action.Stock_Id);
       Unchecked_Free (Action);
    end Free;
 
@@ -73,7 +73,7 @@ package body GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Stock_Id    : String := "")
+      Icon_Name   : String := "")
    is
       Old : constant Action_Record_Access := Lookup_Action (Kernel, Name);
       Overriden : Boolean := False;
@@ -106,8 +106,8 @@ package body GPS.Kernel.Actions is
          Cat := new String'(Category);
       end if;
 
-      if Stock_Id /= "" then
-         Stock := new String'(Stock_Id);
+      if Icon_Name /= "" then
+         Stock := new String'(Icon_Name);
       end if;
 
       --  Handle memory management for the filter
@@ -137,7 +137,7 @@ package body GPS.Kernel.Actions is
          Category   => Cat,
          Overriden  => Overriden,
          Menus      => null,
-         Stock_Id   => Stock);
+         Icon_Name  => Stock);
 
       Register_Perma_Command (Kernel, Cmd);
 

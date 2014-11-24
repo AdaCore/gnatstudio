@@ -309,10 +309,10 @@ XML = r"""<?xml version="1.0" ?>
       <diff_working     action="clearcase_diff_working"     label="Compare against working"/>
       <diff             action="clearcase_diff"             label="Compare against other rev."/>
 
-      <status label="Not checked out" stock="gps-vcs-up-to-date" />
-      <status label="Checked Out (Reserved)" stock="gps-vcs-modified" />
-      <status label="Checked Out (Unreserved)" stock="gps-vcs-modified" />
-      <status label="View-private File" stock="gps-vcs-not-registered" />
+      <status label="Not checked out" stock="gps-emblem-vcs-up-to-date" />
+      <status label="Checked Out (Reserved)" stock="gps-emblem-vcs-modified" />
+      <status label="Checked Out (Unreserved)" stock="gps-emblem-vcs-modified" />
+      <status label="View-private File" stock="gps-emblem-vcs-not-registered" />
 
       <status_parser>
          <regexp>([^\n]*)\n(.*@@)?(.*)\n(.*)\n(.*)(\n|$)</regexp>

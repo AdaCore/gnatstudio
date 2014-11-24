@@ -20,7 +20,6 @@ with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
 with System;
 
-with Gdk.Pixbuf;
 with Glib.Object;
 with Glib.Values;
 with Gtk.Cell_Renderer_Pixbuf;
@@ -40,7 +39,6 @@ with Gtk.Tree_View_Column;
 with Gtk.Widget;
 with Gtkada.MDI;            use Gtkada.MDI;
 
-with Code_Analysis_GUI;
 with Histories;
 with GNATCOLL.Projects;
 with GPS.Intl;              use GPS.Intl;
@@ -471,9 +469,6 @@ package body CodePeer.Messages_Reports is
       Check           : Gtk.Check_Button.Gtk_Check_Button;
       Label           : Gtk.Label.Gtk_Label;
       Separator       : Gtk.Separator.Gtk_Separator;
-      Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
-      File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
-      Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf;
       Dummy           : Glib.Gint;
       pragma Warnings (Off, Dummy);
 
@@ -501,19 +496,6 @@ package body CodePeer.Messages_Reports is
       Self.Kernel  := Kernel;
       Self.Version := Version;
       Self.Tree    := Tree;
-
-      Project_Icon :=
-        Gtk.Widget.Gtk_Widget
-          (Kernel.Get_Main_Window).Render_Icon
-          (Code_Analysis_GUI.Prj_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
-      File_Icon :=
-        Gtk.Widget.Gtk_Widget
-          (Kernel.Get_Main_Window).Render_Icon
-          (Code_Analysis_GUI.File_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
-      Subprogram_Icon :=
-        Gtk.Widget.Gtk_Widget
-          (Kernel.Get_Main_Window).Render_Icon
-          (Code_Analysis_GUI.Subp_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
 
       --  Restore filter settings from histories.
 
@@ -584,10 +566,7 @@ package body CodePeer.Messages_Reports is
       CodePeer.Messages_Summary_Models.Gtk_New
         (Self.Analysis_Model,
          Tree,
-         Project_Data.Message_Categories,
-         Project_Icon,
-         File_Icon,
-         Subprogram_Icon);
+         Project_Data.Message_Categories);
       Gtk.Tree_Model_Sort.Gtk_New_With_Model
         (Self.Analysis_Sort_Model, To_Interface (Self.Analysis_Model));
       Compare_Functions.Set_Default_Sort_Func
@@ -603,8 +582,8 @@ package body CodePeer.Messages_Reports is
       Column.Pack_Start (Pixbuf_Renderer, False);
       Column.Add_Attribute
         (Pixbuf_Renderer,
-         "pixbuf",
-         CodePeer.Messages_Summary_Models.Entity_Icon_Column);
+         "icon-name",
+         CodePeer.Messages_Summary_Models.Entity_Icon_Name_Column);
       Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
       Column.Pack_Start (Text_Renderer, True);
       Column.Add_Attribute

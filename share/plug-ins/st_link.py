@@ -108,8 +108,8 @@ class BoardLoader(Module):
         msg_is("Creating the binary executable...")
         b = GPS.Project.root().get_executable_name(GPS.File(f))
         d = GPS.Project.root().object_dirs()[0]
-        obj = d+b
-        binary = obj+".bin"
+        obj = d + b
+        binary = obj + ".bin"
         cmd = ["arm-eabi-objcopy", "-O", "binary", obj, binary]
         try:
             con = promise.ProcessWrapper(cmd)
@@ -206,24 +206,23 @@ class BoardLoader(Module):
 
         # STEP 3.5 run the program
 
-    # The followings are hooks:
-
     def gps_started(self):
         """
-        When GPS start, add button (include cireteria there)
+        When GPS start, add button (include creteria there)
         """
-        # add hooks
         GPS.Hook("debugger_terminated").add(self.debugger_terminated)
 
         # Create targets * 4:
-        workflow.create_target_from_workflow("Flash to Board",
-                                             "flash-to-board",
-                                             self.__flash_wf,
-                                             "gps-boardloading")
-        workflow.create_target_from_workflow("Debug on Board",
-                                             "debug-on-board",
-                                             self.__debug_wf,
-                                             "gps-boardloading-debug")
+        workflow.create_target_from_workflow(
+            "Flash to Board",
+            "flash-to-board",
+            self.__flash_wf,
+            "gps-boardloading-symbolic")
+        workflow.create_target_from_workflow(
+            "Debug on Board",
+            "debug-on-board",
+            self.__debug_wf,
+            "gps-boardloading-debug-symbolic")
 
         for tar in self.__targets:
             b = GPS.BuildTarget(tar)

@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Pixbuf;
 with Commands;
 with GNAT.Strings;     use GNAT.Strings;
 with Ada.Unchecked_Deallocation;
@@ -32,7 +31,7 @@ package GPS.Editors.Line_Information is
       Text               : GNAT.Strings.String_Access := null;
       Tooltip_Text       : GNAT.Strings.String_Access := null;
       --  A text to be displayed in a tooltip
-      Image              : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
+      Image              : GNAT.Strings.String_Access := null;
       Associated_Command : Commands.Command_Access := null;
    end record;
    --  Text must be a valid UTF8 string, which may contain markups in the pango
@@ -102,6 +101,6 @@ package GPS.Editors.Line_Information is
 private
 
    Empty_Line_Information : constant Line_Information_Record :=
-                              (null, null, Gdk.Pixbuf.Null_Pixbuf, null);
+                              (null, null, null, null);
 
 end GPS.Editors.Line_Information;

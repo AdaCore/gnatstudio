@@ -331,7 +331,7 @@ XML = r"""<?xml version="1.0" ?>
       <arg>-P%pp</arg>
       <arg>%X</arg>
     </command-line>
-    <icon>gps-build-all</icon>
+    <iconname>gps-build-all-symbolic</iconname>
     <switches command="gnattest" columns="2" lines="1">
       <title column="1" line="1">Files and directories</title>
       <title column="2" line="1">Other switches</title>
@@ -406,7 +406,7 @@ XML = r"""<?xml version="1.0" ?>
       <arg>--passed-tests=hide</arg>
     </command-line>
     <server>Execution_Server</server>
-    <icon>gtk-media-play</icon>
+    <iconname>gps-run-symbolic</iconname>
 
     <switches command="%(tool_name)s" columns="1" separator="=">
       <combo label="Default test behavior "

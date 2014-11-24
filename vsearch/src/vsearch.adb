@@ -1218,12 +1218,12 @@ package body Vsearch is
 
          Button := Add_Button
            (Dialog,
-            Text => "gtk-yes",
+            Text => "Yes",
             Response_Id => Gtk_Response_Yes);
 
          Button := Add_Button
            (Dialog,
-            Text => "gtk-no",
+            Text => "No",
             Response_Id => Gtk_Response_No);
 
          Show_All (Dialog);
@@ -2814,7 +2814,7 @@ package body Vsearch is
            & " preference Search/Preserve Search Context, the same context"
            & " will be selected, otherwise the context is reset depending on"
            & " the active window"),
-         Stock_Id    => Stock_Find,
+         Icon_Name   => "gps-search-symbolic",
          Category    => -"Search");
 
       Filter  := new Has_Search_Filter;

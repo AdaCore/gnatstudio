@@ -37,7 +37,6 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
@@ -483,8 +482,8 @@ package body VCS_View_API is
       Gtk_New (Dialog.Branch, -"Is a branch tag");
       Pack_Start (Get_Content_Area (Dialog), Dialog.Branch, Expand => False);
 
-      Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
-      Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+      Grab_Default (Add_Button (Dialog, "OK", Gtk_Response_OK));
+      Ignore := Add_Button (Dialog, "Cancel", Gtk_Response_Cancel);
    end Gtk_New;
 
    procedure Gtk_New
@@ -527,8 +526,8 @@ package body VCS_View_API is
       Set_Text (Dialog.Tag_Name, Default_Tag);
       Pack_Start (Box, Dialog.Tag_Name);
 
-      Grab_Default (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
-      Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+      Grab_Default (Add_Button (Dialog, "OK", Gtk_Response_OK));
+      Ignore := Add_Button (Dialog, "Cancel", Gtk_Response_Cancel);
    end Gtk_New;
 
    -------------------

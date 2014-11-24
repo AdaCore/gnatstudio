@@ -80,7 +80,6 @@ with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Search;              use GPS.Search;
-with GPS.Stock_Icons;         use GPS.Stock_Icons;
 with GUI_Utils;               use GUI_Utils;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with Histories;               use Histories;
@@ -92,7 +91,7 @@ package body KeyManager_Module.GUI is
    Action_Column     : constant := 0;
    Key_Column        : constant := 1;
    Weight_Column     : constant := 2;
-   Icon_Column       : constant := 3;
+   Icon_Name_Column  : constant := 3;
 
    Hist_Show_All_Menus : constant History_Key := "shortcuts-show-all-menus";
    Hist_Shortcuts_Only : constant History_Key := "shortcuts-only";
@@ -312,7 +311,7 @@ package body KeyManager_Module.GUI is
         (Get_Object (Model), Iter'Address,
          Col1 => Action_Column,     Value1 => Descr & ASCII.NUL,
          Col2 => Key_Column,        Value2 => Key & ASCII.NUL,
-         Col3 => Icon_Column,       Value3 => Icon & ASCII.NUL,
+         Col3 => Icon_Name_Column,  Value3 => Icon & ASCII.NUL,
          Col4 => Weight_Column,     Value4 => Weight);
       return Iter;
    end Set;
@@ -406,8 +405,8 @@ package body KeyManager_Module.GUI is
                  (Model   => Editor.Model,
                   Parent  => Parent,
                   Descr   => Name,
-                  Icon    => (if Action.Stock_Id /= null then
-                                   Action.Stock_Id.all
+                  Icon    => (if Action.Icon_Name /= null then
+                                   Action.Icon_Name.all
                               else ""),
                   Key     => Key
                     & (if User_Changed then " (modified)" else ""),
@@ -1271,7 +1270,7 @@ package body KeyManager_Module.GUI is
          (Action_Column     => GType_String,
           Key_Column        => GType_String,
           Weight_Column     => GType_Int,
-          Icon_Column       => GType_String));
+          Icon_Name_Column  => GType_String));
 
       Gtk_New (Editor.Filter, +Editor.Model);
       Keys_Editor_Visible_Funcs.Set_Visible_Func
@@ -1389,7 +1388,7 @@ package body KeyManager_Module.GUI is
       Ignore := Append_Column (Editor.View, Col);
       Set_Title (Col, -"Action");
       Pack_Start (Col, Pixbuf, False);
-      Add_Attribute (Col, Pixbuf, "stock-id", Icon_Column);
+      Add_Attribute (Col, Pixbuf, "icon-name", Icon_Name_Column);
       Pack_Start (Col, Render, True);
       Add_Attribute (Col, Render, "text", Action_Column);
       Add_Attribute (Col, Render, "weight", Weight_Column);
@@ -1436,7 +1435,7 @@ package body KeyManager_Module.GUI is
         (Kernel, "key shortcuts expand all",
          new Expand_All_Command,
          -"Expand or collapse all nodes in the shortcuts editor",
-         Stock_Id => GPS_Expand_All,
+         Icon_Name => "gps-expand-all-symbolic",
          Category => -"Key Shortcuts");
    end Register_Key_Menu;
 

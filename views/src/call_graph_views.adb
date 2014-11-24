@@ -44,7 +44,6 @@ with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Tree_Store;              use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.List_Store;              use Gtk.List_Store;
-with Gtk.Stock;                   use Gtk.Stock;
 with Gtk.Tree_Row_Reference;      use Gtk.Tree_Row_Reference;
 with Gtk.Tree_View;               use Gtk.Tree_View;
 with Gtk.Widget;                  use Gtk.Widget;
@@ -66,7 +65,6 @@ with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Xref;             use GPS.Kernel.Xref;
 with GPS.Intl;                    use GPS.Intl;
-with GPS.Stock_Icons;             use GPS.Stock_Icons;
 with GUI_Utils;                   use GUI_Utils;
 with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
@@ -1853,20 +1851,20 @@ package body Call_Graph_Views is
          new Calltree_Clear_Command,
          -"Clear the contents of the call tree",
          Category => -"Call trees",
-         Stock_Id => Stock_Clear);
+         Icon_Name => "gps-clear-symbolic");
 
       Register_Action
         (Kernel, "calltree remove selection",
          new Calltree_Remove_Command,
          -"Remove the selected line from the calltree",
-         Stock_Id => Stock_Remove,
+         Icon_Name => "gps-remove-symbolic",
          Category => -"Call trees");
 
       Register_Action
         (Kernel, "calltree collapse all",
          new Calltree_Collapse_All_Command,
          -"Close all nodes in the call tree",
-         Stock_Id => GPS_Collapse_All,
+         Icon_Name => "gps-collapse-all-symbolic",
          Category => -"Call trees");
 
       Register_Action
@@ -1874,16 +1872,15 @@ package body Call_Graph_Views is
          new Calltree_Next_Or_Previous_Command'
            (Interactive_Command with Next => False),
          -"Move to the previous line in the call tree",
-         Stock_Id => "gps-navigate-back",
+         Icon_Name => "gps-backward-symbolic",
          Category => -"Call trees");
       Register_Action
         (Kernel, "calltree next",
          new Calltree_Next_Or_Previous_Command'
            (Interactive_Command with Next => True),
          -"Move to the next line in the call tree",
-         Stock_Id => "gps-navigate-forward",
+         Icon_Name => "gps-forward-symbolic",
          Category => -"Call trees");
-
    end Register_Module;
 
 end Call_Graph_Views;

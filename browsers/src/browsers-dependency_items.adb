@@ -20,7 +20,6 @@ with Glib.Object;             use Glib.Object;
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 
@@ -868,16 +867,14 @@ package body Browsers.Dependency_Items is
         (Kernel, "File dependencies",
          Action      => Command,
          Label       => -"Browsers/Show dependencies for %f",
-         Filter      => Filter,
-         Stock_Image => Stock_Go_Forward);
+         Filter      => Filter);
 
       Command := new Show_Depending_On_Command;
       Register_Contextual_Menu
         (Kernel, "File depending on",
          Action      => Command,
          Label       => -"Browsers/Show files depending on %f",
-         Filter      => Filter,
-         Stock_Image => Stock_Go_Back);
+         Filter      => Filter);
 
       Command := new Examine_Other_File_Command;
       Register_Contextual_Menu

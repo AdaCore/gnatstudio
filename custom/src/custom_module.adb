@@ -32,7 +32,6 @@ with Gtk.Accel_Label;           use Gtk.Accel_Label;
 with Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Icon_Set;              use Gtk.Icon_Set;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -875,7 +874,7 @@ package body Custom_Module is
             return;
          end if;
 
-         Register_Button (Kernel, Action, Stock_Id => Stock);
+         Register_Button (Kernel, Action, Icon_Name => Stock);
       end Parse_Button_Node;
 
       ----------------------
@@ -1104,7 +1103,6 @@ package body Custom_Module is
 
       procedure Parse_Stock_Node (Node : Node_Ptr) is
          Child   : Node_Ptr := Node.Child;
-         Set     : Gtk_Icon_Set;
 
          procedure Add_Alternate_Sources;
          --  Add the alternate sources to the icon set.
@@ -1123,6 +1121,7 @@ package body Custom_Module is
                                   Get_File_Child (Files, "file");
                      S : constant String := Get_Attribute (Files, "size");
                      Size : Gtk.Enums.Gtk_Icon_Size;
+                     pragma Unreferenced (Size);
                   begin
                      if S = "Icon_Size_Menu" then
                         Size := Gtk.Enums.Icon_Size_Menu;
@@ -1143,7 +1142,9 @@ package body Custom_Module is
                            -"No alternate file specified for icon "
                            & Get_Attribute (Child, "id"), Mode => Error);
                      else
-                        GPS.Stock_Icons.Set_Icon (Kernel, Set, Filename, Size);
+                        Insert
+                          (Kernel,
+                           -"<icon> no longer supported in customization");
                      end if;
                   end;
                else
@@ -1164,7 +1165,6 @@ package body Custom_Module is
                   Id       : constant String := Get_Attribute (Child, "id");
                   Filename : constant Virtual_File :=
                                Get_File_Child (Child, "file");
-                  Pic_File : constant Virtual_File := Filename;
                begin
                   if Id = "" then
                      Insert
@@ -1179,21 +1179,11 @@ package body Custom_Module is
                         Mode => Error);
 
                   else
-                     Set := GPS.Stock_Icons.Set_Icon
-                       (Kernel => Kernel,
-                        Id     => Id,
-                        Label  => -Get_Attribute (Child, "label"),
-                        File   => Pic_File);
-
-                     if Set = Null_Gtk_Icon_Set then
-                        Insert
-                          (Kernel,
-                           -"Error when creating stock icon " & Id
-                           & (-". File not found: ")
-                           & Display_Full_Name (Pic_File));
-                     else
-                        Add_Alternate_Sources;
-                     end if;
+                     Insert
+                       (Kernel,
+                        -"<icon> no longer supported in customization (for id "
+                        & Id & ")");
+                     Add_Alternate_Sources;
                   end if;
                end;
             end if;

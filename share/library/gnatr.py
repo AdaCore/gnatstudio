@@ -39,7 +39,7 @@ XML = r"""<?xml version="1.0" ?>
       <description>
 Launches GNAT to generate information on the layout of types (using -gnatR)
       </description>
-      <icon>gps-custom-build</icon>
+      <iconname>gps-custom-build-symbolic</iconname>
       <server>Tools_Server</server>
    </target-model>
    <target name='Compute Types Layout' category='File' model='gnatR'>

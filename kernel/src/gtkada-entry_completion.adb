@@ -449,9 +449,9 @@ package body Gtkada.Entry_Completion is
       Color  : Gdk_RGBA;
       Filter : Comp_Filter_Model;
       Button : Gtk_Button;
-      Image  : Gtk_Image;
       Frame  : Gtk_Frame;
       Popup  : Gtk_Window;
+      Image  : Gtk_Image;
       pragma Unreferenced (Col, Dummy);
 
    begin
@@ -643,7 +643,8 @@ package body Gtkada.Entry_Completion is
         (Get_History (Kernel).all, Name & "-preview",
          Default_Value => True);
 
-      Gtk_New (Image, Stock_Id => Stock_Preferences, Size => Icon_Size_Menu);
+      Gtk_New_From_Icon_Name
+         (Image, "gps-settings-symbolic", Size => Icon_Size_Menu);
       Gtk_New (Button);
       Button.Add (Image);
       Self.Settings.Pack_Start (Button, Expand => False);

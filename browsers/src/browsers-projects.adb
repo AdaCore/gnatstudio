@@ -17,7 +17,6 @@
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
@@ -739,7 +738,6 @@ package body Browsers.Projects is
       Register_Contextual_Menu
         (Kernel, "Show projects imported",
          Label       => -"Show projects imported by %p",
-         Stock_Image => Stock_Go_Forward,
          Action      => Command,
          Filter      => Lookup_Filter (Kernel, "Project only"));
 
@@ -756,7 +754,6 @@ package body Browsers.Projects is
       Register_Contextual_Menu
         (Kernel, "Show projects importing",
          Label  => -"Show projects depending on %p",
-         Stock_Image => Stock_Go_Back,
          Action => Command,
          Filter => Lookup_Filter (Kernel, "Project only"));
    end Register_Module;

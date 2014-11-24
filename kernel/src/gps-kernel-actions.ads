@@ -38,7 +38,7 @@ package GPS.Kernel.Actions is
       Menus       : GNAT.Strings.String_List_Access;
       --  List of all menu paths that are associated with this action.
 
-      Stock_Id    : GNAT.Strings.String_Access;
+      Icon_Name   : GNAT.Strings.String_Access;
    end record;
    --  Command is freed automatically. We use an anonymous type so that calls
    --  to Register_Action can call "new ..." directly when passing a value to
@@ -51,7 +51,8 @@ package GPS.Kernel.Actions is
    --  Category is used in the key bindings editor to group actions. If null,
    --  the action should not be shown in the keybinding editor.
    --
-   --  Stock_Id is the icon for this action. It might not be set.
+   --  Icon_Name is the icon for this action (optional, might be null). See
+   --  GPS.Stock_Icons for more information on icon themes.
 
    type Action_Record_Access is access Action_Record;
 
@@ -62,7 +63,7 @@ package GPS.Kernel.Actions is
       Description : String := "";
       Filter      : Action_Filter := null;
       Category    : String := "General";
-      Stock_Id    : String := "");
+      Icon_Name   : String := "");
    --  Register a new named action in GPS.
    --  Only the actions that can be executed interactively by the user
    --  should be registered.

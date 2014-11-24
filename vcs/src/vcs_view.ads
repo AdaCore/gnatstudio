@@ -204,7 +204,7 @@ private
    Local_Rev_Column          : constant := 2;
    Rep_Rev_Column            : constant := 3;
    Status_Description_Column : constant := 4;
-   Status_Pixbuf_Column      : constant := 5;
+   Status_Icon_Name_Column   : constant := 5;
    Has_Log_Column            : constant := 6;
    Activity_Column           : constant := 7;
    Control_Column            : constant := 8;

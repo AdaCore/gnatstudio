@@ -298,10 +298,10 @@ package body Completion_Window is
       --  Notes window.
       if Item.Text /= null then
          Gtk_New_Hbox (HBox);
-         if Item.Stock_Id /= null then
-            Gtk.Image.Gtk_New
-              (Img, Stock_Id => Item.Stock_Id.all,
-               Size => Icon_Size_Menu);
+         if Item.Icon_Name /= null then
+            Gtk.Image.Gtk_New_From_Icon_Name
+              (Img, Icon_Name => Item.Icon_Name.all,
+               Size => 16);
             Pack_Start (HBox, Img, False, False, 3);
          end if;
 
@@ -355,7 +355,7 @@ package body Completion_Window is
       return
         (Markup_Column     => GType_String,
          Index_Column      => GType_Int,
-         Icon_Column       => GType_String,
+         Icon_Name_Column  => GType_String,
          Shown_Column      => GType_Boolean,
          Completion_Column => GType_String);
    end Column_Types;
@@ -370,7 +370,7 @@ package body Completion_Window is
    begin
       Unchecked_Free (X.Markup);
       Unchecked_Free (X.Text);
-      Unchecked_Free (X.Stock_Id);
+      Unchecked_Free (X.Icon_Name);
 
       C := X.Proposals.First;
 
@@ -667,7 +667,7 @@ package body Completion_Window is
             List       : Proposals_List.List;
             Custom_Icon_Name : constant String
               := Proposal.Get_Custom_Icon_Name;
-            Stock      : GNAT.Strings.String_Access;
+            Icon_Name      : GNAT.Strings.String_Access;
             Do_Show_Completion : constant Boolean :=
               (Explorer.Pattern = null
                or else Is_Prefix (Explorer.Pattern.all, Completion));
@@ -678,9 +678,9 @@ package body Completion_Window is
             Last_Completion := To_Unbounded_String (Completion);
 
             if Custom_Icon_Name /= "" then
-               Stock := new String'(Custom_Icon_Name);
+               Icon_Name := new String'(Custom_Icon_Name);
             else
-               Stock := new String'
+               Icon_Name := new String'
                  (Stock_From_Category
                     (False, Get_Visibility (Proposal),
                      Get_Category (Proposal)));
@@ -699,7 +699,7 @@ package body Completion_Window is
                Info :=
                  (new String'(Showable),
                   new String'(Completion),
-                  Stock,
+                  Icon_Name,
                   Get_Caret_Offset (Proposal, Explorer.Kernel.Databases),
                   List,
                   Proposal.Is_Accessible);
@@ -711,8 +711,8 @@ package body Completion_Window is
 
                --  Set all columns
                Explorer.Model.Set (Iter, Markup_Column, Info.Markup.all);
-               if Stock /= null then
-                  Explorer.Model.Set (Iter, Icon_Column, Stock.all);
+               if Icon_Name /= null then
+                  Explorer.Model.Set (Iter, Icon_Name_Column, Icon_Name.all);
                end if;
                Explorer.Model.Set
                  (Iter, Index_Column, Gint (Explorer.Index));
@@ -1697,7 +1697,7 @@ package body Completion_Window is
 
       Gtk_New (Pix);
       Pack_Start (Col, Pix, False);
-      Add_Attribute (Col, Pix, "stock-id", Icon_Column);
+      Add_Attribute (Col, Pix, "icon-name", Icon_Name_Column);
 
       Gtk_New (Text);
       Pack_Start (Col, Text, True);

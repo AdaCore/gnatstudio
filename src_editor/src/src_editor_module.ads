@@ -31,7 +31,6 @@ with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Styles.UI;               use GPS.Styles.UI;
 with GPS.Styles;                  use GPS.Styles;
-with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Generic_List;
 with Glib;                        use Glib;
 with Glib.Object;
@@ -58,12 +57,12 @@ package Src_Editor_Module is
    -- Module-specific graphical objects --
    ---------------------------------------
 
-   Hide_Block_Pixbuf         : Gdk_Pixbuf := Null_Pixbuf;
-   Unhide_Block_Pixbuf       : Gdk_Pixbuf := Null_Pixbuf;
+   Hide_Block_Pixbuf   : constant String := "gps-fold-block-symbolic";
+   Unhide_Block_Pixbuf : constant String := "gps-unfold-block-symbolic";
 
-   File_Pixbuf               : Gdk_Pixbuf := Null_Pixbuf;
-   File_Modified_Pixbuf      : Gdk_Pixbuf := Null_Pixbuf;
-   File_Unsaved_Pixbuf       : Gdk_Pixbuf := Null_Pixbuf;
+   File_Pixbuf : constant String := "gps-emblem-file-unmodified";
+   File_Modified_Pixbuf : constant String := "gps-emblem-file-modified";
+   File_Unsaved_Pixbuf : constant String := "gps-emblem-file-unsaved";
 
    -----------------------
    -- Local subprograms --

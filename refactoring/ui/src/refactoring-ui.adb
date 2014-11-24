@@ -26,7 +26,6 @@ with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Scrolled_Window;   use Gtk.Scrolled_Window;
-with Gtk.Stock;             use Gtk.Stock;
 with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
 with Gtk.Tree_Store;        use Gtk.Tree_Store;
@@ -47,8 +46,8 @@ package body Refactoring.UI is
       Title         : String;
       Msg           : String;
       Files         : Source_File_Set;
-      Execute_Label : String := Stock_Execute;
-      Cancel_Label  : String := Stock_Cancel) return Boolean
+      Execute_Label : String := "Execute";
+      Cancel_Label  : String := "Cancel") return Boolean
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;

@@ -15,26 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-
-with Gtk.Enums;  use Gtk.Enums;
-with Gtk.Widget; use Gtk.Widget;
-
-with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
-
-with GPS.Kernel.Actions; use GPS.Kernel.Actions;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-
-with Commands;    use Commands;
-with Basic_Types; use Basic_Types;
-with GPS.Editors; use GPS.Editors;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
-
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Basic_Types;                    use Basic_Types;
 with Commands.Interactive;
-
+with Commands;                       use Commands;
+with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
+with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
+with GPS.Editors;                    use GPS.Editors;
+with GPS.Kernel.Actions;             use GPS.Kernel.Actions;
 with GPS.Kernel.Messages.Markup;     use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
+with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
 with GPS.Kernel.Styles.Shell;        use GPS.Kernel.Styles.Shell;
+with Gtk.Enums;                      use Gtk.Enums;
+with Gtk.Widget;                     use Gtk.Widget;
 
 package body GPS.Kernel.Messages.Shell is
 
@@ -341,10 +335,7 @@ package body GPS.Kernel.Messages.Shell is
             Action := new Line_Information_Record'
               (Text         => null,
                Tooltip_Text => new String'(Tooltip_Str),
-               Image        => Render_Icon
-                 (Widget   => Gtk_Widget (Get_Main_Window (Kernel)),
-                  Stock_Id => Image_Str,
-                  Size     => Icon_Size_Menu),
+               Image        => new String'(Image_Str),
                Associated_Command => Command);
 
             Message.Set_Action (Action);
@@ -375,10 +366,7 @@ package body GPS.Kernel.Messages.Shell is
             Action := new Line_Information_Record'
               (Text         => null,
                Tooltip_Text => new String'(Tooltip_Str),
-               Image        => Render_Icon
-                 (Widget   => Gtk_Widget (Get_Main_Window (Kernel)),
-                  Stock_Id => Image_Str,
-                  Size     => Icon_Size_Menu),
+               Image        => new String'(Image_Str),
                Associated_Command => Command_Access (Command));
 
             Message.Set_Action (Action);

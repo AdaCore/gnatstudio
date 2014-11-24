@@ -22,7 +22,7 @@ class Sqlite_Cross_References(object):
 <!-- This is an XML model for launching gnatinspect -->
 <target-model name="gnatinspect" category="">
    <description>Launch cross-reference recompilation</description>
-   <icon>gps-custom-build</icon>
+   <iconname>gps-custom-build-symbolic</iconname>
    <server>GPS_Server</server>
    <output-parsers>
        console_writer
@@ -37,7 +37,7 @@ class Sqlite_Cross_References(object):
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
     <in-contextual-menus-for-projects>False</in-contextual-menus-for-projects>
-    <icon>gps-compute-xref</icon>
+    <iconname>gps-compute-xref-symbolic</iconname>
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <server>GPS_Server</server>

@@ -23,7 +23,6 @@ with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with Glib.Object; use Glib.Object;
-with Gdk.Pixbuf;  use Gdk.Pixbuf;
 
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 
@@ -66,7 +65,6 @@ package body Src_Editor_Buffer.Debug is
    function To_String (Info : Line_Data_Record) return String;
    function To_String (X : GNAT.Strings.String_Access) return String;
    function To_String (X : Message_Access) return String;
-   function To_String (X : Gdk_Pixbuf) return String;
    function To_String (X : Command_Access) return String;
    --  Utility functions
 
@@ -123,19 +121,6 @@ package body Src_Editor_Buffer.Debug is
          return "NULL";
       else
          return Name (X);
-      end if;
-   end To_String;
-
-   ---------------
-   -- To_String --
-   ---------------
-
-   function To_String (X : Gdk_Pixbuf) return String is
-   begin
-      if X = null then
-         return "NULL";
-      else
-         return "<image>";
       end if;
    end To_String;
 

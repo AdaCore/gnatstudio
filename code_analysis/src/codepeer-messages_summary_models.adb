@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Object;
+with Code_Analysis_GUI; use Code_Analysis_GUI;
 with Gdk.RGBA;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
@@ -97,8 +97,8 @@ package body CodePeer.Messages_Summary_Models is
 
    begin
       case Index is
-         when Entity_Icon_Column =>
-            return Gdk.Pixbuf.Get_Type;
+         when Entity_Icon_Name_Column =>
+            return Glib.GType_String;
 
          when Entity_Name_Column
             | Entity_Lifeage_Column
@@ -265,25 +265,17 @@ package body CodePeer.Messages_Summary_Models is
 
    begin
       case Column is
-         when Entity_Icon_Column =>
+         when Entity_Icon_Name_Column =>
+            Glib.Values.Init (Value, Glib.GType_String);
+
             if Subprogram_Node /= null then
-               Glib.Values.Init (Value, Glib.GType_Object);
-               Glib.Values.Set_Object
-                 (Value, Glib.Object.GObject (Self.Subprogram_Icon));
-
+               Glib.Values.Set_String (Value, Subp_Pixbuf_Cst);
             elsif File_Node /= null then
-               Glib.Values.Init (Value, Glib.GType_Object);
-               Glib.Values.Set_Object
-                 (Value, Glib.Object.GObject (Self.File_Icon));
-
+               Glib.Values.Set_String (Value, File_Pixbuf_Cst);
             elsif Project_Node /= null then
-               Glib.Values.Init (Value, Glib.GType_Object);
-               Glib.Values.Set_Object
-                 (Value, Glib.Object.GObject (Self.Project_Icon));
-
+               Glib.Values.Set_String (Value, Prj_Pixbuf_Cst);
             else
-               Glib.Values.Init (Value, Glib.GType_Object);
-               Glib.Values.Set_Object (Value, null);
+               Glib.Values.Set_String (Value, "");
             end if;
 
          when Entity_Name_Column =>
@@ -479,14 +471,10 @@ package body CodePeer.Messages_Summary_Models is
    procedure Gtk_New
      (Model           : out Messages_Summary_Model;
       Tree            : Code_Analysis.Code_Analysis_Tree;
-      Categories      : CodePeer.Message_Category_Sets.Set;
-      Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
-      File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
-      Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf) is
+      Categories      : CodePeer.Message_Category_Sets.Set) is
    begin
       Model := new Messages_Summary_Model_Record;
-      Initialize
-        (Model, Tree, Categories, Project_Icon, File_Icon, Subprogram_Icon);
+      Initialize (Model, Tree, Categories);
    end Gtk_New;
 
    ----------------
@@ -496,10 +484,7 @@ package body CodePeer.Messages_Summary_Models is
    procedure Initialize
      (Model           : access Messages_Summary_Model_Record'Class;
       Tree            : Code_Analysis.Code_Analysis_Tree;
-      Categories      : CodePeer.Message_Category_Sets.Set;
-      Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
-      File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
-      Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf) is
+      Categories      : CodePeer.Message_Category_Sets.Set) is
    begin
       Code_Analysis.Tree_Models.Initialize (Model, Tree);
 
@@ -507,10 +492,6 @@ package body CodePeer.Messages_Summary_Models is
       Model.Message_Categories := Categories;
       Model.Message_Lifeages := (others => True);
       Model.Message_Statuses := (others => True);
-
-      Model.Project_Icon    := Project_Icon;
-      Model.File_Icon       := File_Icon;
-      Model.Subprogram_Icon := Subprogram_Icon;
 
       Model.Reconstruct;
    end Initialize;

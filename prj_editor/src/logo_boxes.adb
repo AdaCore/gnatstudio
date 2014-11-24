@@ -88,9 +88,8 @@ package body Logo_Boxes is
       Set_Border_Width (Win.Side_Box, 7);
       Add (Event, Win.Side_Box);
 
-      Gtk_New
-        (Image,
-         Pixbuf => Render_Icon (Win, "adacore-logo", Icon_Size_Large_Toolbar));
+      Gtk_New_From_Icon_Name
+        (Image, "adacore_logo", Icon_Size_Large_Toolbar);
       Pack_Start (Win.Side_Box, Image, Expand => False, Padding => 10);
 
       if not Show_Toc then

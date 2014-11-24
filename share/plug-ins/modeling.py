@@ -152,7 +152,7 @@ PROJECT_DEFS = """<?xml version='1.0' ?>
         <arg>gmc</arg>
       </command-line>
       <switches/>
-      <icon>gps-build-all</icon>
+      <iconname>gps-build-all-symbolic</iconname>
     </target-model>
 
     <target model="GMC" category="_Project_" name="%(target)s">
@@ -428,7 +428,7 @@ class GMC_Module(modules.Module):
                     # the list of open block scopes.
 
                     if block_data[1]:
-                        if not block_id in block_ids:
+                        if block_id not in block_ids:
                             block_ids.append(block_id)
 
                     # Otherwise the line denotes an end annotation which closes

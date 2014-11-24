@@ -31,7 +31,6 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
@@ -41,7 +40,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -76,7 +74,7 @@ package body Bookmark_Views is
 
    Me : constant Trace_Handle := Create ("Bookmarks");
 
-   Icon_Column     : constant := 0;
+   Icon_Name_Column : constant := 0;
    Name_Column     : constant := 1;
    Data_Column     : constant := 2;
    Editable_Column : constant := 3;
@@ -103,7 +101,6 @@ package body Bookmark_Views is
 
    type Bookmark_View_Record is new Generic_Views.View_Record with record
       Tree      : Gtk_Tree_View;
-      Goto_Icon : Gdk_Pixbuf;
       Deleting  : Boolean := False;
       --  Whether we are deleting multiple bookmarks
    end record;
@@ -227,9 +224,6 @@ package body Bookmark_Views is
      (Command : access Next_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to next bookmark in current file
-
-   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
-   --  Called when the bookmark view is destroyed
 
    --------------
    -- Tooltips --
@@ -833,7 +827,7 @@ package body Bookmark_Views is
 
       while List /= Null_Node loop
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, Icon_Column, GObject (View.Goto_Icon));
+         Set (Model, Iter, Icon_Name_Column, "gps-goto-symbolic");
          Set (Model, Iter, Name_Column, Data (List).Name.all);
          Set (Model, Iter, Data_Column, Address => Convert (Data (List)));
          Set (Model, Iter, Editable_Column, True);
@@ -879,15 +873,6 @@ package body Bookmark_Views is
    end On_Preferences_Changed;
 
    ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
-   begin
-      Unref (Bookmark_View_Access (View).Goto_Icon);
-   end On_Destroy;
-
-   ----------------
    -- Initialize --
    ----------------
 
@@ -905,7 +890,7 @@ package body Bookmark_Views is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
-        (Column_Types       => (Icon_Column     => Gdk.Pixbuf.Get_Type,
+        (Column_Types       => (Icon_Name_Column => GType_String,
                                 Name_Column     => GType_String,
                                 Data_Column     => GType_Pointer,
                                 Editable_Column => GType_Boolean),
@@ -920,9 +905,6 @@ package body Bookmark_Views is
       Set_Name (View.Tree, "Bookmark TreeView"); --  For the testsuite
       Scrolled.Add (View.Tree);
 
-      View.Goto_Icon := Render_Icon (View, Stock_Jump_To, Icon_Size_Menu);
-
-      Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
       Return_Callback.Object_Connect
         (View.Tree,
          Signal_Button_Press_Event,
@@ -1243,18 +1225,18 @@ package body Bookmark_Views is
         (Kernel, "bookmark rename", new Rename_Bookmark_Command,
          -("Interactively rename the bookmark currently selected in the"
            & " bookmarks view"), Category => -"Bookmarks",
-         Stock_Id => Stock_Convert);
+         Icon_Name => "gps-rename-symbolic");
 
       Register_Action
         (Kernel, "bookmark remove", new Delete_Bookmark_Command,
          -"Delete the bookmark currently selected in the bookmarks view",
-         Stock_Id => Stock_Remove,
+         Icon_Name => "gps-remove-symbolic",
          Category => -"Bookmarks");
 
       Register_Action
         (Kernel, "bookmark create", new Create_Bookmark_Command,
          -("Create a bookmark at the current location"),
-         Stock_Id => Stock_Add,
+         Icon_Name => "gps-add-symbolic",
          Category => -"Bookmarks", Filter => Src_Action_Context);
 
       Register_Action

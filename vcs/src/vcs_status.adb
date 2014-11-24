@@ -126,7 +126,7 @@ package body VCS_Status is
       L : constant Line_Record := Status_Hash.Get (Cache.T.all, File).LR;
    begin
       if L /= No_Data
-        and then L.Status.Status.Stock_Id.all = S.Stock_Id.all
+        and then L.Status.Status.Icon_Name.all = S.Icon_Name.all
       then
          return True;
       else

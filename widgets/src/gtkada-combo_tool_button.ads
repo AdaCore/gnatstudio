@@ -33,11 +33,11 @@ package Gtkada.Combo_Tool_Button is
      access all Gtkada_Combo_Tool_Button_Record'Class;
 
    procedure Gtk_New
-     (Self     : out Gtkada_Combo_Tool_Button;
-      Stock_Id : String);
+     (Self      : out Gtkada_Combo_Tool_Button;
+      Icon_Name : String);
    procedure Initialize
-     (Self     : access Gtkada_Combo_Tool_Button_Record'Class;
-      Stock_Id : String);
+     (Self      : access Gtkada_Combo_Tool_Button_Record'Class;
+      Icon_Name : String);
    --  Create or initialize a button from a stock icon (see gtk-stock.ads)
 
    type User_Data_Record is abstract tagged null record;
@@ -46,10 +46,10 @@ package Gtkada.Combo_Tool_Button is
    --  retrieved on the selected item.
 
    procedure Add_Item
-     (Widget   : access Gtkada_Combo_Tool_Button_Record;
-      Item     : String;
-      Stock_Id : String := "";
-      Data     : User_Data := null);
+     (Widget    : access Gtkada_Combo_Tool_Button_Record;
+      Item      : String;
+      Icon_Name : String := "";
+      Data      : User_Data := null);
    --  Add an item in the button items list.
 
    procedure Select_Item
@@ -104,8 +104,8 @@ private
       Selected    : Strings_Vector.Extended_Index;
       Menu        : Gtk_Menu;
 
-      Stock_Id    : Unbounded_String;
-      --  The default stock id, when items do not provide one.
+      Icon_Name    : Unbounded_String;
+      --  The default icon name, when items do not provide one.
 
       Popup_Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Popup_Device  : Gdk.Device.Gdk_Device;

@@ -19,7 +19,6 @@ with Glib;            use Glib;
 with Gtk;             use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Image;       use Gtk.Image;
-with Gtk.Stock;       use Gtk.Stock;
 with Gtkada.Handlers; use Gtkada.Handlers;
 
 with Files_Extra_Info_Pkg.Callbacks; use Files_Extra_Info_Pkg.Callbacks;
@@ -102,7 +101,8 @@ package body Files_Extra_Info_Pkg is
         (Files_Extra_Info.Directory_Entry, -"Directory to scan");
       Pack_Start (Hbox, Files_Extra_Info.Directory_Entry, True, True);
 
-      Gtk_New (Icon, Stock_Directory, Icon_Size_Button);
+      Gtk_New_From_Icon_Name
+        (Icon, "gps-emblem-directory-symbolic", Icon_Size_Button);
       Gtk.Button.Gtk_New (Files_Extra_Info.Browse_Button);
       Files_Extra_Info.Browse_Button.Add (Icon);
       Pack_Start (Hbox, Files_Extra_Info.Browse_Button, False, False);

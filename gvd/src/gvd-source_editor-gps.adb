@@ -244,7 +244,7 @@ package body GVD.Source_Editor.GPS is
            (Line => Line_Information_Record'
               (Text               => null,
                Tooltip_Text       => null,
-               Image              => Current_Line_Pixbuf,
+               Image              => new String'(Current_Line_Pixbuf),
                Associated_Command => null)));
       Set_Current_Source_Location (Tab, Editor.Current_File, Line);
    end Set_Line;
@@ -422,7 +422,7 @@ package body GVD.Source_Editor.GPS is
                   Unset,
                   Br (J).File,
                   Br (J).Line);
-               A (L).Image := Line_Has_Breakpoint_Pixbuf;
+               A (L).Image := new String'(Line_Has_Breakpoint_Pixbuf);
                A (L).Associated_Command := Command_Access (Other_Command);
 
                --  Try to resolve file when it is not present to handle
@@ -482,9 +482,9 @@ package body GVD.Source_Editor.GPS is
                      Editor.Current_Breakpoints (J).Line);
 
                   if Editor_Show_Line_With_Code.Get_Pref then
-                     A (L).Image := Line_Has_Code_Pixbuf;
+                     A (L).Image := new String'(Line_Has_Code_Pixbuf);
                   else
-                     A (L).Image := Line_Might_Have_Code_Pixbuf;
+                     A (L).Image := new String'(Line_Might_Have_Code_Pixbuf);
                   end if;
 
                   A (L).Associated_Command := Command_Access (Other_Command);

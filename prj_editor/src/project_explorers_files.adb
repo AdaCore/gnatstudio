@@ -64,7 +64,6 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Stock_Icons;
 with Projects;                   use Projects;
 with File_Utils;
 with GUI_Utils;                  use GUI_Utils;
@@ -820,7 +819,7 @@ package body Project_Explorers_Files is
       Gtk_New (Col);
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, True);
-      Add_Attribute (Col, Pixbuf_Rend, "stock-id", Icon_Column);
+      Add_Attribute (Col, Pixbuf_Rend, "icon-name", Icon_Column);
       Add_Attribute (Col, Text_Rend, "text", Display_Name_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
@@ -1547,7 +1546,7 @@ package body Project_Explorers_Files is
       Register_Action
         (Kernel, "refresh files view", new Refresh_Command,
          -"Refrehs the contents of the Files view",
-         Stock_Id => GPS.Stock_Icons.GPS_Refresh);
+         Icon_Name => "gps-refresh-symbolic");
    end Register_Module;
 
 end Project_Explorers_Files;

@@ -77,7 +77,7 @@ package body GPS.Kernel.Search is
    procedure Register_Provider_And_Action
       (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
        Provider   : not null access Kernel_Search_Provider'Class;
-       Stock_Id   : String := "")
+       Icon_Name  : String := "")
    is
       Command : Global_Search_Command_Access;
    begin
@@ -93,7 +93,7 @@ package body GPS.Kernel.Search is
          (Kernel, Action_Name_Prefix & Provider.Display_Name, Command,
           Description => Command.Provider.Documentation,
           Category    => "Search",
-          Stock_Id    => Stock_Id);
+          Icon_Name   => Icon_Name);
    end Register_Provider_And_Action;
 
 end GPS.Kernel.Search;

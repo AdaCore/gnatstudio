@@ -19,7 +19,6 @@ with Glib;                   use Glib;
 with Glib.Convert;           use Glib.Convert;
 with Glib.Object;            use Glib.Object;
 with Gdk.Event;              use Gdk.Event;
-with Gdk.Pixbuf;             use Gdk.Pixbuf;
 with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Types;              use Gdk.Types;
 with Gtk.Box;                use Gtk.Box;
@@ -30,7 +29,6 @@ with Gtk.Label;              use Gtk.Label;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Notebook;           use Gtk.Notebook;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
-with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
@@ -66,7 +64,7 @@ with Commands.Interactive;   use Commands, Commands.Interactive;
 package body Buffer_Views is
    Me : constant Trace_Handle := Create ("BUFFERS");
 
-   Icon_Column : constant := 0;
+   Icon_Name_Column : constant := 0;
    Name_Column : constant := 1;
    Data_Column : constant := 2;
 
@@ -466,8 +464,8 @@ package body Buffer_Views is
 
             elsif N_Children (Model, Iter) = 1 then
                --  Single child ?
-               Set (Model, Iter, Icon_Column,
-                    Get_C_Proxy (Model, Iter2, Icon_Column));
+               Set (Model, Iter, Icon_Name_Column,
+                    Get_String (Model, Iter2, Icon_Name_Column));
                Set (Model, Iter, Name_Column,
                     Get_String (Model, Iter2, Name_Column));
                Set (Model, Iter, Data_Column,
@@ -498,8 +496,7 @@ package body Buffer_Views is
                Set (Model, Iter, Name_Column, Untitled);
                Set (Model, Iter, Data_Column, Untitled);
             else
-               Set (Model, Iter, Icon_Column,
-                    GObject (Get_Icon (Child)));
+               Set (Model, Iter, Icon_Name_Column, Get_Icon_Name (Child));
                Set (Model, Iter, Name_Column, Name);
                Set (Model, Iter, Data_Column, Get_Title (Child));
             end if;
@@ -641,7 +638,7 @@ package body Buffer_Views is
       View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := Create_Tree_View
-        (Column_Types       => (Icon_Column => Gdk.Pixbuf.Get_Type,
+        (Column_Types       => (Icon_Name_Column => GType_Icon_Name_String,
                                 Name_Column => GType_String,
                                 Data_Column => GType_String),
          Column_Names       => (1 => null, 2 => null),
@@ -885,7 +882,7 @@ package body Buffer_Views is
         (Kernel, "Windows view close selected",
          new Close_Command,
          -"Close all windows currently selected in the Windows view",
-         Stock_Id => Stock_Close,
+         Icon_Name => "gps-close-symbolic",
          Category => -"Windows view");
 
       P := new Opened_Windows_Search;

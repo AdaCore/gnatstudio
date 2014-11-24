@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-package body GPS.Styles is
+with GNAT.Strings;    use GNAT.Strings;
 
-   use GNAT.Strings;
+package body GPS.Styles is
 
    --------------------
    -- Set_Foreground --
@@ -45,20 +45,18 @@ package body GPS.Styles is
       end if;
    end Set_Background;
 
-   ---------------------
-   -- Set_Editor_Icon --
-   ---------------------
+   --------------------------
+   -- Set_Editor_Icon_Name --
+   --------------------------
 
-   procedure Set_Editor_Icon
-     (Style : not null access Simple_Style_Record; Id : String) is
+   procedure Set_Editor_Icon_Name
+     (Style : not null access Simple_Style_Record; Name : String) is
    begin
       Free (Style.Editor_Icon_Name);
-      if Id /= "" then
-         Style.Editor_Icon_Name := new String'(Id);
-      else
-         Style.Editor_Icon_Name := null;
+      if Name /= "" then
+         Style.Editor_Icon_Name := new String'(Name);
       end if;
-   end Set_Editor_Icon;
+   end Set_Editor_Icon_Name;
 
    --------------------
    -- Get_Background --

@@ -1062,8 +1062,7 @@ package body Code_Analysis_Module is
       Fill_Iter
         (View.Model, Iter,
          Analysis.Projects,
-         Binary_Coverage_Mode,
-         View.Icons);
+         Binary_Coverage_Mode);
 
       --  Selection of the context caller:
 

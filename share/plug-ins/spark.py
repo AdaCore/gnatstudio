@@ -86,7 +86,7 @@ def _spawn_spark_tool(
 
     cmd = cmd_name + ' ' + sw
 
-    if input == None:
+    if input is None:
         input = ctx.file()
 
     if not isinstance(input, str):
@@ -389,7 +389,8 @@ def sum_file_current_line_has_vc(context):
         curs = editor.current_view().cursor()
         line = editor.get_chars(curs.beginning_of_line(),
                                 curs.end_of_line())
-        context.has_vc = re.search("\|   [SUEIXPVRCMF].   \|", line) != None
+        context.has_vc = re.search(
+            "\|   [SUEIXPVRCMF].   \|", line) is not None
         return context.has_vc
 
 
@@ -410,7 +411,7 @@ def sum_file_current_line_has_dpc(context):
         curs = editor.current_view().cursor()
         line = editor.get_chars(
             curs.beginning_of_line(), curs.end_of_line())
-        context.has_dpc = re.search("\|   .[SUDL]   \|", line) != None
+        context.has_dpc = re.search("\|   .[SUDL]   \|", line) is not None
         return context.has_dpc
 
 
@@ -1112,7 +1113,7 @@ xml_sparkclean = """<?xml version="1.0"?>
 
   <target model="sparkclean" category="SPARK" messages_category="SPARK"
           name="SPARKClean Custom">
-     <icon>gps-compute-xref</icon>
+     <iconname>gps-clean-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1127,7 +1128,7 @@ xml_sparkclean = """<?xml version="1.0"?>
 
   <target model="sparkclean" category="SPARK" messages_category="SPARK"
           name="SPARKClean All">
-     <icon>gps-compute-xref</icon>
+     <iconname>gps-clean-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1530,7 +1531,7 @@ b = """<?xml version="1.0"?>
         <arg>%F</arg>
      </command-line>
      <server>Tools_Server</server>
-     <icon>gps-syntax-check</icon>
+     <iconname>gps-syntax-check-symbolic</iconname>
      <switches command="">
      </switches>
   </target-model>
@@ -1570,14 +1571,14 @@ b = """<?xml version="1.0"?>
         <arg>%X</arg>
      </command-line>
      <server>Tools_Server</server>
-     <icon>gps-custom-build</icon>
+     <iconname>gps-custom-build-symbolic</iconname>
      <switches command="">
      </switches>
   </target-model>
 
   <target model="examiner" category="SPARK" messages_category="SPARK"
           name="Examine SPARK File">
-     <icon>gps-syntax-check</icon>
+     <iconname>gps-syntax-check-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1593,7 +1594,7 @@ b = """<?xml version="1.0"?>
 
   <target model="examiner" category="SPARK" messages_category="SPARK"
           name="Examine SPARK Meta File">
-     <icon>gps-build-all</icon>
+     <iconname>gps-build-all-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1609,7 +1610,7 @@ b = """<?xml version="1.0"?>
 
   <target model="spark" category="SPARK" messages_category="SPARK"
           name="SPARKMake">
-     <icon>gps-compute-xref</icon>
+     <iconname>gps-compute-xref-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1624,7 +1625,7 @@ b = """<?xml version="1.0"?>
 
   <target model="spark" category="SPARK" messages_category="SPARK"
           name="SPARKFormat">
-     <icon>gps-semantic-check</icon>
+     <iconname>gps-semantic-check-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1640,7 +1641,7 @@ b = """<?xml version="1.0"?>
 
   <target model="spark" category="SPARK" messages_category="SPARK"
           name="Simplifier">
-     <icon>gps-build-main</icon>
+     <iconname>gps-build-main-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1656,7 +1657,7 @@ b = """<?xml version="1.0"?>
 
   <target model="spark" category="SPARK" messages_category="SPARK"
           name="Riposte">
-     <icon>gps-build-main</icon>
+     <iconname>gps-build-main-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1672,7 +1673,7 @@ b = """<?xml version="1.0"?>
 
   <target model="spark" category="SPARK" messages_category="SPARK"
           name="SPARKSimp">
-     <icon>gps-build-main</icon>
+     <iconname>gps-build-main-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1686,7 +1687,7 @@ b = """<?xml version="1.0"?>
   </target>
 
   <target model="spark" category="SPARK" messages_category="SPARK" name="POGS">
-     <icon>gps-build-main</icon>
+     <iconname>gps-build-main-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1701,7 +1702,7 @@ b = """<?xml version="1.0"?>
 
   <target model="spark" category="SPARK" messages_category="SPARK"
           name="Victor">
-     <icon>gps-build-main</icon>
+     <iconname>gps-build-main-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>
@@ -1717,7 +1718,7 @@ b = """<?xml version="1.0"?>
 
   <target model="spark" category="SPARK" messages_category="SPARK"
           name="ZombieScope">
-     <icon>gps-build-main</icon>
+     <iconname>gps-build-main-symbolic</iconname>
      <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
      <in-menu>FALSE</in-menu>
      <read-only>TRUE</read-only>

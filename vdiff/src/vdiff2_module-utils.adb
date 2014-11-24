@@ -18,8 +18,6 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;
 
-with Gdk.Pixbuf;                        use Gdk.Pixbuf;
-
 with Gtk.Enums;                         use Gtk.Enums;
 
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
@@ -36,9 +34,7 @@ with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
-with Pixmaps_Vdiff2;                    use Pixmaps_Vdiff2;
 with String_Utils;                      use String_Utils;
---  with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
@@ -500,12 +496,8 @@ package body Vdiff2_Module.Utils is
       VStyle   : T_VStr;
       Action   : Handler_Action_Line := null)
    is
-      Cmd                 : Diff_Command_Line_Access;
-      Green_Button_Pixbuf : constant Gdk_Pixbuf :=
-                              Gdk_New_From_Xpm_Data (green_button_xpm);
-      Red_Button_Pixbuf   : constant Gdk_Pixbuf :=
-                              Gdk_New_From_Xpm_Data (red_button_xpm);
-      Line                : Natural := VRange (Pos).First - 1;
+      Cmd  : Diff_Command_Line_Access;
+      Line : Natural := VRange (Pos).First - 1;
 
    begin
       if VStyle (Pos).all /= Default_Style then
@@ -520,9 +512,11 @@ package body Vdiff2_Module.Utils is
          end if;
 
          if not Conflict then
-            Info (Pos)(Line).Image := Green_Button_Pixbuf;
+            Info (Pos)(Line).Image :=
+               new String'("gps-diff-noconflict-symbolic");
          else
-            Info (Pos)(Line).Image := Red_Button_Pixbuf;
+            Info (Pos)(Line).Image :=
+               new String'("gps-diff-conflict-symbolic");
          end if;
 
          Info (Pos)(Line).Associated_Command := Command_Access (Cmd);

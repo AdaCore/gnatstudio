@@ -271,7 +271,7 @@ xml_codepeer = """<?xml version="1.0"?>
           <arg>--codepeer</arg>
           <arg>%X</arg>
        </command-line>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="2" lines="3">
          <check label="Progress bar" switch="-d" column="1"
                 tip="Display a progress bar with information about how many
@@ -324,7 +324,7 @@ creating/updating the database" />
           <arg>-update-scil</arg>
           <arg>%X</arg>
        </command-line>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="3" lines="4">
          <spin label="Analysis level" switch="-level" min="0" max="4"
                default="3" separator=" " column="1"
@@ -375,7 +375,7 @@ many cores as available on the machine)." />
           <arg>-out</arg>
           <arg>codepeer.out</arg>
        </command-line>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s" columns="1" lines="2">
          <check label="CSV output" switch="-csv"
                column="1"
@@ -394,7 +394,7 @@ messages. Full: same as normal, plus run-time checks related messages">
 
     <target-model name="codepeer_bridge" category="">
        <description>Load CodePeer messages</description>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <command-line>
           <arg>gps_codepeer_bridge</arg>
        </command-line>
@@ -404,7 +404,7 @@ messages. Full: same as normal, plus run-time checks related messages">
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -421,7 +421,7 @@ messages. Full: same as normal, plus run-time checks related messages">
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
-       <icon>gps-clean</icon>
+       <iconname>gps-clean-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -438,7 +438,7 @@ messages. Full: same as normal, plus run-time checks related messages">
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -455,7 +455,7 @@ messages. Full: same as normal, plus run-time checks related messages">
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -472,7 +472,7 @@ messages. Full: same as normal, plus run-time checks related messages">
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
-       <icon>gps-compile</icon>
+       <iconname>gps-compile-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -494,7 +494,7 @@ messages. Full: same as normal, plus run-time checks related messages">
             name="Run CodePeer File By File" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -513,7 +513,7 @@ messages. Full: same as normal, plus run-time checks related messages">
             name="Regenerate CodePeer Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -528,7 +528,7 @@ messages. Full: same as normal, plus run-time checks related messages">
             name="Generate CSV Report" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
-       <icon>gps-compile</icon>
+       <iconname>gps-compile-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
@@ -546,7 +546,7 @@ messages. Full: same as normal, plus run-time checks related messages">
             name="CodePeer Bridge" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
-       <icon>gps-build-all</icon>
+       <iconname>gps-build-all-symbolic</iconname>
        <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>

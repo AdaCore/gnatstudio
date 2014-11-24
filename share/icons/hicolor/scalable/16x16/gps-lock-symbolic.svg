@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="16"
+   height="16"
+   viewBox="0 0 16 16"
+   id="Layer_1"
+   xml:space="preserve"><metadata
+     id="metadata3414"><rdf:RDF><cc:Work
+         rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+     id="defs3412" /><g
+     transform="matrix(1.4118644,0,0,1.4118644,-0.32033896,-0.47966101)"
+     id="g3401"><linearGradient
+       x1="187.99409"
+       y1="1061"
+       x2="187.99409"
+       y2="1071"
+       id="SVGID_1_"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-182,-1060)"><stop
+         id="stop3404"
+         style="stop-color:#000000;stop-opacity:0.69999999"
+         offset="0" /><stop
+         id="stop3406"
+         style="stop-color:#000000;stop-opacity:0.60000002"
+         offset="1" /></linearGradient><path
+       d="M 8,5 8,5 V 2.899 C 8,1.238 7.518,1 5.991,1 4.464,1 4,1.239 4,2.899 V 5 L 4,5 C 3,5 3,5 3,6 v 4 c 0,1 0,1 1,1 h 4 c 1,0 1,0 0.984,-1 V 6 C 8.984,5 9,5 8,5 z M 5,2 H 5.992 7 V 5 H 5 V 2 z m 0.992,0"
+       id="path3408"
+       style="fill:url(#SVGID_1_)" /></g></svg>

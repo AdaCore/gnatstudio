@@ -19,12 +19,14 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with Gdk;                      use Gdk;
 with Gdk.Cairo;                use Gdk.Cairo;
+with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.RGBA;                 use Gdk.RGBA;
 
 with Glib.Object;              use Glib.Object;
 
 with Gtk;                      use Gtk;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Icon_Theme;           use Gtk.Icon_Theme;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
@@ -66,6 +68,9 @@ package body Src_Editor_Buffer.Line_Information is
       --  highlighting was set one character back.
    end record;
    type Line_Info_Note is access all Line_Info_Note_Record'Class;
+
+   Default_Icon_Width : constant := 10;
+   --  Default width used to display icons in the sidebar of editors.
 
    procedure Remove_Line_Information_Column
      (Buffer : access Source_Buffer_Record'Class;
@@ -508,8 +513,10 @@ package body Src_Editor_Buffer.Line_Information is
          Set_Markup (Layout, String'(Data.Text.all));
          Get_Pixel_Size (Layout, Width, Height);
 
-      elsif Data.Image /= Null_Pixbuf then
-         Width := Get_Width (Data.Image);
+      elsif Data.Image /= null then
+         --  ??? We could compute the line height in the editor, and use this,
+         --  assuming that icons as square.
+         Width := Default_Icon_Width;
       end if;
 
       Get_Column_For_Identifier
@@ -1038,6 +1045,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       procedure Draw_Info (Starting_X : Gint) is
          Action : Line_Information_Record;
+         Pixbuf : Gdk_Pixbuf;
       begin
          Action := Get_Relevant_Action (Line_Info);
 
@@ -1050,16 +1058,21 @@ package body Src_Editor_Buffer.Line_Information is
             Show_Layout (Cr, Layout);
          end if;
 
-         if Action.Image /= Null_Pixbuf then
-            Save (Cr);
-            Translate
-              (Cr,
-               Gdouble (Starting_X),
-               Gdouble (Y_Pix_In_Window + (Line_Height -
-                   Get_Height (Action.Image)) / 2));
-            Set_Source_Pixbuf (Cr, Action.Image, 0.0, 0.0);
-            Paint (Cr);
-            Restore (Cr);
+         if Action.Image /= null then
+            Pixbuf := Gtk.Icon_Theme.Get_Default.Load_Icon
+               (Action.Image.all, Default_Icon_Width, 0, null);
+            if Pixbuf /= null then
+               Save (Cr);
+               Translate
+                 (Cr,
+                  Gdouble (Starting_X),
+                  Gdouble (Y_Pix_In_Window + (Line_Height -
+                      Get_Height (Pixbuf)) / 2));
+               Set_Source_Pixbuf (Cr, Pixbuf, 0.0, 0.0);
+               Paint (Cr);
+               Restore (Cr);
+               Unref (Pixbuf);
+            end if;
          end if;
       end Draw_Info;
 
@@ -1634,8 +1647,7 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;
       Command       : Command_Access;
-      Image         : Gdk_Pixbuf)
-   is
+      Icon_Name     : String) is
    begin
       Add_Side_Information
         (Buffer,
@@ -1645,7 +1657,8 @@ package body Src_Editor_Buffer.Line_Information is
          Line_Information_Array'(Integer (Editable_Line)
            => (Text => null,
                Tooltip_Text => null,
-               Image        => Image,
+               Image        =>
+                  (if Icon_Name = "" then null else new String'(Icon_Name)),
                Associated_Command => Command)),
          0);
    end Add_Block_Command;

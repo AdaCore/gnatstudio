@@ -27,6 +27,7 @@ package body GPS.Editors.Line_Information is
    begin
       Free (X.Text);
       Free (X.Tooltip_Text);
+      Free (X.Image);
 
       if X.Associated_Command /= null then
          Unref (X.Associated_Command);

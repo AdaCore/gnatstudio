@@ -312,7 +312,7 @@ package body Remote.Config_Dialog is
 
       Gtk_New (Widget.Add_Path_Button);
       Set_Name (Widget.Add_Path_Button, "add path button");
-      Gtk_New (Pix, Stock_Add, Icon_Size_Menu);
+      Gtk_New_From_Icon_Name (Pix, "gps-add-symbolic", Icon_Size_Menu);
       Add (Widget.Add_Path_Button, Pix);
       Attach (Widget.Table, Widget.Add_Path_Button, 3, 4, 1, 2, 0, 0);
 
@@ -427,7 +427,7 @@ package body Remote.Config_Dialog is
       Set_Tooltip_Text (Row.Local_Entry, -("Enter here the local path"));
 
       Gtk_New (Row.Local_Browse_Button);
-      Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
+      Gtk_New_From_Icon_Name (Pix, "gps-open-file-symbolic", Icon_Size_Menu);
       Add (Row.Local_Browse_Button, Pix);
       Set_Relief (Row.Local_Browse_Button, Relief_None);
       Set_Border_Width (Row.Local_Browse_Button, 0);
@@ -453,7 +453,7 @@ package body Remote.Config_Dialog is
       Set_Tooltip_Text (Row.Remote_Entry, -("Enter here the remote path"));
 
       Gtk_New (Row.Remote_Browse_Button);
-      Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
+      Gtk_New_From_Icon_Name (Pix, "gps-open-file-symbolic", Icon_Size_Menu);
       Add (Row.Remote_Browse_Button, Pix);
       Set_Relief (Row.Remote_Browse_Button, Relief_None);
       Set_Border_Width (Row.Remote_Browse_Button, 0);
@@ -501,7 +501,7 @@ package body Remote.Config_Dialog is
            "synchronized using the Remote View."));
 
       Gtk_New (Row.Remove_Button);
-      Gtk_New (Pix, Stock_Remove, Icon_Size_Menu);
+      Gtk_New_From_Icon_Name (Pix, "gps-remove-symbolic", Icon_Size_Menu);
       Add (Row.Remove_Button, Pix);
       Attach
         (Widget.Table, Row.Remove_Button, 3, 4, Row_Number, Row_Number + 1,

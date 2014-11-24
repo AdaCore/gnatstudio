@@ -28,7 +28,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Separator;             use Gtk.Separator;
 with Gtk.Size_Group;            use Gtk.Size_Group;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -240,9 +239,9 @@ package body Welcome is
       Gtk_New_Hseparator (Sep);
       Pack_End (Box, Sep, Expand => False, Padding => 5);
 
-      Stock_Button := Add_Button (Screen, Stock_Ok, Gtk_Response_OK);
+      Stock_Button := Add_Button (Screen, -"OK", Gtk_Response_OK);
       Grab_Default (Stock_Button);
-      Stock_Button := Add_Button (Screen, Stock_Quit, Gtk_Response_Close);
+      Stock_Button := Add_Button (Screen, -"Quit", Gtk_Response_Close);
    end Gtk_New;
 
    -----------------
@@ -307,7 +306,7 @@ package body Welcome is
                   Cancelled : Boolean;
                begin
                   Project_Templates.GPS.Launch_Dialog
-                    (Screen.Kernel, Gtk_Widget (Screen), Cancelled);
+                    (Screen.Kernel, Cancelled);
 
                   if Cancelled then
                      Show_All (Screen);

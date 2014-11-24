@@ -217,11 +217,13 @@ package body Code_Coverage.Gcov is
       if Bin_Mode then
          case Coverage.Coverage is
          when 0 =>
-            Result.Image := Code_Analysis_GUI.Uncovered_Line_Pixbuf;
+            Result.Image :=
+               new String'(Code_Analysis_GUI.Uncovered_Line_Pixbuf);
             Result.Tooltip_Text := new String'
               (-"The code for this line has not been executed.");
          when others =>
-            Result.Image := Code_Analysis_GUI.Covered_Line_Pixbuf;
+            Result.Image :=
+               new String'(Code_Analysis_GUI.Covered_Line_Pixbuf);
             Result.Tooltip_Text := new String'
               (-"The code for this line has been executed.");
          end case;

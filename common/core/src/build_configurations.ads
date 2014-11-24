@@ -105,7 +105,7 @@ package Build_Configurations is
    --                     to be launched through $SHELL -c "command line"
    --     COMMAND_N are the various commands supported by the target_model
    --     DEFAULT_COMMAND_LINE is the initial command line
-   --     ICON         (optional) represents a stock icon to serve as default
+   --     ICON         (optional) represents a icon name to serve as default
    --                     for targets of this model
    --     COMMAND      (optional) is a string containing the default executable
    --     ARG1..ARGN   (optional) default arguments
@@ -292,8 +292,8 @@ package Build_Configurations is
       Key             : Unbounded_String;
       --  The key to which the target is bound
 
-      Icon     : Unbounded_String;
-      --  The string contains a stock identifier
+      Icon_Name       : Unbounded_String;
+      --  The string contains an icon name, from the icon theme
 
       Parent_Menu_Name : Unbounded_String;
       --  The name of the parent menu.
@@ -371,10 +371,10 @@ package Build_Configurations is
      (Target : Target_Access) return String;
    --  Return the messages category
 
-   function Get_Icon (Target : Target_Access) return String;
-   --  Return the stock-id corresponding to the icon for target
+   function Get_Icon_Name (Target : Target_Access) return String;
+   --  Return the icon name corresponding to the icon for target
 
-   procedure Set_Icon (Target : Target_Access; Icon : String);
+   procedure Set_Icon_Name (Target : Target_Access; Icon : String);
    --  Change target icon
 
    function Get_Server (Target : Target_Access) return Server_Type;
@@ -565,7 +565,7 @@ package Build_Configurations is
    function Is_Run (Target_Model : Target_Model_Access) return Boolean;
    --  return target model Is-Run field
 
-   function Get_Icon (Target_Model : Target_Model_Access) return String;
+   function Get_Icon_Name (Target_Model : Target_Model_Access) return String;
    --  return target model Icon field
 
    function Get_Switches (Target_Model : Target_Model_Access)

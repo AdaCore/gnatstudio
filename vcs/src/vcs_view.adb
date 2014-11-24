@@ -20,7 +20,6 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 with Gdk;                       use Gdk;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;
 with Gdk.Window;                use Gdk.Window;
 
@@ -314,7 +313,6 @@ package body VCS_View is
       Line_Info : Line_Record;
       Success   : out Boolean)
    is
-      Pixbuf : Gdk_Pixbuf;
    begin
       if Line_Info.Status.File = No_File then
          Success := False;
@@ -362,22 +360,12 @@ package body VCS_View is
               Line_Info.Status.Repository_Revision.all);
       end if;
 
-      if Line_Info.Status.Status.Stock_Id /= null then
-         Pixbuf := Render_Icon
-           (Explorer,
-            Line_Info.Status.Status.Stock_Id.all,
-            Gtk.Enums.Icon_Size_Small_Toolbar);
-      end if;
-
-      if Pixbuf /= null then
-         Set (Explorer.Model, Iter, Status_Pixbuf_Column, GObject (Pixbuf));
+      if Line_Info.Status.Status.Icon_Name /= null then
+         Set (Explorer.Model, Iter, Status_Icon_Name_Column,
+              Line_Info.Status.Status.Icon_Name.all);
       else
-         Pixbuf := Render_Icon
-           (Explorer,
-            VCS.Unknown.Stock_Id.all,
-            Gtk.Enums.Icon_Size_Menu);
-
-         Set (Explorer.Model, Iter, Status_Pixbuf_Column, GObject (Pixbuf));
+         Set (Explorer.Model, Iter, Status_Icon_Name_Column,
+              VCS.Unknown.Icon_Name.all);
       end if;
 
       if Line_Info.Status.Status.Label /= null then
