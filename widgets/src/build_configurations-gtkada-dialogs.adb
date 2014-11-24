@@ -162,7 +162,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
       Gtk_New (Icon_Renderer);
       Pack_Start (Col, Icon_Renderer, False);
-      Add_Attribute (Col, Icon_Renderer, "stock-id", Icon_Column);
+      Add_Attribute (Col, Icon_Renderer, "icon-name", Icon_Column);
 
       Gtk_New (Text_Renderer);
       Pack_Start (Col, Text_Renderer, False);

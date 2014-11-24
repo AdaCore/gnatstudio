@@ -29,29 +29,30 @@ package body Language.Icons is
       function Get_Name (Suffix : String) return String;
       function Get_Name (Suffix : String) return String is
       begin
+         --  Do not use -symbolic icons, since we want to preserve the colors
          case Category is
             when Cat_Unknown | Cat_With
                | Cat_Use   | Cat_Include
                | Construct_Category | Cat_Exception_Handler
                | Cat_Pragma | Cat_Aspect =>
-               return "gps-entity-generic" & Suffix;
+               return "gps-emblem-entity-generic" & Suffix;
 
             when Cat_Package | Cat_Namespace | Cat_Custom =>
-               return "gps-entity-package" & Suffix;
+               return "gps-emblem-entity-package" & Suffix;
 
             when Cat_Task | Cat_Procedure   | Cat_Function
                | Cat_Method    | Cat_Constructor | Cat_Destructor
                | Cat_Protected | Cat_Entry =>
-               return "gps-entity-subprogram" & Suffix;
+               return "gps-emblem-entity-subprogram" & Suffix;
 
             when Cat_Class | Cat_Structure | Cat_Union
                | Cat_Type  | Cat_Subtype | Cat_Case_Inside_Record =>
-               return "gps-entity-type" & Suffix;
+               return "gps-emblem-entity-type" & Suffix;
 
             when Cat_Variable    | Cat_Local_Variable
                | Cat_Parameter | Cat_Discriminant | Cat_Field
                | Cat_Literal   | Cat_Representation_Clause =>
-               return "gps-entity-variable" & Suffix;
+               return "gps-emblem-entity-variable" & Suffix;
          end case;
       end Get_Name;
 

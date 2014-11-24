@@ -59,6 +59,12 @@ with String_List_Utils;
 
 package GUI_Utils is
 
+   Icon_Size_Speedbar : constant Glib.Gint := 9;
+   Icon_Size_Menus    : constant Glib.Gint := 16;
+   Icon_Size_Buttons  : constant Glib.Gint := 16;
+   --  Sizes corresponding to those defined in Gtk.Enums, but suitable for
+   --  use with named icons (Gtk.Icon_Theme)
+
    function Query_User
      (Parent        : Gtk.Window.Gtk_Window;
       Prompt        : String;
@@ -104,10 +110,10 @@ package GUI_Utils is
    -- Buttons --
    -------------
 
-   procedure Gtk_New_From_Stock_And_Label
-     (Button   : out Gtk.Button.Gtk_Button;
-      Stock_Id : String;
-      Label    : String);
+   procedure Gtk_New_From_Name_And_Label
+     (Button    : out Gtk.Button.Gtk_Button;
+      Icon_Name : String;
+      Label     : String);
    --  Create a new button, that uses the image from a stock icon, but with
    --  a specific text.
 
@@ -284,6 +290,10 @@ package GUI_Utils is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);
    type Editable_Callback_Array is array (Natural range <>) of Editable_Cb;
+
+   GType_Icon_Name_String : constant GType := GType'Last - GType_String;
+   --  Special value for use in Column_Types (and only there!) to indicate
+   --  that the column contains the name of an icon
 
    function Create_Tree_View
      (Column_Types       : Glib.GType_Array;

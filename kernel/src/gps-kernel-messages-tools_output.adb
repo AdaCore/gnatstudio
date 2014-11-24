@@ -542,8 +542,8 @@ package body GPS.Kernel.Messages.Tools_Output is
                Msg : constant String := Get_Message (Last);
             begin
                Action := new Line_Information_Record;
-               if C /= null then
-                  Action.Image := Get_Editor_Icon (C);
+               if C /= null and then Get_Editor_Icon (C) /= "" then
+                  Action.Image := new String'(Get_Editor_Icon (C));
                end if;
                Action.Tooltip_Text := new String'(Msg);
 

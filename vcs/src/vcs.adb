@@ -122,14 +122,14 @@ package body VCS is
       use type GNAT.Strings.String_Access;
    begin
       return (S1.Label = null and then S2.Label = null
-              and then S2.Stock_Id = null and then S2.Stock_Id = null)
+              and then S2.Icon_Name = null and then S2.Icon_Name = null)
         or else
           (S1.Label /= null
            and then S2.Label /= null
            and then S1.Label.all = S2.Label.all
-           and then S1.Stock_Id /= null
-           and then S2.Stock_Id /= null
-           and then S1.Stock_Id.all = S2.Stock_Id.all);
+           and then S1.Icon_Name /= null
+           and then S2.Icon_Name /= null
+           and then S1.Icon_Name.all = S2.Icon_Name.all);
    end "=";
 
    ---------------------
@@ -237,7 +237,7 @@ package body VCS is
    procedure Free (X : in out File_Status) is
    begin
       GNAT.Strings.Free (X.Label);
-      GNAT.Strings.Free (X.Stock_Id);
+      GNAT.Strings.Free (X.Icon_Name);
    end Free;
 
    ---------------------------
@@ -281,7 +281,7 @@ package body VCS is
       function Status_For (Status : File_Status) return File_Status is
       begin
          for K in Ref_Status'Range loop
-            if Ref_Status (K).Stock_Id.all = Status.Stock_Id.all then
+            if Ref_Status (K).Icon_Name.all = Status.Icon_Name.all then
                return Ref_Status (K);
             end if;
          end loop;
@@ -315,19 +315,19 @@ package body VCS is
 
    function Get_File_Status_Id (Status : File_Status) return Status_Id is
    begin
-      if Status.Stock_Id.all = Up_To_Date_Stock then
+      if Status.Icon_Name.all = Up_To_Date_Stock then
          return Up_To_Date_Id;
-      elsif Status.Stock_Id.all = Added_Stock then
+      elsif Status.Icon_Name.all = Added_Stock then
          return Added_Id;
-      elsif Status.Stock_Id.all = Removed_Stock then
+      elsif Status.Icon_Name.all = Removed_Stock then
          return Removed_Id;
-      elsif Status.Stock_Id.all = Modified_Stock then
+      elsif Status.Icon_Name.all = Modified_Stock then
          return Modified_Id;
-      elsif Status.Stock_Id.all = Needs_Merge_Stock then
+      elsif Status.Icon_Name.all = Needs_Merge_Stock then
          return Needs_Merge_Id;
-      elsif Status.Stock_Id.all = Needs_Update_Stock then
+      elsif Status.Icon_Name.all = Needs_Update_Stock then
          return Needs_Update_Id;
-      elsif Status.Stock_Id.all = Not_Registered_Stock then
+      elsif Status.Icon_Name.all = Not_Registered_Stock then
          return Not_Registered_Id;
       else
          return Unknown_Id;

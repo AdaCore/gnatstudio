@@ -111,12 +111,12 @@ def make_action_from_workflow(name, category="General",
     return wrap
 
 
-def make_button_for_action(button_name, button_id):
+def make_button_for_action(button_name, icon_name):
     """
        Decorator that wraps an action and make a button for it on the toolbar
 
-       button_name: name of the button
-       button_id: GPS stock-id of the button
+       :param button_name: name of the button
+       :param icon_name: the icon to use.
 
        The input of the decorator = expecting argument for returning wrap
        = an action
@@ -127,16 +127,15 @@ def make_button_for_action(button_name, button_id):
             action.execute_if_possible()
 
         # create the button and append it to the toolbar
-        b = GPS.Button(button_id, button_name, on_click)
+        b = GPS.Button(icon_name, button_name, on_click)
         GPS.Toolbar().append(b)
-
         return action
 
     return wrap
 
 
 def create_target_from_workflow(target_name, workflow_name, workflow,
-                                icon_name="gtk-print"):
+                                icon_name="gps-print-symbolic"):
     """
     Create a Target under the category Workflow from a given workflow.
     Executing this target runs the workflow.
@@ -152,7 +151,7 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
     xml1 = """
 <target model="python" category="Workflow" name="%s">
 <in-toolbar>TRUE</in-toolbar>
-<icon>%s</icon>
+<iconname>%s</iconname>
 <launch-mode>MANUALLY</launch-mode>
 <read-only>TRUE</read-only>
 <target-type>main</target-type>
@@ -164,7 +163,7 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
     <arg>%T</arg>
     <arg>")</arg>
 </command-line>
-</target>
-    """
-    XML = xml1+xml2
+</target>"""
+
+    XML = xml1 + xml2
     GPS.parse_xml(XML)

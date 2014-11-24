@@ -76,7 +76,6 @@ package body Project_Templates.GPS is
 
    procedure Launch_Dialog
      (Kernel    : access Kernel_Handle_Record'Class;
-      Widget    : Gtk_Widget;
       Cancelled : out Boolean)
    is
       use Virtual_File_List;
@@ -115,10 +114,7 @@ package body Project_Templates.GPS is
 
       --  Launch the GUI
 
-      Install_Template
-        (Templates,
-         Render_Icon (Widget, "adacore-logo", Icon_Size_Large_Toolbar),
-         Chosen, Installed, Dir, Project, E);
+      Install_Template (Templates, Chosen, Installed, Dir, Project, E);
 
       if Installed then
          Cancelled := False;
@@ -185,7 +181,7 @@ package body Project_Templates.GPS is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       pragma Unreferenced (Command, Cancelled);
    begin
-      Launch_Dialog (Kernel, Gtk_Widget (Kernel.Get_Main_Window), Cancelled);
+      Launch_Dialog (Kernel, Cancelled);
       return Commands.Success;
    end Execute;
 

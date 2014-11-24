@@ -130,7 +130,6 @@ package body GPS.Kernel.Modules.UI is
          Kernel                : Kernel_Handle;
          Name                  : GNAT.Strings.String_Access;
          Label                 : Contextual_Menu_Label_Creator;
-         Pix                   : GNAT.Strings.String_Access;
          Next                  : Contextual_Menu_Access;
          Group                 : Integer;
          Visible               : Boolean := True;
@@ -385,7 +384,7 @@ package body GPS.Kernel.Modules.UI is
    procedure Gtk_New
      (Button   : out Action_Tool_Button;
       Kernel   : not null access Kernel_Handle_Record'Class;
-      Stock_Id : String := "";
+      Icon_Name : String := "";
       Action   : String;
       Optional : Boolean := False;
       Hide     : Boolean := False);
@@ -874,8 +873,6 @@ package body GPS.Kernel.Modules.UI is
          Full_Name : out GNAT.Strings.String_Access)
       is
          use type GNAT.Strings.String_Access;
-         Image : Gtk_Image_Menu_Item;
-         Pix   : Gtk_Image;
          Menu  : Gtk_Menu;
          Children : Widget_List.Glist;
       begin
@@ -934,17 +931,7 @@ package body GPS.Kernel.Modules.UI is
 
             when Type_Action | Type_Command =>
                if Full_Name.all /= "" then
-                  if C.Pix = null then
-                     Gtk_New (Item, Base_Menu_Name (Full_Name.all));
-                  else
-                     Gtk_New (Image, Base_Menu_Name (Full_Name.all));
-                     Gtk_New (Pix,
-                              Stock_Id => C.Pix.all,
-                              Size     => Icon_Size_Menu);
-                     Set_Image (Image, Pix);
-                     Item := Gtk_Menu_Item (Image);
-                  end if;
-
+                  Gtk_New (Item, Base_Menu_Name (Full_Name.all));
                   Action_Callback.Connect
                     (Item, Gtk.Menu_Item.Signal_Activate,
                      Contextual_Action'Access,
@@ -1434,15 +1421,17 @@ package body GPS.Kernel.Modules.UI is
 
             --  Update the image if the action has one
 
-            if Action.Stock_Id /= null then
+            if Action.Icon_Name /= null then
                if Self.all in Action_Menu_Item_Record'Class then
-                  Gtk_New (Pix, Action.Stock_Id.all, Icon_Size_Menu);
+                  Gtk_New_From_Icon_Name
+                     (Pix, Action.Icon_Name.all, Icon_Size_Menu);
                   Action_Menu_Item (Self).Set_Image (Pix);
                   Pix.Show;
                elsif Self.all in Action_Tool_Button_Record'Class
                  and then not Action_Tool_Button (Self).Forced_Stock
                then
-                  Action_Tool_Button (Self).Set_Stock_Id (Action.Stock_Id.all);
+                  Action_Tool_Button (Self).Set_Icon_Name
+                     (Action.Icon_Name.all);
                end if;
             end if;
 
@@ -1811,10 +1800,10 @@ package body GPS.Kernel.Modules.UI is
 
                Register_Button
                  (Kernel,
-                  Action   => Get_Attribute (N, "action"),
-                  Stock_Id => Get_Attribute (N, "stock"),
-                  Toolbar  => Toolbar,
-                  Hide     => Hide);
+                  Action    => Get_Attribute (N, "action"),
+                  Icon_Name => Get_Attribute (N, "stock"),
+                  Toolbar   => Toolbar,
+                  Hide      => Hide);
 
             elsif Node_Name (N) = "separator" then
                Gtk_New (Sep);
@@ -1869,16 +1858,16 @@ package body GPS.Kernel.Modules.UI is
    ---------------------
 
    procedure Register_Button
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Action   : String;
-      Stock_Id : String := "";
-      Toolbar  : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
-      Position : Glib.Gint := -1;
-      Hide     : Boolean := False)
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Action    : String;
+      Icon_Name : String := "";
+      Toolbar   : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
+      Position  : Glib.Gint := -1;
+      Hide      : Boolean := False)
    is
       Button : Action_Tool_Button;
    begin
-      Gtk_New (Button, Kernel, Stock_Id => Stock_Id, Action => Action,
+      Gtk_New (Button, Kernel, Icon_Name => Icon_Name, Action => Action,
                Hide => Hide);
 
       if Toolbar = null then
@@ -1969,7 +1958,6 @@ package body GPS.Kernel.Modules.UI is
          --  Now Menu_Ref.Menu is not pointed anymore, free associated memory
 
          GNAT.OS_Lib.Free (Menu_Ref.Menu.Name);
-         GNAT.OS_Lib.Free (Menu_Ref.Menu.Pix);
          Unchecked_Free (Menu_Ref.Menu);
 
       else
@@ -2105,7 +2093,6 @@ package body GPS.Kernel.Modules.UI is
             Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => Filter,
-            Pix                   => null,
             Next                  => null,
             Ref_Item              => null,
             Group                 => Group,
@@ -2120,7 +2107,6 @@ package body GPS.Kernel.Modules.UI is
             Menu_Type             => Type_Action,
             Name                  => new String'(Name),
             Action                => Action,
-            Pix                   => null,
             Next                  => null,
             Group                 => Group,
             Visible               => True,
@@ -2142,25 +2128,18 @@ package body GPS.Kernel.Modules.UI is
       Name        : String;
       Action      : Action_Record_Access;
       Label       : access Contextual_Menu_Label_Creator_Record'Class;
-      Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Group       : Integer := Default_Contextual_Group)
    is
-      Pix  : GNAT.Strings.String_Access;
       Menu : Contextual_Menu_Access;
    begin
-      if Stock_Image /= "" then
-         Pix := new String'(Stock_Image);
-      end if;
-
       if Action = null then
          Menu := new Contextual_Menu_Record'
            (Kernel                => Kernel_Handle (Kernel),
             Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => null,
-            Pix                   => Pix,
             Next                  => null,
             Group                 => Group,
             Ref_Item              => null,
@@ -2175,7 +2154,6 @@ package body GPS.Kernel.Modules.UI is
             Menu_Type             => Type_Action,
             Name                  => new String'(Name),
             Action                => Action,
-            Pix                   => Pix,
             Next                  => null,
             Group                 => Group,
             Visible               => True,
@@ -2199,25 +2177,18 @@ package body GPS.Kernel.Modules.UI is
       Filter            : access Action_Filter_Record'Class := null;
       Enable_Filter     : access Action_Filter_Record'Class := null;
       Label             : access Contextual_Menu_Label_Creator_Record'Class;
-      Stock_Image       : String := "";
       Ref_Item          : String := "";
       Add_Before        : Boolean := True;
       Group             : Integer := Default_Contextual_Group)
    is
-      Pix  : GNAT.Strings.String_Access;
       Menu : Contextual_Menu_Access;
    begin
-      if Stock_Image /= "" then
-         Pix := new String'(Stock_Image);
-      end if;
-
       if Action = null then
          Menu := new Contextual_Menu_Record'
            (Kernel                => Kernel_Handle (Kernel),
             Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => Filter,
-            Pix                   => Pix,
             Next                  => null,
             Ref_Item              => null,
             Group                 => Group,
@@ -2234,7 +2205,6 @@ package body GPS.Kernel.Modules.UI is
             Command               => Action,
             Filter                => Filter,
             Enable_Filter         => Enable_Filter,
-            Pix                   => Pix,
             Next                  => null,
             Group                 => Group,
             Visible               => True,
@@ -2255,19 +2225,16 @@ package body GPS.Kernel.Modules.UI is
    procedure Register_Contextual_Menu
      (Kernel            : access Kernel_Handle_Record'Class;
       Name              : String;
-      Action            : Commands.Interactive.Interactive_Command_Access :=
-                            null;
+      Action         : Commands.Interactive.Interactive_Command_Access := null;
       Filter            : access Action_Filter_Record'Class := null;
       Enable_Filter     : access Action_Filter_Record'Class := null;
       Label             : String := "";
       Custom            : Custom_Expansion := null;
-      Stock_Image       : String := "";
       Ref_Item          : String := "";
       Add_Before        : Boolean := True;
       Group             : Integer := Default_Contextual_Group)
    is
       T    : Contextual_Label_Param;
-      Pix  : GNAT.Strings.String_Access;
       Menu : Contextual_Menu_Access;
    begin
       if Label /= "" then
@@ -2277,17 +2244,12 @@ package body GPS.Kernel.Modules.UI is
          T.Filter := Create_Filter (Label);
       end if;
 
-      if Stock_Image /= "" then
-         Pix := new String'(Stock_Image);
-      end if;
-
       if Action = null then
          Menu := new Contextual_Menu_Record'
            (Kernel                => Kernel_Handle (Kernel),
             Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => Filter,
-            Pix                   => Pix,
             Next                  => null,
             Ref_Item              => null,
             Visible               => True,
@@ -2304,7 +2266,6 @@ package body GPS.Kernel.Modules.UI is
             Command               => Action,
             Filter                => Filter,
             Enable_Filter         => Enable_Filter,
-            Pix                   => Pix,
             Next                  => null,
             Visible               => True,
             Group                 => Group,
@@ -2430,7 +2391,6 @@ package body GPS.Kernel.Modules.UI is
             Name                  => new String'(Name),
             Submenu_Filter        => Filter,
             Submenu_Enable        => Enable_Filter,
-            Pix                   => null,
             Next                  => null,
             Visible               => True,
             Filter_Matched        => False,
@@ -2462,7 +2422,7 @@ package body GPS.Kernel.Modules.UI is
    procedure Gtk_New
      (Button   : out Action_Tool_Button;
       Kernel   : not null access Kernel_Handle_Record'Class;
-      Stock_Id : String := "";
+      Icon_Name : String := "";
       Action   : String;
       Optional : Boolean := False;
       Hide     : Boolean := False)
@@ -2471,17 +2431,16 @@ package body GPS.Kernel.Modules.UI is
    begin
       --  ??? Should automatically grey out when the context does not match.
       Button := new Action_Tool_Button_Record;
-      Button.Forced_Stock := Stock_Id /= "";
+      Button.Forced_Stock := Icon_Name /= "";
       Button.Data := (Kernel    => Kernel,
                       Optional  => Optional,
                       Hide      => Hide,
                       Action    => new String'(Action),
                       Looked_Up => null);
 
-      if Stock_Id /= "" then
-         Initialize_From_Stock (Button, Stock_Id);
-      else
-         Initialize (Button, Label => Action);
+      Gtk.Tool_Button.Initialize (Button, Label => Action);
+      if Icon_Name /= "" then
+         Button.Set_Icon_Name (Icon_Name);
       end if;
 
       Get_Style_Context (Button).Add_Class ("gpsaction");
@@ -2730,12 +2689,12 @@ package body GPS.Kernel.Modules.UI is
                   --  when the actual stock was not defined: in this case,
                   --  force a refresh.
                   if Available
-                    and then Action.Stock_Id /= null
+                    and then Action.Icon_Name /= null
                     and then A.Proxy.all in Action_Tool_Button_Record'Class
                     and then not Action_Tool_Button (A.Proxy).Forced_Stock
                   then
-                     Action_Tool_Button (A.Proxy).Set_Stock_Id
-                       (Action.Stock_Id.all);
+                     Action_Tool_Button (A.Proxy).Set_Icon_Name
+                        (Action.Icon_Name.all);
                   end if;
                end if;
             end if;

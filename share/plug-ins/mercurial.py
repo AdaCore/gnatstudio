@@ -241,14 +241,14 @@ MERCURIAL_CONFIG = u'''<?xml version="1.0"?>
       <history_revision     action="generic_hg_history_rev"/>
       <revision             action="generic_hg_revision"/>
 
-      <status label="Up to date" stock="gps-vcs-up-to-date" />
-      <status label="Locally modified" stock="gps-vcs-modified" />
-      <status label="Property modified" stock="gps-vcs-modified" />
-      <status label="Needs merge" stock="gps-vcs-needs-merge" />
-      <status label="Needs update" stock="gps-vcs-needs-update" />
-      <status label="Contains merge conflicts" stock="gps-vcs-has-conflicts" />
-      <status label="Removed" stock="gps-vcs-removed" />
-      <status label="Added" stock="gps-vcs-added" />
+      <status label="Up to date" stock="gps-emblem-vcs-up-to-date" />
+      <status label="Locally modified" stock="gps-emblem-vcs-modified" />
+      <status label="Property modified" stock="gps-emblem-vcs-modified" />
+      <status label="Needs merge" stock="gps-emblem-vcs-needs-merge" />
+      <status label="Needs update" stock="gps-emblem-vcs-needs-update" />
+      <status label="Contains merge conflicts" stock="gps-emblem-vcs-has-conflicts" />
+      <status label="Removed" stock="gps-emblem-vcs-removed" />
+      <status label="Added" stock="gps-emblem-vcs-added" />
 
       <status_parser>
          <regexp>(^|\\n)(.)( |\\t)([^\\\\/\\n]*[/|\\\\])*([^\\\\ \\n]+)</regexp>

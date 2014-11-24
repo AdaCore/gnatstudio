@@ -63,47 +63,6 @@ class EditorBuffer(object):
 
 
 @extend_gps
-class Icon(object):
-
-    def __init__(self, icon_id, label, path, alt_menu=None,
-                 alt_small_toolbar=None, alt_large_toolbar=None,
-                 alt_local_toolbar=None, alt_button=None, alt_dnd=None,
-                 alt_dialog=None):
-        """
-        :param string icon_id: The id of the icon
-        :param string label: The label of the icon
-        :param string path: The path of the default icon file
-        :param string alt_menu: The path for the alternate menu icon file,
-            typically in a 16x16 format.
-        :param string alt_small_toolbar: The path for the alternate small
-            toolbar icon file, typically in a 18x18 format.
-        :param string alt_large_toolbar: The path for the alternate large
-            toolbar icon file, typically in a 24x24 format.
-        :param string alt_local_toolbar: The path for the alternate local
-            toolbar icon file, typically in a 12x12 format.
-        :param string alt_button: The path for the alternate button icon
-            file, typically in a 20x20 format.
-        :param string alt_dnd: The path for the alternate drag&drop
-            operation icon file, typically in a 32x32 format.
-        :param string alt_dialog: The path for the main image in a dialog,
-            typically 48x48 pixels.
-        """
-
-        alts = [(alt_menu, "Icon_Size_Menu"),
-                (alt_small_toolbar, "Icon_Size_Small_Toolbar"),
-                (alt_large_toolbar, "Icon_Size_Large_Toolbar"),
-                (alt_local_toolbar, "Icon_Size_Local_Toolbar"),
-                (alt_button, "Icon_Size_Button"),
-                (alt_dnd, "Icon_Size_Dnd"),
-                (alt_dialog, "Icon_Size_Dialog")]
-
-        x = X("icon", id=icon_id, file=path, label=label)
-        self.x = x.children(X("alternate", file=a, size=s) for a, s in alts
-                            if a is not None)
-        GPS.parse_xml(X("GPS", X("stock", self.x)).with_header())
-
-
-@extend_gps
 class Language(object):
 
     @override_gps_method

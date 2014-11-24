@@ -76,67 +76,60 @@ package body Project_Explorers_Common is
    is
    begin
       case Node is
-         when Project_Node =>
+         when Project_Node | Extends_Project_Node =>
             if Expanded then
-               return "gps-project-open";
+               return "gps-emblem-project-open";
             else
-               return "gps-project-closed";
+               return "gps-emblem-project-closed";
             end if;
 
          when Root_Project_Node =>
             if Expanded then
-               return "gps-project-root-open";
+               return "gps-emblem-project-root-open";
             else
-               return "gps-project-root-closed";
+               return "gps-emblem-project-root-closed";
             end if;
 
          when Runtime_Node =>
             if Expanded then
-               return "gps-project-runtime-open";
+               return "gps-emblem-project-runtime-open";
             else
-               return "gps-project-runtime-closed";
+               return "gps-emblem-project-runtime-closed";
             end if;
 
          when Modified_Project_Node =>
             if Expanded then
-               return "gps-project-modified-open";
+               return "gps-emblem-project-modified-open";
             else
-               return "gps-project-modified-closed";
-            end if;
-
-         when Extends_Project_Node =>
-            if Expanded then
-               return "gps-project-open";
-            else
-               return "gps-project-closed";
+               return "gps-emblem-project-modified-closed";
             end if;
 
          when Directory_Node =>
             if Expanded then
-               return "gps-folder-open";
+               return "gps-emblem-directory-open";
             else
-               return "gps-folder-closed";
+               return "gps-emblem-directory-closed";
             end if;
 
          when Obj_Directory_Node =>
             if Expanded then
-               return "gps-folder-obj-open";
+               return "gps-emblem-objdir-open";
             else
-               return "gps-folder-obj-closed";
+               return "gps-emblem-objdir-closed";
             end if;
 
          when Exec_Directory_Node =>
             if Expanded then
-               return "gps-folder-exec-open";
+               return "gps-emblem-execdir-open";
             else
-               return "gps-folder-exec-closed";
+               return "gps-emblem-execdir-closed";
             end if;
 
          when File_Node =>
-            return "gps-file";
+            return "gps-emblem-file-unmodified";
 
          when Category_Node =>
-            return "gps-box";
+            return "gps-emblem-category";
 
          when Dummy_Node | Entity_Node =>
             return "";

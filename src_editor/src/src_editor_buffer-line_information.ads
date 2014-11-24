@@ -19,13 +19,9 @@
 --  such as information added to the sides of lines, or VCS information.
 
 with Cairo;         use Cairo;
-
 with Gdk.RGBA;
-with Gdk.Pixbuf;    use Gdk.Pixbuf;
-
 with Gtk.Text_View; use Gtk.Text_View;
 with Gtk.Widget;    use Gtk.Widget;
-
 with Pango.Layout;  use Pango.Layout;
 
 package Src_Editor_Buffer.Line_Information is
@@ -184,7 +180,7 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer        : access Source_Buffer_Record'Class;
       Editable_Line : Editable_Line_Type;
       Command       : Command_Access;
-      Image         : Gdk_Pixbuf);
+      Icon_Name     : String);
    --  Add a command in the block column information
    --  If Command is null, remove the previous messages rather than adding one.
 

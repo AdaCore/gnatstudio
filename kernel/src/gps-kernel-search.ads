@@ -88,7 +88,7 @@ package GPS.Kernel.Search is
    procedure Register_Provider_And_Action
       (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
        Provider   : not null access Kernel_Search_Provider'Class;
-       Stock_Id   : String := "");
+       Icon_Name  : String := "");
    --  Register the provider (and sets its Kernel field).
    --  Creates an action for it so that users can do key bindings.
 

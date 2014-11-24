@@ -39,11 +39,11 @@ with Gtk.Box;                           use Gtk.Box;
 with Gtk.Check_Menu_Item;               use Gtk.Check_Menu_Item;
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.Handlers;                      use Gtk.Handlers;
+with Gtk.Image;                         use Gtk.Image;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Menu_Tool_Button;              use Gtk.Menu_Tool_Button;
 with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
-with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Tool_Button;                   use Gtk.Tool_Button;
 with Gtk.Widget;                        use Gtk.Widget;
@@ -412,6 +412,7 @@ package body Browsers.Canvas is
       Zooms_Menu : Gtk_Menu;
       Export_Menu  : Gtk_Menu;
       Mitem      : Gtk_Menu_Item;
+      Image      : Gtk_Image;
    begin
       Gtk_New (Zooms_Menu);
 
@@ -427,7 +428,9 @@ package body Browsers.Canvas is
              Zoom    => Zoom_Levels (J)));
       end loop;
 
-      Gtk_New_From_Stock (Menu, Stock_Zoom_100);
+      Gtk_New_From_Icon_Name
+         (Image, "gps-zoom-100-symbolic", Icon_Size_Local_Toolbar);
+      Gtk.Menu_Tool_Button.Gtk_New (Menu, Gtk_Widget (Image), "100%");
       Menu.Set_Tooltip_Text (-"Reset zoom level");
       Menu.Set_Menu (Zooms_Menu);
       Zooms_Menu.Show_All;
@@ -455,7 +458,9 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Mitem, Gtk.Menu_Item.Signal_Activate, On_Export_To_SVG'Access, View);
 
-      Gtk_New_From_Stock (Menu, GPS_Save);
+      Gtk_New_From_Icon_Name
+         (Image, "gps-save-symbolic", Icon_Size_Local_Toolbar);
+      Gtk_New (Menu, Gtk_Widget (Image), "save");
       Menu.Set_Tooltip_Text (-"Export to...");
       Menu.Set_Menu (Export_Menu);
       Export_Menu.Show_All;
@@ -1167,56 +1172,56 @@ package body Browsers.Canvas is
       Register_Action
         (Kernel, "browser select all", new Select_All_Command,
          -"Select all items in a browser",
-         Stock_Id => Stock_Select_All,
+         Icon_Name => "gps-select-all-symbolic",
          Filter   => Filter,
          Category => "Browsers");
 
       Register_Action
         (Kernel, "browser zoom out", new Zoom_Out_Command,
          -"Zoom out",
-         Stock_Id  => Stock_Zoom_Out,
+         Icon_Name => "gps-zoom-out-symbolic",
          Category  => -"Browsers",
          Filter    => Filter);
 
       Register_Action
         (Kernel, "browser zoom in", new Zoom_In_Command,
          -"Zoom in",
-         Stock_Id  => Stock_Zoom_In,
+         Icon_Name => "gps-zoom-in-symbolic",
          Category  => -"Browsers",
          Filter    => Filter);
 
       Register_Action
         (Kernel, "browser toggle links", new Toggle_Links,
          -"Toggle display of links for the selected items",
-         Stock_Id => GPS_Toggle_Links,
+         Icon_Name => "gps-toggle-links-symbolic",
          Filter   => Filter,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser refresh", new Refresh_Command,
          -"Refresh layout",
-         Stock_Id => GPS_Refresh,
+         Icon_Name => "gps-refresh-symbolic",
          Filter   => Filter,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser clear", new Clear_Command,
          -"Clear the contents of the browser",
-         Stock_Id => Stock_Clear,
+         Icon_Name => "gps-clear-symbolic",
          Filter   => Filter,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser remove unselected", new Remove_Unselected_Command,
          -"Remove unselected items",
-         Stock_Id => GPS_Remove_Unselected,
+         Icon_Name => "gps-remove-unselected-symbolic",
          Filter   => Filter,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser remove selected", new Remove_Selected_Command,
          -"Remove selected items",
-         Stock_Id => Stock_Remove,
+         Icon_Name => "gps-remove-symbolic",
          Filter   => Filter,
          Category => -"Browsers");
    end Register_Actions;

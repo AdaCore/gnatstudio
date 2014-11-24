@@ -57,6 +57,7 @@ with Gdk.Pixbuf;                       use Gdk.Pixbuf;
 with Gtk;                              use Gtk;
 with Gtk.Application;                  use Gtk.Application;
 with Gtk.Enums;                        use Gtk.Enums;
+with Gtk.Icon_Theme;                   use Gtk.Icon_Theme;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Menu_Bar;                     use Gtk.Menu_Bar;
@@ -2122,11 +2123,9 @@ procedure GPS.Main is
       Update_Menus_And_Buttons (GPS_Main.Kernel);
 
       --  Set default icon for dialogs and windows
-      --  ??? as soon as gdk_pixbuf is modified to derive from Glib.GObject
-      --   construct an icon list from gps-icon-16, gps-icon-32 and gps-icon-48
-      --   and call Set_Default_Icon_List
 
-      Icon := Render_Icon_Pixbuf (GPS_Main, "gps-icon-32", Icon_Size_Dialog);
+      Icon := Gtk.Icon_Theme.Get_Default.Load_Icon
+         ("gps-icon-32", 32, 0, null);
 
       if Icon /= null then
          Set_Default_Icon (Icon);

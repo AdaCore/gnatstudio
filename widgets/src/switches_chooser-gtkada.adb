@@ -38,7 +38,6 @@ with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Size_Group;         use Gtk.Size_Group;
 with Gtk.Spin_Button;        use Gtk.Spin_Button;
 with Gtk.Style_Context;      use Gtk.Style_Context;
-with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Table;              use Gtk.Table;
 with Gtk.Toggle_Button;      use Gtk.Toggle_Button;
 with Gtk.Widget;             use Gtk.Widget;
@@ -242,7 +241,7 @@ package body Switches_Chooser.Gtkada is
          Columns   => S.Columns);
       Gtk_Switches_Editors.On_Command_Line_Changed (Data.Editor.all);
 
-      Tmp := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Tmp := Add_Button (Dialog, "OK", Gtk_Response_OK);
       Show_All (Dialog);
 
       Widget_Callback.Object_Connect

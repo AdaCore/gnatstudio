@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Gtk;             use Gtk;
-with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
@@ -267,7 +266,7 @@ package body Advanced_Breakpoint_Pkg is
       Pack_Start (Advanced_Breakpoint.Vbox34,
                   Advanced_Breakpoint.Hbuttonbox13, True, True, 0);
 
-      Gtk_New_From_Stock (Advanced_Breakpoint.Apply, Stock_Apply);
+      Gtk_New (Advanced_Breakpoint.Apply, -"Apply");
       Set_Relief (Advanced_Breakpoint.Apply, Relief_Normal);
       Widget_Callback.Object_Connect
         (Advanced_Breakpoint.Apply, Signal_Clicked,
@@ -275,7 +274,7 @@ package body Advanced_Breakpoint_Pkg is
          Advanced_Breakpoint);
       Add (Advanced_Breakpoint.Hbuttonbox13, Advanced_Breakpoint.Apply);
 
-      Gtk_New_From_Stock (Advanced_Breakpoint.Close, Stock_Close);
+      Gtk_New (Advanced_Breakpoint.Close, -"Close");
       Set_Relief (Advanced_Breakpoint.Close, Relief_Normal);
       Widget_Callback.Object_Connect
         (Advanced_Breakpoint.Close, Signal_Clicked,

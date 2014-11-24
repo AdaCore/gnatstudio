@@ -28,10 +28,8 @@ package Project_Templates.GPS is
 
    procedure Launch_Dialog
      (Kernel    : access Kernel_Handle_Record'Class;
-      Widget    : Gtk_Widget;
       Cancelled : out Boolean);
    --  Launch the "project from template" dialog.
    --  Cancelled indicates whether the user has cancelled the dialog.
-   --  Widget is used for rendering pixbufs.
 
 end Project_Templates.GPS;

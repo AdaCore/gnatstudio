@@ -179,7 +179,6 @@ package GPS.Kernel.Modules.UI is
       Name        : String;
       Action      : Action_Record_Access;
       Label       : access Contextual_Menu_Label_Creator_Record'Class;
-      Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Group       : Integer := Default_Contextual_Group);
@@ -192,7 +191,6 @@ package GPS.Kernel.Modules.UI is
       Filter            : access Action_Filter_Record'Class := null;
       Enable_Filter     : access Action_Filter_Record'Class := null;
       Label             : access Contextual_Menu_Label_Creator_Record'Class;
-      Stock_Image       : String := "";
       Ref_Item          : String := "";
       Add_Before        : Boolean := True;
       Group             : Integer := Default_Contextual_Group);
@@ -214,7 +212,6 @@ package GPS.Kernel.Modules.UI is
       Enable_Filter     : access Action_Filter_Record'Class := null;
       Label             : String := "";
       Custom            : Custom_Expansion := null;
-      Stock_Image       : String := "";
       Ref_Item          : String := "";
       Add_Before        : Boolean := True;
       Group             : Integer := Default_Contextual_Group);
@@ -404,13 +401,13 @@ package GPS.Kernel.Modules.UI is
    procedure Register_Button
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Action   : String;
-      Stock_Id : String := "";
+      Icon_Name : String := "";
       Toolbar  : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
       Position : Glib.Gint := -1;
       Hide     : Boolean := False);
    --  Register a button based on an action.
    --  The action need not be registered yet.
-   --  Stock_Id overrides the action's default image, if specified.
+   --  Icon_Name overrides the action's default image, if specified.
    --  The button will be grayed out automatically whenever the action's filter
    --  indicate the action is not available in the current context.
    --

@@ -29,7 +29,6 @@ with GPS.Kernel.Messages;   use GPS.Kernel.Messages;
 with Glib;
 private with Glib.Main;
 private with Gdk.RGBA;
-private with Gdk.Pixbuf;
 with Gtk.Tree_Model;
 private with Gtk.Tree_Row_Reference;
 
@@ -88,7 +87,7 @@ package GPS.Location_View.Listener is
    --  level nodes the value -1 os used.
    Text_Column               : constant Glib.Gint  := 5;
    --  Contains plain text of the message.
-   Node_Icon_Column          : constant Glib.Gint  := 6;
+   Node_Icon_Name_Column     : constant Glib.Gint  := 6;
    --  Contains icon for the node.
    Node_Markup_Column        : constant Glib.Gint  := 7;
    --  Contains markup of the node. Markup includes line:column information
@@ -100,8 +99,8 @@ package GPS.Location_View.Listener is
    Node_Mark_Column          : constant Glib.Gint  := 9;
    --  Contains editor's mark of the current position of the location in the
    --  source file.
-   Action_Pixbuf_Column      : constant Glib.Gint  := 10;
-   --  Contains pixmuf object of the associated action.
+   Icon_Name_Column      : constant Glib.Gint  := 10;
+   --  Contains the name of the icon to display for this action
    Action_Command_Column     : constant Glib.Gint  := 11;
    --  Contains command to be executed on action.
    Action_Tooltip_Column     : constant Glib.Gint  := 12;
@@ -157,10 +156,6 @@ private
      new GPS.Kernel.Messages.Abstract_Listener with record
       Kernel          : Kernel_Handle;
       Model           : Classic_Tree_Model;
-
-      Category_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
-      File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf;
-      --  Pixbufs to decorate category and file nodes.
 
       Non_Leaf_Color  : Gdk.RGBA.Gdk_RGBA;
       --  Foreground color for category and file nodes.

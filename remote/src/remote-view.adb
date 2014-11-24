@@ -217,11 +217,10 @@ package body Remote.View is
       Full_Table     : Gtk_Table;
       Hbox           : Gtk_Hbox;
       Buttons_Box    : Gtk_Hbox;
-      To_Local_Img   : Gtk_Image;
-      To_Remote_Img  : Gtk_Image;
       List           : Gtk_List_Store;
       Cell           : Gtk_Cell_Renderer_Text;
       Scrolled       : Gtk_Scrolled_Window;
+      Image          : Gtk_Image;
 
    begin
       Initialize_Vbox (View, Homogeneous => False);
@@ -284,13 +283,10 @@ package body Remote.View is
             Set_Alignment (Server_Label, 0.0, 0.5);
          end if;
 
-         Gtk_New
-           (To_Local_Img,
-            Pixbuf => Render_Icon (View, "gps-sync-to-local",
-                                   Icon_Size_Button));
+         Gtk_New_From_Icon_Name (Image, "gps-sync-to-local", Icon_Size_Button);
          Gtk_New (View.To_Local_Buttons (S));
-         Add (View.To_Local_Buttons (S), To_Local_Img);
-         Show (View.To_Local_Buttons (S));
+         View.To_Local_Buttons (S).Add (Image);
+         View.To_Local_Buttons (S).Show_All;
          Set_Relief (View.To_Local_Buttons (S), Relief_None);
          Set_Border_Width (View.To_Local_Buttons (S), 0);
          Set_Tooltip_Text
@@ -298,13 +294,11 @@ package body Remote.View is
             -("Synchronize all directories from the remote" &
               " server to the local machine"));
 
-         Gtk_New
-           (To_Remote_Img,
-            Pixbuf => Render_Icon (View, "gps-sync-to-remote",
-                                   Icon_Size_Button));
+         Gtk_New_From_Icon_Name
+           (Image, "gps-sync-to-remote", Icon_Size_Button);
          Gtk_New (View.To_Remote_Buttons (S));
-         Add (View.To_Remote_Buttons (S), To_Remote_Img);
-         Show (View.To_Remote_Buttons (S));
+         View.To_Remote_Buttons (S).Add (Image);
+         View.To_Remote_Buttons (S).Show_All;
          Set_Relief (View.To_Remote_Buttons (S), Relief_None);
          Set_Border_Width (View.To_Remote_Buttons (S), 0);
          Set_Can_Focus (View.To_Remote_Buttons (S), False);

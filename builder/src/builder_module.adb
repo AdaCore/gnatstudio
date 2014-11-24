@@ -30,7 +30,6 @@ with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
-with GPS.Stock_Icons;            use GPS.Stock_Icons;
 
 with Builder_Facility_Module;    use Builder_Facility_Module;
 with Build_Command_Utils;        use Build_Command_Utils;
@@ -118,7 +117,7 @@ package body Builder_Module is
         (Kernel, "Interrupt", new Interrupt_Tool_Command,
          Description =>
            -"Interrupt the tasks performed in the background by GPS",
-         Stock_Id   => GPS_Stop_Task);
+         Icon_Name  => "gps-stop-symbolic");
 
       Register_Command
         (Kernel, "compute_xref",

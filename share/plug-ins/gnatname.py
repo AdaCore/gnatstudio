@@ -10,7 +10,7 @@ import GPS
 XML = r"""<?xml version="1.0" ?>
 <gnatname>
   <target-model name="gnatname" category="">
-    <icon>gps-build-all</icon>
+    <iconname>gps-build-all-symbolic</iconname>
     <description>Generic launch of gnatname</description>
     <command-line>
       <arg>%gnat</arg>

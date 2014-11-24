@@ -27,7 +27,6 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Gdk;                       use Gdk;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Arrow;                 use Gtk.Arrow;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -59,47 +58,16 @@ with UTF8_Utils;                use UTF8_Utils;
 with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 
 package body Directory_Tree is
+   Me : constant Trace_Handle := Create ("Directory_Tree");
 
    Icon_Column      : constant := 0;
    Base_Name_Column : constant := 1;
    File_Column      : constant := 2;
 
-   --------------
-   -- Graphics --
-   --------------
-
-   type Node_Types is
-     (Directory_Node);
-   --  The kind of nodes one might find in the tree
-
-   type Pixbuf_Array is array (Node_Types) of Gdk.Pixbuf.Gdk_Pixbuf;
-
-   Open_Pixbufs  : Pixbuf_Array;
-   Close_Pixbufs : Pixbuf_Array;
-
-   procedure Init_Graphics (Widget : Gtk_Widget);
-   --  Initialize the pixbufs.
-   --  Widget serves as reference to get the theme engine.
-
-   -------------------
-   -- Init_Graphics --
-   -------------------
-
-   procedure Init_Graphics (Widget : Gtk_Widget) is
-   begin
-      --  If initialization has already been done, exit
-      if Open_Pixbufs (Directory_Node) /= null then
-         return;
-      end if;
-
-      Open_Pixbufs (Directory_Node)  := Render_Icon
-        (Widget, "gps-folder-open", Icon_Size_Menu);
-      Close_Pixbufs (Directory_Node) := Render_Icon
-        (Widget, "gps-folder-closed", Icon_Size_Menu);
-
-   end Init_Graphics;
-
-   Me : constant Trace_Handle := Create ("Directory_Tree");
+   Open_Directory_Node : constant String :=
+      "gps-emblem-directory-open";
+   Closed_Directory_Node : constant String :=
+      "gps-emblem-directory-closed";
 
    package Widget_Menus is new GUI_Utils.User_Contextual_Menus
      (User_Data => Directory_Selector);
@@ -1074,14 +1042,14 @@ package body Directory_Tree is
 
          if D.Physical_Read then
             Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 GObject (Open_Pixbufs (Directory_Node)));
+                 Open_Directory_Node);
             D.Base := Iter;
             return Read_Directory (D);
 
          else
             Append_Dummy_Iter (D.Explorer.File_Model, Iter);
             Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 GObject (Close_Pixbufs (Directory_Node)));
+                 Closed_Directory_Node);
             return False;
          end if;
 
@@ -1124,7 +1092,7 @@ package body Directory_Tree is
 
       if Is_Empty (D.Dirs) then
          Set (D.Explorer.File_Model, D.Base, Icon_Column,
-              GObject (Close_Pixbufs (Directory_Node)));
+              Closed_Directory_Node);
       end if;
 
       while not Is_Empty (D.Dirs) loop
@@ -1161,7 +1129,7 @@ package body Directory_Tree is
                   D.Explorer.Expanding := Expanding;
 
                   Set (D.Explorer.File_Model, D.Base, Icon_Column,
-                       GObject (Open_Pixbufs (Directory_Node)));
+                       Open_Directory_Node);
 
                   Path_Free (Path);
                end;
@@ -1191,7 +1159,7 @@ package body Directory_Tree is
                      D.Explorer.Expanding := Expanding;
 
                      Set (D.Explorer.File_Model, Iter, Icon_Column,
-                          GObject (Open_Pixbufs (Directory_Node)));
+                          Open_Directory_Node);
                      D.Explorer.Scroll_To_Directory := True;
 
                      D.Explorer.Realize_Cb_Id :=
@@ -1210,7 +1178,7 @@ package body Directory_Tree is
                Append_Dummy_Iter (D.Explorer.File_Model, Iter);
 
                Set (D.Explorer.File_Model, Iter, Icon_Column,
-                    GObject (Close_Pixbufs (Directory_Node)));
+                    Closed_Directory_Node);
             end if;
 
             --  Frees first element in the list
@@ -1298,7 +1266,7 @@ package body Directory_Tree is
       Gtk_New (Col);
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, True);
-      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
+      Add_Attribute (Col, Pixbuf_Rend, "icon-name", Icon_Column);
       Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
@@ -1310,7 +1278,7 @@ package body Directory_Tree is
    function Columns_Types return GType_Array is
    begin
       return GType_Array'
-        (Icon_Column      => Gdk.Pixbuf.Get_Type,
+        (Icon_Column      => GType_String,
          File_Column      => GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type,
          Base_Name_Column => GType_String);
    end Columns_Types;
@@ -1358,8 +1326,6 @@ package body Directory_Tree is
          After       => False);
 
       Set_Column_Types (Tree.File_Tree);
-
-      Init_Graphics (Gtk_Widget (Tree));
 
       Widget_Callback.Object_Connect
         (Tree.File_Tree, Signal_Row_Expanded,
@@ -1452,8 +1418,7 @@ package body Directory_Tree is
       Iter_File := Get_File (T.File_Model, Iter, File_Column);
 
       if Is_Directory (Iter_File) then
-         Set (T.File_Model, Iter, Icon_Column,
-              GObject (Close_Pixbufs (Directory_Node)));
+         Set (T.File_Model, Iter, Icon_Column, Closed_Directory_Node);
       end if;
 
    exception
@@ -1531,8 +1496,7 @@ package body Directory_Tree is
          Iter_File := Get_File (T.File_Model, Iter, File_Column);
 
          Free_Children (T, Iter);
-         Set (T.File_Model, Iter, Icon_Column,
-              GObject (Open_Pixbufs (Directory_Node)));
+         Set (T.File_Model, Iter, Icon_Column, Open_Directory_Node);
          File_Append_Directory (T, Iter_File, Iter, 1);
       end;
 

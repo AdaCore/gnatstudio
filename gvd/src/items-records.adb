@@ -17,6 +17,7 @@
 
 with GNAT.IO;         use GNAT.IO;
 with Glib;            use Glib;
+with Gtk.Icon_Theme;  use Gtk.Icon_Theme;
 with Language;        use Language;
 
 package body Items.Records is
@@ -394,7 +395,11 @@ package body Items.Records is
    begin
       if not Self.Valid then
          Rect.Add_Child
-           (Gtk_New_Image (Styles.Item, View.Unknown_Pixmap));
+           (Gtk_New_Image
+              (Styles.Invisible,
+               Gtk.Icon_Theme.Get_Default.Load_Icon
+                  ("gps-unknown-item-symbolic", 16, 0, null),
+               Allow_Rescale => False, Width => 16.0, Height => 16.0));
 
       --  A null record ?
       elsif Self.Num_Fields = 0 then

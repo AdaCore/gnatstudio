@@ -566,7 +566,7 @@ package body Project_Explorers is
       Gtk_New (Col);
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, True);
-      Add_Attribute (Col, Pixbuf_Rend, "stock-id", Icon_Column);
+      Add_Attribute (Col, Pixbuf_Rend, "icon-name", Icon_Column);
       Add_Attribute (Col, Text_Rend, "markup", Display_Name_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;

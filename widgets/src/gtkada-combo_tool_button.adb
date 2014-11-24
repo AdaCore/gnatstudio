@@ -50,17 +50,17 @@ package body Gtkada.Combo_Tool_Button is
    ---------------
 
    type Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      Stock_Id : Unbounded_String;
-      Label    : Gtk_Label;
-      Data     : User_Data;
+      Icon_Name : Unbounded_String;
+      Label     : Gtk_Label;
+      Data      : User_Data;
    end record;
    type Menu_Item is access all Menu_Item_Record'Class;
 
    procedure Gtk_New
-     (Item     : out Menu_Item;
-      Label    : String;
-      Stock_Id : String;
-      Data     : User_Data);
+     (Item      : out Menu_Item;
+      Label     : String;
+      Icon_Name : String;
+      Data      : User_Data);
 
    procedure Set_Highlight
      (Item  : access Menu_Item_Record'Class;
@@ -155,10 +155,10 @@ package body Gtkada.Combo_Tool_Button is
    -------------
 
    procedure Gtk_New
-     (Item     : out Menu_Item;
-      Label    : String;
-      Stock_Id : String;
-      Data     : User_Data)
+     (Item      : out Menu_Item;
+      Label     : String;
+      Icon_Name : String;
+      Data      : User_Data)
    is
       Icon : Gtk_Image;
       Hbox : Gtk_Hbox;
@@ -167,12 +167,12 @@ package body Gtkada.Combo_Tool_Button is
       Gtk.Menu_Item.Initialize (Item);
 
       Item.Data     := Data;
-      Item.Stock_Id := To_Unbounded_String (Stock_Id);
+      Item.Icon_Name := To_Unbounded_String (Icon_Name);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False, Spacing => 5);
       Item.Add (Hbox);
 
-      Gtk_New (Icon, Stock_Id, Icon_Size_Menu);
+      Gtk_New_From_Icon_Name (Icon, Icon_Name, Icon_Size_Menu);
       Hbox.Pack_Start (Icon, False, False, 0);
 
       Gtk_New (Item.Label, Label);
@@ -425,12 +425,12 @@ package body Gtkada.Combo_Tool_Button is
    -------------
 
    procedure Gtk_New
-     (Self     : out Gtkada_Combo_Tool_Button;
-      Stock_Id : String)
+     (Self      : out Gtkada_Combo_Tool_Button;
+      Icon_Name : String)
    is
    begin
       Self := new Gtkada_Combo_Tool_Button_Record;
-      Initialize (Self, Stock_Id);
+      Initialize (Self, Icon_Name);
    end Gtk_New;
 
    ----------------
@@ -438,8 +438,8 @@ package body Gtkada.Combo_Tool_Button is
    ----------------
 
    procedure Initialize
-     (Self     : access Gtkada_Combo_Tool_Button_Record'Class;
-      Stock_Id : String)
+     (Self      : access Gtkada_Combo_Tool_Button_Record'Class;
+      Icon_Name : String)
    is
 
    begin
@@ -452,11 +452,11 @@ package body Gtkada.Combo_Tool_Button is
 
       Get_Style_Context (Self).Add_Class ("gps-combo-tool-button");
 
-      Self.Set_Stock_Id (Stock_Id);
+      Self.Set_Icon_Name (Icon_Name);
       Self.Set_Homogeneous (False);
       Self.Items    := Strings_Vector.Empty_Vector;
       Self.Selected := Strings_Vector.No_Index;
-      Self.Stock_Id := To_Unbounded_String (Stock_Id);
+      Self.Icon_Name := To_Unbounded_String (Icon_Name);
 
       Self.Clear_Items;  --  Creates the menu
 
@@ -488,17 +488,17 @@ package body Gtkada.Combo_Tool_Button is
    procedure Add_Item
      (Widget   : access Gtkada_Combo_Tool_Button_Record;
       Item     : String;
-      Stock_Id : String := "";
+      Icon_Name : String := "";
       Data     : User_Data := null)
    is
       First  : constant Boolean := Widget.Items.Is_Empty;
       M_Item : Menu_Item;
 
    begin
-      if Stock_Id /= "" then
-         Gtk_New (M_Item, Item, Stock_Id, Data);
+      if Icon_Name /= "" then
+         Gtk_New (M_Item, Item, Icon_Name, Data);
       else
-         Gtk_New (M_Item, Item, To_String (Widget.Stock_Id), Data);
+         Gtk_New (M_Item, Item, To_String (Widget.Icon_Name), Data);
       end if;
 
       Widget.Menu.Add (M_Item);
@@ -540,10 +540,10 @@ package body Gtkada.Combo_Tool_Button is
             Widget.Selected := J;
 
             --  Change the toolbar icon
-            if M_Item /= null and then M_Item.Stock_Id /= "" then
-               Widget.Set_Stock_Id (To_String (M_Item.Stock_Id));
+            if M_Item /= null and then M_Item.Icon_Name /= "" then
+               Widget.Set_Icon_Name (To_String (M_Item.Icon_Name));
             else
-               Widget.Set_Stock_Id (To_String (Widget.Stock_Id));
+               Widget.Set_Icon_Name (To_String (Widget.Icon_Name));
             end if;
 
             Widget_Callback.Emit_By_Name (Widget, Signal_Selection_Changed);

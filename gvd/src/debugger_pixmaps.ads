@@ -15,20 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Widget;      use Gtk.Widget;
-with Gdk.Pixbuf;      use Gdk.Pixbuf;
-
 package Debugger_Pixmaps is
 
-   Line_Has_Code_Pixbuf        : Gdk_Pixbuf := Null_Pixbuf;
-   Line_Might_Have_Code_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
-   Line_Has_Breakpoint_Pixbuf  : Gdk_Pixbuf := Null_Pixbuf;
-   Current_Line_Pixbuf         : Gdk_Pixbuf := Null_Pixbuf;
-
-   procedure Init_Graphics (Widget : Gtk_Widget);
-   --  Initialize the module-wide pixbufs.
-   --  This procedure will use the theme engine associated with Widget to look
-   --  up any stock ids. (Therefore this widget can be any visible widget in
-   --  the standard style).
+   Line_Has_Code_Pixbuf        : constant String :=
+      "gps-emblem-debugger-line-has-code";
+   Line_Might_Have_Code_Pixbuf : constant String :=
+      "gps-emblem-debugger-line-might-have-code";
+   Line_Has_Breakpoint_Pixbuf  : constant String :=
+      "gps-emblem-debugger-breakpoint";
+   Current_Line_Pixbuf         : constant String :=
+      "gps-emblem-debugger-current";
 
 end Debugger_Pixmaps;

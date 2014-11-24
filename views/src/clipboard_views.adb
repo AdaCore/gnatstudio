@@ -19,7 +19,6 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;              use GNAT.Strings;
 
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -28,7 +27,6 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
@@ -51,7 +49,6 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
-with Pixmaps_IDE;               use Pixmaps_IDE;
 with String_Utils;              use String_Utils;
 with Tooltips;                  use Tooltips;
 
@@ -63,7 +60,6 @@ package body Clipboard_Views is
 
    type Clipboard_View_Record is new Generic_Views.View_Record with record
       Tree    : Gtk_Tree_View;
-      Current : Gdk_Pixbuf;
    end record;
 
    function Initialize
@@ -327,9 +323,9 @@ package body Clipboard_Views is
             Append (Model, Iter, Null_Iter);
 
             if Last_Paste = S then
-               Set (Model, Iter, 0, GObject (View.Current));
+               Set (Model, Iter, 0, "gps-forward-symbolic");
             else
-               Set (Model, Iter, 0, C_Proxy'(null));
+               Set (Model, Iter, 0, "");
             end if;
 
             Start_Truncated := False;
@@ -402,7 +398,7 @@ package body Clipboard_Views is
       View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := Create_Tree_View
-        (Column_Types       => (0 => Gdk.Pixbuf.Get_Type,
+        (Column_Types       => (0 => GType_Icon_Name_String,
                                 1 => GType_String,
                                 2 => GType_Int),
          Column_Names       => (1 => null, 2 => null),
@@ -413,8 +409,6 @@ package body Clipboard_Views is
       Scrolled.Add (View.Tree);
 
       Modify_Font (View.Tree, View_Fixed_Font.Get_Pref);
-
-      View.Current := Gdk_New_From_Xpm_Data (arrow_xpm);
 
       Return_Callback.Object_Connect
         (View.Tree,
@@ -455,13 +449,13 @@ package body Clipboard_Views is
         (Kernel, "Clipboard View Append To Previous",
          new Merge_With_Previous_Command,
          -"Append to previous clipboard entry",
-         Stock_Id => Stock_Add,
+         Icon_Name => "gps-add-symbolic",
          Category => -"Clipboard");
 
       Register_Action
         (Kernel, "Clipboard View Remove Entry", new Remove_Entry_Command,
          -"Remove selected clipboard entry",
-         Stock_Id => Stock_Remove,
+         Icon_Name => "gps-remove-symbolic",
          Category => -"Clipboard");
    end Register_Module;
 

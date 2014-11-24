@@ -1182,7 +1182,7 @@ package body Navigation_Module is
          Description => -"Goto previous location",
          Filter      => Filter,
          Category    => -"Editor",
-         Stock_Id    => "gps-navigate-back");
+         Icon_Name   => "gps-backward-symbolic");
 
       Filter := new Has_Forward_Navigation;
       Kernel.Register_Filter (Filter, "has forward navigation");
@@ -1191,7 +1191,7 @@ package body Navigation_Module is
          Description => -"Goto next location",
          Filter      => Filter,
          Category    => -"Editor",
-         Stock_Id    => "gps-navigate-forward");
+         Icon_Name   => "gps-forward-symbolic");
 
       Register_Hook_No_Args (Kernel, Marker_Added_In_History_Hook);
       Add_Hook (Kernel, Marker_Added_In_History_Hook,

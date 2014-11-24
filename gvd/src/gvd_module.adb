@@ -72,7 +72,6 @@ with GVD.Preferences;           use GVD.Preferences;
 with GVD.Proc_Utils;            use GVD.Proc_Utils;
 with GVD.Process;               use GVD.Process;
 with GVD.Scripts;               use GVD.Scripts;
-with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with GVD.Source_Editor.GPS;     use GVD.Source_Editor.GPS;
 with GVD.Source_Editor;         use GVD.Source_Editor;
 with GVD.Types;                 use GVD.Types;
@@ -1937,15 +1936,15 @@ package body GVD_Module is
             for J in A'Range loop
                if Lines_Valid then
                   if Lines (J) then
-                     A (J).Image := Line_Has_Code_Pixbuf;
+                     A (J).Image := new String'(Line_Has_Code_Pixbuf);
                   end if;
                else
-                  A (J).Image := Line_Might_Have_Code_Pixbuf;
+                  A (J).Image := new String'(Line_Might_Have_Code_Pixbuf);
                end if;
 
                if Bps (J) /= 0 then
                   Mode        := Unset;
-                  A (J).Image := Line_Has_Breakpoint_Pixbuf;
+                  A (J).Image := new String'(Line_Has_Breakpoint_Pixbuf);
                else
                   Mode := Set;
                end if;
@@ -2139,8 +2138,6 @@ package body GVD_Module is
          Remove_Debugger_Columns (Kernel_Handle (Kernel), No_File);
          Create_Debugger_Columns (Kernel_Handle (Kernel), No_File);
       end if;
-
-      Init_Graphics (Gtk_Widget (Get_Main_Window (Kernel)));
    end Preferences_Changed;
 
    -----------------------
@@ -2386,7 +2383,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug step", new Step_Command,
-         Stock_Id    => "gps-debugger-step",
+         Icon_Name   => "gps-debugger-step",
          Filter      => Debugger_Active,
          Description =>
            -"Execute until program reaches a new line of source code",
@@ -2401,7 +2398,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug next", new Next_Command,
-         Stock_Id    => "gps-debugger-next",
+         Icon_Name   => "gps-debugger-next",
          Filter      => Debugger_Active,
          Description =>
            -("Execute the program until the next source line, stepping over"
@@ -2418,7 +2415,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug finish", new Finish_Command,
-         Stock_Id    => "gps-debugger-finish",
+         Icon_Name   => "gps-debugger-finish",
          Filter      => Debugger_Active,
          Description =>
            -("Continue execution until selected stack frame returns"),
@@ -2426,7 +2423,7 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug continue", new Continue_Command,
-         Stock_Id    => "gps-debugger-run",
+         Icon_Name   => "gps-debugger-run",
          Filter      => Debugger_Active,
          Description =>
            -("Continue execution until next breakpoint." & ASCII.LF
@@ -2435,21 +2432,21 @@ package body GVD_Module is
 
       Register_Action
         (Kernel, "debug up", new Up_Command,
-         Stock_Id    => "gps-debugger-up",
+         Icon_Name   => "gps-debugger-up",
          Filter      => Debugger_Active,
          Description => "Move up one frame",
          Category    => -"Debug");
 
       Register_Action
         (Kernel, "debug down", new Down_Command,
-         Stock_Id    => "gps-debugger-down",
+         Icon_Name   => "gps-debugger-down",
          Filter      => Debugger_Active,
          Description => "Move down one frame",
          Category    => -"Debug");
 
       Register_Action
         (Kernel, "debug interrupt", new Interrupt_Command,
-         Stock_Id    => GPS_Stop_Task,
+         Icon_Name   => "gps-debugger-stop",
          Filter      => Debugger_Active,
          Description => -"Asynchronously interrupt the debuggee program",
          Category    => -"Debug");

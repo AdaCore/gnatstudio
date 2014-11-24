@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Gdk;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Glib.Main;                 use Glib.Main;
 with Glib.Values;               use Glib.Values;
@@ -89,7 +88,7 @@ package body VCS_View.Activities is
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
          Status_Description_Column => GType_String,
-         Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type,
+         Status_Icon_Name_Column   => GType_String,
          Has_Log_Column            => GType_Boolean,
          Activity_Column           => GType_String,
          Control_Column            => GType_Boolean);
@@ -661,7 +660,8 @@ package body VCS_View.Activities is
       Set_Title (Explorer.Status_Column, -"Status");
       Pack_Start (Explorer.Status_Column, Pixbuf_Rend, False);
       Add_Attribute
-        (Explorer.Status_Column, Pixbuf_Rend, "pixbuf", Status_Pixbuf_Column);
+        (Explorer.Status_Column, Pixbuf_Rend,
+         "icon-name", Status_Icon_Name_Column);
       Set_Clickable (Explorer.Status_Column, True);
       Set_Sort_Column_Id (Explorer.Status_Column, Status_Description_Column);
       Dummy := Append_Column (Explorer.Tree, Explorer.Status_Column);

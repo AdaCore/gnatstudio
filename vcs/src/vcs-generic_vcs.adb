@@ -1491,8 +1491,8 @@ package body VCS.Generic_VCS is
 
          while P /= null loop
             if P.Tag.all = "status" then
-               Ref.Status (Num).Stock_Id := new String'
-                 (Get_Attribute (P, "stock", "gtk-new"));
+               Ref.Status (Num).Icon_Name := new String'
+                 (Get_Attribute (P, "stock", "unknown-icon"));
                Ref.Status (Num).Label := new String'
                  (Get_Attribute (P, "label", -"unnamed status"));
 

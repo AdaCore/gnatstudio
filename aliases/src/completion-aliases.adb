@@ -37,7 +37,7 @@ package body Completion.Aliases is
 
    overriding function Get_Custom_Icon_Name
      (Proposal : Alias_Completion_Proposal) return String
-   is ("gps-alias");
+   is ("gps-emblem-alias-symbolic");
 
    overriding function Get_Label
      (Proposal : Alias_Completion_Proposal;

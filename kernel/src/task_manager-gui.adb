@@ -741,7 +741,8 @@ package body Task_Manager.GUI is
       VBox.Pack_Start (View.Main_Progress_Bar, Padding => 2);
 
       Gtk_New (View.Progress_Bar_Button);
-      Gtk_New (Image, GPS_Stop_Task, Icon_Size_Action_Button);
+      Gtk_New_From_Icon_Name
+         (Image, "gps-stop-symbolic", Icon_Size_Action_Button);
       View.Progress_Bar_Button.Add (Image);
       View.Progress_Bar_Button.Set_Relief (Relief_None);
       HBox.Pack_Start (View.Progress_Bar_Button, Expand => False);

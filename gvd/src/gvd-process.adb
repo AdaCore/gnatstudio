@@ -75,7 +75,6 @@ with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
 with Language_Handlers;          use Language_Handlers;
-with Pixmaps_IDE;                use Pixmaps_IDE;
 with Process_Proxies;            use Process_Proxies;
 with Projects;                   use Projects;
 with Remote;                     use Remote;
@@ -952,8 +951,7 @@ package body GVD.Process is
       --  filter.
 
       Configure
-        (Process.Editor_Text,
-         Source, Default_Style.Get_Pref_Font, arrow_xpm, stop_xpm);
+        (Process.Editor_Text, Source, Default_Style.Get_Pref_Font);
 
       Set_Current_Debugger (Window.Kernel, GObject (Process));
 

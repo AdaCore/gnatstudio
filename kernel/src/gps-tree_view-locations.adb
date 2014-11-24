@@ -165,9 +165,7 @@ package body GPS.Tree_View.Locations is
       Gtk_New (Pixbuf_Renderer);
       Self.Action_Column.Pack_Start (Pixbuf_Renderer, False);
       Self.Action_Column.Add_Attribute
-        (Pixbuf_Renderer,
-         Property_Name (Pixbuf_Property),
-         Action_Pixbuf_Column);
+        (Pixbuf_Renderer, "icon-name", Icon_Name_Column);
       Dummy := Self.Append_Column (Self.Action_Column);
 
       --  Text column
@@ -176,7 +174,7 @@ package body GPS.Tree_View.Locations is
       Gtk_New (Pixbuf_Renderer);
       Self.Location_Column.Pack_Start (Pixbuf_Renderer, False);
       Self.Location_Column.Add_Attribute
-        (Pixbuf_Renderer, Property_Name (Pixbuf_Property), Node_Icon_Column);
+        (Pixbuf_Renderer, "icon-name", Node_Icon_Name_Column);
 
       Gtk_New (Self.Text_Renderer);
       Self.Location_Column.Pack_Start (Self.Text_Renderer, False);

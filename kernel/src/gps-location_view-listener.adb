@@ -21,7 +21,6 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 with System.Address_To_Access_Conversions;
 
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Glib.Object;
 with Glib.Values;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -176,15 +175,6 @@ package body GPS.Location_View.Listener is
    begin
       Self.Model.Disable_Sorting;
 
-      --  Create puxbufs for category nodes. It is down here because icon
-      --  factory is not customized at message container initialization time.
-
-      if Self.Category_Pixbuf = null then
-         Self.Category_Pixbuf :=
-           Self.Kernel.Get_Main_Window.Render_Icon
-             ("gps-box", Gtk.Enums.Icon_Size_Menu);
-      end if;
-
       Self.Model.Append (Iter, Gtk.Tree_Model.Null_Iter);
 
       Self.Model.Set (Iter, Category_Column, To_String (Category));
@@ -194,11 +184,10 @@ package body GPS.Location_View.Listener is
       Self.Model.Set (Iter, Column_Column, -1);
       Self.Model.Set (Iter, Text_Column, To_String (Category));
       Self.Model.Set
-        (Iter, Node_Icon_Column, Glib.Object.GObject (Self.Category_Pixbuf));
+         (Iter, Node_Icon_Name_Column, "gps-emblem-category");
       Self.Model.Set (Iter, Node_Markup_Column, To_String (Category));
       Self.Model.Set (Iter, Node_Tooltip_Column, To_String (Category));
       Self.Model.Set (Iter, Node_Mark_Column, GPS.Editors.Nil_Editor_Mark);
-      Self.Model.Set (Iter, Action_Pixbuf_Column, Glib.Object.GObject'(null));
       Self.Model.Set (Iter, Action_Command_Column, System.Null_Address);
       Self.Model.Set (Iter, Action_Tooltip_Column, To_String (Category));
       Self.Model.Set (Iter, Number_Of_Children_Column, 0);
@@ -476,16 +465,6 @@ package body GPS.Location_View.Listener is
    begin
       Self.Model.Disable_Sorting;
 
-      --  Create puxbufs for category and file nodes. It is down here because
-      --  icon factory is not customized at message container initialization
-      --  time.
-
-      if Self.File_Pixbuf = null then
-         Self.File_Pixbuf :=
-           Self.Kernel.Get_Main_Window.Render_Icon
-             ("gps-file", Gtk.Enums.Icon_Size_Menu);
-      end if;
-
       --  Lookup for iter for parent category row.
 
       Self.Find_Category (To_String (Category), Category_Iter);
@@ -508,7 +487,7 @@ package body GPS.Location_View.Listener is
       end if;
 
       Self.Model.Set
-        (Iter, Node_Icon_Column, Glib.Object.GObject (Self.File_Pixbuf));
+         (Iter, Node_Icon_Name_Column, "gps-emblem-file-unmodified");
 
       if File /= No_File then
          Self.Model.Set (Iter, Node_Markup_Column, String (File.Base_Name));
@@ -519,7 +498,6 @@ package body GPS.Location_View.Listener is
 
       Self.Model.Set (Iter, Node_Tooltip_Column, String (File.Base_Name));
       Self.Model.Set (Iter, Node_Mark_Column, GPS.Editors.Nil_Editor_Mark);
-      Self.Model.Set (Iter, Action_Pixbuf_Column, Glib.Object.GObject'(null));
       Self.Model.Set (Iter, Action_Command_Column, System.Null_Address);
       Self.Model.Set (Iter, Action_Tooltip_Column, String (File.Base_Name));
       Self.Model.Set (Iter, Number_Of_Children_Column, 0);
@@ -703,12 +681,12 @@ package body GPS.Location_View.Listener is
          Glib.Guint (Line_Column)               => Glib.GType_Int,
          Glib.Guint (Column_Column)             => Glib.GType_Int,
          Glib.Guint (Text_Column)               => Glib.GType_String,
-         Glib.Guint (Node_Icon_Column)          => Gdk.Pixbuf.Get_Type,
+         Glib.Guint (Node_Icon_Name_Column)     => Glib.GType_String,
          Glib.Guint (Node_Markup_Column)        => Glib.GType_String,
          Glib.Guint (Node_Tooltip_Column)       => Glib.GType_String,
          Glib.Guint (Node_Mark_Column)          =>
            GPS.Editors.GtkAda.Get_Editor_Mark_Type,
-         Glib.Guint (Action_Pixbuf_Column)      => Gdk.Pixbuf.Get_Type,
+         Glib.Guint (Icon_Name_Column)          => Glib.GType_String,
          Glib.Guint (Action_Command_Column)     => Glib.GType_Pointer,
          Glib.Guint (Action_Tooltip_Column)     => Glib.GType_String,
          Glib.Guint (Number_Of_Children_Column) => Glib.GType_Int,
@@ -835,9 +813,9 @@ package body GPS.Location_View.Listener is
       Glib.Values.Set_String (Values (Last), To_String (Message.Get_Text));
 
       Last := Last + 1;
-      Columns (Natural (Last)) := Node_Icon_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Object);
-      Glib.Values.Set_Object (Values (Last), null);
+      Columns (Natural (Last)) := Node_Icon_Name_Column;
+      Glib.Values.Init (Values (Last), Glib.GType_String);
+      Glib.Values.Set_String (Values (Last), "");
 
       Last := Last + 1;
       Columns (Natural (Last)) := Node_Markup_Column;
@@ -912,17 +890,16 @@ package body GPS.Location_View.Listener is
       GPS.Editors.GtkAda.Set_Mark (Values (Last), Message.Get_Editor_Mark);
 
       Last := Last + 1;
-      Columns (Natural (Last)) := Action_Pixbuf_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Object);
+      Columns (Natural (Last)) := Icon_Name_Column;
+      Glib.Values.Init (Values (Last), Glib.GType_String);
 
       if Message.Get_Action /= null
         and then Message.Get_Action.Associated_Command /= null
+        and then Message.Get_Action.Image /= null
       then
-         Glib.Values.Set_Object
-           (Values (Last), Glib.Object.GObject (Message.Get_Action.Image));
-
+         Glib.Values.Set_String (Values (Last), Message.Get_Action.Image.all);
       else
-         Glib.Values.Set_Object (Values (Last), null);
+         Glib.Values.Set_String (Values (Last), "");
       end if;
 
       Last := Last + 1;
@@ -1016,15 +993,12 @@ package body GPS.Location_View.Listener is
 
          if Message.Get_Action /= null
            and then Message.Get_Action.Associated_Command /= null
+           and then Message.Get_Action.Image /= null
          then
             Self.Model.Set
-              (Iter,
-               Action_Pixbuf_Column,
-               Glib.Object.GObject (Message.Get_Action.Image));
-
+               (Iter, Icon_Name_Column, Message.Get_Action.Image.all);
          else
-            Self.Model.Set
-              (Iter, Action_Pixbuf_Column, Glib.Object.GObject'(null));
+            Self.Model.Set (Iter, Icon_Name_Column, "");
          end if;
 
          Self.Model.Set
@@ -1225,16 +1199,6 @@ package body GPS.Location_View.Listener is
 
       Self.Model.Clear;
       Unref (Self.Model);
-
-      --  Release pixbufs.
-
-      if Self.Category_Pixbuf /= null then
-         Unref (Self.Category_Pixbuf);
-      end if;
-
-      if Self.File_Pixbuf /= null then
-         Unref (Self.File_Pixbuf);
-      end if;
 
       Unchecked_Free (Self);
    end Unregister;

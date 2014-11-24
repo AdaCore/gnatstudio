@@ -1326,11 +1326,8 @@ package body CodePeer.Module is
                  (new GPS.Editors.Line_Information.Line_Information_Record'
                     (Text               => null,
                      Tooltip_Text       => new String'("Review message"),
-                     Image              =>
-                       Gtk.Widget.Gtk_Widget
-                         (Self.Kernel.Get_Main_Window).Render_Icon
-                         (Code_Analysis_GUI.Post_Analysis_Cst,
-                          Gtk.Enums.Icon_Size_Menu),
+                     Image              => new String'
+                        (Code_Analysis_GUI.Post_Analysis_Cst),
                      Associated_Command =>
                      new Standard.Commands.CodePeer.Review_Message_Command'
                        (Root_Command with

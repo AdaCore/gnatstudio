@@ -166,11 +166,9 @@ package body GVD.Code_Editors is
    procedure Configure
      (Editor            : access Code_Editor_Record;
       Source            : GVD.Source_Editor.Source_Editor;
-      Font              : Pango_Font_Description;
-      Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
-      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array)
+      Font              : Pango_Font_Description)
    is
-      pragma Unreferenced (Current_Line_Icon, Stop_Icon, Font);
+      pragma Unreferenced (Font);
    begin
       pragma Assert (Editor.Source = null);
       Editor.Source := Source;

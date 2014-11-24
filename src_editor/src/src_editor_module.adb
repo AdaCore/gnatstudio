@@ -31,7 +31,6 @@ with Glib.Values;                       use Glib.Values;
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
-with Gtk.Stock;                         use Gtk.Stock;
 with Gtk.Window;                        use Gtk.Window;
 
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
@@ -61,7 +60,6 @@ with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
-with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
 with Projects;                          use Projects;
 with Remote;                            use Remote;
@@ -237,10 +235,6 @@ package body Src_Editor_Module is
    --  Make sure that the last view for a file is reflected in the cache, so
    --  that we always use that one by default when looking for the last editor
    --  for a given file.
-
-   procedure Create_Files_Pixbufs_If_Needed
-     (Handle : access Kernel_Handle_Record'Class);
-   --  Create File_Pixbuf and File_Modified_Pixbuf if needed
 
    procedure Register_Editor_Close
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -749,29 +743,6 @@ package body Src_Editor_Module is
          return False;
    end File_Edit_Callback;
 
-   ------------------------------------
-   -- Create_Files_Pixbufs_If_Needed --
-   ------------------------------------
-
-   procedure Create_Files_Pixbufs_If_Needed
-     (Handle : access Kernel_Handle_Record'Class) is
-   begin
-      if File_Pixbuf = Null_Pixbuf then
-         File_Pixbuf := Render_Icon
-           (Get_Main_Window (Handle), "gps-file", Icon_Size_Menu);
-      end if;
-
-      if File_Modified_Pixbuf = Null_Pixbuf then
-         File_Modified_Pixbuf := Render_Icon
-           (Get_Main_Window (Handle), "gps-file-modified", Icon_Size_Menu);
-      end if;
-
-      if File_Unsaved_Pixbuf = Null_Pixbuf then
-         File_Unsaved_Pixbuf := Render_Icon
-           (Get_Main_Window (Handle), "gtk-new", Icon_Size_Menu);
-      end if;
-   end Create_Files_Pixbufs_If_Needed;
-
    ------------------
    -- Load_Desktop --
    ------------------
@@ -795,7 +766,6 @@ package body Src_Editor_Module is
       pragma Unreferenced (Dummy);
    begin
       if Node.Tag.all = "Source_Editor" then
-         Create_Files_Pixbufs_If_Needed (User);
          F := Get_File_Child (Node, "File");
 
          if F /= No_File then
@@ -1319,8 +1289,6 @@ package body Src_Editor_Module is
       end Jump_To_Location;
 
    begin
-      Create_Files_Pixbufs_If_Needed (Kernel);
-
       if Active (Me) then
          Trace (Me, "Open file " & File.Display_Full_Name
                 & " Project=" & Project.Project_Path.Display_Full_Name
@@ -1396,19 +1364,13 @@ package body Src_Editor_Module is
          Check_Writable (Editor);
 
          if Get_Status (Get_Buffer (Editor)) = Modified then
-            if File_Modified_Pixbuf /= null then
-               Set_Icon (Child, File_Modified_Pixbuf);
-            end if;
+            Child.Set_Icon_Name (File_Modified_Pixbuf);
 
          elsif Get_Status (Get_Buffer (Editor)) = Unsaved then
-            if File_Unsaved_Pixbuf /= null then
-               Set_Icon (Child, File_Unsaved_Pixbuf);
-            end if;
+            Child.Set_Icon_Name (File_Unsaved_Pixbuf);
 
          else
-            if File_Pixbuf /= null then
-               Set_Icon (Child, File_Pixbuf);
-            end if;
+            Child.Set_Icon_Name (File_Pixbuf);
          end if;
 
          Widget_Callback.Connect
@@ -1682,7 +1644,7 @@ package body Src_Editor_Module is
         Find_Editor (Kernel, D.File, No_Project);  --  any project ???
 
       function Get_Tooltip return String;
-      function Get_Icon return String;
+      function Get_Icon_Name return String;
 
       function Get_Tooltip return String is
       begin
@@ -1693,14 +1655,14 @@ package body Src_Editor_Module is
          end if;
       end Get_Tooltip;
 
-      function Get_Icon return String is
+      function Get_Icon_Name return String is
       begin
-         if D.Icon = null then
+         if D.Icon_Name = null then
             return "";
          else
-            return D.Icon.all;
+            return D.Icon_Name.all;
          end if;
-      end Get_Icon;
+      end Get_Icon_Name;
 
    begin
       if Child /= null then
@@ -1723,7 +1685,7 @@ package body Src_Editor_Module is
                     (Source_Editor_Box
                        (Get_Widget (Child))),
                   D.Identifier, D.Info,
-                  Icon    => Get_Icon,
+                  Icon => Get_Icon_Name,
                   Tooltip => Get_Tooltip);
 
             else
@@ -2168,7 +2130,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, New_File_Command_Name, new New_File_Command,
          Description => -"Create a new empty editor",
-         Stock_Id    => Stock_New);
+         Icon_Name   => "gps-new-document-symbolic");
 
       Register_Action
         (Kernel, "new view", new New_View_Command,
@@ -2177,12 +2139,12 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, Open_Command_Name, new Open_Command,
          Description => -"Open an existing file",
-         Stock_Id    => Stock_Open);
+         Icon_Name   => "gps-open-file-symbolic");
 
       Register_Action
         (Kernel, "open from host", new Open_Remote_Command,
          Description => -"Open a file from a remote host",
-         Stock_Id    => Stock_Open);
+         Icon_Name   => "gps-open-file-symbolic");
 
       Recent_Menu_Item := Find_Menu_Item (Kernel, "/File/Recent");
       Associate (Get_History (Kernel).all,
@@ -2193,7 +2155,7 @@ package body Src_Editor_Module is
 
       Register_Action
         (Kernel, Save_Command_Name, new Save_Command,
-         Stock_Id    => GPS_Save,
+         Icon_Name   => "gps-save-symbolic",
          Description => -"Save the current editor");
 
       Register_Action
@@ -2202,7 +2164,7 @@ package body Src_Editor_Module is
 
       Register_Action
         (Kernel, "print", new Src_Editor_Module.Commands.Print_Command,
-         Stock_Id    => Stock_Print,
+         Icon_Name   => "gps-print-symbolic",
          Description => -"Print the current editor");
 
       Command := new Close_Command;
@@ -2211,7 +2173,7 @@ package body Src_Editor_Module is
         (Kernel, "Close current window", Command,
          Description => -"Close the currently selected window",
          Category    => -"MDI",
-         Stock_Id    => Stock_Close);
+         Icon_Name   => "gps-close-symbolic");
 
       Command := new Close_Command;
       Close_Command (Command.all).Mode := Close_All;
@@ -2234,13 +2196,13 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "undo", new Undo_Command,
          Description => -"Undo the last command",
-         Stock_Id    => Stock_Undo,
+         Icon_Name   => "gps-undo-symbolic",
          Filter      => new Has_Undo_Filter);
 
       Register_Action
         (Kernel, "redo", new Redo_Command,
          Description => -"Redo the last command that was undone",
-         Stock_Id    => Stock_Redo,
+         Icon_Name   => "gps-redo-symbolic",
          Filter      => new Has_Redo_Filter);
 
       Register_Action
@@ -2446,6 +2408,7 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
+      pragma Unreferenced (Data);
       Pref_Display_Line_Numbers     : constant Boolean :=
                                         Display_Line_Numbers.Get_Pref /= Never;
       Pref_Display_Subprogram_Names : constant Boolean :=
@@ -2462,7 +2425,6 @@ package body Src_Editor_Module is
 
       Iter  : Child_Iterator;
       Child : MDI_Child;
-      P : constant Preference := Get_Pref (Data);
    begin
       Line_Highlighting.Add_Category (Search_Results_Style);
 
@@ -2485,20 +2447,6 @@ package body Src_Editor_Module is
          end loop;
 
          Id.Show_Subprogram_Names := Pref_Display_Subprogram_Names;
-      end if;
-
-      if P = null
-        or else P = Preference (Gtk_Theme)
-        or else Hide_Block_Pixbuf = null
-      then
-         --  Do not free old one, since referenced by existing editors.
-
-         Hide_Block_Pixbuf   :=
-           Kernel.Get_Main_Window.Render_Icon
-             (GPS_Fold_Block, Icon_Size_Speedbar);
-         Unhide_Block_Pixbuf   :=
-           Kernel.Get_Main_Window.Render_Icon
-             (GPS_Unfold_Block, Icon_Size_Speedbar);
       end if;
 
       if Id.Font /= Default_Style.Get_Pref_Font then
@@ -2583,27 +2531,6 @@ package body Src_Editor_Module is
       --  Post_It_Note_GC and Blank_Lines_GC are initialized only when the
       --  main window is mapped. Therefore, if the window was never displayed,
       --  these values are not initialized.
-
-      --  Destroy graphics
-      if Hide_Block_Pixbuf /= null then
-         Unref (Hide_Block_Pixbuf);
-      end if;
-
-      if Unhide_Block_Pixbuf /= null then
-         Unref (Unhide_Block_Pixbuf);
-      end if;
-
-      if File_Pixbuf /= null then
-         Unref (File_Pixbuf);
-      end if;
-
-      if File_Modified_Pixbuf /= null then
-         Unref (File_Modified_Pixbuf);
-      end if;
-
-      if File_Unsaved_Pixbuf /= null then
-         Unref (File_Unsaved_Pixbuf);
-      end if;
 
       if Id.Categories /= null then
          Free (Id.Categories.all);

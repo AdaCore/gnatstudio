@@ -34,6 +34,9 @@ package GPS.Styles is
       Background : GNAT.Strings.String_Access;
 
       Editor_Icon_Name : GNAT.Strings.String_Access;
+      --  Name of the icon to display on the left of lines that use this
+      --  style. The icon is looked up in the current icon theme.
+
       Speedbar   : Boolean := False;
    end record;
 
@@ -47,8 +50,8 @@ package GPS.Styles is
    --  Set the foreground or background color for Style. Color must be a
    --  recognized color. (Either a simple color, or "#RRGGBB");
 
-   procedure Set_Editor_Icon
-     (Style : not null access Simple_Style_Record; Id : String);
+   procedure Set_Editor_Icon_Name
+     (Style : not null access Simple_Style_Record; Name : String);
    --  Set the icon to use to represent this style in the side of editors
 
    function Get_Foreground

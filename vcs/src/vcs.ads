@@ -136,7 +136,7 @@ package VCS is
       Label    : GNAT.Strings.String_Access;
       --  The label corresponding to the status
 
-      Stock_Id : GNAT.Strings.String_Access;
+      Icon_Name : GNAT.Strings.String_Access;
       --  Associated stock icon
    end record;
 
@@ -157,7 +157,7 @@ package VCS is
    ---------------------
 
    Unknown_Label : aliased String := "Unknown";
-   Unknown_Stock : aliased String := "gps-vcs-unknown";
+   Unknown_Stock : aliased String := "gps-emblem-vcs-unknown";
 
    Unknown : constant File_Status :=
      (Unknown_Label'Access, Unknown_Stock'Access);
@@ -481,6 +481,10 @@ package VCS is
    --  is useful when the external VCS does not correspond to the native
    --  platform (like Cygwin on Windows based OS).
 
+   Added_Stock : aliased String := "gps-emblem-vcs-added";
+   Removed_Stock : aliased String := "gps-emblem-vcs-removed";
+   Modified_Stock : aliased String := "gps-emblem-vcs-modified";
+
 private
 
    Command_Line_Limit : constant Natural := 64;
@@ -493,47 +497,44 @@ private
    --------------------------
 
    Up_To_Date_Label : aliased String := "Up to date";
-   Up_To_Date_Stock : aliased String := "gps-vcs-up-to-date";
+   Up_To_Date_Stock : aliased String := "gps-emblem-vcs-up-to-date";
    Up_To_Date : File_Status :=
      (Up_To_Date_Label'Access, Up_To_Date_Stock'Access);
    --  The file corresponds to the latest version in the corresponding
    --  branch on the repository.
 
    Added_Label : aliased String := "Added";
-   Added_Stock : aliased String := "gps-vcs-added";
    Added : File_Status :=
      (Added_Label'Access, Added_Stock'Access);
    --  The file has been locally added to the VCS repository but the change
    --  has not been committed.
 
    Removed_Label : aliased String := "Removed";
-   Removed_Stock : aliased String := "gps-vcs-removed";
    Removed : File_Status :=
      (Removed_Label'Access, Removed_Stock'Access);
    --  The file still exists locally but is known to have been removed from
    --  the VCS repository.
 
    Modified_Label : aliased String := "Modified";
-   Modified_Stock : aliased String := "gps-vcs-modified";
    Modified : File_Status :=
      (Modified_Label'Access, Modified_Stock'Access);
    --  The file has been modified by the user or has been explicitly opened
    --  for editing.
 
    Needs_Merge_Label : aliased String := "Needs merge";
-   Needs_Merge_Stock : aliased String := "gps-vcs-needs-merge";
+   Needs_Merge_Stock : aliased String := "gps-emblem-vcs-needs-merge";
    Needs_Merge : File_Status :=
      (Needs_Merge_Label'Access, Needs_Merge_Stock'Access);
    --  The file has been modified locally and on the repository
 
    Needs_Update_Label : aliased String := "Needs update";
-   Needs_Update_Stock : aliased String := "gps-vcs-needs-update";
+   Needs_Update_Stock : aliased String := "gps-emblem-vcs-needs-update";
    Needs_Update : File_Status :=
      (Needs_Update_Label'Access, Needs_Update_Stock'Access);
    --  The file has been modified in the repository but not locally
 
    Not_Registered_Label : aliased String := "Not registered";
-   Not_Registered_Stock : aliased String := "gps-vcs-not-registered";
+   Not_Registered_Stock : aliased String := "gps-emblem-vcs-not-registered";
    Not_Registered : File_Status :=
      (Not_Registered_Label'Access, Not_Registered_Stock'Access);
    --  The file is unknown of the VCS repository

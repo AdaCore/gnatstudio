@@ -28,7 +28,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;
@@ -153,8 +152,9 @@ package body Src_Editor_Status_Bar is
 
       for J in Bar.Buffer_Info_Frames'Range loop
          if Info (J).Icon.all /= "" then
-            Gtk_New (Image, Stock_Id => Info (J).Icon.all,
-                     Size => Icon_Size_Menu);
+            Gtk_New_From_Icon_Name
+               (Image, Icon_Name => Info (J).Icon.all,
+                Size => Icon_Size_Menu);
             Bar.Buffer_Info_Frames (J).Label := Gtk_Widget (Image);
          else
             if Info (J).Info.Text /= null then
@@ -255,65 +255,75 @@ package body Src_Editor_Status_Bar is
    is
       Child : constant MDI_Child := Find_Child
         (Get_Kernel (Bar.Buffer), Source_Editor_Box (Bar.Box));
+      Icon_Size : constant := 16;
    begin
       case Get_Status (Bar.Buffer) is
          when Unmodified =>
             if Show_Modified_Unmodified_In_Status_Bar then
                Bar.Modified_Label.Set_Tooltip_Text (-"Unmodified");
-               Bar.Modified_Label.Set (File_Pixbuf);
+               Bar.Modified_Label.Set_From_Icon_Name
+                  (File_Pixbuf, Icon_Size);
             end if;
 
-            if Child /= null and then File_Pixbuf /= null then
-               Set_Icon (Child, File_Pixbuf);
+            if Child /= null then
+               Child.Set_Icon_Name (File_Pixbuf);
             end if;
 
          when Readonly =>
             if Show_Modified_Unmodified_In_Status_Bar then
                Bar.Modified_Label.Set_Tooltip_Text (-"Read only");
-               Bar.Modified_Label.Set (File_Pixbuf);
+               Bar.Modified_Label.Set_From_Icon_Name
+                  (File_Pixbuf, Icon_Size);
             end if;
 
-            if Child /= null and then File_Pixbuf /= null then
-               Set_Icon (Child, File_Pixbuf);
+            if Child /= null then
+               Child.Set_Icon_Name (File_Pixbuf);
             end if;
 
          when Unsaved =>
             if Show_Modified_Unmodified_In_Status_Bar then
                Bar.Modified_Label.Set_Tooltip_Text (-"Unsaved");
-               Bar.Modified_Label.Set (File_Unsaved_Pixbuf);
+               Bar.Modified_Label.Set_From_Icon_Name
+                  (File_Unsaved_Pixbuf, Icon_Size);
             end if;
 
-            if Child /= null and then File_Unsaved_Pixbuf /= null then
-               Set_Icon (Child, File_Unsaved_Pixbuf);
+            if Child /= null then
+               Child.Set_Icon_Name (File_Unsaved_Pixbuf);
             end if;
 
          when Saved =>
             if Show_Modified_Unmodified_In_Status_Bar then
                Bar.Modified_Label.Set_Tooltip_Text (-"Saved");
-               Bar.Modified_Label.Set (File_Pixbuf);
+               Bar.Modified_Label.Set_From_Icon_Name
+                  (File_Pixbuf, Icon_Size);
             end if;
 
-            if Child /= null and then File_Pixbuf /= null then
-               Set_Icon (Child, File_Pixbuf);
+            if Child /= null then
+               Child.Set_Icon_Name (File_Pixbuf);
             end if;
 
          when Modified =>
             if Show_Modified_Unmodified_In_Status_Bar then
                Bar.Modified_Label.Set_Tooltip_Text (-"Modified");
-               Bar.Modified_Label.Set (File_Modified_Pixbuf);
+               Bar.Modified_Label.Set_From_Icon_Name
+                  (File_Modified_Pixbuf, Icon_Size);
             end if;
 
-            if Child /= null and then File_Modified_Pixbuf /= null then
-               Set_Icon (Child, File_Modified_Pixbuf);
+            if Child /= null then
+               Child.Set_Icon_Name (File_Modified_Pixbuf);
             end if;
       end case;
 
       if Get_Writable (Bar.Buffer) then
-         Set (Bar.Read_Only_Label, GPS_Writable, Icon_Size_Local_Toolbar);
+         Set_From_Icon_Name
+            (Bar.Read_Only_Label, "gps-unlock-symbolic",
+             Icon_Size_Local_Toolbar);
          Bar.Read_Only_Label.Set_Tooltip_Text (-"Writable");
          Get_Style_Context (Bar.View).Remove_Class ("read-only");
       else
-         Set (Bar.Read_Only_Label, GPS_Read_Only, Icon_Size_Local_Toolbar);
+         Set_From_Icon_Name
+            (Bar.Read_Only_Label, "gps-lock-symbolic",
+             Icon_Size_Local_Toolbar);
          Bar.Read_Only_Label.Set_Tooltip_Text (-"Read Only");
          Get_Style_Context (Bar.View).Add_Class ("read-only");
       end if;

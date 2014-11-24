@@ -51,7 +51,7 @@ package body GPS.Kernel.Standard_Hooks is
       Tooltip    : String := "";
       Every_Line : Boolean := True;
       Normalize  : Boolean := True;
-      Icon       : String := "");
+      Icon_Name  : String := "");
    --  Create the Mime info for adding/creating/removing line information,
    --  and send it.
    --  If File is an empty string, send the Mime for all open buffers.
@@ -104,7 +104,7 @@ package body GPS.Kernel.Standard_Hooks is
       Tooltip    : String := "";
       Every_Line : Boolean := True;
       Normalize  : Boolean := True;
-      Icon       : String := "")
+      Icon_Name  : String := "")
    is
       Data : aliased File_Line_Hooks_Args :=
                (Hooks_Data with
@@ -115,7 +115,7 @@ package body GPS.Kernel.Standard_Hooks is
                 Every_Line        => Every_Line,
                 Tooltip           => new String'(Tooltip),
                 Normalize         => Normalize,
-                Icon              => new String'(Icon));
+                Icon_Name         => new String'(Icon_Name));
    begin
       if File /= GNATCOLL.VFS.No_File then
          if not Run_Hook_Until_Success
@@ -143,7 +143,7 @@ package body GPS.Kernel.Standard_Hooks is
       end if;
 
       GNAT.Strings.Free (Data.Tooltip);
-      GNAT.Strings.Free (Data.Icon);
+      GNAT.Strings.Free (Data.Icon_Name);
    end General_Line_Information;
 
    ----------------------
@@ -156,7 +156,7 @@ package body GPS.Kernel.Standard_Hooks is
       Identifier : String;
       Label      : String;
       Tooltip    : String := "";
-      Icon       : String := "")
+      Icon_Name  : String := "")
    is
       Infos : Line_Information_Data;
 
@@ -165,7 +165,8 @@ package body GPS.Kernel.Standard_Hooks is
       Infos (-1).Text := new String'(Label);
 
       Add_Line_Information
-        (Kernel, File, Identifier, Infos, Tooltip => Tooltip, Icon => Icon);
+        (Kernel, File, Identifier, Infos, Tooltip => Tooltip,
+         Icon_Name => Icon_Name);
 
       Unchecked_Free (Infos);
    end Add_Editor_Label;
@@ -223,11 +224,11 @@ package body GPS.Kernel.Standard_Hooks is
       Info       : Line_Information_Data;
       Normalize  : Boolean := True;
       Tooltip    : String := "";
-      Icon       : String := "") is
+      Icon_Name  : String := "") is
    begin
       General_Line_Information
         (Kernel, File, Identifier, Info, Normalize => Normalize,
-         Tooltip => Tooltip, Icon => Icon);
+         Tooltip => Tooltip, Icon_Name => Icon_Name);
    end Add_Line_Information;
 
    ------------------------
@@ -423,7 +424,7 @@ package body GPS.Kernel.Standard_Hooks is
          File         => Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel))),
          Info              => null,
          Tooltip           => null,
-         Icon              => null,
+         Icon_Name         => null,
          Every_Line        => Nth_Arg (Data, 4),
          Normalize         => Nth_Arg (Data, 5));
    end From_Callback_Data_Line_Info;

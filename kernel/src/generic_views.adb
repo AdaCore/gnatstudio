@@ -329,8 +329,8 @@ package body Generic_Views is
          & "Start with <b>not:</b> to reverse the filter");
 
       if Options /= 0 then
-         F.Pattern.Set_Icon_From_Stock
-           (Gtk_Entry_Icon_Primary, "gps-search-and-menu");
+         F.Pattern.Set_Icon_From_Icon_Name
+           (Gtk_Entry_Icon_Primary, "gps-search-and-menu-symbolic");
          F.Pattern.Set_Icon_Activatable (Gtk_Entry_Icon_Primary, True);
          F.Pattern.On_Icon_Press (On_Pattern_Config_Menu'Access, Self);
 
@@ -798,7 +798,8 @@ package body Generic_Views is
          end if;
 
          if Local_Config then
-            Gtk_New_From_Stock (Button, GPS_Stock_Config_Menu);
+            Gtk_New (Button);
+            Button.Set_Icon_Name ("gps-config-menu-symbolic");
             Button.Set_Name ("local-config");
             Button.Set_Homogeneous (False);
             Button.Set_Tooltip_Text (-"Configure this panel");

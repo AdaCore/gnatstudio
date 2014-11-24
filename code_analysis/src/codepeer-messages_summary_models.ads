@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib.Values;
-with Gdk.Pixbuf;
 with Gtk.Tree_Model;
 
 with Code_Analysis.Tree_Models;
@@ -24,7 +23,7 @@ with CodePeer.Utilities;
 
 package CodePeer.Messages_Summary_Models is
 
-   Entity_Icon_Column                 : constant :=  0;
+   Entity_Icon_Name_Column            : constant :=  0;
    Entity_Name_Column                 : constant :=  1;
    Entity_Lifeage_Column              : constant :=  2;
    Informational_Current_Count_Column : constant :=  3;
@@ -48,18 +47,12 @@ package CodePeer.Messages_Summary_Models is
    procedure Gtk_New
      (Model           : out Messages_Summary_Model;
       Tree            : Code_Analysis.Code_Analysis_Tree;
-      Categories      : CodePeer.Message_Category_Sets.Set;
-      Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
-      File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
-      Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf);
+      Categories      : CodePeer.Message_Category_Sets.Set);
 
    procedure Initialize
      (Model           : access Messages_Summary_Model_Record'Class;
       Tree            : Code_Analysis.Code_Analysis_Tree;
-      Categories      : CodePeer.Message_Category_Sets.Set;
-      Project_Icon    : Gdk.Pixbuf.Gdk_Pixbuf;
-      File_Icon       : Gdk.Pixbuf.Gdk_Pixbuf;
-      Subprogram_Icon : Gdk.Pixbuf.Gdk_Pixbuf);
+      Categories      : CodePeer.Message_Category_Sets.Set);
 
    procedure Set_Show_All_Subprograms
      (Self : access Messages_Summary_Model_Record'Class;
@@ -105,9 +98,6 @@ private
       --  Set of the message lifeages, which is show in the report
       Message_Statuses     : CodePeer.Review_Status_Kinds_Flags;
       --  Set of the message review statuses, which is show in the report
-      Project_Icon         : Gdk.Pixbuf.Gdk_Pixbuf;
-      File_Icon            : Gdk.Pixbuf.Gdk_Pixbuf;
-      Subprogram_Icon      : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
 
    type Subprogram_Item is

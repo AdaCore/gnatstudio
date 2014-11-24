@@ -29,7 +29,6 @@ with Glib.Object;            use Glib.Object;
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Stock;              use Gtk.Stock;
 with Gtk.Widget;             use Gtk.Widget;
 
 with Gtkada.File_Selector;   use Gtkada.File_Selector;
@@ -47,7 +46,6 @@ with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Stock_Icons;        use GPS.Stock_Icons;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
 with Default_Preferences;    use Default_Preferences;
@@ -512,14 +510,14 @@ package body GPS.Kernel.Console is
         (Kernel, "messages clear",
          new Clear_Messages_Command,
          -"Clear the contents of the Messages window",
-         Stock_Id => Stock_Clear,
+         Icon_Name => "gps-clear-symbolic",
          Category => -"Messages");
 
       Register_Action
         (Kernel, "messages save to file",
          new Save_Messages_Command,
          -"Save the contents of the messages window to a file",
-         Stock_Id => GPS_Save,
+         Icon_Name => "gps-save-symbolic",
          Category => -"Messages");
 
       Register_Action
@@ -527,7 +525,7 @@ package body GPS.Kernel.Console is
          new Load_Messages_Command,
          -("Loads the contents of a file into the Messages window, and process"
            & " locations into the Locations window."),
-         Stock_Id => Stock_Open,
+         Icon_Name => "gps-open-file-symbolic",
          Category => -"Messages");
 
       --  After the actions have been registered, so that the icons are found.

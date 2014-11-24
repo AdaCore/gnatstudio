@@ -132,7 +132,8 @@ class CompletionProposal(object):
                 - documentation: text appearing in the documentation window
                         when this proposal is selected in the list.
                         In pango markup language.
-                - icon_name: (optional) the name of a stock icon
+                - icon_name: (optional) the name of a named icon in the icon
+                        theme.
                 - action_name: (optional) the name of an action to execute
                         when this proposal is selected.
         """

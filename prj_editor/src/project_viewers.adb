@@ -38,7 +38,6 @@ with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Label;                    use Gtk.Label;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
-with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
 with Gtk.Tree_Store;               use Gtk.Tree_Store;
@@ -1237,7 +1236,7 @@ package body Project_Viewers is
         (Kernel, "open Project Properties",
          new Edit_Project_Properties_Command,
          "Open the project properties editor",
-         Stock_Id => Stock_Edit,
+         Icon_Name => "gps-edit-symbolic",
          Category => -"Views");
 
       Register_Action
@@ -1247,7 +1246,7 @@ package body Project_Viewers is
       Register_Action
         (Kernel, "edit switches for file", new Edit_File_Switches,
          -"Edit the switches for the files selected in the switches editor",
-         Stock_Id => Stock_Edit);
+         Icon_Name => "gps-edit-symbolic");
 
       Filter  := Lookup_Filter (Kernel, "Project only");
       Filter2  := Lookup_Filter (Kernel, "Project only")
@@ -1291,7 +1290,7 @@ package body Project_Viewers is
       Register_Action
         (Kernel, Action_Add_Scenario_Variable,
          Command     => new Add_Variable_Command,
-         Stock_Id    => Stock_Add,
+         Icon_Name   => "gps-add-symbolic",
          Description => -"Add a new scenario variable to the selected project",
          Category => -"Projects");
 

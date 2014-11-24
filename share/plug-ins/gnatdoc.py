@@ -86,7 +86,7 @@ targets = """
       <arg>-P%PP</arg>
       <arg>%X</arg>
     </command-line>
-    <icon>gps-syntax-check</icon>
+    <iconname>gps-syntax-check-symbolic</iconname>
     <switches command="%(tool_name)s" columns="1" lines="3">
        <check
         label="Leading documentation"
@@ -119,7 +119,7 @@ targets = """
    name="gnatdoc"
    menu="/Tools/"
   >
-    <icon>gps-syntax-check</icon>
+    <iconname>gps-syntax-check-symbolic</iconname>
     <in-menu>FALSE</in-menu>
     <read-only>TRUE</read-only>
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
@@ -133,7 +133,7 @@ targets = """
    name="gnatdoc project recursive"
    menu="/Tools/"
   >
-    <icon>gps-syntax-check</icon>
+    <iconname>gps-syntax-check-symbolic</iconname>
     <in-menu>FALSE</in-menu>
     <read-only>TRUE</read-only>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
@@ -148,7 +148,7 @@ targets = """
    name="gnatdoc project"
    menu="/Tools/"
   >
-    <icon>gps-syntax-check</icon>
+    <iconname>gps-syntax-check-symbolic</iconname>
     <in-menu>FALSE</in-menu>
     <read-only>TRUE</read-only>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
@@ -164,7 +164,7 @@ targets = """
    name="gnatdoc file"
    menu="/Tools/"
   >
-    <icon>gps-syntax-check</icon>
+    <iconname>gps-syntax-check-symbolic</iconname>
     <in-menu>FALSE</in-menu>
     <read-only>TRUE</read-only>
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>

@@ -21,7 +21,6 @@ with Gtk.Style_Context;  use Gtk.Style_Context;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with GPS.Intl;           use GPS.Intl;
-with GPS.Stock_Icons;    use GPS.Stock_Icons;
 
 package body Gtkada.Search_Entry is
 
@@ -84,12 +83,13 @@ package body Gtkada.Search_Entry is
       S  : constant Gtkada_Search_Entry := Gtkada_Search_Entry (Self);
    begin
       if S.Get_Text /= "" then
-         S.Set_Icon_From_Stock (Gtk_Entry_Icon_Secondary, GPS_Clear_Entry);
+         S.Set_Icon_From_Icon_Name
+            (Gtk_Entry_Icon_Secondary, "gps-clear-entry-symbolic");
          S.Set_Icon_Activatable (Gtk_Entry_Icon_Secondary, True);
          S.Set_Icon_Tooltip_Text
             (Gtk_Entry_Icon_Secondary, -"Clear the pattern");
       else
-         S.Set_Icon_From_Stock (Gtk_Entry_Icon_Secondary, "");
+         S.Set_Icon_From_Icon_Name (Gtk_Entry_Icon_Secondary, "");
          S.Set_Icon_Activatable (Gtk_Entry_Icon_Secondary, False);
       end if;
    end On_Changed;

@@ -31,7 +31,6 @@ with Language.Tree;             use Language.Tree;
 with Language_Handlers;         use Language_Handlers;
 with String_Utils;              use String_Utils;
 with Code_Coverage;             use Code_Coverage;
-with Code_Analysis_GUI;
 with Code_Coverage.Gcov;
 with Code_Coverage.GNATcov;
 with GPS.Editors; use GPS.Editors;
@@ -243,8 +242,6 @@ package body Coverage_GUI is
    is
       Line_Info : Line_Information_Data;
    begin
-      Code_Analysis_GUI.Initialize_Graphics (Kernel);
-
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
 

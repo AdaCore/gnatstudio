@@ -22,7 +22,6 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Generic_Views;
 with GPS.Search;                     use GPS.Search;
-with GPS.Stock_Icons;                use GPS.Stock_Icons;
 with GPS.Tree_View.Locations;        use GPS.Tree_View.Locations;
 
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
@@ -43,7 +42,6 @@ with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu;                         use Gtk.Menu;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
-with Gtk.Stock;                        use Gtk.Stock;
 with Gtk.Toolbar;                      use Gtk.Toolbar;
 with GPS.Tree_View;                    use GPS.Tree_View;
 with Gtk.Tree_Selection;               use Gtk.Tree_Selection;
@@ -1265,20 +1263,20 @@ package body GPS.Location_View is
         (Kernel, "locations remove selection",
          new Remove_Selection_Command,
          -"Remove the selected category, file or message",
-         Stock_Id => Stock_Remove,
+         Icon_Name => "gps-remove-symbolic",
          Category => -"Locations");
 
       Register_Action
         (Kernel, "locations clear",
          new Clear_Locations_Command,
          -"Remove all the messages",
-         Stock_Id => Stock_Clear,
+         Icon_Name => "gps-clear-symbolic",
          Category => -"Locations");
 
       Register_Action
         (Kernel, "locations export to text file", new Export_Command,
          -"Export the selected category or file to a text file",
-         Stock_Id => GPS_Save,
+         Icon_Name => "gps-save-symbolic",
          Category => -"Locations");
 
       Register_Action
@@ -1293,14 +1291,14 @@ package body GPS.Location_View is
         (Kernel, "locations expand files in category",
          new Expand_Category_Command,
          -"Expand all files in the current category",
-         Stock_Id => GPS_Expand_All,
+         Icon_Name => "gps-expand-all-symbolic",
          Category => -"Locations");
 
       Register_Action
         (Kernel, "locations collapse all files",
          new Collapse_All_Files_Command,
          -"Collapse all files in the locations view",
-         Stock_Id => GPS_Collapse_All,
+         Icon_Name => "gps-collapse-all-symbolic",
          Category => -"Locations");
 
       Register_Hook_No_Return

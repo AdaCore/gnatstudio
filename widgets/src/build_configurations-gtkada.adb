@@ -33,7 +33,6 @@ with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
-with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
@@ -58,14 +57,14 @@ package body Build_Configurations.Gtkada is
    --  ??? Add facility to rename a target
 
    Icons_List : constant array (Natural range <>) of Unbounded_String :=
-                  (To_Unbounded_String ("gps-build-all"),
-                   To_Unbounded_String ("gps-build-main"),
-                   To_Unbounded_String ("gps-clean"),
-                   To_Unbounded_String ("gps-compile"),
-                   To_Unbounded_String ("gps-compute-xref"),
-                   To_Unbounded_String ("gps-custom-build"),
-                   To_Unbounded_String ("gps-semantic-check"),
-                   To_Unbounded_String ("gps-syntax-check"));
+                  (To_Unbounded_String ("gps-build-all-symbolic"),
+                   To_Unbounded_String ("gps-build-main-symbolic"),
+                   To_Unbounded_String ("gps-clean-symbolic"),
+                   To_Unbounded_String ("gps-compile-symbolic"),
+                   To_Unbounded_String ("gps-compute-xref-symbolic"),
+                   To_Unbounded_String ("gps-custom-build-symbolic"),
+                   To_Unbounded_String ("gps-semantic-check-symbolic"),
+                   To_Unbounded_String ("gps-syntax-check-symbolic"));
 
    ---------------
    -- Constants --
@@ -302,10 +301,10 @@ package body Build_Configurations.Gtkada is
            Launch_Mode_Type'Val (Get_Active (T.Launch_Combo));
 
          if T.Icon_Entry /= null then
-            T.Target.Properties.Icon :=
+            T.Target.Properties.Icon_Name :=
               To_Unbounded_String (Get_Text (T.Icon_Entry));
          else
-            T.Target.Properties.Icon :=
+            T.Target.Properties.Icon_Name :=
               To_Unbounded_String (Get_Selected_Item (T.Icon_Button));
          end if;
 
@@ -436,7 +435,7 @@ package body Build_Configurations.Gtkada is
 
       --  Refresh the icon in the tree view
 
-      if T.Target.Properties.Icon = "" then
+      if T.Target.Properties.Icon_Name = "" then
          Get_Selected (Get_Selection (UI.View), M, It);
 
          if It /= Null_Iter then --  It should not be null, but test for safety
@@ -553,7 +552,8 @@ package body Build_Configurations.Gtkada is
          --  ??? We should only put a revert button when there is an original
          --  target
 
-         Gtk_New_From_Stock_And_Label (Button, "gtk-refresh", " Revert ");
+         Gtk_New_From_Name_And_Label
+           (Button, "gps-refresh-symbolic", " Revert ");
          Pack_End (Top_Box, Button, False, False, 0);
 
          Object_Connect
@@ -726,7 +726,7 @@ package body Build_Configurations.Gtkada is
          Gtk_New_Hbox (Hbox);
          Gtk_New
            (Scrolled.Icon_Button,
-            Stock_Id => To_String (Icons_List (Icons_List'First)));
+            Icon_Name => To_String (Icons_List (Icons_List'First)));
          Pack_Start (Hbox, Scrolled.Icon_Button, False, False, 0);
 
          Icon_Callback.Connect
@@ -737,7 +737,8 @@ package body Build_Configurations.Gtkada is
               (Scrolled.Icon_Button,
                To_String (Icons_List (J)), To_String (Icons_List (J)));
          end loop;
-         Add_Item (Scrolled.Icon_Button, "custom", "gtk-new");
+         Add_Item (Scrolled.Icon_Button, "custom",
+                   Icon_Name => "invalid-symbolic");  --  fallback
 
          Attach (Table,
                  Child         => Hbox,
@@ -755,10 +756,10 @@ package body Build_Configurations.Gtkada is
          declare
             Icon : Unbounded_String;
          begin
-            if Target.Properties.Icon = "" then
+            if Target.Properties.Icon_Name = "" then
                Icon := Target.Model.Icon;
             else
-               Icon := Target.Properties.Icon;
+               Icon := Target.Properties.Icon_Name;
             end if;
 
             --  Try to select the icon
@@ -933,7 +934,7 @@ package body Build_Configurations.Gtkada is
 
       Pack_Start (Col, Icon_Renderer, False);
       Pack_Start (Col, Text_Renderer, False);
-      Add_Attribute (Col, Icon_Renderer, "stock-id", Icon_Column);
+      Add_Attribute (Col, Icon_Renderer, "icon-name", Icon_Column);
       Add_Attribute (Col, Text_Renderer, "markup", Name_Column);
       Dummy := Append_Column (UI.View, Col);
 
@@ -949,7 +950,7 @@ package body Build_Configurations.Gtkada is
       Gtk_New_Hbox (Buttons, Spacing => 3);
 
       Gtk_New (Button);
-      Gtk_New (Image, Stock_Add, Icon_Size_Menu);
+      Gtk_New_From_Icon_Name (Image, "gps-add-symbolic", Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
       Set_Tooltip_Text (Widget  => Button,
@@ -963,7 +964,7 @@ package body Build_Configurations.Gtkada is
          After       => True);
 
       Gtk_New (Button);
-      Gtk_New (Image, Stock_Remove, Icon_Size_Menu);
+      Gtk_New_From_Icon_Name (Image, "gps-remove-symbolic", Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
       Set_Tooltip_Text (Widget  => Button,
@@ -977,7 +978,8 @@ package body Build_Configurations.Gtkada is
          After       => True);
 
       Gtk_New (Button);
-      Gtk_New (Image, Stock_New, Icon_Size_Menu);
+      Gtk_New_From_Icon_Name
+        (Image, "gps-new-document-symbolic", Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
       Set_Tooltip_Text (Widget  => Button,
@@ -1023,11 +1025,11 @@ package body Build_Configurations.Gtkada is
 
       --  Create the dialog buttons
 
-      Ignore := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Ignore := Gtk_Button (Add_Button (Dialog, -"OK", Gtk_Response_OK));
       Ignore := Gtk_Button
-        (Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply));
+        (Add_Button (Dialog, -"Apply", Gtk_Response_Apply));
       Ignore := Gtk_Button
-        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+        (Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
@@ -1128,7 +1130,7 @@ package body Build_Configurations.Gtkada is
 
       Pack_Start (Col, Icon_Renderer, False);
       Pack_Start (Col, Text_Renderer, False);
-      Add_Attribute (Col, Icon_Renderer, "stock-id", Icon_Column);
+      Add_Attribute (Col, Icon_Renderer, "icon-name", Icon_Column);
       Add_Attribute (Col, Text_Renderer, "markup", Name_Column);
       Dummy := Append_Column (UI.View, Col);
 
@@ -1144,7 +1146,7 @@ package body Build_Configurations.Gtkada is
       Gtk_New_Hbox (Buttons, Spacing => 3);
 
       Gtk_New (Button);
-      Gtk_New (Image, Stock_Add, Icon_Size_Menu);
+      Gtk_New_From_Icon_Name (Image, "gps-add-symbolic", Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
       Set_Tooltip_Text (Widget => Button,
@@ -1158,7 +1160,7 @@ package body Build_Configurations.Gtkada is
          After       => True);
 
       Gtk_New (Button);
-      Gtk_New (Image, Stock_Remove, Icon_Size_Menu);
+      Gtk_New_From_Icon_Name (Image, "gps-remove-symbolic", Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
       Set_Tooltip_Text (Widget => Button,
@@ -1204,11 +1206,11 @@ package body Build_Configurations.Gtkada is
 
       --  Create the dialog buttons
 
-      Temp := Gtk_Button (Add_Button (Dialog, Stock_Ok, Gtk_Response_OK));
+      Temp := Gtk_Button (Add_Button (Dialog, -"OK", Gtk_Response_OK));
       Temp := Gtk_Button
-        (Add_Button (Dialog, Stock_Apply, Gtk_Response_Apply));
+        (Add_Button (Dialog, -"Apply", Gtk_Response_Apply));
       Temp := Gtk_Button
-        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+        (Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
@@ -1468,9 +1470,9 @@ package body Build_Configurations.Gtkada is
       --  Create the dialog buttons
 
       Ignore := Gtk_Button
-        (Add_Button (Dialog, Stock_Execute, Gtk_Response_OK));
+        (Add_Button (Dialog, -"Execute", Gtk_Response_OK));
       Ignore := Gtk_Button
-        (Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel));
+        (Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
@@ -1626,7 +1628,7 @@ package body Build_Configurations.Gtkada is
             --  We have not found our iter, create it now
             Append (View.Model, Iter, Null_Iter);
             Set (View.Model, Iter, Name_Column, Cat_Name);
-            Set (View.Model, Iter, Icon_Column, "gps-folder-open");
+            Set (View.Model, Iter, Icon_Column, "gps-emblem-directory-open");
 
             --  Category iters correspond to page 0 in the main notebook
             Set (View.Model, Iter, Num_Column, 0);
@@ -1646,8 +1648,8 @@ package body Build_Configurations.Gtkada is
               Glib.Convert.Escape_Text (To_String (Target.Name)));
          Set (View.Model, Iter, Num_Column, Count);
 
-         if Target.Properties.Icon /= "" then
-            Icon_Str := Target.Properties.Icon;
+         if Target.Properties.Icon_Name /= "" then
+            Icon_Str := Target.Properties.Icon_Name;
          elsif Target.Model.Icon /= "" then
             Icon_Str := Target.Model.Icon;
          end if;
@@ -1776,7 +1778,7 @@ package body Build_Configurations.Gtkada is
          --  We have not found our iter, create it now
          Append (View.Model, Iter, Null_Iter);
          Set (View.Model, Iter, Name_Column, Mode_Name);
-         Set (View.Model, Iter, Icon_Column, "gps-folder-open");
+         Set (View.Model, Iter, Icon_Column, "gps-emblem-directory-open");
 
          --  Set the corresponding page in the notebook
          Set (View.Model, Iter, Num_Column, Count);

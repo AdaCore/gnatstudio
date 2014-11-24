@@ -20,9 +20,7 @@ with Gtk.Cell_Renderer;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Menu;                   use Gtk.Menu;
-with Gtk.Window;                 use Gtk.Window;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
-with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Image;                  use Gtk.Image;
@@ -58,7 +56,7 @@ package body Code_Analysis_GUI is
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
       Bar_Render  : Gtk_Cell_Renderer_Progress;
       Dummy       : Gint;
-      pragma Unreferenced (Dummy);
+      pragma Unreferenced (Kernel, Dummy);
       --  Warning board widgets
       Warning_Image    : Gtk_Image;
       Board_Label      : Gtk_Label;
@@ -67,16 +65,10 @@ package body Code_Analysis_GUI is
       Button_Box       : Gtk_Hbox;
    begin
       View.Binary_Mode       := Binary;
-      View.Icons.Prj_Pixbuf  := Render_Icon
-        (Get_Main_Window (Kernel), Prj_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
-      View.Icons.File_Pixbuf := Render_Icon
-        (Get_Main_Window (Kernel), File_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
-      View.Icons.Subp_Pixbuf := Render_Icon
-        (Get_Main_Window (Kernel), Subp_Pixbuf_Cst, Gtk.Enums.Icon_Size_Menu);
       Initialize_Vbox (View, False, 0);
       View.Projects := Projects;
       Gtk_New (View.Model, GType_Array'
-          (Pix_Col     => Gdk.Pixbuf.Get_Type,
+          (Icon_Name_Col => GType_String,
            Name_Col    => GType_String,
            Node_Col    => GType_Pointer,
            File_Col    => GType_Pointer,
@@ -99,8 +91,8 @@ package body Code_Analysis_GUI is
       Set_Name (View.Error_Board, Name.all & "_Error_Board"); --  testsuite
       Gtk_New_Vbox (Label_And_Button, False, 7);
       Gtk_New_Hbox (Button_Box);
-      Gtk_New
-        (Warning_Image, Stock_Dialog_Warning, Icon_Size_Dialog);
+      Gtk_New_From_Icon_Name
+        (Warning_Image, "gps-emblem-build-warning", 16);
       Gtk_New
         (Board_Label,
          -"This coverage report is empty. You can populate it with the "
@@ -126,8 +118,8 @@ package body Code_Analysis_GUI is
       Gtk_New_Hbox (View.Empty_Board, False, 7);
       Gtk_New_Vbox (Label_And_Button, False, 7);
       Gtk_New_Hbox (Button_Box);
-      Gtk_New
-        (Warning_Image, Stock_Dialog_Warning, Icon_Size_Dialog);
+      Gtk_New_From_Icon_Name
+        (Warning_Image, "gps-emblem-build-warning", Icon_Size_Dialog);
       Gtk_New
         (Board_Label,
          -"There is nothing in this flat view. You should try to display the "
@@ -153,7 +145,8 @@ package body Code_Analysis_GUI is
       Gtk_New (View.Node_Column);
       Gtk_New (Pixbuf_Rend);
       Pack_Start (View.Node_Column, Pixbuf_Rend, False);
-      Add_Attribute (View.Node_Column, Pixbuf_Rend, "pixbuf", Pix_Col);
+      Add_Attribute
+         (View.Node_Column, Pixbuf_Rend, "icon-name", Icon_Name_Col);
       Gtk_New (Text_Render);
       Pack_Start (View.Node_Column, Text_Render, False);
       Add_Attribute (View.Node_Column, Text_Render, "text", Name_Col);
@@ -254,8 +247,7 @@ package body Code_Analysis_GUI is
    begin
       Hide (View.Empty_Board);
       Clear (View.Model);
-      Fill_Iter
-        (View.Model, Iter, View.Projects, View.Binary_Mode, View.Icons);
+      Fill_Iter (View.Model, Iter, View.Projects, View.Binary_Mode);
       Iter := Get_Iter_First (View.Model);
       --  can't be null as the corresponding menu entry is not displayed when
       --  there nothing in the Model.
@@ -277,8 +269,7 @@ package body Code_Analysis_GUI is
       Iter : Gtk_Tree_Iter := Get_Iter_First (View.Model);
    begin
       Clear (View.Model);
-      Fill_Iter_With_Files
-        (View.Model, Iter, View.Projects, View.Binary_Mode, View.Icons);
+      Fill_Iter_With_Files (View.Model, Iter, View.Projects, View.Binary_Mode);
 
       if Get_Iter_First (View.Model) = Null_Iter then
          --  Show the empty flat view warning board
@@ -302,7 +293,7 @@ package body Code_Analysis_GUI is
    begin
       Clear (View.Model);
       Fill_Iter_With_Subprograms
-        (View.Model, Iter, View.Projects, View.Binary_Mode, View.Icons);
+        (View.Model, Iter, View.Projects, View.Binary_Mode);
       if Get_Iter_First (View.Model) = Null_Iter then
          --  Show the empty flat view warning board
          if Get_No_Show_All (View.Empty_Board) then
@@ -472,26 +463,5 @@ package body Code_Analysis_GUI is
          end if;
       end if;
    end Code_Analysis_Contextual_Menu_Factory;
-
-   -------------------------
-   -- Initialize_Graphics --
-   -------------------------
-
-   procedure Initialize_Graphics (Kernel : Kernel_Handle) is
-   begin
-      if Covered_Line_Pixbuf /= null then
-         return;
-      end if;
-
-      --  Constants here correspond to definitions in icons.xml
-
-      Covered_Line_Pixbuf := Render_Icon
-        (Get_Main_Window (Kernel),
-         "gps-gcov-covered", Gtk.Enums.Icon_Size_Menu);
-
-      Uncovered_Line_Pixbuf := Render_Icon
-        (Get_Main_Window (Kernel),
-         "gps-gcov-non-covered", Gtk.Enums.Icon_Size_Menu);
-   end Initialize_Graphics;
 
 end Code_Analysis_GUI;

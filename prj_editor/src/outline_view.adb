@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 
 with Glib;                      use Glib;
@@ -37,7 +36,6 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Abstract_Tree_Model;
 with Gtkada.Handlers;            use Gtkada.Handlers;
@@ -103,8 +101,6 @@ package body Outline_View is
    type Outline_View_Record is new Generic_Views.View_Record with record
       Tree        : Gtk_Tree_View;
       File        : GNATCOLL.VFS.Virtual_File;
-      Icon        : Gdk_Pixbuf;
-      File_Icon   : Gdk_Pixbuf;
       Filter      : Gtk.GEntry.Gtk_Entry;
 
       Spec_Column : Gtk_Tree_View_Column;
@@ -690,7 +686,7 @@ package body Outline_View is
       Gtk_New (Pixbuf_Render);
       Pack_Start (Outline.Spec_Column, Pixbuf_Render, False);
       Add_Attribute
-        (Outline.Spec_Column, Pixbuf_Render, "stock-id", Spec_Pixbuf_Column);
+        (Outline.Spec_Column, Pixbuf_Render, "icon-name", Spec_Pixbuf_Column);
 
       Gtk_New (Outline.Body_Column);
       Outline.Body_Column.Set_Sizing (Tree_View_Column_Autosize);
@@ -698,7 +694,7 @@ package body Outline_View is
       Gtk_New (Pixbuf_Render);
       Pack_Start (Outline.Body_Column, Pixbuf_Render, False);
       Add_Attribute
-        (Outline.Body_Column, Pixbuf_Render, "stock-id", Body_Pixbuf_Column);
+        (Outline.Body_Column, Pixbuf_Render, "icon-name", Body_Pixbuf_Column);
 
       Gtk_New (Text_Col);
       Col_Number := Append_Column (Outline.Tree, Text_Col);
@@ -710,11 +706,6 @@ package body Outline_View is
       Clicked (Text_Col);
 
       Scrolled.Add (Outline.Tree);
-
-      Outline.Icon := Render_Icon
-        (Get_Main_Window (Outline.Kernel), "gps-box", Icon_Size_Menu);
-      Outline.File_Icon := Render_Icon
-        (Get_Main_Window (Outline.Kernel), "gps-file", Icon_Size_Menu);
 
       Set_Font_And_Colors (Outline.Tree, Fixed_Font => True);
 
@@ -786,9 +777,6 @@ package body Outline_View is
       if Model /= null then
          Model.Free;
       end if;
-
-      Unref (O.Icon);
-      Unref (O.File_Icon);
    end On_Destroy;
 
    -------------

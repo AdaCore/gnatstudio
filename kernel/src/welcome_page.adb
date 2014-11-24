@@ -17,7 +17,6 @@
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.RGBA;                  use Gdk.RGBA;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -26,10 +25,10 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -39,8 +38,8 @@ package body Welcome_Page is
 
    type Pic_Data is record
       Image     : Gtk_Image;
-      Mouse_On  : Gdk_Pixbuf;
-      Mouse_Off : Gdk_Pixbuf;
+      Mouse_On  : Unbounded_String;
+      Mouse_Off : Unbounded_String;
    end record;
 
    package Kernel_Return_Package is new User_Return_Callback
@@ -52,8 +51,7 @@ package body Welcome_Page is
    use Reacting_Button_Package;
 
    function Create_Reacting_Button
-     (Window : Gtk_Window;
-      Mouse_On, Mouse_Off : String) return Gtk_Event_Box;
+     (Mouse_On, Mouse_Off : String) return Gtk_Event_Box;
    --  Create a button that has Mouse_On and Mouse_Off as on-mouse-over images.
    --  Window is used as base for creating the graphical contexts.
 
@@ -160,12 +158,9 @@ package body Welcome_Page is
    is
       pragma Unreferenced (Widget);
    begin
-      Set (Data.Image, Data.Mouse_On);
+      Data.Image.Set_From_Icon_Name
+         (To_String (Data.Mouse_On), Icon_Size_Large_Toolbar);
       return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end On_Enter;
 
    --------------
@@ -177,12 +172,9 @@ package body Welcome_Page is
    is
       pragma Unreferenced (Widget);
    begin
-      Set (Data.Image, Data.Mouse_Off);
+      Data.Image.Set_From_Icon_Name
+         (To_String (Data.Mouse_Off), Icon_Size_Large_Toolbar);
       return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end On_Leave;
 
    ----------------------------
@@ -190,17 +182,16 @@ package body Welcome_Page is
    ----------------------------
 
    function Create_Reacting_Button
-     (Window : Gtk_Window;
-      Mouse_On, Mouse_Off : String) return Gtk_Event_Box
+     (Mouse_On, Mouse_Off : String) return Gtk_Event_Box
    is
       Data   : Pic_Data;
       Box    : Gtk_Event_Box;
    begin
-      Data.Mouse_On := Render_Icon (Window, Mouse_On, Icon_Size_Large_Toolbar);
-      Data.Mouse_Off := Render_Icon
-        (Window, Mouse_Off, Icon_Size_Large_Toolbar);
+      Data.Mouse_On := To_Unbounded_String (Mouse_On);
+      Data.Mouse_Off := To_Unbounded_String (Mouse_Off);
 
-      Gtk_New (Data.Image, Pixbuf => Data.Mouse_Off);
+      Gtk_New_From_Icon_Name
+         (Data.Image, To_String (Data.Mouse_Off), Icon_Size_Large_Toolbar);
       Gtk_New (Box);
 
       Add (Box, Data.Image);
@@ -235,18 +226,13 @@ package body Welcome_Page is
       Image       : Gtk_Image;
       Scroll      : Gtk_Scrolled_Window;
       Box         : Gtk_Event_Box;
-      Win         : Gtk_Window;
 
    begin
       Main_Box := new Welcome_Page_Record;
       Initialize_Vbox (Main_Box);
 
-      Win := Get_Main_Window (Kernel);
-
-      Gtk_New
-        (Image,
-         Pixbuf => Render_Icon
-           (Win, "welcome-header", Icon_Size_Large_Toolbar));
+      Gtk_New_From_Icon_Name
+        (Image, "welcome_header", Icon_Size_Large_Toolbar);
       Pack_Start (Main_Box, Image);
 
       Gtk_New (Scroll);
@@ -279,7 +265,7 @@ package body Welcome_Page is
       Gtk_New_Vbox (Vbox);
       Hbox.Pack_Start (Vbox, False, False, 3);
       Box := Create_Reacting_Button
-        (Win, "button-overview", "button-overview-over");
+        ("button_overview", "button_overview_over");
       Vbox.Pack_Start (Box, False, False, 3);
       Connect
         (Box, Signal_Button_Release_Event,
@@ -288,7 +274,7 @@ package body Welcome_Page is
       Gtk_New_Vbox (Vbox);
       Hbox.Pack_Start (Vbox, False, False, 3);
       Box := Create_Reacting_Button
-        (Win, "button-guide", "button-guide-over");
+        ("button_guide", "button_guide_over");
       Vbox.Pack_Start (Box, False, False, 3);
       Connect
         (Box, Signal_Button_Release_Event,
@@ -297,7 +283,7 @@ package body Welcome_Page is
       Gtk_New_Vbox (Vbox);
       Hbox.Pack_Start (Vbox, False, False, 3);
       Box := Create_Reacting_Button
-        (Win, "button-tutorial", "button-tutorial-over");
+        ("button_tutorial", "button_tutorial_over");
       Vbox.Pack_Start (Box, False, False, 3);
       Connect
         (Box, Signal_Button_Release_Event,

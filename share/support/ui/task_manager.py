@@ -35,7 +35,7 @@ class Task_Manager_Widget():
         self.close_col = Gtk.TreeViewColumn("Close")
         cell = Gtk.CellRendererPixbuf()
         self.close_col.pack_end(cell, False)
-        self.close_col.add_attribute(cell, "stock_id", COL_CANCEL_PIXBUF)
+        self.close_col.add_attribute(cell, "icon_name", COL_CANCEL_PIXBUF)
         self.view.append_column(self.close_col)
 
         col = Gtk.TreeViewColumn("Progress", Gtk.CellRendererProgress(),
@@ -47,7 +47,7 @@ class Task_Manager_Widget():
         cell = Gtk.CellRendererPixbuf()
         self.playpause_col.pack_end(cell, False)
         self.playpause_col.add_attribute(
-            cell, "stock_id", COL_PLAYPAUSE_PIXBUF)
+            cell, "icon_name", COL_PLAYPAUSE_PIXBUF)
         self.view.append_column(self.playpause_col)
 
         # Connect to a click on the tree view
@@ -120,9 +120,9 @@ class Task_Manager_Widget():
         progress_percent = 0
 
         status = task.status()
-        status_icon = "gtk-media-pause"
+        status_icon = "gps-pause-symbolic"
         if status == "PAUSED":
-            status_icon = "gtk-media-play"
+            status_icon = "gps-run-symbolic"
 
         if progress[1] > 0:
             progress_percent = (progress[0] * 100) / progress[1]
@@ -131,9 +131,9 @@ class Task_Manager_Widget():
             progress_percent,  # COL_PROGRESS
             # COL_PROGRESS_TEXT
             "%s %s / %s" % (task.name(), progress[0], progress[1]),
-            "gtk-close",       # COL_CANCEL_PIXBUF
-            status_icon,       # COL_PLAYPAUSE_PIXBUF
-            str(id(task))]     # COL_TASK_ID
+            "gps-close-symbolic",  # COL_CANCEL_PIXBUF
+            status_icon,           # COL_PLAYPAUSE_PIXBUF
+            str(id(task))]         # COL_TASK_ID
 
     def __iter_from_task(self, task):
         """

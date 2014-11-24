@@ -63,7 +63,6 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
@@ -1226,9 +1225,9 @@ package body GUI_Utils is
          Set_Visibility (GEntry, Visible => False);
       end if;
 
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Button := Add_Button (Dialog, "OK", Gtk_Response_OK);
       Grab_Default (Button);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+      Button := Add_Button (Dialog, "Cancel", Gtk_Response_Cancel);
 
       Show_All (Dialog);
       --  Make sure the dialog is presented to the user
@@ -1716,8 +1715,15 @@ package body GUI_Utils is
       Is_Icon           : Boolean;
       ColNum            : Guint;
       pragma Unreferenced (Col_Number);
+      CT : GType_Array := Column_Types;
    begin
-      Gtk_New (Model, Column_Types);
+      for C in CT'Range loop
+         if CT (C) = GType_Icon_Name_String then
+            CT (C) := GType_String;
+         end if;
+      end loop;
+
+      Gtk_New (Model, CT);
       Gtk_New (View, Model);
       Unref (Model);
       Set_Mode (Get_Selection (View), Selection_Mode);
@@ -1737,7 +1743,8 @@ package body GUI_Utils is
         .. Integer'Min (Column_Names'Length, Column_Types'Length) - 1
       loop
          ColNum := Column_Types'First + Guint (N);
-         Is_Icon := Column_Types (ColNum) = Gdk.Pixbuf.Get_Type;
+         Is_Icon := Column_Types (ColNum) = Gdk.Pixbuf.Get_Type
+            or else Column_Types (ColNum) = GType_Icon_Name_String;
 
          --  Reuse existing column for icons
          if not Merge_Icon_Columns
@@ -1831,7 +1838,12 @@ package body GUI_Utils is
                Gtk_New (Pixbuf_Render);
             end if;
             Pack_Start (Col, Pixbuf_Render, False);
-            Add_Attribute (Col, Pixbuf_Render, "pixbuf", Gint (N));
+
+            if Column_Types (ColNum) = GType_Icon_Name_String then
+               Add_Attribute (Col, Pixbuf_Render, "icon-name", Gint (N));
+            else
+               Add_Attribute (Col, Pixbuf_Render, "pixbuf", Gint (N));
+            end if;
 
          else
             raise Program_Error;
@@ -1933,14 +1945,14 @@ package body GUI_Utils is
       end if;
    end Get_Selection;
 
-   ----------------------------------
-   -- Gtk_New_From_Stock_And_Label --
-   ----------------------------------
+   ---------------------------------
+   -- Gtk_New_From_Name_And_Label --
+   ---------------------------------
 
-   procedure Gtk_New_From_Stock_And_Label
-     (Button   : out Gtk_Button;
-      Stock_Id : String;
-      Label    : String)
+   procedure Gtk_New_From_Name_And_Label
+     (Button    : out Gtk_Button;
+      Icon_Name : String;
+      Label     : String)
    is
       Box : Gtk_Box;
       Lab : Gtk_Label;
@@ -1955,12 +1967,12 @@ package body GUI_Utils is
       Gtk_New_Hbox (Box, Homogeneous => False);
       Add (Align, Box);
 
-      Gtk_New (Img, Stock_Id => Stock_Id, Size => Icon_Size_Button);
+      Gtk_New_From_Icon_Name (Img, Icon_Name, Icon_Size_Button);
       Pack_Start (Box, Img, Expand => False);
 
       Gtk_New (Lab, Label);
       Pack_Start (Box, Lab, Expand => False, Fill => True);
-   end Gtk_New_From_Stock_And_Label;
+   end Gtk_New_From_Name_And_Label;
 
    ------------
    -- Format --

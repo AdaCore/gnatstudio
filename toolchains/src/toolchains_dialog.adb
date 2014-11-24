@@ -287,7 +287,8 @@ package body Toolchains_Dialog is
 
       for J in 1 .. 2 loop
          Gtk_New (Browse);
-         Gtk_New (Pix, Stock_Open, Icon_Size_Menu);
+         Gtk_New_From_Icon_Name
+           (Pix, "gps-open-file-symbolic", Icon_Size_Menu);
          Add (Browse, Pix);
          Set_Relief (Browse, Relief_None);
          Set_Border_Width (Browse, 0);

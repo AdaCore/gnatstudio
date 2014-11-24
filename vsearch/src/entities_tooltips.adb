@@ -39,12 +39,12 @@ package body Entities_Tooltips is
    function Get_Pixbuf
      (Kernel : access Kernel_Handle_Record'Class;
       Entity : Root_Entity'Class) return String;
-   --  Return the image (stock-id) associated to an entity
+   --  Return the image (icon-name) associated to an entity
 
    function Draw_Tooltip
      (Header      : String;
       Doc         : String;
-      Stock_Id    : String;
+      Icon_Name   : String;
       Draw_Border : Boolean;
       Guess       : Boolean := False) return Gtk_Widget;
    --  Helper function, factorizing the tooltip widget creation
@@ -77,7 +77,7 @@ package body Entities_Tooltips is
       return Draw_Tooltip
         (Guess       => Is_Guess (Entity),
          Header      => Get_Tooltip_Header (Kernel, Entity),
-         Stock_Id    => Get_Pixbuf (Kernel, Entity),
+         Icon_Name   => Get_Pixbuf (Kernel, Entity),
          Draw_Border => Draw_Border,
          Doc         => Get_Tooltip_Documentation (Kernel, Entity, Ref));
    end Draw_Tooltip;
@@ -99,9 +99,10 @@ package body Entities_Tooltips is
          Header      => Entity.Documentation_Header,
          Draw_Border => Draw_Border,
          Doc         => Entity.Documentation_Body,
-         Stock_Id    =>
-           Stock_From_Category (Entity.Is_Declaration,
-             Entity.Visibility, Entity.Category));
+         Icon_Name => Stock_From_Category
+           (Entity.Is_Declaration,
+            Entity.Visibility,
+            Entity.Category));
    end Draw_Tooltip;
 
    ------------------
@@ -111,7 +112,7 @@ package body Entities_Tooltips is
    function Draw_Tooltip
      (Header      : String;
       Doc         : String;
-      Stock_Id    : String;
+      Icon_Name   : String;
       Draw_Border : Boolean;
       Guess       : Boolean := False)
      return Gtk_Widget
@@ -129,9 +130,9 @@ package body Entities_Tooltips is
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Box.Pack_Start (Hbox, Expand => False, Fill => False);
 
-      if Stock_Id /= "" then
-         Gtk_New
-           (Image, Stock_Id => Stock_Id,
+      if Icon_Name /= "" then
+         Gtk_New_From_Icon_Name
+           (Image, Icon_Name => Icon_Name,
             Size => Icon_Size_Small_Toolbar);
          Image.Set_Alignment (0.0, 0.0);
          Hbox.Pack_Start (Image, Expand => False, Fill => False);

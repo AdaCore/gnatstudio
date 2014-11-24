@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.1"
+   width="16"
+   height="16"
+   id="svg2985">
+  <defs
+     id="defs2987">
+    <linearGradient
+       id="linearGradient4476">
+      <stop
+         id="stop4478"
+         style="stop-color:#2abeec;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop4480"
+         style="stop-color:#003c9a;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4441">
+      <stop
+         id="stop4443"
+         style="stop-color:#0eff00;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop4445"
+         style="stop-color:#1d8c16;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       x1="-1.5316833"
+       y1="4.0168314"
+       x2="11.80297"
+       y2="4.0168314"
+       id="linearGradient4482"
+       xlink:href="#linearGradient4476"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       x1="-2.9592829"
+       y1="2.0157382"
+       x2="11.241533"
+       y2="2.0157382"
+       id="linearGradient8778"
+       xlink:href="#linearGradient4476"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <metadata
+     id="metadata2990">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1">
+    <path
+       d="M 4.1411254,9.1161463 -2.9592829,2.0157384 4.141125,-5.0846698 11.241533,2.0157381 z"
+       transform="matrix(0.53566431,0,0,0.80035809,5.6339576,6.0885095)"
+       id="path8262"
+       style="fill:url(#linearGradient8778);fill-opacity:1;stroke:none" />
+  </g>
+</svg>

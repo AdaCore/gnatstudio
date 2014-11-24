@@ -23,7 +23,6 @@
 with GNAT.Strings;         use GNAT.Strings;
 with Glib;                 use Glib;
 with Gdk.Event;            use Gdk.Event;
-with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Gtk.Menu;
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Button;           use Gtk.Button;
@@ -37,16 +36,16 @@ with Code_Analysis;        use Code_Analysis;
 
 package Code_Analysis_GUI is
 
-   Prj_Pixbuf_Cst    : constant String := "gps-project-closed";
-   --  Name of the pixbuf used for project node in the analysis report
-   File_Pixbuf_Cst   : constant String := "gps-file";
-   --  Name of the pixbuf used for file node in the analysis report
-   Subp_Pixbuf_Cst   : constant String := "gps-entity-subprogram";
-   --  Name of the pixbuf used for subprogram node in the analysis report
-   Post_Analysis_Cst : constant String := "gps-file-modified";
-   --  Name of the pixbuf used for posting an analysis
+   Prj_Pixbuf_Cst   : constant String := "gps-emblem-project-closed";
+   --  Name of the icon used for project node in the analysis report
+   File_Pixbuf_Cst  : constant String := "gps-emblem-file-unmodified";
+   --  Name of the icon used for file node in the analysis report
+   Subp_Pixbuf_Cst  : constant String := "gps-emblem-entity-subprogram";
+   --  Name of the icon used for subprogram node in the analysis report
+   Post_Analysis_Cst : constant String := "gps-emblem-file-modified";
+   --  Name of the icon used for posting an analysis
 
-   Pix_Col  : constant := 0;
+   Icon_Name_Col  : constant := 0;
    --  Gtk_Tree_Model column number dedicated to the icons associated with each
    --  node of code_analysis data structure
    Name_Col : constant := 1;
@@ -83,19 +82,11 @@ package Code_Analysis_GUI is
    --  Constant used to set the width of the progress bars of the analysis
    --  report
 
-   Covered_Line_Pixbuf   : Gdk_Pixbuf := null;
-   Uncovered_Line_Pixbuf : Gdk_Pixbuf := null;
+   Covered_Line_Pixbuf : constant String := "gps-emblem-gcov-covered-symbolic";
+   Uncovered_Line_Pixbuf : constant String :=
+      "gps-emblem-gcov-uncovered-symbolic";
    --  Pixbufs containing the line information icons.
    --  Call Initialize_Graphics before referencing these variables.
-
-   procedure Initialize_Graphics (Kernel : Kernel_Handle);
-   --  Initialize the code coverage icons.
-
-   type Code_Analysis_Icons is record
-      Prj_Pixbuf  : Gdk.Pixbuf.Gdk_Pixbuf;
-      File_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
-      Subp_Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
-   end record;
 
    type Code_Analysis_View_Record is new Gtk_Vbox_Record with record
       Tree        : Gtk_Tree_View;
@@ -106,7 +97,6 @@ package Code_Analysis_GUI is
       Error_Board : Gtk_Hbox; --  when there's no data
       Load_Button : Gtk_Button;
       Empty_Board : Gtk_Hbox; --  when flat view doesn't allow to see data
-      Icons       : Code_Analysis_Icons;
       Projects    : Code_Analysis_Tree;
       --  Used by Show_Flat_List_* and Save_Desktop callbacks
       Binary_Mode : Boolean := True;

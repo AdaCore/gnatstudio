@@ -184,7 +184,7 @@ class GNATcovPlugin(object):
                 X('arg').children('gnatcov'),
                 X('arg').children('run'),
             ),
-            X('icon').children('gps-build-all'),
+            X('iconname').children('gps-build-all-symbolic'),
             X('switches', command='%(tool_name)s', columns='2', lines='2'),
         ),
 
@@ -197,7 +197,7 @@ class GNATcovPlugin(object):
             X('in-toolbar').children('FALSE'),
             X('in-menu').children('TRUE'),
             X('read-only').children('TRUE'),
-            X('icon').children('gps-build-all'),
+            X('iconname').children('gps-build-all-symbolic'),
             X('launch-mode').children('MANUALLY'),
             X('command-line').children(
                 X('arg').children('gnatcov'),
@@ -225,7 +225,7 @@ class GNATcovPlugin(object):
                 X('arg').children('%target'),
                 X('arg').children('--annotate=xcov'),
             ),
-            X('icon').children('gps-build-all'),
+            X('iconname').children('gps-build-all-symbolic'),
             X('switches', command='%(tool_name)s', columns='1', lines='4'),
         ),
 
@@ -236,7 +236,7 @@ class GNATcovPlugin(object):
             X('in-toolbar').children('FALSE'),
             X('in-menu').children('TRUE'),
             X('read-only').children('TRUE'),
-            X('icon').children('gps-build-all'),
+            X('iconname').children('gps-build-all-symbolic'),
             X('launch-mode').children('MANUALLY'),
             X('command-line').children(
                 X('arg').children('gnatcov'),

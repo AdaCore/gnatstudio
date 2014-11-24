@@ -21,7 +21,6 @@ with GNAT.Strings;
 with Glib;                      use Glib;
 with Gdk;                       use Gdk;
 with Gdk.Rectangle;             use Gdk.Rectangle;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Window;                use Gdk.Window;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Image;                 use Gtk.Image;
@@ -142,7 +141,6 @@ package body Src_Editor_Box.Tooltips is
       Vbox             : Gtk_Box;
       Label            : Gtk_Label;
       Area             : Gdk_Rectangle;
-      Image            : Gtk_Image;
       HBox             : Gtk_Box;
       LX, LY           : Gint;
       --  The coordinates relative to the view, not the box
@@ -181,7 +179,7 @@ package body Src_Editor_Box.Tooltips is
             Content       : Unbounded_String;
             Has_Info      : Boolean := False;
             Action        : GPS.Kernel.Messages.Action_Item;
-            Icon          : Gdk_Pixbuf;
+            Image         : Gtk_Image;
 
             C : Message_List.Cursor;
          begin
@@ -198,9 +196,14 @@ package body Src_Editor_Box.Tooltips is
                   while Message_List.Has_Element (C) loop
                      Action := Message_List.Element (C).Get_Action;
 
-                     Icon := null;
                      if Action /= null then
-                        Icon := Action.Image;
+                        if Image = null
+                           and then Action.Image /= null
+                           and then Action.Image.all /= ""
+                        then
+                           Gtk_New_From_Icon_Name
+                              (Image, Action.Image.all, 20);
+                        end if;
 
                         if Action.Tooltip_Text /= null then
                            if Content /= Null_Unbounded_String then
@@ -218,13 +221,12 @@ package body Src_Editor_Box.Tooltips is
             end if;
 
             if Has_Info then
-               if Icon /= null then
+               if Image = null then
                   Gtk_New (Label, To_String (Content));
                   Set_Use_Markup (Label, True);
                   return Gtk_Widget (Label);
                else
                   Gtk_New_Hbox (HBox, Homogeneous => False);
-                  Gtk_New (Image, Icon);
                   HBox.Pack_Start (Image, Expand => False, Fill => False);
                   Gtk_New (Label, To_String (Content));
                   Set_Use_Markup (Label, True);
@@ -297,7 +299,7 @@ package body Src_Editor_Box.Tooltips is
                   C : Message_List.Cursor;
                   Message : Message_Access;
                   Text    : Unbounded_String;
-                  Icon    : Gdk_Pixbuf;
+                  Image   : Gtk_Image;
                begin
                   C := Line_Info (J).Messages.Last;
 
@@ -325,23 +327,25 @@ package body Src_Editor_Box.Tooltips is
                   end loop;
 
                   if Text /= Null_Unbounded_String then
-                     Icon := null;
 
-                     if Message.Get_Action /= null then
-                        Icon := Message.Get_Action.Image;
+                     if Image = null
+                        and then Message.Get_Action /= null
+                        and then Message.Get_Action.Image /= null
+                     then
+                        Gtk_New_From_Icon_Name
+                           (Image, Message.Get_Action.Image.all, 20);
                      end if;
 
                      if Vbox = null then
                         Gtk_New_Vbox (Vbox, Homogeneous => False);
                      end if;
 
-                     if Icon /= null then
+                     if Image = null then
                         Gtk_New (Label, To_String (Text));
                         Vbox.Pack_Start (Label, Expand => False, Fill => True);
                      else
                         Gtk_New_Hbox (HBox, Homogeneous => False);
                         Vbox.Pack_Start (HBox, Expand => False, Fill => True);
-                        Gtk_New (Image, Icon);
                         HBox.Pack_Start
                           (Image, Expand => False, Fill => False);
                         Gtk_New (Label, To_String (Text));

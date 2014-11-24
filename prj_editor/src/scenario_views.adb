@@ -33,7 +33,6 @@ with Gtk.List_Store;           use Gtk.List_Store;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -61,7 +60,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Stock_Icons;
 with Histories;                 use Histories;
 with Variable_Editors;          use Variable_Editors;
 with GPS.Intl;                  use GPS.Intl;
@@ -278,8 +276,7 @@ package body Scenario_Views is
 
       Gtk_New (Pixbuf);
       Col.Pack_Start (Pixbuf, False);
-      Set_Property
-        (Pixbuf, Stock_Id_Property, GPS.Stock_Icons.GPS_Double_Arrow);
+      Set_Property (Pixbuf, Icon_Name_Property, "gps-double-arrow-symbolic");
       Col.Add_Attribute (Pixbuf, "visible", 3);
 
       Gtk_New (Combo);
@@ -708,14 +705,14 @@ package body Scenario_Views is
         (Kernel, "Scenario edit variable",
          new Command_Edit_Variable,
          -"Edit properties of the selected variable",
-         Stock_Id => GPS.Stock_Icons.GPS_Edit_Value,
+         Icon_Name => "gps-edit-symbolic",
          Category => -"Scenario");
 
       Register_Action
         (Kernel, "Scenario delete variable",
          new Command_Delete_Variable,
          -"Delete the selected variable",
-         Stock_Id => Stock_Remove,
+         Icon_Name => "gps-remove-symbolic",
          Category => -"Scenario");
    end Register_Module;
 

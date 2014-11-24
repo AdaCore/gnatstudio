@@ -15,36 +15,57 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides stock icons to use in the context of GPS.
---  GPS should avoid using hard-coded path names for icons, so that it is
---  easier to replace them everywhere, and gtk+ can automatically resize
---  images as appropriate. It is possible for GPS to register the same images
---  in various sizes to get the best rendering possible.
+--  This package provides the settings to interact with the gtk+ icon theme.
 --
---  See also the file share/gps/plug-ins/icons.xml
---  which can be used to define standard icons.
---  However, the corresponding icons do not have a corresponding string
---  constant.
+--  By default, gtk+ loads the Adwaita icon theme, which is found in the
+--  directory prefix/share/icons/.
+--  An extra theme, hicolor, is also defined, and acts as a fallback when
+--  icons are not found in Adwaita. GPS adds extra directories to that
+--  hicolor theme (gpsprefix/share/icons/hicolor/*), which contain GPS
+--  specific icons. As a result, icons from the user's theme (Adwaita) have
+--  priority, and GPS icons are loaded as fallbacks.
 --
---  In general, the stock_id can be used as is when creating widgets like
---  buttons, since gtk+ supports them out of the box. When you want to use them
---  in browsers, things are more complex (in fact, it seems that the svg are
---  displayed at a low resolution and then scaled, losing the advantage of
---  vector drawing...). Two solutions that have been used in the past:
+--  In GPS, the following conventions are used:
+--    * All icons should be scalable SVG icons. Currently, a few of these
+--      SVG simply embed PNG data, but they should be replaced in the long
+--      term, so that the icons display properly on hidpi screens.
 --
---      P : Gdk_Pixbuf;
---      Error : GError;
---      Path : Virtual_File := Create ("svg/refresh.svg");
---      Icon_To_Absolute_Path (Kernel, Path);
---      Gdk_New_From_File (P, Path.Display_Full_Name, Error);
+--    * By convention in gtk+, the basename of the file is the name by
+--      which the icon is refered to in the code. gtk+ automatically looks
+--      for variants, for instance   basename-rtl.svg when using right-to-left
+--      writing conventions.
 --
---  or
+--    * in GPS, icon files most often end with "-symbolic.svg". This is a
+--      special convention in gtk+. Such icons are displayed as grayscale
+--      only, and automatically adapt to dark themes. This means we do not
+--      need to provide multiple versions of the images, depending on the
+--      user's theme choice.
+--      (For this work, icons must use the fill property, not stroke, since
+--      only the former is properly converted)
+--      In some cases, however, we want to use colors in the icons. In this
+--      case, the icon should not use the -symbolic.svg prefix (although this
+--      isn't systematic, since colors are sometimes properly displayed for
+--      symbolic icons).
 --
---      P := Widget.Render_Icon_Pixbuf
---         (Stock_Id => ..., Size => Icon_Size_Button);
+--    * Icons must be organized into subdirectories based on their default
+--      size. gtk+ 3.14.5 will otherwise display warnings. The size of icons
+--      in a directory is given in the index.theme file.
+--
+--    * We use strings to represent the icons in the GPS code, not string
+--      constants. This makes it slightly easier to maintain, and it is
+--      assumed that someone adding a new icon will properly test that it
+--      displays properly, thus limiting the risk of typos.
+--
+--    * As much as possible, we keep this icon name until the last moment
+--      before rendering. This is cleaner than manipulating and storing
+--      Gdk_Pixbuf. For instance, icons will automatically adapt to changes
+--      in the icon theme, or to screen resolution.
+--
+--  Some icons can be found in
+--      http://commons.wikimedia.org/wiki/GNOME_Desktop_icons
+--  available under GPL2
 
 with Gtk.Enums;
-with Gtk.Icon_Set;
 with GNATCOLL.VFS;
 with GPS.Kernel;
 
@@ -56,78 +77,11 @@ package GPS.Stock_Icons is
    --  Register the stock icons for GPS.
    --  System_Dir is the installation prefix for GPS.
 
-   GPS_Stock_Config_Menu : constant String := "gps-configMenu";
-   --  Icon used for the configuration menu in the toolbar of views
-
-   GPS_Stop_Task : constant String := "gps-stopTask";
-   --  Icon used in the task manager's main progress bar to cancel a task
-
-   GPS_Expand_All : constant String := "gps-expandAll";
-   GPS_Collapse_All : constant String := "gps-collapseAll";
-   --  Manipulating a tree view
-
-   GPS_Clear_Entry : constant String := "gps-clear-entry";
-   --  Clear the contents of the entry, to be used with
-   --  Gtk.GEntry.Set_Icon_From_Stock.
-
-   GPS_Toggle_Links : constant String := "gps-toggle-links";
-   --  Hide or Show links in a browser
-
-   GPS_Remove_Unselected : constant String := "gps-remove-unselected";
-   --  Remove unselected elements
-
-   GPS_Read_Only : constant String := "gps-read-only";
-   GPS_Writable  : constant String := "gps-writable";
-   --  Locl and unlock icons
-
-   GPS_Fold_Block : constant String := "gps-fold-block";
-   GPS_Unfold_Block : constant String := "gps-unfold-block";
-   --  Source editor speedbar icons
-
-   GPS_Regexp : constant String := "gps-regexp";
-   GPS_Negate_Search : constant String := "gps-negate";
-
-   GPS_Double_Arrow : constant String := "gps-double-arrow";
-   --  Two arrows aligned vertically, to show that there is a combo box
-
    Icon_Size_Action_Button : Gtk.Enums.Gtk_Icon_Size;
    --  A very small icon size (7x7). It is used for instance for the Stop_Task
    --  button in the main toolbar.
 
    Icon_Size_Local_Toolbar : Gtk.Enums.Gtk_Icon_Size;
    --  The size for local toolbars in the MDI panels.
-
-   Icon_Size_Speedbar : Gtk.Enums.Gtk_Icon_Size;
-
-   GPS_Refresh             : constant String := "gps-refresh";
-   --  Refresh views
-
-   GPS_Edit_Value          : constant String := "gps-edit";
-   --  Edit a value in a view
-
-   GPS_Save                : constant String := "gtk-cdrom";
-   --  The icon for save. We avoid using "gtk-save" because of a startup
-   --  interaction with gio.
-
-   function Set_Icon
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Id     : String;
-      Label  : String;
-      File   : GNATCOLL.VFS.Virtual_File) return Gtk.Icon_Set.Gtk_Icon_Set;
-   procedure Set_Icon
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Set    : Gtk.Icon_Set.Gtk_Icon_Set;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Size   : Gtk.Enums.Gtk_Icon_Size);
-   --  Register a new stock icon.
-   --  File is either an absolute file name, or relative to the icons directory
-   --  in the GPS install.
-   --  The second version can be used to add variants for specific sizes.
-
-   procedure Icon_To_Absolute_Path
-     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Filename : in out GNATCOLL.VFS.Virtual_File);
-   --  Return the proper location for an icon
-   --  Sets Filename to No_File if the file is not found.
 
 end GPS.Stock_Icons;
