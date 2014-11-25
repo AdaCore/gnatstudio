@@ -68,3 +68,14 @@ KP-61-NA27-039 GPS: incorrect highlight of changed value in debugger data
   Status:     This was fixed in 6.1.1 on 2014-11-05
 
   Workaround: This only impact the colors, the actual values are correct.
+
+KP-61-N604-003 GPS: scroll bars not displayed in editors
+
+  Problem:    After restarting GPS some windows do not have scrollbars, but
+              the text is positioned in a such way that the top part of the
+              file is above the top of the editor window. This prevents normal
+              navigation it the file.
+
+  Status:     This was fixed in 6.1.1 on 2014-11-19
+
+  Workaround: Close and reopen the editor.
