@@ -554,5 +554,3 @@ if codepeer:
         '/share/examples/codepeer'
     xml_codepeer = xml_codepeer.replace('@EXAMPLE@', example_root)
     GPS.parse_xml(xml_codepeer)
-else:
-    GPS.Menu.get("CodePeer").destroy()

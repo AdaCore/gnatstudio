@@ -56,7 +56,6 @@ with CodePeer.Message_Review_Dialogs_V3;
 with CodePeer.Messages_Reports;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
-with CodePeer.Module.Filters;
 with CodePeer.Shell_Commands;   use CodePeer.Shell_Commands;
 with Commands, Commands.Interactive;  use Commands, Commands.Interactive;
 with Commands.CodePeer;
@@ -2125,7 +2124,6 @@ package body CodePeer.Module is
 
       Submenu_Factory : GPS.Kernel.Modules.UI.Submenu_Factory;
       Executable      : constant Virtual_File := Locate_On_Path ("codepeer");
-      Filter          : GPS.Kernel.Action_Filter;
 
    begin
       if Executable = No_File then
@@ -2147,14 +2145,11 @@ package body CodePeer.Module is
            or GPS.Kernel.Lookup_Filter (Kernel, "In project"),
          Submenu => Submenu_Factory);
 
-      Filter := new Filters.Ada_Generic_Or_Separate_Filter_Record;
-
       Register_Action
         (Kernel, "codepeer analyze all", new Analyze_All_Command);
       Register_Action
          (Kernel, "codepeer analyze file", new Analyze_File_Command,
           Filter     => Lookup_Filter (Kernel, "File")
-                        and not Filter
                         and Create (Language => "ada"));
       Register_Action
         (Kernel, "codepeer display code review",
