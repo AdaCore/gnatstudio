@@ -28,6 +28,11 @@ package Language.Libclang_Tree is
    package Clang_Iterator_Lists
    is new Ada.Containers.Doubly_Linked_Lists (Clang_Cursor);
 
+   package Clang_Iterator_Lists_Ref
+   is new Ada.Containers.Indefinite_Holders
+     (Clang_Iterator_Lists.List,
+      "=" => Clang_Iterator_Lists."=");
+
    ----------------------
    -- Type definitions --
    ----------------------
@@ -54,7 +59,7 @@ package Language.Libclang_Tree is
    type Clang_Tree_Iterator is new Semantic_Tree_Iterator with record
       Kernel : Core_Kernel;
       File   : GNATCOLL.VFS.Virtual_File;
-      Elements : Clang_Iterator_Lists.List;
+      Elements : Clang_Iterator_Lists_Ref.Holder;
       Current_Cursor : Clang_Iterator_Lists.Cursor
         := Clang_Iterator_Lists.No_Element;
       Current_Children_Added : Boolean;

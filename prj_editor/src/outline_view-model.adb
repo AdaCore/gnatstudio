@@ -718,11 +718,13 @@ package body Outline_View.Model is
                begin
                   Set_String
                     (Value, Escape_Text (Get (Info.Name).all)
-                     & " <span foreground=""#A0A0A0"">"
-                     & XML_Utils.Protect
-                       (Profile (Profile'First ..
-                            Integer'Min (Profile'Last, Profile'First + 500)))
-                     & "</span>");
+                     & (if Profile /= "" then
+                            " <span foreground=""#A0A0A0"">"
+                       & XML_Utils.Protect
+                         (Profile
+                            (Profile'First ..
+                             Integer'Min (Profile'Last, Profile'First + 500)))
+                       & "</span>" else ""));
                end;
             else
                Set_String

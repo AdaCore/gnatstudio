@@ -138,16 +138,24 @@ package body Language.Libclang_Tree is
    overriding function Root_Iterator
      (Self : Abstract_Clang_Tree) return Semantic_Tree_Iterator'Class
    is
-      Initial_List : Clang_Iterator_Lists.List;
+      Initial_List : Clang_Iterator_Lists_Ref.Holder :=
+        Clang_Iterator_Lists_Ref.To_Holder
+          (Clang_Iterator_Lists.Empty_List);
       Initial_Children : constant Cursors_Vectors.Vector :=
         Get_Children (Root_Cursor (Self.Tu));
    begin
       for I in 1 .. Initial_Children.Length loop
-         Initial_List.Append (Initial_Children.Element (Natural (I)));
+         Initial_List.Reference.Append
+           (Initial_Children.Element (Natural (I)));
       end loop;
 
-      return Clang_Tree_Iterator'
-        (Self.Kernel, Self.File, Initial_List, Initial_List.First, False);
+      declare
+         It : constant Clang_Iterator_Lists.Cursor :=
+           Initial_List.Reference.First;
+      begin
+         return Clang_Tree_Iterator'
+           (Self.Kernel, Self.File, Initial_List, It, False);
+      end;
    end Root_Iterator;
 
    -------------
@@ -159,16 +167,32 @@ package body Language.Libclang_Tree is
       Category_Filter : Category_Array := Null_Category_Array)
       return Semantic_Node'Class
    is
-      pragma Unreferenced (Category_Filter);
       Clang_Loc : constant Clang_Location := clang_getLocation
         (Self.Tu,
          File
            (Self.Tu, String (Self.File.Full_Name.all)),
          unsigned (Sloc.Line), unsigned (Sloc.Column));
+      Node : Clang_Node :=
+        Clang_Node'(Self.Kernel,
+                    clang_getCursor (Self.Tu, Clang_Loc),
+                    Self.File);
    begin
-      return Clang_Node'(Self.Kernel,
-                         clang_getCursor (Self.Tu, Clang_Loc),
-                         Self.File);
+      if Category_Filter /= Null_Category_Array then
+         loop
+            exit when Is_In (Node.Category, Category_Filter);
+            declare
+               P : constant Semantic_Node'Class := Node.Parent;
+            begin
+               if P in Clang_Node'Class then
+                  Node := Clang_Node (P);
+               else
+                  return No_Semantic_Node;
+               end if;
+            end;
+         end loop;
+      end if;
+
+      return Node;
    end Node_At;
 
    overriding function File
@@ -318,7 +342,7 @@ package body Language.Libclang_Tree is
          begin
             return Profile (Name'Length + 1 .. Profile'Last);
          end;
-      elsif K = CXCursor_FieldDecl then
+      elsif K in CXCursor_FieldDecl | CXCursor_VarDecl then
          return Spelling (clang_getCursorType (Self.Cursor));
       end if;
 
@@ -475,7 +499,8 @@ package body Language.Libclang_Tree is
         Next (It.Current_Cursor);
    begin
       for I in 1 .. Vec.Length loop
-         It.Elements.Insert (Cursor_Before, Vec.Element (Natural (I)));
+         It.Elements.Reference.Insert
+           (Cursor_Before, Vec.Element (Natural (I)));
       end loop;
       Next (It.Current_Cursor);
    end Next;
@@ -503,9 +528,13 @@ package body Language.Libclang_Tree is
      (It : Clang_Tree_Iterator) return Boolean
    is
       use Clang_Iterator_Lists;
+      Not_Empty_List_Cursor : constant Boolean :=
+        It.Current_Cursor /= Clang_Iterator_Lists.No_Element;
+      Not_Empty_Clang_Cursor : constant Boolean :=
+        Not_Empty_List_Cursor
+        and then Element (It.Current_Cursor) /= No_Cursor;
    begin
-      return not (It.Current_Cursor = Clang_Iterator_Lists.No_Element
-                  or else Element (It.Current_Cursor) = No_Cursor);
+      return Not_Empty_Clang_Cursor;
    end Has_Element;
 
 end Language.Libclang_Tree;

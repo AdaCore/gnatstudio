@@ -152,6 +152,10 @@ package Language.Tree is
    procedure Free is new Ada.Unchecked_Deallocation
      (Category_Array, Category_Array_Access);
 
+   function Is_In
+     (Cat : Language_Category; Categories : Category_Array) return Boolean;
+   pragma Inline (Is_In);
+
    function Is_In_Category
      (Construct : Simple_Construct_Information; Categories : Category_Array)
       return Boolean;

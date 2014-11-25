@@ -6520,10 +6520,11 @@ package body Src_Editor_Buffer is
 
    function Get_Subprogram_Block
      (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) return Block_Record is
+      Line   : Editable_Line_Type;
+      Update_Tree : Boolean := False) return Block_Record is
    begin
       return Get_Block
-        (Editor, Line, True,
+        (Editor, Line, Update_Tree,
          Filter =>
            (Cat_Package, Cat_Namespace, Cat_Task, Cat_Procedure,
             Cat_Function, Cat_Constructor, Cat_Method, Cat_Destructor,

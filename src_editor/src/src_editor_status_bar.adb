@@ -208,14 +208,16 @@ package body Src_Editor_Status_Bar is
    ----------------------------
 
    procedure Update_Subprogram_Name
-     (Bar : not null access Source_Editor_Status_Bar_Record'Class)
+     (Bar : not null access Source_Editor_Status_Bar_Record'Class;
+      Update_Tree : Boolean := False)
    is
       Block : Block_Record;
       Node  : Sem_Node_Holders.Holder;
       Val   : Unbounded_String;
    begin
       if Display_Subprogram_Names.Get_Pref then
-         Block := Get_Subprogram_Block (Bar.Buffer, Bar.Current_Line);
+         Block := Get_Subprogram_Block (Bar.Buffer, Bar.Current_Line,
+                                        Update_Tree);
          if Block.Block_Type /= Cat_Unknown
            and then Block.Name /= No_Symbol
          then

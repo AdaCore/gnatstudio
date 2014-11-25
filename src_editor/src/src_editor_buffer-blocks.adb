@@ -39,8 +39,6 @@ package body Src_Editor_Buffer.Blocks is
       Column     : Visible_Column_Type;
       Block      : Block_Access;
    begin
-      pragma Warnings (Off);
-      return;
       if Buffer.Lang = null then
          Buffer.Parse_Blocks := False;
          Buffer_Information_Changed (Buffer);
@@ -65,6 +63,7 @@ package body Src_Editor_Buffer.Blocks is
             declare
                Node : constant Semantic_Node'Class := Element (Current);
             begin
+
                if Node.Category in Construct_Category
                  or else Node.Category in Enclosing_Entity_Category
                then

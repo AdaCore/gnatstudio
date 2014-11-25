@@ -686,7 +686,7 @@ package body Src_Editor_Module is
    begin
       if Box /= null then
          if Id.Show_Subprogram_Names then
-            Update_Subprogram_Name (Box);
+            Update_Subprogram_Name (Box, Update_Tree => True);
          end if;
          Box.Get_View.Queue_Draw;
       end if;
@@ -703,12 +703,17 @@ package body Src_Editor_Module is
       D   : constant File_Location_Hooks_Args_Access :=
               File_Location_Hooks_Args_Access (Data);
       C   : constant MDI_Child := Find_Editor (Kernel, D.File, D.Project);
+      Id  : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
       Box : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (C);
    begin
       if Box /= null then
          if C = Get_MDI (Kernel).Get_Focus_Child then
             Update_Menus_And_Buttons (Kernel);
+         end if;
+         if Id.Show_Subprogram_Names then
+            Update_Subprogram_Name (Box, Update_Tree => False);
          end if;
          Box.Get_View.Queue_Draw;
       end if;

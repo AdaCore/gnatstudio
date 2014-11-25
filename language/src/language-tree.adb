@@ -283,6 +283,27 @@ package body Language.Tree is
       return Iter.Node.Construct'Access;
    end Get_Construct;
 
+   -----------
+   -- Is_In --
+   -----------
+
+   function Is_In
+     (Cat : Language_Category; Categories : Category_Array) return Boolean
+   is
+   begin
+      if Categories'Length = 0 then
+         return True;
+      end if;
+
+      for J in Categories'Range loop
+         if Cat = Categories (J) then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Is_In;
+
    --------------------
    -- Is_In_Category --
    --------------------
@@ -292,17 +313,7 @@ package body Language.Tree is
       return Boolean
    is
    begin
-      if Categories'Length = 0 then
-         return True;
-      end if;
-
-      for J in Categories'Range loop
-         if Construct.Category = Categories (J) then
-            return True;
-         end if;
-      end loop;
-
-      return False;
+      return Is_In (Construct.Category, Categories);
    end Is_In_Category;
 
    ----------------------

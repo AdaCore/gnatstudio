@@ -928,7 +928,8 @@ package Src_Editor_Buffer is
 
    function Get_Subprogram_Block
      (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) return Block_Record;
+      Line   : Editable_Line_Type;
+      Update_Tree : Boolean := False) return Block_Record;
    --  Same as above, with a filter that only selects blocks like subprograms
    --  and packages.
 
