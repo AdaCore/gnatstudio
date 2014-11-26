@@ -2313,8 +2313,6 @@ package body CodePeer.Module is
      (Module  : access Module_Id_Record;
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Module);
-
       Widget : Gtk_Label;
       Values : BT.Vn_Values_Seqs.Vector;
       Text   : Unbounded_String;
@@ -2327,11 +2325,40 @@ package body CodePeer.Module is
          return null;
       end if;
 
-      Values :=
-        BT.Xml.Reader.Get_Srcpos_Vn_Values
-          (String (File_Information (Context).Full_Name.all),
-           (Line_Information (Context),
-            Natural (Column_Information (Context))));
+      --  CodePeers assosiate values with position close to start of
+      --  identifier. Code below attempts to go to backward till first
+      --  non-identifier character and requests values information for every
+      --  position.
+
+      declare
+         File     : constant GNATCOLL.VFS.Virtual_File :=
+           File_Information (Context);
+         Buffer   : constant GPS.Editors.Editor_Buffer'Class :=
+           (Module.Kernel.Get_Buffer_Factory.Get (File, False, False, False));
+         Location : GPS.Editors.Editor_Location'Class :=
+           Buffer.New_Location
+             (Line_Information (Context), Column_Information (Context));
+
+      begin
+         while Values.Is_Empty loop
+            Values :=
+              BT.Xml.Reader.Get_Srcpos_Vn_Values
+                (String (File_Information (Context).Full_Name.all),
+                 (Line_Information (Context),
+                  Natural (Location.Column)));
+
+            exit when Location.Get_Char not in
+              Character'Pos ('0') .. Character'Pos ('9')
+              | Character'Pos ('a') .. Character'Pos ('z')
+              | Character'Pos ('A') .. Character'Pos ('Z')
+              | Character'Pos ('_');
+            Location := Location.Forward_Char (-1);
+         end loop;
+
+         if Values.Is_Empty then
+            return null;
+         end if;
+      end;
 
       for Item of Values loop
          if Length (Text) /= 0 then
@@ -2342,10 +2369,6 @@ package body CodePeer.Module is
          Append (Text, ": ");
          Append (Text, Item.Set_Image);
       end loop;
-
-      if Length (Text) = 0 then
-         return null;
-      end if;
 
       Gtk_New (Widget, To_String (Text));
 
