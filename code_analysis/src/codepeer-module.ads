@@ -22,6 +22,7 @@ private with Ada.Strings.Hash;
 
 with Glib.Object;
 with Gtk.Menu;
+with Gtk.Widget;
 
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
@@ -138,6 +139,11 @@ private
       Bridge_Message : Message_Access;
       --  Message used to communicate with gps_codepere_bridge
    end record;
+
+   overriding function Tooltip_Handler
+     (Module  : access Module_Id_Record;
+      Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
+   --  Creates tooltip when backtraces data is available.
 
    function Codepeer_Database_Directory
      (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;

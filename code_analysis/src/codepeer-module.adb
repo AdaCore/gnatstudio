@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;
+with Ada.Characters.Latin_1;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
@@ -23,8 +24,8 @@ with Input_Sources.File;
 
 with Gtk.Enums;
 with Gtk.Handlers;
+with Gtk.Label;                  use Gtk.Label;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
-with Gtk.Widget;
 
 with Basic_Types;
 with Default_Preferences;        use Default_Preferences;
@@ -2303,5 +2304,52 @@ package body CodePeer.Module is
       Self.Filter_Criteria.Files.Insert (File);
       Self.Update_Location_View;
    end Show_Messages;
+
+   ---------------------
+   -- Tooltip_Handler --
+   ---------------------
+
+   overriding function Tooltip_Handler
+     (Module  : access Module_Id_Record;
+      Context : Selection_Context) return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Module);
+
+      Widget : Gtk_Label;
+      Values : BT.Vn_Values_Seqs.Vector;
+      Text   : Unbounded_String;
+
+   begin
+      if not Has_File_Information (Context)
+        or not Has_Line_Information (Context)
+        or not Has_Column_Information (Context)
+      then
+         return null;
+      end if;
+
+      Values :=
+        BT.Xml.Reader.Get_Srcpos_Vn_Values
+          (String (File_Information (Context).Full_Name.all),
+           (Line_Information (Context),
+            Natural (Column_Information (Context))));
+
+      for Item of Values loop
+         if Length (Text) /= 0 then
+            Append (Text, Ada.Characters.Latin_1.LF);
+         end if;
+
+         Append (Text, Item.Vn_Image);
+         Append (Text, ": ");
+         Append (Text, Item.Set_Image);
+      end loop;
+
+      if Length (Text) = 0 then
+         return null;
+      end if;
+
+      Gtk_New (Widget, To_String (Text));
+
+      return Gtk.Widget.Gtk_Widget (Widget);
+   end Tooltip_Handler;
 
 end CodePeer.Module;
