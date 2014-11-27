@@ -17,7 +17,6 @@
 
 with Glib;              use Glib;
 with GNAT.Strings;      use GNAT.Strings;
-with Gtk.Icon_Theme;    use Gtk.Icon_Theme;
 with GVD.Canvas;        use GVD.Canvas;
 with Language;          use Language;
 with Debugger;          use Debugger;
@@ -67,8 +66,8 @@ package body Items is
       return Container_Item
         (Gtk_New_Image
            (View.Get_View.Get_Styles.Invisible,
-            Gtk.Icon_Theme.Get_Default.Load_Icon
-               ("gps-hidden-item-symbolic", 16, 0, null),
+            "gps-hidden-item-symbolic",
+            Width => 16.0, Height => 16.0,
             Allow_Rescale => False));
    end Item_Hidden;
 

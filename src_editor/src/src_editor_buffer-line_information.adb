@@ -19,18 +19,17 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with Gdk;                      use Gdk;
 with Gdk.Cairo;                use Gdk.Cairo;
-with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.RGBA;                 use Gdk.RGBA;
 
 with Glib.Object;              use Glib.Object;
 
 with Gtk;                      use Gtk;
 with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Icon_Theme;           use Gtk.Icon_Theme;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
 with Gtk.Text_Mark;            use Gtk.Text_Mark;
+with Gtkada.Style;             use Gtkada.Style;
 
 with Pango.Cairo;              use Pango.Cairo;
 with Pango.Enums;              use Pango.Enums;
@@ -70,7 +69,8 @@ package body Src_Editor_Buffer.Line_Information is
    type Line_Info_Note is access all Line_Info_Note_Record'Class;
 
    Default_Icon_Width : constant := 10;
-   --  Default width used to display icons in the sidebar of editors.
+   --  Maximum size to display icons in the sidebar of editors.
+   --  The actual size will be smaller if the line height is smaller.
 
    procedure Remove_Line_Information_Column
      (Buffer : access Source_Buffer_Record'Class;
@@ -288,7 +288,7 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer.Line_Numbers_Width :=
               Buffer.Line_Numbers_Width + Natural (Line_Char_Width);
 
-            Dummy := Dummy * 10;
+            Dummy := Dummy * Default_Icon_Width;
             exit when Dummy > Buffer.Last_Editable_Line;
          end loop;
       else
@@ -501,7 +501,7 @@ package body Src_Editor_Buffer.Line_Information is
       Every_Line : Boolean;
       Data       : Line_Information_Record)
    is
-      Width  : Gint := 10;
+      Width  : Gint := Default_Icon_Width;
       Height : Gint;
       Layout : Pango_Layout;
 
@@ -1044,11 +1044,10 @@ package body Src_Editor_Buffer.Line_Information is
       ---------------
 
       procedure Draw_Info (Starting_X : Gint) is
-         Action : Line_Information_Record;
-         Pixbuf : Gdk_Pixbuf;
+         Action : constant Line_Information_Record :=
+            Get_Relevant_Action (Line_Info);
+         Size : Gint;
       begin
-         Action := Get_Relevant_Action (Line_Info);
-
          if Action.Text /= null then
             Set_Markup (Layout, Action.Text.all);
 
@@ -1059,20 +1058,17 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
 
          if Action.Image /= null then
-            Pixbuf := Gtk.Icon_Theme.Get_Default.Load_Icon
-               (Action.Image.all, Default_Icon_Width, 0, null);
-            if Pixbuf /= null then
-               Save (Cr);
-               Translate
-                 (Cr,
-                  Gdouble (Starting_X),
-                  Gdouble (Y_Pix_In_Window + (Line_Height -
-                      Get_Height (Pixbuf)) / 2));
-               Set_Source_Pixbuf (Cr, Pixbuf, 0.0, 0.0);
-               Paint (Cr);
-               Restore (Cr);
-               Unref (Pixbuf);
-            end if;
+            --  Size depends on actual line height, but also on the size
+            --  we reserved for the column
+            Size := Gint'Min (Default_Icon_Width, Line_Height - 2);
+
+            Gtkada.Style.Draw_Pixbuf_With_Scale
+               (Cr,
+                Icon_Name => Action.Image.all,
+                X  => Gdouble (Starting_X),
+                Y  => Gdouble (Y_Pix_In_Window + (Line_Height - Size) / 2),
+                Size      => Size,
+                Widget    => View);
          end if;
       end Draw_Info;
 

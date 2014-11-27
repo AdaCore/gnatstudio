@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib;            use Glib;
-with Gtk.Icon_Theme;  use Gtk.Icon_Theme;
 with GNAT.IO;         use GNAT.IO;
 with Items.Records;   use Items.Records;
 with Language;        use Language;
@@ -189,8 +188,7 @@ package body Items.Classes is
          Rect.Add_Child
            (Gtk_New_Image
               (Styles.Invisible,
-               Gtk.Icon_Theme.Get_Default.Load_Icon
-                  ("gps-unknown-item-symbolic", 16, 0, null),
+               Icon_Name => "gps-unknown-item-symbolic",
                Allow_Rescale => False, Width => 16.0, Height => 16.0));
 
       elsif not Self.Visible then

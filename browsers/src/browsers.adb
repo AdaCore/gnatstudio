@@ -167,10 +167,11 @@ package body Browsers is
    procedure Gtk_New (Self : out Close_Button) is
    begin
       Self := new Close_Button_Record;
-      Self.Initialize_Text
-        (Gtk_New (Stroke => Null_RGBA,
-                  Font => (Name => From_String ("sans 12"), others => <>)),
-         "X",
+      Self.Initialize_Image
+        (Gtk_New (Stroke => Null_RGBA),
+         Icon_Name => "gps-close-symbolic",
+         Allow_Rescale => False,
+         Width => 12.0,
          Height => 12.0);
    end Gtk_New;
 

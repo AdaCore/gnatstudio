@@ -2124,8 +2124,10 @@ procedure GPS.Main is
 
       --  Set default icon for dialogs and windows
 
-      Icon := Gtk.Icon_Theme.Get_Default.Load_Icon
-         ("gps-icon-32", 32, 0, null);
+      Icon := Gtk.Icon_Theme.Get_Default.Load_Icon_For_Scale
+         ("gps-icon-32", 32,
+          Scale => GPS_Main.Get_Scale_Factor,
+          Flags => 0, Error => null);
 
       if Icon /= null then
          Set_Default_Icon (Icon);

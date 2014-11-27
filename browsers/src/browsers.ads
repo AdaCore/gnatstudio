@@ -93,7 +93,7 @@ package Browsers is
    --  view automatically call their On_Click primitive op.
 
    type Close_Button_Record
-      is new Gtkada.Canvas_View.Text_Item_Record and Clickable_Item
+      is new Gtkada.Canvas_View.Image_Item_Record and Clickable_Item
       with null record;
    type Close_Button is access all Close_Button_Record'Class;
    procedure Gtk_New (Self : out Close_Button);
