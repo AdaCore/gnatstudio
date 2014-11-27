@@ -105,6 +105,19 @@ KP-61-NC12-038 GPS: find/replace in current selection does not work
 
   Workaround: Use the "Replace & Find" button and select occurrences manually.
 
+KP-61-NB27-029 GPS: floating window could be restored on second monitor
+
+  Problem:    GPS stores the position of floating windows when they are closed
+              so that it can restore that position the next time the window is
+              opened. However, that position could be on another monitor,
+              which on some systems (OSX for instance) makes the window
+              invisible and impossible to manipulate.
+
+  Status:     This was fixed in 6.2.0 on 2014-11-27
+
+  Workaround: After opening the window, select /Window/Floating to move it
+              back to the GPS main window.
+
 KP-61-NB26-010 GB: Cannot watch global variables defined in package body.
 
   Problem:    When selecting an expression that contains variable(s) defined in

@@ -20,6 +20,8 @@ with Glib.Object;             use Glib, Glib.Object;
 with XML_Utils;               use XML_Utils;
 with Gtk.Editable;
 with Gdk.Event;               use Gdk.Event;
+with Gdk.Rectangle;           use Gdk.Rectangle;
+with Gdk.Screen;              use Gdk.Screen;
 with Gdk.Window;              use Gdk.Window;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Button;              use Gtk.Button;
@@ -529,13 +531,31 @@ package body Generic_Views is
            (Get_History (View.Kernel).all, Window_X_Hist_Key);
          Hist_Y  : constant String_List_Access := Get_History
            (Get_History (View.Kernel).all, Window_Y_Hist_Key);
+
+         Screen : Gdk_Screen;
+         Monitor : Gint;
+         Rect    : Gdk_Rectangle;
       begin
          if Hist_X = null or else Hist_Y = null then
             return;
          end if;
 
+         --  Ensure the window is at least partially visible on the current
+         --  screen.
+         --  Screen.Get_{Width,Height} returns the total size for all monitors
+         --    for instance 5760x1200
+         --  So we need to look at the specific monitor that the window is on.
+
+         Screen := Gtk_Window (Win).Get_Screen;
+         Monitor := Screen.Get_Monitor_At_Window (Win.Get_Window);
+         Screen.Get_Monitor_Geometry (Monitor, Rect);
+
          X := Gint'Value (Hist_X (Hist_X'First).all);
+         X := Gint'Min (Gint'Max (X, Rect.X), Rect.X + Rect.Width - 10);
+
          Y := Gint'Value (Hist_Y (Hist_Y'First).all);
+         Y := Gint'Min (Gint'Max (Y, Rect.Y), Rect.Y + Rect.Height - 10);
+
          Move (Gtk_Window (Win), X, Y);
       end Restore_Position;
 
