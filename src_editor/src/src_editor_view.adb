@@ -1245,6 +1245,8 @@ package body Src_Editor_View is
             end;
          end if;
 
+         Restore (Cr);
+
          --  Redraw the line showing the nth column if needed
 
          if Column > 0 then
@@ -1266,8 +1268,6 @@ package body Src_Editor_View is
               (Cr, To_Cairo (Tmp_Color), X, Y, X, Y + Rect.Height);
             Restore (Cr);
          end if;
-
-         Restore (Cr);
       end Highlight_Text;
 
    begin  -- Expose_Event_Cb
@@ -1623,7 +1623,7 @@ package body Src_Editor_View is
       Return_Callback.Connect
         (View, Signal_Draw,
          Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
-         After => False);
+         After => True);
 
       Widget_Callback.Object_Connect
         (Get_Vadjustment (View.Scroll),
