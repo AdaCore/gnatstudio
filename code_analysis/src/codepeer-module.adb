@@ -47,6 +47,7 @@ with GPS.Styles;                 use GPS.Styles;
 with GPS.Styles.UI;              use GPS.Styles.UI;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Xref;
+with String_Utils;
 
 with BT.Xml.Reader;
 with CodePeer.Backtrace_View;
@@ -2325,8 +2326,8 @@ package body CodePeer.Module is
          return null;
       end if;
 
-      --  CodePeers assosiate values with position close to start of
-      --  identifier. Code below attempts to go to backward till first
+      --  CodePeers associate values with position close to start of
+      --  identifier. Code below attempts to go backward to the first
       --  non-identifier character and requests values information for every
       --  position.
 
@@ -2347,11 +2348,8 @@ package body CodePeer.Module is
                  (Line_Information (Context),
                   Natural (Location.Column)));
 
-            exit when Location.Get_Char not in
-              Character'Pos ('0') .. Character'Pos ('9')
-              | Character'Pos ('a') .. Character'Pos ('z')
-              | Character'Pos ('A') .. Character'Pos ('Z')
-              | Character'Pos ('_');
+            exit when String_Utils.Is_Entity_Letter
+              (Wide_Wide_Character'Val (Location.Get_Char));
             Location := Location.Forward_Char (-1);
          end loop;
 
