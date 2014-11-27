@@ -7,14 +7,6 @@
  */
 @define-color gps_active_tab green;
 
-@define-color theme_tooltip_bg_color #fffce2;
-@define-color theme_tooltip_fg_color black;
-.tooltip {
-   text-shadow: none;
-   border-radius: 0;
-   border: 1px solid grey;
-}
-
 .notebook.mdifocused tab.top:active,
 .notebook.mdifocused tab.bottom:active {
    background-image: linear-gradient(to bottom,
