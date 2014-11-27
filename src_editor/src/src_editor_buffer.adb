@@ -6467,18 +6467,6 @@ package body Src_Editor_Buffer is
 
       --  Take the first possible project. This should not impact block
       --  computation, which does not need xref information
-
---        Set := Get_Project_Tree (Editor.Kernel).Info_Set (Editor.Filename);
---        declare
---           F_Info : constant File_Info'Class :=
---             File_Info'Class (Set.First_Element);
---        begin
---           File := Get_Or_Create
---             (Db      => Editor.Kernel.Get_Construct_Database,
---              File    => Editor.Filename,
---              Project => F_Info.Project);
---        end;
-
       declare
          Node : constant Semantic_Node'Class := Tree.Node_At
            ((Line => Integer (Line), Column => 1, others => <>), Filter);
@@ -6498,20 +6486,6 @@ package body Src_Editor_Buffer is
                Color             => Null_RGBA);
          end if;
       end;
---        Iter := Get_Iterator_At
---          (Tree,
---           Location          =>
---        (Absolute_Offset => False,   --   ??? Should use offset in buffer
---              Line            => Integer (Line),
---              Line_Offset     => 1),
---       From_Type         => Start_Construct,  --  irrelevant with Enclosing
---           Position          => Enclosing,
---           Categories_Seeked => Filter);
---
---        if Iter = Null_Construct_Tree_Iterator then
---           return New_Block;
---        end if;
-
    end Get_Block;
 
    --------------------------

@@ -142,7 +142,7 @@ package body Language.Libclang_Tree is
         Clang_Iterator_Lists_Ref.To_Holder
           (Clang_Iterator_Lists.Empty_List);
       Initial_Children : constant Cursors_Vectors.Vector :=
-        Get_Children (Root_Cursor (Self.Tu));
+        Toplevel_Nodes (Self.Tu, Filter_Children'Access);
    begin
       for I in 1 .. Initial_Children.Length loop
          Initial_List.Reference.Append
