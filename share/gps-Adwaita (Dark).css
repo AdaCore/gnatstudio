@@ -8,10 +8,6 @@
 
 @define-color gps_active_tab green;
 
-.tooltip {
-   text-shadow: none;
-}
-
 .notebook.mdifocused tab.top:active,
 .notebook.mdifocused tab.bottom:active {
    background-image: linear-gradient(to bottom,
