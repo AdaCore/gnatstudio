@@ -25,10 +25,12 @@ with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
+with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Glib.Convert;              use Glib.Convert;
 
 with Basic_Types;               use Basic_Types;
@@ -725,9 +727,14 @@ package body Project_Explorers_Common is
    is
       Iter         : Gtk_Tree_Iter;  --  applies to Model
       Path         : Gtk_Tree_Path;
+      Filter_Path  : Gtk_Tree_Path;
       Line, Column : Gint;
       Project      : Project_Type;
       File         : Virtual_File;
+      Col          : Gtk_Tree_View_Column;
+      Rect         : Gdk_Rectangle;
+      Cell_X, Cell_Y : Gint;
+      Row_Found      : Boolean;
    begin
       if Event.Button = 1 then
          declare
@@ -805,6 +812,29 @@ package body Project_Explorers_Common is
                   return True;
 
                elsif Event.The_Type = Button_Press then
+
+                  --  Did the user click on the expander, or on the file name?
+
+                  Get_Path_At_Pos
+                    (Tree,
+                     Gint (Event.X),
+                     Gint (Event.Y),
+                     Filter_Path,
+                     Col,
+                     Cell_X,
+                     Cell_Y,
+                     Row_Found);
+                  Tree.Get_Cell_Area
+                    (Path   => Filter_Path,
+                     Column => Col,
+                     Rect   => Rect);
+                  Path_Free (Filter_Path);
+                  if Cell_X < Rect.X or else Cell_X > Rect.X + Rect.Width then
+                     Cancel_Child_Drag (Child);
+                     return False;
+                  end if;
+
+                  --  ... he clicked on the file name
 
                   declare
                      use type Gtk.Target_List.Gtk_Target_List;
