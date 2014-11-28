@@ -753,9 +753,6 @@ package body Src_Editor_View is
       pragma Unreferenced (Params, Buffer);
    begin
       Register_Idle_Column_Redraw (User);
-
-   exception
-      when E : others => Trace (Me, E);
    end Side_Columns_Change_Handler;
 
    ----------------------------------------
@@ -807,11 +804,14 @@ package body Src_Editor_View is
       Params : Glib.Values.GValues;
       User   : Source_View)
    is
+      pragma Unreferenced (Buffer);
       Line : constant Gint := Get_Int (Nth (Params, 1));
       Has_Focus : constant Boolean :=
         Gtkada.MDI.MDI_Child (User.Child) =
         Get_Focus_Child (Get_MDI (User.Kernel));
    begin
+      --  This call moves the Saved_Cursor_Mark, which is used by
+      --  Scroll_To_Cursor_Location to leave the cursor visible on the screen.
       if Has_Focus then
          Save_Cursor_Position (User);
 
@@ -823,17 +823,20 @@ package body Src_Editor_View is
       --  If we are highlighting the current line, re-expose the entire view
       --  if the line has changed. Same thing if we are doing block
       --  highlighting and the block has changed.
+      --  ??? This should not be done immediately, since this procedure is
+      --  called a lot when the user keeps the down arrow key pressed. Also it
+      --  seems that gtk+ will properly force a redraw of the relevant areas
 
-      if (User.Highlight_Current
-          and then User.Current_Line /= Line)
-        or else
-          (User.Highlight_Blocks
-           and then User.Current_Block /=
-             Get_Block (Buffer, Editable_Line_Type (Line), False,
-                        Filter => Categories_For_Block_Highlighting))
-      then
-         Invalidate_Window (User);
-      end if;
+--        if (User.Highlight_Current
+--            and then User.Current_Line /= Line)
+--          or else
+--            (User.Highlight_Blocks
+--             and then User.Current_Block /=
+--               Get_Block (Buffer, Editable_Line_Type (Line), False,
+--                          Filter => Categories_For_Block_Highlighting))
+--        then
+--           Invalidate_Window (User);
+--        end if;
 
       User.Current_Line := Line;
    end Cursor_Position_Changed;
@@ -1013,11 +1016,6 @@ package body Src_Editor_View is
       Redraw_Columns (View, Cr);
 
       return True;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return True;
    end Side_Area_Expose_Event_Cb;
 
    -------------------
@@ -1031,152 +1029,37 @@ package body Src_Editor_View is
    is
       View : constant Source_View :=
         Source_View (Get_User_Data_Or_Null (Widget));
-
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Window : constant Gdk.Gdk_Window := View.Get_Window (Text_Window_Text);
 
-      X, Y, Width, Height : Gint;
-
-      Column           : constant Gint := Gint (Highlight_Column.Get_Pref);
       Rect             : Gdk_Rectangle;
-      Line_Y           : Gint;
-      Line_Height      : Gint;
-      Cursor_Iter      : Gtk_Text_Iter;
-      Dummy            : Gint := 0;
-      Buffer_Line_Y    : Gint;
-
-      Dummy_Gint       : Gint;
-      Success          : Boolean;
-      Iter             : Gtk_Text_Iter;
       Top_Line         : Buffer_Line_Type;
       Bottom_Line      : Buffer_Line_Type;
-      Top_In_Buffer    : Gint;
-      Bottom_In_Buffer : Gint;
-      Color            : Gdk_RGBA;
-      Tmp_Color        : HSV_Color;
+      --  Range of the visible area
 
-      Window : constant Gdk.Gdk_Window :=
-        View.Get_Window (Text_Window_Text);
+      Y, Height        : Gint;
+      --  Geometry for the window
 
-      procedure Draw_Block (B : in out Block_Record);
-      --  Draw block B at line L
+      procedure Draw_Below (Start_Iter : Gtk_Text_Iter);
+      --  Draw anything that needs to be visible above the background, but
+      --  below the text. In particular, highlighting the current line and
+      --  any other full-line highlighting.
+      --  The iter should point to the first visible line in the cursor
 
-      ----------------
-      -- Draw_Block --
-      ----------------
+      procedure Draw_Above;
+      --  Draw anything that should appear above the text and selection
+      --  background.
 
-      procedure Draw_Block (B : in out Block_Record) is
-         Bracket_Length : constant := 15;
-         --  The length of upper and lower parts of the bracket
-
-         Bracket_Offset : constant := 2;
-         --  The distance between brackets and text
-
-         Block_Begin_Y  : Gint;
-         Block_End_Y    : Gint;
-         Y              : Gint;
-         Height         : Gint;
-         X              : Gint;
-
-         Buffer_First   : constant Buffer_Line_Type
-           := Get_Buffer_Line (Buffer, B.First_Line);
-         Buffer_Last    : constant Buffer_Line_Type
-           := Get_Buffer_Line (Buffer, B.Last_Line);
-
-         First          : constant Gint := Gint (Buffer_First - 1);
-         Last           : Gint := Gint (Buffer_Last - 1);
-         Offset         : Integer;
-
+      procedure Draw_Below (Start_Iter : Gtk_Text_Iter) is
+         Line_Y           : Gint;
+         Line_Height      : Gint;
+         Dummy            : Gint := 0;
+         Buffer_Line_Y    : Gint;
+         Dummy_Gint       : Gint;
+         Success          : Boolean;
+         Iter             : Gtk_Text_Iter := Start_Iter;
+         Color            : Gdk_RGBA;
       begin
-         if Buffer_First > Bottom_Line
-           or else Buffer_Last < Top_Line
-         then
-            return;
-         end if;
-
-         Calculate_Screen_Offset (Buffer, B);
-         Offset := B.Stored_Offset;
-
-         --  Do not draw blocks that are on the first column
-
-         if Offset <= 1 then
-            return;
-         end if;
-
-         if Last < First then
-            Last := First;
-         end if;
-
-         Get_Iter_At_Line_Offset (Buffer, Iter, First, 0);
-         Get_Line_Yrange  (View, Iter, Block_Begin_Y, Dummy);
-
-         Get_Iter_At_Line_Offset (Buffer, Iter, Last, 0);
-         Get_Line_Yrange (View, Iter, Dummy, Height);
-
-         Height := Dummy + Height - Block_Begin_Y;
-
-         Buffer_To_Window_Coords
-           (View,
-            Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
-
-         X := (Gint (Offset - 1) * View.Width_Of_256_Chars) / 256 -
-           Bracket_Offset - Rect.X + Margin;
-
-         if Y > 0 then
-            Block_Begin_Y := Y;
-         else
-            Block_Begin_Y := 0;
-         end if;
-
-         Block_End_Y := Y + Height;
-
-         Set_Source_Color (Cr, View.Current_Block_Color);
-
-         if Block_End_Y > Rect.Height then
-            Block_End_Y := Rect.Height;
-         else
-            Move_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
-            Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
-         end if;
-
-         Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
-         Line_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
-
-         if Block_Begin_Y /= 0 then
-            Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
-            Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
-         end if;
-
-         Stroke (Cr);
-      end Draw_Block;
-
-   begin
-      --  Draw above background, but below the text
-      if Layer = Text_View_Layer_Below then
-         Get_Visible_Rect (View, Rect);
-         Save (Cr);
-
-         Buffer_To_Window_Coords
-           (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
-
-         --  Get the window coordinates
-
-         Get_Geometry (Window, X, Y, Width, Height);
-
-         Window_To_Buffer_Coords
-           (View, Text_Window_Text,
-            Window_X => 0, Window_Y => Y,
-            Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
-         Window_To_Buffer_Coords
-           (View, Text_Window_Text,
-            Window_X => 0, Window_Y => Y + Height,
-            Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
-
-         Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
-         Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
-
-         Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
-         Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
-
          for Line in Top_Line .. Bottom_Line loop
             Color := Get_Highlight_Color
               (Buffer, Line, Context => Highlight_Editor);
@@ -1198,14 +1081,11 @@ package body Src_Editor_View is
             Forward_Line (Iter, Success);
          end loop;
 
-         Get_Iter_At_Mark
-           (Get_Buffer (View), Cursor_Iter, View.Saved_Cursor_Mark);
-
-         Get_Line_Yrange (View, Cursor_Iter, Line_Y, Line_Height);
-
          --  Highlight the line that contains the cursor
 
          if View.Highlight_Current then
+            Get_Iter_At_Mark (Buffer, Iter, View.Saved_Cursor_Mark);
+            Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
@@ -1226,9 +1106,114 @@ package body Src_Editor_View is
                   Gdouble (Line_Height));
                Cairo.Fill (Cr);
             end if;
-
          end if;
+      end Draw_Below;
 
+      ----------------
+      -- Draw_Above --
+      ----------------
+
+      procedure Draw_Above is
+         Column    : constant Gint := Gint (Highlight_Column.Get_Pref);
+         Tmp_Color : HSV_Color;
+
+         procedure Draw_Block (B : in out Block_Record);
+         --  Draw block B
+
+         ----------------
+         -- Draw_Block --
+         ----------------
+
+         procedure Draw_Block (B : in out Block_Record) is
+            Bracket_Length : constant := 15;
+            --  The length of upper and lower parts of the bracket
+
+            Bracket_Offset : constant := 2;
+            --  The distance between brackets and text
+
+            Block_Begin_Y  : Gint;
+            Block_End_Y    : Gint;
+            Y              : Gint;
+            Height         : Gint;
+            X              : Gint;
+
+            Buffer_First   : constant Buffer_Line_Type
+              := Get_Buffer_Line (Buffer, B.First_Line);
+            Buffer_Last    : constant Buffer_Line_Type
+              := Get_Buffer_Line (Buffer, B.Last_Line);
+
+            First          : constant Gint := Gint (Buffer_First - 1);
+            Last           : Gint := Gint (Buffer_Last - 1);
+            Offset         : Integer;
+            Iter           : Gtk_Text_Iter;
+            Dummy          : Gint := 0;
+
+         begin
+            if Buffer_First > Bottom_Line
+              or else Buffer_Last < Top_Line
+            then
+               return;
+            end if;
+
+            Calculate_Screen_Offset (Buffer, B);
+            Offset := B.Stored_Offset;
+
+            --  Do not draw blocks that are on the first column
+
+            if Offset <= 1 then
+               return;
+            end if;
+
+            if Last < First then
+               Last := First;
+            end if;
+
+            Get_Iter_At_Line_Offset (Buffer, Iter, First, 0);
+            Get_Line_Yrange  (View, Iter, Block_Begin_Y, Dummy);
+
+            Get_Iter_At_Line_Offset (Buffer, Iter, Last, 0);
+            Get_Line_Yrange (View, Iter, Dummy, Height);
+
+            Height := Dummy + Height - Block_Begin_Y;
+
+            Buffer_To_Window_Coords
+              (View,
+               Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
+
+            X := (Gint (Offset - 1) * View.Width_Of_256_Chars) / 256 -
+              Bracket_Offset - Rect.X + Margin;
+
+            if Y > 0 then
+               Block_Begin_Y := Y;
+            else
+               Block_Begin_Y := 0;
+            end if;
+
+            Block_End_Y := Y + Height;
+
+            Set_Source_Color (Cr, View.Current_Block_Color);
+
+            if Block_End_Y > Rect.Height then
+               Block_End_Y := Rect.Height;
+            else
+               Move_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
+               Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
+            end if;
+
+            Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
+            Line_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
+
+            if Block_Begin_Y /= 0 then
+               Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
+               Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
+            end if;
+
+            Stroke (Cr);
+         end Draw_Block;
+
+         X : Gint;
+
+      begin
          --  Highlight the current block
 
          if View.Highlight_Blocks then
@@ -1247,8 +1232,6 @@ package body Src_Editor_View is
             end;
          end if;
 
-         Restore (Cr);
-
          --  Redraw the line showing the nth column if needed
 
          if Column > 0 then
@@ -1266,11 +1249,48 @@ package body Src_Editor_View is
                Tmp_Color.V := (1.0 - Tmp_Color.V) * 0.7;
             end if;
 
-            Draw_Line
-              (Cr, To_Cairo (Tmp_Color), X, Y, X, Y + Rect.Height);
-            Restore (Cr);
+            Draw_Line (Cr, To_Cairo (Tmp_Color), X, Y, X, Y + Rect.Height);
          end if;
-      end if;
+      end Draw_Above;
+
+      Dummy_Gint : Gint;
+      X, Width   : Gint;
+      Iter       : Gtk_Text_Iter;
+
+      Top_In_Buffer    : Gint;
+      Bottom_In_Buffer : Gint;
+      --  buffer-coordinates for first and last visible line
+
+   begin
+      --  ??? Could we cache this between the two calls to On_Draw_Layer
+      Get_Visible_Rect (View, Rect);
+      Buffer_To_Window_Coords (View, Text_Window_Text, Rect.X, Rect.Y, X, Y);
+
+      --  Get the window coordinates
+
+      Get_Geometry (Window, X, Y, Width, Height);
+
+      Window_To_Buffer_Coords
+        (View, Text_Window_Text,
+         Window_X => 0, Window_Y => Y,
+         Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
+      Window_To_Buffer_Coords
+        (View, Text_Window_Text,
+         Window_X => 0, Window_Y => Y + Height,
+         Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
+
+      Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
+      Bottom_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+
+      Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
+      Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+
+      case Layer is
+         when Text_View_Layer_Below =>
+            Draw_Below (Iter);
+         when Text_View_Layer_Above =>
+            Draw_Above;
+      end case;
 
    exception
       when E : others =>
@@ -1500,12 +1520,21 @@ package body Src_Editor_View is
       View.On_Drag_Data_Received
         (View_On_Drag_Data_Received'Access);
 
+      --  ??? Why connect twice to Size_Allocate
       Widget_Callback.Object_Connect
-        (View.Area, Signal_Size_Allocate,
+        (Area, Signal_Size_Allocate,
          Marsh       => Widget_Callback.To_Marshaller
            (Speed_Bar_Size_Allocate_Cb'Access),
          After       => False,
          Slot_Object => View);
+      Widget_Callback.Connect
+        (View, Signal_Size_Allocate,
+         Widget_Callback.To_Marshaller (Size_Allocated'Access),
+         After => True);
+      Widget_Callback.Connect
+        (View, Signal_Size_Allocate,
+         Widget_Callback.To_Marshaller (Size_Allocated_Before'Access),
+         After => False);
 
       Set_Left_Margin (View, Margin);
 
@@ -1534,14 +1563,6 @@ package body Src_Editor_View is
       Return_Callback.Connect
         (View, Signal_Key_Press_Event,
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
-         After => False);
-      Widget_Callback.Connect
-        (View, Signal_Size_Allocate,
-         Widget_Callback.To_Marshaller (Size_Allocated'Access),
-         After => True);
-      Widget_Callback.Connect
-        (View, Signal_Size_Allocate,
-         Widget_Callback.To_Marshaller (Size_Allocated_Before'Access),
          After => False);
 
       Widget_Callback.Connect
@@ -1656,7 +1677,8 @@ package body Src_Editor_View is
       View.Connect_Expose_Registered := False;
 
       --  If there is a synchronized editor, scroll this editor to align it
-      --  with the synchronized editor.
+      --  with the synchronized editor. This is the opposite of the work done
+      --  in On_Scroll.
 
       View.Scrolling := True;
 
@@ -1837,21 +1859,25 @@ package body Src_Editor_View is
      (View      : access Source_View_Record;
       Centering : Centering_Type := Minimal)
    is
-      function Fit (Adj : Gtk.Adjustment.Gtk_Adjustment) return Boolean;
+      function Fit (Adj : Gtk.Adjustment.Gtk_Adjustment) return Boolean
+        with Inline => True;
       --  Check if given adjustment fits whole view
 
-      ------------------
-      -- Visible_Iter --
-      ------------------
+      ---------
+      -- Fit --
+      ---------
 
       function Fit (Adj : Gtk.Adjustment.Gtk_Adjustment) return Boolean is
       begin
          return Adj.Get_Page_Size >= Adj.Get_Upper;
       end Fit;
+
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
    begin
       --  Don't scroll if whole text is visible inside view window
-      if Fit (View.Scroll.Get_Vadjustment) and then
-        Fit (View.Scroll.Get_Hadjustment)
+      if Fit (View.Scroll.Get_Vadjustment)
+        and then Fit (View.Scroll.Get_Hadjustment)
       then
          return;
       end if;
@@ -2642,18 +2668,19 @@ package body Src_Editor_View is
    begin
       Recompute_Visible_Area (Src_View);
 
-      Invalidate_Window (Src_View);
+      --  ??? We use to force a refresh of the window, but not sure why this
+      --  would be needed.
+--      Invalidate_Window (Src_View);
 
-      if Src_View.Scrolling or else Src_View.Synchronized_Editor = null then
-         return;
-      end if;
+      --  Ensure that synchronized editors are also scrolled
 
-      Src_View.Scrolling := True;
-
-      if not Src_View.Synchronized_Editor.Scrolling
+      if not Src_View.Scrolling
+        and then Src_View.Synchronized_Editor /= null
         and then Src_View.Scroll /= null
         and then Src_View.Synchronized_Editor.Scroll /= null
       then
+         Src_View.Scrolling := True;
+
          Set_Value
            (Get_Vadjustment (Src_View.Synchronized_Editor.Scroll),
             Get_Value (Get_Vadjustment (Src_View.Scroll)));
@@ -2661,12 +2688,9 @@ package body Src_Editor_View is
          Set_Value
            (Get_Hadjustment (Src_View.Synchronized_Editor.Scroll),
             Get_Value (Get_Hadjustment (Src_View.Scroll)));
+
+         Src_View.Scrolling := False;
       end if;
-
-      Src_View.Scrolling := False;
-
-   exception
-      when E : others => Trace (Me, E);
    end On_Scroll;
 
    ---------------
