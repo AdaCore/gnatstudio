@@ -116,7 +116,7 @@ class Console_Process(GPS.Console, GPS.Process):
                 self.destroy()  # Close console
             else:
                 self.write(remaining_output)
-                self.write('\nexit status: ' + `status`)
+                self.write('\nexit status: %s' % status)
         except:
             pass  # Might have already been destroyed if that's what
             # resulted in the call to on_exit
@@ -169,15 +169,15 @@ class Console_Process(GPS.Console, GPS.Process):
         """The user has pressed a key in the console (any key). This is called
            before any of the higher level on_completion or on_input callbacks.
            If this subprogram returns True, GPS will consider that the key has
-           already been handled and will not do its standard processing with it.
-           By default, we simply let the key through and let GPS handle it.
+           already been handled and will not do its standard processing with
+           it. By default, we simply let the key through and let GPS handle it.
 
-           :param key: the unicode character (numeric value) that was entered by
-              the user. _modifier_ is a mask of the control and shift keys that
-              were pressed at the same time. See the Mask constants above.
+           :param key: the unicode character (numeric value) that was entered
+              by the user. _modifier_ is a mask of the control and shift keys
+              that were pressed at the same time. See the Mask constants above.
               keycode is the code of the key, which is useful for non-printable
-              characters. It is set to 0 in some cases if the input is simulated
-              after the user has copied some text into the console
+              characters. It is set to 0 in some cases if the input is
+              simulated after the user has copied some text into the console
 
            This function is also called for each character pasted by the user
            in the console. If it returns True, then the selection will not be
@@ -232,7 +232,7 @@ class ANSI_Console_Process(Console_Process):
         elif keycode == Key_Down:
             return "\033[B"
         else:
-            GPS.Logger('CONSOLE').log('keycode=' + `keycode` + ' key=' + `key`)
+            GPS.Logger('CONSOLE').log('keycode=%s key=%s' % (keycode, key))
             return ''
 
     def on_key(self, keycode, key, modifier):
@@ -251,7 +251,7 @@ class ANSI_Console_Process(Console_Process):
                 # Seems like most terminals just send ESC in such a case
                 self.send("\033", add_lf=False)
         else:
-            GPS.Logger('CONSOLE').log('keycode=' + `keycode` + ' key=' + `key`
-                                      + ' modifier=' + `modifier`)
+            GPS.Logger('CONSOLE').log('keycode=%s key=%s modifier=%s'
+                                      % (keycode, key, modifier))
 
         return True
