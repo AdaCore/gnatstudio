@@ -17,6 +17,7 @@
 
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps;
 with Interfaces.C.Strings;
+with System;
 
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -43,13 +44,11 @@ with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Text_View;              use Gtk.Text_View;
 with Gtk.Widget;                 use Gtk.Widget;
 
 with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Style;               use Gtkada.Style;
-with Gtkada.Text_Buffer;         use Gtkada.Text_Buffer;
 
 with Pango.Layout;               use Pango.Layout;
 with Pango.Attributes;           use Pango.Attributes;
@@ -136,6 +135,20 @@ package body Src_Editor_View is
      ((Interfaces.C.Strings.New_String ("text/uri-list"), 0, 0),
       (Interfaces.C.Strings.New_String ("text/plain"), 0, 1));
 
+   procedure On_Draw_Layer
+     (Widget : System.Address;
+      Layer  : Gtk_Text_View_Layer;
+      Cr     : Cairo.Cairo_Context)
+     with Convention => C;
+
+   View_Class_Record : Glib.Object.Ada_GObject_Class :=
+     Glib.Object.Uninitialized_Class;
+   procedure View_Class_Init (Self : GObject_Class)
+     with Convention => C;
+   function View_Get_Type return Glib.GType;
+   --  Support subprograms for creating our own class type, so that we can
+   --  override the "draw_layer" virtual function.
+
    --------------------------
    -- Forward declarations --
    --------------------------
@@ -151,13 +164,6 @@ package body Src_Editor_View is
    --  It performs various operations that can not be done before the widget
    --  is realized, such as setting the default font or the left border window
    --  size for instance.
-
-   function Expose_Event_Cb
-     (Widget  : access Gtk_Widget_Record'Class;
-      Cr      : Cairo_Context) return Boolean;
-   --  This procedure handles all expose events happening on the left border
-   --  window. It will redraw the exposed area (this window may contains
-   --  things such as line number, breakpoint icons, etc).
 
    function Focus_Out_Event_Cb
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
@@ -1014,142 +1020,138 @@ package body Src_Editor_View is
          return True;
    end Side_Area_Expose_Event_Cb;
 
-   ---------------------
-   -- Expose_Event_Cb --
-   ---------------------
+   -------------------
+   -- On_Draw_Layer --
+   -------------------
 
-   function Expose_Event_Cb
-     (Widget  : access Gtk_Widget_Record'Class;
-      Cr      : Cairo_Context) return Boolean
+   procedure On_Draw_Layer
+     (Widget : System.Address;
+      Layer  : Gtk_Text_View_Layer;
+      Cr     : Cairo.Cairo_Context)
    is
-      View   : constant Source_View := Source_View (Widget);
+      View : constant Source_View :=
+        Source_View (Get_User_Data_Or_Null (Widget));
+
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
 
       X, Y, Width, Height : Gint;
 
-      procedure Highlight_Text;
-      --  Highlight the current text, in particular the current line and
-      --  current block, if needed.
+      Column           : constant Gint := Gint (Highlight_Column.Get_Pref);
+      Rect             : Gdk_Rectangle;
+      Line_Y           : Gint;
+      Line_Height      : Gint;
+      Cursor_Iter      : Gtk_Text_Iter;
+      Dummy            : Gint := 0;
+      Buffer_Line_Y    : Gint;
 
-      --------------------
-      -- Highlight_Text --
-      --------------------
+      Dummy_Gint       : Gint;
+      Success          : Boolean;
+      Iter             : Gtk_Text_Iter;
+      Top_Line         : Buffer_Line_Type;
+      Bottom_Line      : Buffer_Line_Type;
+      Top_In_Buffer    : Gint;
+      Bottom_In_Buffer : Gint;
+      Color            : Gdk_RGBA;
+      Tmp_Color        : HSV_Color;
 
-      procedure Highlight_Text is
-         Column           : constant Gint := Gint (Highlight_Column.Get_Pref);
-         Rect             : Gdk_Rectangle;
-         Line_Y           : Gint;
-         Line_Height      : Gint;
-         Cursor_Iter      : Gtk_Text_Iter;
-         Dummy            : Gint := 0;
-         Buffer_Line_Y    : Gint;
+      Window : constant Gdk.Gdk_Window :=
+        View.Get_Window (Text_Window_Text);
 
-         Dummy_Gint       : Gint;
-         Success          : Boolean;
-         Iter             : Gtk_Text_Iter;
-         Top_Line         : Buffer_Line_Type;
-         Bottom_Line      : Buffer_Line_Type;
-         Top_In_Buffer    : Gint;
-         Bottom_In_Buffer : Gint;
-         Color            : Gdk_RGBA;
-         Tmp_Color        : HSV_Color;
+      procedure Draw_Block (B : in out Block_Record);
+      --  Draw block B at line L
 
-         Window : constant Gdk.Gdk_Window :=
-           View.Get_Window (Text_Window_Text);
+      ----------------
+      -- Draw_Block --
+      ----------------
 
-         procedure Draw_Block (B : in out Block_Record);
-         --  Draw block B at line L
+      procedure Draw_Block (B : in out Block_Record) is
+         Bracket_Length : constant := 15;
+         --  The length of upper and lower parts of the bracket
 
-         ----------------
-         -- Draw_Block --
-         ----------------
+         Bracket_Offset : constant := 2;
+         --  The distance between brackets and text
 
-         procedure Draw_Block (B : in out Block_Record) is
-            Bracket_Length : constant := 15;
-            --  The length of upper and lower parts of the bracket
+         Block_Begin_Y  : Gint;
+         Block_End_Y    : Gint;
+         Y              : Gint;
+         Height         : Gint;
+         X              : Gint;
 
-            Bracket_Offset : constant := 2;
-            --  The distance between brackets and text
+         Buffer_First   : constant Buffer_Line_Type
+           := Get_Buffer_Line (Buffer, B.First_Line);
+         Buffer_Last    : constant Buffer_Line_Type
+           := Get_Buffer_Line (Buffer, B.Last_Line);
 
-            Block_Begin_Y  : Gint;
-            Block_End_Y    : Gint;
-            Y              : Gint;
-            Height         : Gint;
-            X              : Gint;
-
-            Buffer_First   : constant Buffer_Line_Type
-              := Get_Buffer_Line (Buffer, B.First_Line);
-            Buffer_Last    : constant Buffer_Line_Type
-              := Get_Buffer_Line (Buffer, B.Last_Line);
-
-            First          : constant Gint := Gint (Buffer_First - 1);
-            Last           : Gint := Gint (Buffer_Last - 1);
-            Offset         : Integer;
-
-         begin
-            if Buffer_First > Bottom_Line
-              or else Buffer_Last < Top_Line
-            then
-               return;
-            end if;
-
-            Calculate_Screen_Offset (Buffer, B);
-            Offset := B.Stored_Offset;
-
-            --  Do not draw blocks that are on the first column
-
-            if Offset <= 1 then
-               return;
-            end if;
-
-            if Last < First then
-               Last := First;
-            end if;
-
-            Get_Iter_At_Line_Offset (Buffer, Iter, First, 0);
-            Get_Line_Yrange  (View, Iter, Block_Begin_Y, Dummy);
-
-            Get_Iter_At_Line_Offset (Buffer, Iter, Last, 0);
-            Get_Line_Yrange (View, Iter, Dummy, Height);
-
-            Height := Dummy + Height - Block_Begin_Y;
-
-            Buffer_To_Window_Coords
-              (View,
-               Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
-
-            X := (Gint (Offset - 1) * View.Width_Of_256_Chars) / 256 -
-              Bracket_Offset - Rect.X + Margin;
-
-            if Y > 0 then
-               Block_Begin_Y := Y;
-            else
-               Block_Begin_Y := 0;
-            end if;
-
-            Block_End_Y := Y + Height;
-
-            Set_Source_Color (Cr, View.Current_Block_Color);
-
-            if Block_End_Y > Rect.Height then
-               Block_End_Y := Rect.Height;
-            else
-               Move_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
-               Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
-            end if;
-
-            Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
-            Line_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
-
-            if Block_Begin_Y /= 0 then
-               Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
-               Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
-            end if;
-
-            Stroke (Cr);
-         end Draw_Block;
+         First          : constant Gint := Gint (Buffer_First - 1);
+         Last           : Gint := Gint (Buffer_Last - 1);
+         Offset         : Integer;
 
       begin
+         if Buffer_First > Bottom_Line
+           or else Buffer_Last < Top_Line
+         then
+            return;
+         end if;
+
+         Calculate_Screen_Offset (Buffer, B);
+         Offset := B.Stored_Offset;
+
+         --  Do not draw blocks that are on the first column
+
+         if Offset <= 1 then
+            return;
+         end if;
+
+         if Last < First then
+            Last := First;
+         end if;
+
+         Get_Iter_At_Line_Offset (Buffer, Iter, First, 0);
+         Get_Line_Yrange  (View, Iter, Block_Begin_Y, Dummy);
+
+         Get_Iter_At_Line_Offset (Buffer, Iter, Last, 0);
+         Get_Line_Yrange (View, Iter, Dummy, Height);
+
+         Height := Dummy + Height - Block_Begin_Y;
+
+         Buffer_To_Window_Coords
+           (View,
+            Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
+
+         X := (Gint (Offset - 1) * View.Width_Of_256_Chars) / 256 -
+           Bracket_Offset - Rect.X + Margin;
+
+         if Y > 0 then
+            Block_Begin_Y := Y;
+         else
+            Block_Begin_Y := 0;
+         end if;
+
+         Block_End_Y := Y + Height;
+
+         Set_Source_Color (Cr, View.Current_Block_Color);
+
+         if Block_End_Y > Rect.Height then
+            Block_End_Y := Rect.Height;
+         else
+            Move_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
+            Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
+         end if;
+
+         Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
+         Line_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
+
+         if Block_Begin_Y /= 0 then
+            Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
+            Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
+         end if;
+
+         Stroke (Cr);
+      end Draw_Block;
+
+   begin
+      --  Draw above background, but below the text
+      if Layer = Text_View_Layer_Below then
          Get_Visible_Rect (View, Rect);
          Save (Cr);
 
@@ -1268,21 +1270,12 @@ package body Src_Editor_View is
               (Cr, To_Cairo (Tmp_Color), X, Y, X, Y + Rect.Height);
             Restore (Cr);
          end if;
-      end Highlight_Text;
-
-   begin  -- Expose_Event_Cb
-      Highlight_Text;
-
-      --  Return false, so that the signal is not blocked, and other
-      --  clients can use it.
-
-      return False;
+      end if;
 
    exception
       when E : others =>
          Trace (Me, E);
-         return False;
-   end Expose_Event_Cb;
+   end On_Draw_Layer;
 
    ------------------------
    -- Focus_Out_Event_Cb --
@@ -1396,6 +1389,29 @@ package body Src_Editor_View is
       Register_View (Source_Buffer (Get_Buffer (V)), Add => False);
    end On_Destroy;
 
+   ---------------------
+   -- View_Class_Init --
+   ---------------------
+
+   procedure View_Class_Init (Self : GObject_Class) is
+   begin
+      Set_Draw_Layer (Self, Handler => On_Draw_Layer'Access);
+   end View_Class_Init;
+
+   -------------------
+   -- View_Get_Type --
+   -------------------
+
+   function View_Get_Type return Glib.GType is
+   begin
+      Glib.Object.Initialize_Class_Record
+        (Ancestor     => Gtk.Text_View.Get_Type,
+         Type_Name    => "SourceView",
+         Class_Record => View_Class_Record,
+         Class_Init   => View_Class_Init'Access);
+      return View_Class_Record.The_Type;
+   end View_Get_Type;
+
    -------------
    -- Gtk_New --
    -------------
@@ -1434,7 +1450,8 @@ package body Src_Editor_View is
 
       pragma Assert (Buffer /= null);
 
-      Gtkada.Text_View.Initialize (View, Gtkada_Text_Buffer (Buffer));
+      G_New (View, View_Get_Type);
+      View.Set_Buffer (Buffer);
 
       Gtk.Dnd.Dest_Set
         (View, Dest_Default_All,
@@ -1620,11 +1637,6 @@ package body Src_Editor_View is
 
    function Connect_Expose (View : Source_View) return Boolean is
    begin
-      Return_Callback.Connect
-        (View, Signal_Draw,
-         Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
-         After => True);
-
       Widget_Callback.Object_Connect
         (Get_Vadjustment (View.Scroll),
          Signal_Value_Changed,

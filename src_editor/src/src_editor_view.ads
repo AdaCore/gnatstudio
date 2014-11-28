@@ -29,9 +29,9 @@ with Gtk.Drawing_Area;
 with Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;          use Gtk.Text_Mark;
+with Gtk.Text_View;          use Gtk.Text_View;
 with Gtk.Handlers;
 with Gtkada.Style;
-with Gtkada.Text_View;       use Gtkada.Text_View;
 
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GNATCOLL.VFS;
@@ -45,7 +45,7 @@ with Completion_Window;      use Completion_Window;
 
 package Src_Editor_View is
 
-   type Source_View_Record is new Gtkada_Text_View_Record with private;
+   type Source_View_Record is new Gtk_Text_View_Record with private;
    type Source_View is access all Source_View_Record'Class;
 
    procedure Gtk_New
@@ -237,7 +237,7 @@ private
 
    type As_Is_Status is (Disabled, Enabled, Sticky_Enabled);
 
-   type Source_View_Record is new Gtkada_Text_View_Record with record
+   type Source_View_Record is new Gtk_Text_View_Record with record
       Project_Path : GNATCOLL.VFS.Virtual_File;
       --  The project that this file is from.
       --  We do not cache the Project_Type itself, since that becomes invalid
