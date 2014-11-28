@@ -603,11 +603,12 @@ def end_of_buffer():
 
 def _goto_line_bound(beginning, extend_selection):
     """Goto the beginning of line"""
+
     from pygps import get_widgets_by_type
 
     widget = get_focused_widget()
     ed = GPS.EditorBuffer.get()
-    extend_selection =\
+    extend_selection = \
         extend_selection or ed.current_view().get_extend_selection()
     gtk_ed_view = get_widgets_by_type(
         Gtk.TextView, ed.current_view().pywidget())[0]
@@ -644,23 +645,23 @@ def _goto_line_bound(beginning, extend_selection):
 @interactive("Editor", filter_text_actions,
              name="goto beginning of line (extend selection)")
 def goto_beginning_of_line_ext_sel():
-    _goto_line_bound(True, True)
+    _goto_line_bound(beginning=True, extend_selection=True)
 
 
 @interactive("Editor", filter_text_actions, name="goto beginning of line")
 def goto_beginning_of_line():
-    _goto_line_bound(True, False)
+    _goto_line_bound(beginning=True, extend_selection=False)
 
 
 @interactive("Editor", filter_text_actions,
              name="goto end of line (extend selection)")
 def goto_end_of_line_ext_sel():
-    _goto_line_bound(False, True)
+    _goto_line_bound(beginning=False, extend_selection=True)
 
 
 @interactive("Editor", filter_text_actions, name="goto end of line")
 def goto_end_of_line():
-    _goto_line_bound(False, False)
+    _goto_line_bound(beginning=False, extend_selection=False)
 
 
 def end_of_line(file, line):

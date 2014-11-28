@@ -68,8 +68,8 @@ def get_focused_widget():
 
 # noinspection PyUnusedLocal
 def filter_text_actions(context):
-    ret = type(get_focused_widget()) in [Gtk.TextView, Gtk.Entry]
-    return ret
+    f = get_focused_widget()
+    return isinstance(f, Gtk.TextView) or isinstance(f, Gtk.Entry)
 
 
 def save_dir(fn):

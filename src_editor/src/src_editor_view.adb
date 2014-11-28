@@ -1151,8 +1151,6 @@ package body Src_Editor_View is
 
       begin
          Get_Visible_Rect (View, Rect);
-         Set_Line_Width (Cr, 1.0);
-         Set_Antialias (Cr, Cairo_Antialias_None);
          Save (Cr);
 
          Buffer_To_Window_Coords
