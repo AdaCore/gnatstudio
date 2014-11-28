@@ -1532,7 +1532,8 @@ package body Gtkada.Entry_Completion is
         (Win,
          Title  => -"Search settings",
          Parent => Get_Main_Window (S.Kernel),
-         Flags  => Modal or Destroy_With_Parent or No_Separator);
+         Flags  => Modal or Destroy_With_Parent
+            or Use_Header_Bar_From_Settings (Get_Main_Window (S.Kernel)));
       Win.Set_Default_Size (500, 480);
 
       Gtk_New (Preview, -"Preview");

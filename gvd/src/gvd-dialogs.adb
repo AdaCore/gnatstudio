@@ -700,7 +700,9 @@ package body GVD.Dialogs is
       Label     : Gtk_Label;
 
    begin
-      Gtk.Dialog.Initialize (Dialog, -"Question", Main_Window, 0);
+      Gtk.Dialog.Initialize
+        (Dialog, -"Question", Main_Window,
+         Flags => Use_Header_Bar_From_Settings (Main_Window));
       Dialog.Main_Window := Main_Window;
 
       Set_Position (Dialog, Win_Pos_Mouse);

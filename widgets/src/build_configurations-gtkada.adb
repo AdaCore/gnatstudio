@@ -910,11 +910,8 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Dialog => Dialog,
                Title  => -"Target Configuration",
                Parent => Parent,
-               Flags  => Modal or Destroy_With_Parent or No_Separator);
-
-      if Parent /= null then
-         Set_Transient_For (Dialog, Parent);
-      end if;
+               Flags  => Modal or Destroy_With_Parent
+                  or Use_Header_Bar_From_Settings (Parent));
 
       Set_Default_Size (Dialog, 1024, 620);
 
@@ -1106,12 +1103,8 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Dialog => Dialog,
                Title  => -"Mode Configuration",
                Parent => Parent,
-               Flags  => Modal or Destroy_With_Parent or No_Separator);
-
-      if Parent /= null then
-         Set_Transient_For (Dialog, Parent);
-      end if;
-
+               Flags  => Modal or Destroy_With_Parent
+                  or Use_Header_Bar_From_Settings (Parent));
       Set_Default_Size (Dialog, 650, 450);
 
       UI := new Mode_UI_Record;
@@ -1438,12 +1431,8 @@ package body Build_Configurations.Gtkada is
       Gtk_New (Dialog => Dialog,
                Title  => Target,
                Parent => Parent,
-               Flags  => Modal or Destroy_With_Parent or No_Separator);
-
-      if Parent /= null then
-         Set_Transient_For (Dialog, Parent);
-      end if;
-
+               Flags  => Modal or Destroy_With_Parent
+                  or Use_Header_Bar_From_Settings (Parent));
       Set_Default_Size (Dialog, 600, 0);
 
       UI := new Build_UI_Record;

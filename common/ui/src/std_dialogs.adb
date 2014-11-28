@@ -157,7 +157,9 @@ package body Std_Dialogs is
       Dialog          : Simple_Entry_Dialog_Access;
    begin
       Dialog := new Simple_Entry_Dialog_Record;
-      Gtk.Dialog.Initialize (Dialog);
+      Gtk.Dialog.Initialize
+        (Dialog, Title => Title, Parent => Gtk_Window (Parent),
+         Flags => Use_Header_Bar_From_Settings (Parent));
 
       declare
          S : constant String := Internal_Simple_Entry_Dialog
@@ -190,7 +192,9 @@ package body Std_Dialogs is
       Dialog : Display_Dialog_Access;
    begin
       Dialog := new Display_Dialog_Record;
-      Gtk.Dialog.Initialize (Dialog);
+      Gtk.Dialog.Initialize
+        (Dialog, Title, Gtk_Window (Parent),
+         Use_Header_Bar_From_Settings (Parent));
 
       if Check_Msg /= "" then
          Gtk_New (Dialog.Check, Check_Msg);

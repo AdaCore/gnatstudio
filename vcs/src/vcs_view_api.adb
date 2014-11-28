@@ -455,7 +455,7 @@ package body VCS_View_API is
         (Dialog,
          Title  => -"Create tag/branch",
          Parent => null,
-         Flags  => Destroy_With_Parent);
+         Flags  => Destroy_With_Parent or Use_Header_Bar_From_Settings);
 
       Gtk_New_Hbox (Box);
       Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
@@ -502,7 +502,7 @@ package body VCS_View_API is
         (Dialog,
          Title  => -"Switch tag/branch",
          Parent => null,
-         Flags  => Destroy_With_Parent);
+         Flags  => Destroy_With_Parent or Use_Header_Bar_From_Settings);
 
       Gtk_New_Hbox (Box);
       Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);

@@ -843,7 +843,8 @@ package body Remote.Config_Dialog is
         (Dialog,
          -"Servers configuration",
          Get_Main_Window (Kernel),
-         Modal + Destroy_With_Parent);
+         Modal or Destroy_With_Parent
+         or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
       Set_Position (Dialog, Win_Pos_Center_On_Parent);
       Set_Default_Size (Dialog, -1, 400);
 

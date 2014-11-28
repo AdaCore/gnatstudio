@@ -103,9 +103,8 @@ package body Welcome is
         (Win        => Screen,
          Title      => -"Welcome to GPS " & Config.Version &
                        " (" & Config.Source_Date & ")",
-         Parent     => null,
-         Title_Font => Wizard_Title_Font.Get_Pref,
-         Has_Separator => False);
+         Parent     => Get_Main_Window (Kernel),
+         Title_Font => Wizard_Title_Font.Get_Pref);
 
       Set_Default_Size (Screen, 600, 350);
 

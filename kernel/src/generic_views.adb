@@ -34,7 +34,6 @@ with Gtk.Style_Context;       use Gtk.Style_Context;
 with Gtk.Radio_Menu_Item;     use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
-with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Tool_Button;         use Gtk.Tool_Button;
 with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
@@ -745,7 +744,7 @@ package body Generic_Views is
             --  Add the "Close" button.
             Close_Button := Gtk_Button
               (Gtk_Dialog (View.Get_Toplevel).Add_Button
-                   (Stock_Close, Gtk_Response_Cancel));
+                   (-"Close", Gtk_Response_Cancel));
 
             Widget_Callback.Object_Connect
               (Close_Button, Gtk.Button.Signal_Clicked,

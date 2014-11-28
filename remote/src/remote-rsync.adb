@@ -184,7 +184,9 @@ package body Remote.Rsync is
    begin
       Dialog := new Rsync_Dialog_Record;
       Initialize (Dialog, -"Synchronisation in progress",
-                  Get_Main_Window (Kernel), No_Separator);
+                  Get_Main_Window (Kernel),
+                  Destroy_With_Parent
+                  or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
       Gtk_New (Label, -"Synchronisation with remote host in progress.");
       Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Label);

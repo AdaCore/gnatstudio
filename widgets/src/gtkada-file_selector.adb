@@ -1758,7 +1758,9 @@ package body Gtkada.File_Selector is
       Hbox7    : Gtk_Hbox;
 
    begin
-      Gtk.Dialog.Initialize (Self, Dialog_Title, Flags => No_Separator);
+      Gtk.Dialog.Initialize
+         (Self, Dialog_Title,
+          Flags => Use_Header_Bar_From_Settings);
       Self.Set_Position (Win_Pos_Mouse);
       Self.Set_Modal (False);
 

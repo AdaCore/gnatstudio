@@ -1434,7 +1434,7 @@ package body Toolchains_Editor is
       --  he needs to wait a bit for the operation to finish
       Gtk.Dialog.Gtk_New
         (Dialog, -"", Gtk_Window (W.Get_Ancestor (Gtk.Window.Get_Type)),
-         No_Separator);
+         Use_Header_Bar_From_Settings (W) or Destroy_With_Parent);
       Gtk_New
         (Label, -"Scanning host for available compilers, please wait ...");
       Pack_Start (Get_Content_Area (Dialog), Label);

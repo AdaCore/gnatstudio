@@ -196,6 +196,7 @@ package body Toolchains_Dialog is
       Browse : Gtk_Button;
       Pix    : Gtk_Image;
       pragma Unreferenced (Dead);
+      Main_Win : constant Gtk_Window := Kernel.Get_Main_Window;
 
    begin
       Widget := new Dialog_Record;
@@ -206,8 +207,8 @@ package body Toolchains_Dialog is
       Initialize
         (Widget,
          Title  => -"Toolchains Configuration",
-         Parent => GPS.Kernel.Get_Main_Window (Kernel),
-         Flags  => Modal);
+         Parent => Main_Win,
+         Flags  => Modal or Use_Header_Bar_From_Settings (Main_Win));
 
       Widget.OK_Button :=
         Gtk_Button (Widget.Add_Button (Gtk.Stock.Stock_Ok, Gtk_Response_OK));

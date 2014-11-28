@@ -53,8 +53,7 @@ package Logo_Boxes is
       Title  : String;
       Parent : Gtk.Window.Gtk_Window;
       Show_Toc   : Boolean := True;
-      Title_Font : Pango.Font.Pango_Font_Description;
-      Has_Separator : Boolean := True);
+      Title_Font : Pango.Font.Pango_Font_Description);
    --  Create a new welcome dialog. Project_Name is the project that should be
    --  suggested by default (empty string for the default project)
 

@@ -1620,12 +1620,15 @@ package body Aliases_Module is
       Success          : Boolean;
       pragma Unreferenced (Number, W);
 
+      Current_Win      : constant Gtk_Window := Get_Current_Window (Kernel);
+
    begin
       Editor := new Alias_Editor_Record;
       Initialize (Editor,
                   Title  => -"Aliases edition",
-                  Parent => Get_Current_Window (Kernel),
-                  Flags  => Destroy_With_Parent);
+                  Parent => Current_Win,
+                  Flags  => Destroy_With_Parent
+                    or Use_Header_Bar_From_Settings (Current_Win));
       Set_Default_Size (Editor, 640, 400);
 
       Editor.Local_Aliases.Clear;

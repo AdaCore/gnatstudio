@@ -1791,6 +1791,16 @@ package body GPS.Kernel.Preferences is
       Dialog.Set_Position (Win_Pos_Mouse);
       Dialog.Set_Default_Size (620, 400);
 
+      --  ??? This has no effect, since the dialog has already been
+      --  "constructed" (in gtk term). We would need to do the initialization
+      --  differently, not clear how. Alternatively, we might not need our own
+      --  class and signals here.
+      Glib.Properties.Set_Property
+        (Dialog,
+         Property_Boolean (Use_Header_Bar_Property),
+         (if Use_Header_Bar_From_Settings (Kernel.Get_Main_Window) = 0
+          then False else True));
+
       Manager.Set_Editor (Dialog);
 
       Gtk_New (Main_Table, Rows => 3, Columns => 2, Homogeneous => False);

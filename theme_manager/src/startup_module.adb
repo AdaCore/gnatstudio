@@ -358,7 +358,8 @@ package body Startup_Module is
         (Editor,
          Title  => -"Startup Plug-ins",
          Parent => Get_Main_Window (Kernel),
-         Flags  => Destroy_With_Parent);
+         Flags  => Destroy_With_Parent
+           or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
       Set_Default_Size (Editor, 800, 600);
       Set_Name (Editor, "Startup Plug-ins Editor");
 

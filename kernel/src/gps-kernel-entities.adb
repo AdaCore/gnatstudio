@@ -907,7 +907,8 @@ package body GPS.Kernel.Entities is
       Initialize (Dialog,
                   Title  => -"Find References Options",
                   Parent => Get_Main_Window (Kernel),
-                  Flags  => Modal);
+                  Flags  => Modal
+                  or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
 
       --  Context choice
 

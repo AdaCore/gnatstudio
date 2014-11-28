@@ -33,8 +33,11 @@ package body New_Variable_Editor_Pkg is
      (New_Variable_Editor : access New_Variable_Editor_Record'Class)
    is
    begin
-      Gtk.Dialog.Initialize (New_Variable_Editor);
-      Set_Title (New_Variable_Editor, -"Creating a variable");
+      Gtk.Dialog.Initialize
+        (New_Variable_Editor,
+         -"Creating a variable",
+         Parent => null,
+         Flags  => Use_Header_Bar_From_Settings);
       Set_Position (New_Variable_Editor, Win_Pos_None);
       Set_Modal (New_Variable_Editor, False);
       Set_Default_Size (New_Variable_Editor, 600, 400);
