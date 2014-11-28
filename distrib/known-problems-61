@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-NB18-009 GB: Cannot open Ada Editor.
+
+  Problem:    Sometimes opening Ada editor fails. The Ada editor could not be
+              initialized because of a NullPointerException. Once it occurs
+              the file cannot be edited anymore by the Ada editor.
+
+  Status:     This was fixed in 2.10.0 on 2014-11-27
+
+  Workaround: Edit the file using the standard text editor or restart
+              GNATbench.
+
 KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Problem:    When closing a debugger session, if the program being debugged
