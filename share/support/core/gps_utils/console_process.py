@@ -62,10 +62,15 @@ class Console_Process(GPS.Console, GPS.Process):
         and append what the user was typing. This is in general suitable but
         might interfer with external programs that do their own screen
         management through ANSI commands (like a Unix shell for instance).
+
+     :param boolean task_manager: If True, the process will be visible in the
+          GPS task manager and can be interrupted or paused by users.
+          Otherwise, it is running in the background and never visible to the
+          user.
      """
 
     def __init__(self, process, args='', close_on_exit=True, force=False,
-                 ansi=False, manage_prompt=True):
+                 ansi=False, manage_prompt=True, task_manager=False):
         self.close_on_exit = close_on_exit
         try:
             GPS.Console.__init__(
@@ -86,7 +91,7 @@ class Console_Process(GPS.Console, GPS.Process):
                 '.+',
                 single_line_regexp=True,  # For efficiency
                 strip_cr=not ansi,        # if ANSI terminal, CR is irrelevant
-                task_manager=False,
+                task_manager=task_manager,
                 on_exit=self.on_exit,
                 on_match=self.on_output)
             GPS.MDI.get_by_child(self).raise_window()
