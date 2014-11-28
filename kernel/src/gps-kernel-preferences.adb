@@ -1795,11 +1795,11 @@ package body GPS.Kernel.Preferences is
       --  "constructed" (in gtk term). We would need to do the initialization
       --  differently, not clear how. Alternatively, we might not need our own
       --  class and signals here.
-      Glib.Properties.Set_Property
-        (Dialog,
-         Property_Boolean (Use_Header_Bar_Property),
-         (if Use_Header_Bar_From_Settings (Kernel.Get_Main_Window) = 0
-          then False else True));
+      --    Glib.Properties.Set_Property
+      --      (Dialog,
+      --       Property_Boolean (Use_Header_Bar_Property),
+      --       (if Use_Header_Bar_From_Settings (Kernel.Get_Main_Window) = 0
+      --        then False else True));
 
       Manager.Set_Editor (Dialog);
 
