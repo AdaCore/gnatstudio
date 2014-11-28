@@ -116,7 +116,7 @@ package body Completion.C.Constructs_Extractor is
 
       Null_C_Completion_Proposal : constant C_Completion_Proposal :=
         (Simple_Completion_Proposal (Null_Completion_Proposal)
-            with Entity_Info => <>,
+            with Entity_Info => Root_Entity_Refs.Empty_Holder,
                  With_Params => False,
                  Is_Param    => False);
 
@@ -886,7 +886,8 @@ package body Completion.C.Constructs_Extractor is
                            Context.Buffer
                              (Natural (Prefix_Token.Token_First)
                                 .. Natural (Prefix_Token.Token_Last));
-         It : Calls_Iterator'Class := Get_All_Called_Entities (Scope);
+         It : Abstract_Entities_Cursor'Class :=
+           Get_All_Called_Entities (Scope);
 
       begin
          while not At_End (It) loop

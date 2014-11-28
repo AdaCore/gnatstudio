@@ -388,7 +388,8 @@ package body GPS.Kernel.Xref is
          return;
       end if;
       declare
-         Calls : Calls_Iterator'Class := Get_All_Called_Entities (Entity);
+         Calls : Abstract_Entities_Cursor'Class :=
+           Get_All_Called_Entities (Entity);
       begin
          For_Each_Entity :
          while not At_End (Calls) loop

@@ -376,7 +376,8 @@ package body Xref is
         Db.Lang_Specific_Databases.Find (Lang_Name);
    begin
       if Cursor /= LDB.No_Element then
-         return LDB.Element (Cursor).Get_Entity (Name, Loc);
+         return LDB.Element (Cursor).Get_Entity
+           (General_Xref_Database (Db), Name, Loc);
       end if;
 
       return Find_Declaration_Or_Overloaded
@@ -1494,7 +1495,7 @@ package body Xref is
    -- At_End --
    ------------
 
-   function At_End (Iter : Base_Entities_Cursor) return Boolean is
+   overriding function At_End (Iter : Base_Entities_Cursor) return Boolean is
    begin
       return not Has_Element (Iter.Iter);
    end At_End;
@@ -1503,7 +1504,8 @@ package body Xref is
    -- Get --
    ---------
 
-   function Get (Iter : Base_Entities_Cursor) return Root_Entity'Class is
+   overriding function Get
+     (Iter : Base_Entities_Cursor) return Root_Entity'Class is
    begin
       return General_Entity'
         (Entity => Element (Iter.Iter),
@@ -1515,7 +1517,7 @@ package body Xref is
    -- Next --
    ----------
 
-   procedure Next (Iter : in out Base_Entities_Cursor) is
+   overriding procedure Next (Iter : in out Base_Entities_Cursor) is
    begin
       Next (Iter.Iter);
    end Next;
@@ -1525,7 +1527,7 @@ package body Xref is
    -----------------------------
 
    overriding function Get_All_Called_Entities
-     (Entity : General_Entity) return Calls_Iterator'Class
+     (Entity : General_Entity) return Abstract_Entities_Cursor'Class
    is
       Result : Calls_Iterator;
    begin
@@ -1617,7 +1619,7 @@ package body Xref is
    -- Destroy --
    -------------
 
-   procedure Destroy (Iter : in out Entities_In_Project_Cursor) is
+   overriding procedure Destroy (Iter : in out Entities_In_Project_Cursor) is
    begin
       null;
    end Destroy;
@@ -1685,7 +1687,7 @@ package body Xref is
    -- Destroy --
    -------------
 
-   procedure Destroy (Iter : in out Calls_Iterator) is
+   overriding procedure Destroy (Iter : in out Calls_Iterator) is
    begin
       null;
    end Destroy;

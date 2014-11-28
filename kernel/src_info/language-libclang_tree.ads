@@ -22,6 +22,7 @@ with Ada.Containers; use Ada.Containers;
 with Libclang.Index; use Libclang.Index;
 with Ada.Containers.Indefinite_Holders;
 with Ada.Containers.Doubly_Linked_Lists;
+with clang_c_Index_h; use clang_c_Index_h;
 
 package Language.Libclang_Tree is
 
@@ -164,6 +165,8 @@ package Language.Libclang_Tree is
 
    overriding function Has_Element
      (It : Clang_Tree_Iterator) return Boolean;
+
+   function To_Sloc_T (Arg : CXSourceLocation) return Sloc_T;
 
 private
 

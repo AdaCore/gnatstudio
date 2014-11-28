@@ -17,7 +17,6 @@
 
 with Language.Libclang; use Language.Libclang;
 with Libclang.File; use Libclang.File;
-with clang_c_Index_h; use clang_c_Index_h;
 with Interfaces.C; use Interfaces.C;
 with String_Utils;
 
@@ -25,8 +24,6 @@ package body Language.Libclang_Tree is
 
    function Node_From_Cursor
      (C : Clang_Cursor; N : Clang_Node) return Semantic_Node'Class;
-
-   function To_Sloc_T (Arg : CXSourceLocation) return Sloc_T;
 
    function Filter_Children (C : Clang_Cursor) return Boolean;
 
