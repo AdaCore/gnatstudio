@@ -590,7 +590,9 @@ package body Src_Editor_Module is
       end On_View;
 
       D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      Ignored : Boolean;
    begin
+      Ignored := Check_Monitored_Files (Kernel, Interactive => False);
       For_All_Views (Kernel, D.File, On_View'Access);
    end File_Changed_On_Disk_Cb;
 
