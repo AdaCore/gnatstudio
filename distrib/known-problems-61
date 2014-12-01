@@ -81,8 +81,8 @@ KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Workaround: Interrupt the program before closing the debugger.
 
-Known problems fixed in GPS 6.1.1
----------------------------------
+Known problems fixed in GPS 6.1.1 / GNATbench 2.9.1
+---------------------------------------------------
 
 KP-61-NB06-027 GPS: Delete ops not working correctly at beginning/end of file
 
@@ -103,6 +103,16 @@ KP-61-NB05-034 GPS: not reusing existing editor
   Status:     This was fixed in 6.1.1 on 2014-11-06
 
   Workaround: After saving a new file, close the editor and reopen it.
+
+KP-61-NA31-056 WB: Cannot edit GNAT project properties through GPS dialog
+
+  Problem:    When running GNAT Project => Edit Properties menu, the GPS
+              project properties dialog is not displayed.
+
+  Status:     This was fixed in 2.9.1 on 2014-12-01
+
+  Workaround: Use the GPR file test editor, or edit externally the GPR file
+              using GPS.
 
 KP-61-NA27-039 GPS: incorrect highlight of changed value in debugger data
 
