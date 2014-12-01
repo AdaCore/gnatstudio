@@ -17,6 +17,7 @@
 
 with Libclang.Index; use Libclang.Index;
 with GPS.Core_Kernels; use GPS.Core_Kernels;
+with GPS.Kernel;
 
 package Language.Libclang is
 
@@ -25,5 +26,8 @@ package Language.Libclang is
       File : GNATCOLL.VFS.Virtual_File;
       Reparse : Boolean := False)
       return Clang_Translation_Unit;
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
 end Language.Libclang;

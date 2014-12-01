@@ -67,7 +67,7 @@ package body Libclang.Index is
    is
       R : Clang_Index;
    begin
-      R.CXIndex := clang_createIndex
+      R := clang_createIndex
         (int (Boolean'Pos (Exclude_Declarations_From_PCH)),
          int (Boolean'Pos (Display_Diagnostics)));
       return R;
@@ -79,7 +79,7 @@ package body Libclang.Index is
 
    procedure Dispose (Index : Clang_Index) is
    begin
-      clang_disposeIndex (Index.CXIndex);
+      clang_disposeIndex (Index);
    end Dispose;
 
    ----------------------------
@@ -151,7 +151,7 @@ package body Libclang.Index is
 
       TU :=
         local_clang_parseTranslationUnit
-          (C_Idxx                => Index.CXIndex,
+          (C_Idxx                => Index,
            Source_Filename       => C_Source_Filename,
            Command_Line_Args     => C_Command_Line_Args,
            Num_Command_Line_Args => Interfaces.C.int (First_Free - CL'First),

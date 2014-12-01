@@ -33,7 +33,7 @@ package Libclang.Index is
    -- Index --
    -----------
 
-   type Clang_Index is private;
+   subtype Clang_Index is clang_c_Index_h.CXIndex;
 
    No_Index : constant Clang_Index;
 
@@ -409,12 +409,7 @@ package Libclang.Index is
 
 private
 
-   type Clang_Index is record
-      CXIndex : clang_c_Index_h.CXIndex;
-   end record;
-
-   No_Index : constant Clang_Index :=
-     (CXIndex => CXIndex (System.Null_Address));
+   No_Index : constant Clang_Index := CXIndex (System.Null_Address);
 
    No_Translation_Unit : constant Clang_Translation_Unit :=
         clang_c_Index_h.CXTranslationUnit (System.Null_Address);

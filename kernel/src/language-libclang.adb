@@ -25,8 +25,14 @@ with Ada.Strings.Hash;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GPS.Editors; use GPS.Editors;
+with clang_c_Index_h; use clang_c_Index_h;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
+with GPS.Kernel; use GPS.Kernel;
+with Ada.Containers.Doubly_Linked_Lists;
 
 package body Language.Libclang is
+
+   LRU_Size : constant := 32;
 
    Diagnostics : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG.DIAGNOSTICS", Off);
@@ -45,45 +51,78 @@ package body Language.Libclang is
    function Hash (Project : Project_Type) return Hash_Type is
      (Ada.Strings.Hash (Project.Name));
 
---     function "=" (L, R : Clang_Translation_Unit) return Boolean is
---       (System.Address (L) = System.Address (R));
-
-   type TU_Cache is record
-      TU : Clang_Translation_Unit;
+   type TU_Cache_Record is record
+      TU      : Clang_Translation_Unit;
       Version : Integer := 0;
    end record;
-   type TU_Cache_Access is access all TU_Cache;
+   type TU_Cache_Access is access all TU_Cache_Record;
+
+   procedure Free
+   is new Ada.Unchecked_Deallocation (TU_Cache_Record, TU_Cache_Access);
+
+   procedure Destroy (Tu_Cache : in out TU_Cache_Access);
 
    package TU_Maps is new Ada.Containers.Hashed_Maps
      (Virtual_File, TU_Cache_Access, Full_Name_Hash, "=");
    type Tu_Map_Access is access all TU_Maps.Map;
 
+   package LRU_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Virtual_File);
+   type LRU_Vector_Access is access all LRU_Lists.List;
+   procedure Free
+   is new Ada.Unchecked_Deallocation (LRU_Lists.List, LRU_Vector_Access);
+
    type Clang_Context is record
-      TU_Cache : Tu_Map_Access;
+      TU_Cache      : Tu_Map_Access;
+      LRU           : LRU_Vector_Access;
       Clang_Indexer : Clang_Index;
    end record;
 
    procedure Free
    is new Ada.Unchecked_Deallocation (TU_Maps.Map, Tu_Map_Access);
-   pragma Unreferenced (Free);
 
    package Clang_Cache_Maps is new Ada.Containers.Hashed_Maps
      (Project_Type, Clang_Context, Hash, "=");
 
-   Global_Cache : Clang_Cache_Maps.Map;
-   --  Global state of libclang, should probably be put into the kernel
+   type Clang_Module_Record is new Abstract_Module_Record with record
+      Global_Cache : Clang_Cache_Maps.Map;
+   end record;
 
-   procedure Initialize (Context : in out Clang_Context);
+   overriding procedure Destroy (Id : in out Clang_Module_Record);
+
+   Clang_Module_Id : access Clang_Module_Record;
+
+   procedure Initialize (Ctx : in out Clang_Context);
+
+   procedure Destroy (Ctx : in out Clang_Context);
+
+   procedure On_Project_View_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (Context : in out Clang_Context) is
+   procedure Initialize (Ctx : in out Clang_Context) is
    begin
-      Context.Clang_Indexer := Create_Index (True, Active (Diagnostics));
-      Context.TU_Cache := new TU_Maps.Map;
+      Ctx.Clang_Indexer := Create_Index (True, Active (Diagnostics));
+      Ctx.TU_Cache := new TU_Maps.Map;
+      Ctx.LRU := new LRU_Lists.List;
    end Initialize;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Ctx : in out Clang_Context) is
+   begin
+      for C of Ctx.TU_Cache.all loop
+         Destroy (C);
+      end loop;
+      Ctx.TU_Cache.Clear;
+      Free (Ctx.TU_Cache);
+      Free (Ctx.LRU);
+   end Destroy;
 
    ----------------------
    -- Translation_Unit --
@@ -107,9 +146,10 @@ package body Language.Libclang is
    begin
       if Reparse
         and then Buffer /= Nil_Editor_Buffer
-        and then Global_Cache.Contains (F_Info.Project)
+        and then Clang_Module_Id.Global_Cache.Contains (F_Info.Project)
       then
-         Context := Global_Cache.Element (F_Info.Project);
+         Context := Clang_Module_Id.Global_Cache.Element (F_Info.Project);
+
          if Context.TU_Cache.Contains (File) then
             Cache_Val := Context.TU_Cache.Element (File);
             if Cache_Val.Version < Buffer.Version then
@@ -127,6 +167,7 @@ package body Language.Libclang is
                end;
             end if;
          end if;
+
       end if;
       return Translation_Unit (Kernel, File, No_Unsaved_Files);
    end Translation_Unit;
@@ -158,11 +199,11 @@ package body Language.Libclang is
 
       Context : Clang_Context;
    begin
-      if not Global_Cache.Contains (F_Info.Project) then
+      if not Clang_Module_Id.Global_Cache.Contains (F_Info.Project) then
          Initialize (Context);
-         Global_Cache.Insert (F_Info.Project, Context);
+         Clang_Module_Id.Global_Cache.Insert (F_Info.Project, Context);
       else
-         Context := Global_Cache.Element (F_Info.Project);
+         Context := Clang_Module_Id.Global_Cache.Element (F_Info.Project);
       end if;
 
       if Unsaved_Files = No_Unsaved_Files
@@ -215,12 +256,73 @@ package body Language.Libclang is
                Options           => Clang_Options);
 
             Context.TU_Cache.Include
-              (File, new TU_Cache'(TU => TU, Version => 0));
+              (File, new TU_Cache_Record'(TU => TU, Version => 0));
+            Context.LRU.Append (File);
+
+            --  Remove elements from the cache if > LRU_Size
+
+            if Context.TU_Cache.Length > LRU_Size then
+               declare
+                  F : constant GNATCOLL.VFS.Virtual_File :=
+                    Context.LRU.First_Element;
+               begin
+                  Destroy (Context.TU_Cache.Reference (F));
+                  Context.TU_Cache.Delete (F);
+                  Context.LRU.Delete_First;
+               end;
+            end if;
          end if;
 
          GNAT.Strings.Free (C_Switches);
          return TU;
       end;
    end Translation_Unit;
+
+   procedure On_Project_View_Changed
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Clang_Module_Id.Destroy;
+   end On_Project_View_Changed;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Clang_Module_Id := new Clang_Module_Record;
+      Register_Module
+        (Module => Clang_Module_Id,
+         Kernel => Kernel);
+      Add_Hook (Kernel, Project_View_Changed_Hook,
+                Wrapper (On_Project_View_Changed'Access),
+                Name => "libclang.project_view_changed");
+   end Register_Module;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Id : in out Clang_Module_Record) is
+   begin
+      for C of Id.Global_Cache loop
+         Destroy (C);
+         clang_disposeIndex (C.Clang_Indexer);
+      end loop;
+      Id.Global_Cache.Clear;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Tu_Cache : in out TU_Cache_Access) is
+   begin
+      clang_disposeTranslationUnit (Tu_Cache.TU);
+      Free (Tu_Cache);
+   end Destroy;
 
 end Language.Libclang;
