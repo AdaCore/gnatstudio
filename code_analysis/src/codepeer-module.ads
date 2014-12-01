@@ -138,6 +138,9 @@ private
 
       Bridge_Message : Message_Access;
       --  Message used to communicate with gps_codepere_bridge
+
+      Display_Values : Boolean := True;
+      --  Display values tooltip
    end record;
 
    overriding function Tooltip_Handler

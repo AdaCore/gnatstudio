@@ -22,6 +22,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Input_Sources.File;
 
+with Gtk.Check_Menu_Item;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
@@ -111,6 +112,11 @@ package body CodePeer.Module is
    procedure On_Hide_Messages
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
+
+   procedure On_Display_Values_Toggled
+     (Item    : access Glib.Object.GObject_Record'Class;
+      Context : Module_Context);
+   --  Handles change of state of display values item
 
    procedure On_Activate
      (Item    : access Glib.Object.GObject_Record'Class;
@@ -419,7 +425,8 @@ package body CodePeer.Module is
 
       use type Code_Analysis.Code_Analysis_Tree;
 
-      Item : Gtk.Menu_Item.Gtk_Menu_Item;
+      Item       : Gtk.Menu_Item.Gtk_Menu_Item;
+      Check_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
 
    begin
       if Factory.Module.Tree = null then
@@ -506,13 +513,23 @@ package body CodePeer.Module is
                      Context_CB.To_Marshaller (On_Show_Messages'Access),
                      Module_Context'
                        (CodePeer_Module_Id (Factory.Module),
-                     Project_Node,
+                        Project_Node,
                         File_Node,
                         null));
                end if;
             end if;
          end;
       end if;
+
+      Gtk.Check_Menu_Item.Gtk_New (Check_Item, -"Display values");
+      Check_Item.Set_Active (Module.Display_Values);
+      Menu.Append (Check_Item);
+      Context_CB.Connect
+        (Check_Item,
+         Gtk.Check_Menu_Item.Signal_Toggled,
+         Context_CB.To_Marshaller (On_Display_Values_Toggled'Access),
+         Module_Context'
+           (CodePeer_Module_Id (Factory.Module), null, null, null));
    end Append_To_Menu;
 
    ---------------------------------
@@ -1469,6 +1486,18 @@ package body CodePeer.Module is
          Trace (Me, E);
    end On_Destroy;
 
+   -------------------------------
+   -- On_Display_Values_Toggled --
+   -------------------------------
+
+   procedure On_Display_Values_Toggled
+     (Item    : access Glib.Object.GObject_Record'Class;
+      Context : Module_Context) is
+   begin
+      Context.Module.Display_Values :=
+        Gtk.Check_Menu_Item.Gtk_Check_Menu_Item (Item).Get_Active;
+   end On_Display_Values_Toggled;
+
    -------------------------
    -- On_Hide_Annotations --
    -------------------------
@@ -2322,6 +2351,7 @@ package body CodePeer.Module is
       if not Has_File_Information (Context)
         or not Has_Line_Information (Context)
         or not Has_Column_Information (Context)
+        or not Module.Display_Values
       then
          return null;
       end if;
