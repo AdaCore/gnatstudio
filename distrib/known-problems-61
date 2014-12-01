@@ -36,6 +36,16 @@ KP-61-NB18-009 GB: Cannot open Ada Editor.
   Workaround: Edit the file using the standard text editor or restart
               GNATbench.
 
+KP-61-NB12-023 ECL: Cannot set breakpoints on Eclipse Luna
+
+  Problem:    On Eclipse 4.4, when debugging an Ada Application (menu Debug As
+              => Ada Application) no breakpoints can be set.
+
+  Status:     This was fixed in 2.10.0 on 2014-11-26
+
+  Workaround: Launch debugger using Debug As => C/C++ Application menu. Set
+              Ada Event Breakpoints using the GDB console view.
+
 KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Problem:    When closing a debugger session, if the program being debugged
