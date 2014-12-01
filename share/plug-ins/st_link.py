@@ -9,8 +9,6 @@ The following is required:
    This is included in recent versions of GNAT, or can be downloaded at
      https://github.com/texane/stlink
 
- - (optional, required for running programs in the emulator)
-   the arm-eabi-gnatemu emulator should be present on the PATH
 """
 
 import GPS
@@ -18,7 +16,6 @@ from modules import Module
 import gps_utils.workflow as workflow
 from gps_utils.workflow import WORKFLOW_PARAMETER
 import gps_utils.promises as promise
-import sys
 
 
 def msg_is(msg):
@@ -29,21 +26,20 @@ class BoardLoader(Module):
 
     # a list of targets
     __targets = ["Flash to Board",
-                 "Debug on Board",
-                 "Run with Emulator",
-                 "Debug with Emulator"]
+                 "Debug on Board"]
     __buttons = []
+    __connection = None
 
     def __error_exit(self, msg=""):
         """ Emit an error and reset the workflows """
         GPS.Console("Messages").write(msg + " [workflow stopped]")
 
-    def __reset_all(self, id, manager_delete=True, connection_delete=True):
+    def __reset_all(self, manager_delete=True, connection_delete=True):
         """ Reset the workflows """
         if self.__connection is not None and connection_delete:
             self.__connection.get().kill()
             self.__connection = None
-        interest = ["st-util", "arm-eabi-gnatemu"][id]
+        interest = "st-util"
         for i in GPS.Task.list():
             if interest in i.name():
                 i.interrupt()
@@ -52,7 +48,7 @@ class BoardLoader(Module):
         """ Back up method to check if task exists
         """
         r = False
-        interest = ["st-util", "arm-eabi-gnatemu"][id]
+        interest = ["st-util"][id]
         for i in GPS.Task.list():
             if interest in i.name():
                 r = True
@@ -152,106 +148,6 @@ class BoardLoader(Module):
         msg_is("... done.")
         msg_is("Running on board...")
 
-    def __emu_wf(self):
-        """
-        Workflow to build and run the program in the emulator.
-        """
-
-        # STEP 1.0 get main name
-        f = yield WORKFLOW_PARAMETER
-        if f is None:
-            self.__error_exit(msg="Main not specified")
-            return
-
-        # STEP 1.5 Build it
-        msg_is("Building main %s..." % f)
-        builder = promise.TargetWrapper("Build Main")
-        r0 = yield builder.wait_on_execute(f)
-        if r0 is not 0:
-            self.__error_exit(msg="Build error.")
-            return
-
-        msg_is("... done.")
-
-        # STEP 2 load with Emulator
-        msg_is("Initializing emulator...")
-
-        b = GPS.Project.root().get_executable_name(GPS.File(f))
-        d = GPS.Project.root().object_dirs()[0]
-        obj = d + b
-        cmd = ["arm-eabi-gnatemu", "--board=STM32F4", obj]
-        try:
-            self.__connection = promise.ProcessWrapper(cmd)
-        except:
-            self.__error_exit("Executable arm-eabi-gnatemu not installed.")
-            return
-
-        msg_is("... done.")
-
-        msg_is("Running in emulator...")
-
-    def __emu_debug_wf(self):
-        """
-        Workflow to debug a program under the emulator.
-        """
-
-        # STEP 1.0 get main name
-        f = yield WORKFLOW_PARAMETER
-        if f is None:
-            self.__error_exit(msg="Main not specified.")
-            return
-
-        # STEP 1.5 Build it
-        msg_is("Building Main %s..." % f)
-        builder = promise.TargetWrapper("Build Main")
-        r0 = yield builder.wait_on_execute(f)
-        if r0 is not 0:
-            self.__error_exit(msg="Build error.")
-            return
-
-        msg_is("... done.")
-
-        # STEP 2 load with Emulator
-        msg_is("Initializing emulator...")
-        b = GPS.Project.root().get_executable_name(GPS.File(f))
-        d = GPS.Project.root().object_dirs()[0]
-        obj = d + b
-        cmd = ["arm-eabi-gnatemu", "-g", "--board=STM32F4", obj]
-        try:
-            self.__connection = promise.ProcessWrapper(cmd)
-        except:
-            msg_is("Executable arm-eabi-gnatemu not installed.")
-            return
-
-        msg_is("... done.")
-
-        # STEP 3.1 launch debugger
-
-        debugger_promise = promise.DebuggerWrapper(GPS.File(b))
-
-        # block execution until debugger is free
-        r3 = yield debugger_promise.wait_and_send(cmd="", block=False)
-        if not r3:
-            self.__error_exit("Could not initialize the debugger.")
-            r3 = yield debugger_promise.wait_and_send(cmd="", block=False)
-            self.__reset_all  # ??? is this the right reset?
-            return
-        msg_is("... done.")
-
-        # STEP 3.2 target and run the program
-        msg_is("Sending debugger command to target the emulator...")
-        r3 = yield debugger_promise.wait_and_send(
-            cmd="target remote localhost:1234",
-            timeout=4000)
-        interest = "Remote debugging using localhost:1234"
-
-        if interest not in r3:
-            self.__error_exit("Could not connect to the target.")
-            self.__reset_all(1)
-            return
-
-        msg_is("... done.")
-
     def __debug_wf(self):
         """
         Workflow to build, flash and debug the program on the real board.
@@ -303,7 +199,7 @@ class BoardLoader(Module):
             self.__error_exit("Connection Lost. "
                               + "Please check the USB connection and restart.")
             r3 = yield debugger_promise.wait_and_send(cmd="", block=True)
-            self.__reset_all(0)
+            self.__reset_all()
             return
 
         msg_is("... done.")
@@ -328,17 +224,9 @@ class BoardLoader(Module):
                                              "debug-on-board",
                                              self.__debug_wf,
                                              "gps-boardloading-debug")
-        workflow.create_target_from_workflow("Run with Emulator",
-                                             "run-with-emulator",
-                                             self.__emu_wf,
-                                             "gps-emulatorloading")
-        workflow.create_target_from_workflow("Debug with Emulator",
-                                             "debug-with-emulator",
-                                             self.__emu_debug_wf,
-                                             "gps-emulatorloading-debug")
 
-        for i in range(0, 4):
-            b = GPS.BuildTarget(self.__targets[i])
+        for tar in self.__targets:
+            b = GPS.BuildTarget(tar)
             self.__buttons.append(b)
 
         self.__show_button()
@@ -353,5 +241,4 @@ class BoardLoader(Module):
         """
         When debugger terminates, kill connection.
         """
-        self.__reset_all(id=1)
-        self.__reset_all(id=0)
+        self.__reset_all()
