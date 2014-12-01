@@ -25,6 +25,22 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-NB26-010 GB: Cannot watch global variables defined in package body.
+
+  Problem:    When selecting an expression that contains variable(s) defined in
+              package body, the expression displayed in the Add Watch
+              Expression dialog doesn't add the package prefix.
+              This problem affects also the tooltip feature. The current value
+              of the pointed variable is not displayed by the tooltip.
+
+              When the selection boundary is not at an identifier boundary or
+              the selection length is equal to 0, the watch expression is
+              incorrect.
+
+  Status:     This was fixed in 2.10.0 on 2014-11-27
+
+  Workaround: Edit the expression manually.
+
 KP-61-NB18-009 GB: Cannot open Ada Editor.
 
   Problem:    Sometimes opening Ada editor fails. The Ada editor could not be
