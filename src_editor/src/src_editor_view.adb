@@ -2670,7 +2670,7 @@ package body Src_Editor_View is
 
       --  ??? We use to force a refresh of the window, but not sure why this
       --  would be needed.
---      Invalidate_Window (Src_View);
+      Invalidate_Window (Src_View);
 
       --  Ensure that synchronized editors are also scrolled
 
