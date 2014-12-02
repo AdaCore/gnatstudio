@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-NC01-048 GB: Ada 2102 reserved word "some" not displayed as a keyword.
+
+  Problem:    Ada 2012 reserved word "some" is not displayed in AdaCore's Ada
+              Editor as an Ada keyword. It is displayed as an identifier.
+
+  Status:     This was fixed in 2.10.0 on 2014-12-02
+
+  Workaround: None.
+
 KP-61-NB26-010 GB: Cannot watch global variables defined in package body.
 
   Problem:    When selecting an expression that contains variable(s) defined in
