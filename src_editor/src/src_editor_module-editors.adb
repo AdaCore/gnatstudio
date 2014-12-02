@@ -225,6 +225,8 @@ package body Src_Editor_Module.Editors is
    overriding function Line (This : Src_Editor_Location) return Integer;
    overriding function Column
      (This : Src_Editor_Location) return Visible_Column_Type;
+   overriding function Line_Offset
+     (This : Src_Editor_Location) return Natural;
    overriding function Offset (This : Src_Editor_Location) return Natural;
 
    overriding procedure Search
@@ -1209,6 +1211,20 @@ package body Src_Editor_Module.Editors is
    begin
       return Integer (This.Line);
    end Line;
+
+   -----------------
+   -- Line_Offset --
+   -----------------
+
+   overriding function Line_Offset
+     (This : Src_Editor_Location) return Natural
+   is
+      Iter    : Gtk_Text_Iter;
+      Success : Boolean;
+   begin
+      Get_Location (Iter, This, Iter, Success);
+      return Natural (Get_Line_Offset (Iter));
+   end Line_Offset;
 
    ------------
    -- Column --

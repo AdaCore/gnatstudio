@@ -29,4 +29,12 @@ package body Libclang.File is
       return Result;
    end File;
 
+   function File (File : Libclang_File) return GNATCOLL.VFS.Virtual_File
+   is
+   begin
+      return GNATCOLL.VFS.Create
+        (GNATCOLL.VFS.Filesystem_String
+           (To_String (clang_getFileName (File))));
+   end File;
+
 end Libclang.File;

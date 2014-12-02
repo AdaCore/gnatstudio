@@ -156,6 +156,10 @@ package GPS.Editors is
      (This : Editor_Location) return Visible_Column_Type is abstract;
    --  Return the column of the location
 
+   function Line_Offset
+     (This : Editor_Location) return Natural is abstract;
+   --  Return the line offset of the location
+
    function Offset (This : Editor_Location) return Natural is abstract;
    --  Offset in the file.
 
@@ -798,6 +802,8 @@ private
    overriding function Line (This : Dummy_Editor_Location) return Integer;
    overriding function Column
      (This : Dummy_Editor_Location) return Visible_Column_Type;
+   overriding function Line_Offset
+     (This : Dummy_Editor_Location) return Natural is (0);
    overriding function Offset (This : Dummy_Editor_Location) return Natural;
 
    overriding function Buffer

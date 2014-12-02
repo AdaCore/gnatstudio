@@ -24,6 +24,7 @@ with Interfaces.C.Strings;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
+with GNATCOLL.VFS;
 with Ada.Containers.Vectors;
 with clang_c_CXString_h;
 
@@ -406,6 +407,76 @@ package Libclang.Index is
      (To_String (clang_getTranslationUnitSpelling (TU)));
 
    subtype Clang_Location is CXSourceLocation;
+
+   subtype Clang_Index_Action is CXIndexAction;
+
+   function Create (Index : Clang_Index) return Clang_Index_Action
+   renames clang_IndexAction_create;
+
+   procedure Dispose (Index_Action : Clang_Index_Action)
+                      renames clang_IndexAction_dispose;
+
+   subtype Clang_Diagnostic_Set is CXDiagnosticSet;
+   subtype Clang_Diagnostic is CXDiagnostic;
+
+   subtype Clang_Included_File_Info is CXIdxIncludedFileInfo;
+   subtype Clang_Decl_Info is CXIdxDeclInfo;
+   subtype Clang_Ref_Info is CXIdxEntityRefInfo;
+   subtype Clang_Index_Options is CXIndexOptFlags;
+
+   generic
+      type Client_Data_T is private;
+
+      with function Abort_Query
+        (Client_Data : in out Client_Data_T) return Boolean is <>;
+
+      with procedure Diagnostic
+        (Client_Data : in out Client_Data_T;
+         Diagnostics : Clang_Diagnostic_Set) is <>;
+
+      with procedure Entered_Main_File
+        (Client_Data : in out Client_Data_T;
+         File        : GNATCOLL.VFS.Virtual_File) is <>;
+
+      with procedure Included_File
+        (Client_Data : in out Client_Data_T;
+         Included_File_Info : Clang_Included_File_Info) is <>;
+
+      with procedure Started_Translation_Unit
+        (Client_Data : in out Client_Data_T) is <>;
+
+      with procedure Index_Declaration
+        (Client_Data : in out Client_Data_T;
+         Decl_Info   : Clang_Decl_Info) is <>;
+
+      with procedure Index_Reference
+        (Client_Data : in out Client_Data_T;
+         Ref_Info   : Clang_Ref_Info) is <>;
+
+   package Source_File_Indexer is
+
+      function Index_Source_File
+        (Index_Action      : Clang_Index_Action;
+         Client_Data       : Client_Data_T;
+         Index_Options     : Clang_Index_Options;
+         Source_Filename   : String;
+         Command_Line_Args : GNATCOLL.Utils.Unbounded_String_Array;
+         Unsaved_Files     : Unsaved_File_Array := No_Unsaved_Files;
+         Options           : Clang_Translation_Unit_Flags :=
+           No_Translation_Unit_Flags) return Clang_Translation_Unit;
+
+      procedure Index_Translation_Unit
+        (Index_Action : Clang_Index_Action;
+         Client_Data : Client_Data_T;
+         Index_Options : Clang_Index_Options;
+         TU : Clang_Translation_Unit);
+
+   end Source_File_Indexer;
+
+   use type Interfaces.C.int;
+   function Is_From_Main_File (Loc : Clang_Location) return Boolean
+   is
+     (clang_Location_isFromMainFile (Loc) /= 0);
 
 private
 

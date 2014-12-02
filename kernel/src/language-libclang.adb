@@ -29,13 +29,19 @@ with clang_c_Index_h; use clang_c_Index_h;
 with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 with GPS.Kernel; use GPS.Kernel;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Text_IO; use Ada.Text_IO;
+with Interfaces.C.Strings;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Language.Libclang_Tree; use Language.Libclang_Tree;
+with Ada.Containers.Vectors;
+with String_Utils; use String_Utils;
 
 package body Language.Libclang is
 
    LRU_Size : constant := 32;
 
    Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG.DIAGNOSTICS", Off);
+     GNATCOLL.Traces.Create ("LANGUAGE_LIBCLANG", On);
 
    Clang_Options : constant Clang_Translation_Unit_Flags :=
      Includebriefcommentsincodecompletion
@@ -47,6 +53,56 @@ package body Language.Libclang is
       File : GNATCOLL.VFS.Virtual_File;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files)
       return Clang_Translation_Unit;
+
+   ----------------------
+   -- References cache --
+   ----------------------
+
+   type Decl_Info is record
+      Sloc : Sloc_T;
+      Is_Def : Boolean;
+   end record;
+
+   type Ref_Info is record
+      Sloc : Sloc_T;
+   end record;
+
+   package Ref_Info_Vectors is
+     new Ada.Containers.Vectors (Positive, Ref_Info);
+   type Ref_Info_Vector is access all Ref_Info_Vectors.Vector;
+   procedure Free
+   is new Ada.Unchecked_Deallocation
+     (Ref_Info_Vectors.Vector, Ref_Info_Vector);
+
+   package Decl_Info_Vectors is
+     new Ada.Containers.Vectors (Positive, Decl_Info);
+   type Decl_Info_Vector is access all Decl_Info_Vectors.Vector;
+   procedure Free
+   is new Ada.Unchecked_Deallocation
+     (Decl_Info_Vectors.Vector, Decl_Info_Vector);
+
+   type Info_Vectors is record
+      Decls : Decl_Info_Vector := null;
+      Refs : Ref_Info_Vector := null;
+   end record;
+
+   use GNATCOLL.Symbols;
+   package Symbol_To_Location_Maps is new Ada.Containers.Hashed_Maps
+     (GNATCOLL.Symbols.Symbol, Info_Vectors,
+      Hash => GNATCOLL.Symbols.Hash, Equivalent_Keys => "=");
+   type Sym_To_Loc_Map is access all Symbol_To_Location_Maps.Map;
+   procedure Free
+   is new Ada.Unchecked_Deallocation
+     (Symbol_To_Location_Maps.Map, Sym_To_Loc_Map);
+
+   procedure Destroy (S : in out Sym_To_Loc_Map);
+
+   package VFS_To_Refs_Maps is new Ada.Containers.Hashed_Maps
+     (GNATCOLL.VFS.Virtual_File, Sym_To_Loc_Map, Full_Name_Hash, "=");
+   type VFS_To_Refs is access all VFS_To_Refs_Maps.Map;
+   procedure Free
+   is new Ada.Unchecked_Deallocation
+     (VFS_To_Refs_Maps.Map, VFS_To_Refs);
 
    function Hash (Project : Project_Type) return Hash_Type is
      (Ada.Strings.Hash (Project.Name));
@@ -76,6 +132,9 @@ package body Language.Libclang is
       TU_Cache      : Tu_Map_Access;
       LRU           : LRU_Vector_Access;
       Clang_Indexer : Clang_Index;
+      Index_Action  : Clang_Index_Action;
+      Sym_Table     : GNATCOLL.Symbols.Symbol_Table_Access;
+      Refs          : VFS_To_Refs;
    end record;
 
    procedure Free
@@ -92,22 +151,45 @@ package body Language.Libclang is
 
    Clang_Module_Id : access Clang_Module_Record;
 
-   procedure Initialize (Ctx : in out Clang_Context);
+   procedure Initialize (Ctx : out Clang_Context);
 
    procedure Destroy (Ctx : in out Clang_Context);
 
    procedure On_Project_View_Changed
      (Kernel : access Kernel_Handle_Record'Class);
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (S : in out Sym_To_Loc_Map) is
+   begin
+      for El of S.all loop
+         if El.Refs /= null then
+            Free (El.Refs);
+         end if;
+         if El.Decls /= null then
+            Free (El.Decls);
+         end if;
+      end loop;
+      Free (S);
+   end Destroy;
+
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (Ctx : in out Clang_Context) is
+   procedure Initialize (Ctx : out Clang_Context)
+   is
+      Idx : constant Clang_Index := Create_Index (True, Active (Diagnostics));
    begin
-      Ctx.Clang_Indexer := Create_Index (True, Active (Diagnostics));
-      Ctx.TU_Cache := new TU_Maps.Map;
-      Ctx.LRU := new LRU_Lists.List;
+      Ctx :=
+        (Clang_Indexer => Idx,
+         TU_Cache      => new TU_Maps.Map,
+         LRU           => new LRU_Lists.List,
+         Index_Action  => Create (Idx),
+         Sym_Table     => GNATCOLL.Symbols.Allocate,
+         Refs          => new VFS_To_Refs_Maps.Map);
    end Initialize;
 
    -------------
@@ -122,7 +204,157 @@ package body Language.Libclang is
       Ctx.TU_Cache.Clear;
       Free (Ctx.TU_Cache);
       Free (Ctx.LRU);
+
+      for M of Ctx.Refs.all loop
+         Destroy (M);
+      end loop;
+
+      Free (Ctx.Refs);
+
+      GNATCOLL.Symbols.Free (Ctx.Sym_Table);
+      Dispose (Ctx.Index_Action);
    end Destroy;
+
+   pragma Style_Checks (Off);
+   pragma Warnings (Off);
+
+   type Indexer_Data is record
+      Syms_To_Locs : Sym_To_Loc_Map;
+      Ctx          : Clang_Context;
+   end record;
+
+   -----------------
+   -- Abort_Query --
+   -----------------
+
+   function Abort_Query
+     (Client_Data : in out Indexer_Data) return Boolean is (False);
+
+   ----------------
+   -- Diagnostic --
+   ----------------
+
+   procedure Diagnostic
+     (Client_Data : in out Indexer_Data;
+      Diagnostics : Clang_Diagnostic_Set)
+   is
+   begin
+      null;
+   end Diagnostic;
+
+   -----------------------
+   -- Entered_Main_File --
+   -----------------------
+
+   procedure Entered_Main_File
+     (Client_Data : in out Indexer_Data;
+      File        : GNATCOLL.VFS.Virtual_File) is
+   begin
+      Put_Line ("IN ENTERED MAIN FILE");
+   end Entered_Main_File;
+
+   -------------------
+   -- Included_File --
+   -------------------
+
+   procedure Included_File
+     (Client_Data : in out Indexer_Data;
+      Included_File_Info : Clang_Included_File_Info) is
+   begin
+      null;
+   end Included_File;
+
+   ------------------------------
+   -- Started_Translation_Unit --
+   ------------------------------
+
+   procedure Started_Translation_Unit
+     (Client_Data : in out Indexer_Data) is
+   begin
+      Put_Line ("IN STARTED TRANSLATION UNIT");
+   end Started_Translation_Unit;
+
+   -----------------------
+   -- Index_Declaration --
+   -----------------------
+
+   procedure Index_Declaration
+     (Client_Data : in out Indexer_Data;
+      Info        : Clang_Decl_Info)
+   is
+      use Interfaces.C.Strings;
+      use Interfaces.C;
+      Loc : Clang_Location :=
+        clang_indexLoc_getCXSourceLocation (Info.loc);
+      Sym : GNATCOLL.Symbols.Symbol;
+      Info_Vector : Info_Vectors;
+   begin
+      if Is_From_Main_File (Loc)
+      then
+--           Put_Line
+--             ("IN INDEX DECLARATION "
+--              & (if Info.entityInfo.name /= Null_Ptr
+--                then Interfaces.C.Strings.Value (Info.entityInfo.name)
+--                else ""));
+
+         Sym :=
+           Client_Data.Ctx.Sym_Table.Find (Value (Info.entityInfo.USR));
+
+         if not Client_Data.Syms_To_Locs.Contains (Sym) then
+            Info_Vector := (new Decl_Info_Vectors.Vector,
+                            new Ref_Info_Vectors.Vector);
+            Client_Data.Syms_To_Locs.Include (Sym, Info_Vector);
+         else
+            Info_Vector := Client_Data.Syms_To_Locs.Element (Sym);
+         end if;
+
+         Info_Vector.Decls.Append
+           (Decl_Info'(To_Sloc_T (Loc), Info.isDefinition /= 0));
+
+      end if;
+   end Index_Declaration;
+
+   ---------------------
+   -- Index_Reference --
+   ---------------------
+
+   procedure Index_Reference
+     (Client_Data : in out Indexer_Data;
+      Info   : Clang_Ref_Info)
+   is
+      use Interfaces.C.Strings;
+      use Interfaces.C;
+      Loc : Clang_Location :=
+        clang_indexLoc_getCXSourceLocation (Info.loc);
+      Sym : GNATCOLL.Symbols.Symbol;
+      Info_Vector : Info_Vectors;
+
+   begin
+      if Is_From_Main_File (Loc)
+      then
+--           Put_Line ("IN INDEX REFERENCE");
+         Sym :=
+           Client_Data.Ctx.Sym_Table.Find (Value (Info.referencedEntity.USR));
+
+         if not Client_Data.Syms_To_Locs.Contains (Sym) then
+            Info_Vector := (new Decl_Info_Vectors.Vector,
+                            new Ref_Info_Vectors.Vector);
+            Client_Data.Syms_To_Locs.Include (Sym, Info_Vector);
+         else
+            Info_Vector := Client_Data.Syms_To_Locs.Element (Sym);
+         end if;
+
+         Info_Vector.Refs.Append
+           (Ref_Info'(Sloc => To_Sloc_T (Loc)));
+
+      end if;
+   end Index_Reference;
+
+   package Indexer is new Source_File_Indexer
+     (Client_Data_T => Indexer_Data);
+
+   pragma Style_Checks (On);
+   pragma Warnings (On);
 
    ----------------------
    -- Translation_Unit --
@@ -220,10 +452,17 @@ package body Language.Libclang is
          The_Switches     : Unbounded_String_Array (C_Switches'Range);
          TU : Clang_Translation_Unit;
          Dummy : Boolean;
+         Refs : Sym_To_Loc_Map;
       begin
          for J in C_Switches'Range loop
             The_Switches (J) := To_Unbounded_String (C_Switches (J).all);
          end loop;
+
+         if Context.Refs.Contains (File) then
+            Destroy (Context.Refs.Reference (File));
+         end if;
+         Refs := new Symbol_To_Location_Maps.Map;
+         Context.Refs.Include (File, Refs);
 
          if Context.TU_Cache.Contains (File) then
             --  If the key is in the cache, we know that File_Content is not
@@ -232,28 +471,38 @@ package body Language.Libclang is
             Dummy := Reparse_Translation_Unit (TU, Unsaved_Files,
                                                Options => Clang_Options);
          else
-            --  In the other case, this is the first time we're parsing this
-            --  file
-            TU := Parse_Translation_Unit
-              (Index             => Context.Clang_Indexer,
-               Source_Filename   => String (File.Full_Name.all),
-               Command_Line_Args =>
+            declare
+               Switches : constant GNATCOLL.Utils.Unbounded_String_Array
+                 :=
 
                --  We pass to libclang a list of switches made of:
                --  ... the C/C++ switches specified in this project
-               The_Switches
+                 The_Switches
 
                --  ... a -I<dir> for each directory in the subprojects
                --  of this project
-               & Get_Project_Source_Dirs
+                 & Get_Project_Source_Dirs
                  (Kernel, F_Info.Project, Lang)
 
-               --  ... a -I<dir> for each dir in the compiler search path
-               & Get_Compiler_Search_Paths
-                 (Kernel, F_Info.Project, Lang),
+                 --  ... a -I<dir> for each dir in the compiler search path
+                 & Get_Compiler_Search_Paths
+                 (Kernel, F_Info.Project, Lang);
+            begin
+               for S of Switches loop
+                  Put_Line ("SWITCHES : " & (+S));
+               end loop;
 
-               Unsaved_Files     => Unsaved_Files,
-               Options           => Clang_Options);
+               --  In the other case, this is the first time we're parsing this
+               --  file
+               TU := Indexer.Index_Source_File
+                 (Index_Action      => Context.Index_Action,
+                  Client_Data       => Indexer_Data'(Refs, Context),
+                  Index_Options     => CXIndexOpt_None,
+                  Source_Filename   => String (File.Full_Name.all),
+                  Command_Line_Args => Switches,
+                  Unsaved_Files     => Unsaved_Files,
+                  Options           => Clang_Options);
+            end;
 
             Context.TU_Cache.Include
               (File, new TU_Cache_Record'(TU => TU, Version => 0));

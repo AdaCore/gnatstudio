@@ -31,4 +31,6 @@ package Libclang.File is
    is
      (Libclang.File.File (TU, String (File.Full_Name.all)));
 
+   function File (File : Libclang_File) return GNATCOLL.VFS.Virtual_File;
+
 end Libclang.File;

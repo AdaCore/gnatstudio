@@ -1709,7 +1709,7 @@ package clang_c_Index_h is
    subtype CXIdxEntityRefKind is unsigned;
    CXIdxEntityRef_Direct : constant CXIdxEntityRefKind := 1;
    CXIdxEntityRef_Implicit : constant CXIdxEntityRefKind := 2;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5199
-
+--
    type CXIdxEntityRefInfo is record
       kind : aliased CXIdxEntityRefKind;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5205
       cursor : aliased CXCursor;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5209
@@ -1797,22 +1797,22 @@ package clang_c_Index_h is
    function clang_indexSourceFile
      (arg1 : CXIndexAction;
       client_data : CXClientData;
-      index_callbacks : access IndexerCallbacks;
+      index_callbacks : access constant IndexerCallbacks;
       index_callbacks_size : unsigned;
       index_options : unsigned;
-      source_filename : Interfaces.C.Strings.chars_ptr;
-      command_line_args : System.Address;
-      num_command_line_args : int;
-      unsaved_files : access CXUnsavedFile;
-      num_unsaved_files : unsigned;
-      out_TU : System.Address;
-      TU_options : unsigned) return int;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5422
+      Source_Filename : Interfaces.C.Strings.chars_ptr;
+      Command_Line_Args : System.Address;
+      Num_Command_Line_Args : int;
+      Unsaved_Files : System.Address;
+      Num_Unsaved_Files : unsigned;
+      Out_TU : System.Address;
+      TU_Options : unsigned) return int;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5422
    pragma Import (C, clang_indexSourceFile, "clang_indexSourceFile");
 
    function clang_indexTranslationUnit
      (arg1 : CXIndexAction;
       client_data : CXClientData;
-      index_callbacks : access IndexerCallbacks;
+      index_callbacks : access constant IndexerCallbacks;
       index_callbacks_size : unsigned;
       index_options : unsigned;
       arg6 : CXTranslationUnit) return int;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5451

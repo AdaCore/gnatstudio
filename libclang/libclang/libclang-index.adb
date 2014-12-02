@@ -23,6 +23,7 @@ with Interfaces.C;         use Interfaces.C;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Interfaces.C.Pointers;
 with clang_c_CXString_h; use clang_c_CXString_h;
+with Libclang.File;
 with System.Address_To_Access_Conversions;
 
 package body Libclang.Index is
@@ -167,6 +168,258 @@ package body Libclang.Index is
 
       return TU;
    end Parse_Translation_Unit;
+
+   -------------------------
+   -- Source_File_Indexer --
+   -------------------------
+
+   package body Source_File_Indexer is
+      package CX_To_Client_Data is new System.Address_To_Access_Conversions
+        (Client_Data_T);
+
+      function To_Client_Data
+        (A : CXClientData) return CX_To_Client_Data.Object_Pointer
+      is
+        (CX_To_Client_Data.To_Pointer (System.Address (A)));
+
+      function Abort_Query_Internal
+        (arg1 : CXClientData; arg2 : System.Address) return int;
+      pragma Convention (C, Abort_Query_Internal);
+      procedure Diagnostic_Internal
+        (arg1 : CXClientData;
+         arg2 : CXDiagnosticSet;
+         arg3 : System.Address);
+      pragma Convention (C, Diagnostic_Internal);
+      function Entered_Main_File_Internal
+        (arg1 : CXClientData;
+         arg2 : CXFile;
+         arg3 : System.Address) return CXIdxClientFile;
+      pragma Convention (C, Entered_Main_File_Internal);
+      function Included_File_Internal
+        (arg1 : CXClientData;
+         arg2 : access constant CXIdxIncludedFileInfo) return CXIdxClientFile;
+      pragma Convention (C, Included_File_Internal);
+      function Started_Translation_Unit_Internal
+        (arg1 : CXClientData;
+         arg2 : System.Address) return CXIdxClientContainer;
+      pragma Convention (C, Started_Translation_Unit_Internal);
+      procedure Index_Reference_Internal
+        (arg1 : CXClientData; arg2 : access constant CXIdxEntityRefInfo);
+      pragma Convention (C, Index_Reference_Internal);
+      procedure Index_Declaration_Internal
+        (arg1 : CXClientData; arg2 : access constant CXIdxDeclInfo);
+      pragma Convention (C, Index_Declaration_Internal);
+
+      --------------------------
+      -- Abort_Query_Internal --
+      --------------------------
+
+      function Abort_Query_Internal
+        (arg1 : CXClientData; arg2 : System.Address) return int is
+         pragma Unreferenced (arg2);
+      begin
+         return
+           (if Abort_Query
+              (To_Client_Data (arg1).all)
+            then 1 else 0);
+      end Abort_Query_Internal;
+
+      -------------------------
+      -- Diagnostic_Internal --
+      -------------------------
+
+      procedure Diagnostic_Internal
+        (arg1 : CXClientData; arg2 : CXDiagnosticSet; arg3 : System.Address)
+      is
+         pragma Unreferenced (arg3);
+      begin
+         Diagnostic (To_Client_Data (arg1).all, arg2);
+      end Diagnostic_Internal;
+
+      --------------------------------
+      -- Entered_Main_File_Internal --
+      --------------------------------
+
+      function Entered_Main_File_Internal
+        (arg1 : CXClientData;
+         arg2 : CXFile;
+         arg3 : System.Address) return CXIdxClientFile is
+         pragma Unreferenced (arg3);
+      begin
+         Entered_Main_File (To_Client_Data (arg1).all,
+                            Libclang.File.File (arg2));
+         return CXIdxClientFile (System.Null_Address);
+      end Entered_Main_File_Internal;
+
+      ----------------------------
+      -- Included_File_Internal --
+      ----------------------------
+
+      function Included_File_Internal
+        (arg1 : CXClientData;
+         arg2 : access constant CXIdxIncludedFileInfo) return CXIdxClientFile
+      is
+      begin
+         Included_File (To_Client_Data (arg1).all, arg2.all);
+         return CXIdxClientFile (System.Null_Address);
+      end Included_File_Internal;
+
+      ---------------------------------------
+      -- Started_Translation_Unit_Internal --
+      ---------------------------------------
+
+      function Started_Translation_Unit_Internal
+        (arg1 : CXClientData; arg2 : System.Address)
+         return CXIdxClientContainer is
+         pragma Unreferenced (arg2);
+      begin
+         Started_Translation_Unit (To_Client_Data (arg1).all);
+         return CXIdxClientContainer (System.Null_Address);
+      end Started_Translation_Unit_Internal;
+
+      --------------------------------
+      -- Index_Declaration_Internal --
+      --------------------------------
+
+      procedure Index_Declaration_Internal
+        (arg1 : CXClientData; arg2 : access constant CXIdxDeclInfo) is
+      begin
+         Index_Declaration (To_Client_Data (arg1).all, arg2.all);
+      end Index_Declaration_Internal;
+
+      ------------------------------
+      -- Index_Reference_Internal --
+      ------------------------------
+
+      procedure Index_Reference_Internal
+        (arg1 : CXClientData; arg2 : access constant CXIdxEntityRefInfo) is
+      begin
+         Index_Reference (To_Client_Data (arg1).all, arg2.all);
+      end Index_Reference_Internal;
+
+      function Imported_AST_File_Internal
+        (arg1 : CXClientData;
+         arg2 : access constant CXIdxImportedASTFileInfo)
+         return CXIdxClientASTFile
+      is
+        (CXIdxClientASTFile (System.Null_Address));
+      pragma Convention (C, Imported_AST_File_Internal);
+
+      Indexer_Callbacks : aliased constant IndexerCallbacks :=
+        (Abort_Query_Internal'Access,
+         Diagnostic_Internal'Access,
+         Entered_Main_File_Internal'Access,
+         Included_File_Internal'Access,
+         Imported_AST_File_Internal'Access,
+         Started_Translation_Unit_Internal'Access,
+         Index_Declaration_Internal'Access,
+         Index_Reference_Internal'Access);
+
+      -----------------------
+      -- Index_Source_File --
+      -----------------------
+
+      function Index_Source_File
+        (Index_Action      : Clang_Index_Action;
+         Client_Data       : Client_Data_T;
+         Index_Options     : Clang_Index_Options;
+         Source_Filename   : String;
+         Command_Line_Args : GNATCOLL.Utils.Unbounded_String_Array;
+         Unsaved_Files     : Unsaved_File_Array := No_Unsaved_Files;
+         Options           : Clang_Translation_Unit_Flags :=
+           No_Translation_Unit_Flags) return Clang_Translation_Unit
+      is
+         TU : aliased Clang_Translation_Unit;
+
+         type Char_Ptr_Ptr is array (Positive range <>) of chars_ptr;
+
+         CL : Char_Ptr_Ptr (Command_Line_Args'Range);
+
+         C_Source_Filename : chars_ptr;
+         C_Command_Line_Args : System.Address;
+         C_Unsaved_Files     : System.Address;
+
+         First_Free : Natural := CL'First;
+
+         Error_Code : int;
+         pragma Unreferenced (Error_Code);
+      begin
+         for J in Command_Line_Args'Range loop
+            declare
+               Arg : constant String := To_String (Command_Line_Args (J));
+            begin
+               --  Never pass the "-v" argument: this causes libclang to output
+               --  the header search settings to the standard error, which
+               --  is not suitable under Windows where GPS does not have a
+               --  console.
+               if Arg /= "-v" then
+                  CL (First_Free) := New_String (Arg);
+                  First_Free := First_Free + 1;
+               end if;
+            end;
+         end loop;
+
+         if First_Free > CL'First then
+            C_Command_Line_Args := CL (CL'First)'Address;
+         else
+            --  ??? This is wrong, the code won't accept a null address below
+            C_Command_Line_Args := System.Null_Address;
+         end if;
+
+         if Unsaved_Files'Length = 0 then
+            C_Unsaved_Files := System.Null_Address;
+         else
+            C_Unsaved_Files := Unsaved_Files (Unsaved_Files'First)'Address;
+         end if;
+
+         C_Source_Filename := New_String (Source_Filename);
+
+         Error_Code :=
+           clang_indexSourceFile
+             (Index_Action,
+              CXClientData (Client_Data'Address),
+              Indexer_Callbacks'Access,
+              Indexer_Callbacks'Size,
+              Index_Options,
+              Source_Filename       => C_Source_Filename,
+              Command_Line_Args     => C_Command_Line_Args,
+              Num_Command_Line_Args =>
+                Interfaces.C.int (First_Free - CL'First),
+              Unsaved_Files         => C_Unsaved_Files,
+              Num_Unsaved_Files     => Unsaved_Files'Length,
+              Out_TU                => TU'Address,
+              TU_Options               => unsigned (Options));
+
+         Free (C_Source_Filename);
+
+         for J in CL'First .. First_Free - 1 loop
+            Free (CL (J));
+         end loop;
+
+         return TU;
+      end Index_Source_File;
+
+      ----------------------------
+      -- Index_Translation_Unit --
+      ----------------------------
+
+      procedure Index_Translation_Unit
+        (Index_Action : Clang_Index_Action;
+         Client_Data : Client_Data_T;
+         Index_Options : Clang_Index_Options;
+         TU : Clang_Translation_Unit)
+      is
+         Error_Code : int;
+         pragma Unreferenced (Error_Code);
+      begin
+         Error_Code := clang_indexTranslationUnit (Index_Action,
+                                     CXClientData (Client_Data'Address),
+                                     Indexer_Callbacks'Access,
+                                     Indexer_Callbacks'Size,
+                                     Index_Options, TU);
+      end Index_Translation_Unit;
+
+   end Source_File_Indexer;
 
    ------------------------------
    -- Reparse_Translation_Unit --

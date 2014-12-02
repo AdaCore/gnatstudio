@@ -347,6 +347,7 @@ package body Completion.C.Libclang is
       end case;
 
       Trace (Me, "Completion prefix: " & Result.Searched_Identifier.all);
+      Trace (Me, "Completion at " & Loc.Line'Img & " : " & Loc.Column'Img);
       Component.Resolver := Resolver;
 
       declare
@@ -365,7 +366,7 @@ package body Completion.C.Libclang is
            (Resolver.TU,
             Filename      => +Context.File.Full_Name,
             Line          => Loc.Line,
-            Column        => Integer (Loc.Column),
+            Column        => Loc.Line_Offset + 1,
             Unsaved_Files => Unsaved_Files);
       end;
 
