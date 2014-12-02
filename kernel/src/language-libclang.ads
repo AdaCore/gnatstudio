@@ -20,12 +20,13 @@ with GPS.Core_Kernels; use GPS.Core_Kernels;
 with GPS.Kernel;
 
 package Language.Libclang is
-
-   function Translation_Unit
-     (Kernel : Core_Kernel;
-      File : GNATCOLL.VFS.Virtual_File;
-      Reparse : Boolean := False)
-      return Clang_Translation_Unit;
+   protected TU_Source is
+      function Translation_Unit
+        (Kernel : Core_Kernel;
+         File : GNATCOLL.VFS.Virtual_File;
+         Reparse : Boolean := False)
+         return Clang_Translation_Unit;
+   end TU_Source;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

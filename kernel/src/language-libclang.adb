@@ -359,50 +359,51 @@ package body Language.Libclang is
    ----------------------
    -- Translation_Unit --
    ----------------------
-
-   function Translation_Unit
-     (Kernel : Core_Kernel;
-      File : GNATCOLL.VFS.Virtual_File;
-      Reparse : Boolean := False)
+   protected body TU_Source is
+      function Translation_Unit
+        (Kernel : Core_Kernel;
+         File : GNATCOLL.VFS.Virtual_File;
+         Reparse : Boolean := False)
       return Clang_Translation_Unit
-   is
-      Buffer : constant Editor_Buffer'Class :=
-        Kernel.Get_Buffer_Factory.Get (File, False, False, False, False);
-      F_Info : constant File_Info'Class :=
-        File_Info'Class
-          (Kernel.Registry.Tree.Info_Set
-             (File).First_Element);
-      Context : Clang_Context;
-      Cache_Val : TU_Cache_Access;
-      TU : Clang_Translation_Unit;
-   begin
-      if Reparse
-        and then Buffer /= Nil_Editor_Buffer
-        and then Clang_Module_Id.Global_Cache.Contains (F_Info.Project)
-      then
-         Context := Clang_Module_Id.Global_Cache.Element (F_Info.Project);
+      is
+         Buffer : constant Editor_Buffer'Class :=
+           Kernel.Get_Buffer_Factory.Get (File, False, False, False, False);
+         F_Info : constant File_Info'Class :=
+           File_Info'Class
+             (Kernel.Registry.Tree.Info_Set
+                (File).First_Element);
+         Context : Clang_Context;
+         Cache_Val : TU_Cache_Access;
+         TU : Clang_Translation_Unit;
+      begin
+         if Reparse
+           and then Buffer /= Nil_Editor_Buffer
+           and then Clang_Module_Id.Global_Cache.Contains (F_Info.Project)
+         then
+            Context := Clang_Module_Id.Global_Cache.Element (F_Info.Project);
 
-         if Context.TU_Cache.Contains (File) then
-            Cache_Val := Context.TU_Cache.Element (File);
-            if Cache_Val.Version < Buffer.Version then
-               declare
-                  Buffer_Text : Ada.Strings.Unbounded.String_Access :=
-                    new String'(Buffer.Get_Chars);
-               begin
-                  TU := Translation_Unit
-                    (Kernel, File,
-                     (0 => Create_Unsaved_File
-                          (String (File.Full_Name.all), Buffer_Text)));
-                  Cache_Val.Version := Buffer.Version;
-                  Free (Buffer_Text);
-                  return TU;
-               end;
+            if Context.TU_Cache.Contains (File) then
+               Cache_Val := Context.TU_Cache.Element (File);
+               if Cache_Val.Version < Buffer.Version then
+                  declare
+                     Buffer_Text : Ada.Strings.Unbounded.String_Access :=
+                       new String'(Buffer.Get_Chars);
+                  begin
+                     TU := Translation_Unit
+                       (Kernel, File,
+                        (0 => Create_Unsaved_File
+                             (String (File.Full_Name.all), Buffer_Text)));
+                     Cache_Val.Version := Buffer.Version;
+                     Free (Buffer_Text);
+                     return TU;
+                  end;
+               end if;
             end if;
-         end if;
 
-      end if;
-      return Translation_Unit (Kernel, File, No_Unsaved_Files);
-   end Translation_Unit;
+         end if;
+         return Translation_Unit (Kernel, File, No_Unsaved_Files);
+      end Translation_Unit;
+   end TU_Source;
 
    ----------------------
    -- Translation_Unit --
