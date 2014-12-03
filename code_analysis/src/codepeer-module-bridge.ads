@@ -20,13 +20,16 @@
 
 package CodePeer.Module.Bridge is
 
-   procedure Inspection (Module : CodePeer.Module.CodePeer_Module_Id);
+   procedure Inspection
+     (Module : not null access CodePeer.Module.Module_Id_Record'Class);
    --  Runs gps_codepeer_bridge to retrive inspection's information.
    --  Reuses existent XML file if it is exists and up-to-date.
+   --  Builder must be switched to 'codepeer' mode by caller.
 
    procedure Remove_Inspection_Cache_File
-      (Module : CodePeer.Module.CodePeer_Module_Id);
+      (Module : not null access CodePeer.Module.Module_Id_Record'Class);
    --  Removes auxiliary inspection's information file, used as cache.
+   --  Builder must be switched to 'codepeer' mode by caller.
 
    procedure Review_Message
      (Module  : CodePeer.Module.CodePeer_Module_Id;

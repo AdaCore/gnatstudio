@@ -181,4 +181,23 @@ private
    --  Global variable for store CodePeer plugin module. Used in the main menu
    --  callbacks.
 
+   type CodePeer_Build_Mode
+     (Kernel : not null access Kernel_Handle_Record'Class) is
+     new Ada.Finalization.Controlled with
+   record
+      Mode : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+   overriding procedure Initialize (Self : in out CodePeer_Build_Mode);
+   overriding procedure Finalize (Self : in out CodePeer_Build_Mode);
+   --  Type used to automatically set build mode to "codepeer" on entry
+   --  and reset it to the previous mode on exit. Also takes care of
+   --  freezing the xref db.
+
+   procedure Review
+     (Module       : not null access Module_Id_Record'Class;
+      Force        : Boolean;
+      Build_Target : String);
+   --  Launch CodePeer review using the specified build target.
+   --  If Force is True, no dialog is displayed to change codepeer switches.
+
 end CodePeer.Module;

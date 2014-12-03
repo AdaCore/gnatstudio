@@ -33,7 +33,6 @@ with Default_Preferences;        use Default_Preferences;
 with GPS.Editors;
 with GPS.Editors.Line_Information;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
@@ -57,11 +56,12 @@ with CodePeer.Bridge.Inspection_Readers;
 with CodePeer.Bridge.Status_Readers;
 with CodePeer.Message_Review_Dialogs_V3;
 with CodePeer.Messages_Reports;
+with CodePeer.Module.Actions;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
 with CodePeer.Shell_Commands;   use CodePeer.Shell_Commands;
-with Commands, Commands.Interactive;  use Commands, Commands.Interactive;
 with Commands.CodePeer;
+with Commands;                  use Commands;
 with Code_Analysis_GUI;
 
 package body CodePeer.Module is
@@ -81,17 +81,6 @@ package body CodePeer.Module is
 
    package Context_CB is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Module_Context);
-
-   type CodePeer_Build_Mode (Kernel : Kernel_Handle) is new
-     Ada.Finalization.Controlled with
-   record
-      Mode : Unbounded_String;
-   end record;
-   overriding procedure Initialize (Self : in out CodePeer_Build_Mode);
-   overriding procedure Finalize (Self : in out CodePeer_Build_Mode);
-   --  Type used to automatically set build mode to "codepeer" on entry
-   --  and reset it to the previous mode on exit. Also takes care of
-   --  freezing the xref db.
 
    type CodePeer_Note is new Abstract_Note with record
       Message : Message_Access;
@@ -126,108 +115,10 @@ package body CodePeer.Module is
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
 
-   type Analyze_All_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Analyze_All_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Analyze All" menu item is activated
-
-   type Analyze_File_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Analyze_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Analyze File" menu item is activated
-
-   type Analyze_File_By_File_Command is new
-     Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Analyze_File_By_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Analyze File By File" menu item is activated
-
-   type Generate_SCIL_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Generate_SCIL_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Generate SCIL" menu item is activated
-
-   type Remove_SCIL_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Remove_SCIL_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Remove SCIL" menu item is activated
-
-   type Remove_Codepeer_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Remove_Codepeer_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Remove SCIL & DB" menu item is activated
-
    procedure On_Compilation_Finished
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
    --  Callback for the "compilation_finished" hook, to schedule other tasks
-
-   type Analyze_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Analyze_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Analyze..." menu item is activated
-
-   type Display_Code_Review_Command
-      is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Display_Code_Review_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Display code review" menu item is activated
-
-   type Regenerate_Report_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Regenerate_Report_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Regenerate Report" menu item is activated
-
-   type Display_HTML_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Display_HTML_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "HTML Report" menu item is activated
-
-   type Generate_CSV_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Generate_CSV_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Generate CSV Report" menu item is activated
-
-   type Text_Overview_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Text_Overview_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Advanced->Edit Text Overview" menu item is activated
-
-   type Text_Listing_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Text_Listing_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Advanced->Edit Text Listing" menu item is activated
-
-   type Log_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Log_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Advanced->Edit CodePeer Log" menu item is activated
-
-   type Remove_Lock_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Remove_Lock_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Advanced->Remove Lock" menu item is activated
-
-   type Remove_XML_Review_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Self : access Remove_XML_Review_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Called when "Advanced->Remove XML Code Review" menu item is activated
 
    procedure On_Criteria_Changed
      (Item    : access Glib.Object.GObject_Record'Class;
@@ -272,13 +163,6 @@ package body CodePeer.Module is
    --  Shows file and its messages in the location view. Current messages
    --  filter is applied. Messages container's messages are created when
    --  necessary.
-
-   procedure Review
-     (Module       : CodePeer.Module.CodePeer_Module_Id;
-      Force        : Boolean;
-      Build_Target : String);
-   --  Launch CodePeer review using the specified build target.
-   --  If Force is True, no dialog is displayed to change codepeer switches.
 
    procedure Load_CSV
      (Self : access Module_Id_Record'Class;
@@ -392,7 +276,7 @@ package body CodePeer.Module is
    ------------
 
    procedure Review
-     (Module       : CodePeer.Module.CodePeer_Module_Id;
+     (Module       : not null access Module_Id_Record'Class;
       Force        : Boolean;
       Build_Target : String)
    is
@@ -886,449 +770,6 @@ package body CodePeer.Module is
          Trace (Me, E);
    end On_Activate;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Display_Code_Review_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      CodePeer.Module.Bridge.Inspection (Module);
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Regenerate_Report_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      Info_File : constant Virtual_File :=
-                    Create_From_Dir (Codepeer_Output_Directory
-                                     (Get_Project (Kernel)),
-                                     "Inspection_Info.xml");
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      if not Is_Regular_File (Info_File) then
-         Kernel.Insert
-           (Info_File.Display_Full_Name &
-            (-" does not exist. Please perform a full analysis first"),
-            Mode => GPS.Kernel.Error);
-      else
-         Review
-           (Module,
-            Force => False,
-            Build_Target  => "Regenerate CodePeer Report");
-      end if;
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Display_HTML_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      declare
-         HTML_File : constant Virtual_File :=
-                       Create_From_Dir (Codepeer_Output_Directory
-                                        (Get_Project (Kernel)),
-                                        "/html/index.html");
-
-      begin
-         if not Is_Regular_File (HTML_File) then
-            Kernel.Insert
-              (HTML_File.Display_Full_Name &
-               (-" does not exist. Please perform a full analysis first"),
-               Mode => GPS.Kernel.Error);
-         else
-            Open_Html (Kernel, String (Full_Name (HTML_File).all));
-         end if;
-      end;
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Generate_CSV_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      Project : constant Project_Type := Get_Project (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      declare
-         Info_File : constant Virtual_File :=
-           Create_From_Dir (Codepeer_Output_Directory
-                            (Get_Project (Kernel)),
-                            "Inspection_Info.xml");
-
-      begin
-         if not Is_Regular_File (Info_File) then
-            Kernel.Insert
-              (Info_File.Display_Full_Name &
-               (-" does not exist. Please perform a full analysis first"),
-               Mode => GPS.Kernel.Error);
-            return Commands.Failure;
-         end if;
-      end;
-
-      Module.Inspection_File :=
-        Create_From_Dir (CodePeer_Object_Directory (Project), "codepeer.csv");
-      Module.Action := Load_CSV;
-      CodePeer.Shell_Commands.Build_Target_Execute
-        (Kernel_Handle (Module.Kernel),
-         CodePeer.Shell_Commands.Build_Target
-           (Module.Get_Kernel, "Generate CSV Report"),
-         Build_Mode  => "codepeer",
-         Synchronous => False,
-         Dir         => CodePeer_Object_Directory (Project));
-
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Text_Listing_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      Text_File : constant Virtual_File :=
-                    Create_From_Dir
-                      (Codepeer_Output_Directory (Get_Project (Kernel)),
-                       "list/" &
-                       (+File_Information
-                          (Context.Context).Display_Base_Name) & ".txt");
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      if Is_Regular_File (Text_File) then
-         Open_File_Editor
-           (Kernel,
-            Text_File,
-            Project      => Project_Information (Context.Context),
-            New_File     => False,
-            Force_Reload => True);
-         return Commands.Success;
-      else
-         Kernel.Insert
-           (-"cannot find text listing: " & Text_File.Display_Full_Name,
-            Mode => GPS.Kernel.Error);
-         return Commands.Failure;
-      end if;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Text_Overview_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      declare
-         Text_File : constant Virtual_File :=
-                       Create_From_Dir
-                         (Codepeer_Output_Directory (Get_Project (Kernel)),
-                          "list/overview.txt");
-      begin
-         if Is_Regular_File (Text_File) then
-            Open_File_Editor
-              (Kernel,
-               Text_File,
-               Project      => Project_Information (Context.Context),
-               New_File     => False,
-               Force_Reload => True);
-         else
-            Kernel.Insert
-              (-"cannot find text overview: " & Text_File.Display_Full_Name,
-               Mode => GPS.Kernel.Error);
-         end if;
-      end;
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Log_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      Log_File : constant Virtual_File :=
-                   Create_From_Dir (Codepeer_Output_Directory
-                                    (Get_Project (Kernel)),
-                                    "Inspection.log");
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      if Is_Regular_File (Log_File) then
-         Open_File_Editor
-           (Kernel,
-            Log_File,
-            Project      => Project_Information (Context.Context),
-            New_File     => False,
-            Force_Reload => True);
-         return Commands.Success;
-      else
-         Kernel.Insert
-           (-"cannot find log file: " & Log_File.Display_Full_Name,
-            Mode => GPS.Kernel.Error);
-         return Commands.Failure;
-      end if;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Remove_Lock_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-      Lock_File : constant Virtual_File :=
-        Create_From_Dir (Codepeer_Output_Directory
-                         (Get_Project (Kernel)),
-                         "inspector.lock");
-      Success   : Boolean;
-
-   begin
-      if Is_Regular_File (Lock_File) then
-         Delete (Lock_File, Success);
-
-         if Success then
-            Kernel.Insert
-              (-"deleted lock file: " & Lock_File.Display_Full_Name);
-         else
-            Kernel.Insert
-              (-"could not delete lock file: " &
-               Lock_File.Display_Full_Name);
-         end if;
-         return Commands.Success;
-      else
-         Kernel.Insert
-           (-"no lock file found: " & Lock_File.Display_Full_Name);
-         return Commands.Failure;
-      end if;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Analyze_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      Review (Module, Force => False, Build_Target => "Run CodePeer...");
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Analyze_All_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      Review (Module, Force => True, Build_Target => "Run CodePeer");
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Analyze_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      pragma Unreferenced (Self);
-   begin
-      CodePeer.Shell_Commands.Build_Target_Execute
-        (Kernel,
-         CodePeer.Shell_Commands.Build_Target
-           (Kernel, "Run CodePeer File"),
-         Force       => True,
-         Synchronous => False);
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Analyze_File_By_File_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      pragma Unreferenced (Self);
-   begin
-      CodePeer.Shell_Commands.Build_Target_Execute
-        (Kernel,
-         CodePeer.Shell_Commands.Build_Target
-           (Kernel, "Run CodePeer File By File"),
-         Force       => False,
-         Synchronous => False);
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Generate_SCIL_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      CodePeer.Shell_Commands.Build_Target_Execute
-        (Kernel,
-         CodePeer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
-         Force       => False,
-         Synchronous => False);
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Remove_SCIL_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      Temp_SCIL : constant Filesystem_String := "Insp_";
-      Objs      : constant GNATCOLL.VFS.File_Array :=
-                    Object_Path (Get_Project (Kernel), True, True);
-      Dirs      : File_Array_Access;
-      Ignore    : Boolean;
-      pragma Unreferenced (Self, Ensure_Build_Mode, Ignore);
-
-   begin
-      Kernel.Insert (-"Deleting SCIL directories...");
-
-      --  Remove all SCIL and Insp_* directories under each <obj>/codepeer dir.
-      --  Ignore errors on e.g. read-only or non-existent directories.
-
-      for J in Objs'Range loop
-         begin
-            Dirs :=
-              Read_Dir (Create_From_Dir (Objs (J), "codepeer"), Dirs_Only);
-         exception
-            when VFS_Directory_Error =>
-               Dirs := null;
-         end;
-
-         if Dirs /= null then
-            for K in Dirs'Range loop
-               declare
-                  Base : constant Filesystem_String := Dirs (K).Base_Name;
-               begin
-                  if Base = "SCIL"
-                    or else
-                      (Base'Length > Temp_SCIL'Length
-                       and then
-                         Base (Base'First .. Base'First + Temp_SCIL'Length - 1)
-                           = Temp_SCIL)
-                  then
-                     Remove_Dir (Dir       => Dirs (K),
-                                 Recursive => True,
-                                 Success   => Ignore);
-                  end if;
-               end;
-            end loop;
-
-            Unchecked_Free (Dirs);
-         end if;
-      end loop;
-
-      CodePeer.Shell_Commands.Build_Target_Execute
-        (Kernel,
-         CodePeer.Shell_Commands.Build_Target (Kernel, "Remove SCIL"),
-         Force       => True,
-         Build_Mode  => "codepeer",
-         Synchronous => False);
-
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Remove_Codepeer_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      Objs   : constant GNATCOLL.VFS.File_Array :=
-                Object_Path (Get_Project (Kernel), True, True);
-      Ignore : Boolean;
-      pragma Unreferenced (Self, Ensure_Build_Mode, Ignore);
-   begin
-      --  Remove all <obj>/codepeer dirs. Ignore errors on e.g. read-only
-      --  or non-existent directories.
-
-      for J in Objs'Range loop
-         Remove_Dir (Dir       => Objs (J),
-                     Recursive => True,
-                     Success   => Ignore);
-      end loop;
-
-      Kernel.Insert
-        (-"Deleted all CodePeer artefacts.", Add_LF => False);
-      return Commands.Success;
-   end Execute;
-
    -----------------------------
    -- On_Compilation_Finished --
    -----------------------------
@@ -1642,22 +1083,6 @@ package body CodePeer.Module is
       Module.Listener.Set_Cleanup_Mode (False);
    end On_Project_Changed_Hook;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self : access Remove_XML_Review_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Self, Ensure_Build_Mode);
-   begin
-      Bridge.Remove_Inspection_Cache_File (Module);
-      return Commands.Success;
-   end Execute;
-
    -------------------------
    -- On_Show_Annotations --
    -------------------------
@@ -1868,8 +1293,8 @@ package body CodePeer.Module is
                          (Code_Analysis_GUI.Post_Analysis_Cst,
                           Gtk.Enums.Icon_Size_Menu),
                      Associated_Command =>
-                     new Commands.CodePeer.Review_Message_Command'
-                       (Commands.Root_Command with
+                     new Standard.Commands.CodePeer.Review_Message_Command'
+                       (Root_Command with
                           CodePeer_Module_Id (Self), Message)));
 
                if Message.From_File /= No_File then
@@ -2176,43 +1601,7 @@ package body CodePeer.Module is
            or GPS.Kernel.Lookup_Filter (Kernel, "In project"),
          Submenu => Submenu_Factory);
 
-      Register_Action
-        (Kernel, "codepeer analyze all", new Analyze_All_Command);
-      Register_Action
-         (Kernel, "codepeer analyze file", new Analyze_File_Command,
-          Filter     => Lookup_Filter (Kernel, "File")
-                        and Create (Language => "ada"));
-      Register_Action
-        (Kernel, "codepeer display code review",
-         new Display_Code_Review_Command);
-      Register_Action
-        (Kernel, "codepeer analyze file by file",
-         new Analyze_File_By_File_Command);
-      Register_Action
-        (Kernel, "codepeer generate scil", new Generate_SCIL_Command);
-      Register_Action
-        (Kernel, "codepeer analyze...", new Analyze_Command);
-      Register_Action
-        (Kernel, "codepeer regenerate report", new Regenerate_Report_Command);
-      Register_Action
-        (Kernel, "codepeer display html", new Display_HTML_Command);
-      Register_Action
-        (Kernel, "codepeer generate csv", new Generate_CSV_Command);
-      Register_Action
-        (Kernel, "codepeer text overview", new Text_Overview_Command);
-      Register_Action
-         (Kernel, "codepeer text listing", new Text_Listing_Command,
-          Filter => Lookup_Filter (Kernel, "File")
-                    and Create (Language => "ada"));
-      Register_Action (Kernel, "codepeer log", new Log_Command);
-      Register_Action
-        (Kernel, "codepeer remove lock", new Remove_Lock_Command);
-      Register_Action
-        (Kernel, "codepeer remove xml review", new Remove_XML_Review_Command);
-      Register_Action
-        (Kernel, "codepeer remove scil", new Remove_SCIL_Command);
-      Register_Action
-        (Kernel, "codepeer remove scil and db", new Remove_Codepeer_Command);
+      CodePeer.Module.Actions.Register_Actions (Module);
 
       Module.Message_Colors (CodePeer.High) :=
         Default_Preferences.Create

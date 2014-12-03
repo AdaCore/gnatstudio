@@ -43,7 +43,7 @@ package body CodePeer.Module.Bridge is
      "review_status_data.xml";
 
    procedure Run_GPS_Codepeer_Bridge
-     (Module       : CodePeer.Module.CodePeer_Module_Id;
+     (Module       : not null access CodePeer.Module.Module_Id_Record'Class;
       Command_File : GNATCOLL.VFS.Virtual_File);
    --  Runs gps_codepeer_bridge
 
@@ -95,7 +95,9 @@ package body CodePeer.Module.Bridge is
    -- Inspection --
    ----------------
 
-   procedure Inspection (Module : CodePeer.Module.CodePeer_Module_Id) is
+   procedure Inspection
+     (Module : not null access CodePeer.Module.Module_Id_Record'Class)
+   is
       Project           : constant Project_Type :=
         GPS.Kernel.Project.Get_Project (Module.Kernel);
       Object_Directory  : constant Virtual_File :=
@@ -157,7 +159,7 @@ package body CodePeer.Module.Bridge is
    ----------------------------------
 
    procedure Remove_Inspection_Cache_File
-     (Module : CodePeer.Module.CodePeer_Module_Id)
+      (Module : not null access CodePeer.Module.Module_Id_Record'Class)
    is
       Project           : constant Project_Type :=
                             GPS.Kernel.Project.Get_Project (Module.Kernel);
@@ -231,7 +233,7 @@ package body CodePeer.Module.Bridge is
    -----------------------------
 
    procedure Run_GPS_Codepeer_Bridge
-     (Module       : CodePeer.Module.CodePeer_Module_Id;
+     (Module       : not null access CodePeer.Module.Module_Id_Record'Class;
       Command_File : GNATCOLL.VFS.Virtual_File)
    is
       Builder    : constant Builder_Context := Builder_Context
