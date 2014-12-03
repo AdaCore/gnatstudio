@@ -24,7 +24,6 @@ package CodePeer.Module.Bridge is
      (Module : not null access CodePeer.Module.Module_Id_Record'Class);
    --  Runs gps_codepeer_bridge to retrive inspection's information.
    --  Reuses existent XML file if it is exists and up-to-date.
-   --  Builder must be switched to 'codepeer' mode by caller.
 
    procedure Remove_Inspection_Cache_File
       (Module : not null access CodePeer.Module.Module_Id_Record'Class);

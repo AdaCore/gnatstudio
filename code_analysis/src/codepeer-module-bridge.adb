@@ -98,6 +98,9 @@ package body CodePeer.Module.Bridge is
    procedure Inspection
      (Module : not null access CodePeer.Module.Module_Id_Record'Class)
    is
+      Ensure_Build_Mode : CodePeer_Build_Mode (Module.Kernel);
+      pragma Unreferenced (Ensure_Build_Mode);
+
       Project           : constant Project_Type :=
         GPS.Kernel.Project.Get_Project (Module.Kernel);
       Object_Directory  : constant Virtual_File :=

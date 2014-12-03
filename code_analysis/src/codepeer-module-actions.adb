@@ -117,9 +117,6 @@ package body CodePeer.Module.Actions is
    is
       pragma Unreferenced (Context);
 
-      Ensure_Build_Mode : CodePeer_Build_Mode (Self.Module.Kernel);
-      pragma Unreferenced (Ensure_Build_Mode);
-
    begin
       CodePeer.Module.Bridge.Inspection (Self.Module);
 

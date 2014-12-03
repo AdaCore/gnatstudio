@@ -85,6 +85,12 @@ package CodePeer.Module is
    CodePeer_Category_Name  : constant String := "CodePeer: messages";
    Race_Condition_Category : constant String := "race condition";
 
+   type CodePeer_Build_Mode
+     (Kernel : not null access Kernel_Handle_Record'Class) is private;
+   --  Type used to automatically set build mode to "codepeer" on entry
+   --  and reset it to the previous mode on exit. Also takes care of
+   --  freezing the xref db.
+
 private
 
    type Message_Ranking_Color_Preference_Array is
@@ -191,9 +197,6 @@ private
    end record;
    overriding procedure Initialize (Self : in out CodePeer_Build_Mode);
    overriding procedure Finalize (Self : in out CodePeer_Build_Mode);
-   --  Type used to automatically set build mode to "codepeer" on entry
-   --  and reset it to the previous mode on exit. Also takes care of
-   --  freezing the xref db.
 
    procedure Review
      (Module       : not null access Module_Id_Record'Class;

@@ -793,6 +793,8 @@ package body CodePeer.Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
    is
+      pragma Unreferenced (Kernel);
+
       Hook_Data : constant GPS.Kernel.Standard_Hooks.
         Compilation_Finished_Hooks_Args :=
           GPS.Kernel.Standard_Hooks.
@@ -811,13 +813,7 @@ package body CodePeer.Module is
 
       case Action is
          when Load_UI =>
-            declare
-               Ensure_Build_Mode : CodePeer_Build_Mode
-                 (Kernel_Handle (Kernel));
-               pragma Unreferenced (Ensure_Build_Mode);
-            begin
-               CodePeer.Module.Bridge.Inspection (Module);
-            end;
+            CodePeer.Module.Bridge.Inspection (Module);
 
          when Audit_Trail =>
             Module.Review_Message
