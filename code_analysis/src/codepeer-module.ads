@@ -158,7 +158,8 @@ private
    --  Returns object directory in 'codepeer' mode.
 
    function Codepeer_Output_Directory
-     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File;
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
    --  Returns directory which is used by CodePeer for output inspection
    --  results.
 

@@ -484,8 +484,13 @@ package body CodePeer.Module is
    -------------------------------
 
    function Codepeer_Output_Directory
-     (Project : Project_Type) return GNATCOLL.VFS.Virtual_File
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return GNATCOLL.VFS.Virtual_File
    is
+      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
+      pragma Unreferenced (Ensure_Build_Mode);
+
+      Project   : constant Project_Type := Get_Project (Kernel);
       Name      : constant Filesystem_String :=
                     Filesystem_String
                       (Ada.Characters.Handling.To_Lower

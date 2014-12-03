@@ -136,13 +136,9 @@ package body CodePeer.Module.Actions is
    is
       pragma Unreferenced (Self);
 
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Ensure_Build_Mode);
-
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
       HTML_File : constant Virtual_File :=
-        Codepeer_Output_Directory (Get_Project (Kernel)).Create_From_Dir
+        Codepeer_Output_Directory (Kernel).Create_From_Dir
           ("/html/index.html");
 
    begin
@@ -234,14 +230,9 @@ package body CodePeer.Module.Actions is
    is
       pragma Unreferenced (Self);
 
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Ensure_Build_Mode);
-
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Log_File : constant Virtual_File :=
-        Codepeer_Output_Directory
-          (Get_Project (Kernel)).Create_From_Dir ("Inspection.log");
+        Codepeer_Output_Directory (Kernel).Create_From_Dir ("Inspection.log");
 
    begin
       if Log_File.Is_Regular_File then
@@ -277,6 +268,8 @@ package body CodePeer.Module.Actions is
 
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
       pragma Unreferenced (Ensure_Build_Mode);
+      --  Inspection_Info_File and Review switches builder mode then necessary,
+      --  so switch it here for both subprograms.
 
       Info_File : constant Virtual_File := Inspection_Info_File (Kernel);
 
@@ -304,14 +297,9 @@ package body CodePeer.Module.Actions is
    is
       pragma Unreferenced (Self);
 
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Ensure_Build_Mode);
-
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
       Lock_File : constant Virtual_File :=
-        Codepeer_Output_Directory
-          (Get_Project (Kernel)).Create_From_Dir ("inspector.lock");
+        Codepeer_Output_Directory (Kernel).Create_From_Dir ("inspector.lock");
       Deleted   : Boolean;
 
    begin
@@ -473,13 +461,9 @@ package body CodePeer.Module.Actions is
    is
       pragma Unreferenced (Self);
 
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Ensure_Build_Mode);
-
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
       Text_File : constant Virtual_File :=
-        Codepeer_Output_Directory (Get_Project (Kernel)).Create_From_Dir
+        Codepeer_Output_Directory (Kernel).Create_From_Dir
           ("list/" &
            (+File_Information
                 (Context.Context).Display_Base_Name) & ".txt");
@@ -514,13 +498,9 @@ package body CodePeer.Module.Actions is
    is
       pragma Unreferenced (Self);
 
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-
-      Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
-      pragma Unreferenced (Ensure_Build_Mode);
-
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
       Text_File : constant Virtual_File :=
-        Codepeer_Output_Directory (Get_Project (Kernel)).Create_From_Dir
+        Codepeer_Output_Directory (Kernel).Create_From_Dir
           ("list/overview.txt");
 
    begin
@@ -552,7 +532,7 @@ package body CodePeer.Module.Actions is
    begin
       return
         Codepeer_Output_Directory
-          (Get_Project (Kernel)).Create_From_Dir ("Inspection_Info.xml");
+          (Kernel).Create_From_Dir ("Inspection_Info.xml");
    end Inspection_Info_File;
 
    -----------------------

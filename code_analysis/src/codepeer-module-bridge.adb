@@ -80,7 +80,7 @@ package body CodePeer.Module.Bridge is
 
       CodePeer.Bridge.Commands.Add_Audit_Record_V3
         (Command_File_Name,
-         Codepeer_Output_Directory (Project),
+         Codepeer_Output_Directory (Module.Kernel),
          Ids,
          Message.Audit_V3.First_Element.Status,
          Message.Audit_V3.First_Element.Approved_By,
@@ -111,7 +111,7 @@ package body CodePeer.Module.Bridge is
       DB_File_Name      : constant Virtual_File :=
         Create_From_Dir (Codepeer_Database_Directory (Project), "Sqlite.db");
       Output_Directory  : constant Virtual_File :=
-        Codepeer_Output_Directory (Project);
+        Codepeer_Output_Directory (Module.Kernel);
       Success           : Boolean;
       pragma Warnings (Off, Success);
 
@@ -214,7 +214,7 @@ package body CodePeer.Module.Bridge is
 
       CodePeer.Bridge.Commands.Audit_Trail
         (Command_File_Name,
-         Codepeer_Output_Directory (Project),
+         Codepeer_Output_Directory (Module.Kernel),
          Reply_File_Name,
          Message.Id,
          Module.Version);
