@@ -81,6 +81,17 @@ KP-61-NB12-023 ECL: Cannot set breakpoints on Eclipse Luna
   Workaround: Launch debugger using Debug As => C/C++ Application menu. Set
               Ada Event Breakpoints using the GDB console view.
 
+KP-61-NA17-042 WB: SIGSEGV crash when opening large programs
+
+  Problem:    Opening a large GNAT project in Wind River Workbench, generates
+              a Java Virtual Machine crash in GNATbench library native code.
+              Deleting the generated b__prj_main ada file allows to restart
+              Wind River Workbench.
+
+  Status:     This was fixed in 2.10.0 on 2014-11-12
+
+  Workaround: None.
+
 KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Problem:    When closing a debugger session, if the program being debugged
