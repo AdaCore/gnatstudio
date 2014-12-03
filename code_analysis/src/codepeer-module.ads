@@ -185,7 +185,8 @@ private
      (Kernel : not null access Kernel_Handle_Record'Class) is
      new Ada.Finalization.Controlled with
    record
-      Mode : Ada.Strings.Unbounded.Unbounded_String;
+      Switch_Mode : Boolean := False;
+      Mode        : Ada.Strings.Unbounded.Unbounded_String;
    end record;
    overriding procedure Initialize (Self : in out CodePeer_Build_Mode);
    overriding procedure Finalize (Self : in out CodePeer_Build_Mode);

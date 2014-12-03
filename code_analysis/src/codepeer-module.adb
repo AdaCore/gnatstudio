@@ -190,9 +190,17 @@ package body CodePeer.Module is
    ----------------
 
    overriding procedure Initialize (Self : in out CodePeer_Build_Mode) is
+      Mode : constant String := Self.Kernel.Get_Build_Mode;
+
    begin
-      Set_Unbounded_String (Self.Mode, Self.Kernel.Get_Build_Mode);
-      Module.Kernel.Set_Build_Mode ("codepeer");
+      if Mode = "codepeer" then
+         Self.Switch_Mode := False;
+
+      else
+         Self.Switch_Mode := True;
+         Self.Mode := To_Unbounded_String (Mode);
+         Module.Kernel.Set_Build_Mode ("codepeer");
+      end if;
    end Initialize;
 
    --------------
@@ -201,7 +209,9 @@ package body CodePeer.Module is
 
    overriding procedure Finalize (Self : in out CodePeer_Build_Mode) is
    begin
-      Self.Kernel.Set_Build_Mode (To_String (Self.Mode));
+      if Self.Switch_Mode then
+         Self.Kernel.Set_Build_Mode (To_String (Self.Mode));
+      end if;
    end Finalize;
 
    -----------------------
