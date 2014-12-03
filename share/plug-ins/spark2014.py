@@ -1304,6 +1304,7 @@ vc_msg_dict = {
     'range check might fail': 'VC_RANGE_CHECK',
     'length check might fail': 'VC_LENGTH_CHECK',
     'discriminant check might fail': 'VC_DISCRIMINANT_CHECK',
+    'tag check might fail': 'VC_TAG_CHECK',
     'initial condition might fail': 'VC_INITIAL_CONDITION',
     'precondition might fail': 'VC_PRECONDITION',
     'precondition of main program might fail': 'VC_PRECONDITION_MAIN',
