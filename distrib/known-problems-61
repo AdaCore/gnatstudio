@@ -90,7 +90,8 @@ KP-61-NA17-042 WB: SIGSEGV crash when opening large programs
 
   Status:     This was fixed in 2.10.0 on 2014-11-12
 
-  Workaround: None.
+  Workaround: Add in eclipse/workbench ini file a -Xss (ex: -Xss1M) vmargs
+              option to set larger thread stack size.
 
 KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
