@@ -1987,12 +1987,11 @@ package body Default_Preferences is
          Add_Theme ("gtk-win32", Dark => False);
          Add_Theme ("gtk-win32-xp", Dark => False);
          Add_Theme ("gtk-win32-classic", Dark => False);
-
-         --  In the development environment on Windows, Gtk.Rc.Get_Theme_Dir
-         --  does not find the Adwaita theme: add it here.
-         Add_Theme ("Adwaita", Dark => False);
-         Add_Theme ("Adwaita", Dark => True);
       end if;
+
+      --  Adwaita and Raleigh are builtin themes
+      Add_Theme ("Adwaita", Dark => False);
+      Add_Theme ("Adwaita", Dark => True);
 
       Add_Theme ("Raleigh", Dark => False);
 
