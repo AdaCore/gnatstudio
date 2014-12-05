@@ -251,7 +251,7 @@ GPS although you can still open any file through the :menuselection:`File
 If your project includes :file:`README` files, or other text files, you
 should add "txt" as a language (the name is arbitrary) and ensure these
 files are associated with that language in the :menuselection:`Project -->
-Edit project properties`.
+Properties...`.
 
 
 .. index:: project; scenario variable
@@ -301,7 +301,7 @@ Creating new scenario variables
 
 Create a new scenario variable through the contextual menu (right-click) in
 the :guilabel:`Project` or :guilabel:`Scenario` views themselves. Select
-the :menuselection:`Project --> Add Configuration Variable` menu, which
+the :menuselection:`Project --> Add Scenario Variable` menu, which
 opens the following dialog:
 
 .. image:: scenarios.png
@@ -546,10 +546,10 @@ GPS (see :ref:`Customizing_through_XML_and_Python_files`), which contains
 the following code::
 
   import GPS
-  GPS.Menu.get('/Project/Edit Project Properties').hide()
+  GPS.Menu.get('/Project/Properties...').hide()
   GPS.Contextual('Edit project properties').hide()
   GPS.Contextual('Save project').hide()
-  GPS.Contextual('Add configuration variable').hide()
+  GPS.Contextual('Add scenario variable').hide()
 
 
 .. _The_Project_Menu:
@@ -607,7 +607,7 @@ These entries are:
 
 .. index:: menu; project --> edit project properties
 
-* :menuselection:`Project --> Edit Project Properties`
+* :menuselection:`Project --> Properties...`
 
   Open the project properties dialog for the currently selected project.
 
@@ -1030,9 +1030,9 @@ The Project Properties Editor
 =============================
 
 Use the :guilabel:`Project Properties` editor at any time to access the
-properties of your project through the :menuselection:`Project --> Edit
-Project Properties` menu or the contextual menu :menuselection:`Edit
-project properties` on any project item, e.g. from the :guilabel:`Project`
+properties of your project through the :menuselection:`Project -->
+Properties...` menu or the contextual menu :menuselection:`Properties`
+on any project item, e.g. from the :guilabel:`Project`
 views or the :guilabel:`Project` browser.
 
 If there was an error loading the project (such as invalid syntax or
