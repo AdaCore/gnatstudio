@@ -112,6 +112,15 @@ KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Workaround: Interrupt the program before closing the debugger.
 
+KP-61-N822-004 GPS: Input focus when creating/opening new windows
+
+  Problem:    After switching from floating windows to non-floating one using
+              keyboard shortcuts GPS keeps focus in the floating window.
+
+  Status:     This was fixed in 6.2.0 on 2014-12-03
+
+  Workaround: Use mouse or Windows Manager shortcuts to switch windows.
+
 Known problems fixed in GPS 6.1.1 / GNATbench 2.9.1
 ---------------------------------------------------
 
