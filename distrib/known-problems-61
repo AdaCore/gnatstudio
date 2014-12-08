@@ -124,6 +124,18 @@ KP-61-N822-004 GPS: Input focus when creating/opening new windows
 Known problems fixed in GPS 6.1.1 / GNATbench 2.9.1
 ---------------------------------------------------
 
+KP-61-NC01-009 GPS: unreadable fonts under Solaris
+
+  Problem:    Under Solaris 10, the fonts might be unreadable or render
+              with all characters replaced by a square.
+
+  Status:     This was fixed in 6.1.1 on 2014-01-02
+
+  Workaround: in the GPS installation, edit the file etc/fonts/fonts.conf.
+              After line 26, add the following two lines:
+                <dir>/usr/openwin/lib/X11/fonts/75dpi</dir>
+                <dir>/usr/openwin/lib/X11/fonts/100dpi</dir>
+
 KP-61-NB10-025 GPS: problems when clicking on Ada files outside of GPS
 
   Problem:    Under Windows, when clicking on Ada files in the Windows explorer
