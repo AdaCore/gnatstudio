@@ -124,6 +124,16 @@ KP-61-N822-004 GPS: Input focus when creating/opening new windows
 Known problems fixed in GPS 6.1.1 / GNATbench 2.9.1
 ---------------------------------------------------
 
+KP-61-NB10-025 GPS: problems when clicking on Ada files outside of GPS
+
+  Problem:    Under Windows, when clicking on Ada files in the Windows explorer
+              to open GPS, a window might pop up saying:
+              "There was a problem sending the command to the program".
+
+  Status:     This was fixed in 6.1.1 on 2014-12-08
+
+  Workaround: Open the file from within a running GPS.
+
 KP-61-NB06-027 GPS: Delete ops not working correctly at beginning/end of file
 
   Problem:    When using Suppr at the end of the file, or backspace at the
