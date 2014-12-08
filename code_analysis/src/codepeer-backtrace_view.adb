@@ -29,6 +29,7 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.MDI;             use Gtkada.MDI;
 
 with Basic_Types;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;    use GNATCOLL.VFS.GtkAda;
@@ -39,6 +40,8 @@ with BT;                     use BT;
 with BT.Xml.Reader;
 
 package body CodePeer.Backtrace_View is
+
+   Me : constant Trace_Handle := Create ("CodePeer-bt");
 
    type Backtrace_View is access all Backtrace_View_Record'Class;
 
@@ -114,10 +117,10 @@ package body CodePeer.Backtrace_View is
          Found);
 
       if not Found then
-         Kernel.Insert
-           ("There is no backtrace information file for "
-            & File.Display_Full_Name & ".",
-            Mode => GPS.Kernel.Error);
+         Trace
+           (Me,
+            "There is no backtrace information file for "
+            & File.Display_Full_Name & ".");
 
          return;
       end if;
