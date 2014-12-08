@@ -66,6 +66,7 @@ with Code_Analysis_GUI;
 
 package body CodePeer.Module is
 
+   use type Code_Analysis.Code_Analysis_Tree;
    use type GPS.Editors.Editor_Mark'Class;
    use type GPS.Editors.Editor_Buffer'Class;
 
@@ -422,8 +423,6 @@ package body CodePeer.Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
-
-      use type Code_Analysis.Code_Analysis_Tree;
 
       Item       : Gtk.Menu_Item.Gtk_Menu_Item;
       Check_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
@@ -2352,6 +2351,7 @@ package body CodePeer.Module is
         or not Has_Line_Information (Context)
         or not Has_Column_Information (Context)
         or not Module.Display_Values
+        or Module.Tree = null
       then
          return null;
       end if;
