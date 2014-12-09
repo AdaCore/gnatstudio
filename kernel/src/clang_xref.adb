@@ -26,7 +26,6 @@ use GNATCOLL.Projects;
 with Language.Libclang; use Language.Libclang;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with GPS.Editors; use GPS.Editors;
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Clang_Xref is
 
@@ -977,6 +976,7 @@ package body Clang_Xref is
       Clang_Db      : Clang_Database;
       File          : Virtual_File;
       Sought_Cursor : Clang_Cursor;
+      Entity_Name   : Symbol;
    end record;
 
    procedure Index_Declaration
@@ -1015,7 +1015,8 @@ package body Clang_Xref is
       then
          Client_Data.Ret_Iterator.Elements.Append
            (Clang_Reference'
-              (Client_Data.File, To_Offset_T (Loc), Client_Data.Clang_Db));
+              (Client_Data.File, To_Offset_T (Loc),
+               Client_Data.Entity_Name, Client_Data.Clang_Db));
       end if;
    end Index_Declaration;
 
@@ -1036,7 +1037,8 @@ package body Clang_Xref is
          then
             Client_Data.Ret_Iterator.Elements.Append
               (Clang_Reference'
-                 (Client_Data.File, To_Offset_T (Loc), Client_Data.Clang_Db));
+                 (Client_Data.File, To_Offset_T (Loc),
+                  Client_Data.Entity_Name, Client_Data.Clang_Db));
          end if;
       end if;
    end Index_Reference;
@@ -1071,17 +1073,23 @@ package body Clang_Xref is
            Elements      => new Clang_Entity_Ref_Vectors.Vector,
            Current_Index => 1);
 
+      F_Info : constant File_Info'Class :=
+        File_Info'Class
+          (Entity.Kernel.Registry.Tree.Info_Set
+             (Entity.Loc.File).First_Element);
+
+      Context : Clang_Context := TU_Source.Context (F_Info.Project);
+
+      Entity_Name : constant Symbol :=
+        Context.Sym_Table.Find (Entity.Get_Name);
+
       Index_Data : constant Indexer_Data := Indexer_Data'
         (Ret_Iterator  => Ret'Unchecked_Access,
          Clang_Db      => Entity.Db,
          File          => Entity.Loc.File,
          Sought_Cursor =>
-           clang_getCursorReferenced (Get_Clang_Cursor (Entity)));
-
-      F_Info : constant File_Info'Class :=
-        File_Info'Class
-          (Entity.Kernel.Registry.Tree.Info_Set
-             (Entity.Loc.File).First_Element);
+           clang_getCursorReferenced (Get_Clang_Cursor (Entity)),
+         Entity_Name => Entity_Name);
 
       Index_Action : constant Clang_Index_Action :=
         TU_Source.Context (F_Info.Project).Index_Action;
@@ -1123,6 +1131,9 @@ package body Clang_Xref is
         (To_String ((clang_getCursorUSR (Cursor))));
       V : Info_Vectors;
 
+      Entity_Name : constant Symbol :=
+        Context.Sym_Table.Find (Entity.Get_Name);
+
       use type Interfaces.C.int;
       use VFS_To_Refs_Maps;
 
@@ -1146,14 +1157,16 @@ package body Clang_Xref is
                  (Clang_Reference'
                     (File     => F,
                      Offset   => V.Decls.Element (I).Loc,
-                     Clang_Db => Entity.Db));
+                     Clang_Db => Entity.Db,
+                     Name     => Entity_Name));
             end loop;
             for I in V.Refs.First_Index .. V.Refs.Last_Index loop
                Ret.Elements.Append
                  (Clang_Reference'
                     (File     => F,
                      Offset   => V.Refs.Element (I).Loc,
-                     Clang_Db => Entity.Db));
+                     Clang_Db => Entity.Db,
+                     Name     => Entity_Name));
             end loop;
          end if;
       end Find_References_In_File_Map;
@@ -1178,13 +1191,19 @@ package body Clang_Xref is
      (Ref : Clang_Reference) return Root_Entity'Class
    is
    begin
-      Put_Line ("<++++ In Clang_Reference Get_Entity ++++>");
       return
         Get_Entity
           (Ref.Clang_Db,
            Ref.Clang_Db.Kernel.Databases, "",
            Ref.Get_Location);
    end Get_Entity;
+
+   overriding function Get_Entity_Name
+     (Ref : Clang_Reference) return String
+   is
+   begin
+      return Get (Ref.Name).all;
+   end Get_Entity_Name;
 
    ------------------
    -- Get_Location --
@@ -1275,6 +1294,6 @@ package body Clang_Xref is
 
    overriding function Get_Display_Kind
      (Ref  : Clang_Reference) return String is
-     (Ref.Get_Entity.Get_Display_Kind);
+     ("");
 
 end Clang_Xref;

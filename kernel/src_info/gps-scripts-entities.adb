@@ -319,10 +319,11 @@ package body GPS.Scripts.Entities is
                     (Data, Create_Entity (Get_Script (Data),
                      Res_2));
                end;
+            else
+               Set_Return_Value
+                 (Data, Create_Entity (Get_Script (Data),
+                  Result));
             end if;
-            Set_Return_Value
-              (Data, Create_Entity (Get_Script (Data),
-               Result));
          end;
 
       elsif Command = "type" then

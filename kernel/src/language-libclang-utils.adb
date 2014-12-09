@@ -142,7 +142,12 @@ package body Language.Libclang.Utils is
          Dir     : Virtual_File;
          Tmp_H   : Virtual_File;
          Tmp_H_W : Writable_File;
-         Args    : GNAT.OS_Lib.Argument_List (1 .. 2);
+         Args    : constant GNAT.OS_Lib.Argument_List :=
+           (new String'("-E"),
+            new String'("-o"),
+            new String'("-"),
+            new String'("-v"),
+            new String'(+Tmp_H.Full_Name));
          Match   : Expect_Match;
          Ignored : Boolean;
          Listing : Boolean := False;
@@ -157,9 +162,6 @@ package body Language.Libclang.Utils is
          Tmp_H_W := Write_File (Tmp_H);
          Write (Tmp_H_W, "");
          Close (Tmp_H_W);
-
-         Args := (1 => new String'("-v"),
-                  2 => new String'(+Tmp_H.Full_Name));
 
          Non_Blocking_Spawn
            (Fd, The_Exec_On_Path.all, Args,

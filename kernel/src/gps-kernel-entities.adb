@@ -667,8 +667,6 @@ package body GPS.Kernel.Entities is
       Result  : out Command_Return_Type)
    is
       Count : Integer := 0;
-      Search_Entity : constant Root_Entity'Class := Data.Entity.Element;
-      Name  : constant String := Search_Entity.Get_Name;
    begin
       Result := Execute_Again;
 
@@ -708,9 +706,7 @@ package body GPS.Kernel.Entities is
                   Print_Ref
                     (Data.Kernel,
                      Ref,
-                     (if Get_Entity (Ref) = Search_Entity
-                      then Name
-                      else Get_Entity (Ref).Get_Name),
+                     (Get_Entity_Name (Ref)),
                      Data.Category.all,
                      Show_Caller  => Data.Show_Caller,
                      Sort_In_File => False);

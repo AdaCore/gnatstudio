@@ -25,6 +25,7 @@ with Libclang.Index; use Libclang.Index;
 with Ada.Containers.Vectors;
 with Ada.Unchecked_Deallocation;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with GNATCOLL.Symbols;
 
 package Clang_Xref is
 
@@ -286,6 +287,8 @@ package Clang_Xref is
      (Ref : Clang_Reference) return Boolean is (True);
    overriding function Get_Entity
      (Ref : Clang_Reference) return Root_Entity'Class;
+   overriding function Get_Entity_Name
+     (Ref : Clang_Reference) return String;
    overriding function Get_Location
      (Ref : Clang_Reference) return General_Location;
    overriding function Show_In_Callgraph
@@ -339,9 +342,12 @@ package Clang_Xref is
 
 private
 
+   use GNATCOLL.Symbols;
+
    type Clang_Reference is new Root_Entity_Reference with record
-      File : GNATCOLL.VFS.Virtual_File;
-      Offset : Offset_T;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Offset   : Offset_T;
+      Name     : Symbol;
       Clang_Db : Clang_Database;
    end record;
 

@@ -26,10 +26,11 @@ with GPS.Kernel; use GPS.Kernel;
 with Interfaces.C.Strings;
 with Language.Libclang_Tree; use Language.Libclang_Tree;
 with Clang_Xref; use Clang_Xref;
+with GPS.Kernel.Commands; use GPS.Kernel.Commands;
 
 package body Language.Libclang is
 
-   LRU_Size : constant := 2;
+   LRU_Size : constant := 16;
 
    Diagnostics : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("LANGUAGE_LIBCLANG", Off);
@@ -81,6 +82,9 @@ package body Language.Libclang is
 
    procedure On_Project_View_Changed
      (Kernel : access Kernel_Handle_Record'Class);
+
+   procedure Parse_One_File
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
 
    -------------
    -- Destroy --
@@ -440,10 +444,6 @@ package body Language.Libclang is
       end;
    end Translation_Unit;
 
-   -----------------------------
-   -- On_Project_View_Changed --
-   -----------------------------
-
    package Virtual_File_Vectors is new Ada.Containers.Vectors
      (Positive, Virtual_File);
 
@@ -482,6 +482,22 @@ package body Language.Libclang is
 --
 --     Indexer_Task : Indexer_Task_T;
 
+   --------------------
+   -- Parse_One_File --
+   --------------------
+
+   procedure Parse_One_File
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
+   is
+      Discard : Clang_Translation_Unit;
+   begin
+      Discard := TU_Source.Translation_Unit (Core_Kernel (Kernel), File);
+   end Parse_One_File;
+
+   -----------------------------
+   -- On_Project_View_Changed --
+   -----------------------------
+
    procedure On_Project_View_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
@@ -490,8 +506,6 @@ package body Language.Libclang is
       RP     : constant GNATCOLL.Projects.Project_Type := P_Tree.Root_Project;
       Files : File_Array_Access;
       Filtered_Files : Virtual_File_Vectors.Vector;
-      Discard : Clang_Translation_Unit;
-
    begin
       Files := RP.Source_Files (Recursive => True);
       for F of Files.all
@@ -503,9 +517,24 @@ package body Language.Libclang is
          end if;
       end loop;
 
-      for F of Filtered_Files loop
-         Discard := TU_Source.Translation_Unit (Core_Kernel (Kernel), F);
-      end loop;
+      declare
+         Files_Array : constant File_Array_Access :=
+           new File_Array
+             (Filtered_Files.First_Index .. Filtered_Files.Last_Index);
+
+      begin
+         for I in Filtered_Files.First_Index .. Filtered_Files.Last_Index loop
+            Files_Array (I) := Filtered_Files (I);
+         end loop;
+
+         Do_On_Each_File
+           (Handle         => Kernel,
+            Callback       => Parse_One_File'Access,
+            Chunk_Size     => 1,
+            Queue_Name     => "parse_clang_files_queue",
+            Operation_Name => "parse clang files",
+            Files          => Files_Array);
+      end;
 
       Clang_Module_Id.Destroy;
    end On_Project_View_Changed;

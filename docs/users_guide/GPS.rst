@@ -880,6 +880,8 @@ Classes
 
    .. automethod:: GPS.Entity.name_parameters
 
+   .. automethod:: GPS.Entity.overrides
+
    .. automethod:: GPS.Entity.parameters
 
    .. automethod:: GPS.Entity.parent_types

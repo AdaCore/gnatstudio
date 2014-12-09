@@ -235,6 +235,8 @@ package Xref is
      (Ref : Root_Entity_Reference) return Boolean is abstract;
    function Get_Entity
      (Ref : Root_Entity_Reference) return Root_Entity'Class is abstract;
+   function Get_Entity_Name
+     (Ref : Root_Entity_Reference) return String is abstract;
    function Get_Location
      (Ref : Root_Entity_Reference) return General_Location is abstract;
    function Show_In_Callgraph
@@ -658,6 +660,10 @@ package Xref is
    overriding function Get_Entity
      (Ref : General_Entity_Reference) return Root_Entity'Class;
    --  Return the entity the reference is pointing to
+
+   function Get_Entity_Name
+     (Ref : General_Entity_Reference) return String
+   is (Ref.Get_Entity.Get_Name);
 
    overriding function Get_Location
      (Ref : General_Entity_Reference) return General_Location;
