@@ -1778,15 +1778,15 @@ package body CodePeer.Module is
                  (Line_Information (Context),
                   Natural (Location.Column)));
 
-            exit when String_Utils.Is_Entity_Letter
+            exit when not String_Utils.Is_Entity_Letter
               (Wide_Wide_Character'Val (Location.Get_Char));
             Location := Location.Forward_Char (-1);
          end loop;
-
-         if Values.Is_Empty then
-            return null;
-         end if;
       end;
+
+      if Values.Is_Empty then
+         return null;
+      end if;
 
       for Item of Values loop
          if Length (Text) /= 0 then
