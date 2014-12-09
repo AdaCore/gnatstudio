@@ -184,7 +184,7 @@ package clang_c_Index_h is
 
    procedure clang_getFileLocation
      (location : CXSourceLocation;
-      file : System.Address;
+      file : access CXFile;
       line : access unsigned;
       column : access unsigned;
       offset : access unsigned);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:585
@@ -260,7 +260,7 @@ package clang_c_Index_h is
    pragma Import (C, clang_disposeDiagnostic, "clang_disposeDiagnostic");
 
    subtype CXDiagnosticDisplayOptions is unsigned;
-   CXDiagnostic_DisplaySourceLocation : constant CXDiagnosticDisplayOptions := 1;
+   CXDiagnostic_DisplaySourceLocationh : constant CXDiagnosticDisplayOptions := 1;
    CXDiagnostic_DisplayColumn : constant CXDiagnosticDisplayOptions := 2;
    CXDiagnostic_DisplaySourceRanges : constant CXDiagnosticDisplayOptions := 4;
    CXDiagnostic_DisplayOption : constant CXDiagnosticDisplayOptions := 8;

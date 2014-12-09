@@ -95,10 +95,9 @@ package body GPS.Scripts.Entities is
             declare
                Ref : Root_Entity_Reference_Ref;
                Entity : constant Root_Entity'Class :=
-                 Kernel.Databases.Find_Declaration_Or_Overloaded
+                 Kernel.Databases.Get_Entity
                    (Loc               => Loc,
-                    Entity_Name       => Name,
-                    Ask_If_Overloaded => False,
+                    Name              => Name,
                     Closest_Ref       => Ref,
                     Approximate_Search_Fallback => Approx_Search);
             begin
@@ -182,6 +181,10 @@ package body GPS.Scripts.Entities is
 
       elsif Command = "is_type" then
          Set_Return_Value (Data, Entity.Is_Type);
+
+      elsif Command = "overrides" then
+         Set_Return_Value
+           (Data, Create_Entity (Get_Script (Data), Entity.Overrides));
 
       elsif Command = "is_container" then
          Set_Return_Value (Data, Entity.Is_Container);
@@ -305,16 +308,21 @@ package body GPS.Scripts.Entities is
 
       elsif Command = "pointed_type" then
          declare
-            Result : Root_Entity'Class := Entity.Pointed_Type;
+            Result : constant Root_Entity'Class := Entity.Pointed_Type;
          begin
             if Result = No_Root_Entity then
-               Result := Entity.Get_Type_Of;
-               if Result /= No_Root_Entity then
-                  Result := Result.Pointed_Type;
-               end if;
+               declare
+                  Res_2 : constant Root_Entity'Class :=
+                    Entity.Get_Type_Of.Pointed_Type;
+               begin
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data),
+                     Res_2));
+               end;
             end if;
             Set_Return_Value
-              (Data, Create_Entity (Get_Script (Data), Result));
+              (Data, Create_Entity (Get_Script (Data),
+               Result));
          end;
 
       elsif Command = "type" then
@@ -372,7 +380,7 @@ package body GPS.Scripts.Entities is
       elsif Command = "parent_types" then
          declare
             Parents : Xref.Entity_Array :=
-              Entity.Parent_Types (Recursive => False);
+              Entity.Parent_Types (Recursive => Nth_Arg (Data, 2, False));
          begin
             Set_Return_Value_As_List (Data);
 
@@ -479,6 +487,10 @@ package body GPS.Scripts.Entities is
          Class        => C,
          Handler      => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
+        ("overrides",
+         Class        => C,
+         Handler      => Entity_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
         ("is_container",
          Class        => C,
          Handler      => Entity_Command_Handler'Access);
@@ -539,6 +551,7 @@ package body GPS.Scripts.Entities is
       Kernel.Scripts.Register_Command
         ("parent_types",
          Class        => C,
+         Params       => (2 => Param ("recursive", Optional => True)),
          Handler      => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("primitive_of",

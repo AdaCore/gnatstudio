@@ -400,7 +400,7 @@ package body Language.Abstract_Construct_Tree is
                     Column => To_Visible_Column
                       (Self.Construct_File, Sloc_Start.Line,
                        String_Index_Type (Sloc_Start.Column)),
-                    Index  => Sloc_Start.Index));
+                    Index  => Offset_T (Sloc_Start.Index)));
    end Sloc_Start;
 
    --------------
@@ -418,7 +418,7 @@ package body Language.Abstract_Construct_Tree is
                     Column => To_Visible_Column
                       (Self.Construct_File, Sloc_Def.Line,
                        String_Index_Type (Sloc_Def.Column)),
-                    Index  => Sloc_Def.Index));
+                    Index  => Offset_T (Sloc_Def.Index)));
    end Sloc_Def;
 
    --------------
@@ -436,7 +436,7 @@ package body Language.Abstract_Construct_Tree is
                     Column => To_Visible_Column
                       (Self.Construct_File, Sloc_End.Line,
                        String_Index_Type (Sloc_End.Column)),
-                    Index  => Sloc_End.Index));
+                    Index  => Offset_T (Sloc_End.Index)));
    end Sloc_End;
 
    --------------

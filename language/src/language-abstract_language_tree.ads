@@ -65,18 +65,27 @@ package Language.Abstract_Language_Tree is
    -- Type definitions --
    ----------------------
 
+   type Offset_T is mod 2 ** 32;
+
    type Sloc_T is record
       Line   : Natural;
       --  Line in the file, starting at 1
       Column : Visible_Column_Type;
       --  Column in the file, starting at 1
-      Index  : Natural;
+      Index  : Offset_T;
       --  Absolute index in the file
    end record;
    --  This is just a simple source location type, that is meant to use real
    --  columns rather than character offsets, unlike the Source_Location type
 
    No_Sloc_T : constant Sloc_T := (0, 0, 0);
+
+   type Raw_Sloc_T is record
+      Line        : Natural;
+      --  Line in the file, starting at 1
+      Line_Offset : Visible_Column_Type;
+      --  Offset in the line, starting at 1
+   end record;
 
    function "<" (Left, Right : Sloc_T) return Boolean is
       (Left.Index < Right.Index);

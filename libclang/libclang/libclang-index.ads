@@ -394,6 +394,10 @@ package Libclang.Index is
    function Spelling
      (Cursor : Clang_Cursor) return String;
 
+   function Location (Cursor : Clang_Cursor) return CXSourceLocation
+   is
+     (clang_getCursorLocation (Cursor));
+
    function Spelling
      (T : Clang_Type) return String;
 

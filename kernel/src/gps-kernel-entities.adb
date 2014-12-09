@@ -295,7 +295,7 @@ package body GPS.Kernel.Entities is
          exit when At_End (Iter_Ref);
          declare
             Ref : constant Root_Entity_Reference'Class :=
-              Get (Iter_Ref);
+              Get (Iter_Ref.Element.all);
          begin
             if Ref /= No_Root_Entity_Reference then
                Command.Locations.Append (Ref);

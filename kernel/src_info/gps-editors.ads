@@ -436,6 +436,10 @@ package GPS.Editors is
       Column : Visible_Column_Type) return Editor_Location'Class is abstract;
    --  Return a new location
 
+   function New_Location
+     (This : Editor_Buffer;
+      Offset : Natural) return Editor_Location'Class is abstract;
+
    function New_View
      (This : Editor_Buffer) return Editor_View'Class is abstract;
    --  Creates a new view for the given buffer, and insert it in the MDI
@@ -924,6 +928,11 @@ private
      (This   : Dummy_Editor_Buffer;
       Line   : Integer;
       Column : Visible_Column_Type) return Editor_Location'Class;
+
+   overriding function New_Location
+     (This   : Dummy_Editor_Buffer;
+      Offset : Natural) return Editor_Location'Class
+   is (Nil_Editor_Location);
 
    overriding function New_View
      (This : Dummy_Editor_Buffer) return Editor_View'Class;

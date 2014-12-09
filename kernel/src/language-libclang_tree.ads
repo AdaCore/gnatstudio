@@ -23,6 +23,7 @@ with Libclang.Index; use Libclang.Index;
 with Ada.Containers.Indefinite_Holders;
 with Ada.Containers.Doubly_Linked_Lists;
 with clang_c_Index_h; use clang_c_Index_h;
+with Language.Libclang; use Language.Libclang;
 
 package Language.Libclang_Tree is
 
@@ -46,9 +47,12 @@ package Language.Libclang_Tree is
    type Abstract_Clang_Tree is new Semantic_Tree with record
       Kernel : Core_Kernel;
       File   : GNATCOLL.VFS.Virtual_File;
-      Tu     : Clang_Translation_Unit;
    end record;
    type Clang_Tree_Access is access all Abstract_Clang_Tree;
+
+   function Tu (Self : Abstract_Clang_Tree) return Clang_Translation_Unit
+   is
+      (TU_Source.Translation_Unit (Self.Kernel, Self.File, False));
 
    type Clang_Node is new Semantic_Node with record
       Kernel : Core_Kernel;
@@ -167,6 +171,10 @@ package Language.Libclang_Tree is
      (It : Clang_Tree_Iterator) return Boolean;
 
    function To_Sloc_T (Arg : CXSourceLocation) return Sloc_T;
+
+   function To_Offset_T (Arg : CXSourceLocation) return Offset_T
+   is
+     (To_Sloc_T (Arg).Index);
 
 private
 

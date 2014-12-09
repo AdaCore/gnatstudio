@@ -364,9 +364,10 @@ package body Xref is
    function Get_Entity
      (Db   : access General_Xref_Database_Record;
       Name : String;
-      Loc  : General_Location) return Root_Entity'Class
+      Loc  : General_Location;
+      Approximate_Search_Fallback : Boolean := True;
+      Closest_Ref  : out Root_Entity_Reference_Ref) return Root_Entity'Class
    is
-      Ref : Root_Entity_Reference_Ref;
       Lang_Name : constant String :=
         Db.Lang_Handler.Get_Language_From_File (Loc.File).Get_Name;
       package LDB renames Lang_Specific_Databases_Maps;
@@ -385,7 +386,23 @@ package body Xref is
          Loc               => Loc,
          Entity_Name       => Name,
          Ask_If_Overloaded => False,
-         Closest_Ref       => Ref);
+         Closest_Ref       => Closest_Ref,
+         Approximate_Search_Fallback => Approximate_Search_Fallback);
+   end Get_Entity;
+
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity
+     (Db   : access General_Xref_Database_Record;
+      Name : String;
+      Loc  : General_Location;
+      Approximate_Search_Fallback : Boolean := True) return Root_Entity'Class
+   is
+      Ref : Root_Entity_Reference_Ref;
+   begin
+      return Get_Entity (Db, Name, Loc, Approximate_Search_Fallback, Ref);
    end Get_Entity;
 
    ------------------------------------

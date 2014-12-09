@@ -35,7 +35,7 @@ with Language_Handlers;
 with Language.Tree.Database;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Strings.Hash;
+with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Containers.Indefinite_Holders;
 
 ----------
@@ -111,7 +111,7 @@ package Xref is
    is new Ada.Containers.Indefinite_Hashed_Maps
      (String,
       Lang_Specific_Database'Class,
-      Hash => Ada.Strings.Hash, Equivalent_Keys => "=");
+      Hash => Ada.Strings.Hash_Case_Insensitive, Equivalent_Keys => "=");
 
    type General_Xref_Database_Record is tagged record
       Xref       : Extended_Xref_Database_Access;
@@ -634,10 +634,23 @@ package Xref is
    --  Nothing is done if Ref does not point to a dispatching call.
    --  This procedure does not propagate any exception.
 
+   package Root_Entity_Reference_Refs
+   is new Ada.Containers.Indefinite_Holders (Root_Entity_Reference'Class);
+
+   subtype Root_Entity_Reference_Ref is Root_Entity_Reference_Refs.Holder;
+
    function Get_Entity
-     (Db   : access General_Xref_Database_Record;
-      Name : String;
-      Loc  : General_Location) return Root_Entity'Class;
+     (Db           : access General_Xref_Database_Record;
+      Name         : String;
+      Loc          : General_Location;
+      Approximate_Search_Fallback : Boolean := True;
+      Closest_Ref  : out Root_Entity_Reference_Ref)
+      return Root_Entity'Class;
+   function Get_Entity
+     (Db           : access General_Xref_Database_Record;
+      Name         : String;
+      Loc          : General_Location;
+      Approximate_Search_Fallback : Boolean := True) return Root_Entity'Class;
    --  Retrieve the entity referenced at the given location.
    --  This also works for operators, whether they are quoted ("=") or
    --  not (=).
@@ -862,11 +875,6 @@ package Xref is
       Tree   : GNATCOLL.Projects.Project_Tree_Access);
    --  The view of the project has changed, we need to refresh the xref
    --  databases.
-
-   package Root_Entity_Reference_Refs
-   is new Ada.Containers.Indefinite_Holders (Root_Entity_Reference'Class);
-
-   subtype Root_Entity_Reference_Ref is Root_Entity_Reference_Refs.Holder;
 
    function Find_Declaration_Or_Overloaded
      (Self              : access General_Xref_Database_Record;
@@ -1130,7 +1138,7 @@ private
    -----------------------------
 
    overriding function At_End (Iter : Dummy_Reference_Iterator) return Boolean
-   is (False);
+   is (True);
    --  Whether there are no more reference to return
 
    overriding procedure Next (Iter : in out Dummy_Reference_Iterator) is null;

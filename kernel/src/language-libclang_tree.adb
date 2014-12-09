@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Language.Libclang; use Language.Libclang;
 with Libclang.File; use Libclang.File;
 with Interfaces.C; use Interfaces.C;
 with String_Utils;
@@ -77,7 +76,7 @@ package body Language.Libclang_Tree is
         (Arg, File'Access, Line'Access, Column'Access, Offset'Access);
 
       return Sloc_T'(Natural (Line), Visible_Column_Type (Column),
-                     Natural (Offset));
+                     Offset_T (Offset));
    end To_Sloc_T;
 
    ------------------------------------
@@ -103,10 +102,7 @@ package body Language.Libclang_Tree is
       File : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
    is
    begin
-      return Abstract_Clang_Tree'
-        (Self.Kernel,
-         File,
-         TU_Source.Translation_Unit (Self.Kernel, File));
+      return Abstract_Clang_Tree'(Self.Kernel, File);
    end Get_Tree_For_File;
 
    ------------------------------------
@@ -164,16 +160,22 @@ package body Language.Libclang_Tree is
       Category_Filter : Category_Array := Null_Category_Array)
       return Semantic_Node'Class
    is
+      Line_Offset : constant Natural :=
+        Self.Kernel.Get_Buffer_Factory.Get
+          (Self.File, Open_View => False, Focus => False, Open_Buffer => True)
+        .New_Location (Sloc.Line, Sloc.Column).Line_Offset;
       Clang_Loc : constant Clang_Location := clang_getLocation
         (Self.Tu,
          File
            (Self.Tu, String (Self.File.Full_Name.all)),
-         unsigned (Sloc.Line), unsigned (Sloc.Column));
+         unsigned (Sloc.Line), unsigned (Line_Offset + 1));
+
       Node : Clang_Node :=
         Clang_Node'(Self.Kernel,
                     clang_getCursor (Self.Tu, Clang_Loc),
                     Self.File);
    begin
+
       if Category_Filter /= Null_Category_Array then
          loop
             exit when Is_In (Node.Category, Category_Filter);
@@ -230,10 +232,10 @@ package body Language.Libclang_Tree is
       CXCursor_FieldDecl => Cat_Field,
       CXCursor_EnumConstantDecl => Cat_Field,
       CXCursor_FunctionDecl => Cat_Function,
+      CXCursor_CXXMethod => Cat_Method,
       CXCursor_VarDecl => Cat_Variable,
       CXCursor_ParmDecl => Cat_Parameter,
       CXCursor_TypedefDecl => Cat_Type,
-      CXCursor_CXXMethod => Cat_Method,
       CXCursor_Namespace => Cat_Namespace,
       CXCursor_Constructor => Cat_Constructor,
       CXCursor_Destructor => Cat_Destructor,
