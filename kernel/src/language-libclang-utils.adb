@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;            use Ada.Calendar;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
@@ -23,8 +24,9 @@ with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 with GNAT.OS_Lib;
 with GNAT.Regpat;     use GNAT.Regpat;
 
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with GNAT.Strings; use GNAT.Strings;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNAT.Strings;       use GNAT.Strings;
 
 package body Language.Libclang.Utils is
 
@@ -140,14 +142,12 @@ package body Language.Libclang.Utils is
          All_Match : constant Pattern_Matcher := Compile
            (".+", Multiple_Lines);
          Dir     : Virtual_File;
-         Tmp_H   : Virtual_File;
-         Tmp_H_W : Writable_File;
          Args    : constant GNAT.OS_Lib.Argument_List :=
            (new String'("-E"),
             new String'("-o"),
             new String'("-"),
             new String'("-v"),
-            new String'(+Tmp_H.Full_Name));
+            new String'("-"));
          Match   : Expect_Match;
          Ignored : Boolean;
          Listing : Boolean := False;
@@ -158,16 +158,17 @@ package body Language.Libclang.Utils is
             Dir := GNATCOLL.VFS.Get_Current_Dir;
          end if;
 
-         Tmp_H := Create_From_Dir (Dir, "gps_libclang_tmp.h");
-         Tmp_H_W := Write_File (Tmp_H);
-         Write (Tmp_H_W, "");
-         Close (Tmp_H_W);
+         Trace (Me,
+                "spawning: "
+                & The_Exec_On_Path.all
+                & " " & Argument_List_To_String (Args));
 
          Non_Blocking_Spawn
            (Fd, The_Exec_On_Path.all, Args,
             Err_To_Out => True);
 
          declare
+            Start : constant Time := Clock;
          begin
             while True loop
                GNAT.Expect.TTY.Expect (Fd, Match, All_Match, Timeout => 1000);
@@ -181,6 +182,7 @@ package body Language.Libclang.Utils is
                      Listing := True;
                   elsif S = "End of search list." then
                      Listing := False;
+                     exit;
                   else
                      if Listing then
                         F := S'First;
@@ -188,6 +190,7 @@ package body Language.Libclang.Utils is
                            F := F + 1;
                         end loop;
 
+                        Trace (Me, "search path found: " & S (F .. S'Last));
                         Result (First_Free) := To_Unbounded_String
                           ("-I" & S (F .. S'Last));
 
@@ -196,16 +199,21 @@ package body Language.Libclang.Utils is
                   end if;
                end;
 
-               --  ??? Add a loop condition termination
+               if Clock - Start > 3.0 then
+                  --  We exceeded 3 seconds of waiting: trace and exit
+                  Trace (Me, "timeout exceeded");
+                  exit;
+               end if;
             end loop;
          exception
             when Process_Died =>
-               --  Expected at some point
+               --  Not expected
                null;
+            when E : others =>
+               Trace (Me, E);
          end;
-         GNAT.Expect.TTY.Close (Fd);
 
-         Tmp_H.Delete (Ignored);
+         Close (Fd);
       end;
 
       GNAT.Strings.Free (The_Exec_On_Path);
