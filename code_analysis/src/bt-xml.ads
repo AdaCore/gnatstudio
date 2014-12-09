@@ -117,11 +117,16 @@ package BT.Xml is
    Text_Attribute       : constant String := "text";
    Vals_Attribute       : constant String := "vals";
 
+   function Xml_Directory
+     (Output_Dir     : String) return String;
+   --  Return the path to the directory where the backtrace and value_set
+   --  xml files are stored.
+
    function Xml_File_Name
      (Output_Dir     : String;
-      File_Path      : String;
+      File_Name      : String;
       For_Backtraces : Boolean) return String;
    --  Return the path to the xml file holding either the backtraces or
-   --  the value_sets, from the given output directory Output_Dir.
+   --  the value_sets.
 
 end BT.Xml;

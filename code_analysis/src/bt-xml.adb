@@ -21,20 +21,22 @@ with Ada.Directories; use Ada.Directories;
 
 package body BT.Xml is
 
+   function Xml_Directory
+     (Output_Dir     : String) return String
+   is
+   begin
+      return Output_Dir & "/bts/";
+   end Xml_Directory;
+
    function Xml_File_Name
      (Output_Dir     : String;
-      File_Path      : String;
+      File_Name      : String;
       For_Backtraces : Boolean) return String
    is
-      Xml_Directory : constant String := Output_Dir & "/bts/";
       Xml_File_Name : constant String :=
-        Xml_Directory & Simple_Name (File_Path);
+        Xml_Directory (Output_Dir) & Simple_Name (File_Name);
 
    begin
-      if not Exists (Xml_Directory) then
-         Create_Directory (Xml_Directory);
-      end if;
-
       if For_Backtraces then
          return Xml_File_Name & "_bts.xml";
       else
