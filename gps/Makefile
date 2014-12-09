@@ -52,6 +52,9 @@ ifneq ($(wildcard ../gnatlib/gnat_src),)
 	  $(LN) ../gnatlib/gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 endif
 
+install:
+	$(MAKE) -C .. install
+
 clean:
 ifeq ($(OS),Windows_NT)
 	$(MAKE) -s -C ../common/expect clean
