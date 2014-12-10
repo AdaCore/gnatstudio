@@ -222,6 +222,18 @@ package body GPS.Kernel.Macros is
       elsif Param = "ek" then
          return String_Utils.Protect
            (Krunch (Entity_Name_Information (Context)));
+
+      elsif Param = "gnat" then
+         declare
+            Target : constant String := Get_Kernel (Context).Get_Target;
+         begin
+            if Target /= "" then
+               return Target & "-gnat";
+            else
+               return "gnat";
+            end if;
+         end;
+
       else
          return Shared_Macros_Substitute
            (Project_From_Kernel => Get_Project (Get_Kernel (Context)),

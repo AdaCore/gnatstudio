@@ -13,7 +13,7 @@ XML = r"""<?xml version="1.0" ?>
     <icon>gps-build-all</icon>
     <description>Generic launch of gnatname</description>
     <command-line>
-      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>%gnat</arg>
       <arg>name</arg>
     </command-line>
     <switches/>
@@ -24,7 +24,7 @@ XML = r"""<?xml version="1.0" ?>
     <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line>
-      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>%gnat</arg>
       <arg>name</arg>
     </command-line>
   </target>

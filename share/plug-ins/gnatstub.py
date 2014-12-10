@@ -38,7 +38,7 @@ body file.
     proj = GPS.current_context().project()
     file = GPS.current_context().file()
     command = '"%s" stub "%s" %s "%s" "%s"' % (
-        proj.get_attribute_as_string("gnat", "ide"),
+        gps_utils.get_gnat_driver_cmd(),
         "-P%s" % proj.file().name() if proj else "",
         GPS.Project.scenario_variables_cmd_line("-X"),
         file.name(),

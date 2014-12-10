@@ -48,9 +48,10 @@ def display():
         f = open(path, "w")
         f.write("package p is end p;")
         f.close()
-        proc = Process \
-            (Project.root().get_attribute_as_string("gnat", "ide") +
-             " compile -q -gnatc -gnatS " + path, on_exit=on_exit)
+        proc = Process(
+            get_gnat_driver_cmd() + " compile -q -gnatc -gnatS " + path,
+            on_exit=on_exit
+        )
 
     proc.standard = dir + "/_standard.ads"
     proc.wait()

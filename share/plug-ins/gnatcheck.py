@@ -22,12 +22,18 @@ gnatcheck = None
 
 
 class rulesSelector(Gtk.Dialog):
-
-    """Dialog used to select a coding standard file before launching gnatcheck."""
+    """
+    Dialog used to select a coding standard file before launching gnatcheck.
+    """
 
     def __init__(self, projectname, defaultfile):
-        Gtk.Dialog.__init__(self, title="Select a coding standard file", parent=GPS.MDI.current(
-        ).pywidget().get_toplevel(), flags=Gtk.DialogFlags.MODAL, buttons=None)
+        Gtk.Dialog.__init__(
+            self,
+            title="Select a coding standard file",
+            parent=GPS.MDI.current().pywidget().get_toplevel(),
+            flags=Gtk.DialogFlags.MODAL,
+            buttons=None
+        )
 
         # OK - Cancel buttons
         self.okButton = Gtk.Button('OK')
@@ -40,8 +46,10 @@ class rulesSelector(Gtk.Dialog):
         self.cancelButton.show()
         self.action_area.pack_start(self.cancelButton, True, True, 0)
 
-        label = Gtk.Label(label="No check switches are defined for project " + projectname + "\n" +
-                          "Please enter a coding standard file containing the desired gnatcheck rules:")
+        label = Gtk.Label(
+            label="No check switches are defined for project {}"
+                  "\nPlease enter a coding standard file containing the"
+                  " desired gnatcheck rules:".format(projectname))
         label.show()
         self.vbox.pack_start(label, False, False, 0)
 
@@ -103,8 +111,7 @@ class gnatCheckProc:
         self.full_output = ""
 
     def updateGnatCmd(self):
-        self.gnatCmd = GPS.Project.root().get_attribute_as_string(
-            "gnat", "ide")
+        self.gnatCmd = gps_utils.get_gnat_driver_cmd()
 
         if self.gnatCmd == "":
             self.gnatCmd = "gnat"
@@ -124,11 +131,13 @@ class gnatCheckProc:
             return
 
         # gnat check command changed: we reinitialize the rules list
-        if prev_cmd != self.gnatCmd or self.rules == None:
+        if prev_cmd != self.gnatCmd or self.rules is None:
             self.rules = get_supported_rules(self.gnatCmd)
 
         # we retrieve the coding standard file from the project
-        for opt in GPS.Project.root().get_attribute_as_list("default_switches", package="check", index="ada"):
+        for opt in GPS.Project.root().get_attribute_as_list(
+            "default_switches", package="check", index="ada"
+        ):
             res = re.split("^\-from\=(.*)$", opt)
             if len(res) > 1:
                 self.rules_file = GPS.File(res[1])
@@ -142,10 +151,12 @@ class gnatCheckProc:
             ruleseditor.destroy()
         except:
             GPS.Console("Messages").write(
-                "Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
+                "Unexpected exception in gnatcheck.py:\n%s\n" % (
+                    traceback.format_exc()))
 
     def parse_output(self, msg):
-        # gnatcheck sometimes displays incorrectly formatted warnings (not handled by GPS correctly then)
+        # gnatcheck sometimes displays incorrectly formatted warnings (not
+        # handled by GPS correctly then)
         # let's reformat those here:
         # expecting "file.ext:nnn:nnn: msg"
         # receiving "file.ext:nnn:nnn msg"
@@ -188,9 +199,9 @@ class gnatCheckProc:
             for opt in opts:
                 res = re.split("^\-from\=(.*)$", opt)
                 if len(res) > 1:
-                    # we cd to the root project's dir before creating the file, as
-                    # this will then correctly resolve if the file is relative to the
-                    # project's dir
+                    # we cd to the root project's dir before creating the file,
+                    # as this will then correctly resolve if the file is
+                    # relative to the project's dir
                     olddir = GPS.pwd()
                     rootdir = GPS.Project.root().file().directory()
                     GPS.cd(rootdir)
@@ -222,7 +233,7 @@ class gnatCheckProc:
 
         # define the scenario variables
         scenario = GPS.Project.scenario_variables()
-        if scenario != None:
+        if scenario is not None:
             for i, j in scenario.iteritems():
                 cmd += ' """-X' + i + '=' + j + '"""'
         # use progress
@@ -240,28 +251,31 @@ class gnatCheckProc:
             GPS.Locations.remove_category(self.locations_string)
 
         self.msg = ""
-        process = GPS.Process(cmd, "^.+$",
-                              on_match=self.on_match,
-                              on_exit=self.on_exit,
-                              progress_regexp="^ *completed (\d*) out of (\d*) .*$",
-                              progress_current=1,
-                              progress_total=2,
-                              remote_server="Tools_Server",
-                              show_command=True)
+        process = GPS.Process(
+            cmd, "^.+$",
+            on_match=self.on_match,
+            on_exit=self.on_exit,
+            progress_regexp="^ *completed (\d*) out of (\d*) .*$",
+            progress_current=1,
+            progress_total=2,
+            remote_server="Tools_Server",
+            show_command=True)
 
     def check_project(self, project, recursive=False):
         try:
             self.internalSpawn("", project, recursive)
         except:
             GPS.Console("Messages").write(
-                "Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
+                "Unexpected exception in gnatcheck.py:\n%s\n" % (
+                    traceback.format_exc()))
 
     def check_file(self, file):
         try:
             self.internalSpawn(file.name("Tools_Server"), file.project())
         except:
             GPS.Console("Messages").write(
-                "Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
+                "Unexpected exception in gnatcheck.py:\n%s\n" % (
+                    traceback.format_exc()))
 
     def check_files(self, files):
         try:
@@ -271,7 +285,8 @@ class gnatCheckProc:
             self.internalSpawn(filestr, files[0].project())
         except:
             GPS.Console("Messages").write(
-                "Unexpected exception in gnatcheck.py:\n%s\n" % (traceback.format_exc()))
+                "Unexpected exception in gnatcheck.py:\n%s\n" % (
+                    traceback.format_exc()))
 
 # Contextual menu for checking files
 
@@ -297,7 +312,7 @@ class contextualMenu (GPS.Contextual):
                 return False
 
             # Does this file belong to the project tree ?
-            return self.file.project(False) != None
+            return self.file.project(False) is not None
 
         except:
             try:
@@ -337,12 +352,18 @@ class contextualMenu (GPS.Contextual):
 
     def label(self, context):
         if self.desttype == "file":
-            return "Check Coding standard of <b>%s</b>" % (os_utils.display_name(os.path.basename(self.file.name())))
+            fmt = "Check Coding standard of <b>{}</b>"
+            name = os.path.basename(self.file.name())
         elif self.desttype == "dir":
-            return "Check Coding standard of files in <b>%s</b>" % (os_utils.display_name(os.path.basename(os.path.dirname(self.dir))))
+            fmt = "Check Coding standard of files in <b>{}</b>"
+            name = os.path.basename(os.path.dirname(self.dir))
         elif self.desttype == "project":
-            return "Check Coding standard of files in <b>%s</b>" % (os_utils.display_name(self.project.name()))
-        return ""
+            fmt = "Check Coding standard of files in <b>{}</b>"
+            name = self.project.name()
+        else:
+            return ""
+
+        return fmt.format(os_utils.display_name(name))
 
     def on_activate(self, context):
         global gnatcheckproc
@@ -395,7 +416,12 @@ def on_gps_started(hook_name):
      <switches sections="-rules">
         <check label="process RTL units" switch="-a" line="1"/>
         <check label="debug mode" switch="-d" line="1"/>
-        <field label="Coding standard file" switch="-from" separator="=" as-file="true" line="1" section="-rules"/>
+        <field label="Coding standard file"
+               switch="-from"
+               separator="="
+               as-file="true"
+               line="1"
+               section="-rules"/>
      </switches>
   </tool>""")
 

@@ -417,3 +417,13 @@ class Chainmap(UserDict.DictMixin):
 
     def keys(self):
         return [k for mp in self._maps for k in mp.keys()]
+
+
+def get_gnat_driver_cmd():
+    """
+    Return the name of the GNAT driver that is suitable for the current
+    project's target. For instance: "gnat" for native targets or
+    "powerpc-elf-gnat" for cross PowerPC ELF targets.
+    """
+    target = GPS.get_target()
+    return '{}-gnat'.format(target) if target else 'gnat'

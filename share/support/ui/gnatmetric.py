@@ -11,7 +11,7 @@ xml_base = ("""
 <target-model name="gnatmetric" category="">
    <description>Generic launch of gnat metric</description>
    <command-line>
-      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>%gnat</arg>
       <arg>metric</arg>
       <arg>-dd</arg>
       <arg>-x</arg>
@@ -170,7 +170,7 @@ xml_base = ("""
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line>
-      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>%gnat</arg>
       <arg>metric</arg>
       <arg>-dd</arg>
       <arg>-x</arg>
@@ -186,7 +186,7 @@ xml_base = ("""
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line>
-      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>%gnat</arg>
       <arg>metric</arg>
       <arg>-dd</arg>
       <arg>-x</arg>
@@ -202,7 +202,7 @@ xml_base = ("""
     <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
     <command-line>
-      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>%gnat</arg>
       <arg>metric</arg>
       <arg>-dd</arg>
       <arg>-x</arg>

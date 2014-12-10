@@ -325,7 +325,7 @@ XML = r"""<?xml version="1.0" ?>
   <target-model name="gnattest" category="">
     <description>Generic launch of gnattest</description>
     <command-line>
-      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>%gnat</arg>
       <arg>test</arg>
       <arg>-dd</arg>
       <arg>-P%pp</arg>
@@ -431,7 +431,7 @@ XML = r"""<?xml version="1.0" ?>
     <read-only>TRUE</read-only>
 
     <command-line>
-      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>%gnat</arg>
       <arg>test</arg>
       <arg>-dd</arg>
       <arg>-P%pp</arg>
@@ -446,7 +446,7 @@ XML = r"""<?xml version="1.0" ?>
     <read-only>TRUE</read-only>
 
     <command-line>
-      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>%gnat</arg>
       <arg>test</arg>
       <arg>-dd</arg>
       <arg>-P%pp</arg>
@@ -462,7 +462,7 @@ XML = r"""<?xml version="1.0" ?>
     <read-only>TRUE</read-only>
 
     <command-line>
-      <arg>%attr(ide'gnat,gnat)</arg>
+      <arg>%gnat</arg>
       <arg>test</arg>
       <arg>-dd</arg>
       <arg>-P%PP</arg>
