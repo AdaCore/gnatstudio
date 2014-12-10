@@ -64,6 +64,7 @@ package body Language.Libclang is
    procedure Free
    is new Ada.Unchecked_Deallocation
      (Decl_Info_Vectors.Vector, Decl_Info_Vector);
+   --  Love you so much Ada <3 <3 (okay)
 
    package Clang_Cache_Maps is new Ada.Containers.Hashed_Maps
      (Project_Type, Clang_Context, Hash, "=");
@@ -175,6 +176,7 @@ package body Language.Libclang is
 
    procedure Started_Translation_Unit
      (Client_Data : in out Indexer_Data) is null;
+
    -----------------------
    -- Index_Declaration --
    -----------------------
@@ -185,18 +187,12 @@ package body Language.Libclang is
    is
       use Interfaces.C.Strings;
       use Interfaces.C;
-      Loc : constant Clang_Location :=
-        clang_indexLoc_getCXSourceLocation (Info.loc);
+      Loc : constant Clang_Location := +Info.loc;
       Sym : GNATCOLL.Symbols.Symbol;
       Info_Vector : Info_Vectors;
    begin
       if Is_From_Main_File (Loc)
       then
---           Put_Line
---             ("IN INDEX DECLARATION "
---              & (if Info.entityInfo.name /= Null_Ptr
---                then Interfaces.C.Strings.Value (Info.entityInfo.name)
---                else ""));
 
          Sym :=
            Client_Data.Ctx.Sym_Table.Find (Value (Info.entityInfo.USR));
@@ -225,8 +221,7 @@ package body Language.Libclang is
    is
       use Interfaces.C.Strings;
       use Interfaces.C;
-      Loc : constant Clang_Location :=
-        clang_indexLoc_getCXSourceLocation (Info.loc);
+      Loc : constant Clang_Location := +Info.loc;
       Sym : GNATCOLL.Symbols.Symbol;
       Info_Vector : Info_Vectors;
 
@@ -379,8 +374,10 @@ package body Language.Libclang is
          Context.Refs.Include (File, Refs);
 
          if Context.TU_Cache.Contains (File) then
+
             --  If the key is in the cache, we know that File_Content is not
             --  null, so we want to reparse
+
             TU := Context.TU_Cache.Element (File).TU;
             Dummy := Reparse_Translation_Unit (TU, Unsaved_Files,
                                                Options => Clang_Options);
@@ -508,6 +505,7 @@ package body Language.Libclang is
       Filtered_Files : Virtual_File_Vectors.Vector;
    begin
       Files := RP.Source_Files (Recursive => True);
+
       for F of Files.all
       loop
          if P_Tree.Info (F).Language = "c"

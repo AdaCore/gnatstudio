@@ -19,7 +19,6 @@ with System; use System;
 
 with Ada.Unchecked_Conversion;
 
-with Interfaces.C;         use Interfaces.C;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Interfaces.C.Pointers;
 with clang_c_CXString_h; use clang_c_CXString_h;
@@ -825,6 +824,33 @@ package body Libclang.Index is
    begin
       return To_String (clang_getCursorSpelling (Cursor));
    end Spelling;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (Location : Clang_Location) return Clang_Raw_Location
+   is
+      Line, Column, Offset : aliased unsigned;
+      F : aliased CXFile;
+   begin
+      clang_getFileLocation
+        (Location, F'Access, Line'Access,
+         Column'Access, Offset'Access);
+
+      return Clang_Raw_Location'
+        (Libclang.File.File (F), Line, Column, Offset);
+   end Value;
+
+   --------------
+   -- Location --
+   --------------
+
+   function Location (Cursor : Clang_Cursor) return Clang_Raw_Location
+   is
+   begin
+      return Value (Location (Cursor));
+   end Location;
 
    ------------------
    -- Display_Name --

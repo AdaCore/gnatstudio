@@ -183,6 +183,7 @@ package body Cpp_Module is
          Doc     => -"Whether to indent lines with comments only",
          Label   => -"Indent comments");
 
+      --  Register tree providers based on clang for both C and C++ languages
       Kernel.Register_Tree_Provider
         (C_Lang, new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
       Kernel.Register_Tree_Provider

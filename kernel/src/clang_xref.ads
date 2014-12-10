@@ -39,7 +39,7 @@ package Clang_Xref is
       Name   : Unbounded_String;
       Loc    : General_Location;
 
-      --  Some type don't have a corresponding cursor (built in types) so we
+      --  Some types don't have a corresponding cursor (built in types) so we
       --  store the clang type to be able to do some operations on them
       Has_Type_Inst   : Boolean := False;
       Clang_Type_Inst : Clang_Type;
@@ -265,6 +265,9 @@ package Clang_Xref is
    overriding function From_Instances
      (Ref : Clang_Reference) return Entity_Array is (No_Entity_Array);
 
+   --  ??? Those functions are not implemented for clang references for the
+   --  moment
+
    overriding function Reference_Is_Body
      (Ref : Clang_Reference) return Boolean is (False);
    overriding function Reference_Is_Declaration
@@ -285,24 +288,35 @@ package Clang_Xref is
      (Ref : Clang_Reference) return Boolean is (True);
    overriding function Is_Read_Or_Write_Or_Implicit_Reference
      (Ref : Clang_Reference) return Boolean is (True);
-   overriding function Get_Entity
-     (Ref : Clang_Reference) return Root_Entity'Class;
-   overriding function Get_Entity_Name
-     (Ref : Clang_Reference) return String;
-   overriding function Get_Location
-     (Ref : Clang_Reference) return General_Location;
    overriding function Show_In_Callgraph
      (Ref : Clang_Reference) return Boolean is (False);
    overriding function Is_Dispatching_Call
      (Ref : Clang_Reference) return Boolean is (False);
-   overriding function Get_Display_Kind
-     (Ref  : Clang_Reference) return String;
+
+   --  Those two functions are not implemented either, those will need to
+   --  compute things in the TUs so probably expensive
+
    overriding procedure For_Each_Dispatching_Call
      (Ref       : Clang_Reference;
       On_Callee : access function (Callee : Root_Entity'Class) return Boolean;
       Filter    : Reference_Kind_Filter := null) is null;
+
    overriding function Get_Caller
      (Ref : Clang_Reference) return Root_Entity'Class is (No_Root_Entity);
+
+   overriding function Get_Entity
+     (Ref : Clang_Reference) return Root_Entity'Class;
+   --  Returns the entity that Ref references ??? Might be implemented
+   --  efficiently by keeping a ref to the original entity that triggered
+   --  the search, rather than the expensive way that it is done at the moment
+
+   overriding function Get_Entity_Name
+     (Ref : Clang_Reference) return String;
+
+   overriding function Get_Location
+     (Ref : Clang_Reference) return General_Location;
+   overriding function Get_Display_Kind
+     (Ref  : Clang_Reference) return String;
 
    ------------------------------
    -- Clang Reference Iterator --

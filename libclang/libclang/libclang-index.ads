@@ -25,8 +25,10 @@ with Interfaces.C.Strings;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 with GNATCOLL.VFS;
+use GNATCOLL.VFS;
 with Ada.Containers.Vectors;
 with clang_c_CXString_h;
+with Ada.Containers; use Ada.Containers;
 
 package Libclang.Index is
 
@@ -354,7 +356,7 @@ package Libclang.Index is
    type Clang_Cursor is new clang_c_Index_h.CXCursor;
    subtype Clang_Type is clang_c_Index_h.CXType;
 
-   use type Interfaces.C.unsigned;
+   use Interfaces.C;
 
    function "=" (Left, Right : Clang_Cursor) return Boolean is
      (clang_equalCursors (Left, Right) /= 0);
@@ -389,10 +391,80 @@ package Libclang.Index is
 
    function Kind
      (Cursor : Clang_Cursor) return Clang_Cursor_Kind
-      renames clang_getCursorKind;
+   is (Clang_Cursor_Kind (Cursor.kind));
+
+   function Is_Definition
+     (Cursor : Clang_Cursor) return Boolean
+   is
+     (clang_isCursorDefinition (Cursor) /= 0);
+
+   function To_String
+     (Clang_String : clang_c_CXString_h.CXString) return String;
+
+   function Spelling
+     (Kind : Clang_Cursor_Kind) return String
+   is
+     (To_String (clang_getCursorKindSpelling (CXCursorKind (Kind))));
 
    function Spelling
      (Cursor : Clang_Cursor) return String;
+
+   function Referenced (Cursor : Clang_Cursor) return Clang_Cursor is
+     (clang_getCursorReferenced (Cursor));
+
+   function Canonical (Cursor : Clang_Cursor) return Clang_Cursor is
+     (clang_getCanonicalCursor (Cursor));
+
+   function Definition (Cursor : Clang_Cursor) return Clang_Cursor is
+     (clang_getCursorDefinition (Cursor));
+
+   function Semantic_Parent (Cursor : Clang_Cursor) return Clang_Cursor
+   is
+     (clang_getCursorSemanticParent (Cursor));
+
+   function Lexical_Parent (Cursor : Clang_Cursor) return Clang_Cursor
+   is
+     (clang_getCursorLexicalParent (Cursor));
+
+   function Typedef_Underlying_Type
+     (T : Clang_Cursor) return Clang_Type is
+     (clang_getTypedefDeclUnderlyingType (T));
+
+   function Is_Method_Pure_Virtual (Method : Clang_Cursor) return Boolean
+   is (clang_CXXMethod_isPureVirtual (Method) /= 0);
+
+   function Element_Type (Array_Type : Clang_Type) return Clang_Type
+   is
+     (clang_getArrayElementType (Array_Type));
+
+   function Declaration
+     (T : Clang_Type) return Clang_Cursor is (clang_getTypeDeclaration (T));
+
+   function USR (Cursor : Clang_Cursor) return String
+   is
+     (To_String (clang_getCursorUSR (Cursor)));
+
+   function Get_Type (Cursor : Clang_Cursor) return Clang_Type
+   is
+     (clang_getCursorType (Cursor));
+
+   function Pointee_Type (T : Clang_Type) return Clang_Type
+   is
+     (clang_getPointeeType (T));
+
+   function Result_Type (T : Clang_Type) return Clang_Type
+   is
+     (clang_getResultType (T));
+
+   function Hash (Cursor : Clang_Cursor) return Hash_Type
+   is (Hash_Type (clang_hashCursor (Cursor)));
+
+   type Clang_Raw_Location is record
+      File : Virtual_File;
+      Line, Column, Offset : unsigned;
+   end record;
+
+   function Location (Cursor : Clang_Cursor) return Clang_Raw_Location;
 
    function Location (Cursor : Clang_Cursor) return CXSourceLocation
    is
@@ -404,13 +476,15 @@ package Libclang.Index is
    function Display_Name
      (Cursor : Clang_Cursor) return String;
 
-   function To_String
-     (Clang_String : clang_c_CXString_h.CXString) return String;
-
    function Spelling (TU : Clang_Translation_Unit) return String is
      (To_String (clang_getTranslationUnitSpelling (TU)));
 
    subtype Clang_Location is CXSourceLocation;
+
+   function Value (Location : Clang_Location) return Clang_Raw_Location;
+
+   function "+" (Loc : CXIdxLoc) return Clang_Location
+   is (clang_indexLoc_getCXSourceLocation (Loc));
 
    subtype Clang_Index_Action is CXIndexAction;
 
@@ -427,6 +501,27 @@ package Libclang.Index is
    subtype Clang_Decl_Info is CXIdxDeclInfo;
    subtype Clang_Ref_Info is CXIdxEntityRefInfo;
    subtype Clang_Index_Options is CXIndexOptFlags;
+
+   subtype Clang_Source_Range is CXSourceRange;
+
+   function Range_Start (R : Clang_Source_Range) return Clang_Location
+   is
+     (clang_getRangeStart (R));
+
+   function Range_End (R : Clang_Source_Range) return Clang_Location
+   is
+     (clang_getRangeEnd (R));
+
+   function Comment_Range (Comment : Clang_Cursor) return Clang_Source_Range
+   is
+     (clang_Cursor_getCommentRange (Comment));
+
+   function Extent (C : Clang_Cursor) return Clang_Source_Range
+   is
+     (clang_getCursorExtent (C));
+
+   procedure Dispose_Overriden
+     (overridden : access Clang_Cursor) renames clang_disposeOverriddenCursors;
 
    generic
       type Client_Data_T is private;
@@ -477,10 +572,56 @@ package Libclang.Index is
 
    end Source_File_Indexer;
 
-   use type Interfaces.C.int;
    function Is_From_Main_File (Loc : Clang_Location) return Boolean
    is
      (clang_Location_isFromMainFile (Loc) /= 0);
+
+   -----------------------
+   --  Kind predicates  --
+   -----------------------
+
+   function Is_Function (K : Clang_Cursor_Kind) return Boolean
+   is
+     (K in CXCursor_FunctionDecl
+        | CXCursor_FunctionTemplate | CXCursor_CXXMethod);
+   --  Helper to determine if a cursor kind is a function kind
+
+   function Is_Object_Type (K : Clang_Cursor_Kind) return Boolean
+   is
+     (K in CXCursor_ClassDecl | CXCursor_ClassTemplate
+        | CXCursor_ClassTemplatePartialSpecialization
+          | CXCursor_StructDecl);
+   --  Helper to determine if type is an object type, eg. can it have methods.
+
+   function Is_Type (K : Clang_Cursor_Kind) return Boolean is
+     (Is_Object_Type (K) or else
+      K in CXCursor_TypeAliasDecl
+        | CXCursor_TypedefDecl | CXCursor_EnumDecl | CXCursor_UnionDecl);
+   --  Helper to determine if cursor is a type
+
+   function Is_Array (K : CXTypeKind) return Boolean
+   is
+     (K in CXType_ConstantArray
+        | CXType_VariableArray
+          | CXType_DependentSizedArray
+            | CXType_IncompleteArray);
+   --  Helper to determine if a kind is one of an array
+
+   function Is_Subprogram (K : Clang_Cursor_Kind) return Boolean is
+     (K in CXCursor_FunctionDecl | CXCursor_CXXMethod
+        | CXCursor_FunctionTemplate);
+
+   function Is_Container
+     (K : Clang_Cursor_Kind) return Boolean is
+     (Is_Array (K) or else Is_Object_Type (K));
+
+   function Is_Generic
+     (K : Clang_Cursor_Kind) return Boolean is
+     (K in
+        CXCursor_ClassTemplatePartialSpecialization
+          | CXCursor_ClassTemplate
+            | CXCursor_FunctionTemplate
+              | CXCursor_TemplateRef);
 
 private
 

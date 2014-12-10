@@ -2037,6 +2037,8 @@ procedure GPS.Main is
          VFS_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
+      --  Register the libclang module for C and C++ semantic support
+
       Language.Libclang.Register_Module (GPS_Main.Kernel);
 
       if Active (Codefix_Trace) then
