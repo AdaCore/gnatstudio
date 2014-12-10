@@ -115,6 +115,8 @@ package body CodePeer.Module.Bridge is
         Create_From_Dir (Codepeer_Database_Directory (Project), "Sqlite.db");
       Output_Directory  : constant Virtual_File :=
         Codepeer_Output_Directory (Module.Kernel);
+      Bts_Directory     : constant Virtual_File :=
+        Output_Directory.Create_From_Dir ("bts");
       Success           : Boolean;
       pragma Warnings (Off, Success);
 
@@ -140,7 +142,7 @@ package body CodePeer.Module.Bridge is
          --  Inspection data file and review status data files are up to date,
          --  and can be loaded without run of gps_codepeer_bridge.
 
-         Module.Load (Reply_File_Name, Status_File_Name);
+         Module.Load (Reply_File_Name, Status_File_Name, Bts_Directory);
       else
          --  Generate command file
 
@@ -153,6 +155,7 @@ package body CodePeer.Module.Bridge is
          Module.Action := Load_Bridge_Results;
          Module.Inspection_File := Reply_File_Name;
          Module.Status_File := Status_File_Name;
+         Module.Bts_Directory := Bts_Directory;
          Run_GPS_Codepeer_Bridge (Module, Command_File_Name);
       end if;
    end Inspection;

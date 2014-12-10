@@ -577,7 +577,8 @@ package body CodePeer.Module is
    procedure Load
      (Self            : access Module_Id_Record'Class;
       Inspection_File : Virtual_File;
-      Status_File     : Virtual_File)
+      Status_File     : Virtual_File;
+      Bts_Directory   : Virtual_File)
    is
       Messages : CodePeer.Message_Maps.Map;
 
@@ -629,6 +630,8 @@ package body CodePeer.Module is
                   Reader.Parse (Input, Messages);
                   Input_Sources.File.Close (Input);
                end;
+
+               Self.Has_Backtraces := Bts_Directory.Is_Directory;
 
             else
                Self.Kernel.Insert
@@ -693,8 +696,14 @@ package body CodePeer.Module is
          Editors.Show_Annotations_In_Opened_Editors (Self);
          Self.Fill_Object_Races;
          Self.Update_Location_View;
-
          Raise_Locations_Window (Self.Kernel);
+
+         --  Open Backtraces view when information is available.
+
+         if Self.Has_Backtraces then
+            CodePeer.Backtrace_View.Display_Backtraces
+              (Self.Kernel, No_File, No_File, "", Natural_Sets.Empty_Set);
+         end if;
 
          --  Raise report window
 
@@ -819,7 +828,10 @@ package body CodePeer.Module is
               (Module.Bridge_Message, Module.Inspection_File);
 
          when Load_Bridge_Results =>
-            Module.Load (Module.Inspection_File, Module.Status_File);
+            Module.Load
+              (Module.Inspection_File,
+               Module.Status_File,
+               Module.Bts_Directory);
 
          when Load_CSV =>
             Module.Load_CSV (Module.Inspection_File);
@@ -1017,7 +1029,9 @@ package body CodePeer.Module is
       D : constant Message_Hooks_Args := Message_Hooks_Args (Data.all);
 
    begin
-      if D.Message.Has_Note (CodePeer_Note'Tag) then
+      if Module.Has_Backtraces
+        and then D.Message.Has_Note (CodePeer_Note'Tag)
+      then
          declare
             Message : constant Message_Access :=
               CodePeer_Note
@@ -1752,6 +1766,7 @@ package body CodePeer.Module is
         or not Has_Column_Information (Context)
         or not Module.Display_Values
         or Module.Tree = null
+        or not Module.Has_Backtraces
       then
          return null;
       end if;
