@@ -42,15 +42,19 @@ class GNATemulator(Module):
 
     def run_gnatemu(self, args):
         gnatemu = self.get_gnatemu_name()
-        jargs = " ".join(args)
-        GPS.Console("Messages").write("Running in emulator: "
-                                      + gnatemu + " " + jargs)
+        proj = GPS.Project.root()
+        project_arg = "-P%s " % proj.file().name() if proj else ""
+        var_args = GPS.Project.scenario_variables_cmd_line("-X")
+
+        jargs = "%s %s %s" % (project_arg, var_args, " ".join(args))
+        GPS.Console("Messages").write("Running in emulator: %s %s" %
+                                      (gnatemu, jargs))
 
         #  - Open a console for each GNATemu run
         #  - Don't close the console when GNAtemu exits so we have time to see
         #    the results
         #  - GNATemu should be in the task manager
-        Console_Process(self.get_gnatemu_name(), args=jargs, force=True,
+        Console_Process(gnatemu, args=jargs, force=True,
                         close_on_exit=False, task_manager=True)
 
     def __error_exit(self, msg=""):
