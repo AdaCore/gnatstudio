@@ -42,8 +42,13 @@ package CodePeer.Backtrace_View is
 private
 
    type Backtrace_View_Record is new Generic_Views.View_Record with record
-      Store : Gtk_Tree_Store;
-      View  : Gtk_Tree_View;
+      Store     : Gtk_Tree_Store;
+      View      : Gtk_Tree_View;
+      --  Gtk+ objects
+
+      Activated : Boolean := False;
+      --  Sets to mark Backtraces view as requested change of location in
+      --  source editor to suppress one redisplaying of data in view.
    end record;
 
 end CodePeer.Backtrace_View;
