@@ -52,7 +52,8 @@ package CodePeer.Module is
    procedure Load
      (Self            : access Module_Id_Record'Class;
       Inspection_File : Virtual_File;
-      Status_File     : Virtual_File);
+      Status_File     : Virtual_File;
+      Bts_Directory   : Virtual_File);
    --  Load code review results from file, creates CodePeer Report window
    --  and display loaded results.
 
@@ -116,6 +117,7 @@ private
       --  CodePeer's output directory for root project.
       Tree                   : Code_Analysis.Code_Analysis_Tree;
       Race_Category          : CodePeer.Message_Category_Access;
+      Has_Backtraces         : Boolean;
       Report_Subwindow       : GPS.Kernel.MDI.GPS_MDI_Child;
       Report                 : CodePeer.Reports.Report;
       Annotation_Style       : GPS.Styles.UI.Style_Access;
@@ -134,6 +136,7 @@ private
 
       Inspection_File : Virtual_File;
       Status_File     : Virtual_File;
+      Bts_Directory   : Virtual_File;
       --  Files is used to communicate with gps_codepeer_bridge
 
       Bridge_Message : Message_Access;
