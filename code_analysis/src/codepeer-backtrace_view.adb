@@ -108,6 +108,15 @@ package body CodePeer.Backtrace_View is
       Src_File : GNATCOLL.VFS.Virtual_File;
 
    begin
+      --  Ignore change of backtraces information when change of source
+      --  location was requested by Backtraces view.
+
+      if View.Activated then
+         View.Activated := False;
+
+         return;
+      end if;
+
       View.Store.Clear;
 
       if Set.Is_Empty then
@@ -238,6 +247,7 @@ package body CodePeer.Backtrace_View is
 
    begin
       if File /= No_File then
+         Self.Activated := True;
          GPS.Kernel.Standard_Hooks.Open_File_Editor
            (Self.Kernel,
             File,
