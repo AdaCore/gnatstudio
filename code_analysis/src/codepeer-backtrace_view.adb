@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings;            use Ada.Strings;
+with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 with Glib;                   use Glib;
@@ -28,7 +30,7 @@ with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.MDI;             use Gtkada.MDI;
 
-with Basic_Types;
+with Basic_Types;            use Basic_Types;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
@@ -93,6 +95,7 @@ package body CodePeer.Backtrace_View is
      (Kernel           : access Kernel_Handle_Record'Class;
       Output_Directory : GNATCOLL.VFS.Virtual_File;
       File             : GNATCOLL.VFS.Virtual_File;
+      Message          : GPS.Kernel.Messages.Message_Access;
       Subprogram       : String;
       Set              : Natural_Sets.Set)
    is
@@ -127,7 +130,13 @@ package body CodePeer.Backtrace_View is
 
       for Vn of Set loop
          View.Store.Append (Vn_Iter, Null_Iter);
-         View.Store.Set (Vn_Iter, Text_Column, "vn" & Integer'Image (Vn));
+         View.Store.Set
+           (Vn_Iter,
+            Text_Column,
+            Message.Get_File.Display_Base_Name
+            & ':' & Trim (Natural'Image (Message.Get_Line), Both)
+            & ':' & Trim (Visible_Column_Type'Image (Message.Get_Column), Both)
+            & ": " & To_String (Message.Get_Text));
          Set_File (View.Store, Vn_Iter, File_Column, No_File);
          View.Store.Set (Vn_Iter, Line_Column, 0);
          View.Store.Set (Vn_Iter, Column_Column, 0);

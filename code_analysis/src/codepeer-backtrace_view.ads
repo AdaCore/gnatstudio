@@ -30,6 +30,7 @@ package CodePeer.Backtrace_View is
      (Kernel           : access Kernel_Handle_Record'Class;
       Output_Directory : GNATCOLL.VFS.Virtual_File;
       File             : GNATCOLL.VFS.Virtual_File;
+      Message          : GPS.Kernel.Messages.Message_Access;
       Subprogram       : String;
       Set              : Natural_Sets.Set);
    --  Fill backtraces view by backtraces of specified VNs

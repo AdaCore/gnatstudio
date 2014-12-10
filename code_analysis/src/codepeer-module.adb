@@ -702,7 +702,12 @@ package body CodePeer.Module is
 
          if Self.Has_Backtraces then
             CodePeer.Backtrace_View.Display_Backtraces
-              (Self.Kernel, No_File, No_File, "", Natural_Sets.Empty_Set);
+              (Self.Kernel,
+               No_File,
+               No_File,
+               null,
+               "",
+               Natural_Sets.Empty_Set);
          end if;
 
          --  Raise report window
@@ -1041,6 +1046,7 @@ package body CodePeer.Module is
               (Kernel,
                Module.Output_Directory,
                Message.File.Name,
+               D.Message,
                Message.Subprogram.Name.all,
                (if Message.Is_Check
                 then Message.Vns
