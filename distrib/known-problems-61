@@ -25,15 +25,6 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
-KP-61-NC04-017 GPS: prevent_project_edition.py need update for menu name
-
-  Problem:    Enabling prevent_project_edition.py plug-in causes an error
-              on GPS start up.
-
-  Status:     This was fixed in 6.2.0 on 2014-12-05
-
-  Workaround: Fix menu names in prevent_project_edition.py.
-
 KP-61-NC03-015 WB: white lines in the Wind River Workbench Build Targets tree
 
   Problem:    In the Project Explorer view, a lot of nodes with no labels are
@@ -123,6 +114,15 @@ KP-61-N822-004 GPS: Input focus when creating/opening new windows
 
 Known problems fixed in GPS 6.1.1 / GNATbench 2.9.1
 ---------------------------------------------------
+
+KP-61-NC04-017 GPS: prevent_project_edition.py need update for menu name
+
+  Problem:    Enabling prevent_project_edition.py plug-in causes an error
+              on GPS start up.
+
+  Status:     This was fixed in 6.1.1 on 2014-12-05
+
+  Workaround: Fix menu names in prevent_project_edition.py.
 
 KP-61-NC01-009 GPS: unreadable fonts under Solaris
 
