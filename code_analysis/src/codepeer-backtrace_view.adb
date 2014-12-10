@@ -119,20 +119,23 @@ package body CodePeer.Backtrace_View is
 
       View.Store.Clear;
 
-      if Set.Is_Empty then
-         return;
+      if not Set.Is_Empty then
+         BT.Xml.Reader.Read_File_Backtrace_Xml
+           (String (Output_Directory.Full_Name.all),
+            String (File.Full_Name.all),
+            Found);
+
+         if not Found then
+            Trace
+              (Me,
+               "There is no backtrace information file for "
+               & File.Display_Full_Name & ".");
+         end if;
       end if;
 
-      BT.Xml.Reader.Read_File_Backtrace_Xml
-        (String (Output_Directory.Full_Name.all),
-         String (File.Full_Name.all),
-         Found);
-
-      if not Found then
-         Trace
-           (Me,
-            "There is no backtrace information file for "
-            & File.Display_Full_Name & ".");
+      if Set.Is_Empty or not Found then
+         View.Store.Append (Vn_Iter, Null_Iter);
+         View.Store.Set (Vn_Iter, Text_Column, "<no backtrace info>");
 
          return;
       end if;
