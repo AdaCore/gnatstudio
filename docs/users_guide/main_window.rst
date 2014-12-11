@@ -1033,7 +1033,7 @@ In the contextual menu, you can configure the display in one of two ways:
 * Organized by notebooks, as in the GPS window itself. This view
   is particularly useful if you have many windows open.
 
-You can also choose, through the contextual menu, whether only source
+You can also choose, through the local configuration menu, whether only source
 editors should be visible or whether all windows should be displayed.
 
 This view allows you to quickly select and focus on a particular window by
@@ -1041,11 +1041,10 @@ clicking the corresponding line. If you leave the button pressed, you can
 drag the window to another place on the desktop (see the description of the
 :ref:`Multiple_Document_Interface`)
 
-Select multiple windows by clicking while pressing the control or shift
-keys. The Window view provides a contextual menu to easily close all
-selected windows at once, which is a fast way to clean up your desktop
-after you have finished working on a task.
-
+Select multiple windows by clicking while pressing the control or shift keys.
+You can then click in on the first button in the local toolbar to close all
+selected windows at once, which is a fast way to clean up your desktop after
+you have finished working on a task.
 
 
 .. index:: windows, outline
