@@ -2500,7 +2500,7 @@ arguments.  This code is useful when you are writing a full python script.
 * :file:`%target`
 
   The string :file:`--target={t}` where :command:`t` is the build target,
-  as determinted by the current toolchain.
+  as determined by the current toolchain.
 
 * :file:`%%`
 
