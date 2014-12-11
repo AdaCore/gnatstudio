@@ -400,20 +400,6 @@ package GUI_Utils is
 
    Special_Key_Binding : constant String := "<special>";
 
-   procedure Key_Grab
-     (In_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Key       : out Gdk.Types.Gdk_Key_Type;
-      Mods      : out Gdk.Types.Gdk_Modifier_Type);
-   --  Temporarily grab the pointer and keyboards for In_Widget, and returns
-   --  the first fully defined key that the user has pressed. (Key, Mods) is
-   --  set to (0, 0) if no key could be grabbed.
-   --  Nothing is done in In_Widget, it is only used as a target for the grab
-   --  operations.
-   --  In_Widget must be realized.
-   --
-   --  In_Widget mustn't be a modal dialog, since otherwise the handling of
-   --  grabs will interfer with the dialog.
-
    -----------
    -- Menus --
    -----------

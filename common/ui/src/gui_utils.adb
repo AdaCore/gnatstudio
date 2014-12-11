@@ -59,7 +59,6 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.List_Store;            use Gtk.List_Store;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -146,20 +145,6 @@ package body GUI_Utils is
       Params : Glib.Values.GValues;
       Data   : Glib.Gint);
    --  Callback for the editable renderer
-
-   type Event_Info is record
-      Key   : Gdk_Key_Type;
-      State : Gdk_Modifier_Type;
-   end record;
-   type Event_Info_Access is access all Event_Info;
-   package Event_Callback is new Gtk.Handlers.User_Return_Callback
-     (Gtk_Widget_Record, Boolean, Event_Info_Access);
-
-   function Key_Press_In_Grab
-     (In_Widget : access Gtk_Widget_Record'Class;
-      Event     : Gdk_Event;
-      Output    : Event_Info_Access) return Boolean;
-   --  Temporary event filter set when grabing the key for a key preference
 
    function "<" (A, B : Gtk_Window) return Boolean is
      (A.all'Address < B.all'Address);
@@ -1063,103 +1048,6 @@ package body GUI_Utils is
 
       Key := From_Name (From (Start .. From'Last));
    end Value;
-
-   -----------------------
-   -- Key_Press_In_Grab --
-   -----------------------
-
-   function Key_Press_In_Grab
-     (In_Widget : access Gtk_Widget_Record'Class;
-      Event     : Gdk_Event;
-      Output    : Event_Info_Access) return Boolean
-   is
-      pragma Unreferenced (In_Widget);
-      Text  : constant String :=
-                Image (Get_Key_Val (Event), Get_State (Event));
-   begin
-      if Text /= Special_Key_Binding then
-         Output.Key := Get_Key_Val (Event);
-         Output.State := Get_State (Event) and Get_Default_Mod_Mask;
-         Main_Quit;
-      end if;
-      return True;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end Key_Press_In_Grab;
-
-   --------------
-   -- Key_Grab --
-   --------------
-
-   procedure Key_Grab
-     (In_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Key       : out Gdk.Types.Gdk_Key_Type;
-      Mods      : out Gdk.Types.Gdk_Modifier_Type)
-   is
-      Device : Gdk_Device := null;
-      Id     : Handler_Id;
-      Output : aliased Event_Info := (0, 0);
-      Cursor : Gdk.Gdk_Cursor;
-   begin
-      Grab_Focus (In_Widget);
-
-      --  We could enable a grab of the device with the following code.
-      --  This seems to be very system-specific though, since setting for
-      --  instance a Key_Press_Mask on a mouse device works fine on OSX, but
-      --  is rejected with X11 servers. For now, we are leaving this code
-      --  disabled and using the simpler Grab_Add.
-      --      Device := Gtk.Main.Get_Current_Event_Device;
-
-      if Device /= null then   --  might be null in testsuite
-         if Device.Get_Source /= Source_Keyboard then
-            Device := Device.Get_Associated_Device;
-         end if;
-
-         if Device = null
-           or else Device.Get_Source /= Source_Keyboard
-           or else Device.Grab
-           (Window         => In_Widget.Get_Window,
-            Grab_Ownership => Ownership_Application,
-            Owner_Events   => True,
-            Event_Mask     => Key_Press_Mask,
-            Cursor         => null,
-            Time           => Gdk.Types.Current_Time) /= Grab_Success
-         then
-            Key := 0;
-            Mods := 0;
-            return;
-         end if;
-      else
-         In_Widget.Grab_Add;
-      end if;
-
-      Id := Event_Callback.Connect
-        (In_Widget, Signal_Key_Press_Event,
-         Event_Callback.To_Marshaller (Key_Press_In_Grab'Access),
-         User_Data => Output'Unchecked_Access);
-
-      Gdk_New (Cursor, Watch);
-      Set_Cursor (In_Widget.Get_Toplevel.Get_Window, Cursor);
-
-      Gtk.Main.Main;
-
-      Set_Cursor (In_Widget.Get_Toplevel.Get_Window, null);
-      Unref (Cursor);
-
-      Key  := Output.Key;
-      Mods := Output.State;
-
-      if Device /= null then
-         Device.Ungrab (Gdk.Types.Current_Time);
-      else
-         In_Widget.Grab_Remove;
-      end if;
-
-      Gtk.Handlers.Disconnect (In_Widget, Id);
-   end Key_Grab;
 
    -------------------
    -- Do_Completion --

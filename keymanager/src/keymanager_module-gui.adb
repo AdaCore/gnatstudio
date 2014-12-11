@@ -26,8 +26,12 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with Glib.Main;               use Glib.Main;
 with Glib.Object;             use Glib, Glib.Object;
 
+with Gdk.Cursor;              use Gdk.Cursor;
+with Gdk.Device;              use Gdk.Device;
+with Gdk.Event;               use Gdk.Event;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
+with Gdk.Window;              use Gdk, Gdk.Window;
 
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
@@ -42,6 +46,7 @@ with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Frame;               use Gtk.Frame;
 with Gtk.GEntry;              use Gtk.GEntry;
+with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
@@ -105,6 +110,10 @@ package body KeyManager_Module.GUI is
       Disable_Filtering  : Boolean := False;
       Themes             : Gtk_Combo_Box_Text;
 
+      Filter_Grab        : Gtk_Tool_Button;
+
+      In_Grab : Boolean := False;
+
       Filter_Pattern     : Search_Pattern_Access;
       --  ??? Should be freed when the view is destroyed
    end record;
@@ -141,6 +150,8 @@ package body KeyManager_Module.GUI is
    use Keys_Editor_Views;
    subtype Keys_Editor is Keys_Editor_Views.View_Access;
 
+   package Keys_Timeout is new Glib.Main.Generic_Sources (Keys_Editor);
+
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class);
    procedure Refill_Editor (View : access GObject_Record'Class);
    --  Fill the contents of the editor
@@ -152,18 +163,55 @@ package body KeyManager_Module.GUI is
    procedure On_Create (Editor : access Gtk_Widget_Record'Class);
    --  Handle the "Grab", "Remove", "Reset" and "Create" buttons
 
+   function On_Delete
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   procedure On_Destroy (Widget : access Gtk_Widget_Record'Class);
+   --  Standard event handlers
+
    procedure On_Grab_For_Filter (View : access GObject_Record'Class);
    --  Called when the user wants to grab a key for the filter
 
    function Grab_Multiple_Key
-     (View : not null access Keys_Editor_Record'Class;
+     (View        : not null access Keys_Editor_Record'Class;
+      For_Filter  : Boolean;
       For_Display : Boolean := False) return String;
    --  Grab a key binding, with support for multiple keymaps. Returns the
    --  empty string if no key could be grabbed.
    --  If For_Display is true, the returned string is suitable for displaying
    --  the shortcut to the user, but not to parse it into its components.
+   --  For_Filter indicates the context of the grab, to change the label of
+   --  the button.
 
-   function Cancel_Grab return Boolean;
+   type Event_Info is record
+      Key   : Gdk_Key_Type;
+      State : Gdk_Modifier_Type;
+   end record;
+   type Event_Info_Access is access all Event_Info;
+   package Event_Callback is new Gtk.Handlers.User_Return_Callback
+     (Gtk_Widget_Record, Boolean, Event_Info_Access);
+
+   procedure Key_Grab
+     (Self      : not null access Keys_Editor_Record'Class;
+      Key       : out Gdk.Types.Gdk_Key_Type;
+      Mods      : out Gdk.Types.Gdk_Modifier_Type);
+   --  Temporarily grab the pointer and keyboards for In_Widget, and returns
+   --  the first fully defined key that the user has pressed. (Key, Mods) is
+   --  set to (0, 0) if no key could be grabbed.
+   --  Nothing is done in In_Widget, it is only used as a target for the grab
+   --  operations.
+   --  In_Widget must be realized.
+   --
+   --  In_Widget mustn't be a modal dialog, since otherwise the handling of
+   --  grabs will interfer with the dialog.
+
+   function Key_Press_In_Grab
+     (In_Widget : access Gtk_Widget_Record'Class;
+      Event     : Gdk_Event;
+      Output    : Event_Info_Access) return Boolean;
+   --  Temporary event filter set when grabing the key for a key preference
+
+   function Cancel_Grab (Self : Keys_Editor) return Boolean;
    --  Exit the current nest main loop, if any
 
    procedure On_Load_Key_Theme (Editor : access GObject_Record'Class);
@@ -622,16 +670,125 @@ package body KeyManager_Module.GUI is
       Add_Selection_Changed (Editor);
    end Refresh_Editor;
 
+   -----------------------
+   -- Key_Press_In_Grab --
+   -----------------------
+
+   function Key_Press_In_Grab
+     (In_Widget : access Gtk_Widget_Record'Class;
+      Event     : Gdk_Event;
+      Output    : Event_Info_Access) return Boolean
+   is
+      pragma Unreferenced (In_Widget);
+      Text  : constant String :=
+        Image (Get_Key_Val (Event), Get_State (Event));
+   begin
+      if Text /= Special_Key_Binding then
+         Output.Key := Get_Key_Val (Event);
+         Output.State := Get_State (Event) and Get_Default_Mod_Mask;
+         Main_Quit;
+      end if;
+      return True;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return False;
+   end Key_Press_In_Grab;
+
+   --------------
+   -- Key_Grab --
+   --------------
+
+   procedure Key_Grab
+     (Self      : not null access Keys_Editor_Record'Class;
+      Key       : out Gdk.Types.Gdk_Key_Type;
+      Mods      : out Gdk.Types.Gdk_Modifier_Type)
+   is
+      Top    : constant Gtk_Widget := Self.Get_Toplevel;
+      Device : Gdk_Device := null;
+      Id     : Handler_Id;
+      Output : aliased Event_Info := (0, 0);
+      Cursor : Gdk.Gdk_Cursor;
+   begin
+      Grab_Focus (Top);
+
+      --  We could enable a grab of the device with the following code.
+      --  This seems to be very system-specific though, since setting for
+      --  instance a Key_Press_Mask on a mouse device works fine on OSX, but
+      --  is rejected with X11 servers. For now, we are leaving this code
+      --  disabled and using the simpler Grab_Add.
+      --      Device := Gtk.Main.Get_Current_Event_Device;
+
+      if Device /= null then   --  might be null in testsuite
+         if Device.Get_Source /= Source_Keyboard then
+            Device := Device.Get_Associated_Device;
+         end if;
+
+         if Device = null
+           or else Device.Get_Source /= Source_Keyboard
+           or else Device.Grab
+             (Window         => Top.Get_Window,
+              Grab_Ownership => Ownership_Application,
+              Owner_Events   => True,
+              Event_Mask     => Key_Press_Mask,
+              Cursor         => null,
+              Time           => Gdk.Types.Current_Time) /= Grab_Success
+         then
+            Key := 0;
+            Mods := 0;
+            return;
+         end if;
+      else
+         Top.Grab_Add;
+      end if;
+
+      Self.In_Grab := True;
+
+      Id := Event_Callback.Connect
+        (Top, Signal_Key_Press_Event,
+         Event_Callback.To_Marshaller (Key_Press_In_Grab'Access),
+         User_Data => Output'Unchecked_Access);
+
+      Gdk_New (Cursor, Watch);
+      Set_Cursor (Top.Get_Window, Cursor);
+
+      Ref (Top);  --  in case the user closes the dialog.
+      Gtk.Main.Main;
+
+      if Top.Get_Window /= null then
+         Set_Cursor (Top.Get_Window, null);
+         Unref (Cursor);
+         Gtk.Handlers.Disconnect (Top, Id);
+         Key  := Output.Key;
+         Mods := Output.State;
+      else
+         Key  := GDK_Escape;
+         Mods := 0;
+      end if;
+
+      if Device /= null then
+         Device.Ungrab (Gdk.Types.Current_Time);
+      elsif Top.Get_Window /= null then
+         Top.Grab_Remove;
+      end if;
+
+      Self.In_Grab := False;
+
+      Unref (Top);
+   end Key_Grab;
+
    -----------------
    -- Cancel_Grab --
    -----------------
 
-   function Cancel_Grab return Boolean is
+   function Cancel_Grab (Self : Keys_Editor) return Boolean is
    begin
       --  If there is a grab pending
 
-      if Main_Level > 0 then
+      if Self.In_Grab then
          Main_Quit;
+         Self.In_Grab := False;
       end if;
 
       return True;  --  so that we can remove it later without an error
@@ -642,19 +799,45 @@ package body KeyManager_Module.GUI is
    -----------------------
 
    function Grab_Multiple_Key
-     (View : not null access Keys_Editor_Record'Class;
+     (View        : not null access Keys_Editor_Record'Class;
+      For_Filter  : Boolean;
       For_Display : Boolean := False) return String
    is
       Grabbed, Tmp : String_Access;
       Key          : Gdk_Key_Type;
       Modif        : Gdk_Modifier_Type;
       Id           : Glib.Main.G_Source_Id;
+
+      procedure Reset;
+      procedure Reset is
+         Dummy : Boolean;
+         pragma Unreferenced (Dummy);
+      begin
+         if For_Filter then
+            View.Filter_Grab.Set_Label ("Grab");
+         else
+            View.Grab_Button.Set_Label ("Modify");
+         end if;
+
+         Unblock_Key_Shortcuts (View.Kernel);
+         Dummy := Cancel_Grab (View);
+      end Reset;
+
    begin
       Block_Key_Shortcuts (View.Kernel);
 
-      Key_Grab (View.Get_Toplevel, Key, Modif);
+      if For_Filter then
+         View.Filter_Grab.Set_Label ("press key");
+      else
+         View.Grab_Button.Set_Label ("press key");
+      end if;
 
-      if Key /= GDK_Escape or else Modif /= 0 then
+      Key_Grab (View, Key, Modif);
+
+      if View.Get_Toplevel.In_Destruction then
+         Reset;
+         return "";
+      elsif Key /= GDK_Escape or else Modif /= 0 then
          if For_Display then
             Grabbed := new String'
               (Gtk.Accel_Group.Accelerator_Get_Label (Key, Modif));
@@ -662,14 +845,16 @@ package body KeyManager_Module.GUI is
             Grabbed := new String'(Image (Key, Modif));
          end if;
       else
+         Reset;
          return "";
       end if;
 
       --  Are we grabbing multiple keymaps ?
 
       loop
-         Id := Glib.Main.Timeout_Add (500, Cancel_Grab'Access);
-         Key_Grab (View.Get_Toplevel, Key, Modif);
+         Id := Keys_Timeout.Timeout_Add
+           (500, Cancel_Grab'Access, Keys_Editor (View));
+         Key_Grab (View, Key, Modif);
          Glib.Main.Remove (Id);
 
          exit when Key = 0 and then Modif = 0;
@@ -691,7 +876,7 @@ package body KeyManager_Module.GUI is
          Free (Tmp);
       end loop;
 
-      Unblock_Key_Shortcuts (View.Kernel);
+      Reset;
 
       return K : constant String := Grabbed.all do
          Free (Grabbed);
@@ -699,7 +884,7 @@ package body KeyManager_Module.GUI is
 
    exception
       when others =>
-         Unblock_Key_Shortcuts (View.Kernel);
+         Reset;
          raise;
    end Grab_Multiple_Key;
 
@@ -728,7 +913,8 @@ package body KeyManager_Module.GUI is
            and then Children (Ed.Model, Iter) = Null_Iter
          then
             declare
-               Key          : constant String := Grab_Multiple_Key (Ed);
+               Key          : constant String :=
+                 Grab_Multiple_Key (Ed, For_Filter => False);
                Old_Action   : constant String := Lookup_Action_From_Key
                  (Key, Get_Shortcuts (Ed.Kernel));
                Old_Prefix   : constant String := Actions_With_Key_Prefix
@@ -992,7 +1178,8 @@ package body KeyManager_Module.GUI is
 
    procedure On_Grab_For_Filter (View : access GObject_Record'Class) is
       V : constant Keys_Editor := Keys_Editor (View);
-      Key : constant String := Grab_Multiple_Key (V, For_Display => True);
+      Key : constant String := Grab_Multiple_Key
+        (V, For_Filter => True, For_Display => True);
    begin
       V.Set_Filter (Key);
    end On_Grab_For_Filter;
@@ -1005,7 +1192,6 @@ package body KeyManager_Module.GUI is
      (View    : not null access Keys_Editor_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
-      B : Gtk_Tool_Button;
    begin
       View.Build_Filter
         (Toolbar     => Toolbar,
@@ -1016,11 +1202,11 @@ package body KeyManager_Module.GUI is
            Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy
          or Has_Approximate);
 
-      Gtk_New (B, Label => -"Grab");
-      B.Set_Tooltip_Text (-"Grab a key sequence to search for");
-      B.On_Clicked (On_Grab_For_Filter'Access, View);
+      Gtk_New (View.Filter_Grab, Label => -"Grab");
+      View.Filter_Grab.Set_Tooltip_Text (-"Grab a key sequence to search for");
+      View.Filter_Grab.On_Clicked (On_Grab_For_Filter'Access, View);
       View.Append_Toolbar
-        (Toolbar, B, Is_Filter => True, Homogeneous => False);
+        (Toolbar, View.Filter_Grab, Is_Filter => True, Homogeneous => False);
    end Create_Toolbar;
 
    --------------------
@@ -1055,6 +1241,32 @@ package body KeyManager_Module.GUI is
    end On_Load_Key_Theme;
 
    ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Widget : access Gtk_Widget_Record'Class) is
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Tmp := Cancel_Grab (Keys_Editor (Widget));
+
+      --  ??? Should we also reset the handling of key shortcuts ?
+   end On_Destroy;
+
+   ---------------
+   -- On_Delete --
+   ---------------
+
+   function On_Delete
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      pragma Unreferenced (Event);
+   begin
+      return Keys_Editor (Widget).In_Grab;
+   end On_Delete;
+
+   ----------------
    -- Initialize --
    ----------------
 
@@ -1080,6 +1292,9 @@ package body KeyManager_Module.GUI is
    begin
       Initialize_Vbox (Editor);
       Editor.Set_Name ("Key shortcuts");  --  for testsuite
+
+      Editor.On_Destroy (On_Destroy'Access);
+      Editor.On_Delete_Event (On_Delete'Access);
 
       --  The model we will modify, wrapped in a filter and sort model
 
