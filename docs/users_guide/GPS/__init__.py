@@ -10453,6 +10453,30 @@ class Icon(object):
         pass
 
 
+class History(object):
+    """
+    This class gives access to GPS internal settings. These settings are
+    used in addition to the preferences, and are used to keep information
+    such as the list of files recently opened, or the state of various
+    check boxes in the interface so that GPS can display them again in the
+    same state when it is restarted.
+    """
+
+    def __init__(self):
+        """
+        No instances of this class can be created.
+        """
+
+    @staticmethod
+    def add(key, value):
+        """
+        Update the value of one of the settings. The new value is added to
+        the list (for instance for recently opened files), and the oldest
+        previous value might be removed, depending on the maximum number
+        of elements that GPS wants to preserve for that key.
+        """
+
+
 class Language(object):
 
     @staticmethod

@@ -324,6 +324,7 @@ package body GPS.Kernel is
       On_Preferences_Changed (Handle, Data => null);
 
       Handle.History := new History_Record;
+      Trace (Me, "Loading histories.xml");
       Load (Handle.History.all,
             Create_From_Dir (Handle.Home_Dir, "histories.xml"));
       Set_Max_Length (Handle.History.all, History_Max_Length);
@@ -1016,6 +1017,7 @@ package body GPS.Kernel is
       Save_Scenario_Vars_On_Exit (Handle);
       Reset_Properties (Handle);
 
+      Trace (Me, "Saving histories.xml");
       Save (Handle.History.all,
             Create_From_Dir (Handle.Home_Dir, "histories.xml"),
             Success);

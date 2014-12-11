@@ -136,6 +136,16 @@ KP-61-NC01-009 GPS: unreadable fonts under Solaris
                 <dir>/usr/openwin/lib/X11/fonts/75dpi</dir>
                 <dir>/usr/openwin/lib/X11/fonts/100dpi</dir>
 
+KP-61-NB11-004 GPS: emacs key shortcuts lost
+
+  Problem:    If you had enabled the emacs.py plugin in GPS 6.0.2 or earlier,
+              the key shortcuts were lost in the transition to GPS 6.1.0.
+              We now provide a dummy emacs.py to help with the transition
+
+  Status:     This was fixed in 6.1.1 on 2014-12-11
+
+  Workaround: Go to /Edit/Key Shortcuts to enable the Emacs shortcuts.
+
 KP-61-NB10-025 GPS: problems when clicking on Ada files outside of GPS
 
   Problem:    Under Windows, when clicking on Ada files in the Windows explorer
