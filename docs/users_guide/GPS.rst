@@ -1044,6 +1044,17 @@ Classes
 
    .. automethod:: GPS.Help.reset
 
+:class:`GPS.History`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: History
+
+   
+
+   .. automethod:: GPS.History.__init__
+
+   .. automethod:: GPS.History.add
+
 :class:`GPS.Hook`
 ^^^^^^^^^^^^^^^^^
 
@@ -1070,15 +1081,6 @@ Classes
    .. automethod:: GPS.Hook.run_until_failure
 
    .. automethod:: GPS.Hook.run_until_success
-
-:class:`GPS.Icon`
-^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Icon
-
-   
-
-   .. automethod:: GPS.Icon.__init__
 
 :class:`GPS.Invalid_Argument`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

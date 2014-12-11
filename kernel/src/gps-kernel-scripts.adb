@@ -180,6 +180,10 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles command related to GPS.Console
 
+   procedure History_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles commands related to GPS.History
+
    function Get_Or_Create_Context
      (Script : access Scripting_Language_Record'Class;
       Class  : Class_Type;
@@ -1124,6 +1128,28 @@ package body GPS.Kernel.Scripts is
       end if;
    end Console_Command_Handler;
 
+   -----------------------------
+   -- History_Command_Handler --
+   -----------------------------
+
+   procedure History_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg (Data, -"Cannot create instance of GPS.History");
+      elsif Command = "add" then
+         declare
+            Key   : constant String := Nth_Arg (Data, 1);
+            Value : constant String := Nth_Arg (Data, 2);
+         begin
+            Add_To_History
+              (Get_Kernel (Data).Get_History.all,
+               History_Key (Key), Value);
+         end;
+      end if;
+   end History_Command_Handler;
+
    ----------------------
    -- Register_Command --
    ----------------------
@@ -1199,12 +1225,27 @@ package body GPS.Kernel.Scripts is
       Console_Class_Name : constant String := "Console";
       Console_Class      : constant Class_Type := New_Class
         (Kernel.Scripts, Console_Class_Name, Base => Get_GUI_Class (Kernel));
+      History_Class : constant Class_Type :=
+        New_Class (Kernel.Scripts, "History");
+
       Tmp : String_Access;
    begin
       GNATCOLL.Scripts.Register_Standard_Classes
         (Get_Scripts (Kernel),
          Console_Class_Name => Console_Class_Name,
          Logger_Class_Name  => "Logger");
+
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Class   => History_Class,
+         Handler => History_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("add",
+         Class   => History_Class,
+         Params  => (1 => Param ("key"),
+                     2 => Param ("value")),
+         Static_Method => True,
+         Handler => History_Command_Handler'Access);
 
       Register_Command
         (Kernel, Constructor_Method,
