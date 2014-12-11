@@ -45,5 +45,8 @@ body file.
         file.directory())
 
     proc = GPS.Process(
-        command, task_manager=True, on_exit=OnExit(file).on_exit)
+        command,
+        task_manager=True,
+        show_command=True,
+        on_exit=OnExit(file).on_exit)
     proc.wait()
