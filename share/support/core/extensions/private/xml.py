@@ -1,4 +1,7 @@
+from __future__ import absolute_import
+
 from copy import copy
+from xml.sax.saxutils import escape
 
 
 class X(object):
@@ -8,13 +11,15 @@ class X(object):
     example of use::
 
         X("foo", bar="baz").children(
-            X("qux", pouet="kanasson")
+            X("qux", pouet="kanasson"),
+            "bar<>",
         )
 
     will render::
 
         <foo bar="baz">
             <qux pouet="kanasson" />
+            bar&lt;&gt;
         </foo>
     """
 
@@ -42,7 +47,7 @@ class X(object):
         :rtype: X
         """
         c = copy(self)
-        if len(args) == 1:
+        if len(args) == 1 and not isinstance(args[0], str):
             try:
                 c._children = c._children + list(args[0])
             except TypeError:
@@ -65,6 +70,14 @@ class X(object):
         c.kws.update({k: w for k, w in kwargs.items() if w is not None})
         return c
 
+    @staticmethod
+    def child_to_str(child):
+        """
+        Returns the seriazilation of `child`. Handle both XML nodes and string
+        ones.
+        """
+        return escape(child) if isinstance(child, str) else str(child)
+
     def __str__(self):
         """
         String representation of self. Used to get the XML repr
@@ -74,7 +87,8 @@ class X(object):
         kws = " ".join('{0}="{1}"'.format(k, v) for k, v in self.kws.items())
         if self._children:
             return "<{0} {1}>{2}</{0}>".format(
-                self.tag_name, kws, "\n".join(str(c) for c in self._children)
+                self.tag_name, kws,
+                "\n".join(self.child_to_str(c) for c in self._children)
             )
         else:
             return "<{0} {1} />".format(self.tag_name, kws)

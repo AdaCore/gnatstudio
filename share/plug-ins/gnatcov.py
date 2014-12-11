@@ -67,8 +67,12 @@ Note: this plug-in activates only when the command-line tool
 import os.path
 
 import GPS
-import gps_utils.highlighter
+from extensions.private.xml import X
 import os_utils
+
+
+def list_to_xml(items):
+    return '\n'.join(str(i) for i in items)
 
 
 class GNATcovPlugin(object):
@@ -78,215 +82,233 @@ class GNATcovPlugin(object):
     # Keep this style name synchronized with Code_Coverage.GNATcov.
     INLINED_DETAILS_NAME = 'GNATcov inlined details'
 
-    PROJECT_SUPPORT_XML = """
-      <project_attribute
-        name="Gnatcov_Mode_Switches"
-        label="Switches in 'gnatcov' mode"
-        package="IDE_Coverage"
-        editor_page="GNATcov"
-        editor_section="Build"
-        hide_in="wizard library_wizard"
-        description="Extra build switches to pass to the builder when in 'gnatcov' mode.">
-        <string />
-      </project_attribute>
+    PROJECT_ATTRIBUTES = [
+        X(
+            'project_attribute',
+            package='IDE_Coverage',
+            name='Gnatcov_Mode_Switches',
 
-      <project_attribute
-        name="Level_Run"
-        label="Coverage Level"
-        package="IDE_Coverage"
-        editor_page="GNATcov"
-        editor_section="Run"
-        hide_in="wizard library_wizard"
-        description="The coverage level to pass to gnatcov run.">
+            label="Switches in 'gnatcov' mode",
+            description=("Extra build switches to pass to the builder when in"
+                         " 'gnatcov' mode."),
 
-          <choice>branch</choice>
-          <choice>insn</choice>
-          <choice default="true">stmt</choice>
-          <choice>stmt+decision</choice>
-          <choice>stmt+mcdc</choice>
+            editor_page='GNATcov',
+            editor_section='Build',
+            hide_in='wizard library_wizard',
+        ).children(X('string')),
 
-      </project_attribute>
+        X(
+            'project_attribute',
+            name='Level_Run',
+            label='Coverage Level',
+            package='IDE_Coverage',
+            editor_page='GNATcov',
+            editor_section='Run',
+            hide_in='wizard library_wizard',
+            description='The coverage level to pass to gnatcov run.',
+        ).children(
+            X('choice').children('branch'),
+            X('choice').children('insn'),
+            X('choice', default='true').children('stmt'),
+            X('choice').children('stmt+decision'),
+            X('choice').children('stmt+mcdc'),
+        ),
 
-      <project_attribute
-        name="Switches_Run"
-        label="Extra switches"
-        package="IDE_Coverage"
-        editor_page="GNATcov"
-        editor_section="Run"
-        hide_in="wizard library_wizard"
-        description="Extra build switches to pass to gnatcov run">
-        <string />
-      </project_attribute>
+        X(
+            'project_attribute',
+            name='Switches_Run',
+            label='Extra switches',
+            package='IDE_Coverage',
+            editor_page='GNATcov',
+            editor_section='Run',
+            hide_in='wizard library_wizard',
+            description='Extra build switches to pass to gnatcov run',
+        ).children(X('string')),
 
-      <project_attribute
-        name="Level_Coverage"
-        label="Coverage Level"
-        package="IDE_Coverage"
-        editor_page="GNATcov"
-        editor_section="Coverage"
-        hide_in="wizard library_wizard"
-        description="The coverage level to pass to gnatcov coverage.">
+        X(
+            'project_attribute',
+            name='Level_Coverage',
+            label='Coverage Level',
+            package='IDE_Coverage',
+            editor_page='GNATcov',
+            editor_section='Coverage',
+            hide_in='wizard library_wizard',
+            description='The coverage level to pass to gnatcov coverage.',
+        ).children(
+            X('choice').children('branch'),
+            X('choice').children('insn'),
+            X('choice', default='true').children('stmt'),
+            X('choice').children('stmt+decision'),
+            X('choice').children('stmt+mcdc'),
+        ),
 
-          <choice>branch</choice>
-          <choice>insn</choice>
-          <choice default="true">stmt</choice>
-          <choice>stmt+decision</choice>
-          <choice>stmt+mcdc</choice>
+        X(
+            'project_attribute',
+            name='Switches_Coverage',
+            label='Extra switches',
+            package='IDE_Coverage',
+            editor_page='GNATcov',
+            editor_section='Coverage',
+            hide_in='wizard library_wizard',
+            description='Extra build switches to pass to gnatcov coverage',
+        ).children(X('string')),
+    ]
 
-      </project_attribute>
+    BUILD_MODES = [
+        X('builder-mode', name='gnatcov').children(
+            X('description').children('Build with GNATcoverage information'),
+            X('subdir').children('gnatcov'),
+            X('supported-model').children('builder'),
+            X('supported-model').children('gnatmake'),
+            X('supported-model').children('gprbuild'),
+            X('supported-model', filter='--subdirs=').children('gnatcov-run'),
+            X('supported-model', filter='--subdirs=').children(
+                'gnatcov-coverage'),
+            X('supported-model', filter='--subdirs=').children('gprclean'),
+            X('extra-args').children(
+                X('arg').children("%attr(ide_coverage'gnatcov_mode_switches)"),
+                X('arg').children('--subdirs=%subdir'),
+                X('arg').children('-cargs'),
+                X('arg').children('-g'),
+                X('arg').children('-fdump-scos'),
+                X('arg').children('-fpreserve-control-flow'),
+            )
+        )
+    ]
 
-      <project_attribute
-        name="Switches_Coverage"
-        label="Extra switches"
-        package="IDE_Coverage"
-        editor_page="GNATcov"
-        editor_section="Coverage"
-        hide_in="wizard library_wizard"
-        description="Extra build switches to pass to gnatcov coverage">
-        <string />
-      </project_attribute>
-    """
+    BUILD_TARGETS = [
+        # Program execution under instrumented execution environment
+        X('target-model', name='gnatcov-run', category='').children(
+            X('description').children('Run under GNATcov for code coverage'),
+            X('command-line').children(
+                X('arg').children('gnatcov'),
+                X('arg').children('run'),
+            ),
+            X('icon').children('gps-build-all'),
+            X('switches', command='%(tool_name)s', columns='2', lines='2'),
+        ),
 
-    BUILD_TARGETS_AND_MODES_XML = """
-      <!--  Program execution under instrumented execution environment  -->
+        X(
+            'target',
+            model='gnatcov-run', category='GNATcov run',
+            name='Run under GNATcov', menu=PLUGIN_MENU
+        ).children(
+            X('target-type').children('executable'),
+            X('in-toolbar').children('FALSE'),
+            X('in-menu').children('TRUE'),
+            X('read-only').children('TRUE'),
+            X('icon').children('gps-build-all'),
+            X('launch-mode').children('MANUALLY'),
+            X('command-line').children(
+                X('arg').children('gnatcov'),
+                X('arg').children('run'),
+                X('arg').children('-P%PP'),
+                X('arg').children('--recursive'),
+                X('arg').children('%target'),
+                X('arg').children('-c'),
+                X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
+                X('arg').children('-o'),
+                X('arg').children('%TT.trace'),
+                X('arg').children('%E'),
+                X('arg').children("%attr(ide_coverage'switches_run)"),
+            ),
+        ),
 
-      <target-model name="gnatcov-run" category="">
-        <description>Run under GNATcov for code coverage</description>
-        <command-line>
-          <arg>gnatcov</arg>
-          <arg>run</arg>
-        </command-line>
-        <icon>gps-build-all</icon>
-        <switches command="%(tool_name)s" columns="2" lines="2">
-        </switches>
-      </target-model>
+        # Coverage report generation
+        X('target-model', name='gnatcov-coverage', category='').children(
+            X('description').children('Code coverage with GNATcov'),
+            X('command-line').children(
+                X('arg').children('gnatcov'),
+                X('arg').children('coverage'),
+                X('arg').children('-P%PP'),
+                X('arg').children('--recursive'),
+                X('arg').children('%target'),
+                X('arg').children('--annotate=xcov'),
+            ),
+            X('icon').children('gps-build-all'),
+            X('switches', command='%(tool_name)s', columns='1', lines='4'),
+        ),
 
-      <target model="gnatcov-run" category="GNATcov run"
-          name="Run under GNATcov"
-          menu="{menu}">
-        <target-type>executable</target-type>
-        <in-toolbar>FALSE</in-toolbar>
-        <in-menu>TRUE</in-menu>
-        <read-only>TRUE</read-only>
-        <icon>gps-build-all</icon>
-        <launch-mode>MANUALLY</launch-mode>
-        <command-line>
-          <arg>gnatcov</arg>
-          <arg>run</arg>
-          <arg>-P%PP</arg>
-          <arg>--recursive</arg>
-          <arg>%target</arg>
-          <arg>-c</arg>
-          <arg>%attr(ide_coverage'level_coverage,stmt)</arg>
-          <arg>-o</arg>
-          <arg>%TT.trace</arg>
-          <arg>%E</arg>
-          <arg>%attr(ide_coverage'switches_run)</arg>
-        </command-line>
-      </target>
+        X('target', model='gnatcov-coverage', category='GNATcov coverage',
+            name='Generate GNATcov Main Report',
+            menu=PLUGIN_MENU).children(
+            X('target-type').children('executable'),
+            X('in-toolbar').children('FALSE'),
+            X('in-menu').children('TRUE'),
+            X('read-only').children('TRUE'),
+            X('icon').children('gps-build-all'),
+            X('launch-mode').children('MANUALLY'),
+            X('command-line').children(
+                X('arg').children('gnatcov'),
+                X('arg').children('coverage'),
+                X('arg').children('-P%PP'),
+                X('arg').children('--recursive'),
+                X('arg').children('%target'),
+                X('arg').children('-c'),
+                X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
+                X('arg').children('--annotate=xcov+'),
+                X('arg').children('--output-dir=%O'),
+                X('arg').children('-T'),
+                X('arg').children('%TT.trace'),
+                X('arg').children("%attr(ide_coverage'switches_coverage)"),
+            ),
+        ),
+    ]
 
-      <!--  Coverage report generation  -->
+    PREFERENCES = [
+        X('preference',
+            name='GNATcov-Inlined-Details-Foreground',
+            page='Plugins/GNATcov',
+            default='#000000',
+            label='Inline details foreground',
+            tip='Color to use for the foreground of inlined details',
+            type='color'),
+        X('preference',
+            name='GNATcov-Inlined-Details-Background',
+            page='Plugins/GNATcov',
+            default='#E9E9E9',
+            label='Inline details background',
+            tip='Color to use for the background of inlined details',
+            type='color'),
+    ]
 
-      <target-model name="gnatcov-coverage" category="">
-        <description>Code coverage with GNATcov</description>
-        <command-line>
-          <arg>gnatcov</arg>
-          <arg>coverage</arg>
-          <arg>-P%PP</arg>
-          <arg>--recursive</arg>
-          <arg>%target</arg>
-          <arg>--annotate=xcov</arg>
-        </command-line>
-        <icon>gps-build-all</icon>
-        <switches command="%(tool_name)s" columns="1" lines="4">
-        </switches>
-      </target-model>
+    GNATCOV_DOCUMENTATION = [
+        X('doc_path').children('share/doc/gnatcoverage/html'),
+        X('documentation_file').children(
+            X('name').children('gnatcov.html'),
+            X('descr').children("GNATcoverage User's Guide"),
+            X('category').children('GNATcoverage'),
+            X('menu', before='About').children(
+                "/Help/GNATcoverage/GNATcoverage User's Guide"
+            ),
+        ),
+    ]
 
-      <target model="gnatcov-coverage" category="GNATcov coverage"
-              name="Generate GNATcov Main Report"
-              menu="{menu}">
-        <target-type>executable</target-type>
-        <in-toolbar>FALSE</in-toolbar>
-        <in-menu>TRUE</in-menu>
-        <read-only>TRUE</read-only>
-        <icon>gps-build-all</icon>
-        <launch-mode>MANUALLY</launch-mode>
-        <command-line>
-          <arg>gnatcov</arg>
-          <arg>coverage</arg>
-          <arg>-P%PP</arg>
-          <arg>--recursive</arg>
-          <arg>%target</arg>
-          <arg>-c</arg>
-          <arg>%attr(ide_coverage'level_coverage,stmt)</arg>
-          <arg>--annotate=xcov+</arg>
-          <arg>--output-dir=%O</arg>
-          <arg>-T</arg>
-          <arg>%TT.trace</arg>
-          <arg>%attr(ide_coverage'switches_coverage)</arg>
-        </command-line>
-      </target>
-
-      <builder-mode name="gnatcov">
-       <description>Build with GNATcoverage information</description>
-       <subdir>gnatcov</subdir>
-       <supported-model>builder</supported-model>
-       <supported-model>gnatmake</supported-model>
-       <supported-model>gprbuild</supported-model>
-       <supported-model filter="--subdirs=">gnatcov-run</supported-model>
-       <supported-model filter="--subdirs=">gnatcov-coverage</supported-model>
-       <supported-model filter="--subdirs=">gprclean</supported-model>
-       <extra-args>
-          <arg>%attr(ide_coverage'gnatcov_mode_switches)</arg>
-          <arg>--subdirs=%subdir</arg>
-          <arg>-cargs</arg>
-          <arg>-g</arg>
-          <arg>-fdump-scos</arg>
-          <arg>-fpreserve-control-flow</arg>
-       </extra-args>
-      </builder-mode>
-    """.format(menu=PLUGIN_MENU)
-
-    PREFERENCES_XML = """
-      <preference
-          name="GNATcov-Inlined-Details-Foreground"
-          page="Plugins/GNATcov"
-          default="#000000"
-          label="Inline details foreground"
-          tip="Color to use for the foreground of inlined details"
-          type="color" />
-      <preference
-          name="GNATcov-Inlined-Details-Background"
-          page="Plugins/GNATcov"
-          default="#E9E9E9"
-          label="Inline details background"
-          tip="Color to use for the background of inlined details"
-          type="color" />
-    """
-
-    GNATCOV_DOCUMENTATION_XML = """
-      <doc_path>share/doc/gnatcoverage/html</doc_path>
-
-      <documentation_file>
-        <name>gnatcov.html</name>
-        <descr>GNATcoverage User's Guide</descr>
-        <category>GNATcoverage</category>
-        <menu before="About">/Help/GNATcoverage/GNATcoverage User's Guide</menu>
-      </documentation_file>
-    """
-
-    GNATEMU_DOCUMENTATION_XML = """
-      <doc_path>share/doc/gnatemu/html</doc_path>
-
-      <documentation_file>
-        <name>gnatemulator.html</name>
-        <descr>GNATemulator Documentation</descr>
-        <category>GNATcoverage</category>
-        <menu before="About">/Help/GNATcoverage/GNATemulator Documentation</menu>
-      </documentation_file>
-    """
+    GNATEMU_DOCUMENTATION = [
+        X('doc_path').children('share/doc/gnatemu/html'),
+        X('documentation_file').children(
+            X('name').children('gnatemulator.html'),
+            X('descr').children('GNATemulator Documentation'),
+            X('category').children('GNATcoverage'),
+            X('menu', before='About').children(
+                '/Help/GNATcoverage/GNATemulator Documentation'
+            ),
+        ),
+    ]
 
     def __init__(self):
+        # Create all custom things that do not require GPS' GUI to be ready
+        # (i.e.: all but menus and hooks).
+        for xml_nodes in (
+            self.PROJECT_ATTRIBUTES, self.BUILD_MODES, self.PREFERENCES,
+            self.GNATCOV_DOCUMENTATION, self.GNATEMU_DOCUMENTATION,
+        ):
+            GPS.parse_xml(list_to_xml(xml_nodes))
+
+        # Defer further initialization to when GPS is completely ready.
+        GPS.Hook('gps_started').add(self.on_gps_started)
+
+    def on_gps_started(self, hook):
         # Create the GNATcov menu entry before loading targets and so on, so
         # that we master where the entry is inserted.
         GPS.Menu.create(
@@ -294,27 +316,18 @@ class GNATcovPlugin(object):
             ref='Coverage',
             add_before=False)
 
-        # The following are needed to load projets, so do not wait the
-        # "gps_started" event.
-        GPS.parse_xml(self.PROJECT_SUPPORT_XML)
-        GPS.parse_xml(self.PREFERENCES_XML)
-        GPS.parse_xml(self.BUILD_TARGETS_AND_MODES_XML)
-        GPS.parse_xml(self.GNATCOV_DOCUMENTATION_XML)
-        GPS.parse_xml(self.GNATEMU_DOCUMENTATION_XML)
-
-    def on_gps_started(self, hook):
+        # Now the parent menu is present, fill it with custom targets.
+        GPS.parse_xml(list_to_xml(self.BUILD_TARGETS))
 
         GPS.Hook('compilation_finished').add(self.on_compilation_finished)
         GPS.Hook('preferences_changed').add(self.on_preferences_changed)
 
         self.inline_details_style = GPS.Style(self.INLINED_DETAILS_NAME)
 
-        self.GPS = GPS
         self.on_preferences_changed('', reload=False)
 
     def reload_gnatcov_data(self):
         """Clean the coverage report and reload it from the files."""
-        GPS = self.GPS
 
         # If needed, switch to GNATcov build mode.
         if GPS.Preference("Coverage-Toolchain").get() != 'Gnatcov':
@@ -336,24 +349,12 @@ class GNATcovPlugin(object):
 
     def on_preferences_changed(self, hook, reload=True):
         """Update various plugin elements that rely on preferences."""
-        GPS = self.GPS
-
         self.inline_details_style.set_background(
             GPS.Preference('GNATcov-Inlined-Details-Background').get())
         self.inline_details_style.set_foreground(
             GPS.Preference('GNATcov-Inlined-Details-Foreground').get())
 
 
-def setup_plugin(hook):
-    # To make debugging easier, keep a reference to the plugin in the module
-    # namespace.
-    global plugin
-
-    # Do nothing if GNATcoverage is not available.
-    if not os_utils.locate_exec_on_path('gnatcov'):
-        return
-
+# This plug-in makes sense only if GNATcoverage is available.
+if os_utils.locate_exec_on_path('gnatcov'):
     plugin = GNATcovPlugin()
-    GPS.Hook('gps_started').add(plugin.on_gps_started)
-
-setup_plugin(None)
