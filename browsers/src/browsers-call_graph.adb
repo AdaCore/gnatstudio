@@ -328,6 +328,10 @@ package body Browsers.Call_Graph is
             Text   : Text_Item;
             S      : constant access Browser_Styles :=
               Browser.Get_View.Get_Styles;
+            Left   : constant access Left_Arrow_Record'Class :=
+              new Show_Ancestors_Button;
+            Right  : constant access Right_Arrow_Record'Class :=
+              new Show_Children_Button;
          begin
             Item := new Entity_Item_Record;
             Item.Browser := General_Browser (Browser);
@@ -339,8 +343,8 @@ package body Browsers.Call_Graph is
             Setup_Titlebar
               (Item, Browser,
                Name  => Name,
-               Left  => new Show_Ancestors_Button,
-               Right => new Show_Children_Button);
+               Left  => Left,
+               Right => Right);
             Text := Gtk_New_Text
               (S.Text_Font,
                Decl.File.Display_Base_Name & ':' & Image (Decl.Line));
