@@ -47,9 +47,11 @@ package GPS.Kernel.Macros is
       For_Shell : Boolean := False) return String;
    --  Return the replacement suitable for %Param.
    --  This should mostly be used from String_Utils.Substitute.
-   --  The empty string "" is returned if Param is not one of the macro
-   --  parameters, and Done.all set to False.
-   --  If Param is recognized and handled, Done.all is set to True.
+   --  If Param is not one of the macro parameters, set Done.all to False and
+   --  return an empty string.
+   --  If Param is recognized and handled, Done.all is set to True. Note that
+   --  an empty string can be a valid substitution result if Done.all is set
+   --  to True.
    --  It is assumed that Context contains enough information for this
    --  substitution, and this can be checked with Macro_Filter above.
    --  Substrings that start with '%' but are not one of the macros are left

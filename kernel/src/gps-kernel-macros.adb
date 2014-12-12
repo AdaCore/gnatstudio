@@ -234,6 +234,17 @@ package body GPS.Kernel.Macros is
             end if;
          end;
 
+      elsif Param = "target" then
+         declare
+            Target : constant String := Get_Kernel (Context).Get_Target;
+         begin
+            if Target /= "" then
+               return "--target=" & Target;
+            else
+               return "";
+            end if;
+         end;
+
       else
          return Shared_Macros_Substitute
            (Project_From_Kernel => Get_Project (Get_Kernel (Context)),

@@ -684,15 +684,12 @@ package body Build_Command_Utils is
                Result : constant String := Substitute (Adapter.all, Param,
                   Quoted, Done'Access, Server => Server);
             begin
-               if Result = "" then
-                  if Simulate then
-                     return '%' & Param;
-                  else
-                     raise Invalid_Argument;
-                  end if;
-
-               else
+               if Done then
                   return Result;
+               elsif Simulate then
+                  return '%' & Param;
+               else
+                  raise Invalid_Argument;
                end if;
             end;
          end if;
@@ -845,19 +842,6 @@ package body Build_Command_Utils is
                end if;
             end if;
 
-            return Res;
-         end;
-
-      elsif Arg = "%target" then
-         declare
-            Prj   : constant Project_Type := Get_Context_Project (Adapter.all);
-            Tc    : constant Toolchains.Toolchain :=
-                      Get_Toolchain
-                        (Get_Context_Toolchains_Manager (Adapter.all), Prj);
-            Res   : Expansion_Result;
-
-         begin
-            Res.Args := Create ("--target=" & Get_Target_Name (Tc));
             return Res;
          end;
 
