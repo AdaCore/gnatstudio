@@ -31,7 +31,6 @@ with Glib.Main;
 with Glib.Xml_Int;
 with Gtk.Accel_Group;
 with Gtk.Handlers;          use Gtk.Handlers;
-with Gtk.Icon_Factory;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Widget;
@@ -389,11 +388,6 @@ package GPS.Kernel.MDI is
      (Handle : access Kernel_Handle_Record'Class)
       return Gtk.Accel_Group.Gtk_Accel_Group;
    --  Returns the defauls accelerators group for the main window
-
-   function Get_Icon_Factory
-     (Handle : access Kernel_Handle_Record'Class)
-      return Gtk.Icon_Factory.Gtk_Icon_Factory;
-   --  Return the default icon factory
 
    -------------
    -- Toolbar --

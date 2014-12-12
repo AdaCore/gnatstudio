@@ -1511,17 +1511,6 @@ package body GPS.Kernel.MDI is
       end if;
    end Get_Default_Accelerators;
 
-   ----------------------
-   -- Get_Icon_Factory --
-   ----------------------
-
-   function Get_Icon_Factory
-     (Handle : access Kernel_Handle_Record'Class)
-      return Gtk.Icon_Factory.Gtk_Icon_Factory is
-   begin
-      return GPS_Window (Handle.Get_Main_Window).Icon_Factory;
-   end Get_Icon_Factory;
-
    -----------------
    -- Get_Toolbar --
    -----------------

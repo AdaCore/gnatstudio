@@ -617,9 +617,6 @@ package body GPS.Main_Window is
       Gtk_New (Main_Window.Main_Accel_Group);
       Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
 
-      Gtk_New (Main_Window.Icon_Factory);
-      Add_Default (Main_Window.Icon_Factory);
-
       GPS.Kernel.MDI.Gtk_New
         (MDI    => Main_Window.MDI,
          Kernel => Application.Kernel,
