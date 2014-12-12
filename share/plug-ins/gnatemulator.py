@@ -135,7 +135,6 @@ class GNATemulator(Module):
         if not r3:
             self.__error_exit("Could not initialize the debugger.")
             r3 = yield debugger_promise.wait_and_send(cmd="", block=False)
-            self.__reset_all  # ??? is this the right reset?
             return
         log("... done.")
 
@@ -155,7 +154,6 @@ class GNATemulator(Module):
 
         if interest not in r3:
             self.__error_exit("Could not connect to the target.")
-            self.__reset_all(1)
             return
 
         log("... done.")
