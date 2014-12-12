@@ -81,6 +81,16 @@ KP-61-NB12-023 ECL: Cannot set breakpoints on Eclipse Luna
   Workaround: Launch debugger using Debug As => C/C++ Application menu. Set
               Ada Event Breakpoints using the GDB console view.
 
+KP-61-NB12-012 GPS: incorrect gnat driver for gnatstub and gnatmetric
+
+  Problem:    GPS does not use the proper cross driver (<target>-gnat) when
+              launching gnat stub for generating bodies and gnat metric for
+              computing metrics.
+
+  Status:     This was fixed in 6.2.0 on 2014-12-11
+
+  Workaround: Launch the tools manually.
+
 KP-61-NA17-042 WB: SIGSEGV crash when opening large programs
 
   Problem:    Opening a large GNAT project in Wind River Workbench, generates
