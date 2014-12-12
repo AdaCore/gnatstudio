@@ -1235,8 +1235,6 @@ procedure GPS.Main is
       Menubar     : Gtk_Menu_Bar;
 
    begin
-      Application.Hold;
-
       --  Create the kernel and prepare the menu model
 
       Gtk_New
@@ -1270,10 +1268,6 @@ procedure GPS.Main is
                Registration =>
                  GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
       end;
-
-      --  We can now release the Application, as the main window took a
-      --  hold on it
-      Application.Release;
 
       Set_Project_Name;
 
@@ -2450,8 +2444,7 @@ procedure GPS.Main is
        Arguments   : access chars_ptr_array_access;
        Exit_Status : access Glib.Gint) return Glib.Gboolean
    is
-      Application : constant Gapplication :=
-         Gapplication (Get_User_Data_Or_Null (Self));
+      pragma Unreferenced (Self);
       Err     : Glib.Error.GError;
       Success : Boolean;
       A       : size_t := 0;
@@ -2465,7 +2458,6 @@ procedure GPS.Main is
       Initialize_Low_Level (Exit_Status.all);
 
       if Exit_Status.all /= 0 then
-         Application.Release;
          return 1;
       end if;
 
@@ -2519,7 +2511,6 @@ procedure GPS.Main is
       end if;
 
       if GPS_Command_Line.Do_Exit then
-         Application.Release;
          Exit_Status.all := 0;
          return 1;  --  Suppress default handling
       end if;
@@ -2555,7 +2546,6 @@ begin
 
    Application := new Gtkada_Application_Record;
    G_New (Application, Application_Class_Record.The_Type);
-   Application.Hold;
    Application.Initialize
      ("com.adacore.GPS",
       Glib.Application.G_Application_Handles_Open +
