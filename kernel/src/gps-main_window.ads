@@ -33,10 +33,14 @@ with GPS.Kernel;
 
 package GPS.Main_Window is
 
-   type GPS_Window_Record is new Gtk_Application_Window_Record with record
+   type GPS_Application_Record is new Gtkada_Application_Record with record
       Kernel            : GPS.Kernel.Kernel_Handle;
-      Application       : Gtkada_Application;
-      --  The GPS Application
+   end record;
+   type GPS_Application is access all GPS_Application_Record'Class;
+
+   type GPS_Window_Record is new Gtk_Application_Window_Record with record
+      Application       : access GPS_Application_Record'Class;
+      --  The GPS Application (not owned by the window)
 
       Main_Accel_Group  : Gtk_Accel_Group;
       --  The default accelerators for the window
@@ -49,6 +53,8 @@ package GPS.Main_Window is
       Toolbar           : Gtk_Toolbar;
       MDI               : Gtkada.MDI.MDI_Window;
 
+      Is_Destroyed      : Boolean := False;
+
       Last_Event_For_Contextual : Gdk_Event;
       --  The event triggering the last contextual menu
 
@@ -59,14 +65,18 @@ package GPS.Main_Window is
 
    procedure Gtk_New
      (Main_Window : out GPS_Window;
-      Application : Gtkada_Application;
-      Kernel      : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Application : not null access GPS_Application_Record'Class;
       Menubar     : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class);
    --  Create a new main window.
    --  Home_Dir is the home directory (e.g ~/.gps) under which configuration
    --  files will be saved.
    --  Prefix_Directory is the prefix where GPS is installed (e.g /opt/gps).
    --  Application is the GPS Application instance
+
+   function Kernel
+     (Self : not null access GPS_Window_Record'Class)
+      return GPS.Kernel.Kernel_Handle;
+   --  The kernel for the application
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class);
    --  Register the key bindings associated with the window

@@ -344,7 +344,8 @@ package body GPS.Kernel.Custom is
                  (Kernel, Create (From_File), Node.Child, Hard_Coded);
                Free (Node);
             exception
-               when others =>
+               when E : others =>
+                  Trace (Me, E);
                   return "Error while executing parse_xml()";
             end;
 

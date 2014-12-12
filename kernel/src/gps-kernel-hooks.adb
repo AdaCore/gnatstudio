@@ -1218,7 +1218,6 @@ package body GPS.Kernel.Hooks is
    begin
       if Info = null then
          Insert (Kernel, -"No such hook: " & To_String (Hook));
-
       else
          Trace (Me, "Run_Hook: " & To_String (Hook));
 

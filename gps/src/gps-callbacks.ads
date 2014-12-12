@@ -30,18 +30,9 @@ with Gtk.Enums;              use Gtk.Enums;
 with Gtkada.MDI;             use Gtkada.MDI;
 
 with GPS.Kernel;             use GPS.Kernel;
-with GPS.Main_Window;        use GPS.Main_Window;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 package GPS.Callbacks is
-
-   GPS_Main : GPS_Window;
-   Started  : Boolean := False;
-   Exiting  : Boolean := False;
-   --  Whether GPS is exiting
-
-   function On_GPS_Started return Boolean;
-   --  Called when GPS is started and visible on the screen
 
    procedure Ctrl_C_Handler;
    pragma Convention (C, Ctrl_C_Handler);

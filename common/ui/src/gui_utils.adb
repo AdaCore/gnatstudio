@@ -503,11 +503,6 @@ package body GUI_Utils is
          end if;
 
          return False;
-
-      exception
-         when E : others =>
-            Trace (Me, E);
-            return False;
       end Key_Press_For_Contextual_Menu;
 
       ---------------------------------------
@@ -575,11 +570,6 @@ package body GUI_Utils is
          end if;
 
          return False;
-
-      exception
-         when E : others =>
-            Trace (Me, E);
-            return False;
       end Button_Press_For_Contextual_Menu;
 
       ------------------------------

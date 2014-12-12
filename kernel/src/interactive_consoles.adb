@@ -1042,9 +1042,11 @@ package body Interactive_Consoles is
                Errors       => Errors);
 
             --  Preserve the focus on the console after an interactive
-            --  execution.
+            --  execution, although the command might have destroyed the MDI
 
-            Grab_Toplevel_Focus (Get_MDI (Console.Kernel), Console.View);
+            if Get_MDI (Console.Kernel) /= null then
+               Grab_Toplevel_Focus (Get_MDI (Console.Kernel), Console.View);
+            end if;
 
             --  Output is done via the scripting language already
             return "";

@@ -20,8 +20,7 @@ with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Main_Window;           use GPS.Main_Window;
 
 package body GPS.Callbacks is
 
@@ -64,21 +63,6 @@ package body GPS.Callbacks is
       null;
    end Ctrl_C_Handler;
 
-   --------------------
-   -- On_GPS_Started --
-   --------------------
-
-   function On_GPS_Started return Boolean is
-   begin
-      Run_Hook (GPS_Main.Kernel, GPS_Started_Hook);
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Gtk_Trace, E);
-         return False;
-   end On_GPS_Started;
-
    -------------------
    -- Title_Changed --
    -------------------
@@ -91,7 +75,7 @@ package body GPS.Callbacks is
       pragma Unreferenced (MDI);
       C : MDI_Child;
    begin
-      if not Exiting then
+      if not Kernel.Is_In_Destruction then
          C := MDI_Child (To_Object (Child, 1));
          Set_Main_Title (Kernel, C);
       end if;
@@ -103,21 +87,17 @@ package body GPS.Callbacks is
 
    procedure Set_Main_Title
      (Kernel : access Kernel_Handle_Record'Class;
-      Child  : MDI_Child) is
+      Child  : MDI_Child)
+   is
+      Win : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
    begin
-      if Started then
+      if Win /= null then
          if Child = null then
-            Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
+            Reset_Title (Win);
+         elsif Has_Title_Bar (Child) then
+            Reset_Title (Win, Get_Short_Title (Child));
          else
-            if Has_Title_Bar (Child) then
-               Reset_Title
-                 (GPS_Window (Get_Main_Window (Kernel)),
-                  Get_Short_Title (Child));
-            else
-               Reset_Title
-                 (GPS_Window (Get_Main_Window (Kernel)),
-                  Get_Title (Child));
-            end if;
+            Reset_Title (Win, Get_Title (Child));
          end if;
       end if;
    end Set_Main_Title;
@@ -134,14 +114,11 @@ package body GPS.Callbacks is
       pragma Unreferenced (Mdi);
       Child : MDI_Child;
    begin
-      if Exiting then
-         return;
-      end if;
-
-      Child := MDI_Child (To_Object (Params, 1));
-      Set_Main_Title (Kernel, Child);
-
-      if Started then
+      if Kernel /= null
+        and then not Kernel.Is_In_Destruction
+      then
+         Child := MDI_Child (To_Object (Params, 1));
+         Set_Main_Title (Kernel, Child);
          Context_Changed (Kernel);
       end if;
    end Child_Selected;

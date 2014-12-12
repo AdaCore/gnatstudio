@@ -99,6 +99,10 @@ package body GPS.Kernel is
 
    function To_Address is new Ada.Unchecked_Conversion
      (Selection_Context_Data, System.Address);
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Kernel_Handle);
+   function Convert is new Ada.Unchecked_Conversion
+     (Kernel_Handle, System.Address);
 
    procedure Free (Tool : in out Tool_Properties_Record);
    procedure Free_Tools (Kernel : access Kernel_Handle_Record'Class);
@@ -124,6 +128,14 @@ package body GPS.Kernel is
       Line     : Natural;
       Column   : Basic_Types.Visible_Column_Type := 1;
       Text     : String);
+
+   procedure On_Main_Window_Destroyed (Data, Self : System.Address)
+     with Convention => C;
+   --  Called when the main window is destroyed.
+   --  We unfortunately cannot reuse the mechanics from GtkApplication, since
+   --  the window is unregistered very early (gtk_window_destroy), before its
+   --  children are destroyed. As a result, plugins like filepos.py can no
+   --  longer access the MDI if the main window is found via Get_Window_By_Id.
 
    ------------------
    -- Report_Error --
@@ -301,7 +313,6 @@ package body GPS.Kernel is
       Handle.Launcher.Kernel := GPS.Core_Kernels.Core_Kernel (Handle);
       Handle.Env := new GPS.Environments.Environment_Record;
       Handle.Application := Application;
-      Handle.Main_Window := 0;
 
       GPS.Core_Kernels.Initialize (Handle);
 
@@ -339,15 +350,27 @@ package body GPS.Kernel is
          Name => "kernel.preferences_changed");
    end Gtk_New;
 
+   ------------------------------
+   -- On_Main_Window_Destroyed --
+   ------------------------------
+
+   procedure On_Main_Window_Destroyed (Data, Self : System.Address) is
+      Kernel : constant Kernel_Handle := Convert (Data);
+      pragma Unreferenced (Self);
+   begin
+      Kernel.Main_Window := null;
+   end On_Main_Window_Destroyed;
+
    ---------------------
    -- Set_Main_Window --
    ---------------------
 
    procedure Set_Main_Window
      (Self : not null access Kernel_Handle_Record;
-      Id   : Guint) is
+      Win  : not null access Gtk.Window.Gtk_Window_Record'Class) is
    begin
-      Self.Main_Window := Id;
+      Self.Main_Window := Win;
+      Win.Weak_Ref (On_Main_Window_Destroyed'Access, Convert (Self));
    end Set_Main_Window;
 
    ----------------------------
@@ -943,7 +966,7 @@ package body GPS.Kernel is
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window is
    begin
-      return Handle.Application.Get_Window_By_Id (Handle.Main_Window);
+      return Gtk_Window (Handle.Main_Window);
    end Get_Main_Window;
 
    ------------------

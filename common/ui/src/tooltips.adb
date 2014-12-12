@@ -343,9 +343,6 @@ package body Tooltips is
       Return_Callback.Connect
         (On_Widget, Signal_Key_Press_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
---        Return_Callback.Connect
---          (On_Widget, Signal_Key_Release_Event,
---           Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
       Return_Callback.Connect
         (On_Widget, Signal_Motion_Notify_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));

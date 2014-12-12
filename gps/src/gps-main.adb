@@ -282,12 +282,12 @@ procedure GPS.Main is
    Server_Mode            : Boolean := False;
    Port_Number            : Natural := 0;
 
-   Application            : Gtkada_Application;
+   GPS_Main               : GPS_Window;
+   Application            : GPS_Application;
    Project_Name           : Virtual_File := No_File;
    About_Contents         : String_Access;
    Splash                 : Gtk_Window;
    Files_To_Open          : File_To_Open_Vectors.Vector;
-   Cleanup_Needed         : Boolean := False;
    Unexpected_Exception   : Boolean := False;
    Splash_Timeout         : Glib.Guint := 1000;
    Env                    : GPS.Environments.Environment;
@@ -316,6 +316,9 @@ procedure GPS.Main is
    procedure Activate_Callback
      (Application : access Gapplication_Record'Class);
    --  Handler for the ::activate signal, emitted by the application
+
+   function On_GPS_Started return Boolean;
+   --  Called when GPS is started and visible on the screen
 
    function Command_Line_Callback
      (Application  : access Gapplication_Record'Class;
@@ -1231,28 +1234,28 @@ procedure GPS.Main is
       return Glib.Gint
    is
       pragma Unreferenced (Command_Line);
-      Kernel      : Kernel_Handle;
-      Menubar     : Gtk_Menu_Bar;
+      App     : constant GPS_Application := GPS_Application (Application);
+      Menubar : Gtk_Menu_Bar;
 
    begin
       --  Create the kernel and prepare the menu model
 
-      Gtk_New
-        (Kernel, Gtkada_Application (Application), GPS_Home_Dir, Prefix_Dir);
-      Create_MDI_Preferences (Kernel);
+      Gtk_New (App.Kernel, App, GPS_Home_Dir, Prefix_Dir);
+
+      Create_MDI_Preferences (App.Kernel);
       Install_Menus
-        (Kernel,
-         Gtkada_Application (Application),
-         Create_From_Base ("menus.xml", Get_Share_Dir (Kernel).Full_Name.all),
+        (App.Kernel,
+         App,
+         Create_From_Base
+           ("menus.xml", Get_Share_Dir (App.Kernel).Full_Name.all),
          Menubar => Menubar);
 
       --  Finally create the main window, and setup the project
 
-      GPS.Main_Window.Gtk_New
-        (GPS_Main, Gtkada_Application (Application), Kernel, Menubar);
+      GPS.Main_Window.Gtk_New (GPS_Main, App, Menubar);
 
-      GPS.Stock_Icons.Register_Stock_Icons (GPS_Main.Kernel, Prefix_Dir);
-      GPS_Main.Kernel.Set_Environment (Env);
+      GPS.Stock_Icons.Register_Stock_Icons (App.Kernel, Prefix_Dir);
+      App.Kernel.Set_Environment (Env);
 
       --  Make the /Window menu dynamic.
       --  ??? This does not work with GtkApplication menu
@@ -1260,11 +1263,11 @@ procedure GPS.Main is
       declare
          Menu_Item : Gtk_Menu_Item;
       begin
-         Menu_Item := Find_Menu_Item (Kernel, -"/Window");
+         Menu_Item := Find_Menu_Item (App.Kernel, -"/Window");
          Set_Submenu
            (Menu_Item, Kernel_Desktop.Create_Menu
               (GPS_Main.MDI,
-               User         => Kernel,
+               User         => App.Kernel,
                Registration =>
                  GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
       end;
@@ -1285,14 +1288,11 @@ procedure GPS.Main is
 
       Reset_Title (GPS_Main);
 
-      GPS.Menu.Register_Common_Menus (GPS_Main.Kernel);
+      GPS.Menu.Register_Common_Menus (App.Kernel);
 
       Kernel_Callback.Connect
-        (Get_MDI (GPS_Main.Kernel), Signal_Child_Selected,
-         Child_Selected'Access, GPS_Main.Kernel);
-      Kernel_Callback.Connect
-        (Get_MDI (GPS_Main.Kernel), Signal_Child_Title_Changed,
-         Title_Changed'Access, GPS_Main.Kernel);
+        (Get_MDI (App.Kernel), Signal_Child_Title_Changed,
+         Title_Changed'Access, App.Kernel);
 
       --  Under Windows, pressing the primary button outside of the slider
       --  should jump by a page increment.
@@ -1315,11 +1315,11 @@ procedure GPS.Main is
       if Splash = null then
          Timeout_Id := Process_Timeout.Timeout_Add
            (1, Finish_Setup'Unrestricted_Access,
-            (GPS_Main.Kernel, null, null, null, null, null, False));
+            (App.Kernel, null, null, null, null, null, False));
       else
          Timeout_Id := Process_Timeout.Timeout_Add
            (Splash_Timeout, Finish_Setup'Unrestricted_Access,
-            (GPS_Main.Kernel, null, null, null, null, null, False));
+            (App.Kernel, null, null, null, null, null, False));
       end if;
 
       return 0;
@@ -1334,6 +1334,7 @@ procedure GPS.Main is
       Files       : Gtkada.Application.GFile_Array)
    is
       pragma Unreferenced (Application);
+      Started : constant Boolean := GPS_Main /= null;
 
    begin
       if Started then
@@ -1395,19 +1396,22 @@ procedure GPS.Main is
    procedure Shutdown_Callback
      (Application : access Gapplication_Record'Class)
    is
-      pragma Unreferenced (Application);
-      Kernel   : Kernel_Handle;
+      Kernel  : constant Kernel_Handle := GPS_Application (Application).Kernel;
       Log_File : Virtual_File;
       Pid_File : Virtual_File;
       Project  : Project_Type;
       Success  : Boolean;
 
    begin
-      if not Cleanup_Needed then
+      --  At this stage, the GUI has already been destroyed, so we must not
+      --  reference GPS_Main.
+
+      if Kernel = null then
          return;
       end if;
 
-      Kernel   := GPS_Main.Kernel;
+      Increase_Indent (Me, "Shutdown");
+
       Log_File := Create_From_Dir (Get_Home_Dir (Kernel), +"log");
       Pid_File := Create_From_Dir
         (Get_Home_Dir (Kernel), +("log." & Pid_Image));
@@ -1415,47 +1419,21 @@ procedure GPS.Main is
 
       Set_Destruction_Flag (Kernel, True);
 
-      Cleanup_Needed := False;
-      Exiting := True;
-
       --  We want to close the debuggers first, to avoid saving debugger
       --  consoles in the desktop.
 
       GVD_Module.Debug_Terminate (Kernel);
 
-      if Started and then Save_Desktop_On_Exit.Get_Pref then
-         Save_Desktop (Kernel);
-      end if;
-
-      if Started then
-         Get_Messages_Container (Kernel).Save;
-         Get_Messages_Container (Kernel).Clear;
-      end if;
+      Get_Messages_Container (Kernel).Save;
+      Get_Messages_Container (Kernel).Clear;
 
       if Get_Registry (Kernel).Tree.Status = Default then
          Trace (Me, "Remove default project on disk, no longer used");
          Delete (Project_Path (Project), Success);
       end if;
 
-      --  All tasks should be interrupted before the main window is closed
-      --  since they may need to access their consoles.
-
-      Task_Manager.Interrupt_All_Tasks (Get_Task_Manager (Kernel));
-
-      --  Destroy the GUI before the modules, otherwise if some package tries
-      --  to access their local module_id, they will generate storage_error.
-      --  No module should need to access its GUI anyway when it is destroyed,
-      --  since the desktop has already been saved, histories and properties
-      --  are handled separately,...
-      --  Since the call to destroy below will free the animation at some
-      --  point, we no longer want to access/update it past this point.
-
-      Destroy (GPS_Main);
-
       Free_Modules (Kernel);
-
       Destroy (Kernel);
-
       GNATCOLL.Traces.Finalize;
 
       --  Memory used by the xref database.
@@ -1496,6 +1474,16 @@ procedure GPS.Main is
          Free (Tmp);
       end;
    end Shutdown_Callback;
+
+   --------------------
+   -- On_GPS_Started --
+   --------------------
+
+   function On_GPS_Started return Boolean is
+   begin
+      Run_Hook (Application.Kernel, GPS_Started_Hook);
+      return False;
+   end On_GPS_Started;
 
    ----------------------
    -- Set_Project_Name --
@@ -1832,8 +1820,6 @@ procedure GPS.Main is
       end Load_Sources;
 
    begin
-      Cleanup_Needed := True;
-
       --  Register the default filters, so that other modules can create
       --  contextual menus
 
@@ -2176,6 +2162,12 @@ procedure GPS.Main is
 
       Configure_MDI (GPS_Main.Kernel);
 
+      --  When the hooks have been registered, in particular context_changed,
+      --  we can start monitoring focus change.
+      Kernel_Callback.Connect
+        (Get_MDI (GPS_Main.Kernel), Signal_Child_Selected,
+         Child_Selected'Access, GPS_Main.Kernel);
+
       --  We now make sure we have a project loaded, so that opening editors
       --  will work correctly.
 
@@ -2300,13 +2292,11 @@ procedure GPS.Main is
          Free (Batch_File);
       end if;
 
-      Started := True;
-
       --  Set the title of the GPS window
       Set_Main_Title
         (GPS_Main.Kernel, Get_Focus_Child (Get_MDI (GPS_Main.Kernel)));
 
-      Idle_Id := Glib.Main.Idle_Add (On_GPS_Started'Access);
+      Idle_Id := Glib.Main.Idle_Add (On_GPS_Started'Unrestricted_Access);
 
       return False;
    end Finish_Setup;
@@ -2544,7 +2534,7 @@ begin
        Type_Name    => "GPSApplication",
        Class_Init   => Application_Class_Init'Unrestricted_Access);
 
-   Application := new Gtkada_Application_Record;
+   Application := new GPS_Application_Record;
    G_New (Application, Application_Class_Record.The_Type);
    Application.Initialize
      ("com.adacore.GPS",
@@ -2582,6 +2572,7 @@ begin
    Application.On_Shutdown (Shutdown_Callback'Unrestricted_Access);
 
    Registered := Application.Register (Cancellable => null);
+
    Status := Application.Run;
 
    if Status /= 0 then

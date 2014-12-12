@@ -501,9 +501,9 @@ package body GPS.Kernel.Console is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Msg     : GPS_Message;
       Msg2    : constant access Kernel_Messages_Window :=
         new Kernel_Messages_Window;
+      Msg     : GPS_Message;
       pragma Unreferenced (Msg);
    begin
       Messages_Views.Register_Module (Kernel);
@@ -533,8 +533,10 @@ package body GPS.Kernel.Console is
          Stock_Id => Stock_Open,
          Category => -"Messages");
 
-      --  After the actions have been registered, so that the icons are found
-      Msg := Messages_Views.Get_Or_Create_View (Kernel);
+      --  After the actions have been registered, so that the icons are found.
+      --  Do not grab the focus, since this would emit the "context_changed"
+      --  hook, but the hook has not been registered yet.
+      Msg := Messages_Views.Get_Or_Create_View (Kernel, Focus => False);
    end Register_Module;
 
 end GPS.Kernel.Console;

@@ -95,7 +95,7 @@ package GPS.Kernel is
 
    procedure Set_Main_Window
      (Self : not null access Kernel_Handle_Record;
-      Id   : Guint);
+      Win  : not null access Gtk.Window.Gtk_Window_Record'Class);
    --  Set the main window for GPS. Id is the result of calling
    --  Gtk.Application_Window.Get_Id.
 
@@ -1175,8 +1175,11 @@ private
       --  The action contexts registered in the kernel
 
       Application : access Gtk_Application_Record'Class;
-      Main_Window : Guint;
+      Main_Window : access Gtk.Window.Gtk_Window_Record'Class;
       --  The main GPS window
+      --  We used to store the id of the main window (from the application),
+      --  but this gets invalid early when GPS exists, and we no longer have
+      --  access to the main window while destroying its children
 
       GNAT_Version : GNAT.Strings.String_Access;
       --  Full GNAT Version, if relevant

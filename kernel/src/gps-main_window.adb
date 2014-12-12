@@ -74,9 +74,11 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;
 with Remote;                    use Remote;
+with Task_Manager;              use Task_Manager;
 with User_Interface_Tools;
 
 package body GPS.Main_Window is
@@ -209,6 +211,13 @@ package body GPS.Main_Window is
       Password_Mode : Boolean) return String;
    --  See inherited for documentation
 
+   function Prepare_Quit
+     (Main_Window : access GPS_Window_Record'Class)
+      return Boolean;
+   --  Prepare GPS for quitting the main window.
+   --  It will save all current windows, and run the hooks.
+   --  Returns False if quitting should be prevented at this time.
+
    ----------------
    -- Query_User --
    ----------------
@@ -303,6 +312,35 @@ package body GPS.Main_Window is
       return Success;
    end Execute;
 
+   ------------------
+   -- Prepare_Quit --
+   ------------------
+
+   function Prepare_Quit
+     (Main_Window : access GPS_Window_Record'Class)
+      return Boolean
+   is
+      Data : aliased Exit_Before_Action_Hooks_Args :=
+        (Hooks_Data with null record);
+   begin
+      if Save_MDI_Children (Main_Window.Kernel)
+        and then Run_Hook_Until_Failure
+          (Main_Window.Kernel,
+           Before_Exit_Action_Hook, Data'Unchecked_Access)
+      then
+         --  Need to save the desktop here, while the MDI still belongs to a
+         --  toplevel window, since otherwise we can't save the size or status
+         --  (maximized or not) of the latter. So can't be done in On_Destroy.
+         if Save_Desktop_On_Exit.Get_Pref then
+            Save_Desktop (Main_Window.Kernel);
+         end if;
+
+         return True;
+      else
+         return False;
+      end if;
+   end Prepare_Quit;
+
    ----------
    -- Quit --
    ----------
@@ -310,20 +348,31 @@ package body GPS.Main_Window is
    procedure Quit
      (Main_Window : access GPS_Window_Record'Class;
       Force       : Boolean := False;
-      Status      : Integer := 0)
-   is
-      Data : aliased Exit_Before_Action_Hooks_Args :=
-               (Hooks_Data with null record);
+      Status      : Integer := 0) is
    begin
-      if Force or else
-        (Save_MDI_Children (Main_Window.Kernel)
-         and then Run_Hook_Until_Failure
-           (Main_Window.Kernel,
-            Before_Exit_Action_Hook, Data'Unchecked_Access))
-      then
-         Main_Window.Application.Quit;
-         Ada.Command_Line.Set_Exit_Status
-           (Ada.Command_Line.Exit_Status (Status));
+      --  Calling Prepare_Quit my be calling GPS.exit(), which would call Quit
+      --  again. We need to protect against this.
+
+      if not Main_Window.Is_Destroyed then
+         Main_Window.Is_Destroyed := True;
+
+         if Force or else Prepare_Quit (Main_Window) then
+            Increase_Indent (Me, "Requesting application quit");
+            Ada.Command_Line.Set_Exit_Status
+              (Ada.Command_Line.Exit_Status (Status));
+
+            --  Destroying the last window will also result in quitting the
+            --  application. If we call directly Application.Quit, we are
+            --  bypassing the On_Destroy callback
+            --  However, the GPS testsuite contains lots of tests that call
+            --  GPS.exit() as part of the gps_started callback. If we destroy
+            --  the window, it means that the other hooks no longer have access
+            --  to the GUI, and that results in a lot of errors (for instance
+            --  python scripts no longer have a console).
+
+            --  Destroy (Main_Window);
+            Main_Window.Application.Quit;
+         end if;
       end if;
    end Quit;
 
@@ -337,9 +386,7 @@ package body GPS.Main_Window is
    is
       pragma Unreferenced (Params);
    begin
-      Quit (GPS_Window (Widget));
-
-      return True;
+      return not Prepare_Quit (GPS_Window (Widget));
    end Delete_Callback;
 
    ------------------------
@@ -510,14 +557,25 @@ package body GPS.Main_Window is
       return False;
    end On_Focus_In;
 
+   ------------
+   -- Kernel --
+   ------------
+
+   function Kernel
+     (Self : not null access GPS_Window_Record'Class)
+      return GPS.Kernel.Kernel_Handle
+   is
+   begin
+      return Self.Application.Kernel;
+   end Kernel;
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
      (Main_Window : out GPS_Window;
-      Application : Gtkada_Application;
-      Kernel      : not null access Kernel_Handle_Record'Class;
+      Application : not null access GPS_Application_Record'Class;
       Menubar     : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class)
    is
       Vbox      : Gtk_Vbox;
@@ -533,11 +591,10 @@ package body GPS.Main_Window is
       Main_Window.Application := Application;
       Application.Add_Window (Main_Window);
 
-      Main_Window.Kernel := Kernel_Handle (Kernel);
-      Kernel.Set_Main_Window (Main_Window.Get_Id);
+      Application.Kernel.Set_Main_Window (Main_Window);
 
       Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
-        (Get_Preferences (Main_Window.Kernel),
+        (Get_Preferences (Application.Kernel),
          Name    => "GPS6-General-Toolbar-Style",
          Label   => -"Toolbar style",
          Page    => -"Windows",
@@ -559,7 +616,7 @@ package body GPS.Main_Window is
 
       GPS.Kernel.MDI.Gtk_New
         (MDI    => Main_Window.MDI,
-         Kernel => Main_Window.Kernel,
+         Kernel => Application.Kernel,
          Group  => Main_Window.Main_Accel_Group);
 
       Gtk_New_Vbox (Vbox, False, 0);
@@ -580,11 +637,11 @@ package body GPS.Main_Window is
 
       Widget_Callback.Connect (Main_Window, Signal_Destroy, On_Destroy'Access);
 
-      Add_Hook (Main_Window.Kernel, Preference_Changed_Hook,
+      Add_Hook (Application.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),
                 Name => "main_window.preferences_changed");
 
-      Add_Hook (Main_Window.Kernel, Project_Changed_Hook,
+      Add_Hook (Application.Kernel, Project_Changed_Hook,
                 Wrapper (On_Project_Changed'Access),
                 Name => "main_window.projet_changed");
 
@@ -603,16 +660,16 @@ package body GPS.Main_Window is
         (Main_Window, Dest_Default_All, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
         (Main_Window, Signal_Drag_Data_Received,
-         Drag_Data_Received'Access, Main_Window.Kernel);
+         Drag_Data_Received'Access, Application.Kernel);
 
       --  Set the generic user interface
       User_Interface_Tools.Set_User_Interface
         (new User_Interface'(Main_Window => Gtk_Window (Main_Window)));
 
-      Main_Window.Toolbar := Create_Toolbar (Main_Window.Kernel, Id => "main");
+      Main_Window.Toolbar := Create_Toolbar (Application.Kernel, Id => "main");
       Main_Window.Toolbar_Box.Pack_Start (Main_Window.Toolbar);
 
-      Preferences_Changed (Main_Window.Kernel, Data => null);
+      Preferences_Changed (Application.Kernel, Data => null);
    end Gtk_New;
 
    -------------------
@@ -1325,10 +1382,12 @@ package body GPS.Main_Window is
    ----------------
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class) is
-      pragma Unreferenced (Main_Window);
-
+      Win : constant GPS_Window := GPS_Window (Main_Window);
    begin
-      Trace (Me, "destroying main window");
+      --  All tasks should be interrupted before the main window is closed
+      --  since they may need to access their consoles.
+
+      Task_Manager.Interrupt_All_Tasks (Get_Task_Manager (Win.Kernel));
    end On_Destroy;
 
    -----------------

@@ -296,7 +296,11 @@ package body Task_Manager.GUI is
 
    procedure Refresh (GUI : Task_Manager_Interface) is
    begin
-      if GUI.Manager.Queues = null then
+      if GUI = null then
+         --  No GUI yet, or already exited
+         return;
+
+      elsif GUI.Manager.Queues = null then
          GUI.Set_Mode (Idle => True);
       else
          declare
@@ -338,6 +342,7 @@ package body Task_Manager.GUI is
       --  If the graphics have been initialized, free them now
 
       Unregister_Timeout (GUI);
+      GUI.Manager.GUI := null;
    end On_GUI_Destroy;
 
    ------------------------
@@ -372,9 +377,10 @@ package body Task_Manager.GUI is
       pragma Unreferenced (Dummy);
       Data : aliased Task_Hooks_Args := (Hooks_Data with Queue_ID => Index);
    begin
-      Refresh (GUI);
-
-      Unregister_Timeout (GUI);
+      if GUI /= null then
+         Refresh (GUI);
+         Unregister_Timeout (GUI);
+      end if;
       Run_Hook (Manager.Kernel, Task_Started_Hook, Data'Access);
    end Queue_Added;
 
@@ -398,9 +404,10 @@ package body Task_Manager.GUI is
             null;
       end;
 
-      Refresh (GUI);
-
-      Unregister_Timeout (GUI);
+      if GUI /= null then
+         Refresh (GUI);
+         Unregister_Timeout (GUI);
+      end if;
    end Queue_Removed;
 
    -------------------------------

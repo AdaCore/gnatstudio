@@ -8539,9 +8539,14 @@ package body Src_Editor_Buffer is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return Source_Buffer_Array
    is
-      Iter        : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Iter        : Child_Iterator;
       Child_Count : Natural := 0;
    begin
+      if Get_MDI (Kernel) = null then
+         return (1 .. 0 => <>);
+      end if;
+
+      Iter := First_Child (Get_MDI (Kernel));
       while Get (Iter) /= null loop
          Child_Count := Child_Count + 1;
          Next (Iter);

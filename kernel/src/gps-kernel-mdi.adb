@@ -1048,8 +1048,6 @@ package body GPS.Kernel.MDI is
          end if;
       end Get_Project_Name;
 
-      Main_Window : constant Gdk.Gdk_Window :=
-                      Get_Window (Handle.Get_Main_Window);
       MDI          : constant MDI_Window := Get_MDI (Handle);
       File_Name    : constant Virtual_File :=
                        Create_From_Dir (Handle.Home_Dir, Desktop_Name);
@@ -1070,7 +1068,7 @@ package body GPS.Kernel.MDI is
       Trace (Me, "saving desktop file " & File_Name.Display_Full_Name
              & " for project " & Project_Name.Display_Full_Name);
 
-      if Main_Window = null then
+      if MDI = null then
          return;
       end if;
 

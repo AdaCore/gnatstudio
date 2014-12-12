@@ -11,13 +11,12 @@ from GPS import *
 
 
 def on_file_closed(hook, file):
-    buffer = EditorBuffer.get(file)
-    line = buffer.current_view().cursor().line()
-    column = buffer.current_view().cursor().column()
-    file.set_property("lastloc_line", `line`, persistent=True)
-    file.set_property("lastloc_column", `column`, persistent=True)
-    Logger ("FileLoc").log \
-        ("Last location for " + file.name() + " is " + `line` + " " + `column`)
+    buffer = EditorBuffer.get(file, open=False)
+    if buffer:
+        line = buffer.current_view().cursor().line()
+        column = buffer.current_view().cursor().column()
+        file.set_property("lastloc_line", repr(line), persistent=True)
+        file.set_property("lastloc_column", repr(column), persistent=True)
 
 
 def on_file_edited(hook, file):
@@ -30,10 +29,8 @@ def on_file_edited(hook, file):
         if cursor.line() == 1 and cursor.column() == 1:
             line = file.get_property("lastloc_line")
             column = file.get_property("lastloc_column")
-            Logger("FileLoc").log(
-                "Restoring last location " + line + " " + column)
-            buffer.current_view().goto \
-                (buffer.at(int(line), int(column)))
+            buffer.current_view().goto(
+                buffer.at(int(line), int(column)))
     except:
         pass
 

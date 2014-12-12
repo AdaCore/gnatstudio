@@ -1316,11 +1316,15 @@ package body GPS.Kernel.Modules.UI is
       Parent_Menu  : Gtk_Menu;
       Index        : Gint;
       Win : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
-
-      Bar : constant Gtk_Menu_Bar :=
-        (if Menubar = null then Win.Menu_Bar else Gtk_Menu_Bar (Menubar));
+      Bar : Gtk_Menu_Bar;
 
    begin
+      if Win = null and then Menubar = null then
+         return;
+      end if;
+
+      Bar := (if Menubar = null then Win.Menu_Bar else Gtk_Menu_Bar (Menubar));
+
       Parent := Find_Or_Create_Menu_Tree
         (Menu_Bar     => Bar,
          Menu         => null,
@@ -1830,6 +1834,10 @@ package body GPS.Kernel.Modules.UI is
    begin
       if Toolbar = null then
          T := Get_Toolbar (Kernel);
+      end if;
+
+      if T = null then
+         return -1;
       end if;
 
       Count := T.Get_N_Items;
@@ -3045,6 +3053,7 @@ package body GPS.Kernel.Modules.UI is
       Doc    : Document;
       N      : Node;
    begin
+      Trace (Me, "Install menus from " & Description.Display_Full_Name);
       if Globals.Symbols = No_Symbol_Table then
          Globals.Symbols := Allocate;
       end if;

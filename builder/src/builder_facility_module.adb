@@ -1225,14 +1225,16 @@ package body Builder_Facility_Module is
 
       C : Buttons_List.Cursor;
    begin
-      --  Browse through the registry and remove already added buttons
+      if Toolbar /= null then
+         --  Browse through the registry and remove already added buttons
 
-      C := Builder_Module_ID.Buttons.First;
+         C := Builder_Module_ID.Buttons.First;
 
-      while Has_Element (C) loop
-         Remove (Toolbar, Element (C));
-         Next (C);
-      end loop;
+         while Has_Element (C) loop
+            Remove (Toolbar, Element (C));
+            Next (C);
+         end loop;
+      end if;
 
       --  Remove all buttons from registry
 
@@ -1384,6 +1386,7 @@ package body Builder_Facility_Module is
 
    begin
       if Target = null
+        or else Toolbar = null
         or else not Get_Properties (Target).In_Toolbar
         or else not Get_Properties (Target).Visible
       then

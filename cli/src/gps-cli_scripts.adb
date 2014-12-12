@@ -28,6 +28,7 @@ with GNAT.Regpat;                     use GNAT.Regpat;
 
 with GNATCOLL.Projects;               use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 
 with GNATdoc;                         use GNATdoc;
@@ -39,6 +40,7 @@ with GPS.Customizable_Modules;        use GPS.Customizable_Modules;
 with GPS.Scripts;                     use GPS.Scripts;
 
 package body GPS.CLI_Scripts is
+   Me : constant Trace_Handle := Create ("SCRIPTS");
 
    Xml_Cst               : aliased constant String := "xml";
    Xml_Custom_Parameters : constant Cst_Argument_List := (1 => Xml_Cst'Access);
@@ -116,7 +118,8 @@ package body GPS.CLI_Scripts is
             end if;
 
             exception
-               when others =>
+               when E : others =>
+                  Trace (Me, E);
                   Set_Error_Msg (Data, "Error while executing parse_xml()");
          end;
       end if;
