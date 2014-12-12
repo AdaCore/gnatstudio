@@ -3,6 +3,7 @@ Provides support for gnatmetric.
 """
 
 import re
+import os
 import GPS
 from gps_utils import interactive
 
@@ -14,6 +15,8 @@ xml_base = ("""
       <arg>%gnat</arg>
       <arg>metric</arg>
       <arg>-dd</arg>
+      <arg>-ox</arg>
+      <arg>%O/metrix.xml</arg>
       <arg>-x</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
@@ -173,6 +176,8 @@ xml_base = ("""
       <arg>%gnat</arg>
       <arg>metric</arg>
       <arg>-dd</arg>
+      <arg>-ox</arg>
+      <arg>%O/metrix.xml</arg>
       <arg>-x</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
@@ -189,6 +194,8 @@ xml_base = ("""
       <arg>%gnat</arg>
       <arg>metric</arg>
       <arg>-dd</arg>
+      <arg>-ox</arg>
+      <arg>%O/metrix.xml</arg>
       <arg>-x</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
@@ -205,6 +212,8 @@ xml_base = ("""
       <arg>%gnat</arg>
       <arg>metric</arg>
       <arg>-dd</arg>
+      <arg>-ox</arg>
+      <arg>%O/metrix.xml</arg>
       <arg>-x</arg>
       <arg>-P%pp</arg>
       <arg>%X</arg>
@@ -257,7 +266,7 @@ def on_compilation_finished(hook, category,
         return
 
     v = GPS.XMLViewer.create_metric("Metrics")
-    v.parse("metrix.xml")
+    v.parse(os.path.join(GPS.Project.root().object_dirs()[0], "metrix.xml"))
 
 
 @interactive(name='open metrics view')
@@ -267,7 +276,8 @@ def show_metrics_window():
 
     if w is None:
         v = GPS.XMLViewer.create_metric("Metrics")
-        v.parse("metrix.xml")
+        v.parse(os.path.join(
+            GPS.Project.root().object_dirs()[0], "metrix.xml"))
     else:
         w.get_child()
         w.raise_window()

@@ -37,7 +37,7 @@ project Sdc is
    end Binder;
 
    package Ide is
-      for Vcs_Kind use "CVS";
+      for Vcs_Kind use "Git";
    end Ide;
 
 end Sdc;
