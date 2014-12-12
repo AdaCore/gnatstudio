@@ -21,7 +21,6 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Application_Window;  use Gtk.Application_Window;
 with Gtk.Box;                 use Gtk.Box;
-with Gtk.Icon_Factory;        use Gtk.Icon_Factory;
 with Gtk.Menu_Bar;            use Gtk.Menu_Bar;
 with Gdk.Event;               use Gdk.Event;
 with Gtk.Toolbar;             use Gtk.Toolbar;
@@ -44,9 +43,6 @@ package GPS.Main_Window is
 
       Main_Accel_Group  : Gtk_Accel_Group;
       --  The default accelerators for the window
-
-      Icon_Factory      : Gtk_Icon_Factory;
-      --  The icon factory specific to GPS
 
       Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;
       Toolbar_Box       : Gtk_Box;
