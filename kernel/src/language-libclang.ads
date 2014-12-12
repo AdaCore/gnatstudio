@@ -60,17 +60,24 @@ package Language.Libclang is
 
    --  NOTE: Those two types store Offsets for space efficiency reasons !
 
+   --  10 bits is enough to store the cursor kind
+   type Small_Cursor_Kind is mod 2 ** 10;
+
    type Decl_Info is record
-      Loc : Offset_T;
-      Is_Def : Boolean;
+      Loc        : Offset_T;
+      Is_Def     : Boolean;
+      Kind       : Small_Cursor_Kind;
    end record;
+--     pragma Pack (Decl_Info);
    --  This is the record for declarations information stored in the reference
    --  cache. Important because in C a single entity can have several
    --  declarations AND bodies
 
    type Ref_Info is record
-      Loc : Offset_T;
+      Loc         : Offset_T;
+      Cursor_Kind : Small_Cursor_Kind;
    end record;
+--     pragma Pack (Ref_Info);
    --  This is the record for references information stored in the reference
    --  cache
 

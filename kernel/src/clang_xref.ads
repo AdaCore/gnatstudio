@@ -363,6 +363,7 @@ private
       Offset   : Offset_T;
       Name     : Symbol;
       Clang_Db : Clang_Database;
+      Kind     : Clang_Cursor_Kind;
    end record;
 
    package Clang_Entity_Ref_Vectors is new Ada.Containers.Vectors

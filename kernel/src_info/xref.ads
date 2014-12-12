@@ -37,6 +37,7 @@ with Language.Profile_Formaters; use Language.Profile_Formaters;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Containers.Indefinite_Holders;
+with Array_Utils;
 
 ----------
 -- Xref --
@@ -52,7 +53,9 @@ package Xref is
    --  aliased is added to let AJIS make it accessible to GNATbench
 
    type Root_Entity_Access is access all Root_Entity'Class;
-   type Entity_Array is array (Natural range <>) of Root_Entity_Access;
+
+   package Entity_Arrays is new Array_Utils (Root_Entity_Access);
+   subtype Entity_Array is Entity_Arrays.Array_Type;
 
    No_Entity_Array : Entity_Array (1 .. 0) := (others => <>);
 
@@ -1121,7 +1124,7 @@ private
    type Dummy_Entities_Cursor is new Abstract_Entities_Cursor with null record;
 
    overriding function At_End
-     (Iter : Dummy_Entities_Cursor) return Boolean is (False);
+     (Iter : Dummy_Entities_Cursor) return Boolean is (True);
 
    overriding function Get
      (Iter : Dummy_Entities_Cursor) return Root_Entity'Class

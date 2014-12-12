@@ -134,12 +134,12 @@ package body Language.Libclang_Tree is
       Initial_List : Clang_Iterator_Lists_Ref.Holder :=
         Clang_Iterator_Lists_Ref.To_Holder
           (Clang_Iterator_Lists.Empty_List);
-      Initial_Children : constant Cursors_Vectors.Vector :=
+
+      Initial_Children : constant Cursors_Arrays.Array_Type :=
         Toplevel_Nodes (Self.Tu, Filter_Children'Access);
    begin
-      for I in 1 .. Initial_Children.Length loop
-         Initial_List.Reference.Append
-           (Initial_Children.Element (Natural (I)));
+      for Cursor of Initial_Children loop
+         Initial_List.Reference.Append (Cursor);
       end loop;
 
       declare
@@ -278,22 +278,21 @@ package body Language.Libclang_Tree is
    overriding function Children
      (Self : Clang_Node) return Semantic_Node_Array'Class
    is
-      C : constant Cursors_Vectors.Vector := Get_Children
-        (Self.Cursor);
+      C : constant Cursors_Arrays.Array_Type := Get_Children (Self.Cursor);
    begin
       if Kind (Self.Cursor) = CXCursor_TypedefDecl
-        and then C.Length = 1
+        and then C'Length = 1
         and then
-          Kind (C.Element (1)) in CXCursor_StructDecl | CXCursor_UnionDecl
+          Kind (C (1)) in CXCursor_StructDecl | CXCursor_UnionDecl
       then
-         if Spelling (C.Element (1)) = "" then
+         if Spelling (C (1)) = "" then
             return Clang_Node_Array'
               (Cursors_Holders.To_Holder
-                 (Get_Children (C.Element (1))),
+                 (Get_Children (C (1))),
                Self.Kernel, Self.File);
          else
             return Clang_Node_Array'
-              (Cursors_Holders.To_Holder (Cursors_Vectors.Empty_Vector),
+              (Cursors_Holders.To_Holder (Cursors_Arrays.Empty_Array),
                Self.Kernel, Self.File);
          end if;
       end if;
@@ -492,14 +491,13 @@ package body Language.Libclang_Tree is
    overriding procedure Next (It : in out Clang_Tree_Iterator)
    is
       use Clang_Iterator_Lists;
-      Vec : constant Cursors_Vectors.Vector :=
+      Vec : constant Cursors_Arrays.Array_Type :=
         Get_Children (Element (It.Current_Cursor));
       Cursor_Before : constant Clang_Iterator_Lists.Cursor :=
         Next (It.Current_Cursor);
    begin
-      for I in 1 .. Vec.Length loop
-         It.Elements.Reference.Insert
-           (Cursor_Before, Vec.Element (Natural (I)));
+      for Cursor of Vec loop
+         It.Elements.Reference.Insert (Cursor_Before, Cursor);
       end loop;
       Next (It.Current_Cursor);
    end Next;

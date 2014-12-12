@@ -27,13 +27,14 @@ with Interfaces.C.Strings;
 with Language.Libclang_Tree; use Language.Libclang_Tree;
 with Clang_Xref; use Clang_Xref;
 with GPS.Kernel.Commands; use GPS.Kernel.Commands;
+with String_Utils; use String_Utils;
 
 package body Language.Libclang is
 
    LRU_Size : constant := 16;
 
    Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LANGUAGE_LIBCLANG", Off);
+     GNATCOLL.Traces.Create ("LANGUAGE_LIBCLANG", On);
 
    Clang_Options : constant Clang_Translation_Unit_Flags :=
      Includebriefcommentsincodecompletion
@@ -110,7 +111,8 @@ package body Language.Libclang is
 
    procedure Initialize (Ctx : out Clang_Context)
    is
-      Idx : constant Clang_Index := Create_Index (True, Active (Diagnostics));
+      Idx : constant Clang_Index :=
+        Create_Index (True, Active (Diagnostics));
    begin
       Ctx :=
         (Clang_Indexer => Idx,
@@ -177,6 +179,25 @@ package body Language.Libclang is
    procedure Started_Translation_Unit
      (Client_Data : in out Indexer_Data) is null;
 
+   ---------------------
+   -- Get_Info_Vector --
+   ---------------------
+
+   function Info_Vector
+     (Map : Sym_To_Loc_Map; Sym : GNATCOLL.Symbols.Symbol) return Info_Vectors
+   is
+      Info_Vector : Info_Vectors;
+   begin
+      if not Map.Contains (Sym) then
+         Info_Vector := (new Decl_Info_Vectors.Vector,
+                         new Ref_Info_Vectors.Vector);
+         Map.Include (Sym, Info_Vector);
+      else
+         Info_Vector := Map.Element (Sym);
+      end if;
+      return Info_Vector;
+   end Info_Vector;
+
    -----------------------
    -- Index_Declaration --
    -----------------------
@@ -189,24 +210,34 @@ package body Language.Libclang is
       use Interfaces.C;
       Loc : constant Clang_Location := +Info.loc;
       Sym : GNATCOLL.Symbols.Symbol;
-      Info_Vector : Info_Vectors;
+      use Cursors_Arrays;
    begin
       if Is_From_Main_File (Loc)
       then
 
-         Sym :=
-           Client_Data.Ctx.Sym_Table.Find (Value (Info.entityInfo.USR));
+         --  Add info for base specifiers references in C++ class declarations,
+         --  because for some reasons they're not visited as references by the
+         --  clang indexing process.
 
-         if not Client_Data.Syms_To_Locs.Contains (Sym) then
-            Info_Vector := (new Decl_Info_Vectors.Vector,
-                            new Ref_Info_Vectors.Vector);
-            Client_Data.Syms_To_Locs.Include (Sym, Info_Vector);
-         else
-            Info_Vector := Client_Data.Syms_To_Locs.Element (Sym);
+         if Info.entityInfo.kind = CXIdxEntity_CXXClass then
+            for C of
+              Get_Children
+                (Clang_Cursor (Info.cursor), CXCursor_CXXBaseSpecifier)
+            loop
+               Sym :=
+                 Client_Data.Ctx.Sym_Table.Find (USR (Referenced (C)));
+               Info_Vector (Client_Data.Syms_To_Locs, Sym).Refs.Append
+                 (Ref_Info'
+                    (To_Offset_T (Location (C)),
+                     Small_Cursor_Kind (Kind (C))));
+            end loop;
          end if;
 
-         Info_Vector.Decls.Append
-           (Decl_Info'(To_Offset_T (Loc), Info.isDefinition /= 0));
+         Sym := Client_Data.Ctx.Sym_Table.Find (Value (Info.entityInfo.USR));
+
+         Info_Vector (Client_Data.Syms_To_Locs, Sym).Decls.Append
+           (Decl_Info'(To_Offset_T (Loc), Info.isDefinition /= 0,
+            Small_Cursor_Kind (Info.cursor.kind)));
 
       end if;
    end Index_Declaration;
@@ -223,24 +254,15 @@ package body Language.Libclang is
       use Interfaces.C;
       Loc : constant Clang_Location := +Info.loc;
       Sym : GNATCOLL.Symbols.Symbol;
-      Info_Vector : Info_Vectors;
-
    begin
       if Is_From_Main_File (Loc)
       then
          Sym :=
            Client_Data.Ctx.Sym_Table.Find (Value (Info.referencedEntity.USR));
 
-         if not Client_Data.Syms_To_Locs.Contains (Sym) then
-            Info_Vector := (new Decl_Info_Vectors.Vector,
-                            new Ref_Info_Vectors.Vector);
-            Client_Data.Syms_To_Locs.Include (Sym, Info_Vector);
-         else
-            Info_Vector := Client_Data.Syms_To_Locs.Element (Sym);
-         end if;
-
-         Info_Vector.Refs.Append
-           (Ref_Info'(Loc => To_Offset_T (Loc)));
+         Info_Vector (Client_Data.Syms_To_Locs, Sym).Refs.Append
+           (Ref_Info'(To_Offset_T (Loc),
+            Small_Cursor_Kind (Info.cursor.kind)));
 
       end if;
    end Index_Reference;
@@ -304,6 +326,10 @@ package body Language.Libclang is
          return Translation_Unit (Kernel, File, No_Unsaved_Files);
       end Translation_Unit;
 
+      -------------
+      -- Context --
+      -------------
+
       function Context
         (Project : Project_Type) return Clang_Context
       is
@@ -312,6 +338,9 @@ package body Language.Libclang is
       end Context;
 
    end TU_Source;
+
+   Empty_String_Array : constant GNATCOLL.Utils.Unbounded_String_Array (1 .. 0)
+     := (others => <>);
 
    ----------------------
    -- Translation_Unit --
@@ -340,6 +369,7 @@ package body Language.Libclang is
 
       Context : Clang_Context;
    begin
+
       if not Clang_Module_Id.Global_Cache.Contains (F_Info.Project) then
          Initialize (Context);
          Clang_Module_Id.Global_Cache.Insert (F_Info.Project, Context);
@@ -354,8 +384,7 @@ package body Language.Libclang is
       end if;
 
       --  Retrieve the switches for this file
-      Switches (F_Info.Project,
-                "compiler", File, Lang, C_Switches, Ignored);
+      Switches (F_Info.Project, "compiler", File, Lang, C_Switches, Ignored);
 
       declare
          The_Switches     : Unbounded_String_Array (C_Switches'Range);
@@ -364,7 +393,7 @@ package body Language.Libclang is
          Refs : Sym_To_Loc_Map;
       begin
          for J in C_Switches'Range loop
-            The_Switches (J) := To_Unbounded_String (C_Switches (J).all);
+            The_Switches (J) := +C_Switches (J).all;
          end loop;
 
          if Context.Refs.Contains (File) then
@@ -381,6 +410,7 @@ package body Language.Libclang is
             TU := Context.TU_Cache.Element (File).TU;
             Dummy := Reparse_Translation_Unit (TU, Unsaved_Files,
                                                Options => Clang_Options);
+
             Indexer.Index_Translation_Unit
               (Index_Action  => Context.Index_Action,
                Client_Data   => Indexer_Data'(Refs, Context),
@@ -402,9 +432,11 @@ package body Language.Libclang is
 
                  --  ... a -I<dir> for each dir in the compiler search path
                  & Get_Compiler_Search_Paths
-                 (Kernel, F_Info.Project, Lang);
-            begin
+                 (Kernel, F_Info.Project, Lang)
 
+                 & (if Lang in "c++" | "cpp" then (+"-x", +"c++")
+                    else Empty_String_Array);
+            begin
                --  In the other case, this is the first time we're parsing this
                --  file
                TU := Indexer.Index_Source_File
@@ -444,41 +476,6 @@ package body Language.Libclang is
    package Virtual_File_Vectors is new Ada.Containers.Vectors
      (Positive, Virtual_File);
 
---     task type Indexer_Task_T
---     is
---        entry Index (Files : Virtual_File_Vectors.Vector;
---                     Kernel : Core_Kernel);
---        pragma Unreferenced (Index);
---     end Indexer_Task_T;
---
---     task body Indexer_Task_T is
---        Discard : Clang_Translation_Unit;
---        Current_Files : Virtual_File_Vectors.Vector;
---        Current_Kernel : Core_Kernel;
---     begin
---        loop
---           Put_Line ("IN Indexer_Task_T body !");
---           select
---              accept Index (Files : Virtual_File_Vectors.Vector;
---                            Kernel : Core_Kernel)
---              do
---                 Current_Files := Files;
---                 Current_Kernel := Kernel;
---              end Index;
---           or
---              terminate;
---           end select;
---           for File of Current_Files loop
---              Discard := TU_Source.Translation_Unit (Current_Kernel, File);
---  --              delay 0.01;
---           end loop;
---           Current_Files.Clear;
---           Current_Kernel := null;
---        end loop;
---     end Indexer_Task_T;
---
---     Indexer_Task : Indexer_Task_T;
-
    --------------------
    -- Parse_One_File --
    --------------------
@@ -504,16 +501,28 @@ package body Language.Libclang is
       Files : File_Array_Access;
       Filtered_Files : Virtual_File_Vectors.Vector;
    begin
+
+      --  Clear the cache
+
+      Clang_Module_Id.Destroy;
+
+      --  Fetch all of the project's files
+
       Files := RP.Source_Files (Recursive => True);
+
+      --  Only keep those who are relevant to libclang
 
       for F of Files.all
       loop
          if P_Tree.Info (F).Language = "c"
            or else P_Tree.Info (F).Language = "cpp"
+           or else P_Tree.Info (F).Language = "c++"
          then
             Filtered_Files.Append (F);
          end if;
       end loop;
+
+      --  Call Translation_Unit on them to populate the cache for the file
 
       declare
          Files_Array : constant File_Array_Access :=
@@ -534,7 +543,6 @@ package body Language.Libclang is
             Files          => Files_Array);
       end;
 
-      Clang_Module_Id.Destroy;
    end On_Project_View_Changed;
 
    ---------------------
@@ -544,14 +552,19 @@ package body Language.Libclang is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
+
+      --  Register cross references databases for c and c++
+
       Kernel.Databases.Lang_Specific_Databases.Include
         ("c", Clang_Database'(Kernel => Core_Kernel (Kernel)));
+
       Kernel.Databases.Lang_Specific_Databases.Include
         ("c++", Clang_Database'(Kernel => Core_Kernel (Kernel)));
+
       Clang_Module_Id := new Clang_Module_Record;
-      Register_Module
-        (Module => Clang_Module_Id,
-         Kernel => Kernel);
+
+      Register_Module (Kernel, Clang_Module_Id);
+
       Add_Hook (Kernel, Project_View_Changed_Hook,
                 Wrapper (On_Project_View_Changed'Access),
                 Name => "libclang.project_view_changed");

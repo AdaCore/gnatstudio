@@ -518,8 +518,10 @@ package body GPS.Kernel.Entities is
          end;
 
       elsif Command = "calls" then
+
          --  The following unchecked_access is safe since
          --  Examine_Entity_Call_Graph is called synchronously
+
          User_Data := new Add_To_List_User_Data;
          User_Data.Data := Data'Unchecked_Access;
          User_Data.Use_Parent_For_Key := False;
@@ -530,8 +532,10 @@ package body GPS.Kernel.Entities is
             Get_All_Refs      => True);
 
       elsif Command = "called_by" then
+
          --  The following unchecked_access is safe since
          --  Examine_Ancestors_Call_Graph is called synchronously
+
          User_Data := new Add_To_List_User_Data;
          User_Data.Data := Data'Unchecked_Access;
          Examine_Ancestors_Call_Graph

@@ -183,7 +183,7 @@ private
    --------------------------------------------------------------------------
 
    package Cursors_Holders is new Ada.Containers.Indefinite_Holders
-     (Cursors_Vectors.Vector, Cursors_Vectors."=");
+     (Cursors_Arrays.Array_Type, Cursors_Arrays."=");
 
    type Clang_Node_Array is new Semantic_Node_Array with record
       Nodes  : Cursors_Holders.Holder;
@@ -197,9 +197,9 @@ private
    function Get
      (Self : Clang_Node_Array; Index : Positive) return Semantic_Node'Class
    is
-     (Clang_Node'(Self.Kernel, Self.Nodes.Element.Element (Index), Self.File));
+     (Clang_Node'(Self.Kernel, Self.Nodes.Element (Index), Self.File));
 
    function Length (Self : Clang_Node_Array) return Natural is
-     (Natural (Self.Nodes.Element.Length));
+     (Natural (Self.Nodes.Element'Length));
 
 end Language.Libclang_Tree;

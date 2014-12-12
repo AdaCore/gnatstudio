@@ -26,6 +26,12 @@ with Language.Libclang; use Language.Libclang;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with GPS.Editors; use GPS.Editors;
 use clang_c_Index_h;
+with Basic_Types;
+with Interfaces.C.Pointers;
+
+----------------
+-- Clang_Xref --
+----------------
 
 package body Clang_Xref is
 
@@ -72,18 +78,15 @@ package body Clang_Xref is
    --  Creates an entity from a Clang cursor
 
    function Methods
-     (Entity : Clang_Entity) return Cursors_Vectors.Vector;
+     (Entity : Clang_Entity) return Cursors_Arrays.Array_Type;
    --  For a given clang entity, returns a vector of clang cursors
 
-   function Get_Children
-     (Cursor : Clang_Cursor;
-      Kind : Clang_Cursor_Kind) return Cursors_Vectors.Vector;
-   --  Get all the children of cursor that have the given kind. Utility
-   --  function
+   function Methods
+     (Type_Decl : Clang_Cursor) return Cursors_Arrays.Array_Type;
 
    function To_Entity_Array
      (From_Entity : Clang_Entity;
-      Cursors : Cursors_Vectors.Vector) return Entity_Array;
+      Cursors : Cursors_Arrays.Array_Type) return Entity_Array;
    --  Convenience function to convert a vector of clang cursors to an array of
    --  clang entities
 
@@ -131,35 +134,57 @@ package body Clang_Xref is
         (E.Kernel.Registry.Tree.Info_Set (E.Loc.File).First_Element).Project);
    --  Helper function to retrieve an entity's project
 
-   ------------------
-   -- Get_Children --
-   ------------------
+   function Overrides
+     (Cursor : Clang_Cursor) return Cursors_Arrays.Array_Type;
+
+   function Parent_Types
+     (C : Clang_Cursor; Recursive : Boolean) return Cursors_Arrays.Array_Type;
+
+   function Find_All_References_In_Scope
+     (Entity : Clang_Entity;
+      In_Scope : Clang_Entity) return Clang_Reference_Iterator;
+
+   function Child_Types
+     (Entity    : Clang_Entity;
+      Recursive : Boolean) return Cursors_Arrays.Array_Type;
 
    use type Clang_Cursor_Kind;
-
-   function Get_Children
-     (Cursor : Clang_Cursor;
-      Kind : Clang_Cursor_Kind) return Cursors_Vectors.Vector
-   is
-      function Has_Kind (C : Clang_Cursor) return Boolean is
-        (Libclang.Index.Kind (C) = Kind);
-      --  Filter predicate, returns true if C has kind Kind
-   begin
-      return Get_Children (Cursor, Has_Kind'Access);
-   end Get_Children;
 
    --------------------
    -- Get_Clang_Node --
    --------------------
 
-   function Get_Clang_Cursor (E : Clang_Entity) return Clang_Cursor is
+   function Get_Clang_Cursor (E : Clang_Entity) return Clang_Cursor
+   is
+      Ret : Clang_Cursor;
+      use Basic_Types;
+      use type Basic_Types.Visible_Column_Type;
+
+      function Get_Cursor
+        (L : Natural; C : Visible_Column_Type) return Clang_Cursor
+      is
+        (Clang_Node
+         --  Go through the abstract tree to get the cursor, will handle
+         --  necessary TU fetching and update transparently
+           (E.Kernel.Get_Abstract_Tree_For_File (E.Loc.File).Node_At
+            (Sloc_T'(L, C, 0))).Cursor);
    begin
-      return
-        Clang_Node
-          --  Go through the abstract tree to get the cursor, will handle
-          --  necessary TU fetching and update transparently
-          (E.Kernel.Get_Abstract_Tree_For_File (E.Loc.File).Node_At
-           (Sloc_T'(E.Loc.Line, E.Loc.Column, 0))).Cursor;
+      Ret := Get_Cursor (E.Loc.Line, E.Loc.Column);
+
+      --  For some stdlib functions, libclang will present an unexposed_attr
+      --  for the location at which the function is declared. A sufficient
+      --  workaround is usually to get the cursor at one column before.
+
+      --  NB: We never want to return an UnexposedAttr since it means it's
+      --  unsupported anyway, so no harm in trying to recover a meaningful
+      --  cursor
+
+      if Ret.kind = CXCursor_UnexposedAttr then
+         Ret := Get_Cursor
+           (E.Loc.Line, Visible_Column_Type'Max (1, E.Loc.Column - 1));
+      end if;
+
+      return Ret;
    end Get_Clang_Cursor;
 
    --------------------
@@ -232,7 +257,7 @@ package body Clang_Xref is
    overriding function Get_Name
      (Entity : Clang_Entity) return String
 
-   --  Named is stored at entity creation
+   --  Name is stored at entity creation
 
    is (+Entity.Name);
 
@@ -379,12 +404,10 @@ package body Clang_Xref is
    overriding function Caller_At_Declaration
      (Entity : Clang_Entity) return Root_Entity'Class
    is
-      pragma Unreferenced (Entity);
+      Decl_Cursor : constant Clang_Cursor :=
+        Get_Clang_Cursor (Entity.Kernel, Entity.Get_Declaration.Loc);
    begin
-
-      --  ??? TODO : Implement
-
-      return No_Root_Entity;
+      return Cursor_As_Entity (Entity, Lexical_Parent (Decl_Cursor));
    end Caller_At_Declaration;
 
    -------------------------
@@ -584,19 +607,31 @@ package body Clang_Xref is
    -------------
 
    function Methods
-     (Entity : Clang_Entity) return Cursors_Vectors.Vector
+     (Type_Decl : Clang_Cursor) return Cursors_Arrays.Array_Type
    is
-      T_Decl : constant Clang_Cursor := Declaration (As_Type (Entity));
    begin
-      if Is_Object_Type (Kind (T_Decl)) then
+      if Is_Object_Type (Kind (Type_Decl)) then
 
          --  Straightforwardly get every children of decl that is a method
 
-         return Get_Children (T_Decl, CXCursor_CXXMethod);
+         return Get_Children (Type_Decl, CXCursor_CXXMethod);
 
       else
-         return Cursors_Vectors.Empty_Vector;
+         return Cursors_Arrays.Empty_Array;
       end if;
+
+   end Methods;
+
+   -------------
+   -- Methods --
+   -------------
+
+   function Methods
+     (Entity : Clang_Entity) return Cursors_Arrays.Array_Type
+   is
+      T_Decl : constant Clang_Cursor := Declaration (As_Type (Entity));
+   begin
+      return Methods (T_Decl);
    end Methods;
 
    ------------------
@@ -647,44 +682,34 @@ package body Clang_Xref is
    overriding function Is_Primitive_Of
      (Entity : Clang_Entity) return Entity_Array
    is
-      C : constant Clang_Cursor := Get_Clang_Cursor (Entity);
+      Method_Cursor : constant Clang_Cursor := Get_Clang_Cursor (Entity);
+
+      use Cursors_Arrays;
+
+      function Method_Is_Not_Overriden_In_Type
+        (Type_Decl : Clang_Cursor) return Boolean
+      is
+        (not (for some C of Array_Type'(Methods (Type_Decl))
+              => Contains (Overrides (C), Method_Cursor)));
+
+      Method_Type : constant Clang_Cursor := Semantic_Parent (Method_Cursor);
+
+      function Internal
+        (T : Clang_Cursor) return Array_Type;
+
+      function Internal
+        (T : Clang_Cursor) return Array_Type
+      is
+         Children_Types : constant Array_Type :=
+           Filter (Child_Types (Cursor_As_Entity (Entity, T), False),
+                   Method_Is_Not_Overriden_In_Type'Access);
+      begin
+         return Children_Types & Id_Flat_Map (Children_Types, Internal'Access);
+      end Internal;
+
    begin
-
-      --  A function can only be a "primitive" in the Ada sense if it is a
-      --  method in C++. This notion is not applicable to the C language.
-
-      --  TODO ??? Reimplement, this method is completely wrong. What we
-      --  should do is:
-      --
-      --  1. Call overrides on the current method recursively, to
-      --  determine all the bases methods that it overrides (we will have
-      --  to make override work with multiple inheritance for this to
-      --  work correcly with multiple inheritance), and get the types
-      --  of all those overriden methods
-      --
-      --  2. Call Child_Types on the class of the current method, and
-      --  then add all the returned types to the list constructed in 1.
-
-      if
-        Kind (C) = CXCursor_CXXMethod
-      then
-         declare
-            Class : constant Clang_Cursor := Semantic_Parent (C);
-            Base_Classes : Cursors_Vectors.Vector :=
-              Get_Children (Class, CXCursor_CXXBaseSpecifier);
-            Ret : Entity_Array (1 .. Natural (Base_Classes.Length) + 1);
-         begin
-            Ret (1) := new Clang_Entity'(Cursor_As_Entity (Entity, Class));
-            for J in 2 .. Ret'Length loop
-               Ret (J) := new Clang_Entity'
-                 (Cursor_As_Entity
-                    (Entity,
-                     Referenced (Base_Classes (J - 1))));
-            end loop;
-            return Ret;
-         end;
-      end if;
-      return No_Entity_Array;
+      return To_Entity_Array
+        (Entity, Array_Type'(1 => Method_Type) & Internal (Method_Type));
    end Is_Primitive_Of;
 
    -----------------
@@ -803,10 +828,10 @@ package body Clang_Xref is
    begin
 
       --  An entity is a global if its parent is the translation unit.
-      --  TODO ??? Heuristic is probably wrong with namespaces.
 
       return
-        Lexical_Parent (Get_Clang_Cursor (E)).kind = CXCursor_TranslationUnit;
+        Lexical_Parent (Get_Clang_Cursor (E)).kind in
+          CXCursor_TranslationUnit | CXCursor_Namespace;
    end Is_Global;
 
    ---------------------
@@ -816,12 +841,8 @@ package body Clang_Xref is
    overriding function Is_Static_Local
      (E  : Clang_Entity) return Boolean
    is
-      pragma Unreferenced (E);
    begin
-
-      --  TODO ??? Not implemented
-
-      return False;
+      return Linkage (Get_Clang_Cursor (E)) = CXLinkage_Internal;
    end Is_Static_Local;
 
    --------------------------
@@ -829,13 +850,10 @@ package body Clang_Xref is
    --------------------------
 
    overriding function Is_Predefined_Entity
-     (E  : Clang_Entity) return Boolean is
-      pragma Unreferenced (E);
+     (E  : Clang_Entity) return Boolean
+   is
    begin
-
-      --  TODO ??? Not implemented
-
-      return False;
+      return As_Type (E).kind in CXType_FirstBuiltin .. CXType_LastBuiltin;
    end Is_Predefined_Entity;
 
    -------------------
@@ -930,11 +948,16 @@ package body Clang_Xref is
    -- Overrides --
    ---------------
 
-   overriding function Overrides
-     (Entity : Clang_Entity) return Root_Entity'Class
+   function Overrides
+     (Cursor : Clang_Cursor) return Cursors_Arrays.Array_Type
    is
+
       type Cursor_Ptr is access Clang_Cursor;
       pragma Convention (C, Cursor_Ptr);
+
+      type C_Cursor_Array is array (Natural range <>) of aliased Clang_Cursor;
+      package C_Cursor_Ptrs is new Interfaces.C.Pointers
+        (Natural, Clang_Cursor, C_Cursor_Array, No_Cursor);
 
       use Interfaces.C;
 
@@ -948,9 +971,10 @@ package body Clang_Xref is
       pragma Import (C, Get_Overriden_Cursors, "clang_getOverriddenCursors");
 
       C : aliased Cursor_Ptr;
-      Ign : aliased unsigned;
+      Nb_Cursors : aliased unsigned;
 
-      Ret : Clang_Entity;
+      C_Ptr : C_Cursor_Ptrs.Pointer;
+
    begin
 
       --  We only get the first cursor, because this is all that is needed
@@ -959,13 +983,39 @@ package body Clang_Xref is
       --  Is_Primitive_Of
 
       Get_Overriden_Cursors
-        (Get_Clang_Cursor (Entity), C'Access, Ign'Access);
+        (Cursor, C'Access, Nb_Cursors'Access);
 
-      Ret := Cursor_As_Entity (Entity, C.all);
+      C_Ptr := C_Cursor_Ptrs.Pointer (C);
 
-      Dispose_Overriden (C);
+      declare
+         Cursors : Cursors_Arrays.Array_Type (1 .. Positive (Nb_Cursors));
+         Current : Positive := 1;
+         use C_Cursor_Ptrs;
+      begin
+         while Current <= Positive (Nb_Cursors) loop
+            Cursors (Current) := C_Ptr.all;
+            Current := Current + 1;
+            C_Ptr := C_Ptr + 1;
+         end loop;
 
-      return Ret;
+         Dispose_Overriden (C);
+
+         return Cursors;
+      end;
+   end Overrides;
+
+   ---------------
+   -- Overrides --
+   ---------------
+
+   overriding function Overrides
+     (Entity : Clang_Entity) return Root_Entity'Class
+   is
+   begin
+      --  Get the first of the overriden cursors
+
+      return Cursor_As_Entity
+        (Entity, Overrides (Get_Clang_Cursor (Entity)) (1));
    end Overrides;
 
    -----------------
@@ -994,9 +1044,9 @@ package body Clang_Xref is
 
    function To_Entity_Array
      (From_Entity : Clang_Entity;
-      Cursors : Cursors_Vectors.Vector) return Entity_Array
+      Cursors : Cursors_Arrays.Array_Type) return Entity_Array
    is
-      Ret : Entity_Array (1 .. Natural (Cursors.Length));
+      Ret : Entity_Array (1 .. Natural (Cursors'Length));
    begin
 
       --  Do a straightforward conversion of cursors to entity pointers, and
@@ -1017,14 +1067,20 @@ package body Clang_Xref is
    overriding function Fields
      (Entity            : Clang_Entity) return Entity_Array
    is
+      use Cursors_Arrays;
+
+      function Get_Fields (C : Clang_Cursor) return Array_Type
+      is
+        (Get_Children (C, CXCursor_FieldDecl)
+         & Id_Flat_Map (Parent_Types (C, True), Get_Fields'Access));
+
       C : constant Clang_Cursor := Get_Clang_Cursor (Entity);
    begin
       if Is_Object_Type (C.kind) then
 
-         --  Make an array of the field declarations TODO ??? For a type with
-         --  bases, will miss the parent types's fields
+         --  Make an array of the field declarations
 
-         return To_Entity_Array (Entity, Get_Children (C, CXCursor_FieldDecl));
+         return To_Entity_Array (Entity, Unique (Get_Fields (C)));
       end if;
 
       return No_Entity_Array;
@@ -1102,7 +1158,7 @@ package body Clang_Xref is
 
    overriding function Index_Types
 
-   --  ??? TODO : Index type is a builtin type in C, and our entity model is
+   --  Index type is a builtin type in C, and our entity model is
    --  not well suited for keeping info about built in types (no declaration
    --  location).
 
@@ -1115,10 +1171,91 @@ package body Clang_Xref is
    overriding function Child_Types
      (Entity    : Clang_Entity;
       Recursive : Boolean) return Entity_Array
+   is
+     (To_Entity_Array (Entity, Child_Types (Entity, Recursive)));
 
-   --  TODO ??? Implement
+   function Child_Types
+     (Entity    : Clang_Entity;
+      Recursive : Boolean) return Cursors_Arrays.Array_Type
+   is
+      function Child_Types_Rec
+        (C : Clang_Cursor) return Cursors_Arrays.Array_Type
+      is (Child_Types (Cursor_As_Entity (Entity, C), True));
 
-   is (No_Entity_Array);
+      use Cursors_Arrays;
+
+      Refs : constant Clang_Entity_Ref_Vector
+        := Clang_Reference_Iterator (Find_All_References (Entity)).Elements;
+
+      Cursors : Cursors_Arrays.Array_Type (1 .. Positive (Refs.Length));
+      Count : Positive := 1;
+
+      function Get_Class_For_Base
+        (Base_Cursor : Clang_Cursor) return Clang_Cursor;
+      --  Clang is stupid, it cannot get the parent of a base specifier when
+      --  you got the cursor to the base specifier from a from_location call.
+      --  For this reason we'll trick clang to get the class, having the
+      --  guarantee that a location just outside of the base specifier's
+      --  span will refer to the class decl.
+
+      function Get_Class_For_Base
+        (Base_Cursor : Clang_Cursor) return Clang_Cursor
+      is
+         Loc : General_Location :=
+           To_General_Location (Entity.Kernel, Location (Base_Cursor));
+         use type Basic_Types.Visible_Column_Type;
+      begin
+         Loc.Column := Loc.Column - 1;
+         return Get_Clang_Cursor (Entity.Kernel, Loc);
+      end Get_Class_For_Base;
+
+   begin
+      for Ref of Refs.all loop
+         if Ref.Kind = CXCursor_CXXBaseSpecifier then
+            Cursors (Count) :=
+              Get_Clang_Cursor (Entity.Kernel, Ref.Get_Location);
+            Count := Count + 1;
+         end if;
+      end loop;
+
+      declare
+         Children : constant Cursors_Arrays.Array_Type :=
+           Id_Map (Cursors (1 .. Count - 1), Get_Class_For_Base'Access);
+      begin
+         return (if Recursive
+                 then Children & Cursors_Arrays.Id_Flat_Map
+                   (Children, Child_Types_Rec'Access)
+                 else Children);
+      end;
+   end Child_Types;
+
+   ------------------
+   -- Parent_Types --
+   ------------------
+
+   function Parent_Types
+     (C : Clang_Cursor; Recursive : Boolean) return Cursors_Arrays.Array_Type
+   is
+      use Cursors_Arrays;
+
+      function Get_Base_Classes (Type_Decl : Clang_Cursor) return Array_Type
+      is
+         (Id_Map
+            (Get_Children (Type_Decl, CXCursor_CXXBaseSpecifier),
+             Referenced'Access));
+
+      function Get_Ancestors (Type_Decl : Clang_Cursor) return Array_Type;
+      function Get_Ancestors (Type_Decl : Clang_Cursor) return Array_Type
+      is
+         Base_Classes : constant Array_Type := Get_Base_Classes (Type_Decl);
+      begin
+         return Base_Classes
+           & Id_Flat_Map (Base_Classes, Get_Ancestors'Access);
+      end Get_Ancestors;
+
+   begin
+      return (if Recursive then Get_Ancestors (C) else Get_Base_Classes (C));
+   end Parent_Types;
 
    ------------------
    -- Parent_Types --
@@ -1129,37 +1266,11 @@ package body Clang_Xref is
       Recursive : Boolean) return Entity_Array
    is
       C : constant Clang_Cursor := Get_Clang_Cursor (Entity);
-
-      --  Return an array containing all the ancestors of the types contained
-      --  in the 'Entities' array
-
-      function Children_Parent_Types
-        (Es : Entity_Array) return Entity_Array
-      is
-        (if Es = No_Entity_Array then No_Entity_Array
-         else Parent_Types (Es (Es'First).all, True)
-              & Children_Parent_Types (Es (Es'First + 1 .. Es'Last)));
    begin
-      if Is_Object_Type (C.kind) then
-         declare
-            Parents : constant Entity_Array :=
-              To_Entity_Array
-                (Entity, Get_Children (C, CXCursor_CXXBaseSpecifier));
-         begin
-            return
-              (if Recursive
-
-               --  If recursive, we want the parent types plus all their
-               --  ancestors
-
-               then Parents & Children_Parent_Types (Parents)
-
-               --  Else, we only want the parent types
-
-               else Parents);
-         end;
-      end if;
-      return No_Entity_Array;
+      return
+        (if Is_Object_Type (C.kind)
+         then To_Entity_Array (Entity, Parent_Types (C, Recursive))
+         else No_Entity_Array);
    end Parent_Types;
 
    ----------------
@@ -1173,16 +1284,55 @@ package body Clang_Xref is
 
    is (No_Parameters);
 
+   ---------------------------
+   -- Clang_Entities_Cursor --
+   ---------------------------
+
+   type Clang_Entities_Cursor (Nb_Entities : Positive)
+   is new Abstract_Entities_Cursor with record
+      Entities_Array : Entity_Array (1 .. Nb_Entities);
+      Current : Positive := 1;
+   end record;
+
+   overriding procedure Destroy (Iter : in out Clang_Entities_Cursor) is null;
+   overriding procedure Next (Iter : in out Clang_Entities_Cursor);
+
+   overriding function At_End
+     (Iter : Clang_Entities_Cursor) return Boolean
+   is
+     (Iter.Current > Iter.Entities_Array'Length);
+
+   overriding function Get
+     (Iter : Clang_Entities_Cursor) return Root_Entity'Class
+   is
+     (Iter.Entities_Array (Iter.Current).all);
+
+   overriding procedure Next (Iter : in out Clang_Entities_Cursor)
+   is
+   begin
+      Iter.Current := Iter.Current + 1;
+   end Next;
+
    -----------------------------
    -- Get_All_Called_Entities --
    -----------------------------
 
    overriding function Get_All_Called_Entities
      (Entity : Clang_Entity) return Abstract_Entities_Cursor'Class
+   is
+      use Cursors_Arrays;
 
-   --  TODO ??? Implement
+      function Get_Calls (C : Clang_Cursor) return Array_Type
+      is (Get_Children (C, CXCursor_CallExpr)
+          & Id_Flat_Map (Get_Children (C), Get_Calls'Access));
 
-   is (No_Entities_Cursor);
+      Calls : constant Array_Type := Get_Calls (Get_Clang_Cursor (Entity));
+      Call_Entities : constant Entity_Array := To_Entity_Array (Entity, Calls);
+   begin
+      return
+        (if Call_Entities'Length = 0 then No_Entities_Cursor
+         else Clang_Entities_Cursor'(Call_Entities'Length, Call_Entities, 1));
+   end Get_All_Called_Entities;
 
    -------------------------
    -- Find_All_References --
@@ -1202,13 +1352,16 @@ package body Clang_Xref is
    is
    begin
 
-      --  This function is cut in two cases: Finding references for an entity
-      --  declared in the global scope and finding references for an entity
-      --  declared in the local scope. This is due to the fact that the
-      --  reference cache only stores references to global entities, for
-      --  space reasons.
+      --  This function is cut in three cases: Finding references for an
+      --  entity declared in the global scope, finding references for an
+      --  entity declared in the local scope, and finding references into the
+      --  limited scope of a specific entity. This is due to the fact that the
+      --  reference cache only stores references to global entities, for space
+      --  reasons.
 
-      if Entity.Is_Global then
+      if In_Scope /= No_Root_Entity then
+         return Find_All_References_In_Scope (Entity, Clang_Entity (In_Scope));
+      elsif Entity.Is_Global then
          return Find_All_References_Global
            (Entity, In_File, In_Scope, Include_Overriding, Include_Overridden,
             Include_Implicit, Include_All, Kind);
@@ -1275,7 +1428,8 @@ package body Clang_Xref is
          Client_Data.Ret_Iterator.Elements.Append
            (Clang_Reference'
               (Client_Data.File, To_Offset_T (Loc),
-               Client_Data.Entity_Name, Client_Data.Clang_Db));
+               Client_Data.Entity_Name, Client_Data.Clang_Db,
+               Info.cursor.kind));
       end if;
    end Index_Declaration;
 
@@ -1298,7 +1452,8 @@ package body Clang_Xref is
             Client_Data.Ret_Iterator.Elements.Append
               (Clang_Reference'
                  (Client_Data.File, To_Offset_T (Loc),
-                  Client_Data.Entity_Name, Client_Data.Clang_Db));
+                  Client_Data.Entity_Name, Client_Data.Clang_Db,
+                  Info.cursor.kind));
          end if;
       end if;
    end Index_Reference;
@@ -1364,6 +1519,50 @@ package body Clang_Xref is
 
       return Ret;
    end Find_All_References_Local;
+
+   ----------------------------------
+   -- Find_All_References_In_Scope --
+   ----------------------------------
+
+   function Find_All_References_In_Scope
+     (Entity : Clang_Entity;
+      In_Scope : Clang_Entity) return Clang_Reference_Iterator
+   is
+      Context : Clang_Context := TU_Source.Context (Get_Project (Entity));
+      Searched : constant Clang_Cursor := Get_Clang_Cursor (Entity);
+
+      use Cursors_Arrays;
+
+      function Is_Reference (C : Clang_Cursor) return Boolean
+      is (Referenced (C) = Searched);
+
+      function Find_References (Scope : Clang_Cursor) return Array_Type;
+      function Find_References (Scope : Clang_Cursor) return Array_Type
+      is
+         Children : constant Array_Type := Get_Children (Scope);
+      begin
+         return Filter (Children, Is_Reference'Access)
+           & Id_Flat_Map (Children, Find_References'Access);
+      end Find_References;
+      Ret_Vec : constant Clang_Entity_Ref_Vector :=
+        new Clang_Entity_Ref_Vectors.Vector;
+
+   begin
+      for Cursor of Find_References (Get_Clang_Cursor (In_Scope)) loop
+         Ret_Vec.Append
+           (Clang_Reference'
+              (In_Scope.Loc.File, Offset_T (Value (Location (Cursor)).Offset),
+               Context.Sym_Table.Find (+Entity.Name), In_Scope.Db,
+               Kind (Cursor)));
+      end loop;
+
+      return
+        Clang_Reference_Iterator'
+          (Entity        => Entity,
+           Db            => Entity.Db,
+           Elements      => Ret_Vec,
+           Current_Index => 1);
+   end Find_All_References_In_Scope;
 
    --------------------------------
    -- Find_All_References_Global --
@@ -1435,7 +1634,9 @@ package body Clang_Xref is
                     (File     => F,
                      Offset   => V.Decls.Element (I).Loc,
                      Clang_Db => Entity.Db,
-                     Name     => Name));
+                     Name     => Name,
+                     Kind     =>
+                       Clang_Cursor_Kind (V.Decls.Element (I).Kind)));
             end loop;
 
             for I in V.Refs.First_Index .. V.Refs.Last_Index loop
@@ -1444,7 +1645,9 @@ package body Clang_Xref is
                     (File     => F,
                      Offset   => V.Refs.Element (I).Loc,
                      Clang_Db => Entity.Db,
-                     Name     => Name));
+                     Name     => Name,
+                     Kind     =>
+                       Clang_Cursor_Kind (V.Refs.Element (I).Cursor_Kind)));
             end loop;
 
          end if;

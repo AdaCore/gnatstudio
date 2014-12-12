@@ -1,5 +1,6 @@
 with "gnatcoll";
 with "../shared";
+with "../common/common";
 
 project libclang is
 

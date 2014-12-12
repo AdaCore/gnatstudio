@@ -29,6 +29,7 @@ use GNATCOLL.VFS;
 with Ada.Containers.Vectors;
 with clang_c_CXString_h;
 with Ada.Containers; use Ada.Containers;
+with Array_Utils;
 
 package Libclang.Index is
 
@@ -376,10 +377,12 @@ package Libclang.Index is
    package Cursors_Vectors is new Ada.Containers.Vectors
      (Positive, Clang_Cursor);
 
+   package Cursors_Arrays is new Array_Utils (Clang_Cursor);
+
    function Toplevel_Nodes
      (TU : Clang_Translation_Unit;
       Filter : access function (C : Clang_Cursor) return Boolean := null)
-      return Cursors_Vectors.Vector;
+      return Cursors_Arrays.Array_Type;
 
    type Cursor_Filter is
      access function (Cursor : Clang_Cursor) return Boolean;
@@ -387,7 +390,13 @@ package Libclang.Index is
    function Get_Children
      (Cursor : Clang_Cursor;
       Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
-      return Cursors_Vectors.Vector;
+      return Cursors_Arrays.Array_Type;
+
+   function Get_Children
+     (Cursor : Clang_Cursor;
+      Kind : Clang_Cursor_Kind) return Cursors_Arrays.Array_Type;
+   --  Get all the children of cursor that have the given kind. Utility
+   --  function
 
    function Kind
      (Cursor : Clang_Cursor) return Clang_Cursor_Kind
@@ -465,6 +474,12 @@ package Libclang.Index is
    end record;
 
    function Location (Cursor : Clang_Cursor) return Clang_Raw_Location;
+
+   subtype Clang_Linkage_Kind is CXLinkageKind;
+
+   function Linkage (Cursor : Clang_Cursor) return Clang_Linkage_Kind
+   is
+      (clang_getCursorLinkage (Cursor));
 
    function Location (Cursor : Clang_Cursor) return CXSourceLocation
    is

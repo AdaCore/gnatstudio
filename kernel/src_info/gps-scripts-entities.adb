@@ -378,6 +378,22 @@ package body GPS.Scripts.Entities is
             Free (Children);
          end;
 
+      elsif Command = "get_called_entities" then
+         declare
+            Called_Entities : Abstract_Entities_Cursor'Class :=
+              Entity.Get_All_Called_Entities;
+         begin
+            Set_Return_Value_As_List (Data);
+            while not Called_Entities.At_End loop
+               Set_Return_Value
+                 (Data,
+                  Create_Entity (Get_Script (Data), Called_Entities.Get));
+               Called_Entities.Next;
+            end loop;
+
+            Called_Entities.Destroy;
+         end;
+
       elsif Command = "parent_types" then
          declare
             Parents : Xref.Entity_Array :=
@@ -392,6 +408,21 @@ package body GPS.Scripts.Entities is
 
             Free (Parents);
          end;
+      elsif Command = "child_types" then
+         declare
+            Parents : Xref.Entity_Array :=
+              Entity.Child_Types (Recursive => Nth_Arg (Data, 2, False));
+         begin
+            Set_Return_Value_As_List (Data);
+
+            for C in Parents'Range loop
+               Set_Return_Value
+                 (Data, Create_Entity (Get_Script (Data), Parents (C).all));
+            end loop;
+
+            Free (Parents);
+         end;
+
       end if;
    end Entity_Command_Handler;
 
@@ -553,6 +584,15 @@ package body GPS.Scripts.Entities is
         ("parent_types",
          Class        => C,
          Params       => (2 => Param ("recursive", Optional => True)),
+         Handler      => Entity_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("child_types",
+         Class        => C,
+         Params       => (2 => Param ("recursive", Optional => True)),
+         Handler      => Entity_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get_called_entities",
+         Class        => C,
          Handler      => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("primitive_of",

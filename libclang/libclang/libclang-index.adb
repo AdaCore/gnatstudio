@@ -48,7 +48,7 @@ package body Libclang.Index is
      (C : Clang_Cursor;
       Visitor : CXCursorVisitor;
       Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
-      return Cursors_Vectors.Vector;
+      return Cursors_Arrays.Array_Type;
 
    function Toplevel_Nodes_Visitor
      (Child  : CXCursor;
@@ -685,6 +685,21 @@ package body Libclang.Index is
       return Returned;
    end Create_Unsaved_File;
 
+   ------------------
+   -- Get_Children --
+   ------------------
+
+   function Get_Children
+     (Cursor : Clang_Cursor;
+      Kind : Clang_Cursor_Kind) return Cursors_Arrays.Array_Type
+   is
+      function Has_Kind (C : Clang_Cursor) return Boolean is
+        (Libclang.Index.Kind (C) = Kind);
+      --  Filter predicate, returns true if C has kind Kind
+   begin
+      return Get_Children (Cursor, Has_Kind'Access);
+   end Get_Children;
+
    -----------------
    -- Root_Cursor --
    -----------------
@@ -701,6 +716,10 @@ package body Libclang.Index is
 
    package Addr_To_Vis_Data is new System.Address_To_Access_Conversions
      (Visitor_Data);
+
+   --------------------------
+   -- Get_Children_Visitor --
+   --------------------------
 
    function Get_Children_Visitor
      (Child  : CXCursor;
@@ -729,7 +748,7 @@ package body Libclang.Index is
      (C : Clang_Cursor;
       Visitor : CXCursorVisitor;
       Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
-      return Cursors_Vectors.Vector
+      return Cursors_Arrays.Array_Type
    is
       V : aliased Visitor_Data;
       V_Ptr : constant Addr_To_Vis_Data.Object_Pointer := V'Unchecked_Access;
@@ -739,19 +758,23 @@ package body Libclang.Index is
         (C, Visitor,
          CXClientData (Addr_To_Vis_Data.To_Address (V_Ptr)));
 
-      if Filter /= null then
-         declare
-            Out_Vec : Cursors_Vectors.Vector;
-         begin
-            for I in V.Vec.First_Index .. V.Vec.Last_Index loop
-               if Filter (V.Vec (I)) then
-                  Out_Vec.Append (V.Vec (I));
-               end if;
-            end loop;
-            return Out_Vec;
-         end;
+      if V.Vec.Length = 0 then
+         return Cursors_Arrays.Empty_Array;
       end if;
-      return V.Vec;
+
+      declare
+         Out_Array : Cursors_Arrays.Array_Type
+           (1 .. Positive (V.Vec.Length));
+      begin
+
+         for I in V.Vec.First_Index .. V.Vec.Last_Index loop
+            Out_Array (I) := V.Vec.Element (I);
+         end loop;
+
+         return (if Filter = null then Out_Array
+                 else Cursors_Arrays.Filter (Out_Array, Filter));
+      end;
+
    end Visit_And_Filter_Children;
 
    ------------------
@@ -761,7 +784,7 @@ package body Libclang.Index is
    function Get_Children
      (Cursor : Clang_Cursor;
       Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
-      return Cursors_Vectors.Vector
+      return Cursors_Arrays.Array_Type
    is
    begin
       return Visit_And_Filter_Children
@@ -796,7 +819,7 @@ package body Libclang.Index is
    function Toplevel_Nodes
      (TU : Clang_Translation_Unit;
       Filter : access function (C : Clang_Cursor) return Boolean := null)
-      return Cursors_Vectors.Vector
+      return Cursors_Arrays.Array_Type
    is
    begin
       return Visit_And_Filter_Children
