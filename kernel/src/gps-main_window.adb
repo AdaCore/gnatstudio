@@ -1325,6 +1325,8 @@ package body GPS.Main_Window is
    ----------------
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class) is
+      pragma Unreferenced (Main_Window);
+
    begin
       Trace (Me, "destroying main window");
    end On_Destroy;
