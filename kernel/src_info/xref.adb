@@ -377,6 +377,8 @@ package body Xref is
         Db.Lang_Specific_Databases.Find (Lang_Name);
    begin
       if Cursor /= LDB.No_Element then
+         Closest_Ref :=
+           Root_Entity_Reference_Refs.To_Holder (No_Root_Entity_Reference);
          return LDB.Element (Cursor).Get_Entity
            (General_Xref_Database (Db), Name, Loc);
       end if;

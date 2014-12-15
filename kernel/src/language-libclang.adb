@@ -34,7 +34,7 @@ package body Language.Libclang is
    LRU_Size : constant := 16;
 
    Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LANGUAGE_LIBCLANG", On);
+     GNATCOLL.Traces.Create ("LANGUAGE_LIBCLANG", Off);
 
    Clang_Options : constant Clang_Translation_Unit_Flags :=
      Includebriefcommentsincodecompletion
@@ -44,7 +44,8 @@ package body Language.Libclang is
    function Translation_Unit
      (Kernel : Core_Kernel;
       File : GNATCOLL.VFS.Virtual_File;
-      Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files)
+      Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
+      Default_Lang : String := "c++")
       return Clang_Translation_Unit;
 
    procedure Free
@@ -285,7 +286,8 @@ package body Language.Libclang is
       function Translation_Unit
         (Kernel : Core_Kernel;
          File : GNATCOLL.VFS.Virtual_File;
-         Reparse : Boolean := False)
+         Reparse : Boolean := False;
+         Default_Lang : String := "c++")
       return Clang_Translation_Unit
       is
          Buffer : constant Editor_Buffer'Class :=
@@ -314,7 +316,8 @@ package body Language.Libclang is
                      TU := Translation_Unit
                        (Kernel, File,
                         (0 => Create_Unsaved_File
-                             (String (File.Full_Name.all), Buffer_Text)));
+                             (String (File.Full_Name.all), Buffer_Text)),
+                        Default_Lang);
                      Cache_Val.Version := Buffer.Version;
                      Free (Buffer_Text);
                      return TU;
@@ -349,7 +352,8 @@ package body Language.Libclang is
    function Translation_Unit
      (Kernel : Core_Kernel;
       File : GNATCOLL.VFS.Virtual_File;
-      Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files)
+      Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
+      Default_Lang : String := "c++")
       return Clang_Translation_Unit
    is
       --  ??? We should fill other unsaved_files! ??? Or should we ? I think
@@ -357,8 +361,11 @@ package body Language.Libclang is
       --  least in the first iteration of libclang, ask the user to save
       --  the other files if he expects to get completion. RA
 
-      Lang             : constant String :=
+      Kernel_Lang      : constant String :=
         Kernel.Lang_Handler.Get_Language_From_File (File);
+      Lang : constant String :=
+        (if Kernel_Lang = "" then Default_Lang else Kernel_Lang);
+
       C_Switches       : GNAT.Strings.String_List_Access;
       Ignored          : Boolean;
 

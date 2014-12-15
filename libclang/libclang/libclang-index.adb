@@ -869,6 +869,21 @@ package body Libclang.Index is
    -- Location --
    --------------
 
+   function Location
+     (TU : Clang_Translation_Unit;
+      File : GNATCOLL.VFS.Virtual_File;
+      Line, Column : Natural) return Clang_Location
+   is
+   begin
+      return clang_getLocation
+        (TU, Libclang.File.File (TU, File),
+         unsigned (Line), unsigned (Column));
+   end Location;
+
+   --------------
+   -- Location --
+   --------------
+
    function Location (Cursor : Clang_Cursor) return Clang_Raw_Location
    is
    begin

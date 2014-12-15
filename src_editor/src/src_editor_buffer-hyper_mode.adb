@@ -354,13 +354,12 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
       declare
          Entity : constant Root_Entity'Class :=
-           Buffer.Kernel.Databases.Find_Declaration_Or_Overloaded
+           Buffer.Kernel.Databases.Get_Entity
              (Loc         => (File   => Buffer.Filename,
                               Project => Project,
                               Line   => Integer (Line),
                               Column => Column),
-              Entity_Name => Get_Slice (Buffer, Entity_Start, Entity_End),
-              Ask_If_Overloaded => False,
+              Name => Get_Slice (Buffer, Entity_Start, Entity_End),
               Closest_Ref       => Closest);
       begin
          if Entity = No_Root_Entity then

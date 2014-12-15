@@ -34,10 +34,11 @@ package Clang_Xref is
    end record;
 
    type Clang_Entity is new Root_Entity with record
-      Kernel : Core_Kernel;
-      Db     : Clang_Database;
-      Name   : Unbounded_String;
-      Loc    : General_Location;
+      Kernel    : Core_Kernel;
+      Db        : Clang_Database;
+      Name      : Unbounded_String;
+      Loc       : General_Location;
+      From_Lang : Unbounded_String;
 
       --  Some types don't have a corresponding cursor (built in types) so we
       --  store the clang type to be able to do some operations on them

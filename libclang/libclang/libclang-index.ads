@@ -498,6 +498,20 @@ package Libclang.Index is
 
    function Value (Location : Clang_Location) return Clang_Raw_Location;
 
+   function "+"
+     (Location : Clang_Location) return Clang_Raw_Location renames Value;
+
+   function Location
+     (TU : Clang_Translation_Unit;
+      File : GNATCOLL.VFS.Virtual_File;
+      Line, Column : Natural) return Clang_Location;
+
+   function Cursor_At (TU : Clang_Translation_Unit;
+                       File : GNATCOLL.VFS.Virtual_File;
+                       Line, Column : Natural) return Clang_Cursor
+   is
+      (clang_getCursor (TU, Location (TU, File, Line, Column)));
+
    function "+" (Loc : CXIdxLoc) return Clang_Location
    is (clang_indexLoc_getCXSourceLocation (Loc));
 

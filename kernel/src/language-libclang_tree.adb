@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Libclang.File; use Libclang.File;
 with Interfaces.C; use Interfaces.C;
 with String_Utils;
 
@@ -164,15 +163,10 @@ package body Language.Libclang_Tree is
         Self.Kernel.Get_Buffer_Factory.Get
           (Self.File, Open_View => False, Focus => False, Open_Buffer => True)
         .New_Location (Sloc.Line, Sloc.Column).Line_Offset;
-      Clang_Loc : constant Clang_Location := clang_getLocation
-        (Self.Tu,
-         File
-           (Self.Tu, String (Self.File.Full_Name.all)),
-         unsigned (Sloc.Line), unsigned (Line_Offset + 1));
 
       Node : Clang_Node :=
         Clang_Node'(Self.Kernel,
-                    clang_getCursor (Self.Tu, Clang_Loc),
+                    Cursor_At (Self.Tu, Self.File, Sloc.Line, Line_Offset + 1),
                     Self.File);
    begin
 

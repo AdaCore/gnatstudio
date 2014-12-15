@@ -102,12 +102,12 @@ package body Src_Editor_Box.Tooltips is
       end if;
 
       return
-        Editor.Kernel.Databases.Find_Declaration_Or_Overloaded
+        Editor.Kernel.Databases.Get_Entity
           (Loc => (File   => Get_Filename (Editor),
                    Project => Contexts.Project_Information (Context),
                    Line   => Contexts.Line_Information (Context),
                    Column => Entity_Column_Information (Context)),
-           Entity_Name => Entity_Name_Information (Context),
+           Name => Entity_Name_Information (Context),
            Closest_Ref => Ref);
 
    exception

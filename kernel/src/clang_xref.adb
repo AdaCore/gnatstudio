@@ -28,6 +28,8 @@ with GPS.Editors; use GPS.Editors;
 use clang_c_Index_h;
 with Basic_Types;
 with Interfaces.C.Pointers;
+with GPS.Kernel.Properties; use GPS.Kernel.Properties;
+with GPS.Kernel; use GPS.Kernel;
 
 ----------------
 -- Clang_Xref --
@@ -150,26 +152,41 @@ package body Clang_Xref is
 
    use type Clang_Cursor_Kind;
 
+   function Get_Line_Offset
+     (K : Core_Kernel; L : General_Location) return Natural;
+
+   ---------------------
+   -- Get_Line_Offset --
+   ---------------------
+
+   function Get_Line_Offset
+     (K : Core_Kernel; L : General_Location) return Natural
+   is
+      Line_Offset : constant Natural :=
+        K.Get_Buffer_Factory.Get
+          (L.File, Open_View => False, Focus => False, Open_Buffer => True)
+        .New_Location (L.Line, L.Column).Line_Offset;
+
+   begin
+      return Line_Offset + 1;
+   end Get_Line_Offset;
+
    --------------------
    -- Get_Clang_Node --
    --------------------
 
    function Get_Clang_Cursor (E : Clang_Entity) return Clang_Cursor
    is
-      Ret : Clang_Cursor;
       use Basic_Types;
       use type Basic_Types.Visible_Column_Type;
 
-      function Get_Cursor
-        (L : Natural; C : Visible_Column_Type) return Clang_Cursor
-      is
-        (Clang_Node
-         --  Go through the abstract tree to get the cursor, will handle
-         --  necessary TU fetching and update transparently
-           (E.Kernel.Get_Abstract_Tree_For_File (E.Loc.File).Node_At
-            (Sloc_T'(L, C, 0))).Cursor);
+      Ret : Clang_Cursor;
+      Line_Offset : constant Natural := Get_Line_Offset (E.Kernel, E.Loc);
+      TU : constant Clang_Translation_Unit :=
+        TU_Source.Translation_Unit (E.Kernel, E.Loc.File, False);
+
    begin
-      Ret := Get_Cursor (E.Loc.Line, E.Loc.Column);
+      Ret := Cursor_At (TU, E.Loc.File, E.Loc.Line, Line_Offset);
 
       --  For some stdlib functions, libclang will present an unexposed_attr
       --  for the location at which the function is declared. A sufficient
@@ -180,8 +197,8 @@ package body Clang_Xref is
       --  cursor
 
       if Ret.kind = CXCursor_UnexposedAttr then
-         Ret := Get_Cursor
-           (E.Loc.Line, Visible_Column_Type'Max (1, E.Loc.Column - 1));
+         Ret := Cursor_At
+           (TU, E.Loc.File, E.Loc.Line, Natural'Max (1, Line_Offset - 1));
       end if;
 
       return Ret;
@@ -194,11 +211,11 @@ package body Clang_Xref is
    function Get_Clang_Cursor
      (Kernel : Core_Kernel; Loc : General_Location) return Clang_Cursor
    is
+      TU : constant Clang_Translation_Unit :=
+        TU_Source.Translation_Unit (Kernel, Loc.File, False);
+      Line_Offset : constant Natural := Get_Line_Offset (Kernel, Loc);
    begin
-      return
-        Clang_Node
-          (Kernel.Get_Abstract_Tree_For_File (Loc.File).Node_At
-           (Sloc_T'(Loc.Line, Loc.Column, 0))).Cursor;
+      return Cursor_At (TU, Loc.File, Loc.Line, Line_Offset);
    end Get_Clang_Cursor;
 
    ----------------
@@ -339,22 +356,37 @@ package body Clang_Xref is
       Kernel : Core_Kernel;
       Cursor : Clang_Cursor) return Clang_Entity
    is
-   begin
+      Lang : constant String :=
+        Kernel.Lang_Handler.Get_Language_From_File
+          (GNATCOLL.VFS.Create
+             (Filesystem_String
+                    (To_String
+                     (clang_getTranslationUnitSpelling
+                          (clang_Cursor_getTranslationUnit (Cursor))))));
 
       --  As described in the intro, entities referencing runtime
       --  variables/constants store locations rather than cursors, and
       --  cursors are re-resolved every time via get_clang_cursor.
 
-      return Clang_Entity'
-        (Db => Db,
-         Name       => +Spelling (Cursor),
-         Loc        =>
-           To_General_Location
-             (Db.Kernel,
-              Location (Referenced (Cursor))),
-         Kernel     => Kernel,
-         Has_Type_Inst => False,
-         Clang_Type_Inst => <>);
+      Res : constant Clang_Entity :=
+        Clang_Entity'
+          (Db              => Db,
+           Name            => +Spelling (Cursor),
+           Loc             =>
+             To_General_Location
+               (Db.Kernel,
+                Location (Referenced (Cursor))),
+           Kernel          => Kernel,
+           Has_Type_Inst   => False,
+           From_Lang       => +Lang,
+           Clang_Type_Inst => <>);
+
+   begin
+      if Kernel.Lang_Handler.Get_Language_From_File (Res.Loc.File) = "" then
+         Set_Language_From_File
+           (Kernel_Handle (Kernel), Res.Loc.File, Lang);
+      end if;
+      return Res;
    end Cursor_As_Entity;
 
    ---------------------
@@ -466,7 +498,7 @@ package body Clang_Xref is
       --  Return value holder
       Ret : General_Location := No_Location;
    begin
-      if Entity_Body = No_Cursor then
+      if Entity_Body /= No_Cursor then
          return To_General_Location (Entity.Kernel, Location (Entity_Body));
       else
 
@@ -550,6 +582,7 @@ package body Clang_Xref is
                       +Spelling (Typ),
                       To_General_Location
                         (From_Entity.Kernel, Location (Declaration (Typ))),
+                      From_Entity.From_Lang,
                       True, Typ);
    end Type_As_Entity;
 

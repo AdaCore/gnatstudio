@@ -152,7 +152,8 @@ package Language.Libclang is
       function Translation_Unit
         (Kernel : Core_Kernel;
          File : GNATCOLL.VFS.Virtual_File;
-         Reparse : Boolean := False)
+         Reparse : Boolean := False;
+         Default_Lang : String := "c++")
          return Clang_Translation_Unit;
 
       function Context
