@@ -41,6 +41,7 @@ package BT.Xml.Reader is
    procedure Get_Vn_Backtraces
      (Proc_Name  : String;
       Vn_Id      : Natural;
+      Msg_Loc    : Source_Position;
       Backtraces : in out BT.BT_Info_Seqs.Vector);
    --  Returns a sequence of backtrace_info that contributed to this
    --  VN (associated with either precondition or error_message).
