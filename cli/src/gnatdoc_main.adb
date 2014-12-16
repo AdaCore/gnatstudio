@@ -34,8 +34,10 @@ with GPS.CLI_Utils;         use GPS.CLI_Utils;
 with GPS.CLI_Kernels;       use GPS.CLI_Kernels;
 
 with GNATdoc;               use GNATdoc;
+with GNATdoc.Customization.Tag_Handlers;
 with Xref;                  use Xref;
 with String_List_Utils;     use String_List_Utils;
+with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 
 procedure GNATdoc_Main is
 
@@ -58,6 +60,7 @@ procedure GNATdoc_Main is
    Process_C_Files      : aliased Boolean := False;
    Process_Bodies       : aliased Boolean := False;
    Project_Name         : aliased GNAT.Strings.String_Access;
+   Script_Name          : aliased GNAT.Strings.String_Access;
    Backend_Name         : aliased GNAT.Strings.String_Access :=
                             new String'("html");
    Process_Private_Part : aliased Boolean := False;
@@ -324,6 +327,12 @@ begin
       Output       => Backend_Name'Access,
       Switch       => "--output=",
       Help         => "Format of generated documentation");
+   Define_Switch
+     (Cmdline,
+      Output      => Script_Name'Access,
+      Switch      => "-l:",
+      Long_Switch => "--load=",
+      Help        => "Execute an external file written in the language lang");
 
    --  Initialize context
    GPS.CLI_Utils.Create_Kernel_Context (Kernel);
@@ -492,6 +501,17 @@ begin
    --  Run GNATinspect
 
    Launch_Gnatinspect;
+
+   --  Register GNATDOC.TagHandler python class
+   GNATdoc.Customization.Tag_Handlers.Register_Commands (Kernel);
+
+   --  Load script
+   declare
+      Script : Scripting_Language;
+      pragma Unreferenced (Script);
+   begin
+      Parse_And_Execute_Script (Kernel, Script_Name.all, Script);
+   end;
 
    --  Run GNATdoc
    declare

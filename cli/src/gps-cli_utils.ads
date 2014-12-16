@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GPS.CLI_Kernels;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNAT.Command_Line; use GNAT.Command_Line;
 with GNAT.Strings;      use GNAT.Strings;
@@ -73,5 +74,12 @@ package GPS.CLI_Utils is
    --  Script_Name: script to execute
    --  Return: False if could not execute script because scripting language
    --          is unknown. True otherwises
+
+   procedure Parse_And_Execute_Script
+     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
+      Script_Name : String;
+      Script      : out Scripting_Language);
+   --  Take Script_Name in form 'lang:script.py', split it to parts and
+   --  execute using Execute_Batch. Return Script value if success
 
 end GPS.CLI_Utils;

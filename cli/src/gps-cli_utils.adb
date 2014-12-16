@@ -41,7 +41,6 @@ with Language.Cpp;
 
 with GNAT.IO;                                  use GNAT.IO;
 with Ada.Strings.Fixed;                        use Ada.Strings.Fixed;
-with GNATCOLL.Scripts;                         use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Projects;
 with GNATCOLL.VFS_Utils;
 with GNATCOLL.Utils;
@@ -178,6 +177,43 @@ package body GPS.CLI_Utils is
    begin
       GPS.Core_Kernels.Destroy (Kernel);
    end Destroy_Kernel_Context;
+
+   ------------------------------
+   -- Parse_And_Execute_Script --
+   ------------------------------
+
+   procedure Parse_And_Execute_Script
+     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
+      Script_Name : String;
+      Script      : out Scripting_Language) is
+   begin
+      if Script_Name /= "" then
+         declare
+            Colon : constant Natural :=
+              Ada.Strings.Fixed.Index (Script_Name, ":");
+            Lang  : String renames
+              Script_Name (Script_Name'First .. Colon - 1);
+         begin
+            if Colon /= 0 then
+
+               if Execute_Batch
+                 (Kernel,
+                  Lang_Name   => Lang,
+                  Script_Name => Script_Name (Colon + 1 .. Script_Name'Last))
+               then
+                  Script := Lookup_Scripting_Language (Kernel.Scripts, Lang);
+               else
+                  Put_Line
+                    ("Language unknown for --load command line switch: " &
+                       Script_Name (Script_Name'First .. Colon - 1));
+               end if;
+
+            else
+               Put_Line ("No lang in --load=" & Script_Name);
+            end if;
+         end;
+      end if;
+   end Parse_And_Execute_Script;
 
    ------------------------
    -- Parse_Command_line --
