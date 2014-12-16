@@ -20,6 +20,8 @@ with GNAT.Regpat;            use GNAT.Regpat;
 
 package body GNATdoc.Backend.Text_Parser is
 
+   use GNATdoc.Markup_Streams;
+
    package Unbounded_String_Vectors is
      new Ada.Containers.Vectors
        (Positive,

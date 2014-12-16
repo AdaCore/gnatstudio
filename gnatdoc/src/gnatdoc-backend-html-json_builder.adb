@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body GNATdoc.Backend.HTML.JSON_Builder is
@@ -27,7 +28,7 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
    ----------------------------
 
    function To_JSON_Representation
-     (Stream : GNATdoc.Backend.Text_Parser.Event_Vectors.Vector;
+     (Stream : GNATdoc.Markup_Streams.Event_Vectors.Vector;
       Kernel : not null access GPS.Core_Kernels.Core_Kernel_Record'Class)
       return GNATCOLL.JSON.JSON_Array
    is
@@ -52,7 +53,7 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
    begin
       for Event of Stream loop
          case Event.Kind is
-            when GNATdoc.Backend.Text_Parser.Start_Tag =>
+            when GNATdoc.Markup_Streams.Start_Tag =>
                State_Stack.Append (State);
                State := (Create_Object, Empty_Array);
 
@@ -97,14 +98,14 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
                   State.Object.Set_Field ("kind", To_String (Event.Name));
                end if;
 
-            when GNATdoc.Backend.Text_Parser.End_Tag =>
+            when GNATdoc.Markup_Streams.End_Tag =>
                State.Object.Set_Field ("children", State.Children);
                Object := State.Object;
                State := State_Stack.Last_Element;
                State_Stack.Delete_Last;
                Append (State.Children, Object);
 
-            when GNATdoc.Backend.Text_Parser.Text =>
+            when GNATdoc.Markup_Streams.Text =>
                if String'(State.Object.Get ("kind")) = "code" then
                   Object := Create_Object;
                   Object.Set_Field ("kind", "span");

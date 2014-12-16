@@ -15,34 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;
+with GNATdoc.Markup_Streams;
 
 package GNATdoc.Backend.Text_Parser is
 
-   type Event_Kinds is (Start_Tag, Text, End_Tag);
-
-   type Event_Type (Kind : Event_Kinds := Text) is record
-      case Kind is
-         when Start_Tag | End_Tag =>
-            Name : Ada.Strings.Unbounded.Unbounded_String;
-
-            case Kind is
-               when Start_Tag =>
-                  Parameter : Ada.Strings.Unbounded.Unbounded_String;
-
-               when others =>
-                  null;
-            end case;
-
-         when Text =>
-            Text : Ada.Strings.Unbounded.Unbounded_String;
-      end case;
-   end record;
-
-   package Event_Vectors is
-     new Ada.Containers.Vectors (Positive, Event_Type);
-
-   function Parse_Text (Comment_Text : String) return Event_Vectors.Vector;
+   function Parse_Text
+     (Comment_Text : String)
+      return GNATdoc.Markup_Streams.Event_Vectors.Vector;
+   --  Parses text and generates markup event stream
 
 end GNATdoc.Backend.Text_Parser;
