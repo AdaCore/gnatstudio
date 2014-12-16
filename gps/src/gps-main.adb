@@ -285,11 +285,9 @@ procedure GPS.Main is
    GPS_Main               : GPS_Window;
    Application            : GPS_Application;
    Project_Name           : Virtual_File := No_File;
-   About_Contents         : String_Access;
    Splash                 : Gtk_Window;
    Files_To_Open          : File_To_Open_Vectors.Vector;
    Unexpected_Exception   : Boolean := False;
-   Splash_Timeout         : Glib.Guint := 1000;
    Env                    : GPS.Environments.Environment;
 
    Timeout_Id             : Glib.Main.G_Source_Id;
@@ -1233,14 +1231,27 @@ procedure GPS.Main is
       Command_Line : not null access Gapplication_Command_Line_Record'Class)
       return Glib.Gint
    is
-      pragma Unreferenced (Command_Line);
       App     : constant GPS_Application := GPS_Application (Application);
       Menubar : Gtk_Menu_Bar;
+      Data    : Process_Data;
+      Tmp     : Boolean;
+      pragma Unreferenced (Command_Line, Tmp);
 
    begin
       --  Create the kernel and prepare the menu model
 
       Gtk_New (App.Kernel, App, GPS_Home_Dir, Prefix_Dir);
+
+      --  Display the splash screen, if needed, while we continue loading
+      Display_Splash_Screen;
+      Data := (App.Kernel, null, null, null, null, null, False);
+      if Splash /= null then
+         --  A small timeout, to make sure the events are processed and the
+         --  splash screen is made visible. But we continue loading in the
+         --  background.
+         Timeout_Id := Process_Timeout.Timeout_Add
+           (1, Finish_Setup'Unrestricted_Access, Data);
+      end if;
 
       Create_MDI_Preferences (App.Kernel);
       Install_Menus
@@ -1274,12 +1285,6 @@ procedure GPS.Main is
 
       Set_Project_Name;
 
-      About_Contents := Create_From_Dir
-        (Prefix_Dir, "share/gps/about.txt").Read_File;
-      if About_Contents = null then
-         About_Contents := new String'("");
-      end if;
-
       if Is_Regular_File
         (Create_From_Dir (Prefix_Dir, "share/gps/gps-pro.txt"))
       then
@@ -1310,16 +1315,8 @@ procedure GPS.Main is
       --    @define-color my_color shade(@theme_bg_color, 1.10);
       Load_CSS;
 
-      Display_Splash_Screen;
-
       if Splash = null then
-         Timeout_Id := Process_Timeout.Timeout_Add
-           (1, Finish_Setup'Unrestricted_Access,
-            (App.Kernel, null, null, null, null, null, False));
-      else
-         Timeout_Id := Process_Timeout.Timeout_Add
-           (Splash_Timeout, Finish_Setup'Unrestricted_Access,
-            (App.Kernel, null, null, null, null, null, False));
+         Tmp := Finish_Setup (Data);
       end if;
 
       return 0;
@@ -1548,32 +1545,19 @@ procedure GPS.Main is
       File   : constant Virtual_File :=
                  Create_From_Dir (Prefix_Dir, "share/gps/gps-splash.png");
       Image  : Gtk_Image;
-      Pixbuf : Gdk_Pixbuf;
-      Error  : GError;
-      FD     : File_Descriptor;
-
    begin
       if not Hide_GPS
         and then Splash_Screen.Get_Pref
-        and then Is_Regular_File (File)
+        and then File.Is_Regular_File
       then
-         FD := Open_Read (+File.Full_Name, Binary);
-
-         if About_Contents.all /= "" then
-            Splash_Timeout := 4000;
-         end if;
-
-         Close (FD);
          Gtk_New (Splash, Window_Toplevel);
          Splash.Set_Hexpand (False);
          Splash.Set_Vexpand (False);
          Set_Property (Splash, Decorated_Property, False);
          Set_Position (Splash, Win_Pos_Center);
-         Gdk_New_From_File (Pixbuf, +File.Full_Name, Error);
-         Gtk_New (Image, Pixbuf);
-         Unref (Pixbuf);
-         Add (Splash, Image);
-         Show_All (Splash);
+         Gtk_New (Image, Filename => +File.Full_Name);
+         Splash.Add (Image);
+         Splash.Show_All;
       end if;
    end Display_Splash_Screen;
 
@@ -2147,13 +2131,21 @@ procedure GPS.Main is
       --  Print a welcome message in the console, but before parsing the error
       --  messages, so that these are visible
 
-      GPS_Main.Kernel.Insert
-        (-"Welcome to GPS " & Config.Version &
-         " (" & Config.Source_Date &
-         (-") hosted on ") & Config.Target & ASCII.LF &
-         (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &
-         "(c) 2001-" & Config.Current_Year & " AdaCore" & ASCII.LF);
-      Free (About_Contents);
+      declare
+         About_Contents : String_Access := Create_From_Dir
+           (Prefix_Dir, "share/gps/about.txt").Read_File;
+      begin
+         if About_Contents = null then
+            About_Contents := new String'("");
+         end if;
+         GPS_Main.Kernel.Insert
+           (-"Welcome to GPS " & Config.Version &
+              " (" & Config.Source_Date &
+            (-") hosted on ") & Config.Target & ASCII.LF &
+            (-"the GNAT Programming Studio") & ASCII.LF & About_Contents.all &
+              "(c) 2001-" & Config.Current_Year & " AdaCore" & ASCII.LF);
+         Free (About_Contents);
+      end;
 
       --  Apply the preferences to the MDI. In particular, we want to set the
       --  default position for notebook tabs, since they can be overriden by

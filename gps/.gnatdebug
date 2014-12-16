@@ -95,6 +95,8 @@ SCRIPTS.REF = no
 CONTEXTS.REF = no
 CONTEXTS.MEM = no
 
+GPS.KERNEL.HELP = no
+
 --  Enable the fallback on the construct tree for xref queries (on by default)
 ENTITIES.CONSTRUCTS = yes
 
