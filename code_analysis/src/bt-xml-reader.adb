@@ -207,14 +207,14 @@ package body BT.Xml.Reader is
 
    function LT (E1, E2 : BT_Info) return Boolean is
    begin
-      if E1.Sloc.Line = E2.Sloc.Line then
-         if E1.Event = E2.Event then
+      if E1.Event = E2.Event then
+         if E1.Sloc.Line = E2.Sloc.Line then
             return E1.Sloc.Column < E2.Sloc.Column;
          else
-            return E1.Event < E2.Event;
+            return E1.Sloc.Line < E2.Sloc.Line;
          end if;
       else
-         return E1.Sloc.Line < E2.Sloc.Line;
+         return E1.Event < E2.Event;
       end if;
    end LT;
 
@@ -595,19 +595,20 @@ package body BT.Xml.Reader is
    procedure Get_Vn_Backtraces
      (Proc_Name  : String;
       Vn_Id      : Natural;
+      Msg_Loc    : Source_Position;
       Backtraces : in out BT.BT_Info_Seqs.Vector)
    is
       Proc : constant Unbounded_String := To_Unbounded_String (Proc_Name);
-      Precond_Found  : Boolean := False;
       All_Checks     : Check_Kinds_Array := Check_Kinds_Array_Default;
 
       procedure Get_Vn_Backtraces_Rec
          (Rec_Proc_Name  : String;
-          Vn_Id          : Natural);
-      --  ???
+          Vn_Id          : Natural;
+          Rec_Backtraces : out BT_Info_Seqs.Vector);
+      --  Recursive version.
 
       procedure Display_BT (Info : BT_Info);
-      --  ???
+      --  Print out the backtrace for debugging.
 
       ----------------
       -- Display_BT --
@@ -624,16 +625,17 @@ package body BT.Xml.Reader is
          New_Line;
       end Display_BT;
 
-      --  recursive version
       procedure Get_Vn_Backtraces_Rec
          (Rec_Proc_Name  : String;
-          Vn_Id          : Natural) is
-          --   Rec_Backtraces : in out BT.BT_Info_Seqs.Vector);
+          Vn_Id          : Natural;
+          Rec_Backtraces : out BT_Info_Seqs.Vector) is
 
          Proc : constant Unbounded_String
            := To_Unbounded_String (Rec_Proc_Name);
          VN_BTs : constant VN_To_BT_Mappings.Cursor :=
            Proc_Vns.Element (Proc).Find (Vn_Id);
+
+         This_Level_BTs : BT_Info_Seqs.Vector := BT_Info_Seqs.Empty_Vector;
          use BT_Info_Seqs;
 
          procedure Add_One_Backtrace (Info : BT_Info);
@@ -655,16 +657,48 @@ package body BT.Xml.Reader is
 
                return;
             end if;
-            Append (Backtraces, Info);
+            Append (This_Level_BTs, Info);
 
             if Debug_On then
                Put ("Adding BT");
                Display_BT (Info);
             end if;
 
+            if Info.Event = Check_Event then
+               All_Checks (Info.Kind) := True;
+            end if;
+         end Add_One_Backtrace;
+
+         use VN_To_BT_Mappings;
+
+      begin
+         if VN_BTs /= VN_To_BT_Mappings.No_Element then
+            for BT of VN_To_BT_Mappings.Element (VN_BTs) loop
+               Add_One_Backtrace (BT);
+            end loop;
+         end if;
+
+         if Debug_On then
+            Put_Line ("before sort");
+            for Info of This_Level_BTs loop
+               Display_BT (Info);
+            end loop;
+         end if;
+         Sort_Backtraces.Sort (This_Level_BTs);
+
+         if Debug_On then
+            Put_Line ("after sort");
+            for Info of This_Level_BTs loop
+               Display_BT (Info);
+            end loop;
+         end if;
+
+         --  now import the precondition backtraces
+         for Info of This_Level_BTs loop
+            Append (Rec_Backtraces, Info);
             if Info.Event = Precondition_Event then
                declare
-                  --  Callee_BTs : BT.BT_Info_Seqs.Vector;
+                  Callee_BTs : BT.BT_Info_Seqs.Vector;
                   Callee_File_Name : constant String :=
                     Get_Callee_File_Name (Info.Bt_Id);
                   Callee_Proc_Name : constant String :=
@@ -689,26 +723,15 @@ package body BT.Xml.Reader is
                   then
                      Get_Vn_Backtraces_Rec
                       (Get_Precondition_Callee_Name (Info.Bt_Id),
-                        Get_Precondition_VN (Info.Bt_Id));
-                        --  Backtraces);
-                     Precond_Found := True;
+                        Get_Precondition_VN (Info.Bt_Id),
+                        Callee_BTs);
+                     for Info of Callee_BTs loop
+                        Append (Rec_Backtraces, Info);
+                     end loop;
                   end if;
                end;
-
-            elsif Info.Event = Check_Event then
-               All_Checks (Info.Kind) := True;
             end if;
-         end Add_One_Backtrace;
-
-         use VN_To_BT_Mappings;
-
-      begin
-         if VN_BTs /= VN_To_BT_Mappings.No_Element then
-            for BT of VN_To_BT_Mappings.Element (VN_BTs) loop
-               Add_One_Backtrace (BT);
-            end loop;
-         end if;
-
+         end loop;
       end Get_Vn_Backtraces_Rec;
 
       Primary_Checks : Check_Kinds_Array;
@@ -733,29 +756,103 @@ package body BT.Xml.Reader is
       --  returning the sequence.
       if Debug_On then
          Put_Line ("get_backtraces for vn " & Natural'Image (Vn_Id)
-            & " in " & Proc_Name);
-      end if;
-      Get_Vn_Backtraces_Rec  (Proc_Name, Vn_Id); --  , Backtraces);
-      if Debug_On then
-         Put_Line ("before sort");
-         for Info of Backtraces loop
-            Display_BT (Info);
-         end loop;
+            & " in " & Proc_Name & ":" & Integer'Image (Msg_Loc.Line)
+            & ":" & Integer'Image (Msg_Loc.Column));
       end if;
 
-      Sort_Backtraces.Sort (Backtraces);
-
-      if Precond_Found then
-         --  Cleanup the new sequence by removing duplicates and
-         --  backtraces associated with non-primary checks
-         Primary_Checks := Primary_Original_Checks (All_Checks);
-
+      if Backtraces /= BT_Info_Seqs.Empty_Vector then
          declare
-            Result_BTs : BT_Info_Seqs.Vector;
-            Prev       : BT_Info := No_BT_Info;
+            New_BTs : BT_Info_Seqs.Vector;
          begin
-            for Info of Backtraces loop
-               if not EQ (Info, Prev) then
+            Get_Vn_Backtraces_Rec  (Proc_Name, Vn_Id, New_BTs);
+            BT_Info_Seqs.Append (Backtraces, New_BTs);
+         end;
+      else
+         Get_Vn_Backtraces_Rec  (Proc_Name, Vn_Id, Backtraces);
+      end if;
+
+      --  Cleanup the new sequence by removing duplicates and
+      --  backtraces associated with non-primary checks
+      Primary_Checks := Primary_Original_Checks (All_Checks);
+      if Debug_On then
+         Put_Line ("removing primary checks");
+         declare
+            procedure Display_Checks (Checks : Check_Kinds_Array);
+
+            --------------------
+            -- Display_Checks --
+            --------------------
+
+            procedure Display_Checks (Checks : Check_Kinds_Array) is
+               First : Boolean := True;
+            begin
+               Put ("(");
+               for Check in Check_Kind_Enum loop
+                  if Checks (Check) then
+                     if not First then
+                        Put (", ");
+                     else
+                        First := False;
+                     end if;
+                     Put (Check_Kind_Enum'Image (Check));
+                  end if;
+               end loop;
+               Put_Line (")");
+            end Display_Checks;
+         begin
+            Put_Line ("All_Checks => ");
+            Display_Checks (All_Checks);
+
+            Put_Line ("Primary_Checks => ");
+            Display_Checks (Primary_Checks);
+         end;
+      end if;
+
+      declare
+         Result_BTs : BT_Info_Seqs.Vector;
+         Prev       : BT_Info := No_BT_Info;
+         Elem       : BT_Info_Seqs.Cursor := Backtraces.First;
+      begin
+         while BT_Info_Seqs.Has_Element (Elem) loop
+            declare
+               Info : BT_Info := BT_Info_Seqs.Element (Elem);
+            begin
+               if not (Info.Event = Prev.Event
+                  and then Info.Kind = Prev.Kind
+                  and then Info.Sloc.Line = Prev.Sloc.Line)
+               then
+                  --  we need to add this backtrace, but first check if
+                  --  there are multiple similar backtraces for the same
+                  --  line. If there are, only add the one corresponding
+                  --  to the message column
+                  if Info.Sloc.Line = Msg_Loc.Line and then
+                     Info.Sloc.Column /= Msg_Loc.Column
+                  then
+                     --  Is there another backtrace on the same line that
+                     --  would be more appropriate?
+                     declare
+                        Next_Cursor : BT_Info_Seqs.Cursor :=
+                           BT_Info_Seqs.Next (Elem);
+                        Next_Info : BT_Info;
+                     begin
+                        while BT_Info_Seqs.Has_Element (Next_Cursor) loop
+                           Next_Info := BT_Info_Seqs.Element (Next_Cursor);
+                           if Next_Info.Event = Info.Event
+                              and then Next_Info.Kind = Info.Kind
+                              and then Next_Info.Sloc.Line = Info.Sloc.Line
+                           then
+                              if Next_Info.Sloc.Column = Msg_Loc.Column then
+                                 Info := Next_Info;
+                                 Elem := Next_Cursor;
+                              end if;
+                              Elem := Next_Cursor;
+                           else
+                              exit;
+                           end if;
+                           Next_Cursor := BT_Info_Seqs.Next (Next_Cursor);
+                        end loop;
+                     end;
+                  end if;
                   Prev := Info;
 
                   if Info.Event /= Check_Event
@@ -764,11 +861,12 @@ package body BT.Xml.Reader is
                      Append (Result_BTs, Info);
                   end if;
                end if;
-            end loop;
+            end;
+            Elem := BT_Info_Seqs.Next (Elem);
+         end loop;
 
-            Backtraces := Result_BTs;
-         end;
-      end if;
+         Backtraces := Result_BTs;
+      end;
       if Debug_On then
          Put_Line ("after primary and sort");
          for Info of Backtraces loop
