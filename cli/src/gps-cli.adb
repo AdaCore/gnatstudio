@@ -17,7 +17,6 @@
 --  Driver for command line version of GPS
 
 with Ada.Command_Line;
-with Ada.Strings.Fixed;
 with Ada.Text_IO;       use Ada.Text_IO;
 
 with GNAT.Command_Line; use GNAT.Command_Line;
@@ -107,31 +106,7 @@ begin
    Project_File := Create (+Project_Name.all);
 
    --  Load script
-   if Script_Name.all /= "" then
-      declare
-         Colon : constant Natural :=
-           Ada.Strings.Fixed.Index (Script_Name.all, ":");
-         Lang  : String renames Script_Name (Script_Name'First .. Colon - 1);
-      begin
-         if Colon /= 0 then
-
-            if Execute_Batch
-              (Kernel,
-               Lang_Name   => Lang,
-               Script_Name => Script_Name (Colon + 1 .. Script_Name'Last))
-            then
-               Script := Lookup_Scripting_Language (Kernel.Scripts, Lang);
-            else
-               Put_Line
-                 ("Language unknown for --load command line switch: " &
-                    Script_Name (Script_Name'First .. Colon - 1));
-            end if;
-
-         else
-            Put_Line ("No lang in --load=" & Script_Name.all);
-         end if;
-      end;
-   end if;
+   Parse_And_Execute_Script (Kernel, Script_Name.all, Script);
 
    --  Load project
    Kernel.Registry.Tree.Load
