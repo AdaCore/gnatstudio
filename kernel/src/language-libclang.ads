@@ -117,7 +117,9 @@ package Language.Libclang is
    --  (File -> USR) -> Info_Vector part of the cache
 
    function Hash (Project : Project_Type) return Hash_Type is
-     (Ada.Strings.Hash (Project.Name));
+     (if Project = No_Project
+      then 0
+      else Ada.Strings.Hash (Project.Name));
 
    type TU_Cache_Record is record
       TU      : Clang_Translation_Unit;

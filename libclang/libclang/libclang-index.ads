@@ -462,8 +462,7 @@ package Libclang.Index is
      (clang_getPointeeType (T));
 
    function Result_Type (T : Clang_Type) return Clang_Type
-   is
-     (clang_getResultType (T));
+   is (clang_getResultType (T));
 
    function Hash (Cursor : Clang_Cursor) return Hash_Type
    is (Hash_Type (clang_hashCursor (Cursor)));

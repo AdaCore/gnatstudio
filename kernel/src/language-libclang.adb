@@ -28,6 +28,7 @@ with Language.Libclang_Tree; use Language.Libclang_Tree;
 with Clang_Xref; use Clang_Xref;
 with GPS.Kernel.Commands; use GPS.Kernel.Commands;
 with String_Utils; use String_Utils;
+with Ada.Containers.Indefinite_Hashed_Maps;
 
 package body Language.Libclang is
 
@@ -68,8 +69,8 @@ package body Language.Libclang is
      (Decl_Info_Vectors.Vector, Decl_Info_Vector);
    --  Love you so much Ada <3 <3 (okay)
 
-   package Clang_Cache_Maps is new Ada.Containers.Hashed_Maps
-     (Project_Type, Clang_Context, Hash, "=");
+   package Clang_Cache_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Virtual_File, Clang_Context, Full_Name_Hash, "=");
 
    type Clang_Module_Record is new Abstract_Module_Record with record
       Global_Cache : Clang_Cache_Maps.Map;
@@ -302,9 +303,11 @@ package body Language.Libclang is
       begin
          if Reparse
            and then Buffer /= Nil_Editor_Buffer
-           and then Clang_Module_Id.Global_Cache.Contains (F_Info.Project)
+           and then Clang_Module_Id.Global_Cache.Contains
+             (F_Info.Project.Project_Path)
          then
-            Context := Clang_Module_Id.Global_Cache.Element (F_Info.Project);
+            Context := Clang_Module_Id.Global_Cache.Element
+              (F_Info.Project.Project_Path);
 
             if Context.TU_Cache.Contains (File) then
                Cache_Val := Context.TU_Cache.Element (File);
@@ -337,7 +340,7 @@ package body Language.Libclang is
         (Project : Project_Type) return Clang_Context
       is
       begin
-         return Clang_Module_Id.Global_Cache.Element (Project);
+         return Clang_Module_Id.Global_Cache.Element (Project.Project_Path);
       end Context;
 
    end TU_Source;
@@ -377,11 +380,15 @@ package body Language.Libclang is
       Context : Clang_Context;
    begin
 
-      if not Clang_Module_Id.Global_Cache.Contains (F_Info.Project) then
+      if not Clang_Module_Id.Global_Cache.Contains
+        (F_Info.Project.Project_Path)
+      then
          Initialize (Context);
-         Clang_Module_Id.Global_Cache.Insert (F_Info.Project, Context);
+         Clang_Module_Id.Global_Cache.Insert
+           (F_Info.Project.Project_Path, Context);
       else
-         Context := Clang_Module_Id.Global_Cache.Element (F_Info.Project);
+         Context :=
+           Clang_Module_Id.Global_Cache.Element (F_Info.Project.Project_Path);
       end if;
 
       if Unsaved_Files = No_Unsaved_Files

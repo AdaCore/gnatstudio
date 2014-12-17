@@ -299,6 +299,34 @@ package body Completion_Module is
    --  Complete indicates whether we should automatically complete to the
    --  biggest common prefix.
 
+   function Get_Focused_Buffer
+     (Kernel : access Kernel_Handle_Record'Class) return Source_Buffer;
+
+   function Triggers_Auto_Completion
+     (Buffer : Source_Buffer; C : Character) return Boolean;
+   --  Return true if C enables opening an auto-completion window; false
+   --  otherwise.
+
+   ------------------------
+   -- Get_Focused_Buffer --
+   ------------------------
+
+   function Get_Focused_Buffer
+     (Kernel : access Kernel_Handle_Record'Class) return Source_Buffer
+   is
+      Widget : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+
+      View   : constant Source_View
+        := (if Widget /= null
+            and then Widget.all in Source_View_Record'Class
+            then Source_View (Widget)
+            else null);
+   begin
+      return (if View /= null
+              then Source_Buffer (Get_Buffer (View))
+              else null);
+   end Get_Focused_Buffer;
+
    -------------------------
    -- Preferences_Changed --
    -------------------------
@@ -993,25 +1021,16 @@ package body Completion_Module is
    is
       Kernel        : constant Kernel_Handle := Get_Kernel (Context.Context);
       M             : Completion_Module_Access renames Completion_Module;
-      Widget        : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
-      View          : Source_View;
       Shell_Command : Editor_Replace_Slice;
       Iter          : Gtk_Text_Iter;
       Prev          : Gtk_Text_Iter;
       Success       : Boolean;
       Text          : GNAT.Strings.String_Access;
-      Buffer        : Source_Buffer;
+      Buffer        : constant Source_Buffer := Get_Focused_Buffer (Kernel);
 
    begin
       if M = null then
          return Commands.Failure;
-      end if;
-
-      if Widget /= null
-        and then Widget.all in Source_View_Record'Class
-      then
-         View   := Source_View (Widget);
-         Buffer := Source_Buffer (Get_Buffer (View));
       end if;
 
       if Buffer = null or else not Get_Writable (Buffer) then
@@ -1318,18 +1337,10 @@ package body Completion_Module is
    function Trigger_Timeout_Callback return Boolean is
       Ignore : Command_Return_Type;
       pragma Unreferenced (Ignore);
-      Widget        : constant Gtk_Widget :=
-        Get_Current_Focus_Widget (Get_Kernel (Completion_Module.all));
-      View          : Source_View;
-      Buffer        : Source_Buffer;
 
+      Buffer : constant Source_Buffer :=
+        Get_Focused_Buffer (Get_Kernel (Completion_Module.all));
    begin
-      if Widget /= null
-        and then Widget.all in Source_View_Record'Class
-      then
-         View   := Source_View (Widget);
-         Buffer := Source_Buffer (Get_Buffer (View));
-      end if;
 
       --  Do not complete when slave cursors active
       if not Has_Slave_Cursors (Buffer) then
@@ -1348,6 +1359,65 @@ package body Completion_Module is
          return False;
    end Trigger_Timeout_Callback;
 
+   ------------------------------
+   -- Triggers_Auto_Completion --
+   ------------------------------
+
+   function Triggers_Auto_Completion
+     (Buffer : Source_Buffer; C : Character) return Boolean
+   is
+      Lang   : constant Language.Language_Access
+        := (if Buffer /= null then Buffer.Get_Language
+            else null);
+
+      --  Return true if the cursor is at a location where an Ada keyword
+      --  should open an auto-completion, false otherwise
+
+   begin
+
+      --  ??? this whole test is too language-specific for the moment.
+      --  Should probably be moved to some new language primitive in order
+      --  to support other auto-completion triggers for other languages.
+
+      if Lang = null then
+         return False;
+      elsif Lang = Ada_Lang then
+         if C = ' ' then
+            declare
+               Exp      : Parsed_Expression;
+               It       : Gtk_Text_Iter;
+               The_Text : String_Access;
+               Ret      : Boolean;
+            begin
+               Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+
+               Exp := Parse_Expression_Backward
+                 (The_Text,
+                  String_Index_Type (Get_Byte_Index (It)));
+
+               Ret := Token_List.Length (Exp.Tokens) = 1
+                 and then
+                   Token_List.Data
+                     (Token_List.First (Exp.Tokens)).Tok_Type in
+                       Tok_With | Tok_Use | Tok_Pragma | Tok_Accept
+                         | Tok_Raise | Tok_Aspect;
+
+               Free (The_Text);
+               Free (Exp);
+
+               return Ret;
+            end;
+         end if;
+
+         return C in '.' | ',' | '(' | ''';
+
+      elsif Lang in Cpp_Lang | C_Lang then
+         return C in '.' | '(' | '>';
+      else
+         return C not in ' ' | ASCII.HT;
+      end if;
+   end Triggers_Auto_Completion;
+
    -----------------------------------
    -- Character_Added_Hook_Callback --
    -----------------------------------
@@ -1356,125 +1426,17 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      function Triggers_Auto_Completion (C : Character) return Boolean;
-      --  Return true if C enables opening an auto-completion window; false
-      --  otherwise.
-
-      ------------------------------
-      -- Triggers_Auto_Completion --
-      -----------------------------
-
-      function Triggers_Auto_Completion (C : Character) return Boolean is
-         Buffer : Source_Buffer;
-
-         function Auto_Complete_Ada_Keyword return Boolean;
-         --  Return true if the cursor is at a location where an Ada keyword
-         --  should open an auto-completion, false otherwise
-
-         -------------------------------
-         -- Auto_Complete_Ada_Keyword --
-         -------------------------------
-
-         function Auto_Complete_Ada_Keyword return Boolean is
-            Exp      : Parsed_Expression;
-            It       : Gtk_Text_Iter;
-            The_Text : String_Access;
-
-         begin
-            The_Text := Get_String (Buffer);
-            Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
-
-            Exp :=
-              Parse_Expression_Backward
-                (The_Text,
-                 String_Index_Type (Get_Byte_Index (It)));
-
-            if Token_List.Length (Exp.Tokens) = 1 then
-               case Token_List.Data
-                 (Token_List.First (Exp.Tokens)).Tok_Type
-               is
-               when Tok_With
-                  | Tok_Use
-                  | Tok_Pragma
-                  | Tok_Accept
-                  | Tok_Raise
-                  | Tok_Aspect =>
-                  return True;
-
-               when others =>
-                  return False;
-
-               end case;
-            end if;
-
-            Free (The_Text);
-            Free (Exp);
-
-            return False;
-         end Auto_Complete_Ada_Keyword;
-
-         --  Local variables
-
-         Widget : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
-         View   : Source_View;
-         Lang   : Language.Language_Access;
-
-      --  Start of processing for Enables_Auto_Completion
-
-      begin
-         if Widget /= null
-           and then Widget.all in Source_View_Record'Class
-         then
-            View   := Source_View (Widget);
-            Buffer := Source_Buffer (Get_Buffer (View));
-         end if;
-
-         if Buffer = null then
-            return False;
-         end if;
-
-         Lang := Buffer.Get_Language;
-
-         --  ??? this whole test is too language-specific for the moment.
-         --  Should probably be moved to some new language primitive in order
-         --  to support other auto-completion triggers for other languages.
-
-         if Lang = Ada_Lang then
-            return
-              C = '.'
-                or else C = ','
-                or else C = '('
-                or else C = '''
-                or else (C = ' ' and then Auto_Complete_Ada_Keyword);
-
-         elsif Lang = Cpp_Lang
-           or else Lang = C_Lang
-         then
-            return
-              C = '.'
-                or else C = '('
-                or else C = '>';
-         else
-            return (C /= ' '
-                    and then C /= ASCII.HT);
-         end if;
-      end Triggers_Auto_Completion;
-
-      --  Local variables
+      Buffer : constant Source_Buffer := Get_Focused_Buffer (Kernel);
+      Lang   : constant Language.Language_Access
+        := (if Buffer /= null then Buffer.Get_Language
+            else null);
 
       Edition_Data : constant File_Edition_Hooks_Args :=
                        File_Edition_Hooks_Args (Data.all);
-      Buffer       : Glib.UTF8_String (1 .. 6);
-      Last         : Natural;
-      Dummy        : Boolean;
-      pragma Unreferenced (Dummy);
 
-      Smart_Completion_Pref : constant Smart_Completion_Type :=
-                                Smart_Completion.Get_Pref;
-
-      Timeout : Gint;
-
-   --  Start of processing for Character_Added_Hook_Callback
+      Is_Dynamic : constant Boolean :=
+        Smart_Completion.Get_Pref = Dynamic
+          and then Lang not in C_Lang | Cpp_Lang;
 
    begin
       if Edition_Data.Character = 8 then
@@ -1485,43 +1447,41 @@ package body Completion_Module is
       end if;
 
       --  Remove the previous timeout, if registered
+
       if Completion_Module.Has_Trigger_Timeout then
          Glib.Main.Remove (Completion_Module.Trigger_Timeout);
          Completion_Module.Has_Trigger_Timeout := False;
       end if;
 
-      Unichar_To_UTF8 (Edition_Data.Character, Buffer, Last);
-
-      if Last = 1 and then Triggers_Auto_Completion (Buffer (Last)) then
-         if Smart_Completion_Pref = Dynamic then
-            Timeout := 0;
-         else
-            Timeout :=
-              Gint (Smart_Completion_Trigger_Timeout.Get_Pref);
-         end if;
-
-         Completion_Module.Trigger_Timeout :=
-           Glib.Main.Timeout_Add
-             (Guint (Timeout), Trigger_Timeout_Callback'Access);
-
-         Completion_Module.Has_Trigger_Timeout := True;
-      end if;
-
-      if Smart_Completion_Pref = Dynamic then
+      if Is_Dynamic then
          declare
-            Widget        : constant Gtk_Widget :=
-              Get_Current_Focus_Widget (Kernel);
-            View   : Source_View;
-            Buffer : Source_Buffer;
+            Buffer : constant Source_Buffer := Get_Focused_Buffer (Kernel);
+            Dummy  : Boolean;
+            pragma Unreferenced (Dummy);
          begin
-            if Widget /= null
-              and then Widget.all in Source_View_Record'Class
+            if Buffer /= null
+              and then not Buffer.Is_Inserting_Internally
             then
-               View   := Source_View (Widget);
-               Buffer := Source_Buffer (Get_Buffer (View));
-               if not Buffer.Is_Inserting_Internally then
-                  Dummy := Trigger_Timeout_Callback;
-               end if;
+               Dummy := Trigger_Timeout_Callback;
+            end if;
+         end;
+      else
+         declare
+            Char_Buffer  : Glib.UTF8_String (1 .. 6);
+            Last         : Natural;
+         begin
+            Unichar_To_UTF8 (Edition_Data.Character, Char_Buffer, Last);
+
+            if Last = 1
+              and then Triggers_Auto_Completion (Buffer, Char_Buffer (Last))
+            then
+               Completion_Module.Trigger_Timeout :=
+                 Glib.Main.Timeout_Add
+                   (Interval =>
+                      Guint (Smart_Completion_Trigger_Timeout.Get_Pref),
+                    Func     => Trigger_Timeout_Callback'Access);
+
+               Completion_Module.Has_Trigger_Timeout := True;
             end if;
          end;
       end if;
