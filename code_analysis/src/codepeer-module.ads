@@ -123,7 +123,7 @@ private
       --  CodePeer's output directory for root project.
       Tree                   : Code_Analysis.Code_Analysis_Tree;
       Race_Category          : CodePeer.Message_Category_Access;
-      Has_Backtraces         : Boolean;
+      Has_Backtraces         : Boolean := False;
       Report_Subwindow       : GPS.Kernel.MDI.GPS_MDI_Child;
       Report                 : CodePeer.Reports.Report;
       Annotation_Style       : GPS.Styles.UI.Style_Access;
