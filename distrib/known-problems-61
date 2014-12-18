@@ -50,16 +50,6 @@ KP-61-NB26-010 GB: Cannot watch global variables defined in package body.
 
   Workaround: Edit the expression manually.
 
-KP-61-NB12-023 ECL: Cannot set breakpoints on Eclipse Luna
-
-  Problem:    On Eclipse 4.4, when debugging an Ada Application (menu Debug As
-              => Ada Application) no breakpoints can be set.
-
-  Status:     This was fixed in 2.10.0 on 2014-11-26
-
-  Workaround: Launch debugger using Debug As => C/C++ Application menu. Set
-              Ada Event Breakpoints using the GDB console view.
-
 KP-61-NB12-012 GPS: incorrect gnat driver for gnatstub and gnatmetric
 
   Problem:    GPS does not use the proper cross driver (<target>-gnat) when
@@ -145,6 +135,16 @@ KP-61-NB18-009 GB: Cannot open Ada Editor.
 
   Workaround: Edit the file using the standard text editor or restart
               GNATbench.
+
+KP-61-NB12-023 ECL: Cannot set breakpoints on Eclipse Luna
+
+  Problem:    On Eclipse 4.4, when debugging an Ada Application (menu Debug As
+              => Ada Application) no breakpoints can be set.
+
+  Status:     This was fixed in 2.9.1 on 2014-12.18
+
+  Workaround: Launch debugger using Debug As => C/C++ Application menu. Set
+              Ada Event Breakpoints using the GDB console view.
 
 KP-61-NB11-004 GPS: emacs key shortcuts lost
 
