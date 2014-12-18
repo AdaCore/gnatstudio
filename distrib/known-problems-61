@@ -50,17 +50,6 @@ KP-61-NB26-010 GB: Cannot watch global variables defined in package body.
 
   Workaround: Edit the expression manually.
 
-KP-61-NB18-009 GB: Cannot open Ada Editor.
-
-  Problem:    Sometimes opening Ada editor fails. The Ada editor could not be
-              initialized because of a NullPointerException. Once it occurs
-              the file cannot be edited anymore by the Ada editor.
-
-  Status:     This was fixed in 2.10.0 on 2014-11-27
-
-  Workaround: Edit the file using the standard text editor or restart
-              GNATbench.
-
 KP-61-NB12-023 ECL: Cannot set breakpoints on Eclipse Luna
 
   Problem:    On Eclipse 4.4, when debugging an Ada Application (menu Debug As
@@ -141,7 +130,7 @@ KP-61-NC03-015 WB: white lines in the Wind River Workbench Build Targets tree
               displayed in the Build Targets tree of any Wind River Workbench
               projects.
 
-  Status:     This was fixed in 2.10.0 on 2014-12-18
+  Status:     This was fixed in 2.9.1 on 2014-12-18
 
   Workaround: None.
 
@@ -156,6 +145,17 @@ KP-61-NC01-009 GPS: unreadable fonts under Solaris
               After line 26, add the following two lines:
                 <dir>/usr/openwin/lib/X11/fonts/75dpi</dir>
                 <dir>/usr/openwin/lib/X11/fonts/100dpi</dir>
+
+KP-61-NB18-009 GB: Cannot open Ada Editor.
+
+  Problem:    Sometimes opening Ada editor fails. The Ada editor could not be
+              initialized because of a NullPointerException. Once it occurs
+              the file cannot be edited anymore by the Ada editor.
+
+  Status:     This was fixed in 2.9.1 on 2014-12-18
+
+  Workaround: Edit the file using the standard text editor or restart
+              GNATbench.
 
 KP-61-NB11-004 GPS: emacs key shortcuts lost
 
