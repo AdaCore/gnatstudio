@@ -25,16 +25,6 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
-KP-61-NC03-015 WB: white lines in the Wind River Workbench Build Targets tree
-
-  Problem:    In the Project Explorer view, a lot of nodes with no labels are
-              displayed in the Build Targets tree of any Wind River Workbench
-              projects.
-
-  Status:     This was fixed in 2.10.0 on 2014-12-03
-
-  Workaround: None.
-
 KP-61-NC01-048 GB: Ada 2102 reserved word "some" not displayed as a keyword.
 
   Problem:    Ada 2012 reserved word "some" is not displayed in AdaCore's Ada
@@ -144,6 +134,16 @@ KP-61-NC04-017 GPS: prevent_project_edition.py need update for menu name
   Status:     This was fixed in 6.1.1 on 2014-12-05
 
   Workaround: Fix menu names in prevent_project_edition.py.
+
+KP-61-NC03-015 WB: white lines in the Wind River Workbench Build Targets tree
+
+  Problem:    In the Project Explorer view, a lot of nodes with no labels are
+              displayed in the Build Targets tree of any Wind River Workbench
+              projects.
+
+  Status:     This was fixed in 2.10.0 on 2014-12-18
+
+  Workaround: None.
 
 KP-61-NC01-009 GPS: unreadable fonts under Solaris
 
