@@ -6444,7 +6444,8 @@ package body Src_Editor_Buffer is
       Line               : Editable_Line_Type;
       Update_Immediately : Boolean;
       Filter             : Language.Tree.Category_Array :=
-        Language.Tree.Null_Category_Array) return Block_Record
+        Language.Tree.Null_Category_Array;
+      Column             : Visible_Column_Type := 1) return Block_Record
    is
       Tree : constant Semantic_Tree'Class :=
         Editor.Kernel.Get_Abstract_Tree_For_File (Editor.Filename);
@@ -6469,7 +6470,7 @@ package body Src_Editor_Buffer is
       --  computation, which does not need xref information
       declare
          Node : constant Semantic_Node'Class := Tree.Node_At
-           ((Line => Integer (Line), Column => 1, others => <>), Filter);
+           ((Line => Integer (Line), Column => Column, others => <>), Filter);
       begin
          if Node = No_Semantic_Node then
             return New_Block;

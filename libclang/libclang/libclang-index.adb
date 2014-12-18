@@ -866,6 +866,20 @@ package body Libclang.Index is
    end Value;
 
    --------------
+   -- In_Range --
+   --------------
+
+   function In_Range (Sought, Containing : Clang_Cursor) return Boolean
+   is
+      Sought_Loc : constant Clang_Raw_Location := Value (Location (Sought));
+      Containing_Range : constant Clang_Source_Range := Extent (Containing);
+   begin
+      return Sought_Loc.Offset > Value (Range_Start (Containing_Range)).Offset
+        and then
+          Sought_Loc.Offset < Value (Range_End (Containing_Range)).Offset;
+   end In_Range;
+
+   --------------
    -- Location --
    --------------
 

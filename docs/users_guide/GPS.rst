@@ -840,6 +840,8 @@ Classes
 
    .. automethod:: GPS.Entity.category
 
+   .. automethod:: GPS.Entity.child_types
+
    .. automethod:: GPS.Entity.declaration
 
    .. automethod:: GPS.Entity.derived_types
@@ -855,6 +857,8 @@ Classes
    .. automethod:: GPS.Entity.find_all_refs
 
    .. automethod:: GPS.Entity.full_name
+
+   .. automethod:: GPS.Entity.get_called_entities
 
    .. automethod:: GPS.Entity.is_access
 

@@ -548,6 +548,8 @@ package Libclang.Index is
    is
      (clang_getCursorExtent (C));
 
+   function In_Range (Sought, Containing : Clang_Cursor) return Boolean;
+
    procedure Dispose_Overriden
      (overridden : access Clang_Cursor) renames clang_disposeOverriddenCursors;
 
@@ -611,7 +613,8 @@ package Libclang.Index is
    function Is_Function (K : Clang_Cursor_Kind) return Boolean
    is
      (K in CXCursor_FunctionDecl
-        | CXCursor_FunctionTemplate | CXCursor_CXXMethod);
+        | CXCursor_FunctionTemplate | CXCursor_CXXMethod
+          | CXCursor_ConversionFunction);
    --  Helper to determine if a cursor kind is a function kind
 
    function Is_Object_Type (K : Clang_Cursor_Kind) return Boolean

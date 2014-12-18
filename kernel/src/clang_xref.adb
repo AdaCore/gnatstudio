@@ -1015,8 +1015,7 @@ package body Clang_Xref is
       --  to decouple that into an helper at some point, and use it for
       --  Is_Primitive_Of
 
-      Get_Overriden_Cursors
-        (Cursor, C'Access, Nb_Cursors'Access);
+      Get_Overriden_Cursors (Cursor, C'Access, Nb_Cursors'Access);
 
       C_Ptr := C_Cursor_Ptrs.Pointer (C);
 

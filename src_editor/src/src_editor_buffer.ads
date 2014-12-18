@@ -921,7 +921,8 @@ package Src_Editor_Buffer is
       Line               : Editable_Line_Type;
       Update_Immediately : Boolean;
       Filter             : Language.Tree.Category_Array :=
-        Language.Tree.Null_Category_Array) return Block_Record;
+        Language.Tree.Null_Category_Array;
+      Column             : Visible_Column_Type := 1) return Block_Record;
    --  Return the block information associated with Line.
    --  If Update_Immediately is True, update the constructs information before
    --  returning the block.

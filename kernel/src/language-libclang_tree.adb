@@ -150,43 +150,9 @@ package body Language.Libclang_Tree is
       end;
    end Root_Iterator;
 
-   -------------
-   -- Node_At --
-   -------------
-
-   overriding function Node_At
-     (Self : Abstract_Clang_Tree; Sloc : Sloc_T;
-      Category_Filter : Category_Array := Null_Category_Array)
-      return Semantic_Node'Class
-   is
-      Line_Offset : constant Natural :=
-        Self.Kernel.Get_Buffer_Factory.Get
-          (Self.File, Open_View => False, Focus => False, Open_Buffer => True)
-        .New_Location (Sloc.Line, Sloc.Column).Line_Offset;
-
-      Node : Clang_Node :=
-        Clang_Node'(Self.Kernel,
-                    Cursor_At (Self.Tu, Self.File, Sloc.Line, Line_Offset + 1),
-                    Self.File);
-   begin
-
-      if Category_Filter /= Null_Category_Array then
-         loop
-            exit when Is_In (Node.Category, Category_Filter);
-            declare
-               P : constant Semantic_Node'Class := Node.Parent;
-            begin
-               if P in Clang_Node'Class then
-                  Node := Clang_Node (P);
-               else
-                  return No_Semantic_Node;
-               end if;
-            end;
-         end loop;
-      end if;
-
-      return Node;
-   end Node_At;
+   ----------
+   -- File --
+   ----------
 
    overriding function File
      (Self : Abstract_Clang_Tree) return GNATCOLL.VFS.Virtual_File
@@ -241,6 +207,11 @@ package body Language.Libclang_Tree is
       CXCursor_UsingDirective => Cat_Use,
       CXCursor_UsingDeclaration => Cat_Use,
       CXCursor_TypeAliasDecl => Cat_Type,
+      CXCursor_IfStmt => Cat_If_Statement,
+      CXCursor_ForStmt => Cat_Loop_Statement,
+      CXCursor_WhileStmt => Cat_Loop_Statement,
+      CXCursor_DoStmt => Cat_Loop_Statement,
+      CXCursor_CaseStmt => Cat_Case_Statement,
       others => Cat_Unknown);
 
    --------------
@@ -252,6 +223,77 @@ package body Language.Libclang_Tree is
    begin
       return Clang_Cursor_Kind_To_Category (Kind (Self.Cursor));
    end Category;
+
+   -------------
+   -- Node_At --
+   -------------
+
+   overriding function Node_At
+     (Self : Abstract_Clang_Tree; Sloc : Sloc_T;
+      Category_Filter : Category_Array := Null_Category_Array)
+      return Semantic_Node'Class
+   is
+      Line_Offset : constant Natural :=
+        Self.Kernel.Get_Buffer_Factory.Get
+          (Self.File, Open_View => False, Focus => False, Open_Buffer => True)
+        .New_Location (Sloc.Line, Sloc.Column).Line_Offset;
+
+      Top_Cursor : constant Clang_Cursor :=
+        Cursor_At (Self.Tu, Self.File, Sloc.Line, Line_Offset + 1);
+      Cursor : Clang_Cursor := Top_Cursor;
+      Parent : Clang_Cursor;
+
+      use Cursors_Arrays;
+
+      function In_Range (Containing : Clang_Cursor) return Boolean
+      is
+        (In_Range (Top_Cursor, Containing) or else Containing = Top_Cursor);
+
+      function Next_Child (C : Clang_Cursor) return Array_Type
+      is (Get_Children (C, In_Range'Access));
+
+      function Children_Chain (C : Clang_Cursor) return Array_Type;
+      function Children_Chain (C : Clang_Cursor) return Array_Type
+      is
+         Child : constant Array_Type := Next_Child (C);
+      begin
+         return (if Child = Empty_Array then Child
+                 else Child & Children_Chain (Child (1)));
+      end Children_Chain;
+
+      function Fullfills_Filter (C : Clang_Cursor) return Boolean
+      is
+        (Is_In (Clang_Cursor_Kind_To_Category (C.kind), Category_Filter));
+
+   begin
+
+      if Category_Filter /= Null_Category_Array then
+
+         --  Get the topmost cursor just before translation unit
+         loop
+            Parent := Semantic_Parent (Cursor);
+            exit when Parent = No_Cursor
+              or else Parent.kind = CXCursor_TranslationUnit;
+            Cursor := Semantic_Parent (Cursor);
+         end loop;
+
+         --  Now explore down to cursor, and keep the list
+         declare
+            Children : constant Array_Type :=
+              Filter (Children_Chain (Cursor), Fullfills_Filter'Access);
+         begin
+            if Children = Empty_Array then
+               return No_Semantic_Node;
+            else
+               return Clang_Node'
+                 (Self.Kernel, Children (Children'Last), Self.File);
+            end if;
+         end;
+      else
+         return Clang_Node'(Self.Kernel, Top_Cursor, Self.File);
+      end if;
+
+   end Node_At;
 
    ------------
    -- Parent --
@@ -325,14 +367,16 @@ package body Language.Libclang_Tree is
    is
       K : constant Clang_Cursor_Kind := Kind (Self.Cursor);
    begin
-      if K in CXCursor_FunctionDecl | CXCursor_FunctionTemplate
-        | CXCursor_ConversionFunction
-      then
+      if Is_Function (K) or else Is_Object_Type (K) or else Is_Type (K) then
          declare
             Profile : constant String := Display_Name (Self.Cursor);
             Name : constant String := GNATCOLL.Symbols.Get (Self.Name).all;
          begin
-            return Profile (Name'Length + 1 .. Profile'Last);
+            if Name'Length < Profile'Length then
+               return Profile (Name'Length + 1 .. Profile'Last);
+            else
+               return "";
+            end if;
          end;
       elsif K in CXCursor_FieldDecl | CXCursor_VarDecl then
          return Spelling (clang_getCursorType (Self.Cursor));
