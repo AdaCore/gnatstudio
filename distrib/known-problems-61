@@ -91,6 +91,17 @@ KP-61-NB12-012 GPS: incorrect gnat driver for gnatstub and gnatmetric
 
   Workaround: Launch the tools manually.
 
+KP-61-NB10-019 GB: Cannot analyze file or projects sources
+
+  Problem:    A Problem Occured error box is displayed when running the
+              "Analyze Ada File" or "Analyze Project Sources" actions.
+              The problem details contains the following message:
+              Build_Configurations.Mode_Map.Element: key not in map
+
+  Status:     This was fixed in 2.10.0 on 2014-11-12
+
+  Workaround: Use compile or build actions to run the analyze.
+
 KP-61-NA17-042 WB: SIGSEGV crash when opening large programs
 
   Problem:    Opening a large GNAT project in Wind River Workbench, generates
