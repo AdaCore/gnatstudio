@@ -208,10 +208,18 @@ package body BT.Xml.Reader is
    function LT (E1, E2 : BT_Info) return Boolean is
    begin
       if E1.Event = E2.Event then
-         if E1.Sloc.Line = E2.Sloc.Line then
-            return E1.Sloc.Column < E2.Sloc.Column;
+         if E1.Kind = E2.Kind then
+            if E1.Sloc.Line = E2.Sloc.Line then
+               return E1.Sloc.Column < E2.Sloc.Column;
+            else
+               return E1.Sloc.Line < E2.Sloc.Line;
+            end if;
          else
-            return E1.Sloc.Line < E2.Sloc.Line;
+            if E1.Sloc.Line = E2.Sloc.Line then
+               return E1.Kind < E2.Kind;
+            else
+               return E1.Sloc.Line < E2.Sloc.Line;
+            end if;
          end if;
       else
          return E1.Event < E2.Event;
