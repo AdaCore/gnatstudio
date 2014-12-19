@@ -277,20 +277,24 @@ package body Language.Libclang_Tree is
             Cursor := Semantic_Parent (Cursor);
          end loop;
 
+         --  Semantic parent did jump to a non lexical containing cursor
+         if not In_Range (Cursor, Top_Cursor) then
+            Cursor := Root_Cursor (Self.Tu);
+         end if;
+
          --  Now explore down to cursor, and keep the list
+
          declare
-            Children : constant Array_Type :=
-              Filter (Children_Chain (Cursor), Fullfills_Filter'Access);
+            C1 : constant Array_Type := Cursor & Children_Chain (Cursor);
+            C : constant Array_Type
+              := Filter (C1, Fullfills_Filter'Access);
          begin
-            if Children = Empty_Array then
-               return No_Semantic_Node;
-            else
-               return Clang_Node'
-                 (Self.Kernel, Children (Children'Last), Self.File);
-            end if;
+            return (if C = Empty_Array then No_Semantic_Node
+                    else Clang_Node'(Self.Kernel, C (C'Last), Self.File));
          end;
       else
-         return Clang_Node'(Self.Kernel, Top_Cursor, Self.File);
+         return Clang_Node'(Self.Kernel,
+                            Semantic_Parent (Top_Cursor), Self.File);
       end if;
 
    end Node_At;
