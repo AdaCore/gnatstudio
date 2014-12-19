@@ -131,7 +131,7 @@ KP-61-NB18-009 GB: Cannot open Ada Editor.
               initialized because of a NullPointerException. Once it occurs
               the file cannot be edited anymore by the Ada editor.
 
-  Status:     This was fixed in 2.9.1 on 2014-12-18
+  Status:     This was fixed in 2.9.1 on 2014-12-19
 
   Workaround: Edit the file using the standard text editor or restart
               GNATbench.
