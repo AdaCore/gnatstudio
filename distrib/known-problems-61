@@ -60,18 +60,6 @@ KP-61-NB12-012 GPS: incorrect gnat driver for gnatstub and gnatmetric
 
   Workaround: Launch the tools manually.
 
-KP-61-NA17-042 WB: SIGSEGV crash when opening large programs
-
-  Problem:    Opening a large GNAT project in Wind River Workbench, generates
-              a Java Virtual Machine crash in GNATbench library native code.
-              Deleting the generated b__prj_main ada file allows to restart
-              Wind River Workbench.
-
-  Status:     This was fixed in 2.10.0 on 2014-11-12
-
-  Workaround: Add in eclipse/workbench ini file a -Xss (ex: -Xss1M) vmargs
-              option to set larger thread stack size.
-
 KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Problem:    When closing a debugger session, if the program being debugged
@@ -217,6 +205,18 @@ KP-61-NA27-039 GPS: incorrect highlight of changed value in debugger data
   Status:     This was fixed in 6.1.1 on 2014-11-05
 
   Workaround: This only impact the colors, the actual values are correct.
+
+KP-61-NA17-042 WB: SIGSEGV crash when opening large programs
+
+  Problem:    Opening a large GNAT project in Wind River Workbench, generates
+              a Java Virtual Machine crash in GNATbench library native code.
+              Deleting the generated b__prj_main ada file allows to restart
+              Wind River Workbench.
+
+  Status:     This was fixed in 2.9.1 on 2014-11-18
+
+  Workaround: Add in eclipse/workbench ini file a -Xss (ex: -Xss1M) vmargs
+              option to set larger thread stack size.
 
 KP-61-N604-003 GPS: scroll bars not displayed in editors
 
