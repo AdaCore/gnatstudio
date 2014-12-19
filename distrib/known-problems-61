@@ -73,6 +73,16 @@ KP-61-N822-004 GPS: Input focus when creating/opening new windows
 Known problems fixed in GPS 6.1.1 / GNATbench 2.9.1
 ---------------------------------------------------
 
+KP-61-NC18-028 GPS: "target already registered" error messages
+
+  Problem:    After editing build targets, GPS displays error messages
+              indicating "target already registered" in the Messages view
+              on startup.
+
+  Status:     This was fixed in 6.1.1 on 2014-12-19
+
+  Workaround: None. These messages can be safely ignored.
+
 KP-61-NC10-014 GB: popup error dialog displayed on Ada editor switch
 
   Problem:    Sometimes when activating/desactivating ada editor, a popup error
