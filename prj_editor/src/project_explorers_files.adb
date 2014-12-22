@@ -75,17 +75,8 @@ with Project_Explorers_Common;   use Project_Explorers_Common;
 package body Project_Explorers_Files is
    Me : constant Trace_Handle := Create ("FILES");
 
-   Explorer_Files_Module_Id     : Module_ID;
-
    File_View_Shows_Only_Project : constant History_Key :=
                                     "explorers-file-show-project-only";
-
-   type Explorer_Module_Record is new Module_ID_Record with null record;
-   overriding procedure Default_Context_Factory
-     (Module  : access Explorer_Module_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject);
-   --  See inherited documentation
 
    type Append_Directory_Idle_Data;
    type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
@@ -121,6 +112,12 @@ package body Project_Explorers_Files is
      (Explorer : access Project_Explorer_Files_Record'Class)
       return Gtk_Widget;
    --  Create a new explorer and returns the focus widget
+
+   type Explorer_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Explorer_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
 
    package Explorer_Files_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Files_View",
@@ -217,19 +214,6 @@ package body Project_Explorers_Files is
      (D : Append_Directory_Idle_Data_Access) return Boolean;
    --  ???
    --  Called by File_Append_Directory.
-
-   procedure Explorer_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu);
-   --  ??? Unused for now while the files explorer is not a separate module.
-   --  Return the context to use for the contextual menu.
-   --  It is also used to return the context for
-   --  GPS.Kernel.Get_Current_Context, and thus can be called with a null
-   --  event or a null menu.
 
    type Refresh_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -336,23 +320,55 @@ package body Project_Explorers_Files is
    is
       pragma Unreferenced (Context);
    begin
-      return Module_ID (Get_Creator (Ctxt)) = Explorer_Files_Module_Id;
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Files_Views.Get_Module;
    end Filter_Matches_Primitive;
 
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   overriding procedure Default_Context_Factory
-     (Module  : access Explorer_Module_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject) is
+   overriding function Build_Context
+     (Self  : not null access Explorer_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
+   is
+      Context : Selection_Context :=
+        GPS_MDI_Child_Record (Self.all).Build_Context (Event);
+      Explorer     : constant Project_Explorer_Files :=
+        Project_Explorer_Files (GPS_MDI_Child (Self).Get_Actual_Widget);
+      Iter      : constant Gtk_Tree_Iter :=
+        Find_Iter_For_Event (Explorer.File_Tree, Event);
+      Path      : Gtk_Tree_Path;
+      File      : Virtual_File;
+      Node_Type : Node_Types;
    begin
-      Explorer_Context_Factory
-        (Context, Get_Kernel (Module.all),
-         Gtk_Widget (Child),
-         Explorer_Files_Views.View_From_Widget (Child), null, null);
-   end Default_Context_Factory;
+      if Iter /= Null_Iter then
+         if Event /= null then
+            Path := Get_Path (Explorer.File_Model, Iter);
+            Set_Cursor (Explorer.File_Tree, Path, null, False);
+            Path_Free (Path);
+         end if;
+
+         Node_Type := Node_Types'Val
+           (Integer (Get_Int (Explorer.File_Model, Iter, Node_Type_Column)));
+
+         case Node_Type is
+            when Directory_Node | File_Node =>
+               File := Get_File (Explorer.File_Model, Iter, File_Column);
+               Set_File_Information (Context, (1 => File));
+
+            when Entity_Node =>
+               --  ??? No entity information was set before, but isn't this
+               --  strange ?
+               null;
+
+            when others =>
+               null;
+
+         end case;
+      end if;
+      return Context;
+   end Build_Context;
 
    -------------------
    -- Drag_Data_Get --
@@ -861,12 +877,9 @@ package body Project_Explorers_Files is
 
       Set_Column_Types (Explorer.File_Tree);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Explorer.Kernel,
-         Event_On_Widget => Explorer.File_Tree,
-         Object          => Explorer,
-         ID              => Explorer_Files_Module_Id,
-         Context_Func    => Explorer_Context_Factory'Access);
+         Event_On_Widget => Explorer.File_Tree);
 
       Refresh (Explorer);
 
@@ -933,59 +946,6 @@ package body Project_Explorers_Files is
 
       return Gtk_Widget (Explorer.File_Tree);
    end Initialize;
-
-   ------------------------------
-   -- Explorer_Context_Factory --
-   ------------------------------
-
-   procedure Explorer_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu)
-   is
-      pragma Unreferenced (Event_Widget, Kernel);
-      Explorer     : constant Project_Explorer_Files :=
-        Project_Explorer_Files (Object);
-      Iter      : constant Gtk_Tree_Iter :=
-                    Find_Iter_For_Event (Explorer.File_Tree, Event);
-      Path      : Gtk_Tree_Path;
-      File      : Virtual_File;
-      Node_Type : Node_Types;
-   begin
-      if Iter /= Null_Iter then
-         --  If Menu is null, this means that this function is being called
-         --  through Default_Context_Factory and is not filling a contextual
-         --  menu. In this case we do not want to do the call to Set_Cursor
-         --  which would cause scrolling of the currently selected cell if it
-         --  is not visible.
-         if Menu /= null then
-            Path := Get_Path (Explorer.File_Model, Iter);
-            Set_Cursor (Explorer.File_Tree, Path, null, False);
-            Path_Free (Path);
-         end if;
-
-         Node_Type := Node_Types'Val
-           (Integer (Get_Int (Explorer.File_Model, Iter, Node_Type_Column)));
-
-         case Node_Type is
-            when Directory_Node | File_Node =>
-               File := Get_File (Explorer.File_Model, Iter, File_Column);
-               Set_File_Information (Context, (1 => File));
-
-            when Entity_Node =>
-               --  ??? No entity information was set before, but isn't this
-               --  strange ?
-               null;
-
-            when others =>
-               null;
-
-         end case;
-      end if;
-   end Explorer_Context_Factory;
 
    -----------------
    -- Create_Menu --
@@ -1152,8 +1112,10 @@ package body Project_Explorers_Files is
      (Explorer : access Gtk_Widget_Record'Class)
    is
       T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
+      Child : constant GPS_MDI_Child :=
+        Explorer_Files_Views.Child_From_View (T);
    begin
-      Context_Changed (T.Kernel);
+      T.Kernel.Context_Changed (Child.Build_Context);
    end File_Selection_Changed;
 
    -----------------------
@@ -1575,9 +1537,7 @@ package body Project_Explorers_Files is
       File_View_Filter : constant Action_Filter :=
                            new File_View_Filter_Record;
    begin
-      Explorer_Files_Module_Id := new Explorer_Module_Record;
-      Explorer_Files_Views.Register_Module
-        (Kernel, Explorer_Files_Module_Id);
+      Explorer_Files_Views.Register_Module (Kernel);
       Register_Filter
         (Kernel,
          Filter => File_View_Filter,

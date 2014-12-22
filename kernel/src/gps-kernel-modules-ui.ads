@@ -59,7 +59,6 @@
 --      - Adding key handlers, which have priority over other shortcuts
 
 with GNAT.Strings;
-with Gdk.Event;
 with Glib.Action;
 with Glib.Object;
 with Glib.Values;
@@ -115,42 +114,30 @@ package GPS.Kernel.Modules.UI is
    -- Contextual menus --
    ----------------------
 
-   type Context_Factory is access procedure
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  This function should set the context associated with the contextual
-   --  menu, when the mouse event Event happened on Widget.
-   --  The mouse event occured in Event_Widget, and the contextual menu was
-   --  registered for Object
-   --  The object should also add its default entries into the menu, so that
-   --  they always appear first in the menu. Note that the module will not be
-   --  asked in the second step whether new entries should be added.
-   --
-   --  If null is returned, no contextual menu will be displayed.
-   --
-   --  The kernel is automatically set in the context.
+   type Contextual_Menu_Factory is access procedure
+     (Context : Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu);
+   --  This function can be used to add custom entries to the contextual menu.
+   --  It is recommended that all contextual menu items be GPS actions
+   --  nowadays, and this API is only kept (hopefully briefly) for backward
+   --  compatibility.
 
-   procedure Register_Contextual_Menu
+   procedure Setup_Contextual_Menu
      (Kernel          : access Kernel_Handle_Record'Class;
       Event_On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object          : access Glib.Object.GObject_Record'Class;
-      ID              : Module_ID;
-      Context_Func    : Context_Factory);
-   --  Register that Widget should be associated with a contextual menu.
-   --  Whenever a right-button click happens inside Event_On_Widget, then the
-   --  following will happen:
-   --     - the kernel detects the event, and creates an empty menu.
-   --     - it asks Object, through Context_Func, the exact context for the
-   --       menu (selected file, ....)
-   --     - it then asks each of the registered modules whether it wants to
-   --       add new items to the menu, and let it do so (through the
-   --       Contextual_Menu_Handler provided in Register_Module)s
-   --     - it then displays the menu
-   --     - it finally cleans up the memory when the menu is hidden
+      Context_Func    : Contextual_Menu_Factory := null);
+   --  Register than Event_On_Widget should create a contextual menu when the
+   --  user right-clicks anywhere inside its area.
+   --  Upon right-click, the following happens:
+   --     - GPS computes the selection_context via a call to the MDI Child's
+   --       Build_Context primitive operation.
+   --     - If Context_Func is specified, it is called to add hard-coded
+   --       entries to the menu. Historically, these have been used for local
+   --       configurations, but it is now preferred to use the local config
+   --       menu instead (via the Generic_Views package).
+   --     - For all registered contextual menu actions, check whether they
+   --       apply, and add them to the menu.
+   --     - display the menu.
 
    type Contextual_Menu_Label_Creator_Record is abstract tagged null record;
    type Contextual_Menu_Label_Creator is
@@ -274,7 +261,6 @@ package GPS.Kernel.Modules.UI is
    type Submenu_Factory is access all Submenu_Factory_Record'Class;
    procedure Append_To_Menu
      (Factory : access Submenu_Factory_Record;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class) is abstract;
    --  Object is the object on which the contextual menu is displayed.
@@ -322,10 +308,8 @@ package GPS.Kernel.Modules.UI is
    --  Return the list of registered contextual menus. The returned array must
    --  be freed by the caller.
 
-   procedure Create_Contextual_Menu
-     (Kernel  : Kernel_Handle;
-      Object  : Glib.Object.GObject;
-      Context : Selection_Context;
+   procedure Add_Actions_To_Contextual_Menu
+     (Context : Selection_Context;
       Menu    : in out Gtk.Menu.Gtk_Menu);
    --  Creates a menu from context and object.
    --  The Gtk_Menu must be created before calling this procedure.

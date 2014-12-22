@@ -20,6 +20,7 @@ with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Main_Window;           use GPS.Main_Window;
 
 package body GPS.Callbacks is
@@ -112,14 +113,25 @@ package body GPS.Callbacks is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Mdi);
-      Child : MDI_Child;
+      Child   : MDI_Child;
+      Context : Selection_Context;
    begin
       if Kernel /= null
         and then not Kernel.Is_In_Destruction
       then
          Child := MDI_Child (To_Object (Params, 1));
          Set_Main_Title (Kernel, Child);
-         Context_Changed (Kernel);
+
+         --  Create the new context. The module itself is in charge of creating
+         --  a specific context.
+
+         if Child.all in GPS_MDI_Child_Record'Class then
+            Context := GPS_MDI_Child (Child).Build_Context;
+         else
+            Context := New_Context (Kernel);
+         end if;
+
+         Kernel.Context_Changed (Context);
       end if;
    end Child_Selected;
 

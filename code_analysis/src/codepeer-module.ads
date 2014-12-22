@@ -20,7 +20,7 @@
 private with Ada.Containers.Indefinite_Hashed_Sets;
 private with Ada.Strings.Hash;
 
-with Glib.Object;
+with Gdk.Event;
 with Gtk.Menu;
 with Gtk.Widget;
 
@@ -29,12 +29,12 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Gdk.RGBA;
 private with Default_Preferences;
-with GPS.Kernel;   use GPS.Kernel;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;
 with GPS.Styles;
 with GPS.Styles.UI;
 
-with GPS.Kernel.MDI;
 with Code_Analysis;
 
 private with CodePeer.Listeners;
@@ -69,10 +69,8 @@ package CodePeer.Module is
    type Submenu_Factory_Record
      (Module : access Module_Id_Record'Class) is
      new GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
-
    overriding procedure Append_To_Menu
      (Factory : access Submenu_Factory_Record;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
@@ -114,6 +112,13 @@ private
    package String_Sets is
      new Ada.Containers.Indefinite_Hashed_Sets (String, Ada.Strings.Hash, "=");
 
+   type Codepeer_Child_Record is new GPS_MDI_Child_Record with null record;
+   type Codepeer_Child is access all Codepeer_Child_Record'Class;
+   overriding function Build_Context
+     (Self  : not null access Codepeer_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
    type Module_Id_Record
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
      new GPS.Kernel.Modules.Module_ID_Record with record
@@ -124,7 +129,7 @@ private
       Tree                   : Code_Analysis.Code_Analysis_Tree;
       Race_Category          : CodePeer.Message_Category_Access;
       Has_Backtraces         : Boolean := False;
-      Report_Subwindow       : GPS.Kernel.MDI.GPS_MDI_Child;
+      Report_Subwindow       : Codepeer_Child;
       Report                 : CodePeer.Reports.Report;
       Annotation_Style       : GPS.Styles.UI.Style_Access;
       Annotation_Color       : Default_Preferences.Color_Preference;

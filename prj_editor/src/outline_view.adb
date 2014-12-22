@@ -94,10 +94,11 @@ package body Outline_View is
      "outline-group-spec-and-body";
    Hist_Flat_View         : constant History_Key := "outline-flat-view";
 
-   overriding procedure Default_Context_Factory
-     (Module  : access Outline_View_Module_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject);
+   type Outline_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Outline_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
    --  See inherited documentation
 
    procedure On_Context_Changed
@@ -139,7 +140,7 @@ package body Outline_View is
      (Module_Name        => Outline_View_Module_Name,
       View_Name          => "Outline",
       Formal_View_Record => Outline_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Formal_MDI_Child   => Outline_Child_Record,
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
       Local_Config       => True,
@@ -186,15 +187,6 @@ package body Outline_View is
    function Get_Filter_Record
      (Kernel : access Kernel_Handle_Record'Class) return Tree_Filter;
    --  Return the filters properties extracted from the kernel
-
-   procedure Outline_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu);
-   --  Context factory when creating contextual menus
 
    procedure Location_Changed
      (Kernel : access Kernel_Handle_Record'Class;
@@ -347,55 +339,28 @@ package body Outline_View is
       end if;
    end Preferences_Changed;
 
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   overriding procedure Default_Context_Factory
-     (Module  : access Outline_View_Module_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject)
+   overriding function Build_Context
+     (Self  : not null access Outline_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
    is
       Outline : constant Outline_View_Access :=
-        Outline_Views.View_From_Widget (Child);
-   begin
-      Outline_Context_Factory
-        (Context      => Context,
-         Kernel       => Get_Kernel (Module.all),
-         Event_Widget => Outline.Tree,
-         Object       => Outline,
-         Event        => null,
-         Menu         => null);
-   end Default_Context_Factory;
-
-   -----------------------------
-   -- Outline_Context_Factory --
-   -----------------------------
-
-   procedure Outline_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu)
-   is
-      pragma Unreferenced (Event_Widget, Menu, Kernel);
-      Outline  : constant Outline_View_Access := Outline_View_Access (Object);
+        Outline_View_Access (GPS_MDI_Child (Self).Get_Actual_Widget);
+      Context : Selection_Context;
+      Iter    : Gtk_Tree_Iter;
       Model    : constant Outline_Model :=
         Outline_Model (-Get_Model (Outline.Tree));
-      Path     : Gtk_Tree_Path;
-      Iter     : Gtk_Tree_Iter;
-      Line     : Integer := 1;
       Entity   : Entity_Access;
+      Line     : Integer := 1;
+      Path     : Gtk_Tree_Path;
    begin
-      Iter := Find_Iter_For_Event (Outline.Tree, Event);
+      Context := GPS_MDI_Child_Record (Self.all).Build_Context (Event);
 
-      Set_File_Information
-        (Context => Context,
-         Project => No_Project,
-         Files   => (1 => Outline.File),
-         Line    => Line);
+      Iter := Find_Iter_For_Event (Outline.Tree, Event);
 
       if Iter /= Null_Iter then
          Path := Get_Path (Model, Iter);
@@ -415,7 +380,15 @@ package body Outline_View is
 
          Line := Get_Construct (Entity).Sloc_Entity.Line;
       end if;
-   end Outline_Context_Factory;
+
+      Set_File_Information
+        (Context => Context,
+         Project => No_Project,
+         Files   => (1 => Outline.File),
+         Line    => Line);
+
+      return Context;
+   end Build_Context;
 
    --------------------
    -- Create_Toolbar --
@@ -806,12 +779,9 @@ package body Outline_View is
       Widget_Callback.Connect
         (Outline, Signal_Destroy, On_Destroy'Access);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Outline.Kernel,
-         Event_On_Widget => Outline.Tree,
-         Object          => Outline,
-         ID              => Outline_View_Module,
-         Context_Func    => Outline_Context_Factory'Access);
+         Event_On_Widget => Outline.Tree);
 
       Tooltip := new Outline_View_Tooltips;
       Tooltip.Outline := Outline;

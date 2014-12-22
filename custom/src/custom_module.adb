@@ -212,7 +212,6 @@ package body Custom_Module is
      Create_Dynamic_Contextual'Class;
    overriding procedure Append_To_Menu
      (Factory : access Create_Dynamic_Contextual;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Create a dynamic contextual menu from a script
@@ -343,11 +342,9 @@ package body Custom_Module is
 
    overriding procedure Append_To_Menu
      (Factory : access Create_Dynamic_Contextual;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Object);
       Script : constant Scripting_Language :=
         Get_Script (Factory.On_Activate.all);
       C : Callback_Data'Class := Create (Script, Arguments_Count => 1);
@@ -1825,17 +1822,22 @@ package body Custom_Module is
       elsif Command = "execute_if_possible" then
          Inst := Nth_Arg (Data, 1, Action_Class);
 
+         --  Force a refresh of the context
+         --  ??? We should really let the script decide whether this is
+         --  necessary.
+         Kernel.Refresh_Context;
+
          declare
             Action : constant Action_Record_Access :=
               Lookup_Action (Kernel, String'(Get_Data (Inst, Action_Class)));
             Context : constant Selection_Context :=
-              Get_Current_Context (Get_Kernel (Data));
+              Get_Current_Context (Kernel);
          begin
             if Context /= No_Context
               and then Filter_Matches (Action.Filter, Context)
             then
                Launch_Foreground_Command
-                 (Get_Kernel (Data), Action.Command, Destroy_On_Exit => False);
+                 (Kernel, Action.Command, Destroy_On_Exit => False);
                Set_Return_Value (Data, True);
             else
                Set_Return_Value (Data, False);

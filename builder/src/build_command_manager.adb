@@ -22,7 +22,6 @@ with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
 with GPS.Kernel.Macros;           use GPS.Kernel.Macros;
 with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
@@ -251,8 +250,8 @@ package body Build_Command_Manager is
       Simulate   : Boolean;
       Background_Env : Extending_Environment) return Expansion_Result
    is
-      Context : constant Selection_Context :=
-        Get_Current_Context (Kernel_Handle (Builder.Kernel));
+      Kernel  : constant Kernel_Handle := Kernel_Handle (Builder.Kernel);
+      Context : constant Selection_Context := Get_Current_Context (Kernel);
       Adapter : Build_Command_Adapter_Access := new Build_Command_Adapter;
       Res     : Expansion_Result;
    begin
@@ -263,8 +262,8 @@ package body Build_Command_Manager is
       Initialize
         (Adapter.all,
          Builder.Kernel.Registry,
-         Get_Project (Get_Kernel (Context)),
-         Get_Kernel (Context).Get_Toolchains_Manager,
+         Get_Project (Kernel),
+         Kernel.Get_Toolchains_Manager,
          File_Information (Context),
          GPS.Kernel.Macros.Special_Character,
          GPS.Kernel.Preferences.Trusted_Mode.Get_Pref,

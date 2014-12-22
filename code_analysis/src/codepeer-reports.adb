@@ -31,12 +31,11 @@ package body CodePeer.Reports is
    procedure Gtk_New
      (Widget  : out Report;
       Kernel  : GPS.Kernel.Kernel_Handle;
-      Module  : GPS.Kernel.Modules.Module_ID;
       Version : Supported_Format_Version;
       Tree    : Code_Analysis.Code_Analysis_Tree) is
    begin
       Widget := new Report_Record;
-      Initialize (Widget, Kernel, Module, Version, Tree);
+      Initialize (Widget, Kernel, Version, Tree);
    end Gtk_New;
 
    ----------------
@@ -46,7 +45,6 @@ package body CodePeer.Reports is
    procedure Initialize
      (Self    : not null access Report_Record'Class;
       Kernel  : GPS.Kernel.Kernel_Handle;
-      Module  : GPS.Kernel.Modules.Module_ID;
       Version : Supported_Format_Version;
       Tree    : Code_Analysis.Code_Analysis_Tree)
    is
@@ -95,7 +93,6 @@ package body CodePeer.Reports is
       CodePeer.Messages_Reports.Gtk_New
         (Self.Messages_Report,
          Kernel,
-         Module,
          Version,
          Tree);
       Notebook.Append_Page (Self.Messages_Report);
@@ -108,6 +105,20 @@ package body CodePeer.Reports is
       Notebook.Append_Page (Self.Race_Report);
       Notebook.Set_Tab_Label_Text (Self.Race_Report, "Race conditions");
    end Initialize;
+
+   -------------------
+   -- Build_Context --
+   -------------------
+
+   function Build_Context
+     (Self  : not null access Report_Record'Class;
+      Event : Gdk.Event.Gdk_Event)
+      return GPS.Kernel.Selection_Context
+   is
+   begin
+      return CodePeer.Messages_Reports.Build_Context
+        (Self.Messages_Report, Event);
+   end Build_Context;
 
    ---------------------
    -- Messages_Report --

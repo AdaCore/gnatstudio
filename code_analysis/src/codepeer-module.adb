@@ -22,8 +22,9 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Input_Sources.File;
 
-with Gtk.Check_Menu_Item;
-with Gtk.Enums;
+with Glib.Object;                use Glib.Object;
+with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
+with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
@@ -39,7 +40,6 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
@@ -55,7 +55,7 @@ with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
 with CodePeer.Bridge.Status_Readers;
 with CodePeer.Message_Review_Dialogs_V3;
-with CodePeer.Messages_Reports;
+with CodePeer.Messages_Reports;  use CodePeer.Messages_Reports;
 with CodePeer.Module.Actions;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
@@ -312,15 +312,11 @@ package body CodePeer.Module is
 
    overriding procedure Append_To_Menu
      (Factory : access Submenu_Factory_Record;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Object);
-
       Item       : Gtk.Menu_Item.Gtk_Menu_Item;
       Check_Item : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
-
    begin
       if Factory.Module.Tree = null then
          return;
@@ -646,7 +642,6 @@ package body CodePeer.Module is
          CodePeer.Reports.Gtk_New
            (Self.Report,
             GPS.Kernel.Kernel_Handle (Self.Kernel),
-            GPS.Kernel.Modules.Module_ID (Self),
             Self.Version,
             Self.Tree);
          Context_CB.Connect
@@ -665,8 +660,9 @@ package body CodePeer.Module is
             Context_CB.To_Marshaller (On_Criteria_Changed'Access),
             Module_Context'(CodePeer_Module_Id (Self), null, null, null));
 
-         GPS.Kernel.MDI.Gtk_New
-           (Self.Report_Subwindow, Self.Report, Module => Self);
+         Self.Report_Subwindow := new Codepeer_Child_Record;
+         GPS.Kernel.MDI.Initialize
+           (Self.Report_Subwindow, Self.Report, Self.Kernel, Module => Self);
          Self.Report_Subwindow.Set_Title (-"CodePeer report");
          GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report_Subwindow);
 
@@ -1576,6 +1572,21 @@ package body CodePeer.Module is
          end loop;
       end if;
    end Update_Location_View;
+
+   -------------------
+   -- Build_Context --
+   -------------------
+
+   overriding function Build_Context
+     (Self  : not null access Codepeer_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
+   is
+      Report : constant CodePeer.Reports.Report :=
+        CodePeer.Reports.Report (GPS_MDI_Child (Self).Get_Actual_Widget);
+   begin
+      return CodePeer.Reports.Build_Context (Report, Event);
+   end Build_Context;
 
    ---------------------
    -- Register_Module --

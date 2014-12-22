@@ -104,7 +104,7 @@ package body Browsers.Entities is
      (Module_Name            => Entity_Browser_Module_Name,
       View_Name              => -"Entity Browser",
       Formal_View_Record     => Type_Browser_Record,
-      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Formal_MDI_Child       => Browser_Child_Record,
       Reuse_If_Exist         => True,
       Initialize             => Initialize,
       Local_Toolbar          => True,
@@ -577,12 +577,9 @@ package body Browsers.Entities is
       return Gtk_Widget is
    begin
       Browsers.Canvas.Initialize (View);
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => View.Kernel,
-         Event_On_Widget => View,
-         Object          => View,
-         ID              => Entities_Views.Get_Module,
-         Context_Func    => Default_Browser_Context_Factory'Access);
+         Event_On_Widget => View);
 
       View.Compartment_Title := Gtk_New
         (Font  => (Name   => From_String ("sans bold 9"),

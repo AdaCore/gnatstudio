@@ -147,21 +147,6 @@ package Generic_Views is
    --  Change the text of the filter (assuming a filter was added through
    --  Build_Filter);
 
-   type MDI_Child_With_Local_Toolbar is interface;
-   type MDI_Child_With_Local_Toolbar_Access
-      is access all MDI_Child_With_Local_Toolbar'Class;
-   function Get_Actual_Widget
-     (Self : not null access MDI_Child_With_Local_Toolbar)
-      return Gtk.Widget.Gtk_Widget
-      is abstract;
-   --  All MDI children created through the generic_views package implement
-   --  this interface. In some cases, the widget put in the child is not the
-   --  one created by the caller itself, but is encapsulated withint other
-   --  widgets so that we can have a local toolbar.
-   --  The function Get_Actual_Widget can be used to retrieve the initial
-   --  widget added to the MDI. If you have access to the instance of
-   --  Simple_Views, it is better to use View_From_Widget instead.
-
    ------------------
    -- Simple_Views --
    ------------------
@@ -268,17 +253,13 @@ package Generic_Views is
       --  not the formal view itself. This function can be used in all cases
       --  to convert from a Child.Get_Widget to a Formal_View
 
-      function Child_From_View
-        (View : not null access Formal_View_Record'Class)
-         return Gtkada.MDI.MDI_Child;
-      --  Return the MDI Child containing view.
-
       procedure Close
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
       --  Close the view
 
-      type Local_Formal_MDI_Child is new Formal_MDI_Child
-        and MDI_Child_With_Local_Toolbar with private;
+      type Local_Formal_MDI_Child is new Formal_MDI_Child with null record;
+      type Access_Local_Formal_MDI_Child is
+        access all Local_Formal_MDI_Child'Class;
       overriding function Save_Desktop
         (Self : not null access Local_Formal_MDI_Child)
          return XML_Utils.Node_Ptr;
@@ -286,9 +267,12 @@ package Generic_Views is
         (Self : not null access Local_Formal_MDI_Child)
          return Gtk.Widget.Gtk_Widget;
 
+      function Child_From_View
+        (View : not null access Formal_View_Record'Class)
+         return access Local_Formal_MDI_Child'Class;
+      --  Return the MDI Child containing view.
+
    private
-      type Local_Formal_MDI_Child is new Formal_MDI_Child
-        and MDI_Child_With_Local_Toolbar with null record;
       --  The following subprograms need to be in the spec so that we can get
       --  access to them from callbacks in the body
 

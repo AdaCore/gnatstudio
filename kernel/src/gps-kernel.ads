@@ -324,14 +324,13 @@ package GPS.Kernel is
    --  module. Note that this is a tagged type, so that it can easily be
    --  extended for modules external to GPS.
 
-   function New_Context return Selection_Context;
-   --  Return a new context, no property is set
-
-   procedure Set_Context_Information
-     (Context : in out Selection_Context;
-      Kernel  : access Kernel_Handle_Record'Class;
-      Creator : Abstract_Module);
-   --  Set the information in the context
+   function New_Context
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Creator : access Abstract_Module_Record'Class := null)
+     return Selection_Context;
+   --  Creates a new context, with basic information set.
+   --  In general, this function should only be called from a GPS_MDI_Child's
+   --  Build_Context primitive.
 
    function Get_Kernel (Context : Selection_Context) return Kernel_Handle;
    --  Return the kernel associated with the context
@@ -346,6 +345,27 @@ package GPS.Kernel is
      (Context : Selection_Context) return GNATCOLL.Tribooleans.Triboolean;
    --  Whether the user clicked on a dispatching call. This information is
    --  cached in the context the first time it is computed.
+
+   procedure Context_Changed
+     (Handle  : access Kernel_Handle_Record;
+      Context : Selection_Context);
+   --  Runs the "context_changed" hook.
+   --  Context is the current context at that point, and will be returned by
+   --  Get_Current_Context until the next call to Context_Changed.
+
+   function Get_Current_Context
+     (Kernel : access Kernel_Handle_Record'Class) return Selection_Context;
+   --  Returns the context last set by Context_Changed.
+   --  The context returned will be that of the active contextual menu if there
+   --  is one at that point in time (therefore, we ignore cases where for
+   --  instance a new child has been selected automatically at that point)
+
+   procedure Refresh_Context
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Force a refresh of the current context, based on which window currently
+   --  has the focus. This also forces a "context_changed" hook.
+   --  This function should be used rarely, since in theory the views are
+   --  supposed to update the context when their selection changes.
 
    -------------
    -- Markers --
@@ -702,9 +722,6 @@ package GPS.Kernel is
    -----------
    -- Hooks --
    -----------
-
-   procedure Context_Changed (Handle : access Kernel_Handle_Record);
-   --  Runs the "context_changed" hook
 
    procedure Source_Lines_Revealed
      (Handle  : access Kernel_Handle_Record;
@@ -1192,6 +1209,9 @@ private
       --  contextual menus, so that they can be freed on exit. These commands
       --  are automatically added to the list when the menu or action is
       --  created
+
+      Current_Context : Selection_Context := No_Context;
+      --  The current context, as set by the last call to Context_Changed.
 
       Last_Context_For_Contextual : Selection_Context := No_Context;
       --  The context used in the last contextual menu.

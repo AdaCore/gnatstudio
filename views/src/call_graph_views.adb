@@ -107,6 +107,12 @@ package body Call_Graph_Views is
    Computing_Label : constant String := "computing...";
    --  Label used while computing the ancestors call graph
 
+   type CG_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access CG_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
    -----------------
    -- Local types --
    -----------------
@@ -185,7 +191,7 @@ package body Call_Graph_Views is
       View_Name          => "Call Trees",
       Reuse_If_Exist     => True,
       Group              => GPS.Kernel.MDI.Group_Consoles,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Formal_MDI_Child   => CG_Child_Record,
       Formal_View_Record => Callgraph_View_Record,
       Local_Toolbar      => True,
       Areas              => Gtkada.MDI.Sides_Only);
@@ -280,15 +286,6 @@ package body Call_Graph_Views is
 
    procedure On_Selection_Changed (View : access Gtk_Widget_Record'Class);
    --  Called when the selection changes in the view
-
-   procedure View_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Context factory when creating contextual menus
 
    function Button_Press
      (Widget : access Gtk_Widget_Record'Class;
@@ -992,41 +989,41 @@ package body Call_Graph_Views is
       return Commands.Success;
    end Execute;
 
-   --------------------------
-   -- View_Context_Factory --
-   --------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   procedure View_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu)
+   overriding function Build_Context
+     (Self  : not null access CG_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
    is
-      pragma Unreferenced (Event_Widget, Kernel, Menu);
+      Context : Selection_Context :=
+        GPS_MDI_Child_Record (Self.all).Build_Context (Event);
       V      : constant Callgraph_View_Access :=
-                 Callgraph_View_Access (Object);
+        Callgraph_View_Access (GPS_MDI_Child (Self).Get_Actual_Widget);
       Iter   : Gtk_Tree_Iter;
-
    begin
-      Iter := Find_Iter_For_Event (V.Tree, Event);
+      if Event /= null then
+         Iter := Find_Iter_For_Event (V.Tree, Event);
 
-      if Iter /= Null_Iter then
-         Select_Iter (Get_Selection (V.Tree), Iter);
+         if Iter /= Null_Iter then
+            Select_Iter (Get_Selection (V.Tree), Iter);
 
-         declare
-            Entity : constant Root_Entity'Class := Get_Entity (V, Iter);
-         begin
-            if Entity /= No_Root_Entity then
-               Set_File_Information   (Context, Files  => Empty_File_Array);
-               Set_Entity_Information (Context, Entity => Entity);
-            end if;
-         end;
-      else
-         Unselect_All (Get_Selection (V.Tree));
+            declare
+               Entity : constant Root_Entity'Class := Get_Entity (V, Iter);
+            begin
+               if Entity /= No_Root_Entity then
+                  Set_File_Information   (Context, Files  => Empty_File_Array);
+                  Set_Entity_Information (Context, Entity => Entity);
+               end if;
+            end;
+         else
+            Unselect_All (Get_Selection (V.Tree));
+         end if;
       end if;
-   end View_Context_Factory;
+      return Context;
+   end Build_Context;
 
    ------------
    -- To_XML --
@@ -1455,12 +1452,9 @@ package body Call_Graph_Views is
          Slot_Object => View,
          After       => False);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => View.Kernel,
-         Event_On_Widget => View.Tree,
-         Object          => View,
-         ID              => Generic_View.Get_Module,
-         Context_Func    => View_Context_Factory'Access);
+         Event_On_Widget => View.Tree);
 
       Widget_Callback.Object_Connect
         (View.Tree,

@@ -26,6 +26,7 @@
 with Glib;
 with Generic_Views;
 with GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;
 with Gtkada.Handlers;
 with Gtk.Widget;
@@ -111,6 +112,10 @@ package GVD.Generic_View is
 
       type Formal_View_Record is new Process_View_Record with private;
       --  The base type of the view
+
+      type Formal_MDI_Child is new GPS_MDI_Child_Record with private;
+      --  The type of MDI child, in case the view needs to use a specialized
+      --  type, for instance to add drag-and-drop capabilities
 
       with function Get_View
         (Process : access Visual_Debugger_Record'Class)

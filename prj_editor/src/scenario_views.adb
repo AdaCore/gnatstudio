@@ -318,12 +318,9 @@ package body Scenario_Views is
       --  Update the viewer with the current project
       Execute (Hook.all, View.Kernel);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => View.Kernel,
-         Event_On_Widget => View.View,
-         Object          => View,
-         ID              => Scenario_Views.Get_Module,
-         Context_Func    => null);
+         Event_On_Widget => View.View);
 
       return Gtk_Widget (View);
    end Initialize;

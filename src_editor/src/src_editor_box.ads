@@ -24,9 +24,8 @@
 --        - the line and column number of the insert cursor
 --  </description>
 
-with Glib;
-with Glib.Object;
 with Gdk.Event;
+with Glib;
 
 with Gtk.Box;
 with Gtk.Event_Box;
@@ -256,7 +255,6 @@ package Src_Editor_Box is
      GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
      (Factory : access Goto_Dispatch_Declaration_Submenu;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Adds submenus to the "Goto dispatching declaration" contextual menu
@@ -265,28 +263,19 @@ package Src_Editor_Box is
      GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
      (Factory : access Goto_Dispatch_Body_Submenu;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Adds submenus to the "Goto dispatching body" contextual menu
 
    type Location_Type is (Location_Mouse, Location_Cursor, Location_Event);
-   procedure Get_Contextual_Menu
-     (Context  : in out GPS.Kernel.Selection_Context;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Object   : access Glib.Object.GObject_Record'Class;
+   function Build_Editor_Context
+     (Editor   : not null access Source_Editor_Box_Record'Class;
       Location : Location_Type := Location_Cursor;
-      Event    : Gdk.Event.Gdk_Event := null;
-      Menu     : Gtk.Menu.Gtk_Menu := null);
-   --  Return the contextual menu to use for the source box.
-   --  It returns the context at the given location (either depending on the
-   --  mouse position, the cursor location, or a specific button_press or
-   --  button_release event). If Location is Location_Event but not event is
-   --  specified, the context for the cursor is returned
-   --
-   --  This function is also used to create the context for
-   --  GPS.Kernel.Get_Current_Context, and might be called with Event and
-   --  Menu set to null.
+      Event    : Gdk.Event.Gdk_Event := null)
+      return GPS.Kernel.Selection_Context;
+   --  Describe the current editor context, at the specified location.
+   --  If Location is Location_Event and no event is specified, the context for
+   --  the cursor is returned.
 
    ----------------------
    -- Line information --

@@ -62,6 +62,7 @@ with Generic_Views;            use Generic_Views;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GVD_Module;               use GVD_Module;
@@ -179,6 +180,7 @@ package body GVD.Memory_View is
      (Module_Name        => "Memory_View",
       View_Name          => -"Memory",
       Formal_View_Record => GVD_Memory_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Get_View           => Get_View,
       Set_View           => Set_View,
       Group              => Group_Default,

@@ -28,6 +28,7 @@ with GNATCOLL.VFS;                           use GNATCOLL.VFS;
 with Glib;                                   use Glib;
 with Glib.Object;                            use Glib.Object;
 with XML_Utils;                              use XML_Utils;
+with Gdk.Event;                              use Gdk.Event;
 with Gtk.Button;
 with Gtk.Enums;                              use Gtk.Enums;
 with Gtk.Handlers;                           use Gtk.Handlers;
@@ -131,6 +132,12 @@ package body Code_Analysis_Module is
       Analyzes : Code_Analysis_Instances.Set;
    end record;
 
+   type CA_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access CA_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
    type Code_Analysis_Module_ID_Access is access all
      Code_Analysis_Module_ID_Record'Class;
 
@@ -169,7 +176,6 @@ package body Code_Analysis_Module is
 
    overriding procedure Append_To_Menu
      (Factory : access Code_Analysis_Contextual_Menu;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Submenu : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Determine wether we add entries directly in the contextual menu, or in
@@ -1115,8 +1121,10 @@ package body Code_Analysis_Module is
 
          --  Create the MDI child
 
-         GPS.Kernel.MDI.Gtk_New
+         Child := new CA_Child_Record;
+         GPS.Kernel.MDI.Initialize
            (Child, View,
+            Kernel => Kernel,
             Group  => Group_Default,
             Module => Code_Analysis_Module_ID);
          Set_Title
@@ -1134,12 +1142,10 @@ package body Code_Analysis_Module is
               (Kernel, To_Unbounded_String (Analysis.Name.all),
                No_Project, No_File));
 
-         Register_Contextual_Menu
+         Setup_Contextual_Menu
            (Kernel          => Kernel,
             Event_On_Widget => View.Tree,
-            Object          => View,
-            ID              => Module_ID (Code_Analysis_Module_ID),
-            Context_Func    => Context_Func'Access);
+            Context_Func    => Code_Analysis_Contextual_Menu_Factory'Access);
          Kernel_Return_Cb.Object_Connect
            (View.Tree, Signal_Button_Press_Event,
             Kernel_Return_Cb.To_Marshaller
@@ -1150,6 +1156,83 @@ package body Code_Analysis_Module is
 
       return Child;
    end Get_Or_Create;
+
+   -------------------
+   -- Build_Context --
+   -------------------
+
+   overriding function Build_Context
+     (Self  : not null access CA_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
+   is
+      View      : constant Code_Analysis_View :=
+        Code_Analysis_View (GPS_MDI_Child (Self).Get_Actual_Widget);
+      Context   : Selection_Context;
+      X, Y      : Gdouble;
+      Path      : Gtk_Tree_Path;
+      Column    : Gtk_Tree_View_Column;
+      Buffer_X, Buffer_Y  : Gint;
+      Row_Found : Boolean;
+      Iter      : Gtk_Tree_Iter := Null_Iter;
+      Prj_Node  : Code_Analysis.Project_Access;
+      File_Node : Code_Analysis.File_Access;
+      Node      : Node_Access;
+      Model     : Gtk_Tree_Model;
+   begin
+      Context := GPS_MDI_Child_Record (Self.all).Build_Context (Event);
+
+      if Event /= null then
+         Get_Coords (Event, X, Y);
+         Get_Path_At_Pos (View.Tree, Gint (X), Gint (Y), Path, Column,
+                          Buffer_X, Buffer_Y, Row_Found);
+
+         if Path /= Null_Gtk_Tree_Path then
+            Iter := Get_Iter (View.Model, Path);
+            Select_Path (Get_Selection (View.Tree), Path);
+         end if;
+
+      else
+         --  Use current selection
+         View.Tree.Get_Selection.Get_Selected (Model, Iter);
+      end if;
+
+      if Iter /= Null_Iter then
+         Node := Code_Analysis.Node_Access
+           (Node_Set.Get (View.Model, Iter, Node_Col));
+
+         if Node.all in Code_Analysis.Project'Class then
+            --  So we are on a project node
+            --  Context receive project information
+            Set_File_Information
+              (Context, Project => Project_Access (Node).Name);
+
+         elsif Node.all in Code_Analysis.File'Class then
+            --  So we are on a file node
+            --  Context receive project and file information
+            Prj_Node := Project_Access
+              (Project_Set.Get (View.Model, Iter, Prj_Col));
+            Set_File_Information
+              (Context,
+               Files   => (1 => Code_Analysis.File_Access (Node).Name),
+               Project => Prj_Node.Name);
+
+         elsif Node.all in Code_Analysis.Subprogram'Class then
+            --  So we are on a subprogram node
+            --  Context receive project, file and entity information
+            File_Node := Code_Analysis.File_Access
+              (File_Set.Get (View.Model, Iter, File_Col));
+            Prj_Node  := Project_Access
+              (Project_Set.Get (View.Model, Iter, Prj_Col));
+            Set_File_Information
+              (Context, (1 => File_Node.Name), Prj_Node.Name);
+            Set_Entity_Information
+              (Context, Subprogram_Access (Node).Name.all);
+         end if;
+      end if;
+
+      return Context;
+   end Build_Context;
 
    -----------------------------
    -- Refresh_Analysis_Report --
@@ -1621,12 +1704,11 @@ package body Code_Analysis_Module is
 
    overriding procedure Append_To_Menu
      (Factory : access Code_Analysis_Contextual_Menu;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Submenu : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       use Code_Analysis_Instances;
-      pragma Unreferenced (Factory, Object);
+      pragma Unreferenced (Factory);
       Analysis : constant String :=
          To_String (Code_Analysis_Module_ID.Registered_Analysis.First_Element);
       Item     : Gtk_Menu_Item;

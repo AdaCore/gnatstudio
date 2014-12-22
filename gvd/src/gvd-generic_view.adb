@@ -19,7 +19,6 @@ with Glib;                use Glib;
 with Glib.Object;         use Glib.Object;
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
 with GPS.Intl;            use GPS.Intl;
 with Gtk.Widget;          use Gtk.Widget;
@@ -79,13 +78,11 @@ package body GVD.Generic_View is
          return Gtk_Widget;
       --  Initialize the view and returns the focus widget.
 
-      type GVD_MDI_Child_Record is new GPS_MDI_Child_Record with null record;
-
       package Views is new Generic_Views.Simple_Views
         (Module_Name        => Module_Name,
          View_Name          => View_Name,
          Formal_View_Record => Formal_View_Record,
-         Formal_MDI_Child   => GVD_MDI_Child_Record,
+         Formal_MDI_Child   => Formal_MDI_Child,
          Reuse_If_Exist     => False,
          Initialize         => Local_Initialize,
          Local_Config       => Local_Config,
@@ -194,7 +191,7 @@ package body GVD.Generic_View is
                Child := Get (Iter);
                exit when Child = null;
 
-               if Child.all in GVD_MDI_Child_Record'Class then
+               if Child.all in Views.Local_Formal_MDI_Child'Class then
                   View := Views.View_From_Widget (Get_Widget (Child));
                   exit when Get_Process (View) = null;
                end if;

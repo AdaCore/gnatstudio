@@ -80,7 +80,6 @@ package body GNATStack.Module is
 
    overriding procedure Append_To_Menu
      (Self    : access GNATStack_Submenu_Factory_Record;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
@@ -172,12 +171,9 @@ package body GNATStack.Module is
 
    overriding procedure Append_To_Menu
      (Self    : access GNATStack_Submenu_Factory_Record;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Object);
-
       function Lookup
         (Name   : Ada.Strings.Unbounded.Unbounded_String;
          File   : Ada.Strings.Unbounded.Unbounded_String;
@@ -734,7 +730,8 @@ package body GNATStack.Module is
             Object_Module_Callbacks.To_Marshaller (On_Goto_Subprogram'Access),
             GNATStack_Module_Id (Self));
          GPS.Kernel.MDI.Gtk_New
-           (Self.Call_Tree_View_MDI, Self.Call_Tree_View, Module => Self);
+           (Self.Call_Tree_View_MDI, Self.Call_Tree_View, Self.Kernel,
+            Module => Self);
          Self.Call_Tree_View_MDI.Set_Title (-"GNATStack: Call Tree");
          Object_Module_Callbacks.Connect
            (Self.Call_Tree_View_MDI,
@@ -770,7 +767,7 @@ package body GNATStack.Module is
       elsif Self.CI_Editor_MDI = null then
          GNATStack.CI_Editors.Gtk_New (CI_Editor, Self.Data'Access);
          GPS.Kernel.MDI.Gtk_New
-           (Self.CI_Editor_MDI, CI_Editor, Module => Self);
+           (Self.CI_Editor_MDI, CI_Editor, Self.Kernel, Module => Self);
          Self.CI_Editor_MDI.Set_Title (-"GNATStack: External subprograms");
          Object_Module_Callbacks.Connect
            (Self.CI_Editor_MDI,

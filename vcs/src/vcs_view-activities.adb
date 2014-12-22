@@ -29,6 +29,7 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -128,13 +129,9 @@ package body VCS_View.Activities is
       File_Data : access Hooks_Data'Class);
    --  Callback for the "file_edited" signal
 
-   procedure Context_Func
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
+   procedure Contextual_Menu_Factory
+     (Context : Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu);
    --  Default context factory
 
    ---------------------
@@ -703,20 +700,15 @@ package body VCS_View.Activities is
       Set_Name (Explorer.Tree, "Activities Explorer Tree");
    end Gtk_New;
 
-   ------------------
-   -- Context_Func --
-   ------------------
+   ------------------------
+   -- Build_View_Context --
+   ------------------------
 
-   procedure Context_Func
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+   overriding function Build_View_Context
+     (Explorer : not null access VCS_Activities_View_Record;
+      Event : Gdk.Event.Gdk_Event)
+      return Selection_Context
    is
-      pragma Unreferenced (Event_Widget);
-
       function Get_Selected_Activities
         (Explorer : VCS_View_Access) return String_List.List;
       --  Return the list of activities that are selected
@@ -765,13 +757,12 @@ package body VCS_View.Activities is
          return Result;
       end Get_Selected_Activities;
 
-      Explorer : constant VCS_Activities_View_Access :=
-                   VCS_Activities_View_Access (Object);
-      Mitem    : Gtk_Separator_Menu_Item;
-      Files    : File_Array_Access;
+      Child : constant MDI_Child := Find_MDI_Child_From_Widget (Explorer);
+      Context  : Selection_Context :=
+        GPS_MDI_Child_Record (Child.all).Build_Context (Event);
+      Files : File_Array_Access;
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
-
    begin
       --  If there is no selection, select the item under the cursor
 
@@ -780,7 +771,9 @@ package body VCS_View.Activities is
       if Iter /= Null_Iter then
          Path := Get_Path (Get_Model (Explorer.Tree), Iter);
 
-         if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
+         if Event /= null
+           and then not Path_Is_Selected (Get_Selection (Explorer.Tree), Path)
+         then
             --  Right click over a line which is not the current selection,
             --  this line becomes the new selection.
             Unselect_All (Get_Selection (Explorer.Tree));
@@ -812,11 +805,20 @@ package body VCS_View.Activities is
          Path_Free (Path);
       end if;
 
-      Set_Context_Information
-        (Context, Kernel, Abstract_Module_ID (VCS_Module_ID));
-      Set_Current_Context (Explorer, Context);
+      return Context;
+   end Build_View_Context;
 
-      VCS_Activities_Contextual_Menu (Kernel_Handle (Kernel), Context, Menu);
+   -----------------------------
+   -- Contextual_Menu_Factory --
+   -----------------------------
+
+   procedure Contextual_Menu_Factory
+     (Context : Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu)
+   is
+      Mitem    : Gtk_Separator_Menu_Item;
+   begin
+      VCS_Activities_Contextual_Menu (Context, Menu);
 
       if Has_File_Information (Context) then
          --  This is a menu for a file line in the tree view, it is fine to add
@@ -824,10 +826,7 @@ package body VCS_View.Activities is
          Gtk_New (Mitem);
          Append (Menu, Mitem);
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end Context_Func;
+   end Contextual_Menu_Factory;
 
    -------------
    -- Execute --
@@ -891,12 +890,10 @@ package body VCS_View.Activities is
    is
       Hook : File_Hook;
    begin
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Explorer.Kernel,
          Explorer.Tree,
-         Explorer,
-         Module_ID (VCS_Module_ID),
-         Context_Func'Access);
+         Context_Func => Contextual_Menu_Factory'Access);
 
       Set_Column_Types (Explorer);
 

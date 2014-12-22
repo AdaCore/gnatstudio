@@ -28,7 +28,7 @@ def sort_selection_revert():
              name="sort selected lines ascending")
 def sort_selection(revert=False):
     """Sorts the current selection, in ascending order"""
-    context = GPS.current_context()
+    context = GPS.current_context(refresh=True)
     ed = GPS.EditorBuffer.get()   # current editor, always
     start = ed.selection_start()
     to = ed.selection_end()

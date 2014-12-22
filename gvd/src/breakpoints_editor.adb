@@ -56,6 +56,7 @@ with Commands.Interactive;    use Commands, Commands.Interactive;
 with Generic_Views;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtkada.MDI;         use Gtkada.MDI;
+with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Actions; use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks; use GPS.Kernel;
@@ -103,6 +104,7 @@ package body Breakpoints_Editor is
      (Module_Name        => "Breakpoints",
       View_Name          => -"Breakpoints",
       Formal_View_Record => Breakpoint_Editor_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Get_View           => Get_View,
       Set_View           => Set_View,
       Group              => Group_Default,

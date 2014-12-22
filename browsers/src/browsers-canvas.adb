@@ -65,8 +65,6 @@ with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
-with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
@@ -579,30 +577,47 @@ package body Browsers.Canvas is
       return Count;
    end Count_Links;
 
-   -------------------------------------
-   -- Default_Browser_Context_Factory --
-   -------------------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   procedure Default_Browser_Context_Factory
-     (Context      : in out GPS.Kernel.Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+   overriding function Build_Context
+     (Self  : not null access Browser_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return GPS.Kernel.Selection_Context
    is
-      pragma Unreferenced (Event_Widget, Kernel, Menu);
-      B            : constant General_Browser := General_Browser (Object);
-      Details      : Canvas_Event_Details;
+      B : constant General_Browser := General_Browser
+        (GPS_MDI_Child (Self).Get_Actual_Widget);
+      Details : Canvas_Event_Details;
+      Context : Selection_Context;
+      Done    : Boolean := False;
+
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class);
+      procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
+      begin
+         if not Done and then B.Model.Is_Selected (Item) then
+            GPS_Item (Item).Set_Context (Context);
+            Done := True;
+         end if;
+      end On_Item;
 
    begin
-      if Get_Event_Type (Event) in Button_Press .. Button_Release then
+      Context := GPS_MDI_Child_Record (Self.all).Build_Context (Event);
+
+      if Event = null
+        or else Get_Event_Type (Event) not in Button_Press .. Button_Release
+      then
+         --  Look at the current selection
+         B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+
+      else
          B.View.Set_Details (Details, Event.Button);
          if Details.Toplevel_Item /= null then
             GPS_Item (Details.Toplevel_Item).Set_Context (Context);
          end if;
       end if;
-   end Default_Browser_Context_Factory;
+      return Context;
+   end Build_Context;
 
    -------------
    -- Execute --
@@ -1214,10 +1229,13 @@ package body Browsers.Canvas is
       Child  : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
       W      : Gtk_Widget;
    begin
-      if Child /= null
-        and then Child.all in MDI_Child_With_Local_Toolbar'Class
-      then
-         W := MDI_Child_With_Local_Toolbar_Access (Child).Get_Actual_Widget;
+      if Child /= null then
+         if Child.all in GPS_MDI_Child_Record'Class then
+            W := GPS_MDI_Child (Child).Get_Actual_Widget;
+         else
+            W := Child.Get_Widget;
+         end if;
+
          if W.all in General_Browser_Record'Class then
             return General_Browser (W);
          end if;

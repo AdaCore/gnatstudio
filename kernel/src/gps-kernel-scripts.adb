@@ -392,6 +392,11 @@ package body GPS.Kernel.Scripts is
                return;
             end if;
 
+            --  Force a refresh of the context
+            --  ??? We should really let the script decide whether this is
+            --  necessary.
+            Kernel.Refresh_Context;
+
             Context := Get_Current_Context (Kernel);
 
             if Context = No_Context then
@@ -739,7 +744,12 @@ package body GPS.Kernel.Scripts is
         or else Command = "contextual_context"
       then
          if Command = "current_context" then
-            Context := Get_Current_Context (Kernel);
+            if Nth_Arg (Data, 1, False) then
+               Kernel.Refresh_Context;
+            end if;
+
+            Context := Kernel.Get_Current_Context;
+
          else
             Context := Kernel.Last_Context_For_Contextual;
          end if;
@@ -757,15 +767,14 @@ package body GPS.Kernel.Scripts is
 
          if Object /= null then
             Gtk.Menu.Gtk_New (Menu);
-            Create_Contextual_Menu
-              (Kernel, Object, Context, Menu);
+            Add_Actions_To_Contextual_Menu (Context, Menu);
+            Set_Return_Value_As_List (Data);
             if Menu /= null then
-               Set_Return_Value_As_List (Data);
                Recursive_Analyze_Menu (1, Menu);
+               Destroy (Menu);
             else
                Set_Return_Value (Data, String'("<empty menu>"));
             end if;
-            Destroy (Menu);
          else
             Set_Error_Msg (Data, -"Seems like no window has focus...");
          end if;
@@ -1458,9 +1467,10 @@ package body GPS.Kernel.Scripts is
          Class   => Get_Message_Context_Class (Kernel),
          Handler => Message_Context_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, "current_context",
-         Handler      => Context_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("current_context",
+         Handler => Context_Command_Handler'Access,
+         Params  => (1 => Param ("refresh", Optional => True)));
       Register_Command
         (Kernel, "contextual_context",
          Handler      => Context_Command_Handler'Access);

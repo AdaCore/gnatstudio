@@ -39,7 +39,6 @@ with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 use Gtk.Cell_Renderer.Cell_Renderer_List;
 with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Model_Sort;        use Gtk.Tree_Model_Sort;
@@ -99,7 +98,7 @@ package body Revision_Views is
       Syms         : String_Hash_Table.Instance;
       File         : Virtual_File;
       Root_Color   : Gdk_RGBA;
-      Child        : MDI_Child;
+      Child        : GPS_MDI_Child;
    end record;
 
    type Revision_View is access all Revision_View_Record'Class;
@@ -123,6 +122,12 @@ package body Revision_Views is
       Table : BT.Instance;
    end record;
 
+   type Revision_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Revision_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
    Revision_View_Module_ID : Module_ID;
 
    type Log_Data is record
@@ -136,20 +141,6 @@ package body Revision_Views is
       Log  : Log_Data;
       Link : Boolean;
    end record;
-
-   overriding procedure Default_Context_Factory
-     (Module  : access Revision_View_Module;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject);
-   --  See inherited documentation
-
-   procedure View_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
 
    function Create_Revision_View
      (Kernel : access Kernel_Handle_Record'Class) return Revision_View;
@@ -472,42 +463,20 @@ package body Revision_Views is
       when E : others => Trace (Me, E);
    end Clear_View_Command_Handler;
 
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   overriding procedure Default_Context_Factory
-     (Module  : access Revision_View_Module;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject)
+   overriding function Build_Context
+     (Self  : not null access Revision_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
    is
-   begin
-      View_Context_Factory (Context      => Context,
-                            Kernel       => Module.Get_Kernel,
-                            Event_Widget => null,
-                            Object       => Child,
-                            Event        => null,
-                            Menu         => null);
-   end Default_Context_Factory;
-
-   --------------------------
-   -- View_Context_Factory --
-   --------------------------
-
-   procedure View_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
-   is
-      pragma Unreferenced (Event_Widget, Kernel, Menu);
-
       procedure Get_Parent_Revision_Node (Iter : in out Gtk_Tree_Iter);
       --  Return the revision for Iter's parent
 
-      V     : constant Revision_View := Revision_View (Object);
+      V     : constant Revision_View :=
+        Revision_View (GPS_MDI_Child (Self).Get_Actual_Widget);
       Model : constant Gtk_Tree_Model := Get_Model (V.Tree);
 
       ------------------------------
@@ -531,6 +500,8 @@ package body Revision_Views is
       Rev   : Unbounded_String;
       O_Rev : Unbounded_String;
       Tag   : Unbounded_String;
+      Context : Selection_Context :=
+        GPS_MDI_Child_Record (Self.all).Build_Context (Event);
 
       Dummy_Model : Gtk_Tree_Model;
    begin
@@ -543,7 +514,7 @@ package body Revision_Views is
       end if;
 
       if Iter = Null_Iter then
-         return;
+         return Context;
       end if;
 
       --  Get selected file revision and tag information
@@ -587,7 +558,8 @@ package body Revision_Views is
          Revision       => To_String (Rev),
          Other_Revision => To_String (O_Rev),
          Tag            => To_String (Tag));
-   end View_Context_Factory;
+      return Context;
+   end Build_Context;
 
    -----------------------------
    -- Create_Revision_Browser --
@@ -600,13 +572,9 @@ package body Revision_Views is
    begin
       View := new Revision_View_Record;
       Initialize (View, Kernel);
-
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Kernel,
-         Event_On_Widget => View.Tree,
-         Object          => View,
-         ID              => Revision_View_Module_ID,
-         Context_Func    => View_Context_Factory'Access);
+         Event_On_Widget => View.Tree);
       return View;
    end Create_Revision_View;
 
@@ -1027,7 +995,7 @@ package body Revision_Views is
       B_Name : constant String := +Base_Name (File);
       Title  : constant String := "Revision View - " & B_Name;
       View   : Revision_View;
-      Child  : MDI_Child;
+      Child  : GPS_MDI_Child;
 
    begin
       View := BT.Get
@@ -1043,14 +1011,17 @@ package body Revision_Views is
             B_Name,
             View);
 
-         Gtk_New (GPS_MDI_Child (Child), View,
-                  Focus_Widget   => Gtk_Widget (View.Tree),
-                  Group          => Group_Consoles,
-                  Module         => Revision_View_Module_ID);
+         Child := new Revision_Child_Record;
+         GPS.Kernel.MDI.Initialize
+           (Child, View,
+            Kernel         => Kernel,
+            Focus_Widget   => Gtk_Widget (View.Tree),
+            Group          => Group_Consoles,
+            Module         => Revision_View_Module_ID);
          View.Child := Child;
          Set_Name (View.Tree, -Title);
          Set_Title (Child, -Title);
-         Put (Get_MDI (Kernel), GPS_MDI_Child (Child));
+         Put (Get_MDI (Kernel), Child);
          Set_Focus_Child (Child);
 
          Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);

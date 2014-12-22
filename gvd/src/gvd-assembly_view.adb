@@ -148,6 +148,7 @@ package body GVD.Assembly_View is
      (Module_Name        => "Assembly_View",
       View_Name          => -"Assembly",
       Formal_View_Record => Assembly_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Get_View           => Get_View,
       Set_View           => Set_View,
       Group              => Group_Debugger_Stack,

@@ -209,6 +209,7 @@ class Background_Highlighter(object):
             self.__on_lines_folded_or_unfolded)
 
     def __del__(self):
+        self.__source_id = None  # Don't try to kill the idle, GPS is quitting
         self.stop_highlight()
         GPS.Hook("before_exit_action_hook").remove(self.__before_exit)
         GPS.Hook("file_closed").remove(self.__on_file_closed)
@@ -222,6 +223,7 @@ class Background_Highlighter(object):
         Called when GPS is about to exit
         """
         self.terminated = True
+        self.__source_id = None  # Don't try to kill the idle, GPS is quitting
         self.stop_highlight()
         return True
 

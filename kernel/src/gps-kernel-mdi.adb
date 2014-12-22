@@ -68,7 +68,6 @@ with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -187,18 +186,19 @@ package body GPS.Kernel.MDI is
    procedure Gtk_New
      (Child               : out GPS_MDI_Child;
       Widget              : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Kernel              : not null access Kernel_Handle_Record'Class;
       Flags               : Child_Flags := All_Buttons;
       Group               : Child_Group := Group_Default;
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module              : access Module_ID_Record'Class;
+      Module              : access Module_ID_Record'Class := null;
       Desktop_Independent : Boolean := False;
       Areas               : Allowed_Areas := Both) is
    begin
       Child := new GPS_MDI_Child_Record;
-      Initialize (Child, Widget, Flags, Group, Focus_Widget,
-                  Default_Width, Default_Height, Module, Desktop_Independent,
-                  Areas);
+      Initialize (Child, Widget, Kernel, Flags, Group, Focus_Widget,
+                  Default_Width, Default_Height,
+                  Module, Desktop_Independent, Areas);
    end Gtk_New;
 
    ----------------
@@ -208,22 +208,20 @@ package body GPS.Kernel.MDI is
    procedure Initialize
      (Child               : access GPS_MDI_Child_Record'Class;
       Widget              : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Kernel              : not null access Kernel_Handle_Record'Class;
       Flags               : Child_Flags := All_Buttons;
       Group               : Child_Group := Group_Default;
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module              : access Module_ID_Record'Class;
+      Module              : access Module_ID_Record'Class := null;
       Desktop_Independent : Boolean := False;
       Areas               : Allowed_Areas := Both)
    is
+      pragma Unreferenced (Default_Width, Default_Height);
    begin
       Gtkada.MDI.Initialize
         (Child, Widget, Flags, Group, Focus_Widget, Areas => Areas);
-
-      if Default_Width /= -1 or else Default_Height /= -1 then
-         Set_Size_Request (Child, Default_Width, Default_Height);
-      end if;
-
+      Child.Kernel := Kernel_Handle (Kernel);
       Child.Module := Abstract_Module_ID (Module);
       Child.Desktop_Independent := Desktop_Independent;
    end Initialize;
@@ -249,7 +247,8 @@ package body GPS.Kernel.MDI is
    ---------------------------
 
    function Get_Module_From_Child
-     (Child : Gtkada.MDI.MDI_Child) return Module_ID is
+     (Child : not null access Gtkada.MDI.MDI_Child_Record'Class)
+      return Module_ID is
    begin
       if Child.all in GPS_MDI_Child_Record'Class then
          return Module_ID (GPS_MDI_Child (Child).Module);
@@ -1314,9 +1313,6 @@ package body GPS.Kernel.MDI is
          end if;
       end loop;
 
-      --  Report a context changed, so that all views can update themselves
-      Context_Changed (Handle);
-
       --  Report the load of the desktop
       Run_Hook (Handle, Desktop_Loaded_Hook);
 
@@ -1341,32 +1337,6 @@ package body GPS.Kernel.MDI is
       return Is_Regular_File
         (Create_From_Dir (Handle.Home_Dir, Desktop_Name));
    end Has_User_Desktop;
-
-   ---------------------------
-   -- Get_Context_For_Child --
-   ---------------------------
-
-   function Get_Context_For_Child
-     (Child : Gtkada.MDI.MDI_Child) return Selection_Context
-   is
-      Module  : Module_ID;
-      Context : Selection_Context;
-   begin
-      if Child = null then
-         return No_Context;
-      end if;
-
-      Module := Get_Module_From_Child (Child);
-
-      if Module /= null then
-         Context.Data.Data := new Selection_Context_Data_Record;
-         Default_Context_Factory
-           (Module, Context, GObject (Get_Widget (Child)));
-         return Context;
-      else
-         return No_Context;
-      end if;
-   end Get_Context_For_Child;
 
    ------------------------------
    -- Get_Current_Focus_Widget --
@@ -1507,34 +1477,6 @@ package body GPS.Kernel.MDI is
          return null;
       end if;
    end Get_Toolbar;
-
-   -------------------------
-   -- Get_Current_Context --
-   -------------------------
-
-   function Get_Current_Context
-     (Kernel : access Kernel_Handle_Record'Class) return Selection_Context
-   is
-      Module  : Module_ID;
-      Handle  : constant Kernel_Handle := Kernel_Handle (Kernel);
-      Context : Selection_Context := New_Context;
-   begin
-      --  ??? Shouldn't have to recompute everytime, but this is needed when
-      --  in the editor (comment-line for instance relies on accurate info in
-      --  the context to get the current line)
-      Module := Get_Current_Module (Kernel);
-
-      Set_Context_Information
-        (Context, Handle, Abstract_Module_ID (Module));
-
-      if Module /= null then
-         Default_Context_Factory
-           (Module, Context,
-            GObject (Get_Widget (Get_Focus_Child (Get_MDI (Handle)))));
-      end if;
-
-      return Context;
-   end Get_Current_Context;
 
    -----------
    -- Setup --
@@ -1686,7 +1628,7 @@ package body GPS.Kernel.MDI is
    function Kernel
      (Self : not null access GPS_MDI_Child_Record) return Kernel_Handle is
    begin
-      return Get_Module_From_Child (MDI_Child (Self)).Get_Kernel;
+      return Self.Kernel;
    end Kernel;
 
    ----------------------------

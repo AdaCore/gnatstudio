@@ -466,12 +466,9 @@ package body GPS.Kernel.Console is
                 Name => "console.preferences_changed",
                 Watch => GObject (Console));
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Console.Kernel,
-         Event_On_Widget => Get_View (Console),
-         Object          => Console,
-         ID              => Messages_Views.Get_Module,
-         Context_Func    => null);
+         Event_On_Widget => Get_View (Console));
       return Gtk_Widget (Console.Get_View);
    end Initialize;
 

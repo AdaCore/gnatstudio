@@ -33,6 +33,7 @@ with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Tree_Sortable;         use Gtk.Tree_Sortable;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -130,13 +131,9 @@ package body VCS_View.Explorer is
       File_Data : access Hooks_Data'Class);
    --  Callback for the "file_edited" signal
 
-   procedure Context_Func
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
+   procedure Contextual_Menu_Factory
+     (Context : Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu);
    --  Default context factory
 
    function To_History_Key (S : String) return History_Key;
@@ -828,33 +825,23 @@ package body VCS_View.Explorer is
       Refresh (E);
    end Toggle_Show_Status;
 
-   ------------------
-   -- Context_Func --
-   ------------------
+   ------------------------
+   -- Build_View_Context --
+   ------------------------
 
-   procedure Context_Func
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+   overriding function Build_View_Context
+     (Explorer : not null access VCS_Explorer_View_Record;
+      Event    : Gdk.Event.Gdk_Event)
+      return Selection_Context
    is
-      pragma Unreferenced (Event_Widget);
-
-      Explorer : constant VCS_Explorer_View_Access :=
-                   VCS_Explorer_View_Access (Object);
-
-      Check     : Gtk_Check_Menu_Item;
-      Mitem     : Gtk_Menu_Item;
-      Sep       : Gtk_Separator_Menu_Item;
-      Submenu   : Gtk_Menu;
+      Child : constant MDI_Child := Find_MDI_Child_From_Widget (Explorer);
+      Context  : Selection_Context :=
+        GPS_MDI_Child_Record (Child.all).Build_Context (Event);
+      Kernel    : constant Kernel_Handle := Explorer.Kernel;
       Files     : File_Array_Access;
       Path      : Gtk_Tree_Path;
       Iter      : Gtk_Tree_Iter;
       Project   : Project_Type := No_Project;
-      Root_Node : Boolean := False;
-
    begin
       --  If there is no selection, select the item under the cursor
 
@@ -863,7 +850,9 @@ package body VCS_View.Explorer is
       if Iter /= Null_Iter then
          Path := Get_Path (Get_Model (Explorer.Tree), Iter);
 
-         if not Path_Is_Selected (Get_Selection (Explorer.Tree), Path) then
+         if Event /= null
+           and then not Path_Is_Selected (Get_Selection (Explorer.Tree), Path)
+         then
             --  Right click over a line which is not the current selection,
             --  this line becomes the new selection.
             Unselect_All (Get_Selection (Explorer.Tree));
@@ -874,13 +863,10 @@ package body VCS_View.Explorer is
             Iter := Get_Iter (Explorer.Model, Path);
             Project := Get_Registry (Kernel).Tree.Project_From_Name
               (Get_String (Explorer.Model, Iter, Name_Column));
-
             Set_File_Information
               (Context,
                Files   => GNATCOLL.VFS.Empty_File_Array,
                Project => Project);
-
-            Root_Node := True;
 
          elsif Get_Depth (Path) > 1 then
             Files := Get_Selected_Files (VCS_View_Access (Explorer));
@@ -905,10 +891,31 @@ package body VCS_View.Explorer is
          Explorer.VCS := Get_Current_Ref (Kernel, Project);
       end if;
 
-      Set_Context_Information
-        (Context, Kernel, Abstract_Module_ID (VCS_Explorer_Module_Id));
-      Set_Current_Context (Explorer, Context);
+      return Context;
+   end Build_View_Context;
 
+   -----------------------------
+   -- Contextual_Menu_Factory --
+   -----------------------------
+
+   procedure Contextual_Menu_Factory
+     (Context : Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu)
+   is
+      Project   : constant Project_Type := Project_Information (Context);
+      Root_Node : constant Boolean :=
+        not Has_File_Information (Context);
+      Check     : Gtk_Check_Menu_Item;
+      Mitem     : Gtk_Menu_Item;
+      Sep       : Gtk_Separator_Menu_Item;
+      Submenu   : Gtk_Menu;
+      Explorer : constant VCS_Explorer_View_Access :=
+        VCS_Explorer_View_Access
+          (GPS_MDI_Child
+             (Get_MDI (Get_Kernel (Context)).Get_Focus_Child)
+             .Get_Actual_Widget);
+
+   begin
       if Root_Node then
          if Project = No_Project then
             Gtk_New (Mitem, Label => -"Remove node");
@@ -922,7 +929,7 @@ package body VCS_View.Explorer is
          Set_Sensitive (Mitem, True);
       end if;
 
-      VCS_Contextual_Menu (Kernel_Handle (Kernel), Context, Menu, False);
+      VCS_Explorer_Contextual_Menu (Context, Menu, Show_Everything => False);
 
       Gtk_New (Mitem, -"Filters");
       Append (Menu, Mitem);
@@ -954,15 +961,12 @@ package body VCS_View.Explorer is
             Page_Status_Callback.Object_Connect
               (Check, Signal_Activate, Toggle_Show_Status'Access, Explorer, J);
             Associate
-              (Get_History (Kernel).all,
+              (Get_History (Get_Kernel (Context)).all,
                To_History_Key (S (J).Status.Label.all),
                Check);
          end loop;
       end;
-
-   exception
-      when E : others => Trace (Me, E);
-   end Context_Func;
+   end Contextual_Menu_Factory;
 
    -------------
    -- Execute --
@@ -1008,12 +1012,10 @@ package body VCS_View.Explorer is
    is
       Hook : File_Hook;
    begin
-      Register_Contextual_Menu
-        (Explorer.Kernel,
+      Setup_Contextual_Menu
+        (Kernel,
          Explorer.Tree,
-         Explorer,
-         Module_ID (VCS_Explorer_Module_Id),
-         Context_Func'Access);
+         Context_Func => Contextual_Menu_Factory'Access);
 
       Set_Column_Types (Explorer);
 

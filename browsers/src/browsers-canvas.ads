@@ -16,9 +16,9 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with Gdk.Event;
 with Generic_Views;
-with Glib.Object;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Widget;
@@ -188,20 +188,16 @@ package Browsers.Canvas is
       Item   : access Gtkada.Canvas_View.Abstract_Item_Record'Class := null);
    --  Mark related items specially so that they are outlined on the display.
 
-   ----------------------
-   -- Contextual menus --
-   ----------------------
+   ---------
+   -- MDI --
+   ---------
 
-   procedure Default_Browser_Context_Factory
-     (Context      : in out GPS.Kernel.Selection_Context;
-      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Return the context to use for a contextual menu in the canvas.
-   --  This version takes care of checking whether the user clicked on an item,
-   --  and adds the standard menu entries
+   type Browser_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Browser_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return GPS.Kernel.Selection_Context;
+   --  The base type for putting browsers in the MDI.
 
    ----------------
    -- Navigation --

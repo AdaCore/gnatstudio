@@ -21,7 +21,6 @@
 --  </description>
 
 with GNAT.Strings;         use GNAT.Strings;
-with Glib.Object;
 with Glib;                 use Glib;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Pixbuf;           use Gdk.Pixbuf;
@@ -137,16 +136,10 @@ package Code_Analysis_GUI is
    --  Callback for the "2button_press" signal that show the File or Subprogram
    --  indicated by the selected Report of Analysis tree node
 
-   procedure Context_Func
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Determines the content of the contextual menu displayed on the Report of
-   --  Analysis MDI child, using its selected node and sets project and file
-   --  information to the given context
+   procedure Code_Analysis_Contextual_Menu_Factory
+     (Context : Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu);
+   --  Add custom entries to contextual menus created in this module.
 
    procedure Open_File_Editor_On_File
      (Kernel : Kernel_Handle; View : Code_Analysis_View; Iter : Gtk_Tree_Iter);

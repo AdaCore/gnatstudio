@@ -23,9 +23,7 @@ with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
 with GNATCOLL.Xref;
-
-with Gdk;                               use Gdk;
-
+with Gdk.Event;                         use Gdk.Event;
 with Glib.Object;                       use Glib.Object;
 with Glib.Unicode;                      use Glib.Unicode;
 with Glib.Values;                       use Glib.Values;
@@ -52,7 +50,6 @@ with Config;                            use Config;
 with Default_Preferences;               use Default_Preferences;
 with File_Utils;                        use File_Utils;
 with Find_Utils;                        use Find_Utils;
-with GPS.Core_Kernels;                  use GPS.Core_Kernels;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
@@ -119,6 +116,10 @@ package body Src_Editor_Module is
      (Self : not null access Editor_Child_Record);
    overriding function Report_Deleted_File
      (Self : not null access Editor_Child_Record) return Boolean;
+   overriding function Build_Context
+     (Self  : not null access Editor_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
    --  See inherited documentation
 
    function Source_File_Hook
@@ -1072,6 +1073,7 @@ package body Src_Editor_Module is
          Child := new Editor_Child_Record;
          Initialize
            (Child, Editor,
+            Kernel         => Kernel,
             Flags          => All_Buttons,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
             Module         => Src_Editor_Module_Id,
@@ -1352,6 +1354,7 @@ package body Src_Editor_Module is
          Child := new Editor_Child_Record;
          Initialize
            (Child, Editor,
+            Kernel         => Kernel,
             Flags          => All_Buttons,
             Focus_Widget   => Gtk_Widget (Get_View (Editor)),
             Group          => Group,
@@ -1792,20 +1795,23 @@ package body Src_Editor_Module is
       Autocase_Text (Buffer, Casing => End_Of_Word);
    end Word_Added_Hook;
 
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   overriding procedure Default_Context_Factory
-     (Module  : access Source_Editor_Module_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject) is
+   overriding function Build_Context
+     (Self  : not null access Editor_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
+   is
+      Editor : constant Source_Editor_Box :=
+        Source_Editor_Box (GPS_MDI_Child (Self).Get_Actual_Widget);
    begin
-      Get_Contextual_Menu
-        (Context, Get_Kernel (Module.all),
-         Source_Editor_Box (Child),
-         Location => Location_Cursor);
-   end Default_Context_Factory;
+      return Build_Editor_Context
+        (Editor   => Editor,
+         Location => Location_Event,
+         Event    => Event);
+   end Build_Context;
 
    -----------------------------
    -- Expand_Aliases_Entities --
@@ -2905,14 +2911,9 @@ package body Src_Editor_Module is
       Command := new Close_Command;
       Close_Command (Command.all).Mode := Close_All_Except_Current;
 
-      Context.Context := New_Context;
-      Set_Context_Information
-        (Context => Context.Context,
-         Kernel  => Kernel,
-         Creator => Abstract_Module (Src_Editor_Module_Id));
-
+      --  ??? Can we reuse the current context instead ?
+      Context.Context := New_Context (Kernel, Src_Editor_Module_Id);
       Proxy := Create_Proxy (Command, Context);
-
       Launch_Background_Command (Kernel          => Kernel,
                                  Command         => Proxy,
                                  Active          => True,

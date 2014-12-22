@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Kernel.MDI; use GPS.Kernel.MDI;
 with VCS;            use VCS;
 with VCS_Activities; use VCS_Activities;
 
@@ -80,30 +81,26 @@ package VCS_View.Activities is
    --  Return the currently selected files, as a list.
    --  Caller must free this list afterwards.
 
+   overriding function Build_View_Context
+     (Explorer : not null access VCS_Activities_View_Record;
+      Event : Gdk.Event.Gdk_Event)
+      return Selection_Context;
+   --  Describe the current selection
+
 private
 
    type VCS_Activities_View_Record is new VCS_View_Record with null record;
-
-   overriding
-   procedure Do_Delete (Explorer : VCS_Activities_View_Record);
-   --  ???
-
-   overriding
-   procedure Do_Refresh (Explorer : access VCS_Activities_View_Record);
-   --  ???
-
-   overriding
-   procedure Do_Fill_Info
+   overriding procedure Do_Delete (Explorer : VCS_Activities_View_Record);
+   overriding procedure Do_Refresh
+     (Explorer : access VCS_Activities_View_Record);
+   overriding procedure Do_Fill_Info
      (Explorer  : VCS_Activities_View_Record;
       Iter      : Gtk_Tree_Iter;
       Line_Info : Line_Record;
       Success   : out Boolean);
-   --  ???
-
-   overriding
-   procedure Do_Initialize
+   overriding procedure Do_Initialize
      (Explorer : access VCS_Activities_View_Record;
       Kernel   : Kernel_Handle);
-   --  ???
+   --  See inherited documentation
 
 end VCS_View.Activities;

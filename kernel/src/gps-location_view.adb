@@ -71,6 +71,7 @@ with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
 with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
+with GUI_Utils;                        use GUI_Utils;
 with Histories;                        use Histories;
 
 package body GPS.Location_View is
@@ -87,6 +88,12 @@ package body GPS.Location_View is
    Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => False,
       GPS.Kernel.Messages.Locations   => True);
+
+   type Locations_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Locations_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
 
    type Expansion_Request is record
       Category   : Ada.Strings.Unbounded.Unbounded_String;
@@ -131,7 +138,7 @@ package body GPS.Location_View is
      (Module_Name        => "Location_View_Record",
       View_Name          => GPS.Kernel.MDI.Locations_View_Name,
       Formal_View_Record => Location_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Formal_MDI_Child   => Locations_Child_Record,
       Reuse_If_Exist     => True,
       Initialize         => Initialize,
       Local_Toolbar      => True,
@@ -300,15 +307,6 @@ package body GPS.Location_View is
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
-
-   procedure Context_Func
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Default context factory
 
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -779,31 +777,28 @@ package body GPS.Location_View is
       end if;
    end On_Destroy;
 
-   ------------------
-   -- Context_Func --
-   ------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   procedure Context_Func
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+   overriding function Build_Context
+     (Self  : not null access Locations_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
    is
-      pragma Unreferenced (Kernel, Event_Widget, Event, Menu);
-
-      Explorer : constant Location_View := Location_View (Object);
+      Context : Selection_Context :=
+        GPS_MDI_Child_Record (Self.all).Build_Context (Event);
+      Explorer : constant Location_View :=
+        Location_View (GPS_MDI_Child (Self).Get_Actual_Widget);
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
-      Model    : Gtk_Tree_Model;
       Message  : Message_Access;
-
+      Model    : constant Gtk_Tree_Model := Get_Model (Explorer.View);
    begin
-      Get_Selected (Get_Selection (Explorer.View), Model, Iter);
+      Iter := Find_Iter_For_Event (Explorer.View, Event);
 
-      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
-         return;
+      if Iter = Null_Iter then
+         return Context;
       end if;
 
       Path := Get_Path (Model, Iter);
@@ -819,7 +814,8 @@ package body GPS.Location_View is
       end if;
 
       Path_Free (Path);
-   end Context_Func;
+      return Context;
+   end Build_Context;
 
    -------------
    -- Execute --
@@ -1024,12 +1020,9 @@ package body GPS.Location_View is
          Location_View_Callbacks.To_Marshaller (On_Location_Clicked'Access),
          Self);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Self.Kernel,
-         Event_On_Widget => Self.View,
-         Object          => Self,
-         ID              => Location_Views.Get_Module,
-         Context_Func    => Context_Func'Access);
+         Event_On_Widget => Self.View);
 
       Add_Hook (Self.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),

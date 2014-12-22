@@ -18,7 +18,6 @@
 with GNAT.Strings;           use GNAT.Strings;
 
 with Gdk.Event;              use Gdk.Event;
-
 with Glib.Object;            use Glib.Object;
 with Glib;                   use Glib;
 
@@ -120,10 +119,17 @@ package body GVD.Call_Stack is
       View    : Generic_Views.Abstract_View_Access);
    --  Store or retrieve the view from the process
 
+   type CS_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access CS_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return GPS.Kernel.Selection_Context;
+
    package Simple_Views is new Base_Views.Simple_Views
      (Module_Name        => "Call_Stack",
       View_Name          => -"Call Stack",
       Formal_View_Record => Call_Stack_Record,
+      Formal_MDI_Child   => CS_Child_Record,
       Get_View           => Get_View,
       Set_View           => Set_View,
       Group              => Group_Debugger_Stack,
@@ -137,11 +143,7 @@ package body GVD.Call_Stack is
    --  Setup the columns.
 
    procedure Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
+     (Context      : Selection_Context;
       Menu         : Gtk_Menu);
    --  Create the context for the contextual menus
 
@@ -254,54 +256,82 @@ package body GVD.Call_Stack is
       Set_Column_Types (Stack);
    end Change_Mask;
 
+   -------------------
+   -- Build_Context --
+   -------------------
+
+   overriding function Build_Context
+     (Self  : not null access CS_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return GPS.Kernel.Selection_Context
+   is
+      Stack   : constant Call_Stack :=
+        Call_Stack (GPS_MDI_Child (Self).Get_Actual_Widget);
+      Iter    : Gtk_Tree_Iter;
+      Path    : Gtk_Tree_Path;
+      Context : Selection_Context;
+   begin
+      Context := GPS_MDI_Child_Record (Self.all).Build_Context (Event);
+      if Event /= null then
+         Iter := Find_Iter_For_Event (Stack.Tree, Event);
+         if Iter /= Null_Iter then
+            Path := Get_Path (Stack.Tree.Get_Model, Iter);
+            Stack.Tree.Set_Cursor (Path, null, False);
+            Path_Free (Path);
+         end if;
+      end if;
+      return Context;
+   end Build_Context;
+
    ---------------------
    -- Context_Factory --
    ---------------------
 
    procedure Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu)
+     (Context : Selection_Context;
+      Menu    : Gtk_Menu)
    is
-      pragma Unreferenced (Kernel, Event_Widget, Event, Context);
-      Stack : constant Call_Stack := Call_Stack (Object);
+      Stack : Call_Stack;
       Check : Gtk_Check_Menu_Item;
    begin
-      if Menu /= null then
-         Gtk_New (Check, Label => -"Frame Number");
-         Set_Active (Check, (Stack.Backtrace_Mask and Frame_Num) /= 0);
-         Append (Menu, Check);
-         Call_Stack_Cb.Object_Connect
-           (Check, Signal_Activate, Change_Mask'Access, Stack, Frame_Num);
-
-         Gtk_New (Check, Label => -"Program Counter");
-         Set_Active (Check, (Stack.Backtrace_Mask and Program_Counter) /= 0);
-         Append (Menu, Check);
-         Call_Stack_Cb.Object_Connect
-           (Check, Signal_Activate,
-            Change_Mask'Access, Stack, Program_Counter);
-
-         Gtk_New (Check, Label => -"Subprogram Name");
-         Set_Active (Check, (Stack.Backtrace_Mask and Subprog_Name) /= 0);
-         Append (Menu, Check);
-         Call_Stack_Cb.Object_Connect
-           (Check, Signal_Activate, Change_Mask'Access, Stack, Subprog_Name);
-
-         Gtk_New (Check, Label => -"Parameters");
-         Set_Active (Check, (Stack.Backtrace_Mask and Params) /= 0);
-         Append (Menu, Check);
-         Call_Stack_Cb.Object_Connect
-           (Check, Signal_Activate, Change_Mask'Access, Stack, Params);
-
-         Gtk_New (Check, Label => -"File Location");
-         Set_Active (Check, (Stack.Backtrace_Mask and File_Location) /= 0);
-         Append (Menu, Check);
-         Call_Stack_Cb.Object_Connect
-           (Check, Signal_Activate, Change_Mask'Access, Stack, File_Location);
+      --  ??? Should be in local config menu instead
+      Stack := Call_Stack
+        (GPS_MDI_Child (Get_MDI (Get_Kernel (Context)).Get_Focus_Child)
+         .Get_Actual_Widget);
+      if Stack = null then
+         return;
       end if;
+
+      Gtk_New (Check, Label => -"Frame Number");
+      Set_Active (Check, (Stack.Backtrace_Mask and Frame_Num) /= 0);
+      Append (Menu, Check);
+      Call_Stack_Cb.Object_Connect
+        (Check, Signal_Activate, Change_Mask'Access, Stack, Frame_Num);
+
+      Gtk_New (Check, Label => -"Program Counter");
+      Set_Active (Check, (Stack.Backtrace_Mask and Program_Counter) /= 0);
+      Append (Menu, Check);
+      Call_Stack_Cb.Object_Connect
+        (Check, Signal_Activate,
+         Change_Mask'Access, Stack, Program_Counter);
+
+      Gtk_New (Check, Label => -"Subprogram Name");
+      Set_Active (Check, (Stack.Backtrace_Mask and Subprog_Name) /= 0);
+      Append (Menu, Check);
+      Call_Stack_Cb.Object_Connect
+        (Check, Signal_Activate, Change_Mask'Access, Stack, Subprog_Name);
+
+      Gtk_New (Check, Label => -"Parameters");
+      Set_Active (Check, (Stack.Backtrace_Mask and Params) /= 0);
+      Append (Menu, Check);
+      Call_Stack_Cb.Object_Connect
+        (Check, Signal_Activate, Change_Mask'Access, Stack, Params);
+
+      Gtk_New (Check, Label => -"File Location");
+      Set_Active (Check, (Stack.Backtrace_Mask and File_Location) /= 0);
+      Append (Menu, Check);
+      Call_Stack_Cb.Object_Connect
+        (Check, Signal_Activate, Change_Mask'Access, Stack, File_Location);
    end Context_Factory;
 
    ----------------------
@@ -363,11 +393,9 @@ package body GVD.Call_Stack is
 
       Set_Column_Types (Widget);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Get_Kernel (Debugger_Module_ID.all),
          Event_On_Widget => Widget.Tree,
-         Object          => Widget,
-         ID              => Debugger_Module_ID,
          Context_Func    => Context_Factory'Access);
 
       Gtkada.Handlers.Object_Callback.Object_Connect

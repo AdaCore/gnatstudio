@@ -78,6 +78,7 @@ package body GPS.Kernel.Interactive is
          if Module /= null then
             GPS.Kernel.MDI.Initialize
               (NChild, Console,
+               Kernel              => Kernel,
                Group               => Group_Consoles,
                Focus_Widget        => Gtk_Widget (Get_View (Console)),
                Module              => Module_ID (Module),
@@ -87,9 +88,9 @@ package body GPS.Kernel.Interactive is
          else
             GPS.Kernel.MDI.Initialize
               (NChild, Console,
+               Kernel              => Kernel,
                Group               => Group_Consoles,
                Focus_Widget        => Gtk_Widget (Get_View (Console)),
-               Module              => null,
                Desktop_Independent => False,
                Areas               => Both);
          end if;

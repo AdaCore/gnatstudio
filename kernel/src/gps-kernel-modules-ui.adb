@@ -106,10 +106,8 @@ package body GPS.Kernel.Modules.UI is
      Create ("SYSTEM_MENUS", GNATCOLL.Traces.Off);
 
    type Contextual_Menu_User_Data is record
-      Object       : GObject;
-      Context_Func : Context_Factory;
+      Context_Func : Contextual_Menu_Factory;
       Kernel       : Kernel_Handle;
-      ID           : Module_ID;
       Event_Widget : Gtk_Widget;
    end record;
 
@@ -832,16 +830,16 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end On_Contextual_Menu_Hide;
 
-   ----------------------------
-   -- Create_Contextual_Menu --
-   ----------------------------
+   ------------------------------------
+   -- Add_Actions_To_Contextual_Menu --
+   ------------------------------------
 
-   procedure Create_Contextual_Menu
-     (Kernel  : Kernel_Handle;
-      Object  : Glib.Object.GObject;
-      Context : Selection_Context;
+   procedure Add_Actions_To_Contextual_Menu
+     (Context : Selection_Context;
       Menu    : in out Gtk.Menu.Gtk_Menu)
    is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+
       use type Gtk.Widget.Widget_List.Glist;
 
       function Menu_Is_Visible
@@ -968,7 +966,6 @@ package body GPS.Kernel.Modules.UI is
                   if C.Submenu /= null then
                      Append_To_Menu
                        (Factory => C.Submenu,
-                        Object  => Object,
                         Context => Context,
                         Menu    => Menu);
                   end if;
@@ -1192,7 +1189,7 @@ package body GPS.Kernel.Modules.UI is
          Trace (Me, E);
          Destroy (Menu);
          Menu := null;
-   end Create_Contextual_Menu;
+   end Add_Actions_To_Contextual_Menu;
 
    ----------------------------
    -- Create_Contextual_Menu --
@@ -1202,32 +1199,36 @@ package body GPS.Kernel.Modules.UI is
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu
    is
-      Context : Selection_Context := New_Context;
+      Context : Selection_Context;
       Menu    : Gtk_Menu := null;
       Win    : constant GPS_Window := GPS_Window (User.Kernel.Get_Main_Window);
+      Child  : MDI_Child;
    begin
       --  Create the menu and add all the modules information
       Menu := new GPS_Contextual_Menu_Record;
       Gtk.Menu.Initialize (Menu);
       GPS_Contextual_Menu (Menu).Kernel := User.Kernel;
 
-      Set_Context_Information
-        (Context,
-         Kernel  => User.Kernel,
-         Creator => Abstract_Module_ID (User.ID));
+      --  Compute the context for the menu. We cannot reuse the current context
+      --  stored in the kernel, since the user might be clicking anywhere in
+      --  the widget (or even in another widget), and we need to use that
+      --  location.
 
-      if User.Context_Func /= null then
-         User.Context_Func
-           (Context      => Context,
-            Kernel       => User.Kernel,
-            Event_Widget => User.Event_Widget,
-            Object       => User.Object,
-            Event        => Event,
-            Menu         => Menu);
+      Child := Find_MDI_Child_From_Widget (User.Event_Widget);
+      if Child.all in GPS_MDI_Child_Record'Class then
+         Context := GPS_MDI_Child (Child).Build_Context (Event);
+      else
+         Context := New_Context (User.Kernel);
       end if;
 
       User.Kernel.Last_Context_For_Contextual := Context;
       User.Kernel.Last_Context_From_Contextual := True;
+
+      --  Do we need to add hand-coded items to the menu ?
+
+      if User.Context_Func /= null then
+         User.Context_Func (Context, Menu);
+      end if;
 
       if Win.Last_Event_For_Contextual /= null then
          Free (Win.Last_Event_For_Contextual);
@@ -1239,7 +1240,7 @@ package body GPS.Kernel.Modules.UI is
       --  need to Unref either. This field is automatically reset to null when
       --  the last holder of a ref calls Unref.
 
-      Create_Contextual_Menu (User.Kernel, User.Object, Context, Menu);
+      Add_Actions_To_Contextual_Menu (Context, Menu);
 
       return Menu;
    exception
@@ -1248,33 +1249,25 @@ package body GPS.Kernel.Modules.UI is
          return null;
    end Create_Contextual_Menu;
 
-   ------------------------------
-   -- Register_Contextual_Menu --
-   ------------------------------
+   ---------------------------
+   -- Setup_Contextual_Menu --
+   ---------------------------
 
-   procedure Register_Contextual_Menu
+   procedure Setup_Contextual_Menu
      (Kernel          : access Kernel_Handle_Record'Class;
       Event_On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object          : access Glib.Object.GObject_Record'Class;
-      ID              : Module_ID;
-      Context_Func    : Context_Factory)
+      Context_Func    : Contextual_Menu_Factory := null)
    is
-      User_Data : Contextual_Menu_User_Data;
-   begin
-      Assert (Me, ID /= null, "Null module Id to Register_Contextual_Menu");
-
-      User_Data := Contextual_Menu_User_Data'
-        (Object       => GObject (Object),
-         Context_Func => Context_Func,
-         ID           => ID,
+      User_Data : constant Contextual_Menu_User_Data :=
+        (Context_Func => Context_Func,
          Event_Widget => Gtk_Widget (Event_On_Widget),
          Kernel       => Kernel_Handle (Kernel));
-
+   begin
       Kernel_Contextuals.Register_Contextual_Menu
         (Event_On_Widget,
          User_Data,
          Menu_Create  => Create_Contextual_Menu'Access);
-   end Register_Contextual_Menu;
+   end Setup_Contextual_Menu;
 
    --------------------
    -- Find_Menu_Item --
@@ -2860,6 +2853,10 @@ package body GPS.Kernel.Modules.UI is
 
       if Ctxt = No_Context then
          Ctxt := Get_Current_Context (Kernel);
+      end if;
+
+      if Ctxt = No_Context then
+         return;
       end if;
 
       if Globals.Update_Menus_Idle_Id /= No_Source_Id then

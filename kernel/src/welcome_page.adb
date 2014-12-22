@@ -318,7 +318,7 @@ package body Welcome_Page is
 
       Show_All (Scroll);
 
-      Gtk_New (Child, Scroll, Module => null, Desktop_Independent => False);
+      Gtk_New (Child, Scroll, Kernel, Desktop_Independent => False);
       Set_Title (Child, -"Welcome to GPS");
       Put (Get_MDI (Kernel), Child);
 

@@ -5970,7 +5970,7 @@ package body Src_Editor_Buffer is
       Start_Line : Buffer_Line_Type;
       End_Line   : Buffer_Line_Type)
    is
-      Context     : Selection_Context := New_Context;
+      Context     : Selection_Context;
       First, Last : Editable_Line_Type;
    begin
       First := 0;
@@ -6010,14 +6010,10 @@ package body Src_Editor_Buffer is
       Start_Line : Editable_Line_Type;
       End_Line   : Editable_Line_Type) return Selection_Context
    is
-      Context     : Selection_Context := New_Context;
+      Context     : Selection_Context :=
+        New_Context (Buffer.Kernel, Src_Editor_Module_Id);
       The_Project : Project_Type;
    begin
-      Set_Context_Information
-        (Context,
-         Buffer.Kernel,
-         Abstract_Module_ID (Src_Editor_Module_Id));
-
       if Project = No_Project then
          declare
             Child : MDI_Child;

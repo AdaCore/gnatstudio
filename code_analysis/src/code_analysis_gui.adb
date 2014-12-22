@@ -24,14 +24,12 @@ with Gtk.Window;                 use Gtk.Window;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Image;                  use Gtk.Image;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtkada.Handlers;            use Gtkada.Handlers;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
@@ -421,41 +419,26 @@ package body Code_Analysis_GUI is
         (Kernel, View, File_Node, True, Subp_Node.Start, Subp_Node.Column);
    end Open_File_Editor_On_Subprogram;
 
-   ------------------
-   -- Context_Func --
-   ------------------
+   -------------------------------------------
+   -- Code_Analysis_Contextual_Menu_Factory --
+   -------------------------------------------
 
-   procedure Context_Func
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk_Event;
-      Menu         : Gtk_Menu)
+   procedure Code_Analysis_Contextual_Menu_Factory
+     (Context : Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu)
    is
-      pragma Unreferenced (Event_Widget, Kernel);
       use Project_Maps;
-      View      : constant Code_Analysis_View := Code_Analysis_View (Object);
-      X, Y      : Gdouble;
-      Path      : Gtk_Tree_Path;
-      Prj_Node  : Code_Analysis.Project_Access;
-      File_Node : Code_Analysis.File_Access;
-      Column    : Gtk_Tree_View_Column;
-      Buffer_X  : Gint;
-      Buffer_Y  : Gint;
-      Row_Found : Boolean;
-      Item      : Gtk_Menu_Item;
-      Sep       : Gtk_Separator_Menu_Item;
-      Iter      : Gtk_Tree_Iter := Get_Iter_First (View.Model);
 
+      --  ??? This is a hack. We should really be using generic_views here
+      View      : constant Code_Analysis_View :=
+        Code_Analysis_View
+          (Get_MDI (Get_Kernel (Context)).Find_MDI_Child_By_Tag
+           (Code_Analysis_View_Record'Tag).Get_Widget);
+
+      Item : Gtk_Menu_Item;
+      Iter : constant Gtk_Tree_Iter := Get_Iter_First (View.Model);
    begin
-      Get_Coords (Event, X, Y);
-      Get_Path_At_Pos (View.Tree, Gint (X), Gint (Y), Path, Column,
-                       Buffer_X, Buffer_Y, Row_Found);
-
-      --------------------------------------------------------
-      --  Report of Coverage # specific contextual entries  --
-      --------------------------------------------------------
+      --  ??? Should be in a local config menu instead
 
       if First (View.Projects.all) /= No_Element then
          Gtk_New (Item, -"Show flat list of files");
@@ -488,52 +471,7 @@ package body Code_Analysis_GUI is
             Append (Menu, Item);
          end if;
       end if;
-
-      ----------------------------------
-      --  Set up context information  --
-      ----------------------------------
-
-      if Path /= Null_Gtk_Tree_Path then
-         Gtk_New (Sep);
-         Append (Menu, Sep);
-         Select_Path (Get_Selection (View.Tree), Path);
-         Iter := Get_Iter (View.Model, Path);
-
-         declare
-            Node : constant Node_Access := Code_Analysis.Node_Access
-              (Node_Set.Get (View.Model, Iter, Node_Col));
-         begin
-            if Node.all in Code_Analysis.Project'Class then
-               --  So we are on a project node
-               --  Context receive project information
-               Set_File_Information
-                 (Context, Project => Project_Access (Node).Name);
-
-            elsif Node.all in Code_Analysis.File'Class then
-               --  So we are on a file node
-               --  Context receive project and file information
-               Prj_Node := Project_Access
-                 (Project_Set.Get (View.Model, Iter, Prj_Col));
-               Set_File_Information
-                 (Context,
-                  Files   => (1 => Code_Analysis.File_Access (Node).Name),
-                  Project => Prj_Node.Name);
-
-            elsif Node.all in Code_Analysis.Subprogram'Class then
-               --  So we are on a subprogram node
-               --  Context receive project, file and entity information
-               File_Node := Code_Analysis.File_Access
-                 (File_Set.Get (View.Model, Iter, File_Col));
-               Prj_Node  := Project_Access
-                 (Project_Set.Get (View.Model, Iter, Prj_Col));
-               Set_File_Information
-                 (Context, (1 => File_Node.Name), Prj_Node.Name);
-               Set_Entity_Information
-                 (Context, Subprogram_Access (Node).Name.all);
-            end if;
-         end;
-      end if;
-   end Context_Func;
+   end Code_Analysis_Contextual_Menu_Factory;
 
    -------------------------
    -- Initialize_Graphics --

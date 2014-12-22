@@ -19,34 +19,35 @@ with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
 with System;
 
+with Gdk.Pixbuf;
 with Glib.Object;
 with Glib.Values;
-with Gdk.Event;
-with Gdk.Pixbuf;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Label;
-with Gtk.Menu;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Separator;
 with Gtk.Toggle_Button;
-with Gtk.Tree_Model; use Gtk.Tree_Model;
+with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_Selection;
 with Gtk.Tree_Sortable;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
+with Gtkada.MDI;            use Gtkada.MDI;
 
+with Code_Analysis_GUI;
 with Histories;
-with GPS.Intl; use GPS.Intl;
+with GPS.Intl;              use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Project;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Location_View;     use GPS.Location_View;
-with Code_Analysis_GUI;
+with GUI_Utils;             use GUI_Utils;
 with CodePeer.Module;
 
 package body CodePeer.Messages_Reports is
@@ -137,14 +138,6 @@ package body CodePeer.Messages_Reports is
         CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record'Class;
       Self   : Messages_Report);
    --  Handles change of set of visible message's lifeages.
-
-   procedure Context_Func
-     (Context      : in out GPS.Kernel.Selection_Context;
-      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
 
    function On_Analysis_Click
      (View  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
@@ -304,40 +297,35 @@ package body CodePeer.Messages_Reports is
       return 0;
    end Compare;
 
-   ------------------
-   -- Context_Func --
-   ------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   procedure Context_Func
-     (Context      : in out GPS.Kernel.Selection_Context;
-      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+   function Build_Context
+     (Self   : not null access Messages_Report_Record'Class;
+      Event  : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
    is
-      pragma Unreferenced (Menu, Event_Widget, Kernel);
-
-      Self       : constant Messages_Report := Messages_Report (Object);
-      X          : constant Glib.Gint := Glib.Gint (Event.Button.X);
-      Y          : constant Glib.Gint := Glib.Gint (Event.Button.Y);
       Path       : Gtk.Tree_Model.Gtk_Tree_Path;
       Model_Path : Gtk.Tree_Model.Gtk_Tree_Path;
-      Cell_X     : Glib.Gint;
-      Cell_Y     : Glib.Gint;
-      Column     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Found      : Boolean;
       Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
       Project    : Code_Analysis.Project_Access;
       File       : Code_Analysis.File_Access;
       Subprogram : Code_Analysis.Subprogram_Access;
-
+      Context  : Selection_Context :=
+        New_Context
+          (Self.Kernel,
+           Get_Module_From_Child
+             (GPS_MDI_Child (Find_MDI_Child_From_Widget (Self))));
    begin
-      Self.Analysis_View.Get_Path_At_Pos
-        (X, Y, Path, Column, Cell_X, Cell_Y, Found);
+      Iter := Find_Iter_For_Event (Self.Analysis_View, Event);
+      if Iter /= Null_Iter then
+         Path := Get_Path (Self.Analysis_View.Get_Model, Iter);
 
-      if Path /= Null_Gtk_Tree_Path then
-         Self.Analysis_View.Get_Selection.Select_Path (Path);
+         if Event /= null then
+            Self.Analysis_View.Get_Selection.Select_Path (Path);
+         end if;
+
          Model_Path :=
            Self.Analysis_Sort_Model.Convert_Path_To_Child_Path (Path);
          Iter       := Self.Analysis_Model.Get_Iter (Model_Path);
@@ -368,7 +356,8 @@ package body CodePeer.Messages_Reports is
          Gtk.Tree_Model.Path_Free (Model_Path);
          Gtk.Tree_Model.Path_Free (Path);
       end if;
-   end Context_Func;
+      return Context;
+   end Build_Context;
 
    -----------------------
    -- Get_Selected_File --
@@ -437,12 +426,11 @@ package body CodePeer.Messages_Reports is
    procedure Gtk_New
      (Report  : out Messages_Report;
       Kernel  : GPS.Kernel.Kernel_Handle;
-      Module  : GPS.Kernel.Modules.Module_ID;
       Version : Supported_Format_Version;
       Tree    : Code_Analysis.Code_Analysis_Tree) is
    begin
       Report := new Messages_Report_Record;
-      Initialize (Report, Kernel, Module, Version, Tree);
+      Initialize (Report, Kernel, Version, Tree);
    end Gtk_New;
 
    ----------------
@@ -452,7 +440,6 @@ package body CodePeer.Messages_Reports is
    procedure Initialize
      (Self    : access Messages_Report_Record'Class;
       Kernel  : GPS.Kernel.Kernel_Handle;
-      Module  : GPS.Kernel.Modules.Module_ID;
       Version : Supported_Format_Version;
       Tree    : Code_Analysis.Code_Analysis_Tree)
    is
@@ -900,12 +887,9 @@ package body CodePeer.Messages_Reports is
 
       --  Register contextual menu handler
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Kernel,
-         Event_On_Widget => Self.Analysis_View,
-         Object          => Self,
-         ID              => Module,
-         Context_Func    => Context_Func'Access);
+         Event_On_Widget => Self.Analysis_View);
    end Initialize;
 
    -----------------------

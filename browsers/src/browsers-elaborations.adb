@@ -65,7 +65,7 @@ package body Browsers.Elaborations is
      (Module_Name            => "Elaboration_Browser",
       View_Name              => -"Elaboration Circularities",
       Formal_View_Record     => Elaboration_Browser_Record,
-      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Formal_MDI_Child       => Browser_Child_Record,
       Reuse_If_Exist         => True,
       Initialize             => Initialize,
       Local_Toolbar          => True,
@@ -165,12 +165,9 @@ package body Browsers.Elaborations is
       return Gtk_Widget is
    begin
       Browsers.Canvas.Initialize (View);
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => View.Kernel,
-         Event_On_Widget => View,
-         Object          => View,
-         ID              => Elaboration_Views.Get_Module,
-         Context_Func    => Default_Browser_Context_Factory'Access);
+         Event_On_Widget => View);
       return Gtk_Widget (View.Get_View);
    end Initialize;
 
@@ -335,8 +332,7 @@ package body Browsers.Elaborations is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Elaboration_Views.Register_Module (Kernel);
 

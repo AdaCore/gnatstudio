@@ -41,7 +41,6 @@ with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Label;                 use Gtk.Label;
@@ -86,10 +85,6 @@ with Tooltips;
 package body Project_Explorers is
 
    Me : constant Trace_Handle := Create ("Project_Explorers");
-
-   type Explorer_Module_Record is new Module_ID_Record with null record;
-   Explorer_Module_ID : Module_ID := null;
-   --  Id for the explorer module
 
    Show_Absolute_Paths : constant History_Key :=
                            "explorer-show-absolute-paths";
@@ -181,11 +176,18 @@ package body Project_Explorers is
       return Gtk.Widget.Gtk_Widget;
    --  Create a new explorer, and return the focus widget.
 
+   type Explorer_Child_Record is
+      new MDI_Explorer_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Explorer_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
    package Explorer_Views is new Generic_Views.Simple_Views
      (Module_Name        => Explorer_Module_Name,
       View_Name          => "Project",
       Formal_View_Record => Project_Explorer_Record,
-      Formal_MDI_Child   => MDI_Explorer_Child_Record,
+      Formal_MDI_Child   => Explorer_Child_Record,
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
       Local_Config       => True,
@@ -244,12 +246,6 @@ package body Project_Explorers is
       Element_Type    => Files_List.List,
       "="             => Files_List."=");
    use Files_List, Dirs_Files_Hash;
-
-   overriding procedure Default_Context_Factory
-     (Module  : access Explorer_Module_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject);
-   --  See inherited documentation
 
    procedure For_Each_File_Node
      (Model    : Gtk_Tree_Store;
@@ -397,23 +393,6 @@ package body Project_Explorers is
       Target_Node : Gtk_Tree_Iter);
    --  Select Target_Node, and make sure it is visible on the screen
 
-   procedure Explorer_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu);
-   --  Return the context to use for the contextual menu.
-   --  It is also used to return the context for
-   --  GPS.Kernel.Get_Current_Context, and thus can be called with a null
-   --  event or a null menu.
-
-   procedure Child_Selected
-     (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
-   --  Called every time a new child is selected in the MDI. This makes sure
-   --  that the selected node in the explorer doesn't reflect false information
-
    --------------
    -- Commands --
    --------------
@@ -505,7 +484,7 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Context);
    begin
-      return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID;
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Views.Get_Module;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -518,7 +497,7 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Context);
    begin
-      return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Views.Get_Module
         and then Has_Project_Information (Ctxt)
         and then not Has_Directory_Information (Ctxt);
    end Filter_Matches_Primitive;
@@ -533,7 +512,7 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Context);
    begin
-      return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Views.Get_Module
         and then Has_Directory_Information (Ctxt)
         and then not Has_File_Information (Ctxt);
    end Filter_Matches_Primitive;
@@ -548,7 +527,7 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Context);
    begin
-      return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Views.Get_Module
         and then Has_File_Information (Ctxt)
         and then not Has_Entity_Name_Information (Ctxt);
    end Filter_Matches_Primitive;
@@ -563,7 +542,7 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Context);
    begin
-      return Module_ID (Get_Creator (Ctxt)) = Explorer_Module_ID
+      return Module_ID (Get_Creator (Ctxt)) = Explorer_Views.Get_Module
         and then Has_Entity_Name_Information (Ctxt);
    end Filter_Matches_Primitive;
 
@@ -645,11 +624,9 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Args);
       T : constant Project_Explorer := Project_Explorer (Explorer);
+      Child : constant GPS_MDI_Child := Explorer_Views.Child_From_View (T);
    begin
-      Context_Changed (T.Kernel);
-   exception
-      when E : others =>
-         Trace (Me, E);
+      T.Kernel.Context_Changed (Child.Build_Context);
    end Tree_Select_Row_Cb;
 
    ----------------
@@ -683,12 +660,9 @@ package body Project_Explorers is
 
       Scrolled.Add (Explorer.Tree);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Explorer.Kernel,
-         Event_On_Widget => Explorer.Tree,
-         Object          => Explorer,
-         ID              => Explorer_Module_ID,
-         Context_Func    => Explorer_Context_Factory'Access);
+         Event_On_Widget => Explorer.Tree);
 
       --  The contents of the nodes is computed on demand. We need to be aware
       --  when the user has changed the visibility status of a node.
@@ -733,10 +707,6 @@ package body Project_Explorers is
 
       --  The explorer (project view) is automatically refreshed when the
       --  project view is changed.
-
-      Widget_Callback.Object_Connect
-        (Get_MDI (Explorer.Kernel), Signal_Child_Selected,
-         Child_Selected'Access, Explorer, After => True);
 
       Gtk.Dnd.Dest_Set
         (Explorer.Tree, Dest_Default_All, Target_Table_Url, Action_Any);
@@ -959,40 +929,6 @@ package body Project_Explorers is
            (Explorer.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
       end if;
    end Preferences_Changed;
-
-   --------------------
-   -- Child_Selected --
-   --------------------
-
-   procedure Child_Selected
-     (Explorer : access Gtk_Widget_Record'Class; Args : GValues)
-   is
-      E     : constant Project_Explorer := Project_Explorer (Explorer);
-      Child : constant MDI_Child := MDI_Child (To_Object (Args, 1));
-      Model : Gtk_Tree_Model;
-      Node  : Gtk_Tree_Iter;
-      Iter  : Gtk_Tree_Iter;
-   begin
-      Get_Selected (Get_Selection (E.Tree), Model, Node);
-
-      if Node = Null_Iter then
-         return;
-      end if;
-
-      E.Tree.Convert_To_Store_Iter (Store_Iter => Iter, Filter_Iter => Node);
-
-      if Child = null
-        or else (Get_Title (Child) = " ")
-        or else (Get_Title (Child) =
-                   Display_Full_Name (Get_File_From_Node (E.Tree.Model, Iter)))
-      then
-         return;
-      end if;
-
-      if not (Get_Widget (Child).all in Project_Explorer_Record'Class) then
-         Unselect_All (Get_Selection (E.Tree));
-      end if;
-   end Child_Selected;
 
    --------------------
    -- Create_Toolbar --
@@ -1241,31 +1177,26 @@ package body Project_Explorers is
       Self.Tree.Filter.Refilter;
    end Filter_Changed;
 
-   ------------------------------
-   -- Explorer_Context_Factory --
-   ------------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   procedure Explorer_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu)
+   overriding function Build_Context
+     (Self  : not null access Explorer_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
    is
-      pragma Unreferenced (Event_Widget, Object, Menu);
-
-      --  "Object" is also the explorer, but this way we make sure the current
-      --  context is that of the explorer (since it will have the MDI focus)
       T         : constant Project_Explorer :=
-        Explorer_Views.Get_Or_Create_View (Kernel, Focus => True);
-      Filter_Iter      : constant Gtk_Tree_Iter :=
-                    Find_Iter_For_Event (T.Tree, Event);
+        Project_Explorer (GPS_MDI_Child (Self).Get_Actual_Widget);
+      Filter_Iter : constant Gtk_Tree_Iter :=
+        Find_Iter_For_Event (T.Tree, Event);
       Iter        : Gtk_Tree_Iter;
       Filter_Path : Gtk_Tree_Path;
+      Context : Selection_Context :=
+        GPS_MDI_Child_Record (Self.all).Build_Context (Event);
    begin
       if Filter_Iter = Null_Iter then
-         return;
+         return Context;
       end if;
 
       Filter_Path := Get_Path (T.Tree.Get_Model, Filter_Iter);
@@ -1277,8 +1208,9 @@ package body Project_Explorers is
       T.Tree.Convert_To_Store_Iter
         (Store_Iter => Iter, Filter_Iter => Filter_Iter);
       Project_Explorers_Common.Context_Factory
-        (Context, Kernel_Handle (Kernel), T.Tree.Model, Iter);
-   end Explorer_Context_Factory;
+        (Context, T.Kernel, T.Tree.Model, Iter);
+      return Context;
+   end Build_Context;
 
    -------------
    -- Execute --
@@ -2066,20 +1998,6 @@ package body Project_Explorers is
       Unchecked_Free (Files);
    end Refresh_Project_Node;
 
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
-
-   overriding procedure Default_Context_Factory
-     (Module  : access Explorer_Module_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject) is
-   begin
-      Explorer_Context_Factory
-        (Context, Get_Kernel (Module.all),
-         Gtk_Widget (Child), Child, null, null);
-   end Default_Context_Factory;
-
    --------------------
    --  Jump_To_Node  --
    --------------------
@@ -2224,10 +2142,7 @@ package body Project_Explorers is
       Command               : Interactive_Command_Access;
 
    begin
-      Explorer_Module_ID := new Explorer_Module_Record;
-      Explorer_Views.Register_Module
-        (Kernel => Kernel,
-         ID     => Explorer_Module_ID);
+      Explorer_Views.Register_Module (Kernel => Kernel);
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Show_Empty_Dirs, True);

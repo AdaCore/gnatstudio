@@ -33,6 +33,7 @@ with Gtk.Widget;           use Gtk.Widget;
 
 with GPS.Kernel;           use GPS.Kernel;
 with VCS_Status;           use VCS_Status;
+with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 with Tooltips;
 
@@ -58,6 +59,18 @@ package VCS_View is
      (Explorer : access VCS_View_Record;
       Kernel   : Kernel_Handle) is abstract;
    --  Explorer specific initialization
+
+   function Build_View_Context
+     (Explorer : not null access VCS_View_Record;
+      Event : Gdk.Event.Gdk_Event)
+      return Selection_Context is abstract;
+   --  Describe the current selection
+
+   function Build_View_Context
+     (Child : not null access GPS_MDI_Child_Record'Class;
+      Event : Gdk.Event.Gdk_Event)
+      return Selection_Context
+   is (Build_View_Context (VCS_View_Access (Child.Get_Actual_Widget), Event));
 
    function Columns_Types
      (Explorer : access VCS_View_Record) return GType_Array is abstract;
@@ -92,13 +105,6 @@ package VCS_View is
 
    procedure On_Destroy (Self : in out VCS_View_Record) is null;
    --  Called when Self is destroyed.
-
-   function Get_Current_Context
-     (Explorer : access VCS_View_Record) return Selection_Context;
-
-   procedure Set_Current_Context
-     (Explorer : access VCS_View_Record;
-      Context  : Selection_Context);
 
    function Get_Iter_From_File
      (Explorer : access VCS_View_Record'Class;

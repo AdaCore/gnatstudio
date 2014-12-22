@@ -104,7 +104,6 @@ package body VCS_Module.Actions is
    type VCS_Contextual_Menu is new Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
      (Factory : access VCS_Contextual_Menu;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Fill Menu with the contextual menu for the VCS module,
@@ -700,19 +699,17 @@ package body VCS_Module.Actions is
 
    overriding procedure Append_To_Menu
      (Factory : access VCS_Contextual_Menu;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Factory, Object);
+      pragma Unreferenced (Factory);
       Creator : constant Abstract_Module := Get_Creator (Context);
    begin
       if (Creator /= Abstract_Module (VCS_Module_ID)
           and then Creator /= Abstract_Module (VCS_Explorer_Module_Id))
         or else Has_Activity_Information (Context)
       then
-         VCS_View_API.VCS_Contextual_Menu
-           (Get_Kernel (Context), Context, Menu, False);
+         VCS_View_API.VCS_Explorer_Contextual_Menu (Context, Menu, False);
       end if;
    end Append_To_Menu;
 

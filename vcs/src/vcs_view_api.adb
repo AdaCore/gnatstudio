@@ -49,7 +49,6 @@ with GPS.Core_Kernels;          use GPS.Core_Kernels;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -59,7 +58,6 @@ with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
@@ -73,7 +71,6 @@ with VCS_View.Explorer;         use VCS_View.Explorer;
 with UTF8_Utils;                use UTF8_Utils;
 
 package body VCS_View_API is
-   Me : constant Trace_Handle := Create ("VCS.VIEW");
    use type GNAT.Strings.String_Access;
 
    -----------------------
@@ -779,16 +776,16 @@ package body VCS_View_API is
       end if;
    end Get_Current_Ref;
 
-   -------------------------
-   -- VCS_Contextual_Menu --
-   -------------------------
+   ----------------------------------
+   -- VCS_Explorer_Contextual_Menu --
+   ----------------------------------
 
-   procedure VCS_Contextual_Menu
-     (Kernel          : Kernel_Handle;
-      Context         : Selection_Context;
+   procedure VCS_Explorer_Contextual_Menu
+     (Context         : Selection_Context;
       Menu            : access Gtk.Menu.Gtk_Menu_Record'Class;
       Show_Everything : Boolean)
    is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
       Item            : Gtk_Menu_Item;
       Menu_Item       : Gtk_Menu_Item;
       Submenu         : Gtk_Menu;
@@ -841,10 +838,7 @@ package body VCS_View_API is
                Set_Use_Markup (Gtk_Label (Get_Child (Item)), True);
                Append (Menu, Item);
 
-               A_Context := New_Context;
-
-               Set_Context_Information
-                 (A_Context, Kernel, Get_Creator (Context));
+               A_Context := New_Context (Kernel, Get_Creator (Context));
 
                Set_Activity_Information (A_Context, Image (Activity));
 
@@ -972,10 +966,7 @@ package body VCS_View_API is
                then
                   Items_Inserted := True;
 
-                  L_Context := New_Context;
-
-                  Set_Context_Information
-                    (L_Context, Kernel, Get_Creator (Context));
+                  L_Context := New_Context (Kernel, Get_Creator (Context));
 
                   declare
                      F_Info : constant File_Info'Class :=
@@ -1127,7 +1118,7 @@ package body VCS_View_API is
             On_Menu_Select_Files_Same_Status'Access, Context);
          Set_Sensitive (Item, True);
       end if;
-   end VCS_Contextual_Menu;
+   end VCS_Explorer_Contextual_Menu;
 
    --------------------
    -- Change_Context --
@@ -1155,7 +1146,6 @@ package body VCS_View_API is
       end if;
 
       Ref := Get_Current_Ref (Context);
-      Set_Current_Context (Explorer, Context);
 
       if Has_Directory_Information (Context)
         and then not Has_File_Information (Context)
@@ -3057,31 +3047,6 @@ package body VCS_View_API is
 
       Unchecked_Free (Dirs);
    end Update_All;
-
-   ---------------------
-   -- Context_Factory --
-   ---------------------
-
-   function Context_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context
-   is
-      pragma Unreferenced (Child);
-      Explorer : VCS_Explorer_View_Access;
-   begin
-      Explorer := Get_Explorer (Kernel_Handle (Kernel), False);
-
-      if Explorer /= null then
-         return Get_Current_Context (Explorer);
-      else
-         return No_Context;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return No_Context;
-   end Context_Factory;
 
    -------------------------
    -- VCS_Command_Handler --

@@ -51,8 +51,7 @@ package VCS_Activities_View_API is
    --  Calling this does NOT open the VCS Explorer.
 
    procedure VCS_Activities_Contextual_Menu
-     (Kernel  : Kernel_Handle;
-      Context : Selection_Context;
+     (Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Complete Menu with the commands related to the VCS Activities,
    --  according to the information in Context.
@@ -81,10 +80,5 @@ package VCS_Activities_View_API is
      (Data    : in out GNATCOLL.Scripts.Callback_Data'Class;
       Command : String);
    --  VCS Activities class command handler
-
-   function Context_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context;
-   --  Return the current context relative to the VCS Activities Explorer
 
 end VCS_Activities_View_API;

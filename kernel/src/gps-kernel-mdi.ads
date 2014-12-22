@@ -26,6 +26,7 @@ with GNAT.SHA1;             use GNAT.SHA1;
 with GNATCOLL.Scripts;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with Gdk.Event;             use Gdk.Event;
 with Glib.Main;
 with Glib.Xml_Int;
 with Gtk.Accel_Group;
@@ -91,11 +92,6 @@ package GPS.Kernel.MDI is
    --  Return False if no desktop could be loaded (in which case the default
    --  desktop was loaded).
 
-   function Get_Context_For_Child
-     (Child : Gtkada.MDI.MDI_Child) return Selection_Context;
-   --  Return the context associated with Child.
-   --  The user should free the returned value.
-
    ---------
    -- MDI --
    ---------
@@ -134,11 +130,12 @@ package GPS.Kernel.MDI is
    procedure Gtk_New
      (Child               : out GPS_MDI_Child;
       Widget              : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Kernel              : not null access Kernel_Handle_Record'Class;
       Flags               : Child_Flags := All_Buttons;
       Group               : Child_Group := Group_Default;
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module              : access Module_ID_Record'Class; --  can be null
+      Module              : access Module_ID_Record'Class := null;
       Desktop_Independent : Boolean := False;
       Areas               : Allowed_Areas := Both);
    --  Recommended version of Gtk_New to use, instead of the one in
@@ -153,11 +150,12 @@ package GPS.Kernel.MDI is
    procedure Initialize
      (Child               : access GPS_MDI_Child_Record'Class;
       Widget              : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Kernel              : not null access Kernel_Handle_Record'Class;
       Flags               : Child_Flags := All_Buttons;
       Group               : Child_Group := Group_Default;
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module              : access Module_ID_Record'Class;
+      Module              : access Module_ID_Record'Class := null;
       Desktop_Independent : Boolean := False;
       Areas               : Allowed_Areas := Both);
    --  Internal version of Gtk_New
@@ -218,8 +216,31 @@ package GPS.Kernel.MDI is
    --  Might return No_Class to use the default GPS.GUI class
 
    function Get_Module_From_Child
-     (Child : Gtkada.MDI.MDI_Child) return Module_ID;
+     (Child : not null access Gtkada.MDI.MDI_Child_Record'Class)
+      return Module_ID;
    --  Return the module that created Child, or null if no module was found.
+
+   function Build_Context
+     (Self  : not null access GPS_MDI_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
+     is (New_Context (Self.Kernel, Get_Module_From_Child (Self)));
+   --  Return the current context for Self.
+   --  When no event is specified, the context should related to the current
+   --  selection in the view (for a tree view, this is a description of the
+   --  selected row for instance).
+   --  When an event is specified, this function should take the event into
+   --  account and change the selection in the view. It should then return the
+   --  new context. An event is only given before we display a contextual menu.
+
+   function Get_Actual_Widget
+     (Self : not null access GPS_MDI_Child_Record)
+      return Gtk.Widget.Gtk_Widget
+     is (Self.Get_Widget);
+   --  Returns the actual widget that was put in the MDI.
+   --  When using the Generic_Views package, it is possible that this widget
+   --  has been encapsulated to provide a local menubar and other decorations,
+   --  so the actual MDI children will override this primitive appropriately.
 
    procedure Tab_Contextual
      (Child : access GPS_MDI_Child_Record;
@@ -374,21 +395,6 @@ package GPS.Kernel.MDI is
       return Gtk.Icon_Factory.Gtk_Icon_Factory;
    --  Return the default icon factory
 
-   function Get_Current_Context
-     (Kernel : access Kernel_Handle_Record'Class) return Selection_Context;
-   --  Return the context associated with the current MDI child.
-   --  The caller should not free the returned value, this is taken care of by
-   --  the kernel automatically. If the caller needs to keep the context valid
-   --  throughout its execution, it should first call Ref, and then Unref on
-   --  the context, similarly for any caller that need to keep a valid context.
-   --  The returned value might be null, if the current child doesn't support
-   --  selection contexts.
-   --  This function is mostly intended to be called for the callbacks in the
-   --  menu bar.
-   --  The context returned will be that of the active contextual menu if there
-   --  is one at that point in time (therefore, we ignore cases where for
-   --  instance a new child has been selected automatically at that point)
-
    -------------
    -- Toolbar --
    -------------
@@ -469,6 +475,7 @@ private
       Module              : Abstract_Module_ID;
       Desktop_Independent : Boolean;
       Save_Desktop        : GNATCOLL.Scripts.Subprogram_Type;
+      Kernel              : Kernel_Handle;
 
       Files               : Monitored_File := No_Monitored_File;
    end record;

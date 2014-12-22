@@ -24,8 +24,8 @@ with Glib.Object;               use Glib.Object;
 with XML_Utils;                 use XML_Utils;
 with Glib;                      use Glib;
 
+with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Widget;                use Gtk.Widget;
 
 with Log_Utils;                 use Log_Utils;
 
@@ -36,7 +36,6 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
@@ -57,7 +56,6 @@ package body VCS_Module is
    type VCS_Contextual_Menu is new Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
      (Factory : access VCS_Contextual_Menu;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Fill Menu with the contextual menu for the VCS module,
@@ -227,19 +225,17 @@ package body VCS_Module is
 
    overriding procedure Append_To_Menu
      (Factory : access VCS_Contextual_Menu;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Factory, Object);
+      pragma Unreferenced (Factory);
       Creator : constant Abstract_Module := Get_Creator (Context);
    begin
       if (Creator /= Abstract_Module (VCS_Module_ID)
           and then Creator /= Abstract_Module (VCS_Explorer_Module_Id))
         or else Has_Activity_Information (Context)
       then
-         VCS_View_API.VCS_Contextual_Menu
-           (Get_Kernel (Context), Context, Menu, False);
+         VCS_View_API.VCS_Explorer_Contextual_Menu (Context, Menu, False);
       end if;
    end Append_To_Menu;
 
@@ -353,11 +349,11 @@ package body VCS_Module is
          Explorer := Get_Explorer (User, True, True);
          Clear (Explorer);
          Open_Explorer (User, No_Context);
-         return M.Explorer_Child;
+         return MDI_Child (M.Explorer_Child);
 
       elsif Node.Tag.all = "VCS_Activities_View_Record" then
          Open_Activities_Explorer (User, No_Context);
-         return M.Activities_Child;
+         return MDI_Child (M.Activities_Child);
       end if;
 
       return null;
@@ -388,37 +384,29 @@ package body VCS_Module is
       return null;
    end Save_Desktop;
 
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   overriding procedure Default_Context_Factory
-     (Module  : access VCS_Module_ID_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject)
-   is
-      Kernel : constant Kernel_Handle := Get_Kernel (Module.all);
+   overriding function Build_Context
+     (Self  : not null access Activities_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context is
    begin
-      if Child = GObject (Get_Explorer (Kernel, False)) then
-         Context := VCS_View_API.Context_Factory (Kernel, Gtk_Widget (Child));
-      else
-         Context := VCS_Activities_View_API.Context_Factory
-           (Kernel, Gtk_Widget (Child));
-      end if;
-   end Default_Context_Factory;
+      return Build_View_Context (Self, Event);
+   end Build_Context;
 
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   overriding procedure Default_Context_Factory
-     (Module  : access VCS_Explorer_Module_ID_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject) is
+   overriding function Build_Context
+     (Self  : not null access Explorer_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context is
    begin
-      Context := VCS_View_API.Context_Factory
-        (Module.Get_Kernel, Gtk_Widget (Child));
-   end Default_Context_Factory;
+      return Build_View_Context (Self, Event);
+   end Build_Context;
 
    ------------------------------------------
    -- VCS_Activities_Class_Command_Handler --
@@ -1123,7 +1111,6 @@ package body VCS_Module is
       Show        : Boolean := False) return VCS_Explorer_View_Access
    is
       M     : constant VCS_Module_ID_Access := VCS_Module_ID;
-      Child : GPS_MDI_Child;
    begin
       if M.Explorer = null then
          Gtk_New (M.Explorer, Kernel);
@@ -1131,11 +1118,12 @@ package body VCS_Module is
       end if;
 
       if Show and then M.Explorer_Child = null then
-         Gtk_New (Child, M.Explorer,
-                  Areas          => Central_Only,
-                  Group          => Group_VCS_Explorer,
-                  Module         => VCS_Explorer_Module_Id);
-         M.Explorer_Child := MDI_Child (Child);
+         M.Explorer_Child := new Explorer_Child_Record;
+         Initialize (M.Explorer_Child, M.Explorer,
+                     Kernel         => Kernel,
+                     Areas          => Central_Only,
+                     Group          => Group_VCS_Explorer,
+                     Module         => VCS_Explorer_Module_Id);
          Set_Title (M.Explorer_Child, -"VCS Explorer");
          Put (Get_MDI (Kernel), M.Explorer_Child);
          Set_Focus_Child (M.Explorer_Child);
@@ -1183,17 +1171,17 @@ package body VCS_Module is
       Show        : Boolean := False) return VCS_Activities_View_Access
    is
       M     : constant VCS_Module_ID_Access := VCS_Module_ID;
-      Child : GPS_MDI_Child;
    begin
       if M.Activities = null then
          Gtk_New (M.Activities, Kernel);
       end if;
 
       if Show and then M.Activities_Child = null then
-         Gtk_New (Child, M.Activities,
-                  Group          => Group_VCS_Activities,
-                  Module         => VCS_Module_ID);
-         M.Activities_Child := MDI_Child (Child);
+         M.Activities_Child := new Activities_Child_Record;
+         Initialize (M.Activities_Child, M.Activities,
+                     Kernel         => Kernel,
+                     Group          => Group_VCS_Activities,
+                     Module         => VCS_Module_ID);
          Set_Title (M.Activities_Child, -"VCS Activities");
          Put (Get_MDI (Kernel), M.Activities_Child);
          Set_Focus_Child (M.Activities_Child);

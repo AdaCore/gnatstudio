@@ -20,10 +20,8 @@ with System;                 use System;
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Glib.Main;              use Glib.Main;
-with Gdk.Event;              use Gdk.Event;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Text_View;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
@@ -124,6 +122,7 @@ package body GVD.Consoles is
      (Module_Name        => "Debugger_Console",
       View_Name          => -"Debugger Console",
       Formal_View_Record => Debugger_Console_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Get_View           => Get_Debugger_Console,
       Set_View           => Set_Debugger_Console,
       Group              => Group_Consoles,
@@ -133,6 +132,7 @@ package body GVD.Consoles is
      (Module_Name        => "Debugger_Execution",
       View_Name          => -"Debugger Execution",
       Formal_View_Record => Debuggee_Console_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
       Get_View           => Get_Debuggee_Console,
       Set_View           => Set_Debuggee_Console,
       Group              => Group_Consoles,
@@ -166,15 +166,6 @@ package body GVD.Consoles is
 
    procedure On_Grab_Focus (Console : access Gtk_Widget_Record'Class);
    --  Callback for the "grab_focus" signal on the console.
-
-   procedure Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu);
-   --  Create the context for the contextual menus
 
    --------------------------
    -- Get_Debugger_Console --
@@ -270,28 +261,6 @@ package body GVD.Consoles is
 
          return True;
    end TTY_Cb;
-
-   ---------------------
-   -- Context_Factory --
-   ---------------------
-
-   procedure Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu)
-   is
-      pragma Unreferenced (Kernel, Event_Widget, Event, Object, Context);
-      Mitem : Gtk_Menu_Item;
-   begin
-      if Menu /= null then
-         Gtk_New (Mitem, Label => -"Info");
-         Set_State (Mitem, State_Insensitive);
-         Append (Menu, Mitem);
-      end if;
-   end Context_Factory;
 
    -------------------------
    -- On_Debuggee_Destroy --
@@ -443,12 +412,9 @@ package body GVD.Consoles is
       Widget_Callback.Object_Connect
         (Get_View (Console), Signal_Grab_Focus, On_Grab_Focus'Access, Console);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Kernel,
-         Event_On_Widget => Get_View (Console),
-         Object          => Console,
-         ID              => Debugger_Module_ID,
-         Context_Func    => Context_Factory'Access);
+         Event_On_Widget => Get_View (Console));
 
       return Gtk_Widget (Get_View (Console));
    end Initialize;

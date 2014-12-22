@@ -15,12 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Gdk.Event;            use Gdk.Event;
 with Glib;
 with Gtk.Box;
 private with Gtk.Tree_Model_Sort;
 private with Gtk.Tree_View;
 
-with GPS.Kernel.Modules;
+with GPS.Kernel;           use GPS.Kernel;
 
 with Code_Analysis;
 private with CodePeer.Messages_Summary_Models;
@@ -36,14 +37,12 @@ package CodePeer.Messages_Reports is
    procedure Gtk_New
      (Report  : out Messages_Report;
       Kernel  : GPS.Kernel.Kernel_Handle;
-      Module  : GPS.Kernel.Modules.Module_ID;
       Version : Supported_Format_Version;
       Tree    : Code_Analysis.Code_Analysis_Tree);
 
    procedure Initialize
      (Self    : access Messages_Report_Record'Class;
       Kernel  : GPS.Kernel.Kernel_Handle;
-      Module  : GPS.Kernel.Modules.Module_ID;
       Version : Supported_Format_Version;
       Tree    : Code_Analysis.Code_Analysis_Tree);
 
@@ -64,6 +63,13 @@ package CodePeer.Messages_Reports is
       Criteria : in out CodePeer.Message_Filter_Criteria);
 
    procedure Update (Self : access Messages_Report_Record'Class);
+
+   function Build_Context
+     (Self   : not null access Messages_Report_Record'Class;
+      Event  : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+   --  Return the context for Self (either the current context or the one
+   --  for the given Event).
 
    Signal_Activated        : constant Glib.Signal_Name;
    Signal_Criteria_Changed : constant Glib.Signal_Name;

@@ -22,11 +22,10 @@ with Browsers.Canvas;          use Browsers, Browsers.Canvas;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Debugger;                 use Debugger;
 with Default_Preferences;      use Default_Preferences;
-with Gdk.Event;                use Gdk.Event;
-with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Window;               use Gdk.Window;
 with Gdk;                      use Gdk;
+with Gdk.Pixbuf;
 with Glib.Object;              use Glib.Object;
 with Glib;                     use Glib;
 with GNAT.Regpat;              use GNAT.Regpat;
@@ -212,6 +211,7 @@ package body GVD.Canvas is
      (Module_Name        => "Debugger_Data",
       View_Name          => "Debugger Data",
       Formal_View_Record => GVD_Canvas_Record,
+      Formal_MDI_Child   => Browser_Child_Record,
       Get_View           => Get_Canvas,
       Set_View           => Set_Canvas,
       Group              => Group_Graphs,
@@ -255,13 +255,9 @@ package body GVD.Canvas is
    end record;
    type GVD_Link is access all GVD_Link_Record'Class;
 
-   procedure GVD_Canvas_Context_Factory
-     (Context      : in out GPS.Kernel.Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
+   procedure Canvas_Contextual_Factory
+     (Context : GPS.Kernel.Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu);
    --  Build the context and contextual menu when right clicking in the canvas
 
    type Display_Item_Record;
@@ -1073,12 +1069,10 @@ package body GVD.Canvas is
       Browsers.Canvas.Initialize (Canvas);
       Canvas.Get_View.Model.Set_Selection_Mode (Selection_Single);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Canvas.Kernel,
          Event_On_Widget => Canvas,
-         Object          => Canvas,
-         ID              => Debugger_Module_ID,
-         Context_Func    => GVD_Canvas_Context_Factory'Access);
+         Context_Func    => Canvas_Contextual_Factory'Access);
 
       Canvas.Hidden_Pixmap  := Gdk.Pixbuf.Gdk_New_From_Xpm_Data (box_xpm);
       Canvas.Unknown_Pixmap := Gdk.Pixbuf.Gdk_New_From_Xpm_Data (trash_xpm);
@@ -1178,19 +1172,15 @@ package body GVD.Canvas is
       end if;
    end Clone_Component;
 
-   --------------------------------
-   -- GVD_Canvas_Context_Factory --
-   --------------------------------
+   -------------------------------
+   -- Canvas_Contextual_Factory --
+   -------------------------------
 
-   procedure GVD_Canvas_Context_Factory
-     (Context      : in out GPS.Kernel.Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+   procedure Canvas_Contextual_Factory
+     (Context : GPS.Kernel.Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu)
    is
-      Canvas  : constant GVD_Canvas := GVD_Canvas (Object);
+      Canvas  : GVD_Canvas;
       Mitem   : Gtk_Menu_Item;
       Sep     : Gtk_Separator_Menu_Item;
       Check   : Gtk_Check_Menu_Item;
@@ -1206,11 +1196,20 @@ package body GVD.Canvas is
                      Format         => Default_Format,
                      Zoom           => 100);
    begin
-      Default_Browser_Context_Factory
-        (Context, Kernel, Event_Widget, Object, Event, Menu);
+      --  ??? Should use actions
+      --  ??? Already computed in Build_Context. We should have our own type
+      --  of context to cache this information.
 
-      --   ??? Already computed in Default_Browser_Context_Factory
-      Canvas.Get_View.Set_Details (Details, Event.Button);
+      Canvas := GVD_Canvas
+        (GPS_MDI_Child
+           (Get_MDI (Get_Kernel (Context)).Get_Focus_Child).Get_Actual_Widget);
+
+      --  ??? Temporary, we need to get access to the details for the selection
+      if True then
+         return;
+      end if;
+
+--      Canvas.Get_View.Set_Details (Details, Event.Button);
 
       if Details.Toplevel_Item = null then
          Gtk_New (Sep);
@@ -1427,7 +1426,7 @@ package body GVD.Canvas is
             Item_Handler.To_Marshaller (Toggle_Refresh_Mode'Access), Base);
          Append (Menu, Check);
       end if;
-   end GVD_Canvas_Context_Factory;
+   end Canvas_Contextual_Factory;
 
    --------------
    -- Hide_All --

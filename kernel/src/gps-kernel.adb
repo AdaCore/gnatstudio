@@ -45,6 +45,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Mapper;              use Basic_Mapper;
 with Basic_Types;               use Basic_Types;
@@ -753,10 +754,14 @@ package body GPS.Kernel is
    -- Context_Changed --
    ---------------------
 
-   procedure Context_Changed (Handle : access Kernel_Handle_Record) is
-      C    : constant Selection_Context := Get_Current_Context (Handle);
-      Data : aliased Context_Hooks_Args := (Hooks_Data with Context => C);
+   procedure Context_Changed
+     (Handle  : access Kernel_Handle_Record;
+      Context : Selection_Context)
+   is
+      Data : aliased Context_Hooks_Args :=
+        (Hooks_Data with Context => Context);
    begin
+      Handle.Current_Context := Context;
       Run_Hook (Handle, Context_Changed_Hook, Data'Unchecked_Access);
    end Context_Changed;
 
@@ -903,6 +908,35 @@ package body GPS.Kernel is
       when E : others => Trace (Me, E);
    end Adjust;
 
+   -------------------------
+   -- Get_Current_Context --
+   -------------------------
+
+   function Get_Current_Context
+     (Kernel : access Kernel_Handle_Record'Class) return Selection_Context is
+   begin
+      if Kernel.Current_Context = No_Context then
+         Kernel.Current_Context := New_Context (Kernel);
+      end if;
+      return Kernel.Current_Context;
+   end Get_Current_Context;
+
+   ---------------------
+   -- Refresh_Context --
+   ---------------------
+
+   procedure Refresh_Context
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      Child : constant MDI_Child := Get_MDI (Kernel).Get_Focus_Child;
+   begin
+      if Child.all in GPS_MDI_Child_Record'Class then
+         Context_Changed (Kernel, GPS_MDI_Child (Child).Build_Context);
+      else
+         Context_Changed (Kernel, New_Context (Kernel));
+      end if;
+   end Refresh_Context;
+
    ----------------
    -- Get_Kernel --
    ----------------
@@ -934,7 +968,11 @@ package body GPS.Kernel is
    -- New_Context --
    -----------------
 
-   function New_Context return Selection_Context is
+   function New_Context
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Creator : access Abstract_Module_Record'Class := null)
+      return Selection_Context
+   is
       Context : constant Selection_Context :=
                   (Data => (Ada.Finalization.Controlled with
                             Data => new Selection_Context_Data_Record));
@@ -943,21 +981,10 @@ package body GPS.Kernel is
          Trace (Create_Me, "Creating new context: 0x"
                 & System.Address_Image (Context.Data.Data.all'Address));
       end if;
+      Context.Data.Data.Kernel  := Kernel_Handle (Kernel);
+      Context.Data.Data.Creator := Abstract_Module (Creator);
       return Context;
    end New_Context;
-
-   -----------------------------
-   -- Set_Context_Information --
-   -----------------------------
-
-   procedure Set_Context_Information
-     (Context : in out Selection_Context;
-      Kernel  : access Kernel_Handle_Record'Class;
-      Creator : Abstract_Module_ID) is
-   begin
-      Context.Data.Data.Kernel := Kernel_Handle (Kernel);
-      Context.Data.Data.Creator := Creator;
-   end Set_Context_Information;
 
    ---------------------
    -- Get_Main_Window --

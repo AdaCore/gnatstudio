@@ -665,7 +665,7 @@ package body XML_Viewer is
 
       Pack_Start (View, Scroll);
 
-      Gtk_New (View.Child, View, Group => Group_View,
+      Gtk_New (View.Child, View, Kernel, Group => Group_View,
                Module => Custom_Module_ID);
       Put (Get_MDI (Kernel), View.Child,
            Initial_Position => Position_Left);

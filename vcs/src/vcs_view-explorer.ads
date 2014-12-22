@@ -18,7 +18,7 @@
 with Ada.Unchecked_Deallocation;
 
 with String_Hash;
-
+with GPS.Kernel.MDI;  use GPS.Kernel.MDI;
 with VCS;             use VCS;
 with VCS.Unknown_VCS; use VCS.Unknown_VCS;
 
@@ -66,6 +66,12 @@ package VCS_View.Explorer is
 
    procedure No_VCS_Message (Explorer : VCS_Explorer_View_Access);
    --  Display a message stating that no VCS is defined for the project
+
+   overriding function Build_View_Context
+     (Explorer : not null access VCS_Explorer_View_Record;
+      Event : Gdk.Event.Gdk_Event)
+      return Selection_Context;
+   --  Describe the current selection
 
 private
 

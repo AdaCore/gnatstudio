@@ -331,10 +331,6 @@ private
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
    overriding procedure Destroy (Id : in out Source_Editor_Module_Record);
-   overriding procedure Default_Context_Factory
-     (Module  : access Source_Editor_Module_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject);
    overriding function Save_Function
      (Module       : access Source_Editor_Module_Record;
       Child        : Glib.Object.GObject;

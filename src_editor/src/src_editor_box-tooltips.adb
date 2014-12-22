@@ -273,13 +273,11 @@ package body Src_Editor_Box.Tooltips is
 
       declare
          Entity_Ref : Root_Entity_Reference_Ref;
-         Context    : Selection_Context := New_Context;
+         Context    : Selection_Context;
          W          : Gtk_Widget;
       begin
-         Get_Contextual_Menu
-           (Context  => Context,
-            Kernel   => Box.Kernel,
-            Object   => Box,
+         Context := Build_Editor_Context
+           (Editor   => Box,
             Location => Location_Mouse);
 
          Trace (Me, "Tooltip on " & Entity_Name_Information (Context));

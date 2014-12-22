@@ -15,11 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Gdk.Event;
 with Gtk.Box;
-
 with CodePeer.Messages_Reports;
 private with CodePeer.Race_Condition_Reports;
-with GPS.Kernel.Modules;
 
 package CodePeer.Reports is
 
@@ -30,20 +29,24 @@ package CodePeer.Reports is
    procedure Gtk_New
      (Widget  : out Report;
       Kernel  : GPS.Kernel.Kernel_Handle;
-      Module  : GPS.Kernel.Modules.Module_ID;
       Version : Supported_Format_Version;
       Tree    : Code_Analysis.Code_Analysis_Tree);
 
    procedure Initialize
      (Self    : not null access Report_Record'Class;
       Kernel  : GPS.Kernel.Kernel_Handle;
-      Module  : GPS.Kernel.Modules.Module_ID;
       Version : Supported_Format_Version;
       Tree    : Code_Analysis.Code_Analysis_Tree);
 
    function Messages_Report
      (Self : not null access Report_Record'Class)
       return CodePeer.Messages_Reports.Messages_Report;
+
+   function Build_Context
+     (Self  : not null access Report_Record'Class;
+      Event : Gdk.Event.Gdk_Event)
+      return GPS.Kernel.Selection_Context;
+   --  Describe the current selection
 
 private
 

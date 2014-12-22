@@ -187,14 +187,12 @@ package body Builder_Facility_Module is
    type Builder_Contextual is new Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
      (Builder : access Builder_Contextual;
-      Object  : access GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
    type Run_Contextual is new Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
      (Builder : access Run_Contextual;
-      Object  : access GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
@@ -504,11 +502,10 @@ package body Builder_Facility_Module is
 
    overriding procedure Append_To_Menu
      (Builder : access Builder_Contextual;
-      Object  : access GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Object, Builder);
+      pragma Unreferenced (Builder);
       --  The filter guarantees we are on a File_Selection_Context
    begin
       Append_To_Contextual_Menu (Build_Targets, Context, Menu);
@@ -520,11 +517,10 @@ package body Builder_Facility_Module is
 
    overriding procedure Append_To_Menu
      (Builder : access Run_Contextual;
-      Object  : access GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Object, Builder);
+      pragma Unreferenced (Builder);
       --  The filter guarantees we are on a File_Selection_Context
    begin
       Append_To_Contextual_Menu (Run_Targets, Context, Menu);

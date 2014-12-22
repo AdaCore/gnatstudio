@@ -81,6 +81,12 @@ package body Buffer_Views is
      "Windows_View_Show_Notebooks";
    --  Used to store the current view settings in histories
 
+   type BV_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access BV_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
    type Buffer_View_Record is new Generic_Views.View_Record with record
       Tree              : Gtk_Tree_View;
       File              : Virtual_File; -- current selected file (cache)
@@ -102,7 +108,7 @@ package body Buffer_Views is
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
       Local_Config       => True,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Formal_MDI_Child   => BV_Child_Record,
       Formal_View_Record => Buffer_View_Record,
       Areas              => Gtkada.MDI.Sides_Only);
    use Generic_View;
@@ -135,15 +141,6 @@ package body Buffer_Views is
      (Command : access Close_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Close the selected editors
-
-   procedure View_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Context factory when creating contextual menus
 
    ---------------
    -- Searching --
@@ -397,7 +394,7 @@ package body Buffer_Views is
       --  breaks the selection of multiple lines
 
       if Child /= null
-        and then Generic_View.Child_From_View (V) /= Child
+        and then MDI_Child (Generic_View.Child_From_View (V)) /= Child
       then
          declare
             Selected : constant String := Get_Title (Child);
@@ -589,20 +586,19 @@ package body Buffer_Views is
       Menu.Add (Check);
    end Create_Menu;
 
-   --------------------------
-   -- View_Context_Factory --
-   --------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   procedure View_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu)
+   overriding function Build_Context
+     (Self  : not null access BV_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
    is
-      pragma Unreferenced (Event_Widget, Context, Kernel, Menu);
-      V       : constant Buffer_View_Access := Buffer_View_Access (Object);
+      Context : constant Selection_Context :=
+        GPS_MDI_Child_Record (Self.all).Build_Context (Event);
+      V       : constant Buffer_View_Access :=
+        Buffer_View_Access (GPS_MDI_Child (Self).Get_Actual_Widget);
       Iter    : Gtk_Tree_Iter;
    begin
       --  Focus on the window, so that the selection is correctly taken into
@@ -612,17 +608,21 @@ package body Buffer_Views is
       Raise_Child (Generic_View.Child_From_View (V));
       Handler_Unblock (Get_MDI (V.Kernel), V.Child_Selected_Id);
 
-      Iter := Find_Iter_For_Event (V.Tree, Event);
+      if Event /= null then
+         Iter := Find_Iter_For_Event (V.Tree, Event);
 
-      if Iter /= Null_Iter then
-         --  Nothing special in the context, just the module itself so that
-         --  people can still add information if needed
-         if not Iter_Is_Selected (Get_Selection (V.Tree), Iter) then
-            Unselect_All (Get_Selection (V.Tree));
-            Select_Iter (Get_Selection (V.Tree), Iter);
+         if Iter /= Null_Iter then
+            --  Nothing special in the context, just the module itself so that
+            --  people can still add information if needed
+            if not Iter_Is_Selected (Get_Selection (V.Tree), Iter) then
+               Unselect_All (Get_Selection (V.Tree));
+               Select_Iter (Get_Selection (V.Tree), Iter);
+            end if;
          end if;
       end if;
-   end View_Context_Factory;
+
+      return Context;
+   end Build_Context;
 
    ----------------
    -- Initialize --
@@ -677,12 +677,9 @@ package body Buffer_Views is
 
       View.Tree.On_Button_Press_Event (Button_Press'Access, View);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => View.Kernel,
-         Event_On_Widget => View.Tree,
-         Object          => View,
-         ID              => Generic_View.Get_Module,
-         Context_Func    => View_Context_Factory'Access);
+         Event_On_Widget => View.Tree);
 
       Add_Hook (View.Kernel, Preference_Changed_Hook,
                 Wrapper (Preferences_Changed'Access),

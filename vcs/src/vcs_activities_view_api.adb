@@ -199,30 +199,6 @@ package body VCS_Activities_View_API is
       end if;
    end Apply;
 
-   ---------------------
-   -- Context_Factory --
-   ---------------------
-
-   function Context_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context
-   is
-      pragma Unreferenced (Child);
-      Explorer : VCS_Activities_View_Access;
-   begin
-      Explorer := Get_Activities_Explorer (Kernel, False);
-
-      if Explorer /= null then
-         return Get_Current_Context (Explorer);
-      else
-         return No_Context;
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
-         return No_Context;
-   end Context_Factory;
-
    -------------
    -- Execute --
    -------------
@@ -960,11 +936,12 @@ package body VCS_Activities_View_API is
    ------------------------------------
 
    procedure VCS_Activities_Contextual_Menu
-     (Kernel  : Kernel_Handle;
-      Context : Selection_Context;
+     (Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       use type GNAT.Strings.String_Access;
+
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
 
       File_Section       : Boolean;
       Activity_Section   : Boolean;

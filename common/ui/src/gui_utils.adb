@@ -802,8 +802,21 @@ package body GUI_Utils is
       Row_Found : Boolean;
       Path      : Gtk_Tree_Path;
       N_Model   : Gtk_Tree_Model;
-      Iter      : Gtk_Tree_Iter;
+      Iter      : Gtk_Tree_Iter := Null_Iter;
       Column    : Gtk_Tree_View_Column := null;
+
+      procedure On_Selected
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; It : Gtk_Tree_Iter);
+      procedure On_Selected
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; It : Gtk_Tree_Iter)
+      is
+         pragma Unreferenced (Model, Path);
+      begin
+         if Iter = Null_Iter then
+            Iter := It;
+         end if;
+      end On_Selected;
+
    begin
       if Event /= null
         and then Get_Event_Type (Event) in Button_Press .. Button_Release
@@ -825,8 +838,12 @@ package body GUI_Utils is
 
          Iter := Get_Iter (Get_Model (Tree), Path);
          Path_Free (Path);
+
+      elsif Tree.Get_Selection.Get_Mode = Selection_Multiple then
+         Tree.Get_Selection.Selected_Foreach (On_Selected'Unrestricted_Access);
+
       else
-         Get_Selected (Get_Selection (Tree), N_Model, Iter);
+         Tree.Get_Selection.Get_Selected (N_Model, Iter);
       end if;
 
       return Iter;

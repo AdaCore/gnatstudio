@@ -18,12 +18,11 @@
 --  ??? missing description
 
 with Glib.Object;        use Glib.Object;
-with Gtk.Widget;
-with Gtk.Menu;           use Gtk.Menu;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.Scripts;
 with GPS.Kernel;         use GPS.Kernel;
+with Gtk.Menu;           use Gtk.Menu;
 with VCS;                use VCS;
-with GNATCOLL.Projects;  use GNATCOLL.Projects;
 
 package VCS_View_API is
 
@@ -241,12 +240,11 @@ package VCS_View_API is
       Context : Selection_Context);
    --  Remove the project node from the explorer
 
-   procedure VCS_Contextual_Menu
-     (Kernel          : Kernel_Handle;
-      Context         : Selection_Context;
+   procedure VCS_Explorer_Contextual_Menu
+     (Context         : Selection_Context;
       Menu            : access Gtk.Menu.Gtk_Menu_Record'Class;
       Show_Everything : Boolean);
-   --  Complete Menu with the commands related to the VCS module,
+   --  Complete Menu with the commands related to the VCS explorer,
    --  according to the information in Context.
    --  If Show_Everything is True, add insensitive menus for items that do not
    --  correspond to the context.
@@ -272,11 +270,6 @@ package VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context);
    --  Update all files in the project
-
-   function Context_Factory
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context;
-   --  Return the current context relative to the VCS Explorer
 
    function Get_Current_Ref
      (Kernel  : access Kernel_Handle_Record'Class;

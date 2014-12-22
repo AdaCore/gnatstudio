@@ -525,9 +525,10 @@ package body Python_Module is
                Position := Child_Position'Val
                  (Nth_Arg (Data, 5, Child_Position'Pos (Position_Automatic)));
 
-               Gtk_New (Child, Gtk_Widget (Widget), Group => Group,
-                           Module => Python_Views.Get_Module,
-                           Desktop_Independent => False);
+               Gtk_New (Child, Gtk_Widget (Widget), Get_Kernel (Data),
+                        Group => Group,
+                        Module => Python_Views.Get_Module,
+                        Desktop_Independent => False);
                Child.Set_Save_Desktop_Callback
                  (Nth_Arg (Data, 6, Default => null));
 

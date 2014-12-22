@@ -74,7 +74,7 @@ with GNAT.Strings;
 with Glib.Object;
 with Gtk.Widget;
 with XML_Utils;
-with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
+with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 
 package GPS.Kernel.Modules is
 
@@ -86,7 +86,7 @@ package GPS.Kernel.Modules is
    Entity_Browser_Module_Name : constant String := "Entity_Browser";
    --  Names for the internal modules.
    --  Changing these might also impact the contents of the saved perspectives
-   --  files.
+   --  files.#
 
    ------------------
    -- Module types --
@@ -100,16 +100,6 @@ package GPS.Kernel.Modules is
 
    function Get_Kernel (ID : Module_ID_Record'Class) return Kernel_Handle;
    --  Return the kernel associated with Module
-
-   procedure Default_Context_Factory
-     (Module  : access Module_ID_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject) is null;
-   --  A function called when the kernel needs to get the current context for
-   --  an MDI child. This is used mostly when generating a context for the
-   --  menubar menu items.
-   --  Child is the widget that was put directly in the MDI. It is always of
-   --  the type MDI_Child_Tag registered with Register_Module.
 
    type Save_Function_Mode is (Query, Action);
    --  The two types of use for Module_Save_Function.

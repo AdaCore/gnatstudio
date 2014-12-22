@@ -37,18 +37,12 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Log_Utils;                 use Log_Utils;
-with String_List_Utils;         use String_List_Utils;
 with VCS;                       use VCS;
 with VCS_Module;                use VCS_Module;
 
 package body VCS_View is
 
    use type GNAT.Strings.String_Access;
-
-   function Copy_Context
-     (Context : Selection_Context) return Selection_Context;
-   --  Copy the information in Context that are relevant to the explorer,
-   --  and create a new context containing them.
 
    procedure Selection_Changed (View  : access Gtk_Widget_Record'Class);
    --  Called when the selection has changed on the explorer
@@ -202,7 +196,7 @@ package body VCS_View is
       Explorer : constant VCS_View_Access := VCS_View_Access (View);
    begin
       --  Reset the context
-      Set_Current_Context (Explorer, No_Context);
+      Explorer.Kernel.Context_Changed (Explorer.Build_View_Context (null));
    end Selection_Changed;
 
    ------------------
@@ -588,52 +582,6 @@ package body VCS_View is
       return True;
    end On_Delete;
 
-   -------------------------
-   -- Get_Current_Context --
-   -------------------------
-
-   function Get_Current_Context
-     (Explorer : access VCS_View_Record) return Selection_Context
-   is
-      Context : Selection_Context;
-   begin
-      if Explorer.Context = No_Context then
-         declare
-            Files : File_Array_Access :=
-                      Get_Selected_Files (VCS_View_Access (Explorer));
-         begin
-            Context := New_Context;
-
-            Set_Context_Information
-              (Context, Explorer.Kernel,
-               Abstract_Module_ID (VCS_Module_ID));
-
-            if Files /= null and then Files'Length > 0 then
-               Set_File_Information (Context, Files => Files.all);
-            end if;
-
-            Unchecked_Free (Files);
-            Set_Current_Context (Explorer, Context);
-
-            return Context;
-         end;
-
-      else
-         return Copy_Context (Explorer.Context);
-      end if;
-   end Get_Current_Context;
-
-   -------------------------
-   -- Set_Current_Context --
-   -------------------------
-
-   procedure Set_Current_Context
-     (Explorer : access VCS_View_Record;
-      Context  : Selection_Context) is
-   begin
-      Explorer.Context := Context;
-   end Set_Current_Context;
-
    -----------
    -- Clear --
    -----------
@@ -646,42 +594,6 @@ package body VCS_View is
 
       Clear (Explorer.Model);
    end Clear;
-
-   ------------------
-   -- Copy_Context --
-   ------------------
-
-   function Copy_Context
-     (Context : Selection_Context) return Selection_Context
-   is
-      Result : Selection_Context;
-   begin
-      if Context /= No_Context then
-         Result := New_Context;
-
-         if Has_Activity_Information (Context) then
-            Set_Activity_Information
-              (Result, Copy_String_List (Activity_Information (Context)));
-         end if;
-
-         if Has_File_Information (Context) then
-            Set_File_Information
-              (Result,
-               File_Information (Context),
-               Project_Information (Context));
-         elsif Has_Project_Information (Context) then
-            Set_File_Information
-              (Result,
-               Empty_File_Array,
-               Project_Information (Context));
-         end if;
-
-         Set_Context_Information
-           (Result, Get_Kernel (Context), Get_Creator (Context));
-      end if;
-
-      return Result;
-   end Copy_Context;
 
    -------------
    -- Refresh --

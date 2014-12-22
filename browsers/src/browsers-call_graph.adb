@@ -51,7 +51,6 @@ package body Browsers.Call_Graph is
    Me : constant Trace_Handle := Create ("CALL_GRAPH");
    use type GNATCOLL.Xref.Visible_Column;
 
-   Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
 
    ------------------------
@@ -78,7 +77,7 @@ package body Browsers.Call_Graph is
      (Module_Name            => Call_Graph_Module_Name,
       View_Name              => -"Call Graph Browser",
       Formal_View_Record     => Call_Graph_Browser_Record,
-      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Formal_MDI_Child       => Browser_Child_Record,
       Reuse_If_Exist         => True,
       Initialize             => Initialize,
       Local_Toolbar          => True,
@@ -283,12 +282,9 @@ package body Browsers.Call_Graph is
       return Gtk_Widget is
    begin
       Browsers.Canvas.Initialize (View);
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => View.Kernel,
-         Event_On_Widget => View,
-         Object          => View,
-         ID              => Callgraph_Views.Get_Module,
-         Context_Func    => Default_Browser_Context_Factory'Access);
+         Event_On_Widget => View);
       return Gtk_Widget (View.Get_View);
    end Initialize;
 
@@ -777,8 +773,7 @@ package body Browsers.Call_Graph is
    is
       Command  : Interactive_Command_Access;
    begin
-      Call_Graph_Module_Id := new Module_ID_Record;
-      Callgraph_Views.Register_Module (Kernel, ID => Call_Graph_Module_Id);
+      Callgraph_Views.Register_Module (Kernel);
 
       Command := new Entity_Calls_Command;
       Register_Contextual_Menu

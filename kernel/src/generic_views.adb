@@ -619,16 +619,17 @@ package body Generic_Views is
       ---------------------
 
       function Child_From_View
-        (View   : not null access Formal_View_Record'Class)
-         return MDI_Child
+        (View : not null access Formal_View_Record'Class)
+         return access Local_Formal_MDI_Child'Class
       is
       begin
          if Local_Config or else Local_Toolbar then
-            return Find_MDI_Child
+            return Access_Local_Formal_MDI_Child (Find_MDI_Child
               (Get_MDI (View.Kernel),
-               View.Get_Parent);  --  the box
+               View.Get_Parent));  --  the box
          else
-            return Find_MDI_Child (Get_MDI (View.Kernel), View);
+            return Access_Local_Formal_MDI_Child
+              (Find_MDI_Child (Get_MDI (View.Kernel), View));
          end if;
       end Child_From_View;
 
@@ -824,6 +825,7 @@ package body Generic_Views is
          --  Child does not exist yet, create it
          Child := new Local_Formal_MDI_Child;
          Initialize (Child, W,
+                     Kernel         => Kernel,
                      Default_Width  => Default_Width,
                      Default_Height => Default_Height,
                      Focus_Widget   => Focus_Widget,

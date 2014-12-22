@@ -271,15 +271,10 @@ package body VCS.Generic_VCS is
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Selection_Context
    is
-      Context : Selection_Context := New_Context;
+      Context : Selection_Context := New_Context
+        (Kernel, VCS_Generic_Module_ID);
    begin
-      Set_Context_Information
-        (Context => Context,
-         Kernel  => Kernel,
-         Creator => Abstract_Module_ID (VCS_Generic_Module_ID));
-
       Set_File_Information (Context, Files => (1 => File));
-
       return Context;
    end Create_File_Context;
 

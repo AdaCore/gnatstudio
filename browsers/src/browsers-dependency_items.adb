@@ -17,9 +17,6 @@
 
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
-
-with Gdk.Event;               use Gdk.Event;
-
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
@@ -54,9 +51,6 @@ with Projects;                use Projects;
 with Xref;                    use Xref;
 
 package body Browsers.Dependency_Items is
-
-   type Dependency_Browser_Module is new Module_ID_Record with null record;
-   Dependency_Browser_Module_ID : Module_ID;
 
    Show_System_Files_Key : constant History_Key := "browser_show_system_files";
    Show_Implicit_Key     : constant History_Key := "browser_show_implicit";
@@ -128,7 +122,7 @@ package body Browsers.Dependency_Items is
      (Module_Name            => Dependency_Browser_Module_Name,
       View_Name              => -"Dependency Browser",
       Formal_View_Record     => Dependency_Browser_Record,
-      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Formal_MDI_Child       => Browser_Child_Record,
       Reuse_If_Exist         => True,
       Initialize             => Initialize,
       Local_Toolbar          => True,
@@ -138,14 +132,10 @@ package body Browsers.Dependency_Items is
    subtype Dependency_Browser is Dependency_Views.View_Access;
    use Dependency_Views;
 
-   procedure Context_Factory
-     (Context      : in out GPS.Kernel.Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Create the contextual menu when right-clicking in the browser
+   procedure Contextual_Menu_Factory
+     (Context : GPS.Kernel.Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu);
+   --  Add custom entries to contextual menus created by this browser.
 
    type Project_Changed_Hook_Record is new Function_No_Args with null record;
    type Project_Changed_Hook is access all Project_Changed_Hook_Record'Class;
@@ -408,32 +398,25 @@ package body Browsers.Dependency_Items is
         (Check, Signal_Toggled, Force_Refresh'Access, View);
    end Create_Menu;
 
-   ---------------------
-   -- Context_Factory --
-   ---------------------
+   -----------------------------
+   -- Contextual_Menu_Factory --
+   -----------------------------
 
-   procedure Context_Factory
-     (Context      : in out GPS.Kernel.Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+   procedure Contextual_Menu_Factory
+     (Context : GPS.Kernel.Selection_Context;
+      Menu    : Gtk.Menu.Gtk_Menu)
    is
       Browser : constant Dependency_Browser :=
-        Dependency_Views.Retrieve_View (Kernel);
+        Dependency_Views.Retrieve_View (Get_Kernel (Context));
       Mitem : Gtk_Menu_Item;
    begin
-      Default_Browser_Context_Factory
-        (Context, Kernel, Event_Widget, Object, Event, Menu);
-
       if Browser /= null and then not Has_File_Information (Context) then
          Gtk_New (Mitem, Label => -"Recompute dependencies");
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, Signal_Activate, Refresh_Browser'Access, Browser);
       end if;
-   end Context_Factory;
+   end Contextual_Menu_Factory;
 
    -----------------
    -- Set_Context --
@@ -475,12 +458,10 @@ package body Browsers.Dependency_Items is
       return Gtk_Widget is
    begin
       Browsers.Canvas.Initialize (View);
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => View.Kernel,
          Event_On_Widget => View,
-         Object          => View,
-         ID              => Dependency_Views.Get_Module,
-         Context_Func    => Context_Factory'Access);
+         Context_Func    => Contextual_Menu_Factory'Access);
       return Gtk_Widget (View.Get_View);
    end Initialize;
 
@@ -880,10 +861,7 @@ package body Browsers.Dependency_Items is
                    and Lookup_Filter (Kernel, "In project");
       Hook    : Project_Changed_Hook;
    begin
-      Dependency_Browser_Module_ID := new Dependency_Browser_Module;
-      Dependency_Views.Register_Module
-        (Kernel,
-         Dependency_Browser_Module_ID);
+      Dependency_Views.Register_Module (Kernel);
 
       Command := new Show_Dep_Command;
       Register_Contextual_Menu

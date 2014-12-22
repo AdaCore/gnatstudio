@@ -217,7 +217,6 @@ package body Codefix_Module is
    type Codefix_Contextual_Menu is new Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu
      (Factory : access Codefix_Contextual_Menu;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Adds multiple messages fixes menus
@@ -806,11 +805,10 @@ package body Codefix_Module is
 
    overriding procedure Append_To_Menu
      (Factory : access Codefix_Contextual_Menu;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      pragma Unreferenced (Factory, Object);
+      pragma Unreferenced (Factory);
       Session : Codefix_Session;
       Error   : Error_Id;
    begin

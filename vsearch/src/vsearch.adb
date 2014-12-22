@@ -2183,6 +2183,7 @@ package body Vsearch is
          end if;
 
          Gtk_New (Child, Vsearch_Module_Id.Search,
+                  Kernel => Kernel,
                   Flags => All_Buttons or Float_To_Main
                   or Always_Destroy_Float,
                   Focus_Widget =>

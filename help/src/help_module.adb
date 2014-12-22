@@ -126,10 +126,6 @@ package body Help_Module is
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
-   overriding procedure Default_Context_Factory
-     (Module  : access Help_Module_ID_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    procedure Add_Doc_Directory
@@ -684,20 +680,6 @@ package body Help_Module is
       Free (Data.Files);
       Unchecked_Free (Data);
    end Free;
-
-   -----------------------------
-   -- Default_Context_Factory --
-   -----------------------------
-
-   overriding procedure Default_Context_Factory
-     (Module  : access Help_Module_ID_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject)
-   is
-      pragma Unreferenced (Child, Context, Module);
-   begin
-      null;
-   end Default_Context_Factory;
 
    -------------
    -- Execute --

@@ -15,7 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Gtkada.MDI;                use Gtkada.MDI;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Module;         use Src_Editor_Module;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
@@ -50,10 +52,13 @@ package body Src_Editor_Buffer.Hooks is
                 Project       => Project,
                 Line          => 0,
                 Column        => 0);
-      Box : constant Source_Editor_Box := Get_Source_Box_From_MDI
-        (Find_Editor (Get_Kernel (Buffer), Buffer.Filename, Project));
+      Child : constant MDI_Child :=
+        Find_Editor (Get_Kernel (Buffer), Buffer.Filename, Project);
+      Box : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
       if Box /= null then
+         Buffer.Kernel.Context_Changed (GPS_MDI_Child (Child).Build_Context);
+
          Get_Cursor_Position
            (Get_Buffer (Box), Editable_Line_Type (Data.Line),
             Character_Offset_Type (Data.Column));

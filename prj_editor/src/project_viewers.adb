@@ -162,11 +162,17 @@ package body Project_Viewers is
    --  Every time the selection in Explorer changes, the info displayed in
    --  the viewer is changed.
 
+   type Files_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Files_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
    package File_Views is new Generic_Views.Simple_Views
      (Formal_View_Record => Project_Viewer_Record,
       Module_Name        => "File_Switches",
       View_Name          => -"Switches editor",
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Formal_MDI_Child   => Files_Child_Record,
       Initialize         => Initialize,
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
@@ -223,15 +229,6 @@ package body Project_Viewers is
      (Viewer  : access Project_Viewer_Record'Class;
       Context : Selection_Context);
    --  Same as above, but work directly on a context
-
-   procedure Project_Editor_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Return the current context for the contextual menu
 
    type Edit_Project_Properties_Command
       is new Interactive_Command with null record;
@@ -673,12 +670,9 @@ package body Project_Viewers is
       Add_Attribute (Col, Render, "text", Compiler_Switches_Column);
       Add_Attribute (Col, Render, "foreground_rgba", Compiler_Color_Column);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Viewer.Kernel,
-         Event_On_Widget => Viewer.Tree,
-         Object          => Viewer,
-         ID              => Module_ID (Prj_Editor_Module_ID),
-         Context_Func    => Project_Editor_Context_Factory'Access);
+         Event_On_Widget => Viewer.Tree);
 
       Return_Callback.Object_Connect
         (Viewer.Tree, Signal_Button_Press_Event,
@@ -869,24 +863,22 @@ package body Project_Viewers is
       return Success;
    end Execute;
 
-   ------------------------------------
-   -- Project_Editor_Context_Factory --
-   ------------------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   procedure Project_Editor_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+   overriding function Build_Context
+     (Self  : not null access Files_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
    is
-      pragma Unreferenced (Event_Widget, Kernel, Menu);
-      V    : constant Project_Viewer := Project_Viewer (Object);
+      V    : constant Project_Viewer :=
+        Project_Viewer (GPS_MDI_Child (Self).Get_Actual_Widget);
       Iter : Gtk_Tree_Iter;
+      Context : Selection_Context :=
+        GPS_MDI_Child_Record (Self.all).Build_Context (Event);
 
    begin
-      --  ??? Should call Project_Editor_Contextual
       Iter := Find_Iter_For_Event (V.Tree, Event);
 
       if Iter = Null_Iter then
@@ -908,7 +900,8 @@ package body Project_Viewers is
                Project => V.Current_Project);
          end;
       end if;
-   end Project_Editor_Context_Factory;
+      return Context;
+   end Build_Context;
 
    -------------
    -- Execute --

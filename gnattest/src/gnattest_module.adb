@@ -99,7 +99,6 @@ package body GNATTest_Module is
 
    overriding procedure Append_To_Menu
      (Factory : access Submenu_Factory_Record;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
@@ -215,12 +214,10 @@ package body GNATTest_Module is
 
    overriding procedure Append_To_Menu
      (Factory : access Submenu_Factory_Record;
-      Object  : access Glib.Object.GObject_Record'Class;
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Factory);
-      pragma Unreferenced (Object);
 
       Item : Gtk.Menu_Item.Gtk_Menu_Item;
 

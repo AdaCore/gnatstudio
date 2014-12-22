@@ -44,8 +44,6 @@ package body Browsers.Projects is
 
    Me : constant Trace_Handle := Create ("Browsers.Projects");
 
-   type Project_Browser_Module is new Module_ID_Record with null record;
-
    ---------------------
    -- Project_Browser --
    ---------------------
@@ -76,7 +74,7 @@ package body Browsers.Projects is
      (Module_Name            => "Project_Browser",
       View_Name              => -"Project Browser",
       Formal_View_Record     => Project_Browser_Record,
-      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Formal_MDI_Child       => Browser_Child_Record,
       Reuse_If_Exist         => True,
       Initialize             => Initialize,
       Local_Toolbar          => True,
@@ -632,12 +630,9 @@ package body Browsers.Projects is
    is
    begin
       Browsers.Canvas.Initialize (View);
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => View.Kernel,
-         Event_On_Widget => View,
-         Object          => View,
-         ID              => Project_Views.Get_Module,
-         Context_Func    => Default_Browser_Context_Factory'Access);
+         Event_On_Widget => View);
       return Gtk_Widget (View.Get_View);
    end Initialize;
 
@@ -737,11 +732,8 @@ package body Browsers.Projects is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command : Interactive_Command_Access;
-      Project_Browser_Module_ID : Module_ID;
    begin
-      Project_Browser_Module_ID := new Project_Browser_Module;
-      Project_Views.Register_Module
-        (Kernel, Project_Browser_Module_ID);
+      Project_Views.Register_Module (Kernel);
 
       Command := new Imported_By_Command;
       Register_Contextual_Menu

@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Browsers.Canvas;           use Browsers.Canvas;
 with Cairo.Pattern;             use Cairo, Cairo.Pattern;
 with Glib;                      use Glib;
 with Glib.Error;                use Glib.Error;
@@ -52,12 +53,6 @@ with Pango.Font;                use Pango.Font;
 
 package body Browsers.Scripts is
    Me : constant Trace_Handle := Create ("BROWSERS");
-
-   type Browsers_Scripts_Module is new Module_ID_Record with record
-      View_Class : Class_Type;
-      Item_Class : Class_Type;
-   end record;
-   Module : access Browsers_Scripts_Module'Class;
 
    P_Stroke             : constant := 2;
    P_Fill               : constant := 3;
@@ -114,6 +109,11 @@ package body Browsers.Scripts is
    L_From_Label         : constant := 13;
    L_To_Label           : constant := 14;
    --  All the parameters for GPS.Browsers.Link
+
+   type Browsers_Scripts_Module is new Module_ID_Record with record
+      View_Class : Class_Type;
+      Item_Class : Class_Type;
+   end record;
 
    type Style_Properties_Record is new Instance_Property_Record with record
       Style : Drawing_Style;
@@ -179,11 +179,17 @@ package body Browsers.Scripts is
      (Self : access Browser_View_Record'Class) return Gtk_Widget;
    --  Create a new browser
 
+   type Script_Child_Record is new Browser_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Script_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
    package Browser_Views is new Generic_Views.Simple_Views
      (Module_Name        => "browsers",
       View_Name          => "Browser",
       Formal_View_Record => Browser_View_Record,
-      Formal_MDI_Child   => GPS.Kernel.MDI.GPS_MDI_Child_Record,
+      Formal_MDI_Child   => Script_Child_Record,
       Reuse_If_Exist     => False,
       Initialize         => Initialize,
       Position           => Position_Automatic,
@@ -191,15 +197,6 @@ package body Browsers.Scripts is
       Commands_Category  => "Browsers");
    use Browser_Views;
    subtype Browser_View is Browser_Views.View_Access;
-
-   procedure Browser_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Returns the context to use when clicking in a browser
 
    function Call_Method
      (Self    : not null access Browser_View_Record'Class;
@@ -857,37 +854,34 @@ package body Browsers.Scripts is
       --  precedence for consistency
       Self.View.On_Item_Event (On_Item_Event'Access, Self);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => Self.Kernel,
-         Event_On_Widget => Self.View,
-         Object          => Self,
-         ID              => Browser_Views.Get_Module,
-         Context_Func    => Browser_Context_Factory'Access);
+         Event_On_Widget => Self.View);
 
       return Gtk_Widget (Self.View);
    end Initialize;
 
-   -----------------------------
-   -- Browser_Context_Factory --
-   -----------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   procedure Browser_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+   overriding function Build_Context
+     (Self  : not null access Script_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
    is
-      pragma Unreferenced (Menu, Event_Widget, Kernel);
-      View    : constant Browser_View := Browser_View (Object);
+      View    : constant Browser_View :=
+        Browser_View (GPS_MDI_Child (Self).Get_Actual_Widget);
       Details : aliased Canvas_Event_Details;
       Dummy   : Boolean;
+      Context : Selection_Context;
    begin
+      Context := Browser_Child_Record (Self.all).Build_Context (Event);
       View.View.Set_Details (Details, Event.Button);
       Dummy := Call_Method
         (View, "on_create_context", Details'Unchecked_Access, Context);
-   end Browser_Context_Factory;
+      return Context;
+   end Build_Context;
 
    ------------------
    -- View_Handler --
@@ -1632,6 +1626,7 @@ package body Browsers.Scripts is
         Kernel.Scripts.New_Class ("Diagram", Module => BModule);
       Rect_Item, Ellipse_Item, Polyline, Text, Hr, Link, Image : Class_Type;
       Editable_Text : Class_Type;
+      Module : access Browsers_Scripts_Module'Class;
    begin
       Module := new Browsers_Scripts_Module;
       Browser_Views.Register_Module (Kernel, Module_ID (Module));

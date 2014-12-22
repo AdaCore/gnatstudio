@@ -23,10 +23,11 @@ with Ada.Strings.Hash_Case_Insensitive;
 
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with Glib.Object;
-with Gtkada.MDI;            use Gtkada.MDI;
+with Gdk.Event;             use Gdk.Event;
+with Gtk.Widget;            use Gtk.Widget;
 
 with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with Projects;              use Projects;
 with VCS;                   use VCS;
@@ -73,6 +74,18 @@ package VCS_Module is
    package Ref_Map is new Containers.Hashed_Maps
      (Virtual_File, Virtual_File, Full_Name_Hash, "=");
 
+   type Explorer_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Explorer_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
+   type Activities_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Activities_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
    --  Global variable to store all the registered handlers
 
    type VCS_Module_ID_Record is new Module_ID_Record with record
@@ -85,13 +98,13 @@ package VCS_Module is
       Explorer          : VCS_Explorer_View_Access;
       --  The VCS Explorer
 
-      Explorer_Child    : MDI_Child;
+      Explorer_Child    : access Explorer_Child_Record;
       --  The child containing the VCS Explorer
 
       Activities        : VCS_Activities_View_Access;
       --  The VCS Activities explorer
 
-      Activities_Child  : MDI_Child;
+      Activities_Child  : access Activities_Child_Record;
 
       Cached_Status     : Status_Cache;
 
@@ -107,16 +120,7 @@ package VCS_Module is
      all VCS_Explorer_Module_ID_Record;
    VCS_Explorer_Module_Id : VCS_Explorer_Module_ID_Access;
 
-   overriding procedure Default_Context_Factory
-     (Module  : access VCS_Explorer_Module_ID_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject);
-
    overriding procedure Destroy (Module : in out VCS_Module_ID_Record);
-   overriding procedure Default_Context_Factory
-     (Module  : access VCS_Module_ID_Record;
-      Context : in out Selection_Context;
-      Child   : Glib.Object.GObject);
    --  See inherited documentation
 
    procedure Register_Module

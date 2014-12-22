@@ -10704,13 +10704,20 @@ def contextual_context():
     pass  # implemented in Ada
 
 
-def current_context():
+def current_context(refresh=False):
     """
     Returns the current context in GPS. This is the currently selected file,
     line, column, project, etc. depending on what window is currently
     active. From one call of this function to the next, a different instance
     is returned, so you should not store your own data in the
     instance, since you will not be able to recover it later on
+
+    :param boolean refresh: If false, the last compute context is returned.
+       The context is set by the views whenever their selection change. You
+       can however set this parameter to true to force a recomputation of the
+       context. This is only useful when your script has executed a number of
+       commands and needs to ensure that the context is properly refresh
+       synchronously.
 
     :return: An instance of, e.g., :class:`GPS.FileContext` or
        :class:`GPS.AreaContext`

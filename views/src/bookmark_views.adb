@@ -117,13 +117,19 @@ package body Bookmark_Views is
      (View   : access Bookmark_View_Record'Class) return Gtk_Widget;
    --  Create a new Bookmark view
 
+   type Bookmark_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Build_Context
+     (Self  : not null access Bookmark_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context;
+
    package Generic_View is new Generic_Views.Simple_Views
      (Module_Name        => "Bookmark_View",
       View_Name          => "Bookmarks",
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
       Areas              => Gtkada.MDI.Sides_Only,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Formal_MDI_Child   => Bookmark_Child_Record,
       Formal_View_Record => Bookmark_View_Record);
    use Generic_View;
    subtype Bookmark_View_Access is Generic_View.View_Access;
@@ -164,15 +170,6 @@ package body Bookmark_Views is
      (Clip  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
-
-   procedure View_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu);
-   --  Context factory when creating contextual menus
 
    procedure Load_Bookmarks (Kernel : access Kernel_Handle_Record'Class);
    procedure Save_Bookmarks (Kernel : access Kernel_Handle_Record'Class);
@@ -678,30 +675,29 @@ package body Bookmark_Views is
       Unchecked_Free (Data);
    end Free;
 
-   --------------------------
-   -- View_Context_Factory --
-   --------------------------
+   -------------------
+   -- Build_Context --
+   -------------------
 
-   procedure View_Context_Factory
-     (Context      : in out Selection_Context;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk_Menu)
+   overriding function Build_Context
+     (Self  : not null access Bookmark_Child_Record;
+      Event : Gdk.Event.Gdk_Event := null)
+      return Selection_Context
    is
-      pragma Unreferenced (Kernel, Event_Widget, Menu, Context);
-      --  Nothing special in the context, just the module itself so that people
-      --  can still add information if needed
-      V     : constant Bookmark_View_Access := Bookmark_View_Access (Object);
-      Iter  : Gtk_Tree_Iter;
+      Context : constant Selection_Context :=
+        GPS_MDI_Child_Record (Self.all).Build_Context (Event);
+      V       : constant Bookmark_View_Access :=
+        Bookmark_View_Access (GPS_MDI_Child (Self).Get_Actual_Widget);
+      Iter    : Gtk_Tree_Iter;
    begin
-      Iter := Find_Iter_For_Event (V.Tree, Event);
-
-      if Iter /= Null_Iter then
-         Select_Iter (Get_Selection (V.Tree), Iter);
+      if Event /= null then
+         Iter := Find_Iter_For_Event (V.Tree, Event);
+         if Iter /= Null_Iter then
+            Select_Iter (Get_Selection (V.Tree), Iter);
+         end if;
       end if;
-   end View_Context_Factory;
+      return Context;
+   end Build_Context;
 
    ------------------
    -- Button_Press --
@@ -934,12 +930,9 @@ package body Bookmark_Views is
          Slot_Object => View,
          After       => False);
 
-      Register_Contextual_Menu
+      Setup_Contextual_Menu
         (Kernel          => View.Kernel,
-         Event_On_Widget => View.Tree,
-         Object          => View,
-         ID              => Module_ID (Bookmark_Views_Module),
-         Context_Func    => View_Context_Factory'Access);
+         Event_On_Widget => View.Tree);
 
       Add_Hook (View.Kernel, Preference_Changed_Hook,
                 Wrapper (On_Preferences_Changed'Access),
