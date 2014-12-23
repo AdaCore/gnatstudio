@@ -61,6 +61,19 @@ KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Workaround: Interrupt the program before closing the debugger.
 
+KP-61-N911-027 GB: auto generated GB files not created upon svn checkout
+
+  Problem:     When using WRWB and Polarion svn to check out WR DKM/RTP
+               projects, the gpr-gpp.makefle, powerpc-wrs-vxworks.cgpr
+               and scenario.makefile are not created as expected.
+
+  Status:      This is fixed in 2.10 on 2014-12-18.
+
+  Workaround:  Right click project, then properties, then Gnatbench
+               properties and touch something(e.g. deselect root project),
+               APPLY, select is root project, hit OK. It will create
+               the necessary files.
+
 KP-61-N822-004 GPS: Input focus when creating/opening new windows
 
   Problem:    After switching from floating windows to non-floating one using
