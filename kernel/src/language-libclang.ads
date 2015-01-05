@@ -26,6 +26,10 @@ with Ada.Strings.Hash;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Ada.Containers; use Ada.Containers;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded.Hash;
+with Ada.Finalization;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 package Language.Libclang is
 
@@ -112,7 +116,7 @@ package Language.Libclang is
    --  File -> (USR -> Info_Vector) part of the cache
 
    package VFS_To_Refs_Maps is new Ada.Containers.Hashed_Maps
-     (GNATCOLL.VFS.Virtual_File, Sym_To_Loc_Map, Full_Name_Hash, "=");
+     (Unbounded_String, Sym_To_Loc_Map, Ada.Strings.Unbounded.Hash, "=");
    type VFS_To_Refs is access all VFS_To_Refs_Maps.Map;
    --  (File -> USR) -> Info_Vector part of the cache
 
@@ -131,40 +135,124 @@ package Language.Libclang is
    --  version to it, that is used to determine when the TU should be reparsed
 
    package TU_Maps is new Ada.Containers.Hashed_Maps
-     (Virtual_File, TU_Cache_Access, Full_Name_Hash, "=");
+     (Unbounded_String, TU_Cache_Access, Hash, "=");
    type Tu_Map_Access is access all TU_Maps.Map;
    --  Map used to store the cache of translation units
 
    package LRU_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Virtual_File);
+     (Unbounded_String);
    type LRU_Vector_Access is access all LRU_Lists.List;
    --  List used to store a LIFO of the translation units to free when the
    --  cache is full
 
-   type Clang_Context is record
-      TU_Cache      : Tu_Map_Access;
-      LRU           : LRU_Vector_Access;
-      Clang_Indexer : Clang_Index;
-      Index_Action  : Clang_Index_Action;
-      Sym_Table     : GNATCOLL.Symbols.Symbol_Table_Access;
-      Refs          : VFS_To_Refs;
+   type Translation_Unit_Wrapper is
+     new Ada.Finalization.Controlled with private;
+
+   function Get
+     (Self : Translation_Unit_Wrapper) return Clang_Translation_Unit;
+
+   function Get_Blocking
+     (Self : Translation_Unit_Wrapper) return Clang_Translation_Unit;
+
+   type Clang_Context;
+   type Clang_Context_Access is access all Clang_Context;
+
+   type Parsing_Request_Priority is (Low, High);
+   type Parsing_Request_Kind is (Parse, Reparse);
+   type Parsing_Request_Record (Kind : Parsing_Request_Kind := Parse) is record
+      Prio        : Parsing_Request_Priority;
+      Options     : Clang_Translation_Unit_Flags;
+      Context     : Clang_Context_Access;
+      File_Name   : Unbounded_String;
+      Cache_Entry : TU_Cache_Access;
+      case Kind is
+         when Parse =>
+            Switches      : access Unbounded_String_Array;
+         when Reparse =>
+            TU            : Clang_Translation_Unit;
+            Unsaved_Files : access Unsaved_File_Array;
+      end case;
+   end record;
+   type Parsing_Request is access all Parsing_Request_Record;
+
+   type Parsing_Response is record
+      TU        : Clang_Translation_Unit;
+      File_Name : Unbounded_String;
+      Context   : Clang_Context_Access;
    end record;
 
-   protected TU_Source is
-      function Translation_Unit
-        (Kernel : Core_Kernel;
-         File : GNATCOLL.VFS.Virtual_File;
-         Reparse : Boolean := False;
-         Default_Lang : String := "c++")
-         return Clang_Translation_Unit;
+   package Request_Maps is new Ada.Containers.Hashed_Maps
+     (Unbounded_String, Parsing_Request, Hash, "=");
+   type Request_Map is access Request_Maps.Map;
 
-      function Context
-        (Project : Project_Type) return Clang_Context;
-   end TU_Source;
+   protected type P_Request_Set is
+      procedure Initialize;
+      function Contains (File_Name : String) return Boolean;
+      function Get (File_Name : String) return Parsing_Request;
+      procedure Add (Request : Parsing_Request);
+      procedure Remove (File_Name : String);
+   private
+      Map : Request_Map;
+   end P_Request_Set;
+
+   type Clang_Context is tagged limited record
+      TU_Cache         : Tu_Map_Access;
+      LRU              : LRU_Vector_Access;
+      Clang_Indexer    : Clang_Index;
+      Index_Action     : Clang_Index_Action;
+      Refs             : VFS_To_Refs;
+      Sym_Table        : GNATCOLL.Symbols.Symbol_Table_Access;
+      Pending_Requests : P_Request_Set;
+   end record;
+
+   procedure Initialize (Self : access Clang_Context);
+   procedure Destroy (Self : access Clang_Context);
+
+   procedure Reset_Refs
+     (Self : access Clang_Context;
+      File_Name : String; New_Refs : Sym_To_Loc_Map);
+
+   function Has_TU
+     (Self : access Clang_Context; File_Name : String) return Boolean;
+   function Get_TU
+     (Self : access Clang_Context;
+      File_Name : String) return Translation_Unit_Wrapper'Class;
+
+   procedure Add_TU_To_Cache
+     (Self : access Clang_Context;
+      File_Name : String;
+      Translation_Unit : Clang_Translation_Unit;
+      Version : Integer := 0);
+
+   function Get_TU
+     (C : access Clang_Context;
+      File_Name : String) return Clang_Translation_Unit;
+
+   function Translation_Unit
+     (Kernel : Core_Kernel;
+      File : GNATCOLL.VFS.Virtual_File;
+      Reparse : Boolean := False;
+      Default_Lang : String := "c++")
+      return Clang_Translation_Unit;
+
+   procedure Enqueue_Translation_Unit
+     (Kernel       : Core_Kernel;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Reparse      : Boolean := False;
+      Default_Lang : String := "c++";
+      Prio         : Parsing_Request_Priority := Low);
+
+   function Context
+     (Project : Project_Type) return Clang_Context_Access;
    --  This is the main entry point of the module. Access to the translation
    --  units goes through Translation_Unit.
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
+private
+   type Translation_Unit_Wrapper
+   is new Ada.Finalization.Controlled with record
+      Cache : TU_Cache_Access;
+   end record;
 end Language.Libclang;

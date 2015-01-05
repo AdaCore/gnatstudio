@@ -169,7 +169,7 @@ package body Language.Libclang_Tree is
      (Self : Abstract_Clang_Tree)
    is
       TU : Clang_Translation_Unit :=
-        TU_Source.Translation_Unit (Self.Kernel, Self.File, Reparse => True);
+        Translation_Unit (Self.Kernel, Self.File, Reparse => True);
       pragma Unreferenced (TU);
    begin
       null;

@@ -52,7 +52,7 @@ package Language.Libclang_Tree is
 
    function Tu (Self : Abstract_Clang_Tree) return Clang_Translation_Unit
    is
-      (TU_Source.Translation_Unit (Self.Kernel, Self.File, False));
+      (Translation_Unit (Self.Kernel, Self.File, False));
 
    type Clang_Node is new Semantic_Node with record
       Kernel : Core_Kernel;

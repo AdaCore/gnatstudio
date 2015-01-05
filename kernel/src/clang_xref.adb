@@ -183,7 +183,7 @@ package body Clang_Xref is
       Ret : Clang_Cursor;
       Line_Offset : constant Natural := Get_Line_Offset (E.Kernel, E.Loc);
       TU : constant Clang_Translation_Unit :=
-        TU_Source.Translation_Unit (E.Kernel, E.Loc.File, False);
+        Translation_Unit (E.Kernel, E.Loc.File, False);
 
    begin
       Ret := Cursor_At (TU, E.Loc.File, E.Loc.Line, Line_Offset);
@@ -212,7 +212,7 @@ package body Clang_Xref is
      (Kernel : Core_Kernel; Loc : General_Location) return Clang_Cursor
    is
       TU : constant Clang_Translation_Unit :=
-        TU_Source.Translation_Unit (Kernel, Loc.File, False);
+        Translation_Unit (Kernel, Loc.File, False);
       Line_Offset : constant Natural := Get_Line_Offset (Kernel, Loc);
    begin
       return Cursor_At (TU, Loc.File, Loc.Line, Line_Offset);
@@ -480,8 +480,8 @@ package body Clang_Xref is
       --  as the cursor's USR, so as to be able to query the ref cache
 
       Cursor : constant Clang_Cursor := Get_Clang_Cursor (Entity);
-      Context : Clang_Context := TU_Source.Context (Get_Project (Entity));
-      USR_Sym : constant Symbol := Context.Sym_Table.Find (USR (Cursor));
+      Ctx : constant Clang_Context_Access := Context (Get_Project (Entity));
+      USR_Sym : constant Symbol := Ctx.Sym_Table.Find (USR (Cursor));
 
       --  Try to use Definition from libclang. It will only work as long as the
       --  definition is in the same translation unit though, so not sufficient
@@ -504,7 +504,7 @@ package body Clang_Xref is
 
          --  Iterate on every file's cache
 
-         for C in Context.Refs.Iterate loop
+         for C in Ctx.Refs.Iterate loop
 
             --  Exit as soon as we have found  the first body
 
@@ -532,7 +532,9 @@ package body Clang_Xref is
 
                   if V.Decls.Element (I).Is_Def then
                      Ret := To_General_Location
-                       (Entity.Kernel, Key (C), V.Decls.Element (I).Loc);
+                       (Entity.Kernel,
+                        GNATCOLL.VFS.Create (Filesystem_String (+Key (C))),
+                        V.Decls.Element (I).Loc);
                   end if;
                end loop;
             end if;
@@ -1521,7 +1523,7 @@ package body Clang_Xref is
       --  Clang context symbol table
 
       Entity_Name : constant Symbol :=
-        TU_Source.Context (Project).Sym_Table.Find (Entity.Get_Name);
+        Context (Project).Sym_Table.Find (Entity.Get_Name);
 
       --  Construct the return value, with an empty vector
 
@@ -1543,11 +1545,11 @@ package body Clang_Xref is
          Entity_Name   => Entity_Name);
 
       Index_Action : constant Clang_Index_Action :=
-        TU_Source.Context (Project).Index_Action;
+        Context (Project).Index_Action;
    begin
       Indexer.Index_Translation_Unit
         (Index_Action, Index_Data, CXIndexOpt_IndexFunctionLocalSymbols,
-         TU_Source.Translation_Unit (Entity.Kernel, Entity.Loc.File));
+         Translation_Unit (Entity.Kernel, Entity.Loc.File));
 
       return Ret;
    end Find_All_References_Local;
@@ -1560,7 +1562,7 @@ package body Clang_Xref is
      (Entity : Clang_Entity;
       In_Scope : Clang_Entity) return Clang_Reference_Iterator
    is
-      Context : Clang_Context := TU_Source.Context (Get_Project (Entity));
+      Ctx : constant Clang_Context_Access := Context (Get_Project (Entity));
       Searched : constant Clang_Cursor := Get_Clang_Cursor (Entity);
 
       use Cursors_Arrays;
@@ -1584,7 +1586,7 @@ package body Clang_Xref is
          Ret_Vec.Append
            (Clang_Reference'
               (In_Scope.Loc.File, Offset_T (Value (Location (Cursor)).Offset),
-               Context.Sym_Table.Find (+Entity.Name), In_Scope.Db,
+               Ctx.Sym_Table.Find (+Entity.Name), In_Scope.Db,
                Kind (Cursor)));
       end loop;
 
@@ -1621,14 +1623,14 @@ package body Clang_Xref is
       --  Retrieve the context which contains the reference cache, as well as
       --  the symbol table
 
-      Context : Clang_Context := TU_Source.Context (Get_Project (Entity));
+      Ctx : constant Clang_Context_Access := Context (Get_Project (Entity));
 
       --  Retrieve information about the entity, USR_Sym to search for symbol
       --  in maps, Name to store in references
 
       USR_Sym : constant Symbol :=
-        Context.Sym_Table.Find (USR (Get_Clang_Cursor (Entity)));
-      Name : constant Symbol := Context.Sym_Table.Find (Entity.Get_Name);
+        Ctx.Sym_Table.Find (USR (Get_Clang_Cursor (Entity)));
+      Name : constant Symbol := Ctx.Sym_Table.Find (Entity.Get_Name);
 
       use VFS_To_Refs_Maps;
 
@@ -1687,13 +1689,15 @@ package body Clang_Xref is
    begin
 
       if In_File /= No_File then
-         if Context.Refs.Contains (In_File) then
+         if Ctx.Refs.Contains (+String (In_File.Full_Name.all)) then
             Find_References_In_File_Map
-              (In_File, Context.Refs.Element (In_File));
+              (In_File,
+               Ctx.Refs.Element (+String (In_File.Full_Name.all)));
          end if;
       else
-         for C in Context.Refs.Iterate loop
-            Find_References_In_File_Map (Key (C), Element (C));
+         for C in Ctx.Refs.Iterate loop
+            Find_References_In_File_Map
+              (Create (Filesystem_String (+Key (C))), Element (C));
          end loop;
       end if;
 

@@ -31,6 +31,18 @@ package Array_Utils is
    type Array_Type is array (Index_Type range <>) of Element_Type;
    Empty_Array : constant Array_Type (1 .. 0) := (others => <>);
 
+   type Option_Type (Has_Element : Boolean) is record
+      case Has_Element is
+      when True =>
+         Element : Element_Type;
+      when False => null;
+      end case;
+   end record;
+
+   function Create (El : Element_Type) return Option_Type;
+
+   None : Option_Type := (Has_Element => False);
+
    ---------
    -- Map --
    ---------
@@ -76,6 +88,36 @@ package Array_Utils is
 
    function Contains
      (In_Array : Array_Type; El : Element_Type) return Boolean;
+
+   generic
+      with function Predicate (In_Element : Element_Type) return Boolean;
+   function Find_Gen (In_Array : Array_Type;
+                      Rev : Boolean := False) return Option_Type;
+
+   function Find
+     (In_Array : Array_Type;
+      Predicate :
+      access function (El : Element_Type) return Boolean;
+      Rev : Boolean := False) return Option_Type;
+
+   function Find (In_Array : Array_Type;
+                  Predicate :
+                  access function (El : Element_Type) return Boolean;
+                  Rev : Boolean := False;
+                  Ret : out Element_Type) return Boolean;
+
+   generic
+      with function Predicate (In_Element : Element_Type) return Boolean;
+   function Find_Gen_Or (In_Array : Array_Type;
+                         Val_If_Not_Found : Element_Type;
+                         Rev : Boolean := False) return Element_Type;
+
+   function Find
+     (In_Array : Array_Type;
+      Predicate :
+      access function (El : Element_Type) return Boolean;
+      Val_If_Not_Found : Element_Type;
+      Rev : Boolean := False) return Element_Type;
 
    --------------
    -- Flat_Map --

@@ -357,7 +357,7 @@ package body Completion.C.Libclang is
                Ada.Strings.Unbounded.String_Access (Context.Buffer)));
          --  ??? We should fill other unsaved_files!
       begin
-         Resolver.TU := TU_Source.Translation_Unit
+         Resolver.TU := Translation_Unit
            (Core_Kernel (Resolver.Kernel), Context.File);
 
          Loc := Loc.Forward_Char (0 - UTF8_Length (Resolver.Prefix.all));

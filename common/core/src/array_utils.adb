@@ -238,4 +238,137 @@ package body Array_Utils is
       return Id_Map_Internal (In_Array);
    end Id_Map;
 
+   generic
+      with function Predicate (In_Element : Element_Type) return Boolean;
+   function Find_Internal (In_Array : Array_Type;
+                           Rev : Boolean := False;
+                           Ret : out Element_Type) return Boolean;
+
+   ----------
+   -- Find --
+   ----------
+
+   function Find (In_Array : Array_Type;
+                  Predicate :
+                  access function (El : Element_Type) return Boolean;
+                  Rev : Boolean := False;
+                  Ret : out Element_Type) return Boolean
+   is
+      function F is new Find_Internal (Predicate.all);
+   begin
+      return F (In_Array, Rev, Ret);
+   end Find;
+
+   -------------------
+   -- Find_Internal --
+   -------------------
+
+   function Find_Internal (In_Array : Array_Type;
+                           Rev : Boolean := False;
+                           Ret : out Element_Type) return Boolean
+   is
+   begin
+      if Rev then
+         for El of In_Array loop
+            if Predicate (El) then
+               Ret := El;
+               return True;
+            end if;
+         end loop;
+      else
+         for El of reverse In_Array loop
+            if Predicate (El) then
+               Ret := El;
+               return True;
+            end if;
+         end loop;
+      end if;
+
+      return False;
+   end Find_Internal;
+
+   ----------
+   -- Some --
+   ----------
+
+   function Create (El : Element_Type) return Option_Type
+   is
+     (Option_Type'(Has_Element => True, Element => El));
+
+   --------------
+   -- Find_Gen --
+   --------------
+
+   function Find_Gen (In_Array : Array_Type;
+                      Rev : Boolean := False) return Option_Type
+   is
+      function F is new Find_Internal (Predicate);
+      El : Element_Type;
+   begin
+      if F (In_Array, Rev, El) then
+         return Create (El);
+      else
+         return None;
+      end if;
+   end Find_Gen;
+
+   ----------
+   -- Find --
+   ----------
+
+   function Find
+     (In_Array : Array_Type;
+      Predicate :
+      access function (El : Element_Type) return Boolean;
+      Rev : Boolean := False) return Option_Type
+   is
+      function F is new Find_Internal (Predicate.all);
+      El : Element_Type;
+   begin
+      if F (In_Array, Rev, El) then
+         return Create (El);
+      else
+         return None;
+      end if;
+   end Find;
+
+   -----------------
+   -- Find_Gen_Or --
+   -----------------
+
+   function Find_Gen_Or (In_Array : Array_Type;
+                         Val_If_Not_Found : Element_Type;
+                         Rev : Boolean := False) return Element_Type
+   is
+      function F is new Find_Internal (Predicate);
+      El : Element_Type;
+   begin
+      if F (In_Array, Rev, El) then
+         return El;
+      else
+         return Val_If_Not_Found;
+      end if;
+   end Find_Gen_Or;
+
+   ----------
+   -- Find --
+   ----------
+
+   function Find
+     (In_Array : Array_Type;
+      Predicate :
+      access function (El : Element_Type) return Boolean;
+      Val_If_Not_Found : Element_Type;
+      Rev : Boolean := False) return Element_Type
+   is
+      function F is new Find_Internal (Predicate.all);
+      El : Element_Type;
+   begin
+      if F (In_Array, Rev, El) then
+         return El;
+      else
+         return Val_If_Not_Found;
+      end if;
+   end Find;
+
 end Array_Utils;

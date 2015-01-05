@@ -23,6 +23,7 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Module;               use Glib.Module;
 with Glib.Object;               use Glib.Object;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body GPS.Kernel.Modules is
 
@@ -83,6 +84,7 @@ package body GPS.Kernel.Modules is
         (Module_ID_Record'Class, Module_ID);
    begin
       if Module /= null then
+         Put_Line ("FREEING MODULE WITH NAME : " & Module.Name.all);
          Destroy (Module.all);
          GNAT.Strings.Free (Module.Name);
          Unchecked_Free (Module);
@@ -220,6 +222,7 @@ package body GPS.Kernel.Modules is
         Kernel.Module_List (Module_ID_Record'Tag);
       Current : Cursor := Abstract_Module_List.Last (List);
    begin
+      Put_Line ("FREE MODULES");
       --  Destroy the modules in the reverse order,
       --  otherwise, the scripts module is no longer available for the other
       --  modules, and some modules (e.g. editor) is freed too early.
