@@ -772,6 +772,7 @@ prove_line_loc = 'Prove Line Location'
 prove_check = 'Prove Check'
 show_report = 'Show Report'
 clean_up = 'Clean Proofs'
+check_msg_prefix = 'medium: '
 
 Default_Trace_Color = "#00ffff"
 Overlay_Name = "Gnatprove_Trace_Overlay"
@@ -1298,6 +1299,8 @@ class UnknownVCError(Exception):
         self.msg = msg
 
 vc_msg_dict = {
+    # VC_RTE_Kind - run-time checks
+
     'divide by zero might fail': 'VC_DIVISION_CHECK',
     'array index check might fail': 'VC_INDEX_CHECK',
     'overflow check might fail': 'VC_OVERFLOW_CHECK',
@@ -1305,8 +1308,13 @@ vc_msg_dict = {
     'length check might fail': 'VC_LENGTH_CHECK',
     'discriminant check might fail': 'VC_DISCRIMINANT_CHECK',
     'tag check might fail': 'VC_TAG_CHECK',
+
+    # VC_Assert_Kind - assertions
+
     'initial condition might fail': 'VC_INITIAL_CONDITION',
+    'default initial condition might fail': 'VC_DEFAULT_INITIAL_CONDITION',
     'precondition might fail': 'VC_PRECONDITION',
+    'call to nonreturning subprogram might be executed': 'VC_PRECONDITION',
     'precondition of main program might fail': 'VC_PRECONDITION_MAIN',
     'postcondition might fail': 'VC_POSTCONDITION',
     'refined postcondition might fail': 'VC_REFINED_POST',
@@ -1319,13 +1327,28 @@ vc_msg_dict = {
     'VC_LOOP_INVARIANT_PRESERV',
     'loop variant might fail': 'VC_LOOP_VARIANT',
     'assertion might fail': 'VC_ASSERT',
-    'exception might be raised': 'VC_RAISE'
+    'exception might be raised': 'VC_RAISE',
+
+    # VC_LSP_Kind - Liskov Substitution Principle
+
+    'precondition might be stronger than class-wide precondition':
+    'VC_WEAKER_PRE',
+    'precondition is stronger than the default class-wide precondition '
+    'of True':
+    'VC_TRIVIAL_WEAKER_PRE',
+    'postcondition might be weaker than class-wide postcondition':
+    'VC_STRONGER_POST',
+    'class-wide precondition might be stronger than overridden one':
+    'VC_WEAKER_CLASSWIDE_PRE',
+    'class-wide postcondition might be weaker than overridden one':
+    'VC_STRONGER_CLASSWIDE_POST'
 }
 
 
-def is_prove_warning(msg):
+def is_unproved_check_message(msg):
     for vc_warn in vc_msg_dict.keys():
-        if msg.get_text()[9:].startswith(vc_warn):
+        # get rid of "medium: "
+        if msg.get_text()[len(check_msg_prefix):].startswith(vc_warn):
             return True
     return False
 
@@ -1333,7 +1356,7 @@ def is_prove_warning(msg):
 def get_line_warn(context):
     def msg_filter(msg):
         return msg.get_line() == context.location().line() \
-            and is_prove_warning(msg)
+            and is_unproved_check_message(msg)
     return filter(msg_filter, GPS.Message.list(file=context.file()))
 
 
@@ -1341,7 +1364,7 @@ def prove_check_context(context):
     if isinstance(context, GPS.FileContext):
         if isinstance(context, GPS.MessageContext):
             context._loc_msg = context.message()
-            return is_prove_warning(context._loc_msg)
+            return is_unproved_check_message(context._loc_msg)
         else:
             tmp = get_line_warn(context)
             if len(tmp) == 1:
@@ -1352,8 +1375,8 @@ def prove_check_context(context):
 
 
 def get_vc_kind(msg):
-    # get rid of "warning:"
-    clean_msg = msg.get_text()[9:]
+    # get rid of "medium: "
+    clean_msg = msg.get_text()[len(check_msg_prefix):]
 
     def best_match(acc, elem):
         if clean_msg.startswith(elem):
