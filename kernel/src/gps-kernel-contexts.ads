@@ -274,6 +274,13 @@ package GPS.Kernel.Contexts is
    --  This information is cached in the context in case multiple places need
    --  to recompute it
 
+   procedure Set_Is_Dispatching_Call
+     (Context : Selection_Context; Is_Dispatching : Boolean);
+   function Is_Dispatching_Call
+     (Context : Selection_Context) return GNATCOLL.Tribooleans.Triboolean;
+   --  Whether the user clicked on a dispatching call. This information is
+   --  cached in the context the first time it is computed.
+
    ----------------------
    -- Activity_Context --
    ----------------------

@@ -19,6 +19,7 @@ with System.Address_To_Access_Conversions;
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with GNATCOLL.Tribooleans; use GNATCOLL.Tribooleans;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with Basic_Types;        use Basic_Types;
@@ -871,6 +872,33 @@ package body GPS.Kernel.Contexts is
          return "";
       end if;
    end Text_Information;
+
+   -----------------------------
+   -- Set_Is_Dispatching_Call --
+   -----------------------------
+
+   procedure Set_Is_Dispatching_Call
+     (Context : Selection_Context; Is_Dispatching : Boolean) is
+   begin
+      if Context.Data.Data /= null then
+         Context.Data.Data.Is_Dispatching_Call :=
+           To_TriBoolean (Is_Dispatching);
+      end if;
+   end Set_Is_Dispatching_Call;
+
+   -------------------------
+   -- Is_Dispatching_Call --
+   -------------------------
+
+   function Is_Dispatching_Call
+     (Context : Selection_Context) return GNATCOLL.Tribooleans.Triboolean is
+   begin
+      if Context.Data.Data /= null then
+         return Context.Data.Data.Is_Dispatching_Call;
+      else
+         return Indeterminate;
+      end if;
+   end Is_Dispatching_Call;
 
    ------------------------------
    -- Register_Default_Filters --

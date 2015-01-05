@@ -434,7 +434,7 @@ package body GPS.Kernel.Scripts is
                               Args        => Args,
                               Via_Menu    =>
                                 Action_Name (Action_Name'First) = '/',
-                              Label       => new String'(Nth_Arg (Data, 1)),
+                              Label       => new String'(Action_Name),
                               Repeat_Count     => 1,
                               Remaining_Repeat => 0));
 

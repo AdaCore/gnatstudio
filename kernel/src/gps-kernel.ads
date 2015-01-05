@@ -318,11 +318,9 @@ package GPS.Kernel is
    --------------
 
    type Selection_Context is private;
-
    No_Context : constant Selection_Context;
    --  This type contains all the information about the selection in any
-   --  module. Note that this is a tagged type, so that it can easily be
-   --  extended for modules external to GPS.
+   --  module.
 
    function New_Context
      (Kernel  : not null access Kernel_Handle_Record'Class;
@@ -338,13 +336,6 @@ package GPS.Kernel is
    function Get_Creator
      (Context : Selection_Context) return Abstract_Module;
    --  Return the module ID for the module that created the context
-
-   procedure Set_Is_Dispatching_Call
-     (Context : Selection_Context; Is_Dispatching : Boolean);
-   function Is_Dispatching_Call
-     (Context : Selection_Context) return GNATCOLL.Tribooleans.Triboolean;
-   --  Whether the user clicked on a dispatching call. This information is
-   --  cached in the context the first time it is computed.
 
    procedure Context_Changed
      (Handle  : access Kernel_Handle_Record;

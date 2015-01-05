@@ -2086,7 +2086,9 @@ package body Builder_Facility_Module is
       C.Main    := Self.Main;
       C.Dialog  := Build_Command_Utils.Default;
       C.Quiet   := False;
-      Result := C.Execute (Context => Null_Context);
+      Result := C.Execute
+        (Context => Create_Null_Context
+           (New_Context (Kernel => Self.Kernel)));
    end Execute;
 
 end Builder_Facility_Module;

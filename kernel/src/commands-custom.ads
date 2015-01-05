@@ -140,11 +140,6 @@ package Commands.Custom is
    --  for their output.
 
    overriding procedure Interrupt (Command : in out Custom_Command);
-   overriding function Start
-     (Command : access Custom_Command) return Component_Iterator;
-   overriding function Create_Command_Editor
-     (Command : access Custom_Command;
-      Kernel  : access Kernel_Handle_Record'Class) return Command_Editor;
    --  See doc from inherited subprograms
 
 private
@@ -199,6 +194,15 @@ private
    type Custom_Command_Execution is access Custom_Command_Execution_Record;
    --  Stores information relevant only while a command is executing, to
    --  limit the memory footprint when storing a command.
+
+   type Command_Component_Record is abstract tagged null record;
+   type Command_Component is access all Command_Component_Record'Class;
+   --  A command is usually a succession of small steps to reach a specific
+   --  goal. These steps can be defined in a number of ways: either they are
+   --  coded in the GPS source code itself or in a module programmed in Ada,
+   --  or they are defined by the user in customization files, and are the
+   --  result of executing GPS shell or Python scripts, or running external
+   --  applications.
 
    type Command_Component_Description is record
       Component      : Command_Component;

@@ -436,38 +436,6 @@ package body KeyManager_Module.GUI is
       Text_Iter : Gtk_Text_Iter;
       Action    : Action_Record_Access;
       Bold      : Gtk_Text_Tag;
-
-      procedure Insert_Details
-        (Comp_Iter : Component_Iterator; Prefix : String);
-      --  Insert the detail for the components of the action
-
-      --------------------
-      -- Insert_Details --
-      --------------------
-
-      procedure Insert_Details
-        (Comp_Iter : Component_Iterator; Prefix : String)
-      is
-         Comp    : Command_Component;
-         Failure : Component_Iterator;
-      begin
-         loop
-            Comp := Get (Comp_Iter);
-            exit when Comp = null;
-
-            Insert
-              (Ed.Help, Text_Iter, Prefix & Get_Name (Comp) & ASCII.LF);
-
-            Failure := On_Failure (Comp_Iter);
-            if Failure /= null then
-               Insert (Ed.Help, Text_Iter, Prefix & "on-failure:" & ASCII.LF);
-               Insert_Details (Failure, Prefix & "   ");
-            end if;
-
-            Next (Comp_Iter);
-         end loop;
-      end Insert_Details;
-
       User_Changed : aliased Boolean;
    begin
       Get_Selected (Selection, Model, Iter);

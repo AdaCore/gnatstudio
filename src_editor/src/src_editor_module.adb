@@ -2906,14 +2906,14 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
       Command : Interactive_Command_Access;
       Proxy   : Command_Access;
-      Context : Interactive_Command_Context := Null_Context;
    begin
       Command := new Close_Command;
       Close_Command (Command.all).Mode := Close_All_Except_Current;
 
       --  ??? Can we reuse the current context instead ?
-      Context.Context := New_Context (Kernel, Src_Editor_Module_Id);
-      Proxy := Create_Proxy (Command, Context);
+      Proxy := Create_Proxy
+        (Command,
+         Create_Null_Context (New_Context (Kernel, Src_Editor_Module_Id)));
       Launch_Background_Command (Kernel          => Kernel,
                                  Command         => Proxy,
                                  Active          => True,

@@ -23,13 +23,8 @@ with Gdk.Event;
 with GNAT.Strings;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GPS.Kernel;
-with Gtk.Box;
-with XML_Utils;
 
 package Commands.Interactive is
-
-   type Component_Iterator_Record is abstract tagged null record;
-   type Component_Iterator is access all Component_Iterator_Record'Class;
 
    ---------------------------------
    -- Interactive_Command_Context --
@@ -69,44 +64,19 @@ package Commands.Interactive is
    --  passing the context to Create_Proxy below, the deep copy will be done
    --  automatically for you.
 
-   Null_Context : constant Interactive_Command_Context :=
-                    (Event            => null,
-                     Context          => GPS.Kernel.No_Context,
-                     Synchronous      => False,
-                     Dir              => No_File,
-                     Args             => null,
-                     Label            => null,
-                     Via_Menu         => False,
-                     Repeat_Count     => 1,
-                     Remaining_Repeat => 0);
+   function Create_Null_Context
+     (From : GPS.Kernel.Selection_Context)
+      return Interactive_Command_Context;
+   --  Create an empty interactive context
 
    procedure Free (X : in out Interactive_Command_Context);
    --  Free memory associated to X
-
-   ------------------------
-   --  Command_Component --
-   ------------------------
-
-   type Command_Component_Record is abstract tagged private;
-   type Command_Component is access all Command_Component_Record'Class;
-   --  A command is usually a succession of small steps to reach a specific
-   --  goal. These steps can be defined in a number of ways: either they are
-   --  coded in the GPS source code itself or in a module programmed in Ada,
-   --  or they are defined by the user in customization files, and are the
-   --  result of executing GPS shell or Python scripts, or running external
-   --  applications.
-
-   function Get_Name
-     (Component : access Command_Component_Record) return String is abstract;
-   --  Return a short name for the component. This will generally be the
-   --  command that it executes. This is used when listing all the components
-   --  of an action
 
    -------------------------
    -- Interactive_Command --
    -------------------------
 
-   type Interactive_Command is abstract new Root_Command with private;
+   type Interactive_Command is abstract new Root_Command with null record;
    type Interactive_Command_Access is access all Interactive_Command'Class;
 
    function Execute
@@ -121,56 +91,6 @@ package Commands.Interactive is
    overriding function Execute (Command : access Interactive_Command)
       return Command_Return_Type;
    --  Execute the command non-interactively, with a Null_Context
-
-   function Start
-     (Command : access Interactive_Command) return Component_Iterator;
-   --  Return the first component that makes up the command. Such commands are
-   --  used mostly for graphical description of the command.
-   --  By default, the command is considered as internal, and thus contains
-   --  only one component, not editable graphically.
-   --  Returned value must be freed by the caller.
-
-   type Command_Editor_Record is abstract new Gtk.Box.Gtk_Box_Record
-      with null record;
-   type Command_Editor is access all Command_Editor_Record'Class;
-
-   function Create_Command_Editor
-     (Command : access Interactive_Command;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Command_Editor;
-   --  Return a widget to edit a command and its various components
-
-   function To_XML
-     (Editor : access Command_Editor_Record)
-      return XML_Utils.Node_Ptr is abstract;
-   --  Return a newly allocated XML node representing the command edited by
-   --  Editor. null will be returned if the command cannot be represented in
-   --  XML (internal command for instance).
-
-   -------------------------
-   --  Component_Iterator --
-   -------------------------
-
-   function Get
-     (Iter : access Component_Iterator_Record)
-      return Command_Component is abstract;
-   --  Return the current component, or null if there are no more components.
-   --  The return value mustn't be freed by the caller.
-   --  It still exists while the action exists
-
-   procedure Next (Iter : access Component_Iterator_Record) is abstract;
-   --  Move to the next component
-
-   procedure Free (Iter : in out Component_Iterator_Record);
-   procedure Free (Iter : in out Component_Iterator);
-   --  Free the iterator. Does nothing by default
-
-   function On_Failure
-     (Iter : access Component_Iterator_Record) return Component_Iterator;
-   --  Return a new iterator for the components to execute in case of failure
-   --  of the current component.
-   --  By default, this returns null to indicate that nothing will happen
-   --  in this case, except that the command will stop executing
 
    -------------------------------
    -- Interactive_Command_Proxy --
@@ -208,7 +128,4 @@ package Commands.Interactive is
      (Command : access Interactive_Command_Proxy) return Boolean;
    --  See doc from inherited subprogram
 
-private
-   type Interactive_Command is abstract new Root_Command with null record;
-   type Command_Component_Record is abstract tagged null record;
 end Commands.Interactive;

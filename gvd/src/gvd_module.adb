@@ -243,10 +243,16 @@ package body GVD_Module is
          Context : Interactive_Command_Context) return Command_Return_Type
       is
          Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-         Top     : constant GPS_Window :=
-           GPS_Window (Get_Main_Window (Kernel));
-         Process : constant Visual_Debugger := Get_Current_Process (Top);
+         Top     : GPS_Window;
+         Process : Visual_Debugger;
       begin
+         Top := GPS_Window (Kernel.Get_Main_Window);
+         if Top = null then
+            return Commands.Failure;
+         end if;
+
+         Process := Get_Current_Process (Top);
+
          if Process = null or else Process.Debugger = null then
             return Commands.Failure;
          end if;
@@ -255,8 +261,7 @@ package body GVD_Module is
             Process.Is_From_Dbg_Console := True;
          end if;
 
-         return Debugger_Command_Access (Command).Execute_Dbg
-           (Process);
+         return Debugger_Command_Access (Command).Execute_Dbg (Process);
       end Execute;
    end Dbg_Command;
 

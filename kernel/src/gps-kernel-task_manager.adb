@@ -17,7 +17,7 @@
 
 with Glib.Object;               use Glib.Object;
 with Gtk.Widget;                use Gtk.Widget;
-
+with Commands.Interactive;      use Commands.Interactive;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Task_Manager.Shell;        use Task_Manager.Shell;
 
@@ -109,14 +109,24 @@ package body GPS.Kernel.Task_Manager is
       Command         : access Root_Command'Class;
       Destroy_On_Exit : Boolean := True)
    is
-      pragma Unreferenced (Kernel);
-      Wrapper : Scheduled_Command_Access :=
-                  Create_Wrapper (Command, Destroy_On_Exit);
       Result  : Command_Return_Type;
+      C : Command_Access;
    begin
       loop
          begin
-            Result := Execute (Command);
+            --  ??? Not elegant. We should refactor commands so that Execute
+            --  takes a context as parameter, and Interactive_Context is just
+            --  a child of Context (MB20-044)
+
+            if Command.all in Interactive_Command'Class then
+               --  We want to make sure that the context provides access to
+               --  the kernel.
+               Result := Interactive_Command_Access (Command).Execute
+                 (Create_Null_Context (New_Context (Kernel => Kernel)));
+            else
+               Result := Command.Execute;
+            end if;
+
          exception
             when E : others =>
                Trace (Me, E);
@@ -126,7 +136,10 @@ package body GPS.Kernel.Task_Manager is
          exit when Result = Success or Result = Failure;
       end loop;
 
-      Unref (Command_Access (Wrapper));
+      if Destroy_On_Exit then
+         C := Command_Access (Command);
+         Unref (C);
+      end if;
    end Launch_Foreground_Command;
 
    ---------------------------

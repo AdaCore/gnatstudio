@@ -15,104 +15,33 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with Gdk.Event;    use Gdk.Event;
 with GPS.Intl;     use GPS.Intl;
-
-with XML_Utils;    use XML_Utils;
+with GPS.Kernel;   use GPS.Kernel;
 
 package body Commands.Interactive is
 
-   type Internal_Component_Iterator is new Component_Iterator_Record with
-      record
-         At_End : Boolean := False;
-      end record;
+   -------------------------
+   -- Create_Null_Context --
+   -------------------------
 
-   overriding function Get
-     (Iter : access Internal_Component_Iterator) return Command_Component;
-   overriding procedure Next (Iter : access Internal_Component_Iterator);
-   --  See docs from inherited subprograms
-
-   type Internal_Component_Record is new Command_Component_Record
-      with null record;
-
-   overriding function Get_Name
-     (Component : access Internal_Component_Record) return String;
-   --  See docs for inherited subprograms
-
-   Internal_Component : aliased Internal_Component_Record;
-   --  Used for all internal components, ie that can't be edited graphically
-
-   ----------------
-   -- On_Failure --
-   ----------------
-
-   function On_Failure
-     (Iter : access Component_Iterator_Record) return Component_Iterator
+   function Create_Null_Context
+     (From : GPS.Kernel.Selection_Context)
+      return Interactive_Command_Context
    is
-      pragma Unreferenced (Iter);
    begin
-      return null;
-   end On_Failure;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Iter : in out Component_Iterator_Record) is
-      pragma Unreferenced (Iter);
-   begin
-      null;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Iter : in out Component_Iterator) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Component_Iterator_Record'Class, Component_Iterator);
-   begin
-      Free (Iter.all);
-      Unchecked_Free (Iter);
-   end Free;
-
-   -----------
-   -- Start --
-   -----------
-
-   function Start
-     (Command : access Interactive_Command) return Component_Iterator
-   is
-      pragma Unreferenced (Command);
-   begin
-      return new Internal_Component_Iterator'
-        (Component_Iterator_Record with At_End => False);
-   end Start;
-
-   ---------
-   -- Get --
-   ---------
-
-   overriding function Get
-     (Iter : access Internal_Component_Iterator) return Command_Component is
-   begin
-      if Iter.At_End then
-         return null;
-      else
-         return Internal_Component'Access;
-      end if;
-   end Get;
-
-   ----------
-   -- Next --
-   ----------
-
-   overriding procedure Next (Iter : access Internal_Component_Iterator) is
-   begin
-      Iter.At_End := True;
-   end Next;
+      return
+        (Event            => null,
+         Context          => From,
+         Synchronous      => False,
+         Dir              => No_File,
+         Args             => null,
+         Label            => null,
+         Via_Menu         => False,
+         Repeat_Count     => 1,
+         Remaining_Repeat => 0);
+   end Create_Null_Context;
 
    -------------
    -- Execute --
@@ -121,7 +50,9 @@ package body Commands.Interactive is
    overriding function Execute
      (Command : access Interactive_Command) return Command_Return_Type is
    begin
-      return Execute (Interactive_Command_Access (Command), Null_Context);
+      return Execute
+        (Interactive_Command_Access (Command),
+         Create_Null_Context (No_Context));
    end Execute;
 
    ------------------
@@ -197,32 +128,6 @@ package body Commands.Interactive is
 
       Free (X.Label);
    end Free;
-
-   ---------------------------
-   -- Create_Command_Editor --
-   ---------------------------
-
-   function Create_Command_Editor
-     (Command : access Interactive_Command;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Command_Editor
-   is
-      pragma Unreferenced (Command, Kernel);
-   begin
-      return null;
-   end Create_Command_Editor;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   overriding function Get_Name
-     (Component : access Internal_Component_Record) return String
-   is
-      pragma Unreferenced (Component);
-   begin
-      return -"Built-in command";
-   end Get_Name;
 
    --------------
    -- Progress --
