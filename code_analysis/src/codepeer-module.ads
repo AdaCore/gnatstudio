@@ -136,6 +136,7 @@ private
       Annotation_Color       : Default_Preferences.Color_Preference;
       Message_Colors         : Message_Ranking_Color_Preference_Array;
       Message_Styles         : Message_Ranking_Style_Array;
+      Backtraces             : Default_Preferences.Boolean_Preference;
       Listener               : CodePeer.Listeners.Listener_Access;
 
       --  Global messages filter
