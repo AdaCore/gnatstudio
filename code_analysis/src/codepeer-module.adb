@@ -802,7 +802,9 @@ package body CodePeer.Module is
 
          --  Open Backtraces view when information is available.
 
-         if Self.Has_Backtraces then
+         if Self.Has_Backtraces
+           and then Self.Backtraces.Get_Pref
+         then
             CodePeer.Backtrace_View.Display_Backtraces
               (Self.Kernel,
                No_File,
@@ -1589,6 +1591,7 @@ package body CodePeer.Module is
 
    begin
       if Module.Has_Backtraces
+        and then Module.Backtraces.Get_Pref
         and then D.Message.Has_Note (CodePeer_Note'Tag)
       then
          declare
@@ -1619,6 +1622,7 @@ package body CodePeer.Module is
       Data   : access Hooks_Data'Class)
    is
       pragma Unreferenced (Kernel);
+
       P : constant Preference := Get_Pref (Data);
 
    begin
@@ -2324,6 +2328,15 @@ package body CodePeer.Module is
          Suppressed_Probability_Style_Name,
          Module.Message_Colors (CodePeer.Suppressed),
          True);
+
+      Module.Backtraces :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           "CodePeer-Backtraces",
+           -"Display message's backtraces",
+           -"Plugins/CodePeer",
+           -"Display message's backtraces information (experimental)",
+           False);
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,
