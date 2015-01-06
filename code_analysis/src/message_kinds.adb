@@ -224,6 +224,11 @@ package body Message_Kinds is
          if Original_Checks (C) then
             case C is
                when Invalid_Check =>
+                  --  See comment above: we want to keep overflow+validity
+                  --  if there are no other checks, so that we do not lose
+                  --  validity information on e.g. tests for uninitialized
+                  --  variables, as found in the qualkit test suite.
+
                   if not Range_Checks_In_Set
                     and then not (Overflow_Checks_In_Set
                                   and then Non_Overflow_Checks_In_Set)
