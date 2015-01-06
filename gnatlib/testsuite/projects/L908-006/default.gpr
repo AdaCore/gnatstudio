@@ -1,0 +1,12 @@
+with "gnatcoll";
+
+project Default is
+   for Source_Dirs use ("tool");
+   for Main use ("main.adb");
+   for Object_dir use "obj";
+   for exec_dir use "."; 
+
+   package Compiler is
+      for Switches ("Ada") use ("-gnat05");
+   end Compiler;
+end Default;

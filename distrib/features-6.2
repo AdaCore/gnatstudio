@@ -2,7 +2,7 @@
 GPS 6.2 and GNATbench 2.9 NEW FEATURES LIST
 ===========================================
 
-Copyright (C) 2011-2014, AdaCore
+Copyright (C) 2011-2015, AdaCore
 
 This file contains a list of new features introduced in GPS and GNATbench IDEs.
 A full description of all features can be found in the GPS or GNATbench
@@ -28,3 +28,9 @@ NF-62-NA22-010 GPS: --version and --help no longer require GUI (2014-10-23)
   The switches are parsed before GPS attempts to connect to the GUI
   environment. As a result, it is possible to get the help or the version
   even when the environment is not setup for GUI.
+
+NF-62-L908-066 GPS: use unix-style paths when editing project (2015-01-06)
+
+  When project properties are edited, all possible occurecies of backslashes
+  are replaced with slashes. This makes it possible to use such project both
+  under Windows and Linux.
