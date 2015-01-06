@@ -865,18 +865,31 @@ package body Libclang.Index is
         (Libclang.File.File (F), Line, Column, Offset);
    end Value;
 
+   ------------
+   -- Offset --
+   ------------
+
+   function Offset (Location : Clang_Location) return unsigned is
+      Offset : aliased unsigned;
+   begin
+      clang_getFileLocation
+        (Location, null, null, null, Offset'Access);
+
+      return Offset;
+   end Offset;
+
    --------------
    -- In_Range --
    --------------
 
    function In_Range (Sought, Containing : Clang_Cursor) return Boolean
    is
-      Sought_Loc : constant Clang_Raw_Location := Value (Location (Sought));
+      Sought_Loc : constant unsigned := Offset (Location (Sought));
       Containing_Range : constant Clang_Source_Range := Extent (Containing);
    begin
-      return Sought_Loc.Offset > Value (Range_Start (Containing_Range)).Offset
+      return Sought_Loc > Offset (Range_Start (Containing_Range))
         and then
-          Sought_Loc.Offset < Value (Range_End (Containing_Range)).Offset;
+          Sought_Loc < Offset (Range_End (Containing_Range));
    end In_Range;
 
    --------------

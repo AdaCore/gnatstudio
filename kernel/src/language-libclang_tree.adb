@@ -23,23 +23,14 @@ package body Language.Libclang_Tree is
    function Node_From_Cursor
      (C : Clang_Cursor; N : Clang_Node) return Semantic_Node'Class;
 
-   function Filter_Children (C : Clang_Cursor) return Boolean;
-
    ------------
    -- Filter --
    ------------
 
    function Filter_Children (C : Clang_Cursor) return Boolean
    is
-      K : constant Clang_Cursor_Kind := Kind (C);
-   begin
-      if K in CXCursor_UnionDecl | CXCursor_StructDecl
-        and then Spelling (C) = ""
-      then
-         return False;
-      end if;
-      return True;
-   end Filter_Children;
+     (not (Kind (C) in CXCursor_UnionDecl | CXCursor_StructDecl
+           and then Spelling (C) = ""));
 
    ----------------------
    -- Node_From_Cursor --
@@ -247,7 +238,10 @@ package body Language.Libclang_Tree is
 
       function In_Range (Containing : Clang_Cursor) return Boolean
       is
-        (In_Range (Top_Cursor, Containing) or else Containing = Top_Cursor);
+        (clang_Location_isFromMainFile
+           (clang_getCursorLocation (Containing)) /= 0
+           and then
+         (In_Range (Top_Cursor, Containing) or else Containing = Top_Cursor));
 
       function Next_Child (C : Clang_Cursor) return Array_Type
       is (Get_Children (C, In_Range'Access));
@@ -266,6 +260,11 @@ package body Language.Libclang_Tree is
         (Is_In (Clang_Cursor_Kind_To_Category (C.kind), Category_Filter));
 
    begin
+      Parent := Lexical_Parent (Cursor);
+
+      if Parent /= No_Cursor then
+         return Clang_Node'(Self.Kernel, Parent, Self.File);
+      end if;
 
       if Category_Filter /= Null_Category_Array then
 
@@ -274,7 +273,7 @@ package body Language.Libclang_Tree is
             Parent := Semantic_Parent (Cursor);
             exit when Parent = No_Cursor
               or else Parent.kind = CXCursor_TranslationUnit;
-            Cursor := Semantic_Parent (Cursor);
+            Cursor := Parent;
          end loop;
 
          --  Semantic parent did jump to a non lexical containing cursor

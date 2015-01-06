@@ -27,7 +27,6 @@ with GPS.Editors; use GPS.Editors;
 with Language;     use Language;
 with Language.Cpp; use Language.Cpp;
 
-with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
@@ -41,12 +40,6 @@ package body Completion.C.Libclang is
 
    Me : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG", On);
-
-   Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("COMPLETION_LIBCLANG.DIAGNOSTICS", Off);
-
-   Indexer : Clang_Index;
-   --  ??? This should be shared GPS-wide
 
    function Current_Location
      (Kernel : Kernel_Handle;
@@ -247,10 +240,6 @@ package body Completion.C.Libclang is
    begin
       R.Manager := null;
       R.Kernel  := Kernel;
-
-      if Indexer = No_Index then
-         Indexer := Create_Index (True, Active (Diagnostics));
-      end if;
 
       return new Libclang_Resolver'(R);
    end New_Libclang_Completion_Resolver;

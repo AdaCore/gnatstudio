@@ -496,6 +496,8 @@ package Libclang.Index is
    subtype Clang_Location is CXSourceLocation;
 
    function Value (Location : Clang_Location) return Clang_Raw_Location;
+   function Offset (Location : Clang_Location) return unsigned;
+   pragma Inline_Always (Offset);
 
    function "+"
      (Location : Clang_Location) return Clang_Raw_Location renames Value;

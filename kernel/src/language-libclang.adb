@@ -30,7 +30,6 @@ with GPS.Kernel.Commands; use GPS.Kernel.Commands;
 with String_Utils; use String_Utils;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Real_Time;
-with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Containers.Unbounded_Synchronized_Queues;
 with Ada.Containers.Unbounded_Priority_Queues;
 with Ada.Containers.Synchronized_Queue_Interfaces;
@@ -41,7 +40,10 @@ package body Language.Libclang is
    LRU_Size : constant := 16;
 
    Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LANGUAGE_LIBCLANG", Off);
+     GNATCOLL.Traces.Create ("LIBCLANG.DIAGNOSTICS", Off);
+
+   Me : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("LIBCLANG", On);
 
    function Parsing_Timeout_Handler return Boolean;
 
@@ -69,7 +71,19 @@ package body Language.Libclang is
    is new Ada.Containers.Unbounded_Synchronized_Queues
      (Parsing_Response_Queues_Interface);
 
-   Parsing_Request_Queue  : Parsing_Request_Queues.Queue;
+   package Request_Maps is new Ada.Containers.Hashed_Maps
+     (Unbounded_String, Parsing_Request, Hash, "=");
+
+   protected type Parsing_Requests_Queue_Type is
+      procedure Enqueue (Request : Parsing_Request);
+      entry Dequeue (Request : out Parsing_Request);
+      function Length return Natural;
+   private
+      Map   : Request_Maps.Map;
+      Queue : Parsing_Request_Queues.Queue;
+   end Parsing_Requests_Queue_Type;
+
+   Parsing_Request_Queue  : Parsing_Requests_Queue_Type;
    Parsing_Response_Queue : Parsing_Response_Queues.Queue;
 
    task type Parsing_Task is
@@ -81,46 +95,50 @@ package body Language.Libclang is
    task body Parsing_Task is
       Request   : Parsing_Request;
       Dummy     : Boolean;
-      TU        : Clang_Translation_Unit;
       Stopped   : Boolean := False;
       Do_Finish : Boolean := False;
    begin
-      Put_Line ("IN PARSING TASK " & Image (Current_Task));
+      Trace (Me, "In parsing task " & Image (Current_Task));
       loop
-         select
-            accept Start do Stopped := False; end Start;
-         or
-            accept Stop do Stopped := True; end Stop;
-         or
-            accept Finish do
-               Put_Line ("TASK " & Image (Current_Task) & "FINISHING");
-               Do_Finish := True;
-            end Finish;
-         or
-            delay 0.1;
-         end select;
+         declare
+            TU        : Clang_Translation_Unit;
+         begin
+            select
+               accept Start do Stopped := False; end Start;
+            or
+               accept Stop do Stopped := True; end Stop;
+            or
+               accept Finish do
+                  Trace (Me, "Task " & Image (Current_Task) & "finishing");
+                  Do_Finish := True;
+               end Finish;
+            or
+               delay 0.1;
+            end select;
 
-         if Do_Finish then
-            goto End_Label;
-         end if;
+            if Do_Finish then
+               goto End_Label;
+            end if;
 
-         if Stopped then
-            delay 0.1;
-            goto Cont;
-         end if;
+            if Stopped then
+               delay 0.1;
+               goto Cont;
+            end if;
 
-         select
-            Parsing_Request_Queue.Dequeue (Request);
-         or
-            --  If we cannot dequeue, timeout and restart the loop, so that the
-            --  entries get a chance to get evaluated
-            delay 0.1;
-            goto Cont;
-         end select;
+            select
+               Parsing_Request_Queue.Dequeue (Request);
+            or
+                 --  If we cannot dequeue, timeout and restart the loop, so
+                 --  that the entries get a chance to get evaluated
+               delay 0.1;
+               goto Cont;
+            end select;
 
-         Put_Line ("PARSING " & (+Request.File_Name));
-         Put_Line ("PRIORITY : " & Request.Prio'Img);
-         case Request.Kind is
+            Trace (Me, "Parsing " & (+Request.File_Name)
+                   & " Priority : " & Request.Prio'Img
+                   & " Request kind : " & Request.Kind'Img);
+
+            case Request.Kind is
             when Parse =>
                TU := Parse_Translation_Unit
                  (Request.Context.Clang_Indexer,
@@ -129,24 +147,24 @@ package body Language.Libclang is
                   Unsaved_Files     => No_Unsaved_Files,
                   Options           => Clang_Options);
             when Reparse =>
-               Put_Line ("REPARSING");
                Dummy := Reparse_Translation_Unit
                  (Request.TU, Request.Unsaved_Files.all,
                   Options => Request.Options);
-         end case;
-         Request.Cache_Entry.TU := TU;
-         Parsing_Response_Queue.Enqueue
-           (Parsing_Response'(TU, Request.File_Name, Request.Context));
+               TU := Request.TU;
+            end case;
+            Request.Cache_Entry.TU := TU;
+            Parsing_Response_Queue.Enqueue
+              (Parsing_Response'(TU, Request.File_Name, Request.Context));
 
-         <<Cont>>
-
+            <<Cont>>
+         end;
       end loop;
 
       <<End_Label>>
 
    exception
       when others =>
-         Put_Line ("EXCEPTION ======================== !!!!!!!!!!!!!!!!!!!");
+         Trace (Me, "Exception in parsing task" & Image (Current_Task));
    end Parsing_Task;
 
    Nb_Tasks      : constant := 4;
@@ -197,58 +215,79 @@ package body Language.Libclang is
    procedure Parse_One_File
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
 
+   function Unique_Key (Request : Parsing_Request) return Unbounded_String
+   is
+     (Request.File_Name & Request.Project_Name);
+
    -------------------
    -- P_Request_Set --
    -------------------
 
-   protected body P_Request_Set is
+   protected body Parsing_Requests_Queue_Type is
 
-      ----------------
-      -- Initialize --
-      ----------------
+      -------------
+      -- Enqueue --
+      -------------
 
-      procedure Initialize is
+      procedure Enqueue (Request : Parsing_Request) is
+         Req_Key : constant Unbounded_String := Unique_Key (Request);
       begin
-         Map := new Request_Maps.Map;
-      end Initialize;
+         if Map.Contains (Req_Key) then
+            --  There is already a request in, we need to check its status
+            declare
+               Existing_Req : constant Parsing_Request :=
+                 Map.Element (Req_Key);
+            begin
+               --  if there is already a request and the new request is a
+               --  parse, the existing request will do in any case, so just
+               --  return
+               if Request.Kind = Parse then
+                  return;
+               else
+                  --  TODO ??? Free the old request
+                  --  Replace the existing request with the new one
+                  Existing_Req.all := Request.all;
 
-      --------------
-      -- Contains --
-      --------------
+                  --  Here, in the case where both requests are reparse, we
+                  --  assume that Request is more recent than Existing_Req,
+                  --  most notably in regards to unsaved_files. This fits
+                  --  with the rest of the model, where only the main threads
+                  --  enqueues requests, and the only unsaved file is the
+                  --  current buffer
+               end if;
+            end;
 
-      function Contains (File_Name : String) return Boolean is
+            null;
+         else
+            --  Simple case, we don't yet have a request in, just add it
+            Map.Include (Req_Key, Request);
+
+            pragma Warnings (Off);
+            Queue.Enqueue (Request);
+            pragma Warnings (On);
+         end if;
+      end Enqueue;
+
+      -------------
+      -- Dequeue --
+      -------------
+
+      entry Dequeue (Request : out Parsing_Request)
+        when Queue.Current_Use > 0
+      is
       begin
-         return Map.Contains (+File_Name);
-      end Contains;
+         pragma Warnings (Off);
+         Queue.Dequeue (Request);
+         pragma Warnings (On);
+         Map.Delete (Unique_Key (Request));
+      end Dequeue;
 
-      ---------
-      -- Get --
-      ---------
-
-      function Get (File_Name : String) return Parsing_Request is
+      function Length return Natural
+      is
       begin
-         return Map.Element (+File_Name);
-      end Get;
-
-      ---------
-      -- Add --
-      ---------
-
-      procedure Add (Request : Parsing_Request) is
-      begin
-         Map.Include (Request.File_Name, Request);
-      end Add;
-
-      ------------
-      -- Remove --
-      ------------
-
-      procedure Remove (File_Name : String) is
-      begin
-         Map.Delete (+File_Name);
-      end Remove;
-
-   end P_Request_Set;
+         return Natural (Queue.Current_Use);
+      end Length;
+   end Parsing_Requests_Queue_Type;
 
    -------------
    -- Destroy --
@@ -283,7 +322,6 @@ package body Language.Libclang is
       Self.Index_Action  := Create (Idx);
       Self.Sym_Table     := GNATCOLL.Symbols.Allocate;
       Self.Refs          := new VFS_To_Refs_Maps.Map;
-      Self.Pending_Requests.Initialize;
    end Initialize;
 
    -------------
@@ -570,12 +608,16 @@ package body Language.Libclang is
                        new String'(Buffer.Get_Chars);
                   begin
                      Enqueue_Translation_Unit
-                       (Kernel, File,
+                       (Kernel,
+                        File,
                         (0 => Create_Unsaved_File
                              (String (File.Full_Name.all), Buffer_Text)),
                         Default_Lang, Prio => Prio);
                      Cache_Val.Cache.Version := Buffer.Version;
+                     return;
                   end;
+               else
+                  return;
                end if;
             end;
          end if;
@@ -677,6 +719,7 @@ package body Language.Libclang is
       Context : Clang_Context_Access;
       File_Name : constant String := Full_Name (File);
       Request : Parsing_Request;
+
    begin
 
       if not Clang_Module_Id.Global_Cache.Contains
@@ -726,11 +769,15 @@ package body Language.Libclang is
                Options       => Clang_Options,
                File_Name     => +File_Name,
                Cache_Entry   => TU_Wrapper.Cache,
-               Prio          => Prio);
+               Prio          => Prio,
+               Project_Name  =>
+                 +(String (F_Info.Project.Project_Path.Full_Name.all)));
             Parsing_Request_Queue.Enqueue (Request);
-            Context.Pending_Requests.Add (Request);
 
          else
+            --  In the other case, this is the first time we're parsing this
+            --  file
+
             declare
                Switches : constant GNATCOLL.Utils.Unbounded_String_Array
                  :=
@@ -751,16 +798,16 @@ package body Language.Libclang is
                  & (if Lang in "c++" | "cpp" then (+"-x", +"c++")
                     else Empty_String_Array);
             begin
-               --  In the other case, this is the first time we're parsing this
-               --  file
                Request := new Parsing_Request_Record'
-                 (Kind      => Parse,
-                  Context   => Context,
-                  File_Name => +File_Name,
-                  Switches  => new Unbounded_String_Array'(Switches),
-                  Options   => Clang_Options,
+                 (Kind        => Parse,
+                  Context     => Context,
+                  File_Name   => +File_Name,
+                  Switches    => new Unbounded_String_Array'(Switches),
+                  Options     => Clang_Options,
                   Cache_Entry => TU_Wrapper.Cache,
-                  Prio        => Prio);
+                  Prio        => Prio,
+                  Project_Name  =>
+                    +(String (F_Info.Project.Project_Path.Full_Name.all)));
                Parsing_Request_Queue.Enqueue (Request);
             end;
          end if;
@@ -809,7 +856,7 @@ package body Language.Libclang is
       Files : File_Array_Access;
       Filtered_Files : Virtual_File_Vectors.Vector;
    begin
-      while Parsing_Request_Queue.Current_Use > 0 loop
+      while Parsing_Request_Queue.Length > 0 loop
          delay 0.1;
       end loop;
 
@@ -824,7 +871,7 @@ package body Language.Libclang is
       declare
          Dummy_Request : Parsing_Request;
       begin
-         while Parsing_Request_Queue.Current_Use > 0 loop
+         while Parsing_Request_Queue.Length > 0 loop
             Parsing_Request_Queue.Dequeue (Dummy_Request);
          end loop;
       end;
@@ -903,7 +950,7 @@ package body Language.Libclang is
             Parsing_Response_Queue.Dequeue (Response);
             Response.Context.Add_TU_To_Cache
               (+Response.File_Name, Response.TU);
-            Put_Line ("INDEXING START FOR FILE " & (+Response.File_Name));
+            Trace (Me, "Start indexing for file " & (+Response.File_Name));
             Indexer.Index_Translation_Unit
               (Index_Action  =>
                  Response.Context.Index_Action,
@@ -915,8 +962,9 @@ package body Language.Libclang is
             --  Reset the references cache for file, and get the new cache
             Response.Context.Reset_Refs (+Response.File_Name, Refs);
 
-            Put_Line
-              ("FINISHED , " & Duration'Image (To_Duration (Clock - T1)));
+            Trace
+              (Me, "Indexing finished, took "
+               & Duration'Image (To_Duration (Clock - T1)));
          end;
       end loop;
       return True;
@@ -956,10 +1004,8 @@ package body Language.Libclang is
 
    overriding procedure Destroy (Id : in out Clang_Module_Record) is
    begin
-      Put_Line ("IN DESTROY");
       Clean_Cache (Id);
       for T of Parsing_Tasks loop
-         Put_Line ("FINISHING TASK");
          T.Finish;
       end loop;
    end Destroy;

@@ -160,11 +160,12 @@ package Language.Libclang is
    type Parsing_Request_Priority is (Low, High);
    type Parsing_Request_Kind is (Parse, Reparse);
    type Parsing_Request_Record (Kind : Parsing_Request_Kind := Parse) is record
-      Prio        : Parsing_Request_Priority;
-      Options     : Clang_Translation_Unit_Flags;
-      Context     : Clang_Context_Access;
-      File_Name   : Unbounded_String;
-      Cache_Entry : TU_Cache_Access;
+      Prio         : Parsing_Request_Priority;
+      Options      : Clang_Translation_Unit_Flags;
+      Context      : Clang_Context_Access;
+      File_Name    : Unbounded_String;
+      Project_Name : Unbounded_String;
+      Cache_Entry  : TU_Cache_Access;
       case Kind is
          when Parse =>
             Switches      : access Unbounded_String_Array;
@@ -173,27 +174,16 @@ package Language.Libclang is
             Unsaved_Files : access Unsaved_File_Array;
       end case;
    end record;
+
    type Parsing_Request is access all Parsing_Request_Record;
+
+   function Unique_Key (Request : Parsing_Request) return Unbounded_String;
 
    type Parsing_Response is record
       TU        : Clang_Translation_Unit;
       File_Name : Unbounded_String;
       Context   : Clang_Context_Access;
    end record;
-
-   package Request_Maps is new Ada.Containers.Hashed_Maps
-     (Unbounded_String, Parsing_Request, Hash, "=");
-   type Request_Map is access Request_Maps.Map;
-
-   protected type P_Request_Set is
-      procedure Initialize;
-      function Contains (File_Name : String) return Boolean;
-      function Get (File_Name : String) return Parsing_Request;
-      procedure Add (Request : Parsing_Request);
-      procedure Remove (File_Name : String);
-   private
-      Map : Request_Map;
-   end P_Request_Set;
 
    type Clang_Context is tagged limited record
       TU_Cache         : Tu_Map_Access;
@@ -202,7 +192,6 @@ package Language.Libclang is
       Index_Action     : Clang_Index_Action;
       Refs             : VFS_To_Refs;
       Sym_Table        : GNATCOLL.Symbols.Symbol_Table_Access;
-      Pending_Requests : P_Request_Set;
    end record;
 
    procedure Initialize (Self : access Clang_Context);
