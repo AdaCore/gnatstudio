@@ -50,10 +50,11 @@ package CodePeer.Module is
    --  ??? missing comments on all types and procedures of this package
 
    procedure Load
-     (Self            : access Module_Id_Record'Class;
-      Inspection_File : Virtual_File;
-      Status_File     : Virtual_File;
-      Bts_Directory   : Virtual_File);
+     (Self             : access Module_Id_Record'Class;
+      Inspection_File  : Virtual_File;
+      Status_File      : Virtual_File;
+      Bts_Directory    : Virtual_File;
+      Output_Directory : Virtual_File);
    --  Load code review results from file, creates CodePeer Report window
    --  and display loaded results.
 

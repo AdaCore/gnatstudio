@@ -571,10 +571,11 @@ package body CodePeer.Module is
    ----------
 
    procedure Load
-     (Self            : access Module_Id_Record'Class;
-      Inspection_File : Virtual_File;
-      Status_File     : Virtual_File;
-      Bts_Directory   : Virtual_File)
+     (Self             : access Module_Id_Record'Class;
+      Inspection_File  : Virtual_File;
+      Status_File      : Virtual_File;
+      Bts_Directory    : Virtual_File;
+      Output_Directory : Virtual_File)
    is
       Messages : CodePeer.Message_Maps.Map;
 
@@ -710,6 +711,10 @@ package body CodePeer.Module is
 
          Self.Report_Subwindow.Raise_Child;
 
+         --  Initialize backtraces information loader.
+
+         BT.Xml.Reader.Initialize (String (Output_Directory.Full_Name.all));
+
       else
          Self.Kernel.Insert
            (Inspection_File.Display_Full_Name &
@@ -832,7 +837,8 @@ package body CodePeer.Module is
             Module.Load
               (Module.Inspection_File,
                Module.Status_File,
-               Module.Bts_Directory);
+               Module.Bts_Directory,
+               Module.Output_Directory);
 
          when Load_CSV =>
             Module.Load_CSV (Module.Inspection_File);

@@ -235,6 +235,15 @@ package body BT.Xml.Reader is
       return Hash_Type (Key_Type.Line + Key_Type.Column);
    end Hash;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize (Output_Directory : String) is
+   begin
+      Inspection_Output_Directory := To_Unbounded_String (Output_Directory);
+   end Initialize;
+
    -------------------
    -- Start_Element --
    -------------------

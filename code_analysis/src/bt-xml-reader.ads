@@ -72,4 +72,7 @@ package BT.Xml.Reader is
    procedure Clear;
    --  Clears all cached data
 
+   procedure Initialize (Output_Directory : String);
+   --  Initialize module to load data from given output directory.
+
 end BT.Xml.Reader;
