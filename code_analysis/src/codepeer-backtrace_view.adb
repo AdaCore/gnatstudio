@@ -99,8 +99,8 @@ package body CodePeer.Backtrace_View is
       Subprogram       : String;
       Set              : Natural_Sets.Set)
    is
-      View     : constant Backtrace_View :=
-        Backtrace_View (Backtrace_Views.Get_Or_Create_View (Kernel, False));
+      View     : Backtrace_View :=
+        Backtrace_View (Backtrace_Views.Retrieve_View (Kernel));
       Found    : Boolean;
       Info     : BT.BT_Info_Seqs.Vector;
       Vn_Iter  : Gtk_Tree_Iter;
@@ -108,6 +108,16 @@ package body CodePeer.Backtrace_View is
       Src_File : GNATCOLL.VFS.Virtual_File;
 
    begin
+      if View = null and then Set.Is_Empty then
+         --  Don't create view when backtraces information is empty
+
+         return;
+
+      end if;
+
+      View :=
+        Backtrace_View (Backtrace_Views.Get_Or_Create_View (Kernel, False));
+
       --  Ignore change of backtraces information when change of source
       --  location was requested by Backtraces view.
 
