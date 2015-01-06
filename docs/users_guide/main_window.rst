@@ -956,11 +956,16 @@ since they provide various scenarios for the same set of project files.
 
 Each such variable is listed on its own line along with its current value.
 Change the current value by clicking on it and selecting the new value
-among the ones that pop up. GPS does not remember the value from one session
-to the next: the variables' initial values come from the project files
-themselves (where you can specify a default value) or from the environment
-in which GPS is started, just as would be the case when spawning command
-line tools like :program:`gprbuild`.
+among the ones that pop up.
+
+Across sessions, GPS will remember the values you set for scenario variables.
+On startup, the initial values for the scenario variables comes, in
+decreasing order of priority:
+   - from the :file:`-X` command line arguments;
+   - from existing environment variables;
+   - from the value you set in a previous GPS session;
+   - from the default set in the project file;
+   - or else defaults to the first valid value for this variable
 
 Whenever you change the value of any variable, GPS automatically recomputes
 the project and dynamically changes the list of source files and
