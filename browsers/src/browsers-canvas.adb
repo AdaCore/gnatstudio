@@ -63,6 +63,7 @@ with GPS.Core_Kernels;                  use GPS.Core_Kernels;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
@@ -612,6 +613,7 @@ package body Browsers.Canvas is
 
       else
          B.View.Set_Details (Details, Event.Button);
+         Set_Browser_Information (Context, Details);
          if Details.Toplevel_Item /= null then
             GPS_Item (Details.Toplevel_Item).Set_Context (Context);
          end if;

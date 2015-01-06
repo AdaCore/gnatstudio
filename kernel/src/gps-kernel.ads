@@ -41,6 +41,7 @@ with Gtk.Application;   use Gtk.Application;
 with Gtk.Dialog;
 with Gtk.Widget;
 with Gtk.Window;
+with Gtkada.Canvas_View;
 
 with Basic_Types;
 with Basic_Mapper;
@@ -998,6 +999,9 @@ private
         GNATCOLL.Projects.No_Project;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
+
+      Browser_Details : Gtkada.Canvas_View.Canvas_Event_Details;
+      Has_Browser_Details : Boolean := False;
 
       Message        : System.Address := System.Null_Address;
       Revision       : GNAT.Strings.String_Access := null;

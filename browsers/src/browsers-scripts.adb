@@ -44,6 +44,7 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Widget;                use Gtk.Widget;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -878,6 +879,7 @@ package body Browsers.Scripts is
    begin
       Context := Browser_Child_Record (Self.all).Build_Context (Event);
       View.View.Set_Details (Details, Event.Button);
+      Set_Browser_Information (Context, Details);
       Dummy := Call_Method
         (View, "on_create_context", Details'Unchecked_Access, Context);
       return Context;

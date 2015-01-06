@@ -900,6 +900,47 @@ package body GPS.Kernel.Contexts is
       end if;
    end Is_Dispatching_Call;
 
+   -----------------------------
+   -- Set_Browser_Information --
+   -----------------------------
+
+   procedure Set_Browser_Information
+     (Context : in out Selection_Context;
+      Details : Gtkada.Canvas_View.Canvas_Event_Details)
+   is
+   begin
+      if Context.Data.Data /= null then
+         Context.Data.Data.Has_Browser_Details := True;
+         Context.Data.Data.Browser_Details := Details;
+      end if;
+   end Set_Browser_Information;
+
+   -----------------------------
+   -- Has_Browser_Information --
+   -----------------------------
+
+   function Has_Browser_Information
+     (Context : Selection_Context) return Boolean is
+   begin
+      return Context.Data.Data /= null
+        and then Context.Data.Data.Has_Browser_Details;
+   end Has_Browser_Information;
+
+   -------------------------
+   -- Browser_Information --
+   -------------------------
+
+   function Browser_Information
+     (Context : Selection_Context)
+      return Gtkada.Canvas_View.Canvas_Event_Details is
+   begin
+      if Context.Data.Data /= null then
+         return Context.Data.Data.Browser_Details;
+      else
+         return Canvas_Event_Details'(others => <>);
+      end if;
+   end Browser_Information;
+
    ------------------------------
    -- Register_Default_Filters --
    ------------------------------

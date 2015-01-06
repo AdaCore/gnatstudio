@@ -23,6 +23,7 @@ with GNATCOLL.VFS;
 with Basic_Types;
 with String_List_Utils;
 with GPS.Kernel.Messages;
+with Gtkada.Canvas_View;      use Gtkada.Canvas_View;
 
 package GPS.Kernel.Contexts is
 
@@ -301,6 +302,20 @@ package GPS.Kernel.Contexts is
    function Activity_Information
      (Context : Selection_Context) return String_List_Utils.String_List.List;
    --  Returns a list of activity names
+
+   --------------
+   -- Browsers --
+   --------------
+
+   procedure Set_Browser_Information
+     (Context : in out Selection_Context;
+      Details : Gtkada.Canvas_View.Canvas_Event_Details);
+   function Has_Browser_Information
+     (Context : Selection_Context) return Boolean;
+   function Browser_Information
+     (Context : Selection_Context)
+      return Gtkada.Canvas_View.Canvas_Event_Details;
+   --  Store information as to where the user clicked in a browser.
 
 private
 

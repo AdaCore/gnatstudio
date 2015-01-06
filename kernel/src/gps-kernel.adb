@@ -930,7 +930,9 @@ package body GPS.Kernel is
    is
       Child : constant MDI_Child := Get_MDI (Kernel).Get_Focus_Child;
    begin
-      if Child.all in GPS_MDI_Child_Record'Class then
+      if Child /= null
+        and then Child.all in GPS_MDI_Child_Record'Class
+      then
          Context_Changed (Kernel, GPS_MDI_Child (Child).Build_Context);
       else
          Context_Changed (Kernel, New_Context (Kernel));

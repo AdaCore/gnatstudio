@@ -35,6 +35,7 @@ with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
@@ -1204,12 +1205,11 @@ package body GVD.Canvas is
         (GPS_MDI_Child
            (Get_MDI (Get_Kernel (Context)).Get_Focus_Child).Get_Actual_Widget);
 
-      --  ??? Temporary, we need to get access to the details for the selection
-      if True then
+      if not Has_Browser_Information (Context) then
          return;
       end if;
 
---      Canvas.Get_View.Set_Details (Details, Event.Button);
+      Details := Browser_Information (Context);
 
       if Details.Toplevel_Item = null then
          Gtk_New (Sep);

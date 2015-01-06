@@ -44,12 +44,22 @@ import os.path
 
 Preference("Plugins/debugger/save_autocont_br").create(
     "Preserve auto-cont breakpoints", "boolean",
-    """If set, the source locations where the debugger should not stop on an exception are preserved across GPS sessions. If unset, you'll have to reset them the next time you start the debugger, but on the other hand this might work better when the source code has changed""", True)
+    "If set, the source locations where the debugger should not stop on an" +
+    " exception are preserved across GPS sessions. If unset, you'll have to" +
+    " reset them the next time you start the debugger, but on the other" +
+    " hand this might work better when the source code has changed", True)
 
 
 def in_debugger(context):
     try:
-        return Debugger.get() != None
+        return Debugger.get() is not None
+    except:
+        return False
+
+
+def in_debugger_and_file(context):
+    try:
+        return Debugger.get() is not None and context.file() is not None
     except:
         return False
 
@@ -95,7 +105,7 @@ def display_full_name_run(context):
 
 def in_debugger_on_entity(context):
     try:
-        return in_debugger(context) and context.entity() != None
+        return in_debugger(context) and context.entity() is not None
     except:
         return False
 
@@ -154,8 +164,8 @@ def debug_add_br_exception_label(context):
     f = "%s:%s" % (os.path.basename(context.file().name()),
                    context.location().line())
     if f in autocont_br:
-        return "Debug/Do not ignore exception breakpoints on line <b>%d</b>" % (
-            context.location().line(), )
+        return ("Debug/Do not ignore exception breakpoints on line <b>%d</b>" %
+                (context.location().line(), ))
     else:
         return "Debug/Ignore exception breakpoints on line <b>%d</b>" % (
             context.location().line(), )
@@ -216,7 +226,7 @@ def on_project_view_changed(h):
 Contextual("debug add breakpoint exception").create(
     label=debug_add_br_exception_label,
     on_activate=add_breakpoint_exception,
-    filter=in_debugger)
+    filter=in_debugger_and_file)
 
 Hook("debugger_process_stopped").add(on_debugger_stopped)
 Hook("project_view_changed").add(on_project_view_changed)
