@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2008-2014, AdaCore                     --
+--                     Copyright (C) 2008-2015, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -50,10 +50,11 @@ package CodePeer.Module is
    --  ??? missing comments on all types and procedures of this package
 
    procedure Load
-     (Self            : access Module_Id_Record'Class;
-      Inspection_File : Virtual_File;
-      Status_File     : Virtual_File;
-      Bts_Directory   : Virtual_File);
+     (Self             : access Module_Id_Record'Class;
+      Inspection_File  : Virtual_File;
+      Status_File      : Virtual_File;
+      Bts_Directory    : Virtual_File;
+      Output_Directory : Virtual_File);
    --  Load code review results from file, creates CodePeer Report window
    --  and display loaded results.
 

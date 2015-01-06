@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                              C O D E P E E R                             --
 --                                                                          --
---                     Copyright (C) 2008-2014, AdaCore                     --
+--                     Copyright (C) 2008-2015, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -71,5 +71,8 @@ package BT.Xml.Reader is
 
    procedure Clear;
    --  Clears all cached data
+
+   procedure Initialize (Output_Directory : String);
+   --  Initialize module to load data from given output directory.
 
 end BT.Xml.Reader;

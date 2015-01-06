@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                              C O D E P E E R                             --
 --                                                                          --
---                     Copyright (C) 2008-2014, AdaCore                     --
+--                     Copyright (C) 2008-2015, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -234,6 +234,15 @@ package body BT.Xml.Reader is
    begin
       return Hash_Type (Key_Type.Line + Key_Type.Column);
    end Hash;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize (Output_Directory : String) is
+   begin
+      Inspection_Output_Directory := To_Unbounded_String (Output_Directory);
+   end Initialize;
 
    -------------------
    -- Start_Element --

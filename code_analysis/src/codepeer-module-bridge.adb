@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2009-2014, AdaCore                     --
+--                     Copyright (C) 2009-2015, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -125,6 +125,7 @@ package body CodePeer.Module.Bridge is
       end if;
 
       Module.Output_Directory := Output_Directory;
+      Module.Bts_Directory := Bts_Directory;
 
       if DB_File_Name.Is_Regular_File
         and then Reply_File_Name.Is_Regular_File
@@ -137,7 +138,12 @@ package body CodePeer.Module.Bridge is
          --  Inspection data file and review status data files are up to date,
          --  and can be loaded without run of gps_codepeer_bridge.
 
-         Module.Load (Reply_File_Name, Status_File_Name, Bts_Directory);
+         Module.Load
+           (Reply_File_Name,
+            Status_File_Name,
+            Bts_Directory,
+            Output_Directory);
+
       else
          --  Generate command file
 
@@ -150,7 +156,6 @@ package body CodePeer.Module.Bridge is
          Module.Action := Load_Bridge_Results;
          Module.Inspection_File := Reply_File_Name;
          Module.Status_File := Status_File_Name;
-         Module.Bts_Directory := Bts_Directory;
          Run_GPS_Codepeer_Bridge (Module, Command_File_Name);
       end if;
    end Inspection;
