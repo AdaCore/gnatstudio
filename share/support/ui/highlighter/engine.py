@@ -245,7 +245,7 @@ class RegionMatcher(Matcher):
     region_matchers = {}
 
     def __init__(self, tag, start_pattern, end_pattern, hl_spec, matchall,
-                 name=""):
+                 name="", igncase=False):
         """
         :type tag: Style
         :type start_pattern: string
@@ -263,7 +263,8 @@ class RegionMatcher(Matcher):
         if self.name:
             RegionMatcher.region_matchers[self.name] = self
 
-        self.subhighlighter = SubHighlighter(hl_spec, end_pattern, matchall)
+        self.subhighlighter = SubHighlighter(hl_spec, end_pattern,
+                                             matchall, igncase=igncase)
         self.subhighlighter.parent_cat = self
 
     @property
@@ -351,7 +352,8 @@ class HighlighterStacks(object):
 
 class SubHighlighter(object):
 
-    def __init__(self, highlighter_spec, stop_pattern=None, matchall=True):
+    def __init__(self, highlighter_spec, stop_pattern=None,
+                 matchall=True, igncase=False):
         """
         :type highlighter_spec: Iterable[BaseMatcher]
         """
@@ -366,6 +368,7 @@ class SubHighlighter(object):
         self.pattern = re.compile(
             "|".join("({0})".format(pat) for pat in patterns),
             flags=re.M + (re.S if matchall else 0)
+            + (re.I if igncase else 0)
         )
         self.gtk_tag = None
         self.region_start = None
@@ -387,12 +390,12 @@ class SubHighlighter(object):
 
 class Highlighter(object):
 
-    def __init__(self, spec=()):
+    def __init__(self, spec=(), igncase=False):
         """
         :type spec: Iterable[BaseMatcher]
         :return:
         """
-        self.root_highlighter = SubHighlighter(spec)
+        self.root_highlighter = SubHighlighter(spec, igncase=igncase)
         self.sync_stop = False
 
     def highlight_info_gen(self, gtk_ed, start_line, end_line=0):

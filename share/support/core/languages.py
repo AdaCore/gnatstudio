@@ -98,7 +98,9 @@ XML = r"""<?xml version="1.0" ?>
         <Icon>var_xpm</Icon>
       </Category>
     </Categories>
-    <Project_Field name="compiler_command" index="perl">Perl Interpreter</Project_Field>
+    <Project_Field
+     name="compiler_command"
+     index="perl">Perl Interpreter</Project_Field>
   </Language>
 
   <Language>
@@ -115,20 +117,14 @@ XML = r"""<?xml version="1.0" ?>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>False</Case_Sensitive>
     </Context>
-    <Project_Field name="compiler_command" index="delphi">Delphi Compiler</Project_Field>
+    <Project_Field
+     name="compiler_command"
+     index="delphi">Delphi Compiler</Project_Field>
   </Language>
 
   <Language>
     <Name>Fortran 90</Name>
     <Body_Suffix>.f</Body_Suffix>
-
-    <Context>
-      <New_Line_Comment_Start>!</New_Line_Comment_Start>
-      <String_Delimiter>&quot;</String_Delimiter>
-      <Can_Indent>False</Can_Indent>
-      <Syntax_Highlighting>True</Syntax_Highlighting>
-      <Case_Sensitive>False</Case_Sensitive>
-    </Context>
 
     <Categories>
       <Category>
@@ -150,7 +146,9 @@ XML = r"""<?xml version="1.0" ?>
         <Icon>var_xpm</Icon>
       </Category>
     </Categories>
-    <Project_Field name="compiler_command" index="fortran 90">Fortran Compiler</Project_Field>
+    <Project_Field
+     name="compiler_command"
+     index="fortran 90">Fortran Compiler</Project_Field>
   </Language>
 
   <Language>
@@ -180,7 +178,8 @@ XML = r"""<?xml version="1.0" ?>
     <Categories>
       <Category>
         <Name>type</Name>
-        <Pattern>^ *([^ \n\t#:=]+([ \t]+([^ \t\n#:=]+|\$[({][^ \t\n#})]+[})]))*)[ \t]*:([ \t]*$|([^=\n].*$))</Pattern>
+        <Pattern>^ *([^ \n\t#:=]+([ \t]+([^ \t\n#:=]+|"""
+"""\$[({][^ \t\n#})]+[})]))*)[ \t]*:([ \t]*$|([^=\n].*$))</Pattern>
         <Index>1</Index>
         <Icon>var_xpm</Icon>
       </Category>

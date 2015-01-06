@@ -207,7 +207,7 @@ def words(words_list, **kwargs):
 
 
 def region(start_re, end_re, tag=None, name="", highlighter=(),
-           matchall=True):
+           matchall=True, igncase=False):
     """
     Return a matcher for a region, which can contain a whole specific
     highlighter
@@ -220,7 +220,8 @@ def region(start_re, end_re, tag=None, name="", highlighter=(),
     :rtype: RegionMatcher
     """
     from highlighter.engine import RegionMatcher
-    return RegionMatcher(tag, start_re, end_re, highlighter, matchall, name)
+    return RegionMatcher(tag, start_re, end_re, highlighter,
+                         matchall, name, igncase=igncase)
 
 
 def region_template(*args, **kwargs):
@@ -337,7 +338,7 @@ def existing_style(pref_name, name="", prio=20):
         pass
 
 
-def register_highlighter(language, spec):
+def register_highlighter(language, spec, igncase=False):
     """
     Used to register the declaration of an highlighter. See the tutorial for
     more information
@@ -347,4 +348,4 @@ def register_highlighter(language, spec):
     :param tuple spec: The spec of the highlighter.
     """
     from highlighter.engine import Highlighter, HighlighterModule
-    HighlighterModule.highlighters[language] = Highlighter(spec)
+    HighlighterModule.highlighters[language] = Highlighter(spec, igncase)
