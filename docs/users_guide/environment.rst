@@ -283,7 +283,7 @@ Files
   List of scripts to load at startup as well as additional code that needs
   to be executed to set up the scripts.
 
-* :file:`$HOME/.gpe/activity_log.tmplt`
+* :file:`$HOME/.gps/activity_log.tmplt`
 
   Template file used to generate activities' group commit-log and patch
   file's header. If not present, the system wide template (see below) is
