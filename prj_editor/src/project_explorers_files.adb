@@ -113,7 +113,8 @@ package body Project_Explorers_Files is
       return Gtk_Widget;
    --  Create a new explorer and returns the focus widget
 
-   type Explorer_Child_Record is new GPS_MDI_Child_Record with null record;
+   type Explorer_Child_Record is
+      new MDI_Explorer_Child_Record with null record;
    overriding function Build_Context
      (Self  : not null access Explorer_Child_Record;
       Event : Gdk.Event.Gdk_Event := null)
@@ -123,7 +124,7 @@ package body Project_Explorers_Files is
      (Module_Name        => "Files_View",
       View_Name          => -"Files",
       Formal_View_Record => Project_Explorer_Files_Record,
-      Formal_MDI_Child   => MDI_Explorer_Child_Record,
+      Formal_MDI_Child   => Explorer_Child_Record,
       Reuse_If_Exist     => True,
       Initialize         => Initialize,
       Local_Toolbar      => True,
