@@ -349,7 +349,8 @@ package body Browsers.Canvas is
 
       List_Rtree.Gtk_New (Browser.Model);
       Browser.Model.Set_Selection_Mode (Selection_Multiple);
-      Gtk_New (Browser.View, Browser.Model);
+      Browser.View := new GPS_Canvas_View_Record;
+      Gtkada.Canvas_View.Initialize (Browser.View, Browser.Model);
       Scrolled.Add (Browser.View);
 
       Id := Browser.Get_View.Model.On_Selection_Changed

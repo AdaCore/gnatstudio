@@ -41,7 +41,6 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Widget;                use Gtk.Widget;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -171,10 +170,10 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all commands for the python classes in this package.
 
-   type Browser_View_Record is new Generic_Views.View_Record with record
-      View      : GPS_Canvas_View;
-      Read_Only : Boolean := True;
-   end record;
+   type Browser_View_Record is new Browsers.Canvas.General_Browser_Record with
+      record
+         Read_Only : Boolean := True;
+      end record;
 
    function Initialize
      (Self : access Browser_View_Record'Class) return Gtk_Widget;
@@ -803,8 +802,8 @@ package body Browsers.Scripts is
    begin
       if not Self.Read_Only
         and then
-          (On_Item_Event_Move_Item (Self.View, Event)
-           or else On_Item_Event_Edit (Self.View, Event))
+          (On_Item_Event_Move_Item (Self.Get_View, Event)
+           or else On_Item_Event_Edit (Self.Get_View, Event))
       then
          return True;
       end if;
@@ -830,36 +829,25 @@ package body Browsers.Scripts is
    ----------------
 
    function Initialize
-     (Self : access Browser_View_Record'Class) return Gtk_Widget
-   is
-      Scrolled : Gtk_Scrolled_Window;
+     (Self : access Browser_View_Record'Class) return Gtk_Widget is
    begin
-      Initialize_Vbox (Self, Homogeneous => False);
+      Browsers.Canvas.Initialize (Self);
 
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-
-      Self.Pack_Start (Scrolled);
-
-      Self.View := new GPS_Canvas_View_Record;
-      Gtkada.Canvas_View.Initialize (Self.View);
-      Scrolled.Add (Self.View);
-
-      Self.View.On_Item_Event (On_Item_Event_Select'Access);
-      Self.View.On_Item_Event (On_Item_Event_Scroll_Background'Access);
-      Self.View.On_Item_Event (On_Item_Event_Zoom'Access);
-      Self.View.On_Item_Event (On_Item_Event_Key_Navigate'Access);
-      Self.View.On_Item_Event (On_Item_Event_Key_Scrolls'Access);
+      Self.Get_View.On_Item_Event (On_Item_Event_Select'Access);
+      Self.Get_View.On_Item_Event (On_Item_Event_Scroll_Background'Access);
+      Self.Get_View.On_Item_Event (On_Item_Event_Zoom'Access);
+      Self.Get_View.On_Item_Event (On_Item_Event_Key_Navigate'Access);
+      Self.Get_View.On_Item_Event (On_Item_Event_Key_Scrolls'Access);
 
       --  Last event handler, so that the default behavior always takes
       --  precedence for consistency
-      Self.View.On_Item_Event (On_Item_Event'Access, Self);
+      Self.Get_View.On_Item_Event (On_Item_Event'Access, Self);
 
       Setup_Contextual_Menu
         (Kernel          => Self.Kernel,
-         Event_On_Widget => Self.View);
+         Event_On_Widget => Self.Get_View);
 
-      return Gtk_Widget (Self.View);
+      return Gtk_Widget (Self.Get_View);
    end Initialize;
 
    -------------------
@@ -878,7 +866,7 @@ package body Browsers.Scripts is
       Context : Selection_Context;
    begin
       Context := Browser_Child_Record (Self.all).Build_Context (Event);
-      View.View.Set_Details (Details, Event.Button);
+      View.Get_View.Set_Details (Details, Event.Button);
       Set_Browser_Information (Context, Details);
       Dummy := Call_Method
         (View, "on_create_context", Details'Unchecked_Access, Context);
@@ -904,14 +892,14 @@ package body Browsers.Scripts is
       elsif Command = "create" then
          Model := Get_Model (Nth_Arg (Data, 2));
          View := Browser_Views.Get_Or_Create_View (Get_Kernel (Data));
-         View.View.Set_Model (Model);
+         View.Get_View.Set_Model (Model);
 
          C := Browser_Views.Child_From_View (View);
          C.Set_Title (Nth_Arg (Data, 3));
          GPS_MDI_Child (C).Set_Save_Desktop_Callback
            (Nth_Arg (Data, 4, Default => null));
 
-         View.View.Set_Snap
+         View.Get_View.Set_Snap
            (Snap_To_Grid   => Nth_Arg (Data, 5, True),
             Snap_To_Guides => Nth_Arg (Data, 6, False));
 
@@ -921,22 +909,22 @@ package body Browsers.Scripts is
       elsif Command = "set_background" then
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
-         View.View.Background := Background_Type'Val
+         View.Get_View.Background := Background_Type'Val
            (Nth_Arg (Data, 2, Background_Type'Pos (Background_None)));
-         View.View.Grid_Style :=
+         View.Get_View.Grid_Style :=
            Get_Style (Nth_Arg (Data, 3, Allow_Null => True));
-         View.View.Set_Grid_Size (Gdouble (Nth_Arg (Data, 4, 20.0)));
+         View.Get_View.Set_Grid_Size (Gdouble (Nth_Arg (Data, 4, 20.0)));
          View.Queue_Draw;
 
       elsif Command = "set_selection_style" then
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
-         View.View.Set_Selection_Style (Get_Style (Nth_Arg (Data, 2)));
+         View.Get_View.Set_Selection_Style (Get_Style (Nth_Arg (Data, 2)));
 
       elsif Command = "scale_to_fit" then
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
-         View.View.Scale_To_Fit
+         View.Get_View.Scale_To_Fit
            (Max_Scale => Gdouble (Nth_Arg (Data, 2, 4.0)));
 
       elsif Command = "set_read_only" then
@@ -947,7 +935,7 @@ package body Browsers.Scripts is
       elsif Command = "scroll_into_view" then
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
-         View.View.Scroll_Into_View (Get_Item (Nth_Arg (Data, 2)));
+         View.Get_View.Scroll_Into_View (Get_Item (Nth_Arg (Data, 2)));
 
       elsif Command = "center_on" then
          declare
@@ -959,7 +947,7 @@ package body Browsers.Scripts is
 
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
-         View.View.Center_On
+         View.Get_View.Center_On
            (Center_On => Pos,
             X_Pos     => Gdouble (Nth_Arg (Data, 3, 0.5)),
             Y_Pos     => Gdouble (Nth_Arg (Data, 4, 0.5)));
@@ -998,7 +986,7 @@ package body Browsers.Scripts is
             end if;
 
             Filename := Nth_Arg (Data, 2);
-            Success := View.View.Export
+            Success := View.Get_View.Export
               (Filename          => Filename.Display_Full_Name,
                Page              => Format,
                Format            => Export_PDF,
@@ -1011,9 +999,9 @@ package body Browsers.Scripts is
          View := Browser_View (GObject'(Get_Data (Inst)));
 
          if Number_Of_Arguments (Data) = 1 then
-            Set_Return_Value (Data, Float (View.View.Get_Scale));
+            Set_Return_Value (Data, Float (View.Get_View.Get_Scale));
          else
-            View.View.Set_Scale (Gdouble (Nth_Arg (Data, 2, 1.0)));
+            View.Get_View.Set_Scale (Gdouble (Nth_Arg (Data, 2, 1.0)));
          end if;
 
       elsif Command = "topleft" then
@@ -1022,7 +1010,7 @@ package body Browsers.Scripts is
 
          if Number_Of_Arguments (Data) = 1 then
             declare
-               A : constant Model_Rectangle := View.View.Get_Visible_Area;
+               A : constant Model_Rectangle := View.Get_View.Get_Visible_Area;
             begin
                Set_Return_Value_As_List (Data, Size => 2);
                Set_Return_Value (Data, Float (A.X));
@@ -1033,7 +1021,7 @@ package body Browsers.Scripts is
             declare
                L : constant List_Instance'Class := Nth_Arg (Data, 2);
             begin
-               View.View.Center_On
+               View.Get_View.Center_On
                  ((Gdouble (Nth_Arg (L, 1, 0.0)),
                    Gdouble (Nth_Arg (L, 2, 0.0))),
                   X_Pos => 0.0,
@@ -1046,11 +1034,11 @@ package body Browsers.Scripts is
          View := Browser_View (GObject'(Get_Data (Inst)));
 
          if Number_Of_Arguments (Data) = 1 then
-            Model := Model_Type (View.View.Model);
+            Model := Model_Type (View.Get_View.Model);
             Set_Return_Value (Data, Get_Instance (Get_Script (Data), Model));
          else
             Model := Get_Model (Nth_Arg (Data, 2));
-            View.View.Set_Model (Model);
+            View.Get_View.Set_Model (Model);
          end if;
       end if;
    end View_Handler;
