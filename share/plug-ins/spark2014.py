@@ -29,7 +29,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
          lang="python">spark2014.on_examine_all(GPS.current_context())</shell>
     </action>
     <action
-        name="Examine Root Project Action" category="GNATprove" output="none">
+        name="Examine All Sources Action" category="GNATprove" output="none">
        <shell
          lang="python">spark2014.on_examine_root_project(GPS.current_context())
        </shell>
@@ -55,7 +55,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
          lang="python">spark2014.on_prove_all(GPS.current_context())</shell>
     </action>
     <action
-      name="Prove Root Project Action" category="GNATprove" output="none">
+      name="Prove All Sources Action" category="GNATprove" output="none">
        <shell
          lang="python">spark2014.on_prove_root_project(GPS.current_context())
        </shell>
@@ -103,8 +103,8 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
         <menu action="Examine All Action">
           <Title>Examine All</Title>
         </menu>
-        <menu action="Examine Root Project Action">
-          <Title>Examine Root Project</Title>
+        <menu action="Examine All Sources Action">
+          <Title>Examine All Sources</Title>
         </menu>
         <menu action="Examine File Action">
           <Title>Examine File</Title>
@@ -113,8 +113,8 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
         <menu action="Prove All Action">
           <Title>Prove All</Title>
         </menu>
-        <menu action="Prove Root Project Action">
-          <Title>Prove Root Project</Title>
+        <menu action="Prove All Sources Action">
+          <Title>Prove All Sources</Title>
         </menu>
         <menu action="Prove File Action">
           <Title>Prove File</Title>
@@ -487,7 +487,6 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>-P%PP</arg>
           <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
-          <arg>-U</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -500,7 +499,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        </output-parsers>
     </target>
 
-    <target model="gnatprove-examine" name="Examine Root Project"
+    <target model="gnatprove-examine" name="Examine All Sources"
             category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
@@ -511,6 +510,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>-P%PP</arg>
           <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>-U</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -580,7 +580,6 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
-          <arg>-U</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -593,7 +592,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        </output-parsers>
     </target>
 
-    <target model="gnatprove-prove" name="Prove Root Project"
+    <target model="gnatprove-prove" name="Prove All Sources"
             category="GNATprove">
        <in-menu>FALSE</in-menu>
        <icon>gps-build-all</icon>
@@ -603,6 +602,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>-U</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -757,11 +757,11 @@ report_file_name = toolname + '.out'
 prefix = 'SPARK'
 menu_prefix = '/' + prefix
 examine_all = 'Examine All'
-examine_root_project = 'Examine Root Project'
+examine_root_project = 'Examine All Sources'
 examine_file = 'Examine Single File'
 examine_subp = 'Examine Subprogram'
 prove_all = 'Prove All'
-prove_root_project = 'Prove Root Project'
+prove_root_project = 'Prove All Sources'
 prove_file = 'Prove File'
 prove_subp = 'Prove Subprogram'
 prove_line = 'Prove Line'
