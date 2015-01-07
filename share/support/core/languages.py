@@ -178,8 +178,7 @@ XML = r"""<?xml version="1.0" ?>
     <Categories>
       <Category>
         <Name>type</Name>
-        <Pattern>^ *([^ \n\t#:=]+([ \t]+([^ \t\n#:=]+|"""
-"""\$[({][^ \t\n#})]+[})]))*)[ \t]*:([ \t]*$|([^=\n].*$))</Pattern>
+        <Pattern>^ *([^ \n\t#:=]+([ \t]+([^ \t\n#:=]+|\$[({][^ \t\n#})]+[})]))*)[ \t]*:([ \t]*$|([^=\n].*$))</Pattern>
         <Index>1</Index>
         <Icon>var_xpm</Icon>
       </Category>
