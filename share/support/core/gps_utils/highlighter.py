@@ -256,8 +256,7 @@ class Background_Highlighter(object):
            highlighted. By default, the whole buffer is highlighted.
         """
         if buffer is None:
-            context = GPS.current_context()
-            location = context.location()
+            location = GPS.current_context().location()
             buffer = GPS.EditorBuffer.get(location.file(), open=False)
 
         if buffer.file().name() == "":
@@ -275,10 +274,12 @@ class Background_Highlighter(object):
                 if b[0] == buffer:
                     return
 
-            start_line = 0 if context is None else max(0, line - context)
             end_line = buffer.lines_count()
             if context is not None:
+                start_line = max(0, line - context)
                 end_line = min(end_line, line + context)
+            else:
+                start_line = 0
 
             # push at the back, so that we do not change the current buffer,
             # in case the user has computed data for it (see
