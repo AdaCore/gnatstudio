@@ -2,7 +2,7 @@
 Known problems in GPS 6.1 and GNATbench 2.8
 ===========================================
 
-Copyright (C) 2013-2014, AdaCore
+Copyright (C) 2013-2015, AdaCore
 
 The following is a listing of known problems in GPS 6.0.x and GNATbench 2.8.x.
 Each entry contains a status line stating when the problem was fixed, and on
@@ -40,6 +40,17 @@ KP-61-NB26-010 GB: Cannot watch global variables defined in package body.
   Status:     This was fixed in 2.10.0 on 2014-11-27
 
   Workaround: Edit the expression manually.
+
+KP-61-NB19-029 GPS: frequent disk access while moving cursor in editors
+
+  Problem:    Whenever the cursor moves in the editor, GPS recompute some
+              information about the current location, which might result in
+              frequent disk access. On slower machines, this might slow down
+              GPS.
+
+  Status:     This was fixed in 6.2.0 on 2015-01-06
+
+  Workaround: This is hardly noticeable on most machines.
 
 KP-61-NB12-012 GPS: incorrect gnat driver for gnatstub and gnatmetric
 
