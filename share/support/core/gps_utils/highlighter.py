@@ -26,6 +26,8 @@ class OverlayStyle(object):
     :param string background:  background color
     :param string weight: one of "bold", "normal", "light"
     :param string slant:  one of "normal", "oblique", "italic"
+    :param boolean editable: whether the text is editable by the user
+       interactively.
     :param boolean whole_line: whether to highlight the whole line, up to the
        right margin
     :param boolean speedbar: whether to show a mark in the speedbar to the left
@@ -455,18 +457,14 @@ class On_The_Fly_Highlighter(Background_Highlighter):
     modified. If pygobject is not available, the highlighting is only done
     when the file is opened or saved
 
+    As for Background_Highlight, you need to override the process() function
+    to perform actual work.
+
     :param OverlayStyle style: the style to apply.
-    :param intger context_lines: The number of lines (plus or minus)
+    :param integer context_lines: The number of lines (plus or minus)
        around the current location that get refreshed when a local
        highlighting is requested.
     """
-
-    def do_highlight(self, buffer, start, end):
-        """
-        Do the highlighting in the range of text.
-        This needs to be overridden to do anything useful
-        """
-        pass
 
     def must_highlight(self, buffer):
         """
@@ -535,7 +533,6 @@ class On_The_Fly_Highlighter(Background_Highlighter):
 
 
 class Location_Highlighter(Background_Highlighter):
-
     """
     An abstract class that can be used to implement highlighter related to
     the cross-reference engine.
