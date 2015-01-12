@@ -1139,10 +1139,10 @@ package body GPS.Kernel.Modules.UI is
                Parent_Item := Find_Or_Create_Menu_Tree
                  (Menu_Bar      => null,
                   Menu          => Menu,
-                  Path          => Parent_Menu_Name ('/' & Full_Name.all),
+                  Path          =>
+                    Escape_Underscore (Parent_Menu_Name ('/' & Full_Name.all)),
                   Accelerators  => Get_Default_Accelerators (Kernel),
-                  Allow_Create  => True,
-                  Use_Mnemonics => False);
+                  Allow_Create  => True);
 
                if Parent_Item /= null then
                   Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
@@ -1285,9 +1285,8 @@ package body GPS.Kernel.Modules.UI is
          return Find_Or_Create_Menu_Tree
            (Menu_Bar      => Win.Menu_Bar,
             Menu          => null,
-            Path          => Path,
+            Path          => Escape_Underscore (Path),
             Accelerators  => Get_Default_Accelerators (Kernel),
-            Use_Mnemonics => False,
             Allow_Create  => False);
       end if;
    end Find_Menu_Item;
@@ -1359,9 +1358,10 @@ package body GPS.Kernel.Modules.UI is
 
          if Item.Get_Child /= null then
             declare
-               Full : constant String := Create_Menu_Path
-                 ('/' & Parent_Path, Item.Get_Label,
-                  Remove_Underlines => Item.Get_Use_Underline);
+               Full : constant String :=
+                 Unescape_Underscore
+                   (Strip_Single_Underscores
+                      (Create_Menu_Path ('/' & Parent_Path, Item.Get_Label)));
             begin
                Register_Action
                  (Kernel      => Kernel,
@@ -1695,15 +1695,12 @@ package body GPS.Kernel.Modules.UI is
       Path          : String;
       Action        : String;
       Ref_Item      : String := "";
-      Add_Before    : Boolean := True;
-      Use_Mnemonics : Boolean := True)
+      Add_Before    : Boolean := True)
    is
       Ignored : Gtk_Menu_Item;
       pragma Unreferenced (Ignored);
    begin
-      Ignored := Register_Menu
-        (Kernel, Path, Action, Ref_Item, Add_Before,
-         Use_Mnemonics => Use_Mnemonics);
+      Ignored := Register_Menu (Kernel, Path, Action, Ref_Item, Add_Before);
    end Register_Menu;
 
    -------------------
@@ -1717,7 +1714,6 @@ package body GPS.Kernel.Modules.UI is
       Ref_Item      : String := "";
       Add_Before    : Boolean := True;
       Optional      : Boolean := False;
-      Use_Mnemonics : Boolean := True;
       Menubar       : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class := null)
       return Gtk.Menu_Item.Gtk_Menu_Item
    is
@@ -1735,13 +1731,8 @@ package body GPS.Kernel.Modules.UI is
       --  Create the menu item
       Self := new Action_Menu_Item_Record;
 
-      if Use_Mnemonics then
-         Gtk.Image_Menu_Item.Initialize_With_Mnemonic
-           (Self, Label => Base_Menu_Name (Full_Path));
-      else
-         Gtk.Image_Menu_Item.Initialize
-           (Self, Label => Base_Menu_Name (Full_Path));
-      end if;
+      Gtk.Image_Menu_Item.Initialize_With_Mnemonic
+        (Self, Label => Base_Menu_Name (Full_Path));
 
       Self.Data := (Action    => new String'(Action),
                     Kernel    => Kernel,
@@ -2974,8 +2965,7 @@ package body GPS.Kernel.Modules.UI is
          if Action /= "" then
             Item := Register_Menu
               (Kernel, Parent_Path & "/" & Label,
-               Action, Optional => Optional, Use_Mnemonics => True,
-               Menubar => Menubar);
+               Action, Optional => Optional, Menubar => Menubar);
 
             if Active (System_Menus) then
                App.Add_Action (New_G_Action (Kernel, Action));

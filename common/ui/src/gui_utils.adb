@@ -1263,15 +1263,14 @@ package body GUI_Utils is
       Menu      : Gtk_Menu;
       Name      : String;
       Menu_Item : out Gtk_Menu_Item;
-      Index     : out Gint;
-      Use_Mnemonics : Boolean := True)
+      Index     : out Gint)
    is
       use type Widget_List.Glist;
       Children, Tmp   : Widget_List.Glist;
       Label         : Gtk_Label;
       Box           : Gtk_Box;
-      New_Name      : String (Name'Range);
-      Last          : Integer := New_Name'First;
+      New_Name      : constant String :=
+        Unescape_Underscore (Strip_Single_Underscores (Name));
 
    begin
       Menu_Item := null;
@@ -1280,18 +1279,6 @@ package body GUI_Utils is
          Index := -1;
          return;
       end if;
-
-      for J in Name'Range loop
-         if Use_Mnemonics and then Name (J) = '_' then
-            if J - 1 >= Name'First and then Name (J - 1) = '_' then
-               New_Name (Last) := '_';
-               Last := Last + 1;
-            end if;
-         else
-            New_Name (Last) := Name (J);
-            Last := Last + 1;
-         end if;
-      end loop;
 
       if Menu /= null then
          Children := Get_Children (Menu);
@@ -1312,8 +1299,7 @@ package body GUI_Utils is
          then
             Label := Gtk_Label (Get_Child (Menu_Item));
             exit when Equal
-              (Get_Text (Label), New_Name (New_Name'First .. Last - 1),
-               Case_Sensitive => False);
+              (Get_Text (Label), New_Name, Case_Sensitive => False);
 
          elsif Get_Child (Menu_Item) /= null
            and then Get_Child (Menu_Item).all in Gtk_Box_Record'Class
@@ -1325,16 +1311,14 @@ package body GUI_Utils is
             then
                Label := Gtk_Label (Get_Child (Box, 0));
                exit when Equal
-                 (Get_Text (Label), New_Name (New_Name'First .. Last - 1),
-                  Case_Sensitive => False);
+                 (Get_Text (Label), New_Name, Case_Sensitive => False);
 
             elsif Get_Child (Box, 1) /= null
               and then Get_Child (Box, 1).all in Gtk_Label_Record'Class
             then
                Label := Gtk_Label (Get_Child (Box, 1));
                exit when Equal
-                 (Get_Text (Label), New_Name (New_Name'First .. Last - 1),
-                  Case_Sensitive => False);
+                 (Get_Text (Label), New_Name, Case_Sensitive => False);
             end if;
          end if;
 
@@ -1382,9 +1366,7 @@ package body GUI_Utils is
    -- Create_Menu_Path --
    ----------------------
 
-   function Create_Menu_Path
-     (Parent, Menu : String;
-      Remove_Underlines : Boolean := False) return String
+   function Create_Menu_Path (Parent, Menu : String) return String
    is
       function Cleanup (Path : String) return String;
       --  Remove duplicate // in Path
@@ -1394,12 +1376,9 @@ package body GUI_Utils is
          Index  : Natural := Output'First;
       begin
          for P in Path'Range loop
-            if (not Remove_Underlines
-                or else Path (P) /= '_')
-              and then
-                (Path (P) /= '/'
-                 or else P + 1 > Path'Last
-                 or else Path (P + 1) /= '/')
+            if Path (P) /= '/'
+              or else P + 1 > Path'Last
+              or else Path (P + 1) /= '/'
             then
                Output (Index) := Path (P);
                Index          := Index + 1;
@@ -1426,7 +1405,9 @@ package body GUI_Utils is
       R : Unbounded_String;
    begin
       for N in Name'Range loop
-         if Name (N) = '/' or else Name (N) = '\' then
+         if Name (N) = '/'
+           or else Name (N) = '\'
+         then
             Append (R, '\' & Name (N));
          else
             Append (R, Name (N));
@@ -1452,6 +1433,45 @@ package body GUI_Utils is
       end loop;
       return To_String (R);
    end Unescape_Menu_Name;
+
+   -----------------------
+   -- Escape_Underscore --
+   -----------------------
+
+   function Escape_Underscore (Name : String) return String is
+      R : Unbounded_String;
+   begin
+      for N in Name'Range loop
+         if Name (N) = '_' then
+            Append (R, "__");
+         else
+            Append (R, Name (N));
+         end if;
+      end loop;
+      return To_String (R);
+   end Escape_Underscore;
+
+   -------------------------
+   -- Unescape_Underscore --
+   -------------------------
+
+   function Unescape_Underscore (Name : String) return String is
+      Result : String (Name'Range);
+      Last   : Integer := Result'First;
+   begin
+      for N in Name'Range loop
+         if Name (N) = '_'
+           and then N > Name'First
+           and then Name (N - 1) = '_'
+         then
+            null;
+         else
+            Result (Last) := Name (N);
+            Last := Last + 1;
+         end if;
+      end loop;
+      return Result (Result'First .. Last - 1);
+   end Unescape_Underscore;
 
    ----------------------
    -- Parent_Menu_Name --
@@ -1500,7 +1520,6 @@ package body GUI_Utils is
       Allow_Create  : Boolean := True;
       Ref_Item      : String  := "";
       Add_Before    : Boolean := True;
-      Use_Mnemonics : Boolean := True;
       New_Item      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null)
       return Gtk_Menu_Item
    is
@@ -1534,8 +1553,7 @@ package body GUI_Utils is
          Find_Menu_Item_By_Name
            (Menu_Bar, Parent,
             Unescape_Menu_Name (Path (First .. Last - 1)),
-            Menu_Item, Index,
-            Use_Mnemonics => Use_Mnemonics);
+            Menu_Item, Index);
 
          exit when Menu_Item = null;
 
@@ -1570,13 +1588,7 @@ package body GUI_Utils is
                Menu_Item := new Gtk_Menu_Item_Record;
             end if;
 
-            if Use_Mnemonics then
-               Initialize_With_Mnemonic
-                 (Menu_Item, Unescape_Menu_Name (Path (First .. Last - 1)));
-            else
-               Initialize
-                 (Menu_Item, Unescape_Menu_Name (Path (First .. Last - 1)));
-            end if;
+            Initialize_With_Mnemonic (Menu_Item, Path (First .. Last - 1));
 
             --  Should we create a submenu ?
             if Last <= Path'Last then
@@ -1586,8 +1598,7 @@ package body GUI_Utils is
             end if;
 
             Find_Menu_Item_By_Name
-              (Menu_Bar, Parent, Ref_Item, Pred, Index,
-               Use_Mnemonics => Use_Mnemonics);
+              (Menu_Bar, Parent, Ref_Item, Pred, Index);
 
             Add_Menu (Parent, Menu_Bar, Menu_Item, Index, Add_Before);
             Show_All (Menu_Item);

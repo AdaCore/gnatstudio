@@ -389,8 +389,7 @@ package GPS.Kernel.Modules.UI is
       Path          : String;
       Action        : String;
       Ref_Item      : String := "";
-      Add_Before    : Boolean := True;
-      Use_Mnemonics : Boolean := True);
+      Add_Before    : Boolean := True);
    function Register_Menu
      (Kernel        : not null access Kernel_Handle_Record'Class;
       Path          : String;
@@ -398,7 +397,6 @@ package GPS.Kernel.Modules.UI is
       Ref_Item      : String := "";
       Add_Before    : Boolean := True;
       Optional      : Boolean := False;
-      Use_Mnemonics : Boolean := True;
       Menubar       : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class := null)
       return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Append a menu binding a GPS action. The action need not exist when the

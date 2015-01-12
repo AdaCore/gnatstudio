@@ -1999,10 +1999,14 @@ package body GVD_Module is
            (if Main = No_File then
                -"<no main file>"
             else
-               Escape_Menu_Name (Main.Display_Base_Name));
+               Escape_Underscore (Escape_Menu_Name (Main.Display_Base_Name)));
 
          Action  : constant String := "debug initialize " & Main_Name;
-         Menu    : constant String := "/Debug/Initialize/" & Main_Name;
+         Menu    : constant String :=
+           "/Debug/Initialize/"
+           & (if Prj = No_Project
+              then "" else Escape_Underscore (Prj.Name) & '/')
+           & Main_Name;
          Command : Interactive_Command_Access;
          Item    : Gtk_Menu_Item;
       begin
@@ -2014,8 +2018,7 @@ package body GVD_Module is
             -"Initialize the debugger on the file "
             & Main.Display_Full_Name,
             Category => -"Debug");
-         Item := Register_Menu
-           (Kernel, Menu, Action => Action, Use_Mnemonics => False);
+         Item := Register_Menu (Kernel, Menu, Action => Action);
 
          --  Only set accelerators for main units of the root project
          if Prj = No_Project or else Prj = Loaded_Project then

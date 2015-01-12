@@ -362,8 +362,7 @@ package body Custom_Module is
                  (Find_Or_Create_Menu_Tree
                     (Menu_Bar      => null,
                      Menu          => Gtk_Menu (Menu),
-                     Path          => List (L).all,
-                     Use_Mnemonics => False,
+                     Path          => Escape_Underscore (List (L).all),
                      Accelerators  =>
                        Get_Default_Accelerators (Get_Kernel (Script)),
                      New_Item      => Gtk_Menu_Item (Item)));

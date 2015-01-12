@@ -6247,15 +6247,19 @@ class Hook(object):
       instance) and the name of the target. If name is not known, it should
       return an empty list.
 
-      :param name: A string, the target type
-      :return: A string
+      :param name: A string, the target type.
+         Example of values are 'main', 'exec' and 'make' currently.
+      :return: A list of tuples, each of which has the following elements:
+         (display name for the target,
+          full name for the target (typically a path),
+          full path for the project (or the empty string))
 
       .. code-block:: python
 
          def compute_targets(hook, name):
             if name == "my_target":
-              return [(display_name_1, target_1),
-                      (display_name_2, target_2)]
+              return [(display_name_1, target_1, ''),
+                      (display_name_2, target_2, '')]
             return ""
          GPS.Hook("compute_build_targets").add(compute_targets)
 

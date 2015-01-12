@@ -443,16 +443,29 @@ package body Builder_Facility_Module is
             begin
                for J in 1 .. Mains.Length loop
                   if Mains.List (J).Length /= 0 then
-                     Mitem := new Dynamic_Menu_Item_Record;
-                     Gtk.Menu_Item.Initialize
-                       (Mitem,
-                        Get_Name (T) & ": " & Mains.List (J).Tuple (1).Str);
-                     Prepend (Menu, Mitem);
-                     String_Callback.Connect
-                       (Mitem, Signal_Activate,
-                        On_Button_Or_Menu_Click'Access,
-                        (To_Unbounded_String (Get_Name (T)),
-                         Create (+Mains.List (J).Tuple (2).Str)));
+                     declare
+                        Display : constant String :=
+                          Mains.List (J).Tuple (1).Str;
+                        Full    : constant String :=
+                          Mains.List (J).Tuple (2).Str;
+                        Prj     : constant Virtual_File :=
+                          Create (+Mains.List (J).Tuple (3).Str);
+                     begin
+                        if not Has_Project_Information (Context)
+                          or else Project_Information (Context).Project_Path =
+                             Prj
+                        then
+                           Mitem := new Dynamic_Menu_Item_Record;
+                           Gtk.Menu_Item.Initialize
+                             (Mitem, Get_Name (T) & ": " & Display);
+                           Prepend (Menu, Mitem);
+                           String_Callback.Connect
+                             (Mitem, Signal_Activate,
+                              On_Button_Or_Menu_Click'Access,
+                              (To_Unbounded_String (Get_Name (T)),
+                               Create (+Full)));
+                        end if;
+                     end;
                   end if;
                end loop;
                Destroy (Data);
@@ -469,7 +482,6 @@ package body Builder_Facility_Module is
                (To_Unbounded_String (Get_Name (T)),
                 No_File));
          end if;
-
       end Add_Contextual;
 
    begin
@@ -541,34 +553,48 @@ package body Builder_Facility_Module is
    ------------------------------------
 
    procedure Add_Action_And_Menu_For_Target (Target : Target_Access) is
+      Kernel   : constant Kernel_Handle := Get_Kernel;
       C        : Build_Command_Access;
       M        : Build_Main_Command_Access;
       N        : constant String := Get_Name (Target);
       Action   : Unbounded_String;
       Category : constant String := Get_Category (Target);
-      Cat_Path : Unbounded_String :=
-        To_Unbounded_String (Get_Parent_Menu_Name (Target));
       Targets  : constant Unbounded_String :=
         Get_Properties (Target).Target_Type;
 
       Toplevel_Menu : constant Boolean := Category (Category'First) = '_'
         and then Category (Category'Last) = '_';
 
+      Cat_Path : constant String :=
+        Strip_Single_Underscores (Get_Parent_Menu_Name (Target))
+        & (if Toplevel_Menu then "" else Category & "/");
+      --  For instance:  /Build/Project/
+
       procedure Menu_For_Action
-        (Main        : Virtual_File;
-         Menu_Name   : String;
-         Action_Name : String);
+        (Main         : Virtual_File;
+         Project      : Project_Type;
+         Menu_Name    : String;
+         Action_Name  : String);
       --  Add a menu at Parent_Path for target named Name, with menu name
       --  Menu_Name
 
       procedure Menu_For_Action
-        (Main        : Virtual_File;
-         Menu_Name   : String;
-         Action_Name : String)
+        (Main         : Virtual_File;
+         Project      : Project_Type;
+         Menu_Name    : String;
+         Action_Name  : String)
       is
-         C : constant Unbounded_String :=
-           To_Unbounded_String
-             (Strip_Single_Underscores (To_String (Cat_Path)));
+         Mnemonics : constant Boolean := Main = No_File;
+         --  Always protect underscores in menu name when dealing with file
+         --  names, but not otherwise.
+
+         Path : constant String :=
+           Cat_Path
+           & (if Project = No_Project
+              then ""
+              else Escape_Menu_Name (Escape_Underscore (Project.Name)) & '/')
+           & Escape_Menu_Name
+            ((if Mnemonics then Menu_Name else Escape_Underscore (Menu_Name)));
       begin
          --  Do nothing is the target is not supposed to be shown in the menu
          if not Get_Properties (Target).In_Menu
@@ -578,26 +604,16 @@ package body Builder_Facility_Module is
          end if;
 
          Register_Menu
-           (Get_Kernel, To_String (C) & Escape_Menu_Name (Menu_Name),
-            Action => Action_Name, Ref_Item => "Project",
+           (Kernel,
+            Path          => Path,
+            Action        => Action_Name,
+            Ref_Item      => "Project");
 
-            --  Do not use mnemonics if we are registering a
-            --  main, as this is a file name in this case.
-            Use_Mnemonics => Main = No_File);
-
-         if Main = No_File then
-            Builder_Module_ID.Menus.Prepend
-              (C & Escape_Menu_Name (Strip_Single_Underscores (Menu_Name)));
-         else
-            Builder_Module_ID.Menus.Prepend (C & Escape_Menu_Name (Menu_Name));
-         end if;
+         Builder_Module_ID.Menus.Prepend
+           (To_Unbounded_String (Strip_Single_Underscores (Path)));
       end Menu_For_Action;
 
    begin
-      if not Toplevel_Menu then
-         Append (Cat_Path, Category & '/');
-      end if;
-
       if Length (Targets) /= 0 then
          --  Register the "build main number x"-like actions
 
@@ -607,7 +623,7 @@ package body Builder_Facility_Module is
                Length => Length (Targets),
                Value  => To_String (Targets));
             Mains  : Any_Type := Run_Hook_Until_Not_Empty
-              (Get_Kernel,
+              (Kernel,
                Compute_Build_Targets_Hook,
                Data'Unchecked_Access);
             D : Dialog_Mode;
@@ -617,7 +633,7 @@ package body Builder_Facility_Module is
               and then Mains.T /= List_Type
             then
                Insert
-                 (Get_Kernel,
+                 (Kernel,
                   (-"The command for determining the target type of target " &
                    To_String (Targets) & (-" returned a ") & Mains.T'Img
                      & (-("but should return a LIST_TYPE "
@@ -644,9 +660,9 @@ package body Builder_Facility_Module is
                              Quiet       => False,
                              Dialog      => D);
                      Set_Unbounded_String (Action, N & (-" Number") & J'Img);
-                     Unregister_Action (Get_Kernel, To_String (Action));
+                     Unregister_Action (Kernel, To_String (Action));
                      Register_Action
-                       (Kernel      => Get_Kernel,
+                       (Kernel      => Kernel,
                         Name        => To_String (Action),
                         Command     => M,
                         Description => To_String (Action),
@@ -654,9 +670,11 @@ package body Builder_Facility_Module is
                         Category    => -"Build");
                      Builder_Module_ID.Actions.Append (Action);
                      Menu_For_Action
-                       (Main        => Create (+Mains.List (J).Tuple (2).Str),
-                        Action_Name => To_String (Action),
-                        Menu_Name   => Mains.List (J).Tuple (1).Str);
+                       (Main         => Create (+Mains.List (J).Tuple (2).Str),
+                        Action_Name  => To_String (Action),
+                        Project      => Kernel.Registry.Tree.Project_From_Path
+                          (Create (+Mains.List (J).Tuple (3).Str)),
+                        Menu_Name    => Mains.List (J).Tuple (1).Str);
                   end if;
                end loop;
 
@@ -664,9 +682,9 @@ package body Builder_Facility_Module is
                --  can associate shortcuts to these.
 
                for J in Mains.Length + 1 .. 4 loop
-                  Unregister_Action (Get_Kernel, N & (-" Number") & J'Img);
+                  Unregister_Action (Kernel, N & (-" Number") & J'Img);
                   Register_Action
-                    (Kernel      => Get_Kernel,
+                    (Kernel      => Kernel,
                      Name        => N & (-" Number") & J'Img,
                      Command     => null,
                      Category    => -"Build");
@@ -680,17 +698,18 @@ package body Builder_Facility_Module is
       else
          Create
            (C, Builder_Module_ID.Builder'Access, N, No_File, False, Default);
-         Unregister_Action (Get_Kernel, N);
-         Register_Action (Kernel      => Get_Kernel,
+         Unregister_Action (Kernel, N);
+         Register_Action (Kernel      => Kernel,
                           Name        => N,
                           Command     => C,
                           Description => (-"Build target ") & N,
                           Stock_Id    => Get_Icon (Target),
                           Category    => -"Build");
          Builder_Module_ID.Actions.Append (To_Unbounded_String (N));
-         Menu_For_Action (Main        => No_File,
-                          Menu_Name   => Get_Menu_Name (Target),
-                          Action_Name => N);
+         Menu_For_Action (Main         => No_File,
+                          Project      => No_Project,
+                          Menu_Name    => Get_Menu_Name (Target),
+                          Action_Name  => N);
       end if;
    end Add_Action_And_Menu_For_Target;
 
@@ -905,21 +924,22 @@ package body Builder_Facility_Module is
          begin
             for J in Mains'Range loop
                declare
-                  Base         : constant String :=
-                                   Mains (J).Main.Display_Base_Name;
-                  Full         : constant String := +Mains (J).Main.Full_Name;
+                  Base : constant String := Mains (J).Main.Display_Base_Name;
+                  Full : constant String := +Mains (J).Main.Full_Name;
+                  P_Name : constant String :=
+                    +Mains (J).Project.Project_Path.Full_Name;
                   Display_Name : constant Any_Type :=
-                                   (String_Type,
-                                    Base'Length,
-                                    Base);
+                    (String_Type, Base'Length, Base);
                   Full_Name    : constant Any_Type :=
-                                   (String_Type, Full'Length, Full);
-
+                    (String_Type, Full'Length, Full);
+                  Project_Name : constant Any_Type :=
+                    (String_Type, P_Name'Length, P_Name);
                begin
                   Result.List (1 + J - Mains'First) := new Any_Type'
-                    ((Tuple_Type, 2,
+                    ((Tuple_Type, 3,
                      Tuple => (1 => new Any_Type'(Display_Name),
-                               2 => new Any_Type'(Full_Name))));
+                               2 => new Any_Type'(Full_Name),
+                               3 => new Any_Type'(Project_Name))));
                end;
             end loop;
 
@@ -959,16 +979,21 @@ package body Builder_Facility_Module is
                           (Mains (J).Main.Full_Name));
                      Base : constant String := String (Exec.Base_Name);
                      Full : constant String := String (Exec.Full_Name.all);
+                     P_Name : constant String :=
+                       +Mains (J).Project.Project_Path.Full_Name;
                      Display_Name : constant Any_Type :=
                        (String_Type, Base'Length, Base);
                      Full_Name    : constant Any_Type :=
                        (String_Type, Full'Length, Full);
+                     Project_Name : constant Any_Type :=
+                       (String_Type, P_Name'Length, P_Name);
 
                   begin
                      Result.List (1 + J - Mains'First) := new Any_Type'
-                       ((Tuple_Type, 2,
+                       ((Tuple_Type, 3,
                         Tuple => (1 => new Any_Type'(Display_Name),
-                                  2 => new Any_Type'(Full_Name))));
+                                  2 => new Any_Type'(Full_Name),
+                                  3 => new Any_Type'(Project_Name))));
                   end;
                end if;
             end loop;
@@ -1446,8 +1471,6 @@ package body Builder_Facility_Module is
       C := Builder_Module_ID.Menus.First;
 
       while Has_Element (C) loop
-         --  Find_Menu_Item expects menu names stripped of their underscores,
-         --  so call Strip_Single_Underscore here.
          M := Find_Menu_Item (Get_Kernel, To_String (Element (C)));
 
          if M /= null then

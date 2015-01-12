@@ -894,6 +894,11 @@ package GPS.Kernel is
    --  Called when computing list of build targets, e.g. list of mains, or list
    --  of Makefile targets. The string parameter gives the kind of target to
    --  be computed (e.g. "main", "makefile").
+   --  The result is of type Any_Type, where each tuple in the list contains
+   --  the following information:
+   --     ("display name of the main",
+   --      "full name of the main",
+   --      "full path of the project or empty")
 
    -------------------
    -- Sets of files --

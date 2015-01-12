@@ -409,13 +409,11 @@ package GUI_Utils is
       Menu          : Gtk.Menu.Gtk_Menu;
       Name          : String;
       Menu_Item     : out Gtk.Menu_Item.Gtk_Menu_Item;
-      Index         : out Gint;
-      Use_Mnemonics : Boolean := True);
+      Index         : out Gint);
    --  Return the menu item with name Name, either from Menu, or from Menu_Bar
    --  if the latter is null.
-   --  If Use_Mnemonics is True, then '_' characters in the path will indicate
-   --  keyboard shortcuts, and need to be doubled to actually display an
-   --  underscore.
+   --  The name must be escape (via Escape_Menu_Name) as would be done to
+   --  create a menu item.
 
    function Find_Or_Create_Menu_Tree
      (Menu_Bar      : Gtk.Menu_Bar.Gtk_Menu_Bar;
@@ -425,16 +423,12 @@ package GUI_Utils is
       Allow_Create  : Boolean := True;
       Ref_Item      : String  := "";
       Add_Before    : Boolean := True;
-      Use_Mnemonics : Boolean := True;
       New_Item      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null)
       return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Create or return the menu_item corresponding to Path in Menu.
    --  Path is a '/'-separated list of menu names, for instance File/New.
    --  Menu_Bar is used if Menu is null
    --  null is returned if the menu couldn't be created.
-   --  If Use_Mnemonics is True, then '_' characters in the path will indicate
-   --  keyboard shortcuts, and need to be doubled to actually display an
-   --  underscore.
    --  New_Item, if specified, is used when a new item needs to be created. It
    --  shouldn't be Initialized, since that will be done automatically by this
    --  function. If it is used, it is returned by this function. If it isn't
@@ -442,8 +436,13 @@ package GUI_Utils is
 
    function Escape_Menu_Name (Name : String) return String;
    function Unescape_Menu_Name (Name : String) return String;
-   --  Escape special characters in the menu name, so that
+   --  Escape special characters (/ and \) in the menu name, so that
    --  Find_Or_Create_Menu_Tree keeps this as a single name, unsplit.
+
+   function Escape_Underscore (Name : String) return String;
+   function Unescape_Underscore (Name : String) return String;
+   --  Protects single underscores so that they are preserved in the
+   --  menu name.
 
    function Parent_Menu_Name (Name : String) return String;
    --  Return the path to the parent menu. The return value always ends with
@@ -453,9 +452,7 @@ package GUI_Utils is
    --  Return the name of the menu item, from its path.
    --  This removes the escaping that might been added thought Escape_Menu_Name
 
-   function Create_Menu_Path
-     (Parent, Menu : String;
-      Remove_Underlines : Boolean := False) return String;
+   function Create_Menu_Path (Parent, Menu : String) return String;
    --  Create a menu from its parent (possibly empty) and its name (which might
    --  need to be escaped first).
 

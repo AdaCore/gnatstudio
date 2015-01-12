@@ -74,7 +74,8 @@ Make_Model = """
      <check label="Project variables" switch="%vars"
            tip="Pass project variables to make" />
      <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
-           tip="Use N processes to carry out the compilations. On a multiprocessor machine compilations will occur in parallel" />
+           tip="Use N processes to carry out the compilations.
+On a multiprocessor machine compilations will occur in parallel" />
    </switches>
 </target-model>
 
@@ -113,8 +114,8 @@ Ant_Model_Template = """
      <check label="Project variables" switch="%vars"
            tip="Pass project variables to make" />
      <spin label="Multiprocessing" switch="-j" min="1" max="100" default="1"
-           tip="Use N processes to carry out the compilations. On a multiprocess
-or machine compilations will occur in parallel" />
+           tip="Use N processes to carry out the compilations.
+On a multiprocess or machine compilations will occur in parallel" />
    </switches>
 </target-model>
 
@@ -143,8 +144,8 @@ class Builder:
            found in the same directory as the root project"""
 
         root_dir = dirname(Project.root().file().name())
-        self.buildfile = Project.root().get_attribute_as_string \
-            (self.build_file_attr, self.pkg_name)
+        self.buildfile = Project.root().get_attribute_as_string(
+            self.build_file_attr, self.pkg_name)
 
         self.buildfile = join(root_dir, self.buildfile)
         if not isfile(self.buildfile):
@@ -154,7 +155,7 @@ class Builder:
                     break
                 self.buildfile = None
         Logger("MAKE").log(
-            "Build file for " + self.pkg_name + " is " + `self.buildfile`)
+            "Build file for %s is %s" % (self.pkg_name, self.buildfile))
 
     def read_targets(self):
         """Read all targets from the build file, and return a list targets"""
@@ -195,11 +196,11 @@ class Makefile (Builder):
                 if matches.group(3):
                     if matches.group(3).strip() != "IGNORE":
                         target_name = matches.group(1)
-                        targets += [(target_name, target_name)]
+                        targets += [(target_name, target_name, '')]
                 else:
                     # Handle multiple targets on same line
                     for target in matches.group(1).split():
-                        targets += [(target, target)]
+                        targets += [(target, target, '')]
         f.close()
         return targets
 
@@ -237,7 +238,7 @@ class Antfile (Builder):
                             target = attrs.get(attrName)
                         if attrName == "description":
                             description = attrs.get(attrName)
-                    ant_targets += [(str(target), str(target))]
+                    ant_targets += [(str(target), str(target), '')]
 
         parser = make_parser()
         parser.setContentHandler(MySaxDocumentHandler())
@@ -266,7 +267,7 @@ def on_gps_started(hook_name):
 
 parse_xml(Make_Model)
 parse_xml(Ant_Model_Template)
-parse_xml ("""
+parse_xml("""
   <project_attribute
     name="Makefile"
     package="Make"
@@ -302,7 +303,7 @@ if os_utils.locate_exec_on_path("ant"):
     try:
         from xml.sax import handler, make_parser
         ant_support = True
-        parse_xml ("""
+        parse_xml("""
   <project_attribute
     name="Antfile"
     package="Ant"
