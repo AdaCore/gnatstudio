@@ -108,6 +108,7 @@ with Projects;                         use Projects;
 with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
+with Trace_Support;                    use Trace_Support;
 with Task_Manager.GUI;
 with Welcome;                          use Welcome;
 with Welcome_Page;                     use Welcome_Page;
@@ -179,6 +180,9 @@ procedure GPS.Main is
    Me         : constant Trace_Handle := Create ("GPS");
    Pid_Image  : constant String := String_Utils.Image (Get_Process_Id);
    Gtk_Errors : constant Trace_Handle := Create ("GTK");
+
+   Memory_Stack_Depth : constant := 1;
+   --  Stack depth for GNATCOLL.Memory
 
    Refactor_Trace         : constant Trace_Handle :=
                               Create ("MODULE.Refactor", GNATCOLL.Traces.On);
@@ -449,8 +453,9 @@ procedure GPS.Main is
 
       begin
          GNATCOLL.Memory.Configure
-           (Activate_Monitor => Tmp /= "",
-            Disable_Free     => Tmp2 /= "");
+           (Activate_Monitor  => Tmp /= "",
+            Stack_Trace_Depth => Memory_Stack_Depth,
+            Disable_Free      => Tmp2 /= "");
       end;
 
       --  Reset the environment that was set before GPS was started (since
@@ -725,6 +730,7 @@ procedure GPS.Main is
            (Filename     => No_File,
             Default      => File,
             On_Exception => GNATCOLL.Traces.Deactivate);
+         Trace_Support.Add_Trace_Decorators;
       exception
          when others =>
             Put_Line (Standard_Error,
@@ -1465,7 +1471,7 @@ procedure GPS.Main is
       begin
          if Tmp.all /= "" then
             GNATCOLL.Memory.Dump
-              (Size   => 10,
+              (Size   => Memory_Stack_Depth,
                Report => GNATCOLL.Memory.All_Reports);
          end if;
          Free (Tmp);
