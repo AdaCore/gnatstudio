@@ -1622,24 +1622,6 @@ package body Src_Contexts is
          end;
 
          if Matches /= null then
-            --  Fix line and column numbers
-            for M in Matches'Range loop
-               if Matches (M).Start.Line = 1 then
-                  Matches (M).Start.Column :=
-                    Matches (M).Start.Column + Begin_Column - 1;
-               end if;
-
-               if Matches (M).Finish.Line = 1 then
-                  Matches (M).Finish.Column :=
-                    Matches (M).Finish.Column + Begin_Column - 1;
-               end if;
-
-               Matches (M).Start.Line :=
-                 Matches (M).Start.Line + Natural (Begin_Line - 1);
-               Matches (M).Finish.Line :=
-                 Matches (M).Finish.Line + Natural (Begin_Line - 1);
-            end loop;
-
             Replace_Matched
               (Context     => Context,
                Replacement => Replacement,
