@@ -157,7 +157,7 @@ def save_excursion(f, args, kwargs, undo_group=True):
         buffer.start_undo_group()
 
     try:
-        f(*args, **kwargs)
+        return f(*args, **kwargs)
 
     finally:
         if undo_group:
@@ -194,7 +194,7 @@ def with_save_excursion(fn):
     """
 
     def do_work(*args, **kwargs):
-        save_excursion(fn, args=args, kwargs=kwargs)
+        return save_excursion(fn, args=args, kwargs=kwargs)
     do_work.__name__ = fn.__name__   # Reset name for interactive()
     do_work.__doc__ = fn.__doc__
     return do_work
