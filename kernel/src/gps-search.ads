@@ -101,6 +101,13 @@ package GPS.Search is
    --  with No_Match, but is more efficient and does not require a
    --  "use type Search_Context.
 
+   procedure Matched_Subexpression
+     (Result      : Search_Context;
+      Index       : Natural;
+      First       : out Natural;
+      Last        : out Natural);
+   --  Return regexp subexpression slice for last matched regexp search
+
    procedure Free (Self : in out Search_Pattern);
    procedure Free (Self : in out Search_Pattern_Access);
    --  Free the memory used by the matcher

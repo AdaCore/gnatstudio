@@ -28,7 +28,6 @@ with GNATCOLL.Xref;
 with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
 with Glib.Error;                 use Glib.Error;
-with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box;
@@ -73,20 +72,12 @@ with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with Vsearch;                    use Vsearch;
 with UTF8_Utils;
 with GPS.Editors;
+with GNAT.Strings;
 
 package body Src_Contexts is
    use type GNATCOLL.Xref.Visible_Column;
 
    Me : constant Trace_Handle := Create ("Src_Contexts");
-
-   function Guess_Casing (S : String) return Casing_Type;
-   --  Guess the casing which is used in S.
-   --  S is encoded in UTF-8.
-
-   function To_Casing (S : String; Casing : Casing_Type) return String;
-   --  Return S transformed to match Casing.
-   --  If S is not all lower-case, return S unchanged.
-   --  S is encoded in UTF-8, and so is the result.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Match_Result_Array, Match_Result_Array_Access);
@@ -239,12 +230,6 @@ package body Src_Contexts is
    --  Print the result of the search in the console
    --  If Give_Focus is true, the focus will be given to the editor
 
-   procedure Free (Result : in out Replacement_Pattern);
-   --  Free cached Replacement_Pattern
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Regexp_Reference_Array, Regexp_Reference_Array_Access);
-
    procedure Initialize_Scope_Combo
      (Combo  : access Gtk_Combo_Box_Text_Record'Class;
       Kernel : access Kernel_Handle_Record'Class);
@@ -303,8 +288,7 @@ package body Src_Contexts is
    --  be replaced, false otherwise.
 
    procedure Replace_Matched
-     (Context     : access File_Search_Context'Class;
-      Replacement : Replacement_Pattern;
+     (Replacement : Replacement_Pattern;
       Matches     : Match_Result_Array_Access;
       Buffer      : Src_Editor_Buffer.Source_Buffer);
    --  Replace all search mathes in given Buffer with Replacement
@@ -1197,15 +1181,6 @@ package body Src_Contexts is
    -- Free --
    ----------
 
-   procedure Free (Result : in out Replacement_Pattern) is
-   begin
-      Free (Result.Replace_String);
-      Free (Result.References);
-      for Casing in Lower .. Smart_Mixed loop
-         Free (Result.Casings (Casing));
-      end loop;
-   end Free;
-
    overriding procedure Free (Context : in out Files_Context) is
    begin
       Directory_List.Free (Context.Dirs);
@@ -1573,8 +1548,6 @@ package body Src_Contexts is
       Buffer       : Src_Editor_Buffer.Source_Buffer;
       Editor       : Source_Editor_Box;
       Matches      : Match_Result_Array_Access;
-      Replacement  : constant Replacement_Pattern :=
-        Context.Get_Replacement_Pattern (Replace_String, Case_Preserving);
       Begin_Line   : Editable_Line_Type;
       Begin_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
@@ -1622,9 +1595,13 @@ package body Src_Contexts is
          end;
 
          if Matches /= null then
+            Context.Replacement.Initialize
+              (Replace_String  => Replace_String,
+               Case_Preserving => Case_Preserving,
+               Is_Regexp       => Context.Is_Regexp);
+
             Replace_Matched
-              (Context     => Context,
-               Replacement => Replacement,
+              (Replacement => Context.Replacement,
                Matches     => Matches,
                Buffer      => Buffer);
 
@@ -2139,167 +2116,12 @@ package body Src_Contexts is
          return;
    end Search;
 
-   -----------------------------
-   -- Get_Replacement_Pattern --
-   -----------------------------
-
-   function Get_Replacement_Pattern
-     (Context         : access File_Search_Context;
-      Replace_String  : String;
-      Case_Preserving : Boolean) return Replacement_Pattern
-   is
-      procedure Fill_References (Result : in out Replacement_Pattern);
-
-      ---------------------
-      -- Fill_References --
-      ---------------------
-
-      procedure Fill_References (Result : in out Replacement_Pattern) is
-         Mask  : Boolean := False;
-         Count : Natural := 0;
-      begin
-         for J in Replace_String'First .. Replace_String'Last - 1 loop
-            if not Mask and Replace_String (J) = '\' then
-               if Replace_String (J + 1) in '0' .. '9' then
-                  Count := Count + 1;
-               elsif Replace_String (J + 1) = '\' then
-                  Mask := True;
-               end if;
-            else
-               Mask := False;
-            end if;
-         end loop;
-
-         if Count > Result.Last then
-            Free (Result.References);
-            Result.References := new Regexp_Reference_Array (1 .. Count);
-         end if;
-
-         Count := 0;
-         Mask := False;
-
-         for J in Replace_String'First .. Replace_String'Last - 1 loop
-            if not Mask and Replace_String (J) = '\' then
-               if Replace_String (J + 1) in '0' .. '9' then
-                  Count := Count + 1;
-                  Result.References (Count) :=
-                    (J, Natural'Value (Replace_String (J + 1 .. J + 1)));
-               elsif Replace_String (J + 1) = '\' then
-                  Mask := True;
-               end if;
-            else
-               Mask := False;
-            end if;
-         end loop;
-
-         Result.Last := Count;
-      end Fill_References;
-
-      Cached : Replacement_Pattern renames Context.Replacement;
-      Result : Replacement_Pattern;
-   begin
-      if Cached.Replace_String = null
-        or else Cached.Replace_String.all /= Replace_String
-      then
-         Free (Cached.Replace_String);
-         Cached.Replace_String := new String'(Replace_String);
-         Cached.Case_Preserving := False;
-         Cached.Casings (Unchanged) := Cached.Replace_String;
-
-         if Context.Is_Regexp then
-            Fill_References (Cached);
-         end if;
-      end if;
-
-      if Case_Preserving and not Cached.Case_Preserving then
-         for Casing in Lower .. Smart_Mixed loop
-            Free (Cached.Casings (Casing));
-            Cached.Casings (Casing) :=
-              new String'(To_Casing (Replace_String, Casing));
-         end loop;
-
-         Cached.Case_Preserving := True;
-      end if;
-
-      Result := Cached;
-      Result.Case_Preserving := Case_Preserving;
-
-      return Result;
-   end Get_Replacement_Pattern;
-
-   ----------------------
-   -- Replacement_Text --
-   ----------------------
-
-   function Replacement_Text
-     (Context         : access File_Search_Context;
-      Result          : GPS.Search.Search_Context;
-      Pattern         : Replacement_Pattern;
-      Matched_Text    : String) return String
-   is
-      Current_Casing : Casing_Type := Unchanged;
-      Regexp_Result  : Unbounded_String;
-      Offset         : Integer;
-      From, To       : Natural;
-      Last           : Natural := 1;
-   begin
-      --  if there are some references to regexp subexpressions
-      --  and search in regexp mode
-      if Pattern.Last > 0 and then Context.Is_Regexp then
-         --  Read offset of Matched_Text into Offset
-         Matched_Subexpression
-           (Result, Index => 0, First => Offset, Last => Last);
-         Offset := Offset - Matched_Text'First;
-         Last := 1;
-         for J in 1 .. Pattern.Last loop
-            declare
-               Ref : constant Regexp_Reference := Pattern.References (J);
-            begin
-               Append
-                 (Regexp_Result,
-                  Pattern.Replace_String (Last .. Ref.Offset - 1));
-
-               if Ref.Match = 0 then  --  Whole matched string
-                  Append (Regexp_Result, Matched_Text);
-               else
-                  Matched_Subexpression
-                    (Result, Index => Ref.Match, First => From, Last => To);
-                  Append (Regexp_Result,
-                          Matched_Text (From - Offset .. To - Offset));
-               end if;
-
-               Last := Ref.Offset + 2;
-            end;
-         end loop;
-
-         Append
-           (Regexp_Result,
-            Pattern.Replace_String (Last .. Pattern.Replace_String'Last));
-
-         if Pattern.Case_Preserving then
-            Current_Casing := Guess_Casing (Matched_Text);
-
-            return To_Casing
-              (UTF8_Strdown (To_String (Regexp_Result)), Current_Casing);
-         end if;
-
-         return To_String (Regexp_Result);
-      end if;
-
-      if Pattern.Case_Preserving then
-         Current_Casing := Guess_Casing (Matched_Text);
-      end if;
-
-      return Pattern.Casings (Current_Casing).all;
-   end Replacement_Text;
-
    ---------------------
    -- Replace_Matched --
    ---------------------
 
    procedure Replace_Matched
-     (Context     : access File_Search_Context'Class;
-      Replacement : Replacement_Pattern;
+     (Replacement : Replacement_Pattern;
       Matches     : Match_Result_Array_Access;
       Buffer      : Src_Editor_Buffer.Source_Buffer) is
    begin
@@ -2325,7 +2147,7 @@ package body Src_Contexts is
                Matches (M).Start.Column,
                Editable_Line_Type (Matches (M).Finish.Line),
                Matches (M).Finish.Column + 1,
-               Context.Replacement_Text (Matches (M), Replacement, Text));
+               Replacement.Replacement_Text (Matches (M), Text));
          end;
       end loop;
 
@@ -2354,9 +2176,12 @@ package body Src_Contexts is
    is
       Editor          : Source_Editor_Box;
       Matches         : Match_Result_Array_Access;
-      Replacement     : constant Replacement_Pattern
-        := Context.Get_Replacement_Pattern (Replace_String, Case_Preserving);
    begin
+      Context.Replacement.Initialize
+        (Replace_String  => Replace_String,
+         Case_Preserving => Case_Preserving,
+         Is_Regexp       => Context.Is_Regexp);
+
       Focus_To_Editor (Child, Give_Focus);
       Editor := Get_Source_Box_From_MDI (Child);
 
@@ -2378,8 +2203,7 @@ package body Src_Contexts is
 
          if Matches /= null then
             Replace_Matched
-              (Context     => Context,
-               Replacement => Replacement,
+              (Replacement => Context.Replacement,
                Matches     => Matches,
                Buffer      => Get_Buffer (Editor));
             Unchecked_Free (Matches);
@@ -2409,8 +2233,8 @@ package body Src_Contexts is
                if True then
                   declare
                      Text : constant String :=
-                       Context.Replacement_Text
-                         (Context.Current, Replacement, Original);
+                       Context.Replacement.Replacement_Text
+                         (Context.Current, Original);
                   begin
                      Replace_Slice
                        (Get_Buffer (Editor),
@@ -2513,9 +2337,6 @@ package body Src_Contexts is
                Previously_Was_UTF8 : Boolean := True;
                Output_Buffer : Unbounded_String;
                Writable : Writable_File;
-               Replacement : constant Replacement_Pattern
-                 := Context.Get_Replacement_Pattern
-                      (Replace_String, Case_Preserving);
             begin
                declare
                   UTF8  : GNAT.Strings.String_Access;
@@ -2537,15 +2358,19 @@ package body Src_Contexts is
                end;
 
                if Buffer /= null then
+                  Context.Replacement.Initialize
+                    (Replace_String  => Replace_String,
+                     Case_Preserving => Case_Preserving,
+                     Is_Regexp       => Context.Is_Regexp);
+
                   for M in Matches'Range loop
                      Append
                        (Output_Buffer,
                         Buffer (Last .. Matches (M).Start.Index - 1));
                      Append
                        (Output_Buffer,
-                        Context.Replacement_Text
+                        Context.Replacement.Replacement_Text
                           (Matches (M),
-                           Replacement,
                            Buffer (Matches (M).Start.Index
                              .. Matches (M).Start.Index
                              + Replace_String'Length - 1)));
@@ -3294,106 +3119,5 @@ package body Src_Contexts is
    begin
       return -"any file in the runtime";
    end Context_Look_In;
-
-   ------------------
-   -- Guess_Casing --
-   ------------------
-
-   function Guess_Casing (S : String) return Casing_Type
-   is
-      Index_1    : Integer;
-      Index_2    : Integer;
-      First_Char : Gunichar;
-   begin
-      if S = "" then
-         return Lower;
-      end if;
-
-      Index_1 := UTF8_Next_Char (S, S'First);
-
-      First_Char := UTF8_Get_Char (S (S'First .. Index_1 - 1));
-
-      if not Is_Alpha (First_Char) then
-         return Unchanged;
-      end if;
-
-      --  First character is lower: this string is Lower
-      if Is_Lower (First_Char) then
-         return Lower;
-      end if;
-
-      --  There is only one character: this string is Upper
-      if Index_1 > S'Last then
-         return Upper;
-      end if;
-
-      Index_2 := UTF8_Next_Char (S, Index_1);
-
-      --  The first character is not lower and the second character is:
-      --  this string is Smart_Mixed
-      if Is_Lower (UTF8_Get_Char (S (Index_1 .. Index_2 - 1))) then
-         return Smart_Mixed;
-      end if;
-
-      --  The first two characters are upper: this string is Upper
-      return Upper;
-   end Guess_Casing;
-
-   ---------------
-   -- To_Casing --
-   ---------------
-
-   function To_Casing (S : String; Casing : Casing_Type) return String is
-      Lower_S : constant String := UTF8_Strdown (S);
-
-   begin
-      --  If S is empty, return empty
-      if S = "" then
-         return "";
-      end if;
-
-      --  If S is not all lower case: return S
-      if Lower_S /= S then
-         return S;
-      end if;
-
-      case Casing is
-         when Unchanged =>
-            return S;
-
-         when Lower =>
-            return Lower_S;
-
-         when Upper =>
-            return UTF8_Strup (S);
-
-         when Smart_Mixed =>
-            declare
-               O       : String (S'Range);
-               I1, I2  : Natural;
-               Capitalize_Next : Boolean := True;
-
-            begin
-               I2 := S'First;
-               loop
-                  I1 := I2;
-                  I2 := UTF8_Next_Char (S, I1);
-
-                  if Capitalize_Next then
-                     O (I1 .. I2 - 1) := UTF8_Strup (S (I1 .. I2 - 1));
-                  else
-                     O (I1 .. I2 - 1) := S (I1 .. I2 - 1);
-                  end if;
-
-                  Capitalize_Next := not Is_Alpha
-                    (UTF8_Get_Char (S (I1 .. I2 - 1)));
-
-                  if I2 > S'Last then
-                     return O;
-                  end if;
-               end loop;
-            end;
-      end case;
-   end To_Casing;
 
 end Src_Contexts;

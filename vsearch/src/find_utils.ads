@@ -110,13 +110,6 @@ package Find_Utils is
    --  This automatically uses either a regexp or a faster Boyer Moore methode
    --  for constant strings.
 
-   procedure Matched_Subexpression
-     (Result      : GPS.Search.Search_Context;
-      Index       : Natural;
-      First       : out Natural;
-      Last        : out Natural);
-   --  Return regexp subexpression slice for last matched regexp search
-
    type Operation_Kind is (Replace, Search);
 
    function Get_Terminate_Message

@@ -45,25 +45,6 @@ package body Find_Utils is
    end Match;
 
    ---------------------------
-   -- Matched_Subexpression --
-   ---------------------------
-
-   procedure Matched_Subexpression
-     (Result      : GPS.Search.Search_Context;
-      Index       : Natural;
-      First       : out Natural;
-      Last        : out Natural) is
-   begin
-      if Index in Result.Groups'Range then
-         First := Result.Groups (Index).First;
-         Last := Result.Groups (Index).Last;
-      else
-         First := 1;
-         Last := 0;
-      end if;
-   end Matched_Subexpression;
-
-   ---------------------------
    -- Get_Terminate_Message --
    ---------------------------
 
