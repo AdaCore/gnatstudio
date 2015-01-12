@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-NC12-038 GPS: GPS: find/replace in current selection does not work
+
+  Problem:    Function Replace All in "Current Selection" scope does not work
+              as expected. This could result as replacement in incorrect text
+              position or no replacent at all depending on selection and file
+              size.
+
+  Status:     This was fixed in 6.2.0 on 2015-01-12
+
+  Workaround: Use "Replace & Find" button to replace all occurences one by one.
+
 KP-61-NB26-010 GB: Cannot watch global variables defined in package body.
 
   Problem:    When selecting an expression that contains variable(s) defined in
