@@ -73,6 +73,17 @@ KP-61-NB12-012 GPS: incorrect gnat driver for gnatstub and gnatmetric
 
   Workaround: Launch the tools manually.
 
+KP-61-NB10-016 GPS: corrupt notebook tabs when reordering
+
+  Problem:    When using the mouse to reorder editors within a notebook, and
+              then dragging the editor to some other place, it is possible
+              that the display gets corrupted.
+
+  Status:     This was fixed in 6.2.0 on 2015-01-13
+
+  Workaround: When this happens, you can still select editors with the
+              /Windows menu for instance. Or restart GPS to refresh the GUI.
+
 KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Problem:    When closing a debugger session, if the program being debugged
