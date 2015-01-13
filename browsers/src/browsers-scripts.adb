@@ -866,7 +866,9 @@ package body Browsers.Scripts is
       Context : Selection_Context;
    begin
       Context := Browser_Child_Record (Self.all).Build_Context (Event);
-      View.Get_View.Set_Details (Details, Event.Button);
+      if Event /= null then
+         View.Get_View.Set_Details (Details, Event.Button);
+      end if;
       Set_Browser_Information (Context, Details);
       Dummy := Call_Method
         (View, "on_create_context", Details'Unchecked_Access, Context);
