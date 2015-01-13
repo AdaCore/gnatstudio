@@ -1,5 +1,5 @@
 GNAT_SOURCES= \
-  gnat_ugn.texi \
+  doc/gnat_ugn/building_executable_programs_with_gnat.rst \
   impunit.ads \
   impunit.adb
 

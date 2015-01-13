@@ -80,7 +80,7 @@ endif
 	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/GPS_old/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - support/) | (cd $(sharedir)/gps; tar xf -)
-	-$(AWK) -f distrib/gnat_switches.awk < gnat/gnat_ugn.texi > $(sharedir)/gps/support/core/gnat_switches.py
+	-${PYTHON} distrib/gnat_switches.py > $(sharedir)/gps/support/core/gnat_switches.py
 	$(RM) $(sharedir)/gps/plug-ins/emacs.xml
 	$(RM) $(sharedir)/gps/plug-ins/python_doc.py
 	$(RM) $(sharedir)/gps/plug-ins/python_doc.pyc
