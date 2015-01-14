@@ -60,7 +60,6 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -2101,7 +2100,7 @@ package body Vsearch is
       --  context, otherwise it would return the context of the search widget
       --  itself
       Selected   : constant Selection_Context := Get_Current_Context (Kernel);
-      Module     : constant Module_ID := Get_Current_Module (Kernel);
+      Module     : constant Module_ID := Module_ID (Get_Creator (Selected));
       W          : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
       Buffer     : Gtk_Text_Buffer;
       First_Iter : Gtk_Text_Iter;

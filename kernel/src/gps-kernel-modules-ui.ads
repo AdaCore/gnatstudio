@@ -17,24 +17,6 @@
 
 --  UI extensions to GPS.Kernel.Modules
 --
---  Contextual menus
---  ================
---
---   Here is a description of the sequence of events used to display contextual
---   menus in GPS:
---      - Each object that should have a contextual menu calls
---        Register_Contextual_Menu. The kernel will automatically setup
---        appropriate gtk callbacks.
---      - Whenever the user presses the right mouse button, the kernel will ask
---        the object to report the context in which the event occured (name of
---        selected file, selected project,...).
---      - Each of the registered module then has the opportunity to add entries
---        in the contextual menu, based on this context.
---      - The menu is displayed, and the callback for the selected menu item
---        will be called as usual.
---      - The menu is automatically destroyed, and the context freed, when the
---        action has finished executing.
---
 --  Registering features
 --  ====================
 --
@@ -77,22 +59,6 @@ with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
 with XML_Utils;
 
 package GPS.Kernel.Modules.UI is
-
-   function Get_Current_Module
-     (Kernel : access Kernel_Handle_Record'Class) return Module_ID;
-   --  Return the module the currently selected MDI child belongs to.
-   --  null might be returned if there is either no selected child or GPS
-   --  couldn't find its module
-
-   -----------
-   -- Types --
-   -----------
-   --  See also the types defined in gps-kernel.ads
-
-   type GPS_Contextual_Menu_Record is new Gtk.Menu.Gtk_Menu_Record with record
-      Kernel : access Kernel_Handle_Record'Class;
-   end record;
-   type GPS_Contextual_Menu is access all GPS_Contextual_Menu_Record'Class;
 
    package Context_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Selection_Context);
@@ -168,7 +134,6 @@ package GPS.Kernel.Modules.UI is
       Action      : Action_Record_Access;
       Label       : String := "";
       Custom      : Custom_Expansion := null;
-      Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Group       : Integer := Default_Contextual_Group);
@@ -190,7 +155,7 @@ package GPS.Kernel.Modules.UI is
    --     %C => value returned by Custom (the menu will not appear if this
    --           returns the empty string or Custom is undefined)
    --  The label might contain a path to indicate submenus.
-   --  Image will be added to the left of the contextual menu entry.
+   --
    --  Ref_Item is the name of another contextual menu (not a label), relative
    --  to which the menu should be placed. There is no garantee that the new
    --  entry will appear just before or just after that item, in particular if

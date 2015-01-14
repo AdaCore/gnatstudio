@@ -105,6 +105,13 @@ package body GPS.Kernel.Modules.UI is
    System_Menus : constant Trace_Handle :=
      Create ("SYSTEM_MENUS", GNATCOLL.Traces.Off);
 
+   type GPS_Contextual_Menu_Record is new Gtk.Menu.Gtk_Menu_Record with record
+      Kernel : access Kernel_Handle_Record'Class;
+   end record;
+   type GPS_Contextual_Menu is access all GPS_Contextual_Menu_Record'Class;
+   --  A special type used for the contextual menu created by GPS. This is used
+   --  to monitor whether a menu is opened.
+
    type Contextual_Menu_User_Data is record
       Context_Func : Contextual_Menu_Factory;
       Kernel       : Kernel_Handle;
@@ -204,9 +211,6 @@ package body GPS.Kernel.Modules.UI is
 
    package Kernel_Contextuals is new GUI_Utils.User_Contextual_Menus
      (Contextual_Menu_User_Data);
-
-   function Get_Focus_Widget return Gtk_Widget;
-   --  Return the widget that currently has the keyboard focus
 
    procedure Contextual_Action
      (Object : access GObject_Record'Class; Action : Contextual_Menu_Access);
@@ -517,84 +521,6 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Execute;
 
-   ----------------------
-   -- Get_Focus_Widget --
-   ----------------------
-
-   function Get_Focus_Widget return Gtk_Widget is
-      use Widget_List;
-      List : Widget_List.Glist := List_Toplevels;
-      L    : Widget_List.Glist;
-      W    : Gtk_Widget;
-   begin
-      L := First (List);
-      while L /= Null_List loop
-         W := Get_Data (L);
-         --  ??? The first test here is a temporary workaround, we should
-         --  investigate why Get_Object (W) can be null.
-         --  This is to fix a fatal Storage_Error in the following scenario:
-         --   starting from the default desktop, make a child floating, and
-         --   close it using the keyboard shortcut for File->Close
-         if Get_Object (W) /= System.Null_Address
-           and then W.all in Gtk_Window_Record'Class
-           and then Is_Active (Gtk_Window (W))
-         then
-            Free (List);
-            return Get_Focus (Gtk_Window (W));
-         end if;
-
-         L := Next (L);
-      end loop;
-
-      Free (List);
-      return null;
-   end Get_Focus_Widget;
-
-   ------------------------
-   -- Get_Current_Module --
-   ------------------------
-
-   function Get_Current_Module
-     (Kernel : access Kernel_Handle_Record'Class) return Module_ID
-   is
-      F : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
-      C : MDI_Child;
-      W : Gtk_Widget;
-   begin
-      if Is_In_Destruction (Kernel) then
-         return null;
-      end if;
-
-      W := Get_Focus_Widget;
-
-      if W = null
-        or else W.In_Destruction
-      then
-         --  No valid window has the focus ? It is probably because we had a
-         --  dialog like the Open From Project dialog, which is being closed.
-         --  The focus is moved asynchronously, but we know it will go back to
-         --  the MDI at this point, and thus the current MDI child is the focus
-         --  one
-         C := F;
-
-      else
-         --  We have an explicit widget with the keyboard focus. Check whether
-         --  it belongs to an MDI child. If not, it is probably part of some
-         --  popup dialog, and therefore There is no module.
-         --  As a special case, if the focus widget's parent is a notebook,
-         --  we check whether the associated page is a MDI child, and behave
-         --  as if that child had the focus (EC19-008)
-
-         C := Find_MDI_Child_From_Widget (W);
-      end if;
-
-      if C = null or else C /= F then
-         return null;
-      else
-         return Get_Module_From_Child (C);
-      end if;
-   end Get_Current_Module;
-
    ---------------
    -- Emphasize --
    ---------------
@@ -728,13 +654,15 @@ package body GPS.Kernel.Modules.UI is
       use type XML_Utils.Node_Ptr;
       List    : constant Abstract_Module_List.List :=
         Kernel.Module_List (Module_ID_Record'Tag);
+      Context : Selection_Context;
       Current : Abstract_Module_List.Cursor :=
         Abstract_Module_List.First (List);
       Module  : Module_ID;
       Marker  : Location_Marker;
    begin
       if Load = null then
-         Module := Get_Current_Module (Kernel);
+         Context := Get_Current_Context (Kernel);
+         Module := Module_ID (Get_Creator (Context));
          if Module /= null then
             return Bookmark_Handler (Module, null);
          end if;
@@ -824,7 +752,6 @@ package body GPS.Kernel.Modules.UI is
    procedure On_Contextual_Menu_Hide
      (Self  : access Gtk_Widget_Record'Class) is
    begin
-      null;
       if Self.all in GPS_Contextual_Menu_Record'Class then
          GPS_Contextual_Menu (Self).Kernel.Contextual_Menu_Open := False;
       end if;
@@ -2135,13 +2062,11 @@ package body GPS.Kernel.Modules.UI is
       Action      : Action_Record_Access;
       Label       : String := "";
       Custom      : Custom_Expansion := null;
-      Stock_Image : String := "";
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Group       : Integer := Default_Contextual_Group)
    is
       T      : Contextual_Label_Param;
-      Pix    : GNAT.Strings.String_Access;
       Menu   : Contextual_Menu_Access;
       Filter : access Action_Filter_Record'Class;
 
@@ -2152,10 +2077,6 @@ package body GPS.Kernel.Modules.UI is
          T.Label  := new String'(Label);
          T.Custom := Custom;
          T.Filter := Create_Filter (Label);
-      end if;
-
-      if Stock_Image /= "" then
-         Pix := new String'(Stock_Image);
       end if;
 
       if Action = null then
@@ -2184,7 +2105,7 @@ package body GPS.Kernel.Modules.UI is
             Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => Filter,
-            Pix                   => Pix,
+            Pix                   => null,
             Next                  => null,
             Ref_Item              => null,
             Group                 => Group,
@@ -2199,7 +2120,7 @@ package body GPS.Kernel.Modules.UI is
             Menu_Type             => Type_Action,
             Name                  => new String'(Name),
             Action                => Action,
-            Pix                   => Pix,
+            Pix                   => null,
             Next                  => null,
             Group                 => Group,
             Visible               => True,
