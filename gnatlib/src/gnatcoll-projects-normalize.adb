@@ -2495,6 +2495,9 @@ package body GNATCOLL.Projects.Normalize is
    is
       V : Name_Id;
 
+      Local_Val : constant String :=
+        +Unix_Style_Full_Name (Create (+Value), Cygwin_Style => True);
+
       procedure Add_Or_Replace
         (Tree_Node      : Project_Node_Tree_Ref;
          Project        : Project_Type;
@@ -2531,10 +2534,10 @@ package body GNATCOLL.Projects.Normalize is
       end Add_Or_Replace;
 
    begin
-      if Value = "" then
+      if Local_Val = "" then
          V := Empty_String;
       else
-         V := Get_String (Value);
+         V := Get_String (Local_Val);
       end if;
 
       Internal_Set_Attribute
@@ -2561,6 +2564,11 @@ package body GNATCOLL.Projects.Normalize is
    is
       List : Project_Node_Id := Empty_Node;
 
+      function Convert_Dir_Separators
+        (Values : GNAT.Strings.String_List)
+      return GNAT.Strings.String_List;
+      --  Replace all "\" with "/".
+
       procedure Add_Or_Replace
         (Tree_Node      : Project_Node_Tree_Ref;
          Project        : Project_Type;
@@ -2570,6 +2578,26 @@ package body GNATCOLL.Projects.Normalize is
          Case_Item      : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
       --  for Case_Item
+
+      function Convert_Dir_Separators
+        (Values : GNAT.Strings.String_List)
+         return GNAT.Strings.String_List
+      is
+         Result : GNAT.Strings.String_List (Values'Range);
+      begin
+         for A in Values'Range loop
+            if Values (A) /= null then
+               Result (A) := new String'
+                 (+Unix_Style_Full_Name
+                    (Create (+Values (A).all), Cygwin_Style => True));
+            end if;
+         end loop;
+
+         return Result;
+      end Convert_Dir_Separators;
+
+      Vals : constant GNAT.Strings.String_List :=
+        Convert_Dir_Separators (Values);
 
       procedure Add_Or_Replace
         (Tree_Node      : Project_Node_Tree_Ref;
@@ -2589,10 +2617,10 @@ package body GNATCOLL.Projects.Normalize is
             List := Default_Project_Node
               (Tree_Node, N_Literal_String_List, Prj.List);
 
-            for A in reverse Values'Range loop
-               if Values (A) /= null then
+            for A in reverse Vals'Range loop
+               if Vals (A) /= null then
                   Expr := String_As_Expression
-                    (Get_String (Values (A).all), Tree_Node);
+                    (Get_String (Vals (A).all), Tree_Node);
                   Set_Next_Expression_In_List
                     (Expr, Tree_Node,
                      First_Expression_In_List (List, Tree_Node));

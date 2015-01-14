@@ -181,8 +181,7 @@ procedure GPS.Main is
    Pid_Image  : constant String := String_Utils.Image (Get_Process_Id);
    Gtk_Errors : constant Trace_Handle := Create ("GTK");
 
-   Memory_Monitor : Boolean;
-   Memory_Stack_Depth : constant := 3;
+   Memory_Stack_Depth : constant := 1;
    --  Stack depth for GNATCOLL.Memory
 
    Refactor_Trace         : constant Trace_Handle :=
@@ -448,6 +447,17 @@ procedure GPS.Main is
       end Get_Environ;
 
    begin
+      declare
+         Tmp  : constant String := Getenv ("GPS_MEMORY_MONITOR");
+         Tmp2 : constant String := Getenv ("GPS_MEMORY_CHECK");
+
+      begin
+         GNATCOLL.Memory.Configure
+           (Activate_Monitor  => Tmp /= "",
+            Stack_Trace_Depth => Memory_Stack_Depth,
+            Disable_Free      => Tmp2 /= "");
+      end;
+
       --  Reset the environment that was set before GPS was started (since
       --  starting GPS will generally imply a change in LD_LIBRARY_PATH to
       --  point to the right libraries
@@ -716,14 +726,11 @@ procedure GPS.Main is
          File : constant Virtual_File :=
                   Create_From_Dir (GPS_Home_Dir, "traces.cfg");
       begin
-         --   Add the decorators first, so that the proper factory is
-         --   used for them when parsing the config file.
-         Trace_Support.Add_Trace_Decorators;
-
          GNATCOLL.Traces.Parse_Config_File
            (Filename     => No_File,
             Default      => File,
             On_Exception => GNATCOLL.Traces.Deactivate);
+         Trace_Support.Add_Trace_Decorators;
       exception
          when others =>
             Put_Line (Standard_Error,
@@ -731,15 +738,6 @@ procedure GPS.Main is
             Status_Code := 1;
             return;
       end;
-
-      --  Check whether we should enable memory monitor. We do not use a
-      --  constant for the trace_handle, since we must create it only after
-      --  the call to Add_Trace_Decorators.
-      Memory_Monitor := Active (Create ("DEBUG.ADA_MEMORY", Off));
-      GNATCOLL.Memory.Configure
-        (Activate_Monitor  => Memory_Monitor,
-         Stack_Trace_Depth => Memory_Stack_Depth,
-         Disable_Free      => False);
 
       Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
              ") hosted on " & Config.Target);
@@ -1468,11 +1466,16 @@ procedure GPS.Main is
 
       Free (Startup_Dir);
 
-      if Memory_Monitor then
-         GNATCOLL.Memory.Dump
-           (Size   => Memory_Stack_Depth,
-            Report => GNATCOLL.Memory.All_Reports);
-      end if;
+      declare
+         Tmp : String_Access := Getenv ("GPS_MEMORY_MONITOR");
+      begin
+         if Tmp.all /= "" then
+            GNATCOLL.Memory.Dump
+              (Size   => Memory_Stack_Depth,
+               Report => GNATCOLL.Memory.All_Reports);
+         end if;
+         Free (Tmp);
+      end;
    end Shutdown_Callback;
 
    --------------------

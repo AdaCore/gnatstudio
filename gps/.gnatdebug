@@ -11,8 +11,6 @@ DEBUG.STACK_TRACE=no
 DEBUG.LOCATION=no
 DEBUG.ENCLOSING_ENTITY=no
 DEBUG.COUNT=no
-DEBUG.MEMORY=no
-DEBUG.ADA_MEMORY=no
 
 --  Always show unexpected exceptions, no matter what other traces are active
 
@@ -26,7 +24,7 @@ OVERRIDE_MIDDLE_CLICK_PASTE = yes
 
 --  Whether to use a system menu bar
 
-SYSTEM_MENUS = yes
+SYSTEM_MENUS = no
 
 --  Select the modules that should be loaded
 

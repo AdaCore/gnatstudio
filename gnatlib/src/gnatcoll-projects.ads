@@ -1447,6 +1447,13 @@ package GNATCOLL.Projects is
    --  Index is the index for the attribute (for instance the file name when
    --  modifying the switches).
    --  A null entry in Values is ignored.
+   --  All backslashes in Values are systematically replaced with slashes.
+   --  This is done to prevent inconsistencies in projects shared by both
+   --  Windows and Unix users. Slashes are fully supported in project parser
+   --  under all operating systems, while backslashes cause problems under
+   --  unix-style systems.
+   --  In Windows-specific cases when exactly a backslash is needed it is
+   --  advised to modify the project manually.
    --  This subprogram properly handles renaming packages (i.e the project
    --  that contains the real definition of the package is modified, not
    --  necessarily Project itself).

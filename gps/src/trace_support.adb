@@ -20,9 +20,7 @@ with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 package body Trace_Support is
 
-   type Factory_Decorator is new Trace_Handle_Record with record
-      Previous : Byte_Count := 0;
-   end record;
+   type Factory_Decorator is new Trace_Handle_Record with null record;
    overriding procedure Post_Decorator
       (Handle   : in out Factory_Decorator;
        Stream   : in out Trace_Stream_Record'Class;
@@ -32,22 +30,8 @@ package body Trace_Support is
    --  A decorator that displays the total amount of memory allocated so far
    --  in the application.
 
-   type Ada_Factory_Decorator is new Trace_Handle_Record with record
-      Previous : Byte_Count := 0;
-   end record;
-   overriding procedure Post_Decorator
-      (Handle   : in out Ada_Factory_Decorator;
-       Stream   : in out Trace_Stream_Record'Class;
-       Location : String;
-       Entity   : String;
-       Message  : String);
-   --  A decorator that displays the total amount of memory allocated from Ada
-   --  so far in the application.
-
    function Memory_Factory return Trace_Handle is (new Factory_Decorator);
-   function Memory_Ada_Factory return Trace_Handle
-      is (new Ada_Factory_Decorator);
-   --  Build the decorators
+   --  Build the DEBUG.MEMORY decorator
 
    --------------------------
    -- Add_Trace_Decorators --
@@ -56,34 +40,8 @@ package body Trace_Support is
    procedure Add_Trace_Decorators is
    begin
       Add_Global_Decorator
-         (Create ("DEBUG.ADA_MEMORY", Off,
-                  Factory => Memory_Ada_Factory'Access));
-      Add_Global_Decorator
          (Create ("DEBUG.MEMORY", Off, Factory => Memory_Factory'Access));
    end Add_Trace_Decorators;
-
-   -------------------
-   -- Pre_Decorator --
-   -------------------
-
-   overriding procedure Post_Decorator
-      (Handle   : in out Ada_Factory_Decorator;
-       Stream   : in out Trace_Stream_Record'Class;
-       Location : String;
-       Entity   : String;
-       Message  : String)
-   is
-      pragma Unreferenced (Location, Entity, Message);
-      Watermark : constant Watermark_Info := Get_Ada_Allocations;
-   begin
-      if Watermark.High /= 0 then
-         Put (Stream, " [AdaWatermark:"
-            & (if Watermark.Current > Handle.Previous then '>' else '<')
-            & Watermark.Current'Img & '/'
-            & Watermark.High'Img & "]");
-      end if;
-      Handle.Previous := Watermark.Current;
-   end Post_Decorator;
 
    -------------------
    -- Pre_Decorator --
@@ -96,14 +54,13 @@ package body Trace_Support is
        Entity   : String;
        Message  : String)
    is
-      pragma Unreferenced (Location, Entity, Message);
-      Watermark : constant Watermark_Info := Get_Allocations;
+      pragma Unreferenced (Handle, Location, Entity, Message);
+      Watermark : constant Watermark_Info := Get_Ada_Allocations;
    begin
-      Put (Stream, " [Watermark:"
-         & (if Watermark.Current > Handle.Previous then '>' else '<')
-         & Watermark.Current'Img & '/'
-         & Watermark.High'Img & "]");
-      Handle.Previous := Watermark.Current;
+      if Watermark.High /= 0 then
+         Put (Stream, " [Watermark:" & Watermark.Current'Img & '/'
+            & Watermark.High'Img & "]");
+      end if;
    end Post_Decorator;
 
 end Trace_Support;
