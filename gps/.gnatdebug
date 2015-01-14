@@ -11,6 +11,8 @@ DEBUG.STACK_TRACE=no
 DEBUG.LOCATION=no
 DEBUG.ENCLOSING_ENTITY=no
 DEBUG.COUNT=no
+DEBUG.MEMORY=no
+DEBUG.ADA_MEMORY=no
 
 --  Always show unexpected exceptions, no matter what other traces are active
 
