@@ -30,6 +30,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Finalization;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
+with Unchecked_Deallocation;
 
 package Language.Libclang is
 
@@ -157,6 +158,20 @@ package Language.Libclang is
    type Clang_Context;
    type Clang_Context_Access is access all Clang_Context;
 
+   type Parse_Callback is abstract tagged null record;
+   procedure Call
+     (Self : access Parse_Callback;
+      File : Virtual_File; TU : Clang_Translation_Unit) is abstract;
+   type Parse_Callback_Access is access all Parse_Callback'Class;
+
+   procedure Free is new Unchecked_Deallocation
+     (Parse_Callback'Class, Parse_Callback_Access);
+
+   package Callbacks_Vectors is
+     new Ada.Containers.Vectors (Positive, Parse_Callback_Access);
+
+   type Unbounded_String_Array_Access is access all Unbounded_String_Array;
+
    type Parsing_Request_Priority is (Low, High);
    type Parsing_Request_Kind is (Parse, Reparse);
    type Parsing_Request_Record (Kind : Parsing_Request_Kind := Parse) is record
@@ -166,16 +181,20 @@ package Language.Libclang is
       File_Name    : Unbounded_String;
       Project_Name : Unbounded_String;
       Cache_Entry  : TU_Cache_Access;
+      Callbacks    : Callbacks_Vectors.Vector;
       case Kind is
          when Parse =>
-            Switches      : access Unbounded_String_Array;
+            Switches      : Unbounded_String_Array_Access;
          when Reparse =>
             TU            : Clang_Translation_Unit;
-            Unsaved_Files : access Unsaved_File_Array;
+            Unsaved_Files : Unsaved_File_Array_Access;
       end case;
    end record;
-
    type Parsing_Request is access all Parsing_Request_Record;
+   procedure Free is new
+     Unchecked_Deallocation (Parsing_Request_Record, Parsing_Request);
+
+   procedure Destroy (Request : in out Parsing_Request);
 
    function Unique_Key (Request : Parsing_Request) return Unbounded_String;
 
@@ -183,6 +202,7 @@ package Language.Libclang is
       TU        : Clang_Translation_Unit;
       File_Name : Unbounded_String;
       Context   : Clang_Context_Access;
+      Callbacks : Callbacks_Vectors.Vector;
    end record;
 
    type Clang_Context is tagged limited record
@@ -229,7 +249,8 @@ package Language.Libclang is
       File         : GNATCOLL.VFS.Virtual_File;
       Reparse      : Boolean := False;
       Default_Lang : String := "c++";
-      Prio         : Parsing_Request_Priority := Low);
+      Prio         : Parsing_Request_Priority := Low;
+      Callback     : in out Parse_Callback_Access);
 
    function Context
      (Project : Project_Type) return Clang_Context_Access;

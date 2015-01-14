@@ -26,7 +26,6 @@ with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with Interfaces.C.Strings;
 with Language.Libclang_Tree; use Language.Libclang_Tree;
 with Clang_Xref; use Clang_Xref;
-with GPS.Kernel.Commands; use GPS.Kernel.Commands;
 with String_Utils; use String_Utils;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Real_Time;
@@ -34,10 +33,17 @@ with Ada.Containers.Unbounded_Synchronized_Queues;
 with Ada.Containers.Unbounded_Priority_Queues;
 with Ada.Containers.Synchronized_Queue_Interfaces;
 with Glib.Main;
+with Commands; use Commands;
+with Commands.Generic_Asynchronous;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+pragma Warnings (Off);
+with System.Traceback.Symbolic;
+pragma Warnings (On);
 
 package body Language.Libclang is
 
    LRU_Size : constant := 16;
+   Nb_Tasks : constant := 4;
 
    Diagnostics : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("LIBCLANG.DIAGNOSTICS", Off);
@@ -46,6 +52,7 @@ package body Language.Libclang is
      GNATCOLL.Traces.Create ("LIBCLANG", On);
 
    function Parsing_Timeout_Handler return Boolean;
+   procedure Index_One_File;
 
    Clang_Options : constant Clang_Translation_Unit_Flags :=
      Includebriefcommentsincodecompletion
@@ -86,11 +93,38 @@ package body Language.Libclang is
    Parsing_Request_Queue  : Parsing_Requests_Queue_Type;
    Parsing_Response_Queue : Parsing_Response_Queues.Queue;
 
+   ------------------
+   -- Parsing_Task --
+   ------------------
+
    task type Parsing_Task is
       entry Start;
       entry Stop;
       entry Finish;
    end Parsing_Task;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Request : in out Parsing_Request) is
+      procedure Free is new Unchecked_Deallocation
+        (Unbounded_String_Array, Unbounded_String_Array_Access);
+   begin
+      case Request.Kind  is
+         when Parse =>
+            Free (Request.Switches);
+         when Reparse =>
+            Destroy (Request.Unsaved_Files);
+      end case;
+
+      Free (Request);
+
+   end Destroy;
+
+   ------------------
+   -- Parsing_Task --
+   ------------------
 
    task body Parsing_Task is
       Request   : Parsing_Request;
@@ -135,8 +169,9 @@ package body Language.Libclang is
             end select;
 
             Trace (Me, "Parsing " & (+Request.File_Name)
-                   & " Priority : " & Request.Prio'Img
-                   & " Request kind : " & Request.Kind'Img);
+                   & ", From task :" & Image (Current_Task)
+                   & ", Priority : " & Request.Prio'Img
+                   & ", Request kind : " & Request.Kind'Img);
 
             case Request.Kind is
             when Parse =>
@@ -152,9 +187,12 @@ package body Language.Libclang is
                   Options => Request.Options);
                TU := Request.TU;
             end case;
-            Request.Cache_Entry.TU := TU;
+
             Parsing_Response_Queue.Enqueue
-              (Parsing_Response'(TU, Request.File_Name, Request.Context));
+              (Parsing_Response'
+                 (TU, Request.File_Name, Request.Context, Request.Callbacks));
+
+            Free (Request);
 
             <<Cont>>
          end;
@@ -167,7 +205,6 @@ package body Language.Libclang is
          Trace (Me, "Exception in parsing task" & Image (Current_Task));
    end Parsing_Task;
 
-   Nb_Tasks      : constant := 4;
    Parsing_Tasks : array (1 .. Nb_Tasks) of Parsing_Task;
 
    procedure Enqueue_Translation_Unit
@@ -175,7 +212,8 @@ package body Language.Libclang is
       File : GNATCOLL.VFS.Virtual_File;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
       Default_Lang : String := "c++";
-      Prio : Parsing_Request_Priority := Low);
+      Prio     : Parsing_Request_Priority := Low;
+      Callback : Parse_Callback_Access := null);
 
    procedure Free
    is new Ada.Unchecked_Deallocation (TU_Maps.Map, Tu_Map_Access);
@@ -212,12 +250,9 @@ package body Language.Libclang is
    procedure On_Project_View_Changed
      (Kernel : access Kernel_Handle_Record'Class);
 
-   procedure Parse_One_File
-     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
-
    function Unique_Key (Request : Parsing_Request) return Unbounded_String
    is
-     (Request.File_Name & Request.Project_Name);
+     (Request.File_Name & Request.Project_Name & Request.Prio'Img);
 
    -------------------
    -- P_Request_Set --
@@ -237,35 +272,39 @@ package body Language.Libclang is
             declare
                Existing_Req : constant Parsing_Request :=
                  Map.Element (Req_Key);
+               use type Callbacks_Vectors.Vector;
             begin
                --  if there is already a request and the new request is a
                --  parse, the existing request will do in any case, so just
-               --  return
+               --  add the new callback if there is one
                if Request.Kind = Parse then
+                  Existing_Req.Callbacks :=
+                    Request.Callbacks & Existing_Req.Callbacks;
                   return;
                else
                   --  TODO ??? Free the old request
                   --  Replace the existing request with the new one
+                  Request.Callbacks :=
+                    Request.Callbacks & Existing_Req.Callbacks;
                   Existing_Req.all := Request.all;
 
                   --  Here, in the case where both requests are reparse, we
                   --  assume that Request is more recent than Existing_Req,
                   --  most notably in regards to unsaved_files. This fits
-                  --  with the rest of the model, where only the main threads
-                  --  enqueues requests, and the only unsaved file is the
-                  --  current buffer
+                  --  with the rest of the model, where only the main
+                  --  threads enqueues requests, and the only unsaved
+                  --  file is the current buffer
                end if;
+               return;
             end;
-
-            null;
-         else
-            --  Simple case, we don't yet have a request in, just add it
-            Map.Include (Req_Key, Request);
-
-            pragma Warnings (Off);
-            Queue.Enqueue (Request);
-            pragma Warnings (On);
          end if;
+
+         --  Simple case, we don't yet have a request in, just add it
+         Map.Include (Req_Key, Request);
+
+         pragma Warnings (Off);
+         Queue.Enqueue (Request);
+         pragma Warnings (On);
       end Enqueue;
 
       -------------
@@ -408,9 +447,24 @@ package body Language.Libclang is
    is
       U_File_Name : constant Unbounded_String := +File_Name;
       Cache : TU_Cache_Access;
+      use LRU_Lists;
    begin
+      Trace (Me, "Adding TU to cache " & File_Name);
+
       if Self.TU_Cache.Contains (U_File_Name) then
          Cache := Self.TU_Cache.Element (U_File_Name);
+
+         Trace (Me, "SELF CONTAINS TU, "
+                & Boolean'Image (Cache.TU /= No_Translation_Unit) & " "
+                & Boolean'Image (Cache.TU /= Translation_Unit));
+
+         if Cache.TU /= No_Translation_Unit
+           and then Cache.TU /= Translation_Unit
+         then
+            Trace (Me, "Freeing old TU " & File_Name);
+            Dispose (Cache.TU);
+         end if;
+
          Cache.TU := Translation_Unit;
       else
          Cache :=
@@ -418,16 +472,38 @@ package body Language.Libclang is
          Self.TU_Cache.Include (U_File_Name, Cache);
       end if;
 
-      Self.LRU.Append (U_File_Name);
+      --  Handle LRU bookkeeping
+
+      declare
+         C : LRU_Lists.Cursor := Self.LRU.Find (U_File_Name);
+      begin
+         --  If the file name is already in the LRU, we want to put it back at
+         --  the beginning of the list, so remove the existing element
+
+         if C /= No_Element then
+            Delete (Self.LRU.all, C);
+         end if;
+
+         --  In every case, append the file name at the beginning of the list
+         Self.LRU.Append (U_File_Name);
+      end;
 
       --  Remove elements from the cache if > LRU_Size
 
-      if Self.TU_Cache.Length > LRU_Size then
+      if Self.LRU.Length > LRU_Size then
          declare
             F : constant Unbounded_String := Self.LRU.First_Element;
          begin
-            Destroy (Self.TU_Cache.Reference (F));
-            Self.TU_Cache.Delete (F);
+            --  We are not actually removing element from the cache, so that we
+            --  can trace dangling pointers
+            Trace (Me, "Removing " & (+F) & " from cache");
+            begin
+               Dispose (Self.TU_Cache.Element (F).TU);
+            exception
+               when E : others =>
+                  Trace (Me, "EXCEPTION !");
+                  Trace (Me, System.Traceback.Symbolic.Symbolic_Traceback (E));
+            end;
             Self.LRU.Delete_First;
          end;
       end if;
@@ -577,7 +653,8 @@ package body Language.Libclang is
       File         : GNATCOLL.VFS.Virtual_File;
       Reparse      : Boolean := False;
       Default_Lang : String := "c++";
-      Prio         : Parsing_Request_Priority := Low)
+      Prio         : Parsing_Request_Priority := Low;
+      Callback     : in out Parse_Callback_Access)
    is
       Buffer : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File, False, False, False, False);
@@ -612,18 +689,22 @@ package body Language.Libclang is
                         File,
                         (0 => Create_Unsaved_File
                              (String (File.Full_Name.all), Buffer_Text)),
-                        Default_Lang, Prio => Prio);
+                        Default_Lang, Prio => Prio, Callback => Callback);
                      Cache_Val.Cache.Version := Buffer.Version;
                      return;
                   end;
                else
-                  return;
+                  if Callback /= null then
+                     Callback.Call (File, Cache_Val.Cache.TU);
+                     Free (Callback);
+                  end if;
                end if;
             end;
          end if;
 
       end if;
-      Enqueue_Translation_Unit (Kernel, File, No_Unsaved_Files, Prio => Prio);
+      Enqueue_Translation_Unit (Kernel, File, No_Unsaved_Files, Prio => Prio,
+                                Callback => Callback);
    end Enqueue_Translation_Unit;
 
    ----------------------
@@ -644,10 +725,11 @@ package body Language.Libclang is
       Context : Clang_Context_Access;
 
       Ret : Clang_Translation_Unit;
-
+      Callback : Parse_Callback_Access := null;
    begin
       Enqueue_Translation_Unit
-        (Kernel, File, Reparse, Default_Lang, Prio => High);
+        (Kernel, File, Reparse, Default_Lang, Prio => High,
+         Callback => Callback);
 
       if Clang_Module_Id /= null then
          Context :=
@@ -696,7 +778,8 @@ package body Language.Libclang is
       File : GNATCOLL.VFS.Virtual_File;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
       Default_Lang : String := "c++";
-      Prio : Parsing_Request_Priority := Low)
+      Prio : Parsing_Request_Priority := Low;
+      Callback     : Parse_Callback_Access := null)
    is
       --  ??? We should fill other unsaved_files! ??? Or should we ? I think
       --  that filling the current file as unsaved is enough. We can, at
@@ -771,7 +854,13 @@ package body Language.Libclang is
                Cache_Entry   => TU_Wrapper.Cache,
                Prio          => Prio,
                Project_Name  =>
-                 +(String (F_Info.Project.Project_Path.Full_Name.all)));
+                 +(String (F_Info.Project.Project_Path.Full_Name.all)),
+               Callbacks     => <>);
+
+            if Callback /= null then
+               Request.Callbacks.Append (Callback);
+            end if;
+
             Parsing_Request_Queue.Enqueue (Request);
 
          else
@@ -799,15 +888,21 @@ package body Language.Libclang is
                     else Empty_String_Array);
             begin
                Request := new Parsing_Request_Record'
-                 (Kind        => Parse,
-                  Context     => Context,
-                  File_Name   => +File_Name,
-                  Switches    => new Unbounded_String_Array'(Switches),
-                  Options     => Clang_Options,
-                  Cache_Entry => TU_Wrapper.Cache,
-                  Prio        => Prio,
-                  Project_Name  =>
-                    +(String (F_Info.Project.Project_Path.Full_Name.all)));
+                 (Kind         => Parse,
+                  Context      => Context,
+                  File_Name    => +File_Name,
+                  Switches     => new Unbounded_String_Array'(Switches),
+                  Options      => Clang_Options,
+                  Cache_Entry  => TU_Wrapper.Cache,
+                  Prio         => Prio,
+                  Project_Name =>
+                    +(String (F_Info.Project.Project_Path.Full_Name.all)),
+                  Callbacks    => <>);
+
+               if Callback /= null then
+                  Request.Callbacks.Append (Callback);
+               end if;
+
                Parsing_Request_Queue.Enqueue (Request);
             end;
          end if;
@@ -819,16 +914,62 @@ package body Language.Libclang is
    package Virtual_File_Vectors is new Ada.Containers.Vectors
      (Positive, Virtual_File);
 
-   --------------------
-   -- Parse_One_File --
-   --------------------
+   type Parse_Files_Data_Type is record
+      Max_Idx, Current_Idx : Natural := 0;
+   end record;
+   type Parse_Files_Data_Type_Access is access all Parse_Files_Data_Type;
 
-   procedure Parse_One_File
-     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Parse_Files_Data_Type, Parse_Files_Data_Type_Access);
+
+   -------------------------
+   -- Parse_Files_Iterate --
+   -------------------------
+
+   procedure Parse_Files_Iterate
+     (Data    : in out Parse_Files_Data_Type_Access;
+      Command : Command_Access;
+      Result  : out Command_Return_Type);
+
+   procedure Parse_Files_Iterate
+     (Data    : in out Parse_Files_Data_Type_Access;
+      Command : Command_Access;
+      Result  : out Command_Return_Type)
    is
    begin
-      Enqueue_Translation_Unit (Core_Kernel (Kernel), File, False);
-   end Parse_One_File;
+      Command.Set_Progress
+        (Progress_Record'(Running, Data.Current_Idx, Data.Max_Idx));
+
+      if Data.Current_Idx = Data.Max_Idx then
+         Result := Success;
+      else
+         Result := Execute_Again;
+      end if;
+   end Parse_Files_Iterate;
+
+   package Parse_Files_Command is
+     new Commands.Generic_Asynchronous (Parse_Files_Data_Type_Access);
+
+   package Parse_Callback_Package is
+      type Parse_For_Cache is new Parse_Callback with record
+         Command : Parse_Files_Data_Type_Access;
+      end record;
+
+      overriding procedure Call
+        (Self : access Parse_For_Cache;
+         File : Virtual_File; TU : Clang_Translation_Unit);
+   end Parse_Callback_Package;
+
+   package body Parse_Callback_Package is
+      overriding procedure Call
+        (Self : access Parse_For_Cache;
+         File : Virtual_File; TU : Clang_Translation_Unit) is
+         pragma Unreferenced (TU);
+      begin
+         Trace (Me, "Finished parsing " & String (File.Full_Name.all));
+         Self.Command.Current_Idx := Self.Command.Current_Idx + 1;
+      end Call;
+   end Parse_Callback_Package;
 
    -----------------
    -- Clean_Cache --
@@ -837,6 +978,7 @@ package body Language.Libclang is
 
    procedure Clean_Cache (Id : in out Clang_Module_Record) is
    begin
+      Trace (Me, "Cleaning all cache for libclang");
       for C of Id.Global_Cache loop
          C.all.Destroy;
       end loop;
@@ -855,7 +997,14 @@ package body Language.Libclang is
       RP     : constant GNATCOLL.Projects.Project_Type := P_Tree.Root_Project;
       Files : File_Array_Access;
       Filtered_Files : Virtual_File_Vectors.Vector;
+      Command_Data : constant Parse_Files_Data_Type_Access
+        := new Parse_Files_Data_Type;
+      Command : Parse_Files_Command.Generic_Asynchronous_Command_Access;
    begin
+
+      Parse_Files_Command.Create (Command, "libclang parsing files",
+                                  Command_Data, Parse_Files_Iterate'Access);
+
       while Parsing_Request_Queue.Length > 0 loop
          delay 0.1;
       end loop;
@@ -911,61 +1060,76 @@ package body Language.Libclang is
          end if;
       end loop;
 
+      Unchecked_Free (Files);
+
       --  Call Translation_Unit on them to populate the cache for the file
+      Command_Data.Max_Idx := Natural (Filtered_Files.Length);
+      for F of Filtered_Files loop
+         declare
+            Callback : Parse_Callback_Access :=
+              new Parse_Callback_Package.Parse_For_Cache'
+                (Command => Command_Data);
+         begin
+            Enqueue_Translation_Unit (Core_Kernel (Kernel), F, False,
+                                      Callback => Callback);
+         end;
+      end loop;
 
-      declare
-         Files_Array : constant File_Array_Access :=
-           new File_Array
-             (Filtered_Files.First_Index .. Filtered_Files.Last_Index);
-
-      begin
-         for I in Filtered_Files.First_Index .. Filtered_Files.Last_Index loop
-            Files_Array (I) := Filtered_Files (I);
-         end loop;
-
-         Do_On_Each_File
-           (Handle         => Kernel,
-            Callback       => Parse_One_File'Access,
-            Chunk_Size     => 1,
-            Queue_Name     => "parse_clang_files_queue",
-            Operation_Name => "parse clang files",
-            Files          => Files_Array);
-      end;
+      Launch_Background_Command (Kernel          => Kernel,
+                                 Command         => Command,
+                                 Active          => False,
+                                 Show_Bar        => True);
 
    end On_Project_View_Changed;
+
+   --------------------
+   -- Index_One_File --
+   --------------------
+
+   procedure Index_One_File is
+      use Ada.Real_Time;
+      T1 : constant Ada.Real_Time.Time := Clock;
+      Refs : constant Sym_To_Loc_Map := new Symbol_To_Location_Maps.Map;
+      Response : Parsing_Response;
+   begin
+      Parsing_Response_Queue.Dequeue (Response);
+
+      Response.Context.Add_TU_To_Cache
+        (+Response.File_Name, Response.TU);
+      Trace (Me, "Start indexing for file " & (+Response.File_Name));
+      Indexer.Index_Translation_Unit
+        (Index_Action  =>
+           Response.Context.Index_Action,
+         Client_Data   =>
+           Indexer_Data'(Refs, Response.Context.Sym_Table),
+         Index_Options => CXIndexOpt_None,
+         TU            =>
+           Response.Context.TU_Cache.Element (Response.File_Name).TU);
+
+      --  Reset the references cache for file, and get the new cache
+      Response.Context.Reset_Refs (+Response.File_Name, Refs);
+
+      --  Call all the callbacks and free them
+      for CB of Response.Callbacks loop
+         CB.Call (Create (Filesystem_String (+Response.File_Name)),
+                  Response.TU);
+         Free (CB);
+      end loop;
+
+      Trace
+        (Me, "Indexing finished, took "
+         & Duration'Image (To_Duration (Clock - T1)));
+   end Index_One_File;
 
    -----------------------------
    -- Parsing_Timeout_Handler --
    -----------------------------
 
    function Parsing_Timeout_Handler return Boolean is
-      use Ada.Real_Time;
-      T1 : constant Ada.Real_Time.Time := Clock;
-      Response : Parsing_Response;
    begin
+
       while Parsing_Response_Queue.Current_Use > 0 loop
-         declare
-            Refs : constant Sym_To_Loc_Map := new Symbol_To_Location_Maps.Map;
-         begin
-            Parsing_Response_Queue.Dequeue (Response);
-            Response.Context.Add_TU_To_Cache
-              (+Response.File_Name, Response.TU);
-            Trace (Me, "Start indexing for file " & (+Response.File_Name));
-            Indexer.Index_Translation_Unit
-              (Index_Action  =>
-                 Response.Context.Index_Action,
-               Client_Data   =>
-                 Indexer_Data'(Refs, Response.Context.Sym_Table),
-               Index_Options => CXIndexOpt_None,
-               TU            => Response.TU);
-
-            --  Reset the references cache for file, and get the new cache
-            Response.Context.Reset_Refs (+Response.File_Name, Refs);
-
-            Trace
-              (Me, "Indexing finished, took "
-               & Duration'Image (To_Duration (Clock - T1)));
-         end;
+         Index_One_File;
       end loop;
       return True;
    end Parsing_Timeout_Handler;
@@ -1017,7 +1181,7 @@ package body Language.Libclang is
    procedure Destroy (Tu_Cache : in out TU_Cache_Access) is
    begin
       if Tu_Cache.TU /= No_Translation_Unit then
-         clang_disposeTranslationUnit (Tu_Cache.TU);
+         Dispose (Tu_Cache.TU);
       end if;
       Free (Tu_Cache);
    end Destroy;
@@ -1043,13 +1207,13 @@ package body Language.Libclang is
    begin
       loop
          if Self.Cache.TU = No_Translation_Unit then
-            delay 0.01;
-         else
             declare
                Dummy : Boolean := Parsing_Timeout_Handler;
             begin
                null;
             end;
+            delay 0.01;
+         else
             return Self.Cache.TU;
          end if;
       end loop;

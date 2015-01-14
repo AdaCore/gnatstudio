@@ -104,7 +104,12 @@ package Libclang.Index is
    --  Create an Unsaved file.
    --  If Length = -1, do not consider it, but compute the length of Buffer.
 
+   procedure Destroy_Unsaved_File (F : in out Unsaved_File);
+
    type Unsaved_File_Array is array (Natural range <>) of Unsaved_File;
+   type Unsaved_File_Array_Access is access all Unsaved_File_Array;
+
+   procedure Destroy (Files : in out Unsaved_File_Array_Access);
 
    No_Unsaved_Files : constant Unsaved_File_Array (1 .. 0) :=
      (others => No_Unsaved_File);

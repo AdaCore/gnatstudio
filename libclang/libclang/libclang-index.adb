@@ -24,10 +24,15 @@ with Interfaces.C.Pointers;
 with clang_c_CXString_h; use clang_c_CXString_h;
 with Libclang.File;
 with System.Address_To_Access_Conversions;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with Ada.Unchecked_Deallocation;
 
 package body Libclang.Index is
 
    Debug : constant Boolean := False;
+
+   Me : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("LIBCLANG", On);
 
    type Complete_Results_Access is access all CXCodeCompleteResults;
 
@@ -119,6 +124,8 @@ package body Libclang.Index is
 
       First_Free : Natural := CL'First;
    begin
+      Trace (Me, "Parsing translation unit " & Source_Filename);
+
       for J in Command_Line_Args'Range loop
          declare
             Arg : constant String := To_String (Command_Line_Args (J));
@@ -465,8 +472,9 @@ package body Libclang.Index is
 
    procedure Dispose (TU : in out Clang_Translation_Unit) is
    begin
+      Trace (Me, "Freeing translation unit" & Spelling (TU));
       if TU = No_Translation_Unit then
-         return;
+         Trace (Me, "WARNING : Trying to dispose of already freed TU");
       end if;
 
       clang_disposeTranslationUnit (TU);
@@ -658,6 +666,31 @@ package body Libclang.Index is
    begin
       return Result.Result.CursorKind;
    end Kind;
+
+   --------------------------
+   -- Destroy_Unsaved_File --
+   --------------------------
+
+   procedure Destroy_Unsaved_File (F : in out Unsaved_File) is
+   begin
+      Free (F.Filename);
+      Free (F.Contents);
+   end Destroy_Unsaved_File;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Files : in out Unsaved_File_Array_Access)
+   is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Unsaved_File_Array, Unsaved_File_Array_Access);
+   begin
+      for F of Files.all loop
+         Destroy_Unsaved_File (F);
+      end loop;
+      Free (Files);
+   end Destroy;
 
    -------------------------
    -- Create_Unsaved_File --

@@ -351,12 +351,14 @@ package body Completion.C.Libclang is
 
          Loc := Loc.Forward_Char (0 - UTF8_Length (Resolver.Prefix.all));
 
+         Resolver.Unsaved_File_Inst := Unsaved_Files (1);
          Resolver.Completions := Complete_At
            (Resolver.TU,
             Filename      => +Context.File.Full_Name,
             Line          => Loc.Line,
             Column        => Loc.Line_Offset + 1,
             Unsaved_Files => Unsaved_Files);
+
       end;
 
       Completion_List_Pckg.Append (Result.List, Component);
@@ -381,6 +383,7 @@ package body Completion.C.Libclang is
    begin
       Dispose (This.Completions);
       Free (This.Prefix);
+      Destroy_Unsaved_File (This.Unsaved_File_Inst);
    end Free;
 
    ----------------------

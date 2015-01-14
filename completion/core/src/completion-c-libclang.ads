@@ -47,10 +47,11 @@ package Completion.C.Libclang is
 private
 
    type Libclang_Resolver is new Completion_Resolver with record
-      Kernel      : Kernel_Handle;
-      TU          : Clang_Translation_Unit := No_Translation_Unit;
-      Completions : Clang_Complete_Results := No_Complete_Results;
-      Prefix      : String_Access;
+      Kernel            : Kernel_Handle;
+      TU                : Clang_Translation_Unit := No_Translation_Unit;
+      Completions       : Clang_Complete_Results := No_Complete_Results;
+      Prefix            : String_Access;
+      Unsaved_File_Inst : Unsaved_File;
    end record;
 
 end Completion.C.Libclang;
