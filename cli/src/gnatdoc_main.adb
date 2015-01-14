@@ -68,6 +68,7 @@ procedure GNATdoc_Main is
    Skip_Subprojects     : aliased Boolean := False;
    Enable_Warnings      : aliased Boolean := False;
    Enable_Build         : aliased Boolean := False;
+   Follow_Symlinks      : aliased Boolean := False;
 
    procedure Launch_Gprbuild;
    --  Launch gprbuild on the loaded project
@@ -194,7 +195,11 @@ procedure GNATdoc_Main is
 
       --  Compute the arguments to launch
       Append (Args, "--exit");
-      Append (Args, "--symlinks");
+
+      if Follow_Symlinks then
+         Append (Args, "--symlinks");
+      end if;
+
       Append (Args, "--encoding=" & Encoding.all);
       Append (Args, "-P" & (+Project_File.Full_Name.all));
       Append (Args, "--db=" &
@@ -333,6 +338,11 @@ begin
       Switch      => "-l:",
       Long_Switch => "--load=",
       Help        => "Execute an external file written in the language lang");
+   Define_Switch
+     (Cmdline,
+      Output      => Follow_Symlinks'Access,
+      Switch      => "--symlinks",
+      Help        => "Take additional time to resolve symbolic links");
 
    --  Initialize context
    GPS.CLI_Utils.Create_Kernel_Context (Kernel);
@@ -480,7 +490,7 @@ begin
    end;
 
    --  Support symbolic links
-   Kernel.Registry.Environment.Set_Trusted_Mode (False);
+   Kernel.Registry.Environment.Set_Trusted_Mode (not Follow_Symlinks);
 
    --  Load project
    Kernel.Registry.Tree.Load

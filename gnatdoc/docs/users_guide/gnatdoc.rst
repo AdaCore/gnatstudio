@@ -74,6 +74,7 @@ switch --help::
   -w                 Enable warnings for missing documentation
   --enable-build     Rebuild the project before processing it
   --output=ARG       Format of generated documentation
+  --symlinks         Take additional time to resolve symbolic links
 
 *Project (-P)*
 
@@ -162,6 +163,13 @@ switch --help::
 *Output format (--output)*
 
   At current stage GNATdoc generates HTML files (*--output=html*).
+
+*Take additional time to resolve symbolic links (--symlinks)*
+
+  Should be specified if your projet uses symbolic links for files. This will
+  ensure that the links are fully resolved as stored in the database, and thus
+  that when a file is visible through different links, the information is
+  appropriately coalesced in the database for that file.
 
 ..  GPS interface
     -------------

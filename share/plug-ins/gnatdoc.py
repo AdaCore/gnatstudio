@@ -192,21 +192,21 @@ GPS.Preference(SPAWN_BROWSER_PREF).create(
 @interactive(name="documentation generate for project", category="GNATdoc")
 def doc_for_project():
     """Launch GNATdoc on the current project"""
-    GPS.BuildTarget("gnatdoc project").execute(synchronous=False)
+    run_gnatdoc("gnatdoc project")
 
 
 @interactive(name="documentation generate for project and subprojects",
              category="GNATdoc")
 def doc_for_project_and_subprojects():
     """Launch GNATdoc on the the project, recursively"""
-    GPS.BuildTarget("gnatdoc project recursive").execute(synchronous=False)
+    run_gnatdoc("gnatdoc project recursive")
 
 
 @interactive(name="documentation generate for current file",
              category="GNATdoc")
 def doc_for_file():
     """Launch GNATdoc on the current project"""
-    GPS.BuildTarget("gnatdoc file").execute(synchronous=False)
+    run_gnatdoc("gnatdoc file")
 
 
 def generate_doc_file(self):
@@ -216,10 +216,10 @@ def generate_doc_file(self):
 
     .. seealso:: :func:`GPS.Project.generate_doc`
     """
-    GPS.BuildTarget("gnatdoc project").execute(
-        synchronous=False,
+    run_gnatdoc(
+        target="gnatdoc project",
         force=True,
-        extra_args="--single-file %s" % os.path.basename(self.name()))
+        extra_args=["--single-file %s" % os.path.basename(self.name())])
 
 
 def generate_doc_project(self, recursive=False):
@@ -236,20 +236,37 @@ def generate_doc_project(self, recursive=False):
     else:
         recurse_flag = "--no-subprojects"
 
-    GPS.BuildTarget("gnatdoc").execute(
-        synchronous=False,
+    run_gnatdoc(
+        target="gnatdoc",
         force=True,
-        extra_args="-P %s %s" % (self.file().name(), recurse_flag))
+        extra_args=["-P %s %s" % (self.file().name(), recurse_flag)])
+
+
+def run_gnatdoc(target, force=False, extra_args=[]):
+    """
+    Runs GNATdoc using given target and extra arguments.
+    """
+    if not GNATdoc_Module.trusted_mode:
+        extra_args.append("--symlinks")
+
+    GPS.BuildTarget(target).execute(
+        synchronous=False, force=force, extra_args=extra_args)
 
 GPS.File.generate_doc = generate_doc_file
 GPS.Project.generate_doc = generate_doc_project
 
 
 class GNATdoc_Module(modules.Module):
+    # Whether we trust that there are no links in the project hierarchy
+    trusted_mode = True
 
     def setup(self):
         GPS.parse_xml(targets)
         GPS.Hook("compilation_finished").add(self.on_compilation_finished)
+        GPS.Hook("preferences_changed").add(self.on_preferences_changed)
+
+        # Initialize trusted_mode and other preferences
+        self.on_preferences_changed(None)
 
     def on_compilation_finished(self, hook, category,
                                 target_name="", mode_name="", status=""):
@@ -268,3 +285,7 @@ class GNATdoc_Module(modules.Module):
 
             if GPS.Preference(SPAWN_BROWSER_PREF).get():
                 GPS.HTML.browse(os.path.join(doc_dir, "index.html"))
+
+    def on_preferences_changed(self, hook_name):
+        GNATdoc_Module.trusted_mode = GPS.Preference(
+            "Prj-Editor-Trusted-Mode").get()
