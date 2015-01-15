@@ -2849,8 +2849,15 @@ package body GPS.Kernel.Modules.UI is
 
             if Active (System_Menus) then
                App.Add_Action (New_G_Action (Kernel, Action));
+
+               --  See possible attributes in gtkmenutrackeritem.c
                Append (Builder_XML,
-                       "<item><attribute name='label'>"
+                       "<item>"
+                       & "<attribute name='hidden-when'>"
+                       & (if Optional
+                          then "action-disabled" else "action-missing")
+                       & "</attribute>"
+                       & "<attribute name='label'>"
                        & XML_Utils.Protect (Label)
                        & "</attribute>"
                        & "<attribute name='action'>app."
@@ -2966,6 +2973,9 @@ package body GPS.Kernel.Modules.UI is
             if Tmp /= 0 then
                Menubar := Builder.Get_Object ("menubar");
                App.Set_Menubar (Gmenu_Model (Menubar));
+            else
+               Trace (Me, "Could not parse menu description "
+                  & Get_Message (Error));
             end if;
             Unref (Builder);
          end;
