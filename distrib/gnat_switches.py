@@ -37,6 +37,7 @@ class Switch(object):
 
         descr = Switch.BOLD.sub(r'\1', descr)
         descr = Switch.SAMP.sub(r'\1', descr)
+        descr = descr.replace("<", "&lt;").replace(">", "&gt;")
 
         if '.. code-block:: ada' in descr:
             self.in_code_block = True
