@@ -29,6 +29,7 @@ with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
@@ -734,28 +735,48 @@ package body Browsers.Projects is
    begin
       Project_Views.Register_Module (Kernel);
 
-      Command := new Imported_By_Command;
+      Register_Action
+        (Kernel, "Browser: show projects imported",
+         Command     => new Imported_By_Command,
+         Description =>
+           "Open the Project Browser to show all projects imported by the"
+           & " selected project",
+         Filter      => Lookup_Filter (Kernel, "Project only"),
+         Category  => -"Views");
       Register_Contextual_Menu
-        (Kernel, "Show projects imported",
+        (Kernel,
          Label       => -"Show projects imported by %p",
-         Action      => Command,
-         Filter      => Lookup_Filter (Kernel, "Project only"));
+         Action      => "Browser: show projects imported");
 
       Command := new Imported_By_Command;
       Imported_By_Command (Command.all).Recursive := True;
+      Register_Action
+        (Kernel, "Browser: show projects imported (recursive)",
+         Command     => Command,
+         Description =>
+           "Open the Project Browser to show all projects imported by the"
+         & " selected project, recursively",
+         Filter      => Lookup_Filter (Kernel, "Project only"),
+         Category  => -"Views");
       Register_Contextual_Menu
-        (Kernel, "Show recursive projects imported",
-         Label  => -"Show projects imported by %p recursively",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "Project only"));
+        (Kernel,
+         Label       => -"Show projects imported by %p (recursively)",
+         Action      => "Browser: show projects imported (recursive)");
 
       Command := new Imported_By_Command;
       Imported_By_Command (Command.all).Show_Ancestors := True;
+      Register_Action
+        (Kernel, "Browser: show projects importing",
+         Command     => Command,
+         Description =>
+           "Open the Project Browser to show all projects importing the"
+         & " selected project",
+         Filter      => Lookup_Filter (Kernel, "Project only"),
+         Category  => -"Views");
       Register_Contextual_Menu
-        (Kernel, "Show projects importing",
-         Label  => -"Show projects depending on %p",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "Project only"));
+        (Kernel,
+         Label       => -"Show projects depending on %p",
+         Action      => "Browser: show projects importing");
    end Register_Module;
 
 end Browsers.Projects;

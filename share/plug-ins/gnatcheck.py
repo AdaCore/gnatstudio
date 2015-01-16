@@ -288,90 +288,100 @@ class gnatCheckProc:
                     traceback.format_exc()))
 
 # Contextual menu for checking files
+# The filter does some computation, and caches the result in the context so
+# that we do not need to recompute it if the action is executed
 
 
-class contextualMenu (GPS.Contextual):
+class __contextualMenuData(object):
+    pass
 
-    def __init__(self):
-        GPS.Contextual.__init__(self, "Check Coding Standard")
-        self.create(on_activate=self.on_activate,
-                    filter=self.filter,
-                    label=self.label)
 
-    def filter(self, context):
-        global gnatcheckproc
-        self.desttype = "none"
-        if not isinstance(context, GPS.FileContext):
+def __contextualMenuFilter(context):
+    global gnatcheckproc
+    data = __contextualMenuData()
+    context.gnatcheck = data
+
+    data.desttype = "none"
+    if not isinstance(context, GPS.FileContext):
+        return False
+    try:
+        # might be a file
+        data.desttype = "file"
+        data.file = context.file()
+        if data.file.language().lower() != "ada":
             return False
+
+        # Does this file belong to the project tree ?
+        return data.file.project(False) is not None
+
+    except:
         try:
-            # might be a file
-            self.desttype = "file"
-            self.file = context.file()
-            if self.file.language().lower() != "ada":
-                return False
-
-            # Does this file belong to the project tree ?
-            return self.file.project(False) is not None
-
+            data.desttype = "dir"
+            # verify this is a dir
+            data.dir = context.directory()
+            # check this directory contains ada sources
+            srcs = GPS.Project.root().sources(True)
+            found = False
+            data.files = []
+            for f in srcs:
+                filename = f.name()
+                if filename.find(data.dir) == 0:
+                    if f.language().lower() == "ada":
+                        data.files.append(f)
+                        found = True
+            return found
         except:
             try:
-                self.desttype = "dir"
-                # verify this is a dir
-                self.dir = context.directory()
-                # check this directory contains ada sources
-                srcs = GPS.Project.root().sources(True)
+                # this is a project file
+                data.desttype = "project"
+                data.project = context.project()
+                srcs = data.project.sources(recursive=False)
                 found = False
-                self.files = []
+                data.files = []
                 for f in srcs:
-                    filename = f.name()
-                    if filename.find(self.dir) == 0:
-                        if f.language().lower() == "ada":
-                            self.files.append(f)
-                            found = True
+                    if f.language().lower() == "ada":
+                        data.files.append(f)
+                        found = True
                 return found
             except:
-                try:
-                    # this is a project file
-                    self.desttype = "project"
-                    self.project = context.project()
-                    srcs = self.project.sources(recursive=False)
-                    found = False
-                    self.files = []
-                    for f in srcs:
-                        if f.language().lower() == "ada":
-                            self.files.append(f)
-                            found = True
-                    return found
-                except:
-                    # Weird case where we have a FileContext with neither file,
-                    # dir or project information...
-                    # This may happen if the file is newly created, and has not
-                    # been saved yet, thus does not exist on the disk.
-                    return False
+                # Weird case where we have a FileContext with neither file,
+                # dir or project information...
+                # This may happen if the file is newly created, and has not
+                # been saved yet, thus does not exist on the disk.
+                return False
 
-    def label(self, context):
-        if self.desttype == "file":
-            fmt = "Check Coding standard of <b>{}</b>"
-            name = os.path.basename(self.file.name())
-        elif self.desttype == "dir":
-            fmt = "Check Coding standard of files in <b>{}</b>"
-            name = os.path.basename(os.path.dirname(self.dir))
-        elif self.desttype == "project":
-            fmt = "Check Coding standard of files in <b>{}</b>"
-            name = self.project.name()
-        else:
-            return ""
 
-        return fmt.format(os_utils.display_name(name))
+def __contextualMenuLabel(context):
+    data = context.gnatcheck
+    if data.desttype == "file":
+        fmt = "Check Coding standard of <b>{}</b>"
+        name = os.path.basename(data.file.name())
+    elif data.desttype == "dir":
+        fmt = "Check Coding standard of files in <b>{}</b>"
+        name = os.path.basename(os.path.dirname(data.dir))
+    elif data.desttype == "project":
+        fmt = "Check Coding standard of files in <b>{}</b>"
+        name = data.project.name()
+    else:
+        return ""
+    return fmt.format(os_utils.display_name(name))
 
-    def on_activate(self, context):
-        global gnatcheckproc
-        if self.desttype == "file":
-            gnatcheckproc.check_file(self.file)
-        elif self.desttype == "project":
-            gnatcheckproc.check_project(self.project)
-        else:
-            gnatcheckproc.check_files(self.files)
+
+@interactive(
+    name='Check Coding Standard',
+    contextual=__contextualMenuLabel,
+    filter=__contextualMenuFilter)
+def on_activate():
+    context = GPS.contextual_context()
+    data = context.gnatcheck
+    global gnatcheckproc
+    if data.desttype == "file":
+        gnatcheckproc.check_file(data.file)
+    elif data.desttype == "project":
+        gnatcheckproc.check_project(data.project)
+    else:
+        gnatcheckproc.check_files(data.files)
+
 
 # create the menus instances.
 
@@ -409,7 +419,6 @@ def edit_gnatcheck_rules():
 
 @hook('gps_started')
 def __on_gps_started():
-    contextualMenu()
     GPS.parse_xml("""
   <tool name="GnatCheck" package="Check" index="Ada" override="false">
      <language>Ada</language>

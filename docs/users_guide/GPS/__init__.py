@@ -228,7 +228,7 @@ class Action(GUI):
         """
         pass  # implemented in Ada
 
-    def contextual(self, path, ref='', add_before=True):
+    def contextual(self, path, ref='', add_before=True, group=0):
         """
         Create a new contextual menu associated with the command. This
         function is somewhat of a duplicate of :func:`GPS.Contextual.create`,
@@ -236,8 +236,12 @@ class Action(GUI):
         Python function that takes no argument while the callback for
         :func:`GPS.Contextual` receives one argument.
 
-        :param string path: A string
+        :param path: A string or a function(GPS.Context):string, which
+           describes the path for the contextual menu.
         :param string ref: A string
+        :param int group: the group of items in the contextual menu. These
+           groups are ordered numerically, so that all items in group 0
+           appear before items in group 1, and so on.
         :param boolean add_before: A boolean
         """
         pass  # implemented in Ada
@@ -274,13 +278,6 @@ class Action(GUI):
 
         """
         pass  # implemented in Ada
-
-    def disable(self, disabled=True):
-        """
-        :param bool disabled: when True, the action cannot be executed by GPS,
-           and will in fact be hidden in most cases. All associated menus and
-           contextual menus will also be disabled or hidden.
-        """
 
     def execute_if_possible(self):
         """
@@ -1468,7 +1465,7 @@ class Command(object):
 
     def get_result(self):
         """
-        Returns the result of the command, if any. Must be overridden by
+        Returns the result of the command, if any. Must be overriden by
         children.
         """
         pass  # implemented in Ada
@@ -2046,6 +2043,9 @@ class Contextual(object):
     .. seealso:: :func:`GPS.Contextual.__init__`
     """
 
+    name = ''
+    """The name of the contextual menu (see __init__)"""
+
     def __init__(self, name):
         """
         Initializes a new instance of :class:`GPS.Contextual`. The name is
@@ -2067,95 +2067,6 @@ class Contextual(object):
            GPS.Contextual ('Goto declaration of entity').hide()
 
            # After this, the menu will never be displayed again.
-        """
-        pass  # implemented in Ada
-
-    def create(self, on_activate, label=None, filter=None,
-               ref='', add_before=True,
-               group='0', visibility_filter=None, action=None):
-
-        """
-        Creates a new contextual menu entry.  Whenever this menu entry is
-        selected by the user, GPS executes :func:`on_activate`, passing one
-        parameter which is the context for which the menu is displayed (this
-        is usually the same as :func:`GPS.current_contextual`).
-
-        The parameters ``group``, ``ref`` and ``add_before`` can be used to
-        control the location of the entry within the contextual
-        menu. ``group`` allows you to create groups of contextual menus that
-        will be put together.  Items of the same group appear before all
-        items with a greater group number.  ``ref`` is the name of another
-        contextual menu entry, and add_before indicates whether the new entry
-        is put before or after that second entry.
-
-        :param on_activate: A subprogram with one parameter context
-           If None, a separator is created.
-        :param label: A subprogram
-           It can be used to control the text displayed in
-           the contextual menu.  By default, it is the same as the contextual
-           name (used in the constructor to :func:`GPS.Contextual.__init__`).
-           If specified, it must be a subprogram that takes an instance of
-           :class:`GPS.Context` in a parameter and returns a string, which is
-           displayed in the menu.
-        :param ref: A string
-        :param add_before: A boolean
-        :param filter: A subprogram
-           This is used to filter when the entry should
-           be displayed in the menu. It is a function that receives one
-           parameter, an instance of :class:`GPS.Context`, and returns a
-           boolean. If it returns True, the entry is displayed, otherwise it is
-           hidden.
-           This parameter is ignored when the ``action`` parameter is
-           specified.
-
-        :param group: An integer
-        :param GPS.Action action: An action instance
-           The predefined filter for this action is applied for the contextual
-           menu (but the action itself is not executed).
-
-        .. code-block:: python
-
-           ## This example demonstrates how to create a contextual
-           ## menu with global functions
-
-           def on_contextual(context):
-              GPS.Console("Messages").write("You selected the custom entry")
-
-           def on_filter(context):
-              return isinstance(context, GPS.EntityContext)
-
-           def on_label(context):
-              global count
-              count += 1
-              return "Custom " + count
-
-           GPS.Contextual("Custom").create(
-           on_activate=on_contextual, filter=on_filter, label=on_label)
-
-           .. code-block:: python
-
-           ## This example is similar to the one above, but uses a python
-           ## class to encapsulate date.
-           ## Note how the extra parameter self can be passed to the callbacks
-           ## thanks to the call to self.create
-
-           class My_Context(GPS.Contextual):
-              def on_contextual(self, context):
-                 GPS.Console("Messages").write(
-                 "You selected the custom entry " + self.data)
-
-              def on_filter(self, context):
-                 return isinstance(context, GPS.EntityContext)
-
-              def on_label(self, context):
-                 return self.data
-
-              def __init__(self):
-                 GPS.Contextual.__init__(self, "Custom")
-                 self.data = "Menu Name"
-                 self.create(on_activate=self.on_contextual,
-                             filter=self.on_filter,
-                             label=self.label)
         """
         pass  # implemented in Ada
 
@@ -3700,6 +3611,15 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def _insert_at_location(self, location, text):
+        """
+        Inserts some text in the buffer.
+
+        :param EditorLocation location: An instance of :class:`EditorLocation`
+        :param string text: A string
+        """
+        pass  # implemented in Ada
+
     def is_modified(self):
         """
         Tests whether the buffer has been modified since it was last opened
@@ -5165,19 +5085,6 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
-    def get_called_entities(self):
-        """
-        Get the list of all entities that are referenced within the scope
-        of self.
-        :return: a list of GPS.Entity instances
-        """
-
-    def child_types(self):
-        """
-        Get the list of all entities that extend or derive from self.
-        :return: a list of GPS.Entity instances
-        """
-
     def name_parameters(self, location):
         """
         Refactors the code at the location, to add named parameters. This
@@ -6083,14 +5990,702 @@ class Help(object):
 # Hook
 ###########################################################
 
-class Hook:     # Don't extend 'object' so that we can change __doc__
+class Hook(object):
+
     """
     General interface to hooks. Hooks are commands executed when some specific
-    events occur in GPS, and allow you to customize some of the aspects of GPS.
-    See the list of available hooks in :class:`GPS.Predefined_Hooks`.
+    events occur in GPS, and allow you to customize some of the aspects of GPS
 
     .. seealso::
         :func:`GPS.Hook.__init__`
+
+    The available hooks are:
+
+    - :command:`activity_checked_hook(hookname)`
+
+      Called when an activity has been checked, the last step done after the
+      activity has been committed. It is at this point that the activity
+      closed status is updated.
+
+    - :command:`after_character_added(hookname, file, character)`
+
+      Called when a character has been added in the editor. This hook is also
+      called for the backspace key.
+
+      :param file: An instance of GPS.File
+      :param character: A character
+
+      .. seealso::
+         Hook :command:`character_added`
+         Hook :command:`word_added`
+
+    - :command:`annotation_parsed_hook(hookname)`
+
+      Called when the last file annotation has been parsed after the
+      corresponding VCS action.
+
+    - :command:`before_exit_action_hook(hookname)`
+
+      Called when GPS is about to exit. If it returns 0, the exit is abort
+      (you should display a dialog to explain why, in such a case)
+
+      :return: A boolean
+
+    - :command:`before_file_saved(hookname, file)`
+
+      Called immediately before a file is saved.
+
+      :param file: An instance of :class:`GPS.File`
+
+    - :command:`bookmark_added(hookname, bookmark_name)`
+
+      Called when a new bookmark has been created by the user.
+
+      :param bookmark_name: A string, the name of the bookmark that has been
+         added
+
+    - :command:`bookmark_removed(hookname, bookmark_name)`
+
+      :command:`Called when a new bookmark has been removed by the user.`
+
+      :param bookmark_name: A string, the name of the bookmark that has been
+          removed
+
+    - :command:`buffer_edited(hookname, file)`
+
+      Called after the user has stopped modifying the contents of an editor.
+
+      :param file: An instance of :class:`GPS.File`
+
+    - :command:`build_server_connected_hook(hookname)`
+
+      Called when GPS connects to the build server in remote mode.
+
+    - :command:`character_added(hookname, file, character)`
+
+      Called when a character is going to be added in the editor. It is also
+      called when a character is going to be removed, in which case the last
+      parameter is 8 (control-h).
+
+      :param file: An instance of :class:`GPS.File`
+      :param character: A character
+
+      .. seealso::
+
+          Hook :command:`after_character_added`
+
+          Hook :command:`word_added`
+
+    - :command:`clipboard_changed(hookname)`
+
+      Called when the contents of the clipboard has changed, either because
+      the user has done a Copy or Cut operation, or because he called Paste
+      Previous which changes the current entry in the multi-level clipboard.
+
+    - :command:`commit_done_hook(hookname)`
+
+      Called when a commit has been done.
+
+    - :command:`compilation_finished(hookname, category, target_name,
+      mode_name, status)`
+
+      Called when a compile operation has finished.
+
+      Among the various tasks that GPS connects to this hook are the automatic
+      reparsing of all xref information, and the activation of the
+      automatic-error fixes
+
+      See also the hook "xref_updated".
+
+      :param category: A string, the location/highlighting category that
+         contains the compilation output.
+      :param target_name: A string, name of the executed build target.
+      :param mode_name: A string, name of the executed build mode.
+      :param status: An integer, exit status of the execuded program.
+
+    - :command:`compilation_starting(hookname, category, quiet, shadow)`
+
+      Called when a compile operation is about to start.
+
+      Among the various tasks that GPS connects to this hook are: check
+      whether unsaved editors should be saved (asking the user), and stop the
+      background task that parses all xref info. If ``quiet`` is True, no
+      visible modification should be done in the MDI, such as raising consoles
+      or clearing their content, since the compilation should happen in
+      background mode.
+
+      Funtions connected to this hook should return False if the compilation
+      should not occur for some reason, True if it is OK to start the
+      compilation. Typically, the reason to reject a compilation would be
+      because the user has explicitly cancelled it through a graphical dialog,
+      or because running a background compilation is not suitable at this
+      time.
+
+      :param category: A string, the location/highlighting category that
+         contains the compilation output.
+
+      :param quiet: A boolean, if True then the GUI should advertise the
+         compilation, otherwise nothing should be reported to the user, unless
+         there is an error.
+
+      :param shadow: A boolean, indicates whether the build launched was a
+         Shadow builds, ie a "secondary" build launched automatically by GPS
+         after a "real" build.  For instance, when the multiple toolchains
+         mode is activated, the builds generating cross-references are Shadow
+         builds.
+
+      :return: A boolean
+
+      .. code-block:: python
+
+         # The following code adds a confirmation dialog to all
+         # compilation commands.
+         def on_compilation_started(hook, category, quiet, shadow):
+            if not quiet:
+               return MDI.yes_no_dialog("Confirm compilation ?")
+            else:
+               return True
+
+         Hook("compilation_starting").add(on_compilation_started)
+
+      .. code-block:: python
+
+         # If you create a script to execute your own build script, you
+         # should always do the following as part of your script. This
+         # ensures a better integration in GPS (saving unsaved editors,
+         # reloading xref information automatically in the end, raising
+         # the GPS console, parsing error messages for automatically
+         # fixable errors,...)
+
+         if notHook ("compilation_starting").run_until_failure(
+              "Builder results", False, False):
+            return
+
+         # ... spawn your command
+
+         Hook("compilation_finished").run("Builder results")
+
+    - :command:`compute_build_targets(hookname, name)`
+
+      Called whenever GPS needs to compute a list of subtargets for a given
+      build target. The handler should check whether name is a known build
+      target, and if so, return a list of tuples, where each tuple corresponds
+      to one target and contains a display name (used in the menus, for
+      instance) and the name of the target. If name is not known, it should
+      return an empty list.
+
+      :param name: A string, the target type.
+         Example of values are 'main', 'exec' and 'make' currently.
+      :return: A list of tuples, each of which has the following elements:
+         (display name for the target,
+          full name for the target (typically a path),
+          full path for the project (or the empty string))
+
+      .. code-block:: python
+
+         def compute_targets(hook, name):
+            if name == "my_target":
+              return [(display_name_1, target_1, ''),
+                      (display_name_2, target_2, '')]
+            return ""
+         GPS.Hook("compute_build_targets").add(compute_targets)
+
+    - :command:`context_changed(hookname, context)`
+
+      Called when the current context changes in GPS, such a new file is
+      selected or a new entity or window are created.
+
+      :param context: An instance of :class:`GPS.Context`
+
+    - :command:`contextual_menu_close(hookname)`
+
+      Called just before a contextual menu is destroyed. At this time, the
+      value returned by :func:`GPS.contextual_context` is still the one used
+      in the hook contextual_menu_open and you can still reference the data
+      you stored in the context. This hook is called even if no action was
+      selected by the user. However, it is always called before the action is
+      executed, since the menu itself is closed first.
+
+       .. seealso:: :func:`contextual_menu_open hook`
+
+    - :command:`contextual_menu_open(hookname)`
+
+      Called just before a contextual menu is created. It is called before any
+      of the filters is evaluated, and can be used to precomputed data shared
+      by multiple filters to speed up the computation. Use
+      :func:`GPS.contextual_context` to get the context of the contextual menu
+      and store precomputed data in it.
+
+      .. seealso:: :func:`contextual_menu_close hook`
+
+    - :command:`debugger_breakpoints_changed(hookname, debugger)`
+
+      Called when the list of breakpoints has been refreshed. This might occur
+      whether or not the list has changed, but is a good time to refresh any
+      view that might depend on an up-to-date list
+
+      :param debugger: An instance of :class:`GPS.Debugger`
+
+    - :command:`debugger_command_action_hook(hookname, debugger, command)`
+
+      Called when the user types a command in the debugger console, or emits
+      the console through the GPS.Debugger API. It gives you a chance to
+      override the behavior for the command, or even define your own
+      commands. Note that you must ensure that any debugger command you
+      execute this way does finish with a prompt. The function should return
+      the output of your custom command
+
+      :param debugger: An instance of :class:`GPS.Debugger`
+      :param command: A string, the command the user wants to execute
+      :return: A boolean
+
+      .. code-block:: python
+
+          ## The following example implements a new gdb command, "hello". When
+          ## the user types this command in the console, we end up executing
+          ## "print A" instead. This can be used for instance to implement
+          ## convenient macros
+
+          def debugger_commands(hook, debugger, command):
+             if command == "hello":
+                return 'A=' + debugger.send("print A", False)
+             else:
+                return ""
+
+          GPS.Hook("debugger_command_action_hook").add(debugger_commands)
+
+    - :command:`debugger_context_changed(hookname, debugger)`
+
+      Called when the debugger context has changed, for example after the user
+      has switched the current thread or selected a new frame.
+
+      :param debugger: An instance of :class:`GPS.Debugger`
+
+    - :command:`debugger_executable_changed(hookname, debugger)`
+
+      Called when the file being debugged has changed
+
+      :param debugger: An instance of :class:`GPS.Debugger`
+
+    - :command:`debugger_process_stopped(hookname, debugger)`
+
+      Called when the debugger has ran and has stopped, for example when
+      hitting a breakpoint, or after a next command. If you need to know when
+      the debugger just started processing a command, you can connect to the
+      debugger_state_changed hook instead. Conceptually, you could connect to
+      debugger_state_changed at all times instead of debugger_process_stopped
+      and check when the state is now "idle".
+
+      :param debugger: An instance of :class:`GPS.Debugger`
+
+      .. seealso:: Hook :command:`debugger_state_changed`
+
+    - :command:`debugger_process_terminated(hookname, debugger)`
+
+      Called when the program being debugged has terminated.
+
+      :param debugger: An instance of :class:`GPS.Debugger`
+
+    - :command:`debugger_question_action_hook(hookname, debugger, question)`
+
+      Action hook called just before displaying an interactive dialog, when
+      the debugger is asking a question to the user. This hook can be used to
+      disable the dialog (and send the rreply directly to the debugger
+      instead). It should return a non-empty string to pass to the debugger if
+      the dialog should not be displayed. You cannot send commands to the
+      debugger when inside this hook, since the debugger is blocked waiting
+      for an answer.
+
+      :param debugger: An instance of :class:`GPS.Debugger`
+      :param question: A string
+      :return: A string
+
+      .. code-block:: python
+
+         def gps_question(hook, debugger, str):
+            return "1"   ## Always choose choice 1
+
+         GPS.Hook("debugger_question_action_hook").add(gps_question)
+
+         debug=GPS.Debugger.get()
+         debug.send("print &foo")
+
+    - :command:`debugger_started(hookname, debugger)`
+
+       Called when a new debugger has been started.
+
+       :param debugger: An instance of :class:`GPS.Debugger`
+
+       .. seealso:: Hook :command:`debugger_state_changed`
+
+    - :command:`debugger_state_changed(hookname, debugger, new_state)`
+
+      Indicates a change in the status of the debugger: ``new_state`` can be
+      one of "none" (the debugger is now terminated), "idle" (the debugger is
+      now waiting for user input) or "busy" (the debugger is now processing a
+      command, and the process is running). As opposed to
+      debugger_process_stopped, this hook is called when the command is just
+      starting its executing (hence the debugger is busy while this hook is
+      called, unless the process immediately stopped).
+
+      This hook is also called when internal commands are sent to the
+      debugger, and thus much more often than if it was just reacting to user
+      input. It is therefore recommended that the callback does the minimal
+      amount of work, possibly doing the rest of the work in an idle callback
+      to be executed when GPS is no longer busy.
+
+      If the new state is "busy", you cannot send additional commands to the
+      debugger.
+
+      When the state is either "busy" or "idle", GPS.Debugger.command will
+      return the command that is about to be executed or the command that was
+      just executed and just completed.
+
+      :param debugger: An instance of :class:`GPS.Debugger`
+      :param new_state: A string
+
+    - :command:`debugger_terminated(hookname, debugger)`
+
+      Called when the debugger session has been terminated. It is now
+      recommended that you connect to the debugger_state_changed hook and test
+      whether the new state is "none".
+
+      :param debugger: An instance of :class:`GPS.Debugger`
+
+      .. seealso:: Hook :command:`debugger_state_changed`
+
+    - :command:`diff_action_hook(hookname, vcs_file, orig_file, ref_file,
+      diff_file, title)`
+
+      Called to request the display of the comparison window.
+
+      :param vcs_file: An instance of :class:`GPS.File`
+      :param orig_file: An instance of :class:`GPS.File`
+      :param ref_file: An instance of :class:`GPS.File`
+      :param diff_file: An instance of :class:`GPS.File`
+      :param title: Buffer title
+      :return: A boolean
+
+    - :command:`file_changed_detected(hookname, file)`
+
+      Called whenever GPS detects that an opened file changed on the
+      disk. You can connect to this hook if you want to change the default
+      behavior, which is asking if the user wants to reload the file. Your
+      function should return 1 if the action is handled by the function, and
+      return 0 if the default behavior is desired.
+
+      :param file: An instance of :class:`GPS.File`
+      :return: A boolean
+
+      .. code-block:: python
+
+            import GPS
+
+            def on_file_changed(hook, file):
+                # automatically reload the file without prompting the user
+                ed = GPS.EditorBuffer.get(file, force = 1)
+                return 1
+
+            # install a handler on "file_changed_detected" hook
+            GPS.Hook("file_changed_detected").add(on_file_changed)
+
+
+    - :command:`file_changed_on_disk(hookname, file)`
+
+      Called when some external action has changed the contents of a file on
+      the disk, such as a VCS operation. The parameter might be a directory
+      instead of a file, indicating that any file in that directory might have
+      changed.
+
+      :param file: An instance of :class:`GPS.File`
+
+    - :command:`file_closed(hookname, file)`
+
+      Called just before the last editor for a file is closed. You can still
+      use :func:`EditorBuffer.get` and :func:`current_view` to access the last
+      editor for ``file``.
+
+      :param file: An instance of :class:`GPS.File`
+
+    - :command:`file_deleted(hookname, file)`
+
+      Called whenever GPS detects that a file was deleted on the disk. The
+      parameter might be a directory instead of a file, indicating that any
+      file within that directory has been deleted.
+
+      :param file: An instance of :class:`GPS.File`
+
+    - :command:`file_edited(hookname, file)`
+
+      Called when a file editor has been opened for a file that was not already
+      opened before. Do not confuse with the hook open_file_action, which is
+      used to request the opening of a file.
+
+      :param file: An instance of :class:`GPS.File`
+
+      .. seealso:: :func:`open_file_action hook`
+
+    - :command:`file_line_action_hook(hookname, identifier, file,
+      every_line, normalize)`
+
+      Called to request the display of new information on the side of the
+      editors. You usually will not connect to this hook, but you might want to
+      run it yourself to ask GPS to display some information on the side of
+      its editors.
+
+      :param identifier: A string
+      :param file: An instance of :class:`GPS.File`
+      :param every_line: A boolean
+      :param normalize: A boolean
+      :return: A boolean
+
+    - :command:`file_renamed(hookname, file, renamed)`
+
+      Called whenever a GPS action renamed a file on the disk. ``file``
+      indicates the initial location of the file, while ``renamed`` indicates
+      the new location. The parameters might be directories instead of files,
+      indicating that the directory has been renamed, and thus any file within
+      that directory have their path changed.
+
+      :param file: An instance of :class:`GPS.File`
+      :param renamed: An instance of :class:`GPS.File`
+
+    - :command:`file_saved(hookname, file)`
+
+      Called whenever a file has been saved.
+
+      :param file: An instance of :class:`GPS.File`
+
+    - :command:`file_status_changed_action_hook(hookname, file, status)`
+
+      Called when a file status has changed.
+
+      :param file: An instance of :class:`GPS.File`
+      :param status: A string, the new status for the file. This is the
+        status displayed in the GPS status line. The value is either
+        Unmodified, Modified or Saved.
+      :return: A boolean
+
+    - :command:`gps_started(hookname)`
+
+      Called when GPS is fully loaded and its window is visible to the user.
+
+      You should not do any direct graphical action before this hook has been
+      called, so it is recommended that in most cases your start scripts
+      connect to this hook.
+
+    - :command:`html_action_hook(hookname, url_or_file, enable_navigation,
+      anchor)`
+
+      Called to request the display of HTML files. It is generally useful
+      if you want to open an HTML file and let GPS handle it in the usual
+      manner.
+
+      :param url_or_file: A string
+      :param enable_navigation: A boolean
+      :param anchor: A string
+      :return: A boolean
+
+    - :command:`location_action_hook(hookname, identifier, category,`
+                           file, line, column, message)
+
+      Called to request the display of new information on the side of the
+      :guilabel:`Locations` view.
+
+      :param identifier: A string
+      :param category: A string
+      :param file: An instance of :class:`GPS.File`
+      :param line: An integer
+      :param column: An integer
+      :param message: A string
+      :return: A boolean
+
+    - :command:`location_changed(hookname, file, line, column)`
+
+      Called when the location in the current editor has changed, and the
+      cursor has stopped moving.
+
+      :param file: An instance of :class:`GPS.File`
+      :param line: An integer
+      :param column: An integer
+
+    - :command:`log_parsed_hook(hookname)`
+
+      Called when the last file log has been parsed after the corresponding
+      VCS action.
+
+    - :command:`marker_added_to_history(hookname)`
+
+      Called when a new marker is added to the history list of previous
+      locations, where the user can navigate backwards and forwards.
+
+    - :command:`open_file_action_hook(hookname, file, line, column,
+      column_end, enable_navigation, new_file, force_reload, focus,
+      project)`
+
+      Called when GPS needs to open a file. You can connect to this hook if
+      you want to have your own editor open, instead of GPS's internal
+      editor. Your function should return 1 if it did open the file or 0 if
+      the next function connected to this hook should be called.
+
+      The file should be opened directly at ``line`` and ``column``. If
+      ``column_end`` is not 0, the given range should be highlighted if
+      possible.  ``enable_navigation`` is set to True if the new location
+      should be added to the history list, so that the user can navigate
+      forward and backward across previous locations. ``new_file`` is set to
+      True if a new file should be created when file is not found. If set to
+      False, nothing should be done. ``force_reload`` is set to true if the
+      file should be reloaded from the disk, discarding any change the user
+      might have done. focus is set to true if the open editor should be given
+      the keyboard focus
+
+      :param file: An instance of :class:`GPS.File`
+      :param line: An integer
+      :param column: An integer
+      :param column_end: An integer
+      :param enable_navigation: A boolean
+      :param new_file: A boolean
+      :param force_reload: A boolean
+      :param focus: A boolean
+      :param GPS.Project project: the project to which the file belongs
+      :return: A boolean
+
+      .. seealso:: Hook :command:`file_edited hook`
+
+      .. code-block:: python
+
+          GPS.Hook('open_file_action_hook').run(
+                    GPS.File("gps-kernel.ads"),
+                    322, # line
+                    5,   # column
+                    9,   # column_end
+                    1,   # enable_navigation
+                    1,   # new_file
+                    0)   # force_reload
+
+    - :command:`preferences_changed(hookname)`
+
+      Called when the value of some of the preferences changes. Modules should
+      refresh themselves dynamically.
+
+    - :command:`project_changed(hookname)`
+
+      Called when the project has changed. A new project has been loaded, and
+      all previous settings and caches are now obsolete. In the callbacks for
+      this hook, the attribute values have not been computed from the project
+      yet, and will only return the default values. Connect to the
+      project_view_changed hook instead to query the actual values
+
+      .. seealso:: Hook :command:`project_view_changed`
+
+    - :command:`project_changing(hookname, file)`
+
+      Called just before a new project is loaded.
+
+      :param file: An instance of :class:`GPS.File`
+
+    - :command:`project_editor(hookname)`
+
+      Called before the :guilabel:`Project Editor` is opened. This allows a
+      custom module to perform specific actions before the actual creation of
+      this dialog.
+
+    - :command:`project_saved(hookname, project)`
+
+      Called when a project is saved to disk. It is called for each
+      project in the hierarchy.
+
+      :param project: An instance of :class:`GPS.Project`
+
+    - :command:`project_view_changed(hookname)`
+
+      Called when the project view has been changed, for instance because one
+      of the environment variables has changed. This means that the list of
+      directories, files or switches might now be different. In the callbacks
+      for this hook, you can safely query the new attribute values.
+
+    - :command:`revision_parsed_hook(hookname)`
+
+      Called when the last file revision has been parsed after the
+      corresponding VCS action.
+
+    - :command:`rsync_action_hook(hookname)`
+
+      For internal use only.
+
+    - :command:`search_functions_changed(hookname)`
+
+      Called when the list of registered search functions changes.
+
+    - :command:`search_regexps_changed(hookname)`
+
+      Called when a new regexp has been added to the list of predefined search
+      patterns.
+
+    - :command:`search_reset(hookname)`
+
+      Called when the current search pattern is reset or changed by the
+      user or when the current search is no longer possible because the setup
+      of GPS has changed.
+
+    - :command:`server_config_hook(hookname, server_type, nickname)`
+
+      Called when a server is assigned to a server operations category.
+
+      :param server_type: A string, the server operations category. Can take
+         the values "BUILD_SERVER", "EXECUTION_SERVER" or "DEBUG_SERVER"
+      :param nickname: A string, the server's nickname
+
+    - :command:`server_list_hook(hookname)`
+
+      Called when the list of configured servers has changed.
+
+    - :command:`source_lines_revealed(hookname, context)`
+
+      Called when a range of lines becomes visible on the screen.
+
+      :param context: An instance of :class:`GPS.Context`
+
+    - :command:`status_parsed_hook(hookname)`
+
+      Called when the last file status has been parsed after the
+      corresponding VCS action.
+
+    - :command:`stop_macro_action_hook(hookname)`
+
+      You should run this hook to request that the macro currently being
+      replayed be stopped. No more events should be processed as part of this
+      macro.
+
+    - :command:`task_started(task)`
+    - :command:`task_changed(task)`
+    - :command:`task_terminated(task)`
+
+      Called when a new background task is started, when an existing task's
+      status is changed (such as making progressed or paused) or when a task
+      is terminated. task_changed might be called asynchronously; for
+      efficiency, GPS will not necessary call it for each progress made by
+      the task when this progress is frequent.
+
+      Each of these hooks receives an instance of :class:`GPS.Task` as
+      parameter.
+
+    - :command:`variable_changed(hookname)`
+
+      Called when one of the scenario variables has been renamed, removed or
+      when one of its possible values has changed.
+
+    - :command:`xref_updated(hookname)`
+
+      Called when the cross-reference information has been updated.
+
+    - :command:`word_added(hookname, file)`
+
+      Called when a word has been added in an editor.
+
+      :param file: An instance of :class:`GPS.File`
+
+      .. seealso:: Hook :command:`character_added`
     """
 
     def __init__(self, name):
@@ -6098,7 +6693,7 @@ class Hook:     # Don't extend 'object' so that we can change __doc__
         Creates a new hook instance, referring to one of the already defined
         hooks.
 
-        :param str name: the name of the hook
+        :param name: A string, the name of the hook
         """
         pass  # implemented in Ada
 
@@ -6110,9 +6705,9 @@ class Hook:     # Don't extend 'object' so that we can change __doc__
         function is called after all functions currently added to this
         hook. If false, it is called before.
 
-        :param function function_name: see the "Subprogram Parameters"
+        :param function_name: A subprogram, see the "Subprogram Parameters"
            section in the GPS documentation
-        :param bool last:
+        :param last: A boolean
 
         .. seealso:: :func:`GPS.Hook.remove`
 
@@ -6162,12 +6757,14 @@ class Hook:     # Don't extend 'object' so that we can change __doc__
     @staticmethod
     def register(name, type=''):
         """
-        Defines a new hook. This hook can take any number of parameters: the
+        Definess a new hook. This hook can take any number of parameters: the
         default is none. The type and number of parameters is called the type
         of the hook and is described by the optional second parameter. The
         value of this parameter should be either the empty string for a hook
         that does not take any parameter. Or it could be one of the predefined
-        types exported by GPS itself (see :func:`list_hook_types`).
+        types exported by GPS itself (see :func:`list_hook_types`). Finally,
+        it could be the word ""generic"" if this is a new type of hook purely
+        defined for this scripting language
 
         :param name: A string, the name of the hook to create
         :param type: A string, the type of the hook.
@@ -6537,19 +7134,11 @@ class MDI(object):
     POSITION_TOP = 0
     POSITION_LEFT = 0
     POSITION_RIGHT = 0
-    POSITION_FLOAT = 0
-    # constants to be used in GPS.MDI.add()
-
-    FLAGS_DESTROY_BUTTON = 4
-    FLAGS_FLOAT_AS_TRANSIENT = 8
-    FLAGS_FLOAT_TO_MAIN = 32
-    FLAGS_ALWAYS_DESTROY_FLOAT = 16
-    FLAGS_ALL_BUTTONS = 4
     # constants to be used in GPS.MDI.add()
 
     @staticmethod
     def add(widget, title="", short="", group=0,
-            position=0, save_desktop=None, flags=FLAGS_ALL_BUTTONS):
+            position=0, save_desktop=None):
         """
         This function is only available if pygobject could be loaded in the
         python shell. You must install this library first, see the
@@ -6589,7 +7178,6 @@ class MDI(object):
             data.  An easier alternative is to use the :file:`modules.py`
             support script in GPS, which handles this parameter automatically
             on your behalf.
-        :param flags: Child behavior flags.
         :return: The instance of :class:`GPS.MDIWindow` that was created
 
         .. code-block:: python
@@ -7042,8 +7630,6 @@ class Message(object):
         :param column: An integer indicating the column
         :param text: A pango markup String containg the message text
         :param flags: An integer representing the location of the message
-        :param allow_auto_jump_to_first: A boolean to control automatic jump to
-            first message in category.
 
         .. code-block:: python
 
@@ -7832,7 +8418,7 @@ class Project(object):
         the list of source files. The directory is added for the current
         value of the scenario variables only. Note that if the current source
         directory for the project is not specified explicitly in the .gpr
-        file), it is overridden by the new directory you are adding. If the
+        file), it is overriden by the new directory you are adding. If the
         directory is already part of the source directories for the project,
         it is not added a second time.
 
@@ -7923,10 +8509,6 @@ class Project(object):
         single element is returned. This function always returns the value of
         the attribute in the currently selected scenario.
 
-        If the project being queried is an extending project, and the attribute
-        is not redefined in this extending project, then the value of the
-        attribute is queried from the extended project.
-
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
         :param index: A string, the name of the index for the specific value
@@ -7976,10 +8558,6 @@ class Project(object):
         concatenation of all the elements of the list. This function always
         returns the value of the attribute in the currently selected
         scenario.
-
-        If the project being queried is an extending project, and the attribute
-        is not redefined in this extending project, then the value of the
-        attribute is queried from the extended project.
 
         When the attribute is not explicitely overridden in the project, the
         default value is returned. This default value is the one described in
@@ -9075,8 +9653,7 @@ class ToolButton(GUI):
 
         - $1 = The instance of :class:`GPS.Button`
 
-        :param stock_id: A string identifying the icon (this is the base
-           name of an .svg file defined in the icon theme).
+        :param stock_id: A string identifying the icon
         :param label: A string, the text that appears on the button
         :param on_click: A subprogram, see the GPS documentation
 
@@ -9830,9 +10407,6 @@ class History(object):
         the list (for instance for recently opened files), and the oldest
         previous value might be removed, depending on the maximum number
         of elements that GPS wants to preserve for that key.
-
-        :param key: a string.
-        :param value: a string or boolean, depending on the key.
         """
 
 
@@ -10584,30 +11158,6 @@ def parse_xml(xml):
           '''<action name="A"><shell>my_action</shell></action>
              <menu action="A"><title>/Edit/A</title></menu>''')
        Adds a new menu in GPS, which executes the command my_action
-    """
-    pass  # implemented in Ada
-
-
-def process_all_events():
-    """
-    Processes pending graphical events.
-    This function is only useful for programming advanced plug-ins.
-    """
-    pass  # implemented in Ada
-
-
-def send_button_event(window, type, button, x, y, state):
-    """
-    Internal function.
-    See pygps.send_button_event.
-    """
-    pass  # implemented in Ada
-
-
-def send_key_event(keyval, window, primary, alt, shift, control):
-    """
-    Internal function.
-    See pygps.send_key_event.
     """
     pass  # implemented in Ada
 

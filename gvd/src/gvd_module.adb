@@ -2176,79 +2176,130 @@ package body GVD_Module is
       Register_Contextual_Submenu (Kernel, "Debug", Ref_Item => "References");
 
       Filter := Debugger_Filter and Printable_Filter;
-      Command := new Print_Variable_Command;
+
+      Register_Action
+        (Kernel, "debug print variable",
+         Command     => new Print_Variable_Command,
+         Description =>
+           "Print the value of the variable in the debugger console",
+         Filter    => Filter,
+         Category  => -"Debug");
       Register_Contextual_Menu
-        (Kernel, "Debug print variable",
-         Label  => "Debug/Print %S",
-         Action => Command,
-         Filter => Filter);
+        (Kernel => Kernel,
+         Label  => -"Debug/Print %S",
+         Action => "debug print variable");
 
       Command := new Print_Variable_Command;
       Print_Variable_Command (Command.all).Display := True;
+      Register_Action
+        (Kernel, "debug display variable",
+         Command     => Command,
+         Description =>
+           "Display the value of the variable in the debugger console, so that"
+           & " it is displayed again every time the debugger stops",
+         Filter    => Filter,
+         Category  => -"Debug");
       Register_Contextual_Menu
-        (Kernel, "Debug display variable",
-         Label  => "Debug/Display %S",
-         Action => Command,
-         Filter => Filter);
+        (Kernel => Kernel,
+         Label  => -"Debug/Display %S",
+         Action => "debug display variable");
 
       Filter := Debugger_Filter and Printable_Filter and Access_Filter;
+
       Command := new Print_Variable_Command;
       Print_Variable_Command (Command.all).Display := False;
       Print_Variable_Command (Command.all).Dereference := True;
+      Register_Action
+        (Kernel, "debug print dereferenced variable",
+         Command     => Command,
+         Description =>
+           "Print the value pointed to by the variable in the debugger"
+           & " console",
+         Filter    => Filter,
+         Category  => -"Debug");
       Register_Contextual_Menu
-        (Kernel, "Debug print dereferenced variable",
-         Label  => "Debug/Print %C",
-         Action => Command,
+        (Kernel => Kernel,
+         Label  => -"Debug/Print %C",
          Custom => Custom_Label_Expansion'Access,
-         Filter => Filter);
+         Action => "debug print dereferenced variable");
 
       Command := new Print_Variable_Command;
       Print_Variable_Command (Command.all).Display := True;
       Print_Variable_Command (Command.all).Dereference := True;
+      Register_Action
+        (Kernel, "debug display dereferenced variable",
+         Command     => Command,
+         Description =>
+           "Display the value pointed to by the variable in the debugger"
+           & " console, so that it is displayed again every time the debugger"
+           & " stops",
+         Filter    => Filter,
+         Category  => -"Debug");
       Register_Contextual_Menu
-        (Kernel, "Debug display dereferenced variable",
-         Label  => "Debug/Display %C",
-         Action => Command,
+        (Kernel => Kernel,
+         Label  => -"Debug/Display %C",
          Custom => Custom_Label_Expansion'Access,
-         Filter => Filter);
+         Action => "debug display dereferenced variable");
 
-      Command := new Set_Value_Command;
+      Register_Action
+        (Kernel, "debug set value",
+         Command     => new Set_Value_Command,
+         Description => "Modify the value of the variable",
+         Filter      => Debugger_Filter and Printable_Filter,
+         Category    => -"Debug");
       Register_Contextual_Menu
-        (Kernel, "Debug set value",
+        (Kernel => Kernel,
          Label  => -"Debug/Set value of %S",
-         Action => Command,
-         Filter => Debugger_Filter and Printable_Filter);
+         Action => "debug set value");
 
-      Command := new Set_Breakpoint_Command;
+      Register_Action
+        (Kernel, "debug set subprogram breakpoint",
+         Command     => new Set_Breakpoint_Command,
+         Description => "Set a breakpoint on subprogram",
+         Filter      => Debugger_Filter and Subprogram_Filter,
+         Category    => -"Debug");
       Register_Contextual_Menu
-        (Kernel, "Debug set subprogram breakpoint",
+        (Kernel => Kernel,
          Label  => -"Debug/Set breakpoint on %e",
-         Action => Command,
-         Filter => Debugger_Filter and Subprogram_Filter);
+         Action => "debug set subprogram breakpoint");
 
       Command := new Set_Breakpoint_Command;
       Set_Breakpoint_Command (Command.all).On_Line := True;
+      Register_Action
+        (Kernel, "debug set line breakpoint",
+         Command     => Command,
+         Description => "Set a breakpoint on line",
+         Filter      => Stopped_And_In_File,
+         Category    => -"Debug");
       Register_Contextual_Menu
-        (Kernel, "Debug set line breakpoint",
+        (Kernel => Kernel,
          Label  => -"Debug/Set breakpoint on line %l",
-         Action => Command,
-         Filter => Stopped_And_In_File);
+         Action => "debug set line breakpoint");
 
       Command := new Set_Breakpoint_Command;
       Set_Breakpoint_Command (Command.all).On_Line := True;
       Set_Breakpoint_Command (Command.all).Continue_Till := True;
+      Register_Action
+        (Kernel, "debug continue until",
+         Command     => Command,
+         Description => "Continue executing until the given line",
+         Filter      => Stopped_And_In_File,
+         Category    => -"Debug");
       Register_Contextual_Menu
-        (Kernel, "Debug continue until",
+        (Kernel => Kernel,
          Label  => -"Debug/Continue until line %l",
-         Action => Command,
-         Filter => Stopped_And_In_File);
+         Action => "debug continue until");
 
-      Command := new Show_Location_Command;
+      Register_Action
+        (Kernel, "debug show current location",
+         Command     => new Show_Location_Command,
+         Description => "Display the current debugger location in an editor",
+         Filter      => Debugger_Filter,
+         Category    => -"Debug");
       Register_Contextual_Menu
-        (Kernel, "Debug show current location",
+        (Kernel => Kernel,
          Label  => -"Debug/Show current location",
-         Action => Command,
-         Filter => Debugger_Filter);
+         Action => "debug show current location");
 
       --  Dynamic Initialize menu
       Mitem := Find_Menu_Item (Kernel, -"/Debug/Initialize");

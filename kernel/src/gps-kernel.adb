@@ -1388,14 +1388,11 @@ package body GPS.Kernel is
         new Base_Action_Filter_Record (Standard_Filter);
    begin
       F.Language := To_Unbounded_String (Language);
-
       F.Shell := To_Unbounded_String (Shell);
       F.Shell_Lang :=
         (if Shell /= ""
          then To_Unbounded_String (Shell_Lang) else Null_Unbounded_String);
-
       F.Module := To_Unbounded_String (Module);
-
       return Action_Filter (F);
    end Create;
 

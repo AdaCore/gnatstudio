@@ -10,6 +10,7 @@ of T.
 """
 
 import GPS
+import gps_utils
 
 
 def get_first_subtype(entity):
@@ -30,26 +31,21 @@ def get_first_subtype(entity):
         return None
 
 
-def goto_first_subtype(context):
-    if context.first_subtype:
-        decl = context.first_subtype.declaration()
-        buffer = GPS.EditorBuffer.get(decl.file())
-        buffer.current_view().goto(
-            buffer.at(decl.line(), decl.column()))
-
-
 def has_first_subtype(context):
     if isinstance(context, GPS.EntityContext):
         context.first_subtype = get_first_subtype(context.entity())
-        return context.first_subtype != None
+        return context.first_subtype is not None
     return False
 
 
-def label(context):
-    return 'Goto first subtype of <b>' + context.entity().name() + '</b>'
-
-
-GPS.Contextual('Goto first subtype').create(
-    on_activate=goto_first_subtype,
-    label=label, filter=has_first_subtype, ref='Goto body of entity',
-    add_before=False)
+@gps_utils.interactive(
+    name='goto first subtype',
+    contextual='Goto first subtype of %e',
+    filter=has_first_subtype,
+    contextual_ref='goto other file')
+def __goto_first_subtype():
+    context = GPS.current_context()
+    decl = context.first_subtype.declaration()
+    buffer = GPS.EditorBuffer.get(decl.file())
+    buffer.current_view().goto(
+        buffer.at(decl.line(), decl.column()))

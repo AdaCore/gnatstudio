@@ -26,6 +26,7 @@ with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 with GPS.Intl;                      use GPS.Intl;
+with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
@@ -769,35 +770,51 @@ package body Browsers.Call_Graph is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command  : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Callgraph_Views.Register_Module (Kernel);
 
-      Command := new Entity_Calls_Command;
+      Register_Action
+        (Kernel, "Browser: entity calls",
+         Command     => new Entity_Calls_Command,
+         Description =>
+           "Open the call graph browser to show all entities referenced in the"
+           & " scope of the selected entity",
+         Filter      => Lookup_Filter (Kernel, "Entity is subprogram"),
+         Category    => -"Views");
       Register_Contextual_Menu
-        (Kernel, "Entity calls in browser",
+        (Kernel => Kernel,
          Label  => "Browsers/%e calls",
-         Filter => Lookup_Filter (Kernel, "Entity is subprogram"),
-         Action => Command);
+         Action => "Browser: entity calls");
 
-      Command := new Entity_Calls_All_Command;
+      Register_Action
+        (Kernel, "Browser: entity calls (recursive)",
+         Command     => new Entity_Calls_All_Command,
+         Description =>
+           "Open the call graph browser to show all entities referenced in the"
+         & " scope of the selected entity (recursively)",
+         Filter      => Lookup_Filter (Kernel, "Entity is subprogram"),
+         Category    => -"Views");
       Register_Contextual_Menu
-        (Kernel, "Entity calls (recursively) in browser",
+        (Kernel => Kernel,
          Label  => "Browsers/%e calls (recursively)",
-         Filter => Lookup_Filter (Kernel, "Entity is subprogram"),
-         Action => Command);
+         Action => "Browser: entity calls (recursive)");
 
-      Command := new Entity_Called_By_Command;
+      Register_Action
+        (Kernel, "Browser: entity called by",
+         Command     => new Entity_Called_By_Command,
+         Description =>
+           "Open the call graph browser to show all entities that call the"
+           & " selected entity",
+         Filter      => Lookup_Filter (Kernel, "Entity is subprogram"),
+         Category    => -"Views");
       Register_Contextual_Menu
-        (Kernel, "Entity called by in browser",
+        (Kernel => Kernel,
          Label  => "Browsers/%e is called by",
-         Filter => Lookup_Filter (Kernel, "Entity is subprogram"),
-         Action => Command);
+         Action => "Browser: entity called by");
 
-      Register_Command
-        (Kernel, "called_by_browser",
+      Kernel.Scripts.Register_Command
+        ("called_by_browser",
          Class   => Get_Entity_Class (Kernel),
          Handler => Call_Graph_Command_Handler'Access);
    end Register_Module;

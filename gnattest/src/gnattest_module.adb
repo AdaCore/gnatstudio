@@ -26,12 +26,12 @@ with Glib.Object;                       use Glib.Object;
 with GNAT.Calendar.Time_IO;
 
 with GPS.Kernel;                        use GPS.Kernel;
-with GPS.Kernel.Actions;
+with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;
 
 with Gtk.Handlers;
@@ -608,12 +608,6 @@ package body GNATTest_Module is
    is
       use Commands.GNATTest;
       Filter : Action_Filter;
-
-      Go_Command : constant Commands.Interactive.Interactive_Command_Access
-        := new Go_To_Tested_Command_Type;
-
-      Submenu_Factory : constant GPS.Kernel.Modules.UI.Submenu_Factory
-        := new Submenu_Factory_Record;
    begin
       GNATTest_Module_ID := new GNATTest_Module_Record;
 
@@ -647,24 +641,23 @@ package body GNATTest_Module is
       Filter := new Go_To_Tested_Filter;
       Register_Filter (Kernel, Filter, "Tested exists");
 
-      GPS.Kernel.Actions.Register_Action
-        (Kernel      => Kernel,
-         Name        => "go to tested procedure",
-         Command     => Go_Command,
-         Filter      => Filter);
-
-      GPS.Kernel.Modules.UI.Register_Contextual_Submenu
+      Register_Contextual_Submenu
         (Kernel   => Kernel,
          Name     => "GNATtest",
          Label    => "GNATtest",
          Filter   => GPS.Kernel.Lookup_Filter (Kernel, "Entity is subprogram"),
-         Submenu  => Submenu_Factory,
+         Submenu  => new Submenu_Factory_Record,
          Ref_Item => "Coverage");
 
-      GPS.Kernel.Modules.UI.Register_Contextual_Menu
+      Register_Action
+        (Kernel      => Kernel,
+         Name        => "go to tested procedure",
+         Command     => new Go_To_Tested_Command_Type,
+         Filter      => Filter);
+      Register_Contextual_Menu
         (Kernel      => Kernel,
          Name        => "Goto tested subprogram",
-         Action      => Go_Command,
+         Action      => "go to tested procedure",
          Label       => "GNATtest/Go to %C",
          Custom      => Tested_Subprogram_Name'Access,
          Ref_Item    => "GNATtest",

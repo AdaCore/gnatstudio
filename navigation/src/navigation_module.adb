@@ -176,6 +176,12 @@ package body Navigation_Module is
      (Filter  : access Has_Back_Navigation;
       Context : Selection_Context) return Boolean;
 
+   type Has_Other_File_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Other_File_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+   --  True if the current file has a spec/body
+
    procedure Command_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
@@ -848,6 +854,30 @@ package body Navigation_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Other_File_Filter;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+   begin
+      if Has_File_Information (Context) then
+         declare
+            File       : constant Virtual_File := File_Information (Context);
+            Other_File : constant Virtual_File :=
+              Get_Registry (Kernel).Tree.Other_File (File);
+         begin
+            return Other_File /= No_File
+              and then Other_File /= File;
+         end;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
      (Filter  : access Has_Back_Navigation;
       Context : Selection_Context) return Boolean
    is
@@ -1177,9 +1207,12 @@ package body Navigation_Module is
          Maximum_Args => Natural'Last,
          Handler      => Command_Handler'Access);
 
+      Filter := new Has_Other_File_Filter;
       Register_Action
-        (Kernel, "goto other file", new Goto_Other_File_Command,
-         -"Open the corresponding spec or body file");
+        (Kernel, "goto other file",
+         Command     => new Goto_Other_File_Command,
+         Description => -"Open the corresponding spec or body file",
+         Filter      => Filter and Src_Action_Context);
 
       Register_Action
         (Kernel, "start of statement", new Start_Statement_Command,

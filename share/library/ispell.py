@@ -47,6 +47,27 @@ import modules   # from GPS
 from gps_utils import make_interactive
 
 
+def find_current_word(context):
+    """
+    Stores in context the current word start, end and text.
+    This is called only when computing whether the menu should be
+    displayed, and stored in the contextual menu for efficiency, since
+    that means we won't have to recompute the info if the user selects
+    the menu.
+    """
+
+    buffer = GPS.EditorBuffer.get()
+    view = buffer.current_view()
+    cursor = view.cursor()
+
+    start = goto_word_start(cursor, underscore_is_word=False)
+    cursor = goto_word_end(cursor, underscore_is_word=False)
+
+    context.ispell_module_start = start
+    context.ispell_module_end = cursor
+    context.ispell_module_word = buffer.get_chars(start, cursor)
+
+
 class Spell_Check_Module(modules.Module):
 
     def setup(self):
@@ -65,7 +86,8 @@ is sent to its stdin.""",
         self.pref_bgcolor.create(
             "Background color",
             "color",
-            """Background color for the command window that contains the suggested replacements""",
+            """Background color for the command window that contains the
+suggested replacements""",
             "yellow")
 
         self.pref_type = GPS.Preference("Plugins/ispell/menutype")
@@ -74,8 +96,9 @@ is sent to its stdin.""",
             "enum",
             """The type of contextual menu we should use:
 - "dynamic" only shows the possible replacements for the current word.
-- "static" displays a single entry that spawns the spell checked for the current word.""",
-            1, "static", "dynamic", "none")
+- "static" displays a single entry that spawns the spell checked for the
+  current word.""",
+            0, "static", "dynamic", "none")
 
         self.ispell = None          # The ispell process
         self.ispell_command = None  # The command used to start ispell
@@ -103,7 +126,7 @@ is sent to its stdin.""",
         make_interactive(
             callback=self.spell_check_word,
             name='spell check word',
-            filter='Source editor',
+            filter=self._filter_has_word,
             category='Editor')
 
         self.preferences_changed()
@@ -112,6 +135,17 @@ is sent to its stdin.""",
         """Terminates the module"""
         self.kill()
         super(Spell_Check_Module, self).teardown()
+
+    def _filter_has_word(self, context):
+        """
+        Whether ispell is available, and the cursor on a word
+        """
+        if (context.module_name == 'Source_Editor' and
+           isinstance(context, GPS.EntityContext)):
+            find_current_word(context)
+            return context.ispell_module_word != ""
+        else:
+            return False
 
     def spell_check_comments(self):
         """Check the spelling for all comments in the current editor"""
@@ -148,23 +182,17 @@ is sent to its stdin.""",
             GPS.Logger("ISPELL").log('Activate static contextual menu')
             if self.dynamic:
                 self.dynamic.hide()
-            if not self.static:
-                self.static = Static_Contextual(ispell=self)
-            else:
-                self.static.show()
+            Static_Contextual(ispell=self)
 
         elif self.ispell_command and self.pref_type.get() == 'dynamic':
             GPS.Logger("ISPELL").log("Activate dynamic contextual menu")
-            if self.static:
-                self.static.hide()
+            GPS.Contextual('spell check word').hide()  # disable static menu
             if not self.dynamic:
                 self.dynamic = Dynamic_Contextual(ispell=self)
             else:
                 self.dynamic.show()
 
         else:
-            if self.static:
-                self.static.hide()
             if self.dynamic:
                 self.dynamic.hide()
 
@@ -300,7 +328,8 @@ is sent to its stdin.""",
                                 meta[1],   # mispelled
                                 s,
                                 e,
-                                proposal[colon + 2:].replace(' ', '').split(','))
+                                proposal[colon + 2:].replace(' ', '')
+                                .split(','))
                             yield self.current
 
                             # Take into account changes in the length of words
@@ -425,57 +454,18 @@ is sent to its stdin.""",
         return True
 
 
-class AbstractContextual(GPS.Contextual):
-
-    def find_current_word(self, context):
-        """
-        Stores in context the current word start, end and text.
-        This is called only when computing whether the menu should be
-        displayed, and stored in the contextual menu for efficiency, since
-        that means we won't have to recompute the info if the user selects
-        the menu.
-        """
-
-        buffer = GPS.EditorBuffer.get()
-        view = buffer.current_view()
-        cursor = view.cursor()
-
-        start = goto_word_start(cursor, underscore_is_word=False)
-        cursor = goto_word_end(cursor, underscore_is_word=False)
-
-        context.ispell_module_start = start
-        context.ispell_module_end = cursor
-        context.ispell_module_word = buffer.get_chars(start, cursor)
-
-
-class Static_Contextual(AbstractContextual):
+class Static_Contextual(object):
 
     def __init__(self, ispell):
         """Create a new static contextual menu for spell checking"""
-        GPS.Contextual.__init__(self, "Spell Check Static")
-        self.ispell = ispell
-        self.create(on_activate=self._on_activate,
-                    filter=self._filter,
-                    label=self._label)
-
-    def _on_activate(self, context):
-        """Display in the console the message read from ispell"""
-        self.ispell.spell_check_word()
-
-    def _filter(self, context):
-        """Decide whether the contextual menu should be made visible"""
-        if isinstance(context, GPS.EntityContext):
-            self.find_current_word(context)
-            return context.ispell_module_word != ""
-        else:
-            return False
+        GPS.Action('spell check word').contextual(self._label)
 
     def _label(self, context):
         """Return the label to use for the contextual menu entry"""
         return "Spell Check %s" % (context.ispell_module_word, )
 
 
-class Dynamic_Contextual(AbstractContextual):
+class Dynamic_Contextual(GPS.Contextual):
 
     def __init__(self, ispell):
         """Create a new dynamic contextual menu for spell checking"""
@@ -489,7 +479,7 @@ class Dynamic_Contextual(AbstractContextual):
     def _filter(self, context):
         """Decide whether the contextual menu should be made visible"""
         if isinstance(context, GPS.EntityContext):
-            self.find_current_word(context)
+            find_current_word(context)
             return context.ispell_module_word != ""
         else:
             return False

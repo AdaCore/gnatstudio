@@ -186,30 +186,6 @@ package body Src_Editor_Module.Commands is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Other_File_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-   begin
-      if Has_File_Information (Context) then
-         declare
-            File       : constant Virtual_File := File_Information (Context);
-            Other_File : constant Virtual_File :=
-              Get_Registry (Kernel).Tree.Other_File (File);
-         begin
-            return Other_File /= No_File
-              and then Other_File /= File;
-         end;
-      end if;
-      return False;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
      (Filter  : access In_Line_Numbers_Area_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -325,27 +301,6 @@ package body Src_Editor_Module.Commands is
             Editor  => Box,
             Context => Context.Context);
       end if;
-      return Standard.Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Goto_Next_Body_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Box    : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   begin
-      Goto_Declaration_Or_Body
-        (Kernel,
-         To_Body => True,
-         Editor  => Box,
-         Context => Context.Context);
       return Standard.Commands.Success;
    end Execute;
 
@@ -830,7 +785,7 @@ package body Src_Editor_Module.Commands is
         (Kernel,
          To_Body => True,
          Editor  => Editor,
-         Context => Get_Current_Context (Kernel));
+         Context => Context.Context);
       return Standard.Commands.Success;
    end Execute;
 

@@ -15,9 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-
 with Glib.Object;               use Glib.Object;
 with Glib;                      use Glib;
 
@@ -55,12 +52,6 @@ package body VCS_Module.Actions is
      (Filter  : access No_File_Filter;
       Context : Selection_Context) return Boolean;
    --  Return True if the filter does not contain a valid file
-
-   type VCS_Explorer_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access VCS_Explorer_Filter;
-      Context : Selection_Context) return Boolean;
-   --  Return True if we are on the VCS explorer
 
    type Has_Revision_Log_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
@@ -124,8 +115,6 @@ package body VCS_Module.Actions is
          Filter        : Action_Filter;
          Callback      : Context_Callback.Marshallers.Void_Marshaller.Handler);
       --  Registers an action.
-      --  If In_Contextual_Menu, also register a contextual menu for this
-      --  action.
 
       Has_Revision_Log : constant Action_Filter :=
                            new Has_Revision_Log_Filter;
@@ -167,27 +156,13 @@ package body VCS_Module.Actions is
          Filter        : Action_Filter;
          Callback      : Context_Callback.Marshallers.Void_Marshaller.Handler)
       is
-         Parent_String : GNAT.Strings.String_Access;
          Command       : Generic_Kernel_Command_Access;
-         The_Filter    : Action_Filter;
-
       begin
          Create (Command, Kernel, Callback);
-         The_Filter := Filter;
-
          Register_Action
            (Kernel, Action_Label, Command, Description,
-            The_Filter,
+            Filter,
             Category => "VCS");
-
-         if Filter = Dir_Filter then
-            Parent_String := new String'("/" & (-"Directory"));
-         elsif Filter = Prj_Filter then
-            Parent_String := new String'("/" & (-"Project"));
-         else
-            Parent_String := new String'("");
-         end if;
-         Free (Parent_String);
       end Register_Action_Menu;
 
       Filter : Action_Filter;
@@ -492,21 +467,7 @@ package body VCS_Module.Actions is
         (Kernel     => Kernel,
          Name       => -"Version Control",
          Filter     => Filter,
-         Ref_Item   => "VCS Reference",
-         Add_Before => False,
          Submenu    => new VCS_Contextual_Menu);
-
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Name   => "Version Control/VCS Reference",
-         Action => Action_Record_Access'(null));
-
-      Filter := new VCS_Explorer_Filter;
-
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Name   => "VCS Reference",
-         Filter => Filter);
    end Register_Actions;
 
    ------------------------------
@@ -558,19 +519,6 @@ package body VCS_Module.Actions is
       end if;
 
       return False;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access VCS_Explorer_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      return Get_Creator (Context) = Abstract_Module (VCS_Explorer_Module_Id);
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -705,6 +653,7 @@ package body VCS_Module.Actions is
       pragma Unreferenced (Factory);
       Creator : constant Abstract_Module := Get_Creator (Context);
    begin
+      --  ??? Should be in the filter for the contextual menu
       if (Creator /= Abstract_Module (VCS_Module_ID)
           and then Creator /= Abstract_Module (VCS_Explorer_Module_Id))
         or else Has_Activity_Information (Context)

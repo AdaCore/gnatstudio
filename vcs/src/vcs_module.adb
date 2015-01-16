@@ -554,133 +554,133 @@ package body VCS_Module is
 
       --  Register VCS commands
 
-      Register_Command
-        (Kernel, "supported_systems",
+      Kernel.Scripts.Register_Command
+        ("supported_systems",
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler_No_Param'Access);
-      Register_Command
-        (Kernel, "get_current_vcs",
+      Kernel.Scripts.Register_Command
+        ("get_current_vcs",
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler_No_Param'Access);
 
-      Register_Command
-        (Kernel, "get_status",
+      Kernel.Scripts.Register_Command
+        ("get_status",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-      Register_Command
-        (Kernel, "update",
+      Kernel.Scripts.Register_Command
+        ("update",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-      Register_Command
-        (Kernel, "commit",
+      Kernel.Scripts.Register_Command
+        ("commit",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-      Register_Command
-        (Kernel, "diff_head",
+      Kernel.Scripts.Register_Command
+        ("diff_head",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-      Register_Command
-        (Kernel, "diff_working",
+      Kernel.Scripts.Register_Command
+        ("diff_working",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-      Register_Command
-        (Kernel, "annotate",
+      Kernel.Scripts.Register_Command
+        ("annotate",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-      Register_Command
-        (Kernel, "remove_annotations",
+      Kernel.Scripts.Register_Command
+        ("remove_annotations",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-      Register_Command
-        (Kernel, "log",
+      Kernel.Scripts.Register_Command
+        ("log",
          Minimum_Args  => 1,
          Maximum_Args  => 2,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-      Register_Command
-        (Kernel, "repository_path",
+      Kernel.Scripts.Register_Command
+        ("repository_path",
          Minimum_Args  => 1,
          Maximum_Args  => 2,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-      Register_Command
-        (Kernel, "repository_dir",
+      Kernel.Scripts.Register_Command
+        ("repository_dir",
          Minimum_Args  => 0,
          Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
-      Register_Command
-        (Kernel, "set_reference",
+      Kernel.Scripts.Register_Command
+        ("set_reference",
          Minimum_Args  => 2,
          Maximum_Args  => 2,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, "get_log_file",
+      Kernel.Scripts.Register_Command
+        ("get_log_file",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => VCS_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, "status_parse",
+      Kernel.Scripts.Register_Command
+        ("status_parse",
          Minimum_Args  => 4,
          Maximum_Args  => 5,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => Status_Parse_Handler'Access);
-      Register_Command
-        (Kernel, "update_parse",
+      Kernel.Scripts.Register_Command
+        ("update_parse",
          Minimum_Args  => 2,
          Maximum_Args  => 3,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => Update_Parse_Handler'Access);
-      Register_Command
-        (Kernel, "annotations_parse",
+      Kernel.Scripts.Register_Command
+        ("annotations_parse",
          Minimum_Args  => 3,
          Maximum_Args  => 3,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => Annotations_Parse_Handler'Access);
-      Register_Command
-        (Kernel, "log_parse",
+      Kernel.Scripts.Register_Command
+        ("log_parse",
          Minimum_Args  => 3,
          Maximum_Args  => 3,
          Class         => VCS_Class,
          Static_Method => True,
          Handler       => Log_Parse_Handler'Access);
-      Register_Command
-        (Kernel, "revision_parse",
+      Kernel.Scripts.Register_Command
+        ("revision_parse",
          Minimum_Args  => 3,
          Maximum_Args  => 3,
          Class         => VCS_Class,
@@ -689,89 +689,89 @@ package body VCS_Module is
 
       --  Register VCS Activities commands
 
-      Register_Command
-        (Kernel, Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Class_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get",
+      Kernel.Scripts.Register_Command
+        ("get",
          Class         => VCS_Activities_Class,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Static_Method => True,
          Handler       => VCS_Activities_Class_Command_Handler'Access);
-      Register_Command
-        (Kernel, "from_file",
+      Kernel.Scripts.Register_Command
+        ("from_file",
          Class         => VCS_Activities_Class,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Static_Method => True,
          Handler       => VCS_Activities_Class_Command_Handler'Access);
-      Register_Command
-        (Kernel, "list",
+      Kernel.Scripts.Register_Command
+        ("list",
          Class         => VCS_Activities_Class,
          Static_Method => True,
          Handler       => VCS_Activities_Class_Command_Handler'Access);
-      Register_Command
-        (Kernel, "id",
+      Kernel.Scripts.Register_Command
+        ("id",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "name",
+      Kernel.Scripts.Register_Command
+        ("name",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "has_log",
+      Kernel.Scripts.Register_Command
+        ("has_log",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "log_file",
+      Kernel.Scripts.Register_Command
+        ("log_file",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "log",
+      Kernel.Scripts.Register_Command
+        ("log",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "is_closed",
+      Kernel.Scripts.Register_Command
+        ("is_closed",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "set_closed",
+      Kernel.Scripts.Register_Command
+        ("set_closed",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "group_commit",
+      Kernel.Scripts.Register_Command
+        ("group_commit",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "toggle_group_commit",
+      Kernel.Scripts.Register_Command
+        ("toggle_group_commit",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "files",
+      Kernel.Scripts.Register_Command
+        ("files",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "commit",
+      Kernel.Scripts.Register_Command
+        ("commit",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "vcs",
+      Kernel.Scripts.Register_Command
+        ("vcs",
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "add_file",
+      Kernel.Scripts.Register_Command
+        ("add_file",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Activities_Class,
          Handler       => VCS_Activities_Command_Handler'Access);
-      Register_Command
-        (Kernel, "remove_file",
+      Kernel.Scripts.Register_Command
+        ("remove_file",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => VCS_Activities_Class,

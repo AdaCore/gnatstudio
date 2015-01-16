@@ -36,10 +36,9 @@ import gps_utils
 
 GPS.Preference("Plugins/copy paste/stdmenu").create(
     "Contextual menu", "boolean",
-    """If enabled, contextual menus will be created for copying, cutting
-and pasting text.
-They will correspond to the /Edit/Copy, /Edit/Cut and /Edit/Paste menus.
-You must restart GPS to take changes into account.""",
+    """If enabled, contextual menus will be created for copying, cutting and
+pasting text. They will correspond to the /Edit/Copy, /Edit/Cut and
+/Edit/Paste menus. You must restart GPS to take changes into account.""",
     True)
 
 GPS.Preference("Plugins/copy paste/greyedout").create(
@@ -51,14 +50,28 @@ You must restart GPS to take changes into account.""",
 
 GPS.Preference("Plugins/copy paste/copy_with_line_nums").create(
     "Copy with line numbers", "boolean",
-    """If enabled and Contextual Menu is also enabled, a contextual menu to
-copy some text with the line numbers will be created.
+    """If enabled a contextual menu to copy some text with the line numbers
+will be created.
 Otherwise, the capability will only be accessible from the /Edit/Copy with
 line numbers menu and possibly the associated key shortcut.""",
     False)
 
 
-def copy_with_line_numbers(menu):
+def on_area(context):
+    buf = GPS.EditorBuffer.get(open=False)
+    if not buf:
+        return False
+
+    start = buf.selection_start()
+    end = buf.selection_end()
+    return start != end
+
+
+@gps_utils.interactive(
+    name='Copy with line numbers',
+    menu='/Edit/Copy with line numbers',
+    filter=on_area)
+def copy_with_line_numbers():
     buffer = GPS.EditorBuffer.get()
     loc_start = buffer.selection_start()
     loc_end = buffer.selection_end().forward_char(-1)
@@ -66,7 +79,7 @@ def copy_with_line_numbers(menu):
     selection_end = loc_end.line()
     result = ""
 
-    max_len = len('%s' % selection_end)
+    max_len = len(str(selection_end))
 
     for line in range(selection_start, selection_end + 1):
         if line == selection_end:
@@ -85,82 +98,17 @@ def copy_with_line_numbers(menu):
     GPS.Clipboard.copy(result)
 
 
-def on_area(context):
-    buf = GPS.EditorBuffer.get(open=False)
-    if not buf:
-        return False
-
-    start = buf.selection_start()
-    end = buf.selection_end()
-    return start != end
-
-
-def on_source_editor_area(context):
+@gps_utils.hook('gps_started')
+def __gps_started():
     global grey_out_contextual
-    return gps_utils.in_editor(context) and \
-        (grey_out_contextual or on_area(context))
-
-
-def on_copy(context):
-    GPS.Editor.copy()
-
-
-def on_cut(context):
-    GPS.Editor.cut()
-
-
-def on_paste(context):
-    GPS.Editor.paste()
-
-
-def on_gps_started(hook):
-    global grey_out_contextual
-
-    GPS.Menu.create(
-        "/Edit/Copy with line numbers",
-        on_activate=copy_with_line_numbers,
-        ref="Copy",
-        add_before=False)
 
     if GPS.Preference("Plugins/copy paste/stdmenu").get():
         grey_out_contextual = GPS.Preference(
             "Plugins/copy paste/greyedout").get()
 
-        GPS.Contextual("Cut in editor").create(
-            on_activate=on_cut,
-            filter=on_source_editor_area,
-            group=-1,
-            visibility_filter=on_area,
-            label=lambda x: "Cut")
-        GPS.Contextual("Copy in editor").create(
-            on_activate=on_copy,
-            filter=on_source_editor_area,
-            group=-1,
-            visibility_filter=on_area,
-            label=lambda x: "Copy",
-            ref="Cut in editor",
-            add_before=False)
-        GPS.Contextual("Paste in editor").create(
-            on_activate=on_paste,
-            group=-1,
-            filter=gps_utils.in_editor,
-            label=lambda x: "Paste",
-            ref="Copy in editor",
-            add_before=False)
-
-        if GPS.Preference("Plugins/copy paste/copy_with_line_nums").get():
-            GPS.Contextual("Copy with line numbers").create(
-                on_activate=copy_with_line_numbers,
-                filter=on_source_editor_area,
-                group=-1,
-                visibility_filter=on_area,
-                ref="Cut in editor")
-
-        GPS.Contextual("sep_group_in_editor").create(
-            on_activate=None,
-            group=-1,
-            filter=gps_utils.in_editor,
-            ref="Paste in editor",
-            add_before=False)
-
-GPS.Hook("gps_started").add(on_gps_started)
+        # ??? Should still show them when inapplicable if grey_out_contextual
+        GPS.Action('cut to clipboard').contextual('Cut', group=-1)
+        GPS.Action('copy to clipboard').contextual('Copy', group=-1)
+        GPS.Action('paste from clipboard').contextual('Paste', group=-1)
+        GPS.Action('Copy with line numbers').contextual(
+            'Copy with line numbers', group=-1)

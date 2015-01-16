@@ -1669,26 +1669,24 @@ package body GVD.Memory_View is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command  : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Simple_Views.Register_Desktop_Functions (Kernel);
 
       Register_Action
-        (Kernel, "examine memory", new View_Memory_Command,
-         -("Examine the contents of the memory at the location of the variable"
-           & " under the cursor"),
+        (Kernel, "examine memory",
+         Command => new View_Memory_Command,
+         Description =>
+           -("Examine the contents of the memory at the location of the"
+             & " selected variable"),
          Category => -"Debug",
          Filter   => Lookup_Filter (Kernel, "Debugger stopped"));
-
-      Command := new View_Memory_Command;
       Register_Contextual_Menu
-        (Kernel, "Debug view memory",
+        (Kernel, Name => "Debug view memory",
          Label  => -"Debug/View memory at address of %S",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "Debugger active")
-           and Lookup_Filter (Kernel, "Debugger printable variable"));
+         Filter =>  Lookup_Filter (Kernel, "Debugger active")
+           and Lookup_Filter (Kernel, "Debugger printable variable"),
+         Action => "examine memory");
    end Register_Module;
 
    -------------------------------

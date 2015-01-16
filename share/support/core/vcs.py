@@ -85,7 +85,7 @@ def not_in_explorer(context):
 
     return not only_in_explorer(context)
 
-global_vcs_menus = []
+global_vcs_menus = []    # list of menu items
 contextual_menu_labels = {}
 
 actions_via_revision_log = ["Commit"]
@@ -96,6 +96,7 @@ def create_menus(system_name, actions):
     global contextual_menu_labels
 
     need_to_create_contextual_menus = system_name not in contextual_menu_labels
+    need_to_create_menus = len(global_vcs_menus) == 0
 
     if need_to_create_contextual_menus:
         contextual_menu_labels[system_name] = []
@@ -109,36 +110,19 @@ def create_menus(system_name, actions):
             action = GPS.Action(action_name)
 
             # Add item in the global menu
-            menu = action.menu("/_VCS/%s" % label)
-
-            global_vcs_menus += [menu]
+            if need_to_create_menus:
+                menu = action.menu("/_VCS/%s" % label)
+                global_vcs_menus.append(menu)
 
             # Add item in the contextual menu
 
             contextual_label = "Version Control/%s" % label.replace("_", "")
 
             if need_to_create_contextual_menus:
-                GPS.Contextual(contextual_label).create(
-                    on_activate=Launcher(action_name).launcher,
-                    ref=last_menu,
-                    filter=not_in_explorer,
-                    action=action,   # Additional filter
-                    add_before=True)
-
-                contextual_menu_labels[system_name] += [contextual_label]
-            else:
-                GPS.Contextual(contextual_label).show()
-
-            # Add item in the VCS Explorer's contextual menu
-
-            contextual_label = label.replace("_", "")
-
-            if need_to_create_contextual_menus:
-                GPS.Contextual(contextual_label).create(
-                    on_activate=Launcher(action_name).launcher,
-                    ref=last_explorer_menu,
-                    action=action,   # Additional filter
-                    filter=only_in_explorer,
+                action.contextual(
+                    path=contextual_label,
+                    # filter=not_in_explorer,
+                    # ref=last_menu,
                     add_before=True)
 
                 contextual_menu_labels[system_name] += [contextual_label]
@@ -150,44 +134,18 @@ def create_menus(system_name, actions):
             separator_count += 1
 
             # Add a separator in the global menu
-            menu = GPS.Menu.create(
-                "/_VCS/%s-separator%s" % (label, separator_count))
-
-            global_vcs_menus += [menu]
+            menu = GPS.Menu.create("/_VCS/-separator%s" % (separator_count, ))
+            global_vcs_menus.append(menu)
 
             # Add a separator in the contextual menu
 
-            label = "%s-%s" % (label.replace("_", ""), separator_count)
-
-            # Add a separator in the VCS menu
-
-            contextual_label = "Version Control/" + label
-
             if need_to_create_contextual_menus:
-                GPS.Contextual(contextual_label).create(
+                GPS.Contextual('').create(
                     on_activate=None,
-                    filter=only_in_submenu,
+                    label='Version Control/-',
+                    #  filter=only_in_submenu,
                     ref=last_menu,
                     add_before=True)
-
-                contextual_menu_labels[system_name] += [contextual_label]
-            else:
-                GPS.Contextual(contextual_label).show()
-
-            # Add a separator in the VCS explorer's menu
-
-            contextual_label = label
-
-            if need_to_create_contextual_menus:
-                GPS.Contextual(contextual_label).create(
-                    on_activate=None,
-                    filter=only_in_explorer,
-                    ref=last_explorer_menu,
-                    add_before=True)
-
-                contextual_menu_labels[system_name] += [contextual_label]
-            else:
-                GPS.Contextual(contextual_label).show()
 
 
 def remove_old_menus(system_name):
@@ -195,8 +153,8 @@ def remove_old_menus(system_name):
 
     if system_name in contextual_menu_labels:
         # Remove old menus
-        for m in global_vcs_menus:
-            m.destroy()
+        for menu in global_vcs_menus:
+            menu.destroy()
 
         global_vcs_menus = []
 
@@ -231,4 +189,4 @@ def __on_project_changed():
     if name in registered_vcs_actions:
         create_menus(name, registered_vcs_actions[name])
 
-    GPS.Contextual(last_menu).hide()
+    # GPS.Contextual(last_menu).hide()

@@ -33,6 +33,7 @@ with Gtk.Widget;               use Gtk.Widget;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
@@ -700,26 +701,28 @@ package body Creation_Wizard.Extending is
    -------------------------------
 
    procedure Register_Contextual_Menus
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command : Interactive_Command_Access;
-      Filter  : Action_Filter;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Command := new Edit_In_Extended_Project;
-      Filter  := new Can_Add_To_Extended;
-      Register_Contextual_Menu
+      Register_Action
         (Kernel, "Add to extending project",
-         Action => Command,
-         Filter => Filter,
-         Label  => "Add to extending project");
+         Command     => new Edit_In_Extended_Project,
+         Filter      => new Can_Add_To_Extended,
+         Description =>
+           "Add a copy of the selected file to an extending project (either"
+           & " the root project or one the specifically extends the selected"
+           & " project",
+         Category    => -"Project");
+      Register_Contextual_Menu (Kernel, "Add to extending project");
 
-      Command := new Remove_From_Extending_Project;
-      Filter  := new In_Extending_Project;
-      Register_Contextual_Menu
+      Register_Action
         (Kernel, "Remove from extending project",
-         Action => Command,
-         Filter => Filter,
-         Label  => "Remove from extending project");
+         Command => new Remove_From_Extending_Project,
+         Filter  => new In_Extending_Project,
+         Description =>
+           "If the selected file belongs to an extending project, delete it"
+           & " from that project",
+         Category    => -"Project");
+      Register_Contextual_Menu (Kernel, "Remove from extending project");
    end Register_Contextual_Menus;
 
 end Creation_Wizard.Extending;

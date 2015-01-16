@@ -52,8 +52,6 @@ with Gtk.Menu_Item;
 with Gtk.Target_List;
 with Gtk.Toolbar;
 with Gtk.Widget;
-with Commands;             use Commands;
-with Commands.Interactive; use Commands.Interactive;
 with Interfaces.C.Strings;
 with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
 with XML_Utils;
@@ -130,13 +128,15 @@ package GPS.Kernel.Modules.UI is
    Default_Contextual_Group : constant := 0;
    procedure Register_Contextual_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
-      Name        : String;
-      Action      : Action_Record_Access;
+      Action      : String;
+      Name        : String := "";   --  defaults to Action
       Label       : String := "";
       Custom      : Custom_Expansion := null;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Group       : Integer := Default_Contextual_Group);
+      Filter      : Action_Filter := null;
+      Group       : Integer := Default_Contextual_Group)
+      with Pre => Action /= "";
    --  Register a new contextual menu entry to be displayed.
    --  This menu will only be shown when the filter associated with the Action
    --  matches. The name used in the menu will be Label (or Name if label isn't
@@ -161,13 +161,10 @@ package GPS.Kernel.Modules.UI is
    --  entry will appear just before or just after that item, in particular if
    --  other entries had the same requirement.
    --
-   --  Separators:
-   --  If Action is null or the name of the menu item starts with '-' (for
-   --  instance if Name = "/submenu/-my item") then a separator will be added
-   --  to the contextual menu instead. It is added in a submenu if Label is not
-   --  the empty string. It is good policy to specify a Ref_Item for a
-   --  separator, since the separator will automatically be hidden if the
-   --  Ref_Item itself is hidden
+   --  Filter:
+   --  Acts as an extra filter (in addition to the action's own filter, and
+   --  automatic filter computed from the label) to decide whether to show the
+   --  contextual menu.
    --
    --  Groups:
    --  Group indicates the group of the entry. If Ref_Item is specified, this
@@ -176,48 +173,27 @@ package GPS.Kernel.Modules.UI is
 
    procedure Register_Contextual_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
-      Name        : String;
-      Action      : Action_Record_Access;
+      Action      : String;
+      Name        : String := "";   --  defaults to action
       Label       : access Contextual_Menu_Label_Creator_Record'Class;
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
-      Group       : Integer := Default_Contextual_Group);
+      Group       : Integer := Default_Contextual_Group)
+      with Pre => Action /= "";
    --  Same as above, except the label of the menu is computed dynamically
 
-   procedure Register_Contextual_Menu
-     (Kernel            : access Kernel_Handle_Record'Class;
-      Name              : String;
-      Action            : Commands.Interactive.Interactive_Command_Access;
-      Filter            : access Action_Filter_Record'Class := null;
-      Enable_Filter     : access Action_Filter_Record'Class := null;
-      Label             : access Contextual_Menu_Label_Creator_Record'Class;
-      Ref_Item          : String := "";
-      Add_Before        : Boolean := True;
-      Group             : Integer := Default_Contextual_Group);
-   --  Same as above, except the action to execute is defined internally.
-   --  When the command is executed, the Context.Context field will be set to
-   --  the current selection context, and Context.Event to the event that
-   --  triggered the menu.
-   --  Action doesn't need to Push_State/Pop_State, nor handle unexpected
-   --  exceptions, since this is already done by its caller. This keeps the
-   --  code shorter.
-   --  Filter will act on the menu's visibility.
-   --  Enable_Filter will act on its sensitivity.
-
-   procedure Register_Contextual_Menu
-     (Kernel            : access Kernel_Handle_Record'Class;
-      Name              : String;
-      Action         : Commands.Interactive.Interactive_Command_Access := null;
-      Filter            : access Action_Filter_Record'Class := null;
-      Enable_Filter     : access Action_Filter_Record'Class := null;
-      Label             : String := "";
-      Custom            : Custom_Expansion := null;
-      Ref_Item          : String := "";
-      Add_Before        : Boolean := True;
-      Group             : Integer := Default_Contextual_Group);
-   --  Same as above, but the menu title is a string where %p, %f,... are
-   --  substituted.
-   --  A separator is inserted if Action is null and the Filter matches.
+   procedure Register_Contextual_Separator
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Action      : String := "";   --  filter
+      In_Submenu  : String := "";
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True;
+      Group       : Integer := Default_Contextual_Group);
+   --  Separators:
+   --  If Action is "" then a separator will be added
+   --  to the contextual menu instead. It is added in a submenu if In_Submenu
+   --  is specified. If an action was specified, the separator will be
+   --  hidden when the action does not apply to the current context.
 
    type Submenu_Factory_Record is abstract tagged null record;
    type Submenu_Factory is access all Submenu_Factory_Record'Class;

@@ -356,22 +356,6 @@ def do_pogs_xref(context, siv, dpc, zlg):
     view.center(view.cursor())
 
 
-def pogs_xref(context):
-    do_pogs_xref(context, siv=False, dpc=False, zlg=False)
-
-
-def pogs_siv_xref(context):
-    do_pogs_xref(context, siv=True, dpc=False, zlg=False)
-
-
-def pogs_dpc_xref(context):
-    do_pogs_xref(context, siv=False, dpc=True, zlg=False)
-
-
-def pogs_zlg_xref(context):
-    do_pogs_xref(context, siv=False, dpc=True, zlg=True)
-
-
 def sum_file_current_line_has_vc(context):
     """Return TRUE if the current line of the POGS output references a VC"""
 
@@ -1756,17 +1740,33 @@ def initialize_spark():
     GPS.parse_xml(b)
     GPS.Hook('compilation_finished').add(on_execution_finished)
 
-    GPS.Contextual('SPARK/Show VC').create(
-        on_activate=pogs_xref, filter=sum_file_current_line_has_vc)
+    make_interactive(
+        name='SPARK/Show VC',
+        callback=lambda: do_pogs_xref(
+            GPS.current_context(), siv=False, dpc=False, zlg=False),
+        filter=sum_file_current_line_has_vc,
+        contextual='SPARK/Show VC')
 
-    GPS.Contextual('SPARK/Show Simplified VC').create(
-        on_activate=pogs_siv_xref, filter=sum_file_current_line_has_vc)
+    make_interactive(
+        name='SPARK/Show Simplified VC',
+        callback=lambda: do_pogs_xref(
+            GPS.current_context(), siv=True, dpc=False, zlg=False),
+        filter=sum_file_current_line_has_vc,
+        contextual='SPARK/Show Simplified VC')
 
-    GPS.Contextual('SPARK/Show DPC').create(
-        on_activate=pogs_dpc_xref, filter=sum_file_current_line_has_dpc)
+    make_interactive(
+        name='SPARK/Show DPC',
+        callback=lambda: do_pogs_xref(
+            GPS.current_context(), siv=False, dpc=True, zlg=False),
+        filter=sum_file_current_line_has_dpc,
+        contextual='SPARK/Show DPC')
 
-    GPS.Contextual('SPARK/Show ZLG').create(
-        on_activate=pogs_zlg_xref, filter=sum_file_current_line_has_dpc)
+    make_interactive(
+        name='SPARK/Show ZLG',
+        callback=lambda: do_pogs_xref(
+            GPS.current_context(), siv=False, dpc=True, zlg=True),
+        filter=sum_file_current_line_has_dpc,
+        contextual='SPARK/Show ZLG')
 
 
 def finalize_spark():

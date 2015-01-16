@@ -32,8 +32,9 @@ class Preference:
 class Entity(object):
 
     """Provides backward compatibility with older versions of GPS.
-To use, build an instance of GPS.Entity, as usual, and then an instance of this method:
-    ent = GPS.Entity ("name", GPS.File ("file"))
+To use, build an instance of GPS.Entity, as usual,
+and then an instance of this method:
+    ent = GPS_old.Entity ("name", GPS.File ("file"))
     GPS_old.Entity (ent).decl_file() == ent.declaration().file()
     ent.calls ()
 """

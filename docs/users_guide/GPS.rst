@@ -401,6 +401,10 @@ Classes
 
 
 
+
+   .. autoattribute:: GPS.Contextual.name
+
+
    .. automethod:: GPS.Contextual.__init__
 
    .. automethod:: GPS.Contextual.create

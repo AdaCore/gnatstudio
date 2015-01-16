@@ -96,11 +96,6 @@ def export_locations_to_editor():
     buf.insert(buf.at(1, 1), text)
 
 
-def on_label(context):
-    return "Clear locations for <b>%s</b>" % (
-        (os.path.basename(context.file().name())))
-
-
 def on_filter(context):
     try:
         # Return True if there are any messages in the file context
@@ -118,17 +113,13 @@ def on_filter(context):
         return False
 
 
-def on_contextual(context):
+@gps_utils.interactive(
+    category='Locations', filter=on_filter,
+    name='Clear locations for file',
+    contextual=lambda ctx: 'Clear locations for <b>%s</b>' % (
+         os.path.basename(ctx.file().name())), )
+def on_contextual():
+    context = GPS.current_context()
     list = GPS.Message.list(file=context.file())
     for m in list:
         m.remove()
-
-GPS.Contextual("Clear locations for file").create(
-    on_activate=on_contextual, filter=on_filter, label=on_label, group=30)
-
-
-@gps_utils.interactive(category="Locations", filter="File",
-                       name="Clear locations for file")
-def clear_locations_for_file():
-    context = GPS.current_context()
-    on_contextual(context)

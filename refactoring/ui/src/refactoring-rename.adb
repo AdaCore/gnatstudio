@@ -31,6 +31,7 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Commands.Interactive;       use Commands, Commands.Interactive;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
@@ -459,18 +460,21 @@ package body Refactoring.Rename is
    --------------------------
 
    procedure Register_Refactoring
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      C : constant Interactive_Command_Access := new Rename_Entity_Command;
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
+      Register_Action
+        (Kernel, "rename entity",
+         Command     => new Rename_Entity_Command,
+         Description => -"Rename an entity, including its references",
+         Category    => -"Refactoring",
+         Filter => Lookup_Filter (Kernel, "Entity"));
       Register_Contextual_Menu
         (Kernel,
-         Name  => "Rename entity",
-         Label => "Refactoring/Rename %e",
-         Filter => Lookup_Filter (Kernel, "Entity"),
-         Action => C);
-      Register_Command
-        (Kernel, "rename", 1, 4, Entity_Command_Handler'Access,
+         Label  => "Refactoring/Rename %e",
+         Action => "rename entity");
+
+      Kernel.Scripts.Register_Command
+        ("rename", 1, 4, Entity_Command_Handler'Access,
          Get_Entity_Class (Kernel));
    end Register_Refactoring;
 

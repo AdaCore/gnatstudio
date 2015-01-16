@@ -3984,6 +3984,8 @@ package body Project_Properties is
             Iterator => For_All_Pages'Access);
       begin
          for T in Tools'Range loop
+            Trace (Me, "MANU Add page for tool="
+               & To_String (Tools (T).Tool_Name));
             Page := Switches_Editor_For_Tool_Factory
               (Tool           => Tools (T),
                Tool_From_Name => Tool_From_Name);
@@ -4218,6 +4220,10 @@ package body Project_Properties is
       Self : constant Properties_Editor := Properties_Editor (Editor);
       Languages : String_List_Access := Get_Languages (Self);
    begin
+      Trace (Me, "MANU On_Languages_Change");
+      for L in Languages'Range loop
+         Trace (Me, "MANU   L =" & Languages (L).all);
+      end loop;
       Set_Visible_Pages (Self, Languages.all);
       Free (Languages);
    end On_Languages_Change;
@@ -4581,9 +4587,17 @@ package body Project_Properties is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Command);
+      Project : Project_Type;
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      Edit_Properties
-        (Project_Information (Context.Context), Get_Kernel (Context.Context));
+      if Has_Project_Information (Context.Context) then
+         Project := Project_Information (Context.Context);
+      else
+         Project := Get_Project (Kernel);
+         Trace (Me, "MANU Editing kernel's project");
+      end if;
+
+      Edit_Properties (Project, Kernel);
       return Commands.Success;
    end Execute;
 

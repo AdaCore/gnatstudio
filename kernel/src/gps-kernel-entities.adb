@@ -1279,32 +1279,48 @@ package body GPS.Kernel.Entities is
 
       Register_Contextual_Submenu
         (Kernel, "References",
-         Ref_Item   => "Goto file spec<->body",
+         Ref_Item   => "goto other file",
          Add_Before => False);
 
       Register_Action
-        (Kernel, "find all references", new Find_All_Refs_Command,
-         -("List all references to the entity under the cursor"
-           & " in the Locations window"));
+        (Kernel, "find all references",
+         Command     => new Find_All_Refs_Command,
+         Description =>
+           -("List all references to the selected entity"
+             & " in the Locations window"),
+         Filter => Lookup_Filter (Kernel, "Entity"));
       Register_Contextual_Menu
-        (Kernel, "Find all references",
+        (Kernel,
          Label      => "References/Find all references to %e",
-         Action     => new Find_All_Refs_Command,
-         Ref_Item   => "Entity called by in browser",
+         Action     => "find all references",
+         Ref_Item   => "Browser: entity called by",
          Add_Before => False);
 
-      Command := new Find_Specific_Refs_Command;
+      Register_Action
+        (Kernel, "find references...",
+         Command     => new Find_Specific_Refs_Command,
+         Description =>
+           -("List all references to the selected entity"
+           & " in the Locations window, with extra filters"),
+         Filter => Lookup_Filter (Kernel, "Entity"));
       Register_Contextual_Menu
-        (Kernel, "Find references...",
+        (Kernel,
          Label      => "References/Find references to %e...",
-         Action     => Command);
+         Action     => "find references...");
 
       Command := new Find_All_Refs_Command;
       Find_All_Refs_Command (Command.all).Locals_Only := True;
+      Register_Action
+        (Kernel, "find all local references",
+         Command     => Command,
+         Description =>
+           -("List all references in the selected file to the selected entity"
+           & " in the Locations window"),
+         Filter => Lookup_Filter (Kernel, "Entity"));
       Register_Contextual_Menu
-        (Kernel, "Find all local references",
+        (Kernel,
          Label  => "References/Find all local references to %e",
-         Action => Command);
+         Action => "find all local references");
 
       Kernel.Scripts.Register_Command
         ("find_all_refs",

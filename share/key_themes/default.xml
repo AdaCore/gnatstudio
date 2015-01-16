@@ -33,7 +33,7 @@
   <key action="comment lines">control-minus</key>
   <key action="uncomment lines">control-underscore</key>
   <key action="refill">control-equal</key>
-  <key action="goto line">control-g</key>
+  <key action="goto line">primary-g</key>
   <key action="jump to matching delimiter">control-apostrophe</key>
 
   <key action="Delete word backward" >control-BackSpace</key>
