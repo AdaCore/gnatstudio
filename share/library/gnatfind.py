@@ -7,9 +7,10 @@ This works only when the project hierarchy consists in a single project.
 
 import GPS
 import os.path
+import gps_utils
 
 
-def on_gnatfind_exit(gprfind_process, status, full_output):
+def __on_gnatfind_exit(gprfind_process, status, full_output):
     """  Parse the output of the gprfind command and enter it in the
          GPS Locations View.
     """
@@ -27,72 +28,48 @@ def on_gnatfind_exit(gprfind_process, status, full_output):
                             "error")
 
 
-class Gnatfind_Contextual (GPS.Contextual):
+@gps_utils.interactive(
+    'run gnatfind',
+    contextual='gnatfind %e',
+    contextual_ref='goto other file',
+    filter=lambda ctx: hasattr(ctx, 'entity') and ctx.entity() is not None)
+def __activate():
+    context = GPS.contextual_context() or GPS.current_context()
 
-    """ Define a contextual menu "gnatfind".
-    """
+    entity = context.entity()
+    loc = context.location()
 
-    def __init__(self):
-        GPS.Contextual.__init__(self, "gnatfind %E")
-        self.create(on_activate=self.on_activate,
-                    ref="Goto declaration of entity",
-                    label=self.label,
-                    filter=self.filter)
+    buf = GPS.EditorBuffer.get(loc.file())
+    location = buf.at(loc.line(), loc.column())
 
-    def label(self, context):
-        return "gnatfind <b>%s</b>" % context.entity().name()
+    entity_name = entity.name()
+    length = len(entity_name)
 
-    def filter(self, context):
-        if not hasattr(context, "entity"):
-            return False
-        if not context.entity():
-            return False
-        return True
+    # Go to the beginning of the entity, as needed by gnatfind
 
-    def on_activate(self, context):
-        entity = context.entity()
+    while not location.starts_word():
+        location = location.forward_word(-1)
 
-        loc = context.location()
+    entity_file = os.path.basename(loc.file().name())
+    entity_line = location.line()
+    entity_column = location.column()
+    source_dirs = GPS.Project.root().get_attribute_as_list("source_dirs")
+    object_dir = GPS.Project.root().get_attribute_as_string("object_dir")
 
-        buf = GPS.EditorBuffer.get(loc.file())
-        location = buf.at(loc.line(), loc.column())
+    ais = " ".join(["-aI%s" % d for d in source_dirs])
 
-        entity_name = entity.name()
-        length = len(entity_name)
+    # Create the gnatfind command line
 
-        # Go to the beginning of the entity, as needed by gnatfind
+    command = "gnatfind -r %s -aO%s %s:%s:%s:%s" % (
+        ais, object_dir, entity_name, entity_file.split('\\')[-1],
+        entity_line, entity_column)
 
-        while not location.starts_word():
-            location = location.forward_word(-1)
+    # Write the command line in the Messages window
 
-        entity_file = os.path.basename(loc.file().name())
-        entity_line = location.line()
-        entity_column = location.column()
-        source_dirs = GPS.Project.root().get_attribute_as_list("source_dirs")
-        object_dir = GPS.Project.root().get_attribute_as_string("object_dir")
+    GPS.Console().write(command + "\n")
 
-        ais = " ".join(["-aI%s" % d for d in source_dirs])
+    # Launch the process
 
-        # Create the gnatfind command line
+    proc = GPS.Process(command, on_exit=__on_gnatfind_exit)
 
-        command = "gnatfind -r %s -aO%s %s:%s:%s:%s" % (
-            ais, object_dir, entity_name, entity_file.split('\\')[-1], entity_line, entity_column)
-
-        # Write the command line in the Messages window
-
-        GPS.Console().write(command + "\n")
-
-        # Launch the process
-
-        proc = GPS.Process(command, on_exit=on_gnatfind_exit)
-
-        proc.query = "%s (%s:%s)" % (entity_name, entity_line, entity_column)
-
-
-# Register the menu
-
-
-def on_gps_started(hook_name):
-    Gnatfind_Contextual()
-
-GPS.Hook("gps_started").add(on_gps_started)
+    proc.query = "%s (%s:%s)" % (entity_name, entity_line, entity_column)

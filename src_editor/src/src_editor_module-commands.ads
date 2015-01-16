@@ -62,12 +62,6 @@ package Src_Editor_Module.Commands is
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current entity has a type
 
-   type Has_Other_File_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Other_File_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-   --  True if the current file has a spec/body
-
    type Goto_Line_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Goto_Line_Command;
@@ -85,12 +79,6 @@ package Src_Editor_Module.Commands is
      (Command : access Goto_Declaration_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to the declaration of the entity in the context
-
-   type Goto_Next_Body_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Goto_Next_Body_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Go to the body of the entity in the context
 
    type Goto_Type_Command is new Interactive_Command with null record;
    overriding function Execute

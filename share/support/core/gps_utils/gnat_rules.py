@@ -113,8 +113,8 @@ class gnatMakeProc:
                 GPS.Console("Messages").write(str(name) + "\n")
                 xmlCompiler = xmlCompilerHead + \
                     xmlCompilerDefault + xmlCompilerTrailer
-            GPS.parse_xml(
-                """<?xml version="1.0" ?><GPS>""" + xmlCompiler + "</GPS>")
+            GPS.Logger("MANU").log(xmlCompiler)
+            GPS.parse_xml("""<GPS>""" + xmlCompiler + "</GPS>")
 
     def get_warnings_list(self):
         self.init_switches()

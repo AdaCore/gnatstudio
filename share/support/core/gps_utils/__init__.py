@@ -209,7 +209,8 @@ def remove_interactive(menu="", name="", contextual=""):
 
 
 def make_interactive(callback, category="General", filter="", menu="", key="",
-                     contextual="", name="", before="", after=""):
+                     contextual='', name="", before="", after="",
+                     contextual_ref=''):
     """
     Declare a new GPS action (an interactive function, in Emacs talk),
     associated with an optional menu and default key. The description of
@@ -228,6 +229,12 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
     :param menu: The name of a menu to associate with the action. It will be
       placed within its parent just before the item referenced as `before`,
       or after the item referenced as `after`.
+
+    :param contextual: Path for the contextual menu
+      This is either a string, for instance '/Menu/Submenu' or
+      '/Menu/Submenu %f', which supports a number of parameter substitution;
+      or a function that receives a GPS.Context as parameter and returns a
+      string.
 
     :return: a tuple (GPS.Action, GPS.Menu)
       The menu might be None if you did not request its creation.
@@ -257,7 +264,7 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
         m = None
 
     if contextual:
-        a.contextual(contextual)
+        a.contextual(contextual, ref=contextual_ref)
 
     if key:
         a.key(key)
@@ -279,13 +286,15 @@ class interactive:
     """
 
     def __init__(self, category="General", filter="", menu="", key="",
-                 contextual="", name="", before="", after=""):
+                 contextual="", name="", before="", after="",
+                 contextual_ref=''):
         self.filter = filter
         self.category = category
         self.menu = menu
         self.key = key
         self.name = name
         self.contextual = contextual
+        self.contextual_ref = contextual_ref
         self.before = before
         self.after = after
 
@@ -293,6 +302,7 @@ class interactive:
         make_interactive(fn, filter=self.filter, category=self.category,
                          menu=self.menu, key=self.key, after=self.after,
                          before=self.before,
+                         contextual_ref=self.contextual_ref,
                          contextual=self.contextual, name=self.name)
         return fn
 

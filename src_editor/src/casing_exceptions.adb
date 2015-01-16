@@ -27,6 +27,7 @@ with Case_Handling.IO;        use Case_Handling.IO;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Editors;             use GPS.Editors;
 with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
@@ -486,14 +487,16 @@ package body Casing_Exceptions is
                              Create_From_Dir
                                (Get_Home_Dir (Kernel),
                                 Case_Exceptions_Filename);
-      Command            : Interactive_Command_Access;
       Label              : Contextual_Label;
-      Substring_Filter   : Action_Filter;
-      Full_String_Filter : Action_Filter;
-      Empty_Filter       : Action_Filter;
-      RW_Filter          : Action_Filter;
-      Filter             : Action_Filter;
+      Substring_Filter : constant Action_Filter := new Substring_Filter_Record;
+      Empty_Filter : constant Action_Filter := new Empty_Filter_Record;
+      Filter       : constant Action_Filter :=
+        Create (Module => Src_Editor_Module_Name) and not Empty_Filter;
+      RW_Filter    : Action_Filter := new RW_Filter_Record;
+      F                  : Action_Filter;
    begin
+      RW_Filter := Filter and RW_Filter;
+
       Casing_Module_Id := new Casing_Module_Record;
 
       Register_Module
@@ -506,85 +509,124 @@ package body Casing_Exceptions is
          Filename,
          Read_Only => False);
 
-      Empty_Filter := new Empty_Filter_Record;
-      RW_Filter    := new RW_Filter_Record;
-
-      Filter :=
-        Create (Module => Src_Editor_Module_Name) and not Empty_Filter;
-
-      Command := new Change_Case_Command (Lower);
       Label   := new Contextual_Label_Record;
       Label.Casing := Lower;
-      Register_Contextual_Menu
-        (Kernel, "Lower case entity",
-         Label  => Label,
-         Filter => Filter and RW_Filter,
-         Action => Command);
-
-      Command := new Change_Case_Command (Upper);
-      Label   := new Contextual_Label_Record;
-      Label.Casing := Upper;
-      Register_Contextual_Menu
-        (Kernel, "Upper case entity",
-         Label  => Label,
-         Filter => Filter and RW_Filter,
-         Action => Command);
-
-      Command := new Change_Case_Command (Mixed);
-      Label   := new Contextual_Label_Record;
-      Label.Casing := Mixed;
-      Register_Contextual_Menu
-        (Kernel, "Mixed case entity",
-         Label  => Label,
-         Filter => Filter and RW_Filter,
-         Action => Command);
-
-      Command := new Change_Case_Command (Smart_Mixed);
-      Label   := new Contextual_Label_Record;
-      Label.Casing := Smart_Mixed;
-      Register_Contextual_Menu
-        (Kernel, "Smart mixed case entity",
-         Label  => Label,
-         Filter => Filter and RW_Filter,
-         Action => Command);
-
+      Register_Action
+        (Kernel,
+         "lower case entity",
+         Command     => new Change_Case_Command (Lower),
+         Description =>
+           "Change the casing of the selected entity to lower case",
+         Filter    => RW_Filter,
+         Category  => -"Editor");
       Register_Contextual_Menu
         (Kernel,
-         Name   => "casing separator",
-         Action => null,
-         Filter => Filter and RW_Filter,
-         Label  => -"Casing/");
+         Label  => Label,
+         Action => "lower case entity");
 
-      Substring_Filter   := new Substring_Filter_Record;
-      Full_String_Filter := not Substring_Filter;
-
-      Command := new Add_Exception_Command (True, Remove => False);
+      Label   := new Contextual_Label_Record;
+      Label.Casing := Upper;
+      Register_Action
+        (Kernel,
+         "upper case entity",
+         Command     => new Change_Case_Command (Upper),
+         Description =>
+           "Change the casing of the selected entity to upper case",
+         Filter    => RW_Filter,
+         Category  => -"Editor");
       Register_Contextual_Menu
-        (Kernel, "Add substring casing exception",
+        (Kernel,
+         Label  => Label,
+         Action => "upper case entity");
+
+      Label   := new Contextual_Label_Record;
+      Label.Casing := Mixed;
+      Register_Action
+        (Kernel,
+         "mixed case entity",
+         Command     => new Change_Case_Command (Mixed),
+         Description =>
+           "Change the casing of the selected entity to mixed case",
+         Filter    => RW_Filter,
+         Category  => -"Editor");
+      Register_Contextual_Menu
+        (Kernel,
+         Label  => Label,
+         Action => "mixed case entity");
+
+      Label   := new Contextual_Label_Record;
+      Label.Casing := Smart_Mixed;
+      Register_Action
+        (Kernel,
+         "smart mixed case entity",
+         Command     => new Change_Case_Command (Smart_Mixed),
+         Description =>
+           "Change the casing of the selected entity to smart mixed case",
+         Filter    => RW_Filter,
+         Category  => -"Editor");
+      Register_Contextual_Menu
+        (Kernel,
+         Label  => Label,
+         Action => "smart mixed case entity");
+
+      F := Filter and Substring_Filter;
+
+      Register_Action
+        (Kernel,
+         "add substring casing exception",
+         Command     => new Add_Exception_Command (True, Remove => False),
+         Description =>
+           "Register a special case for the casing algoritm. All occurrences"
+           & " of this substring will use the given casing from now on",
+         Filter    => F,
+         Category  => -"Editor");
+      Register_Contextual_Menu
+        (Kernel,
          Label  => -"Casing/Add substring exception for %s",
-         Action => Command,
-         Filter => Filter and Substring_Filter);
+         Action => "add substring casing exception");
 
-      Command := new Add_Exception_Command (True, Remove => True);
+      Register_Action
+        (Kernel,
+         "remove substring casing exception",
+         Command     => new Add_Exception_Command (True, Remove => True),
+         Description =>
+           "Remove a casing exception created via"
+           & " 'add substring casing exception'",
+         Filter    => F,
+         Category  => -"Editor");
       Register_Contextual_Menu
-        (Kernel, "Remove substring casing exception",
+        (Kernel,
          Label  => -"Casing/Remove substring exception for %s",
-         Action => Command,
-         Filter => Filter and Substring_Filter);
+         Action => "remove substring casing exception");
 
-      Command := new Add_Exception_Command (False, Remove => False);
+      F := Filter and not Substring_Filter;
+
+      Register_Action
+        (Kernel,
+         "add casing exception",
+         Command     => new Add_Exception_Command (False, Remove => False),
+         Description =>
+           "Register a special case for the casing algoritm. All occurrences"
+         & " of this word will use the given casing from now on",
+         Filter    => F,
+         Category  => -"Editor");
       Register_Contextual_Menu
-        (Kernel, "Add casing exception",
+        (Kernel,
          Label  => -"Casing/Add exception for %s",
-         Action => Command,
-         Filter => Filter and Full_String_Filter);
+         Action => "add casing exception");
 
-      Command := new Add_Exception_Command (False, Remove => True);
+      Register_Action
+        (Kernel,
+         "remove casing exception",
+         Command     => new Add_Exception_Command (True, Remove => True),
+         Description =>
+           "Remove a casing exception created via 'add casing exception'",
+         Filter    => F,
+         Category  => -"Editor");
       Register_Contextual_Menu
-        (Kernel, "Remove casing exception",
+        (Kernel,
          Label  => -"Casing/Remove exception for %s",
-         Action => Command,
-         Filter => Filter and Full_String_Filter);
+         Action => "remove casing exception");
    end Register_Module;
 
    -------------

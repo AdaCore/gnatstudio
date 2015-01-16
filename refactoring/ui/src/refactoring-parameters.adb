@@ -19,6 +19,7 @@ with Basic_Types;           use Basic_Types;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with GPS.Editors;           use GPS.Editors;
 with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
@@ -365,18 +366,23 @@ package body Refactoring.Parameters is
    procedure Register_Refactoring
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      C : constant Interactive_Command_Access := new Name_Parameters_Command;
-      Filter : Action_Filter;
+      F : Action_Filter;
    begin
-      Filter := new Is_Subprogram_Filter;
+      F := new Is_Subprogram_Filter;
+      Register_Action
+        (Kernel, "refactoring name parameters",
+         Command     => new Name_Parameters_Command,
+         Description =>
+           -"Use named parameters for the selected subprogram call",
+         Filter     => F and Create (Language => "Ada"),
+         Category   => -"Refactoring");
       Register_Contextual_Menu
         (Kernel,
-         Name  => "Refactoring name parameters",
          Label => "Refactoring/Name parameters",
-         Filter => Filter and Create (Language => "Ada"),
-         Action => C);
-      Register_Command
-        (Kernel, "name_parameters", 1, 1, Entity_Command_Handler'Access,
+         Action => "refactoring name parameters");
+
+      Kernel.Scripts.Register_Command
+        ("name_parameters", 1, 1, Entity_Command_Handler'Access,
          Get_Entity_Class (Kernel));
    end Register_Refactoring;
 

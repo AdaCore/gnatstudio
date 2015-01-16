@@ -1819,7 +1819,6 @@ package body Call_Graph_Views is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Filter  : Action_Filter;
-      Command : Interactive_Command_Access;
    begin
       Generic_View.Register_Module (Kernel);
 
@@ -1828,21 +1827,33 @@ package body Call_Graph_Views is
 
       Filter := Lookup_Filter (Kernel, "Entity is subprogram");
 
-      Command := new Entity_Calls_Command;
-      Register_Contextual_Menu
+      Register_Action
         (Kernel, "Entity calls",
-         Label      => "%e calls",
-         Filter     => Filter,
-         Action     => Command,
-         Ref_Item   => "Goto file spec<->body",
+         Command     => new Entity_Calls_Command,
+         Description =>
+           "Display the call graph view to show what entities are called by"
+           & " the selected entity",
+         Filter    => Filter,
+         Category  => -"Call trees");
+      Register_Contextual_Menu
+        (Kernel     => Kernel,
+         Label      => -"%e calls",
+         Action     => "Entity calls",
+         Ref_Item   => "Goto other file",
          Add_Before => False);
 
-      Command := new Entity_Called_By_Command;
-      Register_Contextual_Menu
+      Register_Action
         (Kernel, "Entity called by",
-         Label      => "%e is called by",
-         Filter     => Filter,
-         Action     => Command,
+         Command     => new Entity_Called_By_Command,
+         Description =>
+           "Display the call graph view to show what entities are calling"
+         & " the selected entity",
+         Filter    => Filter,
+         Category  => -"Call trees");
+      Register_Contextual_Menu
+        (Kernel     => Kernel,
+         Label      => -"%e is called by",
+         Action     => "Entity called by",
          Ref_Item   => "Entity calls",
          Add_Before => False);
 
@@ -1874,6 +1885,7 @@ package body Call_Graph_Views is
          -"Move to the previous line in the call tree",
          Icon_Name => "gps-backward-symbolic",
          Category => -"Call trees");
+
       Register_Action
         (Kernel, "calltree next",
          new Calltree_Next_Or_Previous_Command'

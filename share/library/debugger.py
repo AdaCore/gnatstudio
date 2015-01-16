@@ -94,15 +94,6 @@ Show in the Data Window the value for each all local variables
 # Display full name #
 #####################
 
-def display_full_name_label(context):
-    return "Debug/Display <b>" + context.entity().full_name() + "</b>"
-
-
-def display_full_name_run(context):
-    Debugger.get().send("graph display " + context.entity().full_name(),
-                        show_in_console=True)
-
-
 def in_debugger_on_entity(context):
     try:
         return in_debugger(context) and context.entity() is not None
@@ -110,29 +101,30 @@ def in_debugger_on_entity(context):
         return False
 
 
-Contextual("debug display full name").create(
-    label=display_full_name_label,
-    on_activate=display_full_name_run,
+@interactive(
+    name='debug display full name',
+    contextual=lambda context:
+         "Debug/Display <b>" + context.entity().full_name() + "</b>",
     filter=in_debugger_on_entity)
+def display_full_name_run():
+    context = GPS.current_context()
+    Debugger.get().send("graph display " + context.entity().full_name(),
+                        show_in_console=True)
 
 
 #######################
 # Printing as decimal #
 #######################
 
-def print_as_dec_label(context):
-    return "Debug/Print <b>" + context.entity().name() + "</b> as decimal"
-
-
-def print_as_dec_run(context):
+@interactive(
+    name='debug print as decimal',
+    contextual=lambda context:
+        "Debug/Print <b>" + context.entity().name() + "</b> as decimal",
+    filter=in_debugger_on_entity)
+def print_as_dec_run():
+    context = GPS.current_context()
     Debugger.get().send("print/d " + context.entity().name(),
                         show_in_console=True)
-
-
-Contextual("debug print as decimal").create(
-    label=print_as_dec_label,
-    on_activate=print_as_dec_run,
-    filter=in_debugger_on_entity)
 
 
 ###################################
@@ -196,7 +188,12 @@ def on_debugger_stopped(h, debug):
         debug.non_blocking_send("cont")
 
 
-def add_breakpoint_exception(context):
+@interactive(
+    name='debug add breakpoint exception',
+    contextual=debug_add_br_exception_label,
+    filter=in_debugger_and_file)
+def add_breakpoint_exception():
+    context = GPS.current_context()
     global autocont_br
     # Only consider base names of files, since the debugger does not always
     # show the full name in the "frame" command
@@ -222,11 +219,6 @@ def on_project_view_changed(h):
     except:
         autocont_br = set()
 
-
-Contextual("debug add breakpoint exception").create(
-    label=debug_add_br_exception_label,
-    on_activate=add_breakpoint_exception,
-    filter=in_debugger_and_file)
 
 Hook("debugger_process_stopped").add(on_debugger_stopped)
 Hook("project_view_changed").add(on_project_view_changed)

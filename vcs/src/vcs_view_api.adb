@@ -24,6 +24,7 @@ with GNAT.Strings;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Values;               use Glib.Values;
@@ -70,6 +71,7 @@ with VCS_View.Explorer;         use VCS_View.Explorer;
 with UTF8_Utils;                use UTF8_Utils;
 
 package body VCS_View_API is
+   Me : constant Trace_Handle := Create ("VCS_VIEW");
    use type GNAT.Strings.String_Access;
 
    -----------------------
@@ -867,6 +869,7 @@ package body VCS_View_API is
       end if;
 
       if Ref = null then
+         Trace (Me, "MANU No ref");
          --  ??? Should add a menu item to add a VCS in the project
          return;
       end if;

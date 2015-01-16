@@ -86,7 +86,6 @@ package body Custom_Module is
    Description_Cst   : aliased constant String := "description";
    Category_Cst      : aliased constant String := "category";
    Key_Cst           : aliased constant String := "key";
-   Action_Cst        : aliased constant String := "action";
    Is_Active_Cst     : aliased constant String := "is_active";
 
    Menu_Get_Params : constant Cst_Argument_List :=
@@ -104,15 +103,6 @@ package body Custom_Module is
       6 => Group_Cst'Access);
    Contextual_Constructor_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
-   Contextual_Create_Params : constant Cst_Argument_List :=
-     (1 => On_Activate_Cst'Access,
-      2 => Label_Cst'Access,
-      3 => Filter_Cst'Access,
-      4 => Ref_Cst'Access,
-      5 => Add_Before_Cst'Access,
-      6 => Group_Cst'Access,
-      7 => Visibility_Filter_Cst'Access,
-      8 => Action_Cst'Access);
    Contextual_Create_Dynamic_Params : constant Cst_Argument_List :=
      (1 => Factory_Cst'Access,
       2 => On_Activate_Cst'Access,
@@ -500,7 +490,6 @@ package body Custom_Module is
          Group   : Integer := Default_Contextual_Group;
          Child   : Node_Ptr;
          Title   : GNAT.OS_Lib.String_Access;
-         Command : Action_Record_Access;
       begin
          Title := new String'(Action);
 
@@ -534,27 +523,12 @@ package body Custom_Module is
             Child := Child.Next;
          end loop;
 
-         if Action /= "" then
-            Command := Lookup_Action (Kernel, Action);
-            if Command = null or else Command.Command = null then
-               Insert (Kernel,
-                       -"Command not found when creating contextual menu: "
-                       & Action,
-                       Mode => Error);
-               Free (Title);
-               pragma Assert (False);
-               return;
-            end if;
-         else
-            Command := null;
-         end if;
-
          if Before /= "" then
             Register_Contextual_Menu
               (Kernel,
                Name       => Title.all,
                Label      => Title.all,
-               Action     => Command,
+               Action     => Action,
                Ref_Item   => Before,
                Add_Before => True,
                Group      => Group);
@@ -563,7 +537,7 @@ package body Custom_Module is
               (Kernel,
                Name       => Title.all,
                Label      => Title.all,
-               Action     => Command,
+               Action     => Action,
                Ref_Item   => After,
                Add_Before => False,
                Group      => Group);
@@ -572,7 +546,7 @@ package body Custom_Module is
               (Kernel,
                Name       => Title.all,
                Label      => Title.all,
-               Action     => Command,
+               Action     => Action,
                Group      => Group);
          end if;
 
@@ -1538,17 +1512,12 @@ package body Custom_Module is
       Kernel           : constant Kernel_Handle := Get_Kernel (Data);
       Contextual_Class : constant Class_Type :=
                            New_Class (Kernel, "Contextual");
-      Action_Class : constant Class_Type := New_Class
-        (Kernel, "Action", Base => Get_GUI_Class (Kernel));
-
-      Action           : Action_Record_Access;
-      Action_Inst      : Class_Instance;
       Inst             : Class_Instance;
-      Cmd              : Subprogram_Command;
       Filter           : Subprogram_Filter;
       The_Filter       : access Action_Filter_Record'Class;
       Enable_Filter    : Action_Filter;
       Label            : Subprogram_Label;
+      pragma Unreferenced (Label);
       Subp             : Subprogram_Type;
    begin
       if Command = Constructor_Method then
@@ -1567,87 +1536,16 @@ package body Custom_Module is
          Set_Contextual_Menu_Visible
            (Kernel, String'(Get_Data (Inst, Contextual_Class)), False);
 
+      elsif Command = "name" then
+         Inst := Nth_Arg (Data, 1, Contextual_Class);
+         Set_Return_Value (Data, String'(Get_Data (Inst, Contextual_Class)));
+
       elsif Command = "set_sensitive" then
          Inst := Nth_Arg (Data, 1, Contextual_Class);
          Set_Contextual_Menu_Sensitivity
            (Kernel,
             String'(Get_Data (Inst, Contextual_Class)),
             Nth_Arg (Data, 2));
-
-      elsif Command = "create" then
-         Name_Parameters (Data, Contextual_Create_Params);
-         Inst := Nth_Arg (Data, 1, Contextual_Class);
-
-         Action_Inst := Nth_Arg (Data, 9, Action_Class, True);
-         if Action_Inst /= No_Class_Instance then
-            Action  := Lookup_Action
-              (Kernel, String'(Get_Data (Action_Inst, Action_Class)));
-
-            if Action /= null then
-               The_Filter := Action.Filter;
-            end if;
-         end if;
-
-         declare
-            Tmp : Subprogram_Type;
-         begin
-            Tmp := Nth_Arg (Data, 2); --  May raise No_Such_Parameter
-            Cmd := new Subprogram_Command_Record;
-            Cmd.On_Activate := Tmp;
-         exception
-            when No_Such_Parameter =>
-               Cmd := null;
-         end;
-
-         Subp := Nth_Arg (Data, 4, null);
-         if Subp /= null then
-            Filter := new Subprogram_Filter_Record'
-              (Action_Filter_Record with Filter => Subp);
-
-            if The_Filter = null then
-               The_Filter := Action_Filter (Filter);
-            else
-               The_Filter := The_Filter and Action_Filter (Filter);
-            end if;
-         end if;
-
-         Subp := Nth_Arg (Data, 3, null);
-         if Subp /= null then
-            Label := new Subprogram_Label_Record'(Label => Subp);
-         end if;
-
-         Subp := Nth_Arg (Data, 8, null);
-         if Subp /= null then
-            Filter := new Subprogram_Filter_Record'
-              (Action_Filter_Record with Filter => Subp);
-
-            Enable_Filter := Action_Filter (Filter);
-         end if;
-
-         if Label /= null then
-            Register_Contextual_Menu
-              (Kernel,
-               Name              => Get_Data (Inst, Contextual_Class),
-               Action            => Interactive_Command_Access (Cmd),
-               Filter            => The_Filter,
-               Enable_Filter     => Enable_Filter,
-               Label             => Label,
-               Ref_Item          => Nth_Arg (Data, 5, ""),
-               Add_Before        => Nth_Arg (Data, 6, True),
-               Group             => Nth_Arg
-                 (Data, 7, Default_Contextual_Group));
-         else
-            Register_Contextual_Menu
-              (Kernel,
-               Name              => Get_Data (Inst, Contextual_Class),
-               Action            => Interactive_Command_Access (Cmd),
-               Filter            => The_Filter,
-               Enable_Filter     => Enable_Filter,
-               Ref_Item          => Nth_Arg (Data, 5, ""),
-               Add_Before        => Nth_Arg (Data, 6, True),
-               Group             => Nth_Arg
-                 (Data, 7, Default_Contextual_Group));
-         end if;
 
       elsif Command = "create_dynamic" then
          Name_Parameters (Data, Contextual_Create_Dynamic_Params);
@@ -1857,26 +1755,36 @@ package body Custom_Module is
          end;
 
       elsif Command = "contextual" then
-         Name_Parameters (Data, (1 => Path_Cst'Access,
-                                 2 => Ref_Cst'Access,
-                                 3 => Add_Before_Cst'Access));
+         Name_Parameters (Data, (2 => Path_Cst'Access,
+                                 3 => Ref_Cst'Access,
+                                 4 => Add_Before_Cst'Access));
          Inst := Nth_Arg (Data, 1, Action_Class);
 
          declare
-            Path   : constant String  := Nth_Arg (Data, 2);
             Ref    : constant String  := Nth_Arg (Data, 3, "");
             Before : constant Boolean := Nth_Arg (Data, 4, True);
-            Action : constant Action_Record_Access :=
-              Lookup_Action (Kernel, String'(Get_Data (Inst, Action_Class)));
+            Action : constant String := Get_Data (Inst, Action_Class);
+            Label  : Subprogram_Label;
+            Subp   : Subprogram_Type;
          begin
-            if Action /= null then
+            Register_Contextual_Menu
+              (Kernel,
+               Label       => Nth_Arg (Data, 2),
+               Ref_Item    => Ref,
+               Add_Before  => Before,
+               Action      => Action);
+         exception
+            when others =>
+               --  Assume path is a function
+               Subp := Nth_Arg (Data, 2, null);
+               Label := new Subprogram_Label_Record'(Label => Subp);
                Register_Contextual_Menu
                  (Kernel,
-                  Name        => Path,
+                  Name        => Action,
+                  Label       => Label,
                   Ref_Item    => Ref,
                   Add_Before  => Before,
                   Action      => Action);
-            end if;
          end;
       end if;
    end Action_Handler;
@@ -1978,43 +1886,41 @@ package body Custom_Module is
          Class         => Menu_Class,
          Handler       => Menu_Handler'Access);
 
-      Register_Command
-        (Kernel, Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Class   => Contextual_Class,
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler => Contextual_Handler'Access);
-      Register_Command
-        (Kernel, "show",
+      Kernel.Scripts.Register_Command
+        ("show",
          Class => Contextual_Class,
          Handler => Contextual_Handler'Access);
-      Register_Command
-        (Kernel, "hide",
+      Kernel.Scripts.Register_Command
+        ("hide",
          Class => Contextual_Class,
          Handler => Contextual_Handler'Access);
-      Register_Command
-        (Kernel, "set_sensitive",
+      Kernel.Scripts.Register_Command
+        ("set_sensitive",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class => Contextual_Class,
          Handler => Contextual_Handler'Access);
-      Register_Command
-        (Kernel, "create",
-         Minimum_Args => 1,
-         Maximum_Args => 8,
-         Class => Contextual_Class,
-         Handler => Contextual_Handler'Access);
-      Register_Command
-        (Kernel, "create_dynamic",
+      Kernel.Scripts.Register_Command
+        ("create_dynamic",
          Minimum_Args => 2,
          Maximum_Args => 8,
          Class => Contextual_Class,
          Handler => Contextual_Handler'Access);
-      Register_Command
-        (Kernel, "list",
+      Kernel.Scripts.Register_Command
+        ("list",
          Class         => Contextual_Class,
          Static_Method => True,
          Handler       => Contextual_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("name",
+         Class         => Contextual_Class,
+         Getter        => Contextual_Handler'Access);
 
       Language.Shell.Setup (Kernel_Handle (Kernel));
    end Register_Module;

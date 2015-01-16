@@ -1598,7 +1598,6 @@ package body GPS.Kernel is
       if Module /= "" then
          F.Module := new String'(Module);
       end if;
-
       return Action_Filter (F);
    end Create;
 

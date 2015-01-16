@@ -25,6 +25,7 @@ with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GNATCOLL.Xref;          use GNATCOLL.Xref;
 with GPS.Editors;            use GPS.Editors;
 with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Simple;
@@ -926,25 +927,25 @@ package body Refactoring.Subprograms is
    procedure Register_Refactoring
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      C : Interactive_Command_Access;
-      Filter : Action_Filter;
+      F : Action_Filter;
    begin
-      --  Disabled for now
-      if Active (Me) then
-         C := new Extract_Method_Command;
-         Filter := new Is_Area_Context;
-         Register_Contextual_Menu
-           (Kernel,
-            Name  => "Extract Subprogram",
-            Label => "Refactoring/Extract Subprogram",
-            Filter => Filter and Create (Module => "Source_Editor") and
-              Create (Language => "ada"),
-            Action => C);
-      end if;
+      F := new Is_Area_Context;
+      Register_Action
+        (Kernel, "extract subprogram",
+         Command     => new Extract_Method_Command,
+         Description => -"Move selected code into its own subprogram",
+         Filter  => F
+            and Create (Module => "Source_Editor")
+            and Create (Language => "ada"),
+         Category    => -"Refactoring");
+      Register_Contextual_Menu
+        (Kernel,
+         Label  => "Refactoring/Extract Subprogram",
+         Action => "extract subprogram");
 
       if Active (Testsuite_Handle) then
-         Register_Command
-           (Kernel, "extract_method", 3, 4, Command_Handler'Access);
+         Kernel.Scripts.Register_Command
+           ("extract_method", 3, 4, Command_Handler'Access);
       end if;
    end Register_Refactoring;
 

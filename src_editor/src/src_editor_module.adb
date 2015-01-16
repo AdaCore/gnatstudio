@@ -1920,7 +1920,6 @@ package body Src_Editor_Module is
       Extra                    : Files_Extra_Scope;
       Recent_Menu_Item         : Gtk_Menu_Item;
       Command                  : Interactive_Command_Access;
-      Filter                   : Action_Filter;
       Label                    : Contextual_Menu_Label_Creator;
       Line_Numbers_Area_Filter : Action_Filter;
       Submenu                  : Submenu_Factory;
@@ -1935,8 +1934,8 @@ package body Src_Editor_Module is
                                    new Src_Editor_Action_Context;
       Is_Not_Makefile          : constant Action_Filter :=
                                    new Is_Not_Makefile_Context;
-      --  Memory is never freed, but this is needed for the whole life of
-      --  the application.
+      F : Action_Filter;
+
       Steps : constant array (1 .. 2) of Integer := (1, -1);
 
    begin
@@ -2003,16 +2002,10 @@ package body Src_Editor_Module is
 
       Line_Numbers_Area_Filter := new In_Line_Numbers_Area_Filter;
 
-      Command := new Goto_Declaration_Command;
       Register_Contextual_Menu
-        (Kernel, "Goto declaration of entity",
-         Action => Command,
-         Label  => -"Goto declaration of %ef",
-         Filter => (not Is_Dispatching)
-            and ((not Line_Numbers_Area_Filter
-                  and Create (Module => Src_Editor_Module_Name))
-                 or Create (Module => Entity_Browser_Module_Name)
-                 or Has_Type));
+        (Kernel,
+         Action => "goto declaration",
+         Label  => -"Goto declaration of %ef");
 
       Submenu := new Goto_Dispatch_Declaration_Submenu;
       Register_Contextual_Submenu
@@ -2025,14 +2018,11 @@ package body Src_Editor_Module is
                  or Create (Module => Entity_Browser_Module_Name)
                  or Has_Type));
 
-      Command := new Goto_Next_Body_Command;
-      Filter  := new Has_Body_Filter;
       Label   := new Goto_Body_Menu_Label;
       Register_Contextual_Menu
-        (Kernel, "Goto body of entity",
-         Action => Command,
-         Label  => Label,
-         Filter => (not Is_Dispatching) and Filter);
+        (Kernel,
+         Action => "goto body",
+         Label  => Label);
 
       Submenu := new Goto_Dispatch_Body_Submenu;
       Register_Contextual_Submenu
@@ -2041,44 +2031,53 @@ package body Src_Editor_Module is
          Submenu => Submenu,
          Filter  => Is_Dispatching);
 
-      Command := new Goto_Type_Command;
+      Register_Action
+        (Kernel, "goto type of entity",
+         Command     => new Goto_Type_Command,
+         Description => "Jump to the declaration for the type of the entity",
+         Filter      => Has_Type);
       Register_Contextual_Menu
-        (Kernel, "Goto type of entity",
-         Action => Command,
-         Label  => -"Goto type declaration of %e",
-         Filter => Has_Type);
+        (Kernel,
+         Action => "goto type of entity",
+         Label  => -"Goto type declaration of %e");
 
-      Command := new Type_Hierarchy_Command;
-      Register_Contextual_Menu
-        (Kernel, "Display type hierarchy of entity",
-         Action     => Command,
-         Label      => -"Display type hierarchy for %e",
+      Register_Action
+        (Kernel, "display type hierarchy of entity",
+         Command    => new Type_Hierarchy_Command,
          Filter     => Has_Parent_Type or Is_Access);
-
-      Command := new Goto_Other_File_Command;
-      Filter  := new Has_Other_File_Filter;
-      Register_Contextual_Menu
-        (Kernel, "Goto file spec<->body",
-         Action     => Command,
-         Label      => -"Goto file spec<->body",
-         Filter     => Filter and Src_Action_Context);
-
-      Command := new Edit_File_Command;
       Register_Contextual_Menu
         (Kernel,
-         Name   => "Edit file",
+         Action => "display type hierarchy of entity",
+         Label  => -"Display type hierarchy for %e");
+
+      --  ??? Used to have an extra filter for Src_Action_Context
+      Register_Contextual_Menu
+        (Kernel,
+         Action => "goto other file",
+         Label  => -"Goto file spec<->body");
+
+      Register_Action
+        (Kernel, "edit file",
+         Command     => new Edit_File_Command,
+         Description => -"Open an editor for the selected file",
+         Filter      => Lookup_Filter (Kernel, "File")
+            and not Create (Module => Src_Editor_Module_Name));
+      Register_Contextual_Menu
+        (Kernel,
          Label  => "Edit %f",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "File")
-           and not Create (Module => Src_Editor_Module_Name));
+         Action => "edit file");
 
-      Command := new Editor_Properties_Command;
+      Register_Action
+        (Kernel, "edit file properties",
+         Command     => new Editor_Properties_Command,
+         Description =>
+           -"Open a dialog to edit file properties (charset, language,...)",
+         Filter   => Create (Module => Src_Editor_Module_Name),
+         Category => -"Editor");
       Register_Contextual_Menu
         (Kernel,
-         Name   => "Editor properties",
          Label  => "Properties...",
-         Action => Command,
-         Filter => Create (Module => Src_Editor_Module_Name),
+         Action => "edit file properties",
          Group  => Integer'Last); --  Always keep last
 
       Command := new Control_Command;
@@ -2256,20 +2255,32 @@ package body Src_Editor_Module is
          Filter => Src_Action_Context);
 
       Register_Action
-        (Kernel, "goto line", new Goto_Line_Command,
-         -"Open a dialog to select a line to go to");
+        (Kernel, "goto line",
+         Command     => new Goto_Line_Command,
+         Description => -"Open a dialog to select a line to go to",
+         Filter      => Line_Numbers_Area_Filter);
       Register_Contextual_Menu
-        (Kernel, -"Goto line...",
-         Action => Command,
-         Filter => Line_Numbers_Area_Filter);
+        (Kernel,
+         Label  => -"Goto line...",
+         Action => "goto line");
 
       Register_Action
-        (Kernel, "goto declaration", new Goto_Declaration_Command,
-         -"Jump to the declaration of the current entity");
+        (Kernel, "goto declaration",
+         Command     => new Goto_Declaration_Command,
+         Description => -"Jump to the declaration of the current entity",
+         Filter => (not Is_Dispatching)
+            and ((not Line_Numbers_Area_Filter
+                  and Create (Module => Src_Editor_Module_Name))
+                or Create (Module => Entity_Browser_Module_Name)
+                or Has_Type));
 
+      F := new Has_Body_Filter;
       Register_Action
-        (Kernel, "goto body", new Goto_Body_Command,
-         -"Jump to the implementation/body of the current entity");
+        (Kernel, "goto body",
+         Command     => new Goto_Body_Command,
+         Description =>
+           -"Jump to the implementation/body of the current entity",
+         Filter      => (not Is_Dispatching) and F);
 
       Register_Action
         (Kernel, "jump to matching delimiter", new Jump_To_Delimiter_Command,

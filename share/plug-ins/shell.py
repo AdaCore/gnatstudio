@@ -24,7 +24,7 @@ import GPS
 import re
 import traceback
 import os
-from gps_utils import interactive
+from gps_utils import interactive, save_dir
 from gps_utils.console_process import *
 
 
@@ -43,32 +43,6 @@ class Win32_Shell(Console_Process):
         Console_Process.__init__(self, process, args)
 
 
-@interactive(name="open os shell")
-def create_default_shell():
-    """Spawns the user's shell as read from the environment variable SHELL"""
-    if os.getenv("SHELL") and os.getenv("TERM"):
-        Unix_Shell(os.getenv("SHELL"), "-i")
-    elif os.getenv("COMSPEC"):
-        Win32_Shell(os.getenv("COMSPEC"), "/Q")
-
-GPS.Preference("Plugins/shell/contextual").create(
-    "Contextual menu", "boolean",
-    "Add contextual menu to start OS shell from project view",
-    True)
-
-
-def on_contextual(context):
-    dir = GPS.pwd()
-    GPS.cd(context.directory())
-    create_default_shell()
-    GPS.cd(dir)
-
-
-def on_label(context):
-    return "Run OS shell in <b>%s</b>" % (
-        os.path.basename(os.path.dirname("%s/" % context.directory())))
-
-
 def on_filter(context):
     if not isinstance(context, GPS.FileContext):
         return False
@@ -79,5 +53,30 @@ def on_filter(context):
     except:
         return False
 
-GPS.Contextual("OS shell").create(
-    on_activate=on_contextual, filter=on_filter, label=on_label, group=30)
+
+def on_label(context):
+    return "Run OS shell in <b>%s</b>" % (
+        os.path.basename(os.path.dirname("%s/" % context.directory())))
+
+
+@interactive(name="open os shell",
+             contextual=on_label,
+             filter=on_filter)
+@save_dir
+def create_default_shell():
+    """Spawns the user's shell as read from the environment variable SHELL"""
+    try:
+        context = GPS.current_context()
+        GPS.cd(context.directory())
+    except:
+        pass
+
+    if os.getenv("SHELL") and os.getenv("TERM"):
+        Unix_Shell(os.getenv("SHELL"), "-i")
+    elif os.getenv("COMSPEC"):
+        Win32_Shell(os.getenv("COMSPEC"), "/Q")
+
+GPS.Preference("Plugins/shell/contextual").create(
+    "Contextual menu", "boolean",
+    "Add contextual menu to start OS shell from project view",
+    True)

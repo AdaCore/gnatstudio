@@ -36,6 +36,7 @@ with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
@@ -61,7 +62,7 @@ package body Browsers.Dependency_Items is
    Space_Between_Layers : constant Glib.Gdouble := 60.0;
 
    --------------
-   -- Commands --
+   -- Command  --
    --------------
 
    type Show_Dep_Command is new Interactive_Command with null record;
@@ -854,7 +855,6 @@ package body Browsers.Dependency_Items is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command : Interactive_Command_Access;
       Filter  : constant Action_Filter :=
                   (not Lookup_Filter (Kernel, "Entity"))
                    and Lookup_Filter (Kernel, "In project");
@@ -862,43 +862,61 @@ package body Browsers.Dependency_Items is
    begin
       Dependency_Views.Register_Module (Kernel);
 
-      Command := new Show_Dep_Command;
+      Register_Action
+        (Kernel, "Browser: show dependencies for file",
+         Command     => new Show_Dep_Command,
+         Description =>
+           "Open the Dependency Browser to show all source files"
+         & " that the selected file depends on",
+         Filter    => Filter,
+         Category  => -"Views");
       Register_Contextual_Menu
-        (Kernel, "File dependencies",
-         Action      => Command,
-         Label       => -"Browsers/Show dependencies for %f",
-         Filter      => Filter);
+        (Kernel => Kernel,
+         Label  => -"Browsers/Show dependencies for %f",
+         Action => "Browser: show dependencies for file");
 
-      Command := new Show_Depending_On_Command;
+      Register_Action
+        (Kernel, "Browser: show files depending on file",
+         Command     => new Show_Depending_On_Command,
+         Description =>
+           "Open the Dependency Browser to show all source files"
+         & " that depend on the selected file",
+         Filter    => Filter,
+         Category  => -"Views");
       Register_Contextual_Menu
-        (Kernel, "File depending on",
-         Action      => Command,
-         Label       => -"Browsers/Show files depending on %f",
-         Filter      => Filter);
+        (Kernel => Kernel,
+         Label  => -"Browsers/Show files depending on %f",
+         Action => "Browser: show files depending on file");
 
-      Command := new Examine_Other_File_Command;
+      Register_Action
+        (Kernel, "Browser: analyze deps for other file",
+         Command     => new Examine_Other_File_Command,
+         Description =>
+           "Open the Dependency Browser and add a box for the other file"
+         & " (spec or body)",
+         Filter    => Create (Module => Dependency_Browser_Module_Name),
+         Category  => -"Views");
       Register_Contextual_Menu
-        (Kernel, "Analyze deps for other file",
+        (Kernel => Kernel,
          Label  => -"Analyze other file (spec or body)",
-         Action => Command,
-         Filter => Create (Module => Dependency_Browser_Module_Name));
+         Action => "Browser: analyze deps for other file");
 
-      Register_Command
-        (Kernel, "uses",
+      Kernel.Scripts.Register_Command
+        ("uses",
          Class   => Get_File_Class (Kernel),
          Handler => Depends_On_Command_Handler'Access);
-      Register_Command
-        (Kernel, "used_by",
+      Kernel.Scripts.Register_Command
+        ("used_by",
          Class   => Get_File_Class (Kernel),
          Handler => Depends_On_Command_Handler'Access);
-      Register_Command
-        (Kernel, "imports",
+      Kernel.Scripts.Register_Command
+        ("imports",
          Minimum_Args => 0,
          Maximum_Args => 2,
          Class        => Get_File_Class (Kernel),
          Handler      => Depends_On_Command_Handler'Access);
-      Register_Command
-        (Kernel, "imported_by",
+      Kernel.Scripts.Register_Command
+        ("imported_by",
          Minimum_Args => 0,
          Maximum_Args => 2,
          Class        => Get_File_Class (Kernel),

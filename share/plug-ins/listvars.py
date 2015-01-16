@@ -11,6 +11,7 @@ used in the selected subprogram.
 
 import GPS
 from gi.repository import GLib
+import gps_utils
 
 
 def list_vars(subprogram, global_only=False):
@@ -52,8 +53,8 @@ def list_vars(subprogram, global_only=False):
                                           file=r.file(),
                                           line=r.line(),
                                           column=r.column(),
-                                          message=e.full_name() + " (decl: "
-                                          + `e.declaration()` + ")",
+                                          message=e.full_name() +
+                                          " (decl: %s)" % e.declaration(),
                                           highlight=highlight,
                                           length=0)
                         added = True
@@ -80,7 +81,8 @@ def on_filter(context):
 def on_label(context):
     entity = context.entity()
     if entity:
-        return "References/Variables used in <b>" + GLib.markup_escape_text(entity.name()) + "</b>"
+        return "References/Variables used in <b>" + \
+            GLib.markup_escape_text(entity.name()) + "</b>"
     else:
         return ""
 
@@ -88,19 +90,25 @@ def on_label(context):
 def on_global_label(context):
     entity = context.entity()
     if entity:
-        return "References/Non local variables used in <b>" + GLib.markup_escape_text(entity.name()) + "</b>"
+        return "References/Non local variables used in <b>" + \
+            GLib.markup_escape_text(entity.name()) + "</b>"
     else:
         return ""
 
 
-def on_gps_started(hook_name):
-    GPS.Contextual("Variables referenced").create(
-        on_activate=lambda context: list_vars(context.entity(), False),
-        filter=on_filter,
-        label=on_label)
-    GPS.Contextual("Non local variables referenced").create(
-        on_activate=lambda context: list_vars(context.entity(), True),
-        filter=on_filter,
-        label=on_global_label)
+@gps_utils.interactive(
+    name='Non local Variables referenced',
+    contextual=on_global_label,
+    filter=on_filter)
+def __list_global_vars():
+    """List all non local variables referenced by the subprogram."""
+    list_vars(GPS.current_context().entity(), False)
 
-GPS.Hook("gps_started").add(on_gps_started)
+
+@gps_utils.interactive(
+    name='Variables referenced',
+    contextual=on_label,
+    filter=on_filter)
+def __list_local_vars():
+    """List all variables referenced by the subprogram."""
+    list_vars(GPS.current_context().entity(), True)

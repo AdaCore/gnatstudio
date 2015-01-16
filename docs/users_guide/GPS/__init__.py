@@ -236,7 +236,8 @@ class Action(GUI):
         Python function that takes no argument while the callback for
         :func:`GPS.Contextual` receives one argument.
 
-        :param string path: A string
+        :param path: A string or a function(GPS.Context):string, which
+           describes the path for the contextual menu.
         :param string ref: A string
         :param boolean add_before: A boolean
         """
@@ -2039,6 +2040,9 @@ class Contextual(object):
     .. seealso:: :func:`GPS.Contextual.__init__`
     """
 
+    name = ''
+    """The name of the contextual menu (see __init__)"""
+
     def __init__(self, name):
         """
         Initializes a new instance of :class:`GPS.Contextual`. The name is
@@ -2060,94 +2064,6 @@ class Contextual(object):
            GPS.Contextual ('Goto declaration of entity').hide()
 
            # After this, the menu will never be displayed again.
-        """
-        pass  # implemented in Ada
-
-    def create(self, on_activate, label=None, filter=None,
-               ref='', add_before=True,
-               group='0', visibility_filter=None, action=None):
-
-        """
-        Creates a new contextual menu entry.  Whenever this menu entry is
-        selected by the user, GPS executes :func:`on_activate`, passing one
-        parameter which is the context for which the menu is displayed (this
-        is usually the same as :func:`GPS.current_contextual`).
-
-        If ``on_activate`` is None, a separator is created.
-
-        The ``filter`` parameter can be used to filter when the entry should
-        be displayed in the menu. It is a function that receives one
-        parameter, an instance of :class:`GPS.Context`, and returns a
-        boolean. If it returns True, the entry is displayed, otherwise it is
-        hidden.
-
-        The ``label`` parameter can be used to control the text displayed in
-        the contextual menu.  By default, it is the same as the contextual
-        name (used in the constructor to :func:`GPS.Contextual.__init__`).
-        If specified, it must be a subprogram that takes an instance of
-        :class:`GPS.Context` in a parameter and returns a string, which is
-        displayed in the menu.
-
-        The parameters ``group``, ``ref`` and ``add_before`` can be used to
-        control the location of the entry within the contextual
-        menu. ``group`` allows you to create groups of contextual menus that
-        will be put together.  Items of the same group appear before all
-        items with a greater group number.  ``ref`` is the name of another
-        contextual menu entry, and add_before indicates whether the new entry
-        is put before or after that second entry.
-
-        :param on_activate: A subprogram with one parameter context
-        :param label: A subprogram
-        :param ref: A string
-        :param add_before: A boolean
-        :param filter: A subprogram
-        :param group: An integer
-        :param GPS.Action action: An action instance to be executed on menu
-            activation
-
-        .. code-block:: python
-
-           ## This example demonstrates how to create a contextual
-           ## menu with global functions
-
-           def on_contextual(context):
-              GPS.Console("Messages").write("You selected the custom entry")
-
-           def on_filter(context):
-              return isinstance(context, GPS.EntityContext)
-
-           def on_label(context):
-              global count
-              count += 1
-              return "Custom " + count
-
-           GPS.Contextual("Custom").create(
-           on_activate=on_contextual, filter=on_filter, label=on_label)
-
-           .. code-block:: python
-
-           ## This example is similar to the one above, but uses a python
-           ## class to encapsulate date.
-           ## Note how the extra parameter self can be passed to the callbacks
-           ## thanks to the call to self.create
-
-           class My_Context(GPS.Contextual):
-              def on_contextual(self, context):
-                 GPS.Console("Messages").write(
-                 "You selected the custom entry " + self.data)
-
-              def on_filter(self, context):
-                 return isinstance(context, GPS.EntityContext)
-
-              def on_label(self, context):
-                 return self.data
-
-              def __init__(self):
-                 GPS.Contextual.__init__(self, "Custom")
-                 self.data = "Menu Name"
-                 self.create(on_activate=self.on_contextual,
-                             filter=self.on_filter,
-                             label=self.label)
         """
         pass  # implemented in Ada
 

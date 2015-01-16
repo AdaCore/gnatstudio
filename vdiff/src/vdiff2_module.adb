@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Config;
-with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GPS.Intl;                  use GPS.Intl;
@@ -269,7 +268,6 @@ package body Vdiff2_Module is
       use Default_Preferences;
       Filter         : Action_Filter;
       Filter_3_Files : Action_Filter;
-      Command        : Interactive_Command_Access;
    begin
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).List_Diff := new Diff_Head_List.List;
@@ -287,26 +285,37 @@ package body Vdiff2_Module is
       Filter := new In_Diff_List_Filter;
       Filter_3_Files := new In_3Diff_List_Filter;
 
-      Command := new Remove_Difference_Command;
+      Register_Action
+        (Kernel, "vdiff remove difference",
+         Command     => new Remove_Difference_Command,
+         Description => "Remove the current diff block",
+         Category    => -"Diff",
+         Filter      => Filter);
       Register_Contextual_Menu
-        (Kernel, "Vdiff remove difference",
+        (Kernel,
          Label  => -"Visual Diff/Close",
-         Action => Command,
-         Filter => Filter);
+         Action => "vdiff remove difference");
 
-      Command := new Recompute_Diff_Command;
+      Register_Action
+        (Kernel, "vdiff recompute difference",
+         Command     => new Recompute_Diff_Command,
+         Description => "Recompute the differences between the two files",
+         Category    => -"Diff",
+         Filter      => Filter);
       Register_Contextual_Menu
-        (Kernel, "Vdiff recompute difference",
+        (Kernel,
          Label  => -"Visual Diff/Recompute",
-         Action => Command,
-         Filter => Filter);
+         Action => "vdiff recompute difference");
 
-      Command := new Change_Ref_File_Command;
+      Register_Action
+        (Kernel, "vdiff change reference file",
+         Command  => new Change_Ref_File_Command,
+         Category => -"Diff",
+         Filter   => Filter_3_Files);
       Register_Contextual_Menu
-        (Kernel, "Vdiff change reference file",
+        (Kernel,
          Label  => -"Visual Diff/Use this editor as reference",
-         Action => Command,
-         Filter => Filter_3_Files);
+         Action => "vdiff change reference file");
 
       Diff3_Cmd := Create
         (Get_Preferences (Kernel),
@@ -375,12 +384,16 @@ package body Vdiff2_Module is
          Name => "vdiff2.diff");
 
       Register_Action
-         (Kernel, "compare two files", new Compare_Two_Files,
-          -"Compare two files");
+        (Kernel, "compare two files",
+         Command     => new Compare_Two_Files,
+         Description => -"Compare two files",
+         Category    => -"Diff");
 
       Register_Action
-         (Kernel, "compare three files", new Compare_Three_Files,
-          -"Compare three files");
+        (Kernel, "compare three files",
+         Command     => new Compare_Three_Files,
+         Description => -"Compare three files",
+         Category    => -"Diff");
 
       Register_Commands (Kernel);
    end Register_Module;

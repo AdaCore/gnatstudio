@@ -207,12 +207,6 @@ package body Project_Viewers is
       Context : Selection_Context);
    --  Same as above, but work directly on a context
 
-   type Edit_Project_Properties_Command
-      is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Edit_Project_Properties_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
    type Save_All_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Save_All_Command;
@@ -673,28 +667,6 @@ package body Project_Viewers is
 
       Unchecked_Free (Files);
    end Show_Project;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Edit_Project_Properties_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Project : Project_Type;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-   begin
-      if Has_Project_Information (Context.Context) then
-         Project := Project_Information (Context.Context);
-      else
-         Project := Get_Project (Kernel);
-      end if;
-
-      Edit_Properties (Project, Kernel);
-      return Commands.Success;
-   end Execute;
 
    -------------
    -- Execute --
@@ -1216,8 +1188,6 @@ package body Project_Viewers is
    is
       Filter  : Action_Filter;
       Filter2 : Action_Filter;
-      Command : Interactive_Command_Access;
-
    begin
       Prj_Editor_Module_ID := new Prj_Editor_Module_Id_Record;
       Register_Module
@@ -1228,123 +1198,146 @@ package body Project_Viewers is
 
       File_Views.Register_Module (Kernel);
 
+      Filter  := Lookup_Filter (Kernel, "Project only");
+      Filter2  := Lookup_Filter (Kernel, "Project only")
+        and Lookup_Filter (Kernel, "Editable Project");
+
       Register_Action
-        (Kernel, "new project", new New_Project_Command,
+        (Kernel, "new project",
+         Command     => new New_Project_Command,
          Description => -"Interactively create a new project");
 
+      --  These two commands are doing the same work, but the second can be
+      --  used in contextual menu since it is filtered.
       Register_Action
         (Kernel, "open Project Properties",
-         new Edit_Project_Properties_Command,
-         "Open the project properties editor",
-         Icon_Name => "gps-edit-symbolic",
-         Category => -"Views");
+         Command     => new Project_Properties_Editor_Command,
+         Description => "Open the project properties editor",
+         Icon_Name   => "gps-edit-symbolic",
+         Category    => -"Views");
+      Register_Action
+        (Kernel, "edit project properties",
+         Command     => new Project_Properties_Editor_Command,
+         Description => "Open the project properties editor",
+         Icon_Name   => "gps-edit-symbolic",
+         Filter      => Filter2,  --  editable project
+         Category    => -"Views");
 
       Register_Action
-        (Kernel, "save all projects", new Save_All_Command,
+        (Kernel, "save all projects",
+         Command     => new Save_All_Command,
+         Category    => -"Projects",
          Description => -"Save all modified projects to disk");
 
       Register_Action
         (Kernel, "edit switches for file", new Edit_File_Switches,
-         -"Edit the switches for the files selected in the switches editor",
+         -"Edit the switches for the selected files",
          Icon_Name => "gps-edit-symbolic");
 
-      Filter  := Lookup_Filter (Kernel, "Project only");
-      Filter2  := Lookup_Filter (Kernel, "Project only")
-        and Lookup_Filter (Kernel, "Editable Project");
-      Command := new Project_Properties_Editor_Command;
       Register_Contextual_Menu
-        (Kernel, "Edit project properties",
-         Action => Command,
+        (Kernel,
          Label  => "Project/Properties",
-         Filter => Filter2);
+         Action => "edit project properties");
 
-      Command := new Save_Project_Command;
+      Register_Action
+        (Kernel, "save project",
+         Command     => new Save_Project_Command,
+         Description => -"Save the selected project",
+         Filter      => Filter2,
+         Category    => -"Projects");
       Register_Contextual_Menu
-        (Kernel, "Save project",
-         Action => Command,
-         Filter => Filter2,
+        (Kernel,
+         Action => "save project",
          Label  => "Project/Save project %p");
 
       Register_Action
-        (Kernel, "Edit project source file", new Edit_Project_Source_Command,
-         "Open an editor for the .gpr file of the current project",
-         null, -"Projects");
+        (Kernel, "Edit project source file",
+         Command     => new Edit_Project_Source_Command,
+         Description =>
+           -"Open an editor for the .gpr file of the current project",
+         Filter      => Filter,
+         Category    => -"Projects");
       Register_Contextual_Menu
-        (Kernel, "Project/Edit source file",
-         Action => new Edit_Project_Source_Command,
-         Filter => Filter);
+        (Kernel,
+         Name   => "Project/Edit source file",
+         Action => "Edit project source file");
 
-      Command := new Project_Dependency_Wizard_Command;
+      Register_Action
+        (Kernel, "edit project dependencies",
+         Command     => new Project_Dependency_Wizard_Command,
+         Description => "Open a dialog to edit the project dependencies",
+         Filter      => Filter2,
+         Category    => -"Projects");
       Register_Contextual_Menu
-        (Kernel, "Project dependencies",
-         Action => Command,
-         Filter => Filter2,
+        (Kernel,
+         Name   => "Project dependencies",
+         Action => "edit project dependencies",
          Label  => "Project/Dependencies");
 
-      Command := new Add_Variable_Command;
-      Register_Contextual_Menu
-        (Kernel, "Add scenario variable",
-         Action => Command,
-         Label  => "Project/Add scenario variable",
-         Filter => (Create (Module => Explorer_Module_Name) and Filter2));
       Register_Action
         (Kernel, Action_Add_Scenario_Variable,
          Command     => new Add_Variable_Command,
          Icon_Name   => "gps-add-symbolic",
          Description => -"Add a new scenario variable to the selected project",
+         Filter => Create (Module => Explorer_Module_Name) and Filter2,
          Category => -"Projects");
-
-      Filter := Lookup_Filter (Kernel, "Project and file");
       Register_Contextual_Menu
-        (Kernel, "", Filter => Filter);
+        (Kernel,
+         Name   => "Add scenario variable",
+         Action => Action_Add_Scenario_Variable,
+         Label  => "Project/Add scenario variable");
 
-      Command := new Edit_Switches_Command;
+      Register_Action
+        (Kernel, "edit file switches",
+         Command     => new Edit_Switches_Command,
+         Description => "Edit the compilation switches for the source files",
+         Filter      =>  Lookup_Filter (Kernel, "Project and file"),
+         Category    => -"Projects");
       Register_Contextual_Menu
-        (Kernel, "Edit file switches",
-         Action => Command,
-         Filter => Filter,
+        (Kernel,
+         Action => "edit file switches",
          Label  => "Edit switches for %f");
 
       Creation_Wizard.Extending.Register_Contextual_Menus (Kernel);
 
-      Register_Command
-        (Kernel, "add_main_unit",
+      Kernel.Scripts.Register_Command
+        ("add_main_unit",
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "remove_dependency",
+      Kernel.Scripts.Register_Command
+        ("remove_dependency",
          Minimum_Args => Remove_Dep_Cmd_Parameters'Length,
          Maximum_Args => Remove_Dep_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "add_dependency",
+      Kernel.Scripts.Register_Command
+        ("add_dependency",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "rename",
+      Kernel.Scripts.Register_Command
+        ("rename",
          Minimum_Args => 1,
          Maximum_Args => 2,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "add_predefined_paths",
+      Kernel.Scripts.Register_Command
+        ("add_predefined_paths",
          Maximum_Args => 2,
          Class        => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler      => Project_Static_Command_Handler'Access);
-      Register_Command
-        (Kernel, "add_source_dir",
+      Kernel.Scripts.Register_Command
+        ("add_source_dir",
          Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,
          Maximum_Args => Add_Source_Dir_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "remove_source_dir",
+      Kernel.Scripts.Register_Command
+        ("remove_source_dir",
          Minimum_Args => Add_Source_Dir_Cmd_Parameters'Length,
          Maximum_Args => Add_Source_Dir_Cmd_Parameters'Length,
          Class        => Get_Project_Class (Kernel),

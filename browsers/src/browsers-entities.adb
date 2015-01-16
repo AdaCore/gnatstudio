@@ -49,6 +49,7 @@ with Commands.Interactive;      use Commands, Commands.Interactive;
 with Generic_Views;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
@@ -504,28 +505,29 @@ package body Browsers.Entities is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Command : Interactive_Command_Access;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Entities_Views.Register_Module (Kernel);
-
-      Command := new Examine_Entity_Command;
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Show_Qualified_Name,
          Default_Value => False);
 
+      Register_Action
+        (Kernel, "Browser: examine entity",
+         Command     => new Examine_Entity_Command,
+         Description =>
+           "Open the entity Browser to show details on the selected entity",
+         Filter     => not Create (Module => Entities_Views.M_Name)
+             and Lookup_Filter (Kernel, "Entity"),
+         Category  => -"Views");
       Register_Contextual_Menu
-        (Kernel, "Examine entity",
-         Label      => -"Browsers/Examine entity %e",
-         Action     => Command,
-         Ref_Item   => "Entity called by in browser",
-         Add_Before => False,
-         Filter     => not Create (Module => Entities_Views.M_Name));
+        (Kernel => Kernel,
+         Label  => -"Browsers/Examine entity %e",
+         Action => "Browser: examine entity");
 
-      Register_Command
-        (Kernel, "show",
+      Kernel.Scripts.Register_Command
+        ("show",
          Class   => Get_Entity_Class (Kernel),
          Handler => Show_Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command

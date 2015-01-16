@@ -2139,8 +2139,6 @@ package body Project_Explorers is
                                 new File_Node_Filter_Record;
       Entity_Node_Filter    : constant Action_Filter :=
                                 new Entity_Node_Filter_Record;
-      Command               : Interactive_Command_Access;
-
    begin
       Explorer_Views.Register_Module (Kernel => Kernel);
 
@@ -2163,30 +2161,33 @@ package body Project_Explorers is
 
       Register_Action
         (Kernel, "Locate file in explorer",
-         new Locate_File_In_Explorer_Command,
-         "Locate current file in project explorer",
-         Lookup_Filter (Kernel, "File"), -"Project Explorer");
-
-      Command := new Locate_File_In_Explorer_Command;
+         Command     => new Locate_File_In_Explorer_Command,
+         Description => "Locate selected file in project view",
+         Filter      => Lookup_Filter (Kernel, "File")
+             and not Create (Module => Explorer_Module_Name),
+         Category    => -"Project Explorer");
       Register_Contextual_Menu
-        (Kernel, "Locate file in explorer",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "In project")
-                     and not Create (Module => Explorer_Module_Name),
+        (Kernel,
+         Action => "Locate file in explorer",
          Label  => "Locate in Project View: %f");
 
-      Command := new Locate_Project_In_Explorer_Command;
-      Register_Contextual_Menu
+      Register_Action
         (Kernel, "Locate project in explorer",
-         Action => Command,
-         Filter => Lookup_Filter (Kernel, "Project only")
-                     and not Create (Module => Explorer_Module_Name),
+         Command     => new Locate_Project_In_Explorer_Command,
+         Description => "Locate selected project in project view",
+         Filter      => Lookup_Filter (Kernel, "Project only")
+            and not Create (Module => Explorer_Module_Name),
+         Category    => -"Project Explorer");
+      Register_Contextual_Menu
+        (Kernel,
+         Action => "Locate project in explorer",
          Label  => "Locate in Project View: %p");
 
       Register_Action
         (Kernel, Toggle_Absolute_Path_Name,
-         new Toggle_Absolute_Path_Command, Toggle_Absolute_Path_Tip,
-         null, -"Project Explorer");
+         Command     => new Toggle_Absolute_Path_Command,
+         Description => Toggle_Absolute_Path_Tip,
+         Category    => -"Project Explorer");
 
       Register_Filter
         (Kernel,
