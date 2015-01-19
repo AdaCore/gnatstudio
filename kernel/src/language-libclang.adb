@@ -207,7 +207,8 @@ package body Language.Libclang is
             Cache := Self.TU_Cache.Element (U_File_Name);
          else
             Cache :=
-              new TU_Cache_Record'(TU => No_Translation_Unit, Version => 0);
+              new TU_Cache_Record'(TU => No_Translation_Unit, Version => 0,
+                                   Is_Ready => False);
             Self.TU_Cache.Include (+File_Name, Cache);
          end if;
          Ret.Cache := Cache;
@@ -245,9 +246,11 @@ package body Language.Libclang is
          end if;
 
          Cache.TU := Translation_Unit;
+         Cache.Is_Ready := True;
       else
          Cache :=
-           new TU_Cache_Record'(TU => Translation_Unit, Version => Version);
+           new TU_Cache_Record'(TU => Translation_Unit, Version => Version,
+                                Is_Ready => True);
          Self.TU_Cache.Include (U_File_Name, Cache);
       end if;
 
@@ -278,6 +281,7 @@ package body Language.Libclang is
             Trace (Me, "Removing " & (+F) & " from cache");
             begin
                Dispose (Self.TU_Cache.Element (F).TU);
+               Self.TU_Cache.Element (F).Is_Ready := False;
             exception
                when E : others =>
                   Trace (Me, "EXCEPTION !");
@@ -622,6 +626,7 @@ package body Language.Libclang is
 
             TU := TU_Wrapper.Cache.TU;
             TU_Wrapper.Cache.TU := No_Translation_Unit;
+            TU_Wrapper.Cache.Is_Ready := False;
 
             Request := new Parsing_Request_Record'
               (TU            => TU,
@@ -989,7 +994,7 @@ package body Language.Libclang is
    is
    begin
       loop
-         if Self.Cache.TU = No_Translation_Unit then
+         if Self.Cache.Is_Ready = False then
             declare
                Dummy : Boolean := Parsing_Timeout_Handler;
             begin

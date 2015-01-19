@@ -126,8 +126,9 @@ package Language.Libclang is
       else Ada.Strings.Hash (Project.Name));
 
    type TU_Cache_Record is record
-      TU      : Clang_Translation_Unit;
-      Version : Integer := 0;
+      TU       : Clang_Translation_Unit := No_Translation_Unit;
+      Is_Ready : Boolean := False;
+      Version  : Integer := 0;
    end record;
    type TU_Cache_Access is access all TU_Cache_Record;
    procedure Destroy (Tu_Cache : in out TU_Cache_Access);
