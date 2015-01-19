@@ -8,7 +8,7 @@ import re
 
 try:
     input = open(doc)
-except FileNotFoundError:
+except IOError:
     print('%s not found' % doc)
     exit()
 
