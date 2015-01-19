@@ -120,15 +120,19 @@ package body GPS.Callbacks is
         and then not Kernel.Is_In_Destruction
       then
          Child := MDI_Child (To_Object (Params, 1));
-         Set_Main_Title (Kernel, Child);
-
-         --  Create the new context. The module itself is in charge of creating
-         --  a specific context.
-
-         if Child.all in GPS_MDI_Child_Record'Class then
-            Context := GPS_MDI_Child (Child).Build_Context;
-         else
+         if Child = null then
             Context := New_Context (Kernel);
+         else
+            Set_Main_Title (Kernel, Child);
+
+            --  Create the new context. The module itself is in charge of
+            --  creating a specific context.
+
+            if Child.all in GPS_MDI_Child_Record'Class then
+               Context := GPS_MDI_Child (Child).Build_Context;
+            else
+               Context := New_Context (Kernel);
+            end if;
          end if;
 
          Kernel.Context_Changed (Context);

@@ -78,6 +78,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with Config;                    use Config;
 with String_List_Utils;         use String_List_Utils;
@@ -110,8 +111,6 @@ package body GUI_Utils is
    package Tree_Column_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Model_Column);
 
---     package Widget_Sources is new Glib.Main.Generic_Sources (Gtk_Widget);
---
    function Idle_Grab_Focus (Widget : Gtk_Widget) return Boolean;
    pragma Unreferenced (Idle_Grab_Focus);
    --  Give the focus to widget (called from an idle loop)
@@ -2103,6 +2102,7 @@ package body GUI_Utils is
    is
       Win : Gtk_Widget;
       Id : Glib.Main.G_Source_Id;
+      C  : MDI_Child;
       pragma Unreferenced (Id);
       GPS_Has_Focus : constant Boolean :=
         (for some W of Get_MDI_Windows (MDI) => W.Has_Toplevel_Focus);
@@ -2115,7 +2115,13 @@ package body GUI_Utils is
          return;
       end if;
 
-      MDI.Set_Focus_Child (Widget);
+      C := Find_MDI_Child_From_Widget (Widget);
+      if C /= null then
+         --  GPS will receive a signal, and adjust the current context
+         MDI.Set_Focus_Child (C);
+      else
+         MDI.Child_Selected (null);  --  force update of the context
+      end if;
 
       Win := Get_Toplevel (Widget);
 

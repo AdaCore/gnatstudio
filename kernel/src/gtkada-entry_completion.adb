@@ -145,6 +145,9 @@ package body Gtkada.Entry_Completion is
    procedure On_Entry_Activate (Self : access GObject_Record'Class);
    --  Called when <enter> is pressed in the entry
 
+   function On_Focus_In
+      (Self  : access GObject_Record'Class;
+       Event : Gdk_Event_Focus) return Boolean;
    function On_Focus_Out
       (Self  : access GObject_Record'Class;
        Event : Gdk_Event_Focus) return Boolean;
@@ -655,6 +658,7 @@ package body Gtkada.Entry_Completion is
       Self.View.On_Button_Press_Event (On_Button_Event'Access, Self);
       Self.GEntry.On_Key_Press_Event (On_Key_Press'Access, Self);
       Self.GEntry.On_Focus_Out_Event (On_Focus_Out'Access, Self);
+      Self.GEntry.On_Focus_In_Event (On_Focus_In'Access, Self);
 
       Grab_Toplevel_Focus (Get_MDI (Kernel), Self.GEntry);
 
@@ -663,6 +667,21 @@ package body Gtkada.Entry_Completion is
       Gtk.Editable.On_Changed
          (+Gtk_Entry (Self.GEntry), On_Entry_Changed'Access, Self);
    end Initialize;
+
+   -----------------
+   -- On_Focus_In --
+   -----------------
+
+   function On_Focus_In
+      (Self  : access GObject_Record'Class;
+       Event : Gdk_Event_Focus) return Boolean
+   is
+      S : constant Gtkada_Entry := Gtkada_Entry (Self);
+      pragma Unreferenced (Event);
+   begin
+      Grab_Toplevel_Focus (Get_MDI (S.Kernel), S.GEntry);
+      return False;
+   end On_Focus_In;
 
    ------------------
    -- On_Focus_Out --
