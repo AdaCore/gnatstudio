@@ -29,8 +29,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Finalization;
-with GNATCOLL.Utils; use GNATCOLL.Utils;
-with Unchecked_Deallocation;
+with Libclang.Task_Parser_Pool; use Libclang.Task_Parser_Pool;
 
 package Language.Libclang is
 
@@ -157,53 +156,6 @@ package Language.Libclang is
 
    type Clang_Context;
    type Clang_Context_Access is access all Clang_Context;
-
-   type Parse_Callback is abstract tagged null record;
-   procedure Call
-     (Self : access Parse_Callback;
-      File : Virtual_File; TU : Clang_Translation_Unit) is abstract;
-   type Parse_Callback_Access is access all Parse_Callback'Class;
-
-   procedure Free is new Unchecked_Deallocation
-     (Parse_Callback'Class, Parse_Callback_Access);
-
-   package Callbacks_Vectors is
-     new Ada.Containers.Vectors (Positive, Parse_Callback_Access);
-
-   type Unbounded_String_Array_Access is access all Unbounded_String_Array;
-
-   type Parsing_Request_Priority is (Low, High);
-   type Parsing_Request_Kind is (Parse, Reparse);
-   type Parsing_Request_Record (Kind : Parsing_Request_Kind := Parse) is record
-      Prio         : Parsing_Request_Priority;
-      Options      : Clang_Translation_Unit_Flags;
-      Context      : Clang_Context_Access;
-      File_Name    : Unbounded_String;
-      Project_Name : Unbounded_String;
-      Cache_Entry  : TU_Cache_Access;
-      Callbacks    : Callbacks_Vectors.Vector;
-      case Kind is
-         when Parse =>
-            Switches      : Unbounded_String_Array_Access;
-         when Reparse =>
-            TU            : Clang_Translation_Unit;
-            Unsaved_Files : Unsaved_File_Array_Access;
-      end case;
-   end record;
-   type Parsing_Request is access all Parsing_Request_Record;
-   procedure Free is new
-     Unchecked_Deallocation (Parsing_Request_Record, Parsing_Request);
-
-   procedure Destroy (Request : in out Parsing_Request);
-
-   function Unique_Key (Request : Parsing_Request) return Unbounded_String;
-
-   type Parsing_Response is record
-      TU        : Clang_Translation_Unit;
-      File_Name : Unbounded_String;
-      Context   : Clang_Context_Access;
-      Callbacks : Callbacks_Vectors.Vector;
-   end record;
 
    type Clang_Context is tagged limited record
       TU_Cache         : Tu_Map_Access;
