@@ -52,7 +52,6 @@ package body Language.Libclang is
      GNATCOLL.Traces.Create ("LIBCLANG", On);
 
    function Parsing_Timeout_Handler return Boolean;
-   procedure Index_One_File;
 
    Clang_Options : constant Clang_Translation_Unit_Flags :=
      Includebriefcommentsincodecompletion
@@ -227,6 +226,7 @@ package body Language.Libclang is
    procedure Free
    is new Ada.Unchecked_Deallocation
      (Symbol_To_Location_Maps.Map, Sym_To_Loc_Map);
+
    procedure Free
    is new Ada.Unchecked_Deallocation
      (Ref_Info_Vectors.Vector, Ref_Info_Vector);
@@ -234,6 +234,8 @@ package body Language.Libclang is
    is new Ada.Unchecked_Deallocation
      (Decl_Info_Vectors.Vector, Decl_Info_Vector);
    --  Love you so much Ada <3 <3 (okay)
+
+   procedure Index_One_File;
 
    package Clang_Cache_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (Virtual_File, Clang_Context_Access, Full_Name_Hash, "=");
