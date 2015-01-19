@@ -60,8 +60,6 @@ package body Language.Libclang is
 
    use Task_Parser_Pool;
 
-   Parsing_Tasks : array (1 .. Nb_Tasks) of Parsing_Task;
-
    procedure Enqueue_Translation_Unit
      (Kernel : Core_Kernel;
       File : GNATCOLL.VFS.Virtual_File;
@@ -99,6 +97,7 @@ package body Language.Libclang is
    type Clang_Module_Record is new Module_ID_Record with record
       Global_Cache : Clang_Cache_Maps.Map;
       Parsing_Timeout_Id : Glib.Main.G_Source_Id;
+      Parsing_Tasks : Parsing_Task_Array (1 .. Nb_Tasks);
    end record;
 
    overriding procedure Destroy (Id : in out Clang_Module_Record);
@@ -788,8 +787,8 @@ package body Language.Libclang is
 
       --  Stop all the tasks
 
-      for I in Parsing_Tasks'Range loop
-         Parsing_Tasks (I).Stop;
+      for I in Clang_Module_Id.Parsing_Tasks'Range loop
+         Clang_Module_Id.Parsing_Tasks (I).Stop;
       end loop;
 
       --  Remove all the pending requests
@@ -817,8 +816,8 @@ package body Language.Libclang is
 
       --  Restart all the tasks
 
-      for I in Parsing_Tasks'Range loop
-         Parsing_Tasks (I).Start;
+      for I in Clang_Module_Id.Parsing_Tasks'Range loop
+         Clang_Module_Id.Parsing_Tasks (I).Start;
       end loop;
 
       --  Fetch all of the project's files
@@ -953,7 +952,7 @@ package body Language.Libclang is
    overriding procedure Destroy (Id : in out Clang_Module_Record) is
    begin
       Clean_Cache (Id);
-      for T of Parsing_Tasks loop
+      for T of Clang_Module_Id.Parsing_Tasks loop
          T.Finish;
       end loop;
    end Destroy;
