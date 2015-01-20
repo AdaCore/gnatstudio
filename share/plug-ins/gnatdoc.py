@@ -219,7 +219,7 @@ def generate_doc_file(self):
     run_gnatdoc(
         target="gnatdoc project",
         force=True,
-        extra_args=["--single-file %s" % os.path.basename(self.name())])
+        extra_args=["--single-file", os.path.basename(self.name())])
 
 
 def generate_doc_project(self, recursive=False):
@@ -239,7 +239,7 @@ def generate_doc_project(self, recursive=False):
     run_gnatdoc(
         target="gnatdoc",
         force=True,
-        extra_args=["-P %s %s" % (self.file().name(), recurse_flag)])
+        extra_args=["-P", self.file().name(), recurse_flag])
 
 
 def run_gnatdoc(target, force=False, extra_args=[]):
