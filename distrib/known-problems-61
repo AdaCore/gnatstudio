@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O120-002 GPS: cannot force background color for editors
+
+  Problem:    The python GPS.Editor.set_background_color method has no
+              effect (and neither does the colors.py example which shows
+              how to show the background color of editors based on their
+              extension).
+
+  Status:     This was fixed in 6.2.0 on 2015-01-20
+
+  Workaround: None, the colors are hard-coded in Ada.
+
 KP-61-O112-033 GNATdoc: fail when project file is symbolic link
 
   Problem:    GNATdoc fails when project file is symbolic link to real file.
@@ -34,7 +45,7 @@ KP-61-O112-033 GNATdoc: fail when project file is symbolic link
   Workaround: Copy of project file to normal file and pass its name to
               GNATdoc.
 
-KP-61-NC12-038 GPS: GPS: find/replace in current selection does not work
+KP-61-NC12-038 GPS: find/replace in current selection does not work
 
   Problem:    Function Replace All in "Current Selection" scope does not work
               as expected. This could result as replacement in incorrect text

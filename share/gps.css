@@ -28,7 +28,7 @@
 .gps-local-toolbar {  /* local toolbar in the panes/views */
 }
 
-.readonly {
+GtkTextView.readonly {
    /* for read-only editors */
    /* background-color: rgb(200,200,200); */
 }

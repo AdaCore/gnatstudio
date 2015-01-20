@@ -97,9 +97,12 @@ package Src_Editor_View is
    --  module. Project will be computed automatically if none is given.
 
    procedure Set_Background_Color
-     (Self : not null access Source_View_Record'Class);
+     (Self : not null access Source_View_Record'Class;
+      Forced : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA);
    --  Update the background color of the window, based on the user preferences
-   --  and whether the editor is editable
+   --  and whether the editor is editable.
+   --  If Forced is given, the background will use this color from now on,
+   --  until is overridden by another call also passing Forced).
 
    procedure Scroll_To_Cursor_Location
      (View      : access Source_View_Record;
@@ -319,9 +322,12 @@ private
       Scroll_To_Value      : Gdouble := 0.0;
       Scroll_Requested     : Boolean := False;
 
+      Forced_Bg_Color       : Boolean := False;
       Background_Color      : Gtkada.Style.Cairo_Color := (0.0, 0.0, 0.0, 1.0);
       Background_Color_Other : Gtkada.Style.Cairo_Color := (others => 0.0);
-      --  The editor background color and its ligthened/darkened version
+      --  The editor background color and its ligthened/darkened version.
+      --  Forced_Bg_Color is true if the python's set_background_color was
+      --  called.
 
       Text_Color           : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       --  The editor text color

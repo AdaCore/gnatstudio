@@ -1576,7 +1576,7 @@ package body Src_Editor_Module.Shell is
             if Child /= null then
                Box := Source_Editor_Box (Get_Widget (Child));
                Parse (Col, Color, Success);
-               Override_Color (Get_View (Box), Gtk_State_Flag_Normal, Col);
+               Get_View (Box).Set_Background_Color (Forced => Col);
             end if;
          end;
 

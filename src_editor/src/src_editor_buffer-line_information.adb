@@ -1012,19 +1012,6 @@ package body Src_Editor_Buffer.Line_Information is
       procedure Draw_Line_Info;
       --  Draw the line number for Editable_Line
 
-      procedure Draw_Blank_Line_Info;
-      --  Draw information for an area where there is no editable line
-
-      --------------------------
-      -- Draw_Blank_Line_Info --
-      --------------------------
-
-      procedure Draw_Blank_Line_Info is
-      begin
-         --  ??? Should we draw something on the side of blank lines ?
-         null;
-      end Draw_Blank_Line_Info;
-
       --------------------
       -- Draw_Line_Info --
       --------------------
@@ -1126,8 +1113,6 @@ package body Src_Editor_Buffer.Line_Information is
             then
                Draw_Line_Info;
             end if;
-         else
-            Draw_Blank_Line_Info;
          end if;
 
          Forward_Line (Iter, More_Lines);

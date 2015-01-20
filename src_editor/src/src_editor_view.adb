@@ -1748,32 +1748,42 @@ package body Src_Editor_View is
    --------------------------
 
    procedure Set_Background_Color
-     (Self : not null access Source_View_Record'Class)
+     (Self   : not null access Source_View_Record'Class;
+      Forced : Gdk.RGBA.Gdk_RGBA := Null_RGBA)
    is
       Color : constant Gdk_RGBA := Default_Style.Get_Pref_Bg;
       C     : Cairo_Color := Color;
       Select_Color : Gdk_RGBA;
    begin
-      Get_Style_Context (Self).Get_Background_Color
-        (Gtk_State_Flag_Selected, Select_Color);
-
-      if not Self.Get_Editable then
-         C := Shade_Or_Lighten (C, Amount => 0.1);
-      end if;
-
-      Self.Background_Color := C;
-      Self.Background_Color_Other := Shade_Or_Lighten (C, Amount => 0.03);
-
-      --  Overridding background color also seems to set the selected color, so
-      --  that selected text becomes invisible. So we have to reset it as well.
-      Self.Override_Background_Color (Gtk_State_Flag_Normal, C);
-      Self.Override_Background_Color (Gtk_State_Flag_Selected, Select_Color);
-
       if Self.Get_Editable then
          Get_Style_Context (Self).Remove_Class ("readonly");
       else
          Get_Style_Context (Self).Add_Class ("readonly");
       end if;
+
+      if Forced /= Null_RGBA then
+         Self.Forced_Bg_Color := True;
+         C := Forced;
+      elsif Self.Forced_Bg_Color then
+         C := Self.Background_Color;
+      end if;
+
+      Self.Background_Color := C;
+
+      if not Self.Get_Editable then
+         C := Shade_Or_Lighten (C, Amount => 0.1);
+      end if;
+
+      Self.Background_Color_Other := Shade_Or_Lighten (C, Amount => 0.03);
+
+      --  Overridding background color also seems to set the selected color, so
+      --  that selected text becomes invisible. So we have to reset it as well.
+
+      Get_Style_Context (Self).Get_Background_Color
+        (Gtk_State_Flag_Selected, Select_Color);
+      Self.Override_Background_Color (Gtk_State_Flag_Normal, C);
+      Self.Override_Background_Color
+         (Gtk_State_Flag_Selected, Select_Color);
 
       Invalidate_Window (Self);
    end Set_Background_Color;
