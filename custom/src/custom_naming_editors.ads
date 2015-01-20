@@ -15,48 +15,47 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Widget;
-with GPS.Kernel;
-with Naming_Editors;
-with GNAT.Strings;
+with GPS.Kernel;         use GPS.Kernel;
+with GNAT.Strings;       use GNAT.Strings;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
-with Gtk.Box;
-with Gtk.GEntry;
-with Naming_Exceptions;
+with Gtk.GEntry;         use Gtk.GEntry;
+with Naming_Exceptions;  use Naming_Exceptions;
+with Project_Viewers;    use Project_Viewers;
 
 package Custom_Naming_Editors is
 
-   type Custom_Naming_Editor_Record is new
-     Naming_Editors.Language_Naming_Editor_Record with private;
+   type Custom_Naming_Editor_Record is
+     new Project_Editor_Page_Record
+       (Flags => Multiple_Projects or Multiple_Scenarios) with private;
    type Custom_Naming_Editor is access all Custom_Naming_Editor_Record'Class;
 
-   procedure Gtk_New
-     (Editor   : out Custom_Naming_Editor;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Language : String);
-   --  Create a new naming scheme editor for a custom language defined in XML.
+   function Custom_Naming_Editor_Factory
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Lang   : String) return not null access Project_Editor_Page_Record'Class;
+   --  Create a new naming scheme editor for a language defined in XML.
+   --  The profile is compatible with Register_Naming_Scheme_Editor
 
-   overriding procedure Destroy (Editor : access Custom_Naming_Editor_Record);
-   overriding function Get_Window
-     (Editor : access Custom_Naming_Editor_Record)
-      return Gtk.Widget.Gtk_Widget;
-   overriding function Create_Project_Entry
-     (Editor             : access Custom_Naming_Editor_Record;
+   overriding procedure Initialize
+     (Self         : not null access Custom_Naming_Editor_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project);
+   overriding function Edit_Project
+     (Self               : not null access Custom_Naming_Editor_Record;
       Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
       Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean;
-   overriding procedure Show_Project_Settings
-     (Editor             : access Custom_Naming_Editor_Record;
-      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Project_Type;
-      Display_Exceptions : Boolean := True);
-   --  See doc for inherited subprogram
+   overriding procedure Destroy (Self : in out Custom_Naming_Editor_Record);
+   overriding function Is_Visible
+     (Self         : not null access Custom_Naming_Editor_Record;
+      Languages    : GNAT.Strings.String_List) return Boolean;
 
 private
-   type Custom_Naming_Editor_Record is new
-     Naming_Editors.Language_Naming_Editor_Record
-   with record
-      GUI            : Gtk.Box.Gtk_Box;
+
+   type Custom_Naming_Editor_Record is
+     new Project_Editor_Page_Record
+       (Flags => Multiple_Projects or Multiple_Scenarios) with
+   record
       Spec_Extension : Gtk.GEntry.Gtk_Entry;
       Impl_Extension : Gtk.GEntry.Gtk_Entry;
       Language       : GNAT.Strings.String_Access;

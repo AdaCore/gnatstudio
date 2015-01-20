@@ -16,106 +16,118 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Frame;               use Gtk.Frame;
-with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Size_Group;          use Gtk.Size_Group;
 with Gtk.Widget;              use Gtk.Widget;
 
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
-with Naming_Exceptions;       use Naming_Exceptions;
 
 package body Custom_Naming_Editors is
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ----------------------------------
+   -- Custom_Naming_Editor_Factory --
+   ----------------------------------
 
-   procedure Gtk_New
-     (Editor   : out Custom_Naming_Editor;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Language : String)
+   function Custom_Naming_Editor_Factory
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Lang   : String) return not null access Project_Editor_Page_Record'Class
+   is
+      pragma Unreferenced (Kernel);
+      Result : Custom_Naming_Editor;
+   begin
+      Result := new Custom_Naming_Editor_Record;
+      Result.Language := new String'(Lang);
+      return Result;
+   end Custom_Naming_Editor_Factory;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize
+     (Self         : not null access Custom_Naming_Editor_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project)
    is
       Extensions : String_List :=
-                     Get_Registry (Kernel).Environment.Registered_Extensions
-                       (Language);
+        Get_Registry (Kernel).Environment.Registered_Extensions
+           (Self.Language.all);
       Label      : Gtk_Label;
       Box        : Gtk_Box;
       Vbox       : Gtk_Box;
       Group      : Gtk_Size_Group;
       Ent        : Gtk_Entry;
       Frame      : Gtk_Frame;
+      P          : Project_Type := Project;
+
    begin
-      Editor := new Custom_Naming_Editor_Record;
-      Editor.Language := new String'(Language);
-      Gtk_New_Vbox (Editor.GUI, Homogeneous => False, Spacing => 4);
+      Initialize_Vbox (Self, Homogeneous => False);
 
       Gtk_New (Group);
 
       Gtk_New (Frame, -"Details");
-      Pack_Start (Editor.GUI, Frame, Expand => False);
+      Self.Pack_Start (Frame, Expand => False);
 
       Gtk_New_Vbox (Vbox, Homogeneous => True);
-      Add (Frame, Vbox);
+      Frame.Add (Vbox);
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Vbox, Box);
+      Vbox.Pack_Start (Box);
       Gtk_New (Label, -"Spec. Extension:  ");
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-      Add_Widget (Group, Label);
-      Gtk_New (Editor.Spec_Extension);
-      Set_Tooltip_Text
-        (Editor.Spec_Extension,
-         -("File extension for specification files. These files are generally"
+      Label.Set_Alignment (0.0, 0.5);
+      Box.Pack_Start (Label, Expand => False);
+      Group.Add_Widget (Label);
+
+      Gtk_New (Self.Spec_Extension);
+      Self.Spec_Extension.Set_Tooltip_Text
+        (-("File extension for specification files. These files are generally"
            & " not to be compiled. Leave this field empty if there are no"
            & " spec files for this language."));
-      Pack_Start (Box, Editor.Spec_Extension, Expand => True, Fill => True);
+      Box.Pack_Start (Self.Spec_Extension, Expand => True, Fill => True);
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Vbox, Box);
+      Vbox.Pack_Start (Box);
       Gtk_New (Label, -"Impl. Extension:  ");
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
-      Add_Widget (Group, Label);
-      Gtk_New (Editor.Impl_Extension);
-      Set_Tooltip_Text
-        (Editor.Impl_Extension,
-         -("File extension for implementation files. These files must"
+      Label.Set_Alignment (0.0, 0.5);
+      Box.Pack_Start (Label, Expand => False);
+      Group.Add_Widget (Label);
+
+      Gtk_New (Self.Impl_Extension);
+      Self.Impl_Extension.Set_Tooltip_Text
+        (-("File extension for implementation files. These files must"
             & " generally be compiled. Leave this field empty if there are no"
             & " implementation files for this language."));
-      Pack_Start (Box, Editor.Impl_Extension, Expand => True, Fill => True);
+      Box.Pack_Start (Self.Impl_Extension, Expand => True, Fill => True);
 
       if Extensions'Length /= 0 then
          Gtk_New (Frame, -"Predefined extensions");
-         Pack_Start (Editor.GUI, Frame, Expand => False);
+         Self.Pack_Start (Frame, Expand => False);
          Gtk_New_Vbox (Vbox, Homogeneous => True);
-         Add (Frame, Vbox);
+         Frame.Add (Vbox);
 
          for E in Extensions'Range loop
             Gtk_New_Hbox (Box, Homogeneous => False);
-            Pack_Start (Vbox, Box, Expand => False);
+            Vbox.Pack_Start (Box, Expand => False);
 
             Gtk_New (Label, -"Extension:  ");
-            Set_Alignment (Label, 0.0, 0.5);
-            Pack_Start (Box, Label, Expand => False);
-            Add_Widget (Group, Label);
+            Label.Set_Alignment (0.0, 0.5);
+            Box.Pack_Start (Label, Expand => False);
+            Group.Add_Widget (Label);
 
             Gtk_New (Ent);
-            Set_Text (Ent, Extensions (E).all & (-"  (cannot be changed)"));
-            Set_Tooltip_Text
-              (Ent,
-               -("Extension defined in the GPS configuration files for this"
+            Ent.Set_Text (Extensions (E).all & (-"  (cannot be changed)"));
+            Ent.Set_Tooltip_Text
+              (-("Extension defined in the GPS configuration files for this"
                  & " language. This extension is shown here for reference"
                  & " purposes, and is used as the default value for the"
                  & " extensions above"));
-            Set_Editable (Ent, False);
-            Pack_Start (Box, Ent, Expand => True, Fill => True);
+            Ent.Set_Editable (False);
+            Box.Pack_Start (Ent, Expand => True, Fill => True);
          end loop;
 
          Free (Extensions);
@@ -124,112 +136,94 @@ package body Custom_Naming_Editors is
       --  ??? These are implementation exceptions, should have support for
       --  spec exceptions
       Gtk_New (Frame, -"Exceptions");
-      Pack_Start (Editor.GUI, Frame, Expand => True, Fill => True);
+      Self.Pack_Start (Frame, Expand => True, Fill => True);
 
-      Gtk_New (Editor.Exceptions, Language);
-      Set_Border_Width (Editor.Exceptions, 3);
-      Add (Frame, Editor.Exceptions);
-   end Gtk_New;
+      Gtk_New (Self.Exceptions, Self.Language.all);
+      Self.Exceptions.Set_Border_Width (3);
+      Frame.Add (Self.Exceptions);
+
+      --  Update project's settings
+
+      if Project = No_Project then
+         P := Get_Project (Kernel);
+      end if;
+
+      Self.Spec_Extension.Set_Text
+        (P.Attribute_Value
+           (Spec_Suffix_Attribute, Index => To_Lower (Self.Language.all)));
+      Self.Impl_Extension.Set_Text
+        (P.Attribute_Value
+           (Impl_Suffix_Attribute, Index => To_Lower (Self.Language.all)));
+
+      Show_Project_Settings (Self.Exceptions, Project);
+   end Initialize;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self         : not null access Custom_Naming_Editor_Record;
+      Languages    : GNAT.Strings.String_List) return Boolean
+   is
+   begin
+      return In_List (Self.Language.all, Languages);
+   end Is_Visible;
 
    -------------
    -- Destroy --
    -------------
 
    overriding procedure Destroy
-     (Editor : access Custom_Naming_Editor_Record) is
+     (Self : in out Custom_Naming_Editor_Record) is
    begin
-      Destroy (Editor.GUI);
-      Free (Editor.Language);
+      Free (Self.Language);
    end Destroy;
 
-   ----------------
-   -- Get_Window --
-   ----------------
+   ------------------
+   -- Edit_Project --
+   ------------------
 
-   overriding function Get_Window
-     (Editor : access Custom_Naming_Editor_Record)
-      return Gtk.Widget.Gtk_Widget is
-   begin
-      return Gtk_Widget (Editor.GUI);
-   end Get_Window;
-
-   --------------------------
-   -- Create_Project_Entry --
-   --------------------------
-
-   overriding function Create_Project_Entry
-     (Editor             : access Custom_Naming_Editor_Record;
+   overriding function Edit_Project
+     (Self               : not null access Custom_Naming_Editor_Record;
       Project            : Project_Type;
-      Languages          : String_List;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
-      pragma Unreferenced (Languages);
+      pragma Unreferenced (Languages, Kernel);
       Changed : Boolean := False;
    begin
       if Project = No_Project
         or else Project.Attribute_Value
           (Attribute => Spec_Suffix_Attribute,
-           Index     => To_Lower (Editor.Language.all)) /=
-        Get_Text (Editor.Spec_Extension)
+           Index     => To_Lower (Self.Language.all)) /=
+              Get_Text (Self.Spec_Extension)
       then
          Project.Set_Attribute
            (Scenario  => Scenario_Variables,
             Attribute => Spec_Suffix_Attribute,
-            Value     => Get_Text (Editor.Spec_Extension),
-            Index     => To_Lower (Editor.Language.all));
+            Value     => Get_Text (Self.Spec_Extension),
+            Index     => To_Lower (Self.Language.all));
          Changed := True;
       end if;
 
       if Project = No_Project
         or else Project.Attribute_Value
           (Attribute => Impl_Suffix_Attribute,
-           Index     => To_Lower (Editor.Language.all)) /=
-        Get_Text (Editor.Impl_Extension)
+           Index     => To_Lower (Self.Language.all)) /=
+        Get_Text (Self.Impl_Extension)
       then
          Project.Set_Attribute
            (Scenario  => Scenario_Variables,
             Attribute => Impl_Suffix_Attribute,
-            Value     => Get_Text (Editor.Impl_Extension),
-            Index     => To_Lower (Editor.Language.all));
+            Value     => Get_Text (Self.Impl_Extension),
+            Index     => To_Lower (Self.Language.all));
          Changed := True;
       end if;
 
       return Changed or
-        Create_Project_Entry (Editor.Exceptions, Project, Scenario_Variables);
-   end Create_Project_Entry;
-
-   ---------------------------
-   -- Show_Project_Settings --
-   ---------------------------
-
-   overriding procedure Show_Project_Settings
-     (Editor             : access Custom_Naming_Editor_Record;
-      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Project_Type;
-      Display_Exceptions : Boolean := True)
-   is
-      P : Project_Type := Project;
-   begin
-      --  If the project is null, we get the default values from the current
-      --  top-level project. It will automatically have the default extensions
-      --  set when a project was registered, unless overriden by the user
-
-      if Project = No_Project then
-         P := Get_Project (Kernel);
-      end if;
-
-      Set_Text
-        (Editor.Spec_Extension,
-         P.Attribute_Value
-            (Spec_Suffix_Attribute, Index => To_Lower (Editor.Language.all)));
-      Set_Text
-        (Editor.Impl_Extension,
-         P.Attribute_Value
-            (Impl_Suffix_Attribute, Index => To_Lower (Editor.Language.all)));
-
-      if Display_Exceptions then
-         Show_Project_Settings (Editor.Exceptions, Project);
-      end if;
-   end Show_Project_Settings;
+        Create_Project_Entry (Self.Exceptions, Project, Scenario_Variables);
+   end Edit_Project;
 
 end Custom_Naming_Editors;

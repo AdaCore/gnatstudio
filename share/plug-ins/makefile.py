@@ -271,7 +271,7 @@ parse_xml("""
   <project_attribute
     name="Makefile"
     package="Make"
-    editor_page="Make"
+    editor_page="Build/Make"
     editor_section="Make"
     hide_in="wizard library_wizard"
     description="Makefile to use for this project">
@@ -280,7 +280,7 @@ parse_xml("""
   <project_attribute
     name="Make"
     package="Make"
-    editor_page="Make"
+    editor_page="Build/Make"
     editor_section="Make"
     hide_in="wizard library_wizard properties"
     description="Deprecated, will be ignored">
@@ -289,7 +289,7 @@ parse_xml("""
   <project_attribute
     name="Switches"
     package="Make"
-    editor_page="Make"
+    editor_page="Build/Make"
     editor_section="Make"
     hide_in="wizard library_wizard properties">
     <string type=""/>
@@ -307,7 +307,7 @@ if os_utils.locate_exec_on_path("ant"):
   <project_attribute
     name="Antfile"
     package="Ant"
-    editor_page="Ant"
+    editor_page="Build/Ant"
     editor_section="Ant"
     hide_in="wizard library_wizard"
     description="Ant build file to use for this project">
@@ -316,7 +316,7 @@ if os_utils.locate_exec_on_path("ant"):
   <project_attribute
     name="Ant"
     package="Ant"
-    editor_page="Ant"
+    editor_page="Build/Ant"
     editor_section="Ant"
     hide_in="wizard library_wizard properties">
     <string type=""/>
@@ -324,7 +324,7 @@ if os_utils.locate_exec_on_path("ant"):
  <project_attribute
     name="Switches"
     package="Ant"
-    editor_page="Ant"
+    editor_page="Build/Ant"
     editor_section="Ant"
     hide_in="wizard library_wizard properties">
     <string type=""/>

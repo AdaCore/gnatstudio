@@ -60,6 +60,13 @@ package body Ada_Naming_Editors is
    Dec_Naming_Scheme    : constant := 2;
    Custom_Naming_Scheme : constant := 3;
 
+   procedure Show_Project_Settings
+     (Editor             : access Ada_Naming_Editor_Record'Class;
+      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project            : Project_Type;
+      Display_Exceptions : Boolean := True);
+   --  Show the project's settings in the editor
+
    type Naming_Data is record
       Body_Name : GNAT.Strings.String_Access;
       Spec_Name : GNAT.Strings.String_Access;
@@ -90,80 +97,90 @@ package body Ada_Naming_Editors is
       end if;
    end Free;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Gtk_New (Editor : out Ada_Naming_Editor) is
+   overriding procedure Initialize
+     (Self         : not null access Ada_Naming_Editor_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project)
+   is
       Size_Group   : Gtk_Size_Group;
       Idx          : Gint := 0;
    begin
-      Editor := new Ada_Naming_Editor_Record;
-      Gtk_New (Editor.GUI);
+      Initialize_Vbox (Self, Homogeneous => False);
 
-      Set_Width_Chars (Editor.GUI.Unit_Name_Entry, 8);
-      Set_Width_Chars (Editor.GUI.Spec_Filename_Entry, 8);
-      Set_Width_Chars (Editor.GUI.Body_Filename_Entry, 8);
+      Gtk_New (Self.GUI);
 
-      Set_Size_Request (Editor.GUI.Exception_List, -1, 170);
+      Set_Width_Chars (Self.GUI.Unit_Name_Entry, 8);
+      Set_Width_Chars (Self.GUI.Spec_Filename_Entry, 8);
+      Set_Width_Chars (Self.GUI.Body_Filename_Entry, 8);
+
+      Set_Size_Request (Self.GUI.Exception_List, -1, 170);
       Gtk_New (Size_Group, Both);
-      Add_Widget (Size_Group, Editor.GUI.Standard_Scheme);
-      Add_Widget (Size_Group, Editor.GUI.Casing);
-      Add_Widget (Size_Group, Editor.GUI.Dot_Replacement);
-      Add_Widget (Size_Group, Editor.GUI.Spec_Extension);
-      Add_Widget (Size_Group, Editor.GUI.Body_Extension);
-      Add_Widget (Size_Group, Editor.GUI.Separate_Extension);
+      Add_Widget (Size_Group, Self.GUI.Standard_Scheme);
+      Add_Widget (Size_Group, Self.GUI.Casing);
+      Add_Widget (Size_Group, Self.GUI.Dot_Replacement);
+      Add_Widget (Size_Group, Self.GUI.Spec_Extension);
+      Add_Widget (Size_Group, Self.GUI.Body_Extension);
+      Add_Widget (Size_Group, Self.GUI.Separate_Extension);
 
       Gtk_New (Size_Group, Both);
-      Add_Widget (Size_Group, Editor.GUI.Label_Naming_Scheme);
-      Add_Widget (Size_Group, Editor.GUI.Label_Casing);
-      Add_Widget (Size_Group, Editor.GUI.Label_Dot_Replacement);
-      Add_Widget (Size_Group, Editor.GUI.Label_Spec_Extensions);
-      Add_Widget (Size_Group, Editor.GUI.Label_Body_Extensions);
-      Add_Widget (Size_Group, Editor.GUI.Label_Separate_Extensions);
+      Add_Widget (Size_Group, Self.GUI.Label_Naming_Scheme);
+      Add_Widget (Size_Group, Self.GUI.Label_Casing);
+      Add_Widget (Size_Group, Self.GUI.Label_Dot_Replacement);
+      Add_Widget (Size_Group, Self.GUI.Label_Spec_Extensions);
+      Add_Widget (Size_Group, Self.GUI.Label_Body_Extensions);
+      Add_Widget (Size_Group, Self.GUI.Label_Separate_Extensions);
 
-      Ref (Editor.GUI.Main_Box);
-      Unparent (Editor.GUI.Main_Box);
+      Ref (Self.GUI.Main_Box);
+      Unparent (Self.GUI.Main_Box);
+      Self.Pack_Start (Self.GUI.Main_Box, Fill => True, Expand => True);
 
-      Reset_Exception_Fields (Editor.GUI);
+      Reset_Exception_Fields (Self.GUI);
 
-      Gtk_List_Store'(-(Editor.GUI.Casing.Get_Model)).Clear;
+      Gtk_List_Store'(-(Self.GUI.Casing.Get_Model)).Clear;
 
       for Casing in Casing_Type loop
          if Casing /= Unknown then
-            Editor.GUI.Casing.Append_Text (-Prj.Image (Casing));
+            Self.GUI.Casing.Append_Text (-Prj.Image (Casing));
 
             if Casing = All_Lower_Case then
-               Editor.GUI.Casing.Set_Active (Idx);
+               Self.GUI.Casing.Set_Active (Idx);
             end if;
 
             Idx := Idx + 1;
          end if;
       end loop;
 
-      Set_Active (Editor.GUI.Standard_Scheme, Gnat_Naming_Scheme);
-   end Gtk_New;
+      Set_Active (Self.GUI.Standard_Scheme, Gnat_Naming_Scheme);
+
+      Show_Project_Settings
+        (Self, Kernel, Project, Display_Exceptions => True);
+   end Initialize;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self      : not null access Ada_Naming_Editor_Record;
+      Languages : GNAT.Strings.String_List) return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      return In_List ("ada", Languages);
+   end Is_Visible;
 
    -------------
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Editor : access Ada_Naming_Editor_Record) is
+   overriding procedure Destroy (Self : in out Ada_Naming_Editor_Record) is
    begin
-      Destroy (Editor.GUI);
-      --  Editor.GUI.Main_Box is automatically destroyed when its parent
-      --  contain (multi-language naming editor) is destroyed.
+      Destroy (Self.GUI);   --  a widget that was not attached
    end Destroy;
-
-   ----------------
-   -- Get_Window --
-   ----------------
-
-   overriding function Get_Window
-     (Editor : access Ada_Naming_Editor_Record) return Gtk.Widget.Gtk_Widget is
-   begin
-      return Gtk_Widget (Editor.GUI.Main_Box);
-   end Get_Window;
 
    ----------------------------
    -- Reset_Exception_Fields --
@@ -228,17 +245,18 @@ package body Ada_Naming_Editors is
       end case;
    end Set_Predefined_Scheme;
 
-   --------------------------
-   -- Create_Project_Entry --
-   --------------------------
+   ------------------
+   -- Edit_Project --
+   ------------------
 
-   overriding function Create_Project_Entry
-     (Editor             : access Ada_Naming_Editor_Record;
+   overriding function Edit_Project
+     (Editor             : not null access Ada_Naming_Editor_Record;
       Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
       Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
-      pragma Unreferenced (Languages);
+      pragma Unreferenced (Kernel, Languages);
       Changed    : Boolean := False;
       Iter       : Gtk_Tree_Iter;
       Ada_Scheme : constant Boolean :=
@@ -459,14 +477,14 @@ package body Ada_Naming_Editors is
       Reset (Cache);
 
       return Changed;
-   end Create_Project_Entry;
+   end Edit_Project;
 
    ---------------------------
    -- Show_Project_Settings --
    ---------------------------
 
-   overriding procedure Show_Project_Settings
-     (Editor             : access Ada_Naming_Editor_Record;
+   procedure Show_Project_Settings
+     (Editor             : access Ada_Naming_Editor_Record'Class;
       Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
       Project            : Project_Type;
       Display_Exceptions : Boolean := True)

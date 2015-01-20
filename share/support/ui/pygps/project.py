@@ -3,6 +3,9 @@
 
 try:
     import pygps
+    import pygps.tree
+    from gi.repository import Gtk
+    import GPS
 
     def open_project_wizard(on_open, *args, **kwargs):
         """
@@ -15,20 +18,21 @@ try:
     def open_project_properties(on_open, *args, **kwargs):
         """
         Open the project properties editor asynchronously, and call
-        on_open (dialog, notebook, *args, **kwargs),
-        where notebook is the notebook found in the project properties
-        dialog, so that you can easily change to a specific page
+        on_open (dialog, treeview, *args, **kwargs),
+        where treeview is the widget found on the left of the project
+        properties dialog, so that you can easily change to a specific page
         inside the notebook:
-            import pygps.notebook
-            def on_pp (dialog, notebook):
-               page = switch_notebook_page (notebook, "Switches")
+            from pygps.tree import select_in_tree
+            def on_pp (dialog, treeview):
+               select_in_tree (treeview, 3, "Switches/Ada")
             open_project_properties (on_pp)
         """
 
         pygps.open_menu(
             "/Project/Properties...", on_open,
-            ["Project Properties Notebook"],
+            ["Project Properties Tree"],
             args, kwargs, 2000)
+
 
 except ImportError:
     pass

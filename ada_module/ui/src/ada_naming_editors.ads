@@ -15,37 +15,34 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Widget;
 with Gtk.GEntry;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
-with Naming_Editors;
-with GPS.Kernel;
+with GPS.Kernel;               use GPS.Kernel;
 with GNATCOLL.Projects;        use GNATCOLL.Projects;
 with GNAT.Strings;
+with Project_Viewers;          use Project_Viewers;
 
 package Ada_Naming_Editors is
 
-   type Ada_Naming_Editor_Record is new
-     Naming_Editors.Language_Naming_Editor_Record with private;
+   type Ada_Naming_Editor_Record is
+     new Project_Editor_Page_Record
+       (Flags => Multiple_Projects or Multiple_Scenarios) with private;
    type Ada_Naming_Editor is access all Ada_Naming_Editor_Record'Class;
 
-   procedure Gtk_New (Editor : out Ada_Naming_Editor);
-   --  Create a new naming scheme editor.
-
-   overriding procedure Destroy (Editor : access Ada_Naming_Editor_Record);
-   overriding function Get_Window
-     (Editor : access Ada_Naming_Editor_Record) return Gtk.Widget.Gtk_Widget;
-   overriding function Create_Project_Entry
-     (Editor             : access Ada_Naming_Editor_Record;
+   overriding procedure Initialize
+     (Self         : not null access Ada_Naming_Editor_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project);
+   overriding function Edit_Project
+     (Editor             : not null access Ada_Naming_Editor_Record;
       Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
       Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean;
-   overriding procedure Show_Project_Settings
-     (Editor             : access Ada_Naming_Editor_Record;
-      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Project_Type;
-      Display_Exceptions : Boolean := True);
-   --  See doc for inherited subprogram
+   overriding procedure Destroy (Self : in out Ada_Naming_Editor_Record);
+   overriding function Is_Visible
+     (Self      : not null access Ada_Naming_Editor_Record;
+      Languages : GNAT.Strings.String_List) return Boolean;
 
    ---------------
    -- Callbacks --
@@ -84,8 +81,9 @@ package Ada_Naming_Editors is
    --  default help value
 
 private
-   type Ada_Naming_Editor_Record is new
-     Naming_Editors.Language_Naming_Editor_Record
+   type Ada_Naming_Editor_Record is
+     new Project_Editor_Page_Record
+       (Flags => Multiple_Projects or Multiple_Scenarios)
    with record
       GUI : Naming_Scheme_Editor_Access;
    end record;

@@ -3180,7 +3180,7 @@ accepts the following attributes:
   it. If this is the empty string, the preference is not editable
   interactively. Use this to save a value from one session of GPS to the
   next without allowing the user to change it.  Subpages are reference by
-  separating pages name with colons (:kbd:`:`).
+  separating pages name with slashes (:kbd:`/`).
 
 * :file:`default` (optional, default depends on type of the preference)
 

@@ -105,7 +105,7 @@ package body GPS.Kernel is
    function Convert is new Ada.Unchecked_Conversion
      (Kernel_Handle, System.Address);
 
-   procedure Free (Tool : in out Tool_Properties_Record);
+   procedure Free (Tool : in out Tool_Properties);
    procedure Free_Tools (Kernel : access Kernel_Handle_Record'Class);
    --  Free the list of registered tools
 
@@ -1312,7 +1312,7 @@ package body GPS.Kernel is
    begin
       case Filter.Kind is
          when Standard_Filter =>
-            null;
+            C := Cached;
 
          when Filter_And =>
             C := Cached
@@ -1360,7 +1360,9 @@ package body GPS.Kernel is
    -- Free --
    ----------
 
-   procedure Free (Tool : in out Tool_Properties_Record) is
+   procedure Free (Tool : in out Tool_Properties) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Tool_Properties_Record, Tool_Properties);
    begin
       Free (Tool.Tool_Name);
       Free (Tool.Project_Package);
@@ -1369,6 +1371,7 @@ package body GPS.Kernel is
       Free (Tool.Initial_Cmd_Line);
       Free (Tool.Languages);
       Free (Tool.Config);
+      Unchecked_Free (Tool);
    end Free;
 
    ----------------
@@ -1378,7 +1381,7 @@ package body GPS.Kernel is
    procedure Free_Tools (Kernel : access Kernel_Handle_Record'Class) is
       use Tools_List;
       Cursor : Tools_List.Cursor := First (Kernel.Tools);
-      Tool   : Tool_Properties_Record;
+      Tool   : Tool_Properties;
    begin
       while Has_Element (Cursor) loop
          Tool := Element (Cursor);
@@ -1394,11 +1397,11 @@ package body GPS.Kernel is
 
    procedure Register_Tool
      (Kernel : access Kernel_Handle_Record;
-      Tool   : Tool_Properties_Record)
+      Tool   : not null Tool_Properties)
    is
       Pkg  : Package_Node_Id;
       Attr : Attribute_Node_Id;
-      Elm  : Tool_Properties_Record;
+      Elm  : Tool_Properties;
       Iter : Tools_List.Cursor;
       use Tools_List;
    begin
@@ -1485,7 +1488,7 @@ package body GPS.Kernel is
 
    function Get_Tool_Properties
      (Kernel    : access Kernel_Handle_Record;
-      Tool_Name : String) return Tool_Properties_Record
+      Tool_Name : String) return Tool_Properties
    is
       use Tools_List;
       Iter : Tools_List.Cursor := First (Kernel.Tools);
@@ -1496,7 +1499,7 @@ package body GPS.Kernel is
          end if;
          Next (Iter);
       end loop;
-      return No_Tool;
+      return null;
    end Get_Tool_Properties;
 
    ------------

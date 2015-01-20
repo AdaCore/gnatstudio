@@ -28,7 +28,6 @@ with Ada_Semantic_Tree.Lang;   use Ada_Semantic_Tree.Lang;
 with Language_Handlers;        use Language_Handlers;
 with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
-with Naming_Editors;           use Naming_Editors;
 with Ada_Naming_Editors;       use Ada_Naming_Editors;
 with Projects;                 use Projects;
 with Case_Handling;            use Case_Handling;
@@ -68,24 +67,10 @@ package body Ada_Module is
    --  Called when the preferences have changed
 
    function Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class; Lang : String)
-      return Language_Naming_Editor;
+     (Kernel : not null access Kernel_Handle_Record'Class; Lang : String)
+      return not null access Project_Editor_Page_Record'Class is
+      (new Ada_Naming_Editor_Record);
    --  Create the naming scheme editor page
-
-   --------------------------
-   -- Naming_Scheme_Editor --
-   --------------------------
-
-   function Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class; Lang : String)
-      return Language_Naming_Editor
-   is
-      pragma Unreferenced (Kernel, Lang);
-      Naming : Ada_Naming_Editor;
-   begin
-      Gtk_New (Naming);
-      return Language_Naming_Editor (Naming);
-   end Naming_Scheme_Editor;
 
    ----------------------------
    -- On_Preferences_Changed --

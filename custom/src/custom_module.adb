@@ -240,7 +240,7 @@ package body Custom_Module is
    procedure Parse_Switches_Node
      (Kernel       : access Kernel_Handle_Record'Class;
       File         : GNATCOLL.VFS.Virtual_File;
-      Current_Tool : in out Tool_Properties_Record;
+      Current_Tool : Tool_Properties;
       Node         : Node_Ptr);
    --  Parse a <switches> node, and returns the corresponding configuration
 
@@ -276,7 +276,7 @@ package body Custom_Module is
    procedure Parse_Switches_Node
      (Kernel       : access Kernel_Handle_Record'Class;
       File         : GNATCOLL.VFS.Virtual_File;
-      Current_Tool : in out Tool_Properties_Record;
+      Current_Tool : Tool_Properties;
       Node         : Node_Ptr)
    is
       M : Unbounded_String;
@@ -285,10 +285,10 @@ package body Custom_Module is
       --  Looks up registered tool corresponding to Name.
 
       function Finder (Name : String) return Switches_Editor_Config is
-         Tool : Tool_Properties_Record;
+         Tool : Tool_Properties;
       begin
          Tool := Get_Tool_Properties (Kernel, Name);
-         if Tool /= No_Tool then
+         if Tool /= null then
             return Tool.Config;
          else
             return null;
@@ -596,7 +596,7 @@ package body Custom_Module is
                        (To_Lower (Get_Attribute (Node, "override", "false"))
                         = "true");
          N         : Node_Ptr := Node.Child;
-         Tool      : Tool_Properties_Record;
+         Tool      : Tool_Properties;
 
       begin
          if Name = "" then
@@ -607,6 +607,7 @@ package body Custom_Module is
             return;
          end if;
 
+         Tool := new Tool_Properties_Record;
          Tool.Tool_Name         := new String'(Name);
          Tool.Project_Package   := new String'(Pack);
          Tool.Project_Attribute := new String'(Attribute);

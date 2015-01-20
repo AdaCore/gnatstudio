@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Strings;       use GNAT.Strings;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
-with GNATCOLL.VFS;
-
-with Gtk.Widget;
-
-with GPS.Kernel;
-with Naming_Editors;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Notebook;       use Gtk.Notebook;
+with Gtk.Widget;         use Gtk.Widget;
+with GPS.Kernel;         use GPS.Kernel;
 
 package Project_Viewers is
 
@@ -36,46 +37,61 @@ package Project_Viewers is
    -- Project editor pages --
    --------------------------
 
-   type Project_Editor_Page_Record is abstract tagged private;
-   type Project_Editor_Page is access all Project_Editor_Page_Record'Class;
-   --  A page that should be inserted in the project creation wizard and the
-   --  project properties editor.
+   type Selector_Flags is mod 4;
+   Multiple_Projects  : constant Selector_Flags := 2 ** 0;
+   Multiple_Scenarios : constant Selector_Flags := 2 ** 1;
+   --  The projects or scenarios the project editor applies to.
+   --  Multiple_Project should be set if multiple projects can be modified by
+   --  the editor.
+   --  Multiple_Scenarios should be set if multiple scenarios can be modified
+   --  at the same time by the editor.
+   --  This flags is used to desactivate the selector widgets in the project
+   --  properties dialog.
 
-   procedure Destroy (Page : in out Project_Editor_Page_Record);
+   type Project_Editor_Page_Record
+     (Flags : Selector_Flags) is abstract new Gtk_Box_Record with null record;
+   type Project_Editor_Page is access all Project_Editor_Page_Record'Class;
+   --  A widget used to edit some properties of a project.
+   --  This is used in the project properties editor
+
+   procedure Destroy (Page : in out Project_Editor_Page_Record) is null;
    --  Free the memory allocated for the page. Inherited subprograms should
    --  always call the parent's Destroy.
 
-   function Widget_Factory
-     (Page         : access Project_Editor_Page_Record;
-      Project      : Project_Type;
-      Full_Project : GNATCOLL.VFS.Virtual_File;
-      Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Gtk.Widget.Gtk_Widget is abstract;
-   --  Return a new widget to display in the project properties editor or the
-   --  project creation wizard. This can be used to store extra information
-   --  closely associated with each projects (either in the project file itself
-   --  or in some external files).
-   --  This function should expect Project_View to be No_Project in some cases,
-   --  when called from the project wizard.
-   --  This subprogram should call Show_All on the returned widget. This allows
-   --  it to hide some of the components when necessary. The caller should not
-   --  force a Show_All on the widget.
+   procedure Initialize
+     (Self         : not null access Project_Editor_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project) is abstract;
+   --  Initialize the widget based on the project's settings.
+   --  Project might be set to No_Project when this function is called from a
+   --  project creation wizard.
    --  Full_Project is the directory/name  the user has chosen for the project
    --  file. It should be used for the pages that need initial values for the
    --  directories.
-   --
-   --  Refresh is always called just after Widget_Factory.
 
-   function Project_Editor
-     (Page               : access Project_Editor_Page_Record;
+   function Is_Visible
+     (Self         : not null access Project_Editor_Page_Record;
+      Languages    : GNAT.Strings.String_List) return Boolean is (True);
+   --  Called to check whether a page should be visible, given the current
+   --  list of languages.
+   --  This function should also take care of hidding nested pages, when they
+   --  exist, depending on the result of their own Is_Visible primitive.
+
+   function Is_Valid
+     (Self         : not null access Project_Editor_Page_Record)
+      return String is ("");
+   --  Whether the current contents of the page is valid.
+   --  Should return the empty string if all is valid, or an error message
+   --  otherwise.
+   --  Invalid fields should be highlighted in red.
+
+   function Edit_Project
+     (Self               : not null access Project_Editor_Page_Record;
       Project            : Project_Type;
-      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Widget             : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Kernel             : not null access Kernel_Handle_Record'Class;
       Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project        : Project_Type) return Boolean is abstract;
-   --  Modifies Project given the data in Widget. Widget is the same that was
-   --  created through a Project_Editor_Page_Factor.
+      Scenario_Variables : Scenario_Variable_Array) return Boolean is abstract;
+   --  Modifies Project given the data in Self.
    --
    --  Return True if at least one project was modified.
    --
@@ -95,84 +111,60 @@ package Project_Viewers is
    --  different scenario if the user has decided to modify several
    --  scenarios.
 
-   procedure Refresh
-     (Page      : access Project_Editor_Page_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project   : Project_Type := No_Project;
-      Languages : GNAT.Strings.String_List);
-   --  Refresh the contents of Widget, that was created by Widget_Factory.
-   --  Since Project_View is still the one when the project creation wizard or
-   --  the project properties editor were initially displayed, the list of
-   --  supported languages should be read from languages.
-   --  By default, it does nothing.
+   ------------------------
+   -- Checking languages --
+   ------------------------
 
-   function Get_Label (Page : access Project_Editor_Page_Record'Class)
-      return String;
-   --  Return the label that should be used to identify the page in the project
-   --  properties editor.
+   function In_List
+     (Lang : String; List : GNAT.Strings.String_List) return Boolean;
+   --  Whether the language is in the list
 
-   function Get_Toc (Page : access Project_Editor_Page_Record'Class)
-      return String;
-   --  Return the table-of-contents label to be used in the project creation
-   --  wizard.
+   ---------------------------
+   -- Notebook editor pages --
+   ---------------------------
+   --  This type can be used to group multiple project editor pages into a
+   --  single one, where each of the page is displayed in its own notebook tab
 
-   function Get_Title (Page : access Project_Editor_Page_Record'Class)
-      return String;
-   --  Return the title that should be used for this page in the project
-   --  creation wizard.
+   type Project_Editor_Multi_Page_Record is new Project_Editor_Page_Record
+     (Flags => Multiple_Projects or Multiple_Scenarios) with private;
 
-   type Selector_Flags is mod 4;
-   Multiple_Projects  : constant Selector_Flags := 2 ** 0;
-   Multiple_Scenarios : constant Selector_Flags := 2 ** 1;
-   --  The projects or scenarios the project editor applies to.
-   --  Multiple_Project should be set if multiple projects can be modified by
-   --  the editor.
-   --  Multiple_Scenarios should be set if multiple scenarios can be modified
-   --  at the same time by the editor.
-   --  This flags is used to desactivate the selector widgets in the project
-   --  properties dialog.
+   overriding procedure Destroy
+     (Self : in out Project_Editor_Multi_Page_Record);
+   overriding procedure Initialize
+     (Self         : not null access Project_Editor_Multi_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project);
+   overriding function Edit_Project
+     (Self               : not null access Project_Editor_Multi_Page_Record;
+      Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean;
+   overriding function Is_Visible
+     (Self         : not null access Project_Editor_Multi_Page_Record;
+      Languages    : GNAT.Strings.String_List) return Boolean;
 
-   function Get_Flags (Page : access Project_Editor_Page_Record'Class)
-      return Selector_Flags;
-   --  Return the list of selectors recognized by this editor
+   procedure Add_Page
+     (Self  : not null access Project_Editor_Multi_Page_Record;
+      Page  : not null access Project_Editor_Page_Record'Class;
+      Title : String);
+   --  Add a new page
 
-   -----------------------------------------------
-   -- Registering new pages to edit the project --
-   -----------------------------------------------
+   type Page_Iterator_Callback is not null access procedure
+     (Page : not null access Project_Editor_Page_Record'Class);
+   procedure For_Each_Page
+     (Self     : not null access Project_Editor_Multi_Page_Record;
+      Callback : Page_Iterator_Callback);
+   --  Executes Callback for each registered page
 
-   procedure Register_Project_Editor_Page
-     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Page      : Project_Editor_Page;
-      Label     : String;
-      Toc       : String;
-      Title     : String;
-      Flags     : Selector_Flags := Multiple_Projects or Multiple_Scenarios;
-      Ref_Page  : String := "";
-      Add_After : Boolean := True);
-   --  Register a page that should be displayed both in the project wizard and
-   --  the project properties editor.
-   --  The new page will be put after or before the page whose label is
-   --  Ref_Page, or after all the pages if Ref_Page is the empty string.
-
-   function Project_Editor_Pages_Count
-      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Natural;
-   --  Return the number of registered project editor pages
-
-   function Get_Nth_Project_Editor_Page
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Num : Positive)
-      return Project_Editor_Page;
-   --  Return the Num-th registered project editor page.
-   --  First page is number 1.
-
-   --------------------------------------------
-   -- Registering new naming schemes editors --
-   --------------------------------------------
-   --  See naming_editors.ads
+   ---------------------------
+   -- Naming scheme editors --
+   ---------------------------
 
    type Naming_Scheme_Editor_Creator is access function
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Language : String)
-     return Naming_Editors.Language_Naming_Editor;
+      return not null access Project_Editor_Page_Record'Class;
 
    procedure Register_Naming_Scheme_Editor
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -185,15 +177,30 @@ package Project_Viewers is
 
    function Get_Naming_Scheme_Page
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Language : String) return Naming_Editors.Language_Naming_Editor;
-   --  Return the naming scheme editor page for the specific language.
+      Language : String) return Project_Editor_Page;
+   --  Return the naming scheme editor page for the specific language. This is
+   --  a newly created widget.
    --  null is returned if there are no such page.
 
-private
+   function Get_All_Naming_Scheme_Page
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Project_Editor_Page;
+   --  A page to edit the naming schemes for all languages
 
-   type Project_Editor_Page_Record is abstract tagged record
-      Label, Toc, Title : GNAT.Strings.String_Access;
-      Flags             : Selector_Flags;
+private
+   type Page_Descr is record
+      Title : Unbounded_String;
+      Page  : Project_Editor_Page;
+   end record;
+
+   package Project_Editor_Page_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Page_Descr);
+
+   type Project_Editor_Multi_Page_Record is new Project_Editor_Page_Record
+     (Flags => Multiple_Projects or Multiple_Scenarios) with
+   record
+      Notebook : Gtk_Notebook;
+      Pages    : Project_Editor_Page_Lists.List;
    end record;
 
 end Project_Viewers;

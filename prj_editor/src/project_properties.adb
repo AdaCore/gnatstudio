@@ -50,12 +50,12 @@ with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Notebook;              use Gtk.Notebook;
-with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -68,7 +68,6 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Basic_Types;               use Basic_Types;
-with Creation_Wizard;           use Creation_Wizard;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -84,9 +83,9 @@ with GPS.Project_Properties;    use GPS.Project_Properties;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
-with Project_Viewers;           use Project_Viewers;
 with Projects;                  use Projects;
 with Scenario_Selectors;        use Scenario_Selectors;
+with Switches_Editors;          use Switches_Editors;
 with Toolchains_Editor;         use Toolchains_Editor;
 with Namet;
 with Wizards;                   use Wizards;
@@ -117,29 +116,11 @@ package body Project_Properties is
    --  Whether all editors on the page have a valid value for their attribute.
    --  See the description of Is_Valid for an Attribute_Description
 
-   ------------------
-   -- Wizard pages --
-   ------------------
-
-   type XML_Project_Wizard_Page is new Project_Wizard_Page_Record with record
-      Page : Attribute_Page;
-      Box  : Gtk_Box;  --  ??? Would be nice to create on the fly
-   end record;
-   type XML_Project_Wizard_Page_Access is
-     access all XML_Project_Wizard_Page'Class;
-
-   overriding procedure Generate_Project
-     (Page               : access XML_Project_Wizard_Page;
-      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Scenario_Variable_Array;
-      Project            : in out Project_Type;
-      Changed            : in out Boolean);
-   overriding function Create_Content
-     (Page : access XML_Project_Wizard_Page;
-      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
-   overriding function Is_Complete
-     (Page : access XML_Project_Wizard_Page) return String;
-   --  See inherited doc
+   Column_Page_Name     : constant := 0;
+   Column_Page_Contents : constant := 1;   --  a Project_Editor_Page
+   Column_Visible       : constant := 2;
+   Column_Path          : constant := 3;  --  e.g. 'Naming/Ada' (testsuite)
+   --  The contents of the tree model that describes all the pages.
 
    -----------------------
    -- Properties module --
@@ -399,29 +380,47 @@ package body Project_Properties is
    --  open a dialog to edit its value (that dialog contains one the standard
    --  widgets like combo boxes,... depending on the type of the attribute)
 
-   type Widget_Array is array (Natural range <>) of Gtk_Widget;
-   type Widget_Array_Access is access Widget_Array;
+   type General_Page_Record is new Project_Editor_Page_Record
+     (Flags => Multiple_Scenarios)
+   with record
+      Use_Relative_Paths : Gtk.Check_Button.Gtk_Check_Button;
+      Name               : Gtk.GEntry.Gtk_Entry;
+      Path               : Gtk.GEntry.Gtk_Entry;
+   end record;
+   type General_Page_Access is access all General_Page_Record'Class;
+   overriding procedure Initialize
+     (Self         : not null access General_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project);
+   overriding function Edit_Project
+     (Self               : not null access General_Page_Record;
+      Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean;
+   overriding function Is_Valid
+     (Self         : not null access General_Page_Record) return String;
+   --  Create the "General" page for the project properties
 
    type Properties_Editor_Record is new Gtk.Dialog.Gtk_Dialog_Record with
    record
-      Name               : Gtk.GEntry.Gtk_Entry;
-      Path               : Gtk.GEntry.Gtk_Entry;
-      Note               : Gtk_Notebook;
-      Use_Relative_Paths : Gtk.Check_Button.Gtk_Check_Button;
+      Tree               : Gtk_Tree_View;
+      List_Of_Pages      : Gtk_Tree_Store;
+
+      Filter             : Gtk_Tree_Model_Filter;
+      --  The filter used to hide the pages that do not apply to the selected
+      --  languages.
+
+      Current_Page       : Gtk_Box;
+      --  The location where the current selected page should be displayed
+
       Errors             : Gtk_Label;
 
       Selector           : Scenario_Selector;
       Prj_Selector       : Project_Selector;
 
-      Toolchains_Editor  : Toolchains_Edit;
-
-      Pages              : Widget_Array_Access;
-      --  The pages that have been registered
-
-      XML_Pages          : Wizard_Pages_Array_Access;
-      --  The pages in the order visible in the notebook.
-      --  Some elements might be null in this array (in particular, the second
-      --  page corresponding to the languages at index 2).
+      General_Page       : General_Page_Access;
+      Languages_Editor   : Languages_Page_Access;
 
       Project            : Project_Type;
       Kernel             : Kernel_Handle;
@@ -440,14 +439,45 @@ package body Project_Properties is
       Kernel  : access Kernel_Handle_Record'Class);
    --  Internal initialization function
 
-   function Is_Complete (Editor : Properties_Editor) return Boolean;
-   --  Return True if the current page contains only valid fields. If not, an
-   --  error message is displayed to the user.
+   procedure On_Languages_Change
+     (Editor : access GObject_Record'Class;
+      Path   : String);
+   --  Called when the list of selected languages changes
+
+   procedure For_Each_Page
+     (Self         : not null access Properties_Editor_Record'Class;
+      Callback     : Page_Iterator_Callback;
+      Visible_Only : Boolean := True);
+   --  Calls Callback for each visible page in the editor
+
+   procedure For_All_Pages
+     (Data : access GObject_Record'Class;
+      Callback : Page_Iterator_Callback);
+   --  Iterate over all pages of a properties editor.
+   --  Profile compatible with a Tool_From_Name_Getter, to handle switch
+   --  dependencies between tools.
+
+   procedure Find_Or_Create_Page
+     (Editor  : not null access Properties_Editor_Record'Class;
+      Name    : String;
+      Page    : not null access Project_Editor_Page_Record'Class);
+   --  Add a new page in the properties editor
 
    procedure Editor_Destroyed
      (Editor : access Gtk_Widget_Record'Class;
       Attr   : Editable_Attribute_Description_Access);
    --  Called when an editor is destroyed
+
+   function Row_Is_Visible
+     (Self : Gtk_Tree_Model; Iter : Gtk_Tree_Iter) return Boolean;
+   --  Whether a row should be visible (i.e. whether the page applies to the
+   --  selected languages)
+
+   procedure Set_Visible_Pages
+     (Self      : not null access Properties_Editor_Record'Class;
+      Languages : GNAT.Strings.String_List;
+      Parent    : Gtk_Tree_Iter := Null_Iter);
+   --  Refresh which page should be visible, and the contents of pages.
 
    function Get_Languages
      (Editor : Properties_Editor) return String_List_Access;
@@ -458,20 +488,13 @@ package body Project_Properties is
       Attr  : Editable_Attribute_Description_Access);
    --  Toggle the sensitivity state of an editor
 
-   function Create_General_Page
-     (Editor  : access Properties_Editor_Record'Class;
-      Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class)
-      return Gtk.Widget.Gtk_Widget;
-   --  Create the "General" page for the project properties
+   function Get_Current_Page
+     (Self : not null access Properties_Editor_Record'Class)
+      return Project_Editor_Page;
+   --  Get the page that is currently displayed to the user
 
-   procedure Switch_Page
-     (Notebook : access GObject_Record'Class; Editor : GObject);
-   procedure Switch_Page_Validate
-     (Notebook : access GObject_Record'Class; Editor : GObject);
-   --  Called when a new page is selected in the notebook.
-   --  The second procedure is called before the actual switch, to validate the
-   --  contents of the current page
+   procedure On_Selection_Changed (Editor : access GObject_Record'Class);
+   --  Called when a new page is selected by the user
 
    function Paths_Are_Relative (Project : Project_Type) return Boolean;
    --  Return True if the paths in the project should be relative paths
@@ -565,6 +588,39 @@ package body Project_Properties is
    function History_Name
      (Description : access Attribute_Description'Class) return History_Key;
    --  Return the name of the history key associated with Description
+
+   ------------------
+   -- Wizard pages --
+   ------------------
+
+   type XML_Page_Record is new Project_Editor_Page_Record
+     (Flags => Multiple_Projects or Multiple_Scenarios)
+   with record
+      Descr   : Attribute_Page;
+      Context : GNAT.Strings.String_Access;  --  where is this page visible ?
+
+      Has_Contents : Boolean := False;
+
+      Path   : Gtk_GEntry;
+      --  Widget that contains the path of the project, so that the various
+      --  pages can edit the project.
+      --  ??? Is this needed, it seems this info could be extracted from the
+      --  project itself when necessary
+   end record;
+   type XML_Page_Access is access all XML_Page_Record'Class;
+   overriding procedure Initialize
+     (Self         : not null access XML_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project);
+   overriding function Edit_Project
+     (Self               : not null access XML_Page_Record;
+      Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean;
+   overriding function Is_Valid
+     (Self         : not null access XML_Page_Record) return String;
+   overriding procedure Destroy (Self : in out XML_Page_Record);
 
    -------------------
    -- Get_Safe_Text --
@@ -825,15 +881,24 @@ package body Project_Properties is
       end if;
    end Is_Valid;
 
-   -----------------
-   -- Is_Complete --
-   -----------------
+   --------------
+   -- Is_Valid --
+   --------------
 
-   overriding function Is_Complete
-     (Page : access XML_Project_Wizard_Page) return String is
+   overriding function Is_Valid
+     (Self : not null access XML_Page_Record) return String is
    begin
-      return Is_Valid (Page.Page);
-   end Is_Complete;
+      return Is_Valid (Self.Descr);
+   end Is_Valid;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : in out XML_Page_Record) is
+   begin
+      Free (Self.Context);
+   end Destroy;
 
    ----------------------
    -- Generate_Project --
@@ -1319,10 +1384,10 @@ package body Project_Properties is
          Name_Parameters (Data, Tool_Parameters);
          declare
             Tool  : constant String := Nth_Arg (Data, 2);
-            Props : constant Tool_Properties_Record :=
+            Props : constant Tool_Properties :=
               Get_Tool_Properties (Kernel, Tool);
          begin
-            if Props = No_Tool then
+            if Props = null then
                Set_Error_Msg (Data, -"No such tool: " & Tool);
 
             else
@@ -1602,27 +1667,27 @@ package body Project_Properties is
       Attr.Editor := null;
    end Editor_Destroyed;
 
-   -------------------------
-   -- Create_General_Page --
-   -------------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Create_General_Page
-     (Editor  : access Properties_Editor_Record'Class;
-      Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk.Widget.Gtk_Widget
+   overriding procedure Initialize
+     (Self         : not null access General_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project)
    is
       pragma Unreferenced (Kernel);
-      Button2         : Gtk_Button;
-      Label           : Gtk_Label;
-      Frame           : Gtk_Frame;
-      Group           : Gtk_Size_Group;
-      Vbox, Box, Hbox : Gtk_Box;
-      Event           : Gtk_Event_Box;
+      Button2   : Gtk_Button;
+      Label     : Gtk_Label;
+      Frame     : Gtk_Frame;
+      Group     : Gtk_Size_Group;
+      Box, Hbox : Gtk_Box;
+      Event     : Gtk_Event_Box;
 
       use Gtk.Enums.String_List;
 
    begin
-      Gtk_New_Vbox (Vbox, Homogeneous => False);
+      Initialize_Vbox (Self, Homogeneous => False);
 
       Gtk_New (Group, Both);
 
@@ -1630,7 +1695,7 @@ package body Project_Properties is
 
       Gtk_New (Frame, -"Name & Location");
       Set_Border_Width (Frame, 5);
-      Pack_Start (Vbox, Frame, Expand => False);
+      Self.Pack_Start (Frame, Expand => False);
 
       Gtk_New_Vbox (Box, Homogeneous => True);
       Add (Frame, Box);
@@ -1651,10 +1716,10 @@ package body Project_Properties is
          (-"Name of the project. ") &
          (-"Only applies to the project you selected initially"));
 
-      Gtk_New (Editor.Name);
-      Set_Width_Chars (Editor.Name, 0);
-      Set_Text (Editor.Name, Project.Name);
-      Pack_Start (Hbox, Editor.Name, Expand => True);
+      Gtk_New (Self.Name);
+      Set_Width_Chars (Self.Name, 0);
+      Set_Text (Self.Name, Project.Name);
+      Pack_Start (Hbox, Self.Name, Expand => True);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox);
@@ -1673,31 +1738,29 @@ package body Project_Properties is
            & " will move the project file. This field only applies to"
            & " the project you selected initially"));
 
-      Gtk_New (Editor.Path);
-      Set_Width_Chars (Editor.Path, 0);
-      Set_Text (Editor.Path, Display_Full_Name (Project_Directory (Project)));
-      Pack_Start (Hbox, Editor.Path, Expand => True);
+      Gtk_New (Self.Path);
+      Set_Width_Chars (Self.Path, 0);
+      Set_Text (Self.Path, Display_Full_Name (Project_Directory (Project)));
+      Pack_Start (Hbox, Self.Path, Expand => True);
 
       Gtk_New (Button2, -"Browse");
       Pack_Start (Hbox, Button2, Expand => False);
       Widget_Callback.Object_Connect
         (Button2, Gtk.Button.Signal_Clicked, Browse_Location'Access,
-         Slot_Object => Editor.Path);
+         Slot_Object => Self.Path);
 
-      Gtk_New (Editor.Use_Relative_Paths, -"Paths should be relative paths");
+      Gtk_New (Self.Use_Relative_Paths, -"Paths should be relative paths");
       Set_Active
-        (Editor.Use_Relative_Paths, Paths_Are_Relative (Project));
-      Pack_Start (Box, Editor.Use_Relative_Paths);
+        (Self.Use_Relative_Paths, Paths_Are_Relative (Project));
+      Pack_Start (Box, Self.Use_Relative_Paths);
       Set_Tooltip_Text
-        (Editor.Use_Relative_Paths,
+        (Self.Use_Relative_Paths,
          -("If this field is activated, then all the path information in"
            & " the project (source and build directories, dependencies"
            & " between projects,...) will be stored as paths relative"
            & " to the location of the project file. It will thus be"
            & " easier to move the project file to another directory"));
-
-      return Gtk_Widget (Vbox);
-   end Create_General_Page;
+   end Initialize;
 
    ------------------------------
    -- Select_Attribute_In_List --
@@ -3627,6 +3690,131 @@ package body Project_Properties is
       end if;
    end Toggle_Sensitive;
 
+   -------------------------
+   -- Find_Or_Create_Page --
+   -------------------------
+
+   procedure Find_Or_Create_Page
+     (Editor  : not null access Properties_Editor_Record'Class;
+      Name    : String;
+      Page    : not null access Project_Editor_Page_Record'Class)
+   is
+      function Find (Parent : Gtk_Tree_Iter; N : String) return Gtk_Tree_Iter;
+      function Find
+        (Parent : Gtk_Tree_Iter; N : String) return Gtk_Tree_Iter
+      is
+         P : constant String := Parent_Menu_Name (N);
+         Base : constant String := Base_Menu_Name (N);
+         Iter, Child : Gtk_Tree_Iter;
+      begin
+         if P = "/" then
+            --  look amongst the children of Parent for the base menu item
+            Iter := Parent;
+         else
+            Iter := Find (Parent, P (P'First .. P'Last - 1));
+         end if;
+
+         if Iter = Null_Iter then
+            Child := Editor.List_Of_Pages.Get_Iter_First;
+         else
+            Child := Editor.List_Of_Pages.Children (Iter);
+         end if;
+
+         while Child /= Null_Iter loop
+            if Editor.List_Of_Pages.Get_String (Child, Column_Page_Name) =
+              Base
+            then
+               --  nothing to do, already exists
+               return Child;
+            end if;
+            Editor.List_Of_Pages.Next (Child);
+         end loop;
+
+         Editor.List_Of_Pages.Append (Child, Iter);
+         Editor.List_Of_Pages.Set (Child, Column_Page_Name, Base);
+         Editor.List_Of_Pages.Set (Child, Column_Visible, True);
+         return Child;
+      end Find;
+
+      Child : Gtk_Tree_Iter;
+   begin
+      Child := Find (Null_Iter, Name);
+      Editor.List_Of_Pages.Set (Child, Column_Path, Name);
+      Editor.List_Of_Pages.Set (Child, Column_Page_Contents, GObject (Page));
+      Page.Ref;
+   end Find_Or_Create_Page;
+
+   ----------------------------------
+   -- For_Each_Project_Editor_Page --
+   ----------------------------------
+
+   procedure For_Each_Project_Editor_Page
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project  : Project_Type;
+      Path     : not null access Gtk_Entry_Record'Class;
+      Context  : String := "properties";
+      Callback : not null access procedure
+        (Title : String;
+         Page  : not null access Project_Editor_Page_Record'Class))
+   is
+      XML_Page : XML_Page_Access;
+   begin
+      if Properties_Module_ID.Pages /= null then
+         for P in Properties_Module_ID.Pages'Range loop
+            declare
+               N : constant String := Properties_Module_ID.Pages (P).Name.all;
+            begin
+               if N /= "" then
+                  XML_Page := new XML_Page_Record;
+                  XML_Page.Descr := Properties_Module_ID.Pages (P);
+                  XML_Page.Path := Gtk_GEntry (Path);
+                  XML_Page.Context := new String'(Context);
+                  XML_Page.Initialize (Kernel, Project);
+
+                  if not XML_Page.Has_Contents then
+                     --  Not needed after all, no attribute is displayed
+                     Destroy (XML_Page.all);
+                     XML_Page.Ref_Sink;
+                     XML_Page.Unref;
+                  else
+                     --  Do not add custom attributes to the hard-coded pages
+                     if N = -"General" then
+                        Callback (-"General/Attributes", XML_Page);
+                     elsif N = -"Languages" then
+                        Callback (-"Languages/Attributes", XML_Page);
+                     else
+                        Callback (N, XML_Page);
+                     end if;
+                  end if;
+               end if;
+            end;
+         end loop;
+      end if;
+   end For_Each_Project_Editor_Page;
+
+   --------------------
+   -- Row_Is_Visible --
+   --------------------
+
+   function Row_Is_Visible
+     (Self : Gtk_Tree_Model; Iter : Gtk_Tree_Iter) return Boolean is
+   begin
+      return Get_Boolean (Self, Iter, Column_Visible);
+   end Row_Is_Visible;
+
+   -------------------
+   -- For_All_Pages --
+   -------------------
+
+   procedure For_All_Pages
+     (Data : access GObject_Record'Class;
+      Callback : Page_Iterator_Callback)
+   is
+      Editor : constant Properties_Editor := Properties_Editor (Data);
+   begin
+      Editor.For_Each_Page (Callback, Visible_Only => False);
+   end For_All_Pages;
+
    ----------------
    -- Initialize --
    ----------------
@@ -3638,13 +3826,14 @@ package body Project_Properties is
    is
       Label            : Gtk_Label;
       Button           : Gtk_Widget;
-      Page             : Project_Editor_Page;
       Box              : Gtk_Box;
-      XML_Page         : XML_Project_Wizard_Page_Access;
-      General_Page_Box : Gtk_Box;
-      Main_Box         : Gtk_Paned;
-      Event            : Gtk_Event_Box;
-      Tmp              : Wizard_Pages_Array_Access;
+      Scrolled         : Gtk_Scrolled_Window;
+      Col              : Gtk_Tree_View_Column;
+      Num              : Gint;
+      Render           : Gtk_Cell_Renderer_Text;
+      Table            : Gtk_Table;
+      P                : access Project_Editor_Page_Record'Class;
+      pragma Unreferenced (Num);
 
    begin
       Gtk.Dialog.Initialize
@@ -3652,24 +3841,51 @@ package body Project_Properties is
          Title  => -"Properties for " & Project.Name,
          Parent => Get_Current_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
-      Set_Name (Editor, "Project Properties"); --  For testsuite
-      Realize (Editor);
+      Editor.Set_Default_Size (1000, 700);
+      Editor.Set_Name ("Project Properties"); --  For testsuite
 
       Gtk_New (Editor.Errors);
-      Pack_Start (Get_Content_Area (Editor), Editor.Errors, Expand => False);
+      Editor.Get_Content_Area.Pack_Start (Editor.Errors, Expand => False);
       Set_No_Show_All (Editor.Errors, No_Show_All => True);
 
-      Gtk_New_Hpaned (Main_Box);
-      Pack_Start
-        (Get_Content_Area (Editor), Main_Box, Expand => True, Fill => True);
+      Gtk_New (Table, Rows => 1, Columns => 3, Homogeneous => False);
 
-      Gtk_New (Editor.Note);
-      Set_Name (Editor.Note, "Project Properties Notebook"); --  Testsuite
-      Set_Tab_Pos (Editor.Note, Pos_Left);
-      Pack1 (Main_Box, Editor.Note, Resize => True, Shrink => False);
+      Editor.Get_Content_Area.Pack_Start
+        (Table, Expand => True, Fill => True);
+
+      --  The list of pages, as a tree
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
+      Table.Attach (Scrolled, 0, 1, 0, 1, Xoptions => Fill);
+
+      Gtk_New (Editor.List_Of_Pages,
+               (Column_Page_Name     => GType_String,
+                Column_Page_Contents => GType_Object,
+                Column_Visible       => GType_Boolean,
+                Column_Path          => GType_String));
+
+      Gtk_New (Editor.Filter, +Editor.List_Of_Pages);
+      Editor.Filter.Set_Visible_Func (Row_Is_Visible'Access);
+
+      Gtk_New (Editor.Tree, Editor.Filter);
+      Scrolled.Add (Editor.Tree);
+      Unref (Editor.Filter);  --  now owned by the tree
+      Editor.Tree.Set_Name ("Project Properties Tree");  --  Testsuite
+      Editor.Tree.Set_Headers_Visible (False);
+      Editor.Tree.Get_Selection.On_Changed
+        (On_Selection_Changed'Access, Editor);
+      Gtk_New (Col);
+      Num := Editor.Tree.Append_Column (Col);
+      Gtk_New (Render);
+      Col.Pack_Start (Render, Expand => True);
+      Col.Add_Attribute (Render, "text", Column_Page_Name);
+
+      --  The contents of the page
+      Gtk_New_Vbox (Editor.Current_Page);
+      Table.Attach (Editor.Current_Page, 1, 2, 0, 1);
 
       Gtk_New_Vbox (Box, Homogeneous => False);
-      Pack2 (Main_Box, Box, Resize => False, Shrink => False);
+      Table.Attach (Box, 2, 3, 0, 1, Xoptions => Fill);
 
       Gtk_New (Label, -"Apply changes to:");
       Set_Alignment (Label, 0.0, 0.0);
@@ -3683,182 +3899,146 @@ package body Project_Properties is
 
       Editor.Project := Project;
       Editor.Kernel  := Kernel_Handle (Kernel);
-      Editor.Pages   := new Widget_Array
-        (1 .. Project_Editor_Pages_Count (Kernel));
 
       Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       Show (Button);
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
       Show (Button);
 
-      if Properties_Module_ID.Pages = null then
-         return;
-      end if;
+      Editor.General_Page := new General_Page_Record;
+      Editor.General_Page.Initialize (Kernel, Project);
+      Editor.Find_Or_Create_Page (-"General", Editor.General_Page);
 
-      Editor.XML_Pages := new Wizard_Pages_Array (1 .. 2);
-      --  Index 1 will be for the "General" Page
-      --  Index 2 will be for the "Languages" page
-      --  These two pages have a fixed order, which we force
+      Editor.Languages_Editor := new Languages_Page_Record;
+      Editor.Languages_Editor.Initialize (Kernel, Project);
+      Editor.Languages_Editor.When_Languages_Change
+        (Editor, On_Languages_Change'Access);
+      Editor.Find_Or_Create_Page
+        (-"Sources/Languages", Editor.Languages_Editor);
 
-      Gtk_New (Event);
-      Gtk_New_Vbox (General_Page_Box, Homogeneous => False);
-      Add (Event, General_Page_Box);
-      Pack_Start (General_Page_Box,
-                  Create_General_Page (Editor, Project, Kernel),
-                  Expand => False);
-      Gtk_New (Label, -"General");
-      Show (Event);
-      Trace (Me, "Initialize, Adding General page first in notebook");
-      Append_Page (Editor.Note, Event, Label);
+      P := new Toolchain_Page_Record;
+      P.Initialize (Kernel, Project);
+      Editor.Find_Or_Create_Page (-"Build/Toolchain", P);
 
-      Gtk_New (Event);
-      Editor.Toolchains_Editor := Create_Language_Page (Project, Kernel);
-      Add (Event, Editor.Toolchains_Editor);
-      Gtk_New (Label, -"Languages");
-      Show (Event);
-      Trace (Me, "Initialize, Adding Languages page second in notebook");
-      Append_Page (Editor.Note, Event, Label);
+      declare
+         procedure Callback
+           (Title : String;
+            Page  : not null access Project_Editor_Page_Record'Class);
+         procedure Callback
+           (Title : String;
+            Page  : not null access Project_Editor_Page_Record'Class) is
+         begin
+            Editor.Find_Or_Create_Page (Title, Page);
+         end Callback;
+      begin
+         For_Each_Project_Editor_Page
+           (Kernel,
+            Project  => Project,
+            Path     => Editor.General_Page.Path,
+            Callback => Callback'Access);
+      end;
 
-      for P in Properties_Module_ID.Pages'Range loop
-         --  We need to put the pages in an event box to workaround a gtk+ bug:
-         --  since a notebook is a NO_WINDOW widget, button_press events are
-         --  sent to the parent of the notebook. In case of nested notebooks,
-         --  this means the event is sent to the parent's of the enclosing
-         --  notebook, and thus is improperly handled by the nested notebooks.
-         --
-         --  This loop never initializes the Languages page, which is handled
-         --  by the toolchain editor
+      --  Add the switches and naming pages
 
-         XML_Page := XML_Project_Wizard_Page_Access
-           (Attribute_Editors_Page_Box
-              (Kernel            => Kernel,
-               Wiz               => null,  --  Not in a wizard
-               Project           => Project,
-               General_Page_Box  => General_Page_Box,
-               Language_Page_Box => Gtk_Box (Editor.Toolchains_Editor),
-               Nth_Page          => P,
-               Path_Widget       => Editor.Path,
-               Context           => "properties"));
-
-         if XML_Page /= null then
-            if XML_Page.Box = General_Page_Box then
-               Editor.XML_Pages (1) := Wizard_Page (XML_Page);
-            else
-               Gtk_New (Event);
-               Add (Event, XML_Page.Box);
-
-               if Attribute_Editors_Page_Name (P) /= "General" then
-                  Gtk_New (Label, Attribute_Editors_Page_Name (P));
-                  Trace (Me, "Initialize, adding page "
-                         & Attribute_Editors_Page_Name (P));
-                  Append_Page (Editor.Note, Event, Label);
-               end if;
-
-               Tmp := Editor.XML_Pages;
-               Editor.XML_Pages :=
-                 new Wizard_Pages_Array (1 .. Tmp'Length + 1);
-               Editor.XML_Pages (Tmp'Range) := Tmp.all;
-               Unchecked_Free (Tmp);
-
-               Editor.XML_Pages (Editor.XML_Pages'Last) :=
-                 Wizard_Page (XML_Page);
-               Trace (Me, "Initialize, Editor.XML_Pages ("
-                      & Editor.XML_Pages'Last'Img & ")="
-                      & Attribute_Editors_Page_Name (P));
-            end if;
-         end if;
-      end loop;
-
-      Show_All (Editor);
-
-      --  We used to create the pages dynamically, in Switch_Page. However,
-      --  this means that the pages that haven't been visited by the user will
-      --  not generate a project on exit, which is a problem when copying a
-      --  scenario to another one for instance
-      for E in Editor.Pages'Range loop
-         Page := Get_Nth_Project_Editor_Page (Kernel, E);
-
-         --  We need to put the pages in an event box to workaround a gtk+ bug:
-         --  since a notebook is a NO_WINDOW widget, button_press events are
-         --  sent to the parent of the notebook. In case of nested notebooks,
-         --  this means the event is sent to the parent's of the enclosing
-         --  notebook, and thus is improperly handled by the nested notebooks.
-
-         Editor.Pages (E) := Widget_Factory
-           (Page, Project,
-            Project_Path (Project),
-            Editor.Kernel);
-
-         if Editor.Pages (E) /= null then
-            Gtk_New (Label, Get_Label (Page));
-            Gtk_New (Event);
-            Add (Event, Editor.Pages (E));
-            Show (Event);
-            Append_Page (Editor.Note, Event, Label);
-            Trace (Me, "Initialize, Adding page from Editor.Pages"
-                   & Get_Label (Page));
-         end if;
-      end loop;
-
-      Set_Current_Page (Editor.Note, 0);
-
-      --  Connect this only once we have created the pages
-      Object_User_Callback.Connect
-        (Editor.Note, Signal_Switch_Page, Switch_Page_Validate'Access,
-         User_Data => GObject (Editor),
-         After     => False);
-      Object_User_Callback.Connect
-        (Editor.Note, Signal_Switch_Page, Switch_Page'Access,
-         User_Data => GObject (Editor),
-         After     => True);
-   end Initialize;
-
-   ----------------------------------
-   -- Attribute_Editors_Page_Count --
-   ----------------------------------
-
-   function Attribute_Editors_Page_Count return Natural is
-   begin
-      if Properties_Module_ID.Pages = null then
-         return 0;
-      else
-         for P in Properties_Module_ID.Pages'Range loop
-            if Properties_Module_ID.Pages (P).Name.all = "General" then
-               return Properties_Module_ID.Pages'Length - 1;
+      declare
+         Tools : constant Tool_Properties_Array := Get_All_Tools (Kernel);
+         Page  : Project_Editor_Page;
+         Tool_From_Name : constant Tool_From_Name_Getter :=
+           (Data     => Editor,
+            Iterator => For_All_Pages'Access);
+      begin
+         for T in Tools'Range loop
+            Page := Switches_Editor_For_Tool_Factory
+              (Tool           => Tools (T),
+               Tool_From_Name => Tool_From_Name);
+            if Page /= null then
+               Page.Initialize (Kernel, Project);
+               Editor.Find_Or_Create_Page
+                 ("Build/Switches/" & Tools (T).Tool_Name.all, Page);
             end if;
          end loop;
+      end;
 
-         return Properties_Module_ID.Pages'Length;
-      end if;
-   end Attribute_Editors_Page_Count;
+      declare
+         Languages : GNAT.Strings.String_List :=
+           Known_Languages (Get_Language_Handler (Kernel));
+         Page      : Project_Editor_Page;
+      begin
+         for L in Languages'Range loop
+            Page := Get_Naming_Scheme_Page (Kernel, Languages (L).all);
+            if Page /= null then
+               Page.Initialize (Kernel, Project);
+               Editor.Find_Or_Create_Page
+                 ("Sources/Naming/" & Languages (L).all, Page);
+            end if;
+         end loop;
+         Free (Languages);
+      end;
 
-   ---------------------------------
-   -- Attribute_Editors_Page_Name --
-   ---------------------------------
+      Show_All (Editor);
+      Editor.Tree.Expand_All;
 
-   function Attribute_Editors_Page_Name (Nth : Integer) return String is
-   begin
-      return Properties_Module_ID.Pages (Nth).Name.all;
-   end Attribute_Editors_Page_Name;
+      On_Languages_Change (Editor, "");
 
-   ----------------------
-   -- Generate_Project --
-   ----------------------
+      --  Select and display the first page
+      Editor.Tree.Get_Selection.Select_Iter (Editor.Filter.Get_Iter_First);
+   end Initialize;
 
-   overriding procedure Generate_Project
-     (Page               : access XML_Project_Wizard_Page;
-      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Scenario_Variables : Scenario_Variable_Array;
-      Project            : in out Project_Type;
-      Changed            : in out Boolean)
+   -------------------
+   -- For_Each_Page --
+   -------------------
+
+   procedure For_Each_Page
+     (Self         : not null access Properties_Editor_Record'Class;
+      Callback     : Page_Iterator_Callback;
+      Visible_Only : Boolean := True)
    is
-      pragma Unreferenced (Kernel);
-      Attr : Editable_Attribute_Description_Access;
+      procedure For_Node (Node : Gtk_Tree_Iter);
+      --  Iterate recursively for Node and its siblings
+
+      procedure For_Node (Node : Gtk_Tree_Iter) is
+         Iter : Gtk_Tree_Iter := Node;
+         Page : Project_Editor_Page;
+      begin
+         while Iter /= Null_Iter loop
+            Page := Project_Editor_Page
+              (Self.List_Of_Pages.Get_Object (Iter, Column_Page_Contents));
+            if Page /= null
+              and then
+                (not Visible_Only
+                 or else Self.List_Of_Pages.Get_Boolean (Iter, Column_Visible))
+            then
+               Callback (Page);
+            end if;
+
+            For_Node (Self.List_Of_Pages.Children (Iter));
+            Self.List_Of_Pages.Next (Iter);
+         end loop;
+      end For_Node;
+
    begin
-      for S in Page.Page.Sections'Range loop
-         for A in Page.Page.Sections (S).Attributes'Range loop
+      For_Node (Self.List_Of_Pages.Get_Iter_First);
+   end For_Each_Page;
+
+   ------------------
+   -- Edit_Project --
+   ------------------
+
+   overriding function Edit_Project
+     (Self               : not null access XML_Page_Record;
+      Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
+   is
+      pragma Unreferenced (Kernel, Languages);
+      Attr : Editable_Attribute_Description_Access;
+      Changed : Boolean := False;
+   begin
+      for S in Self.Descr.Sections'Range loop
+         for A in Self.Descr.Sections (S).Attributes'Range loop
             Attr := Editable_Attribute_Description_Access
-              (Page.Page.Sections (S).Attributes (A));
+              (Self.Descr.Sections (S).Attributes (A));
 
             if Attr.Editor = null then
                Trace (Me, "No editor created for "
@@ -3880,38 +4060,18 @@ package body Project_Properties is
             end if;
          end loop;
       end loop;
-   end Generate_Project;
+      return Changed;
+   end Edit_Project;
 
-   --------------------
-   -- Create_Content --
-   --------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   overriding function Create_Content
-     (Page : access XML_Project_Wizard_Page;
-      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
+   overriding procedure Initialize
+     (Self         : not null access XML_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project)
    is
-      pragma Unreferenced (Wiz);
-   begin
-      return Gtk_Widget (Page.Box);
-   end Create_Content;
-
-   --------------------------------
-   -- Attribute_Editors_Page_Box --
-   --------------------------------
-
-   function Attribute_Editors_Page_Box
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Wiz               : Wizard;
-      Project           : Project_Type;
-      General_Page_Box  : Gtk.Box.Gtk_Box := null;
-      Language_Page_Box : Gtk.Box.Gtk_Box := null;
-      Path_Widget       : access Gtk.GEntry.Gtk_Entry_Record'Class;
-      Nth_Page          : Integer;
-      Context           : String) return Project_Wizard_Page
-   is
-      Page         : Attribute_Page renames
-                       Properties_Module_ID.Pages (Nth_Page);
-      Page_Box     : XML_Project_Wizard_Page_Access;
       Attr         : Editable_Attribute_Description_Access;
       Box          : Gtk_Box;
       Frame        : Gtk_Frame;
@@ -3920,191 +4080,199 @@ package body Project_Properties is
       W_Expandable : Boolean;
       W            : Gtk_Widget;
    begin
-      for S in Page.Sections'Range loop
+      Initialize_Vbox (Self, Homogeneous => False);
+
+      for S in Self.Descr.Sections'Range loop
          Box   := null;
          Frame := null;
          Expandable := False;
 
-         for A in Page.Sections (S).Attributes'Range loop
+         for A in Self.Descr.Sections (S).Attributes'Range loop
             Attr := Editable_Attribute_Description_Access
-              (Page.Sections (S).Attributes (A));
+              (Self.Descr.Sections (S).Attributes (A));
 
             Create_Widget_Attribute
               (Kernel,
-               Wiz,
+               null,  --  wizard
                Project,
                Attr,
                Size,
-               Path_Widget => Gtk_Entry (Path_Widget),
+               Path_Widget => Self.Path,
                Widget      => W,
                Expandable  => W_Expandable,
-               Context     => Context);
+               Context     => Self.Context.all);
 
             if W /= null then
-               if Page_Box = null then
-                  Page_Box := new XML_Project_Wizard_Page;
-                  Page_Box.Page := Page;
-
-                  if Page.Name.all = -"General"
-                    and then General_Page_Box /= null
-                  then
-                     Page_Box.Box := General_Page_Box;
-                  elsif Page.Name.all = -"Languages"
-                    and then Language_Page_Box /= null
-                  then
-                     Page_Box.Box := Language_Page_Box;
-                  else
-                     Gtk_New_Vbox (Page_Box.Box, Homogeneous => False);
-                  end if;
-               end if;
-
                if Box = null then
                   Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 2);
 
-                  if Page.Sections (S).Name.all /= "" then
-                     Gtk_New (Frame, Page.Sections (S).Name.all);
-                     Set_Border_Width (Frame, 5);
-                     Add (Frame, Box);
+                  if Self.Descr.Sections (S).Name.all /= "" then
+                     Gtk_New (Frame, Self.Descr.Sections (S).Name.all);
+                     Frame.Set_Border_Width (5);
+                     Frame.Add (Box);
                   end if;
                end if;
 
                Expandable := Expandable or W_Expandable;
-               Pack_Start (Box, W, Expand => W_Expandable, Fill => True);
+               Box.Pack_Start (W, Expand => W_Expandable, Fill => True);
+               Self.Has_Contents := True;
             end if;
          end loop;
 
-         if Page_Box /= null and then Box /= null then
-            if Page.Sections (S).Name.all /= "" then
-               Pack_Start
-                 (Page_Box.Box, Frame, Expand => Expandable, Fill => True);
+         if Box /= null then
+            if Self.Descr.Sections (S).Name.all /= "" then
+               Self.Pack_Start (Frame, Expand => Expandable, Fill => True);
             else
-               Pack_Start
-                 (Page_Box.Box, Box, Expand => Expandable, Fill => True);
+               Self.Pack_Start (Box, Expand => Expandable, Fill => True);
             end if;
          end if;
       end loop;
-
-      return Project_Wizard_Page (Page_Box);
-   end Attribute_Editors_Page_Box;
+   end Initialize;
 
    -------------------
    -- Get_Languages --
    -------------------
 
    function Get_Languages
-     (Editor : Properties_Editor) return String_List_Access
-   is
-      Attr : constant Editable_Attribute_Description_Access :=
-        Get_Attribute_Type_From_Name (Pkg => "", Name => "languages");
+     (Editor : Properties_Editor) return String_List_Access is
    begin
-      if Editor.Toolchains_Editor /= null then
-         return Get_Languages (Editor.Toolchains_Editor);
+      if Editor.Languages_Editor /= null then
+         return Editor.Languages_Editor.Get_Languages;
       else
          return Get_Current_Value
            (Kernel  => Editor.Kernel,
             Project => GNATCOLL.Projects.No_Project,
-            Attr    => Attr);
+            Attr    => Get_Attribute_Type_From_Name
+              (Pkg => "", Name => "languages"));
       end if;
    end Get_Languages;
 
-   -----------------
-   -- Is_Complete --
-   -----------------
+   ----------------------
+   -- Get_Current_Page --
+   ----------------------
 
-   function Is_Complete (Editor : Properties_Editor) return Boolean is
-      Page : constant Integer := Integer (Get_Current_Page (Editor.Note));
+   function Get_Current_Page
+     (Self : not null access Properties_Editor_Record'Class)
+      return Project_Editor_Page
+   is
+      Children : Gtk.Widget.Widget_List.Glist :=
+        Self.Current_Page.Get_Children;
+      Result   : Gtk_Widget;
    begin
-      for P in Editor.XML_Pages'Range loop
-         if Editor.XML_Pages (P) /= null
-           and then Get_Parent
-             (XML_Project_Wizard_Page_Access (Editor.XML_Pages (P)).Box) =
-              Get_Nth_Page (Editor.Note, Gint (Page))
-         then
-            declare
-               Msg : constant String := Is_Complete (Editor.XML_Pages (P));
-            begin
-               if Msg /= "" then
-                  Set_Text (Editor.Errors, Msg);
-                  Show (Editor.Errors);
-                  return False;
-               end if;
-            end;
+      if Children = Null_List then
+         return null;
+      else
+         Result := Get_Data (Children);
+         Free (Children);
+         return Project_Editor_Page (Result);
+      end if;
+   end Get_Current_Page;
+
+   -------------------------
+   -- On_Languages_Change --
+   -------------------------
+
+   procedure On_Languages_Change
+     (Editor : access GObject_Record'Class;
+      Path   : String)
+   is
+      pragma Unreferenced (Path);
+      Self : constant Properties_Editor := Properties_Editor (Editor);
+      Languages : String_List_Access := Get_Languages (Self);
+   begin
+      Set_Visible_Pages (Self, Languages.all);
+      Free (Languages);
+   end On_Languages_Change;
+
+   -----------------------
+   -- Set_Visible_Pages --
+   -----------------------
+
+   procedure Set_Visible_Pages
+     (Self      : not null access Properties_Editor_Record'Class;
+      Languages : GNAT.Strings.String_List;
+      Parent    : Gtk_Tree_Iter := Null_Iter)
+   is
+      Iter, Child : Gtk_Tree_Iter;
+      Page : Project_Editor_Page;
+      Tmp  : Boolean;
+   begin
+      if Parent = Null_Iter then
+         Iter := Self.List_Of_Pages.Get_Iter_First;
+      else
+         Iter := Self.List_Of_Pages.Children (Parent);
+      end if;
+
+      while Iter /= Null_Iter loop
+         Set_Visible_Pages (Self, Languages, Iter);
+
+         Page := Project_Editor_Page
+           (Self.List_Of_Pages.Get_Object (Iter, Column_Page_Contents));
+         if Page /= null then
+            Tmp := Page.Is_Visible (Languages);
+         else
+            --  Check whether any of the children row is visible
+            Tmp := False;
+            Child := Self.List_Of_Pages.Children (Iter);
+            while not Tmp and Child /= Null_Iter loop
+               Tmp := Self.List_Of_Pages.Get_Boolean (Child, Column_Visible);
+               Self.List_Of_Pages.Next (Child);
+            end loop;
          end if;
+
+         Self.List_Of_Pages.Set (Iter, Column_Visible, Tmp);
+         Self.List_Of_Pages.Next (Iter);
       end loop;
-
-      Hide (Editor.Errors);
-      return True;
-   end Is_Complete;
+   end Set_Visible_Pages;
 
    --------------------------
-   -- Switch_Page_Validate --
+   -- On_Selection_Changed --
    --------------------------
 
-   procedure Switch_Page_Validate
-     (Notebook : access GObject_Record'Class; Editor : GObject)
-   is
-      pragma Unreferenced (Notebook);
-      Ed : constant Properties_Editor := Properties_Editor (Editor);
+   procedure On_Selection_Changed (Editor : access GObject_Record'Class) is
+      Self  : constant Properties_Editor := Properties_Editor (Editor);
+      Current : constant Project_Editor_Page := Get_Current_Page (Self);
+      Filter_Iter  : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
+      M     : Gtk_Tree_Model;
+      Page  : Project_Editor_Page;
    begin
-      if not Is_Complete (Ed) then
-         Emit_Stop_By_Name (Ed.Note, "switch_page");
-      end if;
-   end Switch_Page_Validate;
-
-   -----------------
-   -- Switch_Page --
-   -----------------
-
-   procedure Switch_Page
-     (Notebook : access GObject_Record'Class;
-      Editor   : GObject)
-   is
-      Note                 : constant Gtk_Notebook := Gtk_Notebook (Notebook);
-      Ed                   : constant Properties_Editor :=
-                               Properties_Editor (Editor);
-      Page                 : constant Integer :=
-                               Integer (Get_Current_Page (Note));
-      Pages_From_XML_Count : constant Integer := Ed.XML_Pages'Length;
-      P                    : Project_Editor_Page;
-      Flags                : Selector_Flags;
-   begin
-      if Page >= Pages_From_XML_Count
-        and then not Ed.In_Destruction
-      then
-         --  Some pages might not be visible though...
-         P := Get_Nth_Project_Editor_Page
-           (Ed.Kernel, Page - Pages_From_XML_Count + 1);
-      end if;
-
-      if P /= null then
+      --  Check whether it is valid to change page
+      --  ??? We should not prevent the change here, just highlight the name of
+      --  the page in red or something
+      if Current /= null then
          declare
-            Languages : String_List_Access := Get_Languages (Ed);
+            Error : constant String := Current.Is_Valid;
          begin
-            Refresh
-              (Page      => P,
-               Widget    =>
-                 Ed.Pages (Ed.Pages'First + Page - Pages_From_XML_Count),
-               Project   => Ed.Project,
-               Languages => Languages.all);
-            Free (Languages);
+            Self.Errors.Set_Text (Error);
+            if Error /= "" then
+               Emit_Stop_By_Name (Self.Tree.Get_Selection, "changed");
+               return;
+            end if;
          end;
-
-         Flags := Get_Flags (P);
-
-         Set_Sensitive
-           (Ed.Prj_Selector, (Flags and Multiple_Projects) /= 0);
-         Set_Sensitive
-           (Ed.Selector, (Flags and Multiple_Scenarios) /= 0);
-
-      elsif Page = 0 then
-         Set_Sensitive (Ed.Prj_Selector, True);
-         Set_Sensitive (Ed.Selector, True);
       end if;
 
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end Switch_Page;
+      Self.Tree.Get_Selection.Get_Selected (M, Filter_Iter);
+      if Filter_Iter /= Null_Iter then
+         Self.Filter.Convert_Iter_To_Child_Iter (Iter, Filter_Iter);
+
+         --  Remove the page currently displayed. It is not destroyed.
+         Remove_All_Children (Self.Current_Page);
+
+         --  Change the page that is displayed
+         Page := Project_Editor_Page
+           (Self.List_Of_Pages.Get_Object (Iter, Column_Page_Contents));
+         if Page /= null then
+            Self.Current_Page.Pack_Start (Page, Expand => True, Fill => True);
+            Page.Show_All;
+
+            Set_Sensitive
+              (Self.Prj_Selector, (Page.Flags and Multiple_Projects) /= 0);
+            Set_Sensitive
+              (Self.Selector, (Page.Flags and Multiple_Scenarios) /= 0);
+         end if;
+      end if;
+   end On_Selection_Changed;
 
    -------------------------
    -- Warning_Cannot_Edit --
@@ -4163,6 +4331,60 @@ package body Project_Properties is
       end case;
    end Warning_Cannot_Edit;
 
+   --------------
+   -- Is_Valid --
+   --------------
+
+   overriding function Is_Valid
+     (Self : not null access General_Page_Record) return String
+   is
+      New_Name : constant String := Get_Safe_Text (Self.Name);
+      New_Path : constant Virtual_File :=
+        Create_From_UTF8 (Get_Safe_Text (Self.Path));
+   begin
+      if not Is_Valid_Project_Name (New_Name) then
+         return (-"Invalid name for the project ") &
+            (-"(only letters, digits and underscores ") &
+            (-"and cannot be an Ada reserved word)");
+
+      elsif not Is_Directory (New_Path) then
+         return New_Path.Display_Full_Name & (-" is not a valid directory");
+      end if;
+
+      return "";
+   end Is_Valid;
+
+   ------------------
+   -- Edit_Project --
+   ------------------
+
+   overriding function Edit_Project
+     (Self               : not null access General_Page_Record;
+      Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
+   is
+      pragma Unreferenced (Kernel, Languages, Scenario_Variables);
+      Relative : constant Boolean := Get_Active (Self.Use_Relative_Paths);
+   begin
+      --  Memorize the setup for relative paths. We do not do the path
+      --  conversion ourselves, since each attribute editor will take into
+      --  account this setting when it saves the project.
+
+      if Relative /= Paths_Are_Relative (Project) then
+         Trace (Me, "Process_General_Page: Paths will now be "
+                & Boolean'Image (Relative));
+         if Relative then
+            Set_Paths_Type (Project, Projects.Relative);
+         else
+            Set_Paths_Type (Project, Absolute);
+         end if;
+         return True;
+      end if;
+      return False;
+   end Edit_Project;
+
    ---------------------
    -- Edit_Properties --
    ---------------------
@@ -4177,12 +4399,6 @@ package body Project_Properties is
       procedure Report_Error (Msg : String);
       --  Report an error to the console
 
-      function Process_General_Page
-        (Editor                   : Properties_Editor;
-         Project                  : Project_Type;
-         Project_Renamed_Or_Moved : Boolean) return Boolean;
-      --  Modify the attributes set on the general page
-
       ------------------
       -- Report_Error --
       ------------------
@@ -4192,51 +4408,11 @@ package body Project_Properties is
          Insert (Kernel, Msg);
       end Report_Error;
 
-      --------------------------
-      -- Process_General_Page --
-      --------------------------
-
-      function Process_General_Page
-        (Editor                   : Properties_Editor;
-         Project                  : Project_Type;
-         Project_Renamed_Or_Moved : Boolean) return Boolean
-      is
-         Relative : Boolean := Get_Active (Editor.Use_Relative_Paths);
-      begin
-         --  If we are moving the project through the GUI, then we need to
-         --  convert the paths to absolute or the semantics changes.
-
-         if Project_Renamed_Or_Moved then
-            Relative := False;
-         end if;
-
-         --  Memorize the setup for relative paths. We do not do the path
-         --  conversion ourselves, since each attribute editor will take into
-         --  account this setting when it saves the project.
-
-         if Relative /= Paths_Are_Relative (Project) then
-            Trace (Me, "Process_General_Page: Paths will now be "
-                   & Boolean'Image (Relative));
-            if Relative then
-               Set_Paths_Type (Project, Projects.Relative);
-            else
-               Set_Paths_Type (Project, Absolute);
-            end if;
-            return True;
-         end if;
-
-         return False;
-      end Process_General_Page;
-
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Wizard_Page_Record'Class, Wizard_Page);
-
       Editor                   : Properties_Editor;
       Changed                  : Boolean := False;
       Response                 : Gtk_Response_Type;
       Ignore                   : Message_Dialog_Buttons;
       pragma Unreferenced (Ignore);
-      Project_Renamed_Or_Moved : Boolean := False;
 
       Incomplete : constant String := -"The project """
         & Project.Name
@@ -4300,133 +4476,99 @@ package body Project_Properties is
 
          exit when Response /= Gtk_Response_OK;
 
-         if not Is_Valid_Project_Name (Get_Safe_Text (Editor.Name)) then
-            Ignore := Message_Dialog
-              (Msg         => (-"Invalid name for the project ") &
-               (-"(only letters, digits and underscores ") &
-               (-"and cannot be an Ada reserved word)"),
-               Buttons     => Button_OK,
-               Dialog_Type => Error,
-               Title       => -"Error",
-               Parent      => Get_Current_Window (Kernel));
+         declare
+            Failed : Boolean := False;
 
-         elsif not
-           Is_Directory (Create_From_UTF8 (Get_Safe_Text (Editor.Path)))
-         then
-            Ignore := Message_Dialog
-              (Msg         => Get_Safe_Text (Editor.Path)
-               & (-" is not a valid directory"),
-               Buttons     => Button_OK,
-               Dialog_Type => Error,
-               Title       => -"Error",
-               Parent      => Get_Current_Window (Kernel));
-
-         elsif not Is_Complete (Editor) then
-            null;
-
-         else
-            declare
-               New_Name : constant String :=
-                 Get_Safe_Text (Editor.Name);
-               New_Base : constant Filesystem_String :=
-                 To_File_Name (+New_Name);
-               New_Path : constant Virtual_File :=
-                 Create_From_UTF8 (Get_Safe_Text (Editor.Path));
-               New_File : constant Virtual_File :=
-                 Create_From_Dir
-                   (New_Path,
-                    New_Base & GNATCOLL.Projects.Project_File_Extension);
-
+            procedure Check_Page
+              (Page : not null access Project_Editor_Page_Record'Class);
+            procedure Check_Page
+              (Page : not null access Project_Editor_Page_Record'Class)
+            is
+               Error : constant String := Page.Is_Valid;
             begin
-               if (New_Name /= Project.Name
-                   or else New_Path /= Project_Directory (Project))
-                 and then Is_Regular_File (New_File)
-               then
-                  exit when Message_Dialog
-                    (New_File.Display_Full_Name
-                     & (-" already exists. Do you want to overwrite ?"),
-                     Buttons     => Button_Yes or Button_No,
-                     Dialog_Type => Error,
+               if not Failed and then Error /= "" then
+                  Ignore := Message_Dialog
+                    (Msg         => Error,
+                     Buttons     => Button_OK,
+                     Dialog_Type => Gtkada.Dialogs.Error,
                      Title       => -"Error",
-                     Parent      => Get_Current_Window (Kernel)) = Button_Yes;
-               else
-                  exit;
+                     Parent      => Get_Current_Window (Kernel));
+                  Failed := True;
                end if;
-            end;
-         end if;
+            end Check_Page;
+
+         begin
+            Editor.For_Each_Page
+              (Check_Page'Unrestricted_Access, Visible_Only => True);
+
+            if Failed then
+               null;
+            else
+               declare
+                  New_Name : constant String :=
+                    Get_Safe_Text (Editor.General_Page.Name);
+                  New_Base : constant Filesystem_String :=
+                    To_File_Name (+New_Name);
+                  New_Path : constant Virtual_File := Create_From_UTF8
+                    (Get_Safe_Text (Editor.General_Page.Path));
+                  New_File : constant Virtual_File :=
+                    Create_From_Dir
+                      (New_Path,
+                       New_Base & GNATCOLL.Projects.Project_File_Extension);
+
+               begin
+                  if (New_Name /= Project.Name
+                      or else New_Path /= Project_Directory (Project))
+                    and then Is_Regular_File (New_File)
+                  then
+                     exit when Message_Dialog
+                       (New_File.Display_Full_Name
+                        & (-" already exists. Do you want to overwrite ?"),
+                        Buttons     => Button_Yes or Button_No,
+                        Dialog_Type => Gtkada.Dialogs.Error,
+                        Title       => -"Error",
+                        Parent      =>
+                          Get_Current_Window (Kernel)) = Button_Yes;
+                  else
+                     exit;
+                  end if;
+               end;
+            end if;
+         end;
       end loop;
 
       if Response = Gtk_Response_OK then
          declare
             Prj_Iter    : Scenario_Selectors.Project_Iterator :=
                             Start (Editor.Prj_Selector);
-            Ed          : Project_Editor_Page;
-            Tmp_Project : Project_Type;
+            Languages   : String_List_Access := Get_Languages (Editor);
          begin
             while Current (Prj_Iter) /= GNATCOLL.Projects.No_Project loop
-               Tmp_Project := Current (Prj_Iter);
-
                declare
                   Scenar_Iter : Scenario_Iterator := Start (Editor.Selector);
+
+                  procedure Edit_Page
+                    (Page : not null access Project_Editor_Page_Record'Class);
+                  procedure Edit_Page
+                    (Page : not null access Project_Editor_Page_Record'Class)
+                  is
+                  begin
+                     Changed := Changed
+                       or Page.Edit_Project
+                         (Current (Prj_Iter),
+                          Kernel             => Kernel,
+                          Languages          => Languages.all,
+                          Scenario_Variables => Current (Scenar_Iter));
+                  end Edit_Page;
+
                begin
                   while not At_End (Scenar_Iter) loop
-                     --  First generate for the global page, so that the
-                     --  relative paths option is updated appropriately.
-
-                     Changed := Changed
-                       or else Process_General_Page
-                         (Editor, Current (Prj_Iter),
-                          Project_Renamed_Or_Moved)
-                       or else Generate_Project
-                         (Editor.Toolchains_Editor, Current (Prj_Iter),
-                          Current (Scenar_Iter));
-
-                     if Editor.XML_Pages /= null then
-                        for X in Editor.XML_Pages'Range loop
-                           if Editor.XML_Pages (X) /= null then
-                              Generate_Project
-                                (Page               =>
-                                   Project_Wizard_Page (Editor.XML_Pages (X)),
-                                 Kernel             => Kernel,
-                                 Scenario_Variables => Current (Scenar_Iter),
-                                 Project            => Tmp_Project,
-                                 Changed            => Changed);
-
-                              if Tmp_Project = No_Project then
-                                 Report_Error ("Project not modified");
-                                 return; --  Give up on modifications
-                              end if;
-                           end if;
-                        end loop;
-                     end if;
-
-                     --  Modify each projects
-
-                     for P in Editor.Pages'Range loop
-                        Ed := Get_Nth_Project_Editor_Page (Kernel, P);
-
-                        --  If the project is either the one the user clicked
-                        --  on or the page might apply to multiple projects.
-
-                        if (Get_Flags (Ed) and Multiple_Projects) /= 0
-                          or else Current (Prj_Iter) = Project
-                        then
-                           if Project_Editor
-                             (Ed, Current (Prj_Iter),
-                              Kernel, Editor.Pages (P),
-                              Languages,
-                              Current (Scenar_Iter),
-                              Ref_Project => Project)
-                           then
-                              Trace (Me, "Project modified on page " & P'Img
-                                     & "/" & Editor.Pages'Length'Img);
-                              Changed := True;
-                           end if;
-                        end if;
-                     end loop;
-
+                     Editor.For_Each_Page
+                       (Edit_Page'Unrestricted_Access, Visible_Only => True);
                      Next (Scenar_Iter);
                   end loop;
+
+                  Free (Languages);
                end;
 
                Next (Prj_Iter);
@@ -4439,16 +4581,14 @@ package body Project_Properties is
 
          declare
             New_Name : constant String :=
-                         Get_Safe_Text (Editor.Name);
+              Get_Safe_Text (Editor.General_Page.Name);
             New_Path : constant Virtual_File :=
-                         Create_From_UTF8 (Get_Safe_Text (Editor.Path));
+              Create_From_UTF8 (Get_Safe_Text (Editor.General_Page.Path));
             --  ??? Should we specify the build server's name as host ?
          begin
             if New_Name /= Project.Name
               or else New_Path /= Project_Directory (Project)
             then
-               Project_Renamed_Or_Moved := True;
-
                Project.Rename_And_Move
                  (New_Name   => New_Name,
                   Directory  => New_Path,
@@ -4471,16 +4611,19 @@ package body Project_Properties is
          end if;
       end if;
 
-      if Editor.XML_Pages /= null then
-         for X in Editor.XML_Pages'Range loop
-            if Editor.XML_Pages (X) /= null then
-               On_Destroy (Editor.XML_Pages (X));
-               Unchecked_Free (Editor.XML_Pages (X));
-            end if;
-         end loop;
-
-         Unchecked_Free (Editor.XML_Pages);
-      end if;
+      declare
+         procedure Destroy_Page
+           (Page : not null access Project_Editor_Page_Record'Class);
+         procedure Destroy_Page
+           (Page : not null access Project_Editor_Page_Record'Class) is
+         begin
+            Project_Viewers.Destroy (Page.all);
+            Unref (Page);
+         end Destroy_Page;
+      begin
+         Editor.For_Each_Page
+           (Destroy_Page'Unrestricted_Access, Visible_Only => False);
+      end;
 
       Destroy (Editor);
       Free (Languages);

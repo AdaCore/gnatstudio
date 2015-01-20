@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with Glib;                      use Glib;
@@ -139,7 +140,8 @@ package body Creation_Wizard.GNATname is
 
       function Allow_Page (Page : String) return Boolean is
       begin
-         return Page = -"Source dirs" or else Page = -"Objects";
+         return To_Lower (Page) = -"sources/directories"
+           or else To_Lower (Page) = -"build/directories";
       end Allow_Page;
 
    begin

@@ -577,6 +577,7 @@ package GPS.Kernel is
       Config            : Switches_Chooser.Switches_Editor_Config;
       Languages         : GNAT.Strings.String_List_Access;
    end record;
+   type Tool_Properties is access all Tool_Properties_Record;
    --  (Project_Package, Project_Attribute, Project_Index) describe where its
    --  switches are stored in a project.
    --  Initial_Cmd_Line are the switches when the user hasn't edited them
@@ -584,23 +585,20 @@ package GPS.Kernel is
    --  Any of these field can be left to null if it has no special
    --  signification for this tool.
 
-   type Tool_Properties_Array
-     is array (Natural range <>) of Tool_Properties_Record;
-
-   No_Tool : constant Tool_Properties_Record;
+   type Tool_Properties_Array is array (Natural range <>) of Tool_Properties;
 
    procedure Register_Tool
      (Kernel : access Kernel_Handle_Record;
-      Tool   : Tool_Properties_Record);
+      Tool   : not null Tool_Properties);
    --  Register a new tool.
    --  No copy is made for Tool, which must therefore not be freed by the
    --  caller
 
    function Get_Tool_Properties
      (Kernel    : access Kernel_Handle_Record;
-      Tool_Name : String) return Tool_Properties_Record;
+      Tool_Name : String) return Tool_Properties;
    --  Return the properties of the tool.
-   --  The resulting record must not be freed by the caller.
+   --  The result must not be freed by the caller.
 
    function Get_All_Tools
      (Kernel : access Kernel_Handle_Record) return Tool_Properties_Array;
@@ -1102,7 +1100,7 @@ private
                (null, null, null, null, null, False, null, null);
 
    package Tools_List is new Ada.Containers.Doubly_Linked_Lists
-     (Tool_Properties_Record);
+     (Tool_Properties);
    --  Tools are stored in a list (we expect only a limited number of tools in
    --  any case), so that we also preserve the order in which they were
    --  registered. This is important when displaying the project properties

@@ -44,7 +44,6 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Intl;                  use GPS.Intl;
 with Project_Viewers;           use Project_Viewers;
 with Projects;                  use Projects;
-with Naming_Editors;            use Naming_Editors;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with String_Utils;              use String_Utils;
 with XML_Utils;                 use XML_Utils;
@@ -73,11 +72,6 @@ package body Language.Custom is
    Custom_Root : Custom_Language_Access;
    --  Holds a linked list of custom languages, so that we can implement
    --  dynamic inheritance between custom languages.
-
-   function Custom_Naming_Scheme_Editor
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Lang : String)
-      return Naming_Editors.Language_Naming_Editor;
-   --  Create the naming scheme editor page
 
    function Language_Category_Value (S : String) return Language_Category;
    --  Same as Language_Category'Value ("Cat_" & S), not relying on
@@ -160,20 +154,6 @@ package body Language.Custom is
          return Get_Language_Context (Lang.Parent);
       end if;
    end Get_Language_Context;
-
-   ---------------------------------
-   -- Custom_Naming_Scheme_Editor --
-   ---------------------------------
-
-   function Custom_Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class; Lang : String)
-      return Naming_Editors.Language_Naming_Editor
-   is
-      Naming : Custom_Naming_Editor;
-   begin
-      Gtk_New (Naming, Kernel, Lang);
-      return Naming_Editors.Language_Naming_Editor (Naming);
-   end Custom_Naming_Scheme_Editor;
 
    ----------
    -- Free --
@@ -411,7 +391,7 @@ package body Language.Custom is
          Obj_Suffix => Get_String (Get_Field (Top, "Obj_Suffix")));
 
       Project_Viewers.Register_Naming_Scheme_Editor
-        (Kernel, Get_Name (Lang), Custom_Naming_Scheme_Editor'Access);
+        (Kernel, Get_Name (Lang), Custom_Naming_Editor_Factory'Access);
 
       Node := Top.Child;
       while Node /= null loop

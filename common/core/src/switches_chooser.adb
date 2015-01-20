@@ -753,19 +753,6 @@ package body Switches_Chooser is
       end Initialize;
 
       ----------------------
-      -- Get_Tool_By_Name --
-      ----------------------
-
-      function Get_Tool_By_Name
-        (Editor : Root_Switches_Editor;
-         Tool_Name : String) return Root_Switches_Editor_Access
-      is
-         pragma Unreferenced (Editor, Tool_Name);
-      begin
-         return null;
-      end Get_Tool_By_Name;
-
-      ----------------------
       -- Get_Command_Line --
       ----------------------
 

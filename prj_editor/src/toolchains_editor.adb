@@ -15,11 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with System;
 with Ada.Calendar;             use Ada.Calendar;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Equal_Case_Insensitive;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Strings.Less_Case_Insensitive;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
@@ -29,14 +27,15 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;   use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;
+with GNAT.Strings;             use GNAT.Strings;
 
 with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Gdk.Event;
 with Gtk.Button;               use Gtk.Button;
-with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;
@@ -50,6 +49,7 @@ with Gtk.Label;                use Gtk.Label;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
@@ -58,6 +58,7 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
 with GPS.Customizable_Modules; use GPS.Customizable_Modules;
@@ -69,6 +70,7 @@ with GPS.Kernel.Remote;        use GPS.Kernel.Remote;
 with GUI_Utils;                use GUI_Utils;
 with Language_Handlers;        use Language_Handlers;
 with Remote;                   use Remote;
+with String_Utils;             use String_Utils;
 with Toolchains;               use Toolchains;
 with Toolchains.Known;         use Toolchains.Known;
 with GNATCOLL.Traces;                   use GNATCOLL.Traces;
@@ -100,17 +102,9 @@ package body Toolchains_Editor is
    Location_Column    : constant := 3;
    Version_Column     : constant := 4;
 
-   --  language selector
-   No_Compiler_Column : constant := 2;
-   Fg_Column          : constant := 3;
-   Fg_Set_Column      : constant := 4;
-
    Lang_Column_Types : constant GType_Array :=
                          (Active_Column      => GType_Boolean,
-                          Name_Column        => GType_String,
-                          No_Compiler_Column => GType_Boolean,
-                          Fg_Column          => GType_String,
-                          Fg_Set_Column      => GType_Boolean);
+                          Name_Column        => GType_String);
 
    Column_Types : constant GType_Array :=
                     (Active_Column   => GType_Boolean,
@@ -126,13 +120,14 @@ package body Toolchains_Editor is
       Tool_Name : Toolchains.Tools;
       Lang      : Unbounded_String;
       Label     : Gtk_Label;
+      Active    : Gtk_Check_Button;
       Value     : Gtk_Entry;
       Icon      : Gtk_Image;
       Reset_Btn : Gtk_Button;
    end record;
 
    package Tool_Callback is new Gtk.Handlers.User_Callback
-     (Widget_Type => Toolchains_Edit_Record,
+     (Widget_Type => Gtk_Widget_Record,
       User_Type   => Tool_Callback_User_Object);
 
    type GPS_Toolchain_Manager_Record is
@@ -147,19 +142,14 @@ package body Toolchains_Editor is
       Handle_GUI_Events : Boolean := False) return String;
    --  Executes the command and returns the result
 
-   procedure Set_Project
-     (Editor  : Toolchains_Edit;
-      Project : GNATCOLL.Projects.Project_Type);
-   --  Sets the current project
-
    procedure Add_Toolchain
-     (Editor         : Toolchains_Edit;
+     (Editor         : not null access Toolchain_Page_Record'Class;
       Tc             : Toolchains.Toolchain;
       Force_Selected : Boolean);
    --  Adds or update a toolchain in the editor
 
    procedure Set_Detail
-     (Editor      : Toolchains_Edit;
+     (Editor      : not null access Toolchain_Page_Record'Class;
       Label       : Gtk_Label;
       GEntry      : Gtk_Entry;
       Icon        : Gtk_Image;
@@ -172,18 +162,11 @@ package body Toolchains_Editor is
       Is_Valid    : Boolean;
       Is_Editable : Boolean);
 
-   procedure Update_Details (Editor : Toolchains_Edit);
-
    function Get_Selected_Toolchain
-     (Editor : access Toolchains_Edit_Record'Class) return Toolchain;
+     (Editor  : not null access Toolchain_Page_Record'Class)
+      return Toolchain is (Editor.Toolchain);
 
    procedure On_Lang_Clicked
-     (W      : access GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Data   : Glib.Gint);
-   --  Executed when a toggle renderer is selected
-
-   procedure On_No_Compiler_Clicked
      (W      : access GObject_Record'Class;
       Params : Glib.Values.GValues;
       Data   : Glib.Gint);
@@ -202,13 +185,17 @@ package body Toolchains_Editor is
    --  Executed when the 'Scan' button is clicked
 
    procedure On_Tool_Value_Changed
-     (Widget    : access Toolchains_Edit_Record'Class;
+     (Widget    : access Gtk_Widget_Record'Class;
+      Params    : Glib.Values.GValues;
+      User_Data : Tool_Callback_User_Object);
+   procedure On_Activate_Compiler
+     (Widget    : access Gtk_Widget_Record'Class;
       Params    : Glib.Values.GValues;
       User_Data : Tool_Callback_User_Object);
    --  Executed when a value is changed in the Details view
 
    procedure On_Reset
-     (Widget    : access Toolchains_Edit_Record'Class;
+     (Widget    : access Gtk_Widget_Record'Class;
       Params    : Glib.Values.GValues;
       User_Data : Tool_Callback_User_Object);
    --  Executed when the reset button is clicked
@@ -218,182 +205,104 @@ package body Toolchains_Editor is
       Data   : access Hooks_Data'Class);
    --  Called when a file has been modified
 
-   -------------
-   -- Gtk_New --
-   -------------
+   function Get_Or_Create_Manager
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return Toolchains.Toolchain_Manager;
+   --  Return the kernel's toolchain manager, or create one if needed
 
-   function Create_Language_Page
-     (Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class) return Toolchains_Edit
+   ---------------------------
+   -- Get_Or_Create_Manager --
+   ---------------------------
+
+   function Get_Or_Create_Manager
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return Toolchains.Toolchain_Manager
    is
-      Editor          : Toolchains_Edit;
+      Mgr : Toolchains.Toolchain_Manager;
+   begin
+      if Kernel.Get_Toolchains_Manager = null then
+         Mgr := new GPS_Toolchain_Manager_Record;
+         Kernel.Set_Toolchains_Manager (Mgr);
+         GPS_Toolchain_Manager_Record (Mgr.all).Kernel :=
+           Kernel_Handle (Kernel);
+         return Mgr;
+      else
+         return Kernel.Get_Toolchains_Manager;
+      end if;
+   end Get_Or_Create_Manager;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize
+     (Self         : not null access Toolchain_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project)
+   is
+      Mgr : constant Toolchains.Toolchain_Manager :=
+        Get_Or_Create_Manager (Kernel);
+      Frame           : Gtk_Frame;
+      Scroll          : Gtk_Scrolled_Window;
+      Col             : Gtk_Tree_View_Column;
+      Ignore          : Gint;
+      Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
+      String_Renderer : Gtk_Cell_Renderer_Text;
       Tc_Box          : Gtk.Box.Gtk_Hbox;
       Btn_Box         : Gtk.Box.Gtk_Vbox;
       Btn             : Gtk.Button.Gtk_Button;
-      Col             : Gtk_Tree_View_Column;
-      Ignore          : Gint;
-      pragma Unreferenced (Ignore);
-      Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
-      String_Renderer : Gtk_Cell_Renderer_Text;
-      Frame           : Gtk_Frame;
-      Scroll          : Gtk_Scrolled_Window;
+      Toolchain       : Toolchains.Toolchain;
 
    begin
-      Editor := new Toolchains_Edit_Record;
-      Gtk.Box.Initialize_Vbox (Editor);
-
-      Editor.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
-
-      if Kernel.Get_Toolchains_Manager = null then
-         Editor.Mgr    := new GPS_Toolchain_Manager_Record;
-         Kernel.Set_Toolchains_Manager (Editor.Mgr);
-      else
-         Editor.Mgr := Kernel.Get_Toolchains_Manager;
-      end if;
-
-      GPS_Toolchain_Manager_Record (Editor.Mgr.all).Kernel :=
-        Editor.Kernel;
-
-      --  Init the language selection part
-
-      Gtk_New (Frame, -"Languages");
-      Editor.Pack_Start (Frame, Expand => True, Fill => True, Padding => 5);
-      Gtk_New (Scroll);
-      Scroll.Set_Policy
-        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Frame.Add (Scroll);
-      Frame.Set_Name ("languages_frame");
-
-      Gtk.Tree_Store.Gtk_New (Editor.Lang_Model, Lang_Column_Types);
-      Gtk.Tree_View.Gtk_New (Editor.Languages, Editor.Lang_Model);
-      Scroll.Add (Editor.Languages);
-      Editor.Languages.Get_Selection.Set_Mode (Gtk.Enums.Selection_None);
-
-      Gtk_New (Col);
-      Ignore := Editor.Languages.Append_Column (Col);
-      Gtk_New (Toggle_Renderer);
-      Col.Pack_Start (Toggle_Renderer, False);
-      Col.Add_Attribute (Toggle_Renderer, "active", Active_Column);
-      Tree_Model_Callback.Object_Connect
-        (Toggle_Renderer, Signal_Toggled,
-         On_Lang_Clicked'Access,
-         Slot_Object => Editor,
-         User_Data   => Active_Column);
-
-      Gtk_New (Col);
-      Ignore := Editor.Languages.Append_Column (Col);
-      Gtk_New (String_Renderer);
-      Col.Set_Title (-"Language");
-      Col.Pack_Start (String_Renderer, False);
-      Col.Add_Attribute (String_Renderer, "text", Name_Column);
-      Col.Add_Attribute (String_Renderer, "foreground", Fg_Column);
-      Col.Add_Attribute (String_Renderer, "foreground-set", Fg_Set_Column);
-
-      Gtk_New (Col);
-      Ignore := Editor.Languages.Append_Column (Col);
-      Gtk_New (Toggle_Renderer);
-      Col.Set_Title (-"No compiler");
-      Col.Pack_Start (Toggle_Renderer, False);
-      Col.Add_Attribute (Toggle_Renderer, "active", No_Compiler_Column);
-      Tree_Model_Callback.Object_Connect
-        (Toggle_Renderer, Signal_Toggled,
-         On_No_Compiler_Clicked'Access,
-         Slot_Object => Editor,
-         User_Data   => No_Compiler_Column);
-
-      declare
-         Langs   : constant GNAT.OS_Lib.Argument_List :=
-                     Language_Handlers.Known_Languages
-                       (Get_Language_Handler (Kernel));
-         Ordered : GNAT.OS_Lib.Argument_List := Langs;
-         Done    : Boolean := False;
-         Last    : Natural;
-         Iter    : Gtk_Tree_Iter := Null_Iter;
-
-      begin
-         --  First order the languages alphabetically, with Ada, C and C++
-         --  being forced first (those are already the 3 first items)
-         for J in Langs'First + 3 .. Langs'Last loop
-            Done := False;
-            Last := J - 1;
-
-            for K in Ordered'First + 3 .. Last loop
-               if not Ada.Strings.Less_Case_Insensitive
-                 (Ordered (K).all, Langs (J).all)
-               then
-                  Done := True;
-                  Ordered (K + 1 .. Last + 1) := Ordered (K .. Last);
-                  Ordered (K) := Langs (J);
-
-                  exit;
-               end if;
-            end loop;
-
-            if not Done then
-               Ordered (Last + 1) := Langs (J);
-            end if;
-         end loop;
-
-         for J in Ordered'Range loop
-            Editor.Lang_Model.Append (Iter, Null_Iter);
-            Editor.Lang_Model.Set (Iter, Active_Column, False);
-            Editor.Lang_Model.Set (Iter, Name_Column, Ordered (J).all);
-            Editor.Lang_Model.Set (Iter, Fg_Column, System.Null_Address);
-            Editor.Lang_Model.Set (Iter, Fg_Set_Column, False);
-            GNAT.OS_Lib.Free (Ordered (J));
-         end loop;
-      end;
-
-      --  Init the toolchains part
+      Initialize_Vbox (Self, Homogeneous => False);
+      Self.Kernel := Kernel;
 
       Gtk_New (Frame, -"Toolchains");
-      Editor.Pack_Start (Frame, Expand => True, Fill => True, Padding => 5);
+      Self.Pack_Start (Frame, Expand => True, Fill => True, Padding => 5);
       Frame.Set_Name ("toolchains_frame");
 
       Gtk.Box.Gtk_New_Hbox (Tc_Box);
       Frame.Add (Tc_Box);
 
       Gtk_New (Scroll);
-      Scroll.Set_Policy
-        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
-      Tc_Box.Pack_Start
-        (Scroll, Expand => True, Fill => True, Padding => 0);
+      Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Tc_Box.Pack_Start (Scroll, Expand => True, Fill => True, Padding => 0);
 
-      Gtk.Tree_Store.Gtk_New (Editor.Model, Column_Types);
-      Gtk.Tree_View.Gtk_New (Editor.Toolchains_Tree, Editor.Model);
-      Scroll.Add (Editor.Toolchains_Tree);
-      Editor.Toolchains_Tree.Get_Selection.Set_Mode (Gtk.Enums.Selection_None);
+      Gtk.Tree_Store.Gtk_New (Self.Model, Column_Types);
+      Gtk.Tree_View.Gtk_New (Self.Toolchains_Tree, Self.Model);
+      Scroll.Add (Self.Toolchains_Tree);
+      Self.Toolchains_Tree.Get_Selection.Set_Mode (Selection_None);
 
       --  Add columns to the tree view and connect them to the tree model
       Gtk_New (Col);
-      Ignore := Editor.Toolchains_Tree.Append_Column (Col);
+      Ignore := Self.Toolchains_Tree.Append_Column (Col);
       Gtk_New (Toggle_Renderer);
       Col.Pack_Start (Toggle_Renderer, False);
       Col.Add_Attribute (Toggle_Renderer, "active", Active_Column);
       Set_Radio_And_Callback
-        (Editor.Model, Toggle_Renderer, Active_Column);
+        (Self.Model, Toggle_Renderer, Active_Column);
       Tree_Model_Callback.Object_Connect
-        (Toggle_Renderer, Signal_Toggled,
+        (Toggle_Renderer, Gtk.Cell_Renderer_Toggle.Signal_Toggled,
          On_Toolchain_Clicked'Access,
-         Slot_Object => Editor,
+         Slot_Object => Self,
          User_Data   => Active_Column);
 
       Gtk_New (Col);
-      Ignore := Editor.Toolchains_Tree.Append_Column (Col);
+      Ignore := Self.Toolchains_Tree.Append_Column (Col);
       Gtk_New (String_Renderer);
       Col.Set_Title (-"Name");
       Col.Pack_Start (String_Renderer, False);
       Col.Add_Attribute (String_Renderer, "text", Label_Column);
 
       Gtk_New (Col);
-      Ignore := Editor.Toolchains_Tree.Append_Column (Col);
+      Ignore := Self.Toolchains_Tree.Append_Column (Col);
       Gtk_New (String_Renderer);
       Col.Set_Title (-"Location");
       Col.Pack_Start (String_Renderer, False);
       Col.Add_Attribute (String_Renderer, "text", Location_Column);
 
       Gtk_New (Col);
-      Ignore := Editor.Toolchains_Tree.Append_Column (Col);
+      Ignore := Self.Toolchains_Tree.Append_Column (Col);
       Gtk_New (String_Renderer);
       Col.Set_Title (-"Version");
       Col.Pack_Start (String_Renderer, False);
@@ -407,153 +316,266 @@ package body Toolchains_Editor is
       Btn_Box.Pack_Start (Btn, Expand => False, Padding => 5);
       Widget_Callback.Object_Connect
         (Btn, Gtk.Button.Signal_Clicked, On_Scan_Clicked'Access,
-         Slot_Object => Editor);
+         Slot_Object => Self);
 
       Gtk.Button.Gtk_New_From_Stock (Btn, Gtk.Stock.Stock_Add);
       Btn_Box.Pack_Start (Btn, Expand => False, Padding => 5);
       Widget_Callback.Object_Connect
         (Btn, Gtk.Button.Signal_Clicked, On_Add_Clicked'Access,
-         Slot_Object => Editor);
+         Slot_Object => Self);
 
       --  Add the 'Details' part
       Gtk_New (Frame, -"Details");
-      Editor.Pack_Start
-        (Frame, Expand => True, Fill => True, Padding => 5);
+      Self.Pack_Start (Frame, Expand => True, Fill => True, Padding => 5);
       Frame.Set_Name ("details_frame");
       Gtk_New (Scroll);
-      Scroll.Set_Policy
-        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+      Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
       Frame.Add (Scroll);
       Gtk.Table.Gtk_New
-        (Editor.Details_View,
+        (Self.Details_View,
          Rows        => 1,
          Columns     => 3,
          Homogeneous => False);
-      Scroll.Add_With_Viewport (Editor.Details_View);
+      Scroll.Add_With_Viewport (Self.Details_View);
 
-      Editor.Show_All;
+      Self.Show_All;
 
-      Set_Project (Editor, Project);
+      --  Show the project's settings
 
-      return Editor;
-   end Create_Language_Page;
+      Toolchain := Get_Toolchain (Mgr, Project);
 
-   -----------------
-   -- Set_Project --
-   -----------------
-
-   procedure Set_Project
-     (Editor  : Toolchains_Edit;
-      Project : GNATCOLL.Projects.Project_Type)
-   is
-      Languages : constant GNAT.Strings.String_List :=
-                    GNATCOLL.Projects.Languages (Project);
-      Toolchain : Toolchains.Toolchain;
-      Iter      : Gtk_Tree_Iter;
-      Success   : Boolean;
-      pragma Unreferenced (Success);
-
-   begin
-      Trace (Me, "Setting editor with project and language information");
-
-      --  Displaying the languages
-      Toolchain := Get_Toolchain (Editor.Mgr, Project);
-      Editor.Edited_Prj := Project;
-
-      Iter := Editor.Lang_Model.Get_Iter_First;
-
-      while Iter /= Null_Iter loop
-         Editor.Lang_Model.Set (Iter, Active_Column, False);
-
-         for J in Languages'Range loop
-            if Ada.Strings.Equal_Case_Insensitive
-              (Editor.Lang_Model.Get_String (Iter, Name_Column),
-               Languages (J).all)
-            then
-               Editor.Lang_Model.Set (Iter, Active_Column, True);
-               Editor.Mgr.Add_Language (Languages (J).all, Project);
-
-               if not Get_Compiler_Is_Used (Toolchain, Languages (J).all) then
-                  Editor.Lang_Model.Set (Iter, No_Compiler_Column, True);
-               else
-                  Editor.Lang_Model.Set (Iter, No_Compiler_Column, False);
-               end if;
-
-               exit;
-            end if;
-         end loop;
-
-         Editor.Lang_Model.Next (Iter);
-      end loop;
-
-      --  And finally display the toolchains
-      --  First the project's toolchain
-      Add_Toolchain (Editor, Toolchain, True);
+      Add_Toolchain (Self, Toolchain, True);
       declare
-         Arr : constant Toolchain_Array := Editor.Mgr.Get_Toolchains;
+         Arr : constant Toolchain_Array := Mgr.Get_Toolchains;
       begin
          for J in Arr'Range loop
             if not Has_Errors (Get_Library_Information (Arr (J)).all)
               and then Arr (J) /= Toolchain
             then
-               Add_Toolchain (Editor, Arr (J), Arr (J) = Toolchain);
+               Add_Toolchain (Self, Arr (J), Arr (J) = Toolchain);
             end if;
          end loop;
       end;
-   end Set_Project;
+   end Initialize;
+
+   ---------------------------
+   -- When_Languages_Change --
+   ---------------------------
+
+   procedure When_Languages_Change
+     (Self     : not null access Languages_Page_Record;
+      Data     : access GObject_Record'Class;
+      Callback : Gtk.Cell_Renderer_Toggle.Cb_GObject_UTF8_String_Void) is
+   begin
+      Self.Toggle_Renderer.On_Toggled (Callback, Slot => Data);
+   end When_Languages_Change;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize
+     (Self         : not null access Languages_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project)
+   is
+      Frame           : Gtk_Frame;
+      Scroll          : Gtk_Scrolled_Window;
+      Col             : Gtk_Tree_View_Column;
+      Ignore          : Gint;
+      String_Renderer : Gtk_Cell_Renderer_Text;
+      Langs   : constant GNAT.OS_Lib.Argument_List :=
+        Language_Handlers.Known_Languages
+          (Get_Language_Handler (Kernel));
+      Ordered : GNAT.OS_Lib.Argument_List := Langs;
+      Done    : Boolean := False;
+      Last    : Natural;
+      Iter    : Gtk_Tree_Iter := Null_Iter;
+
+      pragma Unreferenced (Ignore);
+   begin
+      Initialize_Vbox (Self, Homogeneous => False);
+      Self.Kernel := Kernel;
+
+      Gtk_New (Frame, -"Languages");
+      Self.Pack_Start (Frame, Expand => True, Fill => True, Padding => 5);
+
+      Gtk_New (Scroll);
+      Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Frame.Add (Scroll);
+      Frame.Set_Name ("languages_frame");
+
+      Gtk.Tree_Store.Gtk_New (Self.Lang_Model, Lang_Column_Types);
+      Gtk.Tree_View.Gtk_New (Self.Languages, Self.Lang_Model);
+      Scroll.Add (Self.Languages);
+      Self.Languages.Get_Selection.Set_Mode (Selection_None);
+
+      Gtk_New (Col);
+      Ignore := Self.Languages.Append_Column (Col);
+      Gtk_New (Self.Toggle_Renderer);
+      Col.Pack_Start (Self.Toggle_Renderer, False);
+      Col.Add_Attribute (Self.Toggle_Renderer, "active", Active_Column);
+      Tree_Model_Callback.Object_Connect
+        (Self.Toggle_Renderer, Gtk.Cell_Renderer_Toggle.Signal_Toggled,
+         On_Lang_Clicked'Access,
+         Slot_Object => Self,
+         User_Data   => Active_Column);
+
+      Gtk_New (Col);
+      Ignore := Self.Languages.Append_Column (Col);
+      Gtk_New (String_Renderer);
+      Col.Set_Title (-"Language");
+      Col.Pack_Start (String_Renderer, False);
+      Col.Add_Attribute (String_Renderer, "text", Name_Column);
+
+      --  First order the languages alphabetically, with Ada, C and C++
+      --  being forced first (those are already the 3 first items)
+      --  ??? Should just make the model sortable
+      for J in Langs'First + 3 .. Langs'Last loop
+         Done := False;
+         Last := J - 1;
+
+         for K in Ordered'First + 3 .. Last loop
+            if not Ada.Strings.Less_Case_Insensitive
+              (Ordered (K).all, Langs (J).all)
+            then
+               Done := True;
+               Ordered (K + 1 .. Last + 1) := Ordered (K .. Last);
+               Ordered (K) := Langs (J);
+
+               exit;
+            end if;
+         end loop;
+
+         if not Done then
+            Ordered (Last + 1) := Langs (J);
+         end if;
+      end loop;
+
+      for J in Ordered'Range loop
+         Self.Lang_Model.Append (Iter, Null_Iter);
+         Self.Lang_Model.Set (Iter, Active_Column, False);
+         Self.Lang_Model.Set (Iter, Name_Column, Ordered (J).all);
+         GNAT.OS_Lib.Free (Ordered (J));
+      end loop;
+
+      --  Displaying the project languages
+
+      declare
+         Languages : constant GNAT.Strings.String_List :=
+           (if Project = No_Project
+            then (1 => new String'("ada")) else Project.Languages);
+         Mgr : constant Toolchains.Toolchain_Manager :=
+           Get_Or_Create_Manager (Kernel);
+      begin
+         Iter := Self.Lang_Model.Get_Iter_First;
+         while Iter /= Null_Iter loop
+            Self.Lang_Model.Set (Iter, Active_Column, False);
+
+            if In_List
+              (Lang => Self.Lang_Model.Get_String (Iter, Name_Column),
+               List => Languages)
+            then
+               Self.Lang_Model.Set (Iter, Active_Column, True);
+               Mgr.Add_Language
+                 (Self.Lang_Model.Get_String (Iter, Name_Column),
+                  Project);
+            end if;
+
+            Self.Lang_Model.Next (Iter);
+         end loop;
+      end;
+   end Initialize;
 
    -------------------
    -- Get_Languages --
    -------------------
 
-   function Get_Languages (Editor : Toolchains_Edit)
-                           return GNAT.Strings.String_List_Access
+   function Get_Languages
+     (Self : not null access Languages_Page_Record)
+      return GNAT.Strings.String_List_Access
    is
       Iter    : Gtk_Tree_Iter;
       N_Items : Natural := 0;
       Val     : GNAT.Strings.String_List_Access;
    begin
-      Iter := Editor.Lang_Model.Get_Iter_First;
+      Iter := Self.Lang_Model.Get_Iter_First;
 
       while Iter /= Null_Iter loop
-         if Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
+         if Self.Lang_Model.Get_Boolean (Iter, Active_Column) then
             N_Items := N_Items + 1;
          end if;
-         Editor.Lang_Model.Next (Iter);
+         Self.Lang_Model.Next (Iter);
       end loop;
 
       Val := new GNAT.Strings.String_List (1 .. N_Items);
       N_Items := 0;
-      Iter := Editor.Lang_Model.Get_Iter_First;
+      Iter := Self.Lang_Model.Get_Iter_First;
 
       while Iter /= Null_Iter loop
-         if Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
+         if Self.Lang_Model.Get_Boolean (Iter, Active_Column) then
             N_Items := N_Items + 1;
             Val (N_Items) :=
-              new String'(Editor.Lang_Model.Get_String (Iter, Name_Column));
+              new String'(Self.Lang_Model.Get_String (Iter, Name_Column));
          end if;
-         Editor.Lang_Model.Next (Iter);
+         Self.Lang_Model.Next (Iter);
       end loop;
 
       return Val;
    end Get_Languages;
 
-   ----------------------
-   -- Generate_Project --
-   ----------------------
+   ------------------
+   -- Edit_Project --
+   ------------------
 
-   function Generate_Project
-     (Editor    : Toolchains_Edit;
-      Project   : Project_Type;
-      Scenarii  : Scenario_Variable_Array) return Boolean
+   overriding function Edit_Project
+     (Self               : not null access Languages_Page_Record;
+      Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
-      Old       : constant GNAT.Strings.String_List :=
-                    GNATCOLL.Projects.Languages (Project);
-      Tc        : constant Toolchain := Get_Selected_Toolchain (Editor);
-      Iter      : Gtk_Tree_Iter;
-      Val       : GNAT.Strings.String_List_Access;
-      Modified  : Boolean := False;
+      pragma Unreferenced (Languages, Kernel);
+      Old       : constant GNAT.Strings.String_List := Project.Languages;
+      Val       : GNAT.Strings.String_List_Access := Get_Languages (Self);
       Tmp_Modif : Boolean := False;
+   begin
+      if Val'Length = Old'Length then
+         for J in Val'Range loop
+            Tmp_Modif := not In_List (Lang => Val (J).all, List => Old);
+            exit when Tmp_Modif;
+         end loop;
+      else
+         Tmp_Modif := True;
+      end if;
+
+      if Tmp_Modif then
+         Project.Set_Attribute
+           (Attribute => GNATCOLL.Projects.Languages_Attribute,
+            Values    => Val.all,
+            Scenario  => Scenario_Variables);
+      end if;
+
+      GNAT.Strings.Free (Val);
+      return Tmp_Modif;
+   end Edit_Project;
+
+   ------------------
+   -- Edit_Project --
+   ------------------
+
+   overriding function Edit_Project
+     (Self               : not null access Toolchain_Page_Record;
+      Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
+   is
+      Mgr : constant Toolchains.Toolchain_Manager :=
+        Get_Or_Create_Manager (Kernel);
+      Tc        : constant Toolchain := Get_Selected_Toolchain (Self);
+      Modified  : Boolean := False;
+      No_Attribute : constant Attribute_Pkg_String := Build ("", "");
 
       procedure Set_Attribute
         (Attr : Attribute_Pkg_String;
@@ -574,14 +596,13 @@ package body Toolchains_Editor is
          Idx  : String;
          Val  : String) is
       begin
-         if GNATCOLL.Projects.Attribute_Value
-           (Project, Attr, Idx, "dummy-default-val") /= Val
+         if Project.Attribute_Value
+           (Attr, Idx, "dummy-default-val") /= Val
          then
-            GNATCOLL.Projects.Set_Attribute
-              (Project,
-               Attribute => Attr,
+            Project.Set_Attribute
+              (Attribute => Attr,
                Value     => Val,
-               Scenario  => Scenarii,
+               Scenario  => Scenario_Variables,
                Index     => Idx);
             Modified := True;
          end if;
@@ -599,16 +620,13 @@ package body Toolchains_Editor is
          --  Use Attribute_Value here with a dummy value as default, as
          --  calls to Has_Attribute seems to be incorrect when an index is
          --  specified.
-         if GNATCOLL.Projects.Attribute_Value
-           (Project, Attr, Idx, "dummy-default-val") /= "dummy-default-val"
+         if Project.Attribute_Value
+           (Attr, Idx, "dummy-default-val") /= "dummy-default-val"
          then
-            GNATCOLL.Projects.Delete_Attribute
-              (Project, Attr, Scenarii, Idx);
+            Project.Delete_Attribute (Attr, Scenario_Variables, Idx);
             Modified := True;
          end if;
       end Clear_Attribute;
-
-      No_Attribute : constant Attribute_Pkg_String := Build ("", "");
 
       ------------------------
       -- Get_Tool_Attribute --
@@ -629,45 +647,12 @@ package body Toolchains_Editor is
          end case;
       end Get_Tool_Attribute;
 
+      Comp : Compiler;
+
    begin
       Trace (Me, "Generate project");
 
-      Editor.Mgr.Do_Commit;
-
-      --  First save defined languages
-
-      Val := Get_Languages (Editor);
-
-      if Val'Length = Old'Length then
-         for J in Val'Range loop
-            Tmp_Modif := True;
-            for K in Old'Range loop
-               if Ada.Strings.Equal_Case_Insensitive
-                 (Old (K).all, Val (J).all)
-               then
-                  Tmp_Modif := False;
-                  exit;
-               end if;
-            end loop;
-
-            exit when Tmp_Modif;
-         end loop;
-
-      else
-         Tmp_Modif := True;
-      end if;
-
-      if Tmp_Modif then
-         GNATCOLL.Projects.Set_Attribute
-           (Project,
-            Attribute => GNATCOLL.Projects.Languages_Attribute,
-            Values    => Val.all,
-            Scenario  => Scenarii);
-      end if;
-
-      GNAT.Strings.Free (Val);
-
-      Modified := Tmp_Modif;
+      Mgr.Do_Commit;
 
       --  Now save the toolchain
 
@@ -690,61 +675,57 @@ package body Toolchains_Editor is
 
       --  Now see if individual compiler drivers have been explicitely set
 
-      Iter := Editor.Lang_Model.Get_Iter_First;
+      declare
+         All_Languages : GNAT.Strings.String_List :=
+           Known_Languages (Get_Language_Handler (Kernel));
+      begin
+         for All_Lang of All_Languages loop
+            declare
+               L : constant String := To_Lower (All_Lang.all);
+            begin
+               if not In_List (All_Lang.all, Languages) then
+                  Clear_Attribute (Compiler_Driver_Attribute, L);
 
-      while Iter /= Null_Iter loop
-         declare
-            Lang : constant String :=
-                     To_Lower
-                       (Editor.Lang_Model.Get_String (Iter, Name_Column));
-            Comp : Compiler;
-         begin
-            if Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
-               if Editor.Lang_Model.Get_Boolean (Iter, No_Compiler_Column) then
-                  Set_Attribute
-                    (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang, "");
+               elsif not Get_Compiler_Is_Used (Tc, L) then
+                  Set_Attribute (Compiler_Driver_Attribute, L, "");
+
                else
-                  Comp := Get_Compiler (Tc, Lang);
-
+                  Comp := Get_Compiler (Tc, L);
                   if Get_Origin (Comp) /= From_Project_Driver then
-                     if Is_Defined (Tc, Lang)
-                       and then (not Is_Default (Tc, Lang)
-                                 or else not Is_Base_Name (Tc, Lang))
+                     if Is_Defined (Tc, L)
+                       and then (not Is_Default (Tc, L)
+                                 or else not Is_Base_Name (Tc, L))
                      then
                         Set_Attribute
-                          (GNATCOLL.Projects.Compiler_Command_Attribute,
-                           Lang, Get_Exe (Comp));
+                          (Compiler_Command_Attribute, L, Get_Exe (Comp));
                      else
-                        Clear_Attribute
-                          (GNATCOLL.Projects.Compiler_Command_Attribute, Lang);
+                        Clear_Attribute (Compiler_Command_Attribute, L);
                      end if;
                   end if;
                end if;
+            end;
+         end loop;
 
-            else
-               Clear_Attribute
-                 (GNATCOLL.Projects.Compiler_Driver_Attribute, Lang);
-            end if;
-         end;
-
-         Editor.Lang_Model.Next (Iter);
-      end loop;
+         GNATCOLL.Utils.Free (All_Languages);
+      end;
 
       return Modified;
-   end Generate_Project;
+   end Edit_Project;
 
    -------------------
    -- Add_Toolchain --
    -------------------
 
    procedure Add_Toolchain
-     (Editor         : Toolchains_Edit;
+     (Editor         : not null access Toolchain_Page_Record'Class;
       Tc             : Toolchains.Toolchain;
       Force_Selected : Boolean)
    is
       Iter  : Gtk_Tree_Iter;
       Infos : Ada_Library_Info_Access;
       Name  : constant String := Toolchains.Get_Name (Tc);
+      Tmp   : Boolean;
+      pragma Unreferenced (Tmp);
 
    begin
       Toolchains.Compute_Predefined_Paths (Tc);
@@ -775,20 +756,19 @@ package body Toolchains_Editor is
          Editor.Toolchain := Tc;
       end if;
 
-      Editor.Model.Set
-        (Iter, Name_Column,
-         Toolchains.Get_Name (Tc));
-      Editor.Model.Set
-        (Iter, Label_Column,
-         Toolchains.Get_Label (Tc));
+      Editor.Model.Set (Iter, Name_Column,  Toolchains.Get_Name (Tc));
+      Editor.Model.Set (Iter, Label_Column, Toolchains.Get_Label (Tc));
       Editor.Model.Set
         (Iter, Location_Column,
          Toolchains.Get_Install_Path (Infos.all).Display_Full_Name (True));
       Editor.Model.Set
-        (Iter, Version_Column,
-         Toolchains.Get_Version (Infos.all));
+        (Iter, Version_Column, Toolchains.Get_Version (Infos.all));
 
-      Update_Details (Editor);
+      if Editor.Languages_Cache /= null then
+         --  We are only interested in refreshing the contents of the page, but
+         --  it always remain visible.
+         Tmp := Editor.Is_Visible (Editor.Languages_Cache.all);
+      end if;
    end Add_Toolchain;
 
    ----------------
@@ -796,7 +776,7 @@ package body Toolchains_Editor is
    ----------------
 
    procedure Set_Detail
-     (Editor      : Toolchains_Edit;
+     (Editor      : not null access Toolchain_Page_Record'Class;
       Label       : Gtk_Label;
       GEntry      : Gtk_Entry;
       Icon        : Gtk_Image;
@@ -809,8 +789,9 @@ package body Toolchains_Editor is
       Is_Valid    : Boolean;
       Is_Editable : Boolean)
    is
-      function Get_String return String;
+      pragma Unreferenced (Editor);
 
+      function Get_String return String;
       function Format_String return String;
 
       ----------------
@@ -909,45 +890,20 @@ package body Toolchains_Editor is
       if Reset_Btn /= null then
          Reset_Btn.Set_Sensitive (not Is_Default);
       end if;
-
-      if Kind = Tool_Kind_Compiler then
-         declare
-            Iter : Gtk_Tree_Iter;
-         begin
-            Iter := Editor.Lang_Model.Get_Iter_First;
-
-            while Iter /= Null_Iter loop
-               if Editor.Lang_Model.Get_String (Iter, Name_Column) = Lang then
-                  if Is_Valid then
-                     Editor.Lang_Model.Set
-                       (Iter, Fg_Column, System.Null_Address);
-                     Editor.Lang_Model.Set (Iter, Fg_Set_Column, False);
-                  else
-                     Editor.Lang_Model.Set (Iter, Fg_Column, "Red");
-                     Editor.Lang_Model.Set (Iter, Fg_Set_Column, True);
-                  end if;
-
-                  exit;
-               end if;
-
-               Editor.Lang_Model.Next (Iter);
-            end loop;
-         end;
-      end if;
    end Set_Detail;
 
-   --------------------
-   -- Update_Details --
-   --------------------
+   ----------------
+   -- Is_Visible --
+   ----------------
 
-   procedure Update_Details (Editor : Toolchains_Edit) is
-
-      W      : Gtk_Widget;
-      Iter   : Gtk_Tree_Iter;
-      Tc     : constant Toolchain := Get_Selected_Toolchain (Editor);
+   overriding function Is_Visible
+     (Self      : not null access Toolchain_Page_Record;
+      Languages : GNAT.Strings.String_List) return Boolean
+   is
+      Tc     : constant Toolchain := Get_Selected_Toolchain (Self);
       Lbl    : Gtk_Label;
       N_Rows : Guint := 0;
-      N_Cols : constant Guint := 4;
+      N_Cols : constant Guint := 5;
 
       procedure Add_Detail
         (Kind        : Tool_Kind;
@@ -973,15 +929,16 @@ package body Toolchains_Editor is
       is
          Lbl : Gtk_Label;
          Ent : Gtk_Entry;
+         Check : Gtk_Check_Button;
          Icn : Gtk_Image;
          Btn : Gtk_Button := null;
 
       begin
          N_Rows := N_Rows + 1;
-         Editor.Details_View.Resize (N_Rows, N_Cols);
+         Self.Details_View.Resize (N_Rows, N_Cols);
 
          Gtk_New (Lbl);
-         Editor.Details_View.Attach
+         Self.Details_View.Attach
            (Child         => Lbl,
             Left_Attach   => 0,
             Right_Attach  => 1,
@@ -990,11 +947,36 @@ package body Toolchains_Editor is
             Xoptions      => Gtk.Enums.Fill,
             Xpadding      => 20);
 
+         if Kind = Tool_Kind_Compiler then
+            Gtk_New (Check);
+            Check.Set_Active (Get_Compiler_Is_Used (Tc, Lang));
+            Self.Details_View.Attach
+              (Child         => Check,
+               Left_Attach   => 1,
+               Right_Attach  => 2,
+               Top_Attach    => N_Rows - 1,
+               Bottom_Attach => N_Rows,
+               Xoptions      => 0);
+            Tool_Callback.Object_Connect
+              (Check, Gtk.Toggle_Button.Signal_Toggled,
+               On_Activate_Compiler'Access,
+               Slot_Object => Self,
+               User_Data   => Tool_Callback_User_Object'
+                 (Kind      => Kind,
+                  Lang      => To_Unbounded_String (Lang),
+                  Tool_Name => Tool,
+                  Label     => Lbl,
+                  Active    => Check,
+                  Value     => Ent,
+                  Icon      => Icn,
+                  Reset_Btn => Btn));
+         end if;
+
          Gtk_New (Ent);
-         Editor.Details_View.Attach
+         Self.Details_View.Attach
            (Child         => Ent,
-            Left_Attach   => 1,
-            Right_Attach  => 2,
+            Left_Attach   => 2,
+            Right_Attach  => 3,
             Top_Attach    => N_Rows - 1,
             Bottom_Attach => N_Rows);
          Ent.Add_Events (Gdk.Event.Leave_Notify_Mask);
@@ -1006,20 +988,20 @@ package body Toolchains_Editor is
          end if;
 
          Gtk_New (Icn);
-         Editor.Details_View.Attach
+         Self.Details_View.Attach
            (Child         => Icn,
-            Left_Attach   => 2,
-            Right_Attach  => 3,
+            Left_Attach   => 3,
+            Right_Attach  => 4,
             Top_Attach    => N_Rows - 1,
             Bottom_Attach => N_Rows,
             Xoptions      => 0);
 
          if Is_Editable then
             Gtk_New (Btn, "reset");
-            Editor.Details_View.Attach
+            Self.Details_View.Attach
               (Child         => Btn,
-               Left_Attach   => 3,
-               Right_Attach  => 4,
+               Left_Attach   => 4,
+               Right_Attach  => 5,
                Top_Attach    => N_Rows - 1,
                Bottom_Attach => N_Rows,
                Xoptions      => 0);
@@ -1027,32 +1009,34 @@ package body Toolchains_Editor is
             Tool_Callback.Object_Connect
               (Btn, Gtk.Button.Signal_Clicked,
                On_Reset'Access,
-               Slot_Object => Editor,
+               Slot_Object => Self,
                User_Data   => Tool_Callback_User_Object'
                  (Kind      => Kind,
                   Lang      => To_Unbounded_String (Lang),
                   Tool_Name => Tool,
                   Label     => Lbl,
                   Value     => Ent,
+                  Active    => Check,
                   Icon      => Icn,
                   Reset_Btn => Btn));
 
             Tool_Callback.Object_Connect
               (Ent, Gtk.Editable.Signal_Changed,
                On_Tool_Value_Changed'Access,
-               Slot_Object => Editor,
+               Slot_Object => Self,
                User_Data   => Tool_Callback_User_Object'
                  (Kind      => Kind,
                   Lang      => To_Unbounded_String (Lang),
                   Tool_Name => Tool,
                   Label     => Lbl,
                   Value     => Ent,
+                  Active    => Check,
                   Icon      => Icn,
                   Reset_Btn => Btn));
          end if;
 
          Set_Detail
-           (Editor,
+           (Self,
             Lbl, Ent, Icn, Btn,
             Kind, Tool, Lang, Value,
             Is_Default, Is_Valid, Is_Editable);
@@ -1061,24 +1045,16 @@ package body Toolchains_Editor is
    begin
       Trace (Me, "Update_Details called");
 
-      Editor.Updating := True;
-
-      while Gtk.Widget.Widget_List.Length
-        (Editor.Details_View.Get_Children) > 0
-      loop
-         W :=
-           Gtk.Widget.Widget_List.Get_Data (Editor.Details_View.Get_Children);
-         Editor.Details_View.Remove (W);
-      end loop;
-
-      Editor.Updating := False;
+      Self.Updating := True;
+      Remove_All_Children (Self.Details_View);
+      Self.Updating := False;
 
       if Tc = Null_Toolchain then
-         return;
+         return True;   --  always visible
       end if;
 
       N_Rows := N_Rows + 1;
-      Editor.Details_View.Resize (N_Rows, N_Cols);
+      Self.Details_View.Resize (N_Rows, N_Cols);
 
       Gtk_New
         (Lbl,
@@ -1088,7 +1064,7 @@ package body Toolchains_Editor is
            "above</i>"));
       Lbl.Set_Use_Markup (True);
       Lbl.Set_Alignment (0.0, 0.5);
-      Editor.Details_View.Attach
+      Self.Details_View.Attach
         (Child         => Lbl,
          Left_Attach   => 0,
          Right_Attach  => N_Cols,
@@ -1098,13 +1074,12 @@ package body Toolchains_Editor is
          Ypadding      => 5);
 
       N_Rows := N_Rows + 1;
-      Editor.Details_View.Resize (N_Rows, N_Cols);
+      Self.Details_View.Resize (N_Rows, N_Cols);
 
-      Gtk_New
-        (Lbl, "<b>Tools:</b>");
+      Gtk_New (Lbl, "<b>Tools:</b>");
       Lbl.Set_Use_Markup (True);
       Lbl.Set_Alignment (0.0, 0.5);
-      Editor.Details_View.Attach
+      Self.Details_View.Attach
         (Child         => Lbl,
          Left_Attach   => 0,
          Right_Attach  => N_Cols,
@@ -1125,14 +1100,14 @@ package body Toolchains_Editor is
       end loop;
 
       N_Rows := N_Rows + 1;
-      Editor.Details_View.Resize (N_Rows, N_Cols);
+      Self.Details_View.Resize (N_Rows, N_Cols);
 
       Gtk_New
         (Lbl,
          "<b>Compilers:</b>");
       Lbl.Set_Use_Markup (True);
       Lbl.Set_Alignment (0.0, 0.5);
-      Editor.Details_View.Attach
+      Self.Details_View.Attach
         (Child         => Lbl,
          Left_Attach   => 0,
          Right_Attach  => N_Cols,
@@ -1141,64 +1116,84 @@ package body Toolchains_Editor is
          Xpadding      => 0,
          Ypadding      => 5);
 
-      Iter := Get_Iter_First (Editor.Lang_Model);
-
-      while Iter /= Null_Iter loop
-         if Get_Boolean (Editor.Lang_Model, Iter, Active_Column) then
-            declare
-               Lang : constant String :=
-                        Get_String
-                          (Editor.Lang_Model, Iter, Name_Column);
-               C    : constant Compiler := Get_Compiler (Tc, Lang);
-
-            begin
-               if not Get_Compiler_Is_Used (Tc, Lang) then
-                  Add_Detail
-                    (Tool_Kind_Compiler,
-                     Tool        => Unknown,
-                     Lang        => Lang,
-                     Value       => "not compiled ...",
-                     Is_Default  => True,
-                     Is_Valid    => True,
-                     Is_Editable => False);
-               else
-                  Add_Detail
-                    (Tool_Kind_Compiler,
-                     Tool        => Unknown,
-                     Lang        => Lang,
-                     Value       => Get_Exe (C),
-                     Is_Default  => Is_Default (Tc, Lang),
-                     Is_Valid    => Is_Valid (C),
-                     Is_Editable => True);
-               end if;
-            end;
-         else
-            Editor.Lang_Model.Set (Iter, Fg_Column, System.Null_Address);
-            Editor.Lang_Model.Set (Iter, Fg_Set_Column, False);
-         end if;
-
-         Editor.Lang_Model.Next (Iter);
+      for Lang of Languages loop
+         declare
+            C : constant Compiler := Get_Compiler (Tc, Lang.all);
+         begin
+            if not Get_Compiler_Is_Used (Tc, Lang.all) then
+               Add_Detail
+                 (Tool_Kind_Compiler,
+                  Tool        => Unknown,
+                  Lang        => Lang.all,
+                  Value       => "not compiled ...",
+                  Is_Default  => True,
+                  Is_Valid    => True,
+                  Is_Editable => False);
+            else
+               Add_Detail
+                 (Tool_Kind_Compiler,
+                  Tool        => Unknown,
+                  Lang        => Lang.all,
+                  Value       => Get_Exe (C),
+                  Is_Default  => Is_Default (Tc, Lang.all),
+                  Is_Valid    => Is_Valid (C),
+                  Is_Editable => True);
+            end if;
+         end;
       end loop;
 
-      Editor.Details_View.Show_All;
-   end Update_Details;
+      Self.Details_View.Show_All;
+
+      --  Languages might be Self.Languages_Cache
+      declare
+         Tmp : constant String_List_Access :=
+           new GNAT.Strings.String_List'(Clone (Languages));
+      begin
+         Free (Self.Languages_Cache);
+         Self.Languages_Cache := Tmp;
+      end;
+
+      return True;  --  always visible;
+   end Is_Visible;
+
+   --------------------------
+   -- On_Activate_Compiler --
+   --------------------------
+
+   procedure On_Activate_Compiler
+     (Widget    : access Gtk_Widget_Record'Class;
+      Params    : Glib.Values.GValues;
+      User_Data : Tool_Callback_User_Object)
+   is
+      Self : constant Toolchain_Page := Toolchain_Page (Widget);
+      Tc   : constant Toolchain := Get_Selected_Toolchain (Self);
+      Lang : constant String := To_String (User_Data.Lang);
+      Is_Active : constant Boolean := User_Data.Active.Get_Active;
+      Tmp       : Boolean;
+      pragma Unreferenced (Params, Tmp);
+   begin
+      Set_Compiler_Is_Used (Tc, Lang, Is_Active);
+      Tmp := Self.Is_Visible (Self.Languages_Cache.all);
+      --  Page is always visible..
+   end On_Activate_Compiler;
 
    ---------------------------
    -- On_Tool_Value_Changed --
    ---------------------------
 
    procedure On_Tool_Value_Changed
-     (Widget    : access Toolchains_Edit_Record'Class;
+     (Widget    : access Gtk_Widget_Record'Class;
       Params    : Glib.Values.GValues;
       User_Data : Tool_Callback_User_Object)
    is
       pragma Unreferenced (Params);
-      Tc   : constant Toolchain := Get_Selected_Toolchain (Widget);
+      Self : constant Toolchain_Page := Toolchain_Page (Widget);
+      Tc   : constant Toolchain := Get_Selected_Toolchain (Self);
       Val  : constant String := User_Data.Value.Get_Text;
       Lang : constant String := To_String (User_Data.Lang);
 
    begin
-      if Widget.Updating then
+      if Self.Updating then
          return;
       end if;
 
@@ -1209,7 +1204,7 @@ package body Toolchains_Editor is
                Toolchains.Set_Command
                  (Tc, User_Data.Tool_Name, Val, From_User, False);
                Set_Detail
-                 (Toolchains_Edit (Widget),
+                 (Self,
                   Label       => User_Data.Label,
                   GEntry      => User_Data.Value,
                   Icon        => User_Data.Icon,
@@ -1227,7 +1222,7 @@ package body Toolchains_Editor is
             if Get_Exe (Get_Compiler (Tc, Lang)) /= Val then
                Set_Compiler (Tc, Lang, Val);
                Set_Detail
-                 (Toolchains_Edit (Widget),
+                 (Self,
                   Label       => User_Data.Label,
                   GEntry      => User_Data.Value,
                   Icon        => User_Data.Icon,
@@ -1240,12 +1235,7 @@ package body Toolchains_Editor is
                   Is_Valid    => Is_Valid (Get_Compiler (Tc, Lang)),
                   Is_Editable => True);
             end if;
-
       end case;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
    end On_Tool_Value_Changed;
 
    --------------
@@ -1253,19 +1243,20 @@ package body Toolchains_Editor is
    --------------
 
    procedure On_Reset
-     (Widget    : access Toolchains_Edit_Record'Class;
+     (Widget    : access Gtk_Widget_Record'Class;
       Params    : Glib.Values.GValues;
       User_Data : Tool_Callback_User_Object)
    is
       pragma Unreferenced (Params);
-      Tc   : constant Toolchain := Get_Selected_Toolchain (Widget);
+      Self : constant Toolchain_Page := Toolchain_Page (Widget);
+      Tc   : constant Toolchain := Get_Selected_Toolchain (Self);
       Lang : constant String := To_String (User_Data.Lang);
    begin
       case User_Data.Kind is
          when Tool_Kind_Tool =>
             Toolchains.Reset_To_Default (Tc, User_Data.Tool_Name);
             Set_Detail
-              (Toolchains_Edit (Widget),
+              (Self,
                Label       => User_Data.Label,
                GEntry      => User_Data.Value,
                Icon        => User_Data.Icon,
@@ -1281,7 +1272,7 @@ package body Toolchains_Editor is
          when Tool_Kind_Compiler =>
             Toolchains.Reset_To_Default (Tc, Lang);
             Set_Detail
-              (Toolchains_Edit (Widget),
+              (Self,
                Label       => User_Data.Label,
                GEntry      => User_Data.Value,
                Icon        => User_Data.Icon,
@@ -1296,17 +1287,6 @@ package body Toolchains_Editor is
       end case;
    end On_Reset;
 
-   ----------------------------
-   -- Get_Selected_Toolchain --
-   ----------------------------
-
-   function Get_Selected_Toolchain
-     (Editor : access Toolchains_Edit_Record'Class) return Toolchain
-   is
-   begin
-      return Editor.Toolchain;
-   end Get_Selected_Toolchain;
-
    ---------------------
    -- On_Lang_Clicked --
    ---------------------
@@ -1316,64 +1296,16 @@ package body Toolchains_Editor is
       Params : Glib.Values.GValues;
       Data   : Glib.Gint)
    is
-      Editor      : constant Toolchains_Edit := Toolchains_Edit (W);
-      Iter        : Gtk_Tree_Iter;
+      Editor : constant Languages_Page_Access := Languages_Page_Access (W);
+      Iter   : Gtk_Tree_Iter;
       Path_String : constant String := Get_String (Nth (Params, 1));
-
    begin
       Iter := Get_Iter_From_String (Editor.Lang_Model, Path_String);
-
       if Iter /= Null_Iter then
          Set (Editor.Lang_Model, Iter, Data,
               not Get_Boolean (Editor.Lang_Model, Iter, Data));
-
-         declare
-            Lang : constant String :=
-                     Get_String (Editor.Lang_Model, Iter, Name_Column);
-         begin
-            if Get_Boolean (Editor.Lang_Model, Iter, Data) then
-               Editor.Mgr.Add_Language (Lang, Editor.Edited_Prj);
-            end if;
-         end;
       end if;
-
-      Update_Details (Editor);
-
-   exception
-      when E : others => Trace (Me, E);
    end On_Lang_Clicked;
-
-   ----------------------------
-   -- On_No_Compiler_Clicked --
-   ----------------------------
-
-   procedure On_No_Compiler_Clicked
-     (W      : access GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Data   : Glib.Gint)
-   is
-      Editor      : constant Toolchains_Edit := Toolchains_Edit (W);
-      Iter        : Gtk_Tree_Iter;
-      Path_String : constant String := Get_String (Nth (Params, 1));
-
-   begin
-      Iter := Get_Iter_From_String (Editor.Lang_Model, Path_String);
-
-      if Iter /= Null_Iter then
-         Set (Editor.Lang_Model, Iter, Data,
-              not Get_Boolean (Editor.Lang_Model, Iter, Data));
-
-         Toolchains.Set_Compiler_Is_Used
-           (Editor.Toolchain,
-            Editor.Lang_Model.Get_String (Iter, Name_Column),
-            not Editor.Lang_Model.Get_Boolean (Iter, No_Compiler_Column));
-      end if;
-
-      Update_Details (Editor);
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_No_Compiler_Clicked;
 
    --------------------------
    -- On_Toolchain_Clicked --
@@ -1384,10 +1316,13 @@ package body Toolchains_Editor is
       Params : Glib.Values.GValues;
       Data   : Glib.Gint)
    is
-      pragma Unreferenced (Data);
-      Editor      : constant Toolchains_Edit := Toolchains_Edit (W);
+      Editor      : constant Toolchain_Page := Toolchain_Page (W);
       Iter        : Gtk_Tree_Iter;
       Path_String : constant String := Get_String (Nth (Params, 1));
+      Mgr : constant Toolchains.Toolchain_Manager :=
+        Get_Or_Create_Manager (Editor.Kernel);
+      Tmp         : Boolean;
+      pragma Unreferenced (Data, Tmp);
 
    begin
       Iter := Get_Iter_From_String (Editor.Model, Path_String);
@@ -1395,32 +1330,13 @@ package body Toolchains_Editor is
       if Iter /= Null_Iter then
          Editor.Toolchain :=
            Get_Toolchain
-             (Editor.Mgr, Editor.Model.Get_String (Iter, Label_Column));
+             (Mgr, Editor.Model.Get_String (Iter, Label_Column));
       else
          Editor.Toolchain := Null_Toolchain;
       end if;
 
-      --  Update list of unused compilers in the retrieved toolchain
-      Iter := Editor.Lang_Model.Get_Iter_First;
-
-      while Iter /= Null_Iter loop
-         if Editor.Lang_Model.Get_Boolean (Iter, No_Compiler_Column) then
-            Set_Compiler_Is_Used
-              (Editor.Toolchain,
-               Editor.Lang_Model.Get_String (Iter, Name_Column),
-               False);
-         elsif Editor.Lang_Model.Get_Boolean (Iter, Active_Column) then
-            Set_Compiler_Is_Used
-              (Editor.Toolchain,
-               Editor.Lang_Model.Get_String (Iter, Name_Column),
-               True);
-         end if;
-
-         Editor.Lang_Model.Next (Iter);
-      end loop;
-
-      Trace (Me, "Toolchain clicked");
-      Update_Details (Editor);
+      --  The page is always visible, we can ignore the result
+      Tmp := Editor.Is_Visible (Editor.Languages_Cache.all);
    end On_Toolchain_Clicked;
 
    --------------------
@@ -1428,7 +1344,7 @@ package body Toolchains_Editor is
    --------------------
 
    procedure On_Add_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class) is
-      Editor     : constant Toolchains_Edit := Toolchains_Edit (W);
+      Editor     : constant Toolchain_Page := Toolchain_Page (W);
       Dialog     : Gtk.Dialog.Gtk_Dialog;
       Name_Entry : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
       Res        : Gtk_Response_Type;
@@ -1436,6 +1352,8 @@ package body Toolchains_Editor is
                      Toolchains.Known.Get_Known_Toolchain_Names;
       Ignore     : Gtk_Widget;
       pragma Unreferenced (Ignore);
+      Mgr : constant Toolchains.Toolchain_Manager :=
+        Get_Or_Create_Manager (Editor.Kernel);
 
    begin
       Gtk.Dialog.Gtk_New
@@ -1469,18 +1387,18 @@ package body Toolchains_Editor is
          begin
             if Name = "" or else Index (Name, "native") in Name'Range then
                Trace (Me, "Adding a native toolchain");
-               Tc := Editor.Mgr.Get_Native_Toolchain;
+               Tc := Mgr.Get_Native_Toolchain;
 
             elsif Is_Known_Toolchain_Name (Name) then
                Trace (Me, "Adding a known toolchain");
-               Tc := Get_Toolchain (Editor.Mgr, Name);
+               Tc := Get_Toolchain (Mgr, Name);
 
             else
                Trace (Me, "Adding a new toolchain");
-               Tc := Create_Empty_Toolchain (Editor.Mgr);
+               Tc := Create_Empty_Toolchain (Mgr);
                Set_Name (Tc, Name);
                Set_Command (Tc, GNAT_Driver, Name & "-gnat", From_User, True);
-               Editor.Mgr.Add_Toolchain (Tc);
+               Mgr.Add_Toolchain (Tc);
             end if;
 
             Add_Toolchain (Editor, Tc, True);
@@ -1493,11 +1411,13 @@ package body Toolchains_Editor is
    ---------------------
 
    procedure On_Scan_Clicked (W : access Gtk.Widget.Gtk_Widget_Record'Class) is
-      Editor  : constant Toolchains_Edit := Toolchains_Edit (W);
+      Editor  : constant Toolchain_Page := Toolchain_Page (W);
       Success : Boolean;
       Tc      : constant Toolchain := Get_Selected_Toolchain (Editor);
       Dialog  : Gtk_Dialog;
       Label   : Gtk_Label;
+      Mgr : constant Toolchains.Toolchain_Manager :=
+        Get_Or_Create_Manager (Editor.Kernel);
 
    begin
       --  Retrieving a toolchain is potentially a long operation, as we need
@@ -1516,9 +1436,9 @@ package body Toolchains_Editor is
       --  ??? At some point we should handle the 'Success' status and display
       --  an appropriate warning in the widget stating that we could not
       --  retrieve the installed toolchain because gprbuild 1.5.0 is not there
-      Editor.Mgr.Do_Rollback;
-      Editor.Mgr.Compute_Gprconfig_Compilers (Success => Success);
-      Editor.Mgr.Do_Snapshot;
+      Mgr.Do_Rollback;
+      Mgr.Compute_Gprconfig_Compilers (Success => Success);
+      Mgr.Do_Snapshot;
 
       --  Hide and destroy the dialog
       Dialog.Grab_Remove;
@@ -1532,7 +1452,7 @@ package body Toolchains_Editor is
       --  First the project's toolchain
       Add_Toolchain (Editor, Tc, True);
       declare
-         Arr : constant Toolchain_Array := Editor.Mgr.Get_Toolchains;
+         Arr : constant Toolchain_Array := Mgr.Get_Toolchains;
       begin
          for J in Arr'Range loop
             if not Has_Errors (Get_Library_Information (Arr (J)).all)
@@ -1672,5 +1592,14 @@ package body Toolchains_Editor is
    begin
       Toolchains.Known.Read_From_XML (Node);
    end Customize;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : in out Toolchain_Page_Record) is
+   begin
+      Free (Self.Languages_Cache);
+   end Destroy;
 
 end Toolchains_Editor;

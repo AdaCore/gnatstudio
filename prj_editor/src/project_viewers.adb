@@ -16,14 +16,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;      use Ada.Characters.Handling;
+with Ada.Strings.Equal_Case_Insensitive;  use Ada.Strings;
 with Ada.Unchecked_Deallocation;
 with Generic_Views;
-with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;          use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;           use GNATCOLL.VFS_Utils;
 
@@ -34,9 +33,9 @@ with Glib;                         use Glib;
 with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
 
-with Gtk.Box;                      use Gtk.Box;
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Label;                    use Gtk.Label;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
 with Gtk.Stock;                    use Gtk.Stock;
@@ -45,7 +44,6 @@ with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
 with Gtk.Tree_Store;               use Gtk.Tree_Store;
 with Gtk.Tree_View;                use Gtk.Tree_View;
 with Gtk.Tree_View_Column;         use Gtk.Tree_View_Column;
-with Gtk.Widget;                   use Gtk.Widget;
 
 with Gtkada.Handlers;              use Gtkada.Handlers;
 with Gtkada.MDI;                   use Gtkada.MDI;
@@ -65,10 +63,8 @@ with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;           use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel;                   use GPS.Kernel;
 with GUI_Utils;                    use GUI_Utils;
 with Language_Handlers;            use Language_Handlers;
-with Naming_Editors;               use Naming_Editors;
 with Project_Properties;           use Project_Properties;
 with Projects;                     use Projects;
 with Remote;                       use Remote;
@@ -80,26 +76,15 @@ package body Project_Viewers is
 
    Me : constant Trace_Handle := Create ("Project_Viewers");
 
-   type Project_Editor_Page_Array is array (Natural range <>)
-     of Project_Editor_Page;
-   type Project_Editor_Page_Array_Access is access Project_Editor_Page_Array;
-
    type Naming_Page is record
-      Language : String_Access;
+      Language : GNAT.Strings.String_Access;
       Creator  : Naming_Scheme_Editor_Creator;
    end record;
 
    type Naming_Pages_Array is array (Natural range <>) of Naming_Page;
    type Naming_Pages_Array_Access is access Naming_Pages_Array;
-   procedure Free (Arr : in out Naming_Pages_Array_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Naming_Pages_Array, Naming_Pages_Array_Access);
 
    type Prj_Editor_Module_Id_Record is new Module_ID_Record with record
-      Project_Editor_Pages : Project_Editor_Page_Array_Access;
-      --  The pages to be added in the project properties editor and the
-      --  project creation wizard.
-
       Naming_Pages         : Naming_Pages_Array_Access;
    end record;
    type Prj_Editor_Module_Id_Access is access all
@@ -194,13 +179,6 @@ package body Project_Viewers is
    --
    --  Project_Filter mustn't be No_Project.
 
-   overriding procedure Destroy (Module : in out Prj_Editor_Module_Id_Record);
-   --  Free the memory associated with the module
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Project_Editor_Page_Array, Project_Editor_Page_Array_Access);
-   --  Free the memory used by Pages
-
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
       File_Name        : Virtual_File;
@@ -290,55 +268,6 @@ package body Project_Viewers is
       Kernel : access Kernel_Handle_Record'Class);
    --  Hook called when the project view changes
 
-   --------------------------
-   -- Project editor pages --
-   --------------------------
-
-   type Switches_Editor_Record is
-     new Project_Editor_Page_Record with null record;
-   overriding function Widget_Factory
-     (Page         : access Switches_Editor_Record;
-      Project      : Project_Type;
-      Full_Project : GNATCOLL.VFS.Virtual_File;
-      Kernel       : access Kernel_Handle_Record'Class)
-      return Gtk_Widget;
-   overriding function Project_Editor
-     (Page               : access Switches_Editor_Record;
-      Project            : Project_Type;
-      Kernel             : access Kernel_Handle_Record'Class;
-      Widget             : access Gtk_Widget_Record'Class;
-      Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project        : Project_Type) return Boolean;
-   overriding procedure Refresh
-     (Page      : access Switches_Editor_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project   : Project_Type := No_Project;
-      Languages : GNAT.Strings.String_List);
-
-   type Naming_Editor_Record is new Project_Editor_Page_Record with record
-      Kernel : Kernel_Handle;
-   end record;
-   overriding function Widget_Factory
-     (Page         : access Naming_Editor_Record;
-      Project      : Project_Type;
-      Full_Project : GNATCOLL.VFS.Virtual_File;
-      Kernel       : access Kernel_Handle_Record'Class)
-      return Gtk_Widget;
-   overriding function Project_Editor
-     (Page               : access Naming_Editor_Record;
-      Project            : Project_Type;
-      Kernel             : access Kernel_Handle_Record'Class;
-      Widget             : access Gtk_Widget_Record'Class;
-      Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project        : Project_Type) return Boolean;
-   overriding procedure Refresh
-     (Page      : access Naming_Editor_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project   : Project_Type := No_Project;
-      Languages : GNAT.Strings.String_List);
-
    ----------------------
    -- Contextual menus --
    ----------------------
@@ -354,45 +283,6 @@ package body Project_Viewers is
    overriding function Execute
      (Command : access Edit_Project_Source_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Arr : in out Naming_Pages_Array_Access) is
-   begin
-      if Arr /= null then
-         for A in Arr'Range loop
-            Free (Arr (A).Language);
-         end loop;
-
-         Unchecked_Free (Arr);
-      end if;
-   end Free;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy
-     (Module : in out Prj_Editor_Module_Id_Record)
-   is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Project_Editor_Page_Record'Class, Project_Editor_Page);
-   begin
-      if Module.Project_Editor_Pages /= null then
-         for P in Module.Project_Editor_Pages'Range loop
-            Destroy (Module.Project_Editor_Pages (P).all);
-            Unchecked_Free (Module.Project_Editor_Pages (P));
-         end loop;
-
-         Unchecked_Free (Module.Project_Editor_Pages);
-      end if;
-
-      Free (Module.Naming_Pages);
-
-      Destroy (Module_ID_Record (Module));
-   end Destroy;
 
    -------------------------
    -- Project_Viewers_Set --
@@ -416,7 +306,6 @@ package body Project_Viewers is
       Color      : Gdk_RGBA;
       Value      : String_List_Access;
       Is_Default : Boolean;
-      Success    : Boolean;
    begin
       Viewer.Current_Project.Switches
         (Compiler_Package, File_Name,
@@ -425,7 +314,7 @@ package body Project_Viewers is
       if Is_Default then
          Color := Viewer.Default_Switches_Color;
       else
-         Parse (Color, "#000000", Success);
+         Color := Black_RGBA;
       end if;
 
       Internal (Get_Object (Viewer.Model), Iter'Address,
@@ -484,6 +373,9 @@ package body Project_Viewers is
                Unselect_All (Get_Selection (V.Tree));
                Select_Iter (Get_Selection (V.Tree), Iter);
             end if;
+
+            V.Kernel.Context_Changed
+              (File_Views.Child_From_View (V).Build_Context);
 
             return Execute_In_Background
               (V.Kernel, Action => "edit switches for file");
@@ -970,153 +862,6 @@ package body Project_Viewers is
       return Commands.Success;
    end Execute;
 
-   --------------------
-   -- Widget_Factory --
-   --------------------
-
-   overriding function Widget_Factory
-     (Page         : access Switches_Editor_Record;
-      Project      : Project_Type;
-      Full_Project : GNATCOLL.VFS.Virtual_File;
-      Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget
-   is
-      pragma Unreferenced (Page, Full_Project);
-      Switches : Switches_Editors.Switches_Edit;
-   begin
-      Run_Hook (Kernel, Project_Editor_Hook);
-      Gtk_New (Switches, Kernel);
-      Show_All (Switches);
-      Set_Switches (Switches, Project);
-
-      return Gtk_Widget (Switches);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return null;
-   end Widget_Factory;
-
-   --------------------
-   -- Project_Editor --
-   --------------------
-
-   overriding function Project_Editor
-     (Page               : access Switches_Editor_Record;
-      Project            : Project_Type;
-      Kernel             : access Kernel_Handle_Record'Class;
-      Widget             : access Gtk_Widget_Record'Class;
-      Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project        : Project_Type) return Boolean
-   is
-      pragma Unreferenced (Kernel, Page, Ref_Project);
-      Result : Boolean;
-   begin
-      Result := Generate_Project
-        (Switches           => Switches_Edit (Widget),
-         Project            => Project,
-         Languages          => Languages,
-         Scenario_Variables => Scenario_Variables,
-         Files              => (1 .. 0 => GNATCOLL.VFS.No_File));
-      if Result then
-         Trace (Me, "Switches editor: project was modified");
-      end if;
-
-      return Result;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end Project_Editor;
-
-   -------------
-   -- Refresh --
-   -------------
-
-   overriding procedure Refresh
-     (Page      : access Switches_Editor_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project   : Project_Type := No_Project;
-      Languages : GNAT.Strings.String_List)
-   is
-      pragma Unreferenced (Page, Project);
-   begin
-      Set_Visible_Pages (Switches_Edit (Widget), Languages);
-   end Refresh;
-
-   --------------------
-   -- Widget_Factory --
-   --------------------
-
-   overriding function Widget_Factory
-     (Page         : access Naming_Editor_Record;
-      Project      : Project_Type;
-      Full_Project : GNATCOLL.VFS.Virtual_File;
-      Kernel       : access Kernel_Handle_Record'Class) return Gtk_Widget
-   is
-      pragma Unreferenced (Full_Project);
-      Editor : Naming_Editor;
-   begin
-      if Project /= No_Project then
-         Gtk_New (Editor, Kernel, Project);
-         Show (Editor);
-      else
-         Gtk_New (Editor, Kernel,
-                  Known_Languages (Get_Language_Handler (Kernel)));
-         Show (Editor);
-      end if;
-
-      Page.Kernel := Kernel_Handle (Kernel);
-      return Gtk_Widget (Editor);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return null;
-   end Widget_Factory;
-
-   --------------------
-   -- Project_Editor --
-   --------------------
-
-   overriding function Project_Editor
-     (Page               : access Naming_Editor_Record;
-      Project            : Project_Type;
-      Kernel             : access Kernel_Handle_Record'Class;
-      Widget             : access Gtk_Widget_Record'Class;
-      Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project        : Project_Type) return Boolean
-   is
-      pragma Unreferenced (Page, Kernel, Ref_Project);
-   begin
-      return Create_Project_Entry
-        (Naming_Editor (Widget),
-         Project            => Project,
-         Languages          => Languages,
-         Scenario_Variables => Scenario_Variables);
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end Project_Editor;
-
-   -------------
-   -- Refresh --
-   -------------
-
-   overriding procedure Refresh
-     (Page      : access Naming_Editor_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project   : Project_Type := No_Project;
-      Languages : GNAT.Strings.String_List) is
-   begin
-      Set_Visible_Pages
-        (Naming_Editor (Widget), Page.Kernel, Languages, Project);
-   end Refresh;
-
    ------------------------------------
    -- Project_Static_Command_Handler --
    ------------------------------------
@@ -1385,170 +1130,6 @@ package body Project_Viewers is
       end if;
    end Project_Command_Handler;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Page : in out Project_Editor_Page_Record) is
-   begin
-      Free (Page.Label);
-      Free (Page.Toc);
-      Free (Page.Title);
-   end Destroy;
-
-   -------------
-   -- Refresh --
-   -------------
-
-   procedure Refresh
-     (Page      : access Project_Editor_Page_Record;
-      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Project   : Project_Type := No_Project;
-      Languages : GNAT.Strings.String_List)
-   is
-      pragma Unreferenced (Page, Widget, Project, Languages);
-   begin
-      null;
-   end Refresh;
-
-   ---------------
-   -- Get_Label --
-   ---------------
-
-   function Get_Label
-     (Page : access Project_Editor_Page_Record'Class) return String is
-   begin
-      return Page.Label.all;
-   end Get_Label;
-
-   -------------
-   -- Get_Toc --
-   -------------
-
-   function Get_Toc
-     (Page : access Project_Editor_Page_Record'Class) return String is
-   begin
-      return Page.Toc.all;
-   end Get_Toc;
-
-   ---------------
-   -- Get_Title --
-   ---------------
-
-   function Get_Title
-     (Page : access Project_Editor_Page_Record'Class) return String is
-   begin
-      return Page.Title.all;
-   end Get_Title;
-
-   ---------------
-   -- Get_Flags --
-   ---------------
-
-   function Get_Flags
-     (Page : access Project_Editor_Page_Record'Class) return Selector_Flags is
-   begin
-      return Page.Flags;
-   end Get_Flags;
-
-   ----------------------------------
-   -- Register_Project_Editor_Page --
-   ----------------------------------
-
-   procedure Register_Project_Editor_Page
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Page      : Project_Editor_Page;
-      Label     : String;
-      Toc       : String;
-      Title     : String;
-      Flags     : Selector_Flags := Multiple_Projects or Multiple_Scenarios;
-      Ref_Page  : String := "";
-      Add_After : Boolean := True)
-   is
-      pragma Unreferenced (Kernel);
-      Tmp : Project_Editor_Page_Array_Access;
-      Pos : Natural;
-   begin
-      if Prj_Editor_Module_ID = null then
-         Trace (Me, "Register_Project_Editor_Page: module not registered");
-         return;
-      end if;
-
-      Tmp := Prj_Editor_Module_ID.Project_Editor_Pages;
-
-      if Tmp = null then
-         Prj_Editor_Module_ID.Project_Editor_Pages :=
-           new Project_Editor_Page_Array (1 .. 1);
-      else
-         Prj_Editor_Module_ID.Project_Editor_Pages :=
-           new Project_Editor_Page_Array (Tmp'First .. Tmp'Last + 1);
-         Prj_Editor_Module_ID.Project_Editor_Pages (Tmp'Range) := Tmp.all;
-         Unchecked_Free (Tmp);
-      end if;
-
-      Page.Flags := Flags;
-      Page.Label := new String'(Label);
-      Page.Toc   := new String'(Toc);
-      Page.Title := new String'(Title);
-
-      Tmp := Prj_Editor_Module_ID.Project_Editor_Pages;
-
-      Pos := Tmp'Last;
-
-      if Ref_Page /= "" then
-         for J in Tmp'First .. Tmp'Last - 1 loop
-            if Tmp (J).Label.all = Ref_Page then
-               if Add_After then
-                  Pos := J + 1;
-               elsif J > Tmp'First then
-                  Pos := J - 1;
-               else
-                  Pos := J;
-               end if;
-               exit;
-            end if;
-         end loop;
-      end if;
-
-      Tmp (Pos + 1 .. Tmp'Last) := Tmp (Pos .. Tmp'Last - 1);
-      Tmp (Pos) := Page;
-   end Register_Project_Editor_Page;
-
-   --------------------------------
-   -- Project_Editor_Pages_Count --
-   --------------------------------
-
-   function Project_Editor_Pages_Count
-     (Kernel : access Kernel_Handle_Record'Class) return Natural
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      if Prj_Editor_Module_ID.Project_Editor_Pages = null then
-         return 0;
-      else
-         return Prj_Editor_Module_ID.Project_Editor_Pages'Length;
-      end if;
-   end Project_Editor_Pages_Count;
-
-   ---------------------------------
-   -- Get_Nth_Project_Editor_Page --
-   ---------------------------------
-
-   function Get_Nth_Project_Editor_Page
-     (Kernel : access Kernel_Handle_Record'Class; Num : Positive)
-      return Project_Editor_Page
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      if Prj_Editor_Module_ID.Project_Editor_Pages /= null
-        and then Num <= Prj_Editor_Module_ID.Project_Editor_Pages'Length
-      then
-         return Prj_Editor_Module_ID.Project_Editor_Pages
-           (Prj_Editor_Module_ID.Project_Editor_Pages'First + Num - 1);
-      end if;
-      return null;
-   end Get_Nth_Project_Editor_Page;
-
    -----------------------------------
    -- Register_Naming_Scheme_Editor --
    -----------------------------------
@@ -1559,6 +1140,8 @@ package body Project_Viewers is
       Creator  : Naming_Scheme_Editor_Creator)
    is
       pragma Unreferenced (Kernel);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Naming_Pages_Array, Naming_Pages_Array_Access);
       Tmp  : Naming_Pages_Array_Access;
       Lang : constant String := To_Lower (Language);
    begin
@@ -1584,7 +1167,7 @@ package body Project_Viewers is
 
    function Get_Naming_Scheme_Page
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Language : String) return Naming_Editors.Language_Naming_Editor
+      Language : String) return Project_Editor_Page
    is
       Lang : constant String := To_Lower (Language);
    begin
@@ -1598,6 +1181,32 @@ package body Project_Viewers is
       end if;
       return null;
    end Get_Naming_Scheme_Page;
+
+   --------------------------------
+   -- Get_All_Naming_Scheme_Page --
+   --------------------------------
+
+   function Get_All_Naming_Scheme_Page
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Project_Editor_Page
+   is
+      Languages : GNAT.Strings.String_List :=
+        Known_Languages (Get_Language_Handler (Kernel));
+      Page      : Project_Editor_Page;
+      Result    : access Project_Editor_Multi_Page_Record;
+   begin
+      Result := new Project_Editor_Multi_Page_Record;
+
+      for L in Languages'Range loop
+         Page := Get_Naming_Scheme_Page (Kernel, Languages (L).all);
+         if Page /= null then
+            Result.Add_Page (Page, Languages (L).all);
+         end if;
+      end loop;
+
+      Free (Languages);
+      return Project_Editor_Page (Result);
+   end Get_All_Naming_Scheme_Page;
 
    ---------------------
    -- Register_Module --
@@ -1639,27 +1248,6 @@ package body Project_Viewers is
         (Kernel, "edit switches for file", new Edit_File_Switches,
          -"Edit the switches for the files selected in the switches editor",
          Stock_Id => Stock_Edit);
-
-      --  ??? Disabled for now, pending resolution of related problems
-      --  encountered during testing
-
-      --  Kernel_Callback.Connect
-      --    (Kernel, File_Edited_Signal,
-      --     On_File_Edited'Access,
-      --     Kernel_Handle (Kernel));
-
-      Register_Project_Editor_Page
-        (Kernel,
-         Page  => new Naming_Editor_Record,
-         Label => -"Naming",
-         Toc   => -"Naming scheme",
-         Title => -"Please select the naming scheme to use");
-      Register_Project_Editor_Page
-        (Kernel,
-         Page  => new Switches_Editor_Record,
-         Label => -"Switches",
-         Toc   => -"Switches",
-         Title => -"Please select the switches to build the project");
 
       Filter  := Lookup_Filter (Kernel, "Project only");
       Filter2  := Lookup_Filter (Kernel, "Project only")
@@ -1763,5 +1351,129 @@ package body Project_Viewers is
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
    end Register_Module;
+
+   -------------------
+   -- For_Each_Page --
+   -------------------
+
+   procedure For_Each_Page
+     (Self     : not null access Project_Editor_Multi_Page_Record;
+      Callback : Page_Iterator_Callback) is
+   begin
+      for Descr of Self.Pages loop
+         Callback (Descr.Page);
+      end loop;
+   end For_Each_Page;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy
+     (Self : in out Project_Editor_Multi_Page_Record) is
+   begin
+      for Descr of Self.Pages loop
+         Project_Viewers.Destroy (Descr.Page.all);
+      end loop;
+   end Destroy;
+
+   -------------
+   -- In_List --
+   -------------
+
+   function In_List
+     (Lang : String; List : GNAT.Strings.String_List) return Boolean
+   is
+   begin
+      for L of List loop
+         if Equal_Case_Insensitive (Lang, L.all) then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end In_List;
+
+   --------------
+   -- Add_Page --
+   --------------
+
+   procedure Add_Page
+     (Self  : not null access Project_Editor_Multi_Page_Record;
+      Page  : not null access Project_Editor_Page_Record'Class;
+      Title : String) is
+   begin
+      Self.Pages.Append
+        ((Title => To_Unbounded_String (Title),
+          Page  => Project_Editor_Page (Page)));
+   end Add_Page;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize
+     (Self         : not null access Project_Editor_Multi_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project)
+   is
+      Label    : Gtk_Label;
+   begin
+      Initialize_Vbox (Self, Homogeneous => False);
+
+      Gtk_New (Self.Notebook);
+      Self.Pack_Start (Self.Notebook, Fill => True, Expand => True);
+
+      for Descr of Self.Pages loop
+         Gtk_New (Label, To_String (Descr.Title));
+         Descr.Page.Initialize (Kernel, Project);
+         Self.Notebook.Append_Page (Descr.Page, Label);
+      end loop;
+   end Initialize;
+
+   ------------------
+   -- Edit_Project --
+   ------------------
+
+   overriding function Edit_Project
+     (Self               : not null access Project_Editor_Multi_Page_Record;
+      Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
+   is
+      Changed : Boolean := False;
+   begin
+      for Descr of Self.Pages loop
+         if Descr.Page.Is_Visible then
+            Changed := Changed or
+              Descr.Page.Edit_Project
+                (Project, Kernel, Languages, Scenario_Variables);
+         end if;
+      end loop;
+      return Changed;
+   end Edit_Project;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self         : not null access Project_Editor_Multi_Page_Record;
+      Languages    : GNAT.Strings.String_List) return Boolean
+   is
+      Count : constant Gint := Self.Notebook.Get_N_Pages;
+      Page  : Project_Editor_Page;
+      Visible : Boolean := False;
+   begin
+      for P in 0 .. Count - 1 loop
+         Page := Project_Editor_Page (Self.Notebook.Get_Nth_Page (P));
+         if not Page.Is_Visible (Languages) then
+            Page.Hide;
+         else
+            Visible := True;
+         end if;
+      end loop;
+      return Visible;  --  If at least one page is visible
+   end Is_Visible;
 
 end Project_Viewers;

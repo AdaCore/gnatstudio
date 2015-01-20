@@ -29,7 +29,6 @@ with "../spark/spark";
 with "../src_editor/src_editor";
 with "../theme_manager/theme_manager";
 with "../toolchains/toolchains";
-with "../toolchains_editor/ui/toolchains_ui";
 with "../vcs/vcs";
 with "../vdiff/vdiff";
 with "../views/views";

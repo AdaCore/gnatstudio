@@ -15,83 +15,52 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  <description>
 --  This package implements a new widget to interactively edit the switches
---  for the GNAT tools (currently supported are gnatmake, gcc, gnatbind and
---  gnatlink).
+--  for the GNAT tools.
 --  A GUI is provided for the more common switches, but the user can always
 --  edit them through an interactive command line.
---  </description>
 
-with Gtk.Notebook;             use Gtk.Notebook;
-with GNAT.Strings;
-with GPS.Kernel;
-with Switches_Chooser.Gtkada;
+with GPS.Kernel;               use GPS.Kernel;
 with GNATCOLL.Projects;        use GNATCOLL.Projects;
-with GNATCOLL.VFS;
-with Commands.Interactive;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with Commands.Interactive;     use Commands.Interactive;
+with Project_Viewers;          use Project_Viewers;
+with Glib.Object;              use Glib.Object;
 
 package Switches_Editors is
 
-   type Switches_Edit_Record is new Gtk_Notebook_Record with private;
-   type Switches_Edit is access all Switches_Edit_Record'Class;
+   type Page_Iterator is access procedure
+     (Data     : access GObject_Record'Class;
+      Callback : Page_Iterator_Callback);
 
-   -----------
-   -- Pages --
-   -----------
+   type Tool_From_Name_Getter is record
+      Data     : access GObject_Record'Class;
+      Iterator : Page_Iterator;
+   end record;
+   --  This is used to find the page that edit the switches for a specific
+   --  tool, which is needed to resolve dependencies between the tools, for
+   --  instance setting '-g' for the builder should set it for the compiler.
+   --  The iterator is passed the data, and should return all project editor
+   --  page (or at least all the switches editing pages).
 
-   type Switches_Editor_Page_Record is new
-     Switches_Chooser.Gtkada.Switches_Editor_Record with private;
-   type Switches_Editor_Page is access all Switches_Editor_Page_Record'Class;
+   function Switches_Editor_For_Tool_Factory
+     (Tool           : not null access GPS.Kernel.Tool_Properties_Record;
+      Files          : File_Array := Empty_File_Array;
+      Tool_From_Name : Tool_From_Name_Getter)
+      return Project_Editor_Page;
+   --  Create a new project editor page for the switches or naming scheme
+   --  of a specific tool.
+   --  These might return null if no special configuration is necessary for
+   --  this tool.
+   --  Files can be specified to only edit the switches for those files. It
+   --  will be freed when the editor is destroyed.
 
-   procedure Gtk_New
-     (Page             : out Switches_Editor_Page;
-      In_Editor        : Switches_Edit;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Tool             : GPS.Kernel.Tool_Properties_Record);
-   --  Create a new page, that should be displayed.
-   --  You can restrict the display of this page to specific languages by
-   --  calling Add_Language below. However, by default it is displayed for
-   --  all languages.
-   --  The page is setup as a table of (Line + 1) x Cols, the last line
-   --  being automatically created for the command line.
-   --  Title is displayed in the notebook tab of the switches editor.
-   --
-   --  Project_Package is the name of the package, in the project files, where
-   --  the switches are stored. Attribute_Index is the index of the attribute
-   --  to be created in Project_Package.
-
-   ---------------------
-   -- Switches editor --
-   ---------------------
-
-   procedure Gtk_New
-     (Editor : out Switches_Edit;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Create a new switches editor.
-
-   function Get_Page
-     (Editor : access Switches_Edit_Record'Class;
-      Title  : String) return Switches_Editor_Page;
-   --  Return the page with the given title, or null if no such page has been
-   --  added yet.
-
-   procedure Set_Visible_Pages
-     (Editor : access Switches_Edit_Record;
-      Languages : GNAT.Strings.String_List);
-   --  Set the visible pages based on the specific languages
-
-   function Generate_Project
-     (Switches           : access Switches_Edit_Record'Class;
-      Project            : Project_Type;
-      Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Scenario_Variable_Array;
-      Files              : GNATCOLL.VFS.File_Array)
-      return Boolean;
-   --  Generate the information in Project to represent the status of Switches.
-   --  True is returned if at least one project was modified.
-   --  Project can be No_Project, in which case the return value will
-   --  always be non empty, after modification of the project.
+   function Switches_Editor_For_All_Tools_Factory
+     (Kernel         : not null access Kernel_Handle_Record'Class;
+      Files          : File_Array := Empty_File_Array)
+      return Project_Editor_Page;
+   --  Create a page to edit the switches for all registered tools.
+   --  Each tool is set on a separate page of a notebook
 
    -----------------------------------------------------
    -- Editing switches for a specific file or project --
@@ -118,38 +87,5 @@ package Switches_Editors is
    --  the same switches.
    --  If there are no files in Files, the default switches are edited.
    --  Return true if the switches were modified.
-
-   procedure Set_Switches
-     (Editor : access Switches_Edit_Record; Project : Project_Type);
-   --  Set the initial value for the switches, based on the contents
-   --  of Project_View. If a page doesn't exist in Editor, it will not be
-   --  automatically created.
-   --  Project_View can be No_Project, in which case only Ada-related pages are
-   --  displayed.
-
-private
-   type Switches_Editor_Page_Record is new
-     Switches_Chooser.Gtkada.Switches_Editor_Record with
-      record
-         Tool_Name : GNAT.Strings.String_Access;
-         Switches  : Switches_Edit;
-      end record;
-
-   overriding function Get_Tool_By_Name
-     (Editor    : Switches_Editor_Page_Record;
-      Tool_Name : String)
-      return Switches_Chooser.Gtkada.Gtk_Switches_Editors.
-         Root_Switches_Editor_Access;
-   --  See inherited documentation
-
-   type Pages_Array is array (Natural range <>) of Switches_Editor_Page;
-   type Page_Array_Access is access Pages_Array;
-
-   type Switches_Edit_Record is new Gtk_Notebook_Record with record
-      Kernel   : GPS.Kernel.Kernel_Handle;
-      Files    : GNATCOLL.VFS.File_Array_Access;
-      Project  : Project_Type;
-      Pages    : Page_Array_Access;
-   end record;
 
 end Switches_Editors;

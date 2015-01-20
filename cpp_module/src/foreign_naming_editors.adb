@@ -33,154 +33,88 @@ with Naming_Exceptions;                use Naming_Exceptions;
 
 package body Foreign_Naming_Editors is
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ---------------------------
+   -- Naming_Editor_Factory --
+   ---------------------------
 
-   procedure Gtk_New
-     (Editor   : out Foreign_Naming_Editor;
-      Language : String)
+   function Naming_Editor_Factory
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Lang   : String) return not null access Project_Editor_Page_Record'Class
    is
+      pragma Unreferenced (Kernel);
+      Result : Foreign_Naming_Editor;
+   begin
+      Result := new Foreign_Naming_Editor_Record;
+      Result.Language := new String'(Lang);
+      return Result;
+   end Naming_Editor_Factory;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize
+     (Self         : not null access Foreign_Naming_Editor_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project)
+   is
+      Display_Exceptions : constant Boolean := True;
+      P : Project_Type := Project;
       Frame     : Gtk_Frame;
       Box, Vbox : Gtk_Box;
       Label     : Gtk_Label;
       Group     : Gtk_Size_Group;
-
    begin
-      Editor := new Foreign_Naming_Editor_Record;
-      Editor.Language := new String'(Language);
-
-      Gtk_New_Vbox (Editor.GUI, Homogeneous => False);
+      Initialize_Vbox (Self, Homogeneous => False);
 
       Gtk_New (Group);
 
       Gtk_New (Frame, -"Details");
-      Pack_Start (Editor.GUI, Frame, Expand => False);
+      Self.Pack_Start (Frame, Expand => False);
 
       Gtk_New_Vbox (Vbox, Homogeneous => True);
-      Add (Frame, Vbox);
+      Frame.Add (Vbox);
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Vbox, Box, Expand => False);
+      Vbox.Pack_Start (Box, Expand => False);
 
       Gtk_New (Label, -"Header files:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Group, Label);
-      Pack_Start (Box, Label);
+      Label.Set_Alignment (0.0, 0.5);
+      Group.Add_Widget (Label);
+      Box.Pack_Start (Label);
 
-      Gtk_New_With_Entry (Editor.Spec_Ext);
-      Editor.Spec_Ext.Set_Entry_Text_Column (0);
-      Pack_Start (Box, Editor.Spec_Ext);
-      Editor.Spec_Ext.Append_Text (".h");
-      Editor.Spec_Ext.Append_Text (".hh");
-      Editor.Spec_Ext.Append_Text (".H");
-      Editor.Spec_Ext.Append_Text (".hpp");
+      Gtk_New_With_Entry (Self.Spec_Ext);
+      Self.Spec_Ext.Set_Entry_Text_Column (0);
+      Box.Pack_Start (Self.Spec_Ext);
+      Self.Spec_Ext.Append_Text (".h");
+      Self.Spec_Ext.Append_Text (".hh");
+      Self.Spec_Ext.Append_Text (".H");
+      Self.Spec_Ext.Append_Text (".hpp");
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start (Vbox, Box, Expand => False);
+      Vbox.Pack_Start (Box, Expand => False);
 
       Gtk_New (Label, -"Implementation:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add_Widget (Group, Label);
-      Pack_Start (Box, Label);
+      Label.Set_Alignment (0.0, 0.5);
+      Group.Add_Widget (Label);
+      Box.Pack_Start (Label);
 
-      Gtk_New_With_Entry (Editor.Body_Ext);
-      Editor.Body_Ext.Set_Entry_Text_Column (0);
-      Pack_Start (Box, Editor.Body_Ext);
-      Editor.Body_Ext.Append_Text (".c");
-      Editor.Body_Ext.Append_Text (".cc");
-      Editor.Body_Ext.Append_Text (".C");
-      Editor.Body_Ext.Append_Text (".cpp");
+      Gtk_New_With_Entry (Self.Body_Ext);
+      Self.Body_Ext.Set_Entry_Text_Column (0);
+      Box.Pack_Start (Self.Body_Ext);
+      Self.Body_Ext.Append_Text (".c");
+      Self.Body_Ext.Append_Text (".cc");
+      Self.Body_Ext.Append_Text (".C");
+      Self.Body_Ext.Append_Text (".cpp");
 
       Gtk_New (Frame, -"Exceptions");
-      Pack_Start (Editor.GUI, Frame, Expand => True, Fill => True);
-      Gtk_New (Editor.Exceptions, Language);
-      Set_Border_Width (Editor.Exceptions, 3);
-      Add (Frame, Editor.Exceptions);
-   end Gtk_New;
+      Self.Pack_Start (Frame, Expand => True, Fill => True);
+      Gtk_New (Self.Exceptions, Self.Language.all);
+      Self.Exceptions.Set_Border_Width (3);
+      Frame.Add (Self.Exceptions);
 
-   -------------
-   -- Destroy --
-   -------------
+      --  Now show the project's settings
 
-   overriding procedure Destroy
-     (Editor : access Foreign_Naming_Editor_Record) is
-   begin
-      Free (Editor.Language);
-      Destroy (Editor.GUI);
-   end Destroy;
-
-   ----------------
-   -- Get_Window --
-   ----------------
-
-   overriding function Get_Window
-     (Editor : access Foreign_Naming_Editor_Record)
-      return Gtk.Widget.Gtk_Widget is
-   begin
-      return Gtk_Widget (Editor.GUI);
-   end Get_Window;
-
-   --------------------------
-   -- Create_Project_Entry --
-   --------------------------
-
-   overriding function Create_Project_Entry
-     (Editor             : access Foreign_Naming_Editor_Record;
-      Project            : Project_Type;
-      Languages          : Argument_List;
-      Scenario_Variables : Scenario_Variable_Array) return Boolean
-   is
-      pragma Unreferenced (Languages);
-      Changed  : Boolean;
-
-   begin
-      Changed := Create_Project_Entry
-        (Editor.Exceptions, Project, Scenario_Variables);
-
-      if Project = No_Project
-        or else Project.Attribute_Value
-          (Attribute      => Spec_Suffix_Attribute,
-           Index          => Editor.Language.all) /=
-              Get_Active_Text (Editor.Spec_Ext)
-      then
-         Project.Set_Attribute
-           (Scenario  => Scenario_Variables,
-            Attribute => Spec_Suffix_Attribute,
-            Value     => Get_Active_Text (Editor.Spec_Ext),
-            Index     => Editor.Language.all);
-         Changed := True;
-      end if;
-
-      if Project = No_Project
-        or else Project.Attribute_Value
-          (Attribute      => Impl_Suffix_Attribute,
-           Index          => Editor.Language.all) /=
-              Get_Active_Text (Editor.Body_Ext)
-      then
-         Project.Set_Attribute
-           (Scenario  => Scenario_Variables,
-            Attribute => Impl_Suffix_Attribute,
-            Value     => Get_Active_Text (Editor.Body_Ext),
-            Index     => Editor.Language.all);
-         Changed := True;
-      end if;
-
-      return Changed;
-   end Create_Project_Entry;
-
-   ---------------------------
-   -- Show_Project_Settings --
-   ---------------------------
-
-   overriding procedure Show_Project_Settings
-     (Editor             : access Foreign_Naming_Editor_Record;
-      Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project            : Project_Type;
-      Display_Exceptions : Boolean := True)
-   is
-      P : Project_Type := Project;
-   begin
       --  If the project is null, we get the default values from the current
       --  top-level project. It will automatically have the default extensions
       --  set when a project was registered, unless overriden by the user
@@ -189,22 +123,85 @@ package body Foreign_Naming_Editors is
          P := Get_Project (Kernel);
       end if;
 
-      --  ??? Do we get access to the default extensions correctly ?
-
       Set_Text
-        (Gtk_Entry (Get_Child (Editor.Spec_Ext)),
+        (Gtk_Entry (Get_Child (Self.Spec_Ext)),
          P.Attribute_Value
-            (Spec_Suffix_Attribute,
-             Index => Editor.Language.all));
+           (Spec_Suffix_Attribute, Index => Self.Language.all));
       Set_Text
-        (Gtk_Entry (Get_Child (Editor.Body_Ext)),
+        (Gtk_Entry (Get_Child (Self.Body_Ext)),
          P.Attribute_Value
-            (Impl_Suffix_Attribute,
-             Index => Editor.Language.all));
+           (Impl_Suffix_Attribute, Index => Self.Language.all));
 
       if Display_Exceptions then
-         Show_Project_Settings (Editor.Exceptions, Project);
+         Show_Project_Settings (Self.Exceptions, Project);
       end if;
-   end Show_Project_Settings;
+   end Initialize;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Self : in out Foreign_Naming_Editor_Record) is
+   begin
+      Free (Self.Language);
+   end Destroy;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self         : not null access Foreign_Naming_Editor_Record;
+      Languages    : GNAT.Strings.String_List) return Boolean
+   is
+   begin
+      return In_List (Self.Language.all, Languages);
+   end Is_Visible;
+
+   ------------------
+   -- Edit_Project --
+   ------------------
+
+   overriding function Edit_Project
+     (Self               : not null access Foreign_Naming_Editor_Record;
+      Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
+   is
+      pragma Unreferenced (Languages, Kernel);
+      Changed  : Boolean;
+   begin
+      Changed := Create_Project_Entry
+        (Self.Exceptions, Project, Scenario_Variables);
+
+      if Project = No_Project
+        or else Project.Attribute_Value
+          (Attribute => Spec_Suffix_Attribute,
+           Index     => Self.Language.all) /= Get_Active_Text (Self.Spec_Ext)
+      then
+         Project.Set_Attribute
+           (Scenario  => Scenario_Variables,
+            Attribute => Spec_Suffix_Attribute,
+            Value     => Get_Active_Text (Self.Spec_Ext),
+            Index     => Self.Language.all);
+         Changed := True;
+      end if;
+
+      if Project = No_Project
+        or else Project.Attribute_Value
+          (Attribute => Impl_Suffix_Attribute,
+           Index     => Self.Language.all) /= Get_Active_Text (Self.Body_Ext)
+      then
+         Project.Set_Attribute
+           (Scenario  => Scenario_Variables,
+            Attribute => Impl_Suffix_Attribute,
+            Value     => Get_Active_Text (Self.Body_Ext),
+            Index     => Self.Language.all);
+         Changed := True;
+      end if;
+
+      return Changed;
+   end Edit_Project;
 
 end Foreign_Naming_Editors;

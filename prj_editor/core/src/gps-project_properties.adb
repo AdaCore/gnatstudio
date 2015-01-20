@@ -152,7 +152,7 @@ package body GPS.Project_Properties is
                 (Module,
                  Get_Attribute
                    (Node, "editor_page",
-                    Default => "General"));
+                    Default => ""));
             Editor_Section : constant Natural :=
               Find_Editor_Section_By_Name
                 (Module,

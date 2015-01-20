@@ -35,7 +35,6 @@ with Language.C;                 use Language.C;
 with Language.Cpp;               use Language.Cpp;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
-with Naming_Editors;             use Naming_Editors;
 with Project_Viewers;            use Project_Viewers;
 with Projects;                   use Projects;
 
@@ -52,34 +51,12 @@ package body Cpp_Module is
    -- Local Subprograms --
    -----------------------
 
-   function C_Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class; Lang : String)
-      return Language_Naming_Editor;
-   --  Create the naming scheme editor page. Subsidiary of Register_Module
-   --  but must be defined at library level because it is invoked from the
-   --  gps kernel.
-
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when the preferences have changed. Subsidiary of Register_Module
    --  but must be defined at library level because it is invoked from the
    --  gps kernel.
-
-   ----------------------------
-   -- C_Naming_Scheme_Editor --
-   ----------------------------
-
-   function C_Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class; Lang : String)
-      return Language_Naming_Editor
-   is
-      pragma Unreferenced (Kernel);
-      Naming : Foreign_Naming_Editor;
-   begin
-      Gtk_New (Naming, Lang);
-      return Language_Naming_Editor (Naming);
-   end C_Naming_Scheme_Editor;
 
    ----------------------------
    -- On_Preferences_Changed --
@@ -188,9 +165,9 @@ package body Cpp_Module is
       On_Preferences_Changed (Kernel, Data => null);
 
       Register_Naming_Scheme_Editor
-        (Kernel, "c", C_Naming_Scheme_Editor'Access);
+        (Kernel, "c", Naming_Editor_Factory'Access);
       Register_Naming_Scheme_Editor
-        (Kernel, "c++", C_Naming_Scheme_Editor'Access);
+        (Kernel, "c++", Naming_Editor_Factory'Access);
 
    exception
       when E : others => Trace (Me, E);

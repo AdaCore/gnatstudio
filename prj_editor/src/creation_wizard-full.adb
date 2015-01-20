@@ -15,13 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.GEntry;         use Gtk.GEntry;
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with Wizards;            use Wizards;
 with GPS.Kernel;         use GPS.Kernel;
 with Project_Viewers;    use Project_Viewers;
 with Project_Properties; use Project_Properties;
+with Switches_Editors;   use Switches_Editors;
+with Toolchains_Editor;  use Toolchains_Editor;
 
 package body Creation_Wizard.Full is
 
@@ -50,22 +51,10 @@ package body Creation_Wizard.Full is
 
    overriding function Create_Content
      (Page : access Project_Editor_Page_Wrapper;
-      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
-   is
-      Project_Dir : constant Virtual_File :=
-                      Create_From_UTF8
-                        (Get_Text (Get_Path_Widget (Page.Name_And_Loc)));
-      Project_File : constant Virtual_File :=
-                       Create_From_Dir
-                         (Project_Dir,
-                          +Get_Text (Get_Name_Widget (Page.Name_And_Loc)));
+      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget is
    begin
       Page.Wiz := Wizard (Wiz);
-      return Widget_Factory
-        (Page         => Page.Page,
-         Project      => No_Project,
-         Full_Project => Project_File,
-         Kernel       => Get_Kernel (Wiz));
+      return Gtk.Widget.Gtk_Widget (Page.Page);
    end Create_Content;
 
    -----------------
@@ -79,11 +68,10 @@ package body Creation_Wizard.Full is
         (Kernel => Get_Kernel (Page.Wiz),
          Pkg    => "",
          Name   => "languages");
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
    begin
-      Refresh (Page      => Page.Page,
-               Widget    => Get_Content (Page),
-               Project   => No_Project,
-               Languages => Languages.all);
+      Tmp := Page.Page.Is_Visible (Languages.all);
       Free (Languages);
    end Update_Page;
 
@@ -103,14 +91,11 @@ package body Creation_Wizard.Full is
          Pkg    => "",
          Name   => "languages");
    begin
-      Changed := Changed or Project_Editor
-        (Page               => Page.Page,
-         Project            => Project,
+      Changed := Changed or Page.Page.Edit_Project
+        (Project            => Project,
          Kernel             => Kernel,
-         Widget             => Get_Content (Page),
          Languages          => Languages.all,
-         Scenario_Variables => Scenario_Variables,
-         Ref_Project        => No_Project);
+         Scenario_Variables => Scenario_Variables);
       Free (Languages);
    end Generate_Project;
 
@@ -124,51 +109,51 @@ package body Creation_Wizard.Full is
       Context      : String;
       Allow_Page   : access function (Page : String) return Boolean := null)
    is
-      P          : Project_Editor_Page;
-      Attr_Count : constant Natural := Attribute_Editors_Page_Count;
-      Count      : constant Natural :=
-                     Project_Editor_Pages_Count (Get_Kernel (Wiz));
-      Page       : Project_Wizard_Page;
+      Kernel     : constant Kernel_Handle := Get_Kernel (Wiz);
 
-   begin
-      --  "+1" here is for the "General" page, which is omitted in the result
-      --  of Attribute_Editors_Page_Count
-
-      for E in 1 .. Attr_Count + 1 loop
-         Page := Attribute_Editors_Page_Box
-           (Kernel      => Get_Kernel (Wiz),
-            Wiz         => Wizard (Wiz),
-            Project     => No_Project,
-            Path_Widget => Get_Path_Widget (Name_And_Loc),
-            Nth_Page    => E,
-            Context     => Context);
-
-         if Page /= null
-           and then (Allow_Page = null
-                     or else Allow_Page (Attribute_Editors_Page_Name (E)))
-         then
-            Add_Page (Wiz,
-                      Page        => Page,
-                      Description => Attribute_Editors_Page_Name (E),
-                      Toc         => Attribute_Editors_Page_Name (E));
-         end if;
-      end loop;
-
-      for E in 1 .. Count loop
-         P := Get_Nth_Project_Editor_Page (Get_Kernel (Wiz), E);
-
-         if Allow_Page = null or else Allow_Page (P.Get_Toc) then
-            Page := new Project_Editor_Page_Wrapper'
+      procedure Add_Page
+        (Title : String;
+         Page  : not null access Project_Editor_Page_Record'Class);
+      procedure Add_Page
+        (Title : String;
+         Page  : not null access Project_Editor_Page_Record'Class)
+      is
+         P : access Wizard_Page_Record'Class;
+      begin
+         if Allow_Page = null or else Allow_Page (Title) then
+            P := new Project_Editor_Page_Wrapper'
               (Project_Wizard_Page_Record with
-               Page         => P,
+               Page         => Project_Editor_Page (Page),
                Name_And_Loc => Name_And_Location_Page_Access (Name_And_Loc),
                Wiz          => Wizard (Wiz));
-            Add_Page (Wiz,
-                      Page        => Page,
-                      Description => Get_Title (P),
-                      Toc         => Get_Toc (P));
+            Add_Page
+              (Wiz,
+               Page        => P,
+               Description => Title,
+               Toc         => Title);
          end if;
-      end loop;
+      end Add_Page;
+
+      P : Project_Editor_Page;
+   begin
+      P := new Languages_Page_Record;
+      P.Initialize (Kernel, No_Project);
+      Add_Page ("Languages", P);
+
+      For_Each_Project_Editor_Page
+        (Kernel,
+         Project  => No_Project,
+         Path     => Get_Path_Widget (Name_And_Loc),
+         Context  => Context,
+         Callback => Add_Page'Access);
+
+      P := Get_All_Naming_Scheme_Page (Kernel);
+      P.Initialize (Kernel, No_Project);
+      Add_Page ("Naming scheme", P);
+
+      P := Switches_Editor_For_All_Tools_Factory (Kernel);
+      P.Initialize (Kernel, No_Project);
+      Add_Page ("Switches", P);
    end Add_Full_Wizard_Pages;
 
 end Creation_Wizard.Full;

@@ -27,8 +27,7 @@ with GNATCOLL.Projects;   use GNATCOLL.Projects;
 with GPS.Kernel;
 with GNAT.Strings;
 with Commands.Interactive;
-with Creation_Wizard;
-with Wizards;
+with Project_Viewers;     use Project_Viewers;
 
 package Project_Properties is
 
@@ -55,42 +54,20 @@ package Project_Properties is
    -- Attribute editors --
    -----------------------
 
-   function Attribute_Editors_Page_Count return Natural;
-   --  Return the number of pages required to edit all the attributes of the
-   --  project, not including the "General" page.
-   --  The latter should always be added by the editors anyway, and thus isn't
-   --  taken into account even if some XML attributes should be displayed in
-   --  that page..
-
-   function Attribute_Editors_Page_Name (Nth : Integer) return String;
-   --  Return the name of the Nth page for editing attributes
-
-   function Attribute_Editors_Page_Box
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Wiz               : Wizards.Wizard;
-      Project           : Project_Type;
-      General_Page_Box  : Gtk.Box.Gtk_Box := null;
-      Language_Page_Box : Gtk.Box.Gtk_Box := null;
-      Path_Widget       : access Gtk.GEntry.Gtk_Entry_Record'Class;
-      Nth_Page          : Integer;
-      Context           : String) return Creation_Wizard.Project_Wizard_Page;
-   --  Return the nth page for editing attributes.
-   --  Return null if the  given page contains no visible attribute.
-   --
-   --  Project is the project from which the value of the attributes is taken.
-   --  If No_Project is specified, the default value for the attributes will be
-   --  used.
-   --  General_Page_Box is the box associated with the "General" page, so that
-   --  new attributes can be put in it.
-   --  Path_Widget is the widget that contains the location of the project file
-   --
-   --  Context is the name of the window that will display this box. For
-   --  instance, it is "wizard" for the project wizard. This acts as a filter
-   --  over which attributes will be displayed.
-   --
-   --  Wiz is the wizard in which the editor is displayed. It should be left to
-   --  null if the editor is displayed in some other context like the project
-   --  properties editor.
+   procedure For_Each_Project_Editor_Page
+     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project  : Project_Type;
+      Path     : not null access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Context  : String := "properties";
+      Callback : not null access procedure
+        (Title : String;
+         Page  : not null access Project_Editor_Page_Record'Class));
+   --  For each project editor page.
+   --  Path is the widget used to edit the project's path, which is used to
+   --  resolve relative names.
+   --  The Page has already been initialized via a call to Create.
+   --  Context explains where the page is used, and impacts which attributes
+   --  are displayed.
 
    function Get_Current_Value
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;

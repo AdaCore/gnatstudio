@@ -31,7 +31,9 @@ try:
 
     def select_in_tree(tree, column, key):
         """Select a row in a tree view. The row is such that the
-           contents of the given column is key"""
+           contents of the given column is key.
+           :return: the path of the selected row
+        """
 
         path = find_in_tree(tree, column, key)
         if path:
@@ -42,6 +44,8 @@ try:
                 tree.expand_to_path(p)
             tree.get_selection().select_path(path)
             pygps.process_all_events()
+            return path
+        return None
 
     def click_in_tree(view, path=None, column=0, button=1,
                       events=pygps.single_click_events, process_events=True,
@@ -78,7 +82,7 @@ try:
         rect = view.get_cell_area(path, view.get_column(column))
 
         for t in events:
-            #event = Gdk.Event.new(t)
+            # event = Gdk.Event.new(t)
             event = Gdk.EventButton()
             event.type = t
 

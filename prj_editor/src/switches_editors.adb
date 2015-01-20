@@ -17,268 +17,156 @@
 
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Label;                 use Gtk.Label;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
-with Commands.Interactive;      use Commands, Commands.Interactive;
+with Commands;                  use Commands;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel;                use GPS.Kernel;
-with Language_Handlers;         use Language_Handlers;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Histories;                 use Histories;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 package body Switches_Editors is
 
    Me : constant Trace_Handle := Create ("Switches_Editors");
 
-   -----------------------
-   -- Local subprograms --
-   -----------------------
+   ---------------------
+   -- Switches editor --
+   ---------------------
 
-   function Close_Switch_Editor
-     (Switches  : access Switches_Edit_Record'Class;
-      Project   : Project_Type;
-      Files     : File_Array;
-      Scenario  : access Scenario_Selector_Record'Class) return Boolean;
-   --  Called when the user has closed a switch editor for a specific file.
-   --  This modifies the edited project to reflect the changes done in the
-   --  dialog.
-   --  File_Name is the name of the file whose switches we are changing, or ""
-   --  if we are changing the default switches.
-   --  Return True if the switches were modified
+   type Multi_Page_Switches_Editor_Record is
+     new Switches_Chooser.Gtkada.Switches_Editor_Record
+     with record
+        Tool_From_Name : Tool_From_Name_Getter;
+     end record;
+   type Multi_Page_Switches_Editor is
+     access all Multi_Page_Switches_Editor_Record'Class;
+   overriding function Get_Tool_By_Name
+     (Self      : Multi_Page_Switches_Editor_Record;
+      Tool_Name : String)
+      return Gtk_Switches_Editors.Root_Switches_Editor_Access;
+   --  A special child of the switches editor, so that dependencies between
+   --  tools' switches are properly handled.
 
-   procedure Revert_To_Default (Switches : access Gtk_Widget_Record'Class);
-   --  Revert to the default switches in the editor
+   --------------------------
+   -- Project editor pages --
+   --------------------------
+
+   type Switches_Editor_Page_Record is new Project_Editor_Page_Record
+     (Flags => Multiple_Projects or Multiple_Scenarios)
+   with record
+      Switches : Multi_Page_Switches_Editor;
+      Tool     : access GPS.Kernel.Tool_Properties_Record;
+      Files    : File_Array_Access;
+      Tool_From_Name : Tool_From_Name_Getter;
+   end record;
+   type Switches_Editor_Page is access all Switches_Editor_Page_Record'Class;
+   overriding procedure Destroy (Self : in out Switches_Editor_Page_Record);
+   overriding procedure Initialize
+     (Self         : not null access Switches_Editor_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project);
+   overriding function Edit_Project
+     (Self               : not null access Switches_Editor_Page_Record;
+      Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
+      Languages          : GNAT.Strings.String_List;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean;
+   overriding function Is_Visible
+     (Self               : not null access Switches_Editor_Page_Record;
+      Languages          : GNAT.Strings.String_List) return Boolean;
 
    function Get_Switches
-     (Switches : access Switches_Edit_Record'Class;
-      Tool     : Tool_Properties_Record;
-      Files    : File_Array;
+     (Self     : not null access Switches_Editor_Page_Record'Class;
+      Project  : Project_Type;
       Use_Initial_Value : Boolean := True) return GNAT.Strings.String_List;
    --  Return the list of switches for Files, found in the package Pkg_Name,
    --  for a specific language, and for a specific list of switches. The
    --  returned array must be freed by the caller.
 
-   procedure Fill_Editor
-     (Switches  : access Switches_Edit_Record'Class;
-      Project   : Project_Type;
-      Files     : File_Array);
-   --  Fill the editor
+   type All_Tools_Switch_Editor_Record is new Project_Editor_Multi_Page_Record
+   with record
+      Project        : Project_Type;
+   end record;
+   type All_Tools_Switch_Editor is
+     access all All_Tools_Switch_Editor_Record'Class;
 
-   procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class);
-   --  Called when a page is destroyed
+   procedure For_All_Switches_Pages
+     (Data     : access GObject_Record'Class;
+      Callback : Page_Iterator_Callback);
+   --  Iterate over all nested pages of a All_Tools_Switch_Editor.
+   --  The profile is compatible with a Page_Iterator, and is used for a
+   --  Tool_From_Name_Getter.
 
-   procedure Set_Visible_Pages
-     (Editor    : access Switches_Edit_Record'Class;
-      Languages : GNAT.Strings.String_List;
-      Show_Only : Boolean;
-      File_Specific : Boolean);
-   --  Same as the public version, except that the pages are never hidden, only
-   --  shown depending on the languages.
-   --  File_Specific should be True if the editor is open for a specific set
-   --  of files, as opposed to a project-wide setting.
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
+   procedure Revert_To_Default (Switches : access Gtk_Widget_Record'Class);
+   --  Revert to the default switches in the editor
 
    function Has_Supported_Language
      (Tool                : Tool_Properties_Record;
       Supported_Languages : GNAT.Strings.String_List) return Boolean;
-   --  Return True if Page applies to one of the languages in
+   --  Return True if Tool applies to one of the languages in
    --  Supported_Language
 
-   --------------
-   -- Get_Page --
-   --------------
+   -------------
+   -- Destroy --
+   -------------
 
-   function Get_Page
-     (Editor : access Switches_Edit_Record'Class;
-      Title  : String) return Switches_Editor_Page is
+   overriding procedure Destroy (Self : in out Switches_Editor_Page_Record) is
    begin
-      if Editor.Pages /= null then
-         for Num in Editor.Pages'Range loop
-            if Editor.Pages (Num) /= null
-              and then Editor.Pages (Num).Tool_Name.all = Title
-            then
-               return Editor.Pages (Num);
-            end if;
-         end loop;
-      end if;
+      Unchecked_Free (Self.Files);
+   end Destroy;
 
-      return null;
-   end Get_Page;
+   ----------------
+   -- Initialize --
+   ----------------
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Page             : out Switches_Editor_Page;
-      In_Editor        : Switches_Edit;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Tool             : GPS.Kernel.Tool_Properties_Record)
+   overriding procedure Initialize
+     (Self         : not null access Switches_Editor_Page_Record;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      Project      : Project_Type := No_Project)
    is
       pragma Unreferenced (Kernel);
+      List : GNAT.Strings.String_List := Self.Get_Switches
+        (Project           => Project,
+         Use_Initial_Value => False);
    begin
-      Page := new Switches_Editor_Page_Record;
+      Initialize_Vbox (Self, Homogeneous => False);
+
+      Self.Switches := new Multi_Page_Switches_Editor_Record;
+      Self.Switches.Tool_From_Name := Self.Tool_From_Name;
       Initialize
-        (Editor             => Page,
-         Config             => Tool.Config,
+        (Editor             => Self.Switches,
+         Config             => Self.Tool.Config,
          Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref,
          History            => null,
          Key                => No_Key);
-      Widget_Callback.Connect (Page, Signal_Destroy, Page_Destroyed'Access);
+      Self.Pack_Start (Self.Switches, Fill => True, Expand => True);
 
-      Page.Switches  := In_Editor;
-      Page.Tool_Name := new String'(Tool.Tool_Name.all);
-   end Gtk_New;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Editor : out Switches_Edit;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Tab    : Gtk_Label;
-      T      : Integer;
-      Tools  : constant Tool_Properties_Array := Get_All_Tools (Kernel);
-
-   begin
-      Editor := new Switches_Edit_Record;
-      Gtk.Notebook.Initialize (Editor);
-      Set_Scrollable (Editor);
-
-      Editor.Kernel := Kernel_Handle (Kernel);
-      Editor.Pages := new Pages_Array (1 .. Tools'Length);
-
-      for P in Editor.Pages'Range loop
-         T := P - Editor.Pages'First + 1;
-         if Tools (T).Config /= null then
-            Gtk_New
-              (Page           => Editor.Pages (P),
-               In_Editor      => Editor,
-               Kernel         => Kernel,
-               Tool           => Tools (T));
-            Gtk_New (Tab, Editor.Pages (P).Tool_Name.all);
-            Append_Page (Editor, Editor.Pages (P), Tab);
-         end if;
-      end loop;
-
-      Set_Current_Page (Editor, 0);
-   end Gtk_New;
-
-   --------------------
-   -- Page_Destroyed --
-   --------------------
-
-   procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class) is
-      P : constant Switches_Editor_Page := Switches_Editor_Page (Page);
-   begin
-      Free (P.Tool_Name);
-   end Page_Destroyed;
-
-   -----------------------
-   -- Set_Visible_Pages --
-   -----------------------
-
-   procedure Set_Visible_Pages
-     (Editor    : access Switches_Edit_Record;
-      Languages : GNAT.Strings.String_List) is
-   begin
-      Set_Visible_Pages
-        (Editor, Languages, Show_Only => False, File_Specific => False);
-   end Set_Visible_Pages;
-
-   -----------------------
-   -- Set_Visible_Pages --
-   -----------------------
-
-   procedure Set_Visible_Pages
-     (Editor    : access Switches_Edit_Record'Class;
-      Languages : GNAT.Strings.String_List;
-      Show_Only : Boolean;
-      File_Specific : Boolean)
-   is
-      Current : Gint := Get_Current_Page (Editor);
-      Tool    : Tool_Properties_Record;
-   begin
-      for P in Editor.Pages'Range loop
-         if Editor.Pages (P) /= null then
-            Tool := Get_Tool_Properties
-              (Editor.Kernel, Editor.Pages (P).Tool_Name.all);
-
-            if Has_Supported_Language (Tool, Languages)
-              and then (not File_Specific
-                        or else Tool.Project_Package.all /= Ide_Package)
-            then
-               Show (Editor.Pages (P));
-            elsif not Show_Only then
-               Hide (Editor.Pages (P));
-            end if;
-         end if;
-      end loop;
-
-      --  Work around an apparent bug in gtk+: when the contents of a page is
-      --  hidden, and the shown again, it is always displayed on top of the
-      --  current page in the notebook. We thus see the contents of two or more
-      --  pages at the same time...
-      if Current = -1 then
-         Current := 0;
-      end if;
-      Set_Current_Page (Editor, Current);
-   end Set_Visible_Pages;
-
-   -----------------------
-   -- Revert_To_Default --
-   -----------------------
-
-   procedure Revert_To_Default
-     (Switches : access Gtk_Widget_Record'Class)
-   is
-      S : constant Switches_Edit := Switches_Edit (Switches);
-   begin
-      for P in S.Pages'Range loop
-         if S.Pages (P) /= null then
-            declare
-               Tool : constant Tool_Properties_Record :=
-                 Get_Tool_Properties (S.Kernel, S.Pages (P).Tool_Name.all);
-               List : GNAT.Strings.String_List := Get_Switches
-                 (S,
-                  Tool,
-                  Files => (1 .. 0 => GNATCOLL.VFS.No_File),
-                  Use_Initial_Value => True);
-            begin
-               Set_Command_Line (S.Pages (P), List);
-               Free (List);
-            end;
-         end if;
-      end loop;
-
-   exception
-      when E : others => Trace (Me, E);
-   end Revert_To_Default;
+      Set_Command_Line (Self.Switches, Argument_List_To_String (List));
+      Free (List);
+   end Initialize;
 
    ----------------------------
    -- Has_Supported_Language --
@@ -308,39 +196,40 @@ package body Switches_Editors is
       return False;
    end Has_Supported_Language;
 
-   ----------------------
-   -- Generate_Project --
-   ----------------------
+   ----------------
+   -- Is_Visible --
+   ----------------
 
-   function Generate_Project
-     (Switches           : access Switches_Edit_Record'Class;
+   overriding function Is_Visible
+     (Self      : not null access Switches_Editor_Page_Record;
+      Languages : GNAT.Strings.String_List) return Boolean is
+   begin
+      return Has_Supported_Language (Self.Tool.all, Languages);
+   end Is_Visible;
+
+   ------------------
+   -- Edit_Project --
+   ------------------
+
+   overriding function Edit_Project
+     (Self               : not null access Switches_Editor_Page_Record;
       Project            : Project_Type;
+      Kernel             : not null access Kernel_Handle_Record'Class;
       Languages          : GNAT.Strings.String_List;
-      Scenario_Variables : Scenario_Variable_Array;
-      Files              : File_Array) return Boolean
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
+      pragma Unreferenced (Kernel);
+
       Changed : Boolean := False;
 
-      procedure Change_Switches
-        (Page      : access Switches_Editor_Page_Record'Class;
-         Tool      : Tool_Properties_Record;
-         File_Name : Virtual_File);
+      procedure Change_Switches (File_Name : Virtual_File);
       --  Changes the switches for a specific package and tool
-
-      procedure Process_File (File_Name : Virtual_File);
-      --  Generate the switches for a specific file (or the default switches if
-      --  File_Name is the empty string). Return True if the project was
-      --  changed.
 
       ---------------------
       -- Change_Switches --
       ---------------------
 
-      procedure Change_Switches
-        (Page      : access Switches_Editor_Page_Record'Class;
-         Tool      : Tool_Properties_Record;
-         File_Name : Virtual_File)
-      is
+      procedure Change_Switches (File_Name : Virtual_File) is
          Is_Default_Value : Boolean;
          To_Remove        : Boolean := False;
          Attr_Name        : Unbounded_String;
@@ -350,7 +239,7 @@ package body Switches_Editors is
          --  page for a different language (Compiler'Switches is modified by
          --  several pages, for instance).
 
-         if not Has_Supported_Language (Tool, Languages) then
+         if not Has_Supported_Language (Self.Tool.all, Languages) then
             return;
          end if;
 
@@ -358,7 +247,7 @@ package body Switches_Editors is
 
          declare
             Args : String_List_Access :=
-              Get_Command_Line (Page, Expanded => False);
+              Self.Switches.Get_Command_Line (Expanded => False);
          begin
             if Project = No_Project then
                Is_Default_Value := False;
@@ -370,10 +259,10 @@ package body Switches_Editors is
                   Default_Args : GNAT.Strings.String_List :=
                     Get_Switches
                       (Project,
-                       Tool => Tool,
+                       Tool              => Self.Tool.all,
                        Use_Initial_Value => True);
                begin
-                  Is_Default_Value := Page = Default_Args;
+                  Is_Default_Value := Self.Switches = Default_Args;
                   if not Is_Default_Value and then Active (Me) then
                      Trace (Me, "Switches are not the default value");
                   end if;
@@ -391,11 +280,11 @@ package body Switches_Editors is
                   declare
                      Default_Args : GNAT.Strings.String_List :=
                        Get_Switches
-                         (Project, Tool,
-                          File => File_Name,
+                         (Project, Self.Tool.all,
+                          File              => File_Name,
                           Use_Initial_Value => Is_Default_Value);
                   begin
-                     Is_Default_Value := Page = Default_Args;
+                     Is_Default_Value := Self.Switches = Default_Args;
                      if not Is_Default_Value and then Active (Me) then
                         Trace (Me, "Switches changed by user");
                      end if;
@@ -405,7 +294,7 @@ package body Switches_Editors is
                end if;
             end if;
 
-            if Tool.Project_Attribute.all = "default_switches" then
+            if Self.Tool.Project_Attribute.all = "default_switches" then
                --  Tool's attribute is not defined in tool's descriptor,
                --  default handling of switches using "default_switches" and
                --  "switches" is used.
@@ -417,7 +306,7 @@ package body Switches_Editors is
                      Project.Delete_Attribute
                        (Scenario  => Scenario_Variables,
                         Attribute => Attribute_Pkg_List'(Build
-                          (Tool.Project_Package.all, "switches")),
+                          (Self.Tool.Project_Package.all, "switches")),
                         Index     => +Base_Name (File_Name));
                      Changed := True;
                   end if;
@@ -430,7 +319,7 @@ package body Switches_Editors is
                         Project.Set_Attribute
                           (Scenario  => Scenario_Variables,
                            Attribute => Attribute_Pkg_List'(Build
-                             (Tool.Project_Package.all, "switches")),
+                             (Self.Tool.Project_Package.all, "switches")),
                            Values    => Args.all,
                            Index     => +Base_Name (File_Name),
                            Prepend   => False);
@@ -441,7 +330,7 @@ package body Switches_Editors is
                         Project.Delete_Attribute
                           (Scenario  => Scenario_Variables,
                            Attribute => Attribute_Pkg_List'(Build
-                             (Tool.Project_Package.all, "switches")),
+                             (Self.Tool.Project_Package.all, "switches")),
                            Index     => +Base_Name (File_Name));
                         Changed := True;
                      end if;
@@ -450,36 +339,36 @@ package body Switches_Editors is
                      Attr_Name := To_Unbounded_String ("default_switches");
                      if Project.Has_Attribute
                        (Attribute_Pkg_List'(Build
-                        (Tool.Project_Package.all, "switches")),
-                        Index => Tool.Project_Index.all)
+                        (Self.Tool.Project_Package.all, "switches")),
+                        Index => Self.Tool.Project_Index.all)
                      then
                         Attr_Name := To_Unbounded_String ("switches");
                      end if;
 
                      if Args'Length /= 0 then
                         Trace (Me, "Changing default switches for "
-                               & Tool.Project_Package.all
-                               & " " & Tool.Project_Index.all);
+                               & Self.Tool.Project_Package.all
+                               & " " & Self.Tool.Project_Index.all);
                         Project.Set_Attribute
                           (Scenario  => Scenario_Variables,
                            Attribute => Attribute_Pkg_List'(Build
-                             (Tool.Project_Package.all,
+                             (Self.Tool.Project_Package.all,
                                   To_String (Attr_Name))),
                            Values    => Args.all,
-                           Index     => Tool.Project_Index.all,
+                           Index     => Self.Tool.Project_Index.all,
                            Prepend   => False);
                         Changed := True;
 
                      else
                         Trace (Me, "Removing default switches for "
-                               & Tool.Project_Package.all & " "
-                               & Tool.Project_Index.all);
+                               & Self.Tool.Project_Package.all & " "
+                               & Self.Tool.Project_Index.all);
                         Project.Delete_Attribute
                           (Scenario  => Scenario_Variables,
                            Attribute => Attribute_Pkg_List'(Build
-                             (Tool.Project_Package.all,
+                             (Self.Tool.Project_Package.all,
                               To_String (Attr_Name))),
-                           Index     => Tool.Project_Index.all);
+                           Index     => Self.Tool.Project_Index.all);
                         Changed := True;
                      end if;
                   end if;
@@ -490,33 +379,34 @@ package body Switches_Editors is
 
                if Args'Length /= 0 and then not Is_Default_Value then
                   Trace (Me, "Now has switches for '"
-                         & Tool.Project_Package.all & "."
-                         & Tool.Project_Attribute.all & "' when we had none");
+                         & Self.Tool.Project_Package.all & "."
+                         & Self.Tool.Project_Attribute.all
+                         & "' when we had none");
                   Project.Set_Attribute
                     (Scenario  => Scenario_Variables,
                      Attribute =>
                        Attribute_Pkg_List'
                          (Build
-                              (Tool.Project_Package.all,
-                               Tool.Project_Attribute.all)),
+                              (Self.Tool.Project_Package.all,
+                               Self.Tool.Project_Attribute.all)),
                      Values    => Args.all,
-                     Index     => Tool.Project_Index.all,
+                     Index     => Self.Tool.Project_Index.all,
                      Prepend   => False);
                   Changed := True;
 
                elsif not Is_Default_Value then
                   --  Args'Length = 0 and diffs from old value, so drop it
                   Trace (Me, "No more switches for '"
-                         & Tool.Project_Package.all & "."
-                         & Tool.Project_Attribute.all & "'");
+                         & Self.Tool.Project_Package.all & "."
+                         & Self.Tool.Project_Attribute.all & "'");
                   Project.Delete_Attribute
                     (Scenario  => Scenario_Variables,
                      Attribute =>
                        Attribute_Pkg_List'
                          (Build
-                              (Tool.Project_Package.all,
-                               Tool.Project_Attribute.all)),
-                     Index     => Tool.Project_Index.all);
+                              (Self.Tool.Project_Package.all,
+                               Self.Tool.Project_Attribute.all)),
+                     Index     => Self.Tool.Project_Index.all);
                   Changed := True;
                end if;
             end if;
@@ -525,96 +415,34 @@ package body Switches_Editors is
          end;
       end Change_Switches;
 
-      ------------------
-      -- Process_File --
-      ------------------
-
-      procedure Process_File (File_Name : Virtual_File) is
-         Tool : Tool_Properties_Record;
-      begin
-         for P in Switches.Pages'Range loop
-            if Switches.Pages (P) /= null and then
-              Switches.Pages (P).Get_Visible
-            then
-               Tool := Get_Tool_Properties
-                 (Switches.Kernel, Switches.Pages (P).Tool_Name.all);
-               if Tool /= No_Tool then
-                  Change_Switches (Switches.Pages (P), Tool, File_Name);
-               end if;
-            end if;
-         end loop;
-      end Process_File;
-
    begin
       pragma Assert (Project /= No_Project);
 
-      if Files'Length = 0 then
-         Process_File (GNATCOLL.VFS.No_File);
+      if Self.Files = null or else Self.Files'Length = 0 then
+         Change_Switches (GNATCOLL.VFS.No_File);
       else
-         for F in Files'Range loop
-            Process_File (Files (F));
+         for F in Self.Files'Range loop
+            Change_Switches (Self.Files (F));
          end loop;
       end if;
 
       return Changed;
-   end Generate_Project;
-
-   -------------------------
-   -- Close_Switch_Editor --
-   -------------------------
-
-   function Close_Switch_Editor
-     (Switches     : access Switches_Edit_Record'Class;
-      Project      : Project_Type;
-      Files        : GNATCOLL.VFS.File_Array;
-      Scenario     : access Scenario_Selector_Record'Class) return Boolean
-   is
-      Scenar    : Scenario_Iterator := Start (Scenario);
-      Modified  : Boolean := False;
-      Languages : GNAT.Strings.String_List := Project.Languages;
-
-   begin
-      --  No scenario variables ?
-      while not At_End (Scenar) loop
-         Modified := Modified or Generate_Project
-           (Switches           => Switches,
-            Languages          => Languages,
-            Scenario_Variables => Current (Scenar),
-            Project            => Project,
-            Files              => Files);
-         Next (Scenar);
-      end loop;
-
-      Free (Languages);
-
-      --  ??? Need this to update the icon in the project explorer
-      if Modified then
-         Recompute_View (Switches.Kernel);
-      end if;
-
-      return Modified;
-   end Close_Switch_Editor;
-
-   ------------------
-   -- Set_Switches --
-   ------------------
-
-   procedure Set_Switches
-     (Editor : access Switches_Edit_Record; Project : Project_Type) is
-   begin
-      Fill_Editor (Editor, Project, Files => (1 .. 0 => GNATCOLL.VFS.No_File));
-   end Set_Switches;
+   end Edit_Project;
 
    ------------------
    -- Get_Switches --
    ------------------
 
    function Get_Switches
-     (Switches          : access Switches_Edit_Record'Class;
-      Tool              : Tool_Properties_Record;
-      Files             : File_Array;
+     (Self     : not null access Switches_Editor_Page_Record'Class;
+      Project  : Project_Type;
       Use_Initial_Value : Boolean := True) return GNAT.Strings.String_List
    is
+      Files : constant File_Array :=
+        (if Use_Initial_Value or else Self.Files = null
+         then Empty_File_Array
+         else Self.Files.all);
+
       procedure Free is
         new Ada.Unchecked_Deallocation
           (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
@@ -622,20 +450,20 @@ package body Switches_Editors is
       Value : String_List_Access;
 
    begin
-      if Tool.Project_Attribute.all = "default_switches" then
+      if Self.Tool.Project_Attribute.all = "default_switches" then
          --  Tool's attribute is not defined in tool's descriptor, default
          --  handling of switches using "default_switches" and "switches" is
          --  used.
 
          if Files'Length = 0 then
             return Get_Switches
-              (Switches.Project, Tool, GNATCOLL.VFS.No_File,
+              (Project, Self.Tool.all, GNATCOLL.VFS.No_File,
                Use_Initial_Value => Use_Initial_Value);
 
          else
             --  ??? Should we merge all the switches ?
             return Get_Switches
-              (Switches.Project, Tool, Files (Files'First),
+              (Project, Self.Tool.all, Files (Files'First),
                Use_Initial_Value => Use_Initial_Value);
          end if;
 
@@ -643,12 +471,13 @@ package body Switches_Editors is
          --  Tool's attribute is defined in tool's descriptor, request value
          --  of the tool specific attribute and index.
 
-         Value := Switches.Project.Attribute_Value
+         Value := Project.Attribute_Value
            (Attribute =>
               Attribute_Pkg_List'
               (Build
-                 (Tool.Project_Package.all, Tool.Project_Attribute.all)),
-            Index     => Tool.Project_Index.all);
+                 (Self.Tool.Project_Package.all,
+                  Self.Tool.Project_Attribute.all)),
+            Index     => Self.Tool.Project_Index.all);
 
          if Value = null then
             return (1 .. 0 => null);
@@ -662,72 +491,6 @@ package body Switches_Editors is
          end if;
       end if;
    end Get_Switches;
-
-   -----------------
-   -- Fill_Editor --
-   -----------------
-
-   procedure Fill_Editor
-     (Switches  : access Switches_Edit_Record'Class;
-      Project   : Project_Type;
-      Files     : File_Array) is
-   begin
-      Switches.Project := Project;
-
-      --  Project might be null when we are in the project wizard. In this
-      --  case, we fall back on switches for the default project.
-
-      if Project /= No_Project then
-         if Files'Length = 0 then
-            declare
-               Langs : GNAT.Strings.String_List := Project.Languages;
-            begin
-               Set_Visible_Pages (Switches, Langs);
-               Free (Langs);
-            end;
-
-         else
-            for F in Files'Range loop
-               declare
-                  Lang : aliased String := Get_Language_From_File
-                    (Get_Language_Handler (Switches.Kernel), Files (F));
-               begin
-                  To_Lower (Lang);
-
-                  Set_Visible_Pages
-                    (Editor    => Switches,
-                     Languages => (1 => Lang'Unchecked_Access),
-                     Show_Only => F /= Files'First,
-                     File_Specific => True);
-               end;
-            end loop;
-         end if;
-      end if;
-
-      --  Set the switches for all the pages
-
-      for P in Switches.Pages'Range loop
-         if Switches.Pages (P) /= null then
-            declare
-               Tool : constant Tool_Properties_Record :=
-                 Get_Tool_Properties (Switches.Kernel,
-                                      Switches.Pages (P).Tool_Name.all);
-               List : GNAT.Strings.String_List := Get_Switches
-                 (Switches          => Switches,
-                  Tool              => Tool,
-                  Files             => Files,
-                  Use_Initial_Value => False);
-            begin
-               Set_Command_Line
-                 (Switches.Pages (P), Argument_List_To_String (List));
-               Free (List);
-            end;
-         end if;
-      end loop;
-
-   exception
-      when E : others => Trace (Me, E);
-   end Fill_Editor;
 
    -------------
    -- Execute --
@@ -757,6 +520,35 @@ package body Switches_Editors is
       return Success;
    end Execute;
 
+   -----------------------
+   -- Revert_To_Default --
+   -----------------------
+
+   procedure Revert_To_Default
+     (Switches : access Gtk_Widget_Record'Class)
+   is
+      Self : constant All_Tools_Switch_Editor :=
+        All_Tools_Switch_Editor (Switches);
+
+      procedure Callback
+        (Page : not null access Project_Editor_Page_Record'Class);
+      procedure Callback
+        (Page : not null access Project_Editor_Page_Record'Class)
+      is
+         S : constant Switches_Editor_Page := Switches_Editor_Page (Page);
+         List : GNAT.Strings.String_List := Get_Switches
+           (S,
+            Project           => Self.Project,
+            Use_Initial_Value => True);
+      begin
+         Set_Command_Line (S.Switches, List);
+         Free (List);
+      end Callback;
+
+   begin
+      Self.For_Each_Page (Callback'Unrestricted_Access);
+   end Revert_To_Default;
+
    -----------------------------
    -- Edit_Switches_For_Files --
    -----------------------------
@@ -766,7 +558,7 @@ package body Switches_Editors is
       Project      : Project_Type;
       Files        : File_Array) return Boolean
    is
-      Switches  : Switches_Edit;
+      Page      : All_Tools_Switch_Editor;
       Dialog    : Gtk_Dialog;
       Button    : Gtk_Widget;
       Ignore    : Gtk_Widget;
@@ -802,75 +594,184 @@ package body Switches_Editors is
       Dialog.Set_Default_Size (1024, 800);
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Pack_Start
-        (Get_Content_Area (Dialog), Box, Fill => True, Expand => True);
+      Dialog.Get_Content_Area.Pack_Start (Box, Fill => True, Expand => True);
 
-      Gtk_New (Switches, Kernel);
-      Switches.Kernel := Kernel_Handle (Kernel);
-      Pack_Start (Box, Switches, Fill => True, Expand => True);
+      Page := All_Tools_Switch_Editor
+        (Switches_Editor_For_All_Tools_Factory (Kernel, Files));
+      Page.Project := Project;
+      Page.Initialize (Kernel, Project);
+      Box.Pack_Start (Page, Fill => True, Expand => True);
 
       Gtk_New (Selector, Kernel);
-      Pack_Start (Box, Selector, Expand => False);
+      Box.Pack_Start (Selector, Expand => False);
 
-      Show_All (Dialog);
+      Dialog.Show_All;
 
-      --  Unrestricted_Access is safe, since Switches is a local variable
-      --  destroyed when the dialog is destroyed at the end of this procedure.
-
-      Switches.Files := Files'Unrestricted_Access;
-
-      Fill_Editor (Switches, Project, Files);
-
-      Ignore := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Ignore := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
 
       if Files'Length /= 0 then
          Gtk_New_From_Stock (B, Stock_Revert_To_Saved);
-         Pack_Start (Get_Action_Area (Dialog), B);
+         Dialog.Get_Action_Area.Pack_Start (B);
          Widget_Callback.Object_Connect
            (B, Signal_Clicked, Revert_To_Default'Access,
-            Slot_Object => Switches);
-         Show_All (B);
+            Slot_Object => Page);
+         B.Show_All;
       end if;
 
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-      Show_All (Button);
+      Button := Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+      Button.Show_All;
 
       --  Note: if the dialog is no longer modal, then we need to create a copy
       --  of the context for storing in the callback, since the current context
       --  will be automatically freed by the kernel at some point in the life
       --  of this dialog.
 
-      if Run (Dialog) = Gtk_Response_OK then
-         Modified := Close_Switch_Editor
-           (Switches, Project, Files, Selector);
+      Modified := False;
+
+      --  Compute which pages should be visible
+
+      if Files'Length /= 0 then
+         declare
+            List : GNAT.Strings.String_List (Files'Range);
+         begin
+            for L in List'Range loop
+               List (L) := new String'
+                 (Kernel.Get_Language_Handler.Get_Language_From_File
+                    (Files (L)));
+            end loop;
+
+            Modified := Page.Is_Visible (List);
+            Free (List);
+         end;
       else
-         Modified := False;
+         declare
+            List : GNAT.Strings.String_List := Project.Languages;
+         begin
+            Modified := Page.Is_Visible (List);
+            Free (List);
+         end;
+      end if;
+
+      if Run (Dialog) = Gtk_Response_OK then
+         declare
+            Scenar    : Scenario_Iterator := Start (Selector);
+            Languages : GNAT.Strings.String_List := Project.Languages;
+         begin
+            while not At_End (Scenar) loop
+               Modified := Modified or Page.Edit_Project
+                 (Kernel             => Kernel,
+                  Languages          => Languages,
+                  Scenario_Variables => Current (Scenar),
+                  Project            => Project);
+               Next (Scenar);
+            end loop;
+
+            Free (Languages);
+
+            --  ??? Need this to update the icon in the project explorer
+            if Modified then
+               Recompute_View (Kernel);
+            end if;
+         end;
       end if;
 
       Destroy (Dialog);
       return Modified;
    end Edit_Switches_For_Files;
 
+   --------------------------------------
+   -- Switches_Editor_For_Tool_Factory --
+   --------------------------------------
+
+   function Switches_Editor_For_Tool_Factory
+     (Tool           : not null access GPS.Kernel.Tool_Properties_Record;
+      Files          : File_Array := Empty_File_Array;
+      Tool_From_Name : Tool_From_Name_Getter)
+      return Project_Editor_Page
+   is
+      Result : access Switches_Editor_Page_Record;
+   begin
+      Result := new Switches_Editor_Page_Record;
+      Result.Tool_From_Name := Tool_From_Name;
+      Result.Tool := Tool;
+
+      if Files /= Empty_File_Array then
+         Result.Files := new File_Array'(Files);
+      end if;
+      return Project_Editor_Page (Result);
+   end Switches_Editor_For_Tool_Factory;
+
+   ----------------------------
+   -- For_All_Switches_Pages --
+   ----------------------------
+
+   procedure For_All_Switches_Pages
+     (Data     : access GObject_Record'Class;
+      Callback : Page_Iterator_Callback)
+   is
+      P : constant All_Tools_Switch_Editor := All_Tools_Switch_Editor (Data);
+   begin
+      P.For_Each_Page (Callback);
+   end For_All_Switches_Pages;
+
+   -------------------------------------------
+   -- Switches_Editor_For_All_Tools_Factory --
+   -------------------------------------------
+
+   function Switches_Editor_For_All_Tools_Factory
+     (Kernel         : not null access Kernel_Handle_Record'Class;
+      Files          : File_Array := Empty_File_Array)
+      return Project_Editor_Page
+   is
+      Result : constant access All_Tools_Switch_Editor_Record :=
+        new All_Tools_Switch_Editor_Record;
+      Tools : constant Tool_Properties_Array := Get_All_Tools (Kernel);
+   begin
+      for T in Tools'Range loop
+         Result.Add_Page
+           (Page  => Switches_Editor_For_Tool_Factory
+              (Tool           => Tools (T),
+               Files          => Files,
+               Tool_From_Name =>
+                 (Data     => Result,
+                  Iterator => For_All_Switches_Pages'Access)),
+            Title => Tools (T).Tool_Name.all);
+      end loop;
+
+      return Project_Editor_Page (Result);
+   end Switches_Editor_For_All_Tools_Factory;
+
    ----------------------
    -- Get_Tool_By_Name --
    ----------------------
 
    overriding function Get_Tool_By_Name
-     (Editor    : Switches_Editor_Page_Record;
+     (Self      : Multi_Page_Switches_Editor_Record;
       Tool_Name : String)
-      return Gtk_Switches_Editors.Root_Switches_Editor_Access is
+      return Gtk_Switches_Editors.Root_Switches_Editor_Access
+   is
+      Found : Gtk_Switches_Editors.Root_Switches_Editor_Access;
+
+      procedure Callback
+        (Page : not null access Project_Editor_Page_Record'Class);
+      procedure Callback
+        (Page : not null access Project_Editor_Page_Record'Class)
+      is
+      begin
+         if Page.all in Switches_Editor_Page_Record'Class
+           and then Switches_Editor_Page (Page).Tool.Tool_Name.all = Tool_Name
+         then
+            Found := Gtk_Switches_Editors.Root_Switches_Editor_Access
+              (Switches_Editor_Page (Page).Switches);
+         end if;
+      end Callback;
+
    begin
-      if Editor.Switches /= null then
-         for P in Editor.Switches.Pages'Range loop
-            if Editor.Switches.Pages (P) /= null
-              and then Editor.Switches.Pages (P).Tool_Name.all = Tool_Name
-            then
-               return Gtk_Switches_Editors.Root_Switches_Editor_Access
-                 (Editor.Switches.Pages (P));
-            end if;
-         end loop;
+      if Self.Tool_From_Name.Iterator /= null then
+         Self.Tool_From_Name.Iterator
+           (Self.Tool_From_Name.Data, Callback'Unrestricted_Access);
       end if;
-      return null;
+      return Found;
    end Get_Tool_By_Name;
 
 end Switches_Editors;

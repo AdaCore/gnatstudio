@@ -338,7 +338,7 @@ package Switches_Chooser is
 
       function Get_Tool_By_Name
         (Editor : Root_Switches_Editor;
-         Tool_Name : String) return Root_Switches_Editor_Access;
+         Tool_Name : String) return Root_Switches_Editor_Access is (null);
       --  Return the editor for the switches of Tool. By default, this returns
       --  null. When the editor is found, it is possible that changing some
       --  switches in Editor will also impact switches from the returned editor

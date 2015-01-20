@@ -14,9 +14,62 @@ import GPS
 
 XML = r"""<?xml version="1.0" ?>
 <GPS>
+    <!-- Sources directories -->
+
+    <project_attribute
+        name="source_dirs"
+        editor_page="Sources/Directories"
+        editor_section="Source directories"
+        list="true"
+        ordered="true"
+        description="List of directories that contain the source files. You can specify that a directory and all its subdirectories should be included by checking the Recursive checkbox"
+        label="">
+        <string type="directory" default="." />
+    </project_attribute>
+
+    <!--  Source files -->
+
+    <project_attribute
+        name="source_list_file"
+        editor_page="Sources/Files"
+        description="Name of a file that contains the list of source files for this project. The names should appear one per line. The names should not include any directory information, since this is taken from the list of source directories. This attribute is ignored if an explicit list of sources is given."
+        disable_if_not_set="true"
+        disable="source_files"
+        hide_in="wizard library_wizard"
+        label="Source list file">
+        <string type="file" default="" />
+    </project_attribute>
+
+    <project_attribute
+        name="source_files"
+        editor_page="Sources/Files"
+        list="true"
+        base_name_only="true"
+        disable_if_not_set="true"
+        disable="source_list_file"
+        hide_in="wizard library_wizard"
+        description="List of source files for this project. These are the base name of the files, and should not include any directory information. This attribute is not compatible with Source List File.">
+        <string type="file" default="project source files" />
+    </project_attribute>
+
+    <!--  Locally removed files -->
+
+    <project_attribute
+        name="locally_removed_files"
+        label="files"
+        editor_page="Sources/Files"
+        editor_section="Locally removed files"
+        description="List of source files from the extended project that should no longer be visible to the compiler when compiling the extending project. This can be used for instance when a source file has become obsolete due to other changes in the project"
+        disable_if_not_set="true"
+        hide_in="library_wizard wizard"
+        list="true"
+        base_name_only="true">
+        <string type="file" filter="extended_project" default="" />
+    </project_attribute>
+
    <project_attribute
        name="languages"
-       editor_page="Languages"
+       editor_page=""
        editor_section="Languages"
        label=""
        description="List of languages for the source files of this project"
@@ -29,7 +82,7 @@ XML = r"""<?xml version="1.0" ?>
    <project_attribute
        name="Compiler_Command"
        package="IDE"
-       editor_page="Languages"
+       editor_page=""
        editor_section="Tools"
        description="The command to compile the source files for a given language"
        hide_in="all"
@@ -53,7 +106,7 @@ XML = r"""<?xml version="1.0" ?>
    <project_attribute
        name="gnatlist"
        package="IDE"
-       editor_page="Languages"
+       editor_page=""
        editor_section="Tools"
        description="The gnatls command used to find where the Ada run time files are installed (including optional arguments, e.g. gnatls --RTS=sjlj)"
        hide_in="all"
@@ -65,7 +118,7 @@ XML = r"""<?xml version="1.0" ?>
    <project_attribute
        name="gnat"
        package="IDE"
-       editor_page="Languages"
+       editor_page=""
        editor_section="Tools"
        description="The gnat driver used to run the various commands associated with the GNAT toolchain"
        hide_in="all"
@@ -77,7 +130,7 @@ XML = r"""<?xml version="1.0" ?>
    <project_attribute
        name="debugger_command"
        package="IDE"
-       editor_page="Languages"
+       editor_page=""
        editor_section="Tools"
        description="The command line to use when debugging applications (including optional arguments). Only gdb and its variants are currently supported"
        hide_in="all"
@@ -89,7 +142,7 @@ XML = r"""<?xml version="1.0" ?>
    <project_attribute
        name="global_configuration_pragmas"
        package="Builder"
-       editor_page="General"
+       editor_page="Build"
        editor_section="External configuration"
        description="External file that contains the configuration pragmas to use for Ada sources. This file will be used both for this project and all its imported projects"
        label="Global pragmas"
@@ -100,7 +153,7 @@ XML = r"""<?xml version="1.0" ?>
    <project_attribute
        name="local_configuration_pragmas"
        package="Compiler"
-       editor_page="General"
+       editor_page="Build"
        editor_section="External configuration"
        description="External file that contains the configuration pragmas to use for Ada sources in this project. This is the combined with the pragmas found in the Global pragmas attribute of the root project"
        label="Local pragmas"
@@ -108,10 +161,91 @@ XML = r"""<?xml version="1.0" ?>
        <string type="file" />
    </project_attribute>
 
+   <!--  VCS attributes -->
+
+   <project_attribute
+       name="vcs_kind"
+       package="IDE"
+       editor_page="Version Control"
+       editor_section="System"
+       description="Name of the version control system that you are using"
+       label="System">
+       <shell default="None" >VCS.supported_systems</shell>
+   </project_attribute>
+
+   <project_attribute
+       name="vcs_log_check"
+       package="IDE"
+       editor_page="Version Control"
+       editor_section="Actions"
+       description="Application run on the log file/revision history just before commiting a file. If it returns anything other than 0, the commit will not be performed. The only parameter to this script is the name of the log file"
+       label="Log checker">
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="vcs_file_check"
+       package="IDE"
+       editor_page="Version Control"
+       editor_section="Actions"
+       description="Application run on the source file just before commiting a file. If it returns anything other than 0, the commit will not be performed. The only parameter to this script is the name of the source file"
+       label="File checker">
+       <string />
+    </project_attribute>
+
+    <project_attribute
+       name="vcs_repository_root"
+       package="IDE"
+       editor_page="Version Control"
+       editor_section="Path"
+       description="The repository root path"
+       label="Repository">
+       <string />
+    </project_attribute>
+
+    <project_attribute
+       name="vcs_patch_root"
+       package="IDE"
+       editor_page="Version Control"
+       editor_section="Path"
+       description="The root directory to use for building patch file. The root project directory is used if this value is not defined."
+       label="Patch">
+       <string />
+    </project_attribute>
+
+    <!--  Object directories -->
+
+    <project_attribute
+        name="object_dir"
+        editor_page="Build/Directories"
+        description="The name of the directories in which the files generated by the compiler will be put. This include object files and any other file that your compiler generates as a by-product of the compilation. If you need multiple object directories, you must create multiple project files that import each other. The directory is relative to the project directory (thus '.' means the project directory)."
+        label="Build directory">
+        <string type="directory" default="." allow_empty="False"/>
+    </project_attribute>
+
+    <project_attribute
+        name="exec_dir"
+        editor_page="Build/Directories"
+        description="Directory in which the executable will be copied. By default, this is the same as the object directory, and doesn't need to be further specified"
+        label="Exec directory"
+        omit_if_default="true">
+        <string type="directory" default="(same as build directory)" allow_empty="False" />
+    </project_attribute>
+
+    <project_attribute
+        name="documentation_dir"
+        package="IDE"
+        editor_page="Build/Directories"
+        description="Directory in which the documentation will be generated. By default, this is a subdirectory 'doc' in the object directory, and doesn't need to be further specified"
+        label="Doc directory"
+        omit_if_default="true">
+        <string type="directory" default="(subdir doc in build directory)" allow_empty="False" />
+    </project_attribute>
+
    <project_attribute
        name="program_host"
        package="IDE"
-       editor_page="General"
+       editor_page="Build/Cross-Platform"
        editor_section="Cross environment"
        description="Name or IP address of the embedded target. This field should be left blank if you are not working on an embedded application"
        hide_in="wizard library_wizard"
@@ -122,7 +256,7 @@ XML = r"""<?xml version="1.0" ?>
    <project_attribute
        name="communication_protocol"
        package="IDE"
-       editor_page="General"
+       editor_page="Build/Cross-Platform"
        editor_section="Cross environment"
        description="Protocol used to connect to the embedded target. This field should be left blank if you are not working on an embedded application"
        hide_in="wizard library_wizard"
@@ -134,145 +268,11 @@ XML = r"""<?xml version="1.0" ?>
        <string />
    </project_attribute>
 
-   <!--  VCS attributes -->
-
-   <project_attribute
-       name="vcs_kind"
-       package="IDE"
-       editor_page="VCS"
-       editor_section="System"
-       description="Name of the version control system that you are using"
-       label="System">
-       <shell default="None" >VCS.supported_systems</shell>
-   </project_attribute>
-
-   <project_attribute
-       name="vcs_log_check"
-       package="IDE"
-       editor_page="VCS"
-       editor_section="Actions"
-       description="Application run on the log file/revision history just before commiting a file. If it returns anything other than 0, the commit will not be performed. The only parameter to this script is the name of the log file"
-       label="Log checker">
-       <string />
-   </project_attribute>
-
-   <project_attribute
-       name="vcs_file_check"
-       package="IDE"
-       editor_page="VCS"
-       editor_section="Actions"
-       description="Application run on the source file just before commiting a file. If it returns anything other than 0, the commit will not be performed. The only parameter to this script is the name of the source file"
-       label="File checker">
-       <string />
-    </project_attribute>
-
-    <project_attribute
-       name="vcs_repository_root"
-       package="IDE"
-       editor_page="VCS"
-       editor_section="Path"
-       description="The repository root path"
-       label="Repository">
-       <string />
-    </project_attribute>
-
-    <project_attribute
-       name="vcs_patch_root"
-       package="IDE"
-       editor_page="VCS"
-       editor_section="Path"
-       description="The root directory to use for building patch file. The root project directory is used if this value is not defined."
-       label="Patch">
-       <string />
-    </project_attribute>
-
-    <!-- Sources directories -->
-
-    <project_attribute
-        name="source_dirs"
-        editor_page="Source dirs"
-        editor_section="Source directories"
-        list="true"
-        ordered="true"
-        description="List of directories that contain the source files. You can specify that a directory and all its subdirectories should be included by checking the Recursive checkbox"
-        label="">
-        <string type="directory" default="." />
-    </project_attribute>
-
-    <!--  Source files -->
-
-    <project_attribute
-        name="source_list_file"
-        editor_page="Source files"
-        description="Name of a file that contains the list of source files for this project. The names should appear one per line. The names should not include any directory information, since this is taken from the list of source directories. This attribute is ignored if an explicit list of sources is given."
-        disable_if_not_set="true"
-        disable="source_files"
-        hide_in="wizard library_wizard"
-        label="Source list file">
-        <string type="file" default="" />
-    </project_attribute>
-
-    <project_attribute
-        name="source_files"
-        editor_page="Source files"
-        list="true"
-        base_name_only="true"
-        disable_if_not_set="true"
-        disable="source_list_file"
-        hide_in="wizard library_wizard"
-        description="List of source files for this project. These are the base name of the files, and should not include any directory information. This attribute is not compatible with Source List File.">
-        <string type="file" default="project source files" />
-    </project_attribute>
-
-    <!--  Locally removed files -->
-
-    <project_attribute
-        name="locally_removed_files"
-        label="files"
-        editor_page="Hidden files"
-        editor_section="Locally removed files"
-        description="List of source files from the extended project that should no longer be visible to the compiler when compiling the extending project. This can be used for instance when a source file has become obsolete due to other changes in the project"
-        disable_if_not_set="true"
-        hide_in="library_wizard wizard"
-        list="true"
-        base_name_only="true">
-        <string type="file" filter="extended_project" default="" />
-    </project_attribute>
-
-    <!--  Object directories -->
-
-    <project_attribute
-        name="object_dir"
-        editor_page="Objects"
-        description="The name of the directories in which the files generated by the compiler will be put. This include object files and any other file that your compiler generates as a by-product of the compilation. If you need multiple object directories, you must create multiple project files that import each other. The directory is relative to the project directory (thus '.' means the project directory)."
-        label="Build directory">
-        <string type="directory" default="." allow_empty="False"/>
-    </project_attribute>
-
-    <project_attribute
-        name="exec_dir"
-        editor_page="Objects"
-        description="Directory in which the executable will be copied. By default, this is the same as the object directory, and doesn't need to be further specified"
-        label="Exec directory"
-        omit_if_default="true">
-        <string type="directory" default="(same as build directory)" allow_empty="False" />
-    </project_attribute>
-
-    <project_attribute
-        name="documentation_dir"
-        package="IDE"
-        editor_page="Objects"
-        description="Directory in which the documentation will be generated. By default, this is a subdirectory 'doc' in the object directory, and doesn't need to be further specified"
-        label="Doc directory"
-        omit_if_default="true">
-        <string type="directory" default="(subdir doc in build directory)" allow_empty="False" />
-    </project_attribute>
-
     <!--  Main units -->
 
     <project_attribute
         name="main"
-        editor_page="Main files"
+        editor_page="Sources/Main"
         editor_section="Main files"
         list="true"
         description="List of source files that contain the application's entry point. These units will appear in the Build menu, so that you can easily share a single project hierarchy to build a whole set of applications"
@@ -284,7 +284,7 @@ XML = r"""<?xml version="1.0" ?>
    <project_attribute
        name="executable_suffix"
        package="builder"
-       editor_page="Main files"
+       editor_page="Sources/Main"
        label="Default suffix"
        description="The default suffix for executables generated by the builder. This default can be overriden by modifying the list of executable names below.">
        <string />
@@ -293,7 +293,7 @@ XML = r"""<?xml version="1.0" ?>
    <project_attribute
        name="executable"
        package="Builder"
-       editor_page="Main files"
+       editor_page="Sources/Main"
        editor_section="Executable names"
        description="Name of the executable generated when compiling each of the main units"
        case_sensitive_index="file"
@@ -380,7 +380,7 @@ available, apart of course for the spec files and the bodies of generic packages
 
    <project_attribute
        name="library_interface"
-       editor_page="Library"
+       editor_page="Library/Standalone"
        editor_section="Standalone library"
        label="Interface"
        hide_in="wizard"
@@ -391,7 +391,7 @@ available, apart of course for the spec files and the bodies of generic packages
 
    <project_attribute
        name="library_auto_init"
-       editor_page="Library"
+       editor_page="Library/Standalone"
        editor_section="Standalone library"
        label="Auto Init"
        hide_in="wizard"
@@ -402,7 +402,7 @@ available, apart of course for the spec files and the bodies of generic packages
 
    <project_attribute
        name="library_src_dir"
-       editor_page="Library"
+       editor_page="Library/Standalone"
        editor_section="Standalone library"
        label="Source directory"
        hide_in="wizard"

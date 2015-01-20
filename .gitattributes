@@ -6,3 +6,4 @@ libclang/gen/* no-precommit-check
 
 # Long lines in XML string
 share/support/core/languages.py   no-precommit-check
+share/support/core/projects.py    no-precommit-check
