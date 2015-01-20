@@ -132,6 +132,19 @@ package body GPS.Kernel.MDI is
    end record;
    type File_Check_Button is access all File_Check_Button_Record'Class;
 
+   MDI_Child_Class_Record : aliased Glib.Object.Ada_GObject_Class :=
+      Glib.Object.Uninitialized_Class;
+   procedure MDI_Child_Class_Init (Self : GObject_Class);
+   pragma Convention (C, MDI_Child_Class_Init);
+   procedure Get_Preferred_Width
+      (Widget : System.Address; Min, Nat : out Glib.Gint);
+   pragma Convention (C, Get_Preferred_Width);
+   procedure Get_Preferred_Height_For_Width
+      (Widget : System.Address; Width : Glib.Gint; Min, Nat : out Glib.Gint);
+   pragma Convention (C, Get_Preferred_Height_For_Width);
+   --  Support for creating a new gtk class, and define a default size for
+   --  MDI children.
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -215,16 +228,66 @@ package body GPS.Kernel.MDI is
       Default_Width, Default_Height : Glib.Gint := -1;
       Module              : access Module_ID_Record'Class := null;
       Desktop_Independent : Boolean := False;
-      Areas               : Allowed_Areas := Both)
-   is
-      pragma Unreferenced (Default_Width, Default_Height);
+      Areas               : Allowed_Areas := Both) is
    begin
+      Glib.Object.Initialize_Class_Record
+         (Ancestor     => Gtkada.MDI.Child_Get_Type,
+          Class_Record => MDI_Child_Class_Record,
+          Type_Name    => "GPSMDIChild",
+          Class_Init   => MDI_Child_Class_Init'Access);
+      G_New (Child, MDI_Child_Class_Record.The_Type);
+
       Gtkada.MDI.Initialize
         (Child, Widget, Flags, Group, Focus_Widget, Areas => Areas);
       Child.Kernel := Kernel_Handle (Kernel);
       Child.Module := Abstract_Module_ID (Module);
       Child.Desktop_Independent := Desktop_Independent;
+      Child.Default_Width := Default_Width;
+      Child.Default_Height := Default_Height;
    end Initialize;
+
+   --------------------------
+   -- MDI_Child_Class_Init --
+   --------------------------
+
+   procedure MDI_Child_Class_Init (Self : GObject_Class) is
+   begin
+      Set_Default_Get_Preferred_Width_Handler
+         (Self, Get_Preferred_Width'Access);
+      Set_Default_Get_Preferred_Height_For_Width_Handler
+         (Self, Get_Preferred_Height_For_Width'Access);
+   end MDI_Child_Class_Init;
+
+   -------------------------
+   -- Get_Preferred_Width --
+   -------------------------
+
+   procedure Get_Preferred_Width
+      (Widget : System.Address; Min, Nat : out Glib.Gint)
+   is
+      C : constant GPS_MDI_Child :=
+         GPS_MDI_Child (Glib.Object.Convert (Widget));
+   begin
+      Min := 1;
+      Nat := Gint'Max (1, C.Default_Width);
+   end Get_Preferred_Width;
+
+   ------------------------------------
+   -- Get_Preferred_Height_For_Width --
+   ------------------------------------
+
+   procedure Get_Preferred_Height_For_Width
+      (Widget   : System.Address;
+       Width    : Glib.Gint;
+       Min, Nat : out Glib.Gint)
+   is
+      pragma Unreferenced (Width);
+      C : constant GPS_MDI_Child :=
+         GPS_MDI_Child (Glib.Object.Convert (Widget));
+   begin
+      Min := 1;
+      Nat := Gint'Max (1, C.Default_Height);
+   end Get_Preferred_Height_For_Width;
 
    -------------
    -- Get_MDI --

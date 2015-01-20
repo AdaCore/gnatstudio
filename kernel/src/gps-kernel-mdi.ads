@@ -477,6 +477,8 @@ private
       Save_Desktop        : GNATCOLL.Scripts.Subprogram_Type;
       Kernel              : Kernel_Handle;
 
+      Default_Width, Default_Height : Glib.Gint := -1;
+
       Files               : Monitored_File := No_Monitored_File;
    end record;
 
