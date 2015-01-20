@@ -679,6 +679,9 @@ package body Gtkada.Entry_Completion is
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
       pragma Unreferenced (Event);
    begin
+      --  Update the current context, so that key shortcuts like
+      --  Backspace are sent to the omni-search, and not the editor that
+      --  had the focus previously.
       Grab_Toplevel_Focus (Get_MDI (S.Kernel), S.GEntry);
       return False;
    end On_Focus_In;
