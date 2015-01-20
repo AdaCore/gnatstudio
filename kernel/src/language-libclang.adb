@@ -53,6 +53,9 @@ package body Language.Libclang is
    Me : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("LIBCLANG", On);
 
+   Activate_Clang_XRef : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("LIBCLANG.XREF", Off);
+
    function Parsing_Timeout_Handler return Boolean;
 
    package Task_Parser_Pool is new Pool
@@ -781,9 +784,6 @@ package body Language.Libclang is
       RP     : constant GNATCOLL.Projects.Project_Type := P_Tree.Root_Project;
       Files : File_Array_Access;
       Filtered_Files : Virtual_File_Vectors.Vector;
-      Command_Data : constant Parse_Files_Data_Type_Access
-        := new Parse_Files_Data_Type;
-      Command : Parse_Files_Command.Generic_Asynchronous_Command_Access;
    begin
 
       while Parsing_Request_Queue.Length > 0 loop
@@ -825,6 +825,12 @@ package body Language.Libclang is
          Clang_Module_Id.Parsing_Tasks (I).Start;
       end loop;
 
+      --  We actually only want to index if cross refs are activated
+
+      if not Active (Activate_Clang_XRef) then
+         return;
+      end if;
+
       --  Fetch all of the project's files
 
       Files := RP.Source_Files (Recursive => True);
@@ -842,31 +848,37 @@ package body Language.Libclang is
       end loop;
 
       Unchecked_Free (Files);
+      declare
+         Command_Data : constant Parse_Files_Data_Type_Access
+           := new Parse_Files_Data_Type;
+         Command : Parse_Files_Command.Generic_Asynchronous_Command_Access;
+      begin
+         --  Call Translation_Unit on them to populate the cache for the file
+         Command_Data.Max_Idx := Natural (Filtered_Files.Length);
+         for F of Filtered_Files loop
+            declare
+               Callback : Parse_Callback_Access :=
+                 new Parse_Callback_Package.Parse_For_Cache'
+                   (Command => Command_Data);
+            begin
+               Enqueue_Translation_Unit (Core_Kernel (Kernel), F, False,
+                                         Callback => Callback);
+            end;
+         end loop;
 
-      --  Call Translation_Unit on them to populate the cache for the file
-      Command_Data.Max_Idx := Natural (Filtered_Files.Length);
-      for F of Filtered_Files loop
-         declare
-            Callback : Parse_Callback_Access :=
-              new Parse_Callback_Package.Parse_For_Cache'
-                (Command => Command_Data);
-         begin
-            Enqueue_Translation_Unit (Core_Kernel (Kernel), F, False,
-                                      Callback => Callback);
-         end;
-      end loop;
+         --  Only start the monitoring command if there actually are files to
+         --  parse
+         if not Filtered_Files.Is_Empty then
+            Parse_Files_Command.Create (Command, "libclang parsing files",
+                                        Command_Data,
+                                        Parse_Files_Iterate'Access);
 
-      --  Only start the monitoring command if there actually are files to
-      --  parse
-      if not Filtered_Files.Is_Empty then
-         Parse_Files_Command.Create (Command, "libclang parsing files",
-                                     Command_Data, Parse_Files_Iterate'Access);
-
-         Launch_Background_Command (Kernel          => Kernel,
-                                    Command         => Command,
-                                    Active          => False,
-                                    Show_Bar        => True);
-      end if;
+            Launch_Background_Command (Kernel          => Kernel,
+                                       Command         => Command,
+                                       Active          => False,
+                                       Show_Bar        => True);
+         end if;
+      end;
 
    end On_Project_View_Changed;
 
@@ -931,12 +943,13 @@ package body Language.Libclang is
    begin
 
       --  Register cross references databases for c and c++
+      if Active (Activate_Clang_XRef) then
+         Kernel.Databases.Lang_Specific_Databases.Include
+           ("c", Clang_Database'(Kernel => Core_Kernel (Kernel)));
 
-      Kernel.Databases.Lang_Specific_Databases.Include
-        ("c", Clang_Database'(Kernel => Core_Kernel (Kernel)));
-
-      Kernel.Databases.Lang_Specific_Databases.Include
-        ("c++", Clang_Database'(Kernel => Core_Kernel (Kernel)));
+         Kernel.Databases.Lang_Specific_Databases.Include
+           ("c++", Clang_Database'(Kernel => Core_Kernel (Kernel)));
+      end if;
 
       Clang_Module_Id := new Clang_Module_Record;
       Register_Module

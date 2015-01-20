@@ -127,6 +127,7 @@ package body Libclang.Task_Parser_Pool is
          loop
             declare
                TU        : Clang_Translation_Unit;
+               Responded : Boolean := False;
             begin
                select
                   accept Start do Stopped := False; end Start;
@@ -186,15 +187,30 @@ package body Libclang.Task_Parser_Pool is
 
                Free (Request);
 
+               Responded := True;
+
                <<Cont>>
+            exception
+               when others =>
+
+                  --  Queue a response anyway so as to not block a thread
+                  --  eventually waiting for the TU
+                  if not Responded then
+                     Parsing_Response_Queue.Enqueue
+                       (Parsing_Response'
+                          (No_Translation_Unit,
+                           Request.File_Name, Request.Context,
+                           Request.Callbacks));
+
+                     Free (Request);
+                  end if;
+                  Trace
+                    (Me, "Exception in parsing task" & Image (Current_Task));
             end;
          end loop;
 
          <<End_Label>>
 
-      exception
-         when others =>
-            Trace (Me, "Exception in parsing task" & Image (Current_Task));
       end Parsing_Task;
 
    end Pool;
