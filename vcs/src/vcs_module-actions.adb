@@ -440,13 +440,13 @@ package body VCS_Module.Actions is
       Register_Action_Menu
         ("List project",
          -"List all the files in project",
-         Prj_Filter,
+         Prj_Filter or File_Filter,
          On_Menu_List_Project_Files'Access);
 
       Register_Action_Menu
         ("Status project",
          -"Query the status of the current project",
-         Prj_Filter,
+         Prj_Filter or File_Filter,
          On_Menu_Get_Status_Project'Access);
 
       Register_Action_Menu
