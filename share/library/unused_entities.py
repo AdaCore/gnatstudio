@@ -35,15 +35,18 @@ through the GPS.Locations.dump() method in the python console.
 
 from GPS import *
 
-xmlada_projects = ["xmlada_sax", "xmlada_dom", "xmlada_schema", "xmlada_unicode",
-                   "xmlada_input", "xmlada_shared", "xmlada"]
+xmlada_projects = [
+    "xmlada_sax", "xmlada_dom", "xmlada_schema", "xmlada_unicode",
+    "xmlada_input", "xmlada_shared", "xmlada"]
 aws_projects = ["aws_config", "aws_libz", "aws_shared", "aws_ssl_support",
                 "aws_components", "aws_xmlada", "aws"]
 
 Preference("Plugins/unused entities/ignoreprj").create(
     "Ignored projects", "string",
-    """Comma-separated list of projects for which we never want to look for unused entities. # This should in general include those projects from third-party libraries. You can still search for unusued entities if you select that project
-specifically.""",
+    """Comma-separated list of projects for which we never want to look for
+    unused entities. # This should in general include those projects from
+    third-party libraries. You can still search for unusued entities if you
+    select that project specifically.""",
     ",".join(xmlada_projects + aws_projects))
 
 
@@ -77,13 +80,12 @@ def GlobalIterator(where):
 
 
 def is_unused(entity):
-    refs = entity.references \
-        (include_implicit=True, synchronous=True, show_kind=True)
+    refs = entity.references(
+        include_implicit=True, synchronous=True, show_kind=True)
     for loc, kind in refs.iteritems():
         if kind != 'declaration' \
                 and kind != 'body' \
                 and kind != 'label':
-            # Logger ("UNUSED").log (`entity` + " not unused because of " + `loc`)
             return False
 
     # If we have a primitive operation, do not report it for now, since it
@@ -93,7 +95,6 @@ def is_unused(entity):
     if entity.primitive_of():
         return False
 
-    #Logger ("UNUSED").log (`entity` + " is unused: " + `refs`)
     return True
 
 
@@ -116,33 +117,16 @@ def show_unused_entities(where, globals_only):
     Locations.remove_category("Unused entity")
     MDI.get("Messages").raise_window()
 
-    # Update all xref information in memory, and then freeze db for efficiency
-    # Note that one possible drawback is that this will read all .ali files in
-    # the object directories, even if the source files no longer exist. So we
-    # might be missing some cases of unused entities!
-
-    Logger("UNUSED").log("starting")  # For timing and debugging
-    Project.root().update_xref(recursive=True)
-    Logger("UNUSED").log("done parsing")
-
-    try:
-        freeze_xref()
-        set_busy()
-        for e in UnusedIterator(where, globals_only=globals_only):
-            Locations.add(category="Unused entity",
-                          file=e.declaration().file(),
-                          line=e.declaration().line(),
-                          column=e.declaration().column(),
-                          message="unused entity " + e.name(),
-                          highlight="Unused_Entities",
-                          length=len(e.name()))
-
-    finally:
-        thaw_xref()
-        unset_busy()
+    for e in UnusedIterator(where, globals_only=globals_only):
+        Locations.add(category="Unused entity",
+                      file=e.declaration().file(),
+                      line=e.declaration().line(),
+                      column=e.declaration().column(),
+                      message="unused entity " + e.name(),
+                      highlight="Unused_Entities",
+                      length=len(e.name()))
 
     Console().write("Done searching for unused entities\n")
-    Logger("UNUSED").log("done")
 
 
 def show_unused_entities_in_file(menu):
