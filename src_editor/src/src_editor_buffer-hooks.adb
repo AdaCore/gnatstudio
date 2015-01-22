@@ -57,7 +57,10 @@ package body Src_Editor_Buffer.Hooks is
       Box : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
       if Box /= null then
-         Buffer.Kernel.Context_Changed (GPS_MDI_Child (Child).Build_Context);
+         if Child = Get_MDI (Get_Kernel (Buffer)).Get_Focus_Child then
+            Buffer.Kernel.Context_Changed
+               (GPS_MDI_Child (Child).Build_Context);
+         end if;
 
          Get_Cursor_Position
            (Get_Buffer (Box), Editable_Line_Type (Data.Line),
