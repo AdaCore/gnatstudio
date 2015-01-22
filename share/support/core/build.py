@@ -309,7 +309,7 @@ XML = r"""<?xml version="1.0" ?>
     <read-only>TRUE</read-only>
     <server>Tools_Server</server>
     <command-line>
-       <arg>%gnatmake</arg>
+       <arg>%builder</arg>
        <arg>-q</arg>
        <arg>-f</arg>
        <arg>-c</arg>
@@ -331,7 +331,7 @@ XML = r"""<?xml version="1.0" ?>
     <read-only>TRUE</read-only>
     <server>Tools_Server</server>
     <command-line>
-       <arg>%gnatmake</arg>
+       <arg>%builder</arg>
        <arg>-q</arg>
        <arg>-c</arg>
        <arg>-f</arg>
@@ -353,7 +353,7 @@ XML = r"""<?xml version="1.0" ?>
     <server>Tools_Server</server>
     <always-clear-locations>FALSE</always-clear-locations>
     <command-line>
-       <arg>%gnatmake</arg>
+       <arg>%builder</arg>
        <arg>-q</arg>
        <arg>-c</arg>
        <arg>-gnatc</arg>
@@ -381,7 +381,7 @@ name="U_pdate file XRef in background">
     <server>Tools_Server</server>
     <always-clear-locations>FALSE</always-clear-locations>
     <command-line>
-       <arg>%gnatmake</arg>
+       <arg>%builder</arg>
        <arg>-q</arg>
        <arg>-c</arg>
        <arg>-gnatc</arg>

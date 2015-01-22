@@ -36,6 +36,16 @@ KP-61-O120-002 GPS: cannot force background color for editors
 
   Workaround: None, the colors are hard-coded in Ada.
 
+KP-61-O113-020 GPS: build targets refer to "gnatmake"
+
+  Problem:    Some GPS build targets (such as "Check syntax") still invoke
+              gnatmake instead of the more modern gprbuild.
+
+  Status:     This was fixed in 6.2.0 on 2015-01-22
+
+  Workaround: Use the Target Configuration dialog to change manually the
+              targets to use "%builder" instead of "%gnatmake".
+
 KP-61-O112-033 GNATdoc: fail when project file is symbolic link
 
   Problem:    GNATdoc fails when project file is symbolic link to real file.
