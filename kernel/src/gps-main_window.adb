@@ -335,6 +335,12 @@ package body GPS.Main_Window is
             Save_Desktop (Main_Window.Kernel);
          end if;
 
+         --  We are about to tell the main window to destroy itself: set the
+         --  destruction flag in the kernel to avoid, for instance, computing
+         --  menus (that might have been destroyed) in reaction to context
+         --  changes.
+         Main_Window.Kernel.Set_Destruction_Flag (True);
+
          return True;
       else
          return False;

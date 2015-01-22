@@ -57,6 +57,7 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GVD.Assembly_View;          use GVD.Assembly_View;
@@ -126,6 +127,16 @@ package body GVD.Process is
       Command  : String;
       Mode     : Command_Type);
    --  Process a "graph ..." command
+
+   type Exit_Hook_Record is new Function_With_Args_Return_Boolean with record
+      Process : access Visual_Debugger_Record'Class;
+   end record;
+   type Exit_Hook is access all Exit_Hook_Record'Class;
+   overriding function Execute
+     (Hook   : Exit_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean;
+   --  Called before exiting
 
    type Preferences_Changed_Hook_Record is new Function_With_Args with record
       Process : access Visual_Debugger_Record'Class;
@@ -1734,6 +1745,26 @@ package body GVD.Process is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Hook   : Exit_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean
+   is
+      pragma Unreferenced (Kernel, Data);
+   begin
+      --  Close the debugger immediately when receiving the "before exit"
+      --  action hook. This is needed so that the perspective can be saved
+      --  and the default perspective can be reset before the main window
+      --  is actually destroyed.
+      Close_Debugger (Hook.Process);
+
+      return True;
+   end Execute;
+
    -----------
    -- Spawn --
    -----------
@@ -1756,6 +1787,7 @@ package body GVD.Process is
       Success      : Boolean;
       Property     : Breakpoint_Property_Record;
       H            : Preferences_Hook;
+      Exit_H       : Exit_Hook;
 
       procedure Check_Extension (Module : in out Virtual_File);
       --  Check for a missing extension in module, and add it if needed
@@ -1905,6 +1937,13 @@ package body GVD.Process is
       Add_Hook
         (Kernel, Preference_Changed_Hook, H,
          Name => "gvd.process.preferences_changed",
+         Watch => GObject (Process));
+
+      Exit_H := new Exit_Hook_Record;
+      Exit_H.Process := Process;
+      Add_Hook
+        (Kernel, Before_Exit_Action_Hook, Exit_H,
+         Name => "gvd.process.before_exit",
          Watch => GObject (Process));
 
       Run_Debugger_States_Hook
