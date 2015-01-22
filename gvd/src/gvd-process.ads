@@ -28,7 +28,6 @@ with Gtk.Widget;
 
 with Debugger;            use Debugger;
 with GPS.Kernel;
-with GPS.Main_Window;
 with GVD.Code_Editors;
 with GVD.Types;
 with GVD.Histories;
@@ -69,8 +68,8 @@ package GVD.Process is
       Debugger                : Debugger_Access;
       --  The underlying debugger process.
 
-      Window                  : GPS.Main_Window.GPS_Window;
-      --  The associated main window.
+      Kernel                  : GPS.Kernel.Kernel_Handle;
+      --  The associated kernel.
 
       Command_History         : String_History.History_List;
       --  The history of commands for the current session.

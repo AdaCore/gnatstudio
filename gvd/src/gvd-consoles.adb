@@ -44,6 +44,7 @@ with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
+with GPS.Main_Window;        use GPS.Main_Window;
 with GPS.Main_Window.Debug;  use GPS.Main_Window.Debug;
 with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
@@ -241,7 +242,8 @@ package body GVD.Consoles is
                     Expect_Out (Console.Debuggee_Descriptor),
                     Add_LF => False);
             Highlight_Child
-              (Find_MDI_Child (Get_Process (Console).Window.MDI, Console));
+              (Find_MDI_Child
+                 (Get_MDI (Get_Process (Console).Kernel), Console));
          end if;
       end if;
 
@@ -253,7 +255,7 @@ package body GVD.Consoles is
                  Expect_Out (Console.Debuggee_Descriptor),
                  Add_LF => False);
          Highlight_Child
-           (Find_MDI_Child (Get_Process (Console).Window.MDI, Console));
+           (Find_MDI_Child (Get_MDI (Get_Process (Console).Kernel), Console));
 
          --  Reset the TTY linking with the debugger and the console
          Close_TTY (Console);
@@ -280,7 +282,9 @@ package body GVD.Consoles is
       C : constant Debugger_Console := Debugger_Console (Console);
    begin
       if Get_Process (C) /= null then
-         Switch_Debugger (Get_Process (C).Window, GObject (Get_Process (C)));
+         Switch_Debugger
+           (GPS_Window (Get_Process (C).Kernel.Get_Main_Window),
+            GObject (Get_Process (C)));
          String_History.Wind
            (Get_Process (C).Command_History, String_History.Forward);
       end if;

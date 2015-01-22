@@ -478,7 +478,7 @@ package body GVD.Process is
      (Process : access Visual_Debugger_Record'Class)
       return GPS.Kernel.Kernel_Handle is
    begin
-      return Process.Window.Kernel;
+      return Process.Kernel;
    end Get_Kernel;
 
    ----------------------------
@@ -653,7 +653,7 @@ package body GVD.Process is
          end if;
 
          Highlight_Child
-           (Find_MDI_Child (Process.Window.MDI, Process.Debugger_Text));
+           (Find_MDI_Child (Get_MDI (Process.Kernel), Process.Debugger_Text));
       end if;
    end Output_Text;
 
@@ -739,7 +739,8 @@ package body GVD.Process is
       if Process.Is_From_Dbg_Console then
          if Process.Debugger_Text /= null then
             Set_Focus_Child
-              (Find_MDI_Child (Process.Window.MDI, Process.Debugger_Text));
+              (Find_MDI_Child
+                 (Get_MDI (Process.Kernel), Process.Debugger_Text));
          end if;
 
          Process.Is_From_Dbg_Console := False;
@@ -929,7 +930,7 @@ package body GVD.Process is
    begin
       Initialize (Process);
       Ref (Process);
-      Process.Window := Window.all'Access;
+      Process.Kernel := Window.Kernel;
 
       Gtk_New_Hbox (Process.Editor_Text, Process);
 
@@ -1000,7 +1001,8 @@ package body GVD.Process is
       Debugger_Name   : String := "";
       Success         : out Boolean)
    is
-      Window  : constant GPS_Window := Process.Window;
+      Window  : constant GPS_Window := GPS_Window
+        (Process.Kernel.Get_Main_Window);
       Buttons : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
       Widget  : Gtk_Menu_Item;
@@ -1047,7 +1049,7 @@ package body GVD.Process is
          Debugger_Args,
          Executable_Args,
          Proxy,
-         Process.Window.all'Access,
+         Process.Kernel.Get_Main_Window,
          Remote_Target,
          Remote_Protocol,
          Debugger_Name);
@@ -1057,7 +1059,8 @@ package body GVD.Process is
 
       Add_Filter
         (Get_Descriptor (Get_Process (Process.Debugger)).all,
-         First_Text_Output_Filter'Access, Output, Process.Window.all'Address);
+         First_Text_Output_Filter'Access, Output,
+         Process.Kernel.Get_Main_Window.all'Address);
 
       --  Initialize the debugger, and possibly get the name of the initial
       --  file.
@@ -1178,7 +1181,7 @@ package body GVD.Process is
       Process.Breakpoints  := null;
 
       Set_Property
-        (Kernel     => Process.Window.Kernel,
+        (Kernel     => Process.Kernel,
          File       => Get_Executable (Process.Debugger),
          Name       => "breakpoints",
          Property   => Property,
@@ -1190,7 +1193,7 @@ package body GVD.Process is
    --------------------
 
    procedure Close_Debugger (Process : access Visual_Debugger_Record) is
-      Kernel        : constant Kernel_Handle := Process.Window.Kernel;
+      Kernel        : constant Kernel_Handle := Process.Kernel;
       Debugger_List : Debugger_List_Link := Get_Debugger_List (Kernel);
       Prev          : Debugger_List_Link;
       Property      : Breakpoint_Property;
@@ -1227,7 +1230,7 @@ package body GVD.Process is
             Save_Breakpoints_In_Properties (Process, Property);
          else
             Remove_Property
-              (Process.Window.Kernel,
+              (Process.Kernel,
                File => Get_Executable (Process.Debugger),
                Name => "breakpoints");
          end if;

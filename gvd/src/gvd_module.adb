@@ -1043,11 +1043,11 @@ package body GVD_Module is
          Arguments : constant String :=
            Strip_Ending_Linebreaks
              (Display_Entry_Dialog
-                (Parent         => Process.Window,
+                (Parent         => Process.Kernel.Get_Main_Window,
                  Title          => -"Run/Start",
                  Message        => Cmd_Msg.all,
                  Key            => Cst_Run_Arguments_History,
-                 History        => Get_History (Process.Window.Kernel),
+                 History        => Get_History (Process.Kernel),
                  Check_Msg      => Msg1.all,
                  Check_Msg2     => Msg2.all,
                  Button_Active  => Button1,
@@ -1399,7 +1399,7 @@ package body GVD_Module is
                    Get_Variable_Name (Context.Context, False);
       S        : constant String :=
                    Simple_Entry_Dialog
-                     (Parent   => Process.Window,
+                     (Parent   => Process.Kernel.Get_Main_Window,
                       Title    => -"Setting value of " & Variable,
                       Message  => -"Setting value of " & Variable & ':',
                       Position => Win_Pos_Mouse,

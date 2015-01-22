@@ -42,12 +42,12 @@ package body GVD.Menu is
       declare
          Is_Func    : aliased Boolean;
          Expression : constant String := Display_Entry_Dialog
-           (Parent        => Debugger.Window,
+           (Parent        => Debugger.Kernel.Get_Main_Window,
             Title         => -"Expression Selection",
             Message       => -"Enter an expression to display:",
             Key           => "gvd_display_expression_dialog",
             Check_Msg     => -"Expression is a subprogram call",
-            History       => Get_History (Debugger.Window.Kernel),
+            History       => Get_History (Debugger.Kernel),
             Key_Check     => "expression_subprogram_debugger",
             Button_Active => Is_Func'Unchecked_Access);
 

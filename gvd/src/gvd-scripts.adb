@@ -204,7 +204,7 @@ package body GVD.Scripts is
       --  In the case of the gdb testsuite, the debugger is null
       if Debugger /= null then
          Args := (Hooks_Data with Debugger => Visual_Debugger (Debugger));
-         Run_Hook (Debugger.Window.Kernel, Hook, Args'Unchecked_Access);
+         Run_Hook (Debugger.Kernel, Hook, Args'Unchecked_Access);
       end if;
    end Run_Debugger_Hook;
 
@@ -217,7 +217,7 @@ package body GVD.Scripts is
       Hook      : Hook_Name;
       New_State : Debugger_State)
    is
-      Kernel : constant Kernel_Handle := Debugger.Window.Kernel;
+      Kernel : constant Kernel_Handle := Debugger.Kernel;
       Args   : aliased Debugger_Hooks_States_Data;
    begin
       Args := (Hooks_Data with
@@ -235,7 +235,7 @@ package body GVD.Scripts is
       Hook     : Hook_Name;
       Command  : String) return String
    is
-      Kernel : constant Kernel_Handle := Debugger.Window.Kernel;
+      Kernel : constant Kernel_Handle := Debugger.Kernel;
       Args   : aliased Debugger_String_Hooks_Data :=
                  (Hooks_Data with
                   Length   => Command'Length,

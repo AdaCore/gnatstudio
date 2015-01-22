@@ -962,7 +962,7 @@ package body GVD.Canvas is
          GNATCOLL.Traces.Trace (Me, E);
          --  Usually because Find_Item returned a null value
          GVD.Trace.Output_Error
-           (Process.Window.Kernel, (-" Error while processing: ") & Cmd);
+           (Process.Kernel, (-" Error while processing: ") & Cmd);
    end Process_Graph_Cmd;
 
    -------------------------
@@ -1466,7 +1466,7 @@ package body GVD.Canvas is
       Name : constant String := To_String (Item.Component.Name);
       S : constant String :=
         Simple_Entry_Dialog
-        (Parent   => Item.Item.Debugger.Window,
+        (Parent   => Item.Item.Debugger.Kernel.Get_Main_Window,
          Title    => -"Setting value of " & Name,
          Message  => -"Setting value of " & Name & ':',
          Position => Win_Pos_Mouse,

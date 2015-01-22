@@ -420,7 +420,7 @@ package body Debugger.Gdb is
             return;
          else
             Output_Error
-              (Process.Window.Kernel,
+              (Process.Kernel,
                (-"Language unknown, defaulting to C: ") & Lang);
 
             --  We need to check whether we already have C defined:
@@ -551,7 +551,7 @@ package body Debugger.Gdb is
 
       Gtk_New
         (Dialog,
-         Gtk_Window (Process.Window),
+         Process.Kernel.Get_Main_Window,
          Debugger,
          True,
          Choices (1 .. Num));
@@ -624,7 +624,7 @@ package body Debugger.Gdb is
 
       Gtk_New
         (Dialog,
-         Gtk_Window (Process.Window),
+         Process.Kernel.Get_Main_Window,
          Debugger,
          False,
          Choices,
