@@ -10,7 +10,6 @@ GNAT Programming Studio Tutorial
    editing
    building
    navigating
-   Search_Dialog
    project_view
    back_to_navigation
    completion

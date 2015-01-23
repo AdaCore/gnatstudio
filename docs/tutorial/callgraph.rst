@@ -15,9 +15,7 @@ first items on the top). Also click on the right arrow of `Error_Msg`.
 The call graph contains a tool bar; the button on the right of this
 tool bar brings up the options menu.
 
-Unselect `Straight links` in the options  menu of the graph to change the way
-links are displayed in the graph.  You may then play with the zoom (:kbd:`=`
-and :kbd:`-` keys).
+You may want to play with the zoom (:kbd:`=` and :kbd:`-` keys).
 
 Click on right arrow of `Process` (`(Decl) instructions.ads:12`).
 

@@ -21,3 +21,7 @@ right mouse button, then click on `Goto declaration of Next`: we're now in the
 package `Tokens`, in file :file:`tokens.ads`; but where is this file in the
 project?
 
+A simple way to locate a file in the `Project` view is to use the contextual
+menu from the source editor: `Locate in Project View: tokens.ads`.
+
+You can also use the filter entry located at the top of the `Project` view.
