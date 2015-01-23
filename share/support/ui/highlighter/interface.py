@@ -256,7 +256,7 @@ def region_ref(name):
 
 def new_style(lang, name, foreground_colors,
               background_colors=("white",  "white"),
-              font_style="default", prio=20):
+              font_style="default", prio=-1):
     """
     Creates a new style to apply when a matcher successfully matches a
     portion of text. A style is the conflation of
@@ -285,6 +285,7 @@ def new_style(lang, name, foreground_colors,
     :param prio: The priority of the style. This determines which style will
       prevail if two styles are applied to the same portion of text. See
       :func:`Highlighter.region`
+      -1 means default priority: tags added last have precedence.
 
     :rtype: Style
     """
@@ -313,7 +314,7 @@ def new_style(lang, name, foreground_colors,
         pass
 
 
-def existing_style(pref_name, name="", prio=20):
+def existing_style(pref_name, name="", prio=-1):
     """
     Creates a new style to apply when a matcher succeeds, using an existing
     style as a basis. This probably should not be used directly, but one
@@ -324,6 +325,7 @@ def existing_style(pref_name, name="", prio=20):
     :param string name: The name of the style, used for the underlying gtk tag
     :param int prio: The priority of the style compared to others. Higher
       priority styles will take precedence over lower priority ones.
+      -1 means default priority: tags added last have precedence.
     :rtype: Style
     """
     try:

@@ -42,7 +42,7 @@ pp_words = "|".join(["define", "if", "elif", "else", "endif", "ifndef",
 
 preprocessor_directive = region(
     r"^{0}#{1}(?:{2})".format(ws, ws, pp_words), r'$',
-    tag=new_style("C", "preprocessor", ("#606090", "#A0A0F0"), prio=1),
+    tag=new_style("C", "preprocessor", ("#606090", "#A0A0F0"), prio=0),
     highlighter=(
         hl_cont_line,
         string_literal,

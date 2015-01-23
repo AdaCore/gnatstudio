@@ -217,7 +217,8 @@ class Matcher(BaseMatcher):
         self.gtk_tag = gtk_ed.get_tag_table().lookup(self.tag.style_id)
         if not self.gtk_tag:
             self.gtk_tag = gtk_ed.create_tag(self.tag.style_id)
-            self.gtk_tag.set_priority(self.tag.prio)
+            if self.tag.prio != -1:
+                self.gtk_tag.set_priority(self.tag.prio)
             self.tag.pref.tag = self.gtk_tag
             propagate_change(self.tag.pref)
 
