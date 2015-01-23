@@ -249,6 +249,17 @@ xml_codepeer = """<?xml version="1.0"?>
       <string type="directory"/>
     </project_attribute>
 
+    <project_attribute
+      package="CodePeer"
+      name="CWE"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Include CWE ids"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="Whether to include CWE ids in output">
+      <string default="false"/>
+    </project_attribute>
+
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
        <command-line>

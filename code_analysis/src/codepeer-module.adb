@@ -182,6 +182,9 @@ package body CodePeer.Module is
    Database_Directory_Attribute :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
      GNATCOLL.Projects.Build ("CodePeer", "Database_Directory");
+   CWE_Attribute :
+     constant GNATCOLL.Projects.Attribute_Pkg_String :=
+     GNATCOLL.Projects.Build ("CodePeer", "CWE");
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True);
@@ -1388,6 +1391,10 @@ package body CodePeer.Module is
                function Checks_Image return String;
                --  Returns image of set of originating checks for the message.
 
+               function CWE_Image
+                 (Category : Message_Category_Access) return String;
+               --  Returns image of set of CWEs of given category
+
                ------------------
                -- Checks_Image --
                ------------------
@@ -1405,14 +1412,42 @@ package body CodePeer.Module is
                      end if;
 
                      Append (Aux, Check.Name.all);
+
+                     if Length (Check.CWEs) /= 0 then
+                        Append (Aux, CWE_Image (Check));
+                     end if;
                   end loop;
 
                   if Length (Aux) /= 0 then
-                     Append (Aux, ") ");
+                     Append (Aux, ")");
                   end if;
 
                   return To_String (Aux);
                end Checks_Image;
+
+               ---------------
+               -- CWE_Image --
+               ---------------
+
+               function CWE_Image
+                 (Category : Message_Category_Access) return String
+               is
+                  Project : constant Project_Type :=
+                    GPS.Kernel.Project.Get_Project (Self.Kernel);
+
+               begin
+                  if Length (Category.CWEs) /= 0
+                    and then Project.Has_Attribute (CWE_Attribute)
+                    and then
+                      Ada.Characters.Handling.To_Lower
+                        (Project.Attribute_Value (CWE_Attribute)) = "true"
+                  then
+                     return " [" & To_String (Category.CWEs) & ']';
+
+                  else
+                     return "";
+                  end if;
+               end CWE_Image;
 
             begin
                if Message.Text'Length = 0
@@ -1422,12 +1457,14 @@ package body CodePeer.Module is
                     Ranking_Image (Message) & ": "
                     & Message.Category.Name.all
                     & Checks_Image
+                    & CWE_Image (Message.Category)
                     & Message.Text.all;
                else
                   return
                     Ranking_Image (Message) & ": "
-                    & Message.Category.Name.all & " "
+                    & Message.Category.Name.all
                     & Checks_Image
+                    & CWE_Image (Message.Category) & " "
                     & Message.Text.all;
                end if;
             end Image;

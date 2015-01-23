@@ -39,6 +39,7 @@ package body CodePeer.Bridge.Inspection_Readers is
    Category_Attribute       : constant String := "category";
    Checks_Attribute         : constant String := "checks";
    Column_Attribute         : constant String := "column";
+   CWE_Attribute            : constant String := "cwe";
    Entry_Point_Attribute    : constant String := "entry_point";
    File_Attribute           : constant String := "file";
    Format_Attribute         : constant String := "format";
@@ -429,7 +430,12 @@ package body CodePeer.Bridge.Inspection_Readers is
       elsif Qname = Message_Category_Tag then
          Message_Category :=
            new CodePeer.Message_Category'
-             (Name => new String'(Attrs.Get_Value ("name")));
+             (Name => new String'(Attrs.Get_Value ("name")),
+              CWEs =>
+                (if Attrs.Get_Index (CWE_Attribute) /= -1
+                 then Ada.Strings.Unbounded.To_Unbounded_String
+                   (Attrs.Get_Value (CWE_Attribute))
+                 else Ada.Strings.Unbounded.Null_Unbounded_String));
 
          if Attrs.Get_Index (Is_Check_Attribute) /= -1
            and then Boolean'Value (Attrs.Get_Value (Is_Check_Attribute))
@@ -637,7 +643,8 @@ package body CodePeer.Bridge.Inspection_Readers is
          if Self.Race_Category = null then
             Self.Race_Category :=
               new CodePeer.Message_Category'
-                (Name => new String'(CodePeer.Module.Race_Condition_Category));
+                (Name => new String'(CodePeer.Module.Race_Condition_Category),
+                 CWEs => Ada.Strings.Unbounded.Null_Unbounded_String);
             CodePeer.Project_Data'Class
               (Self.Root_Inspection.all).Warning_Subcategories.Include
               (Self.Race_Category);
