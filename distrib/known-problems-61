@@ -27,7 +27,7 @@ Known problems fixed in GPS 6.2 / GNATbench 2.10
 
 KP-61-O120-002 GPS: cannot force background color for editors
 
-  Problem:    The python GPS.Editor.set_background_color method has no
+  Problem:    The python method GPS.Editor.set_background_color has no
               effect (and neither does the colors.py example which shows
               how to show the background color of editors based on their
               extension).
@@ -48,45 +48,44 @@ KP-61-O113-020 GPS: build targets refer to "gnatmake"
 
 KP-61-O112-033 GNATdoc: fail when project file is symbolic link
 
-  Problem:    GNATdoc fails when project file is symbolic link to real file.
+  Problem:    GNATdoc fails when the project file is a symbolic link to a
+              regular file.
 
   Status:     This was fixed in 6.2.0 on 2015-01-14
 
-  Workaround: Copy of project file to normal file and pass its name to
+  Workaround: Copy the project file to a regular file and pass its name to
               GNATdoc.
 
 KP-61-NC12-038 GPS: find/replace in current selection does not work
 
-  Problem:    Function Replace All in "Current Selection" scope does not work
-              as expected. This could result as replacement in incorrect text
-              position or no replacent at all depending on selection and file
-              size.
+  Problem:    The function Replace All in "Current Selection" scope could
+              cause as replacement in an incorrect text position, or no
+              replacement at all.
 
   Status:     This was fixed in 6.2.0 on 2015-01-12
 
-  Workaround: Use "Replace & Find" button to replace all occurences one by one.
+  Workaround: Use the "Replace & Find" button and select occurrences manually.
 
 KP-61-NB26-010 GB: Cannot watch global variables defined in package body.
 
   Problem:    When selecting an expression that contains variable(s) defined in
-              package body, the expression displayed in the Add Watch
+              the package body, the expression displayed in the Add Watch
               Expression dialog doesn't add the package prefix.
-              This problem affects also the tooltip feature. The current value
+              This problem also affects the tooltip feature. The current value
               of the pointed variable is not displayed by the tooltip.
 
               When the selection boundary is not at an identifier boundary or
-              the selection length is equal to 0, the watch expression is
-              incorrect.
+              the selection is empty, the watch expression is incorrect.
 
   Status:     This was fixed in 2.10.0 on 2014-11-27
 
   Workaround: Edit the expression manually.
 
-KP-61-NB19-029 GPS: frequent disk access while moving cursor in editors
+KP-61-NB19-029 GPS: frequent disk accesses while moving cursor in editors
 
-  Problem:    Whenever the cursor moves in the editor, GPS recompute some
+  Problem:    Whenever the cursor moves in the editor, GPS recomputes some
               information about the current location, which might result in
-              frequent disk access. On slower machines, this might slow down
+              frequent disk accesses. On slower machines, this might slow down
               GPS.
 
   Status:     This was fixed in 6.2.0 on 2015-01-06
@@ -124,7 +123,7 @@ KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Workaround: Interrupt the program before closing the debugger.
 
-KP-61-N911-027 GB: auto generated GB files not created upon svn checkout
+KP-61-N911-027 GB: auto-generated GB files not created upon svn checkout
 
   Problem:     When using WRWB and Polarion svn to check out WR DKM/RTP
                projects, the gpr-gpp.makefle, powerpc-wrs-vxworks.cgpr
@@ -134,17 +133,19 @@ KP-61-N911-027 GB: auto generated GB files not created upon svn checkout
 
   Workaround:  Right click project, then properties, then Gnatbench
                properties and touch something(e.g. deselect root project),
-               APPLY, select is root project, hit OK. It will create
+               APPLY, select is root project, hit OK. This will create
                the necessary files.
 
 KP-61-N822-004 GPS: Input focus when creating/opening new windows
 
-  Problem:    After switching from floating windows to non-floating one using
-              keyboard shortcuts GPS keeps focus in the floating window.
+  Problem:    After switching from a floating windows to a non-floating one
+              using keyboard shortcuts, GPS keeps the focus in the floating
+              window.
 
   Status:     This was fixed in 6.2.0 on 2014-12-03
 
-  Workaround: Use mouse or Windows Manager shortcuts to switch windows.
+  Workaround: Use the mouse or Windows Manager shortcuts to switch between
+              windows.
 
 Known problems fixed in GPS 6.1.1 / GNATbench 2.9.1
 ---------------------------------------------------
@@ -169,16 +170,16 @@ KP-61-NC10-014 GB: popup error dialog displayed on Ada editor switch
 
   Status:     This was fixed in 2.9.1 on 2014-12-19
 
-  Workaround: Click OK button and ignore the error.
+  Workaround: The error can be safely ignored.
 
-KP-61-NC04-017 GPS: prevent_project_edition.py need update for menu name
+KP-61-NC04-017 GPS: error on startup with plugin prevent_project_edition.py
 
-  Problem:    Enabling prevent_project_edition.py plug-in causes an error
+  Problem:    Enabling the prevent_project_edition.py plugin causes an error
               on GPS start up.
 
   Status:     This was fixed in 6.1.1 on 2014-12-05
 
-  Workaround: Fix menu names in prevent_project_edition.py.
+  Workaround: Fix manually the menu names in prevent_project_edition.py.
 
 KP-61-NC03-015 WB: white lines in the Wind River Workbench Build Targets tree
 
@@ -192,8 +193,8 @@ KP-61-NC03-015 WB: white lines in the Wind River Workbench Build Targets tree
 
 KP-61-NC01-048 GB: Ada 2102 reserved word "some" not displayed as a keyword.
 
-  Problem:    Ada 2012 reserved word "some" is not displayed in AdaCore's Ada
-              Editor as an Ada keyword. It is displayed as an identifier.
+  Problem:    The Ada 2012 reserved word "some" is not highlighted in the Ada
+              Editor as a keyword, but as a standard identifier.
 
   Status:     This was fixed in 2.9.1 on 2014-12-19
 
@@ -213,9 +214,10 @@ KP-61-NC01-009 GPS: unreadable fonts under Solaris
 
 KP-61-NB18-009 GB: Cannot open Ada Editor.
 
-  Problem:    Sometimes opening Ada editor fails. The Ada editor could not be
-              initialized because of a NullPointerException. Once it occurs
-              the file cannot be edited anymore by the Ada editor.
+  Problem:    Sometimes opening Ada editor fails, indicating that the Ada
+              editor could not be initialized because of a
+              NullPointerException. After this occurs, the file cannot be
+              opened anymore in the Ada editor.
 
   Status:     This was fixed in 2.9.1 on 2014-12-19
 
@@ -224,8 +226,8 @@ KP-61-NB18-009 GB: Cannot open Ada Editor.
 
 KP-61-NB12-023 ECL: Cannot set breakpoints on Eclipse Luna
 
-  Problem:    On Eclipse 4.4, when debugging an Ada Application (menu Debug As
-              => Ada Application) no breakpoints can be set.
+  Problem:    On Eclipse 4.4, when debugging an Ada Application (using the
+              menu Debug As -> Ada Application), no breakpoints can be set.
 
   Status:     This was fixed in 2.9.1 on 2014-12.18
 
@@ -240,7 +242,7 @@ KP-61-NB11-004 GPS: emacs key shortcuts lost
 
   Status:     This was fixed in 6.1.1 on 2014-12-11
 
-  Workaround: Go to /Edit/Key Shortcuts to enable the Emacs shortcuts.
+  Workaround: Use the menu Edit->Key Shortcuts to enable the Emacs shortcuts.
 
 KP-61-NB10-025 GPS: problems when clicking on Ada files outside of GPS
 
@@ -263,11 +265,11 @@ KP-61-NB10-019 GB: Cannot analyze file or projects sources
 
   Workaround: Use compile or build actions to run the analyze.
 
-KP-61-NB06-027 GPS: Delete ops not working correctly at beginning/end of file
+KP-61-NB06-027 GPS: Delete not working correctly at beginning/end of file
 
-  Problem:    When using Suppr at the end of the file, or backspace at the
-              beginning of the file, GPS should have done nothing, but instead
-              did delete a char in the wrong direction
+  Problem:    When using delete at the end of the file, or backspace at the
+              beginning of the file, GPS should do nothing, but instead does
+              delete a character in the wrong direction.
 
   Status:     This was fixed in 6.1.1 on 2014-11-13
 
@@ -283,7 +285,7 @@ KP-61-NB05-034 GPS: not reusing existing editor
 
   Workaround: After saving a new file, close the editor and reopen it.
 
-KP-61-NA31-056 WB: Cannot edit GNAT project properties through GPS dialog
+KP-61-NA31-056 WB: Cannot edit GNAT project properties through the GPS dialog
 
   Problem:    When running GNAT Project => Edit Properties menu, the GPS
               project properties dialog is not displayed.
