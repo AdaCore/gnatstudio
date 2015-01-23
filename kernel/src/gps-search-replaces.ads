@@ -41,6 +41,10 @@ package GPS.Search.Replaces is
       Matched_Text    : String) return String;
    --  Return replacement text based on replacement pattern
 
+   procedure Reset (Self : in out Replacement_Pattern);
+   --  Called whenever a new search/replace will start (as opposed to
+   --  continuing the current one through the Next button).
+
    procedure Free (Result : in out Replacement_Pattern);
    --  Free cached Replacement_Pattern
 
@@ -58,9 +62,25 @@ private
    --  If S is not all lower-case, return S unchanged.
    --  S is encoded in UTF-8, and so is the result.
 
+   type Subexpression is abstract tagged null record;
+   type Subexpression_Access is access all Subexpression'Class;
+   --  Abstract type to provide text of replace subexpression such as "\1"
+
+   function Origin_Length (Self : Subexpression) return Positive is abstract;
+   --  Length of replace subexpression in origin text. For example 2 for "\1"
+
+   function Replace
+     (Self    : access Subexpression;
+      Context : GPS.Search.Search_Context;
+      Matched : String) return String is abstract;
+   --  Provide text of given replace subexpression
+
+   procedure Reset (Self : access Subexpression) is null;
+   --  Reset subexpression to original state
+
    type Regexp_Reference is record
       Offset : Positive;
-      Match  : Natural;
+      Object : Subexpression_Access;
    end record;
    --  Reference to one Regexp subexpression in Replace_String
 

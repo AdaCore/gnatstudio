@@ -51,11 +51,17 @@ This dialog contains three fields:
 
   Contains the string to replace the occurrences of the pattern.  The combo
   box provides a history of previously used replacement strings. If a
-  regular expression is used for search, special escapes :samp:`\1`,
-  :samp:`\2` .. :samp:`\9` in this field refer to the corresponding
-  matching subexpressions; :samp:`\0` refers to the complete matched
-  string.
+  regular expression is used for search, special escapes in this field are
+  used as:
 
+  * :samp:`\\1`, :samp:`\\2` .. :samp:`\\9` refer to the
+    corresponding matching subexpressions;
+
+  * :samp:`\\0` refers to the complete matched string;
+
+  * :samp:`\\i`, :samp:`\\i(start,step)` refers to the sequentially increasing
+    number (starting from start and increased by step on each replace).
+    
 *Look in*
   .. index:: look in
 

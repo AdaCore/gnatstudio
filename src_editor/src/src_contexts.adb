@@ -2659,6 +2659,21 @@ package body Src_Contexts is
         (Locations_Category_Name (Context_Look_For (Context)),
          (Editor_Side => True,
           Locations   => True));
+      --  Call inherited Reset
+      File_Search_Context (Context.all).Reset (Kernel);
+   end Reset;
+
+   -----------
+   -- Reset --
+   -----------
+
+   overriding procedure Reset
+     (Context : access File_Search_Context;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Context.Replacement.Reset;
+      --  Call inherited Reset
+      Root_Search_Context (Context.all).Reset (Kernel);
    end Reset;
 
    ------------

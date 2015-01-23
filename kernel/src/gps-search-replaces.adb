@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNAT.Strings;          use GNAT.Strings;
@@ -28,14 +29,292 @@ package body GPS.Search.Replaces is
    procedure Free is new Ada.Unchecked_Deallocation
      (Regexp_Reference_Array, Regexp_Reference_Array_Access);
 
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Subexpression'Class, Subexpression_Access);
+
+   ---------------------------
+   -- Regexp_Subexpressions --
+   ---------------------------
+
+   package Regexp_Subexpressions is
+      --  This type provide text of regexp subexpression number Match
+      type Regexp_Subexpression is new Subexpression with record
+         Match : Positive;
+      end record;
+
+      procedure Create
+        (Self   : in out Subexpression_Access;
+         Origin : String);
+      --  Initialize Self as Regexp_Subexpression, use Origin as image of
+      --  regexp subexpression number
+
+      overriding function Origin_Length
+        (Self : Regexp_Subexpression) return Positive;
+
+      overriding function Replace
+        (Self    : access Regexp_Subexpression;
+         Context : GPS.Search.Search_Context;
+         Matched : String) return String;
+
+   end Regexp_Subexpressions;
+
+   package body Regexp_Subexpressions is
+
+      ------------
+      -- Create --
+      ------------
+
+      procedure Create
+        (Self   : in out Subexpression_Access;
+         Origin : String)
+      is
+         Match : constant Positive := Natural'Value (Origin);
+      begin
+         --  Avoid deallocation then allocation of Regexp_Subexpression if we
+         --  already have correct object. Check EXACT match of type here.
+         if Self = null or else Self.all not in Regexp_Subexpression then
+            Free (Self);
+            Self := new Regexp_Subexpression'(Match => Match);
+         else
+            Regexp_Subexpression (Self.all).Match := Match;
+         end if;
+      end Create;
+
+      -------------------
+      -- Origin_Length --
+      -------------------
+
+      overriding function Origin_Length
+        (Self : Regexp_Subexpression) return Positive
+      is
+         pragma Unreferenced (Self);
+      begin
+         return 2;  --  Length of "\1" .. "\9" pattern
+      end Origin_Length;
+
+      -------------
+      -- Replace --
+      -------------
+
+      overriding function Replace
+        (Self    : access Regexp_Subexpression;
+         Context : GPS.Search.Search_Context;
+         Matched : String) return String
+      is
+         From, To : Natural;
+      begin
+         Matched_Subexpression
+           (Context, Index => Self.Match, First => From, Last => To);
+
+         return Matched (From .. To);
+      end Replace;
+
+   end Regexp_Subexpressions;
+
+   --------------------------
+   -- Whole_Subexpressions --
+   --------------------------
+
+   package Whole_Subexpressions is
+      --  This type provide text of whole matched regexp
+      type Whole_Subexpression is new Subexpression with null record;
+
+      procedure Create (Self : in out Subexpression_Access);
+      --  Initialize Self as Whole_Subexpression
+
+      overriding function Origin_Length
+        (Self : Whole_Subexpression) return Positive;
+
+      overriding function Replace
+        (Self    : access Whole_Subexpression;
+         Context : GPS.Search.Search_Context;
+         Matched : String) return String;
+
+   end Whole_Subexpressions;
+
+   package body Whole_Subexpressions is
+
+      ------------
+      -- Create --
+      ------------
+
+      procedure Create (Self : in out Subexpression_Access) is
+      begin
+         --  Avoid deallocation then allocation of Whole_Subexpression if we
+         --  already have correct object. Check EXACT match of type here.
+         if Self = null or else Self.all not in Whole_Subexpression then
+            Free (Self);
+            Self := new Whole_Subexpression;
+         end if;
+      end Create;
+
+      -------------------
+      -- Origin_Length --
+      -------------------
+
+      overriding function Origin_Length
+        (Self : Whole_Subexpression) return Positive
+      is
+         pragma Unreferenced (Self);
+      begin
+         return 2;  --  Length of "\0" pattern
+      end Origin_Length;
+
+      -------------
+      -- Replace --
+      -------------
+
+      overriding function Replace
+        (Self    : access Whole_Subexpression;
+         Context : GPS.Search.Search_Context;
+         Matched : String) return String
+      is
+         pragma Unreferenced (Self);
+         pragma Unreferenced (Context);
+      begin
+         return Matched;
+      end Replace;
+
+   end Whole_Subexpressions;
+
+   -----------------------------
+   -- Sequence_Subexpressions --
+   -----------------------------
+
+   package Sequence_Subexpressions is
+      --  This type provide text of Sequence subexpression number Match
+      type Sequence_Subexpression is new Subexpression with record
+         Start         : Natural;
+         Saved_Start   : Natural;
+         Increment     : Integer;
+         Origin_Length : Positive;
+      end record;
+
+      procedure Create
+        (Self   : in out Subexpression_Access;
+         Origin : String);
+      --  Initialize Self as Sequence_Subexpression, use Origin as parameters
+      --  in form (start, increment)
+
+      overriding function Origin_Length
+        (Self : Sequence_Subexpression) return Positive;
+
+      overriding function Replace
+        (Self    : access Sequence_Subexpression;
+         Context : GPS.Search.Search_Context;
+         Matched : String) return String;
+
+      overriding procedure Reset (Self : access Sequence_Subexpression);
+
+   end Sequence_Subexpressions;
+
+   package body Sequence_Subexpressions is
+
+      ------------
+      -- Create --
+      ------------
+
+      procedure Create
+        (Self   : in out Subexpression_Access;
+         Origin : String)
+      is
+         Pos           : Positive;
+         Close         : constant Natural := Index (Origin, ")");
+         Start         : Natural := 1;
+         Increment     : Integer := 1;
+         Origin_Length : Positive := 2;
+      begin
+         if Origin'Last > Origin'First
+           and then Origin (Origin'First + 1) = '('
+           and then Close > 0
+         then
+            Pos := Origin'First + 2;
+            while Origin (Pos) in '0' .. '9' loop
+               Pos := Pos + 1;
+            end loop;
+
+            Start := Natural'Value (Origin (Origin'First + 2 .. Pos - 1));
+
+            if Pos /= Close then
+               Increment := Natural'Value (Origin (Pos + 1 .. Close - 1));
+            end if;
+
+            Origin_Length := Close - Origin'First + 2;
+         end if;
+
+         --  Avoid deallocation then allocation of Sequence_Subexpression if we
+         --  already have correct object. Check EXACT match of type here.
+         if Self = null or else Self.all not in Sequence_Subexpression then
+            Free (Self);
+            Self := new Sequence_Subexpression'
+              (Start         => Start,
+               Saved_Start   => Start,
+               Increment     => Increment,
+               Origin_Length => Origin_Length);
+         else
+            Sequence_Subexpression (Self.all).Start := Start;
+            Sequence_Subexpression (Self.all).Increment := Increment;
+            Sequence_Subexpression (Self.all).Origin_Length := Origin_Length;
+         end if;
+      end Create;
+
+      -------------------
+      -- Origin_Length --
+      -------------------
+
+      overriding function Origin_Length
+        (Self : Sequence_Subexpression) return Positive is
+      begin
+         return Self.Origin_Length;
+      end Origin_Length;
+
+      -------------
+      -- Replace --
+      -------------
+
+      overriding function Replace
+        (Self    : access Sequence_Subexpression;
+         Context : GPS.Search.Search_Context;
+         Matched : String) return String
+      is
+         pragma Unreferenced (Context);
+         pragma Unreferenced (Matched);
+
+         Image : constant String := Natural'Image (Self.Start);
+      begin
+         if Self.Start + Self.Increment >= 0 then
+            Self.Start := Self.Start + Self.Increment;
+         end if;
+
+         return Image (Image'First + 1 .. Image'Last);
+      end Replace;
+
+      -----------
+      -- Reset --
+      -----------
+
+      overriding procedure Reset (Self : access Sequence_Subexpression) is
+      begin
+         Self.Start := Self.Saved_Start;
+      end Reset;
+
+   end Sequence_Subexpressions;
+
    ----------
    -- Free --
    ----------
 
    procedure Free (Result : in out Replacement_Pattern) is
    begin
+      if Result.References /= null then
+         for J in Result.References'Range loop
+            Free (Result.References (J).Object);
+         end loop;
+
+         Free (Result.References);
+      end if;
+
       Free (Result.Replace_String);
-      Free (Result.References);
       for Casing in Lower .. Smart_Mixed loop
          Free (Result.Casings (Casing));
       end loop;
@@ -104,10 +383,11 @@ package body GPS.Search.Replaces is
       procedure Fill_References (Result : in out Replacement_Pattern) is
          Mask  : Boolean := False;
          Count : Natural := 0;
+         Pos   : Positive;
       begin
          for J in Replace_String'First .. Replace_String'Last - 1 loop
             if not Mask and Replace_String (J) = '\' then
-               if Replace_String (J + 1) in '0' .. '9' then
+               if Replace_String (J + 1) in '0' .. '9' | 'i' then
                   Count := Count + 1;
                elsif Replace_String (J + 1) = '\' then
                   Mask := True;
@@ -125,17 +405,41 @@ package body GPS.Search.Replaces is
          Count := 0;
          Mask := False;
 
-         for J in Replace_String'First .. Replace_String'Last - 1 loop
-            if not Mask and Replace_String (J) = '\' then
-               if Replace_String (J + 1) in '0' .. '9' then
+         Pos := Replace_String'First;
+
+         while Pos < Replace_String'Last loop
+            if Replace_String (Pos) = '\' then
+               if Replace_String (Pos + 1) = '0' then
                   Count := Count + 1;
-                  Result.References (Count) :=
-                    (J, Natural'Value (Replace_String (J + 1 .. J + 1)));
-               elsif Replace_String (J + 1) = '\' then
-                  Mask := True;
+                  Result.References (Count).Offset := Pos;
+
+                  Whole_Subexpressions.Create
+                    (Result.References (Count).Object);
+
+                  Pos := Pos + 2;
+               elsif Replace_String (Pos + 1) in '1' .. '9' then
+                  Count := Count + 1;
+                  Result.References (Count).Offset := Pos;
+
+                  Regexp_Subexpressions.Create
+                    (Self   => Result.References (Count).Object,
+                     Origin => Replace_String (Pos + 1 .. Pos + 1));
+
+                  Pos := Pos + 2;
+               elsif Replace_String (Pos + 1) = 'i' then
+                  Count := Count + 1;
+                  Result.References (Count).Offset := Pos;
+
+                  Sequence_Subexpressions.Create
+                    (Result.References (Count).Object,
+                     Replace_String (Pos + 1 .. Replace_String'Last));
+
+                  Pos := Pos + Result.References (Count).Object.Origin_Length;
+               elsif Replace_String (Pos + 1) = '\' then
+                  Pos := Pos + 2;
                end if;
             else
-               Mask := False;
+               Pos := Pos + 1;
             end if;
          end loop;
 
@@ -148,6 +452,7 @@ package body GPS.Search.Replaces is
       then
          Free (Self.Replace_String);
          Self.Replace_String := new String'(Replace_String);
+
          for Casing in Casing_Type loop
             Free (Self.Casings (Casing));
             Self.Casings (Casing) :=
@@ -172,36 +477,33 @@ package body GPS.Search.Replaces is
    is
       Current_Casing : Casing_Type := Unchanged;
       Regexp_Result  : Unbounded_String;
-      Offset         : Integer;
       From, To       : Natural;
       Last           : Natural := 1;
    begin
       --  if there are some references to regexp subexpressions
       --  and search in regexp mode
       if Pattern.Last > 0 and then Pattern.Is_Regexp then
-         --  Read offset of Matched_Text into Offset
-         Matched_Subexpression
-           (Result, Index => 0, First => Offset, Last => Last);
-         Offset := Offset - Matched_Text'First;
-         Last := 1;
+         --  Read bounds of original Matched_Text into From, To
+         Matched_Subexpression (Result, Index => 0, First => From, Last => To);
+         To := From + Matched_Text'Length - 1;
+
          for J in 1 .. Pattern.Last loop
             declare
+               subtype Matched is String (From .. To);
+
                Ref : constant Regexp_Reference := Pattern.References (J);
+               Obj : constant Subexpression_Access :=
+                 Pattern.References (J).Object;
             begin
                Append
                  (Regexp_Result,
                   Pattern.Replace_String (Last .. Ref.Offset - 1));
 
-               if Ref.Match = 0 then  --  Whole matched string
-                  Append (Regexp_Result, Matched_Text);
-               else
-                  Matched_Subexpression
-                    (Result, Index => Ref.Match, First => From, Last => To);
-                  Append (Regexp_Result,
-                          Matched_Text (From - Offset .. To - Offset));
-               end if;
+               Append
+                 (Regexp_Result,
+                  Obj.Replace (Result, Matched (Matched_Text)));
 
-               Last := Ref.Offset + 2;
+               Last := Ref.Offset + Obj.Origin_Length;
             end;
          end loop;
 
@@ -225,6 +527,19 @@ package body GPS.Search.Replaces is
 
       return Pattern.Casings (Current_Casing).all;
    end Replacement_Text;
+
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Self : in out Replacement_Pattern) is
+   begin
+      if Self.References /= null then
+         for J in 1 .. Self.Last loop
+            Self.References (J).Object.Reset;
+         end loop;
+      end if;
+   end Reset;
 
    ---------------
    -- To_Casing --

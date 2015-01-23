@@ -418,6 +418,11 @@ private
       --  Cached replacement pattern
    end record;
 
+   overriding procedure Reset
+     (Context : access File_Search_Context;
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  See inherited documentation
+
    type Current_File_Context is new File_Search_Context with record
       Current_File : Ada.Strings.Unbounded.Unbounded_String;
    end record;

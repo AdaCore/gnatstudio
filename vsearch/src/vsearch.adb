@@ -1754,8 +1754,15 @@ package body Vsearch is
         (Vsearch.Table, Vsearch.Replace_Combo, 1, 2, 1, 2,
          Xpadding => 0,
          Ypadding => 2);
-      Set_Tooltip_Text (Vsearch.Replace_Combo,
-               -"The text that will replace each match");
+      Set_Tooltip_Text
+        (Vsearch.Replace_Combo,
+         -("The text that will replace each match. Next special patterns are" &
+             " recognized in regexp mode:" & ASCII.LF &
+             " * \0 - refers to the complete matched string" & ASCII.LF &
+             " * \1..\9 - refer to the corresponding matching subexpression" &
+             ASCII.LF &
+             " * \i or \i(start,step) - refers to the sequentially " &
+             "increasing number"));
 
       Disable_Button_Focus (Vsearch.Replace_Combo);
 
