@@ -743,10 +743,6 @@ package body Browsers.Projects is
            & " selected project",
          Filter      => Lookup_Filter (Kernel, "Project only"),
          Category  => -"Views");
-      Register_Contextual_Menu
-        (Kernel,
-         Label       => -"Show projects imported by %p",
-         Action      => "Browser: show projects imported");
 
       Command := new Imported_By_Command;
       Imported_By_Command (Command.all).Recursive := True;
@@ -758,10 +754,6 @@ package body Browsers.Projects is
          & " selected project, recursively",
          Filter      => Lookup_Filter (Kernel, "Project only"),
          Category  => -"Views");
-      Register_Contextual_Menu
-        (Kernel,
-         Label       => -"Show projects imported by %p (recursively)",
-         Action      => "Browser: show projects imported (recursive)");
 
       Command := new Imported_By_Command;
       Imported_By_Command (Command.all).Show_Ancestors := True;
@@ -773,10 +765,6 @@ package body Browsers.Projects is
          & " selected project",
          Filter      => Lookup_Filter (Kernel, "Project only"),
          Category  => -"Views");
-      Register_Contextual_Menu
-        (Kernel,
-         Label       => -"Show projects depending on %p",
-         Action      => "Browser: show projects importing");
    end Register_Module;
 
 end Browsers.Projects;

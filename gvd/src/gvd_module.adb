@@ -2199,8 +2199,6 @@ package body GVD_Module is
       Access_Filter     := new Access_Variable_Filter;
       Subprogram_Filter := new Subprogram_Variable_Filter;
 
-      Register_Contextual_Submenu (Kernel, "Debug", Ref_Item => "References");
-
       Filter := Debugger_Filter and Printable_Filter;
 
       Register_Action
@@ -2210,10 +2208,6 @@ package body GVD_Module is
            "Print the value of the variable in the debugger console",
          Filter    => Filter,
          Category  => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Print %S",
-         Action => "debug print variable");
 
       Command := new Print_Variable_Command;
       Print_Variable_Command (Command.all).Display := True;
@@ -2225,10 +2219,6 @@ package body GVD_Module is
            & " it is displayed again every time the debugger stops",
          Filter    => Filter,
          Category  => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Display %S",
-         Action => "debug display variable");
 
       Filter := Debugger_Filter and Printable_Filter and Access_Filter;
 
@@ -2273,10 +2263,6 @@ package body GVD_Module is
          Description => "Modify the value of the variable",
          Filter      => Debugger_Filter and Printable_Filter,
          Category    => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Set value of %S",
-         Action => "debug set value");
 
       Register_Action
         (Kernel, "debug set subprogram breakpoint",
@@ -2284,10 +2270,6 @@ package body GVD_Module is
          Description => "Set a breakpoint on subprogram",
          Filter      => Debugger_Filter and Subprogram_Filter,
          Category    => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Set breakpoint on %e",
-         Action => "debug set subprogram breakpoint");
 
       Command := new Set_Breakpoint_Command;
       Set_Breakpoint_Command (Command.all).On_Line := True;
@@ -2297,10 +2279,6 @@ package body GVD_Module is
          Description => "Set a breakpoint on line",
          Filter      => Stopped_And_In_File,
          Category    => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Set breakpoint on line %l",
-         Action => "debug set line breakpoint");
 
       Command := new Set_Breakpoint_Command;
       Set_Breakpoint_Command (Command.all).On_Line := True;
@@ -2311,10 +2289,6 @@ package body GVD_Module is
          Description => "Continue executing until the given line",
          Filter      => Stopped_And_In_File,
          Category    => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Continue until line %l",
-         Action => "debug continue until");
 
       Register_Action
         (Kernel, "debug show current location",
@@ -2322,10 +2296,6 @@ package body GVD_Module is
          Description => "Display the current debugger location in an editor",
          Filter      => Debugger_Filter,
          Category    => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Show current location",
-         Action => "debug show current location");
 
       --  Dynamic Initialize menu
       Mitem := Find_Menu_Item (Kernel, -"/Debug/Initialize");

@@ -429,6 +429,229 @@
       </menu>
    </menubar>
 
+   <!--  In a contextual menu, all menu items are 'optional' and 'hide' by default -->
+   <contextual id='main'>
+      <!--  ??? We had a preference to decide whether these are 'hide' or not -->
+      <menu label='Cut'   action='cut to clipboard' hide='false'/>
+      <menu label='Copy'  action='copy to clipboard' hide='false'/>
+      <menu label='Paste' action='paste from clipboard' hide='false'/>
+      <menu label='Copy with line numbers' action='copy_with_line_numbers'/>
+      <separator/>
+      <separator/>
+      <separator/>
+
+      <menu label='Goto declaration of %ef'     action='goto declaration'/>
+      <menu label='Goto declarations of %ef' action=".."/>                          <!-- dynamic -->
+      <menu label='Goto %body_or_decl of %ef'   action='goto body'/>
+      <menu label='Goto bodies of %ef' action=".."/>                                <!-- dynamic -->
+      <menu label='Goto separate body of %e'    action='jump to separate body'/>
+      <menu label='Goto type declaration of %e' action='goto type of entity'/>
+      <menu label='Display type hierarchy for %e' action='display type hierarchy of entity'/>
+      <menu label='Goto first subtype of %e'      action='goto first subtype'/>
+      <menu label='%e calls'                      action='Entity calls'/>
+      <menu label='%e is called by'               action='Entity called by'/>
+     
+      <!--  ??? Need an extra filter to display only in source editor -->
+      <menu label='Goto file spec&lt;-&gt;body'   action='goto other file'/>
+      <menu label='Edit %f'                       action='edit file'/>
+
+      <!--  Only in Line_Numbers_Area_Filter -->
+      <menu label='Goto line...'                  action='goto line'/>
+
+      <menu label='Locate in Project view: %f'    action='locate file in explorer'/>
+      <menu label='Locate in Project view: %p'    action='locate project in explorer'/>
+      <menu label='Clear locations for %f'        action='Clear locations for file'/>
+      <menu label='Run OS shell in %dk'            action='open os shell'/>
+
+      <!-- In Locations view only -->
+      <menu label='Export messages to editor'     action='export locations to editor'/>
+
+      <menu label='References'>
+         <menu label='Find all references to %e'  action='find all references'/>
+         <menu label='Find references to %e...'   action='find references...'/>
+         <menu label='Find all references to %e'  action='find all local references'/>
+      </menu>
+
+      <menu label='Casing'>
+         <menu label='Lower %lower_s'              action='lower case entity'/>
+         <menu label='Upper %upper_s'              action='upper case entity'/>
+         <menu label='Mixed %mixed_s'              action='mixed case entity'/>
+         <menu label='Smart Mixed %smart_mixed_s'  action='smart mixed case entity'/>
+         <separator/>
+         <menu label='Add substring exception for %s' action='add substring casing exception'/>
+         <menu label='Remove substring exception for %s' action='remove substring casing exception'/>
+         <menu label='Add exception for %s' action='add casing exception'/>
+         <menu label='Remove exception for %s' action='remove casing exception'/>
+      </menu>
+
+      <menu label='Browsers'>
+         <menu label='%e calls'                   action='Browser: entity calls'/>
+         <menu label='%e calls (recursively)'     action='Browser: entity calls (recursive)'/>
+         <menu label='%e is called by'            action='Browser: entity called by'/>
+         <menu label='Show dependencies for %f'   action='Browser: show dependencies for file'/>
+         <menu label='Show files depending on %f' action='Browser: show files depending on file'/>
+         <menu label='Analyze other file (spec or body)' action='Browser: analyze deps for other file'/>
+         <menu label='Show projects imported by %p' action='Browser: show projects imported'/>
+         <menu label='Show projects imported by %p (recursively)'
+               action='Browser: show projects imported (recursive)'/>
+         <menu label='Show projects depending on %p' action='Browser: show projects importing'/>
+         <menu label='Examine entity %e'             action='Browser: examine entity'/>
+      </menu>
+
+      <menu label='Debug'>
+         <menu label='Print %S'                     action='debug print variable'/>
+         <menu label='Display %S'                   action='debug display variable'/>
+         <menu label='View memory at address of %S' action='examine memory'/>
+         <menu label='...' action='debug print dereferenced variable'/> <!-- dynamic label -->
+         <menu label='...' action='debug display dereferenced variable'/> <!-- dynamic label -->
+         <menu label='Set value of %S'              action='debug set value'/>
+         <menu label='Set breakpoint on %e'         action='debug set subprogram breakpoint'/>
+         <menu label='Set breakpoint on line %l'    action='debug set line breakpoint'/>
+         <menu label='Continue until line %l'       action='debug continue until'/>
+         <menu label='Show current location'        action='debug show current location'/>
+      </menu>
+
+      <menu label='File operations'>
+         <menu label='Create a new file'           action='create new file'/>
+         <menu label='Create a subdirectory'       action='create new directory'/>
+         <menu label='Rename file %f'              action='rename file'/>
+         <menu label='Rename directory %f'         action='rename directory'/>
+         <menu label='Delete file %f'              action='delete file'/>
+         <menu label='Delete directory'            action='delete directory'/>
+      </menu>
+
+      <menu label='Visual diff'>
+         <menu label='Close'                        action='vdiff remove difference'/>
+         <menu label='Recompute'                    action='vdiff recompute difference'/>
+         <menu label='Use this editor as reference' action='vdiff change reference file'/>
+      </menu>
+
+      <menu label='Refactoring'>
+         <menu label='Name parameters'              action='refactoring name parameters'/>
+         <menu label='Rename %e'                    action='rename entity'/>
+         <menu label='Extract subprogram'           action='extract subprogram'/>
+      </menu>
+
+      <menu label='Project'>
+         <menu label='Properties'                    action='edit project properties'/>
+         <menu label='Save project %p'               action='save project'/>
+         <menu label='Edit source file'              action='edit project source file'/>
+         <menu label='Dependenies'                   action='edit project dependencies'/>
+         <menu label='Add scenario variable'         action='Add scenario variable'/>
+         <menu label='Edit switches for %f'          action='edit file switches'/>
+         <menu label='Add to extending project'      action='add to extending project'/>
+         <menu label='Remove from extending project' action='remove from extending project'/>
+      </menu>
+
+      <menu label='GNATtest'>
+         <menu label='...'    action='go to tested procedure'/>  <!--  dynamic label -->
+         <menu label='Generate unit test setup for %p' action='run gnattest'/>
+         <menu label='Generate unit test setup for %p recursively' action='run gnattest recursive'/>
+         <menu label='Generate unit test setup for %f' action='make single test'/>
+         <menu label='Open harness project'            action='open harness'/>
+         <menu label='Exit harness project'            action='exit harness'/>
+      </menu>
+
+      <menu label='Expanded code'>
+         <menu label='Show subprogram'         action='show expanded code for subprogram'/>
+         <menu label='Show entire file'        action='show expanded code for file'/>
+         <menu label='Show in separate editor' action='show expanded code in separate editor'/>
+         <menu label='Clear'                   action='clear expanded code'/>
+      </menu>
+
+      <menu label='Metrics'>
+         <menu label='Compute metrics for project %p' action='GNAT metric on current project'/>
+         <menu label='Compute metrics for project %p and subprojects'
+               action='GNAT metric on current project and subprojects'/>
+      </menu>
+
+      <menu label='Align'>
+         <menu label='Colons'                 action='Align colons'/>
+         <menu label='Comas'                  action='Align comas'/>
+         <menu label='Reserved word "is"'     action='Align reserved is'/>
+         <menu label='Reserved word renames"' action='Align reserved renames'/>
+         <menu label='Use clauses'            action='Align use clauses'/>
+         <menu label='Arrow symbols'          action='Align arrows'/>
+         <menu label='Assignment'             action='Align assignments'/>
+         <menu label='Formal parameters'      action='Align formal parameters'/>
+         <menu label='Record representation clause' action='Align record representation clause'/>
+         <menu label='End of line comments'   action='Align end of line comments'/>
+      </menu>
+
+      <menu label='Version Control'>   <!--  dynamic labels -->
+         <menu action='Status' label='Status'/>
+         <menu action='Commit' label='Commit'/>
+         <menu action='Commit (via revision log)' label='Commit (via revision log)'/>
+         <menu action='Commit (from revision log)' label='Commit (from revision log)'/>
+         <menu action='History (as text)' label='History (as text)'/>
+         <menu action='History' label='History'/>
+         <menu action='History for revision' label='History for revision'/>
+         <menu action='Diff against head' label='Diff against head'/>
+         <menu action='Annotate' label='Annotate'/>
+         <menu action='Remove Annotate' label='Remove Annotate'/>
+         <menu action='Edit revision log' label='Edit revision log'/>
+         <menu action='Edit global ChangeLog' label='Edit global ChangeLog'/>
+         <menu action='Remove revision log' label='Remove revision log'/>
+         <menu action='Add no commit' label='Add no commit'/>
+         <menu action='View revision' label='View revision'/>
+         <menu action='Status dir' label='Status dir'/>
+         <menu action='Status dir (recursively)' label='Status dir (recursively)'/>
+         <menu action='Update dir (recursively)' label='Update dir (recursively)'/>
+         <menu action='List project' label='List project'/>
+         <menu action='Status project' label='Status project'/>
+         <menu action='Update project' label='Update project'/>
+         <menu action='List project (recursively)' label='List project (recursively)'/>
+         <menu action='Status project (recursively)' label='Status project (recursively)'/>
+         <menu action='Update project (recursively)' label='Update project (recursively)'/>
+      </menu>
+
+      <menu label='SPARK'>
+         <menu label='Show VC'               action='Show VC'/>
+         <menu label='Show Simplified VC'    action='SPARK/Show Simplified VC'/>
+         <menu label='Show DPC'              action='SPARK/Show DPC'/>
+         <menu label='Show ZLG'              action='SPARK/Show ZLG'/>
+
+         <menu label='Examine metafile'      action='Examine metafile'/>
+         <menu label='Examine file'          action='Examine file'/>
+         <menu label='SPARKFormat file'      action='SPARKFormat file'/>
+         <menu label='SPARKFormat selection' action='SPARKFormat selection'/>
+         <menu label='Simplify file'         action='Simplify file'/>
+         <menu label='Victor file'           action='Victor file'/>
+         <menu label='Riposte file'          action='Riposte entire file'/>
+
+         <!--  Were not in a SPARK submenu -->
+         <menu label='Generate counter-example for VC (showing constants)' action='Riposte this VC'/>
+         <menu label='Generate counter-example for VC (showing numbers)'   action='Riposte this VC (Numeric)'/>
+
+         <menu label='ZombieScope file'      action='ZombieScope file'/>
+         <menu label='SPARKSimpl'            action='Launch SPARKSimp'/>
+         <menu label='POGS'                  action='Launch POGS'/>
+         <menu label='SPARKMake'             action='Launch SPARKMake'/>
+         <menu label='SPARKClean (all)'      action='Launch SPARKClean All'/>
+         <menu label='SPARKClean (custom)'   action='Launch SPARKClean Custom'/>
+      </menu>
+
+      <menu label='Build'/> <!-- dynamic -->
+      <menu label='Run/'/>   <!-- dynamic -->
+      <menu label='Auto Fix'/>  <!-- dynamic -->
+      <menu label='Coverage'/>  <!-- dynamic -->
+      <menu label='CodePeer'/>  <!-- dynamic --> 
+      <menu action='Check Coding Standard' label='Check Coding Standard'/>
+      <menu action='Non local Variables referenced' label='Non local Variables referenced'/>
+      <menu action='Variables referenced' label='Variables referenced'/>
+      <menu action='show_in_html_browser' label='show_in_html_browser'/>
+      <menu action='debug display full name' label='debug display full name'/>
+      <menu action='debug print as decimal' label='debug print as decimal'/>
+      <menu action='debug add breakpoint exception' label='debug add breakpoint exception'/>
+      <menu action='open file at cursor location' label='open file at cursor location'/>
+      <menu label='Locate in model:'/>  <!--  dynamic -->
+      <menu action='spell check word' label='spell check word'/>
+      <menu label='Methods'/>  <!--  dynamic -->
+      <menu action='reload python file' label='reload python file'/>
+
+      <menu label='Properties...'         action='edit file properties'/>
+   </contextual>
+
    <toolbar id='main'>
       <button action="new file"/>
       <button action="open file"/>

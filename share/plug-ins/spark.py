@@ -969,58 +969,6 @@ xml_spark = """<?xml version="1.0"?>
       </menu>
  </submenu>
 
-  <contextual action="Examine metafile" >
-    <Title>SPARK/Examine Metafile</Title>
-  </contextual>
-
-  <contextual action="Examine file" >
-    <Title>SPARK/Examine File</Title>
-  </contextual>
-
-  <contextual action="SPARKFormat file" >
-    <Title>SPARK/SPARKFormat File</Title>
-  </contextual>
-
-  <contextual action="SPARKFormat selection" >
-    <Title>SPARK/SPARKFormat Selection</Title>
-  </contextual>
-
-  <contextual action="Simplify file" >
-    <Title>SPARK/Simplify File</Title>
-  </contextual>
-
-  <contextual action="Victor file" >
-    <Title>SPARK/Victor File</Title>
-  </contextual>
-
-  <contextual action="Riposte entire file" >
-    <Title>SPARK/Riposte File</Title>
-  </contextual>
-
-  <contextual action="Riposte this VC" >
-    <Title>Generate counter-example for VC (showing constants)</Title>
-  </contextual>
-
-  <contextual action="Riposte this VC (Numeric)" >
-    <Title>Generate counter-example for VC (showing numbers)</Title>
-  </contextual>
-
-  <contextual action="ZombieScope file" >
-    <Title>SPARK/ZombieScope File</Title>
-  </contextual>
-
-  <contextual action="Launch SPARKSimp" >
-    <Title>SPARK/SPARKSimp</Title>
-  </contextual>
-
-  <contextual action="Launch POGS" >
-    <Title>SPARK/POGS</Title>
-  </contextual>
-
-  <contextual action="Launch SPARKMake" >
-    <Title>SPARK/SPARKMake</Title>
-  </contextual>
-
   <!-- Shortcut keys -->
 
   <key action="/SPARK/Examine File">F8</key>
@@ -1073,10 +1021,6 @@ xml_sparkclean = """<?xml version="1.0"?>
        </menu>
   </submenu>
 
-  <contextual action="Launch SPARKClean All" >
-    <Title>SPARK/SPARKClean (all)</Title>
-  </contextual>
-
   <action name="Launch SPARKClean Custom" category="Spark" output="none">
     <filter language="Ada" />
     <shell lang="python">""" \
@@ -1090,10 +1034,6 @@ xml_sparkclean = """<?xml version="1.0"?>
          <Title>SPARKClean (custom)</Title>
        </menu>
   </submenu>
-
-  <contextual action="Launch SPARKClean Custom" >
-    <Title>SPARK/SPARKClean (custom)</Title>
-  </contextual>
 
   <target model="sparkclean" category="SPARK" messages_category="SPARK"
           name="SPARKClean Custom">
@@ -1744,29 +1684,25 @@ def initialize_spark():
         name='SPARK/Show VC',
         callback=lambda: do_pogs_xref(
             GPS.current_context(), siv=False, dpc=False, zlg=False),
-        filter=sum_file_current_line_has_vc,
-        contextual='SPARK/Show VC')
+        filter=sum_file_current_line_has_vc)
 
     make_interactive(
         name='SPARK/Show Simplified VC',
         callback=lambda: do_pogs_xref(
             GPS.current_context(), siv=True, dpc=False, zlg=False),
-        filter=sum_file_current_line_has_vc,
-        contextual='SPARK/Show Simplified VC')
+        filter=sum_file_current_line_has_vc)
 
     make_interactive(
         name='SPARK/Show DPC',
         callback=lambda: do_pogs_xref(
             GPS.current_context(), siv=False, dpc=True, zlg=False),
-        filter=sum_file_current_line_has_dpc,
-        contextual='SPARK/Show DPC')
+        filter=sum_file_current_line_has_dpc)
 
     make_interactive(
         name='SPARK/Show ZLG',
         callback=lambda: do_pogs_xref(
             GPS.current_context(), siv=False, dpc=True, zlg=True),
-        filter=sum_file_current_line_has_dpc,
-        contextual='SPARK/Show ZLG')
+        filter=sum_file_current_line_has_dpc)
 
 
 def finalize_spark():

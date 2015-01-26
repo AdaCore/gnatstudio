@@ -35,8 +35,6 @@ with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
@@ -712,9 +710,6 @@ package body Creation_Wizard.Extending is
            & " the root project or one the specifically extends the selected"
            & " project",
          Category    => -"Project");
-      Register_Contextual_Menu
-        (Kernel, "Add to extending project",
-         Action => "add to extending project");
 
       Register_Action
         (Kernel, "remove from extending project",
@@ -724,9 +719,6 @@ package body Creation_Wizard.Extending is
            "If the selected file belongs to an extending project, delete it"
            & " from that project",
          Category    => -"Project");
-      Register_Contextual_Menu
-        (Kernel, "Remove from extending project",
-         Action => "remove from extending project");
    end Register_Contextual_Menus;
 
 end Creation_Wizard.Extending;

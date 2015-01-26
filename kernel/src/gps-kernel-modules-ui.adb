@@ -464,6 +464,21 @@ package body GPS.Kernel.Modules.UI is
    end record;
    Globals : Global_Data;
 
+   procedure Propagate_Visibility
+     (Widget : not null access Gtk_Widget_Record'Class;
+      Parent : not null access Gtk_Container_Record'Class);
+   --  Cleanup (recursively) a menu, so that the following holds true:
+   --  - menu items with a submenu but no visible child are hidden;
+   --  - menu items with only insensitive children are also insensitive;
+   --  - no two separators displayed next to each other;
+   --  - no separator at top or bottom.
+   --
+   --  Widget's visibility and sensitivity will be updated based on the
+   --  list of children of Parent. Typically, the following parameters are
+   --  used:
+   --  - (toolbar, toolbar): process all menus in a toolbar;
+   --  - (menuitem, menuitem.get_submenu): process a single menu recursively.
+
    -----------------------------
    -- Create_Command_For_Menu --
    -----------------------------
@@ -570,9 +585,10 @@ package body GPS.Kernel.Modules.UI is
             declare
                Done : aliased Boolean := False;
                Tmp  : constant String :=
-                        Unknown_To_UTF8
-                          (GPS.Kernel.Macros.Substitute
-                             (Param, Context, Quoted, Done'Access));
+                 Unknown_To_UTF8
+                   (Escape_Menu_Name
+                      (GPS.Kernel.Macros.Substitute
+                         (Param, Context, Quoted, Done'Access)));
             begin
                Has_Error := not Done;
                return Emphasize (Tmp);
@@ -1024,13 +1040,13 @@ package body GPS.Kernel.Modules.UI is
       --  Same, but only for separators now, since their visibility might
       --  depend on the visibility of other items
 
-      C := Convert (Kernel.Contextual);
-      while C /= null loop
-         if C.Menu_Type = Type_Separator then
-            C.Filter_Matched := Menu_Is_Visible (C, Context);
-         end if;
-         C := C.Next;
-      end loop;
+--        C := Convert (Kernel.Contextual);
+--        while C /= null loop
+--           if C.Menu_Type = Type_Separator then
+--              C.Filter_Matched := Menu_Is_Visible (C, Context);
+--           end if;
+--           C := C.Next;
+--        end loop;
 
       C := Convert (Kernel.Contextual);
       while C /= null loop
@@ -1089,6 +1105,10 @@ package body GPS.Kernel.Modules.UI is
          Menu.Weak_Ref
            (Contextual_Menu_Destroyed'Access, Data => Kernel.all'Address);
          Kernel.Contextual_Menu_Open := True;
+
+         Trace (Me, "MANU Got contextual menu");
+         Propagate_Visibility (Menu, Menu);
+         Trace (Me, "MANU Done contextual menu");
       end if;
 
    exception
@@ -2099,6 +2119,10 @@ package body GPS.Kernel.Modules.UI is
       end if;
 
       if Is_Separator then
+--           if True then
+--              raise Program_Error with "when parsing " & Name & " action="
+--                & Action & " label=" & Label;
+--           end if;
          --  ??? Tmp, separators should come from an xml file as we do for
          --  standard menus
          Act := Lookup_Action (Kernel, Action);
@@ -2395,6 +2419,61 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Set_Active;
 
+   procedure Propagate_Visibility
+     (Widget : not null access Gtk_Widget_Record'Class;
+      Parent : not null access Gtk_Container_Record'Class)
+   is
+      use Widget_List;
+      Children : Widget_List.Glist := Parent.Get_Children;
+      Iter     : Widget_List.Glist := Children;
+      S, V : Boolean := False;
+      W    : Gtk_Widget;
+      Last_Visible_Sep : Gtk_Widget;
+      Prev_Is_Sep : Boolean := True;
+   begin
+      while Iter /= Null_List loop
+         W := Widget_List.Get_Data (Iter);
+
+         --  Separators should not impact the visibility of the parent.
+         if W.all in Gtk_Separator_Menu_Item_Record'Class then
+            if Prev_Is_Sep then
+               W.Hide;
+            else
+               W.Show;
+               Last_Visible_Sep := W;
+            end if;
+            Prev_Is_Sep := True;
+
+         else
+            if W.all in Gtk_Menu_Item_Record'Class
+              and then Gtk_Menu_Item (W).Get_Submenu /= null
+            then
+               Propagate_Visibility
+                 (W, Gtk_Container (Gtk_Menu_Item (W).Get_Submenu));
+            end if;
+
+            Prev_Is_Sep := Prev_Is_Sep and then not W.Get_Visible;
+            S := S or else W.Get_Sensitive;
+            V := V or else W.Get_Visible;  --  do not check parents
+         end if;
+
+         Iter := Next (Iter);
+      end loop;
+
+      if Prev_Is_Sep and then Last_Visible_Sep /= null then
+         Last_Visible_Sep.Hide;
+      end if;
+
+      Widget_List.Free (Children);
+
+      if not V then
+         Widget.Hide;
+      else
+         Widget.Show;
+         Widget.Set_Sensitive (S);
+      end if;
+   end Propagate_Visibility;
+
    ------------------------------------
    -- Update_Menus_And_Buttons_Chunk --
    ------------------------------------
@@ -2411,75 +2490,9 @@ package body GPS.Kernel.Modules.UI is
       Tool_Bar : Gtk_Toolbar;
       Available : Boolean;
 
-      procedure Propagate_Visibility
-        (Widget : not null access Gtk_Widget_Record'Class;
-         Parent : not null access Gtk_Container_Record'Class);
-      --  Hide menu items for which all children are also hidden.
-      --  Set menu items insensitive if all children are also insensitive
-      --  Widget's visibility and sensitivity will be updated based on the
-      --  list of children of Parent.
-
       procedure Cleanup_Toolbar_Separators
         (Toolbar : not null access Gtk_Toolbar_Record'Class);
       --  Cleanup separators in a toolbar
-
-      procedure Propagate_Visibility
-        (Widget : not null access Gtk_Widget_Record'Class;
-         Parent : not null access Gtk_Container_Record'Class)
-      is
-         use Widget_List;
-         Children : Widget_List.Glist := Parent.Get_Children;
-         Iter     : Widget_List.Glist := Children;
-         S, V : Boolean := False;
-         W    : Gtk_Widget;
-         Last_Visible_Sep : Gtk_Widget;
-         Prev_Is_Sep : Boolean := True;
-      begin
-         while Iter /= Null_List loop
-            W := Widget_List.Get_Data (Iter);
-
-            --  Separators should not impact the visibility of the parent.
-            --  We also do not want to display a separator as the first or last
-            --  item in the menu, nor display multiple separators next to
-            --  each other.
-            if W.all in Gtk_Separator_Menu_Item_Record'Class then
-               if Prev_Is_Sep then
-                  W.Hide;
-               else
-                  W.Show;
-                  Last_Visible_Sep := W;
-               end if;
-               Prev_Is_Sep := True;
-
-            else
-               if W.all in Gtk_Menu_Item_Record'Class
-                 and then Gtk_Menu_Item (W).Get_Submenu /= null
-               then
-                  Propagate_Visibility
-                    (W, Gtk_Container (Gtk_Menu_Item (W).Get_Submenu));
-               end if;
-
-               Prev_Is_Sep := Prev_Is_Sep and then not W.Get_Visible;
-               S := S or else W.Get_Sensitive;
-               V := V or else W.Get_Visible;  --  do not check parents
-            end if;
-
-            Iter := Next (Iter);
-         end loop;
-
-         if Prev_Is_Sep and then Last_Visible_Sep /= null then
-            Last_Visible_Sep.Hide;
-         end if;
-
-         Widget_List.Free (Children);
-
-         if not V then
-            Widget.Hide;
-         else
-            Widget.Show;
-            Widget.Set_Sensitive (S);
-         end if;
-      end Propagate_Visibility;
 
       procedure Cleanup_Toolbar_Separators
         (Toolbar : not null access Gtk_Toolbar_Record'Class)
@@ -2705,6 +2718,9 @@ package body GPS.Kernel.Modules.UI is
       procedure Process_Menu_Bar (Menubar_Node : Node);
       --  Process a <menubar> node
 
+      procedure Process_Contextual (Contextual : Node);
+      --  Process a <contextual> node
+
       Builder_XML : Unbounded_String;
 
       procedure Process_Menu
@@ -2823,6 +2839,52 @@ package body GPS.Kernel.Modules.UI is
          end loop;
       end Process_Menu_Bar;
 
+      ------------------------
+      -- Process_Contextual --
+      ------------------------
+
+      procedure Process_Contextual (Contextual : Node) is
+         procedure Menu_Node_For_Contextual (Parent : String; Menu : Node);
+         procedure Menu_Node_For_Contextual (Parent : String; Menu : Node) is
+            Label    : constant DOM_String := Get_Attribute (Menu, "label");
+            Action   : constant DOM_String := Get_Attribute (Menu, "action");
+            N : Node := First_Child (Menu);
+         begin
+            --  ??? For now, use Register_Contextual_Menu, although we should
+            --  create a list in memory and use this to instantiate the menu,
+            --  to preserve the order.
+            --  ??? Should take 'optional' and 'hide' into account
+            Register_Contextual_Menu
+              (Kernel,
+               Name   => Action,
+               Action => Action,
+               Label  => Parent & Label);
+
+            while N /= null loop
+               if Node_Name (N) = "menu" then
+                  Menu_Node_For_Contextual (Parent & Label & '/', N);
+               elsif Node_Name (N) = "separator" then
+                  --  ??? Separators not implemented yet
+                  null;
+               end if;
+               N := Next_Sibling (N);
+            end loop;
+         end Menu_Node_For_Contextual;
+
+         N    : Node := First_Child (Contextual);
+      begin
+         while N /= null loop
+            if Node_Name (N) = "menu" then
+               Menu_Node_For_Contextual ("", N);
+            elsif Node_Name (N) = "separator" then
+               --  ??? Separators not implemented yet
+               null;
+            end if;
+
+            N := Next_Sibling (N);
+         end loop;
+      end Process_Contextual;
+
       Input  : File_Input;
       Reader : Tree_Reader;
       Doc    : Document;
@@ -2849,6 +2911,8 @@ package body GPS.Kernel.Modules.UI is
       while N /= null loop
          if Node_Name (N) = "menubar" then
             Process_Menu_Bar (N);
+         elsif Node_Name (N) = "contextual" then
+            Process_Contextual (N);
          elsif Node_Name (N) = "toolbar" then
             Globals.Toolbar_Descriptions.Include
               (Get_Attribute (N, "id"), Clone_Node (N, Deep => True));

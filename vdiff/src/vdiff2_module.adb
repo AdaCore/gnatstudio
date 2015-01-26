@@ -23,7 +23,6 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -291,10 +290,6 @@ package body Vdiff2_Module is
          Description => "Remove the current diff block",
          Category    => -"Diff",
          Filter      => Filter);
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => -"Visual Diff/Close",
-         Action => "vdiff remove difference");
 
       Register_Action
         (Kernel, "vdiff recompute difference",
@@ -302,20 +297,12 @@ package body Vdiff2_Module is
          Description => "Recompute the differences between the two files",
          Category    => -"Diff",
          Filter      => Filter);
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => -"Visual Diff/Recompute",
-         Action => "vdiff recompute difference");
 
       Register_Action
         (Kernel, "vdiff change reference file",
          Command  => new Change_Ref_File_Command,
          Category => -"Diff",
          Filter   => Filter_3_Files);
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => -"Visual Diff/Use this editor as reference",
-         Action => "vdiff change reference file");
 
       Diff3_Cmd := Create
         (Get_Preferences (Kernel),

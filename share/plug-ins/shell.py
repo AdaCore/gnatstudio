@@ -54,14 +54,7 @@ def on_filter(context):
         return False
 
 
-def on_label(context):
-    return "Run OS shell in <b>%s</b>" % (
-        os.path.basename(os.path.dirname("%s/" % context.directory())))
-
-
-@interactive(name="open os shell",
-             contextual=on_label,
-             filter=on_filter)
+@interactive(name="open os shell", filter=on_filter)
 @save_dir
 def create_default_shell():
     """Spawns the user's shell as read from the environment variable SHELL"""

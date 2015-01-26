@@ -302,26 +302,6 @@ XML = r"""<?xml version="1.0" ?>
     >gnattest.run(GPS.current_context().project(), "GNATtest for file")</shell>
   </action>
 
-  <contextual action="run gnattest" after="GNATtest">
-    <title>GNATtest/Generate unit test setup for %p</title>
-  </contextual>
-
-  <contextual action="run gnattest recursive" after="GNATtest">
-    <title>GNATtest/Generate unit test setup for %p recursive</title>
-  </contextual>
-
-  <contextual action="open harness" after="GNATtest">
-    <title>GNATtest/Open harness project</title>
-  </contextual>
-
-  <contextual action="exit harness" after="GNATtest">
-    <title>GNATtest/Exit harness project</title>
-  </contextual>
-
-  <contextual action="make single test" after="GNATtest">
-    <title>GNATtest/Generate unit test setup for %f</title>
-  </contextual>
-
   <target-model name="gnattest" category="">
     <description>Generic launch of gnattest</description>
     <command-line>

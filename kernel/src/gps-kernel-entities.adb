@@ -45,7 +45,6 @@ with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;           use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup;    use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;    use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;            use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
@@ -1286,11 +1285,6 @@ package body GPS.Kernel.Entities is
       Subprogram_Entity_Filter (Filter.all).Kernel := Kernel_Handle (Kernel);
       Register_Filter (Kernel, Filter, "Entity is subprogram");
 
-      Register_Contextual_Submenu
-        (Kernel, "References",
-         Ref_Item   => "goto other file",
-         Add_Before => False);
-
       Register_Action
         (Kernel, "find all references",
          Command     => new Find_All_Refs_Command,
@@ -1298,12 +1292,6 @@ package body GPS.Kernel.Entities is
            -("List all references to the selected entity"
              & " in the Locations window"),
          Filter => Lookup_Filter (Kernel, "Entity"));
-      Register_Contextual_Menu
-        (Kernel,
-         Label      => "References/Find all references to %e",
-         Action     => "find all references",
-         Ref_Item   => "Browser: entity called by",
-         Add_Before => False);
 
       Register_Action
         (Kernel, "find references...",
@@ -1312,10 +1300,6 @@ package body GPS.Kernel.Entities is
            -("List all references to the selected entity"
            & " in the Locations window, with extra filters"),
          Filter => Lookup_Filter (Kernel, "Entity"));
-      Register_Contextual_Menu
-        (Kernel,
-         Label      => "References/Find references to %e...",
-         Action     => "find references...");
 
       Command := new Find_All_Refs_Command;
       Find_All_Refs_Command (Command.all).Locals_Only := True;
@@ -1326,10 +1310,6 @@ package body GPS.Kernel.Entities is
            -("List all references in the selected file to the selected entity"
            & " in the Locations window"),
          Filter => Lookup_Filter (Kernel, "Entity"));
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => "References/Find all local references to %e",
-         Action => "find all local references");
 
       Kernel.Scripts.Register_Command
         ("find_all_refs",

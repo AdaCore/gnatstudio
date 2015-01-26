@@ -17,12 +17,8 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Maps;        use Ada.Strings.Maps;
-
 with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
-
-with Glib.Convert;            use Glib.Convert;
-
 with Case_Handling.IO;        use Case_Handling.IO;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Editors;             use GPS.Editors;
@@ -30,11 +26,8 @@ with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Src_Editor_Module;       use Src_Editor_Module;
-with String_Utils;            use String_Utils;
-with UTF8_Utils;              use UTF8_Utils;
 
 package body Casing_Exceptions is
    Case_Exceptions_Filename : constant Filesystem_String :=
@@ -52,15 +45,6 @@ package body Casing_Exceptions is
    ----------------------
 
    type Casing_Type is (Lower, Upper, Mixed, Smart_Mixed);
-
-   type Contextual_Label_Record is new Contextual_Menu_Label_Creator_Record
-   with record
-      Casing : Casing_Type;
-   end record;
-   type Contextual_Label is access all Contextual_Label_Record'Class;
-   overriding function Get_Label
-     (Creator : access Contextual_Label_Record;
-      Context : Selection_Context) return String;
 
    type Change_Case_Command (Casing : Casing_Type) is
      new Interactive_Command with null record;
@@ -242,55 +226,6 @@ package body Casing_Exceptions is
          end;
       end if;
    end Casing_Customize;
-
-   ---------------
-   -- Get_Label --
-   ---------------
-
-   overriding function Get_Label
-     (Creator : access Contextual_Label_Record;
-      Context : Selection_Context) return String
-   is
-      function Get_Label (Str : String) return String;
-      --  Returns the label for the given string (Entity or Area)
-
-      ---------------
-      -- Get_Label --
-      ---------------
-
-      function Get_Label (Str : String) return String is
-         Success : aliased Boolean;
-         Name    : constant String :=
-           Krunch (Unknown_To_UTF8 (Str, Success'Access));
-      begin
-         if not Success then
-            return "<>";
-         end if;
-
-         case Creator.Casing is
-            when Lower =>
-               return "Casing/Lower " &
-                 Escape_Text (Set_Case (No_Casing_Exception, Name, Lower));
-            when Upper =>
-               return "Casing/Upper " &
-                 Escape_Text (Set_Case (No_Casing_Exception, Name, Upper));
-            when Mixed =>
-               return "Casing/Mixed " &
-                 Escape_Text (Mixed_Case (Name, False));
-            when Smart_Mixed =>
-               return "Casing/Smart Mixed " &
-                 Escape_Text (Mixed_Case (Name, True));
-         end case;
-      end Get_Label;
-
-   begin
-      if Has_Entity_Name_Information (Context) then
-         return Get_Label (Entity_Name_Information (Context));
-      elsif Has_Area_Information (Context) then
-         return Get_Label (Text_Information (Context));
-      end if;
-      return "";
-   end Get_Label;
 
    -------------
    -- Execute --
@@ -487,7 +422,6 @@ package body Casing_Exceptions is
                              Create_From_Dir
                                (Get_Home_Dir (Kernel),
                                 Case_Exceptions_Filename);
-      Label              : Contextual_Label;
       Substring_Filter : constant Action_Filter := new Substring_Filter_Record;
       Empty_Filter : constant Action_Filter := new Empty_Filter_Record;
       Filter       : constant Action_Filter :=
@@ -509,8 +443,6 @@ package body Casing_Exceptions is
          Filename,
          Read_Only => False);
 
-      Label   := new Contextual_Label_Record;
-      Label.Casing := Lower;
       Register_Action
         (Kernel,
          "lower case entity",
@@ -519,13 +451,6 @@ package body Casing_Exceptions is
            "Change the casing of the selected entity to lower case",
          Filter    => RW_Filter,
          Category  => -"Editor");
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => Label,
-         Action => "lower case entity");
-
-      Label   := new Contextual_Label_Record;
-      Label.Casing := Upper;
       Register_Action
         (Kernel,
          "upper case entity",
@@ -534,13 +459,6 @@ package body Casing_Exceptions is
            "Change the casing of the selected entity to upper case",
          Filter    => RW_Filter,
          Category  => -"Editor");
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => Label,
-         Action => "upper case entity");
-
-      Label   := new Contextual_Label_Record;
-      Label.Casing := Mixed;
       Register_Action
         (Kernel,
          "mixed case entity",
@@ -549,13 +467,6 @@ package body Casing_Exceptions is
            "Change the casing of the selected entity to mixed case",
          Filter    => RW_Filter,
          Category  => -"Editor");
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => Label,
-         Action => "mixed case entity");
-
-      Label   := new Contextual_Label_Record;
-      Label.Casing := Smart_Mixed;
       Register_Action
         (Kernel,
          "smart mixed case entity",
@@ -564,10 +475,6 @@ package body Casing_Exceptions is
            "Change the casing of the selected entity to smart mixed case",
          Filter    => RW_Filter,
          Category  => -"Editor");
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => Label,
-         Action => "smart mixed case entity");
 
       F := Filter and Substring_Filter;
 
@@ -580,11 +487,6 @@ package body Casing_Exceptions is
            & " of this substring will use the given casing from now on",
          Filter    => F,
          Category  => -"Editor");
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => -"Casing/Add substring exception for %s",
-         Action => "add substring casing exception");
-
       Register_Action
         (Kernel,
          "remove substring casing exception",
@@ -594,10 +496,6 @@ package body Casing_Exceptions is
            & " 'add substring casing exception'",
          Filter    => F,
          Category  => -"Editor");
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => -"Casing/Remove substring exception for %s",
-         Action => "remove substring casing exception");
 
       F := Filter and not Substring_Filter;
 
@@ -610,11 +508,6 @@ package body Casing_Exceptions is
          & " of this word will use the given casing from now on",
          Filter    => F,
          Category  => -"Editor");
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => -"Casing/Add exception for %s",
-         Action => "add casing exception");
-
       Register_Action
         (Kernel,
          "remove casing exception",
@@ -623,10 +516,6 @@ package body Casing_Exceptions is
            "Remove a casing exception created via 'add casing exception'",
          Filter    => F,
          Category  => -"Editor");
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => -"Casing/Remove exception for %s",
-         Action => "remove casing exception");
    end Register_Module;
 
    -------------

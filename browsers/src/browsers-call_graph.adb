@@ -782,10 +782,6 @@ package body Browsers.Call_Graph is
            & " scope of the selected entity",
          Filter      => Lookup_Filter (Kernel, "Entity is subprogram"),
          Category    => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => "Browsers/%e calls",
-         Action => "Browser: entity calls");
 
       Register_Action
         (Kernel, "Browser: entity calls (recursive)",
@@ -795,10 +791,6 @@ package body Browsers.Call_Graph is
          & " scope of the selected entity (recursively)",
          Filter      => Lookup_Filter (Kernel, "Entity is subprogram"),
          Category    => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => "Browsers/%e calls (recursively)",
-         Action => "Browser: entity calls (recursive)");
 
       Register_Action
         (Kernel, "Browser: entity called by",
@@ -808,10 +800,6 @@ package body Browsers.Call_Graph is
            & " selected entity",
          Filter      => Lookup_Filter (Kernel, "Entity is subprogram"),
          Category    => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => "Browsers/%e is called by",
-         Action => "Browser: entity called by");
 
       Kernel.Scripts.Register_Command
         ("called_by_browser",

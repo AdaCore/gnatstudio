@@ -63,7 +63,6 @@ with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GVD_Module;               use GVD_Module;
 with GVD.Preferences;          use GVD.Preferences;
@@ -1683,10 +1682,6 @@ package body GVD.Memory_View is
          Filter   =>
            Lookup_Filter (Kernel, "Debugger active")
            and Lookup_Filter (Kernel, "Debugger printable variable"));
-      Register_Contextual_Menu
-        (Kernel, "Debug view memory",
-         Label  => -"Debug/View memory at address of %S",
-         Action => "examine memory");
    end Register_Module;
 
    -------------------------------

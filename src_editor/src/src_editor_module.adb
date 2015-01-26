@@ -1920,7 +1920,6 @@ package body Src_Editor_Module is
       Extra                    : Files_Extra_Scope;
       Recent_Menu_Item         : Gtk_Menu_Item;
       Command                  : Interactive_Command_Access;
-      Label                    : Contextual_Menu_Label_Creator;
       Line_Numbers_Area_Filter : Action_Filter;
       Submenu                  : Submenu_Factory;
 
@@ -2002,11 +2001,6 @@ package body Src_Editor_Module is
 
       Line_Numbers_Area_Filter := new In_Line_Numbers_Area_Filter;
 
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "goto declaration",
-         Label  => -"Goto declaration of %ef");
-
       Submenu := new Goto_Dispatch_Declaration_Submenu;
       Register_Contextual_Submenu
         (Kernel, "Goto dispatching declaration of entity",
@@ -2017,12 +2011,6 @@ package body Src_Editor_Module is
                   and Create (Module => Src_Editor_Module_Name))
                  or Create (Module => Entity_Browser_Module_Name)
                  or Has_Type));
-
-      Label   := new Goto_Body_Menu_Label;
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "goto body",
-         Label  => Label);
 
       Submenu := new Goto_Dispatch_Body_Submenu;
       Register_Contextual_Submenu
@@ -2036,37 +2024,16 @@ package body Src_Editor_Module is
          Command     => new Goto_Type_Command,
          Description => "Jump to the declaration for the type of the entity",
          Filter      => Has_Type);
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "goto type of entity",
-         Label  => -"Goto type declaration of %e");
-
       Register_Action
         (Kernel, "display type hierarchy of entity",
          Command    => new Type_Hierarchy_Command,
          Filter     => Has_Parent_Type or Is_Access);
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "display type hierarchy of entity",
-         Label  => -"Display type hierarchy for %e");
-
-      --  ??? Used to have an extra filter for Src_Action_Context
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "goto other file",
-         Label  => -"Goto file spec<->body");
-
       Register_Action
         (Kernel, "edit file",
          Command     => new Edit_File_Command,
          Description => -"Open an editor for the selected file",
          Filter      => Lookup_Filter (Kernel, "File")
             and not Create (Module => Src_Editor_Module_Name));
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => "Edit %f",
-         Action => "edit file");
-
       Register_Action
         (Kernel, "edit file properties",
          Command     => new Editor_Properties_Command,
@@ -2074,28 +2041,18 @@ package body Src_Editor_Module is
            -"Open a dialog to edit file properties (charset, language,...)",
          Filter   => Create (Module => Src_Editor_Module_Name),
          Category => -"Editor");
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => "Properties...",
-         Action => "edit file properties",
-         Group  => Integer'Last); --  Always keep last
-
-      Command := new Control_Command;
-      Control_Command (Command.all).Mode := As_Is;
       Register_Action
         (Kernel, "No casing/indentation on next key",
-         Command, -"Disable the casing and indentation on next key",
-         Category   => "Editor",
-         Filter     => Src_Action_Context);
-
-      Command := new Control_Command;
-      Control_Command (Command.all).Mode := Sticky_As_Is;
+         new Control_Command'(Interactive_Command with Mode => As_Is),
+         Description => -"Disable the casing and indentation on next key",
+         Category    => "Editor",
+         Filter      => Src_Action_Context);
       Register_Action
         (Kernel, "Toggle auto casing/indentation",
-         Command, -"Disable or enable the casing and indentation",
-         Category => "Editor",
-         Filter     => Src_Action_Context);
-
+         new Control_Command'(Interactive_Command with Mode => Sticky_As_Is),
+         Description => -"Disable or enable the casing and indentation",
+         Category    => "Editor",
+         Filter      => Src_Action_Context);
       Register_Action
         (Kernel, "Insert TAB with spaces",
          new Tab_As_Space_Command,
@@ -2257,12 +2214,7 @@ package body Src_Editor_Module is
       Register_Action
         (Kernel, "goto line",
          Command     => new Goto_Line_Command,
-         Description => -"Open a dialog to select a line to go to",
-         Filter      => Line_Numbers_Area_Filter);
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => -"Goto line...",
-         Action => "goto line");
+         Description => -"Open a dialog to select a line to go to");
 
       Register_Action
         (Kernel, "goto declaration",

@@ -1835,12 +1835,6 @@ package body Call_Graph_Views is
            & " the selected entity",
          Filter    => Filter,
          Category  => -"Call trees");
-      Register_Contextual_Menu
-        (Kernel     => Kernel,
-         Label      => -"%e calls",
-         Action     => "Entity calls",
-         Ref_Item   => "Goto other file",
-         Add_Before => False);
 
       Register_Action
         (Kernel, "Entity called by",
@@ -1850,12 +1844,6 @@ package body Call_Graph_Views is
          & " the selected entity",
          Filter    => Filter,
          Category  => -"Call trees");
-      Register_Contextual_Menu
-        (Kernel     => Kernel,
-         Label      => -"%e is called by",
-         Action     => "Entity called by",
-         Ref_Item   => "Entity calls",
-         Add_Before => False);
 
       Register_Action
         (Kernel, "calltree clear",

@@ -463,21 +463,10 @@ package body VCS_Module.Actions is
          null,
          Query_Status_For_Project'Access);
 
-      --  Register_Contextual_Menu
-      --    (Kernel => Kernel,
-      --     Name   => "Version Control/VCS Reference",
-      --     Action => "");
-      --  Register_Contextual_Menu
-      --    (Kernel => Kernel,
-      --     Name   => "VCS Reference",
-      --     Filter => Create (Module => "VCS_Explorer"));
-
       Register_Contextual_Submenu
         (Kernel     => Kernel,
          Name       => -"Version Control",
          Filter     => Filter,
-         --   Ref_Item   => "VCS Reference",
-         --   Add_Before => False,
          Submenu    => new VCS_Contextual_Menu);
    end Register_Actions;
 

@@ -243,15 +243,6 @@ xml_base = ("""
    >GPS.BuildTarget("GNAT Metrics for project and subprojects").execute"""
             """(synchronous=False)</shell>
 </action>
-
-<contextual action="GNAT metric on current project" >
-   <title>Metrics/Compute metrics for project %p</title>
-</contextual>
-
-<contextual action="GNAT metric on current project and subprojects" >
-   <title>Metrics/Compute metrics for project %p and subprojects</title>
-</contextual>
-
 """)
 
 

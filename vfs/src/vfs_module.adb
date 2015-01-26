@@ -37,7 +37,6 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
@@ -834,10 +833,6 @@ package body VFS_Module is
          Command     => Command,
          Description => "Create a new file in the selected directory",
          Filter      => Is_Dir);
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "create new file",
-         Label  => "File operations/Create a new file");
 
       Command := new Create_Command;
       Create_Command (Command.all).Create_Dir := True;
@@ -846,50 +841,30 @@ package body VFS_Module is
          Command     => Command,
          Description => "Create a new subdirectory in the selected directory",
          Filter      => Is_Dir);
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "create new directory",
-         Label  => "File operations/Create a subdirectory");
 
       Register_Action
         (Kernel, "rename file",
          Command     => new Rename_Command,
          Description => "Rename the selected file",
          Filter      => Is_File);
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "rename file",
-         Label  => "File operations/Rename file %f");
 
       Register_Action
         (Kernel, "rename directory",
          Command     => new Rename_Command,
          Description => "Rename the selected directory",
          Filter      => Is_Dir);
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "rename directory",
-         Label  => "File operations/Rename directory %f");
 
       Register_Action
         (Kernel, "delete file",
          Command     => new Delete_Command,
          Description => "Delete the selected file",
          Filter      => Is_File);
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "delete file",
-         Label  => "File operations/Delete file %f");
 
       Register_Action
         (Kernel, "delete directory",
          Command     => new Delete_Command,
          Description => "Delete the selected directory and its subdirectories",
          Filter      => Is_File);
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "delete directory",
-         Label  => "File operations/Delete directory recursively");
 
       Kernel.Scripts.Register_Command
         ("pwd",

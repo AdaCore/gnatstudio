@@ -27,9 +27,7 @@ def __filter(context):
 
 @gps_utils.interactive(
     name='jump to separate body',
-    filter=__filter,
-    contextual="Goto separate body of %e",
-    contextual_ref='goto body')
+    filter=__filter)
 def on_goto_separate():
     """
     Jump to the actual implementation for an Ada entity that is declared as

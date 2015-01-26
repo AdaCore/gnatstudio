@@ -252,8 +252,7 @@ def in_rw_ada_file(context):
             and is_writable(context))
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Colons",
-             name="Align colons")
+@interactive("Ada", in_rw_ada_file, name="Align colons")
 def align_colons():
     """
     Aligns colons (eg in object and record type declarations) and trailing
@@ -263,8 +262,7 @@ def align_colons():
     buffer_align_on(sep=":(?!=)", replace_with=" : ")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Comas",
-             name="Align comas")
+@interactive("Ada", in_rw_ada_file, name="Align comas")
 def align_comas():
     """
     Aligns comas (eg actual parameters or arguments in pragmas) in
@@ -330,8 +328,7 @@ def align_comas():
     return True
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Reserved word 'is'",
-             name="Align reserved is")
+@interactive("Ada", in_rw_ada_file, name="Align reserved is")
 def align_reserved_is():
     """
     Aligns reserved word 'is' (eg in type declarations) in
@@ -341,23 +338,19 @@ def align_reserved_is():
     buffer_align_on(sep=" is ")
 
 
-@interactive("Ada", in_rw_ada_file,
-             contextual="Align/Reserved word 'renames'",
-             name="Align reserved renames")
+@interactive("Ada", in_rw_ada_file, name="Align reserved renames")
 def align_renaming():
     """Aligns reserved word 'renames' in current selection"""
     buffer_align_on(sep=" renames ")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Use clauses",
-             name="Align use clauses")
+@interactive("Ada", in_rw_ada_file, name="Align use clauses")
 def align_use_clauses():
     """Aligns Ada use-clauses in current selection"""
     buffer_align_on(sep=" use ")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Arrow symbols",
-             name="Align arrows")
+@interactive("Ada", in_rw_ada_file, name="Align arrows")
 @with_save_excursion
 def align_arrows():
     """Aligns Ada arrow symbol '=>' in current selection"""
@@ -416,15 +409,13 @@ def align_arrows():
         top.buffer().finish_undo_group()
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Assignment symbols",
-             name="Align assignments")
+@interactive("Ada", in_rw_ada_file, name="Align assignments")
 def align_assignments():
     """Aligns Ada assignment symbol ':=' in current selection"""
     buffer_align_on(sep=":=", replace_with=" := ")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Formal parameters",
-             name="Align formal parameters")
+@interactive("Ada", in_rw_ada_file, name="Align formal parameters")
 def align_formal_params():
     """
     Aligns the colons, modes, and formal types in parameter specifications
@@ -435,9 +426,7 @@ def align_formal_params():
                     replace_with=" : \\1")
 
 
-@interactive(category="Ada",
-             filter=in_rw_ada_file,
-             contextual="Align/Record representation clause",
+@interactive(category="Ada", filter=in_rw_ada_file,
              name="Align record representation clause")
 def align_record_rep_clause():
     """Aligns the various parts of a record representation clause"""
@@ -447,7 +436,6 @@ def align_record_rep_clause():
 
 @interactive(category="Ada",
              filter=in_rw_ada_file,
-             contextual="Align/End of line comments",
              name="Align end of line comments")
 def align_end_of_line_comments():
     """Align end of line comments"""

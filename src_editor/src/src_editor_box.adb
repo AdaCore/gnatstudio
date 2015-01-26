@@ -728,34 +728,6 @@ package body Src_Editor_Box is
          return False;
    end Focus_Out;
 
-   ---------------
-   -- Get_Label --
-   ---------------
-
-   overriding function Get_Label
-     (Creator : access Goto_Body_Menu_Label;
-      Context : Selection_Context) return String
-   is
-      pragma Unreferenced (Creator);
-
-      Entity : constant Root_Entity'Class := Get_Entity (Context);
-      Decl   : General_Entity_Declaration;
-
-   begin
-      if Entity /= No_Root_Entity then
-         Decl := Get_Declaration (Entity);
-
-         if Decl.Body_Is_Full_Declaration then
-            return Substitute_Label
-              (-"Goto full declaration of %ef", Context);
-         else
-            return Substitute_Label (-"Goto body of %ef", Context);
-         end if;
-      end if;
-
-      return "";
-   end Get_Label;
-
    ----------------------------
    -- On_Goto_Declaration_Of --
    ----------------------------

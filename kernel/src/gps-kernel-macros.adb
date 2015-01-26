@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Case_Handling;           use Case_Handling;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Shared_Macros;       use GPS.Shared_Macros;
@@ -135,6 +136,21 @@ package body GPS.Kernel.Macros is
       --  cases except for remote directory (\\server\drive). Having 4
       --  backslashes at the start of the PATH is not recognized by Windows.
 
+      function Get_S return String;
+      --  The '%s' expansion
+
+      function Get_S return String is
+      begin
+         if Has_Entity_Name_Information (Context) then
+            return Entity_Name_Information (Context);
+         elsif Has_Area_Information (Context) then
+            return Text_Information (Context);
+         else
+            Done.all := False;
+            return "";
+         end if;
+      end Get_S;
+
    begin
       Done.all := True;
 
@@ -172,6 +188,22 @@ package body GPS.Kernel.Macros is
             end if;
          end if;
 
+      elsif Param = "body_or_decl" then
+         --  Whether the body of the entity is a full declaration or a body
+         declare
+            Entity : constant Root_Entity'Class := Get_Entity (Context);
+            Decl   : General_Entity_Declaration;
+         begin
+            if Entity /= No_Root_Entity then
+               Decl := Get_Declaration (Entity);
+               if Decl.Body_Is_Full_Declaration then
+                  return "full declaration";
+               else
+                  return "body";
+               end if;
+            end if;
+         end;
+
       elsif Param = "ek" then
          if Get_Entity (Context) /= No_Root_Entity then
             --  Get the name from the context, to have the proper casing
@@ -197,11 +229,16 @@ package body GPS.Kernel.Macros is
            (Get_Kernel (Context).Get_System_Dir, "bin").Display_Full_Name;
 
       elsif Param = "s" then
-         if Has_Entity_Name_Information (Context) then
-            return Entity_Name_Information (Context);
-         elsif Has_Area_Information (Context) then
-            return Text_Information (Context);
-         end if;
+         return Get_S;
+
+      elsif Param = "lower_s" then
+         return Set_Case (No_Casing_Exception, Get_S, Lower);
+      elsif Param = "upper_s" then
+         return Set_Case (No_Casing_Exception, Get_S, Upper);
+      elsif Param = "mixed_s" then
+         return Mixed_Case (Get_S, False);
+      elsif Param = "smart_mixed_s" then
+         return Mixed_Case (Get_S, True);
 
       elsif Param = "S" then
          if Has_Area_Information (Context) then

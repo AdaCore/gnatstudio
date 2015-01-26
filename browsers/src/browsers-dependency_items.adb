@@ -870,10 +870,6 @@ package body Browsers.Dependency_Items is
          & " that the selected file depends on",
          Filter    => Filter,
          Category  => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Browsers/Show dependencies for %f",
-         Action => "Browser: show dependencies for file");
 
       Register_Action
         (Kernel, "Browser: show files depending on file",
@@ -883,10 +879,6 @@ package body Browsers.Dependency_Items is
          & " that depend on the selected file",
          Filter    => Filter,
          Category  => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Browsers/Show files depending on %f",
-         Action => "Browser: show files depending on file");
 
       Register_Action
         (Kernel, "Browser: analyze deps for other file",
@@ -896,10 +888,6 @@ package body Browsers.Dependency_Items is
          & " (spec or body)",
          Filter    => Create (Module => Dependency_Browser_Module_Name),
          Category  => -"Views");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Analyze other file (spec or body)",
-         Action => "Browser: analyze deps for other file");
 
       Kernel.Scripts.Register_Command
         ("uses",

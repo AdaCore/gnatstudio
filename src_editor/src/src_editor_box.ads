@@ -243,14 +243,6 @@ package Src_Editor_Box is
    -- Contextual menu --
    ---------------------
 
-   type Goto_Body_Menu_Label is new
-     GPS.Kernel.Modules.UI.Contextual_Menu_Label_Creator_Record
-     with null record;
-   overriding function Get_Label
-     (Creator : access Goto_Body_Menu_Label;
-      Context : GPS.Kernel.Selection_Context) return String;
-   --  Return the label to use for the contextual menu "Goto body"
-
    type Goto_Dispatch_Declaration_Submenu is new
      GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
    overriding procedure Append_To_Menu

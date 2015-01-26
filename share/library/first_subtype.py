@@ -38,11 +38,7 @@ def has_first_subtype(context):
     return False
 
 
-@gps_utils.interactive(
-    name='goto first subtype',
-    contextual='Goto first subtype of %e',
-    filter=has_first_subtype,
-    contextual_ref='goto other file')
+@gps_utils.interactive(name='goto first subtype', filter=has_first_subtype)
 def __goto_first_subtype():
     context = GPS.current_context()
     decl = context.first_subtype.declaration()

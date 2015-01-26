@@ -2166,10 +2166,6 @@ package body Project_Explorers is
          Filter      => Lookup_Filter (Kernel, "File")
              and not Create (Module => Explorer_Module_Name),
          Category    => -"Project Explorer");
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "Locate file in explorer",
-         Label  => "Locate in Project View: %f");
 
       Register_Action
         (Kernel, "Locate project in explorer",
@@ -2178,10 +2174,6 @@ package body Project_Explorers is
          Filter      => Lookup_Filter (Kernel, "Project only")
             and not Create (Module => Explorer_Module_Name),
          Category    => -"Project Explorer");
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "Locate project in explorer",
-         Label  => "Locate in Project View: %p");
 
       Register_Action
         (Kernel, Toggle_Absolute_Path_Name,

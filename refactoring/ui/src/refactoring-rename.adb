@@ -36,8 +36,6 @@ with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel;                 use GPS.Kernel;
 with Histories;                  use Histories;
@@ -468,10 +466,6 @@ package body Refactoring.Rename is
          Description => -"Rename an entity, including its references",
          Category    => -"Refactoring",
          Filter => Lookup_Filter (Kernel, "Entity"));
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => "Refactoring/Rename %e",
-         Action => "rename entity");
 
       Kernel.Scripts.Register_Command
         ("rename", 1, 4, Entity_Command_Handler'Access,

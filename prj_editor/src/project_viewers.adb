@@ -1234,21 +1234,12 @@ package body Project_Viewers is
          -"Edit the switches for the selected files",
          Icon_Name => "gps-edit-symbolic");
 
-      Register_Contextual_Menu
-        (Kernel,
-         Label  => "Project/Properties",
-         Action => "edit project properties");
-
       Register_Action
         (Kernel, "save project",
          Command     => new Save_Project_Command,
          Description => -"Save the selected project",
          Filter      => Filter2,
          Category    => -"Projects");
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "save project",
-         Label  => "Project/Save project %p");
 
       Register_Action
         (Kernel, "Edit project source file",
@@ -1257,10 +1248,6 @@ package body Project_Viewers is
            -"Open an editor for the .gpr file of the current project",
          Filter      => Filter,
          Category    => -"Projects");
-      Register_Contextual_Menu
-        (Kernel,
-         Name   => "Project/Edit source file",
-         Action => "Edit project source file");
 
       Register_Action
         (Kernel, "edit project dependencies",
@@ -1268,11 +1255,6 @@ package body Project_Viewers is
          Description => "Open a dialog to edit the project dependencies",
          Filter      => Filter2,
          Category    => -"Projects");
-      Register_Contextual_Menu
-        (Kernel,
-         Name   => "Project dependencies",
-         Action => "edit project dependencies",
-         Label  => "Project/Dependencies");
 
       Register_Action
         (Kernel, Action_Add_Scenario_Variable,
@@ -1281,11 +1263,6 @@ package body Project_Viewers is
          Description => -"Add a new scenario variable to the selected project",
          Filter => Create (Module => Explorer_Module_Name) and Filter2,
          Category => -"Projects");
-      Register_Contextual_Menu
-        (Kernel,
-         Name   => "Add scenario variable",
-         Action => Action_Add_Scenario_Variable,
-         Label  => "Project/Add scenario variable");
 
       Register_Action
         (Kernel, "edit file switches",
@@ -1293,10 +1270,6 @@ package body Project_Viewers is
          Description => "Edit the compilation switches for the source files",
          Filter      =>  Lookup_Filter (Kernel, "Project and file"),
          Category    => -"Projects");
-      Register_Contextual_Menu
-        (Kernel,
-         Action => "edit file switches",
-         Label  => "Edit switches for %f");
 
       Creation_Wizard.Extending.Register_Contextual_Menus (Kernel);
 

@@ -107,11 +107,6 @@ def on_gps_started(hook):
         grey_out_contextual = GPS.Preference(
             "Plugins/copy paste/greyedout").get()
 
-        # ??? Should still show them when inapplicable if grey_out_contextual
-        GPS.Action('cut to clipboard').contextual('Cut')
-        GPS.Action('copy to clipboard').contextual('Copy')
-        GPS.Action('paste from clipboard').contextual('Paste')
-
     gps_utils.make_interactive(
         callback=copy_with_line_numbers,
         menu='/Edit/Copy with line numbers',
