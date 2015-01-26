@@ -1081,11 +1081,6 @@ package body Completion_Window is
          Unchecked_Free (Explorer.Iter);
       end if;
 
-      --  Force a refresh of the context as we are about to destroy the
-      --  completion window, so that editor actions can go back to the
-      --  editor.
-      Explorer.Kernel.Refresh_Context;
-
       return False;
 
    exception
@@ -1734,11 +1729,6 @@ package body Completion_Window is
          Gtk.Widget.Signal_Destroy_Event,
          To_Marshaller (On_Explorer_Destroyed'Access), Explorer);
 
-      --  A number of editor actions (for instance pressing the "down" arrow)
-      --  test a filter which is False when the smart completion window is up:
-      --  force a refresh of the context here, to clear the previous context's
-      --  cache of the value for this filter.
-      Kernel.Refresh_Context;
    end Initialize;
 
    -------------

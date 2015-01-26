@@ -451,22 +451,21 @@ package GPS.Kernel is
    procedure Register_Filter
      (Kernel : access Kernel_Handle_Record'Class;
       Filter : access Action_Filter_Record;
-      Name   : String);
-   --  The goal of this procedure is twofold:
-   --    * If a name is specified, the filter will be accessible from other
-   --      places in GPS, including scripts, through calls to Lookup_Filter
-   --    * Whether the name is specified or not, this ensures that the filter
-   --      will be properly freed when GPS exits. When you create new filter
-   --      types that embed other filters, you should override this procedure
-   --      so that it calls the inherited version and calls Register_Filter on
-   --      each of the filters it embeds
+      Name   : String;
+      Cached : Boolean := True);
+   --  Makes the filter accessible from other parts of GPS via a name,
+   --  including scripts.
+   --  If Cached is true, the result of the filter is stored in the context,
+   --  and not recomputed while the context exists.
+   --
+   --  As a special case, this subprogram is called internally with no name,
+   --  for memory management purposes.
 
    type Base_Action_Filter_Record (<>)
       is new Action_Filter_Record with private;
    type Base_Action_Filter is access all Base_Action_Filter_Record'Class;
 
-   overriding
-   function Filter_Matches_Primitive
+   overriding function Filter_Matches_Primitive
      (Filter  : access Base_Action_Filter_Record;
       Context : Selection_Context) return Boolean;
    --  See docs for inherited subprograms
@@ -517,7 +516,8 @@ package GPS.Kernel is
    overriding procedure Register_Filter
      (Kernel : access Kernel_Handle_Record'Class;
       Filter : access Base_Action_Filter_Record;
-      Name   : String);
+      Name   : String;
+      Cached : Boolean := True);
 
    function Lookup_Filter
      (Kernel : access Kernel_Handle_Record;
@@ -958,6 +958,10 @@ private
       --  apart from that in general). They are added automatically to the list
       --  the first time they are used, so users do not need to do anything
       --  special except use them
+
+      Cached : Boolean := True;
+      --  Whether the result of the filter should be stored in the context, or
+      --  recomputed each time Filter_Matches_Primitive is called.
    end record;
 
    type Base_Action_Filter_Record (Kind : Filter_Type)
