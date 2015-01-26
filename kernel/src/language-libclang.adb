@@ -36,6 +36,7 @@ pragma Warnings (Off);
 with System.Traceback.Symbolic;
 pragma Warnings (On);
 with GNATCOLL.Utils; use GNATCOLL.Utils;
+with GNAT.Regpat; use GNAT.Regpat;
 
 package body Language.Libclang is
 
@@ -48,13 +49,13 @@ package body Language.Libclang is
    Nb_Tasks : constant := 4;
 
    Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG.DIAGNOSTICS", Off);
+     GNATCOLL.Traces.Create ("LIBCLANG.DIAGNOSTICS", On);
 
    Me : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("LIBCLANG", On);
 
    Activate_Clang_XRef : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG.XREF", Off);
+     GNATCOLL.Traces.Create ("LIBCLANG.XREF", On);
 
    function Parsing_Timeout_Handler return Boolean;
 
@@ -555,9 +556,12 @@ package body Language.Libclang is
       return Cache_Entry.Get;
    end Get_TU;
 
-   ----------------------
-   -- Translation_Unit --
-   ----------------------
+   Cpp_Header_Regex : constant Regpat.Pattern_Matcher :=
+     Compile (".*?include\/c\+\+\/\d\..*?\/.*$");
+
+   ------------------------------
+   -- Enqueue_Translation_Unit --
+   ------------------------------
 
    procedure Enqueue_Translation_Unit
      (Kernel : Core_Kernel;
@@ -574,8 +578,18 @@ package body Language.Libclang is
 
       Kernel_Lang      : constant String :=
         Kernel.Lang_Handler.Get_Language_From_File (File);
-      Lang : constant String :=
-        (if Kernel_Lang = "" then Default_Lang else Kernel_Lang);
+
+      function Lang return String;
+      function Lang return String is
+      begin
+         if Match (Cpp_Header_Regex, String (File.Full_Name.all)) then
+            return "c++";
+         elsif Kernel_Lang = "" then
+            return Default_Lang;
+         else
+            return Kernel_Lang;
+         end if;
+      end Lang;
 
       C_Switches       : GNAT.Strings.String_List_Access;
       Ignored          : Boolean;

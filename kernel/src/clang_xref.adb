@@ -30,12 +30,16 @@ with Basic_Types;
 with Interfaces.C.Pointers;
 with GPS.Kernel.Properties; use GPS.Kernel.Properties;
 with GPS.Kernel; use GPS.Kernel;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 ----------------
 -- Clang_Xref --
 ----------------
 
 package body Clang_Xref is
+
+   Me : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("LIBCLANG", On);
 
    --  Quick design notes about clang cross references:
    --
@@ -133,7 +137,8 @@ package body Clang_Xref is
    function Get_Project (E : Clang_Entity) return Project_Type
    is
      (File_Info'Class
-        (E.Kernel.Registry.Tree.Info_Set (E.Loc.File).First_Element).Project);
+        (E.Kernel.Registry.Tree.Info_Set
+             (E.Ref_Loc.File).First_Element).Project);
    --  Helper function to retrieve an entity's project
 
    function Overrides
@@ -177,30 +182,43 @@ package body Clang_Xref is
 
    function Get_Clang_Cursor (E : Clang_Entity) return Clang_Cursor
    is
-      use Basic_Types;
-      use type Basic_Types.Visible_Column_Type;
+      function Internal (Loc : General_Location) return Clang_Cursor;
+      function Internal (Loc : General_Location) return Clang_Cursor is
+         use Basic_Types;
+         use type Basic_Types.Visible_Column_Type;
+
+         Ret : Clang_Cursor;
+         Line_Offset : constant Natural := Get_Line_Offset (E.Kernel, Loc);
+         TU : constant Clang_Translation_Unit :=
+           Translation_Unit (E.Kernel, Loc.File, False);
+
+      begin
+         Ret := Cursor_At (TU, Loc.File, Loc.Line, Line_Offset);
+
+         --  For some stdlib functions, libclang will present an unexposed_attr
+         --  for the location at which the function is declared. A sufficient
+         --  workaround is usually to get the cursor at one column before.
+
+         --  NB: We never want to return an UnexposedAttr since it means it's
+         --  unsupported anyway, so no harm in trying to recover a meaningful
+         --  cursor
+
+         if Ret.kind = CXCursor_UnexposedAttr then
+            Ret := Cursor_At
+              (TU, Loc.File, Loc.Line, Natural'Max (1, Line_Offset - 1));
+         end if;
+
+         return Ret;
+      end Internal;
 
       Ret : Clang_Cursor;
-      Line_Offset : constant Natural := Get_Line_Offset (E.Kernel, E.Loc);
-      TU : constant Clang_Translation_Unit :=
-        Translation_Unit (E.Kernel, E.Loc.File, False);
-
    begin
-      Ret := Cursor_At (TU, E.Loc.File, E.Loc.Line, Line_Offset);
-
-      --  For some stdlib functions, libclang will present an unexposed_attr
-      --  for the location at which the function is declared. A sufficient
-      --  workaround is usually to get the cursor at one column before.
-
-      --  NB: We never want to return an UnexposedAttr since it means it's
-      --  unsupported anyway, so no harm in trying to recover a meaningful
-      --  cursor
-
-      if Ret.kind = CXCursor_UnexposedAttr then
-         Ret := Cursor_At
-           (TU, E.Loc.File, E.Loc.Line, Natural'Max (1, Line_Offset - 1));
+      Ret := Internal (E.Ref_Loc);
+      if Offset (Location (Ret)) = 0 then
+         Ret := Internal (E.Ref_Loc);
+      else
+         Ret := Referenced (Ret);
       end if;
-
       return Ret;
    end Get_Clang_Cursor;
 
@@ -237,8 +255,7 @@ package body Clang_Xref is
 
       pragma Unreferenced (Name, General_Db);
 
-      C : constant Clang_Cursor := Referenced
-        (Get_Clang_Cursor (Db.Kernel, Loc));
+      C : constant Clang_Cursor := Get_Clang_Cursor (Db.Kernel, Loc);
    begin
       if C = No_Cursor then
 
@@ -376,6 +393,10 @@ package body Clang_Xref is
              To_General_Location
                (Db.Kernel,
                 Location (Referenced (Cursor))),
+           Ref_Loc         =>
+             To_General_Location
+               (Db.Kernel,
+                Location (Cursor)),
            Kernel          => Kernel,
            Has_Type_Inst   => False,
            From_Lang       => +Lang,
@@ -408,6 +429,17 @@ package body Clang_Xref is
       end if;
 
       Cursor := Get_Clang_Cursor (Entity);
+
+      --  In some cases we cannot get the cursor from a decl again, because
+      --  (for example) it's from a file that doesn't make sense on its own. In
+      --  this case we want to just return the location stored in the entity,
+      --  since it's probably already the decl place
+
+      if Cursor = No_Cursor then
+         return General_Entity_Declaration'
+           (Loc => Entity.Loc,
+            Name => Entity.Name, Body_Is_Full_Declaration => False);
+      end if;
 
       --  Get the referenced cursor, which gives us the declaration in most
       --  cases
@@ -584,6 +616,7 @@ package body Clang_Xref is
                       +Spelling (Typ),
                       To_General_Location
                         (From_Entity.Kernel, Location (Declaration (Typ))),
+                      No_Location,
                       From_Entity.From_Lang,
                       True, Typ);
    end Type_As_Entity;
@@ -859,14 +892,20 @@ package body Clang_Xref is
    ---------------
 
    overriding function Is_Global
-     (E  : Clang_Entity) return Boolean is
+     (E  : Clang_Entity) return Boolean
+   is
+      function Internal (C : Clang_Cursor) return Boolean;
+      function Internal (C : Clang_Cursor) return Boolean is
+         P : constant Clang_Cursor := Lexical_Parent (C);
+      begin
+
+         --  An entity is a global if its parent is the translation unit.
+
+         return P.kind in CXCursor_TranslationUnit | CXCursor_Namespace
+           or else (Is_Type (P.kind) and then Internal (P));
+      end Internal;
    begin
-
-      --  An entity is a global if its parent is the translation unit.
-
-      return
-        Lexical_Parent (Get_Clang_Cursor (E)).kind in
-          CXCursor_TranslationUnit | CXCursor_Namespace;
+      return Internal (Get_Clang_Cursor (E));
    end Is_Global;
 
    ---------------------
@@ -1385,6 +1424,7 @@ package body Clang_Xref is
       return Root_Reference_Iterator'Class
    is
    begin
+      Trace (Me, "Find all references for entity " & (+Entity.Name));
 
       --  This function is cut in three cases: Finding references for an
       --  entity declared in the global scope, finding references for an
@@ -1540,7 +1580,7 @@ package body Clang_Xref is
       Index_Data : constant Indexer_Data := Indexer_Data'
         (Ret_Iterator  => Ret'Unchecked_Access,
          Clang_Db      => Entity.Db,
-         File          => Entity.Loc.File,
+         File          => Entity.Ref_Loc.File,
          Sought_Cursor => Referenced (Get_Clang_Cursor (Entity)),
          Entity_Name   => Entity_Name);
 
@@ -1549,7 +1589,7 @@ package body Clang_Xref is
    begin
       Indexer.Index_Translation_Unit
         (Index_Action, Index_Data, CXIndexOpt_IndexFunctionLocalSymbols,
-         Translation_Unit (Entity.Kernel, Entity.Loc.File));
+         Translation_Unit (Entity.Kernel, Entity.Ref_Loc.File));
 
       return Ret;
    end Find_All_References_Local;

@@ -160,33 +160,41 @@ package body Libclang.Task_Parser_Pool is
                   goto Cont;
                end select;
 
-               Trace (Me, "Parsing " & (+Request.File_Name)
-                      & ", From task :" & Image (Current_Task)
-                      & ", Priority : " & Request.Prio'Img
-                      & ", Request kind : " & Request.Kind'Img);
+               if Request.File_Name = "" then
+                  Parsing_Response_Queue.Enqueue
+                    (Parsing_Response'
+                       (No_Translation_Unit,
+                        Request.File_Name, Request.Context,
+                        Request.Callbacks));
+               else
+                  Trace (Me, "Parsing " & (+Request.File_Name)
+                         & ", From task :" & Image (Current_Task)
+                         & ", Priority : " & Request.Prio'Img
+                         & ", Request kind : " & Request.Kind'Img);
 
-               case Request.Kind is
-               when Parse =>
-                  TU := Parse_Translation_Unit
-                    (Request.Indexer,
-                     Source_Filename   => +Request.File_Name,
-                     Command_Line_Args => Request.Switches.all,
-                     Unsaved_Files     => No_Unsaved_Files,
-                     Options           => Request.Options);
-               when Reparse =>
-                  Dummy := Reparse_Translation_Unit
-                    (Request.TU, Request.Unsaved_Files.all,
-                     Options => Request.Options);
-                  TU := Request.TU;
-               end case;
+                  case Request.Kind is
+                  when Parse =>
+                     TU := Parse_Translation_Unit
+                       (Request.Indexer,
+                        Source_Filename   => +Request.File_Name,
+                        Command_Line_Args => Request.Switches.all,
+                        Unsaved_Files     => No_Unsaved_Files,
+                        Options           => Request.Options);
+                  when Reparse =>
+                     Dummy := Reparse_Translation_Unit
+                       (Request.TU, Request.Unsaved_Files.all,
+                        Options => Request.Options);
+                     TU := Request.TU;
+                  end case;
 
-               Parsing_Response_Queue.Enqueue
-                 (Parsing_Response'
-                    (TU, Request.File_Name, Request.Context,
-                     Request.Callbacks));
+                  Parsing_Response_Queue.Enqueue
+                    (Parsing_Response'
+                       (TU, Request.File_Name, Request.Context,
+                        Request.Callbacks));
+
+               end if;
 
                Free (Request);
-
                Responded := True;
 
                <<Cont>>
