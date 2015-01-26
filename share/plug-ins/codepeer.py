@@ -257,7 +257,8 @@ xml_codepeer = """<?xml version="1.0"?>
       label="Include CWE ids"
       hide_in="wizard gnatname_wizard library_wizard"
       description="Whether to include CWE ids in output">
-      <string default="false"/>
+      <choice default="true">False</choice>
+      <choice>True</choice>
     </project_attribute>
 
     <target-model name="generate_scil" category="">
