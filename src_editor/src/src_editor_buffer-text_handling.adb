@@ -28,6 +28,8 @@ use Src_Editor_Buffer.Line_Information;
 
 with GPS.Kernel; use GPS.Kernel;
 with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
+with GNAT.Regpat; use GNAT.Regpat;
+with Language.Ada;
 
 package body Src_Editor_Buffer.Text_Handling is
 
@@ -306,10 +308,43 @@ package body Src_Editor_Buffer.Text_Handling is
    -- Autocase_Text --
    -------------------
 
+   Match_Ada_Comments : constant Pattern_Matcher :=
+     Compile ("^([^""]|"".*?""|'.')*--.*$");
+
    procedure Autocase_Text
      (Buffer : access Source_Buffer_Record'Class;
       Casing : Casing_Policy)
    is
+      function Is_In_Comment (Iter : Gtk_Text_Iter) return Boolean;
+
+      function Is_In_Comment (Iter : Gtk_Text_Iter) return Boolean
+      is
+         Pos, Line_Start : Gtk_Text_Iter;
+         Success : Boolean;
+      begin
+         Copy (Iter, Pos);
+
+         --  ??? Special case for Ada language. This is a dirty fix, and is
+         --  there only because we don't want to rehighlight synchronously for
+         --  performance reasons (current Ada highlighter needs to highlight
+         --  everything from beginning of file to current point)
+
+         if Buffer.Get_Language = Language.Ada.Ada_Lang then
+            Forward_Char (Pos, Success);
+            Copy (Pos, Line_Start);
+            Set_Line_Offset (Line_Start, 0);
+            declare
+               Ret : Boolean;
+               Text : constant String := Get_Text (Buffer, Line_Start, Pos);
+            begin
+               Ret := Match (Match_Ada_Comments, Text);
+               return Ret;
+            end;
+         else
+            return Is_In_Comment (Source_Buffer (Buffer), Iter);
+         end if;
+      end Is_In_Comment;
+
       procedure Replace_Text
         (Ln, F, L : Natural;
          Replace  : Basic_Types.UTF8_String);
@@ -410,7 +445,7 @@ package body Src_Editor_Buffer.Text_Handling is
            or else (Indent_Params.Casing_Policy = End_Of_Word
                     and then Casing = On_The_Fly)
            or else Get_Language_Context (Lang).Case_Sensitive
-           or else Is_In_Comment (Source_Buffer (Buffer), W_End)
+           or else Is_In_Comment (W_End)
            or else Is_In_String (Source_Buffer (Buffer), W_End)
          then
             --  On-the-fly casing not activated, the language is case sensitive
