@@ -563,6 +563,7 @@ package body Gtkada.Combo_Tool_Button is
       Popdown (Widget);
 
       if Widget.Menu /= null then
+         Unref (Widget.Menu);
          Widget.Menu.Detach;   --  also resets menu to null
       end if;
 

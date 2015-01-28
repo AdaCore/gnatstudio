@@ -189,5 +189,6 @@
   Memcheck:Leak
   fun:malloc
   fun:gnatcoll__memory__alloc
+  fun:__gnat_malloc
   fun:system__secondary_stack__ss_allocate
 }

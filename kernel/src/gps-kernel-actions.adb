@@ -57,6 +57,7 @@ package body GPS.Kernel.Actions is
       Free (Action.Category);
       Free (Action.Description);
       Free (Action.Name);
+      Free (Action.Menus);
       Free (Action.Stock_Id);
       Unchecked_Free (Action);
    end Free;

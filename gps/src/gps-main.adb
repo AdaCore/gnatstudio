@@ -412,8 +412,7 @@ procedure GPS.Main is
    is
       function Getenv (Var : String) return String;
       function Get_Cwd return String;
-      function Get_Environ return GNAT.Strings.String_List;
-         --  proxies for the services in the command line, usable even when no
+      --  proxies for the services in the command line, usable even when no
       --  command line is passed
 
       function Getenv (Var : String) return String is
@@ -437,15 +436,6 @@ procedure GPS.Main is
             return Command_Line.Get_Cwd;
          end if;
       end Get_Cwd;
-
-      function Get_Environ return GNAT.Strings.String_List is
-      begin
-         if Command_Line = null then
-            return (1 .. 0 => null);
-         else
-            return Command_Line.Get_Environ;
-         end if;
-      end Get_Environ;
 
    begin
       --  Reset the environment that was set before GPS was started (since
@@ -588,27 +578,33 @@ procedure GPS.Main is
 
       declare
          Equal  : Natural;  --  Position of '=' in NAME=VALUE env string
-         List   : GNAT.Strings.String_List := Get_Environ;
          Prefix : constant String := "GPS_STARTUP_";
       begin
          Env := new Environment_Record;
 
-         for J in List'Range loop
-            if Head (List (J).all, Prefix'Length) = Prefix then
-               Equal := Index (List (J).all, "=");
+         if Command_Line /= null then
+            declare
+               List : GNAT.Strings.String_List := Command_Line.Get_Environ;
+            begin
+               for J in List'Range loop
+                  if Head (List (J).all, Prefix'Length) = Prefix then
+                     Equal := Index (List (J).all, "=");
 
-               declare
-                  Name : constant String :=
-                    List (J) (Prefix'Length + List (J)'First .. Equal - 1);
-               begin
-                  Env.Append
-                    (Name        => Name,
-                     Users_Value => List (J) (Equal + 1 .. List (J)'Last),
-                     GPS_Value   => Getenv (Name));
-               end;
-            end if;
-         end loop;
-         Free (List);
+                     declare
+                        Name : constant String :=
+                        List (J) (Prefix'Length + List (J)'First .. Equal - 1);
+                     begin
+                        Env.Append
+                          (Name        => Name,
+                           Users_Value =>
+                              List (J) (Equal + 1 .. List (J)'Last),
+                           GPS_Value   => Getenv (Name));
+                     end;
+                  end if;
+               end loop;
+               Free (List);
+            end;
+         end if;
       end;
    end Initialize_Environment_Variables;
 

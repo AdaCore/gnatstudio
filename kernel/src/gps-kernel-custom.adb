@@ -338,6 +338,8 @@ package body GPS.Kernel.Custom is
       --  registered.
 
       if Node /= null then
+         Free (Err);
+
          if Kernel.Custom_Files_Loaded = User_Level then
             begin
                Execute_Customization_String
@@ -388,6 +390,8 @@ package body GPS.Kernel.Custom is
 
          Trace (Me, "Could not parse custom string " & Customization
                 & ' ' & Exception_Message (E));
+         Free (Err);
+         Free (Node);
          return "Internal error";
    end Add_Customization_String;
 

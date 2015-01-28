@@ -307,7 +307,7 @@ package body GPS.Tree_View.Locations is
          Self.Get_Path_At_Pos
            (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
 
-         if Column /= Self.Action_Column then
+         if Row_Found and then Column /= Self.Action_Column then
             Self.Get_Cell_Area (Path, Self.Location_Column, Cell_Rect);
             Self.Get_Background_Area (Path, Self.Location_Column, Back_Rect);
 
