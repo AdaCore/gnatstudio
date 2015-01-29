@@ -804,7 +804,6 @@ package body Src_Editor_View is
       Params : Glib.Values.GValues;
       User   : Source_View)
    is
-      pragma Unreferenced (Buffer);
       Line : constant Gint := Get_Int (Nth (Params, 1));
       Has_Focus : constant Boolean :=
         Gtkada.MDI.MDI_Child (User.Child) =
@@ -823,20 +822,22 @@ package body Src_Editor_View is
       --  If we are highlighting the current line, re-expose the entire view
       --  if the line has changed. Same thing if we are doing block
       --  highlighting and the block has changed.
-      --  ??? This should not be done immediately, since this procedure is
-      --  called a lot when the user keeps the down arrow key pressed. Also it
-      --  seems that gtk+ will properly force a redraw of the relevant areas
 
---        if (User.Highlight_Current
---            and then User.Current_Line /= Line)
---          or else
---            (User.Highlight_Blocks
---             and then User.Current_Block /=
---               Get_Block (Buffer, Editable_Line_Type (Line), False,
---                          Filter => Categories_For_Block_Highlighting))
---        then
---           Invalidate_Window (User);
---        end if;
+      --  ??? Potential optimization here: this procedure is called a lot when
+      --  the user keeps the down arrow key pressed.
+      --  Do not remove: gtk+ will *not* properly force a redraw of the
+      --  relevant areas.
+
+      if (User.Highlight_Current
+          and then User.Current_Line /= Line)
+        or else
+          (User.Highlight_Blocks
+           and then User.Current_Block /=
+             Get_Block (Buffer, Editable_Line_Type (Line), False,
+                        Filter => Categories_For_Block_Highlighting))
+      then
+         Invalidate_Window (User);
+      end if;
 
       User.Current_Line := Line;
    end Cursor_Position_Changed;
