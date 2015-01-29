@@ -380,7 +380,12 @@ package body GPS.Kernel.Search.Sources is
             Start := Start + 1;
          end loop;
 
-         Finish := Line_End (Self.Text.all, Self.Context.Finish.Index);
+         --  If match is empty string use begin of match
+         if Is_Empty_Match (Self.Context) then
+            Finish := Line_End (Self.Text.all, Self.Context.Start.Index);
+         else
+            Finish := Line_End (Self.Text.all, Self.Context.Finish.Index);
+         end if;
 
          declare
             P_Name : constant String :=
@@ -553,25 +558,29 @@ package body GPS.Kernel.Search.Sources is
          Buffer.Insert (First, Tmp.all);
          GNAT.Strings.Free (Tmp);
 
-         Buffer.Get_Iter_At_Line_Offset
-           (First, Gint (Self.Line - 1), Gint (Self.Column - 1));
-         Buffer.Get_Iter_At_Line_Offset
-           (Last, Gint (Self.Line_End - 1), Gint (Self.Column_End - 1));
+         --  If match is empty string we have nothing to tag
+         if Self.Line_End /= 0 then
 
-         Tag := Buffer.Create_Tag;
-         Set_Property
-           (Tag, Gtk.Text_Tag.Font_Desc_Property,
-            Keywords_Style.Get_Pref_Font);
-         Set_Property
-           (Tag, Gtk.Text_Tag.Foreground_Rgba_Property,
-            Keywords_Style.Get_Pref_Fg);
-         Set_Property
-           (Tag, Gtk.Text_Tag.Background_Rgba_Property,
-            Keywords_Style.Get_Pref_Bg);
-         Set_Property
-           (Tag, Gtk.Text_Tag.Underline_Property, Pango_Underline_Single);
+            Buffer.Get_Iter_At_Line_Offset
+              (First, Gint (Self.Line - 1), Gint (Self.Column - 1));
+            Buffer.Get_Iter_At_Line_Offset
+              (Last, Gint (Self.Line_End - 1), Gint (Self.Column_End - 1));
 
-         Buffer.Apply_Tag (Tag, First, Last);
+            Tag := Buffer.Create_Tag;
+            Set_Property
+              (Tag, Gtk.Text_Tag.Font_Desc_Property,
+               Keywords_Style.Get_Pref_Font);
+            Set_Property
+              (Tag, Gtk.Text_Tag.Foreground_Rgba_Property,
+               Keywords_Style.Get_Pref_Fg);
+            Set_Property
+              (Tag, Gtk.Text_Tag.Background_Rgba_Property,
+               Keywords_Style.Get_Pref_Bg);
+            Set_Property
+              (Tag, Gtk.Text_Tag.Underline_Property, Pango_Underline_Single);
+
+            Buffer.Apply_Tag (Tag, First, Last);
+         end if;
 
          View.On_Size_Allocate (On_Size_Allocate'Access, After => False);
 

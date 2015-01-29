@@ -72,6 +72,7 @@ package body Find_Utils is
    is
       Result : GPS.Search.Search_Context;
       BOL, EOL : Integer;
+      After : Positive;
    begin
       Was_Partial := False;
 
@@ -94,12 +95,9 @@ package body Find_Utils is
       while Result /= GPS.Search.No_Match loop
          Ref  := Result.Ref;
 
-         --  It is possible that Result.Finish.Index is less than Buffer'First
-         --  when we matched an empty string (for instance "^").
+         After := Index_After_Match (Result);
          BOL := Line_Start (Buffer, Result.Start.Index);
-         EOL := Line_End
-           (Buffer,
-            Integer'Max (Buffer'First, Result.Finish.Index));
+         EOL := Line_End (Buffer, After);
 
          --  Don't use GPS.Search.Highlight_Match, since that would only show
          --  the part of the buffer that was tested, whereas we want the full
@@ -110,10 +108,9 @@ package body Find_Utils is
             Glib.Convert.Escape_Text (Buffer (BOL .. Result.Start.Index - 1))
             & "<b>"
             & Glib.Convert.Escape_Text
-              (Buffer (Result.Start.Index .. Result.Finish.Index))
+              (Buffer (Result.Start.Index .. After - 1))
             & "</b>"
-            & Glib.Convert.Escape_Text
-              (Buffer (Result.Finish.Index + 1 .. EOL)))
+            & Glib.Convert.Escape_Text (Buffer (After .. EOL)))
          then
             Was_Partial := True;
             exit;

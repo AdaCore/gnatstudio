@@ -722,6 +722,11 @@ package body Src_Contexts is
       function To_Positive (N : Natural) return Positive;
       --  If N > 0 then return N else return 1.
 
+      procedure Do_Highlight
+        (Column_End : Basic_Types.Visible_Column_Type;
+         Length     : Positive);
+      --  Common code to highlight text
+
       -----------------
       -- To_Positive --
       -----------------
@@ -735,8 +740,14 @@ package body Src_Contexts is
          end if;
       end To_Positive;
 
-   begin
-      if Match.Start.Line = Match.Finish.Line then
+      ------------------
+      -- Do_Highlight --
+      ------------------
+
+      procedure Do_Highlight
+        (Column_End : Basic_Types.Visible_Column_Type;
+         Length     : Positive) is
+      begin
          if Interactive then
             Open_File_Editor
               (Kernel,
@@ -744,7 +755,7 @@ package body Src_Contexts is
                GNATCOLL.Projects.No_Project,   --   ??? any project will do
                Match.Start.Line,
                Match.Start.Visible_Column,
-               Match.Finish.Visible_Column + 1,
+               Column_End,
                Focus => Give_Focus);
             Push_Current_Editor_Location_In_History (Kernel);
 
@@ -767,49 +778,31 @@ package body Src_Contexts is
                      Get_Name (Search_Results_Style)
                      & '/' & Locations_Category_Name (Look_For),
                      Search_Results_Style),
-                  Integer (Match.Finish.Visible_Column
-                    - Match.Start.Visible_Column) + 1);
+                  Length);
             end;
          end if;
+      end Do_Highlight;
+
+   begin
+      if Is_Empty_Match (Match) then
+         Do_Highlight
+           (Column_End => Match.Start.Visible_Column + 1,
+            Length     => 1);
+      elsif Match.Start.Line = Match.Finish.Line then
+         Do_Highlight
+           (Column_End => Match.Finish.Visible_Column + 1,
+            Length     => Integer (Match.Finish.Visible_Column
+                                     - Match.Start.Visible_Column) + 1);
       else
          --  When the location spans on multiple lines, we base the length
          --  to highlight on the pattern length.
          --  ??? This is not compatible with UTF-8
-         if Interactive then
-            Open_File_Editor
-              (Kernel,
-               File_Name,
-               GNATCOLL.Projects.No_Project,  --  ??? any project will do
-               Match.Start.Line,
-               Match.Start.Visible_Column,
+         Do_Highlight
+           (Column_End =>
                Match.Start.Visible_Column
                  + Visible_Column_Type
                    (Match.Finish.Index - Match.Start.Index + 1),
-               Focus => Give_Focus);
-            Push_Current_Editor_Location_In_History (Kernel);
-
-         else
-            declare
-               Message : constant Markup_Message_Access :=
-                 Create_Markup_Message
-                   (Get_Messages_Container (Kernel),
-                    Locations_Category_Name (Look_For),
-                    File_Name,
-                    To_Positive (Match.Start.Line),
-                    Match.Start.Visible_Column,
-                    Text,
-                    0,
-                    (Editor_Side => True, Locations => True));
-            begin
-               Message.Set_Highlighting
-                 (Get_Or_Create_Style_Copy
-                    (Kernel_Handle (Kernel),
-                     Get_Name (Search_Results_Style)
-                     & '/' & Locations_Category_Name (Look_For),
-                     Search_Results_Style),
-                  Match.Finish.Index - Match.Start.Index + 1);
-            end;
-         end if;
+            Length     => Match.Finish.Index - Match.Start.Index + 1);
       end if;
    end Highlight_Result;
 
@@ -879,7 +872,10 @@ package body Src_Contexts is
          --  current position but don't have any match yet, we have to return
          --  the last match.
          if Match.Start.Line > Integer (Current_Line)
-           or else (Match.Start.Line = Integer (Current_Line)
+           or else (Is_Empty_Match (Match)
+                    and then Match.Start.Line = Integer (Current_Line)
+                    and then Match.Start.Column >= Current_Column)
+           or else (Match.Finish.Line = Integer (Current_Line)
                     and then Match.Finish.Column + 1 >= Current_Column)
          then
             if not Continue_Till_End
@@ -1904,19 +1900,16 @@ package body Src_Contexts is
       --  have anything to do.
 
       if Context.Current /= GPS.Search.No_Match
-        and then Context.Current.Start = Context.Current.Finish
+        and then Is_Empty_Match (Context.Current)
+        and then not Search_Backward
       then
-         --  The test below will return True if the character after the current
-         --  one is eol.
-         if Is_Valid_Position
-           (Editor, Gint (Context.Current.Finish.Line - 1), Gint (Column))
-           and then not Ends_Line (Start_At)
-         then
-            Column := Column + 1;
-         else
-            Line   := Line + 1;
-            Column := 1;
-         end if;
+         Forward_Position
+           (Buffer       => Editor,
+            Start_Line   => Line,
+            Start_Column => Column,
+            Length       => 1,
+            End_Line     => Line,
+            End_Column   => Column);
       end if;
 
       Scan_Next
@@ -1940,9 +1933,14 @@ package body Src_Contexts is
          Match_From :=
            (Line => Editable_Line_Type (Context.Current.Start.Line),
             Col  => Context.Current.Start.Column);
-         Match_Up_To :=
-           (Line => Editable_Line_Type (Context.Current.Finish.Line),
-            Col => Context.Current.Finish.Column + 1);
+
+         if Is_Empty_Match (Context.Current) then
+            Match_Up_To := Match_From;
+         else
+            Match_Up_To :=
+              (Line => Editable_Line_Type (Context.Current.Finish.Line),
+               Col => Context.Current.Finish.Column + 1);
+         end if;
       end if;
    end Search_In_Editor;
 
@@ -2133,22 +2131,30 @@ package body Src_Contexts is
       Buffer.Disable_Highlighting;
 
       for M in reverse Matches'Range loop
-         declare
-            Text : constant String := Get_Text
+         if Is_Empty_Match (Matches (M)) then
+            Insert
               (Buffer,
                Editable_Line_Type (Matches (M).Start.Line),
                Matches (M).Start.Column,
-               Editable_Line_Type (Matches (M).Finish.Line),
-               Matches (M).Finish.Column + 1);
-         begin
-            Replace_Slice
-              (Buffer,
-               Editable_Line_Type (Matches (M).Start.Line),
-               Matches (M).Start.Column,
-               Editable_Line_Type (Matches (M).Finish.Line),
-               Matches (M).Finish.Column + 1,
-               Replacement.Replacement_Text (Matches (M), Text));
-         end;
+               Replacement.Replacement_Text (Matches (M), ""));
+         else
+            declare
+               Text : constant String := Get_Text
+                 (Buffer,
+                  Editable_Line_Type (Matches (M).Start.Line),
+                  Matches (M).Start.Column,
+                  Editable_Line_Type (Matches (M).Finish.Line),
+                  Matches (M).Finish.Column + 1);
+            begin
+               Replace_Slice
+                 (Buffer,
+                  Editable_Line_Type (Matches (M).Start.Line),
+                  Matches (M).Start.Column,
+                  Editable_Line_Type (Matches (M).Finish.Line),
+                  Matches (M).Finish.Column + 1,
+                  Replacement.Replacement_Text (Matches (M), Text));
+            end;
+         end if;
       end loop;
 
       Buffer.Enable_Highlighting;
@@ -2220,61 +2226,67 @@ package body Src_Contexts is
 
          if Context.Current /= GPS.Search.No_Match then
             declare
-               Original : constant String := Editor.Get_Buffer.Get_Text
-                 (Editable_Line_Type (Context.Current.Start.Line),
-                  Context.Current.Start.Column,
-                  Editable_Line_Type (Context.Current.Finish.Line),
-                  Context.Current.Finish.Column + 1);
---                 Current         : GPS.Search.Search_Context;
-            begin
-               --  ??? Do we really need to double-check
---                 Current := Context.Match (Buffer => Original);
---                 if Current /= GPS.Search.No_Match then
-               if True then
-                  declare
-                     Text : constant String :=
-                       Context.Replacement.Replacement_Text
-                         (Context.Current, Original);
-                  begin
-                     Replace_Slice
-                       (Get_Buffer (Editor),
-                        Editable_Line_Type (Context.Current.Start.Line),
-                        Context.Current.Start.Column,
-                        Editable_Line_Type (Context.Current.Finish.Line),
-                        Context.Current.Finish.Column + 1,
-                        Text);
-
-                     Forward_Position
-                       (Get_Buffer (Editor),
-                        Editable_Line_Type (Context.Current.Start.Line),
-                        Context.Current.Start.Column,
-                        Text'Length,
-                        Editable_Line_Type (Context.Current.Finish.Line),
-                        Context.Current.Finish.Column);
-                  end;
-
-                  Push_Current_Editor_Location_In_History (Kernel);
-
-                  if Search_Backward then
-                     Context.Current.Finish.Line := Context.Current.Start.Line;
-                     Context.Current.Finish.Column :=
-                       Context.Current.Start.Column;
+               Original : constant String :=
+                 (if Is_Empty_Match (Context.Current) then
+                     ""
                   else
-                     Context.Current.Start.Line := Context.Current.Finish.Line;
-                     Context.Current.Start.Column :=
-                       Context.Current.Finish.Column - 1;
-                  end if;
+                     Editor.Get_Buffer.Get_Text
+                       (Editable_Line_Type (Context.Current.Start.Line),
+                        Context.Current.Start.Column,
+                        Editable_Line_Type (Context.Current.Finish.Line),
+                        Context.Current.Finish.Column + 1));
 
-                  Set_Cursor_Position
+               Text : constant String :=
+                 Context.Replacement.Replacement_Text
+                   (Context.Current, Original);
+            begin
+               if Is_Empty_Match (Context.Current) then
+                  Insert
                     (Get_Buffer (Editor),
+                     Editable_Line_Type (Context.Current.Start.Line),
+                     Context.Current.Start.Column,
+                     Text);
+               else
+                  Replace_Slice
+                    (Get_Buffer (Editor),
+                     Editable_Line_Type (Context.Current.Start.Line),
+                     Context.Current.Start.Column,
                      Editable_Line_Type (Context.Current.Finish.Line),
-                     Context.Current.Finish.Column,
-                     Internal => True);
-                  Get_View (Editor).Set_Position_Set_Explicitely;
-
-                  Save_Cursor_Position (Get_View (Editor));
+                     Context.Current.Finish.Column + 1,
+                     Text);
                end if;
+
+               Forward_Position
+                 (Get_Buffer (Editor),
+                  Editable_Line_Type (Context.Current.Start.Line),
+                  Context.Current.Start.Column,
+                  Text'Length,
+                  Editable_Line_Type (Context.Current.Finish.Line),
+                  Context.Current.Finish.Column);
+
+               Context.Current.Finish.Index :=
+                 Context.Current.Start.Index + Text'Length;
             end;
+
+            Push_Current_Editor_Location_In_History (Kernel);
+
+            if Search_Backward then
+               Context.Current.Finish := Context.Current.Start;
+            else
+               Context.Current.Start.Line := Context.Current.Finish.Line;
+               Context.Current.Start.Column :=
+                 Context.Current.Finish.Column - 1;
+            end if;
+
+            Set_Cursor_Position
+              (Get_Buffer (Editor),
+               Editable_Line_Type (Context.Current.Finish.Line),
+               Context.Current.Finish.Column,
+               Internal => True);
+
+            Get_View (Editor).Set_Position_Set_Explicitely;
+
+            Save_Cursor_Position (Get_View (Editor));
          end if;
       end if;
 
@@ -2375,9 +2387,7 @@ package body Src_Contexts is
                              .. Matches (M).Start.Index
                              + Replace_String'Length - 1)));
 
-                     Last := Matches (M).Start.Index
-                       + Matches (M).Finish.Index
-                       - Matches (M).Start.Index + 1;
+                     Last := Index_After_Match (Matches (M));
                   end loop;
 
                   Append (Output_Buffer, Buffer (Last .. Buffer'Last));

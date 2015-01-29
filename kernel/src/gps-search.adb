@@ -179,20 +179,18 @@ package body GPS.Search is
       C2 : Unicode_Char;
       Len : Integer;
 
-      --  Matching an empty string will have Finish < Start
-      M : constant Integer := Integer'Max
-        (Context.Start.Index, Context.Finish.Index);
+      M : Positive := Index_After_Match (Context);
    begin
-      --  Ref should be before any (Start, Finish) to update them correctly
-      if Context.Ref = Unknown_Position
-        or else Context.Ref.Index > Integer'Min
-          (Context.Start.Index, Context.Finish.Index)
-      then
+      if Is_Empty_Match (Context) then
+         M := M + 1;
+      end if;
+
+      if Context.Ref = Unknown_Position then
          --  Assume beginning of buffer is first line and column
          Context.Ref := (Buffer'First, 1, 1, 1);
       end if;
 
-      while Context.Ref.Index <= M
+      while Context.Ref.Index < M
         and then Context.Ref.Index <= Context.Buffer_End
       loop
          --  UTF-8 decoding for the current character.
@@ -221,7 +219,10 @@ package body GPS.Search is
             Context.Start := Context.Ref;
          end if;
 
-         if Context.Ref.Index <= Context.Finish.Index
+         --  We are unable to calculate Finish of empty match, because it could
+         --  be before Buffer'First and before Context.Ref. Keep it as is.
+         if not Is_Empty_Match (Context)
+           and then Context.Ref.Index <= Context.Finish.Index
            and then Context.Finish.Index < Context.Ref.Index + Len
          then
             Context.Finish := Context.Ref;
@@ -379,13 +380,14 @@ package body GPS.Search is
          return No_Match;
       end if;
 
-      --  If we are matching an empty string
+      --  If we are matching an empty string set Finish as Unknown_Position
       if Context.Groups (0).Last < Context.Groups (0).First then
-         Context.Groups (0).Last := Context.Groups (0).First;
+         Context.Finish := Unknown_Position;
+      else
+         Context.Finish := (Context.Groups (0).Last, 1, 1, 1);
       end if;
 
       Context.Start  := (Context.Groups (0).First, 1, 1, 1);
-      Context.Finish := (Context.Groups (0).Last, 1, 1, 1);
       Update_Location (Context, Buffer);
       return Context;
    end Start;
@@ -549,6 +551,8 @@ package body GPS.Search is
       Offset : Mask;
 
    begin
+      Context.Ref := (Buffer'First, 1, 1, 1);
+
       P := Context.Finish.Index + 1;  --  points to first byte of first char
 
       while P <= Context.Buffer_End loop
@@ -767,9 +771,16 @@ package body GPS.Search is
       Buffer  : String;
       Context : in out Search_Context)
    is
+      First : Positive := Index_After_Match (Context);
    begin
-      Match (Self.Pattern.all, Buffer, Context.Groups,
-             Context.Finish.Index + 1, Context.Buffer_End);
+      --  We need to skip extra position in case of empty match to avoid
+      --  endless search loop
+      if Is_Empty_Match (Context) then
+         First := First + 1;
+      end if;
+
+      Match
+        (Self.Pattern.all, Buffer, Context.Groups, First, Context.Buffer_End);
 
       --  The second test below works around an apparent bug in GNAT.Regpat
 
@@ -778,8 +789,14 @@ package body GPS.Search is
       then
          Context := No_Match;
       else
+         --  If we are matching an empty string set Finish as Unknown_Position
+         if Context.Groups (0).Last < Context.Groups (0).First then
+            Context.Finish := Unknown_Position;
+         else
+            Context.Finish := (Context.Groups (0).Last, 1, 1, 1);
+         end if;
+
          Context.Start.Index := Context.Groups (0).First;
-         Context.Finish.Index := Context.Groups (0).Last;
          Update_Location (Context, Buffer);
       end if;
    end Next;
@@ -821,7 +838,8 @@ package body GPS.Search is
       B := Integer'Max (Context.Buffer_Start, Buffer'First);
       F := Integer'Min (Context.Buffer_End, Buffer'Last);
       S := Integer'Max (Context.Start.Index, Buffer'First);
-      E := Integer'Min (Context.Finish.Index, Buffer'Last);
+      E := Index_After_Match (Context) - 1;
+      E := Integer'Min (E, Buffer'Last);
 
       return Glib.Convert.Escape_Text (Buffer (B .. S - 1))
          & "<b>"
@@ -1324,5 +1342,18 @@ package body GPS.Search is
       return '(' & Pos.Index'Img & "," & Pos.Line'Img
         & "," & Pos.Column'Img & "," & Pos.Visible_Column'Img & ')';
    end Image;
+
+   -----------------------
+   -- Index_After_Match --
+   -----------------------
+
+   function Index_After_Match (Self : Search_Context) return Positive is
+   begin
+      if Is_Empty_Match (Self) then
+         return Self.Start.Index;
+      else
+         return Self.Finish.Index + 1;
+      end if;
+   end Index_After_Match;
 
 end GPS.Search;

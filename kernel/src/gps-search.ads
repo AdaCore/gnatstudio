@@ -76,7 +76,8 @@ package GPS.Search is
 
    type Search_Context is record
       Start, Finish : Buffer_Position;
-      --  Locations of start and end of the current match.
+      --  Locations of start and end of the current match. When the match is
+      --  an empty string set Finish to Unknown_Position.
 
       Score         : Natural;
       --  The score for the current match
@@ -100,6 +101,13 @@ package GPS.Search is
    --  Whether Self failed to match. This is somewhat equivalent to comparing
    --  with No_Match, but is more efficient and does not require a
    --  "use type Search_Context.
+
+   function Is_Empty_Match (Self : Search_Context) return Boolean
+      is (Self.Finish.Index <= 0);
+   --  Whether Self matches an empty string
+
+   function Index_After_Match (Self : Search_Context) return Positive;
+   --  Return index of position just after end of match
 
    procedure Matched_Subexpression
      (Result      : Search_Context;
