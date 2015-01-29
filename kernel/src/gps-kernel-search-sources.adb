@@ -155,11 +155,13 @@ package body GPS.Kernel.Search.Sources is
 
    overriding procedure Execute
      (Hook : Hook_Project_View_Changed;
-      Kernel : access Kernel_Handle_Record'Class) is
+      Kernel : access Kernel_Handle_Record'Class)
+   is
    begin
       Free (Hook.Provider.Files);
       Hook.Provider.Files :=
-        Get_Project (Kernel).Source_Files (Recursive => True);
+        Get_Project (Kernel).Source_Files
+           (Recursive => True, Include_Project_Files => True);
 
       --  In testsuite mode, we want to sort the results so that the matches
       --  do not depend on the filesystem order.
