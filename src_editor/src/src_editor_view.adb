@@ -1251,6 +1251,7 @@ package body Src_Editor_View is
             end if;
 
             Draw_Line (Cr, To_Cairo (Tmp_Color), X, Y, X, Y + Rect.Height);
+            Restore (Cr);
          end if;
       end Draw_Above;
 
