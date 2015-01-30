@@ -75,6 +75,11 @@ package body CodePeer.Messages_Reports is
              Categories_Criteria_Editor_Record,
            Messages_Report);
 
+   package CWE_Categories_Criteria_Callbacks is
+     new Gtk.Handlers.User_Callback
+          (CodePeer.CWE_Criteria_Editors.Criteria_Editor_Record,
+           Messages_Report);
+
    package Message_Lifeage_Criteria_Callbacks is
      new Gtk.Handlers.User_Callback
           (CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor_Record,
@@ -132,6 +137,12 @@ package body CodePeer.Messages_Reports is
           Categories_Criteria_Editor_Record'Class;
       Self   : Messages_Report);
    --  Handles change of set of visible message's categories.
+
+   procedure On_CWE_Criteria_Changed
+     (Object : access
+        CodePeer.CWE_Criteria_Editors.Criteria_Editor_Record'Class;
+      Self   : Messages_Report);
+   --  Handles change of set of visible CWE's categories.
 
    procedure On_Lifeage_Criteria_Changed
      (Object : access
@@ -723,6 +734,23 @@ package body CodePeer.Messages_Reports is
            (On_Categories_Criteria_Changed'Access),
          Messages_Report (Self));
 
+      --  CWEs categories
+
+      CodePeer.CWE_Criteria_Editors.Gtk_New
+        (Self.CWE_Editor,
+         Self.Kernel,
+         -"CWE categories",
+         "codepeer-summary-report-categories-cwe",
+         Project_Data.CWE_Categories);
+      Category_Box.Pack_Start (Self.CWE_Editor);
+
+      CWE_Categories_Criteria_Callbacks.Connect
+        (Self.CWE_Editor,
+         CodePeer.CWE_Criteria_Editors.Signal_Criteria_Changed,
+         CWE_Categories_Criteria_Callbacks.To_Marshaller
+           (On_CWE_Criteria_Changed'Access),
+         Messages_Report (Self));
+
       --  Filter view
 
       Gtk.Box.Gtk_New_Vbox (Filter_Box);
@@ -993,6 +1021,24 @@ package body CodePeer.Messages_Reports is
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Categories_Criteria_Changed;
 
+   -----------------------------
+   -- On_CWE_Criteria_Changed --
+   -----------------------------
+
+   procedure On_CWE_Criteria_Changed
+     (Object : access
+        CodePeer.CWE_Criteria_Editors.Criteria_Editor_Record'Class;
+      Self   : Messages_Report)
+   is
+      pragma Unreferenced (Object);
+
+   begin
+      Self.Analysis_Model.Set_Visible_CWE_Categories
+        (Self.CWE_Editor.Get_Visible_Items);
+
+      Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
+   end On_CWE_Criteria_Changed;
+
    ----------------
    -- On_Destroy --
    ----------------
@@ -1240,6 +1286,7 @@ package body CodePeer.Messages_Reports is
       Criteria.Categories :=
         Self.Warning_Categories_Editor.Get_Visible_Categories.Union
           (Self.Check_Categories_Editor.Get_Visible_Categories);
+      Criteria.CWEs       := Self.CWE_Editor.Get_Visible_Items;
       Criteria.Rankings   := Self.Show_Ranking;
       Criteria.Lineages   := Self.Lifeage_Editor.Get_Visible_Lifeages;
       Criteria.Statuses   := Self.Show_Status;

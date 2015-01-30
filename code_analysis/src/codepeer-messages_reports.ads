@@ -24,8 +24,9 @@ private with Gtk.Tree_View;
 with GPS.Kernel;           use GPS.Kernel;
 
 with Code_Analysis;
-private with CodePeer.Messages_Summary_Models;
+private with CodePeer.CWE_Criteria_Editors;
 private with CodePeer.Categories_Criteria_Editors;
+private with CodePeer.Messages_Summary_Models;
 private with CodePeer.Lifeage_Criteria_Editors;
 
 package CodePeer.Messages_Reports is
@@ -87,6 +88,8 @@ private
         CodePeer.Categories_Criteria_Editors.Categories_Criteria_Editor;
       Check_Categories_Editor :
         CodePeer.Categories_Criteria_Editors.Categories_Criteria_Editor;
+      CWE_Editor          :
+        CodePeer.CWE_Criteria_Editors.Criteria_Editor;
       Lifeage_Editor      :
         CodePeer.Lifeage_Criteria_Editors.Lifeage_Criteria_Editor;
 

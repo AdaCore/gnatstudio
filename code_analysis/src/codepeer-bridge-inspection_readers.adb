@@ -54,6 +54,10 @@ package body CodePeer.Bridge.Inspection_Readers is
    Vn_Id_Attribute          : constant String := "vn-id";
    Vn_Ids_Attribute         : constant String := "vn-ids";
 
+   procedure Update_CWE
+     (Self : in out Reader'Class; Category : Message_Category_Access);
+   --  Update sets of CWEs for message category and project nodes.
+
    -----------------
    -- End_Element --
    -----------------
@@ -92,6 +96,15 @@ package body CodePeer.Bridge.Inspection_Readers is
            (null, CodePeer.Object_Access_Vectors.Empty_Vector);
       end if;
    end End_Element;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Item : CWE_Identifier) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Containers.Hash_Type (Item);
+   end Hash;
 
    ----------
    -- Hash --
@@ -430,12 +443,13 @@ package body CodePeer.Bridge.Inspection_Readers is
       elsif Qname = Message_Category_Tag then
          Message_Category :=
            new CodePeer.Message_Category'
-             (Name => new String'(Attrs.Get_Value ("name")),
-              CWEs =>
+             (Name      => new String'(Attrs.Get_Value ("name")),
+              CWE_Image =>
                 (if Attrs.Get_Index (CWE_Attribute) /= -1
                  then Ada.Strings.Unbounded.To_Unbounded_String
                    (Attrs.Get_Value (CWE_Attribute))
-                 else Ada.Strings.Unbounded.Null_Unbounded_String));
+                 else Ada.Strings.Unbounded.Null_Unbounded_String),
+              CWEs      => <>);
 
          if Attrs.Get_Index (Is_Check_Attribute) /= -1
            and then Boolean'Value (Attrs.Get_Value (Is_Check_Attribute))
@@ -450,6 +464,8 @@ package body CodePeer.Bridge.Inspection_Readers is
            (Message_Category);
          Self.Message_Categories.Insert
            (Natural'Value (Attrs.Get_Value ("identifier")), Message_Category);
+
+         Self.Update_CWE (Message_Category);
 
       elsif Qname = Annotation_Category_Tag then
          Annotation_Category :=
@@ -643,8 +659,10 @@ package body CodePeer.Bridge.Inspection_Readers is
          if Self.Race_Category = null then
             Self.Race_Category :=
               new CodePeer.Message_Category'
-                (Name => new String'(CodePeer.Module.Race_Condition_Category),
-                 CWEs => Ada.Strings.Unbounded.Null_Unbounded_String);
+                (Name      =>
+                    new String'(CodePeer.Module.Race_Condition_Category),
+                 CWE_Image => Ada.Strings.Unbounded.Null_Unbounded_String,
+                 CWEs      => CodePeer.CWE_Category_Sets.Empty_Set);
             CodePeer.Project_Data'Class
               (Self.Root_Inspection.all).Warning_Subcategories.Include
               (Self.Race_Category);
@@ -686,5 +704,91 @@ package body CodePeer.Bridge.Inspection_Readers is
          Self.Ignore_Depth := 1;
       end if;
    end Start_Element;
+
+   ----------------
+   -- Update_CWE --
+   ----------------
+
+   procedure Update_CWE
+     (Self : in out Reader'Class; Category : Message_Category_Access)
+   is
+      CWEs : constant String :=
+        Ada.Strings.Unbounded.To_String (Category.CWE_Image);
+
+      procedure Insert (Id : CWE_Identifier);
+      --  Inserts CWE into set of CWEs
+
+      ------------
+      -- Insert --
+      ------------
+
+      procedure Insert (Id : CWE_Identifier) is
+         Aux : CWE_Category_Access;
+
+      begin
+         if not Self.CWE_Categories.Contains (Id) then
+            Aux := new CWE_Category'(Identifier => Id);
+            Self.CWE_Categories.Include (Id, Aux);
+            CodePeer.Project_Data'Class
+              (Self.Root_Inspection.all).CWE_Categories.Include (Aux);
+         end if;
+
+         Category.CWEs.Include (Self.CWE_Categories (Id));
+      end Insert;
+
+      Start_CWE_Id : CWE_Identifier := 0;
+      CWE_Id       : CWE_Identifier;
+      First        : Positive := CWEs'First;
+
+   begin
+      for Current in CWEs'Range loop
+         case CWEs (Current) is
+            when '0' .. '9' =>
+               null;
+
+            when '-' =>
+               Start_CWE_Id :=
+                 CWE_Identifier'Value (CWEs (First .. Current - 1));
+               First := Current + 1;
+
+            when ',' =>
+               CWE_Id := CWE_Identifier'Value (CWEs (First .. Current - 1));
+               First := Current + 1;
+
+               if Start_CWE_Id /= 0 then
+                  --  Range starting at Start_CWE_Id + 1
+
+                  for Id in Start_CWE_Id .. CWE_Id loop
+                     Insert (Id);
+                  end loop;
+
+                  Start_CWE_Id := 0;
+
+               else
+                  Insert (CWE_Id);
+               end if;
+
+            when others =>
+               raise Program_Error;
+         end case;
+      end loop;
+
+      if First < CWEs'Last then
+         CWE_Id := CWE_Identifier'Value (CWEs (First .. CWEs'Last));
+
+         if Start_CWE_Id /= 0 then
+            --  Range starting at Start_CWE_Id + 1
+
+            for Id in Start_CWE_Id .. CWE_Id loop
+               Insert (Id);
+            end loop;
+
+            Start_CWE_Id := 0;
+
+         else
+            Insert (CWE_Id);
+         end if;
+      end if;
+   end Update_CWE;
 
 end CodePeer.Bridge.Inspection_Readers;

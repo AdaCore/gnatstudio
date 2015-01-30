@@ -189,6 +189,17 @@ package body CodePeer is
       Self.Annotations.Clear;
    end Finalize;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Item : CWE_Category) return String is
+      Image : constant String := CWE_Identifier'Image (Item.Identifier);
+
+   begin
+      return "CWE-" & Image (Image'First + 1 .. Image'Last);
+   end Get_Name;
+
    ----------
    -- Hash --
    ----------
@@ -229,6 +240,17 @@ package body CodePeer is
    is
    begin
       return Left.Order < Right.Order;
+   end Less;
+
+   ----------
+   -- Less --
+   ----------
+
+   function Less
+     (Left  : CWE_Category_Access;
+      Right : CWE_Category_Access) return Boolean is
+   begin
+      return Left.Identifier < Right.Identifier;
    end Less;
 
    ----------

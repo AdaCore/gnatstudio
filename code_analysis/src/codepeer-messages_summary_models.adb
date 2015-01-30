@@ -665,6 +665,18 @@ package body CodePeer.Messages_Summary_Models is
       Self.Reconstruct;
    end Set_Show_All_Subprograms;
 
+   --------------------------------
+   -- Set_Visible_CWE_Categories --
+   --------------------------------
+
+   procedure Set_Visible_CWE_Categories
+     (Self : access Messages_Summary_Model_Record'Class;
+      To   : CodePeer.CWE_Category_Sets.Set) is
+   begin
+      Self.CWE_Categories := To;
+      Self.Reconstruct;
+   end Set_Visible_CWE_Categories;
+
    ------------------------------------
    -- Set_Visible_Message_Categories --
    ------------------------------------

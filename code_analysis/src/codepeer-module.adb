@@ -1413,7 +1413,7 @@ package body CodePeer.Module is
 
                      Append (Aux, Check.Name.all);
 
-                     if Length (Check.CWEs) /= 0 then
+                     if Length (Check.CWE_Image) /= 0 then
                         Append (Aux, CWE_Image (Check));
                      end if;
                   end loop;
@@ -1436,13 +1436,13 @@ package body CodePeer.Module is
                     GPS.Kernel.Project.Get_Project (Self.Kernel);
 
                begin
-                  if Length (Category.CWEs) /= 0
+                  if Length (Category.CWE_Image) /= 0
                     and then Project.Has_Attribute (CWE_Attribute)
                     and then
                       Ada.Characters.Handling.To_Lower
                         (Project.Attribute_Value (CWE_Attribute)) = "true"
                   then
-                     return " [" & To_String (Category.CWEs) & ']';
+                     return " [" & To_String (Category.CWE_Image) & ']';
 
                   else
                      return "";
@@ -1496,6 +1496,15 @@ package body CodePeer.Module is
 
                if not Self.Filter_Criteria.Categories.Intersection
                  (Message.Checks).Is_Empty
+               then
+                  return True;
+               end if;
+
+               --  or at least one CWE of the message's category should be
+               --  selected
+
+               if not Self.Filter_Criteria.CWEs.Intersection
+                 (Message.Category.CWEs).Is_Empty
                then
                   return True;
                end if;

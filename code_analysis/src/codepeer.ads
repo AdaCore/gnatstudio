@@ -51,9 +51,26 @@ package CodePeer is
       Intentional,
       Bug);
 
+   type CWE_Identifier is new Natural;
+
+   type CWE_Category is record
+      Identifier : CWE_Identifier;
+   end record;
+
+   function Get_Name (Item : CWE_Category) return String;
+
+   type CWE_Category_Access is access all CWE_Category;
+
+   function Less
+     (Left : CWE_Category_Access; Right : CWE_Category_Access) return Boolean;
+
+   package CWE_Category_Sets is new Ada.Containers.Ordered_Sets
+     (CWE_Category_Access, Less);
+
    type Message_Category is record
-      Name : GNAT.Strings.String_Access;
-      CWEs : Ada.Strings.Unbounded.Unbounded_String;
+      Name      : GNAT.Strings.String_Access;
+      CWE_Image : Ada.Strings.Unbounded.Unbounded_String;
+      CWEs      : CWE_Category_Sets.Set;
    end record;
 
    type Message_Category_Access is access all Message_Category;
@@ -206,6 +223,7 @@ package CodePeer is
       Baseline_Inspection   : Natural;
       Message_Categories    : Message_Category_Sets.Set;
       Annotation_Categories : Annotation_Category_Sets.Set;
+      CWE_Categories        : CWE_Category_Sets.Set;
 
       Check_Subcategories   : Message_Category_Sets.Set;
       Warning_Subcategories : Message_Category_Sets.Set;
@@ -265,6 +283,7 @@ package CodePeer is
       Files      : File_Sets.Set;
       --  Set of shown files.
       Categories : Message_Category_Sets.Set;
+      CWEs       : CWE_Category_Sets.Set;
       Rankings   : Message_Ranking_Level_Flags;
       Lineages   : Lifeage_Kinds_Flags;
       Statuses   : Review_Status_Kinds_Flags;

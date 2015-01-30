@@ -42,8 +42,13 @@ private
 
    function Hash (Item : Natural) return Ada.Containers.Hash_Type;
 
+   function Hash (Item : CWE_Identifier) return Ada.Containers.Hash_Type;
+
    package Message_Category_Maps is new Ada.Containers.Hashed_Maps
      (Natural, Message_Category_Access, Hash, "=", "=");
+
+   package CWE_Category_Maps is new Ada.Containers.Hashed_Maps
+     (CWE_Identifier, CWE_Category_Access, Hash, "=", "=");
 
    package Annotation_Category_Maps is new Ada.Containers.Hashed_Maps
      (Natural, Annotation_Category_Access, Hash, "=");
@@ -68,6 +73,7 @@ private
       Projects              : Code_Analysis.Code_Analysis_Tree;
       Root_Inspection       : Code_Analysis.CodePeer_Data_Access;
       Message_Categories    : Message_Category_Maps.Map;
+      CWE_Categories        : CWE_Category_Maps.Map;
       Annotation_Categories : Annotation_Category_Maps.Map;
       Entry_Point_Map       : Entry_Point_Maps.Map;
       File_Node             : Code_Analysis.File_Access;
