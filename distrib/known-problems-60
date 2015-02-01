@@ -610,7 +610,7 @@ KP-60-N407-001 GPS: GPS crashes on some completions involving generic packages
   Workaround: Deactivate dynamic smart completion/Don't trigger it on generic
               packages with child packages.
 
-KP-60-N402-044 GPS: exception from highlightinh plugin
+KP-60-N402-044 GPS: exception from highlighting plugin
 
   Problem:    Sometimes GPS can output internal exception to Messages window
               when autohighlighting plugin is active.
