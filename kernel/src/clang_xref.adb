@@ -1142,10 +1142,13 @@ package body Clang_Xref is
    is
       use Cursors_Arrays;
 
+      function Get_Fields (C : Clang_Cursor) return Array_Type;
       function Get_Fields (C : Clang_Cursor) return Array_Type
       is
-        (Get_Children (C, CXCursor_FieldDecl)
-         & Id_Flat_Map (Parent_Types (C, True), Get_Fields'Access));
+      begin
+         return (Get_Children (C, CXCursor_FieldDecl)
+                 & Id_Flat_Map (Parent_Types (C, True), Get_Fields'Access));
+      end Get_Fields;
 
       C : constant Clang_Cursor := Get_Clang_Cursor (Entity);
    begin
@@ -1311,11 +1314,14 @@ package body Clang_Xref is
    is
       use Cursors_Arrays;
 
+      function Get_Base_Classes (Type_Decl : Clang_Cursor) return Array_Type;
       function Get_Base_Classes (Type_Decl : Clang_Cursor) return Array_Type
       is
-         (Id_Map
-            (Get_Children (Type_Decl, CXCursor_CXXBaseSpecifier),
-             Referenced'Access));
+      begin
+         return (Id_Map
+                  (Get_Children (Type_Decl, CXCursor_CXXBaseSpecifier),
+                   Referenced'Access));
+      end Get_Base_Classes;
 
       function Get_Ancestors (Type_Decl : Clang_Cursor) return Array_Type;
       function Get_Ancestors (Type_Decl : Clang_Cursor) return Array_Type
@@ -1395,9 +1401,13 @@ package body Clang_Xref is
    is
       use Cursors_Arrays;
 
+      function Get_Calls (C : Clang_Cursor) return Array_Type;
       function Get_Calls (C : Clang_Cursor) return Array_Type
-      is (Get_Children (C, CXCursor_CallExpr)
-          & Id_Flat_Map (Get_Children (C), Get_Calls'Access));
+      is
+      begin
+         return (Get_Children (C, CXCursor_CallExpr)
+                 & Id_Flat_Map (Get_Children (C), Get_Calls'Access));
+      end Get_Calls;
 
       Calls : constant Array_Type := Get_Calls (Get_Clang_Cursor (Entity));
       Call_Entities : constant Entity_Array := To_Entity_Array (Entity, Calls);
