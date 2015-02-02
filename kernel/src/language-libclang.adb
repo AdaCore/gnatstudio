@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2014, AdaCore                        --
+--                       Copyright (C) 2015, AdaCore                        --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -369,8 +369,7 @@ package body Language.Libclang is
       Sym : GNATCOLL.Symbols.Symbol;
       use Cursors_Arrays;
    begin
-      if Is_From_Main_File (Loc)
-      then
+      if Is_From_Main_File (Loc) then
 
          --  Add info for base specifiers references in C++ class declarations,
          --  because for some reasons they're not visited as references by the
@@ -412,8 +411,7 @@ package body Language.Libclang is
       Loc : constant Clang_Location := +Info.loc;
       Sym : GNATCOLL.Symbols.Symbol;
    begin
-      if Is_From_Main_File (Loc)
-      then
+      if Is_From_Main_File (Loc) then
          Sym :=
            Client_Data.Sym_Table.Find (Value (Info.referencedEntity.USR));
 
