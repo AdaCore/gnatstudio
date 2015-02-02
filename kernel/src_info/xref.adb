@@ -364,9 +364,10 @@ package body Xref is
    function Get_Entity
      (Db   : access General_Xref_Database_Record;
       Name : String;
-      Loc  : General_Location) return Root_Entity'Class
+      Loc  : General_Location;
+      Approximate_Search_Fallback : Boolean := True;
+      Closest_Ref  : out Root_Entity_Reference_Ref) return Root_Entity'Class
    is
-      Ref : Root_Entity_Reference_Ref;
       Lang_Name : constant String :=
         Db.Lang_Handler.Get_Language_From_File (Loc.File).Get_Name;
       package LDB renames Lang_Specific_Databases_Maps;
@@ -376,7 +377,10 @@ package body Xref is
         Db.Lang_Specific_Databases.Find (Lang_Name);
    begin
       if Cursor /= LDB.No_Element then
-         return LDB.Element (Cursor).Get_Entity (Name, Loc);
+         Closest_Ref :=
+           Root_Entity_Reference_Refs.To_Holder (No_Root_Entity_Reference);
+         return LDB.Element (Cursor).Get_Entity
+           (General_Xref_Database (Db), Name, Loc);
       end if;
 
       return Find_Declaration_Or_Overloaded
@@ -384,7 +388,23 @@ package body Xref is
          Loc               => Loc,
          Entity_Name       => Name,
          Ask_If_Overloaded => False,
-         Closest_Ref       => Ref);
+         Closest_Ref       => Closest_Ref,
+         Approximate_Search_Fallback => Approximate_Search_Fallback);
+   end Get_Entity;
+
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity
+     (Db   : access General_Xref_Database_Record;
+      Name : String;
+      Loc  : General_Location;
+      Approximate_Search_Fallback : Boolean := True) return Root_Entity'Class
+   is
+      Ref : Root_Entity_Reference_Ref;
+   begin
+      return Get_Entity (Db, Name, Loc, Approximate_Search_Fallback, Ref);
    end Get_Entity;
 
    ------------------------------------
@@ -1494,7 +1514,7 @@ package body Xref is
    -- At_End --
    ------------
 
-   function At_End (Iter : Base_Entities_Cursor) return Boolean is
+   overriding function At_End (Iter : Base_Entities_Cursor) return Boolean is
    begin
       return not Has_Element (Iter.Iter);
    end At_End;
@@ -1503,7 +1523,8 @@ package body Xref is
    -- Get --
    ---------
 
-   function Get (Iter : Base_Entities_Cursor) return Root_Entity'Class is
+   overriding function Get
+     (Iter : Base_Entities_Cursor) return Root_Entity'Class is
    begin
       return General_Entity'
         (Entity => Element (Iter.Iter),
@@ -1515,7 +1536,7 @@ package body Xref is
    -- Next --
    ----------
 
-   procedure Next (Iter : in out Base_Entities_Cursor) is
+   overriding procedure Next (Iter : in out Base_Entities_Cursor) is
    begin
       Next (Iter.Iter);
    end Next;
@@ -1525,7 +1546,7 @@ package body Xref is
    -----------------------------
 
    overriding function Get_All_Called_Entities
-     (Entity : General_Entity) return Calls_Iterator'Class
+     (Entity : General_Entity) return Abstract_Entities_Cursor'Class
    is
       Result : Calls_Iterator;
    begin
@@ -1617,7 +1638,7 @@ package body Xref is
    -- Destroy --
    -------------
 
-   procedure Destroy (Iter : in out Entities_In_Project_Cursor) is
+   overriding procedure Destroy (Iter : in out Entities_In_Project_Cursor) is
    begin
       null;
    end Destroy;
@@ -1685,7 +1706,7 @@ package body Xref is
    -- Destroy --
    -------------
 
-   procedure Destroy (Iter : in out Calls_Iterator) is
+   overriding procedure Destroy (Iter : in out Calls_Iterator) is
    begin
       null;
    end Destroy;

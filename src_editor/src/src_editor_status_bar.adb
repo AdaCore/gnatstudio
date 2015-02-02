@@ -44,7 +44,6 @@ with Gtk.Text_Iter;     use Gtk.Text_Iter;
 with Gtk.Widget; use Gtk.Widget;
 with Gtkada.Handlers;
 with Gtkada.MDI; use Gtkada.MDI;
-with Language.Tree; use Language.Tree;
 with Language; use Language;
 with Pango.Layout; use Pango.Layout;
 with Src_Editor_Box; use Src_Editor_Box;
@@ -52,6 +51,7 @@ with Src_Editor_Module.Commands; use Src_Editor_Module.Commands;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_Module; use Src_Editor_Module;
 with String_Utils; use String_Utils;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Src_Editor_Status_Bar is
 
@@ -208,14 +208,16 @@ package body Src_Editor_Status_Bar is
    ----------------------------
 
    procedure Update_Subprogram_Name
-     (Bar : not null access Source_Editor_Status_Bar_Record'Class)
+     (Bar : not null access Source_Editor_Status_Bar_Record'Class;
+      Update_Tree : Boolean := False)
    is
       Block : Block_Record;
-      Iter  : Construct_Tree_Iterator;
+      Node  : Sem_Node_Holders.Holder;
       Val   : Unbounded_String;
    begin
       if Display_Subprogram_Names.Get_Pref then
-         Block := Get_Subprogram_Block (Bar.Buffer, Bar.Current_Line);
+         Block := Get_Subprogram_Block (Bar.Buffer, Bar.Current_Line,
+                                        Update_Tree);
          if Block.Block_Type /= Cat_Unknown
            and then Block.Name /= No_Symbol
          then
@@ -225,14 +227,15 @@ package body Src_Editor_Status_Bar is
                & Glib.Convert.Escape_Text (Get (Block.Name).all)
                & "</a></span>");
 
-            Iter := Get_Parent_Scope (Block.Tree, Block.Iter);
-            while Iter /= Null_Construct_Tree_Iterator loop
+            Node := Sem_Node_Holders.To_Holder
+              (Block.Tree_Node.Element.Parent);
+            while Node.Element /= No_Semantic_Node loop
                Val :=
                  "<span underline='none'><a href='"
-                 & Get_Construct (Iter).Sloc_Start.Line'Img
-                 & "'>" & Get (Get_Construct (Iter).Name).all & "</a></span>."
+                 & Node.Element.Sloc_Start.Line'Img
+                 & "'>" & Get (Node.Element.Name).all & "</a></span>."
                  & Val;
-               Iter := Get_Parent_Scope (Block.Tree, Iter);
+               Node.Replace_Element (Node.Element.Parent);
             end loop;
 
             Bar.Function_Label.Set_Markup (To_String (Val));

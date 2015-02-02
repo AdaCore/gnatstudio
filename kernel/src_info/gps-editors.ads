@@ -156,6 +156,10 @@ package GPS.Editors is
      (This : Editor_Location) return Visible_Column_Type is abstract;
    --  Return the column of the location
 
+   function Line_Offset
+     (This : Editor_Location) return Natural is abstract;
+   --  Return the line offset of the location
+
    function Offset (This : Editor_Location) return Natural is abstract;
    --  Offset in the file.
 
@@ -414,6 +418,9 @@ package GPS.Editors is
    -- Editor_Buffer --
    -------------------
 
+   function Version
+     (This : Editor_Buffer) return Integer is abstract;
+
    function Has_Slave_Cursors
      (This : Editor_Buffer) return Boolean is abstract;
 
@@ -428,6 +435,10 @@ package GPS.Editors is
       Line   : Integer;
       Column : Visible_Column_Type) return Editor_Location'Class is abstract;
    --  Return a new location
+
+   function New_Location
+     (This : Editor_Buffer;
+      Offset : Natural) return Editor_Location'Class is abstract;
 
    function New_View
      (This : Editor_Buffer) return Editor_View'Class is abstract;
@@ -593,18 +604,6 @@ package GPS.Editors is
    --  Indicates whether the user should be able to edit the buffer
    --  interactively (through any view).
 
-   procedure Get_Constructs
-     (This       : Editor_Buffer;
-      Constructs : out Language.Construct_List;
-      Timestamp  : out Natural) is abstract;
-   --  Return the constructs in the current state of the buffer.
-   --  This should be cached in the editor; as a result the caller should not
-   --  free the result.
-   --  Timestamp is a Natural which is increased every time the constructs are
-   --  increased. As a result, if two calls to Get_Constructs return the same
-   --  Timestamp, the caller can assume that the constructs have not changed
-   --  in the meantime.
-
    procedure Apply_Style
      (This  : Editor_Buffer;
       Style : not null access Simple_Style_Record'Class;
@@ -703,7 +702,7 @@ package GPS.Editors is
 
    function Get
      (This        : Editor_Buffer_Factory;
-      File        : Virtual_File;
+      File        : Virtual_File := No_File;
       Force       : Boolean := False;
       Open_Buffer : Boolean := False;
       Open_View   : Boolean := True;
@@ -807,6 +806,8 @@ private
    overriding function Line (This : Dummy_Editor_Location) return Integer;
    overriding function Column
      (This : Dummy_Editor_Location) return Visible_Column_Type;
+   overriding function Line_Offset
+     (This : Dummy_Editor_Location) return Natural is (0);
    overriding function Offset (This : Dummy_Editor_Location) return Natural;
 
    overriding function Buffer
@@ -910,6 +911,9 @@ private
    overriding procedure Newline_And_Indent
      (This : Dummy_Editor_Buffer) is null;
 
+   overriding function Version
+     (This : Dummy_Editor_Buffer) return Integer is (0);
+
    function Get_Main_Cursor
      (This : Dummy_Editor_Buffer) return Editor_Cursor'Class
    is (Nil_Editor_Cursor);
@@ -924,6 +928,11 @@ private
      (This   : Dummy_Editor_Buffer;
       Line   : Integer;
       Column : Visible_Column_Type) return Editor_Location'Class;
+
+   overriding function New_Location
+     (This   : Dummy_Editor_Buffer;
+      Offset : Natural) return Editor_Location'Class
+   is (Nil_Editor_Location);
 
    overriding function New_View
      (This : Dummy_Editor_Buffer) return Editor_View'Class;
@@ -1001,11 +1010,6 @@ private
      (This : Dummy_Editor_Buffer; Read_Only : Boolean) is null;
    overriding function Is_Read_Only
      (This : Dummy_Editor_Buffer) return Boolean;
-
-   overriding procedure Get_Constructs
-     (This       : Dummy_Editor_Buffer;
-      Constructs : out Language.Construct_List;
-      Timestamp  : out Natural);
 
    overriding procedure Apply_Style
      (This  : Dummy_Editor_Buffer;

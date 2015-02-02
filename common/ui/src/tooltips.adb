@@ -358,6 +358,9 @@ package body Tooltips is
       Return_Callback.Connect
         (On_Widget, Signal_Focus_Out_Event,
          Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
+      Return_Callback.Connect
+        (On_Widget, Signal_Destroy_Event,
+         Return_Callback.To_Marshaller (Tooltip_Event_Cb'Access));
 
       Tooltip_User_Data.Set
         (On_Widget, Tooltips_Access (Tooltip),

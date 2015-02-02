@@ -19,15 +19,20 @@ with System; use System;
 
 with Ada.Unchecked_Conversion;
 
-with Interfaces.C;         use Interfaces.C;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Interfaces.C.Pointers;
-with clang_c_CXString_h;
-with clang_c_Index_h; use clang_c_Index_h;
+with clang_c_CXString_h; use clang_c_CXString_h;
+with Libclang.File;
+with System.Address_To_Access_Conversions;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with Ada.Unchecked_Deallocation;
 
 package body Libclang.Index is
 
    Debug : constant Boolean := False;
+
+   Me : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("LIBCLANG", On);
 
    type Complete_Results_Access is access all CXCodeCompleteResults;
 
@@ -42,8 +47,19 @@ package body Libclang.Index is
      (Index              => Natural,
       Element            => CXCompletionResult,
       Element_Array      => CXCompletionResult_Array,
-      Default_Terminator => (CursorKind => <>,
-                             CompletionString => <>));
+      Default_Terminator => No_CXCompletionResult);
+
+   function Visit_And_Filter_Children
+     (C : Clang_Cursor;
+      Visitor : CXCursorVisitor;
+      Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
+      return Cursors_Arrays.Array_Type;
+
+   function Toplevel_Nodes_Visitor
+     (Child  : CXCursor;
+      Parent : CXCursor;
+      UData   : CXClientData) return CXChildVisitResult;
+   pragma Convention (C, Toplevel_Nodes_Visitor);
 
    ------------------
    -- Create_Index --
@@ -56,7 +72,7 @@ package body Libclang.Index is
    is
       R : Clang_Index;
    begin
-      R.CXIndex := clang_createIndex
+      R := clang_createIndex
         (int (Boolean'Pos (Exclude_Declarations_From_PCH)),
          int (Boolean'Pos (Display_Diagnostics)));
       return R;
@@ -68,7 +84,7 @@ package body Libclang.Index is
 
    procedure Dispose (Index : Clang_Index) is
    begin
-      clang_disposeIndex (Index.CXIndex);
+      clang_disposeIndex (Index);
    end Dispose;
 
    ----------------------------
@@ -80,8 +96,9 @@ package body Libclang.Index is
       Source_Filename       : String;
       Command_Line_Args     : GNATCOLL.Utils.Unbounded_String_Array;
       Unsaved_Files         : Unsaved_File_Array := No_Unsaved_Files;
-      Options               : Clang_Translation_Unit_Flags := None)
-      return Clang_Translation_Unit'Class
+      Options               : Clang_Translation_Unit_Flags :=
+        No_Translation_Unit_Flags)
+      return Clang_Translation_Unit
    is
       TU : Clang_Translation_Unit;
 
@@ -104,15 +121,31 @@ package body Libclang.Index is
 
       C_Command_Line_Args : System.Address;
       C_Unsaved_Files     : System.Address;
+
+      First_Free : Natural := CL'First;
    begin
-      for J in CL'Range loop
-         CL (J) := New_String (To_String (Command_Line_Args (J)));
+      Trace (Me, "Parsing translation unit " & Source_Filename);
+
+      for J in Command_Line_Args'Range loop
+         declare
+            Arg : constant String := To_String (Command_Line_Args (J));
+         begin
+            --  Never pass the "-v" argument: this causes libclang to
+            --  output the header search settings to the standard error, which
+            --  is not suitable under Windows where GPS does not have a
+            --  console.
+            if Arg /= "-v" then
+               CL (First_Free) := New_String (Arg);
+               First_Free := First_Free + 1;
+            end if;
+         end;
       end loop;
 
-      if CL'Length = 0 then
-         C_Command_Line_Args := System.Null_Address;
-      else
+      if First_Free > CL'First then
          C_Command_Line_Args := CL (CL'First)'Address;
+      else
+         --  ??? This is wrong, the code won't accept a null address below
+         C_Command_Line_Args := System.Null_Address;
       end if;
 
       if Unsaved_Files'Length = 0 then
@@ -123,24 +156,276 @@ package body Libclang.Index is
 
       C_Source_Filename := New_String (Source_Filename);
 
-      TU.CX_Translation_Unit :=
+      TU :=
         local_clang_parseTranslationUnit
-          (C_Idxx                => Index.CXIndex,
+          (C_Idxx                => Index,
            Source_Filename       => C_Source_Filename,
            Command_Line_Args     => C_Command_Line_Args,
-           Num_Command_Line_Args => CL'Length,
+           Num_Command_Line_Args => Interfaces.C.int (First_Free - CL'First),
            Unsaved_Files         => C_Unsaved_Files,
            Num_Unsaved_Files     => Unsaved_Files'Length,
            Options               => unsigned (Options));
 
       Free (C_Source_Filename);
 
-      for J in CL'Range loop
+      for J in CL'First .. First_Free - 1 loop
          Free (CL (J));
       end loop;
 
       return TU;
    end Parse_Translation_Unit;
+
+   -------------------------
+   -- Source_File_Indexer --
+   -------------------------
+
+   package body Source_File_Indexer is
+      package CX_To_Client_Data is new System.Address_To_Access_Conversions
+        (Client_Data_T);
+
+      function To_Client_Data
+        (A : CXClientData) return CX_To_Client_Data.Object_Pointer
+      is
+        (CX_To_Client_Data.To_Pointer (System.Address (A)));
+
+      function Abort_Query_Internal
+        (arg1 : CXClientData; arg2 : System.Address) return int;
+      pragma Convention (C, Abort_Query_Internal);
+      procedure Diagnostic_Internal
+        (arg1 : CXClientData;
+         arg2 : CXDiagnosticSet;
+         arg3 : System.Address);
+      pragma Convention (C, Diagnostic_Internal);
+      function Entered_Main_File_Internal
+        (arg1 : CXClientData;
+         arg2 : CXFile;
+         arg3 : System.Address) return CXIdxClientFile;
+      pragma Convention (C, Entered_Main_File_Internal);
+      function Included_File_Internal
+        (arg1 : CXClientData;
+         arg2 : access constant CXIdxIncludedFileInfo) return CXIdxClientFile;
+      pragma Convention (C, Included_File_Internal);
+      function Started_Translation_Unit_Internal
+        (arg1 : CXClientData;
+         arg2 : System.Address) return CXIdxClientContainer;
+      pragma Convention (C, Started_Translation_Unit_Internal);
+      procedure Index_Reference_Internal
+        (arg1 : CXClientData; arg2 : access constant CXIdxEntityRefInfo);
+      pragma Convention (C, Index_Reference_Internal);
+      procedure Index_Declaration_Internal
+        (arg1 : CXClientData; arg2 : access constant CXIdxDeclInfo);
+      pragma Convention (C, Index_Declaration_Internal);
+
+      --------------------------
+      -- Abort_Query_Internal --
+      --------------------------
+
+      function Abort_Query_Internal
+        (arg1 : CXClientData; arg2 : System.Address) return int is
+         pragma Unreferenced (arg2);
+      begin
+         return
+           (if Abort_Query
+              (To_Client_Data (arg1).all)
+            then 1 else 0);
+      end Abort_Query_Internal;
+
+      -------------------------
+      -- Diagnostic_Internal --
+      -------------------------
+
+      procedure Diagnostic_Internal
+        (arg1 : CXClientData; arg2 : CXDiagnosticSet; arg3 : System.Address)
+      is
+         pragma Unreferenced (arg3);
+      begin
+         Diagnostic (To_Client_Data (arg1).all, arg2);
+      end Diagnostic_Internal;
+
+      --------------------------------
+      -- Entered_Main_File_Internal --
+      --------------------------------
+
+      function Entered_Main_File_Internal
+        (arg1 : CXClientData;
+         arg2 : CXFile;
+         arg3 : System.Address) return CXIdxClientFile is
+         pragma Unreferenced (arg3);
+      begin
+         Entered_Main_File (To_Client_Data (arg1).all,
+                            Libclang.File.File (arg2));
+         return CXIdxClientFile (System.Null_Address);
+      end Entered_Main_File_Internal;
+
+      ----------------------------
+      -- Included_File_Internal --
+      ----------------------------
+
+      function Included_File_Internal
+        (arg1 : CXClientData;
+         arg2 : access constant CXIdxIncludedFileInfo) return CXIdxClientFile
+      is
+      begin
+         Included_File (To_Client_Data (arg1).all, arg2.all);
+         return CXIdxClientFile (System.Null_Address);
+      end Included_File_Internal;
+
+      ---------------------------------------
+      -- Started_Translation_Unit_Internal --
+      ---------------------------------------
+
+      function Started_Translation_Unit_Internal
+        (arg1 : CXClientData; arg2 : System.Address)
+         return CXIdxClientContainer is
+         pragma Unreferenced (arg2);
+      begin
+         Started_Translation_Unit (To_Client_Data (arg1).all);
+         return CXIdxClientContainer (System.Null_Address);
+      end Started_Translation_Unit_Internal;
+
+      --------------------------------
+      -- Index_Declaration_Internal --
+      --------------------------------
+
+      procedure Index_Declaration_Internal
+        (arg1 : CXClientData; arg2 : access constant CXIdxDeclInfo) is
+      begin
+         Index_Declaration (To_Client_Data (arg1).all, arg2.all);
+      end Index_Declaration_Internal;
+
+      ------------------------------
+      -- Index_Reference_Internal --
+      ------------------------------
+
+      procedure Index_Reference_Internal
+        (arg1 : CXClientData; arg2 : access constant CXIdxEntityRefInfo) is
+      begin
+         Index_Reference (To_Client_Data (arg1).all, arg2.all);
+      end Index_Reference_Internal;
+
+      function Imported_AST_File_Internal
+        (arg1 : CXClientData;
+         arg2 : access constant CXIdxImportedASTFileInfo)
+         return CXIdxClientASTFile
+      is
+        (CXIdxClientASTFile (System.Null_Address));
+      pragma Convention (C, Imported_AST_File_Internal);
+
+      Indexer_Callbacks : aliased constant IndexerCallbacks :=
+        (Abort_Query_Internal'Access,
+         Diagnostic_Internal'Access,
+         Entered_Main_File_Internal'Access,
+         Included_File_Internal'Access,
+         Imported_AST_File_Internal'Access,
+         Started_Translation_Unit_Internal'Access,
+         Index_Declaration_Internal'Access,
+         Index_Reference_Internal'Access);
+
+      -----------------------
+      -- Index_Source_File --
+      -----------------------
+
+      function Index_Source_File
+        (Index_Action      : Clang_Index_Action;
+         Client_Data       : Client_Data_T;
+         Index_Options     : Clang_Index_Options;
+         Source_Filename   : String;
+         Command_Line_Args : GNATCOLL.Utils.Unbounded_String_Array;
+         Unsaved_Files     : Unsaved_File_Array := No_Unsaved_Files;
+         Options           : Clang_Translation_Unit_Flags :=
+           No_Translation_Unit_Flags) return Clang_Translation_Unit
+      is
+         TU : aliased Clang_Translation_Unit;
+
+         type Char_Ptr_Ptr is array (Positive range <>) of chars_ptr;
+
+         CL : Char_Ptr_Ptr (Command_Line_Args'Range);
+
+         C_Source_Filename : chars_ptr;
+         C_Command_Line_Args : System.Address;
+         C_Unsaved_Files     : System.Address;
+
+         First_Free : Natural := CL'First;
+
+         Error_Code : int;
+         pragma Unreferenced (Error_Code);
+      begin
+         for J in Command_Line_Args'Range loop
+            declare
+               Arg : constant String := To_String (Command_Line_Args (J));
+            begin
+               --  Never pass the "-v" argument: this causes libclang to output
+               --  the header search settings to the standard error, which
+               --  is not suitable under Windows where GPS does not have a
+               --  console.
+               if Arg /= "-v" then
+                  CL (First_Free) := New_String (Arg);
+                  First_Free := First_Free + 1;
+               end if;
+            end;
+         end loop;
+
+         if First_Free > CL'First then
+            C_Command_Line_Args := CL (CL'First)'Address;
+         else
+            --  ??? This is wrong, the code won't accept a null address below
+            C_Command_Line_Args := System.Null_Address;
+         end if;
+
+         if Unsaved_Files'Length = 0 then
+            C_Unsaved_Files := System.Null_Address;
+         else
+            C_Unsaved_Files := Unsaved_Files (Unsaved_Files'First)'Address;
+         end if;
+
+         C_Source_Filename := New_String (Source_Filename);
+
+         Error_Code :=
+           clang_indexSourceFile
+             (Index_Action,
+              CXClientData (Client_Data'Address),
+              Indexer_Callbacks'Access,
+              Indexer_Callbacks'Size,
+              Index_Options,
+              Source_Filename       => C_Source_Filename,
+              Command_Line_Args     => C_Command_Line_Args,
+              Num_Command_Line_Args =>
+                Interfaces.C.int (First_Free - CL'First),
+              Unsaved_Files         => C_Unsaved_Files,
+              Num_Unsaved_Files     => Unsaved_Files'Length,
+              Out_TU                => TU'Address,
+              TU_Options               => unsigned (Options));
+
+         Free (C_Source_Filename);
+
+         for J in CL'First .. First_Free - 1 loop
+            Free (CL (J));
+         end loop;
+
+         return TU;
+      end Index_Source_File;
+
+      ----------------------------
+      -- Index_Translation_Unit --
+      ----------------------------
+
+      procedure Index_Translation_Unit
+        (Index_Action : Clang_Index_Action;
+         Client_Data : Client_Data_T;
+         Index_Options : Clang_Index_Options;
+         TU : Clang_Translation_Unit)
+      is
+         Error_Code : int;
+         pragma Unreferenced (Error_Code);
+      begin
+         Error_Code := clang_indexTranslationUnit (Index_Action,
+                                     CXClientData (Client_Data'Address),
+                                     Indexer_Callbacks'Access,
+                                     Indexer_Callbacks'Size,
+                                     Index_Options, TU);
+      end Index_Translation_Unit;
+
+   end Source_File_Indexer;
 
    ------------------------------
    -- Reparse_Translation_Unit --
@@ -149,13 +434,14 @@ package body Libclang.Index is
    function Reparse_Translation_Unit
      (TU            : Clang_Translation_Unit;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
-      Options       : Clang_Translation_Unit_Flags := None) return Boolean
+      Options       : Clang_Translation_Unit_Flags :=
+        No_Translation_Unit_Flags) return Boolean
    is
 
       function local_clang_reparseTranslationUnit
         (tu : CXTranslationUnit;
-         Unsaved_Files : System.Address;
          Num_Unsaved_Files : unsigned;
+         Unsaved_Files : System.Address;
          Options : unsigned) return int;
       pragma Import (C, local_clang_reparseTranslationUnit,
                      "clang_reparseTranslationUnit");
@@ -172,7 +458,7 @@ package body Libclang.Index is
 
       C_Result :=
         local_clang_reparseTranslationUnit
-          (tu                    => TU.CX_Translation_Unit,
+          (tu                    => TU,
            Unsaved_Files         => C_Unsaved_Files,
            Num_Unsaved_Files     => Unsaved_Files'Length,
            Options               => unsigned (Options));
@@ -184,9 +470,15 @@ package body Libclang.Index is
    -- Dispose --
    -------------
 
-   procedure Dispose (TU : Clang_Translation_Unit) is
+   procedure Dispose (TU : in out Clang_Translation_Unit) is
    begin
-      clang_disposeTranslationUnit (TU.CX_Translation_Unit);
+      Trace (Me, "Freeing translation unit" & Spelling (TU));
+      if TU = No_Translation_Unit then
+         Trace (Me, "WARNING : Trying to dispose of already freed TU");
+      end if;
+
+      clang_disposeTranslationUnit (TU);
+      TU := No_Translation_Unit;
    end Dispose;
 
    -----------------
@@ -200,7 +492,7 @@ package body Libclang.Index is
       Column        : Natural;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
       Options       : Clang_Code_Complete_Flags := 0)
-      return Clang_Complete_Results'Class
+      return Clang_Complete_Results
    is
       C_Filename : chars_ptr;
       C_Unsaved_Files     : System.Address;
@@ -231,7 +523,7 @@ package body Libclang.Index is
 
       C_Returned :=
         local_clang_codeCompleteAt
-          (TU                => TU.CX_Translation_Unit,
+          (TU                => TU,
            complete_filename => C_Filename,
            complete_line     => unsigned (Line),
            complete_column   => unsigned (Column),
@@ -242,7 +534,7 @@ package body Libclang.Index is
       Free (C_Filename);
 
       if C_Returned = System.Null_Address then
-         Result := No_Completion_Results;
+         return No_Complete_Results;
       else
          Result.CXCodeCompleteResults := Convert (C_Returned);
 
@@ -259,12 +551,12 @@ package body Libclang.Index is
 
    procedure Dispose (Results : in out Clang_Complete_Results) is
    begin
-      if Results = No_Completion_Results then
-         --  nothing to do
+      if Results = No_Complete_Results then
          return;
-      else
-         clang_disposeCodeCompleteResults (Results.CXCodeCompleteResults);
       end if;
+
+      clang_disposeCodeCompleteResults (Results.CXCodeCompleteResults);
+      Results := No_Complete_Results;
    end Dispose;
 
    -----------------
@@ -282,7 +574,7 @@ package body Libclang.Index is
 
    function Nth_Result
      (Results : Clang_Complete_Results;
-      N       : Positive) return Clang_Completion_Result'Class
+      N       : Positive) return Clang_Completion_Result
    is
       use CXCompletionResult_Pointer;
 
@@ -325,7 +617,7 @@ package body Libclang.Index is
       end Chunk_Text;
 
    begin
-      if Result = No_Result then
+      if Result = No_Completion_Results then
          return Returned;
       end if;
 
@@ -364,5 +656,331 @@ package body Libclang.Index is
 
       return Returned;
    end Spelling;
+
+   ----------
+   -- Kind --
+   ----------
+
+   function Kind
+     (Result : Clang_Completion_Result) return clang_c_Index_h.CXCursorKind is
+   begin
+      return Result.Result.CursorKind;
+   end Kind;
+
+   --------------------------
+   -- Destroy_Unsaved_File --
+   --------------------------
+
+   procedure Destroy_Unsaved_File (F : in out Unsaved_File) is
+   begin
+      Free (F.Filename);
+      Free (F.Contents);
+   end Destroy_Unsaved_File;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Files : in out Unsaved_File_Array_Access)
+   is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Unsaved_File_Array, Unsaved_File_Array_Access);
+   begin
+      for F of Files.all loop
+         Destroy_Unsaved_File (F);
+      end loop;
+      Free (Files);
+   end Destroy;
+
+   -------------------------
+   -- Create_Unsaved_File --
+   -------------------------
+
+   function Create_Unsaved_File
+     (Filename : String;
+      Buffer   : String_Access) return Unsaved_File
+   is
+      Returned : Unsaved_File;
+      C_Filename : chars_ptr;
+   begin
+      C_Filename := New_String (Filename);
+      --  ??? Who frees this?
+      Returned.Filename := C_Filename;
+
+      if Buffer = null then
+         Returned.Contents := Null_Ptr;
+         Returned.Length := 0;
+      else
+         Returned.Contents := New_String (Buffer.all);
+         Returned.Length := Buffer'Length;
+      end if;
+
+      return Returned;
+   end Create_Unsaved_File;
+
+   ------------------
+   -- Get_Children --
+   ------------------
+
+   function Get_Children
+     (Cursor : Clang_Cursor;
+      Kind : Clang_Cursor_Kind) return Cursors_Arrays.Array_Type
+   is
+      function Has_Kind (C : Clang_Cursor) return Boolean is
+        (Libclang.Index.Kind (C) = Kind);
+      --  Filter predicate, returns true if C has kind Kind
+   begin
+      return Get_Children (Cursor, Has_Kind'Access);
+   end Get_Children;
+
+   -----------------
+   -- Root_Cursor --
+   -----------------
+
+   function Root_Cursor
+     (TU : Clang_Translation_Unit) return Clang_Cursor is
+   begin
+      return clang_getTranslationUnitCursor (TU);
+   end Root_Cursor;
+
+   type Visitor_Data is record
+      Vec : Cursors_Vectors.Vector;
+   end record;
+
+   package Addr_To_Vis_Data is new System.Address_To_Access_Conversions
+     (Visitor_Data);
+
+   --------------------------
+   -- Get_Children_Visitor --
+   --------------------------
+
+   function Get_Children_Visitor
+     (Child  : CXCursor;
+      Parent : CXCursor;
+      UData   : CXClientData) return CXChildVisitResult;
+   pragma Convention (C, Get_Children_Visitor);
+
+   --------------------------
+   -- Get_Children_Visitor --
+   --------------------------
+
+   function Get_Children_Visitor
+     (Child  : CXCursor;
+      Parent : CXCursor;
+      UData  : CXClientData) return CXChildVisitResult
+   is
+      pragma Unreferenced (Parent);
+      Data : constant Addr_To_Vis_Data.Object_Pointer
+        := Addr_To_Vis_Data.To_Pointer (System.Address (UData));
+   begin
+      Data.Vec.Append (Clang_Cursor (Child));
+      return CXChildVisit_Continue;
+   end Get_Children_Visitor;
+
+   function Visit_And_Filter_Children
+     (C : Clang_Cursor;
+      Visitor : CXCursorVisitor;
+      Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
+      return Cursors_Arrays.Array_Type
+   is
+      V : aliased Visitor_Data;
+      V_Ptr : constant Addr_To_Vis_Data.Object_Pointer := V'Unchecked_Access;
+      Discard : Interfaces.C.unsigned;
+   begin
+      Discard := clang_visitChildren
+        (C, Visitor,
+         CXClientData (Addr_To_Vis_Data.To_Address (V_Ptr)));
+
+      if V.Vec.Length = 0 then
+         return Cursors_Arrays.Empty_Array;
+      end if;
+
+      declare
+         Out_Array : Cursors_Arrays.Array_Type
+           (1 .. Positive (V.Vec.Length));
+      begin
+
+         for I in V.Vec.First_Index .. V.Vec.Last_Index loop
+            Out_Array (I) := V.Vec.Element (I);
+         end loop;
+
+         return (if Filter = null then Out_Array
+                 else Cursors_Arrays.Filter (Out_Array, Filter));
+      end;
+
+   end Visit_And_Filter_Children;
+
+   ------------------
+   -- Get_Children --
+   ------------------
+
+   function Get_Children
+     (Cursor : Clang_Cursor;
+      Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
+      return Cursors_Arrays.Array_Type
+   is
+   begin
+      return Visit_And_Filter_Children
+        (Cursor, Get_Children_Visitor'Access, Filter);
+   end Get_Children;
+
+   ----------------------------
+   -- Toplevel_Nodes_Visitor --
+   ----------------------------
+
+   function Toplevel_Nodes_Visitor
+     (Child  : CXCursor;
+      Parent : CXCursor;
+      UData  : CXClientData) return CXChildVisitResult
+   is
+      pragma Unreferenced (Parent);
+      Data : constant Addr_To_Vis_Data.Object_Pointer
+        := Addr_To_Vis_Data.To_Pointer (System.Address (UData));
+   begin
+      if
+         clang_Location_isFromMainFile (clang_getCursorLocation (Child)) /= 0
+      then
+         Data.Vec.Append (Clang_Cursor (Child));
+      end if;
+      return CXChildVisit_Continue;
+   end Toplevel_Nodes_Visitor;
+
+   --------------------
+   -- Toplevel_Nodes --
+   --------------------
+
+   function Toplevel_Nodes
+     (TU : Clang_Translation_Unit;
+      Filter : access function (C : Clang_Cursor) return Boolean := null)
+      return Cursors_Arrays.Array_Type
+   is
+   begin
+      return Visit_And_Filter_Children
+        (Root_Cursor (TU), Toplevel_Nodes_Visitor'Access, Filter);
+   end Toplevel_Nodes;
+
+   --------------
+   -- Spelling --
+   --------------
+
+   function Spelling
+     (T : Clang_Type) return String
+   is
+   begin
+      return To_String (clang_getTypeSpelling (T));
+   end Spelling;
+
+   --------------
+   -- Spelling --
+   --------------
+
+   function Spelling
+     (Cursor : Clang_Cursor) return String
+   is
+   begin
+      return To_String (clang_getCursorSpelling (Cursor));
+   end Spelling;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (Location : Clang_Location) return Clang_Raw_Location
+   is
+      Line, Column, Offset : aliased unsigned;
+      F : aliased CXFile;
+   begin
+      clang_getFileLocation
+        (Location, F'Access, Line'Access,
+         Column'Access, Offset'Access);
+
+      return Clang_Raw_Location'
+        (Libclang.File.File (F), Line, Column, Offset);
+   end Value;
+
+   ------------
+   -- Offset --
+   ------------
+
+   function Offset (Location : Clang_Location) return unsigned is
+      Offset : aliased unsigned;
+   begin
+      clang_getFileLocation
+        (Location, null, null, null, Offset'Access);
+
+      return Offset;
+   end Offset;
+
+   --------------
+   -- In_Range --
+   --------------
+
+   function In_Range (Sought, Containing : Clang_Cursor) return Boolean
+   is
+      Sought_Loc : constant unsigned := Offset (Location (Sought));
+      Containing_Range : constant Clang_Source_Range := Extent (Containing);
+   begin
+      return Sought_Loc > Offset (Range_Start (Containing_Range))
+        and then
+          Sought_Loc < Offset (Range_End (Containing_Range));
+   end In_Range;
+
+   --------------
+   -- Location --
+   --------------
+
+   function Location
+     (TU : Clang_Translation_Unit;
+      File : GNATCOLL.VFS.Virtual_File;
+      Line, Column : Natural) return Clang_Location
+   is
+   begin
+      return clang_getLocation
+        (TU, Libclang.File.File (TU, File),
+         unsigned (Line), unsigned (Column));
+   end Location;
+
+   --------------
+   -- Location --
+   --------------
+
+   function Location (Cursor : Clang_Cursor) return Clang_Raw_Location
+   is
+   begin
+      return Value (Location (Cursor));
+   end Location;
+
+   ------------------
+   -- Display_Name --
+   ------------------
+
+   function Display_Name
+     (Cursor : Clang_Cursor) return String
+   is
+   begin
+      return To_String (clang_getCursorDisplayName (Cursor));
+   end Display_Name;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String
+     (Clang_String : clang_c_CXString_h.CXString) return String
+   is
+      C_String : constant Interfaces.C.Strings.chars_ptr :=
+        clang_getCString (Clang_String);
+   begin
+      if C_String /= Null_Ptr then
+         declare
+            Str : constant String := Interfaces.C.Strings.Value (C_String);
+         begin
+            clang_disposeString (Clang_String);
+            return Str;
+         end;
+      else
+         return "";
+      end if;
+   end To_String;
 
 end Libclang.Index;

@@ -1223,13 +1223,19 @@ package body Src_Editor_View is
          --  Highlight the current block
 
          if View.Highlight_Blocks then
-            View.Current_Block := Get_Block
-              (Buffer,
-               Get_Editable_Line
-                 (Buffer, Buffer_Line_Type (Get_Line (Cursor_Iter)) + 1),
-               False,
-               Filter => Categories_For_Block_Highlighting);
-            Draw_Block (View.Current_Block);
+            declare
+               Line : Editable_Line_Type;
+               Column : Visible_Column_Type;
+            begin
+               Buffer.Get_Cursor_Position (Line, Column);
+               View.Current_Block := Get_Block
+                 (Buffer,
+                  Line,
+                  False,
+                  Filter => Categories_For_Block_Highlighting,
+                  Column => Column);
+               Draw_Block (View.Current_Block);
+            end;
          end if;
 
          --  Redraw the line showing the nth column if needed

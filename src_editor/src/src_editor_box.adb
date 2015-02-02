@@ -513,9 +513,10 @@ package body Src_Editor_Box is
    ----------------------------
 
    procedure Update_Subprogram_Name
-     (Box : not null access Source_Editor_Box_Record'Class) is
+     (Box : not null access Source_Editor_Box_Record'Class;
+      Update_Tree : Boolean := False) is
    begin
-      Update_Subprogram_Name (Box.Status_Bar);
+      Update_Subprogram_Name (Box.Status_Bar, Update_Tree);
    end Update_Subprogram_Name;
 
    --------------------

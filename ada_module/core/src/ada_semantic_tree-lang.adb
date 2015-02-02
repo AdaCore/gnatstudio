@@ -177,14 +177,11 @@ package body Ada_Semantic_Tree.Lang is
             Len := Len + 4;
          end if;
 
-         if Construct.Attributes (Ada_Not_Attribute) then
-            Append (Result, "not ");
-            Len := Len + 4;
-         end if;
-
-         if Construct.Attributes (Ada_Null_Attribute) then
-            Append (Result, "null ");
-            Len := Len + 5;
+         if Construct.Attributes (Ada_Not_Attribute)
+           and then Construct.Attributes (Ada_Null_Attribute)
+         then
+            Append (Result, "not null ");
+            Len := Len + 9;
          end if;
 
          if Construct.Attributes (Ada_Access_Attribute) then

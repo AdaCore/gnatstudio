@@ -82,8 +82,6 @@ with GPS.Kernel.Project;                  use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                  use GPS.Kernel.Scripts;
 with GPS.Properties;
 with Language;                            use Language;
-with Language.Tree;                       use Language.Tree;
-with Language.Tree.Database;              use Language.Tree.Database;
 with Language.Unknown;                    use Language.Unknown;
 with Language_Handlers;                   use Language_Handlers;
 with Src_Editor_Box;                      use Src_Editor_Box;
@@ -6442,12 +6440,11 @@ package body Src_Editor_Buffer is
       Line               : Editable_Line_Type;
       Update_Immediately : Boolean;
       Filter             : Language.Tree.Category_Array :=
-        Language.Tree.Null_Category_Array) return Block_Record
+        Language.Tree.Null_Category_Array;
+      Column             : Visible_Column_Type := 1) return Block_Record
    is
-      File : Structured_File_Access;
-      Tree : Construct_Tree;
-      Iter : Construct_Tree_Iterator;
-      Set  : File_Info_Set;
+      Tree : constant Semantic_Tree'Class :=
+        Editor.Kernel.Get_Abstract_Tree_For_File (Editor.Filename);
    begin
       if Line = 0 then
          return New_Block;
@@ -6462,56 +6459,29 @@ package body Src_Editor_Buffer is
       end if;
 
       if Update_Immediately then
-         Update_Contents
-           (Db      => Editor.Kernel.Get_Construct_Database,
-            File    => Editor.Filename);
+         Tree.Update;
       end if;
 
       --  Take the first possible project. This should not impact block
       --  computation, which does not need xref information
-
-      Set := Get_Project_Tree (Editor.Kernel).Info_Set (Editor.Filename);
       declare
-         F_Info : constant File_Info'Class :=
-           File_Info'Class (Set.First_Element);
+         Node : constant Semantic_Node'Class := Tree.Node_At
+           ((Line => Integer (Line), Column => Column, others => <>), Filter);
       begin
-         File := Get_Or_Create
-           (Db      => Editor.Kernel.Get_Construct_Database,
-            File    => Editor.Filename,
-            Project => F_Info.Project);
-      end;
-
-      Tree := Get_Tree (File);
-
-      Iter := Get_Iterator_At
-        (Tree,
-         Location          =>
-           (Absolute_Offset => False,   --   ??? Should use offset in buffer
-            Line            => Integer (Line),
-            Line_Offset     => 1),
-         From_Type         => Start_Construct,  --  irrelevant with Enclosing
-         Position          => Enclosing,
-         Categories_Seeked => Filter);
-
-      if Iter = Null_Construct_Tree_Iterator then
-         return New_Block;
-      end if;
-
-      declare
-         Current : constant access Simple_Construct_Information :=
-           Get_Construct (Iter);
-      begin
-         return Block_Record'
-           (Indentation_Level => 0,
-            Offset_Start      => Current.Sloc_Start.Column,
-            Stored_Offset     => 0,
-            First_Line      => Editable_Line_Type (Current.Sloc_Start.Line),
-            Last_Line         => Editable_Line_Type (Current.Sloc_End.Line),
-            Name              => Current.Name,
-            Iter              => Iter,
-            Tree              => Tree,
-            Block_Type        => Current.Category,
-            Color             => Null_RGBA);
+         if Node = No_Semantic_Node then
+            return New_Block;
+         else
+            return Block_Record'
+              (Indentation_Level => 0,
+               Offset_Start      => Integer (Node.Sloc_Start.Column),
+               Stored_Offset     => 0,
+               First_Line      => Editable_Line_Type (Node.Sloc_Start.Line),
+               Last_Line         => Editable_Line_Type (Node.Sloc_End.Line),
+               Name              => Node.Name,
+               Tree_Node         => Sem_Node_Holders.To_Holder (Node),
+               Block_Type        => Node.Category,
+               Color             => Null_RGBA);
+         end if;
       end;
    end Get_Block;
 
@@ -6521,10 +6491,11 @@ package body Src_Editor_Buffer is
 
    function Get_Subprogram_Block
      (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type) return Block_Record is
+      Line   : Editable_Line_Type;
+      Update_Tree : Boolean := False) return Block_Record is
    begin
       return Get_Block
-        (Editor, Line, True,
+        (Editor, Line, Update_Tree,
          Filter =>
            (Cat_Package, Cat_Namespace, Cat_Task, Cat_Procedure,
             Cat_Function, Cat_Constructor, Cat_Method, Cat_Destructor,
@@ -8391,37 +8362,38 @@ package body Src_Editor_Buffer is
       return Count;
    end Collapse_Tabs;
 
+   --------------
+   -- Get_Tree --
+   --------------
+
+   function Get_Tree
+     (Buffer : access Source_Buffer_Record) return Semantic_Tree'Class is
+   begin
+      return Buffer.Kernel.Get_Abstract_Tree_For_File (Buffer.Filename);
+   end Get_Tree;
+
    --------------------
    -- Get_Constructs --
    --------------------
 
-   function Get_Constructs
+   function Get_Tree_Iterator
      (Buffer         : access Source_Buffer_Record;
-      Required_Level : Constructs_State_Type) return Construct_List
+      Required_Level : Constructs_State_Type)
+      return Semantic_Tree_Iterator'Class
    is
-      Text : GNAT.Strings.String_Access;
    begin
-      if Buffer.Constructs_State >= Required_Level then
-         return Buffer.Constructs;
+      if Buffer.Constructs_State < Required_Level then
+         Buffer.Get_Tree.Update;
+         Buffer.Constructs_State := Exact;
+         if Buffer.Constructs_Timestamp = Natural'Last then
+            Buffer.Constructs_Timestamp := 0;
+         else
+            Buffer.Constructs_Timestamp := Buffer.Constructs_Timestamp + 1;
+         end if;
       end if;
 
-      Free (Buffer.Constructs);
-
-      Text := Get_String (Source_Buffer (Buffer));
-      Parse_Constructs (Buffer.Lang, Buffer.Get_Filename,
-                        Text.all, Buffer.Constructs);
-      GNAT.Strings.Free (Text);
-
-      Buffer.Constructs_State := Exact;
-
-      if Buffer.Constructs_Timestamp = Natural'Last then
-         Buffer.Constructs_Timestamp := 0;
-      else
-         Buffer.Constructs_Timestamp := Buffer.Constructs_Timestamp + 1;
-      end if;
-
-      return Buffer.Constructs;
-   end Get_Constructs;
+      return Buffer.Get_Tree.Root_Iterator;
+   end Get_Tree_Iterator;
 
    --------------------------
    -- Get_Constructs_State --
@@ -8642,7 +8614,7 @@ package body Src_Editor_Buffer is
    end Get_Typed_Chars;
 
    -------------------
-   -- Get_Timestamp --
+   -- Get_Version --
    -------------------
 
    function Get_Version

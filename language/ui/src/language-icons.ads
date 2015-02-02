@@ -17,12 +17,13 @@
 
 --  This package describes the icons associated to language constructs.
 
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+
 package Language.Icons is
 
    function Stock_From_Category
      (Is_Declaration : Boolean;
-      Visibility     : Construct_Visibility;
+      Visibility     : Semantic_Node_Visibility;
       Category       : Language_Category) return String;
    --  Return the icon to use for a given entity
-
 end Language.Icons;

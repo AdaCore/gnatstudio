@@ -25,6 +25,7 @@ with System;            use System;
 with String_Utils;      use String_Utils;
 with UTF8_Utils;        use UTF8_Utils;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Language.Tree.Database is
 
@@ -194,6 +195,8 @@ package body Language.Tree.Database is
             Formater.Add_Result
               (Mode    => "",
                Of_Type => Buffer (Type_Start.Index .. Type_End.Index));
+            Put_Line ("ADDING "
+                      & Buffer (Type_Start.Index .. Type_End.Index) & " PD");
          end if;
 
       elsif Get_Construct (Node).Category in Data_Category then
@@ -215,6 +218,26 @@ package body Language.Tree.Database is
             end if;
          end;
       end if;
+   end Get_Profile;
+
+   function Get_Profile
+     (Lang       : access Tree_Language;
+      Entity     : Entity_Access;
+      With_Aspects : Boolean := False) return String
+   is
+      Formater : aliased Text_Profile_Formater;
+      Node   : constant Construct_Tree_Iterator :=
+        To_Construct_Tree_Iterator (Entity);
+      use type Ada.Strings.Unbounded.String_Access;
+   begin
+      if Get_Construct (Node).Profile_Cache /= null then
+         return Get_Construct (Node).Profile_Cache.all;
+      end if;
+
+      Tree_Language_Access (Lang).Get_Profile
+        (Entity, Formater'Access, With_Aspects);
+      Get_Construct (Node).Profile_Cache := new String'(Formater.Get_Text);
+      return Formater.Get_Text;
    end Get_Profile;
 
    ---------------------
@@ -1529,6 +1552,16 @@ package body Language.Tree.Database is
          end if;
       end if;
    end "<";
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Entity : Entity_Access) return Hash_Type
+   is
+   begin
+      return Hash_Type (Entity.It.Index);
+   end Hash;
 
    ----------
    -- Free --

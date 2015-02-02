@@ -35,8 +35,9 @@ with Language_Handlers;
 with Language.Tree.Database;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Strings.Hash;
+with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Containers.Indefinite_Holders;
+with Array_Utils;
 
 ----------
 -- Xref --
@@ -45,13 +46,18 @@ with Ada.Containers.Indefinite_Holders;
 package Xref is
 
    type Root_Reference_Iterator is abstract tagged null record;
+   No_Reference_Iterator : constant Root_Reference_Iterator'Class;
 
    type Root_Entity is abstract tagged null record;
    No_Root_Entity : aliased constant Root_Entity'Class;
    --  aliased is added to let AJIS make it accessible to GNATbench
 
    type Root_Entity_Access is access all Root_Entity'Class;
-   type Entity_Array is array (Natural range <>) of Root_Entity_Access;
+
+   package Entity_Arrays is new Array_Utils (Root_Entity_Access);
+   subtype Entity_Array is Entity_Arrays.Array_Type;
+
+   No_Entity_Array : Entity_Array (1 .. 0) := (others => <>);
 
    procedure Free (X : in out Entity_Array);
    --  Free memory associated with X
@@ -94,9 +100,13 @@ package Xref is
    --  ??? Should we also cache the Old_Entities.Source_File ?
    --  aliased is added to let AJIS make it accessible to GNATbench
 
+   type General_Xref_Database_Record;
+   type General_Xref_Database is access all General_Xref_Database_Record'Class;
+
    type Lang_Specific_Database is interface;
    function Get_Entity
      (Db : Lang_Specific_Database;
+      General_Db : General_Xref_Database;
       Name : String;
       Loc : General_Location) return Root_Entity'Class is abstract;
 
@@ -104,7 +114,7 @@ package Xref is
    is new Ada.Containers.Indefinite_Hashed_Maps
      (String,
       Lang_Specific_Database'Class,
-      Hash => Ada.Strings.Hash, Equivalent_Keys => "=");
+      Hash => Ada.Strings.Hash_Case_Insensitive, Equivalent_Keys => "=");
 
    type General_Xref_Database_Record is tagged record
       Xref       : Extended_Xref_Database_Access;
@@ -140,8 +150,6 @@ package Xref is
 
       Lang_Specific_Databases : Lang_Specific_Databases_Maps.Map;
    end record;
-
-   type General_Xref_Database is access all General_Xref_Database_Record'Class;
 
    procedure Destroy (Self : in out General_Xref_Database);
    --  Destroy the xref database (in memory)
@@ -230,6 +238,8 @@ package Xref is
      (Ref : Root_Entity_Reference) return Boolean is abstract;
    function Get_Entity
      (Ref : Root_Entity_Reference) return Root_Entity'Class is abstract;
+   function Get_Entity_Name
+     (Ref : Root_Entity_Reference) return String is abstract;
    function Get_Location
      (Ref : Root_Entity_Reference) return General_Location is abstract;
    function Show_In_Callgraph
@@ -520,11 +530,14 @@ package Xref is
       Parameter : General_Entity;
       Kind      : GNATCOLL.Xref.Parameter_Kind;
    end record;
+
    type Parameter_Array is array (Natural range <>) of General_Parameter;
 
    function Parameters
      (Entity : Root_Entity) return Parameter_Array is abstract;
    --  Return the list of parameters for a given subprogram
+
+   No_Parameters : constant Parameter_Array;
 
    -----------
    -- Files --
@@ -626,10 +639,23 @@ package Xref is
    --  Nothing is done if Ref does not point to a dispatching call.
    --  This procedure does not propagate any exception.
 
+   package Root_Entity_Reference_Refs
+   is new Ada.Containers.Indefinite_Holders (Root_Entity_Reference'Class);
+
+   subtype Root_Entity_Reference_Ref is Root_Entity_Reference_Refs.Holder;
+
    function Get_Entity
-     (Db   : access General_Xref_Database_Record;
-      Name : String;
-      Loc  : General_Location) return Root_Entity'Class;
+     (Db           : access General_Xref_Database_Record;
+      Name         : String;
+      Loc          : General_Location;
+      Approximate_Search_Fallback : Boolean := True;
+      Closest_Ref  : out Root_Entity_Reference_Ref)
+      return Root_Entity'Class;
+   function Get_Entity
+     (Db           : access General_Xref_Database_Record;
+      Name         : String;
+      Loc          : General_Location;
+      Approximate_Search_Fallback : Boolean := True) return Root_Entity'Class;
    --  Retrieve the entity referenced at the given location.
    --  This also works for operators, whether they are quoted ("=") or
    --  not (=).
@@ -637,6 +663,10 @@ package Xref is
    overriding function Get_Entity
      (Ref : General_Entity_Reference) return Root_Entity'Class;
    --  Return the entity the reference is pointing to
+
+   function Get_Entity_Name
+     (Ref : General_Entity_Reference) return String
+   is (Ref.Get_Entity.Get_Name);
 
    overriding function Get_Location
      (Ref : General_Entity_Reference) return General_Location;
@@ -673,12 +703,27 @@ package Xref is
    -- Entities in file --
    ----------------------
 
-   type Base_Entities_Cursor is tagged private;
+   type Abstract_Entities_Cursor is interface;
+   function At_End
+     (Iter : Abstract_Entities_Cursor) return Boolean is abstract;
+   function Get
+     (Iter : Abstract_Entities_Cursor) return Root_Entity'Class is abstract;
+   procedure Next (Iter : in out Abstract_Entities_Cursor) is abstract;
+   procedure Destroy (Iter : in out Abstract_Entities_Cursor) is abstract;
 
-   function At_End (Iter : Base_Entities_Cursor) return Boolean;
-   function Get (Iter : Base_Entities_Cursor) return Root_Entity'Class;
-   procedure Next (Iter : in out Base_Entities_Cursor);
+   No_Entities_Cursor : constant Abstract_Entities_Cursor'Class;
+
+   type Base_Entities_Cursor is new Abstract_Entities_Cursor with private;
+
+   overriding function At_End
+     (Iter : Base_Entities_Cursor) return Boolean;
+   overriding function Get
+     (Iter : Base_Entities_Cursor) return Root_Entity'Class;
+   overriding procedure Next (Iter : in out Base_Entities_Cursor);
    --  Iterate and retrieve an entity at each iteration
+
+   overriding procedure Destroy
+     (Iter : in out Base_Entities_Cursor) is null;
 
    type Entities_In_File_Cursor is new Base_Entities_Cursor with private;
 
@@ -710,7 +755,7 @@ package Xref is
      (Iter : Entities_In_Project_Cursor) return Root_Entity'Class;
    overriding procedure Next (Iter : in out Entities_In_Project_Cursor);
 
-   procedure Destroy (Iter : in out Entities_In_Project_Cursor);
+   overriding procedure Destroy (Iter : in out Entities_In_Project_Cursor);
 
    ---------------
    -- Callgraph --
@@ -719,7 +764,7 @@ package Xref is
    type Calls_Iterator is new Base_Entities_Cursor with private;
 
    function Get_All_Called_Entities
-     (Entity : Root_Entity) return Calls_Iterator'Class is abstract;
+     (Entity : Root_Entity) return Abstract_Entities_Cursor'Class is abstract;
    --  Return all the entities that are found in the scope of Entity. This is
    --  not necessarily a subprogram call, but can be many things.
    --  All entities returned are unique. If you need to find the specific
@@ -732,7 +777,7 @@ package Xref is
    overriding procedure Next (Iter : in out Calls_Iterator);
    --  Move to the next entity
 
-   procedure Destroy (Iter : in out Calls_Iterator);
+   overriding procedure Destroy (Iter : in out Calls_Iterator);
    --  Free the memory used by the iterator
 
    ----------------
@@ -839,11 +884,6 @@ package Xref is
       Tree   : GNATCOLL.Projects.Project_Tree_Access);
    --  The view of the project has changed, we need to refresh the xref
    --  databases.
-
-   package Root_Entity_Reference_Refs
-   is new Ada.Containers.Indefinite_Holders (Root_Entity_Reference'Class);
-
-   subtype Root_Entity_Reference_Ref is Root_Entity_Reference_Refs.Holder;
 
    function Find_Declaration_Or_Overloaded
      (Self              : access General_Xref_Database_Record;
@@ -1020,7 +1060,7 @@ private
      (Entity    : General_Entity;
       Recursive : Boolean) return Entity_Array;
    overriding function Get_All_Called_Entities
-     (Entity : General_Entity) return Calls_Iterator'Class;
+     (Entity : General_Entity) return Abstract_Entities_Cursor'Class;
 
    overriding function Parameters
      (Entity : General_Entity) return Parameter_Array;
@@ -1050,7 +1090,7 @@ private
       Db       : General_Xref_Database;
    end record;
 
-   type Base_Entities_Cursor is tagged record
+   type Base_Entities_Cursor is new Abstract_Entities_Cursor with record
       Iter     : Entities_Cursor;
       Db       : General_Xref_Database;
    end record;
@@ -1078,5 +1118,59 @@ private
 
    No_Root_Entity : aliased constant Root_Entity'Class :=
      No_General_Entity;
+
+   No_Parameters : constant Parameter_Array (1 .. 0) := (others => <>);
+
+   type Dummy_Entities_Cursor is new Abstract_Entities_Cursor with null record;
+
+   overriding function At_End
+     (Iter : Dummy_Entities_Cursor) return Boolean is (True);
+
+   overriding function Get
+     (Iter : Dummy_Entities_Cursor) return Root_Entity'Class
+   is
+     (No_Root_Entity);
+
+   overriding procedure Next (Iter : in out Dummy_Entities_Cursor) is null;
+
+   overriding procedure Destroy
+     (Iter : in out Dummy_Entities_Cursor) is null;
+
+   No_Entities_Cursor : constant Abstract_Entities_Cursor'Class :=
+     Dummy_Entities_Cursor'(others => <>);
+
+   type Dummy_Reference_Iterator is new Root_Reference_Iterator
+   with null record;
+
+   -----------------------------
+   -- Root Reference Iterator --
+   -----------------------------
+
+   overriding function At_End (Iter : Dummy_Reference_Iterator) return Boolean
+   is (True);
+   --  Whether there are no more reference to return
+
+   overriding procedure Next (Iter : in out Dummy_Reference_Iterator) is null;
+   --  Move to the next reference to the entity
+
+   overriding function Get
+     (Iter : Dummy_Reference_Iterator) return Root_Entity_Reference'Class
+      is (No_Root_Entity_Reference);
+
+   overriding function Get_Entity
+        (Iter : Dummy_Reference_Iterator) return Root_Entity'Class
+      is (No_Root_Entity);
+
+   overriding procedure Destroy (Iter : in out Dummy_Reference_Iterator)
+   is null;
+
+   function Get_Current_Progress
+     (Iter : Dummy_Reference_Iterator) return Integer is (0);
+
+   overriding function Get_Total_Progress
+     (Iter : Dummy_Reference_Iterator) return Integer is (0);
+
+   No_Reference_Iterator : constant Root_Reference_Iterator'Class :=
+     Dummy_Reference_Iterator'(others => <>);
 
 end Xref;

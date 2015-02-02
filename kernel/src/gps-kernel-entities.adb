@@ -295,7 +295,7 @@ package body GPS.Kernel.Entities is
          exit when At_End (Iter_Ref);
          declare
             Ref : constant Root_Entity_Reference'Class :=
-              Get (Iter_Ref);
+              Get (Iter_Ref.Element.all);
          begin
             if Ref /= No_Root_Entity_Reference then
                Command.Locations.Append (Ref);
@@ -518,8 +518,10 @@ package body GPS.Kernel.Entities is
          end;
 
       elsif Command = "calls" then
+
          --  The following unchecked_access is safe since
          --  Examine_Entity_Call_Graph is called synchronously
+
          User_Data := new Add_To_List_User_Data;
          User_Data.Data := Data'Unchecked_Access;
          User_Data.Use_Parent_For_Key := False;
@@ -530,8 +532,10 @@ package body GPS.Kernel.Entities is
             Get_All_Refs      => True);
 
       elsif Command = "called_by" then
+
          --  The following unchecked_access is safe since
          --  Examine_Ancestors_Call_Graph is called synchronously
+
          User_Data := new Add_To_List_User_Data;
          User_Data.Data := Data'Unchecked_Access;
          Examine_Ancestors_Call_Graph
@@ -667,8 +671,6 @@ package body GPS.Kernel.Entities is
       Result  : out Command_Return_Type)
    is
       Count : Integer := 0;
-      Search_Entity : constant Root_Entity'Class := Data.Entity.Element;
-      Name  : constant String := Search_Entity.Get_Name;
    begin
       Result := Execute_Again;
 
@@ -708,9 +710,7 @@ package body GPS.Kernel.Entities is
                   Print_Ref
                     (Data.Kernel,
                      Ref,
-                     (if Get_Entity (Ref) = Search_Entity
-                      then Name
-                      else Get_Entity (Ref).Get_Name),
+                     (Get_Entity_Name (Ref)),
                      Data.Category.all,
                      Show_Caller  => Data.Show_Caller,
                      Sort_In_File => False);

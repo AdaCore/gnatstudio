@@ -823,7 +823,7 @@ package body Browsers.Entities is
       end if;
 
       declare
-         Iter : Calls_Iterator'Class := Get_All_Called_Entities
+         Iter : Abstract_Entities_Cursor'Class := Get_All_Called_Entities
            (Item.Entity.Element);
       begin
          while not At_End (Iter) loop

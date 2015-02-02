@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Hash;
-
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Symbols;                 use GNATCOLL.Symbols;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
@@ -25,6 +23,7 @@ with GNATCOLL.VFS_Utils;               use GNATCOLL.VFS_Utils;
 with GPS.Scripts;
 
 with Language_Handlers;                use Language_Handlers;
+with Language.Unknown; use Language.Unknown;
 
 package body GPS.Core_Kernels is
 
@@ -217,6 +216,77 @@ package body GPS.Core_Kernels is
    begin
       return Kernel.Registry;
    end Registry;
+
+   ----------------------------
+   -- Get_Construct_Database --
+   ----------------------------
+
+   function Get_Construct_Database
+     (Kernel : not null access Core_Kernel_Record)
+      return Language.Tree.Database.Construct_Database_Access
+   is
+   begin
+      return Kernel.Databases.Constructs;
+   end Get_Construct_Database;
+
+   ----------------------------
+   -- Register_Tree_Provider --
+   ----------------------------
+
+   procedure Register_Tree_Provider
+     (Kernel   : not null access Core_Kernel_Record;
+      Lang     : Language_Access;
+      Provider : Semantic_Tree_Provider_Access)
+   is
+   begin
+      Kernel.Semantic_Tree_Providers.Include (Lang, Provider);
+   end Register_Tree_Provider;
+
+   ------------------------------------
+   -- Default_Language_Tree_Provider --
+   ------------------------------------
+
+   function Default_Language_Tree_Provider
+     (Kernel : not null access Core_Kernel_Record)
+      return Semantic_Tree_Provider_Access is (null);
+
+   --------------------------------
+   -- Get_Abstract_Tree_For_File --
+   --------------------------------
+
+   function Get_Abstract_Tree_For_File
+     (Kernel : not null access Core_Kernel_Record;
+      File   : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class
+   is
+      Language : constant Language_Access :=
+        Kernel.Lang_Handler.Get_Language_From_File (File);
+   begin
+      if Language = null or else Language = Unknown_Lang then
+
+         --  Return nothing for common cases where the request has no meaning
+
+         return No_Semantic_Tree;
+
+      elsif not Kernel.Semantic_Tree_Providers.Contains (Language) then
+
+         --  If there is no specific provider for Language, then use the
+         --  default provider
+
+         if Core_Kernel (Kernel).Default_Language_Tree_Provider /= null then
+            return Core_Kernel (Kernel).Default_Language_Tree_Provider
+              .Get_Tree_For_File (File);
+         else
+            return No_Semantic_Tree;
+         end if;
+
+      else
+
+         --  If there is a specific provider for Language, use that to return
+         --  the file
+         return Kernel.Semantic_Tree_Providers
+           .Element (Language).Get_Tree_For_File (File);
+      end if;
+   end Get_Abstract_Tree_For_File;
 
    -------------
    -- Scripts --

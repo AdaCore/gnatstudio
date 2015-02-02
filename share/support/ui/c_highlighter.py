@@ -74,3 +74,19 @@ register_highlighter(
               tag=tag_type)
     )
 )
+
+register_highlighter(
+    language="c++",
+    spec=(
+        string_literal, character_literal, number_literal,
+        c99_comment, multiline_comment, preprocessor_comment,
+        preprocessor_directive,
+        # Match keywords
+        words("auto|break|case|const|continue|default|do|else|enum|extern|for"
+              "|goto|if|register|return|sizeof|static|struct|switch|typedef"
+              "|union|void|volatile|while", tag=tag_keyword),
+
+        words("int|long|char|float|short|unsigned|double|signed",
+              tag=tag_type)
+    )
+)

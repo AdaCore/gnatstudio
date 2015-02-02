@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Ordered_Sets;
-with GNATCOLL.Symbols;
 with GPS.Search;
 
 with Glib;                       use Glib;
@@ -25,8 +24,11 @@ with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtkada.Abstract_Tree_Model; use Gtkada.Abstract_Tree_Model;
 
 with Language;               use Language;
-with Language.Tree;          use Language.Tree;
-with Language.Tree.Database; use Language.Tree.Database;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers; use Ada.Containers;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Ada.Containers.Vectors;
+with Ada.Strings.Hash;
 
 --  This package implements a sortable hierarchical outline model, based on the
 --  construct trees.
@@ -72,12 +74,12 @@ private package Outline_View.Model is
       Pattern : GPS.Search.Search_Pattern_Access);
    --  Filters the contents of the model. This does not refresh the model.
 
-   procedure Set_File
-     (Model  : not null access Outline_Model_Record'Class;
-      File   : Structured_File_Access;
-      Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Filter : Tree_Filter);
-   function Get_File (Model : Outline_Model) return Structured_File_Access;
+   procedure Set_Tree
+     (Model    : not null access Outline_Model_Record'Class;
+      Sem_Tree : Semantic_Tree'Class;
+      Filter   : Tree_Filter);
+
+   function Get_Tree (Model : Outline_Model) return Semantic_Tree'Class;
    --  Return the file modelized by this model.
    --  Setting the file forces a refresh of the model.
 
@@ -85,6 +87,8 @@ private package Outline_View.Model is
 
    type Sorted_Node_Access is access all Sorted_Node;
    pragma No_Strict_Aliasing (Sorted_Node_Access);
+
+   function Get_Info (S : Sorted_Node) return Semantic_Node_Info;
 
    -------------------------------
    --  GtkTreeModel subprograms --
@@ -153,10 +157,10 @@ private package Outline_View.Model is
       return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  See inherited documentation
 
-   function Get_Entity
+   function Get_Info
      (Self   : not null access Outline_Model_Record'Class;
       Iter   : Gtk_Tree_Iter;
-      Column : Gint := Display_Name_Column) return Entity_Access;
+      Column : Gint := Display_Name_Column) return Semantic_Node_Info;
    --  Return the entity designed by this iterator.
    --  If Column is set to Body_Pixbuf_Column, the "body" of the entity is
    --  returned.
@@ -166,10 +170,7 @@ private package Outline_View.Model is
    --  usable afterwards (this doesn't unchecked free the model itself).
 
    procedure File_Updated
-     (Model    : access Outline_Model_Record;
-      File     : Structured_File_Access;
-      Old_Tree : Construct_Tree;
-      Kind     : Update_Kind);
+     (Model    : access Outline_Model_Record);
    --  In order to keep the model up to date with the tree, this function
    --  should be called every time the construct tree is changed.
 
@@ -178,16 +179,22 @@ private package Outline_View.Model is
       Line, Column : Integer) return Gtk_Tree_Path;
    --  Return the closest path enclosing the {line, column} from the model
 
+   function Get_Sorted_Node
+     (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
+   --  Return the node stored in the iter
+
 private
 
    function "<" (Left, Right : Sorted_Node_Access) return Boolean;
+
+   package Sorted_Node_Vector is new
+     Ada.Containers.Vectors (Positive, Sorted_Node_Access);
 
    package Sorted_Node_Set is new
      Ada.Containers.Ordered_Sets (Sorted_Node_Access, "<");
 
    type Sorted_Node is record
-      Spec_Entity      : Entity_Persistent_Access;
-      Body_Entity      : Entity_Persistent_Access;
+      Spec_Info, Body_Info : Semantic_Node_Info := No_Node_Info;
       --  A node might be associated to up to two construct entities (the
       --  spec and the body of an Ada entity). We keep pointers to these so
       --  that the node is only freed when both entities are freed, but kept
@@ -207,27 +214,31 @@ private
       Model : Outline_Model;
 
       Children : Sorted_Node_Set.Set;
-
-      --  We need to copy the following things in order to still be able
-      --  to remove the node after it has been deleted from the construct
-      --  tree.
-      Category     : Language_Category;
-      Name         : GNATCOLL.Symbols.Symbol;
-      Sloc         : Source_Location;
    end record;
 
+   function Get_Info (S : Sorted_Node) return Semantic_Node_Info is
+      (if S.Spec_Info /= No_Node_Info then S.Spec_Info else S.Body_Info);
+
+   function Hash (H : Hash_Type) return Hash_Type is (H);
+
+   package Sem_To_Tree_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Sorted_Node_Access, Hash => Ada.Strings.Hash,
+      Equivalent_Keys => "=");
+
    type Outline_Model_Record is new Gtk_Abstract_Tree_Model_Record with record
-      Annotation_Key : Construct_Annotations_Pckg.Annotation_Key;
-      File           : Structured_File_Access;
+      Semantic_Tree     : Sem_Tree_Holders.Holder :=
+        Sem_Tree_Holders.Empty_Holder;
 
-      Filter         : Tree_Filter;
-      Filter_Pattern : GPS.Search.Search_Pattern_Access := null;
+      Filter            : Tree_Filter;
+      Filter_Pattern    : GPS.Search.Search_Pattern_Access := null;
 
-      Phantom_Root : aliased Sorted_Node;
+      Phantom_Root      : aliased Sorted_Node;
       --  This is a 'dummy' root, not in the model. Actual roots are children
       --  of that node.
-      Root_With    : Sorted_Node_Access;
+      Root_With         : Sorted_Node_Access;
       --  Container for with clauses.
+
+      Sem_To_Tree_Nodes : Sem_To_Tree_Maps.Map;
    end record;
 
 end Outline_View.Model;

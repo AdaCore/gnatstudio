@@ -23,70 +23,88 @@ with Ada.Command_Line;      use Ada.Command_Line;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.Utils; use GNATCOLL.Utils;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Libclang.Index; use Libclang.Index;
 with Ada.Text_IO; use Ada.Text_IO;
+with GNAT.Strings;
 
 ----------------
 -- Test_Index --
 ----------------
 
 procedure Test_Index is
-
-   Index : Clang_Index;
-   Source_Filename : constant String := Argument (1);
-   CL : Unbounded_String_Array (4 .. Argument_Count);
-
-   Line, Column : Natural;
 begin
-
-   Index := Create_Index (Exclude_Declarations_From_PCH => False,
-                          Display_Diagnostics           => False);
-
-   --  Parse args
-
-   Line := Integer'Value (Argument (2));
-   Column := Integer'Value (Argument (3));
-
-   for J in 4 .. Argument_Count loop
-      CL (J) := To_Unbounded_String (Argument (J));
-   end loop;
-
-   --  Create TU
+   if Argument_Count < 3 then
+      Put_Line ("Usage : test_index <source_file> <line> <column>"
+                & " <compiler_args*>");
+      return;
+   end if;
 
    declare
-      TU : constant Clang_Translation_Unit'Class :=
-        Index.Parse_Translation_Unit
-          (Source_Filename   => Source_Filename,
-           Command_Line_Args => CL);
+      Index : Clang_Index;
+      Source_Filename : constant String := Argument (1);
+      CL : Unbounded_String_Array (4 .. Argument_Count);
+      Line, Column : Natural;
+      Source_File : constant GNATCOLL.VFS.Virtual_File :=
+        GNATCOLL.VFS.Create (+Source_Filename);
+      Content : constant GNAT.Strings.String_Access := Source_File.Read_File;
 
-      Success : Boolean;
-      pragma Unreferenced (Success);
    begin
-      Success := TU.Reparse_Translation_Unit;
 
-      --  Get completion
+      Index := Create_Index (Exclude_Declarations_From_PCH => False,
+                             Display_Diagnostics           => False);
+
+      --  Parse args
+
+      Line := Integer'Value (Argument (2));
+      Column := Integer'Value (Argument (3));
+
+      for J in 4 .. Argument_Count loop
+         CL (J) := To_Unbounded_String (Argument (J));
+      end loop;
+
+      --  Create TU
 
       declare
-         Completion : Clang_Complete_Results'Class :=
-           TU.Complete_At (Filename      => Source_Filename,
-                           Line          => Line,
-                           Column        => Column);
+         TU : Clang_Translation_Unit :=
+           Parse_Translation_Unit
+             (Index,
+              Source_Filename   => Source_Filename,
+              Command_Line_Args => CL);
 
-         Strings : Completion_Strings;
+         Unsaved_Files : constant Unsaved_File_Array :=
+           (1 => Create_Unsaved_File
+              (Source_Filename,
+               Ada.Strings.Unbounded.String_Access (Content)));
+
+         Success : Boolean;
+         pragma Unreferenced (Success);
       begin
-         for J in 1 .. Completion.Num_Results loop
-            Strings := Completion.Nth_Result (J).Spelling;
+         Success := Reparse_Translation_Unit (TU, Unsaved_Files);
+         Put_Line (Content.all);
 
-            Put_Line (To_String (Strings.Completion)
-                      & ASCII.HT & To_String (Strings.Doc));
-         end loop;
+         --  Get completion
 
-         Completion.Dispose;
+         declare
+            Completion : Clang_Complete_Results :=
+              Complete_At (TU,
+                           Filename => Source_Filename,
+                           Line     => Line,
+                           Column   => Column);
+
+            Strings : Completion_Strings;
+            pragma Unreferenced (Strings);
+         begin
+            for J in 1 .. Num_Results (Completion) loop
+               Strings := Spelling (Nth_Result (Completion, J));
+            end loop;
+
+            Dispose (Completion);
+         end;
+
+         Dispose (TU);
       end;
 
-      TU.Dispose;
+      Dispose (Index);
    end;
-
-   Index.Dispose;
-
 end Test_Index;

@@ -37,7 +37,7 @@ package clang_c_Index_h is
    end record;
    pragma Convention (C_Pass_By_Copy, CXUnsavedFile);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:101
 
-   type CXAvailabilityKind is 
+   type CXAvailabilityKind is
      (CXAvailability_Available,
       CXAvailability_Deprecated,
       CXAvailability_NotAvailable,
@@ -57,7 +57,7 @@ package clang_c_Index_h is
    procedure clang_disposeIndex (index : CXIndex);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:218
    pragma Import (C, clang_disposeIndex, "clang_disposeIndex");
 
-   type CXGlobalOptFlags is 
+   type CXGlobalOptFlags is
      (CXGlobalOpt_None,
       CXGlobalOpt_ThreadBackgroundPriorityForIndexing,
       CXGlobalOpt_ThreadBackgroundPriorityForEditing,
@@ -184,7 +184,7 @@ package clang_c_Index_h is
 
    procedure clang_getFileLocation
      (location : CXSourceLocation;
-      file : System.Address;
+      file : access CXFile;
       line : access unsigned;
       column : access unsigned;
       offset : access unsigned);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:585
@@ -210,7 +210,7 @@ package clang_c_Index_h is
    procedure clang_disposeSourceRangeList (ranges : access CXSourceRangeList);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:627
    pragma Import (C, clang_disposeSourceRangeList, "clang_disposeSourceRangeList");
 
-   type CXDiagnosticSeverity is 
+   type CXDiagnosticSeverity is
      (CXDiagnostic_Ignored,
       CXDiagnostic_Note,
       CXDiagnostic_Warning,
@@ -228,7 +228,7 @@ package clang_c_Index_h is
    function clang_getDiagnosticInSet (Diags : CXDiagnosticSet; Index : unsigned) return CXDiagnostic;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:699
    pragma Import (C, clang_getDiagnosticInSet, "clang_getDiagnosticInSet");
 
-   type CXLoadDiag_Error is 
+   type CXLoadDiag_Error is
      (CXLoadDiag_None,
       CXLoadDiag_Unknown,
       CXLoadDiag_CannotLoad,
@@ -260,7 +260,7 @@ package clang_c_Index_h is
    pragma Import (C, clang_disposeDiagnostic, "clang_disposeDiagnostic");
 
    subtype CXDiagnosticDisplayOptions is unsigned;
-   CXDiagnostic_DisplaySourceLocation : constant CXDiagnosticDisplayOptions := 1;
+   CXDiagnostic_DisplaySourceLocationh : constant CXDiagnosticDisplayOptions := 1;
    CXDiagnostic_DisplayColumn : constant CXDiagnosticDisplayOptions := 2;
    CXDiagnostic_DisplaySourceRanges : constant CXDiagnosticDisplayOptions := 4;
    CXDiagnostic_DisplayOption : constant CXDiagnosticDisplayOptions := 8;
@@ -365,14 +365,14 @@ package clang_c_Index_h is
       out_TU : System.Address) return clang_c_CXErrorCode_h.CXErrorCode;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:1276
    pragma Import (C, clang_parseTranslationUnit2, "clang_parseTranslationUnit2");
 
-   type CXSaveTranslationUnit_Flags is 
+   type CXSaveTranslationUnit_Flags is
      (CXSaveTranslationUnit_None);
    pragma Convention (C, CXSaveTranslationUnit_Flags);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:1292
 
    function clang_defaultSaveOptions (TU : CXTranslationUnit) return unsigned;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:1308
    pragma Import (C, clang_defaultSaveOptions, "clang_defaultSaveOptions");
 
-   type CXSaveError is 
+   type CXSaveError is
      (CXSaveError_None,
       CXSaveError_Unknown,
       CXSaveError_TranslationErrors,
@@ -388,7 +388,7 @@ package clang_c_Index_h is
    procedure clang_disposeTranslationUnit (arg1 : CXTranslationUnit);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:1375
    pragma Import (C, clang_disposeTranslationUnit, "clang_disposeTranslationUnit");
 
-   type CXReparse_Flags is 
+   type CXReparse_Flags is
      (CXReparse_None);
    pragma Convention (C, CXReparse_Flags);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:1384
 
@@ -641,6 +641,7 @@ package clang_c_Index_h is
       xdata : aliased int;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:2271
       data : aliased CXCursor_data_array;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:2272
    end record;
+   function "=" (Left, Right : CXCursor) return Boolean is abstract;
    pragma Convention (C_Pass_By_Copy, CXCursor);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:2273
 
    --  skipped anonymous struct anon_7
@@ -690,7 +691,7 @@ package clang_c_Index_h is
    function clang_isUnexposed (arg1 : CXCursorKind) return unsigned;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:2366
    pragma Import (C, clang_isUnexposed, "clang_isUnexposed");
 
-   type CXLinkageKind is 
+   type CXLinkageKind is
      (CXLinkage_Invalid,
       CXLinkage_NoLinkage,
       CXLinkage_Internal,
@@ -727,7 +728,7 @@ package clang_c_Index_h is
    procedure clang_disposeCXPlatformAvailability (availability : access CXPlatformAvailability);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:2491
    pragma Import (C, clang_disposeCXPlatformAvailability, "clang_disposeCXPlatformAvailability");
 
-   type CXLanguageKind is 
+   type CXLanguageKind is
      (CXLanguage_Invalid,
       CXLanguage_C,
       CXLanguage_ObjC,
@@ -966,7 +967,7 @@ package clang_c_Index_h is
    function clang_Type_getOffsetOf (T : CXType; S : Interfaces.C.Strings.chars_ptr) return Long_Long_Integer;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:3127
    pragma Import (C, clang_Type_getOffsetOf, "clang_Type_getOffsetOf");
 
-   type CXRefQualifierKind is 
+   type CXRefQualifierKind is
      (CXRefQualifier_None,
       CXRefQualifier_LValue,
       CXRefQualifier_RValue);
@@ -987,7 +988,7 @@ package clang_c_Index_h is
    function clang_isVirtualBase (arg1 : CXCursor) return unsigned;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:3174
    pragma Import (C, clang_isVirtualBase, "clang_isVirtualBase");
 
-   type CX_CXXAccessSpecifier is 
+   type CX_CXXAccessSpecifier is
      (CX_CXXInvalidAccessSpecifier,
       CX_CXXPublic,
       CX_CXXProtected,
@@ -1006,7 +1007,7 @@ package clang_c_Index_h is
    function clang_getIBOutletCollectionType (arg1 : CXCursor) return CXType;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:3240
    pragma Import (C, clang_getIBOutletCollectionType, "clang_getIBOutletCollectionType");
 
-   type CXChildVisitResult is 
+   type CXChildVisitResult is
      (CXChildVisit_Break,
       CXChildVisit_Continue,
       CXChildVisit_Recurse);
@@ -1187,7 +1188,7 @@ package clang_c_Index_h is
    CXNameRange_WantTemplateArgs : constant CXNameRefFlags := 2;
    CXNameRange_WantSinglePiece : constant CXNameRefFlags := 4;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:3820
 
-   type CXTokenKind is 
+   type CXTokenKind is
      (CXToken_Punctuation,
       CXToken_Keyword,
       CXToken_Identifier,
@@ -1268,7 +1269,7 @@ package clang_c_Index_h is
 
    --  skipped anonymous struct anon_12
 
-   type CXCompletionChunkKind is 
+   type CXCompletionChunkKind is
      (CXCompletionChunk_Optional,
       CXCompletionChunk_TypedText,
       CXCompletionChunk_Text,
@@ -1441,7 +1442,7 @@ package clang_c_Index_h is
    procedure clang_remap_dispose (arg1 : CXRemapping);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:4841
    pragma Import (C, clang_remap_dispose, "clang_remap_dispose");
 
-   type CXVisitorResult is 
+   type CXVisitorResult is
      (CXVisit_Break,
       CXVisit_Continue);
    pragma Convention (C, CXVisitorResult);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:4852
@@ -1457,7 +1458,7 @@ package clang_c_Index_h is
 
    --  skipped anonymous struct anon_14
 
-   type CXResult is 
+   type CXResult is
      (CXResult_Success,
       CXResult_Invalid,
       CXResult_VisitBreak);
@@ -1514,7 +1515,7 @@ package clang_c_Index_h is
 
    --  skipped anonymous struct anon_18
 
-   type CXIdxEntityKind is 
+   type CXIdxEntityKind is
      (CXIdxEntity_Unexposed,
       CXIdxEntity_Typedef,
       CXIdxEntity_Function,
@@ -1544,21 +1545,21 @@ package clang_c_Index_h is
       CXIdxEntity_CXXInterface);
    pragma Convention (C, CXIdxEntityKind);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5041
 
-   type CXIdxEntityLanguage is 
+   type CXIdxEntityLanguage is
      (CXIdxEntityLang_None,
       CXIdxEntityLang_C,
       CXIdxEntityLang_ObjC,
       CXIdxEntityLang_CXX);
    pragma Convention (C, CXIdxEntityLanguage);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5048
 
-   type CXIdxEntityCXXTemplateKind is 
+   type CXIdxEntityCXXTemplateKind is
      (CXIdxEntity_NonTemplate,
       CXIdxEntity_Template,
       CXIdxEntity_TemplatePartialSpecialization,
       CXIdxEntity_TemplateSpecialization);
    pragma Convention (C, CXIdxEntityCXXTemplateKind);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5065
 
-   type CXIdxAttrKind is 
+   type CXIdxAttrKind is
      (CXIdxAttr_Unexposed,
       CXIdxAttr_IBAction,
       CXIdxAttr_IBOutlet,
@@ -1627,7 +1628,7 @@ package clang_c_Index_h is
 
    --  skipped anonymous struct anon_28
 
-   type CXIdxObjCContainerKind is 
+   type CXIdxObjCContainerKind is
      (CXIdxObjCContainer_ForwardRef,
       CXIdxObjCContainer_Interface,
       CXIdxObjCContainer_Implementation);
@@ -1708,7 +1709,7 @@ package clang_c_Index_h is
    subtype CXIdxEntityRefKind is unsigned;
    CXIdxEntityRef_Direct : constant CXIdxEntityRefKind := 1;
    CXIdxEntityRef_Implicit : constant CXIdxEntityRefKind := 2;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5199
-
+--
    type CXIdxEntityRefInfo is record
       kind : aliased CXIdxEntityRefKind;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5205
       cursor : aliased CXCursor;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5209
@@ -1796,22 +1797,22 @@ package clang_c_Index_h is
    function clang_indexSourceFile
      (arg1 : CXIndexAction;
       client_data : CXClientData;
-      index_callbacks : access IndexerCallbacks;
+      index_callbacks : access constant IndexerCallbacks;
       index_callbacks_size : unsigned;
       index_options : unsigned;
-      source_filename : Interfaces.C.Strings.chars_ptr;
-      command_line_args : System.Address;
-      num_command_line_args : int;
-      unsaved_files : access CXUnsavedFile;
-      num_unsaved_files : unsigned;
-      out_TU : System.Address;
-      TU_options : unsigned) return int;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5422
+      Source_Filename : Interfaces.C.Strings.chars_ptr;
+      Command_Line_Args : System.Address;
+      Num_Command_Line_Args : int;
+      Unsaved_Files : System.Address;
+      Num_Unsaved_Files : unsigned;
+      Out_TU : System.Address;
+      TU_Options : unsigned) return int;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5422
    pragma Import (C, clang_indexSourceFile, "clang_indexSourceFile");
 
    function clang_indexTranslationUnit
      (arg1 : CXIndexAction;
       client_data : CXClientData;
-      index_callbacks : access IndexerCallbacks;
+      index_callbacks : access constant IndexerCallbacks;
       index_callbacks_size : unsigned;
       index_options : unsigned;
       arg6 : CXTranslationUnit) return int;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:5451

@@ -215,7 +215,9 @@ procedure Code_Analysis_Test is
          return S & Duration'Image (Value) & "s" & ASCII.LF & "Timeout set to:"
            & Duration'Image (Time);
       end Build_Msg;
+
    begin
+
       Time_Before := Clock;
       Tree.Load_Empty_Project;
 

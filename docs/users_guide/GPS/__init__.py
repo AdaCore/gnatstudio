@@ -5181,6 +5181,14 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
+    def overrides(self):
+        """
+        Returns the entity that self overrides.
+
+        :rtype: :class:`GPS.Entity`
+        """
+        pass
+
     def parameters(self):
         """
         Returns the list of parameters for entity. This is a list of

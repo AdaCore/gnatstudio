@@ -64,6 +64,8 @@ with Cairo; use Cairo;
 with Glib.Object; use Glib.Object;
 with Gdk.Visual; use Gdk.Visual;
 with Gtk.Scrollbar;
+with Language.Cpp;
+with Language.C;
 
 package body Completion_Window is
    Me : constant Trace_Handle := Create ("COMPLETION");
@@ -1496,6 +1498,11 @@ package body Completion_Window is
       Dummy   : Boolean;
       pragma Unreferenced (Dummy);
       use type Editors_Holders.Holder;
+
+      Is_Normal_Completion : constant Boolean
+        := Window.Mode = Normal
+          or else Window.Lang in Language.C.C_Lang | Language.Cpp.Cpp_Lang;
+
    begin
       if Unichar <= 16#80# then
          C := Character'Val (Unichar);
@@ -1509,7 +1516,7 @@ package body Completion_Window is
             --  In any case, let the event through so that the character gets
             --  inserted as expected.
 
-            if Window.Mode = Normal then
+            if Is_Normal_Completion then
                --  If we are in Normal completion mode, and Volatile at the
                --  same time, this means that we are completing on '.' -
                --  in this case, if there is only one entry, this means that we
@@ -1537,7 +1544,7 @@ package body Completion_Window is
 
          when GDK_Return =>
             if Window.Volatile then
-               if Window.Mode = Normal
+               if Is_Normal_Completion
                  and then N_Children (Window.Explorer.Model) = 1
                then
                   Select_Next (Completion_Window_Access (Window));

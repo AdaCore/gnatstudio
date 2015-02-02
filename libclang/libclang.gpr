@@ -1,10 +1,11 @@
 with "gnatcoll";
 with "../shared";
+with "../common/common";
 
 project libclang is
 
    for Source_Dirs use ("gen", "example", "libclang");
-   for Main use ("test_index");
+   for Main use ("test_index", "test_refs");
 
    for Object_Dir use "obj";
 

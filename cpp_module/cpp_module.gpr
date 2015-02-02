@@ -1,5 +1,6 @@
 with "../shared";
 with "../prj_editor/prj_editor";
+with "../libclang/libclang";
 
 project Cpp_Module is
 

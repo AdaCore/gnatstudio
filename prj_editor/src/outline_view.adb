@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.Rectangle;             use Gdk.Rectangle;
@@ -68,16 +66,12 @@ with Histories;                 use Histories;
 with Language;                  use Language;
 with Tooltips;                  use Tooltips;
 
-with Language.Tree;          use Language.Tree;
-with Language.Tree.Database; use Language.Tree.Database;
-
 with Outline_View.Model; use Outline_View.Model;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Outline_View is
 
-   type Outline_View_Module_Record is new Module_ID_Record with record
-      Construct_Annotation_Key : Construct_Annotations_Pckg.Annotation_Key;
-   end record;
+   type Outline_View_Module_Record is new Module_ID_Record with null record;
 
    Outline_View_Module : Module_ID;
    Outline_View_Module_Name : constant String := "Outline_View";
@@ -106,16 +100,11 @@ package body Outline_View is
       Data   : access Hooks_Data'Class);
    --  Called when the context has changed
 
-   type Outline_Db_Listener;
-   type Outline_Db_Listener_Access is access all Outline_Db_Listener'Class;
-
    type Outline_View_Record is new Generic_Views.View_Record with record
       Tree        : Gtk_Tree_View;
       File        : GNATCOLL.VFS.Virtual_File;
       Icon        : Gdk_Pixbuf;
       File_Icon   : Gdk_Pixbuf;
-      Db_Listener : Outline_Db_Listener_Access;
-
       Filter      : Gtk.GEntry.Gtk_Entry;
 
       Spec_Column : Gtk_Tree_View_Column;
@@ -150,23 +139,6 @@ package body Outline_View is
    use Outline_Views;
    subtype Outline_View_Access is Outline_Views.View_Access;
 
-   type Outline_Db_Listener is new Database_Listener with record
-      Outline : Outline_View_Access;
-   end record;
-
-   overriding procedure File_Updated
-     (Listener : access Outline_Db_Listener;
-      File     : Structured_File_Access;
-      Old_Tree : Construct_Tree;
-      Kind     : Update_Kind);
-
-   overriding procedure Before_Clear_Db
-     (Listener : access Outline_Db_Listener;
-      Db       : access Construct_Database'Class);
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Outline_Db_Listener'Class, Outline_Db_Listener_Access);
-
    procedure Refresh (View : access Gtk_Widget_Record'Class);
    --  Recompute the information for Outline.File, and redisplay it.
    --  If the constructs are up-to-date, do nothing.
@@ -193,13 +165,20 @@ package body Outline_View is
       Data   : access Hooks_Data'Class);
    --  Called when the current editor reaches a new location
 
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class; Line, Column : Natural);
+
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      F : GNATCOLL.VFS.Virtual_File);
+
    procedure On_Destroy
      (Outline : access Gtk_Widget_Record'Class);
    --  Called when the outline is destroyed
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
 
-   procedure File_Saved
+   procedure File_Modified
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class);
    --  Called when a file has been modified
@@ -251,41 +230,57 @@ package body Outline_View is
    is
       pragma Unreferenced (Widget);
       Iter     : Gtk_Tree_Iter;
-      Entity   : Entity_Access;
       Area     : Gdk_Rectangle;
    begin
       Initialize_Tooltips (Tooltip.Outline.Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
          Tooltip.Set_Tip_Area (Area);
-
-         Entity := Get_Entity (Get_Outline_Model (Tooltip.Outline), Iter);
-         if Entity /= Null_Entity_Access then
-            Entity := Get_Declaration
-              (Get_Tree_Language (Get_File (Entity)), Entity);
-
-            return Entities_Tooltips.Draw_Tooltip
-              (Kernel      => Tooltip.Outline.Kernel,
-               Draw_Border => True,
-               Entity      => Entity);
-         end if;
+         declare
+            SN : constant Semantic_Node'Class :=
+              Tooltip.Outline.Kernel.Get_Abstract_Tree_For_File
+                (Tooltip.Outline.File).Node_At
+              (Get_Info
+                 (Get_Outline_Model (Tooltip.Outline), Iter).Sloc_Start);
+         begin
+            if SN /= No_Semantic_Node then
+               return Entities_Tooltips.Draw_Tooltip
+                 (Kernel      => Tooltip.Outline.Kernel,
+                  Draw_Border => True,
+                  Entity      => SN);
+            end if;
+         end;
       end if;
       return null;
    end Create_Contents;
+
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      F : GNATCOLL.VFS.Virtual_File)
+   is
+      Ed : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get
+          (F, Open_View => False, Focus => False);
+   begin
+      if Ed /= Nil_Editor_Buffer then
+         Location_Changed
+           (Kernel,
+            Natural (Ed.Get_Main_Cursor.Get_Insert_Mark.Line),
+            Natural (Ed.Get_Main_Cursor.Get_Insert_Mark.Column));
+      end if;
+   end Location_Changed;
 
    ----------------------
    -- Location_Changed --
    ----------------------
 
    procedure Location_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class; Line, Column : Natural)
    is
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
       Model   : Outline_Model;
       Path    : Gtk_Tree_Path;
-      Loc     : File_Location_Hooks_Args_Access;
    begin
       if Get_History (Get_History (Kernel).all, Hist_Editor_Link)
         and then Outline /= null
@@ -297,9 +292,7 @@ package body Outline_View is
             return;
          end if;
 
-         Loc := File_Location_Hooks_Args_Access (Data);
-
-         Path := Get_Path_Enclosing_Location (Model, Loc.Line, Loc.Column);
+         Path := Get_Path_Enclosing_Location (Model, Line, Column);
 
          if Get_Depth (Path) >= 1 then
             declare
@@ -320,6 +313,20 @@ package body Outline_View is
 
          Path_Free (Path);
       end if;
+   end Location_Changed;
+
+   ----------------------
+   -- Location_Changed --
+   ----------------------
+
+   procedure Location_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      Loc : File_Location_Hooks_Args_Access;
+   begin
+      Loc := File_Location_Hooks_Args_Access (Data);
+      Location_Changed (Kernel, Loc.Line, Loc.Column);
    end Location_Changed;
 
    -------------------------
@@ -354,9 +361,9 @@ package body Outline_View is
       Iter    : Gtk_Tree_Iter;
       Model    : constant Outline_Model :=
         Outline_Model (-Get_Model (Outline.Tree));
-      Entity   : Entity_Access;
       Line     : Integer := 1;
       Path     : Gtk_Tree_Path;
+      Node_Info : Semantic_Node_Info;
    begin
       Context := GPS_MDI_Child_Record (Self.all).Build_Context (Event);
 
@@ -369,16 +376,15 @@ package body Outline_View is
          end if;
          Path_Free (Path);
 
-         Entity := Get_Entity (Model, Iter);
+         Node_Info := Get_Info (Model, Iter);
 
          Set_Entity_Information
            (Context       => Context,
-            Entity_Name   => Get (Get_Construct (Entity).Name).all,
+            Entity_Name   => Get (Node_Info.Name).all,
             Entity_Column =>
-              Visible_Column_Type
-                (Get_Construct (Entity).Sloc_Entity.Column));
+              Node_Info.Sloc_Start.Column);
 
-         Line := Get_Construct (Entity).Sloc_Entity.Line;
+         Line := Node_Info.Sloc_Start.Line;
       end if;
 
       Set_File_Information
@@ -530,51 +536,35 @@ package body Outline_View is
       Path                : Gtk_Tree_Path;
       Col                 : Gtk_Tree_View_Column;
 
-      procedure Goto_Entity (Entity : Entity_Access; Is_Spec : Boolean);
+      procedure Goto_Node (Node : Semantic_Node_Info; Is_Spec : Boolean);
       --  goto and highlight the entity
 
-      procedure Goto_Entity (Entity : Entity_Access; Is_Spec : Boolean) is
-         Line, End_Line      : Integer;
-         Column, End_Column  : Visible_Column_Type;
-         Construct           : access Simple_Construct_Information;
+      procedure Goto_Node (Node : Semantic_Node_Info; Is_Spec : Boolean) is
       begin
-         if Entity = Null_Entity_Access then
+         if Node = No_Node_Info then
             return;
          end if;
 
-         Construct  := Get_Construct (To_Construct_Tree_Iterator (Entity));
-
-         if Construct.Sloc_Entity.Index /= 0 then
-            To_Line_Column
-              (Get_File (Entity),
-               String_Index_Type (Construct.Sloc_Entity.Index),
-               Line,
-               Column);
-            To_Line_Column
-              (Get_File (Entity),
-               String_Index_Type
-                 (Construct.Sloc_Entity.Index
-                  + Get (Construct.Name)'Length),
-               End_Line,
-               End_Column);
-         else
-            To_Line_Column
-              (Get_File (Entity),
-               String_Index_Type (Construct.Sloc_Start.Index),
-               Line,
-               Column);
-            End_Line := Line;
-            End_Column := Column;
-         end if;
-
          declare
+            use type Visible_Column_Type;
             Buffer   : constant Editor_Buffer'Class :=
               Get (Get_Buffer_Factory (View.Kernel).all,
                    View.File, False, False, False);
+            HSD : constant Boolean := Node.Sloc_Def.Index /= 0;
             Location : constant Editor_Location'Class :=
-              New_Location (Buffer, Line, Column);
+              (if HSD
+               then New_Location (Buffer, Node.Sloc_Def.Line,
+                                  Node.Sloc_Def.Column)
+               else New_Location
+                 (Buffer, Node.Sloc_Start.Line,
+                  Node.Sloc_Start.Column));
+
             End_Location : constant Editor_Location'Class :=
-              New_Location (Buffer, End_Line, End_Column);
+              (if HSD
+               then New_Location (Buffer, Node.Sloc_Def.Line,
+                 Node.Sloc_Def.Column
+                 + Get (Node.Name)'Length)
+               else Location);
             Editor : constant Editor_View'Class := Current_View (Buffer);
          begin
             if Col /= View.Spec_Column
@@ -584,14 +574,14 @@ package body Outline_View is
             then
                --  Clicking on the name will jump to the spec, unless this is
                --  already the current location
-               Goto_Entity (Get_Entity (Model, Iter, Body_Pixbuf_Column),
+               Goto_Node (Get_Info (Model, Iter, Body_Pixbuf_Column),
                             Is_Spec => False);
             else
                Editor.Cursor_Goto (Location, Raise_View => True);
                Select_Text (Buffer, Location, End_Location);
             end if;
          end;
-      end Goto_Entity;
+      end Goto_Node;
 
    begin
       if Event.Button = 1 then
@@ -633,54 +623,16 @@ package body Outline_View is
             Path_Free (Path);
 
             if Col = View.Body_Column then
-               Goto_Entity (Get_Entity (Model, Iter, Body_Pixbuf_Column),
+               Goto_Node (Get_Info (Model, Iter, Body_Pixbuf_Column),
                             Is_Spec => False);
             else
-               Goto_Entity (Get_Entity (Model, Iter), Is_Spec => True);
+               Goto_Node (Get_Info (Model, Iter), Is_Spec => True);
             end if;
             return True;
          end if;
       end if;
       return False;
    end Button_Press;
-
-   ------------------
-   -- File_Updated --
-   ------------------
-
-   overriding procedure File_Updated
-     (Listener : access Outline_Db_Listener;
-      File     : Structured_File_Access;
-      Old_Tree : Construct_Tree;
-      Kind     : Update_Kind)
-   is
-      Model : constant Outline_Model := Get_Outline_Model (Listener.Outline);
-   begin
-      if Model /= null then
-         File_Updated (Model, File, Old_Tree, Kind);
-      end if;
-   end File_Updated;
-
-   ---------------------
-   -- Before_Clear_Db --
-   ---------------------
-
-   overriding procedure Before_Clear_Db
-     (Listener : access Outline_Db_Listener;
-      Db       : access Construct_Database'Class)
-   is
-      pragma Unreferenced (Db);
-
-      Model : Outline_Model;
-   begin
-      Listener.Outline.File := No_File;
-
-      Model := Get_Outline_Model (Listener.Outline);
-
-      if Model /= null then
-         Free (Model);
-      end if;
-   end Before_Clear_Db;
 
    --------------------
    -- Filter_Changed --
@@ -729,14 +681,6 @@ package body Outline_View is
       Set_Name (Outline.Tree, "Outline View Tree");  --  For testsuite
 
       Set_Headers_Visible (Outline.Tree, False);
-
-      --  ??? when do we free / release this object?
-      Outline.Db_Listener := new Outline_Db_Listener;
-      Outline.Db_Listener.Outline := Outline;
-
-      Add_Database_Listener
-        (Outline.Kernel.Get_Construct_Database,
-         Database_Listener_Access (Outline.Db_Listener));
 
       --  Create an explicit columns for the expander
 
@@ -805,7 +749,7 @@ package body Outline_View is
                 Name  => "outline.location_changed",
                 Watch => GObject (Outline));
       Add_Hook (Outline.Kernel, File_Saved_Hook,
-                Wrapper (File_Saved'Access),
+                Wrapper (File_Modified'Access),
                 Name  => "outline.file_saved",
                 Watch => GObject (Outline));
       Add_Hook (Outline.Kernel, File_Closed_Hook,
@@ -817,7 +761,7 @@ package body Outline_View is
                 Name  => "outline.file_edited",
                 Watch => GObject (Outline));
       Add_Hook (Outline.Kernel, Buffer_Modified_Hook,
-                Wrapper (File_Saved'Access),
+                Wrapper (File_Modified'Access),
                 Name  => "outline.file_modified",
                 Watch => GObject (Outline));
       Add_Hook (Outline.Kernel, Project_View_Changed_Hook,
@@ -838,11 +782,6 @@ package body Outline_View is
       O     : constant Outline_View_Access := Outline_View_Access (Outline);
       Model : constant Outline_Model := Get_Outline_Model (O);
    begin
-      Remove_Database_Listener
-        (Get_Construct_Database (O.Kernel),
-         Database_Listener_Access (O.Db_Listener));
-
-      Free (O.Db_Listener);
 
       if Model /= null then
          Model.Free;
@@ -860,8 +799,8 @@ package body Outline_View is
       Outline : constant Outline_View_Access := Outline_View_Access (View);
    begin
       if Outline.File /= No_File then
-         Update_Contents
-           (Get_Construct_Database (Outline.Kernel), Outline.File);
+         Outline.Kernel.Get_Abstract_Tree_For_File (Outline.File).Update;
+         File_Updated (Get_Outline_Model (View));
       end if;
    end Refresh;
 
@@ -881,7 +820,7 @@ package body Outline_View is
    -- File_Saved --
    ----------------
 
-   procedure File_Saved
+   procedure File_Modified
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
@@ -891,8 +830,9 @@ package body Outline_View is
    begin
       if Outline /= null and then Outline.File = D.File then
          Refresh (Outline);
+         Location_Changed (Kernel, D.File);
       end if;
-   end File_Saved;
+   end File_Modified;
 
    -----------------
    -- File_Closed --
@@ -930,6 +870,7 @@ package body Outline_View is
          end if;
 
          Refresh (Outline);
+         Location_Changed (Kernel, D.File);
       end if;
    end File_Edited;
 
@@ -994,12 +935,6 @@ package body Outline_View is
         (Get_History (Kernel).all, Hist_Show_Objects, True);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Hist_Flat_View, False);
-
-      Construct_Annotations_Pckg.Get_Annotation_Key
-        (Get_Construct_Annotation_Key_Registry
-           (Get_Construct_Database (Kernel)).all,
-         Outline_View_Module_Record (Outline_View_Module.all).
-           Construct_Annotation_Key);
    end Register_Module;
 
    --------------
@@ -1011,15 +946,12 @@ package body Outline_View is
       File    : GNATCOLL.VFS.Virtual_File)
    is
       Model       : Outline_Model;
-      Struct_File : Structured_File_Access;
       Filter      : constant Tree_Filter :=
         Get_Filter_Record (Outline.Kernel);
+      Tree : constant Semantic_Tree'Class :=
+        Outline.Kernel.Get_Abstract_Tree_For_File (File);
    begin
       Outline.File := File;
-
-      Struct_File := Get_Or_Create
-        (Get_Construct_Database (Outline.Kernel), Outline.File);
-
       Model := Get_Outline_Model (Outline_View_Access (Outline));
 
       if Model = null then
@@ -1034,13 +966,9 @@ package body Outline_View is
       Outline.Tree.Set_Show_Expanders (Enabled => not Filter.Flat_View);
       Outline.Body_Column.Set_Visible (Filter.Group_Spec_And_Body);
 
-      Model.Set_File
-        (File   => Struct_File,
-         Key    => Outline_View_Module_Record
-           (Outline_View_Module.all).Construct_Annotation_Key,
-         Filter => Filter);
+      Model.Set_Tree (Tree, Filter);
 
-      if Struct_File /= null then
+      if Tree /= No_Semantic_Tree then
          declare
             Path : Gtk_Tree_Path;
          begin

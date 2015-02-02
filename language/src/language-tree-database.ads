@@ -32,6 +32,7 @@ with GNATCOLL.Symbols;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
+with Ada.Containers; use Ada.Containers;
 
 package Language.Tree.Database is
 
@@ -77,6 +78,13 @@ package Language.Tree.Database is
    --  If With_Aspects is true and the profile has aspects then they are
    --  appended at the end of the returned string.
    --  Formater is responsible for formating and keep resulting text.
+
+   function Get_Profile
+     (Lang       : access Tree_Language;
+      Entity     : Entity_Access;
+      With_Aspects : Boolean := False) return String;
+   --  Shortcut to Get_Profile that uses a default text formatter, and caches
+   --  its results.
 
    function Get_Declaration
      (Lang   : access Tree_Language;
@@ -556,6 +564,8 @@ package Language.Tree.Database is
 
    function "<" (Left, Right : Entity_Persistent_Access) return Boolean;
    --  Gives an arbitrary unique order between two entities.
+
+   function Hash (Entity : Entity_Access) return Hash_Type;
 
    type Entity_Persistent_Array is array (Integer range <>)
    of Entity_Persistent_Access;

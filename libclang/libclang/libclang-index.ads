@@ -15,10 +15,21 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with clang_c_Index_h;
+with clang_c_Index_h; use clang_c_Index_h;
+
+with System;
+
+with Interfaces.C;
+with Interfaces.C.Strings;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
+with GNATCOLL.VFS;
+use GNATCOLL.VFS;
+with Ada.Containers.Vectors;
+with clang_c_CXString_h;
+with Ada.Containers; use Ada.Containers;
+with Array_Utils;
 
 package Libclang.Index is
 
@@ -26,7 +37,9 @@ package Libclang.Index is
    -- Index --
    -----------
 
-   type Clang_Index is tagged private;
+   subtype Clang_Index is clang_c_Index_h.CXIndex;
+
+   No_Index : constant Clang_Index;
 
    function Create_Index
      (Exclude_Declarations_From_PCH : Boolean;
@@ -79,19 +92,38 @@ package Libclang.Index is
    -- Unsaved files --
    -------------------
 
-   type Unsaved_File_Array is array (Natural range <>)
-     of clang_c_Index_h.CXUnsavedFile;
+   type Unsaved_File is new clang_c_Index_h.CXUnsavedFile;
+   No_Unsaved_File : constant Unsaved_File :=
+     (Filename => Interfaces.C.Strings.Null_Ptr,
+      Contents => Interfaces.C.Strings.Null_Ptr,
+      Length   => 0);
 
-   No_Unsaved_Files : constant Unsaved_File_Array (1 .. 0) := (others => <>);
+   function Create_Unsaved_File
+     (Filename : String;
+      Buffer   : String_Access) return Unsaved_File;
+   --  Create an Unsaved file.
+   --  If Length = -1, do not consider it, but compute the length of Buffer.
+
+   procedure Destroy_Unsaved_File (F : in out Unsaved_File);
+
+   type Unsaved_File_Array is array (Natural range <>) of Unsaved_File;
+   type Unsaved_File_Array_Access is access all Unsaved_File_Array;
+
+   procedure Destroy (Files : in out Unsaved_File_Array_Access);
+
+   No_Unsaved_Files : constant Unsaved_File_Array (1 .. 0) :=
+     (others => No_Unsaved_File);
 
    -----------------------
    -- Translation units --
    -----------------------
 
-   type Clang_Translation_Unit is tagged private;
+   subtype Clang_Translation_Unit is clang_c_Index_h.CXTranslationUnit;
+
+   No_Translation_Unit : constant Clang_Translation_Unit;
 
    type Clang_Translation_Unit_Flags is mod 2 ** Integer'Size;
-   None                         : constant Clang_Translation_Unit_Flags := 0;
+   No_Translation_Unit_Flags    : constant Clang_Translation_Unit_Flags := 0;
    Detailedpreprocessingrecord  : constant Clang_Translation_Unit_Flags := 1;
    Incomplete                   : constant Clang_Translation_Unit_Flags := 2;
    Precompiledpreamble          : constant Clang_Translation_Unit_Flags := 4;
@@ -107,8 +139,9 @@ package Libclang.Index is
       Source_Filename       : String;
       Command_Line_Args     : GNATCOLL.Utils.Unbounded_String_Array;
       Unsaved_Files         : Unsaved_File_Array := No_Unsaved_Files;
-      Options               : Clang_Translation_Unit_Flags := None)
-      return Clang_Translation_Unit'Class;
+      Options               : Clang_Translation_Unit_Flags :=
+        No_Translation_Unit_Flags)
+      return Clang_Translation_Unit;
   --  \brief Parse the given source file and the translation unit corresponding
   --  to that file.
   --
@@ -156,7 +189,8 @@ package Libclang.Index is
    function Reparse_Translation_Unit
      (TU            : Clang_Translation_Unit;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
-      Options       : Clang_Translation_Unit_Flags := None) return Boolean;
+      Options       : Clang_Translation_Unit_Flags :=
+        No_Translation_Unit_Flags) return Boolean;
   --  \brief Reparse the source files that produced this translation unit.
   --
   --  This routine can be used to re-parse the source files that originally
@@ -196,7 +230,7 @@ package Libclang.Index is
   --  clang_disposeTranslationUnit(TU). The error codes returned by this
   --  routine are described by the \c CXErrorCode enum. /
 
-   procedure Dispose (TU : Clang_Translation_Unit);
+   procedure Dispose (TU : in out Clang_Translation_Unit);
    --  Free TU
 
    ----------------
@@ -208,10 +242,10 @@ package Libclang.Index is
    Include_Code_Patterns  : constant Clang_Code_Complete_Flags := 2;
    Include_Brief_Comments : constant Clang_Code_Complete_Flags := 4;
 
-   type Clang_Complete_Results is tagged private;
+   type Clang_Complete_Results is private;
    --  A set of completion results
 
-   No_Completion_Results : constant Clang_Complete_Results;
+   No_Complete_Results : constant Clang_Complete_Results;
 
    procedure Dispose (Results : in out Clang_Complete_Results);
    --  Free memory associated to Results
@@ -223,7 +257,7 @@ package Libclang.Index is
       Column        : Natural;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
       Options       : Clang_Code_Complete_Flags := 0)
-      return Clang_Complete_Results'Class;
+      return Clang_Complete_Results;
    --  Perform code completion at a given location in a translation unit.
    --
    --  This function performs code completion at a particular file, line, and
@@ -289,19 +323,19 @@ package Libclang.Index is
    --  \returns If successful, a new \c CXCodeCompleteResults structure
    --  containing code-completion results, which should eventually be
    --  freed with \c clang_disposeCodeCompleteResults(). If code
-   --  completion fails, returns No_Completion_Results.
+   --  completion fails, returns Null.
 
-   type Clang_Completion_Result is tagged private;
+   type Clang_Completion_Result is private;
    --  One completion result
 
-   No_Result : constant Clang_Completion_Result;
+   No_Completion_Results : constant Clang_Completion_Result;
 
    function Num_Results (Results : Clang_Complete_Results) return Natural;
    --  Return the number of results in Results.
 
    function Nth_Result
      (Results : Clang_Complete_Results;
-      N       : Positive) return Clang_Completion_Result'Class;
+      N       : Positive) return Clang_Completion_Result;
    --  Return the Nth result in Results
 
    type Completion_Strings is record
@@ -317,27 +351,347 @@ package Libclang.Index is
      (Result : Clang_Completion_Result) return Completion_Strings;
    --  Return the tex1t associated with Result
 
+   function Kind
+     (Result : Clang_Completion_Result) return clang_c_Index_h.CXCursorKind;
+   --  Return the kind of the result
+
+   ------------------------------
+   -- Cursors & Tree traversal --
+   ------------------------------
+
+   type Clang_Cursor is new clang_c_Index_h.CXCursor;
+   subtype Clang_Type is clang_c_Index_h.CXType;
+
+   use Interfaces.C;
+
+   function "=" (Left, Right : Clang_Cursor) return Boolean is
+     (clang_equalCursors (Left, Right) /= 0);
+
+   subtype Clang_Cursor_Kind is clang_c_Index_h.CXCursorKind;
+
+   subtype Clang_Visit_Result is clang_c_Index_h.CXChildVisitResult;
+
+   No_Cursor : constant Clang_Cursor;
+
+   type Clang_Cursor_Visitor is access function
+     (Parent, Child : Clang_Cursor) return Clang_Visit_Result;
+
+   function Root_Cursor
+     (TU : Clang_Translation_Unit) return Clang_Cursor;
+
+   package Cursors_Vectors is new Ada.Containers.Vectors
+     (Positive, Clang_Cursor);
+
+   package Cursors_Arrays is new Array_Utils (Clang_Cursor);
+
+   function Toplevel_Nodes
+     (TU : Clang_Translation_Unit;
+      Filter : access function (C : Clang_Cursor) return Boolean := null)
+      return Cursors_Arrays.Array_Type;
+
+   type Cursor_Filter is
+     access function (Cursor : Clang_Cursor) return Boolean;
+
+   function Get_Children
+     (Cursor : Clang_Cursor;
+      Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
+      return Cursors_Arrays.Array_Type;
+
+   function Get_Children
+     (Cursor : Clang_Cursor;
+      Kind : Clang_Cursor_Kind) return Cursors_Arrays.Array_Type;
+   --  Get all the children of cursor that have the given kind. Utility
+   --  function
+
+   function Kind
+     (Cursor : Clang_Cursor) return Clang_Cursor_Kind
+   is (Clang_Cursor_Kind (Cursor.kind));
+
+   function Is_Definition
+     (Cursor : Clang_Cursor) return Boolean
+   is
+     (clang_isCursorDefinition (Cursor) /= 0);
+
+   function To_String
+     (Clang_String : clang_c_CXString_h.CXString) return String;
+
+   function Spelling
+     (Kind : Clang_Cursor_Kind) return String
+   is
+     (To_String (clang_getCursorKindSpelling (CXCursorKind (Kind))));
+
+   function Spelling
+     (Cursor : Clang_Cursor) return String;
+
+   function Referenced (Cursor : Clang_Cursor) return Clang_Cursor is
+     (clang_getCursorReferenced (Cursor));
+
+   function Canonical (Cursor : Clang_Cursor) return Clang_Cursor is
+     (clang_getCanonicalCursor (Cursor));
+
+   function Definition (Cursor : Clang_Cursor) return Clang_Cursor is
+     (clang_getCursorDefinition (Cursor));
+
+   function Semantic_Parent (Cursor : Clang_Cursor) return Clang_Cursor
+   is
+     (clang_getCursorSemanticParent (Cursor));
+
+   function Lexical_Parent (Cursor : Clang_Cursor) return Clang_Cursor
+   is
+     (clang_getCursorLexicalParent (Cursor));
+
+   function Typedef_Underlying_Type
+     (T : Clang_Cursor) return Clang_Type is
+     (clang_getTypedefDeclUnderlyingType (T));
+
+   function Is_Method_Pure_Virtual (Method : Clang_Cursor) return Boolean
+   is (clang_CXXMethod_isPureVirtual (Method) /= 0);
+
+   function Element_Type (Array_Type : Clang_Type) return Clang_Type
+   is
+     (clang_getArrayElementType (Array_Type));
+
+   function Declaration
+     (T : Clang_Type) return Clang_Cursor is (clang_getTypeDeclaration (T));
+
+   function USR (Cursor : Clang_Cursor) return String
+   is
+     (To_String (clang_getCursorUSR (Cursor)));
+
+   function Get_Type (Cursor : Clang_Cursor) return Clang_Type
+   is
+     (clang_getCursorType (Cursor));
+
+   function Pointee_Type (T : Clang_Type) return Clang_Type
+   is
+     (clang_getPointeeType (T));
+
+   function Result_Type (T : Clang_Type) return Clang_Type
+   is (clang_getResultType (T));
+
+   function Hash (Cursor : Clang_Cursor) return Hash_Type
+   is (Hash_Type (clang_hashCursor (Cursor)));
+
+   type Clang_Raw_Location is record
+      File : Virtual_File;
+      Line, Column, Offset : unsigned;
+   end record;
+
+   function Location (Cursor : Clang_Cursor) return Clang_Raw_Location;
+
+   subtype Clang_Linkage_Kind is CXLinkageKind;
+
+   function Linkage (Cursor : Clang_Cursor) return Clang_Linkage_Kind
+   is
+      (clang_getCursorLinkage (Cursor));
+
+   function Location (Cursor : Clang_Cursor) return CXSourceLocation
+   is
+     (clang_getCursorLocation (Cursor));
+
+   function Spelling
+     (T : Clang_Type) return String;
+
+   function Display_Name
+     (Cursor : Clang_Cursor) return String;
+
+   function Spelling (TU : Clang_Translation_Unit) return String is
+     (To_String (clang_getTranslationUnitSpelling (TU)));
+
+   subtype Clang_Location is CXSourceLocation;
+
+   function Value (Location : Clang_Location) return Clang_Raw_Location;
+   function Offset (Location : Clang_Location) return unsigned;
+   pragma Inline_Always (Offset);
+
+   function "+"
+     (Location : Clang_Location) return Clang_Raw_Location renames Value;
+
+   function Location
+     (TU : Clang_Translation_Unit;
+      File : GNATCOLL.VFS.Virtual_File;
+      Line, Column : Natural) return Clang_Location;
+
+   function Cursor_At (TU : Clang_Translation_Unit;
+                       File : GNATCOLL.VFS.Virtual_File;
+                       Line, Column : Natural) return Clang_Cursor
+   is
+      (clang_getCursor (TU, Location (TU, File, Line, Column)));
+
+   function "+" (Loc : CXIdxLoc) return Clang_Location
+   is (clang_indexLoc_getCXSourceLocation (Loc));
+
+   subtype Clang_Index_Action is CXIndexAction;
+
+   function Create (Index : Clang_Index) return Clang_Index_Action
+   renames clang_IndexAction_create;
+
+   procedure Dispose (Index_Action : Clang_Index_Action)
+                      renames clang_IndexAction_dispose;
+
+   subtype Clang_Diagnostic_Set is CXDiagnosticSet;
+   subtype Clang_Diagnostic is CXDiagnostic;
+
+   subtype Clang_Included_File_Info is CXIdxIncludedFileInfo;
+   subtype Clang_Decl_Info is CXIdxDeclInfo;
+   subtype Clang_Ref_Info is CXIdxEntityRefInfo;
+   subtype Clang_Index_Options is CXIndexOptFlags;
+
+   subtype Clang_Source_Range is CXSourceRange;
+
+   function Range_Start (R : Clang_Source_Range) return Clang_Location
+   is
+     (clang_getRangeStart (R));
+
+   function Range_End (R : Clang_Source_Range) return Clang_Location
+   is
+     (clang_getRangeEnd (R));
+
+   function Comment_Range (Comment : Clang_Cursor) return Clang_Source_Range
+   is
+     (clang_Cursor_getCommentRange (Comment));
+
+   function Extent (C : Clang_Cursor) return Clang_Source_Range
+   is
+     (clang_getCursorExtent (C));
+
+   function In_Range (Sought, Containing : Clang_Cursor) return Boolean;
+
+   procedure Dispose_Overriden
+     (overridden : access Clang_Cursor) renames clang_disposeOverriddenCursors;
+
+   generic
+      type Client_Data_T is private;
+
+      with function Abort_Query
+        (Client_Data : in out Client_Data_T) return Boolean is <>;
+
+      with procedure Diagnostic
+        (Client_Data : in out Client_Data_T;
+         Diagnostics : Clang_Diagnostic_Set) is <>;
+
+      with procedure Entered_Main_File
+        (Client_Data : in out Client_Data_T;
+         File        : GNATCOLL.VFS.Virtual_File) is <>;
+
+      with procedure Included_File
+        (Client_Data : in out Client_Data_T;
+         Included_File_Info : Clang_Included_File_Info) is <>;
+
+      with procedure Started_Translation_Unit
+        (Client_Data : in out Client_Data_T) is <>;
+
+      with procedure Index_Declaration
+        (Client_Data : in out Client_Data_T;
+         Decl_Info   : Clang_Decl_Info) is <>;
+
+      with procedure Index_Reference
+        (Client_Data : in out Client_Data_T;
+         Ref_Info   : Clang_Ref_Info) is <>;
+
+   package Source_File_Indexer is
+
+      function Index_Source_File
+        (Index_Action      : Clang_Index_Action;
+         Client_Data       : Client_Data_T;
+         Index_Options     : Clang_Index_Options;
+         Source_Filename   : String;
+         Command_Line_Args : GNATCOLL.Utils.Unbounded_String_Array;
+         Unsaved_Files     : Unsaved_File_Array := No_Unsaved_Files;
+         Options           : Clang_Translation_Unit_Flags :=
+           No_Translation_Unit_Flags) return Clang_Translation_Unit;
+
+      procedure Index_Translation_Unit
+        (Index_Action : Clang_Index_Action;
+         Client_Data : Client_Data_T;
+         Index_Options : Clang_Index_Options;
+         TU : Clang_Translation_Unit);
+
+   end Source_File_Indexer;
+
+   function Is_From_Main_File (Loc : Clang_Location) return Boolean
+   is
+     (clang_Location_isFromMainFile (Loc) /= 0);
+
+   -----------------------
+   --  Kind predicates  --
+   -----------------------
+
+   function Is_Function (K : Clang_Cursor_Kind) return Boolean
+   is
+     (K in CXCursor_FunctionDecl
+        | CXCursor_FunctionTemplate | CXCursor_CXXMethod
+          | CXCursor_ConversionFunction);
+   --  Helper to determine if a cursor kind is a function kind
+
+   function Is_Object_Type (K : Clang_Cursor_Kind) return Boolean
+   is
+     (K in CXCursor_ClassDecl | CXCursor_ClassTemplate
+        | CXCursor_ClassTemplatePartialSpecialization
+          | CXCursor_StructDecl);
+   --  Helper to determine if type is an object type, eg. can it have methods.
+
+   function Is_Type (K : Clang_Cursor_Kind) return Boolean is
+     (Is_Object_Type (K) or else
+      K in CXCursor_TypeAliasDecl
+        | CXCursor_TypedefDecl | CXCursor_EnumDecl | CXCursor_UnionDecl);
+   --  Helper to determine if cursor is a type
+
+   function Is_Array (K : CXTypeKind) return Boolean
+   is
+     (K in CXType_ConstantArray
+        | CXType_VariableArray
+          | CXType_DependentSizedArray
+            | CXType_IncompleteArray);
+   --  Helper to determine if a kind is one of an array
+
+   function Is_Subprogram (K : Clang_Cursor_Kind) return Boolean is
+     (K in CXCursor_FunctionDecl | CXCursor_CXXMethod
+        | CXCursor_FunctionTemplate);
+
+   function Is_Container
+     (K : Clang_Cursor_Kind) return Boolean is
+     (Is_Array (K) or else Is_Object_Type (K));
+
+   function Is_Generic
+     (K : Clang_Cursor_Kind) return Boolean is
+     (K in
+        CXCursor_ClassTemplatePartialSpecialization
+          | CXCursor_ClassTemplate
+            | CXCursor_FunctionTemplate
+              | CXCursor_TemplateRef);
+
 private
 
-   type Clang_Index is tagged record
-      CXIndex : clang_c_Index_h.CXIndex;
-   end record;
+   No_Index : constant Clang_Index := CXIndex (System.Null_Address);
 
-   type Clang_Translation_Unit is tagged record
-      CX_Translation_Unit : clang_c_Index_h.CXTranslationUnit;
-   end record;
+   No_Translation_Unit : constant Clang_Translation_Unit :=
+        clang_c_Index_h.CXTranslationUnit (System.Null_Address);
 
-   type Clang_Complete_Results is tagged record
+   type Clang_Complete_Results is record
       CXCodeCompleteResults : access clang_c_Index_h.CXCodeCompleteResults;
    end record;
 
-   No_Completion_Results : constant Clang_Complete_Results :=
-     (CXCodeCompleteResults => <>);
+   Aliased_0 : aliased constant Interfaces.C.unsigned := 0;
 
-   type Clang_Completion_Result is tagged record
+   No_CXCompletionResult : aliased clang_c_Index_h.CXCompletionResult
+     := (clang_c_Index_h.CXCursor_UnexposedDecl,
+         clang_c_Index_h.CXCompletionString (System.Null_Address));
+
+   No_CXCodeCompleteResults : aliased clang_c_Index_h.CXCodeCompleteResults
+     := (Results    => No_CXCompletionResult'Access,
+         NumResults => Aliased_0);
+
+   No_Complete_Results : constant Clang_Complete_Results :=
+     (CXCodeCompleteResults => null);
+
+   type Clang_Completion_Result is record
       Result : access clang_c_Index_h.CXCompletionResult;
    end record;
 
-   No_Result : constant Clang_Completion_Result := (Result => null);
+   No_Completion_Results : constant Clang_Completion_Result :=
+     (Result => null);
+
+   No_Cursor : constant Clang_Cursor := clang_getNullCursor;
 
 end Libclang.Index;

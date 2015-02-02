@@ -43,13 +43,16 @@ package body Language.Tree is
         (Construct_Tree_Record, Construct_Tree);
       procedure Internal is new Ada.Unchecked_Deallocation
         (Referenced_Identifiers_List_Record, Access_Referenced_List);
-
       Ref     : Referenced_Identifiers_List;
       Garbage : Referenced_Identifiers_List;
+      use Ada.Strings.Unbounded;
    begin
       if Tree /= null then
          for J in Tree.Contents'Range loop
             Ref := Tree.Contents (J).Referenced_Ids;
+            if Tree.Contents (J).Construct.Profile_Cache /= null then
+               Free (Tree.Contents (J).Construct.Profile_Cache);
+            end if;
 
             while Ref.Contents /= null loop
                Garbage := Ref;
@@ -280,6 +283,27 @@ package body Language.Tree is
       return Iter.Node.Construct'Access;
    end Get_Construct;
 
+   -----------
+   -- Is_In --
+   -----------
+
+   function Is_In
+     (Cat : Language_Category; Categories : Category_Array) return Boolean
+   is
+   begin
+      if Categories'Length = 0 then
+         return True;
+      end if;
+
+      for J in Categories'Range loop
+         if Cat = Categories (J) then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Is_In;
+
    --------------------
    -- Is_In_Category --
    --------------------
@@ -289,17 +313,7 @@ package body Language.Tree is
       return Boolean
    is
    begin
-      if Categories'Length = 0 then
-         return True;
-      end if;
-
-      for J in Categories'Range loop
-         if Construct.Category = Categories (J) then
-            return True;
-         end if;
-      end loop;
-
-      return False;
+      return Is_In (Construct.Category, Categories);
    end Is_In_Category;
 
    ----------------------

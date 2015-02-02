@@ -225,6 +225,8 @@ package body Src_Editor_Module.Editors is
    overriding function Line (This : Src_Editor_Location) return Integer;
    overriding function Column
      (This : Src_Editor_Location) return Visible_Column_Type;
+   overriding function Line_Offset
+     (This : Src_Editor_Location) return Natural;
    overriding function Offset (This : Src_Editor_Location) return Natural;
 
    overriding procedure Search
@@ -327,6 +329,10 @@ package body Src_Editor_Module.Editors is
       Line   : Integer;
       Column : Visible_Column_Type) return Editor_Location'Class;
 
+   overriding function New_Location
+     (This   : Src_Editor_Buffer;
+      Offset : Natural) return Editor_Location'Class;
+
    overriding function New_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
 
@@ -407,6 +413,12 @@ package body Src_Editor_Module.Editors is
 
    overriding function Current_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
+
+   overriding function Version
+     (This : Src_Editor_Buffer) return Integer
+   is
+     (This.Contents.Buffer.Get_Version);
+
    overriding function Views
      (This : Src_Editor_Buffer) return View_Lists.List;
 
@@ -504,11 +516,6 @@ package body Src_Editor_Module.Editors is
       Style : not null access Simple_Style_Record'Class;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
-
-   overriding procedure Get_Constructs
-     (This       : Src_Editor_Buffer;
-      Constructs : out Language.Construct_List;
-      Timestamp  : out Natural);
 
    overriding procedure Add_File_Information
      (This       : Src_Editor_Buffer;
@@ -1209,6 +1216,20 @@ package body Src_Editor_Module.Editors is
       return Integer (This.Line);
    end Line;
 
+   -----------------
+   -- Line_Offset --
+   -----------------
+
+   overriding function Line_Offset
+     (This : Src_Editor_Location) return Natural
+   is
+      Iter    : Gtk_Text_Iter;
+      Success : Boolean;
+   begin
+      Get_Location (Iter, This, Iter, Success);
+      return Natural (Get_Line_Offset (Iter));
+   end Line_Offset;
+
    ------------
    -- Column --
    ------------
@@ -1627,6 +1648,33 @@ package body Src_Editor_Module.Editors is
          end if;
       end if;
    end Move;
+
+   ------------------
+   -- New_Location --
+   ------------------
+
+   overriding function New_Location
+     (This   : Src_Editor_Buffer;
+      Offset : Natural) return Editor_Location'Class
+   is
+      Iter : Gtk_Text_Iter;
+      Result : Src_Editor_Location;
+   begin
+      Get_Iter_At_Offset
+        (This.Contents.Buffer,
+         Iter,
+         Gint (Offset));
+      Result := Src_Editor_Location (Create_Editor_Location (This, Iter));
+      Get_Iter_Position
+        (This.Contents.Buffer, Iter, Result.Line, Result.Column);
+      return Result;
+   exception
+      when Editor_Exception =>
+         Result.Buffer := This;
+         Result.Line := 0;
+         Result.Column := 0;
+         return Result;
+   end New_Location;
 
    ------------------
    -- New_Location --
@@ -2373,25 +2421,6 @@ package body Src_Editor_Module.Editors is
 
       Add_Side_Information (This.Contents.Buffer, Identifier, Info.all, 0);
    end Add_File_Information;
-
-   --------------------
-   -- Get_Constructs --
-   --------------------
-
-   overriding procedure Get_Constructs
-     (This       : Src_Editor_Buffer;
-      Constructs : out Language.Construct_List;
-      Timestamp  : out Natural) is
-   begin
-      if This.Contents.Buffer = null then
-         Constructs := (null, null, null, 0);
-         Timestamp := 0;
-         return;
-      end if;
-
-      Constructs := Get_Constructs (This.Contents.Buffer, Exact);
-      Timestamp  := Get_Constructs_Timestamp (This.Contents.Buffer);
-   end Get_Constructs;
 
    ----------
    -- Line --

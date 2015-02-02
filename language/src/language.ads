@@ -25,11 +25,12 @@ with GNATCOLL.Xref;
 with Basic_Types;       use Basic_Types;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.VFS;
+with Ada.Strings.Unbounded;
 
 package Language is
 
    Clang_Support : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
-     ("libclang_backend", GNATCOLL.Traces.Off);
+     ("libclang_backend", GNATCOLL.Traces.On);
 
    type Language_Root is abstract tagged limited private;
    type Language_Access is access all Language_Root'Class;
@@ -577,6 +578,7 @@ package Language is
       Sloc_Entity     : aliased Source_Location;
       Sloc_End        : aliased Source_Location;
       Attributes      : aliased Construct_Attribute_Map;
+      Profile_Cache   : Ada.Strings.Unbounded.String_Access := null;
    end record;
    --  Same as above, but containing only the needed construct information, no
    --  list constructions.
@@ -856,6 +858,7 @@ private
                                    Sloc_Start      => (0, 0, 0),
                                    Sloc_Entity     => (0, 0, 0),
                                    Sloc_End        => (0, 0, 0),
-                                   Attributes      => (others => False));
+                                   Attributes      => (others => False),
+                                  Profile_Cache => null);
 
 end Language;
