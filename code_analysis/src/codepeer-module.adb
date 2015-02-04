@@ -1412,10 +1412,7 @@ package body CodePeer.Module is
                      end if;
 
                      Append (Aux, Check.Name.all);
-
-                     if Length (Check.CWE_Image) /= 0 then
-                        Append (Aux, CWE_Image (Check));
-                     end if;
+                     Append (Aux, CWE_Image (Check));
                   end loop;
 
                   if Length (Aux) /= 0 then
@@ -1432,17 +1429,69 @@ package body CodePeer.Module is
                function CWE_Image
                  (Category : Message_Category_Access) return String
                is
-                  Project : constant Project_Type :=
+                  Project   : constant Project_Type :=
                     GPS.Kernel.Project.Get_Project (Self.Kernel);
+                  Aux       : Unbounded_String;
+                  Previous  : CWE_Identifier        := 0;
+                  Delimiter : Natural               := 0;
+                  --  Position of range delimiter.
 
                begin
-                  if Length (Category.CWE_Image) /= 0
+                  if not Category.CWEs.Is_Empty
                     and then Project.Has_Attribute (CWE_Attribute)
                     and then
                       Ada.Characters.Handling.To_Lower
                         (Project.Attribute_Value (CWE_Attribute)) = "true"
                   then
-                     return " [" & To_String (Category.CWE_Image) & ']';
+                     for CWE of Category.CWEs loop
+                        declare
+                           Image : constant String :=
+                             CWE_Identifier'Image (CWE.Identifier);
+
+                        begin
+                           if Length (Aux) = 0 then
+                              Append (Aux, " [");
+                              Append
+                                (Aux, Image (Image'First + 1 .. Image'Last));
+                              Delimiter := 0;
+
+                           else
+                              if Previous + 1 = CWE.Identifier then
+                                 --  Continuous value
+
+                                 if Delimiter = 0 then
+                                    Append (Aux, '-');
+                                    Delimiter := Length (Aux);
+                                    Append
+                                      (Aux,
+                                       Image (Image'First + 1 .. Image'Last));
+
+                                 else
+                                    Replace_Slice
+                                      (Aux,
+                                       Delimiter + 1,
+                                       Length (Aux),
+                                       Image (Image'First + 1 .. Image'Last));
+                                 end if;
+
+                              else
+                                 Delimiter := 0;
+                                 Append (Aux, ',');
+                                 Append
+                                   (Aux,
+                                    Image (Image'First + 1 .. Image'Last));
+                              end if;
+                           end if;
+
+                           Previous := CWE.Identifier;
+                        end;
+                     end loop;
+
+                     if Length (Aux) /= 0 then
+                        Append (Aux, ']');
+                     end if;
+
+                     return To_String (Aux);
 
                   else
                      return "";

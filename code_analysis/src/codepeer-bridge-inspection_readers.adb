@@ -55,7 +55,9 @@ package body CodePeer.Bridge.Inspection_Readers is
    Vn_Ids_Attribute         : constant String := "vn-ids";
 
    procedure Update_CWE
-     (Self : in out Reader'Class; Category : Message_Category_Access);
+     (Self     : in out Reader'Class;
+      Category : Message_Category_Access;
+      CWEs     : String);
    --  Update sets of CWEs for message category and project nodes.
 
    -----------------
@@ -443,13 +445,8 @@ package body CodePeer.Bridge.Inspection_Readers is
       elsif Qname = Message_Category_Tag then
          Message_Category :=
            new CodePeer.Message_Category'
-             (Name      => new String'(Attrs.Get_Value ("name")),
-              CWE_Image =>
-                (if Attrs.Get_Index (CWE_Attribute) /= -1
-                 then Ada.Strings.Unbounded.To_Unbounded_String
-                   (Attrs.Get_Value (CWE_Attribute))
-                 else Ada.Strings.Unbounded.Null_Unbounded_String),
-              CWEs      => <>);
+             (Name => new String'(Attrs.Get_Value ("name")),
+              CWEs => <>);
 
          if Attrs.Get_Index (Is_Check_Attribute) /= -1
            and then Boolean'Value (Attrs.Get_Value (Is_Check_Attribute))
@@ -465,7 +462,11 @@ package body CodePeer.Bridge.Inspection_Readers is
          Self.Message_Categories.Insert
            (Natural'Value (Attrs.Get_Value ("identifier")), Message_Category);
 
-         Self.Update_CWE (Message_Category);
+         Self.Update_CWE
+           (Message_Category,
+            (if Attrs.Get_Index (CWE_Attribute) /= -1
+             then Attrs.Get_Value (CWE_Attribute)
+             else ""));
 
       elsif Qname = Annotation_Category_Tag then
          Annotation_Category :=
@@ -659,10 +660,8 @@ package body CodePeer.Bridge.Inspection_Readers is
          if Self.Race_Category = null then
             Self.Race_Category :=
               new CodePeer.Message_Category'
-                (Name      =>
-                    new String'(CodePeer.Module.Race_Condition_Category),
-                 CWE_Image => Ada.Strings.Unbounded.Null_Unbounded_String,
-                 CWEs      => CodePeer.CWE_Category_Sets.Empty_Set);
+                (Name => new String'(CodePeer.Module.Race_Condition_Category),
+                 CWEs => CodePeer.CWE_Category_Sets.Empty_Set);
             CodePeer.Project_Data'Class
               (Self.Root_Inspection.all).Warning_Subcategories.Include
               (Self.Race_Category);
@@ -710,10 +709,10 @@ package body CodePeer.Bridge.Inspection_Readers is
    ----------------
 
    procedure Update_CWE
-     (Self : in out Reader'Class; Category : Message_Category_Access)
+     (Self     : in out Reader'Class;
+      Category : Message_Category_Access;
+      CWEs     : String)
    is
-      CWEs : constant String :=
-        Ada.Strings.Unbounded.To_String (Category.CWE_Image);
 
       procedure Insert (Id : CWE_Identifier);
       --  Inserts CWE into set of CWEs
@@ -736,9 +735,8 @@ package body CodePeer.Bridge.Inspection_Readers is
          Category.CWEs.Include (Self.CWE_Categories (Id));
       end Insert;
 
-      Start_CWE_Id : CWE_Identifier := 0;
-      CWE_Id       : CWE_Identifier;
-      First        : Positive := CWEs'First;
+      CWE_Id : CWE_Identifier;
+      First  : Positive := CWEs'First;
 
    begin
       for Current in CWEs'Range loop
@@ -746,27 +744,10 @@ package body CodePeer.Bridge.Inspection_Readers is
             when '0' .. '9' =>
                null;
 
-            when '-' =>
-               Start_CWE_Id :=
-                 CWE_Identifier'Value (CWEs (First .. Current - 1));
-               First := Current + 1;
-
-            when ',' =>
+            when ' ' =>
                CWE_Id := CWE_Identifier'Value (CWEs (First .. Current - 1));
-               First := Current + 1;
-
-               if Start_CWE_Id /= 0 then
-                  --  Range starting at Start_CWE_Id + 1
-
-                  for Id in Start_CWE_Id .. CWE_Id loop
-                     Insert (Id);
-                  end loop;
-
-                  Start_CWE_Id := 0;
-
-               else
-                  Insert (CWE_Id);
-               end if;
+               First  := Current + 1;
+               Insert (CWE_Id);
 
             when others =>
                raise Program_Error;
@@ -775,19 +756,7 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       if First < CWEs'Last then
          CWE_Id := CWE_Identifier'Value (CWEs (First .. CWEs'Last));
-
-         if Start_CWE_Id /= 0 then
-            --  Range starting at Start_CWE_Id + 1
-
-            for Id in Start_CWE_Id .. CWE_Id loop
-               Insert (Id);
-            end loop;
-
-            Start_CWE_Id := 0;
-
-         else
-            Insert (CWE_Id);
-         end if;
+         Insert (CWE_Id);
       end if;
    end Update_CWE;
 

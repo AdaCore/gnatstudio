@@ -68,9 +68,8 @@ package CodePeer is
      (CWE_Category_Access, Less);
 
    type Message_Category is record
-      Name      : GNAT.Strings.String_Access;
-      CWE_Image : Ada.Strings.Unbounded.Unbounded_String;
-      CWEs      : CWE_Category_Sets.Set;
+      Name : GNAT.Strings.String_Access;
+      CWEs : CWE_Category_Sets.Set;
    end record;
 
    type Message_Category_Access is access all Message_Category;
