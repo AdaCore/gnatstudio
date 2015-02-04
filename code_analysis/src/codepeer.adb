@@ -200,15 +200,14 @@ package body CodePeer is
       return "CWE-" & Image (Image'First + 1 .. Image'Last);
    end Get_Name;
 
-   ----------
-   -- Hash --
-   ----------
+   --------------
+   -- Get_Name --
+   --------------
 
-   function Hash
-     (Item : Message_Category_Access) return Ada.Containers.Hash_Type is
+   function Get_Name (Self : Message_Category) return String is
    begin
-      return Ada.Strings.Hash (Item.Name.all);
-   end Hash;
+      return Self.Name.all;
+   end Get_Name;
 
    ----------
    -- Hash --

@@ -71,8 +71,7 @@ package body CodePeer.Messages_Reports is
 
    package Message_Categories_Criteria_Callbacks is
      new Gtk.Handlers.User_Callback
-          (CodePeer.Categories_Criteria_Editors.
-             Categories_Criteria_Editor_Record,
+          (CodePeer.Categories_Criteria_Editors.Criteria_Editor_Record,
            Messages_Report);
 
    package CWE_Categories_Criteria_Callbacks is
@@ -133,8 +132,7 @@ package body CodePeer.Messages_Reports is
 
    procedure On_Categories_Criteria_Changed
      (Object : access
-        CodePeer.Categories_Criteria_Editors.
-          Categories_Criteria_Editor_Record'Class;
+        CodePeer.Categories_Criteria_Editors.Criteria_Editor_Record'Class;
       Self   : Messages_Report);
    --  Handles change of set of visible message's categories.
 
@@ -1007,16 +1005,15 @@ package body CodePeer.Messages_Reports is
 
    procedure On_Categories_Criteria_Changed
      (Object : access
-        CodePeer.Categories_Criteria_Editors.
-          Categories_Criteria_Editor_Record'Class;
+        CodePeer.Categories_Criteria_Editors.Criteria_Editor_Record'Class;
       Self   : Messages_Report)
    is
       pragma Unreferenced (Object);
 
    begin
       Self.Analysis_Model.Set_Visible_Message_Categories
-        (Self.Warning_Categories_Editor.Get_Visible_Categories.Union
-           (Self.Check_Categories_Editor.Get_Visible_Categories));
+        (Self.Warning_Categories_Editor.Get_Visible_Items.Union
+           (Self.Check_Categories_Editor.Get_Visible_Items));
 
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Categories_Criteria_Changed;
@@ -1284,8 +1281,8 @@ package body CodePeer.Messages_Reports is
       Criteria : in out CodePeer.Message_Filter_Criteria) is
    begin
       Criteria.Categories :=
-        Self.Warning_Categories_Editor.Get_Visible_Categories.Union
-          (Self.Check_Categories_Editor.Get_Visible_Categories);
+        Self.Warning_Categories_Editor.Get_Visible_Items.Union
+          (Self.Check_Categories_Editor.Get_Visible_Items);
       Criteria.CWEs       := Self.CWE_Editor.Get_Visible_Items;
       Criteria.Rankings   := Self.Show_Ranking;
       Criteria.Lineages   := Self.Lifeage_Editor.Get_Visible_Lifeages;

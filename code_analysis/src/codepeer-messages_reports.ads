@@ -85,9 +85,9 @@ private
       Analysis_Sort_Model : Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;
       Analysis_View       : Gtk.Tree_View.Gtk_Tree_View;
       Warning_Categories_Editor :
-        CodePeer.Categories_Criteria_Editors.Categories_Criteria_Editor;
+        CodePeer.Categories_Criteria_Editors.Criteria_Editor;
       Check_Categories_Editor :
-        CodePeer.Categories_Criteria_Editors.Categories_Criteria_Editor;
+        CodePeer.Categories_Criteria_Editors.Criteria_Editor;
       CWE_Editor          :
         CodePeer.CWE_Criteria_Editors.Criteria_Editor;
       Lifeage_Editor      :

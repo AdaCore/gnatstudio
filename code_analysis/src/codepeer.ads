@@ -72,13 +72,15 @@ package CodePeer is
       CWEs : CWE_Category_Sets.Set;
    end record;
 
+   function Get_Name (Self : Message_Category) return String;
+
    type Message_Category_Access is access all Message_Category;
 
-   function Hash
-     (Item : Message_Category_Access) return Ada.Containers.Hash_Type;
+   function Less
+     (Left, Right : CodePeer.Message_Category_Access) return Boolean;
 
-   package Message_Category_Sets is new Ada.Containers.Hashed_Sets
-     (Message_Category_Access, Hash, "=");
+   package Message_Category_Sets is new Ada.Containers.Ordered_Sets
+     (Message_Category_Access, Less, "=");
 
    type Audit_Record_V3 is record
       Timestamp   : Ada.Strings.Unbounded.Unbounded_String;
@@ -287,11 +289,5 @@ package CodePeer is
       Lineages   : Lifeage_Kinds_Flags;
       Statuses   : Review_Status_Kinds_Flags;
    end record;
-
-   function Less
-     (Left, Right : CodePeer.Message_Category_Access) return Boolean;
-
-   package Message_Category_Ordered_Sets is new Ada.Containers.Ordered_Sets
-     (CodePeer.Message_Category_Access, Less, CodePeer."=");
 
 end CodePeer;

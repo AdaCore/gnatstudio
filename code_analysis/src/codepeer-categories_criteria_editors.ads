@@ -18,55 +18,12 @@
 --  This package contains implementation of the CodePeer's message categories
 --  filter criteria editor. It is used by Summary Report form.
 
-with Glib;
-with Gtk.Widget;
-
-private with Gtk.Check_Button;
-private with Gtk.Scrolled_Window;
-private with Gtk.Tree_View;
-
-private with CodePeer.Categories_Criteria_Models;
+with CodePeer.Generic_Criteria_Editors;
 
 package CodePeer.Categories_Criteria_Editors is
-
-   type Categories_Criteria_Editor_Record is
-     new Gtk.Widget.Gtk_Widget_Record with private;
-
-   type Categories_Criteria_Editor is
-     access all Categories_Criteria_Editor_Record'Class;
-
-   procedure Gtk_New
-     (Editor         : in out Categories_Criteria_Editor;
-      Kernel         : GPS.Kernel.Kernel_Handle;
-      Title          : String;
-      History_Prefix : String;
-      Categories     : CodePeer.Message_Category_Sets.Set);
-
-   procedure Initialize
-     (Self           : not null access Categories_Criteria_Editor_Record'Class;
-      Kernel         : GPS.Kernel.Kernel_Handle;
-      Title          : String;
-      History_Prefix : String;
-      Categories     : CodePeer.Message_Category_Sets.Set);
-
-   function Get_Visible_Categories
-     (Self : access Categories_Criteria_Editor_Record'Class)
-      return CodePeer.Message_Category_Sets.Set;
-   --  Returns a set of selected message categories
-
-   Signal_Criteria_Changed : constant Glib.Signal_Name;
-   --  This signal emitted by the editor in the case of the criteria change
-
-private
-
-   type Categories_Criteria_Editor_Record is
-     new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
-      record
-         Model  : Categories_Criteria_Models.Categories_Criteria_Model;
-         View   : Gtk.Tree_View.Gtk_Tree_View;
-         Toggle : Gtk.Check_Button.Gtk_Check_Button;
-      end record;
-
-   Signal_Criteria_Changed : constant Glib.Signal_Name := "criteria-changed";
-
-end CodePeer.Categories_Criteria_Editors;
+  new CodePeer.Generic_Criteria_Editors
+    (CodePeer.Message_Category,
+     CodePeer.Message_Category_Access,
+     CodePeer.Get_Name,
+     CodePeer.Less,
+     CodePeer.Message_Category_Sets);
