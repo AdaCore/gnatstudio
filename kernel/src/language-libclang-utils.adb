@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Config; use Config;
+
 with Ada.Calendar;            use Ada.Calendar;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
@@ -51,7 +53,7 @@ package body Language.Libclang.Utils is
       Language : String) return Unbounded_String_Array
    is
       The_Exec         : GNAT.Strings.String_Access;
-      The_Exec_On_Path : GNAT.Strings.String_Access;
+      Gcc_Exec_On_Path : GNAT.Strings.String_Access;
       Result           : Unbounded_String_Array (1 .. 512);
       --  Unlikely to go over 512 search dirs
       First_Free       : Natural := 1;
@@ -128,11 +130,11 @@ package body Language.Libclang.Utils is
 
       --  At this stage we have a driver, now let's run it
 
-      The_Exec_On_Path := GNAT.OS_Lib.Locate_Exec_On_Path (The_Exec.all);
+      Gcc_Exec_On_Path := GNAT.OS_Lib.Locate_Exec_On_Path (The_Exec.all);
       GNAT.Strings.Free (The_Exec);
 
-      if The_Exec_On_Path = null then
-         Trace (Me, "driver not found on PATH");
+      if Gcc_Exec_On_Path = null then
+         Trace (Me, "driver not found on PATH : " & The_Exec.all);
          return (1 .. 0 => <>);
       end if;
 
@@ -140,13 +142,9 @@ package body Language.Libclang.Utils is
          Fd      : TTY_Process_Descriptor;
          All_Match : constant Pattern_Matcher := Compile
            (".+", Multiple_Lines);
+         Args : GNAT.OS_Lib.Argument_List_Access;
+         Spawned_Exec : GNAT.Strings.String_Access;
          Dir     : Virtual_File;
-         Args    : constant GNAT.OS_Lib.Argument_List :=
-           (new String'("-E"),
-            new String'("-o"),
-            new String'("-"),
-            new String'("-v"),
-            new String'("-"));
          Match   : Expect_Match;
          Ignored : Boolean;
          Listing : Boolean := False;
@@ -157,14 +155,32 @@ package body Language.Libclang.Utils is
             Dir := GNATCOLL.VFS.Get_Current_Dir;
          end if;
 
+         if Host = Windows then
+            Spawned_Exec := new String'("cmd");
+            Args  := new GNAT.OS_Lib.Argument_List'
+              (new String'("/c"),
+               new String'("echo | " & Gcc_Exec_On_Path.all & " -xc -E -v -"));
+         else
+            Spawned_Exec := new String'(Gcc_Exec_On_Path.all);
+            Args  := new GNAT.OS_Lib.Argument_List'
+              (new String'("-E"),
+               new String'("-o"),
+               new String'("-"),
+               new String'("-v"),
+               new String'("-"));
+         end if;
+
          Trace (Me,
                 "spawning: "
-                & The_Exec_On_Path.all
-                & " " & Argument_List_To_String (Args));
+                & Spawned_Exec.all
+                & " " & Argument_List_To_String (Args.all));
 
          Non_Blocking_Spawn
-           (Fd, The_Exec_On_Path.all, Args,
+           (Fd, Spawned_Exec.all, Args.all,
             Err_To_Out => True);
+
+         GNAT.Strings.Free (Spawned_Exec);
+         GNAT.OS_Lib.Free (Args);
 
          declare
             Start : constant Time := Clock;
@@ -177,6 +193,8 @@ package body Language.Libclang.Utils is
                     Strip_CR (Strip_Character (Expect_Out (Fd), ASCII.LF));
                   F : Natural;
                begin
+                  Trace (Me, "Out: " & S);
+
                   if S = "#include <...> search starts here:" then
                      Listing := True;
                   elsif S = "End of search list." then
@@ -189,7 +207,7 @@ package body Language.Libclang.Utils is
                            F := F + 1;
                         end loop;
 
-                        Trace (Me, "search path found: " & S (F .. S'Last));
+                        Trace (Me, "=> search path found: " & S (F .. S'Last));
                         Result (First_Free) := To_Unbounded_String
                           ("-I" & S (F .. S'Last));
 
@@ -215,7 +233,7 @@ package body Language.Libclang.Utils is
          Close (Fd);
       end;
 
-      GNAT.Strings.Free (The_Exec_On_Path);
+      GNAT.Strings.Free (Gcc_Exec_On_Path);
 
       --  We are about to return results: cache this
       if Last_Lang /= null then
