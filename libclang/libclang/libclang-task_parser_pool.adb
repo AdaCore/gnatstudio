@@ -20,8 +20,7 @@ with Ada.Task_Identification; use Ada.Task_Identification;
 
 package body Libclang.Task_Parser_Pool is
 
-   Me : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG", On);
+   Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    function "+"
      (S : Unbounded_String) return String renames To_String;

@@ -39,7 +39,7 @@ with GPS.Core_Kernels; use GPS.Core_Kernels;
 package body Completion.C.Libclang is
 
    Me : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG.COMPLETION", On);
+     GNATCOLL.Traces.Create ("LIBCLANG.COMPLETION");
 
    function Current_Location
      (Kernel : Kernel_Handle;

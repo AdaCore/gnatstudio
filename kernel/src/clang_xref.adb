@@ -38,8 +38,7 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Clang_Xref is
 
-   Me : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG", On);
+   Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    --  Quick design notes about clang cross references:
    --

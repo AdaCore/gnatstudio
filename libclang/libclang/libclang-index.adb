@@ -31,8 +31,7 @@ package body Libclang.Index is
 
    Debug : constant Boolean := False;
 
-   Me : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG", On);
+   Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    type Complete_Results_Access is access all CXCodeCompleteResults;
 

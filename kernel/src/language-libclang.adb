@@ -49,13 +49,12 @@ package body Language.Libclang is
    Nb_Tasks : constant := 4;
 
    Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG.DIAGNOSTICS", On);
+     GNATCOLL.Traces.Create ("LIBCLANG.DIAGNOSTICS");
 
-   Me : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG", On);
+   Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    Activate_Clang_XRef : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG.XREF", On);
+     GNATCOLL.Traces.Create ("LIBCLANG.XREF");
 
    function Parsing_Timeout_Handler return Boolean;
 

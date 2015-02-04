@@ -74,6 +74,7 @@ PROJECTS.GNAT = no
 --  Debug handles related to the cross-references database
 
 XREF.* = yes
+LIBCLANG.*=no
 ALI=no
 ALI.PARSING=yes
 ALI.Assert=no

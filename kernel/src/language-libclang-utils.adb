@@ -30,8 +30,7 @@ with GNAT.Strings;       use GNAT.Strings;
 
 package body Language.Libclang.Utils is
 
-   Me : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG.UTILS", On);
+   Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG.UTILS");
 
    -------------------------------
    -- Get_Compiler_Search_Paths --
