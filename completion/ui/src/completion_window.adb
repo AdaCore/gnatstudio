@@ -126,12 +126,7 @@ package body Completion_Window is
       Previous_Screen : access Gdk.Screen.Gdk_Screen_Record'Class);
    --  Callback for a screen changed event on the tree view
 
-   procedure Insert_Text_Handler
-     (Window : access Completion_Window_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Callback after a text insertion
-
-   procedure Mark_Set_Handler
+   procedure On_Cursor_Position_Changed
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues);
    --  Callback after a Mark set on the buffer
@@ -885,28 +880,49 @@ package body Completion_Window is
       end if;
    end Adjust_Selected;
 
-   ----------------------
-   -- Mark_Set_Handler --
-   ----------------------
+   --------------------------------
+   -- On_Cursor_Position_Changed --
+   --------------------------------
 
-   procedure Mark_Set_Handler
+   procedure On_Cursor_Position_Changed
      (Window : access Completion_Window_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Mark   : constant Gtk_Text_Mark :=
-                 Get_Text_Mark (Glib.Values.Nth (Params, 2));
+      pragma Unreferenced (Params);
+      Mark   : Gtk_Text_Mark;
       Cursor : Gtk_Text_Iter;
+      Beg    : Gtk_Text_Iter;
    begin
-      if Get_Name (Mark) = "insert" then
-         Get_Iter_At_Mark (Window.Buffer, Cursor, Mark);
+      Mark := Window.Buffer.Get_Mark ("insert");
+      Get_Iter_At_Mark (Window.Buffer, Cursor, Mark);
 
-         if Window.Initial_Line  /= Get_Line (Cursor) then
+      if Window.Initial_Line  /= Get_Line (Cursor) then
+         Delete (Window);
+      else
+         Move_Mark (Window.Buffer, Window.End_Mark, Cursor);
+
+         Get_Iter_At_Mark (Window.Buffer, Beg, Window.Start_Mark);
+         Free (Window.Explorer.Pattern);
+         Window.Explorer.Pattern := new String'
+           (Get_Text (Window.Buffer, Beg, Cursor));
+
+         --  If the character we just inserted is not in the set of
+         --  identifier characters, we know that we won't find the result
+         --  in the list of stored items, so return immediately.
+
+         if Window.Explorer.Pattern'Length > 0
+           and then (not Is_In
+                     (Window.Explorer.Pattern (Window.Explorer.Pattern'Last),
+                      Word_Character_Set (Window.Lang)))
+         then
             Delete (Window);
+         elsif not Window.In_Destruction then
+            Adjust_Selected (Window);
          end if;
       end if;
    exception
       when E : others => Trace (Me, E);
-   end Mark_Set_Handler;
+   end On_Cursor_Position_Changed;
 
    ----------------------------
    -- Viewport_Moved_Handler --
@@ -922,46 +938,6 @@ package body Completion_Window is
    exception
       when E : others => Trace (Me, E);
    end Viewport_Moved_Handler;
-
-   -------------------------
-   -- Insert_Text_Handler --
-   -------------------------
-
-   procedure Insert_Text_Handler
-     (Window : access Completion_Window_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      Iter : Gtk_Text_Iter;
-      Beg  : Gtk_Text_Iter;
-
-   begin
-      if Window.In_Deletion or else Window.In_Destruction then
-         return;
-      end if;
-
-      Get_Text_Iter (Nth (Params, 1), Iter);
-      Move_Mark (Window.Buffer, Window.End_Mark, Iter);
-
-      Get_Iter_At_Mark (Window.Buffer, Beg, Window.Start_Mark);
-      Free (Window.Explorer.Pattern);
-      Window.Explorer.Pattern := new String'
-        (Get_Text (Window.Buffer, Beg, Iter));
-
-      --  If the character we just inserted is not in the set of identifier
-      --  characters, we know that we won't find the result in the list of
-      --  stored items, so return immediately.
-
-      if not Is_In (Window.Explorer.Pattern (Window.Explorer.Pattern'Last),
-                    Word_Character_Set (Window.Lang))
-      then
-         Delete (Window);
-      elsif not Window.In_Destruction then
-         Adjust_Selected (Window);
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end Insert_Text_Handler;
 
    --------------------------------
    -- Before_Delete_Text_Handler --
@@ -2014,11 +1990,8 @@ package body Completion_Window is
          To_Marshaller (On_Key_Press'Access), Window, After => False);
 
       Object_Connect
-        (Buffer, Signal_Insert_Text, Insert_Text_Handler'Access, Window,
-         After => True);
-
-      Object_Connect
-        (Buffer, Signal_Mark_Set, Mark_Set_Handler'Access, Window);
+        (Buffer, "cursor_position_changed",
+         On_Cursor_Position_Changed'Access, Window);
 
       Parent := Get_Parent (View);
       if Parent /= null
