@@ -212,6 +212,14 @@ KP-61-NC01-009 GPS: unreadable fonts under Solaris
                 <dir>/usr/openwin/lib/X11/fonts/75dpi</dir>
                 <dir>/usr/openwin/lib/X11/fonts/100dpi</dir>
 
+KP-61-NB19-042 GPS: CodePeer's Analyze File menu item is missing
+
+  Problem:    Analyze File menu item is not displayed in CodePeer menu.
+
+  Status:     This was fixed in 6.1.1 on 2014-12-18
+
+  Workaround: Use Analyze File by File menu.
+
 KP-61-NB18-009 GB: Cannot open Ada Editor.
 
   Problem:    Sometimes opening Ada editor fails, indicating that the Ada
