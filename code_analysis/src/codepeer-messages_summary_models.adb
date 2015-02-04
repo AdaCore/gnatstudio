@@ -203,6 +203,7 @@ package body CodePeer.Messages_Summary_Models is
                CodePeer.Utilities.Compute_Messages_Count
                  (Self.Tree,
                   Self.Message_Categories,
+                  Self.CWE_Categories,
                   Self.Message_Lifeages,
                   Self.Message_Statuses,
                   Counts,
@@ -414,6 +415,7 @@ package body CodePeer.Messages_Summary_Models is
                   CodePeer.Utilities.Compute_Messages_Count
                     (Self.Tree,
                      Self.Message_Categories,
+                     Self.CWE_Categories,
                      Self.Message_Lifeages,
                      Self.Message_Statuses,
                      Counts,
@@ -454,6 +456,7 @@ package body CodePeer.Messages_Summary_Models is
                   CodePeer.Utilities.Compute_Messages_Count
                     (Self.Tree,
                      Self.Message_Categories,
+                     Self.CWE_Categories,
                      Self.Message_Lifeages,
                      Self.Message_Statuses,
                      Counts,
@@ -573,6 +576,7 @@ package body CodePeer.Messages_Summary_Models is
       CodePeer.Utilities.Compute_Messages_Count
         (Project_Node.Node,
          Self.Message_Categories,
+         Self.CWE_Categories,
          Self.Message_Lifeages,
          Self.Message_Statuses,
          Project_Node.Messages_Counts,
@@ -608,6 +612,7 @@ package body CodePeer.Messages_Summary_Models is
       CodePeer.Utilities.Compute_Messages_Count
         (File_Node.Node,
          Self.Message_Categories,
+         Self.CWE_Categories,
          Self.Message_Lifeages,
          Self.Message_Statuses,
          File_Node.Messages_Counts,
@@ -641,6 +646,7 @@ package body CodePeer.Messages_Summary_Models is
       CodePeer.Utilities.Compute_Messages_Count
         (Subprogram_Node.Node,
          Self.Message_Categories,
+         Self.CWE_Categories,
          Self.Message_Lifeages,
          Self.Message_Statuses,
          Subprogram_Node.Messages_Counts,

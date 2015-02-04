@@ -41,6 +41,7 @@ package body CodePeer.Utilities is
    procedure Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
+      CWEs       : CodePeer.CWE_Category_Sets.Set;
       Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       Statuses   : CodePeer.Review_Status_Kinds_Flags;
       Counts     : out Messages_Counts;
@@ -59,7 +60,8 @@ package body CodePeer.Utilities is
       begin
          --  Count messages of specified categories, lifeage and review status.
 
-         if Categories.Contains (Message.Category)
+         if (Categories.Contains (Message.Category)
+               or not CWEs.Intersection (Message.Category.CWEs).Is_Empty)
            and Lifeages (Message.Lifeage)
            and Statuses (Message.Status)
          then
@@ -93,6 +95,7 @@ package body CodePeer.Utilities is
    procedure Compute_Messages_Count
      (File       : Code_Analysis.File_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
+      CWEs       : CodePeer.CWE_Category_Sets.Set;
       Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       Statuses   : CodePeer.Review_Status_Kinds_Flags;
       Counts     : out Messages_Counts;
@@ -114,6 +117,7 @@ package body CodePeer.Utilities is
          Compute_Messages_Count
            (Subprogram,
             Categories,
+            CWEs,
             Lifeages,
             Statuses,
             Aux_Counts,
@@ -137,6 +141,7 @@ package body CodePeer.Utilities is
    procedure Compute_Messages_Count
      (Project      : Code_Analysis.Project_Access;
       Categories   : CodePeer.Message_Category_Sets.Set;
+      CWEs         : CodePeer.CWE_Category_Sets.Set;
       Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       Statuses     : CodePeer.Review_Status_Kinds_Flags;
       Counts       : out Messages_Counts;
@@ -157,7 +162,13 @@ package body CodePeer.Utilities is
 
       begin
          Compute_Messages_Count
-           (File, Categories, Lifeages, Statuses, Aux_Counts, Aux_Checks);
+           (File,
+            Categories,
+            CWEs,
+            Lifeages,
+            Statuses,
+            Aux_Counts,
+            Aux_Checks);
 
          Counts := Counts + Aux_Counts;
          Checks := Checks + Aux_Checks;
@@ -182,6 +193,7 @@ package body CodePeer.Utilities is
    procedure Compute_Messages_Count
      (Tree         : Code_Analysis.Code_Analysis_Tree;
       Categories   : CodePeer.Message_Category_Sets.Set;
+      CWEs         : CodePeer.CWE_Category_Sets.Set;
       Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       Statuses     : CodePeer.Review_Status_Kinds_Flags;
       Counts       : out Messages_Counts;
@@ -205,6 +217,7 @@ package body CodePeer.Utilities is
          Compute_Messages_Count
            (Project,
             Categories,
+            CWEs,
             Lifeages,
             Statuses,
             Aux_Counts,

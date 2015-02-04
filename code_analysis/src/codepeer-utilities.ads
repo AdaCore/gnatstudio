@@ -29,6 +29,7 @@ package CodePeer.Utilities is
    procedure Compute_Messages_Count
      (Subprogram : Code_Analysis.Subprogram_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
+      CWEs       : CodePeer.CWE_Category_Sets.Set;
       Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       Statuses   : CodePeer.Review_Status_Kinds_Flags;
       Counts     : out Messages_Counts;
@@ -38,6 +39,7 @@ package CodePeer.Utilities is
    procedure Compute_Messages_Count
      (File       : Code_Analysis.File_Access;
       Categories : CodePeer.Message_Category_Sets.Set;
+      CWEs       : CodePeer.CWE_Category_Sets.Set;
       Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       Statuses   : CodePeer.Review_Status_Kinds_Flags;
       Counts     : out Messages_Counts;
@@ -47,6 +49,7 @@ package CodePeer.Utilities is
    procedure Compute_Messages_Count
      (Project      : Code_Analysis.Project_Access;
       Categories   : CodePeer.Message_Category_Sets.Set;
+      CWEs         : CodePeer.CWE_Category_Sets.Set;
       Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       Statuses     : CodePeer.Review_Status_Kinds_Flags;
       Counts       : out Messages_Counts;
@@ -57,6 +60,7 @@ package CodePeer.Utilities is
    procedure Compute_Messages_Count
      (Tree         : Code_Analysis.Code_Analysis_Tree;
       Categories   : CodePeer.Message_Category_Sets.Set;
+      CWEs         : CodePeer.CWE_Category_Sets.Set;
       Lifeages     : CodePeer.Lifeage_Kinds_Flags;
       Statuses     : CodePeer.Review_Status_Kinds_Flags;
       Counts       : out Messages_Counts;
