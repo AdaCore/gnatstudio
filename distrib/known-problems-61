@@ -224,6 +224,15 @@ KP-61-NB18-009 GB: Cannot open Ada Editor.
   Workaround: Edit the file using the standard text editor or restart
               GNATbench.
 
+KP-61-NB13-049 GPS: slow navigation between messages in Locations view
+
+  Problem:    In some cases navigation between CodePeer's messages in Locations
+              view makes GPS non responsible for few seconds.
+
+  Status:     This was fixed in 6.1.1 on 2014-12-09
+
+  Workaround: None.
+
 KP-61-NB12-023 ECL: Cannot set breakpoints on Eclipse Luna
 
   Problem:    On Eclipse 4.4, when debugging an Ada Application (using the
