@@ -36,6 +36,20 @@ KP-61-O120-002 GPS: cannot force background color for editors
 
   Workaround: None, the colors are hard-coded in Ada.
 
+KP-61-O116-007 GPS: selecting -gnatp automatically adds -gnatVn
+
+  Problem:    In the Project Properties dialog, adding the "Suppress All
+              Checks" as a switch for the Ada sources adds both -gnatp
+              and -gnatVn on the command line. Although this is correct
+              (since in the compiler -gnatp automatically also disables
+              validity checks), this was also a bit confusing.
+
+  Status:     This was fixed in 6.2.0 on 2015-02-04
+
+  Workaround: Leave both switches, or manually remove -gnatVn if you
+              prefer. The behavior of the compiler is the same in both
+              cases.
+
 KP-61-O113-020 GPS: build targets refer to "gnatmake"
 
   Problem:    Some GPS build targets (such as "Check syntax") still invoke

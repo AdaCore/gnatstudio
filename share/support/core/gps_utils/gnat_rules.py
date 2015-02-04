@@ -215,9 +215,6 @@ class gnatMakeProc:
             xml += switch.Xml(line, "1")
         xml += """
         <dependency master-page="Ada" slave-page="Ada"
-                    master-switch="-gnatp" master-status="on"
-                    slave-switch="-gnatVn" slave-status="on" />
-        <dependency master-page="Ada" slave-page="Ada"
                     master-switch="-gnatVa" master-status="on"
                     slave-switch="-gnatVn" slave-status="off" />
         <dependency master-page="Ada" slave-page="Ada"
