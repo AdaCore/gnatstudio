@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
 with Interfaces.C.Strings;
 with System;
@@ -41,6 +42,7 @@ with Gtkada.MDI;            use Gtkada.MDI;
 
 with Code_Analysis_GUI;
 with Histories;
+with GNATCOLL.Projects;
 with GPS.Intl;              use GPS.Intl;
 with GPS.Kernel.Contexts;
 with GPS.Kernel.Project;
@@ -201,6 +203,10 @@ package body CodePeer.Messages_Reports is
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
      (1 => (1 => Glib.GType_None),
       2 => (1 => Glib.GType_None));
+
+   CWE_Attribute :
+     constant GNATCOLL.Projects.Attribute_Pkg_String :=
+     GNATCOLL.Projects.Build ("CodePeer", "CWE");
 
    -------------
    -- Compare --
@@ -471,12 +477,12 @@ package body CodePeer.Messages_Reports is
       Dummy           : Glib.Gint;
       pragma Warnings (Off, Dummy);
 
+      Project      : constant GNATCOLL.Projects.Project_Type :=
+        GPS.Kernel.Project.Get_Project (Kernel);
       Project_Data : CodePeer.Project_Data'Class renames
         CodePeer.Project_Data'Class
           (Code_Analysis.Get_Or_Create
-               (Tree,
-                GPS.Kernel.Project.Get_Project
-                  (Kernel)).Analysis_Data.CodePeer_Data.all);
+               (Tree, Project).Analysis_Data.CodePeer_Data.all);
 
    begin
       Glib.Object.Initialize_Class_Record
@@ -734,20 +740,26 @@ package body CodePeer.Messages_Reports is
 
       --  CWEs categories
 
-      CodePeer.CWE_Criteria_Editors.Gtk_New
-        (Self.CWE_Editor,
-         Self.Kernel,
-         -"CWE categories",
-         "codepeer-summary-report-categories-cwe",
-         Project_Data.CWE_Categories);
-      Category_Box.Pack_Start (Self.CWE_Editor);
+      if Project.Has_Attribute (CWE_Attribute)
+        and then
+          Ada.Characters.Handling.To_Lower
+            (Project.Attribute_Value (CWE_Attribute)) = "true"
+      then
+         CodePeer.CWE_Criteria_Editors.Gtk_New
+           (Self.CWE_Editor,
+            Self.Kernel,
+            -"CWE categories",
+            "codepeer-summary-report-categories-cwe",
+            Project_Data.CWE_Categories);
+         Category_Box.Pack_Start (Self.CWE_Editor);
 
-      CWE_Categories_Criteria_Callbacks.Connect
-        (Self.CWE_Editor,
-         CodePeer.CWE_Criteria_Editors.Signal_Criteria_Changed,
-         CWE_Categories_Criteria_Callbacks.To_Marshaller
-           (On_CWE_Criteria_Changed'Access),
-         Messages_Report (Self));
+         CWE_Categories_Criteria_Callbacks.Connect
+           (Self.CWE_Editor,
+            CodePeer.CWE_Criteria_Editors.Signal_Criteria_Changed,
+            CWE_Categories_Criteria_Callbacks.To_Marshaller
+              (On_CWE_Criteria_Changed'Access),
+            Messages_Report (Self));
+      end if;
 
       --  Filter view
 
@@ -1278,12 +1290,18 @@ package body CodePeer.Messages_Reports is
 
    procedure Update_Criteria
      (Self     : access Messages_Report_Record'Class;
-      Criteria : in out CodePeer.Message_Filter_Criteria) is
+      Criteria : in out CodePeer.Message_Filter_Criteria)
+   is
+      use type CodePeer.CWE_Criteria_Editors.Criteria_Editor;
+
    begin
       Criteria.Categories :=
         Self.Warning_Categories_Editor.Get_Visible_Items.Union
           (Self.Check_Categories_Editor.Get_Visible_Items);
-      Criteria.CWEs       := Self.CWE_Editor.Get_Visible_Items;
+      Criteria.CWEs       :=
+        (if Self.CWE_Editor /= null
+         then Self.CWE_Editor.Get_Visible_Items
+         else CodePeer.CWE_Category_Sets.Empty_Set);
       Criteria.Rankings   := Self.Show_Ranking;
       Criteria.Lineages   := Self.Lifeage_Editor.Get_Visible_Lifeages;
       Criteria.Statuses   := Self.Show_Status;
