@@ -1414,6 +1414,7 @@ package body Project_Viewers is
    overriding procedure Initialize
      (Self         : not null access Project_Editor_Multi_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project)
    is
       Label    : Gtk_Label;
@@ -1425,7 +1426,7 @@ package body Project_Viewers is
 
       for Descr of Self.Pages loop
          Gtk_New (Label, To_String (Descr.Title));
-         Descr.Page.Initialize (Kernel, Project);
+         Descr.Page.Initialize (Kernel, Read_Only, Project);
          Self.Notebook.Append_Page (Descr.Page, Label);
       end loop;
    end Initialize;

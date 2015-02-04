@@ -238,6 +238,7 @@ package body Toolchains_Editor is
    overriding procedure Initialize
      (Self         : not null access Toolchain_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project)
    is
       Mgr : constant Toolchains.Toolchain_Manager :=
@@ -256,6 +257,7 @@ package body Toolchains_Editor is
    begin
       Initialize_Vbox (Self, Homogeneous => False);
       Self.Kernel := Kernel;
+      Self.Read_Only := Read_Only;
 
       Gtk_New (Frame, -"Toolchains");
       Self.Pack_Start (Frame, Expand => True, Fill => True, Padding => 5);
@@ -270,6 +272,7 @@ package body Toolchains_Editor is
 
       Gtk.Tree_Store.Gtk_New (Self.Model, Column_Types);
       Gtk.Tree_View.Gtk_New (Self.Toolchains_Tree, Self.Model);
+      Self.Toolchains_Tree.Set_Sensitive (not Read_Only);
       Scroll.Add (Self.Toolchains_Tree);
       Self.Toolchains_Tree.Get_Selection.Set_Mode (Selection_None);
 
@@ -313,12 +316,14 @@ package body Toolchains_Editor is
       Tc_Box.Pack_Start (Btn_Box, Expand => False, Padding => 10);
 
       Gtk.Button.Gtk_New (Btn, -"Scan");
+      Btn.Set_Sensitive (not Read_Only);
       Btn_Box.Pack_Start (Btn, Expand => False, Padding => 5);
       Widget_Callback.Object_Connect
         (Btn, Gtk.Button.Signal_Clicked, On_Scan_Clicked'Access,
          Slot_Object => Self);
 
       Gtk.Button.Gtk_New_From_Stock (Btn, Gtk.Stock.Stock_Add);
+      Btn.Set_Sensitive (not Read_Only);
       Btn_Box.Pack_Start (Btn, Expand => False, Padding => 5);
       Widget_Callback.Object_Connect
         (Btn, Gtk.Button.Signal_Clicked, On_Add_Clicked'Access,
@@ -377,6 +382,7 @@ package body Toolchains_Editor is
    overriding procedure Initialize
      (Self         : not null access Languages_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project)
    is
       Frame           : Gtk_Frame;
@@ -407,6 +413,7 @@ package body Toolchains_Editor is
 
       Gtk.Tree_Store.Gtk_New (Self.Lang_Model, Lang_Column_Types);
       Gtk.Tree_View.Gtk_New (Self.Languages, Self.Lang_Model);
+      Self.Languages.Set_Sensitive (not Read_Only);
       Scroll.Add (Self.Languages);
       Self.Languages.Get_Selection.Set_Mode (Selection_None);
 
@@ -789,8 +796,6 @@ package body Toolchains_Editor is
       Is_Valid    : Boolean;
       Is_Editable : Boolean)
    is
-      pragma Unreferenced (Editor);
-
       function Get_String return String;
       function Format_String return String;
 
@@ -840,7 +845,7 @@ package body Toolchains_Editor is
 
       Trace (Me, "Setting text of GEntry to '" & Value & "'");
       GEntry.Set_Text (Value);
-      GEntry.Set_Sensitive (Is_Editable);
+      GEntry.Set_Sensitive (Is_Editable and then not Editor.Read_Only);
 
       if not Is_Valid then
          Set (Icon, Stock_Dialog_Warning, Icon_Size_Button);
@@ -888,7 +893,8 @@ package body Toolchains_Editor is
       end if;
 
       if Reset_Btn /= null then
-         Reset_Btn.Set_Sensitive (not Is_Default);
+         Reset_Btn.Set_Sensitive
+           (not Is_Default and then not Editor.Read_Only);
       end if;
    end Set_Detail;
 
@@ -949,6 +955,7 @@ package body Toolchains_Editor is
 
          if Kind = Tool_Kind_Compiler then
             Gtk_New (Check);
+            Check.Set_Sensitive (not Self.Read_Only);
             Check.Set_Active (Get_Compiler_Is_Used (Tc, Lang));
             Self.Details_View.Attach
               (Child         => Check,
@@ -973,6 +980,7 @@ package body Toolchains_Editor is
          end if;
 
          Gtk_New (Ent);
+         Ent.Set_Sensitive (not Self.Read_Only);
          Self.Details_View.Attach
            (Child         => Ent,
             Left_Attach   => 2,
@@ -998,6 +1006,7 @@ package body Toolchains_Editor is
 
          if Is_Editable then
             Gtk_New (Btn, "reset");
+            Btn.Set_Sensitive (not Self.Read_Only);
             Self.Details_View.Attach
               (Child         => Btn,
                Left_Attach   => 4,

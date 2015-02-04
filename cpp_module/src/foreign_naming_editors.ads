@@ -38,6 +38,7 @@ package Foreign_Naming_Editors is
    overriding procedure Initialize
      (Self         : not null access Foreign_Naming_Editor_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project);
    overriding function Edit_Project
      (Self               : not null access Foreign_Naming_Editor_Record;

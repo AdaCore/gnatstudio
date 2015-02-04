@@ -137,22 +137,23 @@ package body Creation_Wizard.Full is
       P : Project_Editor_Page;
    begin
       P := new Languages_Page_Record;
-      P.Initialize (Kernel, No_Project);
+      P.Initialize (Kernel, Read_Only => False, Project => No_Project);
       Add_Page ("Languages", P);
 
       For_Each_Project_Editor_Page
         (Kernel,
-         Project  => No_Project,
-         Path     => Get_Path_Widget (Name_And_Loc),
-         Context  => Context,
-         Callback => Add_Page'Access);
+         Project   => No_Project,
+         Path      => Get_Path_Widget (Name_And_Loc),
+         Read_Only => False,
+         Context   => Context,
+         Callback  => Add_Page'Access);
 
       P := Get_All_Naming_Scheme_Page (Kernel);
-      P.Initialize (Kernel, No_Project);
+      P.Initialize (Kernel, Read_Only => False, Project => No_Project);
       Add_Page ("Naming scheme", P);
 
       P := Switches_Editor_For_All_Tools_Factory (Kernel);
-      P.Initialize (Kernel, No_Project);
+      P.Initialize (Kernel, Read_Only => False, Project => No_Project);
       Add_Page ("Switches", P);
    end Add_Full_Wizard_Pages;
 

@@ -742,8 +742,8 @@ package body Switches_Chooser is
       ----------------
 
       procedure Initialize
-        (Editor : in out Root_Switches_Editor;
-         Config : Switches_Editor_Config)
+        (Editor    : in out Root_Switches_Editor;
+         Config    : Switches_Editor_Config)
       is
       begin
          Set_Configuration (Editor.Cmd_Line, Config.Config);

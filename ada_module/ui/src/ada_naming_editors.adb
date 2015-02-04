@@ -104,6 +104,7 @@ package body Ada_Naming_Editors is
    overriding procedure Initialize
      (Self         : not null access Ada_Naming_Editor_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project)
    is
       Size_Group   : Gtk_Size_Group;
@@ -113,9 +114,21 @@ package body Ada_Naming_Editors is
 
       Gtk_New (Self.GUI);
 
+      Self.GUI.Unit_Name_Entry.Set_Sensitive (not Read_Only);
       Set_Width_Chars (Self.GUI.Unit_Name_Entry, 8);
+
+      Self.GUI.Spec_Filename_Entry.Set_Sensitive (not Read_Only);
       Set_Width_Chars (Self.GUI.Spec_Filename_Entry, 8);
+
+      Self.GUI.Body_Filename_Entry.Set_Sensitive (not Read_Only);
       Set_Width_Chars (Self.GUI.Body_Filename_Entry, 8);
+
+      Self.GUI.Standard_Scheme.Set_Sensitive (not Read_Only);
+      Self.GUI.Dot_Replacement.Set_Sensitive (not Read_Only);
+      Self.GUI.Spec_Extension.Set_Sensitive (not Read_Only);
+      Self.GUI.Body_Extension.Set_Sensitive (not Read_Only);
+      Self.GUI.Separate_Extension.Set_Sensitive (not Read_Only);
+      Self.GUI.Update.Set_Sensitive (not Read_Only);
 
       Set_Size_Request (Self.GUI.Exception_List, -1, 170);
       Gtk_New (Size_Group, Both);

@@ -56,6 +56,7 @@ package body Foreign_Naming_Editors is
    overriding procedure Initialize
      (Self         : not null access Foreign_Naming_Editor_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project)
    is
       Display_Exceptions : constant Boolean := True;
@@ -84,6 +85,7 @@ package body Foreign_Naming_Editors is
       Box.Pack_Start (Label);
 
       Gtk_New_With_Entry (Self.Spec_Ext);
+      Self.Spec_Ext.Set_Sensitive (not Read_Only);
       Self.Spec_Ext.Set_Entry_Text_Column (0);
       Box.Pack_Start (Self.Spec_Ext);
       Self.Spec_Ext.Append_Text (".h");
@@ -100,6 +102,7 @@ package body Foreign_Naming_Editors is
       Box.Pack_Start (Label);
 
       Gtk_New_With_Entry (Self.Body_Ext);
+      Self.Body_Ext.Set_Sensitive (not Read_Only);
       Self.Body_Ext.Set_Entry_Text_Column (0);
       Box.Pack_Start (Self.Body_Ext);
       Self.Body_Ext.Append_Text (".c");

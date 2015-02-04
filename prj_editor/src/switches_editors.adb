@@ -83,6 +83,7 @@ package body Switches_Editors is
    overriding procedure Initialize
      (Self         : not null access Switches_Editor_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project);
    overriding function Edit_Project
      (Self               : not null access Switches_Editor_Page_Record;
@@ -145,6 +146,7 @@ package body Switches_Editors is
    overriding procedure Initialize
      (Self         : not null access Switches_Editor_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project)
    is
       pragma Unreferenced (Kernel);
@@ -160,6 +162,7 @@ package body Switches_Editors is
         (Editor             => Self.Switches,
          Config             => Self.Tool.Config,
          Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref,
+         Read_Only          => Read_Only,
          History            => null,
          Key                => No_Key);
       Self.Pack_Start (Self.Switches, Fill => True, Expand => True);
@@ -599,7 +602,7 @@ package body Switches_Editors is
       Page := All_Tools_Switch_Editor
         (Switches_Editor_For_All_Tools_Factory (Kernel, Files));
       Page.Project := Project;
-      Page.Initialize (Kernel, Project);
+      Page.Initialize (Kernel, Read_Only => False, Project => Project);
       Box.Pack_Start (Page, Fill => True, Expand => True);
 
       Gtk_New (Selector, Kernel);

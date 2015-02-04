@@ -88,9 +88,10 @@ package body Switches_Chooser.Scripts is
             Node                => Xml);
          Switches_Chooser.Gtkada.Gtk_New
            (Editor, Config,
-            Use_Native_Dialogs.Get_Pref,
-            null,
-            Histories.No_Key);
+            Use_Native_Dialogs => Use_Native_Dialogs.Get_Pref,
+            Read_Only          => False,
+            History            => null,
+            Key                => Histories.No_Key);
 
          GNATCOLL.Scripts.Gtkada.Set_Data
            (Inst, GObject (Editor));

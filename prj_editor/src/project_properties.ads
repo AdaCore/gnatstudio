@@ -55,11 +55,12 @@ package Project_Properties is
    -----------------------
 
    procedure For_Each_Project_Editor_Page
-     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project  : Project_Type;
-      Path     : not null access Gtk.GEntry.Gtk_Entry_Record'Class;
-      Context  : String := "properties";
-      Callback : not null access procedure
+     (Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project   : Project_Type;
+      Path      : not null access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Context   : String := "properties";
+      Read_Only : Boolean;
+      Callback  : not null access procedure
         (Title : String;
          Page  : not null access Project_Editor_Page_Record'Class));
    --  For each project editor page.

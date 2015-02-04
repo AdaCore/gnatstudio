@@ -35,12 +35,14 @@ package Switches_Chooser.Gtkada is
      (Editor             : out Switches_Editor;
       Config             : Switches_Editor_Config;
       Use_Native_Dialogs : Boolean;
+      Read_Only          : Boolean;
       History            : Histories.History;
       Key                : History_Key);
    procedure Initialize
      (Editor             : access Switches_Editor_Record'Class;
       Config             : Switches_Editor_Config;
       Use_Native_Dialogs : Boolean;
+      Read_Only          : Boolean;
       History            : Histories.History;
       Key                : History_Key);
    --  Create a new switches editor based on Config.
@@ -69,6 +71,7 @@ private
    with record
       Native_Dialogs : Boolean;
       Ent            : Gtk.GEntry.Gtk_Entry;
+      Read_Only      : Boolean;
    end record;
 
 end Switches_Chooser.Gtkada;

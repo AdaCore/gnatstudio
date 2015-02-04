@@ -122,6 +122,9 @@ package body Project_Properties is
    Column_Path          : constant := 3;  --  e.g. 'Naming/Ada' (testsuite)
    --  The contents of the tree model that describes all the pages.
 
+   Response_Edit : constant Gtk_Response_Type := 1;
+   --  Response from a dialog to edit the source file
+
    -----------------------
    -- Properties module --
    -----------------------
@@ -166,6 +169,7 @@ package body Project_Properties is
       Project     : Project_Type;
       Attr        : Editable_Attribute_Description_Access;
       Size_Group  : in out Gtk_Size_Group;
+      Read_Only   : Boolean;
       Path_Widget : Gtk_Entry;
       Widget      : out Gtk_Widget;
       Expandable  : out Boolean;
@@ -391,6 +395,7 @@ package body Project_Properties is
    overriding procedure Initialize
      (Self         : not null access General_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project);
    overriding function Edit_Project
      (Self               : not null access General_Page_Record;
@@ -430,13 +435,15 @@ package body Project_Properties is
    procedure Gtk_New
      (Editor  : out Properties_Editor;
       Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class);
+      Kernel  : access Kernel_Handle_Record'Class;
+      Read_Only : Boolean);
    --  Create a new properties editor
 
    procedure Initialize
      (Editor  : access Properties_Editor_Record'Class;
       Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class);
+      Kernel  : access Kernel_Handle_Record'Class;
+      Read_Only : Boolean);
    --  Internal initialization function
 
    procedure On_Languages_Change
@@ -498,18 +505,6 @@ package body Project_Properties is
 
    function Paths_Are_Relative (Project : Project_Type) return Boolean;
    --  Return True if the paths in the project should be relative paths
-
-   type Project_Edition_Type is (Do_Not_Edit, Edit_File, Edit_Properties);
-
-   function Warning_Cannot_Edit
-     (Kernel             : access Kernel_Handle_Record'Class;
-      Message            : String;
-      Always_Load_Source : Boolean) return Project_Edition_Type;
-   --  Display a warning dialog to indicate that the current view is
-   --  incomplete, and it might be dangereous to edit the properties.
-   --  If Always_Load_Source is True, [Open] will always open the source file,
-   --  not the project properties. Otherwise, the user has a choice between the
-   --  two.
 
    function Select_Files_Or_Directories
      (Toplevel       : access Gtk_Window_Record'Class;
@@ -611,6 +606,7 @@ package body Project_Properties is
    overriding procedure Initialize
      (Self         : not null access XML_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project);
    overriding function Edit_Project
      (Self               : not null access XML_Page_Record;
@@ -1648,10 +1644,11 @@ package body Project_Properties is
    procedure Gtk_New
      (Editor  : out Properties_Editor;
       Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class) is
+      Kernel  : access Kernel_Handle_Record'Class;
+      Read_Only : Boolean) is
    begin
       Editor := new Properties_Editor_Record;
-      Initialize (Editor, Project, Kernel);
+      Initialize (Editor, Project, Kernel, Read_Only);
    end Gtk_New;
 
    ----------------------
@@ -1672,9 +1669,10 @@ package body Project_Properties is
    ----------------
 
    overriding procedure Initialize
-     (Self         : not null access General_Page_Record;
-      Kernel       : not null access Kernel_Handle_Record'Class;
-      Project      : Project_Type := No_Project)
+     (Self      : not null access General_Page_Record;
+      Kernel    : not null access Kernel_Handle_Record'Class;
+      Read_Only : Boolean;
+      Project   : Project_Type := No_Project)
    is
       pragma Unreferenced (Kernel);
       Button2   : Gtk_Button;
@@ -1717,6 +1715,7 @@ package body Project_Properties is
          (-"Only applies to the project you selected initially"));
 
       Gtk_New (Self.Name);
+      Self.Name.Set_Sensitive (not Read_Only);
       Set_Width_Chars (Self.Name, 0);
       Set_Text (Self.Name, Project.Name);
       Pack_Start (Hbox, Self.Name, Expand => True);
@@ -1739,17 +1738,20 @@ package body Project_Properties is
            & " the project you selected initially"));
 
       Gtk_New (Self.Path);
+      Self.Path.Set_Sensitive (not Read_Only);
       Set_Width_Chars (Self.Path, 0);
       Set_Text (Self.Path, Display_Full_Name (Project_Directory (Project)));
       Pack_Start (Hbox, Self.Path, Expand => True);
 
       Gtk_New (Button2, -"Browse");
+      Button2.Set_Sensitive (not Read_Only);
       Pack_Start (Hbox, Button2, Expand => False);
       Widget_Callback.Object_Connect
         (Button2, Gtk.Button.Signal_Clicked, Browse_Location'Access,
          Slot_Object => Self.Path);
 
       Gtk_New (Self.Use_Relative_Paths, -"Paths should be relative paths");
+      Self.Use_Relative_Paths.Set_Sensitive (not Read_Only);
       Set_Active
         (Self.Use_Relative_Paths, Paths_Are_Relative (Project));
       Pack_Start (Box, Self.Use_Relative_Paths);
@@ -3462,6 +3464,7 @@ package body Project_Properties is
       Project     : Project_Type;
       Attr        : Editable_Attribute_Description_Access;
       Size_Group  : in out Gtk_Size_Group;
+      Read_Only   : Boolean;
       Path_Widget : Gtk_Entry;
       Widget      : out Gtk_Widget;
       Expandable  : out Boolean;
@@ -3540,6 +3543,7 @@ package body Project_Properties is
          Set_Border_Width (Align, 0);
          Pack_Start (Vbox, Align, Expand => False, Fill => False);
          Gtk_New (Check, "");
+         Check.Set_Sensitive (not Read_Only);
          Add (Align, Check);
          Set_Active (Check, Exists);
          Attribute_Handler.Connect
@@ -3594,17 +3598,15 @@ package body Project_Properties is
       Attribute_Handler.Connect
         (Attr.Editor, Signal_Destroy, Editor_Destroyed'Access, Attr);
 
-      if Attr.Editor /= null then
-         Pack_Start (Box, Attr.Editor, Expand => True, Fill => True);
-         if Attr.Description /= null
-           and then Attr.Description.all /= ""
-         then
-            Set_Tooltip_Text (Attr.Editor, Attr.Description.all);
-         end if;
-
-         Attr.Editor.Active_Check := Check;
-         Set_Sensitive (Attr.Editor, Exists);
+      Pack_Start (Box, Attr.Editor, Expand => True, Fill => True);
+      if Attr.Description /= null
+        and then Attr.Description.all /= ""
+      then
+         Set_Tooltip_Text (Attr.Editor, Attr.Description.all);
       end if;
+
+      Attr.Editor.Active_Check := Check;
+      Attr.Editor.Set_Sensitive (Exists and then not Read_Only);
 
       Widget := Gtk_Widget (Box);
       Expandable := Attr.Indexed or else Attr.Is_List;
@@ -3749,11 +3751,12 @@ package body Project_Properties is
    ----------------------------------
 
    procedure For_Each_Project_Editor_Page
-     (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Project  : Project_Type;
-      Path     : not null access Gtk_Entry_Record'Class;
-      Context  : String := "properties";
-      Callback : not null access procedure
+     (Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Project   : Project_Type;
+      Path      : not null access Gtk_Entry_Record'Class;
+      Context   : String := "properties";
+      Read_Only : Boolean;
+      Callback  : not null access procedure
         (Title : String;
          Page  : not null access Project_Editor_Page_Record'Class))
    is
@@ -3769,7 +3772,7 @@ package body Project_Properties is
                   XML_Page.Descr := Properties_Module_ID.Pages (P);
                   XML_Page.Path := Gtk_GEntry (Path);
                   XML_Page.Context := new String'(Context);
-                  XML_Page.Initialize (Kernel, Project);
+                  XML_Page.Initialize (Kernel, Read_Only, Project);
 
                   if not XML_Page.Has_Contents then
                      --  Not needed after all, no attribute is displayed
@@ -3822,7 +3825,8 @@ package body Project_Properties is
    procedure Initialize
      (Editor  : access Properties_Editor_Record'Class;
       Project : Project_Type;
-      Kernel  : access Kernel_Handle_Record'Class)
+      Kernel  : access Kernel_Handle_Record'Class;
+      Read_Only : Boolean)
    is
       Label            : Gtk_Label;
       Button           : Gtk_Widget;
@@ -3884,40 +3888,57 @@ package body Project_Properties is
       Gtk_New_Vbox (Editor.Current_Page);
       Table.Attach (Editor.Current_Page, 1, 2, 0, 1);
 
-      Gtk_New_Vbox (Box, Homogeneous => False);
-      Table.Attach (Box, 2, 3, 0, 1, Xoptions => Fill);
+      if not Read_Only then
+         Gtk_New_Vbox (Box, Homogeneous => False);
+         Table.Attach (Box, 2, 3, 0, 1, Xoptions => Fill);
 
-      Gtk_New (Label, -"Apply changes to:");
-      Set_Alignment (Label, 0.0, 0.0);
-      Pack_Start (Box, Label, Expand => False);
+         Gtk_New (Label, -"Apply changes to:");
+         Set_Alignment (Label, 0.0, 0.0);
+         Pack_Start (Box, Label, Expand => False);
 
-      Gtk_New (Editor.Prj_Selector, Kernel, Project);
-      Pack_Start (Box, Editor.Prj_Selector, Expand => True, Fill => True);
+         Gtk_New (Editor.Prj_Selector, Kernel, Project);
+         Pack_Start (Box, Editor.Prj_Selector, Expand => True, Fill => True);
 
-      Gtk_New (Editor.Selector, Kernel);
-      Pack_Start (Box, Editor.Selector, Expand => True, Fill => True);
+         Gtk_New (Editor.Selector, Kernel);
+         Pack_Start (Box, Editor.Selector, Expand => True, Fill => True);
+      end if;
 
       Editor.Project := Project;
       Editor.Kernel  := Kernel_Handle (Kernel);
 
-      Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
-      Show (Button);
-      Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
-      Show (Button);
+      if Read_Only then
+         Gtk_New
+           (Label,
+            -"Cannot edit graphically");
+         Label.Set_Tooltip_Text
+           (-"Statements such as ""Var := ..."" prevent graphical editing."
+            & ASCII.LF
+            & (-"Aggregate projects also cannot be edited graphically"));
+         Editor.Get_Action_Area.Pack_Start
+           (Label, Expand => False, Fill => False);
+      end if;
+
+      Button := Editor.Add_Button (-"Edit Source", Response_Edit);
+      Button.Set_Tooltip_Text
+        ("Close this dialog and edit the source file for this project");
+
+      Button := Editor.Add_Button (Stock_Ok, Gtk_Response_OK);
+      Button.Set_Sensitive (not Read_Only);
+      Button := Editor.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
 
       Editor.General_Page := new General_Page_Record;
-      Editor.General_Page.Initialize (Kernel, Project);
+      Editor.General_Page.Initialize (Kernel, Read_Only, Project);
       Editor.Find_Or_Create_Page (-"General", Editor.General_Page);
 
       Editor.Languages_Editor := new Languages_Page_Record;
-      Editor.Languages_Editor.Initialize (Kernel, Project);
+      Editor.Languages_Editor.Initialize (Kernel, Read_Only, Project);
       Editor.Languages_Editor.When_Languages_Change
         (Editor, On_Languages_Change'Access);
       Editor.Find_Or_Create_Page
         (-"Sources/Languages", Editor.Languages_Editor);
 
       P := new Toolchain_Page_Record;
-      P.Initialize (Kernel, Project);
+      P.Initialize (Kernel, Read_Only, Project);
       Editor.Find_Or_Create_Page (-"Build/Toolchain", P);
 
       declare
@@ -3933,9 +3954,10 @@ package body Project_Properties is
       begin
          For_Each_Project_Editor_Page
            (Kernel,
-            Project  => Project,
-            Path     => Editor.General_Page.Path,
-            Callback => Callback'Access);
+            Project   => Project,
+            Path      => Editor.General_Page.Path,
+            Read_Only => Read_Only,
+            Callback  => Callback'Access);
       end;
 
       --  Add the switches and naming pages
@@ -3952,7 +3974,7 @@ package body Project_Properties is
               (Tool           => Tools (T),
                Tool_From_Name => Tool_From_Name);
             if Page /= null then
-               Page.Initialize (Kernel, Project);
+               Page.Initialize (Kernel, Read_Only, Project);
                Editor.Find_Or_Create_Page
                  ("Build/Switches/" & Tools (T).Tool_Name.all, Page);
             end if;
@@ -3967,7 +3989,7 @@ package body Project_Properties is
          for L in Languages'Range loop
             Page := Get_Naming_Scheme_Page (Kernel, Languages (L).all);
             if Page /= null then
-               Page.Initialize (Kernel, Project);
+               Page.Initialize (Kernel, Read_Only, Project);
                Editor.Find_Or_Create_Page
                  ("Sources/Naming/" & Languages (L).all, Page);
             end if;
@@ -3975,7 +3997,7 @@ package body Project_Properties is
          Free (Languages);
       end;
 
-      Show_All (Editor);
+      Editor.Show_All;
       Editor.Tree.Expand_All;
 
       On_Languages_Change (Editor, "");
@@ -4070,6 +4092,7 @@ package body Project_Properties is
    overriding procedure Initialize
      (Self         : not null access XML_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project)
    is
       Attr         : Editable_Attribute_Description_Access;
@@ -4097,6 +4120,7 @@ package body Project_Properties is
                Project,
                Attr,
                Size,
+               Read_Only   => Read_Only,
                Path_Widget => Self.Path,
                Widget      => W,
                Expandable  => W_Expandable,
@@ -4266,70 +4290,15 @@ package body Project_Properties is
             Self.Current_Page.Pack_Start (Page, Expand => True, Fill => True);
             Page.Show_All;
 
-            Set_Sensitive
-              (Self.Prj_Selector, (Page.Flags and Multiple_Projects) /= 0);
-            Set_Sensitive
-              (Self.Selector, (Page.Flags and Multiple_Scenarios) /= 0);
+            if Self.Prj_Selector /= null then
+               Set_Sensitive
+                 (Self.Prj_Selector, (Page.Flags and Multiple_Projects) /= 0);
+               Set_Sensitive
+                 (Self.Selector, (Page.Flags and Multiple_Scenarios) /= 0);
+            end if;
          end if;
       end if;
    end On_Selection_Changed;
-
-   -------------------------
-   -- Warning_Cannot_Edit --
-   -------------------------
-
-   function Warning_Cannot_Edit
-     (Kernel             : access Kernel_Handle_Record'Class;
-      Message            : String;
-      Always_Load_Source : Boolean) return Project_Edition_Type
-   is
-      D : Gtk_Dialog;
-      L : Gtk_Label;
-      C : Gtk_Check_Button;
-
-      Ignore : Gtk_Widget;
-      pragma Unreferenced (Ignore);
-   begin
-      Gtk_New (D,
-               Title  => -"Project had errors",
-               Parent => Get_Main_Window (Kernel),
-               Flags  => Modal);
-
-      Gtk_New (L, Message);
-      Set_Alignment (L, 0.0, 0.5);
-      Pack_Start (Get_Content_Area (D), L, Expand => True, Fill => True);
-
-      if not Always_Load_Source then
-         Gtk_New (C, -"Edit the project file");
-         Set_Active (C, True);
-         Pack_End (Get_Content_Area (D), C, Expand => False);
-      end if;
-
-      if Always_Load_Source then
-         Ignore := Add_Button (D, -"Open Source",   Gtk_Response_OK);
-      else
-         Ignore := Add_Button (D, Stock_Open,   Gtk_Response_OK);
-      end if;
-
-      Ignore := Add_Button (D, Stock_Cancel, Gtk_Response_Cancel);
-
-      Show_All (D);
-
-      case Run (D) is
-         when Gtk_Response_OK =>
-            if Always_Load_Source or else Get_Active (C) then
-               Destroy (D);
-               return Edit_File;
-            else
-               Destroy (D);
-               return Edit_Properties;
-            end if;
-
-         when others =>
-            Destroy (D);
-            return Do_Not_Edit;
-      end case;
-   end Warning_Cannot_Edit;
 
    --------------
    -- Is_Valid --
@@ -4408,136 +4377,93 @@ package body Project_Properties is
          Insert (Kernel, Msg);
       end Report_Error;
 
-      Editor                   : Properties_Editor;
-      Changed                  : Boolean := False;
-      Response                 : Gtk_Response_Type;
-      Ignore                   : Message_Dialog_Buttons;
+      Editor   : Properties_Editor;
+      Changed  : Boolean := False;
+      Ignore   : Message_Dialog_Buttons;
+      Response : Gtk_Response_Type;
       pragma Unreferenced (Ignore);
 
-      Incomplete : constant String := -"The project """
-        & Project.Name
-        & (-(""" contained errors, and was incorrectly"
-        & ASCII.LF
-        & "loaded by GPS. Editing it through the project properties"
-        & ASCII.LF
-        & "dialog might result in a loss of data."));
-
-      Had_Errors : constant String := -"The project """
-        & Project.Name
-        & (-(""" cannot be edited (it might be using statements"
-        & ASCII.LF
-        & "which GPS cannot edit graphically, such as ""Var := ..."""));
-
-      Aggregate : constant String := -"The project """
-        & Project.Name
-        & (-(""" is an aggregate project." & ASCII.LF
-             & "These are not editable graphically."));
-
+      Read_Only : constant Boolean :=
+        Project.Is_Aggregate_Project
+        or else not Project.Is_Editable;
    begin
-      if Project.Is_Aggregate_Project then
-         if Warning_Cannot_Edit (Kernel, Aggregate, True) = Edit_File then
-            Open_File_Editor (Kernel, Project.Project_Path, Project);
-         end if;
-         return;
-
-      elsif not Is_Editable (Project) then
-         case Warning_Cannot_Edit (Kernel, Had_Errors, True) is
-            when Do_Not_Edit | Edit_Properties =>
-               null;
-
-            when Edit_File =>
-               Open_File_Editor (Kernel, Project.Project_Path, Project);
-         end case;
-
-         return;
-      end if;
-
-      --  ??? We used to check View_Is_Complete (Project), but this attribute
-      --  is now hidden and its semantic is in fact not quite clear
-      if not Project.Is_Editable then
-         case Warning_Cannot_Edit (Kernel, Incomplete, False) is
-            when Do_Not_Edit =>
-               return;
-
-            when Edit_File =>
-               Open_File_Editor (Kernel, Project.Project_Path, Project);
-               return;
-
-            when Edit_Properties =>
-               null;
-         end case;
-      end if;
-
       Run_Hook (Kernel, Project_Editor_Hook);
-      Gtk_New (Editor, Project, Kernel);
+      Gtk_New (Editor, Project, Kernel, Read_Only => Read_Only);
 
       loop
-         Response := Run (Editor);
-
-         exit when Response /= Gtk_Response_OK;
-
-         declare
-            Failed : Boolean := False;
-
-            procedure Check_Page
-              (Page : not null access Project_Editor_Page_Record'Class);
-            procedure Check_Page
-              (Page : not null access Project_Editor_Page_Record'Class)
-            is
-               Error : constant String := Page.Is_Valid;
-            begin
-               if not Failed and then Error /= "" then
-                  Ignore := Message_Dialog
-                    (Msg         => Error,
-                     Buttons     => Button_OK,
-                     Dialog_Type => Gtkada.Dialogs.Error,
-                     Title       => -"Error",
-                     Parent      => Get_Current_Window (Kernel));
-                  Failed := True;
-               end if;
-            end Check_Page;
-
-         begin
-            Editor.For_Each_Page
-              (Check_Page'Unrestricted_Access, Visible_Only => True);
-
-            if Failed then
-               null;
-            else
+         Response := Editor.Run;
+         case Response is
+            when Response_Edit =>
+               Open_File_Editor (Kernel, Project.Project_Path, Project);
+               exit;
+            when Gtk_Response_OK =>
                declare
-                  New_Name : constant String :=
-                    Get_Safe_Text (Editor.General_Page.Name);
-                  New_Base : constant Filesystem_String :=
-                    To_File_Name (+New_Name);
-                  New_Path : constant Virtual_File := Create_From_UTF8
-                    (Get_Safe_Text (Editor.General_Page.Path));
-                  New_File : constant Virtual_File :=
-                    Create_From_Dir
-                      (New_Path,
-                       New_Base & GNATCOLL.Projects.Project_File_Extension);
+                  Failed : Boolean := False;
+
+                  procedure Check_Page
+                    (Page : not null access Project_Editor_Page_Record'Class);
+                  procedure Check_Page
+                    (Page : not null access Project_Editor_Page_Record'Class)
+                  is
+                     Error : constant String := Page.Is_Valid;
+                  begin
+                     if not Failed and then Error /= "" then
+                        Ignore := Message_Dialog
+                          (Msg         => Error,
+                           Buttons     => Button_OK,
+                           Dialog_Type => Gtkada.Dialogs.Error,
+                           Title       => -"Error",
+                           Parent      => Get_Current_Window (Kernel));
+                        Failed := True;
+                     end if;
+                  end Check_Page;
 
                begin
-                  if (New_Name /= Project.Name
-                      or else New_Path /= Project_Directory (Project))
-                    and then Is_Regular_File (New_File)
-                  then
-                     exit when Message_Dialog
-                       (New_File.Display_Full_Name
-                        & (-" already exists. Do you want to overwrite ?"),
-                        Buttons     => Button_Yes or Button_No,
-                        Dialog_Type => Gtkada.Dialogs.Error,
-                        Title       => -"Error",
-                        Parent      =>
-                          Get_Current_Window (Kernel)) = Button_Yes;
+                  Editor.For_Each_Page
+                    (Check_Page'Unrestricted_Access, Visible_Only => True);
+
+                  if Failed then
+                     null;
                   else
-                     exit;
+                     declare
+                        New_Name : constant String :=
+                          Get_Safe_Text (Editor.General_Page.Name);
+                        New_Base : constant Filesystem_String :=
+                          To_File_Name (+New_Name);
+                        New_Path : constant Virtual_File := Create_From_UTF8
+                          (Get_Safe_Text (Editor.General_Page.Path));
+                        New_File : constant Virtual_File :=
+                          Create_From_Dir
+                            (New_Path,
+                             New_Base
+                             & GNATCOLL.Projects.Project_File_Extension);
+
+                     begin
+                        if (New_Name /= Project.Name
+                            or else New_Path /= Project_Directory (Project))
+                          and then Is_Regular_File (New_File)
+                        then
+                           exit when Message_Dialog
+                             (New_File.Display_Full_Name &
+                              (-" already exists. Do you want to overwrite ?"),
+                              Buttons     => Button_Yes or Button_No,
+                              Dialog_Type => Gtkada.Dialogs.Error,
+                              Title       => -"Error",
+                              Parent      =>
+                                Get_Current_Window (Kernel)) = Button_Yes;
+                        else
+                           exit;
+                        end if;
+                     end;
                   end if;
                end;
-            end if;
-         end;
+
+            when others =>
+               exit;
+         end case;
       end loop;
 
-      if Response = Gtk_Response_OK then
+      if not Read_Only and then Response = Gtk_Response_OK then
          declare
             Prj_Iter    : Scenario_Selectors.Project_Iterator :=
                             Start (Editor.Prj_Selector);

@@ -961,11 +961,12 @@ among the ones that pop up.
 Across sessions, GPS will remember the values you set for scenario variables.
 On startup, the initial values for the scenario variables comes, in
 decreasing order of priority:
-   - from the :file:`-X` command line arguments;
-   - from existing environment variables;
-   - from the value you set in a previous GPS session;
-   - from the default set in the project file;
-   - or else defaults to the first valid value for this variable
+
+* from the :file:`-X` command line arguments;
+* from existing environment variables;
+* from the value you set in a previous GPS session;
+* from the default set in the project file;
+* or else defaults to the first valid value for this variable
 
 Whenever you change the value of any variable, GPS automatically recomputes
 the project and dynamically changes the list of source files and

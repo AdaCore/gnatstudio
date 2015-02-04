@@ -107,18 +107,18 @@ package body Switches_Chooser.Gtkada is
    --  Open a dialog to select a directory or a file
 
    procedure Create_Box_For_Popup
-     (Editor             : access Switches_Editor_Record'Class;
-      Popup              : Popup_Index;
-      Table              : access Gtk_Table_Record'Class;
-      Lines, Columns     : Positive);
+     (Editor         : access Switches_Editor_Record'Class;
+      Popup          : Popup_Index;
+      Table          : access Gtk_Table_Record'Class;
+      Lines, Columns : Positive);
    --  Create, inside Table, the frames that contain the switches associated
    --  with the given popup (or main window).
 
    procedure Create_Widget
-     (Editor   : access Switches_Editor_Record'Class;
-      Switch   : Switch_Description_Vectors.Cursor;
-      Size     : Gtk_Size_Group;
-      Box      : Gtk_Box);
+     (Editor    : access Switches_Editor_Record'Class;
+      Switch    : Switch_Description_Vectors.Cursor;
+      Size      : Gtk_Size_Group;
+      Box       : Gtk_Box);
    --  Create and register the widget matching S
 
    procedure Set_Tooltip
@@ -439,10 +439,10 @@ package body Switches_Chooser.Gtkada is
    -------------------
 
    procedure Create_Widget
-     (Editor   : access Switches_Editor_Record'Class;
-      Switch   : Switch_Description_Vectors.Cursor;
-      Size     : Gtk_Size_Group;
-      Box      : Gtk_Box)
+     (Editor    : access Switches_Editor_Record'Class;
+      Switch    : Switch_Description_Vectors.Cursor;
+      Size      : Gtk_Size_Group;
+      Box       : Gtk_Box)
    is
       S : constant Switch_Description := Element (Switch);
       Check    : Gtkada_Check_Button;
@@ -477,6 +477,7 @@ package body Switches_Chooser.Gtkada is
       case S.Typ is
          when Switch_Check =>
             Gtk_New    (Check, To_String (S.Label), S.Default_State);
+            Check.Set_Sensitive (not Editor.Read_Only);
             Pack_Start (Box, Check, Expand => False, Padding => 0);
             Set_Tooltip (Editor, Check, Switch, S);
             User_Widget_Callback.Connect
@@ -486,6 +487,7 @@ package body Switches_Chooser.Gtkada is
 
          when Switch_Field =>
             Gtk_New (Field);
+            Field.Set_Sensitive (not Editor.Read_Only);
             Set_Tooltip (Editor, Field, Switch, S);
             Pack_Start (Hbox, Field, True, True, 0);
             User_Widget_Callback.Connect
@@ -495,6 +497,7 @@ package body Switches_Chooser.Gtkada is
 
             if S.As_File then
                Gtk_New (Button, -"Browse");
+               Button.Set_Sensitive (not Editor.Read_Only);
                Pack_Start (Hbox, Button, Expand => False, Padding => 0);
                User_Widget_Callback.Object_Connect
                  (Button, Signal_Clicked, Browse_File'Access,
@@ -503,6 +506,7 @@ package body Switches_Chooser.Gtkada is
 
             elsif S.As_Directory then
                Gtk_New (Button, -"Browse");
+               Button.Set_Sensitive (not Editor.Read_Only);
                Pack_Start (Hbox, Button, Expand => False, Padding => 0);
                User_Widget_Callback.Object_Connect
                  (Button, Signal_Clicked,
@@ -516,6 +520,7 @@ package body Switches_Chooser.Gtkada is
                      Gdouble (S.Min), Gdouble (S.Max),
                      1.0, 10.0);
             Gtk_New (Spin, Adj, 1.0, 0);
+            Spin.Set_Sensitive (not Editor.Read_Only);
             Set_Tooltip (Editor, Spin, Switch, S);
             Pack_Start (Hbox, Spin, True, True, 0);
 
@@ -538,6 +543,7 @@ package body Switches_Chooser.Gtkada is
                         Gtk_New
                           (Radio, Group => Radio,
                            Label => To_String (S2.Label));
+                        Radio.Set_Sensitive (not Editor.Read_Only);
                         Pack_Start (Box, Radio, Expand => False, Padding => 0);
                         Set_Tooltip (Editor, Radio, Switch2, S2);
                         User_Widget_Callback.Connect
@@ -553,6 +559,7 @@ package body Switches_Chooser.Gtkada is
 
          when Switch_Combo =>
             Gtk_New (Combo);
+            Combo.Set_Sensitive (not Editor.Read_Only);
             Set_Tooltip (Editor, Combo, Switch, S);
             Pack_Start (Hbox, Combo, True, True, Padding => 0);
 
@@ -769,11 +776,12 @@ package body Switches_Chooser.Gtkada is
      (Editor             : out Switches_Editor;
       Config             : Switches_Editor_Config;
       Use_Native_Dialogs : Boolean;
+      Read_Only          : Boolean;
       History            : Histories.History;
       Key                : History_Key) is
    begin
       Editor := new Switches_Editor_Record;
-      Initialize (Editor, Config, Use_Native_Dialogs, History, Key);
+      Initialize (Editor, Config, Use_Native_Dialogs, Read_Only, History, Key);
    end Gtk_New;
 
    ----------------
@@ -784,6 +792,7 @@ package body Switches_Chooser.Gtkada is
      (Editor             : access Switches_Editor_Record'Class;
       Config             : Switches_Editor_Config;
       Use_Native_Dialogs : Boolean;
+      Read_Only          : Boolean;
       History            : Histories.History;
       Key                : History_Key)
    is
@@ -793,6 +802,7 @@ package body Switches_Chooser.Gtkada is
       Table                   : Gtk_Table;
    begin
       Editor.Native_Dialogs := Use_Native_Dialogs;
+      Editor.Read_Only      := Read_Only;
 
       Initialize (Editor.all, Config);
       Gtk.Box.Initialize_Vbox (Editor);
@@ -829,6 +839,8 @@ package body Switches_Chooser.Gtkada is
          Widget_For_Command_Line := Gtk_Widget (Combo);
          Get_History (History.all, Key, Combo, False, False);
       end if;
+
+      Editor.Ent.Set_Sensitive (not Read_Only);
 
       if Config.Show_Command_Line then
          declare

@@ -61,6 +61,7 @@ package Project_Viewers is
    procedure Initialize
      (Self         : not null access Project_Editor_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project) is abstract;
    --  Initialize the widget based on the project's settings.
    --  Project might be set to No_Project when this function is called from a
@@ -133,6 +134,7 @@ package Project_Viewers is
    overriding procedure Initialize
      (Self         : not null access Project_Editor_Multi_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project);
    overriding function Edit_Project
      (Self               : not null access Project_Editor_Multi_Page_Record;

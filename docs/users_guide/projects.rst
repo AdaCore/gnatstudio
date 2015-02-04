@@ -541,15 +541,9 @@ This prevents the loading of the two GPS modules responsible for editing
 project files. However, this also has an impact on the Python functions
 that are exported by GPS and thus could break some plug-ins. Another
 possible solution is to hide the corresponding project editing menus and
-contextual menus.  You could do this by creating a simple Python plug-in for
-GPS (see :ref:`Customizing_through_XML_and_Python_files`), which contains
-the following code::
-
-  import GPS
-  GPS.Menu.get('/Project/Properties...').hide()
-  GPS.Contextual('Edit project properties').hide()
-  GPS.Contextual('Save project').hide()
-  GPS.Contextual('Add scenario variable').hide()
+contextual menus.  You could do this by enabling the
+:file:`prevent_project_edition.py` plug-in via the
+:menuselection:`Tools --> Plug-ins` menu.
 
 
 .. _The_Project_Menu:
@@ -1035,16 +1029,15 @@ Properties...` menu or the contextual menu :menuselection:`Properties`
 on any project item, e.g. from the :guilabel:`Project`
 views or the :guilabel:`Project` browser.
 
-If there was an error loading the project (such as invalid syntax or
-non-existing directories), GPS displays a warning dialog when you select
-the menu. This reminds you that the project might be only partially loaded,
-and editing it might result in the loss of data. In such cases, you should
-edit the project file manually, which you can do directly from the pop-up
-dialog.
+In some cases, GPS cannot edit your project graphically. It will still
+display a read-only version of the :guilabel:`Project Properties` dialog.
+This is the case, among others, when:
 
-Correct the errors in the project file by editing it as you would any text
-file and reload it manually (through the :menuselection:`Project -->
-Open...` or :menuselection:`Project --> Recent` menus).
+  - the project loaded with errors, such as invalid syntax or missing
+    directories;
+  - you are editing an aggregate project;
+  - the project was written manually before and uses advanced features
+    like variables (:samp:`Var := ...`).
 
 .. image:: project-properties.jpg
 

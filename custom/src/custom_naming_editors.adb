@@ -52,6 +52,7 @@ package body Custom_Naming_Editors is
    overriding procedure Initialize
      (Self         : not null access Custom_Naming_Editor_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project)
    is
       Extensions : String_List :=
@@ -84,6 +85,7 @@ package body Custom_Naming_Editors is
       Group.Add_Widget (Label);
 
       Gtk_New (Self.Spec_Extension);
+      Self.Spec_Extension.Set_Sensitive (not Read_Only);
       Self.Spec_Extension.Set_Tooltip_Text
         (-("File extension for specification files. These files are generally"
            & " not to be compiled. Leave this field empty if there are no"
@@ -98,6 +100,7 @@ package body Custom_Naming_Editors is
       Group.Add_Widget (Label);
 
       Gtk_New (Self.Impl_Extension);
+      Self.Impl_Extension.Set_Sensitive (not Read_Only);
       Self.Impl_Extension.Set_Tooltip_Text
         (-("File extension for implementation files. These files must"
             & " generally be compiled. Leave this field empty if there are no"
@@ -120,6 +123,7 @@ package body Custom_Naming_Editors is
             Group.Add_Widget (Label);
 
             Gtk_New (Ent);
+            Ent.Set_Sensitive (not Read_Only);
             Ent.Set_Text (Extensions (E).all & (-"  (cannot be changed)"));
             Ent.Set_Tooltip_Text
               (-("Extension defined in the GPS configuration files for this"

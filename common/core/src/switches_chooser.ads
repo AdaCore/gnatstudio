@@ -314,8 +314,8 @@ package Switches_Chooser is
       ------------------------------
 
       procedure Initialize
-        (Editor : in out Root_Switches_Editor;
-         Config : Switches_Editor_Config);
+        (Editor    : in out Root_Switches_Editor;
+         Config    : Switches_Editor_Config);
       --  Initialize the editor
 
       procedure Set_Widget

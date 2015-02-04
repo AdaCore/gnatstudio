@@ -39,6 +39,7 @@ package Toolchains_Editor is
    overriding procedure Initialize
      (Self         : not null access Languages_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project);
    overriding function Edit_Project
      (Self               : not null access Languages_Page_Record;
@@ -67,6 +68,7 @@ package Toolchains_Editor is
    overriding procedure Initialize
      (Self         : not null access Toolchain_Page_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
+      Read_Only    : Boolean;
       Project      : Project_Type := No_Project);
    overriding function Edit_Project
      (Self               : not null access Toolchain_Page_Record;
@@ -100,6 +102,7 @@ private
       Details_View    : Gtk_Table;
       Toolchain       : Toolchains.Toolchain := Toolchains.Null_Toolchain;
       Updating        : Boolean := False;
+      Read_Only       : Boolean := False;
       Edited_Prj      : GNATCOLL.Projects.Project_Type;
 
       Languages_Cache : GNAT.Strings.String_List_Access;

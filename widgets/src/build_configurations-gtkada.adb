@@ -468,9 +468,10 @@ package body Build_Configurations.Gtkada is
       Gtk_New
         (UI.Editor,
          UI.Target.Model.Switches,
-         False,
-         UI.History,
-         Target_To_Key (UI.Target));
+         Use_Native_Dialogs => False,
+         Read_Only          => False,
+         History            => UI.History,
+         Key                => Target_To_Key (UI.Target));
 
       --  Create the "current command" entry
 
