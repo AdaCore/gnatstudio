@@ -220,12 +220,14 @@ package body Src_Editor_Box.Tooltips is
             if Has_Info then
                if Icon /= null then
                   Gtk_New (Label, To_String (Content));
+                  Set_Use_Markup (Label, True);
                   return Gtk_Widget (Label);
                else
                   Gtk_New_Hbox (HBox, Homogeneous => False);
                   Gtk_New (Image, Icon);
                   HBox.Pack_Start (Image, Expand => False, Fill => False);
                   Gtk_New (Label, To_String (Content));
+                  Set_Use_Markup (Label, True);
                   HBox.Pack_Start (Label, Expand => True, Fill => True);
                   return Gtk_Widget (HBox);
                end if;
