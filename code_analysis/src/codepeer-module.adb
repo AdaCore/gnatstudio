@@ -1405,7 +1405,7 @@ package body CodePeer.Module is
                begin
                   for Check of Message.Checks loop
                      if Length (Aux) = 0 then
-                        Append (Aux, "(");
+                        Append (Aux, " (");
 
                      else
                         Append (Aux, ", ");
