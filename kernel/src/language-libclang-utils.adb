@@ -163,9 +163,8 @@ package body Language.Libclang.Utils is
          else
             Spawned_Exec := new String'(Gcc_Exec_On_Path.all);
             Args  := new GNAT.OS_Lib.Argument_List'
-              (new String'("-E"),
-               new String'("-o"),
-               new String'("-"),
+              (new String'("-xc"),
+               new String'("-E"),
                new String'("-v"),
                new String'("-"));
          end if;
