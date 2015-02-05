@@ -1386,10 +1386,18 @@ package body Completion_Module is
             declare
                Exp      : Parsed_Expression;
                It       : Gtk_Text_Iter;
+               Beg      : Gtk_Text_Iter;
                The_Text : String_Access;
                Ret      : Boolean;
             begin
                Get_Iter_At_Mark (Buffer, It, Get_Insert (Buffer));
+
+               --  Given the tokens that we are looking to complete,
+               --  only parse backwards the current line of code.
+
+               Copy (It, Beg);
+               Set_Line_Offset (Beg, 0);
+               The_Text := new String'(Buffer.Get_Text (Beg, It));
 
                Exp := Parse_Expression_Backward
                  (The_Text,
@@ -1426,6 +1434,9 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
+      function Char_Triggers_Auto_Completion return Boolean;
+      --  Return True iff the character being added is a completion trigger
+
       Buffer : constant Source_Buffer := Get_Focused_Buffer (Kernel);
       Lang   : constant Language.Language_Access
         := (if Buffer /= null then Buffer.Get_Language
@@ -1437,6 +1448,23 @@ package body Completion_Module is
       Is_Dynamic : constant Boolean :=
         Smart_Completion.Get_Pref = Dynamic
           and then Lang not in C_Lang | Cpp_Lang;
+
+      -----------------------------------
+      -- Char_Triggers_Auto_Completion --
+      -----------------------------------
+
+      function Char_Triggers_Auto_Completion return Boolean is
+         Char_Buffer  : Glib.UTF8_String (1 .. 6);
+         Last         : Natural;
+      begin
+         if Buffer = null then
+            return False;
+         end if;
+
+         Unichar_To_UTF8 (Edition_Data.Character, Char_Buffer, Last);
+         return Last = 1
+           and then Triggers_Auto_Completion (Buffer, Char_Buffer (Last));
+      end Char_Triggers_Auto_Completion;
 
    begin
       if Edition_Data.Character = 8 then
@@ -1455,35 +1483,43 @@ package body Completion_Module is
 
       if Is_Dynamic then
          declare
-            Buffer : constant Source_Buffer := Get_Focused_Buffer (Kernel);
             Dummy  : Boolean;
             pragma Unreferenced (Dummy);
          begin
             if Buffer /= null
               and then not Buffer.Is_Inserting_Internally
             then
+               if Char_Triggers_Auto_Completion then
+                  --  If we are hitting a completion trigger, remove
+                  --  immediately any window that might be present.
+                  --
+                  --  Otherwise the following might happen:
+                  --    completion window is up on
+                  --    - a character added -> Trigger_Timeout_Callback is
+                  --                           called (right here)
+                  --    - the completion window receives a cursor move
+                  --      and notices that the character is not an identifier
+                  --      character and decides to remove itself
+                  --
+                  --    -> the completion window is not shown for the
+                  --       trigger character.
+
+                  Remove_Completion;
+               end if;
+
                Dummy := Trigger_Timeout_Callback;
             end if;
          end;
       else
-         declare
-            Char_Buffer  : Glib.UTF8_String (1 .. 6);
-            Last         : Natural;
-         begin
-            Unichar_To_UTF8 (Edition_Data.Character, Char_Buffer, Last);
+         if Char_Triggers_Auto_Completion then
+            Completion_Module.Trigger_Timeout :=
+              Glib.Main.Timeout_Add
+                (Interval =>
+                   Guint (Smart_Completion_Trigger_Timeout.Get_Pref),
+                 Func     => Trigger_Timeout_Callback'Access);
 
-            if Last = 1
-              and then Triggers_Auto_Completion (Buffer, Char_Buffer (Last))
-            then
-               Completion_Module.Trigger_Timeout :=
-                 Glib.Main.Timeout_Add
-                   (Interval =>
-                      Guint (Smart_Completion_Trigger_Timeout.Get_Pref),
-                    Func     => Trigger_Timeout_Callback'Access);
-
-               Completion_Module.Has_Trigger_Timeout := True;
-            end if;
-         end;
+            Completion_Module.Has_Trigger_Timeout := True;
+         end if;
       end if;
 
    exception
