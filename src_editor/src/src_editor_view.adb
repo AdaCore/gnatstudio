@@ -210,7 +210,7 @@ package body Src_Editor_View is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Called when the view is destroyed
 
-   procedure Change_Handler
+   procedure Cursor_Position_Changed
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
       User   : Source_View);
@@ -787,11 +787,11 @@ package body Src_Editor_View is
          return False;
    end Idle_Column_Redraw;
 
-   --------------------
-   -- Change_Handler --
-   --------------------
+   -----------------------------
+   -- Cursor_Position_Changed --
+   -----------------------------
 
-   procedure Change_Handler
+   procedure Cursor_Position_Changed
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
       User   : Source_View)
@@ -821,7 +821,7 @@ package body Src_Editor_View is
       end if;
 
       User.Current_Line := Line;
-   end Change_Handler;
+   end Cursor_Position_Changed;
 
    ---------------------------
    -- Size_Allocated_Before --
@@ -1527,7 +1527,7 @@ package body Src_Editor_View is
 
       Source_Buffer_Callback.Connect
         (Buffer, Signal_Cursor_Position_Changed,
-         Cb        => Change_Handler'Access,
+         Cb        => Cursor_Position_Changed'Access,
          User_Data => Source_View (View),
          After     => True);
 
