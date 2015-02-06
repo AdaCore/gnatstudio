@@ -32,6 +32,7 @@ with GNATCOLL.Symbols;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
+with Language.Unknown;       use Language.Unknown;
 with Ada.Containers; use Ada.Containers;
 
 package Language.Tree.Database is
@@ -782,7 +783,7 @@ private
 
    type Structured_File is record
       File      : Virtual_File;
-      Lang      : Language_Access;
+      Lang      : Language_Access := Unknown_Lang;
       Tree_Lang : Tree_Language_Access;
 
       Timestamp : Integer := -1;

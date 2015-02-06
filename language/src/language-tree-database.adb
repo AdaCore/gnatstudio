@@ -27,7 +27,11 @@ with UTF8_Utils;        use UTF8_Utils;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Text_IO; use Ada.Text_IO;
 
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+
 package body Language.Tree.Database is
+
+   Me : constant Trace_Handle := Create ("Language.Tree.Database");
 
    procedure Internal_Update_Contents
      (File : Structured_File_Access; Purge : Boolean);
@@ -949,7 +953,13 @@ package body Language.Tree.Database is
          if This.File_Locked.Lock_Depth = 0
            and then This.File_Locked.Update_Locked
          then
-            Update_Contents (This.File_Locked);
+            begin
+               Update_Contents (This.File_Locked);
+            exception
+               when E : others =>
+                  --  needed to avoid inconsistent update_lock list.
+                  Trace (Me, E);
+            end;
             This.File_Locked.Update_Locked := False;
          end if;
 
@@ -1049,7 +1059,7 @@ package body Language.Tree.Database is
 
          Lang := Db.Lg_Handler.Get_Language_From_File (File);
 
-         if Lang = Unknown_Lang then
+         if Lang = null or else Lang = Unknown_Lang then
             --  Files that are not yet associated with a language may be later
             --  on, e.g. after project initialization. So we don't want to
             --  force the association between a structured file and an unknown
