@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2006-2014, AdaCore                     --
+--                     Copyright (C) 2006-2015, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -32,6 +32,7 @@ with GNATCOLL.Symbols;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with Language.Profile_Formaters; use Language.Profile_Formaters;
+with Language.Unknown;       use Language.Unknown;
 
 package Language.Tree.Database is
 
@@ -772,7 +773,7 @@ private
 
    type Structured_File is record
       File      : Virtual_File;
-      Lang      : Language_Access;
+      Lang      : Language_Access := Unknown_Lang;
       Tree_Lang : Tree_Language_Access;
 
       Timestamp : Integer := -1;
