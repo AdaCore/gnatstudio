@@ -93,6 +93,10 @@ package body GPS.Kernel is
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
 
+   Context_Hook_Timeout : constant Guint := 400;
+   --  The time in ms after which to run the "context_changed" hook after
+   --  the context has actually changed.
+
    Build_Mode_Property : constant String := "Build-Mode";
    --  The name of a GPS.Properties to store the current build mode. Use
    --  Get_Build_Mode below instead
@@ -138,6 +142,10 @@ package body GPS.Kernel is
    --  the window is unregistered very early (gtk_window_destroy), before its
    --  children are destroyed. As a result, plugins like filepos.py can no
    --  longer access the MDI if the main window is found via Get_Window_By_Id.
+
+   function Context_Timeout (Kernel : Kernel_Handle) return Boolean;
+   --  Timeout callback which actually emits the "context_changed" hook
+   --  an interval after the context has last been actually changed.
 
    ------------------
    -- Report_Error --
@@ -755,18 +763,48 @@ package body GPS.Kernel is
    end Is_Hidden;
 
    ---------------------
+   -- Context_Timeout --
+   ---------------------
+
+   function Context_Timeout (Kernel : Kernel_Handle) return Boolean is
+      Data : aliased Context_Hooks_Args :=
+        (Hooks_Data with Context => Kernel.Current_Context);
+   begin
+      Run_Hook (Kernel, Context_Changed_Hook, Data'Unchecked_Access);
+
+      --  Lower the flag, and stop calling this in a timeout.
+      Kernel.Context_Timeout_Registered := False;
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Kernel.Context_Timeout_Registered := False;
+         return False;
+   end Context_Timeout;
+
+   ---------------------
    -- Context_Changed --
    ---------------------
 
    procedure Context_Changed
      (Handle  : access Kernel_Handle_Record;
-      Context : Selection_Context)
-   is
-      Data : aliased Context_Hooks_Args :=
-        (Hooks_Data with Context => Context);
+      Context : Selection_Context) is
    begin
       Handle.Current_Context := Context;
-      Run_Hook (Handle, Context_Changed_Hook, Data'Unchecked_Access);
+
+      --  The actual context_changed hook is emitted in a timeout after
+      --  the last time the context has changed: if the timeout is already
+      --  running, deregister it and register another one.
+      if Handle.Context_Timeout_Registered then
+         Glib.Main.Remove (Handle.Context_Timeout);
+      end if;
+
+      Handle.Context_Timeout_Registered := True;
+      Handle.Context_Timeout := Kernel_Sources.Timeout_Add
+        (Context_Hook_Timeout,
+         Context_Timeout'Access,
+         Kernel_Handle (Handle));
    end Context_Changed;
 
    ----------------------------------
@@ -922,6 +960,25 @@ package body GPS.Kernel is
       if Kernel.Current_Context = No_Context then
          Kernel.Current_Context := New_Context (Kernel);
       end if;
+
+      --  If someone queries the current context in the interval between
+      --  the time we have actually changed the context and the time
+      --  when we wanted to emit the context_changed hook, immediately emit
+      --  context_changed, so that all clients are acting on the same
+      --  context.
+
+      if Kernel.Context_Timeout_Registered then
+         declare
+            Data : aliased Context_Hooks_Args :=
+              (Hooks_Data with Context => Kernel.Current_Context);
+         begin
+            Run_Hook (Kernel, Context_Changed_Hook, Data'Unchecked_Access);
+         end;
+
+         Glib.Main.Remove (Kernel.Context_Timeout);
+         Kernel.Context_Timeout_Registered := False;
+      end if;
+
       return Kernel.Current_Context;
    end Get_Current_Context;
 
@@ -1070,6 +1127,16 @@ package body GPS.Kernel is
         (Refactoring.Factory_Context_Record'Class,
          Refactoring.Factory_Context);
    begin
+      --  Remove dangling timeout callback, if any.
+      --  Do this before the rest, for a minor optimization: so that
+      --  the "context_changed" hook won't be run here, which wouldn't
+      --  be necessary.
+
+      if Handle.Context_Timeout_Registered then
+         Glib.Main.Remove (Handle.Context_Timeout);
+         Handle.Context_Timeout_Registered := False;
+      end if;
+
       Save_Scenario_Vars_On_Exit (Handle);
       Reset_Properties (Handle);
 

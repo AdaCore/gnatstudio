@@ -369,6 +369,10 @@ package body GPS.Kernel.Project is
          return;
       end if;
 
+      --  The current context might reference the old project tree:
+      --  refresh it immediately.
+      Self.Handle.Refresh_Context;
+
       Run_Hook (Self.Handle, Project_View_Changed_Hook);
    end Recompute_View;
 

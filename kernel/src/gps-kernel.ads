@@ -1207,8 +1207,19 @@ private
       --  are automatically added to the list when the menu or action is
       --  created
 
+      ----------------------
+      -- Context handling --
+      ----------------------
+
       Current_Context : Selection_Context := No_Context;
       --  The current context, as set by the last call to Context_Changed.
+
+      Context_Timeout_Registered : Boolean;
+      --  Whether there is a timeout registered for emitting the
+      --  "Context_Changed" hook.
+
+      Context_Timeout : Glib.Main.G_Source_Id;
+      --  The registered context timeout.
 
       Last_Context_For_Contextual : Selection_Context := No_Context;
       --  The context used in the last contextual menu.
