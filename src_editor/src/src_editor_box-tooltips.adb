@@ -279,7 +279,7 @@ package body Src_Editor_Box.Tooltips is
          W          : Gtk_Widget;
       begin
          Context := Build_Editor_Context
-           (Editor   => Box,
+           (View     => Box.Source_View,
             Location => Location_Mouse);
 
          Trace (Me, "Tooltip on " & Entity_Name_Information (Context));

@@ -223,6 +223,16 @@ package Src_Editor_View is
    --  Set the value of the Extend_Selection property. Default value is False,
    --  which means, editor commands don't extend the user's selection.
 
+   type Location_Type is (Location_Mouse, Location_Cursor, Location_Event);
+   function Build_Editor_Context
+     (View     : access Source_View_Record;
+      Location : Location_Type := Location_Cursor;
+      Event    : Gdk.Event.Gdk_Event := null)
+      return GPS.Kernel.Selection_Context;
+   --  Describe the current editor context, at the specified location. If
+   --  Location is Location_Event and no event is specified, the context
+   --  for the cursor is returned.
+
 private
 
    type As_Is_Status is (Disabled, Enabled, Sticky_Enabled);

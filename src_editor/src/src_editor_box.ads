@@ -24,7 +24,6 @@
 --        - the line and column number of the insert cursor
 --  </description>
 
-with Gdk.Event;
 with Glib;
 
 with Gtk.Box;
@@ -267,16 +266,6 @@ package Src_Editor_Box is
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Adds submenus to the "Goto dispatching body" contextual menu
-
-   type Location_Type is (Location_Mouse, Location_Cursor, Location_Event);
-   function Build_Editor_Context
-     (Editor   : not null access Source_Editor_Box_Record'Class;
-      Location : Location_Type := Location_Cursor;
-      Event    : Gdk.Event.Gdk_Event := null)
-      return GPS.Kernel.Selection_Context;
-   --  Describe the current editor context, at the specified location.
-   --  If Location is Location_Event and no event is specified, the context for
-   --  the cursor is returned.
 
    ----------------------
    -- Line information --

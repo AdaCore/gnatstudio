@@ -1836,7 +1836,7 @@ package body Src_Editor_Module is
         Source_Editor_Box (GPS_MDI_Child (Self).Get_Actual_Widget);
    begin
       return Build_Editor_Context
-        (Editor   => Editor,
+        (View     => Get_View (Editor),
          Location => Location_Event,
          Event    => Event);
    end Build_Context;

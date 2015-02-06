@@ -58,6 +58,7 @@ with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_Buffer.Blocks;   use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Hooks;    use Src_Editor_Buffer.Hooks;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
+with Src_Editor_Module;          use Src_Editor_Module;
 
 with Basic_Types;                use Basic_Types;
 with Config;                     use Config;
@@ -65,6 +66,7 @@ with Default_Preferences;        use Default_Preferences;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Clipboard;       use GPS.Kernel.Clipboard;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
@@ -85,6 +87,9 @@ with Gtk.Target_List;            use Gtk.Target_List;
 with Gdk.Property;               use Gdk.Property;
 with GNAT.Strings;
 with Glib.Convert;               use Glib.Convert;
+
+with GUI_Utils;    use GUI_Utils;
+with String_Utils; use String_Utils;
 
 --  Drawing the side info is organized this way:
 --
@@ -803,6 +808,9 @@ package body Src_Editor_View is
    begin
       if Has_Focus then
          Save_Cursor_Position (User);
+
+         --  ??? We have changed the position: we should emit the
+         --  "context_changed" signal here.
       end if;
 
       --  If we are highlighting the current line, re-expose the entire view
@@ -2794,5 +2802,302 @@ package body Src_Editor_View is
       --  buffer, but it is fast.
       Buffer.Filename_Changed;
    end Set_Project;
+
+   --------------------------
+   -- Build_Editor_Context --
+   --------------------------
+
+   function Build_Editor_Context
+     (View     : access Source_View_Record;
+      Location : Location_Type := Location_Cursor;
+      Event    : Gdk.Event.Gdk_Event := null)
+      return GPS.Kernel.Selection_Context
+   is
+      V        : constant Source_View := Source_View (View);
+      B        : constant Source_Buffer := Source_Buffer (View.Get_Buffer);
+      Filename : constant GNATCOLL.VFS.Virtual_File := Get_Filename (B);
+      Loc                        : Location_Type := Location;
+      Line                       : Gint := 0;
+      EL                         : Editable_Line_Type;
+      Col                        : Visible_Column_Type;
+      Column                     : Gint := 0;
+      X, Y                       : Gint;
+      Start_Iter                 : Gtk_Text_Iter;
+      End_Iter                   : Gtk_Text_Iter;
+      Entity_Start               : Gtk_Text_Iter;
+      Entity_End                 : Gtk_Text_Iter;
+      Has_Selection              : Boolean;
+      Out_Of_Bounds              : Boolean := False;
+      Start_Line, End_Line       : Integer;
+      Selection_Is_Single_Entity : Boolean;
+      Click_In_Selection         : Boolean;
+      Mouse_X, Mouse_Y           : Gint;
+      Mask                       : Gdk.Types.Gdk_Modifier_Type;
+      Win                        : Gdk.Gdk_Window;
+      Cursor_Location            : Gtk_Text_Iter;
+      Xevent, Yevent             : Gdouble;
+      Context                    : Selection_Context;
+      Str                        : Src_String;
+      The_Line                   : Editable_Line_Type;
+      The_Column                 : Character_Offset_Type;
+      Success                    : Boolean;
+
+   begin
+      Trace (Me, "Build_Editor_Context");
+
+      if Location = Location_Event
+        and then
+        (Event = null
+         or else Get_Event_Type (Event) not in Button_Press .. Button_Release)
+      then
+         Loc := Location_Cursor;
+      end if;
+
+      --  If we are reactiving to an event (for a contextual menu), then we
+      --  need to cancel the selection drag.
+      --  Otherwise, we are calling this function only to create a context (for
+      --  instance when displaying a tooltip) and we should not cancel the
+      --  selection drag.
+      if Event /= null then
+         Stop_Selection_Drag (V);
+      end if;
+
+      Context := New_Context (V.Kernel, Src_Editor_Module_Id);
+
+      --  Compute the location for which we should compute the context.
+      --  Output of this block is (Line, Column) within the editor.
+
+      case Loc is
+         when Location_Event =>
+            if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
+               --  Click in the line numbers area
+               Get_Coords (Event, Xevent, Yevent);
+               Window_To_Buffer_Coords
+                 (V, Text_Window_Left, Gint (Xevent), Gint (Yevent), X, Y);
+               Get_Iter_At_Location (V, Start_Iter, X, Y);
+               Line := Get_Line (Start_Iter);
+               Place_Cursor (B, Start_Iter);
+
+               Get_Iter_Position (B, Start_Iter, EL, Col);
+
+               Set_File_Information
+                 (Context,
+                  Files           => (1 => Filename),
+                  Project         => Get_Project (V),
+                  Publish_Project => False,
+                  Line            => Integer (EL),
+                  Column          => 0);
+               return Context;
+            end if;
+
+            Event_To_Buffer_Coords (V, Event, Line, Column, Out_Of_Bounds);
+            if not Out_Of_Bounds then
+               Get_Iter_At_Line_Offset (B, Start_Iter, Line, Column);
+               Get_Iter_Position (B, Start_Iter, EL, Col);
+            end if;
+
+         when Location_Cursor =>
+            Get_Iter_At_Mark (B, Start_Iter, Get_Insert (B));
+            Line   := Get_Line (Start_Iter);
+            Column := Get_Line_Offset (Start_Iter);
+            Get_Iter_At_Line_Offset (B, Start_Iter, Line, Column);
+            Get_Iter_Position (B, Start_Iter, EL, Col);
+
+         when Location_Mouse =>
+            Get_Pointer (Get_Window (V, Text_Window_Text),
+                         Mouse_X, Mouse_Y, Mask, Win);
+            Window_To_Buffer_Coords
+              (V, Mouse_X, Mouse_Y, Line, Column, Out_Of_Bounds);
+            Get_Iter_At_Line_Offset (B, Start_Iter, Line, Column);
+            Get_Iter_Position (B, Start_Iter, EL, Col);
+
+            if Out_Of_Bounds then
+               Set_File_Information
+                 (Context,
+                  Files           => (1 => Filename),
+                  Project         => Get_Project (V),
+                  Publish_Project => False);
+               return Context;
+            end if;
+      end case;
+
+      --  If we have a current selection, use it as the context if the user
+      --  clicked inside it (ie consider the selection as an opaque block and
+      --  don't look inside)
+
+      Get_Selection_Bounds (B, Start_Iter, End_Iter, Has_Selection);
+      if Has_Selection then
+         Get_Iter_Position (B, Start_Iter, EL, Col);
+      end if;
+
+      if Out_Of_Bounds and then not Has_Selection then
+         --  The position we are looking at is outside the text, and there is
+         --  no current selection. We move the cursor to a valid location, but
+         --  there is no additional info to set in the context.
+         Get_Iter_At_Line_Offset (B, Start_Iter, Line, Column);
+
+         if Event /= null then
+            Acquire_Focus (V);
+            Place_Cursor (B, Start_Iter);
+         end if;
+
+         --  Set basic context information about current file
+
+         Set_File_Information
+           (Context,
+            Files           => (1 => Filename),
+            Project         => Get_Project (V),
+            Publish_Project => False,
+            Line            => Integer (EL),
+            Column          => Col);
+         return Context;
+      end if;
+
+      Get_Iter_At_Line_Offset (B, Entity_Start, Line, Column);
+
+      Copy (Source => Entity_Start, Dest => Cursor_Location);
+
+      Click_In_Selection :=
+        Has_Selection
+        and then Get_Offset (Start_Iter) <= Get_Offset (Entity_Start)
+        and then Get_Offset (Entity_Start) <= Get_Offset (End_Iter);
+
+      Str := Get_String
+        (B,
+         Get_Editable_Line
+           (B, Buffer_Line_Type (Get_Line (Entity_Start)) + 1));
+
+      Search_Entity_Bounds
+        (Entity_Start, Entity_End,
+         Maybe_File => Str.Contents /= null
+         and then Has_Include_Directive (Str.Contents (1 .. Str.Length)));
+      Selection_Is_Single_Entity :=
+        Has_Selection
+        and then Equal (Entity_Start, Start_Iter)
+        and then Equal (Entity_End, End_Iter);
+
+      --  If the location is in the current selection, use this as the
+      --  context. However, if the selection is a single entity, we should
+      --  create a context such that cross-references menus also appear.
+
+      if not Selection_Is_Single_Entity
+        and then Click_In_Selection
+      then
+         Start_Line := Integer (EL);
+
+         End_Line   := Integer
+           (Get_Editable_Line
+              (B, Buffer_Line_Type (Get_Line (End_Iter) + 1)));
+
+         --  Do not consider the last line selected if only the first
+         --  character is selected.
+
+         if Get_Line_Offset (End_Iter) = 0 then
+            End_Line := End_Line - 1;
+         end if;
+
+         --  Do not consider the first line selected if only the last
+         --  character is selected. Also, move Start_Iter to skip end of
+         --  line characters in the buffer.
+
+         if Ends_Line (Start_Iter) then
+            Forward_Line (Start_Iter, Success);
+            Start_Line := Start_Line + 1;
+         end if;
+
+         --  Set the column to the start of the selection
+
+         Column := Get_Line_Offset (Start_Iter);
+         Col := Expand_Tabs (B, EL, Character_Offset_Type (Column + 1));
+
+         Set_File_Information
+           (Context,
+            Files           => (1 => Filename),
+            Project         => Get_Project (V),
+            Publish_Project => False,
+            Line            => Integer (EL),
+            Column          => Col);
+         Set_Area_Information
+           (Context,
+            Get_Text (Start_Iter, End_Iter),
+            Start_Line, End_Line);
+
+         Free (Str);
+         return Context;
+      end if;
+
+      --  Set basic context information about current file. Must be
+      --  done before we set the entity information.
+
+      Set_File_Information
+        (Context,
+         Files           => (1 => Filename),
+         Project         => Get_Project (V),
+         Publish_Project => False,
+         Line            => Integer (EL),
+         Column          => Col);
+
+      --  Expand the tabs
+
+      Get_Iter_Position (B, Entity_Start, The_Line, The_Column);
+
+      if Str.Contents /= null then
+         if Click_In_Selection then
+            --  If there was a selection and we clicked in it, we only
+            --  should take the selection into account. For instance, this
+            --  is a way for the user to force a specific name to be sent
+            --  to the debugger instead of the whole expression
+
+            Set_Entity_Information
+              (Context,
+               Entity_Name   => Get_Text (Entity_Start, Entity_End),
+               Entity_Column => Expand_Tabs (B, The_Line, The_Column));
+
+         else
+            Set_Entity_Information
+              (Context,
+               Entity_Name   => Get_Text (Entity_Start, Entity_End),
+               Entity_Column => Expand_Tabs (B, The_Line, The_Column),
+               From_Expression =>
+                 Parse_Reference_Backwards
+                   (Get_Language (B),
+                    Buffer       => Str.Contents (1 .. Str.Length),
+                    Start_Offset =>
+                      String_Index_Type (Get_Line_Index (Entity_End))));
+         end if;
+      else
+         Set_Entity_Information
+           (Context,
+            Entity_Name   => Get_Text (Entity_Start, Entity_End),
+            Entity_Column => Expand_Tabs (B, The_Line, The_Column));
+      end if;
+
+      Free (Str);
+
+      if Event /= null
+        and then not Click_In_Selection
+      then
+         --  Move the cursor at the correct location. The cursor is
+         --  grabbed automatically by the kernel when displaying the
+         --  menu, and this would result in unwanted scrolling
+         --  otherwise..
+         --  Do not move the cursor if we have clicked in the
+         --  selection, since otherwise that cancels the selection
+         --
+         --  Force the focus on the MDI window right away, instead of
+         --  waiting for the editor to gain the focus later on.
+         --  Otherwise, if the editor doesn't have the focus at this
+         --  point, it will move back to its Saved_Cursor_Mark when
+         --  it does, instead of where we have used Place_Cursor. Note
+         --  that explicitly using Save_Cursor_Position doesn't work
+         --  either, since it needs to be called after Place_Cursor,
+         --  which does the scrolling to Saved_Cursor_Mark.
+
+         Acquire_Focus (V);
+         Place_Cursor (B, Cursor_Location);
+      end if;
+
+      return Context;
+   end Build_Editor_Context;
 
 end Src_Editor_View;
