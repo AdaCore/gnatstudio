@@ -710,9 +710,6 @@ package body Src_Editor_Module is
         Get_Source_Box_From_MDI (C);
    begin
       if Box /= null then
-         if C = Get_MDI (Kernel).Get_Focus_Child then
-            Update_Menus_And_Buttons (Kernel);
-         end if;
          if Id.Show_Subprogram_Names then
             Update_Subprogram_Name (Box, Update_Tree => False);
          end if;

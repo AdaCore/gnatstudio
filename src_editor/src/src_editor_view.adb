@@ -809,8 +809,9 @@ package body Src_Editor_View is
       if Has_Focus then
          Save_Cursor_Position (User);
 
-         --  ??? We have changed the position: we should emit the
-         --  "context_changed" signal here.
+         --  We have changed the position: emit "context_changed" here.
+         User.Kernel.Context_Changed
+           (Build_Editor_Context (User, Location_Cursor));
       end if;
 
       --  If we are highlighting the current line, re-expose the entire view
