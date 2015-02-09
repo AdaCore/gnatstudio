@@ -19,15 +19,11 @@ with Ada.Calendar;          use Ada.Calendar;
 with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 
-with Language.Unknown;       use Language.Unknown;
-
 with System;            use System;
 with String_Utils;      use String_Utils;
 with UTF8_Utils;        use UTF8_Utils;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Text_IO; use Ada.Text_IO;
-
-with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Language.Tree.Database is
 
