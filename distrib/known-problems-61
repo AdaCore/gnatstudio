@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O204-017 GB: random crash after code assist popup display
+
+  Problem:    After code assist popup was displayed to propose possible
+              completions, Eclipse/Workbench sometimes crashes.
+
+  Status:     This was fixed in 2.10 on 2015-02-09
+
+  Workaround: Disable Code Assist feature through Ada/Tools preference page.
+
 KP-61-O120-002 GPS: cannot force background color for editors
 
   Problem:    The python method GPS.Editor.set_background_color has no
