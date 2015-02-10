@@ -1088,15 +1088,6 @@ Classes
 
    .. automethod:: GPS.Hook.run_until_success
 
-:class:`GPS.Icon`
-^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Icon
-
-   
-
-   .. automethod:: GPS.Icon.__init__
-
 :class:`GPS.Invalid_Argument`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
