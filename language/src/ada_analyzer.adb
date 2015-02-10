@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2014, AdaCore                     --
+--                     Copyright (C) 2001-2015, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -3375,7 +3375,7 @@ package body Ada_Analyzer is
             First_Indent    : Boolean := True;
 
          begin
-            Ref_Indent := Num_Spaces;
+            Ref_Indent := Integer'Max (Num_Spaces, 0);
 
             if not Indent_Done
               and then Stick_Comments
@@ -3383,7 +3383,7 @@ package body Ada_Analyzer is
               and then Start_Of_Line > Buffer'First + 2
               and then Buffer (Start_Of_Line - 2) /= ASCII.LF
             then
-               Ref_Indent := Ref_Indent - Indent_Level;
+               Ref_Indent := Integer'Max (Ref_Indent - Indent_Level, 0);
             end if;
 
             while P < Buffer_Last
@@ -3419,7 +3419,8 @@ package body Ada_Analyzer is
                      end if;
 
                      Do_Indent (P, L, Ref_Indent, Continuation => True);
-                     Ref_Indent := Ref_Indent + Continuation_Val;
+                     Ref_Indent :=
+                             Integer'Max (Ref_Indent + Continuation_Val, 0);
                      Continuation_Val := 0;
                   else
                      Do_Indent (P, L, Ref_Indent);
@@ -3437,7 +3438,8 @@ package body Ada_Analyzer is
                  and then To /= 0
                  and then L not in From .. To
                then
-                  Ref_Indent := P - Start_Of_Line - Indent_Offset;
+                  Ref_Indent :=
+                          Integer'Max (P - Start_Of_Line - Indent_Offset, 0);
                end if;
 
                Next_Line (Buffer, P + 1, P, Success);
@@ -3455,7 +3457,7 @@ package body Ada_Analyzer is
                   --  only use LF separators internally in GPS.
 
                   while P < Buffer_Last and then Buffer (P) = ASCII.LF loop
-                     Ref_Indent := Num_Spaces;
+                     Ref_Indent :=  Integer'Max (Num_Spaces, 0);
                      New_Line (L);
                      P := P + 1;
                   end loop;
