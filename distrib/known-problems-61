@@ -25,6 +25,22 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O204-044 GB: comment between 'null' and ')' in subprogram definition
+
+  Problem:    Having in a subprogram definition (specification or body) the
+              last parameter default value equal to 'null' and having a
+              comment between this 'null' default value and the ')' character
+              closing the parameters list, generates unhandled ada exceptions
+              in ada_analyzer package, and brakes tooltips & code assist
+              feature.
+
+  Status:     This was fixed in 2.10 on 2015-02-11
+
+  Workaround: Move the comment before the last parameter, or use a constant
+              instead of 'null' to set the default value.
+              ex: MY_TYPE_NULL_DEFAULT_VALUE : constant My_Type := null;
+              Restart the Eclipse or Workbench platform.
+
 KP-61-O204-017 GB: random crash after code assist popup display
 
   Problem:    After code assist popup was displayed to propose possible
