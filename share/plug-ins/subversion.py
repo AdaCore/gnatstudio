@@ -673,7 +673,7 @@ XML = r"""<?xml version="1.0"?>
       <status label="Added" stock="gps-vcs-added" />
 
       <status_parser>
-         <regexp>(^|\n)([^\?S]........)\s+([0-9]+)\s+([0-9?]+)\s+([^\s]+)\s+([^\n]+)</regexp>
+         <regexp>(^|\n)([^\?S]........)\s+([0-9-]+)\s+([0-9?]+)\s+([^\s]+)\s+([^\n]+)</regexp>
 
          <file_index>6</file_index>
          <status_index>2</status_index>
