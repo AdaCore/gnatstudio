@@ -12,14 +12,23 @@
 
 import GPS
 import re
+from pygps import process_all_events
+from gi.repository import GLib
 
 
-class Promise:
+class Promise(object):
     """
-       A promise cam be registered with a resolve function which will be called
-       whenever the promise is answered. User define and provide the function.
-       A promise is thenable: it can execute the resolve function and return a
-       new promise.
+    A promise is a wrapper object around an asynchronous computation.
+    - The client of the promise calls promise.then(use_callback) on the promise
+      to register the action that he wants executed when the promise's result
+      is available.
+    - The creator of the promise calls resolve on the promise when the result
+      is ready, which will notify the client via the callback.
+
+    In effect, in GPS, promises are never used directly, but instead are
+    created in the context of workflows. The writer of a workflow yields
+    promises, and that allows the workflow driver to resume execution of the
+    workflow when the result of the promise is available.
     """
 
     # answer = a function/handler that is called to fullfill the promise
@@ -40,7 +49,112 @@ class Promise:
             self.answer(result)
 
 
-class ProcessWrapper():
+def action(msecs, action_fn):
+    """
+    This primitive makes a blocking action_fn non blocking in the context of a
+    workflow.  It executes action_fn in a timeout, and then calls the promise's
+    callback in another.
+    """
+    p = Promise()
+
+    def timeout_handler(t):
+        t.remove()
+        p.resolve()
+
+    def action_handler(t):
+        t.remove()
+        GPS.Timeout(msecs, timeout_handler)
+        action_fn()
+
+    GPS.Timeout(10, action_handler)
+
+    return p
+
+
+def idle_action(action_fn):
+    """
+    This primitive makes a blocking action_fn non blocking in the context of a
+    workflow.  It executes action_fn in an idle, and then calls the promise's
+    callback in another.
+    """
+    p = Promise()
+
+    def action_handler():
+        GLib.idle_add(lambda: p.resolve())
+        action_fn()
+
+    GLib.idle_add(action_handler)
+
+    return p
+
+
+def timeout(msecs):
+    """
+    This primitive allows the user to delay execution of the rest of a workflow
+    for msecs milliseconds.
+    """
+    p = Promise()
+
+    def timeout_handler(t):
+        t.remove()
+        p.resolve()
+
+    GPS.Timeout(msecs, timeout_handler)
+
+    return p
+
+
+def wait_tasks():
+    """
+    This primitive allows the user to delay the execution of the rest of a
+    workflow until all active tasks are terminated
+    """
+
+    p = Promise()
+
+    def timeout_handler(t=None):
+        if not GPS.Task.list():
+            t.remove()
+            process_all_events()
+            GLib.idle_add(lambda: p.resolve())
+
+    GPS.Timeout(200, timeout_handler)
+    return p
+
+
+def hook(hook_name):
+    """
+    This primitive allows the writer of a workflow to connect to a hook once,
+    as if it were a function, and get the parameters of the hook as return
+    values. For example:
+
+    _, file = hook("buffer_edited")
+
+    This will wait until the "buffer_edited" hook is triggered, and the file
+    will be stored in the file variable
+    """
+    p = Promise()
+
+    def hook_handler(hook_params):
+        GPS.Hook(hook_name).remove(hook_handler)
+        p.resolve()
+
+    GPS.Hook(hook_name).add(hook_handler)
+    return p
+
+
+def wait_idle():
+    """
+    This primitive allows the writer of a workflow to wait until all event have
+    been handled, and resume execution of the workflow in an idle callback
+    """
+    p = Promise()
+    process_all_events()
+    GLib.idle_add(lambda: p.resolve())
+    return p
+
+
+class ProcessWrapper(object):
     """
        ProcessWrapper is a advanced process manager
        It makes a promise (yield object of the promise class) when user:
@@ -190,7 +304,7 @@ class ProcessWrapper():
         self.__process.kill()
 
 
-class DebuggerWrapper():
+class DebuggerWrapper(object):
     """
        DebuggerWrapper is a debbuger (eseentially a process in GPS) manager
        It make a promise (yield object of the promise class) when user:

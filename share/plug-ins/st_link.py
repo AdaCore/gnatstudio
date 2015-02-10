@@ -13,9 +13,8 @@ The following is required:
 
 import GPS
 from modules import Module
-import gps_utils.workflow as workflow
-from gps_utils.workflow import WORKFLOW_PARAMETER
-import gps_utils.promises as promise
+import workflows
+import workflows.promises as promises
 
 
 def msg_is(msg):
@@ -84,20 +83,19 @@ class BoardLoader(Module):
     # The following are workflows #
     ###############################
 
-    def __flash_wf(self):
+    def __flash_wf(self, main_name):
         """Workflow to build and flash the program on the board.
         """
 
         # STEP 1.0 get the main name; it should have been passed to the driver
-        f = yield WORKFLOW_PARAMETER
-        if f is None:
+        if main_name is None:
             self.__error_exit(msg="Could not find the name of the main.")
             return
 
         # STEP 1.5 Build it
-        msg_is("Building Main %s..." % f)
-        builder = promise.TargetWrapper("Build Main")
-        r0 = yield builder.wait_on_execute(f)
+        msg_is("Building Main %s..." % main_name)
+        builder = promises.TargetWrapper("Build Main")
+        r0 = yield builder.wait_on_execute(main_name)
         if r0 is not 0:
             self.__error_exit(msg="... Build error.")
             return
@@ -106,13 +104,13 @@ class BoardLoader(Module):
 
         # STEP 2 create executable
         msg_is("Creating the binary executable...")
-        b = GPS.Project.root().get_executable_name(GPS.File(f))
+        b = GPS.Project.root().get_executable_name(GPS.File(main_name))
         d = GPS.Project.root().object_dirs()[0]
         obj = d+b
         binary = obj+".bin"
         cmd = ["arm-eabi-objcopy", "-O", "binary", obj, binary]
         try:
-            con = promise.ProcessWrapper(cmd)
+            con = promises.ProcessWrapper(cmd)
         except:
             self.__error_exit("Could not launch executable st-flash.")
             return
@@ -128,7 +126,7 @@ class BoardLoader(Module):
         msg_is("Connecting to board...")
         cmd = ["st-flash", "write", binary, "0x8000000"]
         try:
-            con = promise.ProcessWrapper(cmd)
+            con = promises.ProcessWrapper(cmd)
         except:
             self.__error_exit("Could not connect to the board.")
             return
@@ -148,22 +146,21 @@ class BoardLoader(Module):
         msg_is("... done.")
         msg_is("Running on board...")
 
-    def __debug_wf(self):
+    def __debug_wf(self, main_name):
         """
         Workflow to build, flash and debug the program on the real board.
         """
         # STEP 1.0 get main name
 
-        f = yield WORKFLOW_PARAMETER
-        if f is None:
+        if main_name is None:
             self.__error_exit(msg="Main not specified")
             return
 
         # STEP 1.5 Build it
 
-        msg_is("Building Main %s..." % f)
-        builder = promise.TargetWrapper("Build Main")
-        r0 = yield builder.wait_on_execute(f)
+        msg_is("Building Main %s..." % main_name)
+        builder = promises.TargetWrapper("Build Main")
+        r0 = yield builder.wait_on_execute(main_name)
         if r0 is not 0:
             self.__error_exit("Build error.")
             return
@@ -176,7 +173,7 @@ class BoardLoader(Module):
         cmd = ["st-util"]
 
         try:
-            con = promise.ProcessWrapper(cmd)
+            con = promises.ProcessWrapper(cmd)
         except:
             self.__error_exit("Could not launch st-util.")
             return
@@ -187,11 +184,11 @@ class BoardLoader(Module):
         # STEP 3 begin debugger-> load and run
         msg_is("Loading executable file...")
 
-        b = GPS.Project.root().get_executable_name(GPS.File(f))
+        b = GPS.Project.root().get_executable_name(GPS.File(main_name))
         d = GPS.Project.root().object_dirs()[0]
         obj = d+b
 
-        debugger_promise = promise.DebuggerWrapper(GPS.File(b))
+        debugger_promise = promises.DebuggerWrapper(GPS.File(b))
         debugger_promise.get().non_blocking_send("load "+obj)
         r3 = yield debugger_promise.wait_and_send(cmd="", block=True)
 
@@ -216,14 +213,14 @@ class BoardLoader(Module):
         GPS.Hook("debugger_terminated").add(self.debugger_terminated)
 
         # Create targets * 4:
-        workflow.create_target_from_workflow("Flash to Board",
-                                             "flash-to-board",
-                                             self.__flash_wf,
-                                             "gps-boardloading")
-        workflow.create_target_from_workflow("Debug on Board",
-                                             "debug-on-board",
-                                             self.__debug_wf,
-                                             "gps-boardloading-debug")
+        workflows.create_target_from_workflow("Flash to Board",
+                                              "flash-to-board",
+                                              self.__flash_wf,
+                                              "gps-boardloading")
+        workflows.create_target_from_workflow("Debug on Board",
+                                              "debug-on-board",
+                                              self.__debug_wf,
+                                              "gps-boardloading-debug")
 
         for tar in self.__targets:
             b = GPS.BuildTarget(tar)

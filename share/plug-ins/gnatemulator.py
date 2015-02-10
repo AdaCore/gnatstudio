@@ -9,9 +9,8 @@ The following is required:
 
 import GPS
 from modules import Module
-import gps_utils.workflow as workflow
-from gps_utils.workflow import WORKFLOW_PARAMETER
-import gps_utils.promises as promise
+import workflows.promises as promises
+import workflows
 from os_utils import locate_exec_on_path
 from gps_utils.console_process import Console_Process
 
@@ -77,21 +76,19 @@ class GNATemulator(Module):
     # The following are workflows #
     ###############################
 
-    def __emu_wf(self):
+    def __emu_wf(self, main_name):
         """
         Workflow to build and run the program in the emulator.
         """
 
-        # STEP 1.0 get main name
-        f = yield WORKFLOW_PARAMETER
-        if f is None:
+        if main_name is None:
             self.__error_exit(msg="Main not specified")
             return
 
         # STEP 1.5 Build it
-        log("Building Main %s..." % f)
-        builder = promise.TargetWrapper("Build Main")
-        r0 = yield builder.wait_on_execute(f)
+        log("Building Main %s..." % main_name)
+        builder = promises.TargetWrapper("Build Main")
+        r0 = yield builder.wait_on_execute(main_name)
         if r0 is not 0:
             self.__error_exit(msg="Build error.")
             return
@@ -99,36 +96,35 @@ class GNATemulator(Module):
         log("... done.")
 
         # STEP 2 load with Emulator
-        b = GPS.Project.root().get_executable_name(GPS.File(f))
+        b = GPS.Project.root().get_executable_name(GPS.File(main_name))
         d = GPS.Project.root().object_dirs()[0]
         obj = d + b
         self.run_gnatemu([obj])
 
-    def __emu_debug_wf(self):
+    def __emu_debug_wf(self, main_name):
         """
         Workflow to debug a program under the emulator.
         """
 
         # STEP 1.0 get main name
-        f = yield WORKFLOW_PARAMETER
-        if f is None:
+        if main_name is None:
             self.__error_exit(msg="Main not specified.")
             return
 
         # STEP 1.5 Build it
-        log("Building Main %s..." % f)
-        builder = promise.TargetWrapper("Build Main")
-        r0 = yield builder.wait_on_execute(f)
+        log("Building Main %s..." % main_name)
+        builder = promises.TargetWrapper("Build Main")
+        r0 = yield builder.wait_on_execute(main_name)
         if r0 is not 0:
             self.__error_exit(msg="Build error.")
             return
-        binary = GPS.Project.root().get_executable_name(GPS.File(f))
+        binary = GPS.Project.root().get_executable_name(GPS.File(main_name))
 
         log("... done.")
 
         # STEP 2 launch debugger
 
-        debugger_promise = promise.DebuggerWrapper(GPS.File(binary))
+        debugger_promise = promises.DebuggerWrapper(GPS.File(binary))
 
         # block execution until debugger is free
         r3 = yield debugger_promise.wait_and_send(cmd="", block=False)
@@ -173,8 +169,8 @@ class GNATemulator(Module):
         for target in targets_def:
 
             # Create targets * 2:
-            workflow.create_target_from_workflow(target[0], target[1],
-                                                 target[2], target[3])
+            workflows.create_target_from_workflow(target[0], target[1],
+                                                  target[2], target[3])
 
             b = GPS.BuildTarget(target[0])
             self.__buttons.append(b)

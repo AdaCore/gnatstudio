@@ -7,53 +7,74 @@ structure.
 
 import sys
 import GPS
-from gps_utils import promises
+import workflows.promises as promises
+import types
 
 # A table of all registered workflows
 registered_workflows = {}
 
-# Special command that can be yielded by a workflow to get the parameter
-# passed to the driver
-WORKFLOW_PARAMETER = "get_workflow_parameter"
 
-
-def run_registered_workflows(workflow_name, workflow_arg=None):
+def run_registered_workflows(workflow_name, *args, **kwargs):
     """ Find workflow and run it with the driver.
     """
     try:
-        wf = registered_workflows[workflow_name]()
-        driver(wf, workflow_arg)
+        wf = registered_workflows[workflow_name](*args, **kwargs)
+        driver(wf)
     except KeyError:
         GPS.Console("Messages").write(
             "\nError: Workflow name not registered.\n")
 
 
-def driver(w, workflow_arg=None):
-    """ The main driver for workflows """
-    def go(gowith=None):
-        try:
-            # if there's feedback from previous event, tell the generator
-            if gowith is not None:
-                    p = w.send(gowith)
-            # otherwise just goto the next step
-            else:
-                p = w.next()
+def driver(gen_inst):
+    """
+    This is the main driver for workflows. You can pass your worklow (which is
+    a python generator instance ) to it and it will execute it.
 
-            # if promise instance is got from workflow, "then" it
-            if isinstance(p, promises.Promise):
-                p.then(go)
-            # otherwise, continue to the next object by go()
-            else:
-                if p == WORKFLOW_PARAMETER:
-                    go(workflow_arg)
+    From a worklow, you can yield two types of objects:
+
+    - You can yield promises. Those will be chained so that when the promise
+      resolves, the execution of the workflow is resumed, and any eventual
+      result of the promise will be passed as result to the yield call.
+
+    - You can yield other generators, in which case the driver will take care
+      of consuming (executing) them, and then resume the execution of the
+      current generator
+    """
+    gen_stack = [gen_inst]
+
+    def internal(return_val=None):
+        el = None
+        while gen_stack:
+            gen = gen_stack[0]
+            try:
+                # if there's feedback from previous event, tell the generator
+                if return_val is not None:
+                    el = gen.send(return_val)
+                    return_val = None
+                # otherwise just goto the next step
                 else:
-                    go()
+                    el = gen.next()
 
-        # indicates the end of the generator: exit cleanly
-        except StopIteration:
-            # print sys.exc_info()[0]
+                if isinstance(el, types.GeneratorType):
+                    gen_stack.insert(0, el)
+                else:
+                    break
+
+            # indicates the end of the generator: exit cleanly
+            except StopIteration:
+                gen_stack.pop(0)
+
+        if el is None:
             return
-    go()
+
+        # if promise instance is got from workflow, "then" it
+        if isinstance(el, promises.Promise):
+            el.then(internal)
+        # otherwise, continue to the next object by internal()
+        else:
+            internal()
+
+    internal()
 
 
 # The following are decorators for workflows(generators)
@@ -136,7 +157,7 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
 <read-only>TRUE</read-only>
 <target-type>main</target-type>
 <command-line>
-    <arg>gps_utils.workflow.run_registered_workflows("%s", "</arg>
+    <arg>workflows.run_registered_workflows("%s", "</arg>
     """ % (target_name, icon_name, workflow_name)
 
     xml2 = """
