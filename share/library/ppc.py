@@ -25,7 +25,6 @@ XML = r"""<?xml version="1.0"?>
         <Name>function</Name>
         <Pattern>^([-\w\d+_:]+):$</Pattern>
         <Index>1</Index>
-        <Icon>subprogram_xpm</Icon>
       </Category>
     </Categories>
   </Language>

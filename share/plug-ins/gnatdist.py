@@ -51,13 +51,11 @@ if gnatdist_tool != "":
         <Name>subprogram</Name>
         <Pattern>^\s*(procedure|function)\s+([-\w\d+_:]+)((.*)|)(\s+(is|return)|\s*;)</Pattern>
         <Index>2</Index>
-        <Icon>subprogram_xpm</Icon>
       </Category>
       <Category>
         <Name>configuration</Name>
         <Pattern>^configuration\s+([-\w\d+_]+)\s+is</Pattern>
         <Index>1</Index>
-        <Icon>package_xpm</Icon>
       </Category>
     </Categories>
   </Language>

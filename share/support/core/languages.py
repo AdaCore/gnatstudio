@@ -83,19 +83,16 @@ XML = r"""<?xml version="1.0" ?>
         <Name>procedure</Name>
         <Pattern>^sub\s+([-\w\d+_:]+)\s*(\([^)]*\))?\s*{</Pattern>
         <Index>1</Index>
-        <Icon>subprogram_xpm</Icon>
       </Category>
       <Category>
         <Name>package</Name>
         <Pattern>^package\s+([-\w\d+_:]+);</Pattern>
         <Index>1</Index>
-        <Icon>package_xpm</Icon>
       </Category>
       <Category>
         <Name>variable</Name>
         <Pattern>^([$@%][-\w\d+_:]+)\s*=</Pattern>
         <Index>1</Index>
-        <Icon>var_xpm</Icon>
       </Category>
     </Categories>
     <Project_Field
@@ -131,19 +128,16 @@ XML = r"""<?xml version="1.0" ?>
         <Name>procedure</Name>
         <Pattern>^[\s\d]*(program|function|subroutine)\s+(\w+)\b</Pattern>
         <Index>2</Index>
-        <Icon>subprogram_xpm</Icon>
       </Category>
       <Category>
         <Name>package</Name>
         <Pattern>^[\s\d]*module\s+(\w+)\s*(!|$)</Pattern>
         <Index>1</Index>
-        <Icon>package_xpm</Icon>
       </Category>
       <Category>
         <Name>type</Name>
         <Pattern>^[\s0-9]*type\s+(\w+)\b</Pattern>
         <Index>1</Index>
-        <Icon>var_xpm</Icon>
       </Category>
     </Categories>
     <Project_Field
@@ -180,7 +174,6 @@ XML = r"""<?xml version="1.0" ?>
         <Name>type</Name>
         <Pattern>^ *([^ \n\t#:=]+([ \t]+([^ \t\n#:=]+|\$[({][^ \t\n#})]+[})]))*)[ \t]*:([ \t]*$|([^=\n].*$))</Pattern>
         <Index>1</Index>
-        <Icon>var_xpm</Icon>
       </Category>
     </Categories>
   </Language>
@@ -202,7 +195,6 @@ XML = r"""<?xml version="1.0" ?>
         <Name>procedure</Name>
         <Pattern>^\s*(function\s+)?([\w_][\w\d_]+)\s*\(\)</Pattern>
         <Index>2</Index>
-        <Icon>subprogram_xpm</Icon>
       </Category>
     </Categories>
   </Language>
@@ -240,7 +232,6 @@ XML = r"""<?xml version="1.0" ?>
         <Name>function</Name>
         <Pattern>^function\s+([-\w\d+_:]+)\s</Pattern>
         <Index>1</Index>
-        <Icon>subprogram_xpm</Icon>
       </Category>
     </Categories>
   </Language>
