@@ -3627,12 +3627,6 @@ The following child tags are available:
     Optional tag providing the index of the subexpression used to start the
     next search.  The default is the end of the pattern.
 
-  * :file:`<Icon>`
-
-    Name of a stock icon for that category (see
-    :ref:`Adding_stock_icons`). This tag is currently ignored and reserved
-    for future use.
-
 * :file:`<Project_Field>`
 
   Information about the tools used to support this language. The name of

@@ -46,21 +46,18 @@ language_description = """
         <Name>package</Name>
         <Pattern>^interface\s+([\w\d+_]+)(\s|\(|&lt;)</Pattern>
         <Index>1</Index>
-        <Icon>package_xpm</Icon>
       </Category>
 
       <Category>
         <Name>class</Name>
         <Pattern>^class\s+([\w\d+_]+)(\s|\()</Pattern>
         <Index>1</Index>
-        <Icon>type_xpm</Icon>
       </Category>
 
       <Category>
         <Name>function</Name>
         <Pattern>^func\s+([\w\d+_]+)(\s|\()</Pattern>
         <Index>1</Index>
-        <Icon>subprogram_xpm</Icon>
       </Category>
     </Categories>
 
