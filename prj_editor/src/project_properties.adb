@@ -933,7 +933,11 @@ package body Project_Properties is
               (Attr               => Editor.Attribute,
                Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Value              => +Relative_Path (F1, F2),
+               --  The paths in projects should be UNIX-style; the call to
+               --  Create_From_UTF8 above could create Windows-style separators
+               --  so replace this here.
+               Value              => Replace
+                 (+Relative_Path (F1, F2), "\", "/"),
                Entry_Value        => Get_Safe_Text (Editor.Ent),
                Project_Changed    => Project_Changed);
 
