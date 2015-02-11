@@ -597,6 +597,7 @@ package body Build_Configurations is
       --  If we have duplicated a target using this subprogram, this means the
       --  target is user-created.
       Dest.Properties.Read_Only := False;
+      Dest.Properties.Do_Not_Save := False;
    end Duplicate_Target;
 
    --------------------------------------
@@ -1302,6 +1303,9 @@ package body Build_Configurations is
          elsif Child.Tag.all = "read-only" then
             Target.Properties.Read_Only := Boolean'Value (Child.Value.all);
 
+         elsif Child.Tag.all = "do-not-save" then
+            Target.Properties.Do_Not_Save := Boolean'Value (Child.Value.all);
+
          elsif Child.Tag.all = "target-type" then
             Set_Unbounded_String
               (Target.Properties.Target_Type, Child.Value.all);
@@ -1353,29 +1357,31 @@ package body Build_Configurations is
       C := Registry.Targets.First;
 
       while Has_Element (C) loop
-         --  Check whether the target has been modified. If so, save it
+         if not Element (C).Properties.Do_Not_Save then
+            --  Check whether the target has been modified. If so, save it
 
-         Name := Element (C).Name;
-         Equals_To_Original := False;
-         C2 := Registry.Original_Targets.First;
+            Name := Element (C).Name;
+            Equals_To_Original := False;
+            C2 := Registry.Original_Targets.First;
 
-         while Has_Element (C2) loop
-            if Element (C2).Name = Name then
-               if Equals (Element (C2), Element (C)) then
-                  Equals_To_Original := True;
+            while Has_Element (C2) loop
+               if Element (C2).Name = Name then
+                  if Equals (Element (C2), Element (C)) then
+                     Equals_To_Original := True;
+                  end if;
+                  exit;
                end if;
-               exit;
-            end if;
-            Next (C2);
-         end loop;
+               Next (C2);
+            end loop;
 
-         if not Equals_To_Original or Save_Even_If_Equals_To_Original then
-            if Child = null then
-               N.Child := Save_Target_To_XML (Registry, Element (C));
-               Child := N.Child;
-            else
-               Child.Next := Save_Target_To_XML (Registry, Element (C));
-               Child := Child.Next;
+            if not Equals_To_Original or Save_Even_If_Equals_To_Original then
+               if Child = null then
+                  N.Child := Save_Target_To_XML (Registry, Element (C));
+                  Child := N.Child;
+               else
+                  Child.Next := Save_Target_To_XML (Registry, Element (C));
+                  Child := Child.Next;
+               end if;
             end if;
          end if;
 

@@ -281,6 +281,9 @@ package Build_Configurations is
       Read_Only       : Boolean          := False;
       --  When set to True, the target cannot be renamed or removed
 
+      Do_Not_Save       : Boolean          := False;
+      --  When set to True, the target should not be saved
+
       Server           : Server_Type := GPS_Server;
       --  Server used to launch the target. If equal to GPS_Server, then its
       --  model's server is used.
