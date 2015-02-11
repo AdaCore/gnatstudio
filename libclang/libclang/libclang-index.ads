@@ -250,6 +250,8 @@ package Libclang.Index is
    procedure Dispose (Results : in out Clang_Complete_Results);
    --  Free memory associated to Results
 
+   procedure Sort (Results : in out Clang_Complete_Results);
+
    function Complete_At
      (TU            : Clang_Translation_Unit;
       Filename      : String;

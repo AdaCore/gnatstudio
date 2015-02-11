@@ -558,6 +558,17 @@ package body Libclang.Index is
       Results := No_Complete_Results;
    end Dispose;
 
+   ----------
+   -- Sort --
+   ----------
+
+   procedure Sort (Results : in out Clang_Complete_Results) is
+   begin
+      clang_sortCodeCompletionResults
+        (Results.CXCodeCompleteResults.Results,
+         Results.CXCodeCompleteResults.NumResults);
+   end Sort;
+
    -----------------
    -- Num_Results --
    -----------------

@@ -359,6 +359,7 @@ package body Completion.C.Libclang is
             Column        => Loc.Line_Offset + 1,
             Unsaved_Files => Unsaved_Files);
 
+         Sort (Resolver.Completions);
       end;
 
       Completion_List_Pckg.Append (Result.List, Component);
