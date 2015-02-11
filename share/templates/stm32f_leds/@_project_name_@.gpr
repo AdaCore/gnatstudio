@@ -22,5 +22,9 @@ project @_project_name_@ is
       for Communication_Protocol use "remote";
    end Ide;
 
+   package Emulator is
+      for Board use "STM32F4";
+   end Emulator;
+
 end @_project_name_@;
 
