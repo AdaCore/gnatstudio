@@ -9732,7 +9732,8 @@ class ToolButton(GUI):
 
         - $1 = The instance of :class:`GPS.Button`
 
-        :param stock_id: A string identifying the icon
+        :param stock_id: A string identifying the icon (this is the base
+           name of an .svg file defined in the icon theme).
         :param label: A string, the text that appears on the button
         :param on_click: A subprogram, see the GPS documentation
 

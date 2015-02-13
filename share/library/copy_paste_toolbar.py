@@ -11,11 +11,14 @@ import GPS
 def on_gps_started(hook_name):
     t = GPS.Toolbar()
     cut = GPS.ToolButton(
-        "gtk-cut",   "Cut", lambda x: GPS.execute_action("/Edit/Cut"))
+        "gps-cut-symbolic",   "Cut",
+        lambda x: GPS.execute_action("Cut to Clipboard"))
     copy = GPS.ToolButton(
-        "gtk-copy",  "Copy", lambda x: GPS.execute_action("/Edit/Copy"))
+        "gps-copy-symbolic",  "Copy",
+        lambda x: GPS.execute_action("Copy to Clipboard"))
     paste = GPS.ToolButton(
-        "gtk-paste", "Paste", lambda x: GPS.execute_action("/Edit/Paste"))
+        "gps-paste-symbolic", "Paste",
+        lambda x: GPS.execute_action("Paste From Clipboard"))
 
     t.insert(cut,   3, "Cut to Clipboard")
     t.insert(copy,  4, "Copy to Clipboard")

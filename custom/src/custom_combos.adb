@@ -576,7 +576,8 @@ package body Custom_Combos is
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Create_Tool_Button_Args);
-         Gtk_New_From_Stock (Button, Nth_Arg (Data, 2));
+         Gtk_New (Button);
+         Button.Set_Icon_Name (Nth_Arg (Data, 2));
          Set_Label (Button, Nth_Arg (Data, 3));
          Set_Data (Inst, Widget => GObject (Button));
          Show_All (Button);
