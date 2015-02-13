@@ -1384,13 +1384,6 @@ package body GPS.Kernel.Modules.UI is
       Action := Lookup_Action (Data.Kernel, Data.Action.all);
 
       if Action /= Data.Looked_Up then
-         --  ??? Commented out because Data.Looked_Up might no longer be valid
---           if Data.Looked_Up /= null then
---              if Self.all in Gtk_Menu_Item_Record'Class then
---             Remove_Menu_From_List (Data.Looked_Up, Create_Menu_Path (Self));
---              end if;
---           end if;
-
          Data.Looked_Up := Action;
 
          if Action /= null then
@@ -1868,7 +1861,7 @@ package body GPS.Kernel.Modules.UI is
          Toolbar.Insert (Button, Pos => Position);
       end if;
 
-      Show_All (Button);
+      Button.Show_All;
    end Register_Button;
 
    ------------------------
@@ -2478,10 +2471,9 @@ package body GPS.Kernel.Modules.UI is
          W.Set_Sensitive (True);
 
       else
+         W.Set_Sensitive (False);
          if Self.Optional or else Self.Hide then
             W.Hide;
-         else
-            W.Set_Sensitive (False);
          end if;
       end if;
    end Set_Active;
@@ -2582,6 +2574,7 @@ package body GPS.Kernel.Modules.UI is
       begin
          for C in 0 .. Count - 1 loop
             Item := Toolbar.Get_Nth_Item (C);
+            Item.Set_No_Show_All (True);
 
             if Item.all in Gtk_Separator_Tool_Item_Record'Class then
                if Prev_Is_Sep then
@@ -2675,19 +2668,6 @@ package body GPS.Kernel.Modules.UI is
 
                   Available := Filter_Matches (Action.Filter, Data.Context);
                   D.Set_Active (Available, A.Proxy);
-
-                  --  If this is a tool button that we are just showing,
-                  --  it is possible that the stock id was set at a time
-                  --  when the actual stock was not defined: in this case,
-                  --  force a refresh.
-                  if Available
-                    and then Action.Icon_Name /= null
-                    and then A.Proxy.all in Action_Tool_Button_Record'Class
-                    and then not Action_Tool_Button (A.Proxy).Forced_Stock
-                  then
-                     Action_Tool_Button (A.Proxy).Set_Icon_Name
-                        (Action.Icon_Name.all);
-                  end if;
                end if;
             end if;
          end if;
