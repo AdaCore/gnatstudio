@@ -78,6 +78,7 @@ try:
     triple_click_events = [
         Gdk.EventType.BUTTON_PRESS,
         Gdk.EventType.BUTTON_RELEASE,
+        Gdk.EventType.BUTTON_PRESS,
         Gdk.EventType._2BUTTON_PRESS,
         Gdk.EventType.BUTTON_RELEASE,
         Gdk.EventType.BUTTON_PRESS,
