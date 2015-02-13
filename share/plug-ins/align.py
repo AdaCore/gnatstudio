@@ -248,7 +248,9 @@ def max_min(e1, e2):
 
 def in_rw_ada_file(context):
     return (context.module_name == "Source_Editor"
-            and in_ada_file(context)
+            and (in_ada_file(context) or
+                 EditorBuffer.get().file().language().lower() in (
+                     'project file',))
             and is_writable(context))
 
 

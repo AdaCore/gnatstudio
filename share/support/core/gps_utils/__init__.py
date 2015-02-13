@@ -336,7 +336,6 @@ def in_ada_file(context):
         context.in_ada_file = (
             context.module_name == "Source_Editor"
             and buffer
-            # and MDI.current() == MDI.get_by_child(buffer.current_view())
             and buffer.file().language().lower() == "ada")
     return context.in_ada_file
 
