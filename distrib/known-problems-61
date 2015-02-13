@@ -25,6 +25,20 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O213-020 GPS: renamed action in eclipse.py
+
+  Problem:    The eclipse.py provides an action that deletes all the lines
+              that are at least partially selected. This action was named
+              "delete line", which created a conflict with a similar built-in
+              action, so it was renamed to "delete selected lines". You
+              might need to update your key shortcuts.
+
+  Status:     This was fixed in 6.2 on 2015-02-13
+
+  Workaround: eclipse.py is not loaded by default. When you load it, you
+              are getting an error message in the GPS Message view, which
+              can be safely ignored.
+
 KP-61-O204-044 GB: comment between 'null' and ')' in subprogram definition
 
   Problem:    Having in a subprogram definition (specification or body) the

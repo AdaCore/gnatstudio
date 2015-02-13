@@ -1,39 +1,25 @@
 """ Enables a selection of Eclipse-like shortcuts in GPS.
 
-The "delete line" (Ctrl-D or Cmd-D) action was contributed by Robert ter Vehn.
+The "delete selected lines" (Ctrl-D or Cmd-D) action was contributed
+by Robert ter Vehn.
 """
 
 
 import GPS
-
-#
-# Local subprograms
-#
+import gps_utils
 
 
-def delete_line():
-    """ Remove the lines that include the current selection. If there is
-        no selection, remove the line at the cursor position.
-     """
+@gps_utils.interactive(name='delete selected lines',
+                       category='Editor',
+                       filter='Source editor',
+                       key='primary-d')
+def delete_selected_lines():
+    """
+    Remove all the lines that are at least partially selected.
+    If there is no selection, remove the current line.
+    """
 
     buffer = GPS.EditorBuffer.get()
-    cpos = buffer.current_view().cursor()
-
-    append = GPS.last_command() == "delete line"
-    if append:
-        GPS.set_last_command("delete line")
-
     start = buffer.selection_start().beginning_of_line()
     end = buffer.selection_end().end_of_line()
-
     buffer.delete(start, end)
-
-#
-# Bindings
-#
-GPS.parse_xml ("""
-   <action name="delete line" output="none" category="Editor">
-      <description>Delete the lines that include the selection, or the current line.</description>
-      <shell lang="python">eclipse.delete_line()</shell>
-   </action>
-   <key action="delete line">primary-d</key>""")
