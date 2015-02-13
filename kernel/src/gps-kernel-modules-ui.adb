@@ -1588,7 +1588,7 @@ package body GPS.Kernel.Modules.UI is
       while Has_Element (C) loop
          It := Element (C);
          if Get_Object (It.Proxy) = Item then
-            Globals.Proxy_Items.Delete (C);
+            Globals.Proxy_Items.Delete (C);  --  calls On_Delete_Proxy
 
             --  Update cursor in the background updating, if needed
 
@@ -1666,14 +1666,6 @@ package body GPS.Kernel.Modules.UI is
          Menubar => Menubar);
 
       Add_To_Global_Proxies (Self, Kernel, null);
-
-      --  We have modified Global_Proxy_Items: if the menu recomputer
-      --  is running, its cursors might be invalid: reset it now.
-
-      if Globals.Update_Menus_Idle_Id /= No_Source_Id then
-         Update_Menus_And_Buttons (Kernel);
-      end if;
-
       --  And now setup the dynamic behavior
 
       Self.On_Activate (On_Activate_Action_Item'Access);

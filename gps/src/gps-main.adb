@@ -1864,7 +1864,6 @@ procedure GPS.Main is
 
       Register_Action_Hooks (GPS_Main.Kernel);
       Register_Standard_Hooks (GPS_Main.Kernel);
-      GPS.Kernel.Modules.UI.Start_Monitoring_Menus (GPS_Main.Kernel);
 
       --  Load the theme manager module immediately, so that any customization
       --  file or module can provide its own themes.
@@ -2120,6 +2119,7 @@ procedure GPS.Main is
       --  we would first be displaying empty buttons until their icon is
       --  loaded).
 
+      GPS.Kernel.Modules.UI.Start_Monitoring_Menus (GPS_Main.Kernel);
       Update_Menus_And_Buttons (GPS_Main.Kernel);
 
       --  Set default icon for dialogs and windows
