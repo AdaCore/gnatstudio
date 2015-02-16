@@ -629,8 +629,6 @@ package body Project_Templates.GUI is
       Gtk_New (Assistant);
       Assistant.Set_Position (Win_Pos_Center);
 
-      Assistant.Set_Title ("Create Project from Template");
-
       Gtk_New (Scroll);
       Gtk_New_Hpaned (Hpane);
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
@@ -726,6 +724,7 @@ package body Project_Templates.GUI is
       end if;
 
       Show_All (Assistant);
+      Assistant.Set_Title ("Create Project from Template");
 
       --  Launch a main loop: we do not want to leave this procedure while the
       --  assistand is running.
