@@ -21,7 +21,6 @@ with Interfaces.C.Strings;
 with System;
 
 with Glib.Object;
-with Glib.Properties;          use Glib.Properties;
 with Gtk.Button;
 with Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;
@@ -220,11 +219,8 @@ package body CodePeer.Message_Review_Dialogs_V3 is
          Class_Record => Class_Record,
          Type_Name    => "CodePeerMessageReviewDialogV3",
          Parameters   => Signal_Parameters);
-      Glib.Object.G_New (Self, Class_Record);
-      Glib.Properties.Set_Property
-        (Self,
-         Property_Boolean (Use_Header_Bar_Property),
-         (if Use_Header_Bar_From_Settings (Self) = 0 then False else True));
+      Glib.Object.G_New
+         (Self, Class_Record);
       Self.Set_Transient_For (Gtk_Window (Self.Get_Toplevel));
       Self.Set_Title (-"CodePeer message review");
 
