@@ -487,8 +487,8 @@ package body Interactive_Consoles is
    ------------------
 
    procedure Destroy_Idle (Console : in out Interactive_Console) is
-      pragma Warnings (Off, Console);
    begin
+      Console.Idle_Id := 0;
       Console.Idle_Registered := False;
    end Destroy_Idle;
 
@@ -1330,17 +1330,14 @@ package body Interactive_Consoles is
 
    procedure Replace_Cursor (Console : Interactive_Console) is
    begin
-      if Console.Idle_Registered then
-         return;
+      if not Console.Idle_Registered then
+         Console.Idle_Registered := True;
+         Console.Idle_Id :=
+           Console_Idle.Idle_Add
+             (Place_Cursor_At_Prompt'Access,
+              Console,
+              Notify => Destroy_Idle'Access);
       end if;
-
-      Console.Idle_Registered := True;
-
-      Console.Idle_Id :=
-        Console_Idle.Idle_Add
-          (Place_Cursor_At_Prompt'Access,
-           Console,
-           Notify => Destroy_Idle'Access);
    end Replace_Cursor;
 
    ----------------------
