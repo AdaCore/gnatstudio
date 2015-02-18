@@ -107,8 +107,7 @@ try:
         blocking the whole GPS interface.
         """
 
-        while Gtk.events_pending():
-            Gtk.main_iteration_do(blocking=0)
+        GPS.process_all_events()
 
     # ###############################
     # # Traversing the widget tree ##

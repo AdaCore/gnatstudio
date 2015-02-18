@@ -2005,10 +2005,11 @@ package body KeyManager_Module is
             Window  : Gdk.Gdk_Window := From_PyGtk (Data, 1);
             Typ     : constant Gdk_Event_Type :=
               Gdk_Event_Type'Val
-                (Nth_Arg (Data, 2, Gdk_Event_Type'Pos (Button_Press)));
+                (Nth_Arg (Data, 2, Gdk_Event_Type'Pos (Button_Press)) + 1);
             Button  : constant Integer := Nth_Arg (Data, 3, 1);
             X       : constant Integer := Nth_Arg (Data, 4, 1);
             Y       : constant Integer := Nth_Arg (Data, 5, 1);
+            State   : constant Integer := Nth_Arg (Data, 6, 0);
             Event   : Gdk_Event;
             List    : Widget_List.Glist;
             Win     : Gtk_Widget;
@@ -2034,11 +2035,12 @@ package body KeyManager_Module is
                 X           => Gdouble (X),
                 Y           => Gdouble (Y),
                 Axes        => null,
-                State       => 0,
+                State       => Gdk_Modifier_Type (State),
                 Button      => Guint (Button),
                 Device      => System.Null_Address,
                 X_Root      => 0.0,
                 Y_Root      => 0.0);
+
             Ref (Event.Button.Window);
 
             Device.Ref;
@@ -2046,7 +2048,8 @@ package body KeyManager_Module is
             Device.Ref;
             Set_Source_Device (Event, Device);
 
-            General_Event_Handler (Event, Kernel => Get_Kernel (Data));
+            Main_Do_Event (Event);
+
             Gdk.Event.Free (Event);
          end;
 
@@ -2140,6 +2143,15 @@ package body KeyManager_Module is
 
             General_Event_Handler (Event, Kernel => Get_Kernel (Data));
             Gdk.Event.Free (Event);
+         end;
+
+      elsif Command = "process_all_events" then
+         declare
+            Dummy : Boolean;
+         begin
+            while Gtk.Main.Events_Pending loop
+               Dummy := Gtk.Main.Main_Iteration;
+            end loop;
          end;
       end if;
    end Keymanager_Command_Handler;
@@ -2284,7 +2296,11 @@ package body KeyManager_Module is
              Param ("type", Optional => True),
              Param ("button", Optional => True),
              Param ("x", Optional => True),
-             Param ("y", Optional => True)),
+             Param ("y", Optional => True),
+             Param ("state", Optional => True)),
+            Keymanager_Command_Handler'Access);
+         Register_Command
+           (Get_Scripts (Kernel), "process_all_events", No_Params,
             Keymanager_Command_Handler'Access);
       end if;
 

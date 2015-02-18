@@ -50,7 +50,7 @@ try:
     def click_in_tree(view, path=None, column=0, button=1,
                       events=pygps.single_click_events, process_events=True,
                       control=False, alt=False, shift=False,
-                      modifier=None):
+                      modifier=None, through_gps=True):
         """Simulate a click in the TreeView on the given path and column.
            This event is sent asynchronously, and you should check its
            result in an idle callback, or call process_all_events() immediately
@@ -82,16 +82,6 @@ try:
         rect = view.get_cell_area(path, view.get_column(column))
 
         for t in events:
-            # event = Gdk.Event.new(t)
-            event = Gdk.EventButton()
-            event.type = t
-
-            event.window = view.get_bin_window()
-            event.device = pygps.default_event_device()
-            event.button = button
-            event.x = float(rect.x + rect.width / 2)
-            event.y = float(rect.y + rect.height / 2)
-
             if modifier is not None:
                 state = modifier
             else:
@@ -108,8 +98,28 @@ try:
                 if alt:
                     state |= Gdk.ModifierType.MOD1_MASK
 
-            event.state = state
-            event.put()
+            x = float(rect.x + rect.width / 2)
+            y = float(rect.y + rect.height / 2)
+
+            if through_gps:
+                GPS.send_button_event(
+                    button=button,
+                    x=int(x),
+                    y=int(y),
+                    window=view.get_bin_window(),
+                    state=state,
+                    type=t)
+            else:
+                # event = Gdk.Event.new(t)
+                event = Gdk.EventButton()
+                event.type = t
+                event.window = view.get_bin_window()
+                event.device = pygps.default_event_device()
+                event.button = button
+                event.x = x
+                event.y = y
+                event.state = state
+                event.put()
 
         if process_events:
             pygps.process_all_events()
