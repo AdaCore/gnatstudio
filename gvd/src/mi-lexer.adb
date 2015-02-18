@@ -72,6 +72,11 @@ package body MI.Lexer is
          Number : out Integer);
       --  Read the longest number from the stream and return it.
 
+      procedure Handle_Escape_Char
+        (Sh         : in out Input_Handler;
+         Str        : in out Unbounded_String);
+      --  handle '\' when reading identifier or C string
+
       procedure Read_Identifier
         (Sh         : in out Input_Handler;
          Identifier : out String_Access);
@@ -239,6 +244,32 @@ package body MI.Lexer is
          return Is_Alphanumeric (C) or else C = '-' or else C = '_';
       end Is_Valid_Identifier_Character;
 
+      ------------------------
+      -- Handle_Escape_Char --
+      ------------------------
+
+      procedure Handle_Escape_Char
+        (Sh         : in out Input_Handler;
+         Str        : in out Unbounded_String)
+      is
+         C          : Character;
+      begin
+         pragma Assert (Sh.Look_Ahead = '\');
+         Sh.Eat;
+         C := Sh.Look_Ahead;
+         if C = ASCII.CR then
+            Sh.Eat;
+            C := Sh.Look_Ahead;
+         end if;
+         if C /= ASCII.LF then
+            Append (Str, '\');
+            Append (Str, C);
+            Sh.Line := Sh.Line + 1;
+            Sh.Column := 1;
+         end if;
+         Sh.Eat;
+      end Handle_Escape_Char;
+
       ---------------------
       -- Read_Identifier --
       ---------------------
@@ -252,9 +283,13 @@ package body MI.Lexer is
       begin
          loop
             C := Sh.Look_Ahead;
-            exit when not Is_Valid_Identifier_Character (C);
-            Sh.Eat;
-            Append (Str, C);
+            if C = '\' then
+               Handle_Escape_Char (Sh, Str);
+            else
+               exit when not Is_Valid_Identifier_Character (C);
+               Sh.Eat;
+               Append (Str, C);
+            end if;
          end loop;
 
          Identifier := new String'(To_String (Str));
@@ -268,7 +303,6 @@ package body MI.Lexer is
         (Sh            : in out Input_Handler;
          C_String      : out String_Access)
       is
-         Previous_Char : Character := ASCII.NUL;
          Current_Char  : Character := ASCII.NUL;
          Str           : Unbounded_String;
 
@@ -277,12 +311,14 @@ package body MI.Lexer is
          Sh.Eat;  -- Eats the starting quotation char.
 
          loop
-            Previous_Char := Current_Char;
             Current_Char := Sh.Look_Ahead;
-            exit when Current_Char = '"'
-              and then Previous_Char /= '\';
-            Sh.Eat;
-            Append (Str, Current_Char);
+            if Current_Char = '\' then
+               Handle_Escape_Char (Sh, Str);
+            else
+               exit when Current_Char = '"';
+               Sh.Eat;
+               Append (Str, Current_Char);
+            end if;
          end loop;
 
          pragma Assert (Sh.Look_Ahead = '"');
@@ -480,6 +516,26 @@ package body MI.Lexer is
                       & To_String (Word)
                       & ")', expected (gdb)";
                end if;
+            when '\' =>
+
+               --  ignore '\' at EOL
+               Sh.Eat;
+               C := Sh.Look_Ahead;
+               if C = ASCII.CR then
+                  Sh.Eat;
+                  C := Sh.Look_Ahead;
+               end if;
+               if C = ASCII.LF then
+                  Sh.Eat;
+               else
+                  Clear_Token_List (List);
+                  raise Lexer_Error with
+                    ("Invalid token `" & C & "' at "
+                     & "line" & Natural'Image (Sh.Line)
+                     & " column" & Natural'Image (Sh.Column));
+               end if;
+            when ' ' | ASCII.CR =>
+               Sh.Eat;
             when '0' .. '9' =>
                Sh.Read_Number (Number);
                List.Append (Token_Type'(Code   => Token_No,
