@@ -204,7 +204,7 @@ package body Language.Custom is
       Comment_Start           : String_Ptr;
       Comment_End             : String_Ptr;
       Tmp_Str                 : String_Ptr;
-      Flags                   : Regexp_Flags;
+      Flags                   : Regexp_Flags := No_Flags;
       New_Line_Comment_Start  : String_Ptr;
       Num_Categories          : Natural := 0;
       Tmp                     : Project_Field_Array_Access;
