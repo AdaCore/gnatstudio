@@ -660,6 +660,10 @@ package body Outline_View.Model is
       return Path;
    end Get_Path;
 
+   --------------
+   -- Get_Path --
+   --------------
+
    overriding function Get_Path
      (Self : access Outline_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
@@ -1109,8 +1113,18 @@ package body Outline_View.Model is
 
       end Update_Nodes;
    begin
-      Update_Nodes (Model.Phantom_Root.Children,
-                    Model.Semantic_Tree.Element.Root_Nodes, No_Semantic_Node);
+      if Model.Filter.Flat_View then
+         --  Don't use the selective update mode in flat view, just reset the
+         --  tree
+         --  ??? TODO We might want to get rid of the selective update mode
+         --  completely, because it is performance consuming, and the only pro
+         --  is that user expanded nodes stay expanded
+         Set_Tree (Model, Model.Semantic_Tree.Element, Model.Filter);
+      else
+         Update_Nodes
+           (Model.Phantom_Root.Children,
+            Model.Semantic_Tree.Element.Root_Nodes, No_Semantic_Node);
+      end if;
    end File_Updated;
 
    ---------------------------------
@@ -1148,7 +1162,6 @@ package body Outline_View.Model is
                exit when Parent = No_Semantic_Node;
                Sem_Node := Parent;
             end;
-
          end loop;
 
          if Node = null then

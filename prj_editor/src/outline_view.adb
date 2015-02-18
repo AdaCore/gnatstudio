@@ -789,6 +789,7 @@ package body Outline_View is
       if Outline.File /= No_File then
          Outline.Kernel.Get_Abstract_Tree_For_File (Outline.File).Update;
          File_Updated (Get_Outline_Model (View));
+         Location_Changed (Outline.Kernel, Outline.File);
       end if;
    end Refresh;
 
