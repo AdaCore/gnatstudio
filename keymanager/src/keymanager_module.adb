@@ -2041,7 +2041,9 @@ package body KeyManager_Module is
                 X_Root      => 0.0,
                 Y_Root      => 0.0);
 
-            Ref (Event.Button.Window);
+            if Event.Button.Window /= null then
+               Ref (Event.Button.Window);
+            end if;
 
             Device.Ref;
             Set_Device (Event, Device);
