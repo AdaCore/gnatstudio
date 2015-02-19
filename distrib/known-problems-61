@@ -64,6 +64,15 @@ KP-61-O204-017 GB: random crash after code assist popup display
 
   Workaround: Disable Code Assist feature through Ada/Tools preference page.
 
+KP-61-O202-032 GB: <Ctrl> click hyperlink not working in ada editor
+
+  Problem:    When the ada editor is opened from the problem view, the
+              hyperlink navigation is not working.
+
+  Status:     This was fixed in 2.10 on 2015-02-06
+
+  Workaround: Close the editor, open it from the project editor view.
+
 KP-61-O120-002 GPS: cannot force background color for editors
 
   Problem:    The python method GPS.Editor.set_background_color has no
