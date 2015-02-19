@@ -31,8 +31,7 @@ class rulesSelector(Gtk.Dialog):
             self,
             title="Select a coding standard file",
             parent=GPS.MDI.current().pywidget().get_toplevel(),
-            flags=Gtk.DialogFlags.MODAL,
-            buttons=None
+            flags=Gtk.DialogFlags.MODAL
         )
 
         # OK - Cancel buttons
