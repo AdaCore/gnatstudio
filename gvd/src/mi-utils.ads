@@ -31,6 +31,12 @@ package MI.Utils is
    Not_Yet_Implemented_Error : exception;
    --  Exception raised when calling a routine that is not yet implemented
 
+   Result_Not_Found : exception;
+   --  Exception raised when no result was found
+
+   Multiple_Results_Found : exception;
+   --  Exception raised when more than one result was found
+
    type Var_Obj_Type;
    --  Forward declaration of the Var_Obj_Type to declare an access to it
 
@@ -319,5 +325,28 @@ package MI.Utils is
       Var_Obj : in out Var_Obj_Type);
    --  Handles the result of the MI command `-var-visualizer' and updates the
    --  Var_Obj_Type accordingly.
+
+   function Get_Stream_Content
+     (Records : Record_List;
+      Stream_Type : Stream_Output_Record_Type) return String_List;
+   --  return from the records the content of stream of requested type
+
+   function Get_Stream_Content
+     (Records : Record_List;
+      Stream_Type : Stream_Output_Record_Type) return String;
+   --  return from the records the content of stream of requested type
+
+   function Get_Result_Record
+     (Records : Record_List) return Result_Record;
+   --  return from records the first result record found
+
+   function Parse (Input : String) return Record_List;
+   --  parse the GDB/MI stream
+
+   function Get_Stream_Content
+     (Input : String;
+      Stream_Type : Stream_Output_Record_Type)
+      return String_List;
+   --  return from GDB/MI content the content of stream of requested type
 
 end MI.Utils;

@@ -158,10 +158,15 @@ package body MI.Parser is
       --   * "error"
       --   * "exit"
 
-      function Is_Known_Async_Class (Token : String) return Boolean;
-      pragma Inline (Is_Known_Async_Class);
+      function Is_Known_Async_Exec_Class (Token : String) return Boolean;
+      pragma Inline (Is_Known_Async_Exec_Class);
       --  This function checks whether or not the given token is one of the
-      --  known `async-class' possible string, i.e.
+      --  known execute `async-class' possible string, i.e.
+
+      function Is_Known_Async_Notify_Class (Token : String) return Boolean;
+      pragma Inline (Is_Known_Async_Notify_Class);
+      --  This function checks whether or not the given token is one of the
+      --  known notify `async-class' possible string, i.e.
 
       procedure Drop_Tokens_Until
         (Tokens   : in out Token_List;
@@ -488,14 +493,44 @@ package body MI.Parser is
       --   * "error"
       --   * "exit"
 
-      --------------------------
-      -- Is_Known_Async_Class --
-      --------------------------
+      -------------------------------
+      -- Is_Known_Async_Exec_Class --
+      -------------------------------
 
-      function Is_Known_Async_Class (Token : String) return Boolean is
+      function Is_Known_Async_Exec_Class (Token : String) return Boolean is
       begin
-         return Token = "stopped";
-      end Is_Known_Async_Class;
+         return Token = "stopped" or else
+           Token = "running";
+      end Is_Known_Async_Exec_Class;
+
+      ---------------------------------
+      -- Is_Known_Async_Notify_Class --
+      ---------------------------------
+
+      function Is_Known_Async_Notify_Class (Token : String) return Boolean is
+      begin
+         return Token = "thread-group-added" or else
+           Token = "thread-group-removed" or else
+           Token = "thread-group-started" or else
+           Token = "thread-group-exited" or else
+           Token = "thread-created" or else
+           Token = "thread-exited" or else
+           Token = "thread-selected" or else
+           Token = "library-loaded" or else
+           Token = "library-unloaded" or else
+           Token = "traceframe-changed" or else
+           Token = "traceframe-changed" or else
+           Token = "tsv-created" or else
+           Token = "tsv-deleted" or else
+           Token = "tsv-modified" or else
+           Token = "breakpoint-created" or else
+           Token = "breakpoint-modified" or else
+           Token = "breakpoint-deleted" or else
+           Token = "record-started" or else
+           Token = "record-stopped" or else
+           Token = "cmd-param-changed" or else
+           Token = "memory-changed";
+      end Is_Known_Async_Notify_Class;
 
       -----------------------
       -- Drop_Tokens_Until --
@@ -541,6 +576,16 @@ package body MI.Parser is
 
       function Look_Ahead (Tokens : Token_List) return Token_Type;
       --  Returns the first token of the list
+
+      function Look_Twice_Ahead (Tokens : Token_List) return Token_Type;
+      --  Gdb/MI output grammar is LL(2), which means that at some point, we
+      --  need to look two tokens ahead to make a decision on which rule to
+      --  follow and invoke.  The 2 incertitude spots which make this
+      --  grammar LL(2) is when the parser must evaluate an sequence of
+      --  tokens to be either part of an out-of-band-record rule or part of
+      --  a result-record rule, because both can start by a token number,
+      --  and when encountering the following construction
+      --  name1={...},{...} or name1={...},name2=...
 
       procedure Eat (Tokens : in out Token_List);
       --  Consumes a token from the list
@@ -617,7 +662,8 @@ package body MI.Parser is
 
       procedure Parse_Value
         (Tokens : in out Token_List;
-         Value  : out MI_Value_Access);
+         Value  : out MI_Value_Access;
+         In_List : Boolean := False);
       --  value =>
       --   C-String | tuple | list
 
@@ -652,6 +698,24 @@ package body MI.Parser is
          return Token_Lists.Element (Cursor);
       end Look_Ahead;
 
+      ----------------------
+      -- Look_Twice_Ahead --
+      ----------------------
+
+      function Look_Twice_Ahead (Tokens : Token_List) return Token_Type
+      is
+         pragma Assert (Tokens.Length >= 2);
+         Cursor : Token_Lists.Cursor := Tokens.First;
+      begin
+         Cursor := Token_Lists.Next (Cursor);
+
+         pragma Assert (Token_Lists.Has_Element (Cursor));
+         pragma Assert (Token_Lists.Element (Cursor).Code /= End_Of_File
+                        or else Tokens.Length = 1);
+
+         return Token_Lists.Element (Cursor);
+      end Look_Twice_Ahead;
+
       ---------
       -- Eat --
       ---------
@@ -678,36 +742,13 @@ package body MI.Parser is
 
       function Is_Result_Record (Tokens : Token_List) return Boolean
       is
-         function Look_Twice_Ahead (Tokens : Token_List) return Token_Type;
-         --  Gdb/MI output grammar is LL(2), which means that at some point, we
-         --  need to look two tokens ahead to make a decision on which rule to
-         --  follow and invoke.  The only incertitude spot which make this
-         --  grammar LL(2) is when the parser must evaluate an sequence of
-         --  tokens to be either part of an out-of-band-record rule or part of
-         --  a result-record rule, because both can start by a token number.
-
-         function Look_Twice_Ahead (Tokens : Token_List) return Token_Type
-         is
-            pragma Assert (Tokens.Length >= 2);
-            Cursor : Token_Lists.Cursor := Tokens.First;
-         begin
-            Cursor := Token_Lists.Next (Cursor);
-
-            pragma Assert (Token_Lists.Has_Element (Cursor));
-            pragma Assert (Token_Lists.Element (Cursor).Code /= End_Of_File
-                           or else Tokens.Length = 1);
-
-            return Token_Lists.Element (Cursor);
-         end Look_Twice_Ahead;
-
          First  : constant Token_Type := Look_Ahead (Tokens);
          Second : constant Token_Type := Look_Twice_Ahead (Tokens);
-
       begin
          return (Is_Result_Record_First (First)
                  and then First.Code /= Token_No)
-                  or else
-                (First.Code = Token_No and then Second.Code = Caret);
+           or else
+             (First.Code = Token_No and then Second.Code = Caret);
       end Is_Result_Record;
 
       ------------------------
@@ -791,19 +832,24 @@ package body MI.Parser is
          pragma Assert (Is_Output_First (Token));
 
       begin
-         while Is_Out_Of_Band_Record_First (Token) loop
+         while Is_Out_Of_Band_Record_First (Token) or
+               Is_Result_Record_First (Token) loop
 
             --  The grammar is LL(2) at this point.  We need to check two
             --  tokens ahead that the current token is not part of a
             --  `result-record' rule.
 
-            exit when Is_Result_Record (Tokens);
+            if Is_Result_Record (Tokens) then
+               Parse_Result_Record (Tokens, Result_Record_Access (MIR));
+            else
+               Parse_Out_Of_Band_Record (Tokens, MIR);
+            end if;
 
-            Parse_Out_Of_Band_Record (Tokens, MIR);
             Result.Append (MIR);
             Token := Look_Ahead (Tokens);
 
-            if not Is_Out_Of_Band_Record_Follower (Token) then
+            if not Is_Out_Of_Band_Record_Follower (Token) and then not
+                   Is_Result_Record_Follower (Token) then
                --  try recover the current state to a known one.
                Clear_Token (Token);  --  Release the memory used for this token
                Eat (Tokens);         --  ... and skip it
@@ -813,25 +859,8 @@ package body MI.Parser is
                   Error_Msg => ("Syntax error, expected out-of-band-record "
                                 & "follower"));
             end if;
+
          end loop;
-
-         --  Rest of expression: [result-record] "(gdb)" nl
-
-         Token := Look_Ahead (Tokens);
-
-         if Is_Result_Record_First (Token) then
-            Parse_Result_Record (Tokens, Result_Record_Access (MIR));
-            Result.Append (MIR);
-            Token := Look_Ahead (Tokens);
-
-            if not Is_Result_Record_Follower (Token) then
-               --  try recover the current state to a known one.
-               Clear_Token (Token);  --  Release the memory used for this token
-               Eat (Tokens);         --  ... and skip it
-               Try_Recover_Or_Die (Tokens, Is_Result_Record_Follower'Access,
-                  "Syntax error, expected result-record follower");
-            end if;
-         end if;
 
          if Token.Code /= Gdb_Prompt then
             --  try recover the current state to a known one.
@@ -1105,10 +1134,22 @@ package body MI.Parser is
             end;
          end if;
 
-         if not Is_Known_Async_Class (Token.Text.all) then
-            Put_Line (Standard_Error, "Warning: unknown async-class `"
-                                      & Token.Text.all & "'");
-         end if;
+         case Result.all.R_Type is
+            when Async_Exec =>
+               if not Is_Known_Async_Exec_Class (Token.Text.all) then
+                  Put_Line (Standard_Error,
+                            "Warning: unknown execute async-class `"
+                            & Token.Text.all & "'");
+               end if;
+            when Async_Notify =>
+               if not Is_Known_Async_Notify_Class (Token.Text.all) then
+                  Put_Line (Standard_Error,
+                            "Warning: unknown notify async-class `"
+                            & Token.Text.all & "'");
+               end if;
+            when others =>
+               null;
+         end case;
 
          Result.all.Class := Token.Text;
          Eat (Tokens);
@@ -1217,7 +1258,8 @@ package body MI.Parser is
       --   C-String | tuple | list
       procedure Parse_Value
         (Tokens : in out Token_List;
-         Value  : out MI_Value_Access)
+         Value  : out MI_Value_Access;
+         In_List : Boolean := False)
       is
          Token  : Token_Type := Look_Ahead (Tokens);
          pragma Assert (Is_Value_First (Token));
@@ -1240,6 +1282,30 @@ package body MI.Parser is
             pragma Assert (Token.Code = L_Brace);
             Parse_Tuple (Tokens, Value);
             Token := Look_Ahead (Tokens);
+
+            --  handle value={},{} constructions
+            if not In_List and then
+              Token.Code = Comma and then
+              Look_Twice_Ahead (Tokens).Code = L_Brace then
+               declare
+                  V_List : constant Value_List_Value_Access
+                    := new Value_List_Value;
+               begin
+                  V_List.all.Value.Append (Value);
+                  while Token.Code = Comma and then
+                    Look_Twice_Ahead (Tokens).Code = L_Brace loop
+
+                     --  eat comma
+                     Eat (Tokens);
+
+                     Parse_Tuple (Tokens, Value);
+                     V_List.all.Value.Append (Value);
+                     Token := Look_Ahead (Tokens);
+                  end loop;
+                  Value := MI_Value_Access (V_List);
+               end;
+
+            end if;
 
             if not Is_Tuple_Follower (Look_Ahead (Tokens)) then
                --  try recover the current state to a known one.
@@ -1376,7 +1442,7 @@ package body MI.Parser is
 
             begin
                loop
-                  Parse_Value (Tokens, Val);
+                  Parse_Value (Tokens, Val, True);
                   Token := Look_Ahead (Tokens);
 
                   if not Is_Value_Follower (Token) then

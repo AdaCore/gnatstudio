@@ -248,4 +248,104 @@ package body MI.Ast.Visitors is
       Clear_Value_List_Value (Object);
    end Visit;
 
+   -----------
+   -- Visit --
+   -----------
+
+   overriding procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Record_List)
+   is
+      Cursor : Record_Lists.Cursor := Object.First;
+   begin
+      while Record_Lists.Has_Element (Cursor) loop
+         Record_Lists.Element (Cursor).all.Accept_Visitor (This);
+         Cursor := Record_Lists.Next (Cursor);
+      end loop;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Result_List_Value'Class)
+   is
+      pragma Unreferenced (This);
+      pragma Unreferenced (Object);
+   begin
+      null;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Result_Pair)
+   is
+      pragma Unreferenced (This);
+      pragma Unreferenced (Object);
+   begin
+      null;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Result_Record'Class)
+   is
+      pragma Unreferenced (This);
+      pragma Unreferenced (Object);
+   begin
+      null;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Stream_Output_Record'Class)
+   is
+      pragma Unreferenced (This);
+      pragma Unreferenced (Object);
+   begin
+      null;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : String_Value'Class)
+   is
+      pragma Unreferenced (This);
+      pragma Unreferenced (Object);
+   begin
+      null;
+   end Visit;
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Value_List_Value'Class)
+   is
+      pragma Unreferenced (This);
+      pragma Unreferenced (Object);
+   begin
+      null;
+   end Visit;
+
 end MI.Ast.Visitors;

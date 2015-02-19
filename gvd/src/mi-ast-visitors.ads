@@ -70,13 +70,12 @@ package MI.Ast.Visitors is
       Object : Value_List_Value'Class);
 
    -------------------------------------
-   -- Consistency visitor declaration --
+   -- Dealloc visitor declaration --
    -------------------------------------
 
    type Dealloc_Visitor is new Mutable_Visitor with null record;
    --  One implementation of the Visitor interface which walks through the AST
-   --  and ensure that there is no dangling nodes, i.e. pointer which are null,
-   --  but shouldn't.
+   --  and Clear all elements
 
    overriding
    procedure Visit
@@ -112,5 +111,48 @@ package MI.Ast.Visitors is
    procedure Visit
      (This   : in out Dealloc_Visitor;
       Object : in out Value_List_Value'Class);
+
+   -------------------------------------
+   -- Record_List_Visitor declaration --
+   -------------------------------------
+
+   type Record_List_Visitor is new Visitor with null record;
+   --  One implementation of the Visitor interface visiting only top level
+   --  elements
+
+   overriding
+   procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Record_List);
+
+   overriding
+   procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Result_List_Value'Class);
+
+   overriding
+   procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Result_Pair);
+
+   overriding
+   procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Result_Record'Class);
+
+   overriding
+   procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Stream_Output_Record'Class);
+
+   overriding
+   procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : String_Value'Class);
+
+   overriding
+   procedure Visit
+     (This   : in out Record_List_Visitor;
+      Object : Value_List_Value'Class);
 
 end MI.Ast.Visitors;

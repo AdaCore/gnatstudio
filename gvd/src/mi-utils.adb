@@ -16,6 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with MI.Ast.Visitors; use MI.Ast.Visitors;
+with MI.Lexer; use MI.Lexer;
+with MI.Parser; use MI.Parser;
 
 package body MI.Utils is
 
@@ -1112,5 +1115,147 @@ package body MI.Utils is
    begin
       raise Not_Yet_Implemented_Error with "Process_Var_Visualizer";
    end Process_Var_Visualizer;
+
+   type Stream_Getter is new Record_List_Visitor with record
+      Output_Type : Stream_Output_Record_Type;
+      Fill_Strings : Boolean := false;
+      Strings     : String_List;
+      Fill_Content : Boolean := false;
+      Content     : Unbounded_String;
+   end record;
+   --  Visitor used to get the streams contents
+
+   overriding
+   procedure Visit
+     (This   : in out Stream_Getter;
+      Object : Stream_Output_Record'Class);
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding procedure Visit
+     (This   : in out Stream_Getter;
+      Object : Stream_Output_Record'Class)
+   is
+   begin
+      if Object.Output_Type = This.Output_Type then
+         if This.Fill_Strings then
+            This.Strings.Append (Object.Content);
+         end if;
+         if This.Fill_Content then
+            Append (This.Content, To_Unbounded_String (Object.Content.all));
+         end if;
+      end if;
+   end Visit;
+
+   type Result_Getter is new Record_List_Visitor with record
+      Length : Natural := 0;
+      Result : Result_Record;
+   end record;
+   --  Visitor used to get the result(s)
+
+   overriding
+   procedure Visit
+     (This   : in out Result_Getter;
+      Object : Result_Record'Class);
+
+   -----------
+   -- Visit --
+   -----------
+
+   overriding procedure Visit
+     (This   : in out Result_Getter;
+      Object : Result_Record'Class)
+   is
+   begin
+      This.Result := (Token => Object.Token,
+                      R_Type => Object.R_Type,
+                      Class => Object.Class,
+                      Results => Object.Results);
+      This.Length := This.Length + 1;
+   end Visit;
+
+   ------------------------
+   -- Get_Stream_Content --
+   ------------------------
+
+   function Get_Stream_Content
+     (Records : Record_List;
+      Stream_Type : Stream_Output_Record_Type)
+      return String
+   is
+      Visitor : Stream_Getter;
+   begin
+      Visitor.Output_Type := Stream_Type;
+      Visitor.Fill_Content := True;
+      Visitor.Visit (Records);
+      return To_String (Visitor.Content);
+   end Get_Stream_Content;
+
+   ------------------------
+   -- Get_Stream_Content --
+   ------------------------
+
+   function Get_Stream_Content
+     (Records : Record_List;
+      Stream_Type : Stream_Output_Record_Type)
+      return String_List
+   is
+      Visitor : Stream_Getter;
+   begin
+      Visitor.Output_Type := Stream_Type;
+      Visitor.Fill_Strings := True;
+      Visitor.Visit (Records);
+      return Visitor.Strings;
+   end Get_Stream_Content;
+
+   -----------------------
+   -- Get_Result_Record --
+   -----------------------
+
+   function Get_Result_Record
+     (Records : Record_List) return Result_Record
+   is
+      Visitor : Result_Getter;
+   begin
+      Visitor.Visit (Records);
+      if Visitor.Length = 0 then
+         raise Result_Not_Found;
+      elsif Visitor.Length > 1 then
+            raise Multiple_Results_Found;
+      end if;
+      return Visitor.Result;
+   end Get_Result_Record;
+
+   -----------
+   -- Parse --
+   -----------
+
+   function Parse (Input : String) return Record_List is
+      Tokens : Token_List := Build_Tokens (Input);
+      Records : Record_List;
+   begin
+      Build_Records (Tokens, Records);
+      Clear_Token_List (Tokens);
+      return Records;
+   end Parse;
+
+   ------------------------
+   -- Get_Stream_Content --
+   ------------------------
+
+   function Get_Stream_Content
+     (Input : String;
+      Stream_Type : Stream_Output_Record_Type)
+      return String_List
+   is
+      Records : Record_List := Parse (Input);
+      Stream_Content : constant String_List :=
+        Get_Stream_Content (Records, Stream_Type);
+   begin
+      Clear_Record_List (Records);
+      return Stream_Content;
+   end Get_Stream_Content;
 
 end MI.Utils;

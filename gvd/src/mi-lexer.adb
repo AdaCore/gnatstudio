@@ -261,12 +261,31 @@ package body MI.Lexer is
             Sh.Eat;
             C := Sh.Look_Ahead;
          end if;
-         if C /= ASCII.LF then
-            Append (Str, '\');
-            Append (Str, C);
-            Sh.Line := Sh.Line + 1;
-            Sh.Column := 1;
-         end if;
+         case C is
+            when ASCII.LF =>
+               Sh.Line := Sh.Line + 1;
+               Sh.Column := 1;
+            when ''' | '"' | '\' | '/' =>
+               Append (Str, C);
+            when 'n' =>
+               Append (Str, ASCII.LF);
+            when 'r' =>
+               Append (Str, ASCII.CR);
+            when 't' =>
+               Append (Str, ASCII.HT);
+            when 'b' =>
+               Append (Str, ASCII.BS);
+            when 'f' =>
+               Append (Str, ASCII.FF);
+            when 'v' =>
+               Append (Str, ASCII.VT);
+            when '0' =>
+               Append (Str, ASCII.NUL);
+            when others =>
+               Append (Str, '\');
+               Append (Str, C);
+         end case;
+
          Sh.Eat;
       end Handle_Escape_Char;
 
