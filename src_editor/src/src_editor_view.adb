@@ -2863,7 +2863,7 @@ package body Src_Editor_View is
       End_Iter                   : Gtk_Text_Iter;
       Entity_Start               : Gtk_Text_Iter;
       Entity_End                 : Gtk_Text_Iter;
-      Has_Selection              : Boolean;
+      Has_Selection              : Boolean := False;
       Out_Of_Bounds              : Boolean := False;
       Start_Line, End_Line       : Integer;
       Selection_Is_Single_Entity : Boolean;
@@ -2961,10 +2961,17 @@ package body Src_Editor_View is
       --  If we have a current selection, use it as the context if the user
       --  clicked inside it (ie consider the selection as an opaque block and
       --  don't look inside)
+      --
+      --  When we are calling this in reaction to the cursor moved, do not
+      --  perform this test: we might have moved "insert" but not yet
+      --  "selection_bound", and, in any case, we are not interested in the
+      --  area in this case.
 
-      Get_Selection_Bounds (B, Start_Iter, End_Iter, Has_Selection);
-      if Has_Selection then
-         Get_Iter_Position (B, Start_Iter, EL, Col);
+      if Location /= Location_Cursor then
+         Get_Selection_Bounds (B, Start_Iter, End_Iter, Has_Selection);
+         if Has_Selection then
+            Get_Iter_Position (B, Start_Iter, EL, Col);
+         end if;
       end if;
 
       if Out_Of_Bounds and then not Has_Selection then
