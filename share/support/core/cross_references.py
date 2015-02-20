@@ -124,7 +124,7 @@ class Sqlite_Cross_References(object):
                             "Build <current file>", "Custom Build...",
                             "Check Semantic", "Update file XRef",
                             "Update file XRef in background"]
-                or category in ["Makefile", "CodePeer"]):
+                or category in ["Makefile"]):
             self.recompute_xref()
 
         if (self.gnatinspect_launch_registered
