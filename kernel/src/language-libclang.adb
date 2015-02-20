@@ -54,7 +54,7 @@ package body Language.Libclang is
    Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    Activate_Clang_XRef : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG_XREF");
+     GNATCOLL.Traces.Create ("LIBCLANG_XREF", On);
 
    function Parsing_Timeout_Handler return Boolean;
 
