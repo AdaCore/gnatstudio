@@ -242,7 +242,9 @@ package Libclang.Index is
    Include_Code_Patterns  : constant Clang_Code_Complete_Flags := 2;
    Include_Brief_Comments : constant Clang_Code_Complete_Flags := 4;
 
-   type Clang_Complete_Results is private;
+   type Clang_Complete_Results is record
+      CXCodeCompleteResults : access clang_c_Index_h.CXCodeCompleteResults;
+   end record;
    --  A set of completion results
 
    No_Complete_Results : constant Clang_Complete_Results;
@@ -327,7 +329,8 @@ package Libclang.Index is
    --  freed with \c clang_disposeCodeCompleteResults(). If code
    --  completion fails, returns Null.
 
-   type Clang_Completion_Result is private;
+   type Clang_Completion_Result
+   is access all clang_c_Index_h.CXCompletionResult;
    --  One completion result
 
    No_Completion_Results : constant Clang_Completion_Result;
@@ -340,22 +343,74 @@ package Libclang.Index is
       N       : Positive) return Clang_Completion_Result;
    --  Return the Nth result in Results
 
+   subtype Clang_Completion_Chunk_Kind is CXCompletionChunkKind;
+   type Clang_Completion_Chunk is record
+      Completion : Clang_Completion_Result;
+      Index      : Interfaces.C.unsigned;
+   end record;
+   --  Wrapper around a clang completion chunk.
+
+   function Text (Chunk : Clang_Completion_Chunk) return String;
+   --  Get the text associated with this completion chunk
+
+   function Kind
+     (Chunk : Clang_Completion_Chunk) return Clang_Completion_Chunk_Kind;
+   --  Get the kind of this completion chunk
+
+   function To_String (Chunk : Clang_Completion_Chunk) return String;
+   --  Get a string representation of this completion chunk
+
+   package Chunk_Arrays is new Array_Utils (Clang_Completion_Chunk);
+   subtype Chunk_Array is Chunk_Arrays.Array_Type;
+   --  Wrapper around the internal collection of chunks. Created so that we can
+
+   function Get_Chunks (R : Clang_Completion_Result) return Chunk_Array;
+   --  Get the array of chunks from a completion result
+
+   function To_String (Completion : Clang_Completion_Result) return String;
+   --  Get the string repr of a completion result
+
    type Completion_Strings is record
       Completion : Unbounded_String := Null_Unbounded_String;
-      --  The completion string (the identifier that is being proposed
+      --  The completion string (the identifier that is being< proposed
 
       Doc        : Unbounded_String := Null_Unbounded_String;
       --  The full doc to display
    end record;
    --  A collated data used for completion
 
-   function Spelling
+   function Spellings
      (Result : Clang_Completion_Result) return Completion_Strings;
-   --  Return the tex1t associated with Result
+   --  Return the texts (completion + doc) associated with Result
+
+   function Typed_Text (C : Clang_Completion_Result) return String;
+   --  Returns the typed text asssociated with the result, that is the
+   --  completion associated with the result.
 
    function Kind
      (Result : Clang_Completion_Result) return clang_c_Index_h.CXCursorKind;
    --  Return the kind of the result
+
+   function Priority
+     (Result : Clang_Completion_Result) return Natural;
+   --  Return the priority of this completion result. The lowest the priority
+   --  is, the likeliest the result is meaningful in the context according to
+   --  libclang
+
+   function Is_Parameter_Completion
+     (Result : Clang_Completion_Result) return Boolean;
+   --  Return wether this completion result corresponds to a current_parameter
+   --  completion result (a completion that indicates the current parameter
+   --  of a function call)
+
+   function Get_Current_Param_Index
+     (Result : Clang_Completion_Result) return Natural;
+   --  In the case where the result is a current parameter completion result,
+   --  return the index of the chunk corresponding to the current parameter
+
+   function Extract_Param_Name_From_Chunk
+     (Chunk : Clang_Completion_Chunk) return String;
+   --  Return the name from a chunk representing a function/method parameter
 
    ------------------------------
    -- Cursors & Tree traversal --
@@ -676,10 +731,6 @@ private
    No_Translation_Unit : constant Clang_Translation_Unit :=
         clang_c_Index_h.CXTranslationUnit (System.Null_Address);
 
-   type Clang_Complete_Results is record
-      CXCodeCompleteResults : access clang_c_Index_h.CXCodeCompleteResults;
-   end record;
-
    Aliased_0 : aliased constant Interfaces.C.unsigned := 0;
 
    No_CXCompletionResult : aliased clang_c_Index_h.CXCompletionResult
@@ -693,12 +744,7 @@ private
    No_Complete_Results : constant Clang_Complete_Results :=
      (CXCodeCompleteResults => null);
 
-   type Clang_Completion_Result is record
-      Result : access clang_c_Index_h.CXCompletionResult;
-   end record;
-
-   No_Completion_Results : constant Clang_Completion_Result :=
-     (Result => null);
+   No_Completion_Results : constant Clang_Completion_Result := null;
 
    No_Cursor : constant Clang_Cursor := clang_getNullCursor;
 

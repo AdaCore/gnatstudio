@@ -21,6 +21,8 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 generic
    type Element_Type is private;
    with function "=" (L, R : Element_Type) return Boolean is <>;
@@ -30,6 +32,8 @@ package Array_Utils is
 
    type Array_Type is array (Index_Type range <>) of Element_Type;
    Empty_Array : constant Array_Type (1 .. 0) := (others => <>);
+
+   type Array_Type_Access is access all Array_Type;
 
    type Option_Type (Has_Element : Boolean) is record
       case Has_Element is
@@ -42,6 +46,9 @@ package Array_Utils is
    function Create (El : Element_Type) return Option_Type;
 
    None : Option_Type := (Has_Element => False);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Object => Array_Type, Name => Array_Type_Access);
 
    ---------
    -- Map --
@@ -94,6 +101,11 @@ package Array_Utils is
    function Contains
      (In_Array : Array_Type; El : Element_Type) return Boolean;
 
+   function Contains
+     (In_Array : Array_Type;
+      Pred : access function (El : Element_Type) return Boolean)
+      return Boolean;
+
    generic
       with function Predicate (In_Element : Element_Type) return Boolean;
    function Find_Gen (In_Array : Array_Type;
@@ -104,6 +116,12 @@ package Array_Utils is
       Predicate :
       access function (El : Element_Type) return Boolean;
       Rev : Boolean := False) return Option_Type;
+
+   function Find
+     (In_Array : Array_Type;
+      Predicate :
+      access function (El : Element_Type) return Boolean;
+      Rev : Boolean := False) return Natural;
 
    function Find (In_Array : Array_Type;
                   Predicate :
@@ -130,6 +148,7 @@ package Array_Utils is
 
    generic
       type F_Type is private;
+      type Index_Type is range <>;
       type Fun_Ret_Array_Type is array (Index_Type range <>) of F_Type;
    function Flat_Map
      (In_Array : Array_Type;
@@ -145,6 +164,7 @@ package Array_Utils is
 
    generic
       type F_Type is private;
+      type Index_Type is range <>;
       type Fun_Ret_Array_Type is array (Index_Type range <>) of F_Type;
       with function Transform
         (In_Element : Element_Type) return Fun_Ret_Array_Type;
@@ -154,6 +174,17 @@ package Array_Utils is
       with function Transform
         (In_Element : Element_Type) return Array_Type;
    function Id_Flat_Map_Gen (In_Array : Array_Type) return Array_Type;
+
+   ----------
+   -- Sort --
+   ----------
+   generic
+      with function "<" (Left, Right : Element_Type) return Boolean;
+   function Sort_Gen (In_Array : Array_Type) return Array_Type;
+
+   generic
+      with function "<" (Left, Right : Element_Type) return Boolean;
+   procedure In_Place_Sort_Gen (In_Out_Array : in out Array_Type);
 
 private
    type Bool_Array is array (Index_Type range <>) of Boolean;

@@ -26,11 +26,12 @@ with Libclang.File;
 with System.Address_To_Access_Conversions;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Ada.Unchecked_Deallocation;
+with String_Utils; use String_Utils;
+with GNAT.Regpat; use GNAT.Regpat;
 
 package body Libclang.Index is
 
    Debug : constant Boolean := False;
-
    Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    type Complete_Results_Access is access all CXCodeCompleteResults;
@@ -596,76 +597,203 @@ package body Libclang.Index is
    begin
       P := P + ptrdiff_t (N - 1);
 
-      Returned.Result := P;
+      Returned := Clang_Completion_Result (P);
 
       return Returned;
    end Nth_Result;
 
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Chunk : Clang_Completion_Chunk) return String
+   is
+      Kind_Image : constant String := Kind (Chunk)'Img;
+      Prefix : constant String := "CXCompletionChunk_";
+   begin
+      return "(" & Kind_Image (Prefix'Length .. Kind_Image'Length)
+        & ", """ & Text (Chunk) & """)";
+   end To_String;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Completion : Clang_Completion_Result) return String is
+      A : Unbounded_String;
+   begin
+      Append (A, "Completion (");
+      for Chunk of Get_Chunks (Completion) loop
+         if Chunk.Index /= 0 then
+            Append (A, ", ");
+         end if;
+
+         Append (A, To_String (Chunk));
+      end loop;
+      Append (A, ")");
+      return +A;
+   end To_String;
+
+   ----------
+   -- Text --
+   ----------
+
+   function Text
+     (Chunk : Clang_Completion_Chunk) return String
+   is
+     (To_String
+        (clang_getCompletionChunkText
+             (Chunk.Completion.CompletionString,
+              Chunk.Index)));
+
+   ----------
+   -- Kind --
+   ----------
+
+   function Kind
+     (Chunk : Clang_Completion_Chunk) return Clang_Completion_Chunk_Kind
+   is
+     (clang_getCompletionChunkKind
+        (Chunk.Completion.CompletionString, Chunk.Index));
+
+   ----------------
+   -- Get_Chunks --
+   ----------------
+
+   function Get_Chunks (R : Clang_Completion_Result) return Chunk_Array
+   is
+   begin
+      return
+        Ret : Chunk_Array
+          (1 .. Natural
+             (clang_getNumCompletionChunks (R.CompletionString)))
+      do
+         for I in Ret'Range loop
+            Ret (I) := Clang_Completion_Chunk'(R, unsigned (I - 1));
+         end loop;
+      end return;
+   end Get_Chunks;
+
+   ----------------
+   -- Typed_Text --
+   ----------------
+
+   function Typed_Text (C : Clang_Completion_Result) return String
+   is
+      function Is_Typed_Text_Chunk
+        (Chunk : Clang_Completion_Chunk) return Boolean
+      is (Kind (Chunk) = CXCompletionChunk_TypedText);
+
+      function Find
+      is new Chunk_Arrays.Find_Gen (Is_Typed_Text_Chunk);
+   begin
+      return Text
+        (Find (Get_Chunks (C)).Element);
+   end Typed_Text;
+
    --------------
-   -- Spelling --
+   -- Spellings --
    --------------
 
-   function Spelling
+   function Spellings
      (Result : Clang_Completion_Result) return Completion_Strings
    is
       Returned : Completion_Strings;
-      Len      : Interfaces.C.unsigned;
-
-      function Chunk_Text (Chunk_Num : Interfaces.C.unsigned) return String;
-      --  Return the string for the chunk at position Chunk_Num
-
-      ----------------
-      -- Chunk_Text --
-      ----------------
-
-      function Chunk_Text (Chunk_Num : Interfaces.C.unsigned) return String is
-      begin
-         return Value
-           (clang_c_CXString_h.clang_getCString
-              (clang_getCompletionChunkText
-                   (Result.Result.CompletionString, Chunk_Num)));
-      end Chunk_Text;
-
+      Chunks   : constant Chunk_Array := Get_Chunks (Result);
    begin
       if Result = No_Completion_Results then
          return Returned;
       end if;
-
-      Len := clang_getNumCompletionChunks (Result.Result.CompletionString);
-
-      if Len = 0 then
+      case Chunks'Length is
+      when 0 =>
          null;
 
-      elsif Len = 1 then
-         Returned.Completion := To_Unbounded_String (Chunk_Text (0));
-         Returned.Doc := To_Unbounded_String (Chunk_Text (0));
-      else
-         for Chunk in 0 .. Len - 1 loop
-            if clang_getCompletionChunkKind
-              (Result.Result.CompletionString, Chunk) in
+      when 1 =>
+         Returned.Completion := +Text (Chunks (1));
+         Returned.Doc := +Text (Chunks (1));
+      when others =>
+         for Chunk of Chunks loop
+            if Kind (Chunk) in
               CXCompletionChunk_TypedText .. CXCompletionChunk_Text
             then
-               Append (Returned.Completion, Chunk_Text (Chunk));
+               Append (Returned.Completion, Text (Chunk));
             end if;
 
             if Debug then
-               Append (Returned.Doc,
-                       " [" &
-                         clang_getCompletionChunkKind
-                         (Result.Result.CompletionString, Chunk)'Img &
-                       "]");
+               Append (Returned.Doc, " [" & Kind (Chunk)'Img & "]");
             end if;
 
-            Append (Returned.Doc, Chunk_Text (Chunk));
+            Append (Returned.Doc, Text (Chunk));
 
-            if Chunk = 0 then
+            if Chunk.Index = 0 then
                Append (Returned.Doc, " ");
             end if;
          end loop;
-      end if;
+      end case;
 
       return Returned;
-   end Spelling;
+   end Spellings;
+
+   ----------
+   -- Pred --
+   ----------
+
+   function Pred (El : Clang_Completion_Chunk) return Boolean is
+     (Kind (El) = CXCompletionChunk_CurrentParameter);
+
+   -----------------------------
+   -- Is_Parameter_Completion --
+   -----------------------------
+
+   function Is_Parameter_Completion
+     (Result : Clang_Completion_Result) return Boolean
+   is
+      use Chunk_Arrays;
+   begin
+      return Contains (Get_Chunks (Result), Pred'Access);
+   end Is_Parameter_Completion;
+
+   -----------------------------
+   -- Get_Current_Param_Index --
+   -----------------------------
+
+   function Get_Current_Param_Index
+     (Result : Clang_Completion_Result) return Natural
+   is
+      use Chunk_Arrays;
+   begin
+      return Find (Get_Chunks (Result), Pred'Access);
+   end Get_Current_Param_Index;
+
+   -----------------------------------
+   -- Extract_Param_Name_From_Chunk --
+   -----------------------------------
+
+   function Extract_Param_Name_From_Chunk
+     (Chunk : Clang_Completion_Chunk) return String
+   is
+      C : constant Pattern_Matcher := Compile ("[\w_$]+$");
+      Match_Arr : Match_Array (0 .. 1) := (others => No_Match);
+      T : constant String := Text (Chunk);
+   begin
+      Match (C, T, Match_Arr);
+      if Match_Arr (0) /= No_Match then
+         return T (Match_Arr (0).First .. Match_Arr (0).Last);
+      else
+         return "";
+      end if;
+   end Extract_Param_Name_From_Chunk;
+
+   --------------
+   -- Priority --
+   --------------
+
+   function Priority
+     (Result : Clang_Completion_Result) return Natural
+   is
+   begin
+      return Natural (clang_getCompletionPriority (Result.CompletionString));
+   end Priority;
 
    ----------
    -- Kind --
@@ -674,7 +802,7 @@ package body Libclang.Index is
    function Kind
      (Result : Clang_Completion_Result) return clang_c_Index_h.CXCursorKind is
    begin
-      return Result.Result.CursorKind;
+      return Result.CursorKind;
    end Kind;
 
    --------------------------

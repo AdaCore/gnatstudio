@@ -20,6 +20,7 @@
 -- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 ------------------------------------------------------------------------------
+with Ada.Containers.Generic_Array_Sort;
 
 package body Array_Utils is
 
@@ -65,6 +66,24 @@ package body Array_Utils is
    begin
       return Filter_Internal (In_Array);
    end Filter;
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains
+     (In_Array : Array_Type;
+      Pred : access function (El : Element_Type) return Boolean)
+      return Boolean
+   is
+   begin
+      for E of In_Array loop
+         if Pred (E) then
+            return True;
+         end if;
+      end loop;
+      return False;
+   end Contains;
 
    --------------
    -- Contains --
@@ -166,7 +185,7 @@ package body Array_Utils is
    function Id_Flat_Map_Gen (In_Array : Array_Type) return Array_Type
    is
       function Flat_Map_Internal
-      is new Flat_Map_Gen (Element_Type, Array_Type, Transform);
+      is new Flat_Map_Gen (Element_Type, Index_Type, Array_Type, Transform);
    begin
       return Flat_Map_Internal (In_Array);
    end Id_Flat_Map_Gen;
@@ -213,7 +232,8 @@ package body Array_Utils is
       return Fun_Ret_Array_Type
    is
       function Flat_Map_Internal
-      is new Flat_Map_Gen (F_Type, Fun_Ret_Array_Type, Transform.all);
+      is new Flat_Map_Gen (F_Type, Index_Type,
+                           Fun_Ret_Array_Type, Transform.all);
    begin
       return Flat_Map_Internal (In_Array);
    end Flat_Map;
@@ -248,7 +268,7 @@ package body Array_Utils is
       with function Predicate (In_Element : Element_Type) return Boolean;
    function Find_Internal (In_Array : Array_Type;
                            Rev : Boolean := False;
-                           Ret : out Element_Type) return Boolean;
+                           Ret : out Element_Type) return Natural;
 
    ----------
    -- Find --
@@ -262,7 +282,7 @@ package body Array_Utils is
    is
       function F is new Find_Internal (Predicate.all);
    begin
-      return F (In_Array, Rev, Ret);
+      return F (In_Array, Rev, Ret) /= 0;
    end Find;
 
    -------------------
@@ -271,26 +291,26 @@ package body Array_Utils is
 
    function Find_Internal (In_Array : Array_Type;
                            Rev : Boolean := False;
-                           Ret : out Element_Type) return Boolean
+                           Ret : out Element_Type) return Natural
    is
    begin
       if Rev then
-         for El of In_Array loop
-            if Predicate (El) then
-               Ret := El;
-               return True;
+         for Idx in In_Array'Range loop
+            if Predicate (In_Array (Idx)) then
+               Ret := In_Array (Idx);
+               return Idx;
             end if;
          end loop;
       else
-         for El of reverse In_Array loop
-            if Predicate (El) then
-               Ret := El;
-               return True;
+         for Idx in reverse In_Array'Range loop
+            if Predicate (In_Array (Idx)) then
+               Ret := In_Array (Idx);
+               return Idx;
             end if;
          end loop;
       end if;
 
-      return False;
+      return 0;
    end Find_Internal;
 
    ----------
@@ -311,7 +331,7 @@ package body Array_Utils is
       function F is new Find_Internal (Predicate);
       El : Element_Type;
    begin
-      if F (In_Array, Rev, El) then
+      if F (In_Array, Rev, El) /= 0 then
          return Create (El);
       else
          return None;
@@ -326,12 +346,28 @@ package body Array_Utils is
      (In_Array : Array_Type;
       Predicate :
       access function (El : Element_Type) return Boolean;
+      Rev : Boolean := False) return Natural
+   is
+      function F is new Find_Internal (Predicate.all);
+      El : Element_Type;
+   begin
+      return F (In_Array, Rev, El);
+   end Find;
+
+   ----------
+   -- Find --
+   ----------
+
+   function Find
+     (In_Array : Array_Type;
+      Predicate :
+      access function (El : Element_Type) return Boolean;
       Rev : Boolean := False) return Option_Type
    is
       function F is new Find_Internal (Predicate.all);
       El : Element_Type;
    begin
-      if F (In_Array, Rev, El) then
+      if F (In_Array, Rev, El) /= 0 then
          return Create (El);
       else
          return None;
@@ -349,7 +385,7 @@ package body Array_Utils is
       function F is new Find_Internal (Predicate);
       El : Element_Type;
    begin
-      if F (In_Array, Rev, El) then
+      if F (In_Array, Rev, El) /= 0 then
          return El;
       else
          return Val_If_Not_Found;
@@ -367,14 +403,35 @@ package body Array_Utils is
       Val_If_Not_Found : Element_Type;
       Rev : Boolean := False) return Element_Type
    is
-      function F is new Find_Internal (Predicate.all);
-      El : Element_Type;
+      function F is new Find_Gen_Or (Predicate.all);
    begin
-      if F (In_Array, Rev, El) then
-         return El;
-      else
-         return Val_If_Not_Found;
-      end if;
+      return F (In_Array, Val_If_Not_Found, Rev);
    end Find;
+
+   --------------
+   -- Sort_Gen --
+   --------------
+
+   function Sort_Gen (In_Array : Array_Type) return Array_Type is
+      procedure Sort is new Ada.Containers.Generic_Array_Sort
+        (Index_Type, Element_Type, Array_Type);
+   begin
+      return Res : Array_Type (In_Array'Range) do
+         Res := In_Array;
+         Sort (Res);
+      end return;
+   end Sort_Gen;
+
+   -----------------------
+   -- In_Place_Sort_Gen --
+   -----------------------
+
+   procedure In_Place_Sort_Gen (In_Out_Array : in out Array_Type)
+   is
+      procedure Sort is new Ada.Containers.Generic_Array_Sort
+        (Index_Type, Element_Type, Array_Type);
+   begin
+      Sort (In_Out_Array);
+   end In_Place_Sort_Gen;
 
 end Array_Utils;

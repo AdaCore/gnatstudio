@@ -19,6 +19,7 @@
 
 with GPS.Kernel;     use GPS.Kernel;
 with Libclang.Index; use Libclang.Index;
+with Array_Utils;
 
 package Completion.C.Libclang is
 
@@ -46,12 +47,19 @@ package Completion.C.Libclang is
 
 private
 
+   package Completion_Results_Arrays
+   is new Array_Utils (Clang_Completion_Result);
+   subtype Completion_Results_Array is Completion_Results_Arrays.Array_Type;
+   subtype Completion_Results_Array_Access
+     is Completion_Results_Arrays.Array_Type_Access;
+
    type Libclang_Resolver is new Completion_Resolver with record
-      Kernel            : Kernel_Handle;
-      TU                : Clang_Translation_Unit := No_Translation_Unit;
-      Completions       : Clang_Complete_Results := No_Complete_Results;
-      Prefix            : String_Access;
-      Unsaved_File_Inst : Unsaved_File;
+      Kernel             : Kernel_Handle;
+      TU                 : Clang_Translation_Unit := No_Translation_Unit;
+      Completions        : Clang_Complete_Results := No_Complete_Results;
+      Completions_Array  : Completion_Results_Array_Access;
+      Prefix             : String_Access;
+      Unsaved_File_Inst  : Unsaved_File;
    end record;
 
 end Completion.C.Libclang;

@@ -25,16 +25,16 @@ with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GPS.Editors; use GPS.Editors;
 
 with Language;     use Language;
-with Language.Cpp; use Language.Cpp;
 
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
-with UTF8_Utils; use UTF8_Utils;
-
 with clang_c_Index_h; use clang_c_Index_h;
 with Language.Libclang; use Language.Libclang;
 with GPS.Core_Kernels; use GPS.Core_Kernels;
+with Glib.Unicode; use Glib.Unicode;
+with Glib; use Glib;
+with String_Utils; use String_Utils;
 
 package body Completion.C.Libclang is
 
@@ -51,32 +51,67 @@ package body Completion.C.Libclang is
    -- Proposals --
    ---------------
 
-   type Simple_Libclang_Completion_Proposal is new Simple_Completion_Proposal
+   type Libclang_Completion is new Completion_Proposal
    with record
       Label         : Unbounded_String;
       Documentation : Unbounded_String;
+      Completion    : Unbounded_String;
+      Category      : Language_Category;
    end record;
 
+   overriding procedure Free (Proposal : in out Libclang_Completion) is null;
+
+   overriding function Match
+     (Proposal   : Libclang_Completion;
+      Context    : Completion_Context;
+      Offset     : String_Index_Type) return Boolean is (True);
+   --  This function is not actually used, need to be clarified some day ???
+
    overriding function Get_Action_Name
-     (Proposal : Simple_Libclang_Completion_Proposal)
+     (Proposal : Libclang_Completion)
       return String is ("");
+   --  No action linked to Libclang_Completion resolvers
+
+   overriding function Get_Visibility
+     (Proposal : Libclang_Completion) return Construct_Visibility
+   is (Visibility_Public);
+   --  Libclang only returns visible (eg. public) entities already, so
+   --  everything will be public
+
+   overriding function Get_Completion
+     (Proposal : Libclang_Completion;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return Basic_Types.UTF8_String is (+Proposal.Completion);
+   --  Return stored completion string
+
+   overriding function Get_Category
+     (Proposal : Libclang_Completion) return Language_Category
+   is (Proposal.Category);
+   --  Return the category of the object proposed for the completion
 
    overriding function Get_Documentation
-     (Proposal : Simple_Libclang_Completion_Proposal)
+     (Proposal : Libclang_Completion)
       return String is (To_String (Proposal.Documentation));
+   --  Return stored documentation directly
 
    overriding function Get_Custom_Icon_Name
-     (Proposal : Simple_Libclang_Completion_Proposal) return String is ("");
+     (Proposal : Libclang_Completion) return String is ("");
+   --  No custom icon
 
    overriding function Get_Label
-     (Proposal : Simple_Libclang_Completion_Proposal;
+     (Proposal : Libclang_Completion;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return String is (To_String (Proposal.Label));
+   --  Return stored label directly
 
    overriding function To_Completion_Id
-     (Proposal : Simple_Libclang_Completion_Proposal;
+     (Proposal : Libclang_Completion;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return Completion_Id;
+
+   package Completion_Proposal_Lists
+   is new Ada.Containers.Doubly_Linked_Lists
+     (Libclang_Completion);
 
    ----------------------
    -- Lazy computation --
@@ -94,8 +129,9 @@ package body Completion.C.Libclang is
    type Libclang_Iterator is
      new Completion_List_Pckg.Virtual_List_Component_Iterator
    with record
-      Resolver    : access Libclang_Resolver;
-      Next_Num    : Positive := 1;
+      Resolver        : access Libclang_Resolver;
+      Next_Num        : Natural := 0;
+      Pending_Results : Completion_Proposal_Lists.List;
       --  The number of the next item to get.
    end record;
 
@@ -118,19 +154,74 @@ package body Completion.C.Libclang is
       Iterator : Libclang_Iterator;
    begin
       Iterator.Resolver := List.Resolver;
-      Iterator.Next_Num := 1;
-
-      while not At_End (Iterator)
-        and then not Starts_With
-          (To_String
-             (Simple_Libclang_Completion_Proposal (Get (Iterator)).Label),
-           Iterator.Resolver.Prefix.all)
-      loop
-         Next (Iterator);
-      end loop;
-
+      Iterator.Next_Num := 0;
+      Next (Iterator);
       return Iterator;
    end First;
+
+   ------------------
+   -- Compute_Next --
+   ------------------
+
+   procedure Compute_Next (It : in out Libclang_Iterator);
+   procedure Compute_Next (It : in out Libclang_Iterator)
+   is
+      The_Res  : constant Clang_Completion_Result :=
+        It.Resolver.Completions_Array (It.Next_Num);
+      Strs     : constant Completion_Strings := Spellings (The_Res);
+   begin
+
+      --  Since we sorted the results by priority, the first result is gonna
+      --  be the current parameter completion (highest priority) if there is
+      --  a current parameter completion.
+
+      if It.Next_Num = 1
+        and then Is_Parameter_Completion (It.Resolver.Completions_Array (1))
+      then
+
+         --  In this case we create a custom completion that informs the user
+         --  about the current parameter. If he triggers it it will insert a
+         --  /* */ comment containing the name of the parameter
+
+         declare
+            C : constant Clang_Completion_Result :=
+              It.Resolver.Completions_Array (1);
+            Param_Index : constant Natural := Get_Current_Param_Index (C);
+            Param_Name : constant String := Extract_Param_Name_From_Chunk
+              (Get_Chunks (C) (Param_Index));
+         begin
+            It.Pending_Results.Append
+              ((Resolver => It.Resolver,
+               Label => +(Param_Name & " (param)"),
+               Completion => +("/* " & Param_Name & " = */"),
+               Documentation => Strs.Doc,
+               Category => Cat_Parameter));
+         end;
+
+      else
+
+         --  In the other (regular) case we just fill the completion proposal
+         --  with the needed information
+
+         It.Pending_Results.Append
+           ((Resolver => It.Resolver,
+             Label => Strs.Completion,
+             Completion => Strs.Completion,
+             Documentation => Strs.Doc,
+             Category =>
+               (case Kind (The_Res) is
+                   when EnumDecl
+                        | EnumConstantDecl => Cat_Literal,
+                   when FieldDecl => Cat_Field,
+                   when FunctionDecl
+                        | FunctionTemplate => Cat_Function,
+                   when ParmDecl => Cat_Parameter,
+                   when TypedefDecl
+                        | TypeAliasDecl => Cat_Type,
+                   when VarDecl => Cat_Variable,
+                   when others => Cat_Unknown)));
+      end if;
+   end Compute_Next;
 
    ----------
    -- Next --
@@ -138,20 +229,20 @@ package body Completion.C.Libclang is
 
    overriding procedure Next (It : in out Libclang_Iterator) is
    begin
-      It.Next_Num := It.Next_Num + 1;
-
-      while not At_End (It)
       loop
-         declare
-            C : constant Simple_Libclang_Completion_Proposal :=
-              Simple_Libclang_Completion_Proposal (It.Get);
-         begin
-            if Starts_With (To_String (C.Label), It.Resolver.Prefix.all) then
-               return;
-            end if;
-         end;
+         It.Pending_Results.Delete_First;
 
-         Next (It);
+         if It.Pending_Results.Is_Empty then
+            It.Next_Num := It.Next_Num + 1;
+            exit when It.Next_Num > It.Resolver.Completions_Array'Length;
+            Compute_Next (It);
+         end if;
+
+         exit
+           when Starts_With
+             (To_String
+                (Libclang_Completion (It.Get).Label),
+              It.Resolver.Prefix.all);
       end loop;
    end Next;
 
@@ -161,7 +252,8 @@ package body Completion.C.Libclang is
 
    overriding function At_End (It : Libclang_Iterator) return Boolean is
    begin
-      return It.Next_Num > Num_Results (It.Resolver.Completions);
+      return It.Next_Num > Num_Results (It.Resolver.Completions)
+        and then It.Pending_Results.Is_Empty;
    end At_End;
 
    ---------
@@ -171,42 +263,11 @@ package body Completion.C.Libclang is
    overriding function Get
      (It : Libclang_Iterator) return Completion_Proposal'Class
    is
-      Proposal : Simple_Libclang_Completion_Proposal;
-      The_Res  : constant Clang_Completion_Result :=
-        Nth_Result (It.Resolver.Completions, It.Next_Num);
-      Strs     : constant Completion_Strings := Spelling (The_Res);
-      --  ??? Break this into steps and add traces
    begin
-      Proposal.Resolver := It.Resolver;
-      Proposal.Name := new String'(To_String (Strs.Completion));
-
-      Proposal.Label := Strs.Completion;
-      Proposal.Documentation := Strs.Doc;
-
-      case Kind (The_Res) is
-         when EnumDecl | EnumConstantDecl =>
-            Proposal.Category := Cat_Literal;
-
-         when FieldDecl =>
-            Proposal.Category := Cat_Field;
-
-         when FunctionDecl | FunctionTemplate =>
-            Proposal.Category := Cat_Function;
-
-         when ParmDecl =>
-            Proposal.Category := Cat_Parameter;
-
-         when TypedefDecl | TypeAliasDecl =>
-            Proposal.Category := Cat_Type;
-
-         when VarDecl =>
-            Proposal.Category := Cat_Variable;
-
-         when others =>
-            Proposal.Category := Cat_Unknown;
-      end case;
-
-      return Proposal;
+      return
+        (if not It.Pending_Results.Is_Empty
+         then Completion_Proposal'Class (It.Pending_Results.First_Element)
+         else Null_Completion_Proposal);
    end Get;
 
    ----------------------
@@ -214,21 +275,21 @@ package body Completion.C.Libclang is
    ----------------------
 
    overriding function To_Completion_Id
-     (Proposal : Simple_Libclang_Completion_Proposal;
+     (Proposal : Libclang_Completion;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return Completion_Id
    is
       pragma Unreferenced (Db);
    begin
-      return (Proposal.Name'Length,
+      return (Length (Proposal.Completion),
               "LIBCLANG",
-              Proposal.Name.all,
+              +Proposal.Completion,
               GNATCOLL.VFS.No_File, 0, 0);
    end To_Completion_Id;
 
-   -----------------------------------------
-   -- New_C_Construct_Completion_Resolver --
-   -----------------------------------------
+   --------------------------------------
+   -- New_Libclang_Completion_Resolver --
+   --------------------------------------
 
    function New_Libclang_Completion_Resolver
      (Kernel       : Kernel_Handle;
@@ -261,105 +322,102 @@ package body Completion.C.Libclang is
       Filename  : constant String := +Context.File.Full_Name.all;
       Component : Libclang_Component;
 
-      C_Context  : C_Completion_Context;
-      Expression : Parsed_Expression;
-      Token      : Token_Record;
+      function Unichar_To_UTF8 (Char : Gunichar) return String;
+      function Unichar_To_UTF8 (Char : Gunichar) return String is
+         The_Char   : String (1 .. 6);
+         Last : Natural;
+      begin
+         Unichar_To_UTF8 (Char, The_Char, Last);
+         return The_Char (1 .. Last);
+      end Unichar_To_UTF8;
+
    begin
       --  Find the prefix of the word
-      --  ??? we should use libclang for that.
 
-      --  Below is a simple implementation, to be used if we switch away
-      --  from a C resolver manager but before we have the tree exploration
-      --  in libclang
+      declare
+         Unichar    : Gunichar;
+         Prefix     : Unbounded_String;
+      begin
+         loop
+            Loc := Loc.Forward_Char (-1);
+            Unichar := Gunichar (Loc.Get_Char);
 
---        declare
---           Unichar    : Gunichar;
---           The_Char   : String (1 .. 6);
---           Last       : Natural;
---           Prefix : String (1 .. Integer (Loc.Column) + 1);
---           Prefix_Last : Natural := Prefix'Last;
---        begin
---           Loc := Loc.Forward_Char (-1);
---           loop
---              Unichar := Gunichar (Loc.Get_Char);
---              Unichar_To_UTF8 (Unichar, The_Char, Last);
---
---              Loc := Loc.Forward_Char (-1);
---              exit when not (Is_Alnum (Unichar)
---                             or else Unichar = Character'Pos ('_'));
---              Prefix (Prefix_Last - Last + 1 .. Prefix_Last) :=
---                The_Char (1 .. Last);
---              Prefix_Last := Prefix_Last - Last;
---              exit when Integer (Loc.Column) <= 1;
---           end loop;
---
---           Result.Searched_Identifier := new String'
---             (Prefix (Prefix_Last + 1 .. Prefix'Last));
---        end;
+            --  Exit when we are out of an identifier, eg. the current char is
+            --  neither an alphanumeric character, neither an underscore
 
-      if Context.all not in C_Completion_Context'Class then
-         return;
-      end if;
+            exit when not
+              (Is_Alnum (Unichar) or else Unichar = Character'Pos ('_'));
 
-      C_Context  := C_Completion_Context (Context.all);
-      Expression := C_Context.Expression;
+            Insert (Prefix, 1, Unichar_To_UTF8 (Unichar));
 
-      case Token_List.Length (Expression.Tokens) is
-         when 0 =>
-            return;
+            --  Exit here if we are on the beginning of the buffer
 
-         --  No context available: our candidates are all the C/C++ entities
-         --  whose prefix matches this one! We perform the computation of
-         --  proposals in an incremental way using iterators.
+            exit when Loc.Offset = 0;
+         end loop;
 
-         when others =>
-            Token := Token_List.Data (Token_List.Last (Expression.Tokens));
-
-            case Token.Tok_Type is
-               when  Tok_Identifier =>
-                  declare
-                     Prefix : constant String :=
-                       Context.Buffer
-                         (Natural (Token.Token_First)
-                          .. Natural (Token.Token_Last));
-
-                  begin
-                     Result.Searched_Identifier := new String'(Prefix);
-                     Resolver.Prefix := new String'(Prefix);
-                  end;
-               when Tok_Dereference | Tok_Dot | Tok_Scope | Tok_Colon =>
-                  Result.Searched_Identifier := new String'("");
-                  Resolver.Prefix := new String'("");
-               when others =>
-                  return;
-            end case;
-      end case;
+         Result.Searched_Identifier := new String'(+Prefix);
+      end;
 
       Trace (Me, "Completion prefix: " & Result.Searched_Identifier.all);
-      Trace (Me, "Completion at " & Loc.Line'Img & " : " & Loc.Column'Img);
+      Trace (Me, "Completion at " & Loc.Line'Img & " : "
+             & Natural'Image (Loc.Line_Offset + 2));
       Component.Resolver := Resolver;
+      Resolver.Prefix := new String'(Result.Searched_Identifier.all);
 
       declare
          Unsaved_Files : constant Unsaved_File_Array :=
            (1 => Create_Unsaved_File
               (Filename,
                Ada.Strings.Unbounded.String_Access (Context.Buffer)));
-         --  ??? We should fill other unsaved_files!
       begin
          Resolver.TU := Translation_Unit
            (Core_Kernel (Resolver.Kernel), Context.File);
-
-         Loc := Loc.Forward_Char (0 - UTF8_Length (Resolver.Prefix.all));
 
          Resolver.Unsaved_File_Inst := Unsaved_Files (1);
          Resolver.Completions := Complete_At
            (Resolver.TU,
             Filename      => +Context.File.Full_Name,
             Line          => Loc.Line,
-            Column        => Loc.Line_Offset + 1,
+            Column        => Loc.Line_Offset + 2,
             Unsaved_Files => Unsaved_Files);
 
-         Sort (Resolver.Completions);
+         declare
+            use Completion_Results_Arrays;
+
+            function "<"
+              (Left, Right : Clang_Completion_Result) return Boolean;
+            --  We want to store completion results:
+            --    * First by libclang given priorities
+            --    * Second by lexical order
+
+            function "<"
+              (Left, Right : Clang_Completion_Result) return Boolean
+            is
+               P_Left : constant Natural := Priority (Left);
+               P_Right : constant Natural := Priority (Right);
+            begin
+               if P_Left = P_Right then
+                  return Typed_Text (Left) < Typed_Text (Right);
+               else
+                  return P_Left < P_Right;
+               end if;
+            end "<";
+
+            procedure Sort is new In_Place_Sort_Gen ("<");
+
+            Completions_Array : Completion_Results_Array
+              (1 .. Num_Results (Resolver.Completions));
+         begin
+            for I in 1 .. Num_Results (Resolver.Completions) loop
+               Completions_Array (I) :=
+                 Nth_Result (Resolver.Completions, I);
+            end loop;
+
+            Sort (Completions_Array);
+
+            Resolver.Completions_Array :=
+              new Completion_Results_Array'(Completions_Array);
+         end;
       end;
 
       Completion_List_Pckg.Append (Result.List, Component);
@@ -385,6 +443,7 @@ package body Completion.C.Libclang is
       Dispose (This.Completions);
       Free (This.Prefix);
       Destroy_Unsaved_File (This.Unsaved_File_Inst);
+      Completion_Results_Arrays.Free (This.Completions_Array);
    end Free;
 
    ----------------------

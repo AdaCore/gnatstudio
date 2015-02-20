@@ -888,21 +888,18 @@ package body Completion_Module is
                Data.Manager := new C_Completion_Manager;
 
                --  If we are using Clang, deactivate the constructs resolver
-
-               if Lang = C_Lang
-                 or else Lang = Cpp_Lang
-               then
-                  if Active (Clang_Support) then
-                     Data.Constructs_Resolver :=
-                       New_Libclang_Completion_Resolver
-                         (Kernel       => Kernel,
-                          Current_File => Get_Filename (Buffer));
-                  else
-                     Data.Constructs_Resolver :=
-                       New_C_Construct_Completion_Resolver
-                         (Kernel       => Kernel,
-                          Current_File => Get_Filename (Buffer));
-                  end if;
+               if Active (Clang_Support) then
+                  Register_Resolver
+                    (Data.Manager,
+                     New_Libclang_Completion_Resolver
+                       (Kernel       => Kernel,
+                        Current_File => Get_Filename (Buffer)));
+                  Data.Constructs_Resolver := null;
+               else
+                  Data.Constructs_Resolver :=
+                    New_C_Construct_Completion_Resolver
+                      (Kernel       => Kernel,
+                       Current_File => Get_Filename (Buffer));
                end if;
             else
                Data.Manager := new Generic_Completion_Manager;
