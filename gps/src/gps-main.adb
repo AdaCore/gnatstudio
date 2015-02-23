@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2014, AdaCore                     --
+--                     Copyright (C) 2001-2015, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -2590,6 +2590,25 @@ procedure GPS.Main is
    pragma Unreferenced (Dead);
 
 begin
+   --  Under Windows, prevent the creation of a dbus session: this serves
+   --  no purpose, breaks the testsuite, slows down the startup of the first
+   --  GPS instance, and is flaky under Windows XP.
+
+   if Config.Host = Windows then
+      --  If, for some obscure reason, there is a DBUS address specified,
+      --  allow it.
+      declare
+         Bus_Addr : String_Access := Getenv ("DBUS_SESSION_BUS_ADDRESS");
+      begin
+         if Bus_Addr = null
+           or else Bus_Addr.all = ""
+         then
+            Setenv ("DBUS_SESSION_BUS_ADDRESS", "null");
+         end if;
+         Free (Bus_Addr);
+      end;
+   end if;
+
    --  Create and setup a Gtk Application. We create our own class so that we
    --  can override the local_command_Line virtual method, and thus do our own
    --  handling of --help. Otherwise, since we haven't yet registered our
