@@ -227,6 +227,12 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "changed" signal
 
+   procedure On_Mark_Set
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View);
+   --  Callback for "mark_set" signal
+
    procedure Buffer_Information_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
@@ -795,6 +801,34 @@ package body Src_Editor_View is
          return False;
    end Idle_Column_Redraw;
 
+   -----------------
+   -- On_Mark_Set --
+   -----------------
+
+   procedure On_Mark_Set
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View)
+   is
+      Mark : constant Gtk_Text_Mark :=
+        Get_Text_Mark (Glib.Values.Nth (Params, 2));
+
+      Has_Focus : constant Boolean :=
+        Gtkada.MDI.MDI_Child (User.Child) =
+        Get_Focus_Child (Get_MDI (User.Kernel));
+   begin
+      if Has_Focus then
+         if Mark = Buffer.Get_Insert
+           or else Mark = Buffer.Get_Selection_Bound
+         then
+            --  We have changed the cursor position or the selection: emit
+            --  "context_changed" here.
+            User.Kernel.Context_Changed
+              (Build_Editor_Context (User, Location_Cursor));
+         end if;
+      end if;
+   end On_Mark_Set;
+
    -----------------------------
    -- Cursor_Position_Changed --
    -----------------------------
@@ -813,10 +847,6 @@ package body Src_Editor_View is
       --  Scroll_To_Cursor_Location to leave the cursor visible on the screen.
       if Has_Focus then
          Save_Cursor_Position (User);
-
-         --  We have changed the position: emit "context_changed" here.
-         User.Kernel.Context_Changed
-           (Build_Editor_Context (User, Location_Cursor));
       end if;
 
       --  If we are highlighting the current line, re-expose the entire view
@@ -1575,6 +1605,12 @@ package body Src_Editor_View is
       Source_Buffer_Callback.Connect
         (Buffer, Signal_Cursor_Position_Changed,
          Cb        => Cursor_Position_Changed'Access,
+         User_Data => Source_View (View),
+         After     => True);
+
+      Source_Buffer_Callback.Connect
+        (Buffer, Signal_Mark_Set,
+         Cb        => On_Mark_Set'Access,
          User_Data => Source_View (View),
          After     => True);
 
@@ -2961,17 +2997,10 @@ package body Src_Editor_View is
       --  If we have a current selection, use it as the context if the user
       --  clicked inside it (ie consider the selection as an opaque block and
       --  don't look inside)
-      --
-      --  When we are calling this in reaction to the cursor moved, do not
-      --  perform this test: we might have moved "insert" but not yet
-      --  "selection_bound", and, in any case, we are not interested in the
-      --  area in this case.
 
-      if Location /= Location_Cursor then
-         Get_Selection_Bounds (B, Start_Iter, End_Iter, Has_Selection);
-         if Has_Selection then
-            Get_Iter_Position (B, Start_Iter, EL, Col);
-         end if;
+      Get_Selection_Bounds (B, Start_Iter, End_Iter, Has_Selection);
+      if Has_Selection then
+         Get_Iter_Position (B, Start_Iter, EL, Col);
       end if;
 
       if Out_Of_Bounds and then not Has_Selection then
