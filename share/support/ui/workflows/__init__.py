@@ -8,6 +8,7 @@ structure.
 import sys
 import GPS
 import workflows.promises as promises
+import traceback
 import types
 
 # A table of all registered workflows
@@ -28,7 +29,7 @@ def run_registered_workflows(workflow_name, *args, **kwargs):
 def driver(gen_inst):
     """
     This is the main driver for workflows. You can pass your worklow (which is
-    a python generator instance ) to it and it will execute it.
+    a python generator instance) to it and it will execute it.
 
     From a worklow, you can yield two types of objects:
 
@@ -38,43 +39,81 @@ def driver(gen_inst):
 
     - You can yield other generators, in which case the driver will take care
       of consuming (executing) them, and then resume the execution of the
-      current generator
+      current generator.
+
+    Generators can throw exceptions: these will be propagated to the generator
+    that spawned them.
     """
+
+    # Stack of generators, similar to a call stack. The first one is the
+    # original generator and the last one is the most recently spawned one.
     gen_stack = [gen_inst]
 
-    def internal(return_val=None):
+    def resume(return_val=None):
+        """Resume execution for this workflow."""
         el = None
+        exc = None
+        exc_info = None
+
         while gen_stack:
-            gen = gen_stack[0]
+            gen = gen_stack[-1]
             try:
-                # if there's feedback from previous event, tell the generator
-                if return_val is not None:
+                if exc is not None:
+                    # If the previous round raised an exception, propagate it
+                    # to this generator.
+                    el = gen.throw(exc)
+                elif return_val is not None:
+                    # If there's feedback from previous event, tell the
+                    # generator.
                     el = gen.send(return_val)
-                    return_val = None
-                # otherwise just goto the next step
                 else:
+                    # Otherwise just go to the next step.
                     el = gen.next()
 
-                if isinstance(el, types.GeneratorType):
-                    gen_stack.insert(0, el)
-                else:
-                    break
-
-            # indicates the end of the generator: exit cleanly
             except StopIteration:
-                gen_stack.pop(0)
+                # The current generator just done: discard it so we can resume
+                # its parent generator.
+                gen_stack.pop()
 
-        if el is None:
-            return
+            except BaseException as exc:
+                # The current generator aborted because of an uncaught
+                # exception: discard it and let the next round propagate the
+                # exception to its "caller".
+                gen_stack.pop()
+                exc_info = sys.exc_info()
+                continue
 
-        # if promise instance is got from workflow, "then" it
-        if isinstance(el, promises.Promise):
-            el.then(internal)
-        # otherwise, continue to the next object by internal()
-        else:
-            internal()
+            if isinstance(el, types.GeneratorType):
+                # The last generator performed some kind of "call": schedule to
+                # run the child generator for the next round.
+                gen_stack.append(el)
+            elif isinstance(el, promises.Promise):
+                # If the last generator yielded a promise, schedule to resume
+                # its execution when the promise is ready.
+                el.then(resume)
+                return
 
-    internal()
+            # Clean state for the next round.
+            return_val = None
+            el = None
+            exc = None
+            exc_info = None
+
+        # If we reach this point, there's nothing to execute anymore: just log
+        # any uncaught exception.
+        if exc is not None:
+            # TODO: chained generators form a kind of call stack. However, what
+            # users will see here is the actual call stack, which includes only
+            # this frame and the ones that raised the exception. It would be
+            # more helpful to display the stack of generators.
+            GPS.Console('Messages').write(
+                'Uncaught exception in workflows:\n'
+                '{}\n'.format(traceback.format_exc(exc_info))
+            )
+
+    # We just created a new execution state (gen_stack), so technically we are
+    # resuming it below.
+    resume()
 
 
 # The following are decorators for workflows(generators)
