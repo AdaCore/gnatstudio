@@ -2301,10 +2301,11 @@ package body KeyManager_Module is
              Param ("y", Optional => True),
              Param ("state", Optional => True)),
             Keymanager_Command_Handler'Access);
-         Register_Command
-           (Get_Scripts (Kernel), "process_all_events", No_Params,
-            Keymanager_Command_Handler'Access);
       end if;
+
+      Register_Command
+        (Get_Scripts (Kernel), "process_all_events", No_Params,
+         Keymanager_Command_Handler'Access);
 
       Command := new Repeat_Next_Command;
       Register_Action

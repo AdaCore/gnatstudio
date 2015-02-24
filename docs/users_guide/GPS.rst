@@ -43,6 +43,7 @@ Functions
 .. autofunction:: ls
 .. autofunction:: lsmod
 .. autofunction:: parse_xml
+.. autofunction:: process_all_events
 .. autofunction:: pwd
 .. autofunction:: repeat_next
 .. autofunction:: reset_xref_db

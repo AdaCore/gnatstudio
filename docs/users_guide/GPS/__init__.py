@@ -11242,6 +11242,14 @@ def parse_xml(xml):
     pass  # implemented in Ada
 
 
+def process_all_events():
+    """
+    Processes pending graphical events.
+    This function is only useful for programming advanced plug-ins.
+    """
+    pass  # implemented in Ada
+
+
 def pwd():
     """
     Prints name of the current (working) directory.
