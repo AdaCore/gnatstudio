@@ -35,9 +35,9 @@ package CodePeer.Backtrace_View is
       Set              : Natural_Sets.Set);
    --  Fill backtraces view by backtraces of specified VNs
 
-   procedure Close_Backtraces_View
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Close Backtraces view
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Registers view.
 
 private
 

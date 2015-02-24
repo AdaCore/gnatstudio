@@ -52,15 +52,15 @@ package body CodePeer.Backtrace_View is
       return Gtk_Widget;
 
    package Backtrace_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Backtrace_View_Record",
-      View_Name          => "Backtrace",
+     (Module_Name        => "Backtrace_View",
+      View_Name          => "Backtraces",
       Formal_View_Record => Backtrace_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => True,
       Initialize         => Initialize,
       Position           => Position_Right,
       Group              => Group_Debugger_Stack,
-      Commands_Category  => "",
+      Commands_Category  => "CodePeer",
       Areas              => Sides_Only);
 
    Text_Column   : constant := 0;
@@ -77,16 +77,6 @@ package body CodePeer.Backtrace_View is
       Column : Gtk_Tree_View_Column);
    --  Opens source editor for clicked location.
 
-   ---------------------------
-   -- Close_Backtraces_View --
-   ---------------------------
-
-   procedure Close_Backtraces_View
-     (Kernel : access Kernel_Handle_Record'Class) is
-   begin
-      Backtrace_Views.Close (Kernel);
-   end Close_Backtraces_View;
-
    ------------------------
    -- Display_Backtraces --
    ------------------------
@@ -99,7 +89,7 @@ package body CodePeer.Backtrace_View is
       Subprogram       : String;
       Set              : Natural_Sets.Set)
    is
-      View     : Backtrace_View :=
+      View     : constant Backtrace_View :=
         Backtrace_View (Backtrace_Views.Retrieve_View (Kernel));
       Found    : Boolean;
       Info     : BT.BT_Info_Seqs.Vector;
@@ -108,15 +98,12 @@ package body CodePeer.Backtrace_View is
       Src_File : GNATCOLL.VFS.Virtual_File;
 
    begin
-      if View = null and then Set.Is_Empty then
-         --  Don't create view when backtraces information is empty
+      if View = null then
+         --  There is no Backtraces view open.
 
          return;
 
       end if;
-
-      View :=
-        Backtrace_View (Backtrace_Views.Get_Or_Create_View (Kernel, False));
 
       --  Ignore change of backtraces information when change of source
       --  location was requested by Backtraces view.
@@ -273,5 +260,15 @@ package body CodePeer.Backtrace_View is
             Col);
       end if;
    end On_Activated;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Backtrace_Views.Register_Module (Kernel);
+   end Register_Module;
 
 end CodePeer.Backtrace_View;

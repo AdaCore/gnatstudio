@@ -274,6 +274,7 @@
       <menu label='_Tools'>
          <menu label="Views">
             <menu label="_Bookmarks"                 action="open bookmarks"/>
+            <menu label="B_acktraces"                action="open backtraces"/>
             <menu label="Ca_ll Trees"                action="open call trees"/>
             <menu label="_Clipboard"                 action="open clipboard"/>
             <menu label="File Sw_itches"             action="open switches editor"/>

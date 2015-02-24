@@ -176,6 +176,11 @@ package body CodePeer.Module is
    --  Called when message in Locations view is selected. Updated Backtraces
    --  view.
 
+   function On_GPS_Exit_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean;
+   --  Called before GPS exits. Switchs perspective to default.
+
    Output_Directory_Attribute   :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
      GNATCOLL.Projects.Build ("CodePeer", "Output_Directory");
@@ -589,6 +594,9 @@ package body CodePeer.Module is
          Self.Report_Subwindow.Destroy;
       end if;
 
+      --  Switch to CodePeer perspective.
+      Load_Perspective (Self.Kernel, "CodePeer");
+
       --  Remove messages from the messages container and clear backtraces data
       --  cache.
 
@@ -679,6 +687,16 @@ package body CodePeer.Module is
             Name  => "codepeer.message_selected",
             Watch => Glib.Object.GObject (Self.Report));
 
+         --  Setup before exit hook, it is needed to switch to default
+         --  perspective before end of GPS session.
+
+         Add_Hook
+           (Self.Kernel,
+            Before_Exit_Action_Hook,
+            Wrapper (On_GPS_Exit_Hook'Access),
+            Name  => "codepeer.before_exit",
+            Watch => Glib.Object.GObject (Self.Report));
+
          --  Setup filter criteria
 
          Self.Filter_Criteria.Files.Clear;
@@ -698,19 +716,15 @@ package body CodePeer.Module is
          Self.Update_Location_View;
          Raise_Locations_Window (Self.Kernel);
 
-         --  Open Backtraces view when information is available.
+         --  Reset content of Backtraces view.
 
-         if Self.Has_Backtraces
-           and then Self.Backtraces.Get_Pref
-         then
-            CodePeer.Backtrace_View.Display_Backtraces
-              (Self.Kernel,
-               No_File,
-               No_File,
-               null,
-               "",
-               Natural_Sets.Empty_Set);
-         end if;
+         CodePeer.Backtrace_View.Display_Backtraces
+           (Self.Kernel,
+            No_File,
+            No_File,
+            null,
+            "",
+            Natural_Sets.Empty_Set);
 
          --  Raise report window
 
@@ -917,9 +931,11 @@ package body CodePeer.Module is
       end Process_Project;
 
    begin
-      --  Close Backtraces view.
-
-      CodePeer.Backtrace_View.Close_Backtraces_View (Context.Module.Kernel);
+      --  Load the default perspective before closing the report view. This
+      --  is necessary because the position of views is memorized at this
+      --  time: if views are closed before the perspective change, their
+      --  position is lost.
+      Load_Perspective (Context.Module.Kernel, "Default");
 
       --  Switch listener to cleanup mode to allow to destroy messages
 
@@ -972,6 +988,30 @@ package body CodePeer.Module is
       Context.Module.Display_Values :=
         Gtk.Check_Menu_Item.Gtk_Check_Menu_Item (Item).Get_Active;
    end On_Display_Values_Toggled;
+
+   ----------------------
+   -- On_GPS_Exit_Hook --
+   ----------------------
+
+   function On_GPS_Exit_Hook
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class) return Boolean
+   is
+      pragma Unreferenced (Data);
+
+   begin
+      --  Load the default perspective before closing the report view. This
+      --  is necessary because the position of views is memorized at this
+      --  time: if views are closed before the perspective change, their
+      --  position is lost.
+      Load_Perspective (Kernel, "Default");
+
+      --  Destroy report window
+
+      Module.Report_Subwindow.Destroy;
+
+      return True;
+   end On_GPS_Exit_Hook;
 
    -------------------------
    -- On_Hide_Annotations --
@@ -1042,7 +1082,6 @@ package body CodePeer.Module is
 
    begin
       if Module.Has_Backtraces
-        and then Module.Backtraces.Get_Pref
         and then D.Message.Has_Note (CodePeer_Note'Tag)
       then
          declare
@@ -1732,6 +1771,10 @@ package body CodePeer.Module is
          return;
       end if;
 
+      --  Register backtrace view
+
+      CodePeer.Backtrace_View.Register_Module (Kernel);
+
       Module          := new Module_Id_Record (Kernel);
       Submenu_Factory := new Submenu_Factory_Record (Module);
 
@@ -1831,15 +1874,6 @@ package body CodePeer.Module is
          Suppressed_Probability_Style_Name,
          Module.Message_Colors (CodePeer.Suppressed),
          True);
-
-      Module.Backtraces :=
-        Default_Preferences.Create
-          (Kernel.Get_Preferences,
-           "CodePeer-Backtraces",
-           -"Display message's backtraces",
-           -"Plugins/CodePeer",
-           -"Display message's backtraces information (experimental)",
-           False);
 
       GPS.Kernel.Hooks.Add_Hook
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,
