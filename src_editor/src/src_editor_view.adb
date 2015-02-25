@@ -812,17 +812,13 @@ package body Src_Editor_View is
    is
       Mark : constant Gtk_Text_Mark :=
         Get_Text_Mark (Glib.Values.Nth (Params, 2));
-
-      Has_Focus : constant Boolean :=
-        Gtkada.MDI.MDI_Child (User.Child) =
-        Get_Focus_Child (Get_MDI (User.Kernel));
    begin
-      if Has_Focus then
-         if Mark = Buffer.Get_Insert
-           or else Mark = Buffer.Get_Selection_Bound
+      if Mark = Buffer.Get_Selection_Bound then
+         --  Test whether we have the focus
+         if Gtkada.MDI.MDI_Child (User.Child) =
+           Get_Focus_Child (Get_MDI (User.Kernel))
          then
-            --  We have changed the cursor position or the selection: emit
-            --  "context_changed" here.
+            --  We have changed the selection: emit "context_changed" here.
             User.Kernel.Context_Changed
               (Build_Editor_Context (User, Location_Cursor));
          end if;
@@ -847,6 +843,10 @@ package body Src_Editor_View is
       --  Scroll_To_Cursor_Location to leave the cursor visible on the screen.
       if Has_Focus then
          Save_Cursor_Position (User);
+
+         --  We have changed the cursor position: emit "context_changed" here.
+         User.Kernel.Context_Changed
+           (Build_Editor_Context (User, Location_Cursor));
       end if;
 
       --  If we are highlighting the current line, re-expose the entire view
