@@ -848,14 +848,20 @@ package body Language.Libclang is
 
       --  Only keep those who are relevant to libclang
 
-      for F of Files.all
-      loop
-         if P_Tree.Info (F).Language = "c"
-           or else P_Tree.Info (F).Language = "cpp"
-           or else P_Tree.Info (F).Language = "c++"
-         then
-            Filtered_Files.Append (F);
-         end if;
+      for F of Files.all loop
+         declare
+            Info_Set : constant File_Info_Set := P_Tree.Info_Set (F);
+            Language : constant String :=
+              File_Info (Info_Set.First_Element).Language;
+
+         begin
+            if Language = "c"
+              or else Language = "cpp"
+              or else Language = "c++"
+            then
+               Filtered_Files.Append (F);
+            end if;
+         end;
       end loop;
 
       Unchecked_Free (Files);
