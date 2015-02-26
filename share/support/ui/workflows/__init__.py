@@ -5,6 +5,7 @@ a chain of asynchronous actions, while retaining a sequential
 structure.
 """
 
+import inspect
 import sys
 import GPS
 import workflows.promises as promises
@@ -24,6 +25,18 @@ def run_registered_workflows(workflow_name, *args, **kwargs):
     except KeyError:
         GPS.Console("Messages").write(
             "\nError: Workflow name not registered.\n")
+
+
+def peel_traceback_to(tb, frame):
+    """
+    Peel `tb` (a traceback object) until the top-level frame is `frame`.
+
+    Return the resulting traceback object, or None if `tb` contains no such
+    frame.
+    """
+    while tb and tb.tb_frame != frame:
+        tb = tb.tb_next
+    return tb
 
 
 def driver(gen_inst):
@@ -52,16 +65,15 @@ def driver(gen_inst):
     def resume(return_val=None):
         """Resume execution for this workflow."""
         el = None
-        exc = None
         exc_info = None
 
         while gen_stack:
             gen = gen_stack[-1]
             try:
-                if exc is not None:
+                if exc_info is not None:
                     # If the previous round raised an exception, propagate it
                     # to this generator.
-                    el = gen.throw(exc)
+                    el = gen.throw(*exc_info)
                 elif return_val is not None:
                     # If there's feedback from previous event, tell the
                     # generator.
@@ -75,12 +87,27 @@ def driver(gen_inst):
                 # its parent generator.
                 gen_stack.pop()
 
-            except BaseException as exc:
+            except BaseException:
                 # The current generator aborted because of an uncaught
                 # exception: discard it and let the next round propagate the
                 # exception to its "caller".
                 gen_stack.pop()
-                exc_info = sys.exc_info()
+
+                # For debugging purpose, keep exception information so that at
+                # the end, the user can have a traceback that is focused on its
+                # generators.
+                exc_type, exc_value, exc_tb = sys.exc_info()
+                # Strip the traceback to only keep the user part. Be careful
+                # about currentframe: on some implementations it can return
+                # None.
+                frame = inspect.currentframe()
+                if frame:
+                    exc_tb = peel_traceback_to(exc_tb, frame)
+                    # We want a traceback that do not contain this frame: peel
+                    # one more level!
+                    if exc_tb:
+                        exc_tb = exc_tb.tb_next
+                exc_info = (exc_type, exc_value, exc_tb)
                 continue
 
             if isinstance(el, types.GeneratorType):
@@ -96,19 +123,14 @@ def driver(gen_inst):
             # Clean state for the next round.
             return_val = None
             el = None
-            exc = None
             exc_info = None
 
         # If we reach this point, there's nothing to execute anymore: just log
         # any uncaught exception.
-        if exc is not None:
-            # TODO: chained generators form a kind of call stack. However, what
-            # users will see here is the actual call stack, which includes only
-            # this frame and the ones that raised the exception. It would be
-            # more helpful to display the stack of generators.
+        if exc_info is not None:
             GPS.Console('Messages').write(
                 'Uncaught exception in workflows:\n'
-                '{}\n'.format(traceback.format_exc(exc_info))
+                '{}\n'.format(''.join(traceback.format_exception(*exc_info)))
             )
 
     # We just created a new execution state (gen_stack), so technically we are
