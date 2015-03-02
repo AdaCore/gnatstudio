@@ -7711,6 +7711,8 @@ class Message(object):
         :param column: An integer indicating the column
         :param text: A pango markup String containg the message text
         :param flags: An integer representing the location of the message
+        :param allow_auto_jump_to_first: A boolean to control automatic jump to
+            first message in category.
 
         .. code-block:: python
 

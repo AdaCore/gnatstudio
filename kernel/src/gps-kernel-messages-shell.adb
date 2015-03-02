@@ -36,6 +36,7 @@ package body GPS.Kernel.Messages.Shell is
    Message_Class : Class_Type;
 
    Action_Cst     : aliased constant String := "action";
+   Auto_First     : aliased constant String := "allow_auto_jump_to_first";
    Subprogram_Cst : aliased constant String := "subprogram";
    Tooltip_Cst    : aliased constant String := "tooltip";
    Image_Cst      : aliased constant String := "image";
@@ -269,28 +270,32 @@ package body GPS.Kernel.Messages.Shell is
              3 => Line_Cst'Access,
              4 => Column_Cst'Access,
              5 => Text_Cst'Access,
-             6 => Flags_Cst'Access));
+             6 => Flags_Cst'Access,
+             7 => Auto_First'Access));
 
          declare
-            Category : constant String := Nth_Arg (Data, 2);
-            File     : constant Virtual_File :=
+            Category   : constant String := Nth_Arg (Data, 2);
+            File       : constant Virtual_File :=
               Get_Data (Nth_Arg
                         (Data, 3, Get_File_Class (Kernel),
-                   Default => No_Class_Instance, Allow_Null => False));
-            Line     : constant Natural := Nth_Arg (Data, 4);
-            Column   : constant Natural := Nth_Arg (Data, 5);
-            Text     : constant String := Nth_Arg (Data, 6);
-            Flags    : constant Integer := Nth_Arg (Data, 7, 0);
-            Message  : constant Markup_Message_Access :=
+                         Default => No_Class_Instance, Allow_Null => False));
+            Line       : constant Natural := Nth_Arg (Data, 4);
+            Column     : constant Natural := Nth_Arg (Data, 5);
+            Text       : constant String := Nth_Arg (Data, 6);
+            Flags      : constant Integer := Nth_Arg (Data, 7, 0);
+            Auto_First : constant Boolean := Nth_Arg (Data, 8, True);
+            Message    : constant Markup_Message_Access :=
               Create_Markup_Message
-                (Container => Container,
-                 Category  => Category,
-                 File      => File,
-                 Line      => Line,
-                 Column    => Visible_Column_Type (Column),
-                 Text      => Text,
-                 Weight    => 0, --  ??? what is Weight?
-                 Flags     => From_Int (Flags));
+                (Container                => Container,
+                 Category                 => Category,
+                 File                     => File,
+                 Line                     => Line,
+                 Column                   => Visible_Column_Type (Column),
+                 Text                     => Text,
+                 Weight                   => 0, --  ??? what is Weight?
+                 Flags                    => From_Int (Flags),
+                 Allow_Auto_Jump_To_First => Auto_First);
+
          begin
             Message_Inst := Nth_Arg (Data, 1, Message_Class);
             Set_Data (Message_Inst, Message_Access (Message));
@@ -477,7 +482,7 @@ package body GPS.Kernel.Messages.Shell is
       Message_Class := New_Class (Kernel, Class);
 
       Register_Command
-        (Kernel, Constructor_Method, 5, 6, Message_Command_Handler'Access,
+        (Kernel, Constructor_Method, 5, 7, Message_Command_Handler'Access,
          Message_Class, False);
 
       Register_Command
