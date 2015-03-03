@@ -1101,6 +1101,7 @@ package body Builder_Facility_Module is
                            Synchronous  => False,
                            Background   => Background,
                            Dialog       => Default,
+                           Via_Menu     => False,
                            Main         => No_File);
             --  ??? Should we attempt to compute which is the "relevant" main
             --  in On_File_Save mode?
@@ -1277,7 +1278,7 @@ package body Builder_Facility_Module is
          To_String (Data.Target),
          "",
          No_File,
-         null, False, False, Default, Data.Main, False);
+         null, False, False, Default, False, Data.Main, False);
    exception
       when E : others =>
          Trace (Me, E);
@@ -1299,7 +1300,7 @@ package body Builder_Facility_Module is
             To_String (Target_And_Main (Data.all).Target),
             "",
             No_File,
-            null, False, False, Default,
+            null, False, False, Default, False,
             Target_And_Main (Data.all).Main, False);
       end if;
 

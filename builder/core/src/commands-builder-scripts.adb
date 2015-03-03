@@ -214,6 +214,7 @@ package body Commands.Builder.Scripts is
                            Quiet        => Quiet,
                            Synchronous  => Synchronous,
                            Dialog       => Mode,
+                           Via_Menu     => False,
                            Main         => Create (+Main),
                            Background   => False,
                            Directory    => Dir,
@@ -275,6 +276,7 @@ package body Commands.Builder.Scripts is
                         Quiet        => False,
                         Synchronous  => True,
                         Dialog       => Default,
+                        Via_Menu     => False,
                         Background   => False,
                         Main         => No_File);
 
@@ -296,6 +298,7 @@ package body Commands.Builder.Scripts is
                         Quiet        => False,
                         Synchronous  => True,
                         Dialog       => Default,
+                        Via_Menu     => False,
                         Background   => False,
                         Main         => No_File);
 
@@ -314,6 +317,7 @@ package body Commands.Builder.Scripts is
                         Quiet        => False,
                         Synchronous  => True,
                         Dialog       => Default,
+                        Via_Menu     => False,
                         Background   => False,
                         Main         => No_File);
 
@@ -330,6 +334,7 @@ package body Commands.Builder.Scripts is
                         Quiet        => False,
                         Synchronous  => True,
                         Dialog       => Default,
+                        Via_Menu     => False,
                         Background   => False,
                         Main         => No_File);
 

@@ -40,6 +40,7 @@ package Commands.Builder is
       Quiet       : Boolean;
       Synchronous : Boolean;
       Dialog      : Dialog_Mode;
+      Via_Menu    : Boolean;
       Main        : Virtual_File;
       Background  : Boolean;
       Directory   : Virtual_File := No_File;
@@ -56,6 +57,7 @@ package Commands.Builder is
    --    - the console is not cleared when launching the build
    --  If Synchronous is True, GPS will block until the command is terminated.
    --  See document of Dialog_Mode for details on Dialog values.
+   --  Via_Menu is true iff the target was launched via the global menu.
    --  Main, if not empty, indicates the main to build.
    --  If Directory is not empty, indicates which directory the target should
    --  be run under. Default is the project's directory.

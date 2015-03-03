@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O228-001 GPS: targets with mode 'Manually' launch without dialog
+
+  Problem:    The build targets which have launch mode 'Manually' launch
+              without a dialog when invoked from the global menu, instead
+              of presenting the command line dialog.
+
+  Status:     This was fixed in 6.2 on 2015-03-03
+
+  Workaround: Switch the target to mode "Manually with dialog".
+
 KP-61-O213-020 GPS: renamed action in eclipse.py
 
   Problem:    The eclipse.py provides an action that deletes all the lines

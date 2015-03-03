@@ -53,6 +53,9 @@ package body Build_Command_Manager.End_Of_Build is
       function Expand_Cmd_Line (CL : String) return String;
       --  Callback for Single_Target_Dialog
 
+      function Should_Display_Dialog return Boolean;
+      --  Return whether we should display the target command line dialog
+
       ---------------------
       -- Expand_Cmd_Line --
       ---------------------
@@ -80,85 +83,113 @@ package body Build_Command_Manager.End_Of_Build is
          return To_Display_String (Res.Args);
       end Expand_Cmd_Line;
 
-      Command_Line   : Argument_List_Access;
-   begin
-      begin
-         if (not Build.Shadow)
-           and then (not Build.Background)
-           and then
-            (Build.Dialog = Force_Dialog
-              or else (Build.Dialog = Force_Dialog_Unless_Disabled_By_Target
-                        and then Get_Properties (Build.Target).Launch_Mode
-                        /= Manually_With_No_Dialog)
-              or else (Build.Dialog = Default
-                        and then Get_Properties (Build.Target).Launch_Mode
-                        = Manually_With_Dialog))
-         then
-            --  Use the single target dialog to get the unexpanded command line
-            Single_Target_Dialog
-              (Registry        => Builder.Registry,
-               Parent          => Get_Main_Window
-                                    (Kernel_Handle (Builder.Kernel)),
-               Target          => Get_Name (Build.Target),
-               History         => Get_History (Kernel_Handle (Builder.Kernel)),
-               Expand_Cmd_Line => Expand_Cmd_Line'Unrestricted_Access,
-               Result          => Command_Line);
+      ---------------------------
+      -- Should_Display_Dialog --
+      ---------------------------
 
-            if Command_Line = null then
-               --  The dialog was cancelled: return
+      function Should_Display_Dialog return Boolean is
+      begin
+         if Build.Shadow
+           or else Build.Background
+         then
+            return False;
+         end if;
+
+         case Build.Dialog is
+            when Force_Dialog =>
+               return True;
+
+            when Force_No_Dialog =>
+               return False;
+
+            when Force_Dialog_Unless_Disabled_By_Target =>
+               return Get_Properties (Build.Target).Launch_Mode /=
+                 Manually_With_No_Dialog;
+
+            when Default =>
+               case Get_Properties (Build.Target).Launch_Mode is
+                  when Manually =>
+                     return Build.Via_Menu;
+
+                  when Manually_With_Dialog =>
+                     return True;
+
+                  when Manually_With_No_Dialog
+                     | On_File_Save
+                     | In_Background =>
+                     return False;
+               end case;
+         end case;
+      end Should_Display_Dialog;
+
+      Command_Line   : Argument_List_Access;
+
+   begin
+      if Should_Display_Dialog then
+         --  Use the single target dialog to get the unexpanded command line
+         Single_Target_Dialog
+           (Registry        => Builder.Registry,
+            Parent          => Get_Main_Window
+              (Kernel_Handle (Builder.Kernel)),
+            Target          => Get_Name (Build.Target),
+            History         => Get_History (Kernel_Handle (Builder.Kernel)),
+            Expand_Cmd_Line => Expand_Cmd_Line'Unrestricted_Access,
+            Result          => Command_Line);
+
+         if Command_Line = null then
+            --  The dialog was cancelled: return
+            Build.Launch := False;
+            return;
+         end if;
+
+         declare
+            CL_Mode : Argument_List_Access :=
+              Apply_Mode_Args (Builder.Registry, Get_Model (Build.Target),
+                               Mode, Command_Line.all);
+         begin
+            Build.Full := Expand_Command_Line
+              (Builder, CL_Mode.all & Build.Extra_Args.all, Build.Target,
+               Server, Build.Force_File, Build.Main, Subdir, False, False,
+               Build.Env);
+            Free (Command_Line);
+            Free (CL_Mode);
+         end;
+
+      else
+         declare
+            CL      : constant Argument_List :=
+              Get_Command_Line_Unexpanded (Builder.Registry, Build.Target);
+            CL_Mode : Argument_List_Access :=
+              Apply_Mode_Args (Builder.Registry,
+                               Get_Model (Build.Target),
+                               Mode,
+                               CL);
+         begin
+            --  Sanity check that the command line contains at least one
+            --  item (the command itself). It can happen that this is not
+            --  the case if the user has modified the command by hand.
+
+            if CL_Mode'Length = 0 then
+               Builder.Kernel.Messages_Window.Insert
+                 (-"Command line is empty for target: " &
+                    Get_Name (Build.Target),
+                  Mode => Error);
+               Free (CL_Mode);
                Build.Launch := False;
                return;
             end if;
 
-            declare
-               CL_Mode : Argument_List_Access :=
-                 Apply_Mode_Args (Builder.Registry, Get_Model (Build.Target),
-                                  Mode, Command_Line.all);
-            begin
-               Build.Full := Expand_Command_Line
-                 (Builder, CL_Mode.all & Build.Extra_Args.all, Build.Target,
-                  Server, Build.Force_File, Build.Main, Subdir, False, False,
-                  Build.Env);
-               Free (Command_Line);
-               Free (CL_Mode);
-            end;
+            --  Expand the command line
 
-         else
-            declare
-               CL      : constant Argument_List :=
-                 Get_Command_Line_Unexpanded (Builder.Registry, Build.Target);
-               CL_Mode : Argument_List_Access :=
-                 Apply_Mode_Args (Builder.Registry,
-                                  Get_Model (Build.Target),
-                                  Mode,
-                                  CL);
-            begin
-               --  Sanity check that the command line contains at least one
-               --  item (the command itself). It can happen that this is not
-               --  the case if the user has modified the command by hand.
+            Build.Full := Expand_Command_Line
+              (Builder, CL_Mode.all & Build.Extra_Args.all, Build.Target,
+               Server, Build.Force_File,
+               Build.Main, Subdir, Build.Background, False,
+               Build.Env);
 
-               if CL_Mode'Length = 0 then
-                  Builder.Kernel.Messages_Window.Insert
-                    (-"Command line is empty for target: " &
-                       Get_Name (Build.Target),
-                     Mode => Error);
-                  Free (CL_Mode);
-                  Build.Launch := False;
-                  return;
-               end if;
-
-               --  Expand the command line
-
-               Build.Full := Expand_Command_Line
-                 (Builder, CL_Mode.all & Build.Extra_Args.all, Build.Target,
-                  Server, Build.Force_File,
-                  Build.Main, Subdir, Build.Background, False,
-                  Build.Env);
-
-               Free (CL_Mode);
-            end;
-         end if;
-      end;
+            Free (CL_Mode);
+         end;
+      end if;
 
       --  Update Build.Full.Dir to not empty value
       if Build.Full.Dir = No_File then

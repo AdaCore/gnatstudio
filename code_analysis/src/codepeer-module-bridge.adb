@@ -263,6 +263,7 @@ package body CodePeer.Module.Bridge is
          Quiet       => False,
          Synchronous => False,
          Dialog      => Force_No_Dialog,
+         Via_Menu    => False,
          Main        => No_File,
          Background  => True,
          Directory   => No_File);

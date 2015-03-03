@@ -362,6 +362,7 @@ package Build_Command_Utils is
       Full        : Expansion_Result;
       Extra_Args  : Argument_List_Access;
       Dialog      : Dialog_Mode;
+      Via_Menu    : Boolean;
       Launch      : Boolean;
 
       On_Exit     : Subprogram_Type := null;

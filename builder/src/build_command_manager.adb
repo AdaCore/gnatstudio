@@ -284,10 +284,7 @@ package body Build_Command_Manager is
    overriding
    function Execute
      (Command : access Build_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      --  ??? We should use the command context
-      pragma Unreferenced (Context);
+      Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       Launch_Target
         (Target_Name  => To_String (Command.Target_Name),
@@ -296,6 +293,7 @@ package body Build_Command_Manager is
          Extra_Args   => null,
          Quiet        => Command.Quiet,
          Dialog       => Command.Dialog,
+         Via_Menu     => Context.Via_Menu,
          Synchronous  => False,
          Background   => False,
          Main         => Command.Main,
@@ -341,7 +339,6 @@ package body Build_Command_Manager is
         (Kernel_Handle (Command.Builder.Kernel),
          Compute_Build_Targets_Hook,
          Data'Unchecked_Access);
-      D : Dialog_Mode;
 
    begin
       if Mains.T /= List_Type then
@@ -365,27 +362,14 @@ package body Build_Command_Manager is
          return Failure;
       end if;
 
-      case Command.Dialog is
-         when Force_Dialog
-            | Force_No_Dialog
-            | Force_Dialog_Unless_Disabled_By_Target =>
-            D := Command.Dialog;
-
-         when Default =>
-            if Context.Via_Menu then
-               D := Force_Dialog;
-            else
-               D := Force_No_Dialog;
-            end if;
-      end case;
-
       Launch_Target
         (Target_Name => To_String (Command.Target_Name),
          Mode_Name   => "",
          Force_File  => No_File,
          Extra_Args  => null,
          Quiet       => Command.Quiet,
-         Dialog      => D,
+         Dialog      => Command.Dialog,
+         Via_Menu    => Context.Via_Menu,
          Synchronous => False,
          Background  => False,
          Main        => Create (+Mains.List (Command.Main).Tuple (2).Str),

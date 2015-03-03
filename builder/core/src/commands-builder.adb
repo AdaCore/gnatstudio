@@ -47,6 +47,7 @@ package body Commands.Builder is
       Quiet       : Boolean;
       Synchronous : Boolean;
       Dialog      : Dialog_Mode;
+      Via_Menu    : Boolean;
       Main        : Virtual_File;
       Background  : Boolean;
       Directory   : Virtual_File := No_File;
@@ -139,6 +140,7 @@ package body Commands.Builder is
                                                 others => <>),
                                  Extra_Args => All_Extra_Args,
                                  Dialog     => Dialog,
+                                 Via_Menu   => Via_Menu,
                                  Launch     => True,
                                  On_Exit    => The_Exit),
             Server           => Server,

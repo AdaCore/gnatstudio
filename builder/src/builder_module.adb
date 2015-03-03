@@ -65,6 +65,7 @@ package body Builder_Module is
             Quiet       => True,
             Synchronous => True,
             Dialog      => Build_Command_Utils.Force_No_Dialog,
+            Via_Menu    => False,
             Background  => False,
             Main        => GNATCOLL.VFS.No_File);
 
@@ -78,6 +79,7 @@ package body Builder_Module is
             Synchronous => False,
             Background  => False,
             Dialog      => Build_Command_Utils.Force_No_Dialog,
+            Via_Menu    => False,
             Main        => GNATCOLL.VFS.No_File);
       end if;
    end Compile_Command;
