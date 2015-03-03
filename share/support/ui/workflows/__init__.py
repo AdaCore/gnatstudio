@@ -128,10 +128,15 @@ def driver(gen_inst):
         # If we reach this point, there's nothing to execute anymore: just log
         # any uncaught exception.
         if exc_info is not None:
-            GPS.Console('Messages').write(
+            message = (
                 'Uncaught exception in workflows:\n'
                 '{}\n'.format(''.join(traceback.format_exception(*exc_info)))
             )
+            # This one is for debugging/testing convenience.
+            GPS.Console('Messages').write(message)
+            # This one is for automatic issue detection in testsuites. This
+            # should also ring a bell while analysis post-mortem GPS logs.
+            GPS.Logger('TESTSUITE.EXCEPTIONS').log(message)
 
     # We just created a new execution state (gen_stack), so technically we are
     # resuming it below.
