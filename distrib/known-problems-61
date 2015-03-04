@@ -35,6 +35,15 @@ KP-61-O228-001 GPS: targets with mode 'Manually' launch without dialog
 
   Workaround: Switch the target to mode "Manually with dialog".
 
+KP-61-O227-005 GPS: Align command depends on auto-indent preference
+
+  Problem:    The Align contextual menu does not work if the auto-indentation
+              is set to 'None'.
+
+  Status:     This was fixed in 6.2 on 2015-03-04
+
+  Workaround: Delete lines with 'indent' call in align.py file.
+
 KP-61-O213-020 GPS: renamed action in eclipse.py
 
   Problem:    The eclipse.py provides an action that deletes all the lines
