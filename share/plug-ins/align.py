@@ -230,7 +230,7 @@ def buffer_align_on(sep, replace_with=None, buffer=None, sep_group=0):
         bmark.delete()
 
 
-def get_comas(l):
+def get_commas(l):
     n = 0
     enabled = True
     res = []
@@ -274,11 +274,11 @@ def align_colons():
     buffer_align_on(sep=":(?!=)", replace_with=" : ")
 
 
-@interactive("Ada", in_rw_ada_file, contextual="Align/Comas",
-             name="Align comas")
-def align_comas():
+@interactive("Ada", in_rw_ada_file, contextual="Align/Commas",
+             name="Align commas")
+def align_commas():
     """
-    Aligns comas (eg actual parameters or arguments in pragmas) in
+    Aligns commas (eg actual parameters or arguments in pragmas) in
     current selection.
     """
 
@@ -312,7 +312,7 @@ def align_comas():
             line = line.forward_line()
 
         for l in content:
-            data.append(get_comas(l))
+            data.append(get_commas(l))
         mm = reduce(max_min, data)
 
         for l in range(0, len(content)):
