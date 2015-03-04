@@ -17,7 +17,6 @@
 
 with System;
 with Glib.Object;      use Glib.Object;
-with Gdk.RGBA;         use Gdk.RGBA;
 with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Widget;       use Gtk.Widget;
 
@@ -256,16 +255,12 @@ package body Gtkada.Check_Button is
    ------------------
 
    procedure Redraw_State (Check : access Gtkada_Check_Button_Record'Class) is
-      Grey : Gdk_RGBA;
-      Success : Boolean;
    begin
       case Check.State is
          when State_Checked | State_Unchecked =>
-            Check.Override_Background_Color
-              (Gtk_State_Flag_Normal, White_RGBA);
+            Check.Set_Inconsistent (False);
          when State_Checked_Default =>
-            Parse (Grey, "#777777", Success);
-            Check.Override_Background_Color (Gtk_State_Flag_Normal, Grey);
+            Check.Set_Inconsistent (True);
       end case;
    end Redraw_State;
 
