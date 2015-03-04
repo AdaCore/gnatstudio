@@ -294,8 +294,10 @@ class Current_Entity_Highlighter(Location_Highlighter):
                     word = buffer.get_chars(start_loc, end_loc).strip()
                     word = word.decode("utf8")  # make unicode-string
 
-        if (entity and self.entity == entity) \
-           or (word and self.word == word):
+        # Exit if we are highlighting the word or the entity that we were
+        # already highlighting.
+        if (entity and self.entity and self.entity == entity) \
+           or (word and self.word and self.word == word):
             return
 
         self.stop_highlight()

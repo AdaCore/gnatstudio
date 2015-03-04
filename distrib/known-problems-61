@@ -44,6 +44,15 @@ KP-61-O227-005 GPS: Align command depends on auto-indent preference
 
   Workaround: Delete lines with 'indent' call in align.py file.
 
+KP-61-O222-001 GPS: leftover highlighting from auto_highlight_occurrences
+
+  Problem:    When the auto_highlight_occurrences plugin is active, stray
+              highlighting may remain in the buffer after cursor move.
+
+  Status:     This was fixed in 6.2 on 2015-03-04
+
+  Workaround: Close and reopen the file editor.
+
 KP-61-O213-020 GPS: renamed action in eclipse.py
 
   Problem:    The eclipse.py provides an action that deletes all the lines
