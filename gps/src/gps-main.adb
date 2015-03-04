@@ -52,7 +52,9 @@ with Glib.Object;                      use Glib.Object;
 with Glib.Option;                      use Glib.Option;
 with Glib.Properties;                  use Glib.Properties;
 
+with Gdk.Main;
 with Gdk.Pixbuf;                       use Gdk.Pixbuf;
+with Gdk.Window;
 
 with Gtk;                              use Gtk;
 with Gtk.Application;                  use Gtk.Application;
@@ -60,10 +62,12 @@ with Gtk.Enums;                        use Gtk.Enums;
 with Gtk.Icon_Theme;                   use Gtk.Icon_Theme;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Handlers;
+with Gtk.Main;
 with Gtk.Menu_Bar;                     use Gtk.Menu_Bar;
 with Gtk.Menu_Item;                    use Gtk.Menu_Item;
 with Gtk.Settings;                     use Gtk.Settings;
 with Gtk.Style_Provider;               use Gtk.Style_Provider;
+with Gtk.Widget;                       use Gtk.Widget;
 with Gtk.Window;                       use Gtk.Window;
 with Gtk_Utils;                        use Gtk_Utils;
 
@@ -1251,13 +1255,6 @@ procedure GPS.Main is
       --  Display the splash screen, if needed, while we continue loading
       Display_Splash_Screen;
       Data := (App.Kernel, null, null, null, null, null, False);
-      if Splash /= null then
-         --  A small timeout, to make sure the events are processed and the
-         --  splash screen is made visible. But we continue loading in the
-         --  background.
-         Timeout_Id := Process_Timeout.Timeout_Add
-           (1, Finish_Setup'Unrestricted_Access, Data);
-      end if;
 
       Create_MDI_Preferences (App.Kernel);
       Install_Menus
@@ -1321,9 +1318,7 @@ procedure GPS.Main is
       --    @define-color my_color shade(@theme_bg_color, 1.10);
       Load_CSS;
 
-      if Splash = null then
-         Tmp := Finish_Setup (Data);
-      end if;
+      Tmp := Finish_Setup (Data);
 
       return 0;
    end Command_Line_Callback;
@@ -1546,12 +1541,14 @@ procedure GPS.Main is
       File   : constant Virtual_File :=
                  Create_From_Dir (Prefix_Dir, "share/gps/gps-splash.png");
       Image  : Gtk_Image;
+      Ignored : Boolean;
    begin
       if not Hide_GPS
         and then Splash_Screen.Get_Pref
         and then File.Is_Regular_File
       then
          Gtk_New (Splash, Window_Toplevel);
+         Splash.Set_Type_Hint (Gdk.Window.Window_Type_Hint_Splashscreen);
          Splash.Set_Hexpand (False);
          Splash.Set_Vexpand (False);
          Set_Property (Splash, Decorated_Property, False);
@@ -1559,6 +1556,15 @@ procedure GPS.Main is
          Gtk_New (Image, Filename => +File.Full_Name);
          Splash.Add (Image);
          Splash.Show_All;
+
+         --  The following is required for the splash screen to be fully
+         --  painted before the startup process continues.
+         Splash.Show_Now;
+         Image.Show_Now;
+         Gdk.Main.Flush;
+         while Gtk.Main.Events_Pending loop
+            Ignored := Gtk.Main.Main_Iteration;
+         end loop;
       end if;
    end Display_Splash_Screen;
 
