@@ -48,6 +48,8 @@ Functions
 .. autofunction:: repeat_next
 .. autofunction:: reset_xref_db
 .. autofunction:: save_persistent_properties
+.. autofunction:: send_button_event
+.. autofunction:: send_key_event
 .. autofunction:: set_build_mode
 .. autofunction:: set_last_command
 .. autofunction:: supported_languages

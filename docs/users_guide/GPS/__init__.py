@@ -11252,6 +11252,22 @@ def process_all_events():
     pass  # implemented in Ada
 
 
+def send_button_event(window, type, button, x, y, state):
+    """
+    Internal function.
+    See pygps.send_button_event.
+    """
+    pass  # implemented in Ada
+
+
+def send_key_event(keyval, window, primary, alt, shift, control):
+    """
+    Internal function.
+    See pygps.send_key_event.
+    """
+    pass  # implemented in Ada
+
+
 def pwd():
     """
     Prints name of the current (working) directory.

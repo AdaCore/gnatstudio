@@ -2282,26 +2282,24 @@ package body KeyManager_Module is
       Register_Command
         (Kernel, "lookup_actions", 0, 0, Keymanager_Command_Handler'Access);
 
-      if Active (Testsuite_Handle) then
-         Register_Command
-            (Get_Scripts (Kernel), "send_key_event",
-             (Param ("keyval"),
-              Param ("window", Optional => True),
-              Param ("primary", Optional => True),
-              Param ("alt", Optional => True),
-              Param ("shift", Optional => True),
-              Param ("control", Optional => True)),
-             Keymanager_Command_Handler'Access);
-         Register_Command
-           (Get_Scripts (Kernel), "send_button_event",
-            (Param ("window", Optional => True),
-             Param ("type", Optional => True),
-             Param ("button", Optional => True),
-             Param ("x", Optional => True),
-             Param ("y", Optional => True),
-             Param ("state", Optional => True)),
-            Keymanager_Command_Handler'Access);
-      end if;
+      Register_Command
+        (Get_Scripts (Kernel), "send_key_event",
+         (Param ("keyval"),
+          Param ("window", Optional => True),
+          Param ("primary", Optional => True),
+          Param ("alt", Optional => True),
+          Param ("shift", Optional => True),
+          Param ("control", Optional => True)),
+         Keymanager_Command_Handler'Access);
+      Register_Command
+        (Get_Scripts (Kernel), "send_button_event",
+         (Param ("window", Optional => True),
+          Param ("type", Optional => True),
+          Param ("button", Optional => True),
+          Param ("x", Optional => True),
+          Param ("y", Optional => True),
+          Param ("state", Optional => True)),
+         Keymanager_Command_Handler'Access);
 
       Register_Command
         (Get_Scripts (Kernel), "process_all_events", No_Params,
