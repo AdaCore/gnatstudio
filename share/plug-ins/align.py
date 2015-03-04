@@ -104,6 +104,15 @@ import GPS
 from gps_utils import *
 
 
+def try_indent(buffer, top, bottom):
+    """ Ident text in given buffer between top and bottom position.
+        Ignore exceptions raised when ident setting is None"""
+    try:
+        buffer.indent(top, bottom)
+    except:
+        pass
+
+
 def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
     """Align each line from top to bottom, aligning, for each line, sep in
        the same column. For instance:
@@ -213,7 +222,7 @@ def buffer_align_on(sep, replace_with=None, buffer=None, sep_group=0):
     else:
         tmark = top.create_mark()
         bmark = bottom.create_mark(left_gravity=False)
-        buffer.indent(top, bottom)
+        try_indent(buffer, top, bottom)
         range_align_on(
             tmark.location(), bmark.location(), sep,
             replace_with, sep_group=sep_group)
@@ -380,7 +389,7 @@ def align_arrows():
     try:
         buffer.start_undo_group()
         for lr in range(9):
-            buffer.indent(top, bottom)
+            try_indent(buffer, top, bottom)
             top = buffer.get_mark("top").location()
             bottom = buffer.get_mark("bottom").location()
             chars = buffer.get_chars(top, bottom)
