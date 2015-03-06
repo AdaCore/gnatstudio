@@ -263,26 +263,35 @@ package body Language.Shell is
    is
       Sub    : constant Subprogram_Type :=
         Get_Method (Lang.Object, "parse_constructs");
-      Script : constant Scripting_Language  := Get_Script (Sub.all);
-      Args   : Callback_Data'Class := Create (Script, 3);
-
-      Python_CList : constant Class_Instance :=
-        Create_Python_Constructs_List (Script, Shell_Language_Access (Lang));
-
-      CList : constant Construct_List_Properties :=
-        Construct_List_Properties
-          (Get_Data (Python_CList, Construct_List_Class_Name));
-
    begin
-      Args.Set_Nth_Arg (1, Python_CList);
-      Args.Set_Nth_Arg (2, GPS.Scripts.Files.Create_File (Script, File));
-      Args.Set_Nth_Arg (3, Buffer);
+      if Sub = null then
+         Result := (null, null, null, 0);
+         return;
+      end if;
+
       declare
-         Ignore : Any_Type := Execute (Sub, Args);
+         Script : constant Scripting_Language  := Get_Script (Sub.all);
+         Args   : Callback_Data'Class := Create (Script, 3);
+
+         Python_CList : constant Class_Instance :=
+           Create_Python_Constructs_List
+             (Script, Shell_Language_Access (Lang));
+
+         CList : constant Construct_List_Properties :=
+           Construct_List_Properties
+             (Get_Data (Python_CList, Construct_List_Class_Name));
+
       begin
-         null;
+         Args.Set_Nth_Arg (1, Python_CList);
+         Args.Set_Nth_Arg (2, GPS.Scripts.Files.Create_File (Script, File));
+         Args.Set_Nth_Arg (3, Buffer);
+         declare
+            Ignore : Any_Type := Execute (Sub, Args);
+         begin
+            null;
+         end;
+         Result := CList.CList;
       end;
-      Result := CList.CList;
    end Parse_Constructs;
 
    --------------------
