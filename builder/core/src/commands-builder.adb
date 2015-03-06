@@ -297,7 +297,21 @@ package body Commands.Builder is
                   Errors  => E'Access);
                pragma Unreferenced (Output);
             begin
-               null;
+               --  Run the On_Exit callback, if any.
+
+               if Build.On_Exit /= null then
+                  declare
+                     Script  : constant Scripting_Language :=
+                       Get_Script (Build.On_Exit.all);
+                     Args    : Callback_Data'Class := Create (Script, 1);
+                     Ignored : Boolean;
+                  begin
+                     --  ??? For now, consider that the status of any
+                     --  python-based command is 0 (success). Is this correct?
+                     Set_Nth_Arg (Args, 1, 0);
+                     Ignored := Execute (Build.On_Exit, Args);
+                  end;
+               end if;
             end;
          end;
 
