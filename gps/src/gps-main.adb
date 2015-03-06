@@ -808,7 +808,7 @@ procedure GPS.Main is
             --  Get_Help (True) will only print options from the main
             --  group
             Help : constant String :=
-                     "GPS version " &
+                     "GPS " &
                      Config.Version & " (" &
                      Config.Source_Date & ") hosted on " &
                      Config.Target & ASCII.LF &
@@ -827,7 +827,7 @@ procedure GPS.Main is
       elsif Switch = "--version" or else Switch = "-v" then
          declare
             Version : constant String :=
-                        "GPS version " &
+                        "GPS " &
                         Config.Version & " (" &
                         Config.Source_Date & ") hosted on " &
                         Config.Target;
