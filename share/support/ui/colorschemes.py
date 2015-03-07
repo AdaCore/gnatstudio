@@ -1,12 +1,21 @@
 """
 This plugin provides a new preference that allows users to
-select a color scheme.
+select a color theme.
 
 These themes are inspired from:
     http://colorsublime.com/?page=5
 """
 
+import os
+import cairo
+
 import GPS
+import pygps
+import textmate
+from textmate import light_common, dark_common
+
+from modules import Module
+from gps_utils import make_interactive
 
 try:
     from gi.repository import Gtk, Gdk
@@ -23,70 +32,7 @@ STYLE_ERROR = GPS.Style("editor-errors")
 STYLE_ERROR.set_background(
     GPS.Preference("Errors-Src-Highlight-Color").get())
 
-
-light_common = {
-    "Editor/Ada/expanded_code_style": "#dddddd",
-    "Plugins/auto_highlight_occurrences/color_type":
-    "rgba(144, 238, 144, 0.5)",
-    "Plugins/auto_highlight_occurrences/color_unknown": "rgb(215,215,215)",
-    "Plugins/auto_highlight_occurrences/color_subprogram":
-    "rgba(252, 175, 62, 0.5)",
-    "Plugins/auto_highlight_occurrences/color_object":
-    "rgba(255, 190, 238, 0.7)",
-    "Plugins/auto_highlight_occurrences/color_package_namespace":
-    "rgba(144, 238, 144, 0.5)",
-
-    'Plugins/isearch/nextmatchcolor': 'cyan',
-    'Plugins/isearch/bgcolor': 'red',
-
-    "Search-Src-Highlight-Color": "rgb(189,215,255)",
-    "Messages-Highlight-Color": "rgb(255,0,0)",
-    "Errors-Src-Highlight-Color": "rgb(255,183,183)",
-    "Warnings-Src-Highlight-Color": "rgb(255,204,156)",
-    "Style-Src-Highlight-Color": "rgb(255,255,173)",
-    "Info-Src-Highlight-Color": "rgb(173,255,194)",
-
-    "Horizontal-Diff-Change-Color": "rgb(253,230,106)",
-    "Diff-Change-Color": "rgb(236,236,170)",
-    "Diff-Remove-Color": "rgb(255,160,160)",
-    "Diff-Append-Color": "rgb(136,238,170)",
-
-    "Plugins/dispatching/color": "rgb(255,243,194)",
-    "Plugins/ispell/bgcolor": "rgb(255,255,0)",
-    "Plugins/multi_cursors/multicursor_on_entity_color": "#94C3D7",
-    "Plugins/multi_cursors/multicursor_selection_color": "#96C5D9",
-}
-
-dark_common = {
-    "Editor/Ada/expanded_code_style": "#333333",
-    "Plugins/auto_highlight_occurrences/color_type": "rgb(3,41,97)",
-    "Plugins/auto_highlight_occurrences/color_unknown": "rgb(32,74,135)",
-    "Plugins/auto_highlight_occurrences/color_subprogram": "rgb(39,81,0)",
-    "Plugins/auto_highlight_occurrences/color_object": "rgb(92,53,102)",
-    "Plugins/auto_highlight_occurrences/color_package_namespace":
-    "rgb(94,0,118)",
-
-    'Plugins/isearch/nextmatchcolor': 'rgb(9,60,60)',
-    'Plugins/isearch/bgcolor': 'rgb(77,19,19)',
-
-    "Search-Src-Highlight-Color": "rgb(0,113,128)",
-    "Messages-Highlight-Color": "rgb(200,42,42)",
-    "Errors-Src-Highlight-Color": "rgb(75,34,34)",
-    "Warnings-Src-Highlight-Color": "rgb(85,52,18)",
-    "Style-Src-Highlight-Color": "rgb(68,12,42)",
-    "Info-Src-Highlight-Color": "rgb(53,77,59)",
-
-    "Horizontal-Diff-Change-Color": "rgb(143,89,2)",
-    "Diff-Change-Color": "rgb(107,73,19)",
-    "Diff-Remove-Color": "rgb(88,43,43)",
-    "Diff-Append-Color": "rgb(38,68,36)",
-
-    "Plugins/dispatching/color": "rgb(46,52,56)",
-    "Plugins/ispell/bgcolor": "rgb(206,92,0)",
-
-    "Plugins/multi_cursors/multicursor_on_entity_color": "#3070A0",
-    "Plugins/multi_cursors/multicursor_selection_color": "#3272A2",
-}
+_VIEW_TITLE = "Color Theme"
 
 default = gps_utils.Chainmap(light_common, {
     "name": "Default",
@@ -106,7 +52,6 @@ default = gps_utils.Chainmap(light_common, {
     "Src-Editor-Numbers-Variant": ("DEFAULT", "rgb(255,51,51)", "transparent"),
     "Src-Editor-Annotated-Comments-Variant": (
         "DEFAULT", "rgb(96,97,95)", "transparent"),
-    "Src-Editor-Aspects-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent"),
     "Src-Editor-Comments-Variant": (
         "DEFAULT", "rgb(150,150,150)", "transparent"),
     "Src-Editor-Keywords-Variant": ("DEFAULT", "rgb(0,0,230)", "transparent"),
@@ -140,9 +85,6 @@ monokai = gps_utils.Chainmap(dark_common, {
                                               "rgb(255,51,51)",
                                               "transparent"),
     "Src-Editor-Annotated-Comments-Variant": ("DEFAULT",
-                                              "rgb(117,113,94)",
-                                              "transparent"),
-    "Src-Editor-Aspects-Variant":            ("DEFAULT",
                                               "rgb(117,113,94)",
                                               "transparent"),
     "Src-Editor-Comments-Variant":           ("DEFAULT",
@@ -242,7 +184,7 @@ iplastic = gps_utils.Chainmap(light_common, {
                                              "transparent")
 })
 
-themes = [default, darkside, monokai, iplastic]
+themes = [default, darkside, monokai, iplastic] + textmate.textmate_themes()
 
 
 def pref_set(gps_pref, val):
@@ -254,23 +196,12 @@ def pref_set(gps_pref, val):
 
 class ColorThemeSwitcher(object):
 
-    pref_name = "General/ColorTheme"
     pref_gtk_theme = "GPS6-Gtk-Theme-Name"
     gtkpref_name = "/ColorTheme gtk+"
 
     def __init__(self):
         self.__modified = False
         args = ["Custom"] + [t["name"] for t in themes]
-        p = GPS.Preference(self.pref_name)
-        p.create(
-            "Color Theme",  # label
-            "enum",         # type
-            "Selecting a color scheme provides default values for a number of"
-            + " other preferences, which can still be changed"
-            + " independently",
-            0,   # Custom
-            *args)
-        self.current = p.get()
 
         GPS.Preference(self.gtkpref_name).create("", "string", "", "")
 
@@ -278,10 +209,7 @@ class ColorThemeSwitcher(object):
         screen = Gdk.Display.get_default().get_default_screen()
         Gtk.StyleContext.add_provider_for_screen(screen, self.provider, 901)
 
-        GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
-
-    def __del__(self):
-        GPS.Hook("preferences_changed").remove(self.__on_preferences_changed)
+        self.__set_gtk_properties()
 
     def __set_gtk_properties(self):
         c = GPS.Preference(self.gtkpref_name).get()
@@ -312,55 +240,6 @@ class ColorThemeSwitcher(object):
             elif isinstance(v, tuple):
                 cb(key, "@".join((subst(v[0]), subst(v[1]), subst(v[2]))))
 
-    def __on_preferences_changed(self, hook):
-        del hook  # Unused parameter
-
-        STYLE_WARNING.set_background(
-            GPS.Preference("Warnings-Src-Highlight-Color").get())
-        STYLE_WARNING.set_background(
-            GPS.Preference("Warnings-Src-Highlight-Color").get())
-
-        v = GPS.Preference(self.pref_name).get()
-        if v == "Custom":
-            self.current = v
-
-        else:
-            values = {}
-            for t in themes:
-                if t["name"] == v:
-                    values = t
-                    break
-
-            if self.current != v:
-                GPS.Logger("COLORSCHEME").log(
-                    "Applying new color scheme %s" % (v, ))
-                self.current = v
-                self.apply_theme(values)
-            else:
-                self.__modified = False
-
-                # if any of the preferences was changed, set to "Custom"
-                def test_changed(key, value):
-                    try:
-                        # convert colors to RGBA to correct compare equal
-                        # colors in distinct string representations
-                        left = Gdk.RGBA()
-                        right = Gdk.RGBA()
-                        left.parse(GPS.Preference(key).get())
-                        right.parse(value)
-                        if not left.equal(right):
-                            GPS.Logger("COLORSCHEME").log(
-                                "pref %s is different: %s != %s" %
-                                (key, left.to_string(), right.to_string()))
-                            self.__modified = True
-                    except GPS.Exception:
-                        pass
-
-                self.__for_each_pref(values, lambda k, v: test_changed(k, v))
-
-                if self.__modified:
-                    pref_set(self.pref_name, "Custom")
-
     def apply_theme(self, theme):
         colors = ""
 
@@ -384,6 +263,10 @@ class ColorThemeSwitcher(object):
         if v:
             colors += "*:selected, *:selected:focus {color: %s}" % v
 
+        v = theme.get("@caret")
+        if v:
+            colors += "GtkTextView {-GtkWidget-cursor-color: %s}" % v
+
         with gps_utils.freeze_prefs():
             pref_set(self.gtkpref_name, colors)
 
@@ -394,4 +277,181 @@ class ColorThemeSwitcher(object):
 
         self.__set_gtk_properties()
 
-ColorThemeSwitcher()
+the_theme_switcher = ColorThemeSwitcher()
+
+themes_to_process = []
+
+
+def generate_snapshots(directory):
+    """ Utility function to generate snapshots for all themes.
+        This generates all snapshots in the specified directory, then
+        exits GPS.
+        This is meant to be launched by GPS developers, to regenerate
+        the screenshots.
+    """
+
+    global themes_to_process
+
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+
+    # Prepare an interesting editor buffer
+    if os.path.exists("sample.adb"):
+        os.remove("sample.adb")
+
+    buf = GPS.EditorBuffer.get(GPS.File("sample.adb"))
+    buf.insert("""
+   procedure Foo
+     (An_Integer : in out Integer := 0;
+      A_String   : String  := "some text")
+     with Pre  => An_Integer >= -1;
+   --  Documentation for Foo
+
+   ---------
+   -- Foo --
+   ---------
+
+   procedure Foo
+     (An_Integer : in out Integer := 0;
+      A_String   : String  := "some text") is
+   begin
+      --  Do the actual loop
+
+      for J in A_String'Range loop
+         Put_Line ("bla" & (A + 10)'Img);
+      end loop;
+   end Foo;
+
+""")
+    buf.save()
+
+    #  Get the widget to capture
+
+    view = buf.current_view()
+    view.goto(buf.at(19, 28))
+    widget = view.pywidget()
+
+    themes_to_process = [t for t in themes]
+
+    def process_one(timeout):
+        global themes_to_process
+        if len(themes_to_process) == 0:
+            timeout.remove()
+            GPS.exit(True)
+
+        t = themes_to_process[0]
+        themes_to_process.remove(t)
+
+        name = t['name']
+        file_base_name = t['name'] + ".png"
+        GPS.Console("Messages").write("generating for %s\n" % name)
+        the_theme_switcher.apply_theme(t)
+        pygps.process_all_events()
+        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 400, 300)
+        context = cairo.Context(surface)
+        widget.draw(context)
+        surface.write_to_png(os.path.join(directory, file_base_name))
+
+    GPS.Timeout(1000, process_one)
+
+
+def get_luminosity(x):
+    """ Utility function to sort themes based on luminosity.
+    """
+    if '@luminosity' in x:
+        return x['@luminosity']
+    else:
+        return 0.0
+
+
+class ColorSchemePicker(object):
+
+    def __init__(self):
+        self.vbox = Gtk.VBox()
+        self.snapshots_dir = os.path.join(
+            GPS.get_system_dir(), "share", "gps", "color_themes", "snapshots")
+
+        scroll = Gtk.ScrolledWindow()
+        self.vbox.pack_start(scroll, True, True, 0)
+
+        flow = Gtk.FlowBox()
+        flow.set_selection_mode(Gtk.SelectionMode.NONE)
+        scroll.add(flow)
+
+        button_box = Gtk.HButtonBox()
+        close = Gtk.Button("Close")
+        close.connect("clicked", self.on_close_button)
+        button_box.pack_end(close, False, False, 0)
+
+        self.vbox.pack_end(button_box, False, False, 3)
+
+        index = 0
+
+        the_themes = [t for t in themes]
+
+        the_themes.sort(key=get_luminosity)
+
+        for t in the_themes:
+            flow.add(self.__one_box(t))
+            c = flow.get_child_at_index(index)
+            c.connect("activate", self.__on_chosen, t)
+            index += 1
+
+        # a default size that allows showing two columns of previews
+        self.vbox.set_size_request(930, 600)
+
+        self.vbox.connect("key_press_event", self.on_key_press)
+
+    def on_close_button(self, widget):
+        """ Callback on a click on the close button """
+
+        GPS.MDI.get(_VIEW_TITLE).destroy()
+
+    def on_key_press(self, widget, event):
+        """ Callback on a key press event"""
+
+        if event.keyval == Gdk.KEY_Escape:
+            self.on_close_button(widget)
+            return True
+
+        return False
+
+    def __on_chosen(self, widget, theme):
+        the_theme_switcher.apply_theme(theme)
+
+    def __one_box(self, theme):
+        """ Return one widget representing one theme in the flowbox.
+        """
+        # frame = Gtk.Frame()
+        vbox = Gtk.VBox()
+        # frame.add(vbox)
+        image = Gtk.Image.new_from_file(
+            os.path.join(self.snapshots_dir, theme['name'] + '.png'))
+        vbox.pack_start(image, False, False, 0)
+        hbox = Gtk.HBox()
+        vbox.pack_start(hbox, False, False, 0)
+
+        b = Gtk.Button(theme['name'])
+        b.connect('clicked', self.__on_chosen, theme)
+        hbox.pack_start(b, True, False, 0)
+
+        return vbox
+
+
+class ColorSchemes(Module):
+    view_title = _VIEW_TITLE
+    mdi_position = GPS.MDI.POSITION_FLOAT
+    mdi_flags = GPS.MDI.FLAGS_ALL_BUTTONS + GPS.MDI.FLAGS_ALWAYS_DESTROY_FLOAT
+
+    def __init__(self):
+        self.widget = None
+
+    def setup(self):
+        make_interactive(
+            self.get_view,
+            category="Views",
+            name="open Color Theme Picker")
+
+    def create_view(self):
+        self.widget = ColorSchemePicker()
+        return self.widget.vbox

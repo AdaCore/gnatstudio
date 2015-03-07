@@ -1520,6 +1520,24 @@ depend on this behavior.
 .. index:: key shortcuts; editing
 .. _The_Key_Shortcuts_Editor:
 
+Color Themes
+============
+
+.. index: themes
+
+The :guilabel:`Color Theme window` shows a list of color themes to choose
+from, presented in the form of a list of screenshots. Clicking on the button
+underneath a screenshot applies the given color theme to GPS.
+
+Applying a color theme modifies the corresponding GPS preferences. It is
+therefore possible to customeize the colors after a theme has been applied,
+through the preferences dialog.
+
+GPS supports importing themes which use the TextMate (:file:`.tmTheme`)
+format: at startup, GPS will look in the directory
+file:`INSTALL/share/gps/color_themes/themes/` and will include all the
+:file:`.tmTheme` found at the first level of each subdirectory.
+
 The Key Shortcuts Editor
 ========================
 

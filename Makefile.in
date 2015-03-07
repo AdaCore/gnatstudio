@@ -30,6 +30,10 @@ clean:
 test-clean:
 	(cd scripts; ./testsuites clean)
 
+colorthemes-snapshots:
+	$(RMDIR) share/color_themes/snapshots
+	gps --load=python:distrib/generate_colorscheme_snapshots.py
+
 install-common:
 	$(MKDIR) $(bindir)
 	$(MKDIR) $(sharedir)
@@ -83,6 +87,7 @@ endif
 	$(RM) $(sharedir)/gps/plug-ins/python_doc.pyc
 	$(RM) $(sharedir)/gps/shell_commands.xml
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
+	(cd share; tar cf - color_themes/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - templates/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - key_themes/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)

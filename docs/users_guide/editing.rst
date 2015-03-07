@@ -911,6 +911,12 @@ The :menuselection:`Edit` Menu
   Start the key manager dialog, used to associate commands with special
   keys.  See :ref:`The_Key_Shortcuts_Editor`.
 
+.. index:: menu; edit --> color theme
+
+* :menuselection:`Edit --> Color Theme`
+
+  Open the Color Theme window. See :ref:`GPS_Themes`.
+
 .. index:: menu; edit --> preferences
 
 * :menuselection:`Edit --> Preferences`
