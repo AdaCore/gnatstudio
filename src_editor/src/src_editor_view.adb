@@ -1803,11 +1803,11 @@ package body Src_Editor_View is
          elsif Source.Speed_Column_Mode = Always then
             Source.Speed_Bar_Width := Speed_Bar_Default_Width;
          end if;
+      end if;
 
-         if Source.Speed_Column_Buffer /= Null_Surface then
-            Destroy (Source.Speed_Column_Buffer);
-            Source.Speed_Column_Buffer := Null_Surface;
-         end if;
+      if Source.Speed_Column_Buffer /= Null_Surface then
+         Destroy (Source.Speed_Column_Buffer);
+         Source.Speed_Column_Buffer := Null_Surface;
       end if;
 
       Size_Side_Column (Source);
