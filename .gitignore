@@ -27,6 +27,7 @@ b__*
 *.d
 *.cgpr
 /Makefile
+shared.gpr
 common/Makefile.common
 common/common.gpr
 common/expect/Makefile
@@ -220,6 +221,8 @@ docs/programmers_guide/_build/
 docs/users_guide/_build/
 docs/tutorial/_build/
 docs/release_notes/build/
+docs/gps-welcome.html
+docs/gps-welcome-public.html
 docs/gps
 docs/gps.aux
 docs/gps.cp
