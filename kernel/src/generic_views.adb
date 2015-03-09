@@ -327,7 +327,7 @@ package body Generic_Views is
 
       F.Pattern.Set_Tooltip_Markup
         (Tooltip & ASCII.LF
-         & "Start with <b>not:</b> to reverse the filter");
+         & "Start with <b>not:</b> to invert the filter");
 
       if Options /= 0 then
          F.Pattern.Set_Icon_From_Icon_Name
