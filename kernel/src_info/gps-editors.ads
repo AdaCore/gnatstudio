@@ -914,7 +914,7 @@ private
    overriding function Version
      (This : Dummy_Editor_Buffer) return Integer is (0);
 
-   function Get_Main_Cursor
+   overriding function Get_Main_Cursor
      (This : Dummy_Editor_Buffer) return Editor_Cursor'Class
    is (Nil_Editor_Cursor);
 
@@ -1155,7 +1155,7 @@ private
 
    type Dummy_Editor_Cursor is new Editor_Cursor with null record;
 
-   function Get_Insert_Mark
+   overriding function Get_Insert_Mark
      (This : Dummy_Editor_Cursor) return Editor_Mark'Class
    is (Nil_Editor_Mark);
 
@@ -1163,7 +1163,7 @@ private
      (This : Dummy_Editor_Cursor; Where : Editor_Location'Class;
       Extend_Selection : Boolean) is null;
 
-   function Get_Selection_Mark
+   overriding function Get_Selection_Mark
      (This : Dummy_Editor_Cursor) return Editor_Mark'Class
    is
      (Nil_Editor_Mark);

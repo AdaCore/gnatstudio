@@ -347,13 +347,13 @@ private
      (Self : Dummy_Semantic_Node) return Semantic_Node'Class
    is (No_Semantic_Node);
 
-   function Sloc_Def
+   overriding function Sloc_Def
      (Self : Dummy_Semantic_Node) return Sloc_T is (0, 0, 0);
 
-   function Documentation_Body
+   overriding function Documentation_Body
      (SN : Dummy_Semantic_Node) return String is ("");
 
-   function Documentation_Header
+   overriding function Documentation_Header
      (SN : Dummy_Semantic_Node) return String is ("");
 
    overriding function Info
@@ -435,20 +435,20 @@ private
 
    type Dummy_Semantic_Tree is new Semantic_Tree with null record;
 
-   function Root_Iterator
+   overriding function Root_Iterator
      (Self : Dummy_Semantic_Tree) return Semantic_Tree_Iterator'Class is
       (No_Semantic_Tree_Iterator);
 
-   function Root_Nodes
+   overriding function Root_Nodes
      (Self : Dummy_Semantic_Tree) return Semantic_Node_Array'Class
       is (No_Semantic_Node_Array);
 
-   function Node_At
+   overriding function Node_At
      (Self : Dummy_Semantic_Tree; Sloc : Sloc_T;
       Category_Filter : Category_Array := Null_Category_Array)
       return Semantic_Node'Class is (No_Semantic_Node);
 
-   function File
+   overriding function File
      (Self : Dummy_Semantic_Tree) return GNATCOLL.VFS.Virtual_File is
      (GNATCOLL.VFS.No_File);
 

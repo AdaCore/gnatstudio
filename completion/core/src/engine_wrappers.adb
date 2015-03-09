@@ -360,7 +360,7 @@ package body Engine_Wrappers is
    -- Get_Custom_Icon_Name --
    --------------------------
 
-   function Get_Custom_Icon_Name
+   overriding function Get_Custom_Icon_Name
      (Proposal : Comp_Proposal) return String
    is (Proposal.P.Get_Custom_Icon_Name);
 

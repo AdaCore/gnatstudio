@@ -167,12 +167,12 @@ private
       Nodes : Construct_Node_Vectors.Vector;
    end record;
 
-   function Get
+   overriding function Get
      (Self : Construct_Node_Array; Index : Positive) return Semantic_Node'Class
    is
       (Self.Nodes.Element (Index));
 
-   function Length (Self : Construct_Node_Array) return Natural is
+   overriding function Length (Self : Construct_Node_Array) return Natural is
      (Natural (Self.Nodes.Length));
 
 end Language.Abstract_Construct_Tree;

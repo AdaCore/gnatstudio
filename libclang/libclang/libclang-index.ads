@@ -366,7 +366,7 @@ package Libclang.Index is
 
    use Interfaces.C;
 
-   function "=" (Left, Right : Clang_Cursor) return Boolean is
+   overriding function "=" (Left, Right : Clang_Cursor) return Boolean is
      (clang_equalCursors (Left, Right) /= 0);
 
    subtype Clang_Cursor_Kind is clang_c_Index_h.CXCursorKind;

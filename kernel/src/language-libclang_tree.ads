@@ -194,12 +194,12 @@ private
       File   : GNATCOLL.VFS.Virtual_File;
    end record;
 
-   function Get
+   overriding function Get
      (Self : Clang_Node_Array; Index : Positive) return Semantic_Node'Class
    is
      (Clang_Node'(Self.Kernel, Self.Nodes.Element (Index), Self.File));
 
-   function Length (Self : Clang_Node_Array) return Natural is
+   overriding function Length (Self : Clang_Node_Array) return Natural is
      (Natural (Self.Nodes.Element'Length));
 
 end Language.Libclang_Tree;

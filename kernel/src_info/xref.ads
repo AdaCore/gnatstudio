@@ -664,7 +664,7 @@ package Xref is
      (Ref : General_Entity_Reference) return Root_Entity'Class;
    --  Return the entity the reference is pointing to
 
-   function Get_Entity_Name
+   overriding function Get_Entity_Name
      (Ref : General_Entity_Reference) return String
    is (Ref.Get_Entity.Get_Name);
 
@@ -1164,7 +1164,7 @@ private
    overriding procedure Destroy (Iter : in out Dummy_Reference_Iterator)
    is null;
 
-   function Get_Current_Progress
+   overriding function Get_Current_Progress
      (Iter : Dummy_Reference_Iterator) return Integer is (0);
 
    overriding function Get_Total_Progress
