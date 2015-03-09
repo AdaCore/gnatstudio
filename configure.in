@@ -68,6 +68,10 @@ AC_CHECK_PROGS(TEXI2DVI, texi2dvi)
 AM_PATH_GTK
 AM_PATH_GTKADA(3.4.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
+######### detect libclang
+AM_PATH_LIBCLANG
+AM_TO_GPR($CLANG_LIBS,   CLANG_LIBS_GPR)
+
 ######## GNU regex checking
 AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
 
@@ -189,4 +193,4 @@ AC_MSG_NOTICE([ Xml/Ada: $XMLADA_GPR])
 AC_MSG_NOTICE([    use ADA_PROJECT_PATH to find xmlada.gpr])
 AC_MSG_NOTICE([--------------------------------------------------])
 
-AC_OUTPUT(Makefile docs/Makefile po/Makefile common/core/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gps-welcome.html docs/gps-welcome-public.html)
+AC_OUTPUT(shared.gpr Makefile docs/Makefile po/Makefile common/core/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gps-welcome.html docs/gps-welcome-public.html)

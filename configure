@@ -648,6 +648,8 @@ STRIP_CR
 EXEC_PREFIX
 TARGET
 GPS_VERSION
+CLANG_LIBS_GPR
+CLANG_LIBS
 GTKADA_PREFIX
 GTK_STATIC_LIBS
 GTK_LIBS
@@ -741,6 +743,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 with_gtk
+with_clang
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1366,6 +1369,8 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-gtk=version      Specify the version of GTK to support (3.0 or 2.0)
   --without-gtk           Disable support for GTK
+  --with-clang=<path>     Specify the directory that contains the libclang
+                          libary
 
 Some influential environment variables:
   CC          C compiler command
@@ -4363,6 +4368,68 @@ $as_echo "no" >&6; }
   rm -f conf.gtktest
 
 
+######### detect libclang
+
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libclang" >&5
+$as_echo_n "checking for libclang... " >&6; }
+
+   CLANG_LIBS="-lclang"
+
+
+# Check whether --with-clang was given.
+if test "${with_clang+set}" = set; then :
+  withval=$with_clang; CLANG_LIBS="-L$withval $CLANG_LIBS"
+fi
+
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+clang_getCursorSpelling(0)
+  ;
+  return 0;
+}
+_ACEOF
+
+   _save_LIBS="$LIBS"
+   LIBS="$CLANG_LIBS $LIBS"
+
+   if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  as_fn_error $? "libclang not found (see --with-clang)" "$LINENO" 5
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+
+   LIBS=$_save_LIBS
+
+
+
+   value=$CLANG_LIBS
+
+   # Special handling on darwin for gcc 4.5 and 4.7
+   case "$build_os" in
+      *darwin*)
+         value=`echo $value | sed -e "s/-framework \([^ ]*\)/-Wl,-framework -Wl,\1/g"`
+   esac
+
+   output=CLANG_LIBS_GPR
+   result=""
+   for v in $value; do
+      if test "$result" != ""; then
+         result="$result, "
+      fi
+      result="$result\"$v\""
+   done
+   CLANG_LIBS_GPR=$result
+
+
+
+
 ######## GNU regex checking
 ac_fn_c_check_func "$LINENO" "re_compile_pattern" "ac_cv_func_re_compile_pattern"
 if test "x$ac_cv_func_re_compile_pattern" = xyes; then :
@@ -4614,7 +4681,7 @@ $as_echo "$as_me:     use ADA_PROJECT_PATH to find xmlada.gpr" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: --------------------------------------------------" >&5
 $as_echo "$as_me: --------------------------------------------------" >&6;}
 
-ac_config_files="$ac_config_files Makefile docs/Makefile po/Makefile common/core/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gps-welcome.html docs/gps-welcome-public.html"
+ac_config_files="$ac_config_files shared.gpr Makefile docs/Makefile po/Makefile common/core/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gps-welcome.html docs/gps-welcome-public.html"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5323,6 +5390,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
+    "shared.gpr") CONFIG_FILES="$CONFIG_FILES shared.gpr" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "docs/Makefile") CONFIG_FILES="$CONFIG_FILES docs/Makefile" ;;
     "po/Makefile") CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;

@@ -50,9 +50,11 @@ project Shared is
       for Switches ("Ada") use ("-E");
    end Binder;
 
+   Clang_Libs := (@CLANG_LIBS_GPR@);
+
    package Linker is
       for Default_Switches ("Ada") use Gnatcoll_Shared.System_Linker_Flags &
-         ("-lclang", "-lstdc++");
+         Clang_Libs & ("-lstdc++");
    end Linker;
 
 end Shared;

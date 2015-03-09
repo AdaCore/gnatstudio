@@ -71,6 +71,39 @@ EOF
 
 #############################################################
 #
+# Configure for libclang
+#
+#############################################################
+
+AC_DEFUN(AM_PATH_LIBCLANG,
+[
+   AC_MSG_CHECKING(for libclang)
+
+   CLANG_LIBS="-lclang"
+
+   AC_ARG_WITH(clang,
+     [AC_HELP_STRING(
+        [--with-clang=<path>],
+        [Specify the directory that contains the libclang libary])],
+     [CLANG_LIBS="-L$withval $CLANG_LIBS"])
+   AC_LANG_CONFTEST(
+     [AC_LANG_PROGRAM(
+        [],
+        [clang_getCursorSpelling(0)])])
+
+   _save_LIBS="$LIBS"
+   LIBS="$CLANG_LIBS $LIBS"
+
+   AC_LINK_IFELSE([],
+     [AC_MSG_RESULT(yes)],
+     [AC_MSG_ERROR([libclang not found (see --with-clang)])])
+
+   LIBS=$_save_LIBS
+   AC_SUBST(CLANG_LIBS)
+])
+
+#############################################################
+#
 # Configure paths for GtkAda
 #
 #############################################################
