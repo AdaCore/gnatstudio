@@ -80,6 +80,10 @@ private
 
       Box    : Gtk_Event_Box;
 
+      Info_Box : Gtk_Box;
+      --  Will contain extra information displayed in the status bar, like
+      --  the VCS status.
+
       Function_Label       : Gtk.Label.Gtk_Label;
       Read_Only_Label      : Gtk.Image.Gtk_Image;
       Modified_Label       : Gtk.Image.Gtk_Image;

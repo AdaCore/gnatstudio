@@ -118,7 +118,7 @@ package body Src_Editor_Status_Bar is
    begin
       if Bar.Buffer_Info_Frames /= null then
          for J in Bar.Buffer_Info_Frames'Range loop
-            Remove (Bar.HBox, Bar.Buffer_Info_Frames (J).Label);
+            Remove (Bar.Info_Box, Bar.Buffer_Info_Frames (J).Label);
          end loop;
 
          Unchecked_Free (Bar.Buffer_Info_Frames);
@@ -175,7 +175,7 @@ package body Src_Editor_Status_Bar is
          end if;
 
          Pack_End
-           (Bar.HBox,
+           (Bar.Info_Box,
             Bar.Buffer_Info_Frames (J).Label,
             Expand  => False,
             Fill    => True,
@@ -534,7 +534,14 @@ package body Src_Editor_Status_Bar is
            (Bar.Modified_Label, Expand => False, Fill => False);
       end if;
 
+      Gtk_New_Hbox (Bar.Info_Box, Homogeneous => False);
+      Bar.HBox.Pack_Start (Bar.Info_Box, Expand => False, Fill => False);
+
       --  Read only file area...
+      --  Leave this to the right of the info_box area, since the latter
+      --  is displayed after a delay, and people trying to click on the lock
+      --  icon too early might end up clicking on the info_box area
+      --  instead.
       Gtk_New (Bar.Read_Only_Label);
       Gtk_New (Event_Box);
       Event_Box.Add (Bar.Read_Only_Label);

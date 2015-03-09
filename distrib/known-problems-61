@@ -25,6 +25,19 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O308-004 GPS: annoyance when clicking on lock icon in editors
+
+  Problem:    Editors display two icons in their status bar: a lock to make
+              the file read-only, and an icon showing the VCS status. The
+              latter is displayed slightly later, and this moves the lock
+              icon aside. Trying to click on the lock icon before the VCS
+              icon is displayed could result in clicking on the VCS icon
+              instead if it happens to be made visible just at that point.
+
+  Status:     This was fixed in 6.2 on 2015-03-09
+
+  Workaround: Wait for the VCS icon to be visible.
+
 KP-61-O228-001 GPS: targets with mode 'Manually' launch without dialog
 
   Problem:    The build targets which have launch mode 'Manually' launch
