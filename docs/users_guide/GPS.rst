@@ -1201,6 +1201,10 @@ Classes
 
 
 
+   .. autoattribute:: GPS.MDI.POSITION_FLOAT
+
+
+
    .. autoattribute:: GPS.MDI.POSITION_LEFT
 
 
