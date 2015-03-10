@@ -209,7 +209,8 @@ package body Python_Module is
              Param ("short", Optional => True),
              Param ("group", Optional => True),
              Param ("position", Optional => True),
-             Param ("save_desktop", Optional => True)),
+             Param ("save_desktop", Optional => True),
+             Param ("flags", Optional => True)),
          Static_Method => True,
          Language      => Python_Name);
 
@@ -526,6 +527,8 @@ package body Python_Module is
                  (Nth_Arg (Data, 5, Child_Position'Pos (Position_Automatic)));
 
                Gtk_New (Child, Gtk_Widget (Widget), Get_Kernel (Data),
+                        Flags => Child_Flags
+                          (Integer'(Nth_Arg (Data, 7, Integer (All_Buttons)))),
                         Group => Group,
                         Module => Python_Views.Get_Module,
                         Desktop_Independent => False);

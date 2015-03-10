@@ -1161,6 +1161,26 @@ Classes
    
 
 
+   .. autoattribute:: GPS.MDI.FLAGS_ALL_BUTTONS
+
+
+
+   .. autoattribute:: GPS.MDI.FLAGS_ALWAYS_DESTROY_FLOAT
+
+
+
+   .. autoattribute:: GPS.MDI.FLAGS_DESTROY_BUTTON
+
+
+
+   .. autoattribute:: GPS.MDI.FLAGS_FLOAT_AS_TRANSIENT
+
+
+
+   .. autoattribute:: GPS.MDI.FLAGS_FLOAT_TO_MAIN
+
+
+
    .. autoattribute:: GPS.MDI.GROUP_CONSOLES
 
 

@@ -7217,9 +7217,16 @@ class MDI(object):
     POSITION_RIGHT = 0
     # constants to be used in GPS.MDI.add()
 
+    FLAGS_DESTROY_BUTTON = 4
+    FLAGS_FLOAT_AS_TRANSIENT = 8
+    FLAGS_FLOAT_TO_MAIN = 32
+    FLAGS_ALWAYS_DESTROY_FLOAT = 16
+    FLAGS_ALL_BUTTONS = 4
+    # constants to be used in GPS.MDI.add()
+
     @staticmethod
     def add(widget, title="", short="", group=0,
-            position=0, save_desktop=None):
+            position=0, save_desktop=None, flags=FLAGS_ALL_BUTTONS):
         """
         This function is only available if pygobject could be loaded in the
         python shell. You must install this library first, see the
@@ -7259,6 +7266,7 @@ class MDI(object):
             data.  An easier alternative is to use the :file:`modules.py`
             support script in GPS, which handles this parameter automatically
             on your behalf.
+        :param flags: Child behavior flags.
         :return: The instance of :class:`GPS.MDIWindow` that was created
 
         .. code-block:: python

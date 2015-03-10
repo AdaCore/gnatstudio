@@ -137,6 +137,9 @@ class Module(object):
     # created windows in this group, and in this case the new view will be
     # put on top of the existing windows.
 
+    mdi_flags = GPS.MDI.FLAGS_ALL_BUTTONS
+    # the default MDI flags for this view
+
     view_title = None
     # The name of the view that will be created by GPS. By default, this is
     # the name of your class, but you can override this as a class attribute
@@ -322,7 +325,8 @@ class Module(object):
                         position=self.mdi_position,
                         group=self.mdi_group,
                         title=self.view_title,
-                        save_desktop=self._save_desktop)
+                        save_desktop=self._save_desktop,
+                        flags=self.mdi_flags)
                     return child
         return None
 
