@@ -1321,9 +1321,17 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class)
    is
       Tree : constant Project_Explorer := Project_Explorer (Explorer);
+      Pattern : Search_Pattern_Access := Tree.Filter.Pattern;
    begin
+      --  Temporary clear the filter before rebuilding Tree.Model to avoid
+      --  Storage_Error on Tree.Model.Clear call
+      Tree.Filter.Cache.Clear;
+      Tree.Filter.Pattern := null;
+      Tree.Tree.Filter.Refilter;
       Tree.Tree.Model.Clear;
       Refresh (Explorer);
+      --  Restore applied filter after Tree.Model rebuild
+      Filter_Changed (Tree, Pattern);
    end Update_View;
 
    ---------------------
