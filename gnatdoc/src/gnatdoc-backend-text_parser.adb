@@ -83,9 +83,9 @@ package body GNATdoc.Backend.Text_Parser is
       P_Matches   : Match_Array (0 .. 1);
 
       procedure Parse_Line
-        (Line       : String;
-         Text_Line  : out Ada.Strings.Unbounded.Unbounded_String;
-         Emit_After : out Event_Vectors.Vector);
+        (Line        : String;
+         Line_Events : out Event_Vectors.Vector;
+         Emit_After  : out Event_Vectors.Vector);
       --  Parse tags in line and process them. Result line is returned in
       --  Text_Line parameter, set of events to be emitted after close of
       --  current event is returned in Emit_After parameter.
@@ -156,17 +156,17 @@ package body GNATdoc.Backend.Text_Parser is
       ---------------------
 
       procedure Open_P_And_Push is
-         Text_Line  : Ada.Strings.Unbounded.Unbounded_String;
-         Emit_After : Event_Vectors.Vector;
+         Line_Events : Event_Vectors.Vector;
+         Emit_After  : Event_Vectors.Vector;
 
       begin
          Parse_Line
            (Slice
               (Lines (Current), P_Matches (1).First, Length (Lines (Current))),
-            Text_Line,
+            Line_Events,
             Emit_After);
 
-         if Length (Text_Line) /= 0 then
+         if not Line_Events.Is_Empty then
             State_Stack.Append (State);
             State :=
               (Kind        => Paragraph,
@@ -174,7 +174,7 @@ package body GNATdoc.Backend.Text_Parser is
                Emit_After  => Emit_After);
             Result.Append
               ((Start_Tag, To_Unbounded_String ("p"), Null_Unbounded_String));
-            Result.Append ((Text, Text_Line));
+            Result.Append (Line_Events);
 
          else
             Result.Append (Emit_After);
@@ -213,9 +213,9 @@ package body GNATdoc.Backend.Text_Parser is
       ----------------
 
       procedure Parse_Line
-        (Line       : String;
-         Text_Line  : out Ada.Strings.Unbounded.Unbounded_String;
-         Emit_After : out Event_Vectors.Vector)
+        (Line        : String;
+         Line_Events : out Event_Vectors.Vector;
+         Emit_After  : out Event_Vectors.Vector)
       is
          First           : Positive := Line'First;
          Doc_Tag_Matches : Match_Array (0 .. 0);
@@ -229,13 +229,21 @@ package body GNATdoc.Backend.Text_Parser is
               (Doc_Tag_Pattern, Line (First .. Line'Last), Doc_Tag_Matches);
 
             if Doc_Tag_Matches (0) = No_Match then
-               Append (Text_Line, Line (First .. Line'Last));
+               if First <= Line'Last then
+                  Line_Events.Append
+                    ((Text, To_Unbounded_String (Line (First .. Line'Last))));
+               end if;
 
                exit;
 
             else
-               Append
-                 (Text_Line, Line (First .. Doc_Tag_Matches (0).First - 1));
+               if First <= Doc_Tag_Matches (0).First - 1 then
+                  Line_Events.Append
+                    ((Text,
+                      To_Unbounded_String
+                       (Line (First .. Doc_Tag_Matches (0).First - 1))));
+               end if;
+
                First := Doc_Tag_Matches (0).Last + 1;
 
                Tag_Name :=
@@ -339,7 +347,7 @@ package body GNATdoc.Backend.Text_Parser is
 
                   else
                      declare
-                        Text_Line : Ada.Strings.Unbounded.Unbounded_String;
+                        Line_Events : Event_Vectors.Vector;
 
                      begin
                         Parse_Line
@@ -347,11 +355,11 @@ package body GNATdoc.Backend.Text_Parser is
                              (Lines (Current),
                               P_Matches (1).First,
                               Length (Lines (Current))),
-                           Text_Line,
+                           Line_Events,
                            State.Emit_After);
 
-                        if Length (Text_Line) /= 0 then
-                           Result.Append ((Text, Text_Line));
+                        if not Line_Events.Is_Empty then
+                           Result.Append (Line_Events);
                         end if;
                      end;
                   end if;
