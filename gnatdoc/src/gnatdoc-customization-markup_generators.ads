@@ -40,6 +40,19 @@ package GNATdoc.Customization.Markup_Generators is
    procedure End_List_Item (Self : not null access Markup_Generator);
    --  Generate end event for 'li' tag.
 
+   procedure Image
+     (Self : not null access Markup_Generator;
+      File : String);
+   --  Generate set of events to insert image into the document.
+
+   procedure Switch_To_After_Stream (Self : not null access Markup_Generator);
+   --  Switch generator to process events of stream that will be inserted after
+   --  current element.
+
+   procedure Switch_To_Inline_Stream (Self : not null access Markup_Generator);
+   --  Switch generator to process events of stream that will be inserted
+   --  inside current element.
+
    procedure Text (Self : not null access Markup_Generator; Text : String);
    --  Generate text event.
 
@@ -47,10 +60,26 @@ package GNATdoc.Customization.Markup_Generators is
    --  Generate start event for 'html' tag, text event and end event for
    --  'html' text.
 
+   function Get_Inline_Stream
+     (Self : Markup_Generator)
+      return GNATdoc.Markup_Streams.Event_Vectors.Vector;
+   --  Returns stream on elements to be inserted into current element
+
+   function Get_After_Stream
+     (Self : Markup_Generator)
+      return GNATdoc.Markup_Streams.Event_Vectors.Vector;
+   --  Returns stream of elements to be inserted after current element
+
 private
 
+   type Stream_Kinds is (Inline_Stream, After_Stream);
+
+   type Stream_Array is
+     array (Stream_Kinds) of GNATdoc.Markup_Streams.Event_Vectors.Vector;
+
    type Markup_Generator is tagged limited record
-      Stream : GNATdoc.Markup_Streams.Event_Vectors.Vector;
+      Streams : Stream_Array;
+      Current : Stream_Kinds := Inline_Stream;
    end record;
 
 end GNATdoc.Customization.Markup_Generators;

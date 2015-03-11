@@ -34,7 +34,8 @@ with GPS.CLI_Utils;         use GPS.CLI_Utils;
 with GPS.CLI_Kernels;       use GPS.CLI_Kernels;
 
 with GNATdoc;               use GNATdoc;
-with GNATdoc.Customization.Tag_Handlers;
+with GNATdoc.Customization.Tag_Handlers.Images;
+with GNATdoc.Customization.Tag_Handlers.Shell;
 with Xref;                  use Xref;
 with String_List_Utils;     use String_List_Utils;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
@@ -512,8 +513,13 @@ begin
 
    Launch_Gnatinspect;
 
+   --  Register build-in tag handlers.
+
+   GNATdoc.Customization.Tag_Handlers.Register
+     (new GNATdoc.Customization.Tag_Handlers.Images.Image_Tag_Handler);
+
    --  Register GNATDOC.TagHandler python class
-   GNATdoc.Customization.Tag_Handlers.Register_Commands (Kernel);
+   GNATdoc.Customization.Tag_Handlers.Shell.Register_Commands (Kernel);
 
    --  Load script
    declare

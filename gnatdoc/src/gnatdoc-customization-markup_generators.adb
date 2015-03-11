@@ -25,7 +25,8 @@ package body GNATdoc.Customization.Markup_Generators is
 
    procedure End_List (Self : not null access Markup_Generator) is
    begin
-      Self.Stream.Append ((End_Tag, To_Unbounded_String ("ul")));
+      Self.Streams (Self.Current).Append
+        ((End_Tag, To_Unbounded_String ("ul")));
    end End_List;
 
    -------------------
@@ -34,7 +35,8 @@ package body GNATdoc.Customization.Markup_Generators is
 
    procedure End_List_Item (Self : not null access Markup_Generator) is
    begin
-      Self.Stream.Append ((End_Tag, To_Unbounded_String ("li")));
+      Self.Streams (Self.Current).Append
+        ((End_Tag, To_Unbounded_String ("li")));
    end End_List_Item;
 
    -------------------
@@ -43,8 +45,31 @@ package body GNATdoc.Customization.Markup_Generators is
 
    procedure End_Paragraph (Self : not null access Markup_Generator) is
    begin
-      Self.Stream.Append ((End_Tag, To_Unbounded_String ("p")));
+      Self.Streams (Self.Current).Append
+        ((End_Tag, To_Unbounded_String ("p")));
    end End_Paragraph;
+
+   ----------------------
+   -- Get_After_Stream --
+   ----------------------
+
+   function Get_After_Stream
+     (Self : Markup_Generator)
+      return GNATdoc.Markup_Streams.Event_Vectors.Vector is
+   begin
+      return Self.Streams (After_Stream);
+   end Get_After_Stream;
+
+   -----------------------
+   -- Get_Inline_Stream --
+   -----------------------
+
+   function Get_Inline_Stream
+     (Self : Markup_Generator)
+      return GNATdoc.Markup_Streams.Event_Vectors.Vector is
+   begin
+      return Self.Streams (Inline_Stream);
+   end Get_Inline_Stream;
 
    ----------
    -- HTML --
@@ -52,11 +77,29 @@ package body GNATdoc.Customization.Markup_Generators is
 
    procedure HTML (Self : not null access Markup_Generator; HTML : String) is
    begin
-      Self.Stream.Append
+      Self.Streams (Self.Current).Append
         ((Start_Tag, To_Unbounded_String ("html"), Null_Unbounded_String));
-      Self.Stream.Append ((Markup_Streams.Text, To_Unbounded_String (HTML)));
-      Self.Stream.Append ((End_Tag, To_Unbounded_String ("html")));
+      Self.Streams (Self.Current).Append
+        ((Markup_Streams.Text, To_Unbounded_String (HTML)));
+      Self.Streams (Self.Current).Append
+        ((End_Tag, To_Unbounded_String ("html")));
    end HTML;
+
+   -----------
+   -- Image --
+   -----------
+
+   procedure Image
+     (Self : not null access Markup_Generator;
+      File : String) is
+   begin
+      Self.Streams (Self.Current).Append
+        ((Kind      => Start_Tag,
+          Name      => To_Unbounded_String ("image"),
+          Parameter => To_Unbounded_String (File)));
+      Self.Streams (Self.Current).Append
+        ((End_Tag, To_Unbounded_String ("image")));
+   end Image;
 
    ----------------
    -- Start_List --
@@ -64,7 +107,7 @@ package body GNATdoc.Customization.Markup_Generators is
 
    procedure Start_List (Self : not null access Markup_Generator) is
    begin
-      Self.Stream.Append
+      Self.Streams (Self.Current).Append
         ((Start_Tag, To_Unbounded_String ("ul"), Null_Unbounded_String));
    end Start_List;
 
@@ -74,7 +117,7 @@ package body GNATdoc.Customization.Markup_Generators is
 
    procedure Start_List_Item (Self : not null access Markup_Generator) is
    begin
-      Self.Stream.Append
+      Self.Streams (Self.Current).Append
         ((Start_Tag, To_Unbounded_String ("li"), Null_Unbounded_String));
    end Start_List_Item;
 
@@ -84,9 +127,29 @@ package body GNATdoc.Customization.Markup_Generators is
 
    procedure Start_Paragraph (Self : not null access Markup_Generator) is
    begin
-      Self.Stream.Append
+      Self.Streams (Self.Current).Append
         ((Start_Tag, To_Unbounded_String ("p"), Null_Unbounded_String));
    end Start_Paragraph;
+
+   ----------------------------
+   -- Switch_To_After_Stream --
+   ----------------------------
+
+   procedure Switch_To_After_Stream
+     (Self : not null access Markup_Generator) is
+   begin
+      Self.Current := After_Stream;
+   end Switch_To_After_Stream;
+
+   -----------------------------
+   -- Switch_To_Inline_Stream --
+   -----------------------------
+
+   procedure Switch_To_Inline_Stream
+     (Self : not null access Markup_Generator) is
+   begin
+      Self.Current := Inline_Stream;
+   end Switch_To_Inline_Stream;
 
    ----------
    -- Text --
@@ -94,7 +157,8 @@ package body GNATdoc.Customization.Markup_Generators is
 
    procedure Text (Self : not null access Markup_Generator; Text : String) is
    begin
-      Self.Stream.Append ((Markup_Streams.Text, To_Unbounded_String (Text)));
+      Self.Streams (Self.Current).Append
+        ((Markup_Streams.Text, To_Unbounded_String (Text)));
    end Text;
 
 end GNATdoc.Customization.Markup_Generators;

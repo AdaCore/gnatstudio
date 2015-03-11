@@ -18,6 +18,11 @@
 with Ada.Characters.Latin_1; use Ada.Characters.Latin_1;
 with GNAT.Regpat;            use GNAT.Regpat;
 
+with GNATdoc.Customization.Markup_Generators;
+use GNATdoc.Customization.Markup_Generators;
+with GNATdoc.Customization.Tag_Handlers;
+use GNATdoc.Customization.Tag_Handlers;
+
 package body GNATdoc.Backend.Text_Parser is
 
    use GNATdoc.Markup_Streams;
@@ -63,24 +68,55 @@ package body GNATdoc.Backend.Text_Parser is
    package State_Vectors is
      new Ada.Containers.Vectors (Positive, State_Type);
 
-   LI_Pattern      : constant Pattern_Matcher := Compile ("^\s+([-*])\s*(\S)");
-   P_Pattern       : constant Pattern_Matcher := Compile ("\s*(\S)");
-   Doc_Tag_Pattern : constant Pattern_Matcher := Compile ("@image");
-   Path_Pattern    : constant Pattern_Matcher := Compile ("\s*(\S*)");
+   function Build_Doc_Tag_Pattern return Pattern_Matcher;
+   --  Builds regular expression to detect all known inline tags
+
+   LI_Pattern        : constant Pattern_Matcher :=
+     Compile ("^\s+([-*])\s*(\S)");
+   P_Pattern         : constant Pattern_Matcher := Compile ("\s*(\S)");
+   Parameter_Pattern : constant Pattern_Matcher := Compile ("\s*(\S*)");
+
+   ---------------------------
+   -- Build_Doc_Tag_Pattern --
+   ---------------------------
+
+   function Build_Doc_Tag_Pattern return Pattern_Matcher is
+      Expression : Unbounded_String;
+
+   begin
+      for Tag of Get_Inline_Tags loop
+         if Expression = "" then
+            Append (Expression, "@(");
+
+         else
+            Append (Expression, '|');
+         end if;
+
+         Append (Expression, Tag);
+      end loop;
+
+      if Expression /= "" then
+         Append (Expression, ")");
+      end if;
+
+      return Compile (To_String (Expression));
+   end Build_Doc_Tag_Pattern;
 
    ----------------
    -- Parse_Text --
    ----------------
 
    function Parse_Text (Comment_Text : String) return Event_Vectors.Vector is
-      Lines       : constant Unbounded_String_Vectors.Vector :=
+      Doc_Tag_Pattern : constant Pattern_Matcher := Build_Doc_Tag_Pattern;
+      Lines           : constant Unbounded_String_Vectors.Vector :=
         Split_Lines (Comment_Text);
-      Result      : Event_Vectors.Vector;
-      Current     : Positive := Lines.First_Index;
-      State       : State_Type := ((Kind => Initial, Last_Para_Offset => <>));
-      State_Stack : State_Vectors.Vector;
-      LI_Matches  : Match_Array (0 .. 2);
-      P_Matches   : Match_Array (0 .. 1);
+      Result          : Event_Vectors.Vector;
+      Current         : Positive := Lines.First_Index;
+      State           : State_Type :=
+        ((Kind => Initial, Last_Para_Offset => <>));
+      State_Stack     : State_Vectors.Vector;
+      LI_Matches      : Match_Array (0 .. 2);
+      P_Matches       : Match_Array (0 .. 1);
 
       procedure Parse_Line
         (Line        : String;
@@ -89,12 +125,6 @@ package body GNATdoc.Backend.Text_Parser is
       --  Parse tags in line and process them. Result line is returned in
       --  Text_Line parameter, set of events to be emitted after close of
       --  current event is returned in Emit_After parameter.
-
-      procedure Process_Image_Tag
-        (Line       : String;
-         First      : in out Positive;
-         Emit_After : out Event_Vectors.Vector);
-      --  Process 'image' tag.
 
       procedure Close_P_And_Pop;
 
@@ -217,9 +247,12 @@ package body GNATdoc.Backend.Text_Parser is
          Line_Events : out Event_Vectors.Vector;
          Emit_After  : out Event_Vectors.Vector)
       is
-         First           : Positive := Line'First;
-         Doc_Tag_Matches : Match_Array (0 .. 0);
-         Tag_Name        : Ada.Strings.Unbounded.Unbounded_String;
+         First             : Positive := Line'First;
+         Doc_Tag_Matches   : Match_Array (0 .. 1);
+         Parameter_Matches : Match_Array (0 .. 1);
+         Handler           : Inline_Tag_Handler_Access;
+         Writer            : Markup_Generator;
+         Parameter         : Unbounded_String;
 
       begin
          --  Parse line to extract embedded tags and process them
@@ -246,47 +279,48 @@ package body GNATdoc.Backend.Text_Parser is
 
                First := Doc_Tag_Matches (0).Last + 1;
 
-               Tag_Name :=
-                 To_Unbounded_String
-                   (Line
-                      (Doc_Tag_Matches (0).First .. Doc_Tag_Matches (0).Last));
+               --  Lookup for tag handler
 
-               if Tag_Name = "@image" then
-                  Process_Image_Tag (Line, First, Emit_After);
+               Handler :=
+                 Get_Inline_Tag_Handler
+                   (Line
+                      (Doc_Tag_Matches (1).First .. Doc_Tag_Matches (1).Last));
+
+               --  Process tag's parameter when necessary
+
+               if Handler.Has_Parameter then
+                  Match
+                    (Parameter_Pattern,
+                     Line (First .. Line'Last),
+                     Parameter_Matches);
+
+                  if Parameter_Matches (0) /= No_Match then
+                     First := Parameter_Matches (0).Last + 1;
+                     Parameter :=
+                       To_Unbounded_String
+                         (Line
+                            (Parameter_Matches (1).First
+                             .. Parameter_Matches (1).Last));
+
+                  else
+                     --  Ignore tag due to absence of parameter.
+
+                     --  ??? Error should be reported here
+
+                     Handler := null;
+                  end if;
+               end if;
+
+               --  Run tag handler
+
+               if Handler /= null then
+                  Handler.To_Markup (To_String (Parameter), Writer);
+                  Line_Events.Append (Writer.Get_Inline_Stream);
+                  Emit_After.Append (Writer.Get_After_Stream);
                end if;
             end if;
          end loop;
       end Parse_Line;
-
-      -----------------------
-      -- Process_Image_Tag --
-      -----------------------
-
-      procedure Process_Image_Tag
-        (Line       : String;
-         First      : in out Positive;
-         Emit_After : out Event_Vectors.Vector)
-      is
-         Path_Matches     : Match_Array (0 .. 1);
-         Image_File_Name  : Ada.Strings.Unbounded.Unbounded_String;
-
-      begin
-         Match (Path_Pattern, Line (First .. Line'Last), Path_Matches);
-
-         if Path_Matches (0) /= No_Match then
-            First := Path_Matches (0).Last + 1;
-            Image_File_Name :=
-              To_Unbounded_String
-                (Line
-                   (Path_Matches (1).First .. Path_Matches (1).Last));
-            Emit_After.Append
-              ((Kind      => Start_Tag,
-                Name      => To_Unbounded_String ("image"),
-                Parameter => Image_File_Name));
-            Emit_After.Append
-              ((End_Tag, To_Unbounded_String ("image")));
-         end if;
-      end Process_Image_Tag;
 
    begin
       while Current <= Lines.Last_Index loop
