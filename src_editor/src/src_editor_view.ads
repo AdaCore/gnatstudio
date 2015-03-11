@@ -297,6 +297,7 @@ private
       Width_Of_256_Chars  : Gint;
 
       Current_Block_Color : Gdk.RGBA.Gdk_RGBA;
+      Line_Number_Color   : Gdk.RGBA.Gdk_RGBA;
 
       Highlight_Blocks    : Boolean := False;
       --  Whether source blocks should be highlighted
@@ -338,6 +339,9 @@ private
       --  The editor background color and its ligthened/darkened version.
       --  Forced_Bg_Color is true if the python's set_background_color was
       --  called.
+
+      Speed_Column_Slider_Color : Gtkada.Style.Cairo_Color := (others => 0.0);
+      --  The color for the slider in the speed column.
 
       Text_Color           : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       --  The editor text color

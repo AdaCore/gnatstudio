@@ -1222,24 +1222,25 @@ package body Src_Editor_View is
 
             Block_End_Y := Y + Height;
 
-            Set_Source_Color (Cr, View.Current_Block_Color);
+            Set_Line_Width (Cr, 1.0);
 
             if Block_End_Y > Rect.Height then
                Block_End_Y := Rect.Height;
             else
-               Move_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
-               Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
+               Draw_Line
+                 (Cr, View.Current_Block_Color,
+                  X, Block_End_Y, X + Bracket_Length, Block_End_Y);
             end if;
 
-            Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
-            Line_To (Cr, Gdouble (X), Gdouble (Block_End_Y));
+            Draw_Line
+              (Cr, View.Current_Block_Color,
+               X, Block_Begin_Y, X, Block_End_Y);
 
             if Block_Begin_Y /= 0 then
-               Move_To (Cr, Gdouble (X), Gdouble (Block_Begin_Y));
-               Rel_Line_To (Cr, Gdouble (Bracket_Length), 0.0);
+               Draw_Line
+               (Cr, View.Current_Block_Color,
+                X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
             end if;
-
-            Stroke (Cr);
          end Draw_Block;
 
          X : Gint;
@@ -1821,6 +1822,7 @@ package body Src_Editor_View is
          Override_Color (Source, Gtk_State_Flag_Normal, Color);
       end if;
 
+      Source.Line_Number_Color := Shade_Or_Lighten (Source.Text_Color, 0.2);
       Source.Current_Line_Color := Current_Line_Color.Get_Pref;
       Source.Highlight_Current := Source.Current_Line_Color /= White_RGBA;
 
@@ -1860,6 +1862,15 @@ package body Src_Editor_View is
       end if;
 
       Self.Background_Color_Other := Shade_Or_Lighten (C, Amount => 0.03);
+
+      if To_HSLA (C).Lightness > 0.5 then
+         --  If the background is light, the slider should be a transparent
+         --  black.
+         Self.Speed_Column_Slider_Color := (0.0, 0.0, 0.0, 0.1);
+      else
+         --  Otherwise use a transparent white
+         Self.Speed_Column_Slider_Color := (1.0, 1.0, 1.0, 0.1);
+      end if;
 
       --  Overridding background color also seems to set the selected color, so
       --  that selected text becomes invisible. So we have to reset it as well.
@@ -2529,7 +2540,7 @@ package body Src_Editor_View is
 
       else
          --  This is the regular line numbering, with every line numbered
-         Num_Color := Shade_Or_Lighten (View.Background_Color_Other, 0.4);
+         Num_Color := View.Line_Number_Color;
          Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
       end if;
 
@@ -2653,7 +2664,7 @@ package body Src_Editor_View is
 
       Set_Line_Width (Cr, 0.5);
       Draw_Rectangle
-        (Cr, (0.0, 0.0, 0.0, Alpha => 0.1), True,
+        (Cr, View.Speed_Column_Slider_Color, True,
          1,
          (Height * Gint (View.Top_Line - 1)) / Total_Lines,
          View.Speed_Bar_Width - 2,
