@@ -229,6 +229,17 @@ KP-61-NB10-016 GPS: corrupt notebook tabs when reordering
   Workaround: When this happens, you can still select editors with the
               /Windows menu for instance. Or restart GPS to refresh the GUI.
 
+KP-61-NB07-018 GPS: filter menus do not stay visible on screen
+
+  Problem:    When clicking in one of the filters boxes (in the Outline,
+              Locations or Project views for instance), the menu appears and
+              immediately disappears (on some systems) when the mouse button
+              is released.
+
+  Status:     This was fixed in 6.2.0 on 2015-03-11
+
+  Workaround: Keep the button pressed while selecting options in the menu.
+
 KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Problem:    When closing a debugger session, if the program being debugged

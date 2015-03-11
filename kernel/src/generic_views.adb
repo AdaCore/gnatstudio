@@ -333,7 +333,7 @@ package body Generic_Views is
          F.Pattern.Set_Icon_From_Icon_Name
            (Gtk_Entry_Icon_Primary, "gps-search-and-menu-symbolic");
          F.Pattern.Set_Icon_Activatable (Gtk_Entry_Icon_Primary, True);
-         F.Pattern.On_Icon_Press (On_Pattern_Config_Menu'Access, Self);
+         F.Pattern.On_Icon_Release (On_Pattern_Config_Menu'Access, Self);
 
          Gtk_New (F.Pattern_Config_Menu);
          Ref (F.Pattern_Config_Menu);  --  unref'ed in On_Destroy
@@ -615,7 +615,7 @@ package body Generic_Views is
          V.Create_Menu (Menu);
          Menu.Show_All;
 
-         Menu.Popup; --   (Func => Position_Local_Config'Access);
+         Menu.Popup;
       end On_Display_Local_Config;
 
       -----------
