@@ -578,13 +578,7 @@ package body Language.Ada is
    overriding procedure Parse_Entities
      (Lang     : access Ada_Language;
       Buffer   : String;
-      Callback : Entity_Callback)
-   is
-      pragma Suppress (All_Checks);
-      --  See comment in Language.C.Parse_Entities
-      --  We've never got an exception for an Ada file, but on the other hand,
-      --  no checks are required in this procedure anyway.
-
+      Callback : Entity_Callback) is
    begin
       Analyze_Ada_Source
         (Buffer,

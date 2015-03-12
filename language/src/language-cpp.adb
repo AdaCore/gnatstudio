@@ -241,11 +241,7 @@ package body Language.Cpp is
    overriding procedure Parse_Entities
      (Lang     : access Cpp_Language;
       Buffer   : String;
-      Callback : Entity_Callback)
-   is
-      pragma Suppress (All_Checks);
-      --  See comment in Language.C.Parse_Entities
-
+      Callback : Entity_Callback) is
    begin
       Analyze_C_Source
         (Buffer        => Buffer,

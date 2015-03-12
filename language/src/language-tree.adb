@@ -21,6 +21,7 @@ with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with String_Utils;            use String_Utils;
 
 package body Language.Tree is
+   Me : constant Trace_Handle := Create ("TREE");
 
    use GNAT.Strings;
 
@@ -89,9 +90,6 @@ package body Language.Tree is
       Free_List : Boolean := False)
       return Construct_Tree
    is
-      pragma Suppress (All_Checks);
-      --  For efficiency
-
       Size              : constant Natural := List.Size;
       Current_Construct : Construct_Access;
    begin
@@ -251,7 +249,25 @@ package body Language.Tree is
      return Construct_Tree_Iterator
    is
    begin
-      if Iter.Node.Parent_Index /= 0 then
+      if Tree = null then
+         return Null_Construct_Tree_Iterator;
+      end if;
+
+      if Active (Me) then
+         Assert
+            (Me, Iter.Node.Parent_Index = 0
+             or else Iter.Node.Parent_Index in Tree.Contents'Range,
+             "Get_Parent_Scope: invalid index"
+             & Iter.Node.Parent_Index'Img
+             & " Tree.Contents="
+             & Tree.Contents'First'Img & ".."
+             & Tree.Contents'Last'Img & " ",
+             Raise_Exception => False);
+      end if;
+
+      if Iter.Node.Parent_Index /= 0
+         and then Iter.Node.Parent_Index in Tree.Contents'Range
+      then
          return
            (Tree.Contents
               (Iter.Node.Parent_Index)'Access, Iter.Node.Parent_Index);

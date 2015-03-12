@@ -275,12 +275,7 @@ package body Language.C is
    overriding procedure Parse_Entities
      (Lang     : access C_Language;
       Buffer   : String;
-      Callback : Entity_Callback)
-   is
-      pragma Suppress (All_Checks);
-      --  ??? For some reason we're sometimes getting a CE in this procedure
-      --  with no apparent reason if checks are enabled.
-
+      Callback : Entity_Callback) is
    begin
       Analyze_C_Source
         (Buffer        => Buffer,
