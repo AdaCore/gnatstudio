@@ -834,11 +834,16 @@ package body Src_Editor_View is
       Params : Glib.Values.GValues;
       User   : Source_View)
    is
-      Line : constant Gint := Get_Int (Nth (Params, 1));
+      Line : Gint;
+      Iter : Gtk_Text_Iter;
+      pragma Unreferenced (Params);
       Has_Focus : constant Boolean :=
         Gtkada.MDI.MDI_Child (User.Child) =
         Get_Focus_Child (Get_MDI (User.Kernel));
    begin
+      Buffer.Get_Iter_At_Mark (Iter, Buffer.Get_Insert);
+      Line := Get_Line (Iter) + 1;
+
       --  This call moves the Saved_Cursor_Mark, which is used by
       --  Scroll_To_Cursor_Location to leave the cursor visible on the screen.
       if Has_Focus then
@@ -1120,15 +1125,15 @@ package body Src_Editor_View is
             Buffer_To_Window_Coords
               (View, Text_Window_Text, Dummy, Line_Y, Dummy, Buffer_Line_Y);
 
-            Set_Source_RGBA (Cr, View.Current_Line_Color);
-
             if View.Highlight_As_Line then
-               Move_To (Cr,
-                        0.0,
-                        Gdouble (Buffer_Line_Y + Line_Height));
-               Rel_Line_To (Cr, Gdouble (Rect.Width), 0.0);
-               Stroke (Cr);
+               Set_Line_Width (Cr, 1.0);
+               Draw_Line (Cr, View.Current_Line_Color,
+                          0,
+                          Buffer_Line_Y + Line_Height,
+                          Rect.Width,
+                          Buffer_Line_Y + Line_Height);
             else
+               Set_Source_RGBA (Cr, View.Current_Line_Color);
                Cairo.Rectangle
                  (Cr,
                   0.0,
@@ -2547,6 +2552,7 @@ package body Src_Editor_View is
       Draw_Line_Info
         (Src_Buffer, View.Top_Line, View.Bottom_Line,
          Buffer_Line_Type (View.Current_Line),
+         View.Highlight_As_Line,
          Gtk_Text_View (View),
          Num_Color,
          View.Current_Line_Color,

@@ -990,6 +990,7 @@ package body Src_Editor_Buffer.Line_Information is
       Top_Line     : Buffer_Line_Type;
       Bottom_Line  : Buffer_Line_Type;
       Current_Line : Buffer_Line_Type;
+      As_Line      : Boolean;
       View         : Gtk_Text_View;
       Color        : Gdk_RGBA;
       Line_Color   : Gdk_RGBA;
@@ -1093,13 +1094,24 @@ package body Src_Editor_Buffer.Line_Information is
          if L = Current_Line then
             --  Draw the current line color
 
-            Set_Source_RGBA (Cr, Line_Color);
+            if As_Line then
+               Save (Cr);
+               Set_Line_Width (Cr, 1.0);
+               Draw_Line
+                 (Cr, Line_Color,
+                  0, Y_Pix_In_Window + Line_Height,
+                  Gint (Buffer.Total_Column_Width),
+                  Y_Pix_In_Window + Line_Height);
+               Restore (Cr);
+            else
+               Set_Source_RGBA (Cr, Line_Color);
 
-            Cairo.Rectangle
-              (Cr, 0.0, Gdouble (Y_Pix_In_Window),
-               Gdouble (Buffer.Total_Column_Width), Gdouble (Line_Height));
-            Cairo.Fill (Cr);
-            Set_Source_RGBA (Cr, Color);
+               Cairo.Rectangle
+                 (Cr, 0.0, Gdouble (Y_Pix_In_Window),
+                  Gdouble (Buffer.Total_Column_Width), Gdouble (Line_Height));
+               Cairo.Fill (Cr);
+               Set_Source_RGBA (Cr, Color);
+            end if;
          end if;
 
          Editable_Line := Get_Editable_Line (Buffer, L);

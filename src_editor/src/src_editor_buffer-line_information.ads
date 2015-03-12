@@ -86,6 +86,7 @@ package Src_Editor_Buffer.Line_Information is
       Top_Line     : Buffer_Line_Type;
       Bottom_Line  : Buffer_Line_Type;
       Current_Line : Buffer_Line_Type;
+      As_Line      : Boolean;
       View         : Gtk_Text_View;
       Color        : Gdk.RGBA.Gdk_RGBA;
       Line_Color   : Gdk.RGBA.Gdk_RGBA;
