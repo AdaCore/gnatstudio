@@ -321,7 +321,9 @@ package body Src_Editor_Module.Markers is
       Source : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
       if Source /= null then
-         if Marker.Mark = null then
+         if Marker.Mark = null
+           or else Marker.Mark.Get_Deleted
+         then
             Marker.Buffer :=
               Gtk_Text_Buffer (Source_Buffer'(Get_Buffer (Source)));
 
