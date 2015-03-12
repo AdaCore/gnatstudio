@@ -57,7 +57,6 @@ package Variable_Editors is
 
 private
    type New_Var_Edit_Record is new New_Variable_Editor_Record with record
-      Kernel : GPS.Kernel.Kernel_Handle;
       Var    : Scenario_Variable;
       --  Variable being edited (or Empty_Node for a new variable)
 

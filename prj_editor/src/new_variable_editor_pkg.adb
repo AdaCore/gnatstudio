@@ -23,23 +23,34 @@ with GPS.Intl;        use GPS.Intl;
 
 package body New_Variable_Editor_Pkg is
 
-   procedure Gtk_New (New_Variable_Editor : out New_Variable_Editor_Access) is
-   begin
-      New_Variable_Editor := new New_Variable_Editor_Record;
-      New_Variable_Editor_Pkg.Initialize (New_Variable_Editor);
-   end Gtk_New;
+   -------------
+   -- Gtk_New --
+   -------------
 
-   procedure Initialize
-     (New_Variable_Editor : access New_Variable_Editor_Record'Class)
+   procedure Gtk_New
+     (New_Variable_Editor : out New_Variable_Editor_Access;
+      Title               : String;
+      Kernel              : not null access Kernel_Handle_Record'Class)
    is
    begin
-      Gtk.Dialog.Initialize
+      New_Variable_Editor := new New_Variable_Editor_Record;
+      New_Variable_Editor_Pkg.Initialize (New_Variable_Editor, Title, Kernel);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (New_Variable_Editor : access New_Variable_Editor_Record'Class;
+      Title               : String;
+      Kernel              : not null access Kernel_Handle_Record'Class)
+   is
+   begin
+      GPS.Kernel.MDI.Initialize
         (New_Variable_Editor,
-         -"Creating a variable",
-         Parent => null,
-         Flags  => Use_Header_Bar_From_Settings);
-      Set_Position (New_Variable_Editor, Win_Pos_None);
-      Set_Modal (New_Variable_Editor, False);
+         Title => Title,
+         Kernel => Kernel);
       Set_Default_Size (New_Variable_Editor, 600, 400);
 
       New_Variable_Editor.Dialog_Vbox1 :=

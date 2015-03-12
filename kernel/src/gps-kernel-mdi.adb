@@ -44,7 +44,6 @@ with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Combo_Box;            use Gtk.Combo_Box;
 with Gtk.Container;            use Gtk.Container;
-with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Main;                 use Gtk.Main;
@@ -169,6 +168,11 @@ package body GPS.Kernel.MDI is
 
    function Check_Timestamp_Idle (Kernel : Kernel_Handle) return Boolean;
    --  Checks whether any of the monitored files has been modified on disk.
+
+   function On_GPS_Dialog_Focus_In
+     (Dialog : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event_Focus) return Boolean;
+   --  Called when a dialog gets the focus. This updates the kernel context.
 
    ------------------------
    -- Get_Current_Window --
@@ -545,7 +549,7 @@ package body GPS.Kernel.MDI is
       Child               : MDI_Child;
       Num_Unsaved         : Natural := 0;
       Model               : Gtk_Tree_Store;
-      Dialog              : Gtk_Dialog;
+      Dialog              : GPS_Dialog;
       It                  : Gtk_Tree_Iter := Null_Iter;
       Renderer            : Gtk_Cell_Renderer_Text;
       Toggle_Renderer     : Gtk_Cell_Renderer_Toggle;
@@ -675,14 +679,14 @@ package body GPS.Kernel.MDI is
          if Num_Unsaved = 1 then
             Gtk_New (Dialog,
                      Title  => -"Confirmation",
-                     Parent => Get_Current_Window (Handle),
+                     Kernel => Handle,
                      Flags  => Modal or Destroy_With_Parent);
             Gtk_New (Label, -"Do you want to save the following file?");
 
          else
             Gtk_New (Dialog,
                      Title  => -"Saving files",
-                     Parent => Get_Current_Window (Handle),
+                     Kernel => Handle,
                      Flags  => Modal or Destroy_With_Parent);
             Gtk_New (Label, -"Do you want to save the following files?");
          end if;
@@ -1895,7 +1899,7 @@ package body GPS.Kernel.MDI is
       To_Update : File_Sets.Set;
       F        : Monitored_File_Lists.Cursor;
       Data     : aliased File_Hooks_Args;
-      Dialog   : Gtk_Dialog;
+      Dialog   : GPS_Dialog;
       Label    : Gtk_Label;
       Ignore   : Gtk_Widget;
       Response : Gtk_Response_Type;
@@ -1945,7 +1949,7 @@ package body GPS.Kernel.MDI is
          else
             Gtk_New (Dialog,
                      Title  => -"Files changed on disk",
-                     Parent => Get_Current_Window (Kernel),
+                     Kernel => Kernel,
                      Flags  => Modal or Destroy_With_Parent);
             Kernel.Check_Monitored_Files_Dialog := Dialog;
 
@@ -2038,5 +2042,71 @@ package body GPS.Kernel.MDI is
 
       return False;
    end Check_Monitored_Files;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Self   : out GPS_Dialog;
+      Title  : Glib.UTF8_String;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Flags  : Gtk_Dialog_Flags := Destroy_With_Parent;
+      Typ    : Glib.GType := Gtk.Dialog.Get_Type) is
+   begin
+      Self := new GPS_Dialog_Record;
+      Initialize (Self, Title, Kernel, Flags, Typ);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self   : not null access GPS_Dialog_Record'Class;
+      Title  : Glib.UTF8_String;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Flags  : Gtk_Dialog_Flags := Destroy_With_Parent;
+      Typ    : Glib.GType := Gtk.Dialog.Get_Type)
+   is
+      Win : constant Gtk_Window := Get_Current_Window (Kernel);
+      F   : constant Gtk_Dialog_Flags := Flags
+        or Destroy_With_Parent
+        or Use_Header_Bar_From_Settings (Win);
+   begin
+      Self.Kernel := Kernel;
+
+      G_New_Dialog (Self, Flags => F, Typ => Typ);
+
+      Self.Set_Title (Title);
+      Self.Set_Transient_For (Win);
+
+      if (F and Gtk.Dialog.Modal) /= 0 then
+         Self.Set_Modal (True);
+      end if;
+
+      if (F and Gtk.Dialog.Destroy_With_Parent) /= 0 then
+         Self.Set_Destroy_With_Parent (True);
+      end if;
+
+      Self.Set_Position (Win_Pos_Mouse);
+
+      Self.On_Focus_In_Event (On_GPS_Dialog_Focus_In'Access);
+   end Initialize;
+
+   ----------------------------
+   -- On_GPS_Dialog_Focus_In --
+   ----------------------------
+
+   function On_GPS_Dialog_Focus_In
+     (Dialog : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event_Focus) return Boolean
+   is
+      Self : constant GPS_Dialog := GPS_Dialog (Dialog);
+      pragma Unreferenced (Event);
+   begin
+      Self.Kernel.Context_Changed (No_Context);
+      return False;   --  propagate the event
+   end On_GPS_Dialog_Focus_In;
 
 end GPS.Kernel.MDI;

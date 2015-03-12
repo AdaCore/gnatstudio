@@ -15,18 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;
-with Gtk.Dialog; use Gtk.Dialog;
-with Gtk.Box; use Gtk.Box;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with Gtk.Box;             use Gtk.Box;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Handlers;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Button; use Gtk.Button;
-with Gtk.Tree_View; use Gtk.Tree_View;
-with Gtk.Tree_Store; use Gtk.Tree_Store;
-with Gtk.Window; use Gtk.Window;
+with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Tree_View;       use Gtk.Tree_View;
+with Gtk.Tree_Store;      use Gtk.Tree_Store;
 with GVD.Process;
-with Debugger; use Debugger;
+with Debugger;            use Debugger;
 with GNAT.Strings;
 
 package GVD.Dialogs is
@@ -51,7 +50,7 @@ package GVD.Dialogs is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the functions to load and save the desktop
 
-   type Question_Dialog_Record is new Gtk_Dialog_Record with private;
+   type Question_Dialog_Record is new GPS_Dialog_Record with private;
    type Question_Dialog_Access is access all Question_Dialog_Record'Class;
 
    type Dialog_Kind is (Yes_No_Dialog, Multiple_Choice_Dialog);
@@ -71,7 +70,14 @@ package GVD.Dialogs is
 
    procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
-      Main_Window                : Gtk_Window;
+      Kernel                     : not null access Kernel_Handle_Record'Class;
+      Debugger                   : Debugger_Access;
+      Multiple_Selection_Allowed : Boolean;
+      Questions                  : Question_Array;
+      Question_Description       : String := "");
+   procedure Initialize
+     (Dialog                     : access Question_Dialog_Record'Class;
+      Kernel                     : not null access Kernel_Handle_Record'Class;
       Debugger                   : Debugger_Access;
       Multiple_Selection_Allowed : Boolean;
       Questions                  : Question_Array;
@@ -80,22 +86,13 @@ package GVD.Dialogs is
    --  If Questions consists of two choices "y" and "n" then display
    --  only a basic Yes/No dialog.
 
-   procedure Initialize
-     (Dialog                     : access Question_Dialog_Record'Class;
-      Main_Window                : Gtk_Window;
-      Debugger                   : Debugger_Access;
-      Multiple_Selection_Allowed : Boolean;
-      Questions                  : Question_Array;
-      Question_Description       : String := "");
-
    function Get_Dialog_Kind
      (Question_Dialog : access Question_Dialog_Record'Class)
       return Dialog_Kind;
    --  Return the kind of dialog associated with Question_Dialog
 
 private
-   type Question_Dialog_Record is new Gtk_Dialog_Record with record
-      Main_Window     : Gtk_Window;
+   type Question_Dialog_Record is new GPS_Dialog_Record with record
       Vbox1           : Gtk_Vbox;
       Scrolledwindow1 : Gtk_Scrolled_Window;
       Tree_Model      : Gtk_Tree_Store;

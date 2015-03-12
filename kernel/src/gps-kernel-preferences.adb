@@ -51,6 +51,7 @@ with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
@@ -76,7 +77,7 @@ package body GPS.Kernel.Preferences is
       Level  : Customization_Level);
    --  Handle GPS customization files for this module
 
-   type Preferences_Editor_Record is new Gtk_Dialog_Record with null record;
+   type Preferences_Editor_Record is new GPS_Dialog_Record with null record;
    type Preferences_Editor is access all Preferences_Editor_Record'Class;
    Preferences_Editor_Class_Record : Glib.Object.Ada_GObject_Class :=
      Glib.Object.Uninitialized_Class;
@@ -1781,14 +1782,14 @@ package body GPS.Kernel.Preferences is
          Parameters   => Signal_Parameters);
 
       Dialog := new Preferences_Editor_Record;
-      G_New (Dialog, Preferences_Editor_Class_Record.The_Type);
+      GPS.Kernel.MDI.Initialize
+         (Self   => Dialog,
+          Title  => -"Preferences",
+          Kernel => Kernel,
+          Flags  => Modal,
+          Typ    => Preferences_Editor_Class_Record.The_Type);
 
-      Dialog.Set_Title (-"Preferences");
-      Dialog.Set_Transient_For (Kernel.Get_Main_Window);
-      Dialog.Set_Destroy_With_Parent (True);
-      Dialog.Set_Modal (True);
       Dialog.Set_Name ("Preferences");  --  for the testsuite
-      Dialog.Set_Position (Win_Pos_Mouse);
       Dialog.Set_Default_Size (620, 400);
 
       --  ??? This has no effect, since the dialog has already been

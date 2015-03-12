@@ -218,6 +218,5 @@ private
 
       Current_Page    : Positive;
       Pages           : Wizard_Pages_Array_Access;
-      Kernel          : GPS.Kernel.Kernel_Handle;
    end record;
 end Wizards;

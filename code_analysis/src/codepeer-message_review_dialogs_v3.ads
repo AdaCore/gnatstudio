@@ -15,33 +15,33 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Kernel;        use GPS.Kernel;
 with Glib;
 with Gtk.Combo_Box;
-with Gtk.Dialog;
 with Gtk.GEntry;
 with Gtk.Text_Buffer;
+with GPS.Kernel.MDI;    use GPS.Kernel.MDI;
 
 package CodePeer.Message_Review_Dialogs_V3 is
 
-   type Message_Review_Dialog_Record is
-     new Gtk.Dialog.Gtk_Dialog_Record with private;
+   type Message_Review_Dialog_Record is new GPS_Dialog_Record with private;
 
    type Message_Review_Dialog is access all Message_Review_Dialog_Record'Class;
 
    procedure Gtk_New
      (Dialog  : in out Message_Review_Dialog;
+      Kernel  : not null access Kernel_Handle_Record'Class;
       Message : CodePeer.Message_Access);
-
    procedure Initialize
      (Self    : not null access Message_Review_Dialog_Record'Class;
+      Kernel  : not null access Kernel_Handle_Record'Class;
       Message : CodePeer.Message_Access);
 
    Signal_Ok_Activated : constant Glib.Signal_Name;
 
 private
 
-   type Message_Review_Dialog_Record is
-     new Gtk.Dialog.Gtk_Dialog_Record with record
+   type Message_Review_Dialog_Record is new GPS_Dialog_Record with record
       Message        : CodePeer.Message_Access;
       New_Status     : Gtk.Combo_Box.Gtk_Combo_Box;
       Comment_Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;

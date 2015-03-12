@@ -654,7 +654,7 @@ package body GPS.Kernel.Xref is
       Label     : Gtk_Label;
       Model     : Gtk_Tree_Store;
       M         : Gtk_Tree_Model;
-      Dialog    : Gtk_Dialog;
+      Dialog    : GPS_Dialog;
       It        : Gtk_Tree_Iter;
       Scrolled  : Gtk_Scrolled_Window;
       View      : Gtk_Tree_View;
@@ -681,8 +681,8 @@ package body GPS.Kernel.Xref is
             if Count = 1 then
                Gtk_New (Dialog,
                         Title  => -"Select the declaration",
-                        Parent => Get_Main_Window (Self.Kernel),
-                        Flags  => Modal or Destroy_With_Parent);
+                        Kernel => Self.Kernel,
+                        Flags  => Modal);
                Set_Default_Size (Dialog, 500, 500);
 
                Gtk_New (Label, -"This entity is overloaded.");

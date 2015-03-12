@@ -1137,7 +1137,7 @@ package body GVD_Module is
                        GPS_Window (Get_Main_Window (Kernel));
       Process      : constant Visual_Debugger :=
                        Get_Current_Process (Top);
-      Dialog       : Gtk_Dialog;
+      Dialog       : GPS_Dialog;
       Table        : Gtk_Table;
       Ent_Protocol : Gtk_Entry;
       Ent_Target   : Gtk_Entry;
@@ -1148,7 +1148,7 @@ package body GVD_Module is
       Gtk_New
         (Dialog,
          Title  => -"Connect to board",
-         Parent => Get_Current_Window (Kernel),
+         Kernel => Kernel,
          Flags  => Modal or Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, 300, 100);

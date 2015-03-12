@@ -1298,7 +1298,8 @@ private
 
       Contextual_Menu_Open : Boolean := False;
 
-      Check_Monitored_Files_Dialog : Gtk.Dialog.Gtk_Dialog := null;
+      Check_Monitored_Files_Dialog : access Gtk.Dialog.Gtk_Dialog_Record'Class
+         := null;
       --  The dialog that let's users synchronize edited files with the disk.
 
       Check_Monitored_Files_Id : Glib.Main.G_Source_Id :=

@@ -38,7 +38,6 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
-with Gtk.Window;               use Gtk.Window;
 
 with GPS.Intl; use GPS.Intl;
 
@@ -94,11 +93,12 @@ package body CodePeer.Message_Review_Dialogs_V3 is
 
    procedure Gtk_New
      (Dialog  : in out Message_Review_Dialog;
+      Kernel  : not null access Kernel_Handle_Record'Class;
       Message : CodePeer.Message_Access)
    is
    begin
       Dialog := new Message_Review_Dialog_Record;
-      Initialize (Dialog, Message);
+      Initialize (Dialog, Kernel, Message);
    end Gtk_New;
 
    ----------------
@@ -107,6 +107,7 @@ package body CodePeer.Message_Review_Dialogs_V3 is
 
    procedure Initialize
      (Self    : not null access Message_Review_Dialog_Record'Class;
+      Kernel  : not null access Kernel_Handle_Record'Class;
       Message : CodePeer.Message_Access)
    is
       Scrolled      : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
@@ -219,10 +220,12 @@ package body CodePeer.Message_Review_Dialogs_V3 is
          Class_Record => Class_Record,
          Type_Name    => "CodePeerMessageReviewDialogV3",
          Parameters   => Signal_Parameters);
-      Glib.Object.G_New
-         (Self, Class_Record);
-      Self.Set_Transient_For (Gtk_Window (Self.Get_Toplevel));
-      Self.Set_Title (-"CodePeer message review");
+
+      GPS.Kernel.MDI.Initialize
+        (Self,
+         Title  => -"CodePeer message review",
+         Kernel => Kernel,
+         Typ    => Class_Record.The_Type);
 
       Self.Message := Message;
 

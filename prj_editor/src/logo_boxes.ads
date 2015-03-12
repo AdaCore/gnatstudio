@@ -30,28 +30,28 @@
 --
 --  The Action_Area of the dialog is unaffected.
 
+with GPS.Kernel;       use GPS.Kernel;
+with GPS.Kernel.MDI;   use GPS.Kernel.MDI;
 with Gtk.Box;
-with Gtk.Dialog;
 with Gtk.Label;
 with Gtk.Style;
-with Gtk.Window;
 with Pango.Font;
 
 package Logo_Boxes is
 
-   type Logo_Box_Record is new Gtk.Dialog.Gtk_Dialog_Record with private;
+   type Logo_Box_Record is new GPS_Dialog_Record with private;
    type Logo_Box is access all Logo_Box_Record'Class;
 
    procedure Gtk_New
      (Win    : out Logo_Box;
       Title  : String;
-      Parent : Gtk.Window.Gtk_Window := null;
+      Kernel : not null access Kernel_Handle_Record'Class;
       Show_Toc   : Boolean := True;
       Title_Font : Pango.Font.Pango_Font_Description := null);
    procedure Initialize
-     (Win : access Logo_Box_Record'Class;
-      Title  : String;
-      Parent : Gtk.Window.Gtk_Window;
+     (Win        : access Logo_Box_Record'Class;
+      Title      : String;
+      Kernel     : not null access Kernel_Handle_Record'Class;
       Show_Toc   : Boolean := True;
       Title_Font : Pango.Font.Pango_Font_Description);
    --  Create a new welcome dialog. Project_Name is the project that should be
@@ -78,7 +78,7 @@ package Logo_Boxes is
    --  If As_Error is True, the message is displayed with a special style
 
 private
-   type Logo_Box_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
+   type Logo_Box_Record is new GPS_Dialog_Record with record
       Side_Box    : Gtk.Box.Gtk_Box;
       Title       : Gtk.Label.Gtk_Label;
       Content     : Gtk.Box.Gtk_Box;

@@ -811,7 +811,7 @@ package body Refactoring.Subprograms is
      (Command : access Extract_Method_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Dialog : Gtk_Dialog;
+      Dialog : GPS_Dialog;
       Ent    : Gtk_Entry;
       Button : Gtk_Widget;
       Label  : Gtk_Label;
@@ -844,7 +844,7 @@ package body Refactoring.Subprograms is
 
       Gtk_New (Dialog,
                Title  => -"Extract Method",
-               Parent => Get_Current_Window (Get_Kernel (Context.Context)),
+               Kernel => Get_Kernel (Context.Context),
                Flags  => Modal);
       Gtk_New (Label, -"Name of the new subprogram:");
       Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);

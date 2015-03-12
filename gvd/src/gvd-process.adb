@@ -34,7 +34,6 @@ with Glib;                       use Glib;
 with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 
-with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
@@ -51,7 +50,6 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
@@ -1556,7 +1554,7 @@ package body GVD.Process is
 
    procedure Register_Dialog
      (Process : access Visual_Debugger_Record;
-      Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class) is
+      Dialog  : access GPS_Dialog_Record'Class) is
    begin
       if Process.Registered_Dialog /= null then
          --  Typically happens when the filter used to create a dialog
@@ -1565,7 +1563,7 @@ package body GVD.Process is
          Destroy (Process.Registered_Dialog);
       end if;
 
-      Process.Registered_Dialog := Gtk_Dialog (Dialog);
+      Process.Registered_Dialog := Dialog;
    end Register_Dialog;
 
    -----------------------

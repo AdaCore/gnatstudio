@@ -36,12 +36,12 @@ package body Logo_Boxes is
    procedure Gtk_New
      (Win        : out Logo_Box;
       Title      : String;
-      Parent     : Gtk.Window.Gtk_Window := null;
+      Kernel     : not null access Kernel_Handle_Record'Class;
       Show_Toc   : Boolean := True;
       Title_Font : Pango.Font.Pango_Font_Description := null) is
    begin
       Win := new Logo_Box_Record;
-      Logo_Boxes.Initialize (Win, Title, Parent, Show_Toc, Title_Font);
+      Logo_Boxes.Initialize (Win, Title, Kernel, Show_Toc, Title_Font);
    end Gtk_New;
 
    ----------------
@@ -51,7 +51,7 @@ package body Logo_Boxes is
    procedure Initialize
      (Win        : access Logo_Box_Record'Class;
       Title      : String;
-      Parent     : Gtk.Window.Gtk_Window;
+      Kernel     : not null access Kernel_Handle_Record'Class;
       Show_Toc   : Boolean := True;
       Title_Font : Pango.Font.Pango_Font_Description)
    is
@@ -61,12 +61,11 @@ package body Logo_Boxes is
       Image       : Gtk_Image;
       Success : Boolean;
    begin
-      Gtk.Dialog.Initialize
-        (Dialog  => Win,
+      GPS.Kernel.MDI.Initialize
+        (Self    => Win,
          Title   => Title,
-         Parent  => Parent,
-         Flags   => Modal or Destroy_With_Parent
-            or Use_Header_Bar_From_Settings (Parent));
+         Kernel  => Kernel,
+         Flags   => Modal);
 
       Parse (Color, Bg_Color, Success);
 

@@ -27,7 +27,6 @@ with Gtk.GEntry;                 use Gtk.GEntry;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Widget;                 use Gtk.Widget;
-with Gtk.Window;                 use Gtk.Window;
 
 with Commands.Interactive;       use Commands, Commands.Interactive;
 with GPS.Editors;                use GPS.Editors;
@@ -83,7 +82,7 @@ package body Refactoring.Rename is
       Stale_LI_List : Source_File_Set);
    --  Implements the "Renaming entity" refactoring
 
-   type Entity_Renaming_Dialog_Record is new Gtk_Dialog_Record with record
+   type Entity_Renaming_Dialog_Record is new GPS_Dialog_Record with record
       New_Name          : Gtk_GEntry;
       Auto_Save         : Gtk_Check_Button;
       Auto_Compile      : Gtk_Check_Button;
@@ -116,7 +115,6 @@ package body Refactoring.Rename is
       Box    : Gtk_Box;
       Button : Gtk_Widget;
       pragma Unreferenced (Button);
-      Current_Win : constant Gtk_Window := Get_Current_Window (Kernel);
    begin
       if not Save_MDI_Children
         (Kernel, Force => False)
@@ -125,12 +123,11 @@ package body Refactoring.Rename is
       end if;
 
       Dialog := new Entity_Renaming_Dialog_Record;
-      Gtk.Dialog.Initialize
+      GPS.Kernel.MDI.Initialize
         (Dialog,
          Title  => -"Renaming entity",
-         Parent => Current_Win,
-         Flags  => Destroy_With_Parent
-           or Use_Header_Bar_From_Settings (Current_Win));
+         Kernel => Kernel,
+         Flags  => Destroy_With_Parent);
 
       Gtk_New (Label, -"Renaming " & Qualified_Name (Entity));
       Set_Alignment (Label, 0.0, 0.0);

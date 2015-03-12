@@ -15,10 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
-with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
@@ -28,7 +29,7 @@ with Gtk.Viewport;        use Gtk.Viewport;
 
 package New_Variable_Editor_Pkg is
 
-   type New_Variable_Editor_Record is new Gtk_Dialog_Record with record
+   type New_Variable_Editor_Record is new GPS_Dialog_Record with record
       Dialog_Vbox1        : Gtk_Vbox;
       Dialog_Action_Area1 : Gtk_Hbox;
       Table1              : Gtk_Table;
@@ -49,8 +50,13 @@ package New_Variable_Editor_Pkg is
    type New_Variable_Editor_Access is
      access all New_Variable_Editor_Record'Class;
 
-   procedure Gtk_New (New_Variable_Editor : out New_Variable_Editor_Access);
+   procedure Gtk_New
+     (New_Variable_Editor : out New_Variable_Editor_Access;
+      Title               : String;
+      Kernel              : not null access Kernel_Handle_Record'Class);
    procedure Initialize
-     (New_Variable_Editor : access New_Variable_Editor_Record'Class);
+     (New_Variable_Editor : access New_Variable_Editor_Record'Class;
+      Title               : String;
+      Kernel              : not null access Kernel_Handle_Record'Class);
 
 end New_Variable_Editor_Pkg;

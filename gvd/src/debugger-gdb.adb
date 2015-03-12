@@ -551,11 +551,11 @@ package body Debugger.Gdb is
 
       Gtk_New
         (Dialog,
-         Process.Kernel.Get_Main_Window,
+         Process.Kernel,
          Debugger,
          True,
          Choices (1 .. Num));
-      Show_All (Dialog);
+      Dialog.Show_All;
 
       for J in 1 .. Num loop
          Free (Choices (Num).Choice);
@@ -624,12 +624,12 @@ package body Debugger.Gdb is
 
       Gtk_New
         (Dialog,
-         Process.Kernel.Get_Main_Window,
+         Process.Kernel,
          Debugger,
          False,
          Choices,
          Str (Matched (0).First .. Matched (0).Last));
-      Show_All (Dialog);
+      Dialog.Show_All;
 
       for J in Choices'Range loop
          Free (Choices (J).Choice);

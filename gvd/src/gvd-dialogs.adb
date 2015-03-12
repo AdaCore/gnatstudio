@@ -21,9 +21,7 @@ with Generic_Views;         use Generic_Views;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
-with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Main_Window;       use GPS.Main_Window;
 with GPS.Intl;              use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
@@ -517,7 +515,7 @@ package body GVD.Dialogs is
 
    procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
-      Main_Window                : Gtk_Window;
+      Kernel                     : not null access Kernel_Handle_Record'Class;
       Debugger                   : Debugger_Access;
       Multiple_Selection_Allowed : Boolean;
       Questions                  : Question_Array;
@@ -526,7 +524,7 @@ package body GVD.Dialogs is
       Question_Dialog := new Question_Dialog_Record;
 
       Initialize
-        (Question_Dialog, Main_Window, Debugger,
+        (Question_Dialog, Kernel, Debugger,
          Multiple_Selection_Allowed, Questions,
          Question_Description);
    end Gtk_New;
@@ -684,7 +682,7 @@ package body GVD.Dialogs is
 
    procedure Initialize
      (Dialog                     : access Question_Dialog_Record'Class;
-      Main_Window                : Gtk_Window;
+      Kernel                     : not null access Kernel_Handle_Record'Class;
       Debugger                   : Debugger_Access;
       Multiple_Selection_Allowed : Boolean;
       Questions                  : Question_Array;
@@ -700,12 +698,11 @@ package body GVD.Dialogs is
       Label     : Gtk_Label;
 
    begin
-      Gtk.Dialog.Initialize
-        (Dialog, -"Question", Main_Window,
-         Flags => Use_Header_Bar_From_Settings (Main_Window));
-      Dialog.Main_Window := Main_Window;
+      GPS.Kernel.MDI.Initialize
+        (Dialog,
+         Title   => -"Question",
+         Kernel  => Kernel);
 
-      Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, -1, 200);
 
       Dialog.Vbox1 := Get_Content_Area (Dialog);

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GPS.Intl;             use GPS.Intl;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 
@@ -33,8 +34,6 @@ with Gtk.Tree_View;         use Gtk.Tree_View;
 with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
 with Gtk.Widget;            use Gtk.Widget;
 
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
-
 package body Refactoring.UI is
 
    ------------
@@ -49,7 +48,7 @@ package body Refactoring.UI is
       Execute_Label : String := "Execute";
       Cancel_Label  : String := "Cancel") return Boolean
    is
-      Dialog : Gtk_Dialog;
+      Dialog : GPS_Dialog;
       Button : Gtk_Widget;
       Label  : Gtk_Label;
       Result : Boolean;
@@ -57,7 +56,7 @@ package body Refactoring.UI is
       if not Files.Is_Empty then
          Gtk_New (Dialog,
                   Title  => Title,
-                  Parent => Get_Current_Window (Kernel),
+                  Kernel => Kernel,
                   Flags  => Destroy_With_Parent or Modal);
          Set_Default_Size (Dialog, -1, 350);
 

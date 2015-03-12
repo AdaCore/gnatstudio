@@ -182,7 +182,7 @@ package body Aliases_Module is
 
    Aliases_Module_Id : Aliases_Module_Id_Access;
 
-   type Alias_Editor_Record is new Gtk_Dialog_Record with record
+   type Alias_Editor_Record is new GPS_Dialog_Record with record
       Local_Aliases   : Aliases_Map.Map;
       Aliases         : Gtk_Tree_View;
       Aliases_Model   : Gtk_Tree_Store;
@@ -751,7 +751,7 @@ package body Aliases_Module is
           (To_UStr (Name));
 
       Values  : Params_Subst_List.List;
-      Dialog  : Gtk_Dialog;
+      Dialog  : GPS_Dialog;
       Box     : Gtk_Box;
       S       : Gtk_Size_Group;
       Label   : Gtk_Label;
@@ -777,7 +777,7 @@ package body Aliases_Module is
                   if Dialog = null then
                      Gtk_New (Dialog,
                               Title  => -"Alias Parameter Selection",
-                              Parent => Get_Current_Window (Kernel),
+                              Kernel => Kernel,
                               Flags  => Destroy_With_Parent);
                      Gtk_New (S);
 

@@ -1260,7 +1260,8 @@ package body CodePeer.Module is
       else
          --  Create and show review dialog
 
-         CodePeer.Message_Review_Dialogs_V3.Gtk_New (Review_V3, Message);
+         CodePeer.Message_Review_Dialogs_V3.Gtk_New
+           (Review_V3, Self.Kernel, Message);
          Review_V3.Set_Transient_For (Self.Kernel.Get_Main_Window);
          Review_V3.Show_All;
          Context_CB.Connect

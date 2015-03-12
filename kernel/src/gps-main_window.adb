@@ -218,6 +218,9 @@ package body GPS.Main_Window is
    --  It will save all current windows, and run the hooks.
    --  Returns False if quitting should be prevented at this time.
 
+   function On_Focus_In (W : access Gtk_Widget_Record'Class) return Boolean;
+   --  Called when the main window gains or loses focus.
+
    ----------------
    -- Query_User --
    ----------------
@@ -556,7 +559,6 @@ package body GPS.Main_Window is
    -- On_Focus_In --
    -----------------
 
-   function On_Focus_In (W : access Gtk_Widget_Record'Class) return Boolean;
    function On_Focus_In (W : access Gtk_Widget_Record'Class) return Boolean is
    begin
       Check_Monitored_Files_In_Background (GPS_Window (W).Kernel);

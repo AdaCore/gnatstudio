@@ -87,7 +87,7 @@ ENTITIES.REF  = no
 ENTITIES.QUERIES = no
 
 --  Monitor keybindings
-KEYMANAGER=no
+KEYMANAGER=yes
 
 --  Deactivate this to disable the use of sql-based entities.
 --  This cannot be set from the command line, since the kernel and the xref
@@ -112,7 +112,7 @@ PYTHON.OUT=yes
 SCRIPTS.LOG=no
 PYTHON.ERRORS=yes
 COMMANDS.CUSTOM=no
-HOOKS=no
+HOOKS=yes
 EXPECT=no
 TERM=no
 

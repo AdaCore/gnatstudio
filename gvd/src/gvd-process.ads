@@ -19,15 +19,15 @@ with Glib;
 with Glib.Main;
 with Glib.Object;
 
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
-with GNAT.Regpat;  use GNAT.Regpat;
-with GNAT.Expect;  use GNAT.Expect;
+with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.Regpat;          use GNAT.Regpat;
+with GNAT.Expect;          use GNAT.Expect;
 
-with Gtk.Dialog;
 with Gtk.Widget;
 
-with Debugger;            use Debugger;
+with Debugger;             use Debugger;
 with GPS.Kernel;
+with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GVD.Code_Editors;
 with GVD.Types;
 with GVD.Histories;
@@ -125,7 +125,7 @@ package GVD.Process is
       ------------
       --  The following fields should only be used in gvd-process.adb
 
-      Registered_Dialog       : Gtk.Dialog.Gtk_Dialog := null;
+      Registered_Dialog       : access GPS_Dialog_Record'Class := null;
       --  Currently displayed dialog that should be deleted on next user input.
       --  This is mostly used for question dialogs, since the user can also
       --  type its input directly in the command window.
@@ -280,7 +280,7 @@ package GVD.Process is
 
    procedure Register_Dialog
      (Process : access Visual_Debugger_Record;
-      Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class);
+      Dialog  : access GPS_Dialog_Record'Class);
    --  Register a dialog, that will be deleted next time a user command is
    --  processed. Only one such dialog can be registered at any given time.
    --  Program_Error is raised if there is already such a dialog.

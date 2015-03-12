@@ -983,7 +983,7 @@ package body KeyManager_Module.GUI is
 
    procedure On_Create (Editor : access Gtk_Widget_Record'Class) is
       Self   : constant Keys_Editor := Keys_Editor (Editor);
-      Dialog : Gtk_Dialog;
+      Dialog : GPS_Dialog;
       Label  : Gtk_Label;
       Ent    : Gtk_Entry;
       W      : Gtk_Widget;
@@ -991,8 +991,8 @@ package body KeyManager_Module.GUI is
    begin
       Gtk_New (Dialog,
                Title  => -"Select key theme name",
-               Parent => Gtk_Window (Self.Get_Toplevel),
-               Flags  => Destroy_With_Parent or Modal);
+               Kernel => Self.Kernel,
+               Flags  => Modal);
 
       Gtk_New (Label, -"Enter theme name:");
       Label.Set_Alignment (0.0, 0.5);

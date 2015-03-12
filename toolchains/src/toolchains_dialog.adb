@@ -17,6 +17,7 @@
 
 with Glib;                      use Glib;
 with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Editable;              use Gtk.Editable;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
@@ -182,10 +183,10 @@ package body Toolchains_Dialog is
    -------------
 
    procedure Gtk_New
-     (Widget            : out Dialog;
-      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Active            : Boolean;
-      Tools_Path        : Virtual_File;
+     (Widget          : out Dialog;
+      Kernel          : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Active          : Boolean;
+      Tools_Path      : Virtual_File;
       Use_Xrefs_Subdirs : Boolean;
       Compiler_Path     : Virtual_File)
    is
@@ -196,19 +197,17 @@ package body Toolchains_Dialog is
       Browse : Gtk_Button;
       Pix    : Gtk_Image;
       pragma Unreferenced (Dead);
-      Main_Win : constant Gtk_Window := Kernel.Get_Main_Window;
 
    begin
       Widget := new Dialog_Record;
-      Widget.Kernel       := Kernel_Handle (Kernel);
       Widget.Active       := Active;
       Widget.Xrefs_Subdir := Use_Xrefs_Subdirs;
 
-      Initialize
+      GPS.Kernel.MDI.Initialize
         (Widget,
          Title  => -"Toolchains Configuration",
-         Parent => Main_Win,
-         Flags  => Modal or Use_Header_Bar_From_Settings (Main_Win));
+         Kernel => Kernel,
+         Flags  => Gtk.Dialog.Modal);
 
       Widget.OK_Button :=
         Gtk_Button (Widget.Add_Button (Gtk.Stock.Stock_Ok, Gtk_Response_OK));

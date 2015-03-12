@@ -65,7 +65,6 @@ private
       Open_Project_Button : Gtk.Radio_Button.Gtk_Radio_Button;
       Open_Browse         : Gtk.Button.Gtk_Button;
       Always_Show         : Gtk.Check_Button.Gtk_Check_Button;
-      Kernel              : GPS.Kernel.Kernel_Handle;
    end record;
 
 end Welcome;

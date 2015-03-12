@@ -30,6 +30,7 @@ with Gdk.Event;             use Gdk.Event;
 with Glib.Main;
 with Glib.Xml_Int;
 with Gtk.Accel_Group;
+with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Toolbar;
@@ -390,25 +391,40 @@ package GPS.Kernel.MDI is
    --  Returns the defauls accelerators group for the main window
 
    -------------
-   -- Toolbar --
+   -- Dialogs --
    -------------
 
-   --  The GPS toolbar is organized this way:
+   type GPS_Dialog_Record is new Gtk_Dialog_Record with record
+      Kernel : access Kernel_Handle_Record'Class;
+   end record;
+   type GPS_Dialog is access all GPS_Dialog_Record'Class;
+   --  All dialogs in GPS should either be full MDI_Child or derived from the
+   --  type GPS_Dialog. This type ensures that when the dialogs gets the
+   --  focus, the current context is properly updated in the kernel.
+   --  This type also ensures consistency in the use of the header bar for the
+   --  action buttons.
+
+   procedure Gtk_New
+     (Self   : out GPS_Dialog;
+      Title  : Glib.UTF8_String;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Flags  : Gtk_Dialog_Flags := Destroy_With_Parent;
+      Typ    : Glib.GType := Gtk.Dialog.Get_Type);
+   procedure Initialize
+     (Self   : not null access GPS_Dialog_Record'Class;
+      Title  : Glib.UTF8_String;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Flags  : Gtk_Dialog_Flags := Destroy_With_Parent;
+      Typ    : Glib.GType := Gtk.Dialog.Get_Type);
+   --  Create a new dialog.
    --
-   --    <gps-defined> <custom> | <build> | [debug]      [progress] <search>
-   --                          (a)       (b)
-   --
-   --  where:
-   --     | is a named separator
-   --     gps-defined are the icons set by GPS
-   --     custom are the custom icons
-   --     build are the build icons
-   --     debug are the debug icons
-   --     progress is the progress bar
-   --     search is the search area
-   --
-   --  The position of the named separators can be obtained by
-   --  Get_Toolbar_Separator_Position
+   --  If you are subclassing the GtkDialog class to add new signals, pass the
+   --  id of the new class in the Typ parameter, so that the proper gtk+
+   --  widget is allocated.
+
+   -------------
+   -- Toolbar --
+   -------------
 
    function Get_Toolbar
      (Handle : access Kernel_Handle_Record'Class)

@@ -123,7 +123,7 @@ package body Wizards is
       Logo_Boxes.Initialize
         (Win        => Wiz,
          Title      => Title,
-         Parent     => Get_Main_Window (Kernel),
+         Kernel     => Kernel,
          Show_Toc   => Show_Toc,
          Title_Font => Wizard_Title_Font.Get_Pref);
 
@@ -153,7 +153,6 @@ package body Wizards is
 
       Wiz.Pages := null;
       Wiz.Current_Page := 1;
-      Wiz.Kernel := Kernel_Handle (Kernel);
    end Initialize;
 
    --------------
@@ -509,7 +508,7 @@ package body Wizards is
    function Get_Kernel
      (Wiz : access Wizard_Record) return GPS.Kernel.Kernel_Handle is
    begin
-      return Wiz.Kernel;
+      return Kernel_Handle (Wiz.Kernel);
    end Get_Kernel;
 
    -----------------

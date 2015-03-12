@@ -16,24 +16,24 @@
 ------------------------------------------------------------------------------
 
 with Gtk.Button;  use Gtk.Button;
-with Gtk.Dialog;  use Gtk.Dialog;
 with Gtk.Frame;   use Gtk.Frame;
 with Gtk.GEntry;  use Gtk.GEntry;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with GPS.Kernel;  use GPS.Kernel;
+with GPS.Kernel;      use GPS.Kernel;
+with GPS.Kernel.MDI;  use GPS.Kernel.MDI;
 
 package Toolchains_Dialog is
 
-   type Dialog_Record is new Gtk.Dialog.Gtk_Dialog_Record with private;
+   type Dialog_Record is new GPS_Dialog_Record with private;
    type Dialog is access all Dialog_Record;
 
    procedure Gtk_New
-     (Widget            : out Dialog;
-      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Active            : Boolean;
-      Tools_Path        : Virtual_File;
+     (Widget           : out Dialog;
+      Kernel           : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Active           : Boolean;
+      Tools_Path       : Virtual_File;
       Use_Xrefs_Subdirs : Boolean;
       Compiler_Path     : Virtual_File);
 
@@ -55,8 +55,7 @@ package Toolchains_Dialog is
 
 private
 
-   type Dialog_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
-      Kernel         : Kernel_Handle;
+   type Dialog_Record is new GPS_Dialog_Record with record
       OK_Button      : Gtk_Button;
       Active         : Boolean;
       Xrefs_Subdir   : Boolean;
