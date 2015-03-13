@@ -97,9 +97,13 @@ package body Outline_View.Model is
      (N.Unique_Id & (if N.Is_Declaration then "" else "B"));
 
    function S_Unique_Id
+     (N : Semantic_Node_Info) return String;
+   function S_Unique_Id
      (N : Semantic_Node_Info) return String
    is
-     (+N.Unique_Id & (if N.Is_Decl then "" else "B"));
+   begin
+      return +N.Unique_Id & (if N.Is_Decl then "" else "B");
+   end S_Unique_Id;
 
    --------------
    -- Get_Node --
