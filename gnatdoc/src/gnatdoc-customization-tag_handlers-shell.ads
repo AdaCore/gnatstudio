@@ -18,19 +18,33 @@
 --  This package provides base class for pythin to extend gnatdoc with
 --  custom tags.
 
+private with GNATCOLL.Scripts;
+
 package GNATdoc.Customization.Tag_Handlers.Shell is
 
    procedure Register_Commands (Kernel : access Core_Kernel_Record'Class);
    --  Register the script classes and commands.
 
-   function Is_Supported (Tag : String) return Boolean;
-   --  Check is there is custom tag code for given Tag
+private
 
-   procedure On_Match
-     (Writer : in out Markup_Generator;
-      Tag    : String;
-      Attrs  : String;
-      Value  : String);
-   --  Lookup custom tag code for given Tag and execute it if found.
+   type Python_Inline_Tag_Handler is
+     new Abstract_Inline_Tag_Handler with record
+      Instance : GNATCOLL.Scripts.Class_Instance;
+   end record;
+
+   overriding function Name
+     (Self : Python_Inline_Tag_Handler) return String;
+   --  Returns name of the tag
+
+   overriding function Has_Parameter
+     (Self : Python_Inline_Tag_Handler) return Boolean;
+   --  Returns True when first word after tag should be processed as tag's
+   --  argument.
+
+   overriding procedure To_Markup
+     (Self      : in out Python_Inline_Tag_Handler;
+      Parameter : String;
+      Writer    : in out Markup_Generator);
+   --  Called to process tag
 
 end GNATdoc.Customization.Tag_Handlers.Shell;

@@ -518,7 +518,7 @@ begin
    GNATdoc.Customization.Tag_Handlers.Register
      (new GNATdoc.Customization.Tag_Handlers.Images.Image_Tag_Handler);
 
-   --  Register GNATDOC.TagHandler python class
+   --  Register GNATDOC.*TagHandler python classes
    GNATdoc.Customization.Tag_Handlers.Shell.Register_Commands (Kernel);
 
    --  Load script
