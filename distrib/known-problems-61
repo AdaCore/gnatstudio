@@ -38,6 +38,17 @@ KP-61-O308-004 GPS: annoyance when clicking on lock icon in editors
 
   Workaround: Wait for the VCS icon to be visible.
 
+KP-61-O302-020 GPS: project view not refreshed when view filter cleared
+
+  Problem:    Changing Project View options when some filter is applied
+              could result in incorrect content of project view or even
+              in GPS hang. One of possible glitch is that Project View
+              stays empty after cleaning filter.
+
+  Status:     This was fixed in 6.2 on 2015-03-11
+
+  Workaround: Clear filter before changing Project View options.
+
 KP-61-O228-001 GPS: targets with mode 'Manually' launch without dialog
 
   Problem:    The build targets which have launch mode 'Manually' launch
