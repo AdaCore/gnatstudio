@@ -2665,7 +2665,7 @@ package body Ada_Analyzer is
            or else (Reserved in Tok_Package | Tok_Task | Tok_Entry
                     and then Prev_Token /= Tok_Is)
          then
-            if In_Generic and then Prev_Token /= Tok_With then
+            if In_Generic and then Prev_Token not in Tok_With | Tok_Access then
                --  unindent after a generic declaration, e.g:
                --
                --  generic
