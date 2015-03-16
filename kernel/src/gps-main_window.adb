@@ -449,7 +449,7 @@ package body GPS.Main_Window is
             Gtk.Style_Context.Add_Provider_For_Screen
               (Get_Default_Screen (Get_Default),
                +Theme_Specific_Css_Provider,
-               Priority => Gtk.Style_Provider.Priority_Settings);
+               Priority => Gtk.Style_Provider.Priority_Application);
          end if;
 
          Theme_Css := Kernel.Get_Home_Dir.Create_From_Dir

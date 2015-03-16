@@ -1,0 +1,6 @@
+@import url("gps-gtk-win32-base.css");
+
+GtkToolbar .button {
+  border: none;
+  background: transparent;
+}
