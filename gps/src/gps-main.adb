@@ -100,7 +100,7 @@ with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles.Shell;
+with GPS.Kernel.Style_Manager.Shell;
 with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
 with GPS.Kernel.Xref;
@@ -1843,7 +1843,7 @@ procedure GPS.Main is
       GPS.Kernel.Xref.Register_Module (GPS_Main.Kernel);
 
       GPS.Kernel.Messages.Shell.Register_Commands (GPS_Main.Kernel);
-      GPS.Kernel.Styles.Shell.Register_Commands (GPS_Main.Kernel);
+      GPS.Kernel.Style_Manager.Shell.Register_Commands (GPS_Main.Kernel);
 
       --  Register this very early so that other modules can access remote
       --  files. Note that we need the scripting capabilities to be initialized

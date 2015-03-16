@@ -47,6 +47,7 @@ with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Files_Extra_Info_Pkg;       use Files_Extra_Info_Pkg;
+with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -54,11 +55,8 @@ with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Search;                 use GPS.Search;
-with GPS.Styles;                 use GPS.Styles;
-with GPS.Styles.UI;              use GPS.Styles.UI;
 with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
@@ -772,13 +770,7 @@ package body Src_Contexts is
                     Weight    => 0,
                     Flags     => (Editor_Side => True, Locations => True));
             begin
-               Message.Set_Highlighting
-                 (Get_Or_Create_Style_Copy
-                    (Kernel_Handle (Kernel),
-                     Get_Name (Search_Results_Style)
-                     & '/' & Locations_Category_Name (Look_For),
-                     Search_Results_Style),
-                  Length);
+               Message.Set_Highlighting (Search_Results_Style, Length);
             end;
          end if;
       end Do_Highlight;

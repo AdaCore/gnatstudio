@@ -1175,9 +1175,6 @@ private
       Actions : Root_Table_Access;
       --  The actions registered in the kernel
 
-      Styles : Root_Table_Access;
-      --  The styles registered in the kernel
-
       Startup_Scripts : Root_Table_Access;
       --  The list of startup scripts and whether they should be loaded
 
@@ -1200,6 +1197,9 @@ private
 
       Preferences : Default_Preferences.Preferences_Manager;
       --  The current setting for the preferences
+
+      Style_Manager : System.Address;
+      --  A pointer to the color manager.
 
       Perma_Commands : Commands.Command_Lists.List;
       --  The list of global commands associated with menus, actions or

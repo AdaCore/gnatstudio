@@ -18,7 +18,7 @@
 with Glib.Object;
 with GVD.Types;
 with GPS.Main_Window; use GPS.Main_Window;
-with GPS.Styles.UI;
+with GPS.Kernel.Style_Manager;    use GPS.Kernel.Style_Manager;
 
 with String_List_Utils;
 
@@ -94,7 +94,7 @@ private
       --  necessity to reallocate it every time the set of breakpoints
       --  is updated.
 
-      Current_Line_Style : Standard.GPS.Styles.UI.Style_Access;
+      Current_Line_Style : Style_Access;
       --  style used for highlighting the current line
 
       Highlighted_Files : String_List_Utils.String_List.List;

@@ -32,8 +32,7 @@ private with Default_Preferences;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;
-with GPS.Styles;
-with GPS.Styles.UI;
+with GPS.Kernel.Style_Manager;
 
 with Code_Analysis;
 
@@ -99,7 +98,7 @@ private
 
    type Message_Ranking_Style_Array is
      array (CodePeer.Message_Ranking_Level)
-       of GPS.Styles.UI.Style_Access;
+       of GPS.Kernel.Style_Manager.Style_Access;
 
    type CodePeer_Action is
      (None, Load_UI, Audit_Trail, Load_Bridge_Results, Load_CSV);
@@ -132,7 +131,7 @@ private
       Has_Backtraces         : Boolean := False;
       Report_Subwindow       : Codepeer_Child;
       Report                 : CodePeer.Reports.Report;
-      Annotation_Style       : GPS.Styles.UI.Style_Access;
+      Annotation_Style       : GPS.Kernel.Style_Manager.Style_Access;
       Annotation_Color       : Default_Preferences.Color_Preference;
       Message_Colors         : Message_Ranking_Color_Preference_Array;
       Message_Styles         : Message_Ranking_Style_Array;

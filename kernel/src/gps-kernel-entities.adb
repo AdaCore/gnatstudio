@@ -39,6 +39,7 @@ with GNATCOLL.Projects;             use GNATCOLL.Projects;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.Xref;                 use GNATCOLL.Xref;
+with GPS.Default_Styles;            use GPS.Default_Styles;
 with GPS.Scripts.Commands;          use GPS.Scripts.Commands;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
@@ -48,12 +49,9 @@ with GPS.Kernel.Messages.Simple;    use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;            use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
-with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Xref;               use GPS.Kernel.Xref;
 with GPS.Intl;                      use GPS.Intl;
-with GPS.Styles;                    use GPS.Styles;
-with GPS.Styles.UI;                 use GPS.Styles.UI;
 with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
 with UTF8_Utils;
@@ -654,11 +652,7 @@ package body GPS.Kernel.Entities is
       end if;
 
       Message.Set_Highlighting
-        (Get_Or_Create_Style_Copy
-           (Kernel_Handle (Kernel),
-            Get_Name (Search_Results_Style) & '/' & Category,
-            Search_Results_Style),
-         UTF8_Utils.UTF8_Length (Name));
+        (Search_Results_Style, UTF8_Utils.UTF8_Length (Name));
    end Print_Ref;
 
    -------------------------
@@ -1203,11 +1197,7 @@ package body GPS.Kernel.Entities is
                              0,
                              Call_Graph_Message_Flags);
                         Message.Set_Highlighting
-                          (Get_Or_Create_Style_Copy
-                             (Kernel_Handle (Kernel),
-                              Get_Name (Search_Results_Style) & '/' & Title,
-                              Search_Results_Style),
-                           Name2'Length);
+                          (Search_Results_Style, Name2'Length);
                      end;
                   end if;
                end if;

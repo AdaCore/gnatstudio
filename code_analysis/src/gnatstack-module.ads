@@ -18,7 +18,7 @@
 private with Default_Preferences;
 private with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;
-private with GPS.Styles.UI;
+with GPS.Kernel.Style_Manager;
 private with GNATCOLL.VFS;
 private with GNATStack.Call_Tree_Views;
 private with GNATStack.Data_Model;
@@ -40,7 +40,7 @@ private
       Loaded                 : Boolean := False;
       Annotations_Foreground : Default_Preferences.Color_Preference;
       Annotations_Background : Default_Preferences.Color_Preference;
-      Annotations_Style      : GPS.Styles.UI.Style_Access;
+      Annotations_Style      : GPS.Kernel.Style_Manager.Style_Access;
 
       File                   : GNATCOLL.VFS.Virtual_File;
       Subprogram             :

@@ -15,11 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with Gdk.RGBA;                 use Gdk.RGBA;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 
-package body GPS.Kernel.Styles.Shell is
-
-   use Style_Htable.String_Hash_Table;
+package body GPS.Kernel.Style_Manager.Shell is
 
    Class       : constant String := "Style";
    Style_Class : Class_Type;
@@ -28,7 +27,7 @@ package body GPS.Kernel.Styles.Shell is
    Create_Cst     : aliased constant String := "create";
 
    type Style_Property_Record is new Instance_Property_Record with record
-      Style : Style_Access;
+      Style : GPS.Kernel.Style_Manager.Style_Access;
    end record;
    type Style_Property_Access is access all Style_Property_Record'Class;
 
@@ -38,7 +37,7 @@ package body GPS.Kernel.Styles.Shell is
 
    procedure Set_Data
      (Instance : Class_Instance;
-      Style    : Style_Access);
+      Style    : GPS.Kernel.Style_Manager.Style_Access);
    --  Set data in Instance to Style
 
    procedure Style_Command_Handler
@@ -56,7 +55,7 @@ package body GPS.Kernel.Styles.Shell is
 
    procedure Set_Data
      (Instance : Class_Instance;
-      Style    : Style_Access) is
+      Style    : GPS.Kernel.Style_Manager.Style_Access) is
    begin
       Set_Data (Instance, Class,
                 Style_Property_Record'
@@ -67,7 +66,10 @@ package body GPS.Kernel.Styles.Shell is
    -- Get_Style --
    ---------------
 
-   function Get_Style (Instance : Class_Instance) return Style_Access is
+   function Get_Style
+     (Instance : Class_Instance)
+      return GPS.Kernel.Style_Manager.Style_Access
+   is
       Prop : Style_Property_Access;
    begin
       if Instance /= No_Class_Instance then
@@ -101,9 +103,14 @@ package body GPS.Kernel.Styles.Shell is
          declare
             Name   : constant String := Nth_Arg (Data, 2);
             Create : constant Boolean := Nth_Arg (Data, 3, True);
-            Style  : Style_Access;
+            Style  : GPS.Kernel.Style_Manager.Style_Access;
          begin
-            Style := Get_Or_Create_Style (Kernel, Name, Create);
+            if Create then
+               Style := Get_Style_Manager (Kernel).Get_Or_Create (Name);
+            else
+               Style := Get_Style_Manager (Kernel).Get (Name);
+            end if;
+
             Style_Inst := Nth_Arg (Data, 1, Style_Class);
             Set_Data (Style_Inst, Style);
          end;
@@ -112,20 +119,14 @@ package body GPS.Kernel.Styles.Shell is
          Set_Return_Value_As_List (Data);
 
          declare
-
-            Iter    : Style_Htable.String_Hash_Table.Cursor;
-            Info    : Style_Access;
+            List    : GPS.Kernel.Style_Manager.Style_Vector.Vector;
          begin
+            List := Get_Style_Manager (Kernel).List_Styles;
 
-            Get_First (Style_Htable_Access (Kernel.Styles).Table, Iter);
-            loop
-               Info := Get_Element (Iter);
-               exit when Info = null;
+            for J in 1 .. List.Last_Index loop
                Style_Inst := New_Instance (Get_Script (Data), Style_Class);
-               Set_Data (Style_Inst, Info);
+               Set_Data (Style_Inst, List (J));
                Set_Return_Value (Data, Style_Inst);
-
-               Get_Next (Style_Htable_Access (Kernel.Styles).Table, Iter);
             end loop;
          end;
       end if;
@@ -138,23 +139,24 @@ package body GPS.Kernel.Styles.Shell is
    procedure Accessors
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Style : constant Style_Access := Get_Style
+      Style : constant GPS.Kernel.Style_Manager.Style_Access := Get_Style
         (Nth_Arg (Data, 1, Style_Class));
+
    begin
       if Command = "set_foreground" then
-         Set_Foreground (Style, Nth_Arg (Data, 2));
+         Set_Foreground (Style, Parse_Color (Nth_Arg (Data, 2)));
       elsif Command = "set_background" then
-         Set_Background (Style, Nth_Arg (Data, 2));
+         Set_Background (Style, Parse_Color (Nth_Arg (Data, 2)));
       elsif Command = "set_in_speedbar" then
          Set_In_Speedbar (Style, Nth_Arg (Data, 2));
       elsif Command = "get_name" then
          Set_Return_Value (Data, Get_Name (Style));
       elsif Command = "get_foreground" then
-         Set_Return_Value (Data, Get_Foreground (Style));
+         Set_Return_Value (Data, To_String (Get_Foreground (Style)));
       elsif Command = "get_background" then
-         Set_Return_Value (Data, Get_Background (Style));
+         Set_Return_Value (Data, To_String (Get_Background (Style)));
       elsif Command = "get_in_speedbar" then
-         Set_Return_Value (Data, In_Speedbar (Style));
+         Set_Return_Value (Data, Get_In_Speedbar (Style));
       end if;
    end Accessors;
 
@@ -192,4 +194,4 @@ package body GPS.Kernel.Styles.Shell is
         (Kernel, "set_in_speedbar", 1, 1, Accessors'Access, Style_Class);
    end Register_Commands;
 
-end GPS.Kernel.Styles.Shell;
+end GPS.Kernel.Style_Manager.Shell;

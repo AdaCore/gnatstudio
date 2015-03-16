@@ -18,7 +18,6 @@
 with GPS.Editors;            use GPS.Editors;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel.Styles;      use GPS.Kernel.Styles;
 
 package body Src_Editor_Module.Line_Highlighting is
 
@@ -68,21 +67,14 @@ package body Src_Editor_Module.Line_Highlighting is
                          Create (Nth_Arg (Data, 1), Kernel);
             Style_ID : constant String  := Nth_Arg (Data, 2);
             Line     : constant Integer := Nth_Arg (Data, 3, Default => 0);
-            Style    : constant Style_Access :=
-                         Get_Or_Create_Style (Kernel, Style_ID, False);
             Buffer   : constant Editor_Buffer'Class :=
               Get_Buffer_Factory (Kernel).Get (File, Open_View => False);
          begin
-            if Style = null then
-               Set_Error_Msg (Data, -"No such style: " & Style_ID);
-               return;
-            end if;
-
             if Buffer /= Nil_Editor_Buffer then
                if Command = "highlight" then
-                  Buffer.Apply_Style (Style => Style, Line  => Line);
+                  Buffer.Apply_Style (Style => Style_ID, Line  => Line);
                else
-                  Buffer.Remove_Style (Style => Style, Line => Line);
+                  Buffer.Remove_Style (Style => Style_ID, Line => Line);
                end if;
             else
                Set_Error_Msg
@@ -100,8 +92,9 @@ package body Src_Editor_Module.Line_Highlighting is
             Style            : Style_Access;
          begin
             --  Create the style corresponding to the higlighing category
-            Style := Get_Or_Create_Style (Kernel, Category, Create => True);
-            Set_Background (Style, Color);
+            Style := Get_Style_Manager (Kernel).Get_Or_Create (Category);
+
+            Set_Background (Style, Parse_Color (Color));
             Set_In_Speedbar (Style, Mark_In_Speedbar);
 
             Add_Category (Style);
@@ -120,26 +113,19 @@ package body Src_Editor_Module.Line_Highlighting is
               Visible_Column_Type (Nth_Arg (Data, 4, Default => 0));
             End_Col   : constant Visible_Column_Type :=
               Visible_Column_Type (Nth_Arg (Data, 5, Default => -1));
-            Style     : constant Style_Access :=
-                          Get_Or_Create_Style (Kernel, Style_ID, False);
             Buffer    : constant Editor_Buffer'Class :=
               Get_Buffer_Factory (Kernel).Get (File, Open_View => False);
          begin
-            if Style = null then
-               Set_Error_Msg (Data, -"No such style: " & Style_ID);
-               return;
-            end if;
-
             if Buffer /= Nil_Editor_Buffer then
                if Command = "highlight_range" then
                   Buffer.Apply_Style
-                    (Style       => Style,
+                    (Style       => Style_ID,
                      Line        => Line,
                      From_Column => Start_Col,
                      To_Column   => End_Col);
                else
                   Buffer.Remove_Style
-                    (Style       => Style,
+                    (Style       => Style_ID,
                      Line        => Line,
                      From_Column => Start_Col,
                      To_Column   => End_Col);
@@ -242,7 +228,7 @@ package body Src_Editor_Module.Line_Highlighting is
 
    begin
       if Index > 0 and then Index <= Module_Id.Categories'Last then
-         return Get_Background_Color (Module_Id.Categories (Index).Style);
+         return Get_Background (Module_Id.Categories (Index).Style);
       else
          return Null_RGBA;
       end if;

@@ -162,7 +162,7 @@ package body Src_Editor_Module.Messages is
          while Has_Element (Set_Position) loop
             Get_Buffer_Factory (Self.Kernel).Get
               (File, Open_View => False).Remove_Style
-              (Style_Sets.Element (Set_Position),
+              (Get_Name (Style_Sets.Element (Set_Position)),
                0,
                0,
                0);
@@ -179,7 +179,7 @@ package body Src_Editor_Module.Messages is
    ----------
 
    function Hash
-     (Item : GPS.Styles.UI.Style_Access) return Containers.Hash_Type is
+     (Item : Style_Access) return Containers.Hash_Type is
    begin
       return Strings.Hash (Get_Name (Item));
    end Hash;

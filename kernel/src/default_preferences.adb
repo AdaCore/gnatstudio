@@ -742,6 +742,17 @@ package body Default_Preferences is
       return Pref.Font_Descr;
    end Get_Pref_Font;
 
+   ----------------------
+   -- Get_Pref_Variant --
+   ----------------------
+
+   function Get_Pref_Variant
+     (Pref     : access Variant_Preference_Record)
+      return Variant_Enum is
+   begin
+      return Pref.Variant;
+   end Get_Pref_Variant;
+
    -----------------------
    -- Get_Pref_Fg_Color --
    -----------------------

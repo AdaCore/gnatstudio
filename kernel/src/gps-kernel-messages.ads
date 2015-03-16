@@ -36,9 +36,8 @@ private with Ada.Strings.Unbounded.Hash;
 with Ada.Tags;
 
 with GNATCOLL.VFS;
-with GPS.Styles;
-with GPS.Styles.UI;
 with GPS.Editors.Line_Information;
+with GPS.Kernel.Style_Manager;
 with Histories;
 
 package GPS.Kernel.Messages is
@@ -161,19 +160,19 @@ package GPS.Kernel.Messages is
 
    procedure Set_Highlighting
      (Self   : not null access Abstract_Message'Class;
-      Style  : GPS.Styles.UI.Style_Access;
+      Style  : GPS.Kernel.Style_Manager.Style_Access;
       Length : Positive);
    --  Set highlighting style and span to be used in the editor to highlight
    --  corresponding location.
 
    procedure Set_Highlighting
      (Self  : not null access Abstract_Message'Class;
-      Style : GPS.Styles.UI.Style_Access);
-   --  Set style for line highlightinh in the editor.
+      Style : GPS.Kernel.Style_Manager.Style_Access);
+   --  Set style for line highlighting in the editor.
 
    function Get_Highlighting_Style
      (Self : not null access constant Abstract_Message'Class)
-      return GPS.Styles.UI.Style_Access;
+      return GPS.Kernel.Style_Manager.Style_Access;
    --  Returns highlighting style to be used by source editor to highlight
    --  message.
 
@@ -504,7 +503,7 @@ private
             Column : Basic_Types.Visible_Column_Type;
             Mark   : Editor_Mark_Access;
             Action : Action_Item;
-            Style  : GPS.Styles.UI.Style_Access;
+            Style  : GPS.Kernel.Style_Manager.Style_Access;
             Length : Natural := 0;
             Notes  : Note_Maps.Map;
             Flags  : Message_Flags;

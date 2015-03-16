@@ -298,8 +298,10 @@ package Default_Preferences is
    function Get_Pref_Bg_Color
      (Pref     : access Variant_Preference_Record)
       return Gdk.RGBA.Gdk_RGBA;
-
    function Get_Pref (Pref : access Enum_Preference_Record) return Integer;
+   function Get_Pref_Variant
+     (Pref     : access Variant_Preference_Record)
+      return Variant_Enum;
    --  Get the value for a preference. The default value is returned if the
    --  user hasn't explicitely overriden it.
    --  Colors have already been allocated when they are returned.

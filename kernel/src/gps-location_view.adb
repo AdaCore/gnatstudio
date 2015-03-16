@@ -67,7 +67,7 @@ with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;                use GPS.Kernel.Styles;
+with GPS.Kernel.Style_Manager;         use GPS.Kernel.Style_Manager;
 with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
 with GUI_Utils;                        use GUI_Utils;
 with Histories;                        use Histories;
@@ -1484,8 +1484,9 @@ package body GPS.Location_View is
                     Visible_Column_Type (Nth_Arg (Data, 4, Default => 1)),
                     Nth_Arg (Data, 5),
                     0,
-                    Get_Or_Create_Style
-                      (Get_Kernel (Data), Nth_Arg (Data, 6, ""), False),
+                    Get_Style_Manager
+                      (Get_Kernel (Data)).Get
+                    (Nth_Arg (Data, 6, ""), Allow_Null => True),
                     Nth_Arg (Data, 7, 0),
                     Nth_Arg (Data, 8, False),
                     Show_In_Locations => True);

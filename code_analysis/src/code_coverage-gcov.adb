@@ -20,11 +20,9 @@ with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with GNAT.Regpat;                use GNAT.Regpat;
 
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
-with GPS.Styles;                 use GPS.Styles;
-with GPS.Styles.UI;              use GPS.Styles.UI;
 with Code_Analysis_GUI;
 --  ??? Why not replace by Code_Coverage_Gui?
 with Coverage_GUI;               use Coverage_GUI;
@@ -187,11 +185,7 @@ package body Code_Coverage.Gcov is
               0,
               Coverage_Message_Flags,
               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
-         Message.Set_Highlighting
-           (Get_Or_Create_Style_Copy
-              (Kernel,
-               Get_Name (Builder_Styles (Warnings)) & '/' & Uncovered_Category,
-               Builder_Styles (Warnings)));
+         Message.Set_Highlighting (Builder_Styles (Warnings));
       end if;
    end Add_Location_If_Uncovered;
 

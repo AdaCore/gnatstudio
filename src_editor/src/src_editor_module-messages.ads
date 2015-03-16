@@ -22,8 +22,6 @@ with Ada.Strings.Unbounded;
 with Ada.Containers.Hashed_Maps;
 
 private with Ada.Containers.Hashed_Sets;
-private with GPS.Styles;
-private with GPS.Styles.UI;
 
 with GPS.Kernel.Messages; use GPS.Kernel.Messages;
 
@@ -40,13 +38,15 @@ private
    use Ada;
    use Ada.Strings.Unbounded;
 
+   --  ??? Do we need all this? Why not create styles once and for
+   --  all in the Style_Manager?
+
    function Hash
-     (Item : GPS.Styles.UI.Style_Access) return Containers.Hash_Type;
+     (Item : Style_Access) return Containers.Hash_Type;
    --  Returns hash value constructed from style's name
 
    package Style_Sets is
-     new Ada.Containers.Hashed_Sets
-       (GPS.Styles.UI.Style_Access, Hash, GPS.Styles.UI."=");
+     new Ada.Containers.Hashed_Sets (Style_Access, Hash, "=");
 
    type Style_Set_Access is access all Style_Sets.Set;
 

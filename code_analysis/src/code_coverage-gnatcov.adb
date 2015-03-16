@@ -23,12 +23,10 @@ with GNAT.Regpat;                  use GNAT.Regpat;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Styles;            use GPS.Kernel.Styles;
-with GPS.Styles;                   use GPS.Styles;
-with GPS.Styles.UI;                use GPS.Styles.UI;
 with Coverage_GUI;                 use Coverage_GUI;
 
 package body Code_Coverage.GNATcov is
@@ -361,12 +359,7 @@ package body Code_Coverage.GNATcov is
               0,
               Coverage_Message_Flags,
               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
-         Msg.Set_Highlighting
-           (Get_Or_Create_Style_Copy
-              (Kernel,
-               Get_Name (Builder_Styles (Warnings))
-               & '/' & Coverage_Category.all,
-               Builder_Styles (Warnings)));
+         Msg.Set_Highlighting (Builder_Styles (Warnings));
       end Process;
 
    begin

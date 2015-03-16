@@ -49,6 +49,7 @@ with Config;                            use Config;
 with Default_Preferences;               use Default_Preferences;
 with File_Utils;                        use File_Utils;
 with Find_Utils;                        use Find_Utils;
+with GPS.Default_Styles;                use GPS.Default_Styles;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;

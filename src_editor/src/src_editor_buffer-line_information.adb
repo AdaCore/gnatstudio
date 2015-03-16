@@ -32,7 +32,6 @@ with Gtk.Text_Mark;            use Gtk.Text_Mark;
 with Gtkada.Style;             use Gtkada.Style;
 
 with Pango.Cairo;              use Pango.Cairo;
-with Pango.Enums;              use Pango.Enums;
 
 with Commands.Editor;          use Commands.Editor;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
@@ -1428,14 +1427,17 @@ package body Src_Editor_Buffer.Line_Information is
       To_Column   := From_Column +
         Visible_Column_Type (Message.Get_Highlighting_Length);
 
-      if From_Column = To_Column then
-         Remove_Line_Highlighting (Buffer, Line, Style);
-      else
-         if Has_Iters then
-            Highlight_Range (Buffer, Style, Line, Start_Iter, End_Iter, True);
+      if Style /= null then
+         if From_Column = To_Column then
+            Remove_Line_Highlighting (Buffer, Line, Style);
          else
-            Highlight_Range
-              (Buffer, Style, Line, From_Column, To_Column, True);
+            if Has_Iters then
+               Highlight_Range
+                 (Buffer, Style, Line, Start_Iter, End_Iter, True);
+            else
+               Highlight_Range
+                 (Buffer, Style, Line, From_Column, To_Column, True);
+            end if;
          end if;
       end if;
    end Remove_Message_Highlighting;
@@ -1525,12 +1527,12 @@ package body Src_Editor_Buffer.Line_Information is
                Style        => Style,
                Set          => True,
                Highlight_In =>
-                 (Highlight_Speedbar => Style.In_Speedbar,
+                 (Highlight_Speedbar => Get_In_Speedbar (Style),
                   Highlight_Editor   => True));
 
             Line_Highlights_Changed (Buffer);
          else
-            if Style.In_Speedbar then
+            if Get_In_Speedbar (Style) then
                Compute_BL;
 
                Set_Line_Highlighting
@@ -1539,7 +1541,7 @@ package body Src_Editor_Buffer.Line_Information is
                   Style        => Style,
                   Set          => True,
                   Highlight_In =>
-                    (Highlight_Speedbar => Style.In_Speedbar,
+                    (Highlight_Speedbar => Get_In_Speedbar (Style),
                      Highlight_Editor   => False));
 
                Line_Highlights_Changed (Buffer);
@@ -2714,9 +2716,7 @@ package body Src_Editor_Buffer.Line_Information is
       End_Iter   : Gtk_Text_Iter;
       Remove     : Boolean := False)
    is
-      Tag                  : Gtk_Text_Tag;
-      Color                : Gdk_RGBA;
-      New_Tag              : Boolean := False;
+      Tag : Gtk_Text_Tag;
    begin
       --  Get the text tag, create it if necessary
 
@@ -2726,24 +2726,10 @@ package body Src_Editor_Buffer.Line_Information is
          if Remove then
             return;
          else
-            Gtk_New (Tag, Get_Name (Style));
-            New_Tag := True;
+            --  Create the tag from the style
+            Tag := Get_Tag (Style);
+            Add (Get_Tag_Table (Buffer), Tag);
          end if;
-      end if;
-
-      Color := Get_Background_Color (Style);
-
-      --  ??? Should we do the following even if not New_Tag ?
-
-      if Color /= Null_RGBA then
-         Set_Property (Tag, Background_Rgba_Property, Color);
-         Set_Property (Tag, Underline_Property, Pango_Underline_None);
-      else
-         Set_Property (Tag, Underline_Property, Pango_Underline_Error);
-      end if;
-
-      if New_Tag then
-         Add (Get_Tag_Table (Buffer), Tag);
       end if;
 
       --  Highlight/Unhighlight the text
@@ -2755,7 +2741,7 @@ package body Src_Editor_Buffer.Line_Information is
       end if;
 
       if Line /= 0 then
-         if Style.In_Speedbar then
+         if Get_In_Speedbar (Style) then
             if Remove then
                Remove_Line_Highlighting (Buffer, Line, Style);
             else

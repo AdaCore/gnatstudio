@@ -34,8 +34,7 @@ with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Project;            use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;             use GPS.Kernel.Styles;
-with GPS.Styles.UI;                 use GPS.Styles, GPS.Styles.UI;
+with GPS.Kernel.Style_Manager;      use GPS.Kernel.Style_Manager;
 with Histories;                     use Histories;
 with Projects;                      use Projects;
 with XML_Parsers;                   use XML_Parsers;
@@ -556,7 +555,7 @@ package body GPS.Kernel.Messages is
 
    function Get_Highlighting_Style
      (Self : not null access constant Abstract_Message'Class)
-      return GPS.Styles.UI.Style_Access is
+      return GPS.Kernel.Style_Manager.Style_Access is
    begin
       return Self.Style;
    end Get_Highlighting_Style;
@@ -962,7 +961,8 @@ package body GPS.Kernel.Messages is
             Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
 
          if Style_Name /= "" then
-            Style := Get_Or_Create_Style (Self.Kernel, Style_Name, True);
+            Style := Get_Style_Manager
+              (Kernel_Handle (Self.Kernel)).Get_Or_Create (Style_Name);
 
             if Length = 0 then
                Set_Highlighting (Message, Style);
@@ -2187,7 +2187,7 @@ package body GPS.Kernel.Messages is
 
    procedure Set_Highlighting
      (Self   : not null access Abstract_Message'Class;
-      Style  : GPS.Styles.UI.Style_Access;
+      Style  : Style_Access;
       Length : Positive) is
    begin
       Self.Style := Style;
@@ -2203,7 +2203,7 @@ package body GPS.Kernel.Messages is
 
    procedure Set_Highlighting
      (Self  : not null access Abstract_Message'Class;
-      Style : GPS.Styles.UI.Style_Access) is
+      Style : Style_Access) is
    begin
       Self.Style := Style;
       Self.Length := 0;

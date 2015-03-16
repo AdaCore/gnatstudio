@@ -42,9 +42,7 @@ with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;          use GPS.Kernel.Styles;
-with GPS.Styles;                 use GPS.Styles;
-with GPS.Styles.UI;              use GPS.Styles.UI;
+with GPS.Kernel.Style_Manager;   use GPS.Kernel.Style_Manager;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Xref;
 with String_Utils;
@@ -128,11 +126,6 @@ package body CodePeer.Module is
    procedure On_Message_Reviewed
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
-
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
-   --  Called when the preferences have changed
 
    procedure On_Project_Changed_Hook
      (Kernel : access Kernel_Handle_Record'Class);
@@ -1103,42 +1096,6 @@ package body CodePeer.Module is
       end if;
    end On_Message_Selected_Hook;
 
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
-
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-   is
-      pragma Unreferenced (Kernel);
-
-      P : constant Preference := Get_Pref (Data);
-
-   begin
-      if P = Preference (Module.Annotation_Color) then
-         Module.Annotation_Style.Set_Background
-           (Module.Annotation_Color.Get_Pref);
-      elsif P = Preference (Module.Message_Colors (CodePeer.High)) then
-         Module.Message_Styles (CodePeer.High).Set_Background
-           (Module.Message_Colors (CodePeer.High).Get_Pref);
-      elsif P = Preference (Module.Message_Colors (CodePeer.Medium)) then
-         Module.Message_Styles (CodePeer.Medium).Set_Background
-           (Module.Message_Colors (CodePeer.Medium).Get_Pref);
-      elsif P = Preference (Module.Message_Colors (CodePeer.Low)) then
-         Module.Message_Styles (CodePeer.Low).Set_Background
-           (Module.Message_Colors (CodePeer.Low).Get_Pref);
-      elsif P =
-        Preference (Module.Message_Colors (CodePeer.Info))
-      then
-         Module.Message_Styles (CodePeer.Info).Set_Background
-           (Module.Message_Colors (CodePeer.Info).Get_Pref);
-      elsif P = Preference (Module.Message_Colors (CodePeer.Suppressed)) then
-         Module.Message_Styles (CodePeer.Suppressed).Set_Background
-           (Module.Message_Colors (CodePeer.Suppressed).Get_Pref);
-      end if;
-   end On_Preferences_Changed;
-
    -----------------------------
    -- On_Project_Changed_Hook --
    -----------------------------
@@ -1355,11 +1312,7 @@ package body CodePeer.Module is
                if Style /= null
                  and then Message.Lifeage /= Removed
                then
-                  Primary.Set_Highlighting
-                    (Get_Or_Create_Style_Copy
-                       (Kernel_Handle (Self.Kernel),
-                        Get_Name (Style) & '/' & CodePeer_Category_Name,
-                        Style));
+                  Primary.Set_Highlighting (Style);
                end if;
 
                Primary.Set_Action
@@ -1738,7 +1691,7 @@ package body CodePeer.Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       procedure Initialize_Style
-        (Style      : out GPS.Styles.UI.Style_Access;
+        (Style      : out Style_Access;
          Name       : String;
          Preference : Default_Preferences.Color_Preference;
          Speedbar   : Boolean);
@@ -1749,16 +1702,17 @@ package body CodePeer.Module is
       ----------------------
 
       procedure Initialize_Style
-        (Style      : out GPS.Styles.UI.Style_Access;
+        (Style      : out Style_Access;
          Name       : String;
          Preference : Default_Preferences.Color_Preference;
          Speedbar   : Boolean) is
       begin
-         Style :=
-           GPS.Kernel.Styles.Get_Or_Create_Style
-             (GPS.Kernel.Kernel_Handle (Kernel), Name);
-         Style.Set_Background (Preference.Get_Pref);
-         Style.Set_In_Speedbar (Speedbar);
+         Style := Get_Style_Manager
+           (Kernel_Handle (Kernel)).Create_From_Preferences
+             (Name,
+              Fg_Pref => null,
+              Bg_Pref => Preference);
+         Set_In_Speedbar (Style, Speedbar);
       end Initialize_Style;
 
       Submenu_Factory : GPS.Kernel.Modules.UI.Submenu_Factory;
@@ -1880,10 +1834,6 @@ package body CodePeer.Module is
         (Kernel, GPS.Kernel.Compilation_Finished_Hook,
          GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
          Name => "codepeer.compilation_finished");
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel, GPS.Kernel.Preference_Changed_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_Preferences_Changed'Access),
-         "codepeer.preferences_changed");
       GPS.Kernel.Hooks.Add_Hook
         (Kernel,
          GPS.Kernel.Project_Changed_Hook,

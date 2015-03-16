@@ -37,7 +37,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Search;                use GPS.Search;
 
 with Src_Editor_Module.Line_Highlighting;
@@ -507,13 +506,13 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Apply_Style
      (This  : Src_Editor_Buffer;
-      Style : not null access Simple_Style_Record'Class;
+      Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
 
    overriding procedure Remove_Style
      (This  : Src_Editor_Buffer;
-      Style : not null access Simple_Style_Record'Class;
+      Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
 
@@ -1794,8 +1793,8 @@ package body Src_Editor_Module.Editors is
             Style              : Style_Access;
          begin
             if Category /= "" then
-               Style := Get_Or_Create_Style
-                 (This.Contents.Kernel, Category, False);
+               Style := Get_Style_Manager
+                 (This.Contents.Kernel).Get (Category);
 
                if Style = null then
                   raise Editor_Exception
@@ -2268,11 +2267,14 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Apply_Style
      (This  : Src_Editor_Buffer;
-      Style : not null access Simple_Style_Record'Class;
+      Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1)
    is
+      The_Style : Style_Access;
    begin
+      The_Style := Get_Style_Manager (This.Contents.Kernel).Get (Style);
+
       --  ??? The interface for Add_Line_Highlighting only works on a single
       --  line. It should probably be enhanced rather than do it in this
       --  procedure
@@ -2282,12 +2284,12 @@ package body Src_Editor_Module.Editors is
             Add_Line_Highlighting
               (This.Contents.Buffer,
                Editable_Line_Type (Line),
-               Style_Access (Style),
+               The_Style,
                Highlight_In => (others => True));
 
          else
             Highlight_Range
-              (This.Contents.Buffer, Style_Access (Style),
+              (This.Contents.Buffer, The_Style,
                Editable_Line_Type (Line),
                From_Column,
                To_Column);
@@ -2301,18 +2303,21 @@ package body Src_Editor_Module.Editors is
 
    overriding procedure Remove_Style
      (This  : Src_Editor_Buffer;
-      Style : not null access Simple_Style_Record'Class;
+      Style : String;
       Line  : Integer;
-      From_Column, To_Column : Visible_Column_Type := -1) is
+      From_Column, To_Column : Visible_Column_Type := -1)
+   is
+      The_Style : Style_Access;
    begin
+      The_Style := Get_Style_Manager (This.Contents.Kernel).Get (Style);
+
       if This.Contents.Buffer /= null then
          if From_Column = To_Column then
             Remove_Line_Highlighting
-              (This.Contents.Buffer, Editable_Line_Type (Line),
-               Style_Access (Style));
+              (This.Contents.Buffer, Editable_Line_Type (Line), The_Style);
          else
             Highlight_Range
-              (This.Contents.Buffer, Style_Access (Style),
+              (This.Contents.Buffer, The_Style,
                Editable_Line_Type (Line),
                From_Column,
                To_Column,

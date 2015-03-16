@@ -18,8 +18,6 @@
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
-with GPS.Styles.UI;             use GPS.Styles.UI;
 
 with GVD.Process;               use GVD.Process;
 with GVD.Types;                 use GVD.Types;
@@ -86,11 +84,11 @@ package body GVD.Source_Editor.GPS is
                Raise_View => True);
 
             Buffer.Remove_Style
-              (Style      => Editor.Current_Line_Style,
+              (Style      => Get_Name (Editor.Current_Line_Style),
                Line       => 0);  --  whole buffer
 
             Buffer.Apply_Style
-              (Style      => Editor.Current_Line_Style,
+              (Style      => Get_Name (Editor.Current_Line_Style),
                Line       => Editor.Line);
          end;
 
@@ -127,7 +125,7 @@ package body GVD.Source_Editor.GPS is
       end if;
 
       Kernel.Get_Buffer_Factory.Get (Editor.Current_File).Remove_Style
-        (Style => Editor.Current_Line_Style, Line => 0);
+        (Style => Get_Name (Editor.Current_Line_Style), Line => 0);
    end Unhighlight_Current_Line;
 
    ----------------
@@ -140,10 +138,12 @@ package body GVD.Source_Editor.GPS is
    is
    begin
       Editor.Window := GPS_Window (Window);
-      Editor.Current_Line_Style := Get_Or_Create_Style
-        (Kernel => Window.Kernel,
-         Name   => "debugger current line",
-         Create => True);
+
+      Editor.Current_Line_Style :=
+        Get_Style_Manager (Window.Kernel).Create_From_Preferences
+        ("debugger current line",
+         Fg_Pref => null,
+         Bg_Pref => Editor_Current_Line_Color);
 
       Preferences_Changed (Editor);
    end Initialize;
@@ -187,10 +187,7 @@ package body GVD.Source_Editor.GPS is
    -------------------------
 
    overriding procedure Preferences_Changed (Editor : access GEdit_Record) is
-   begin
-      Editor.Current_Line_Style.Set_Background
-        (Editor_Current_Line_Color.Get_Pref);
-   end Preferences_Changed;
+   null;
 
    --------------
    -- Set_Line --
@@ -525,7 +522,7 @@ package body GVD.Source_Editor.GPS is
       while not Is_Empty (Editor.Highlighted_Files) loop
          Kernel.Get_Buffer_Factory.Get
            (Create (+Head (Editor.Highlighted_Files))).Remove_Style
-           (Style => Editor.Current_Line_Style, Line => 0);
+           (Style => Get_Name (Editor.Current_Line_Style), Line => 0);
          Next (Editor.Highlighted_Files);
       end loop;
    end Free_Debug_Info;

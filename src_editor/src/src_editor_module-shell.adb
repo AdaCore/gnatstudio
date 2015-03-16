@@ -50,7 +50,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Styles;         use GPS.Kernel.Styles;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Search;
 with Language;                  use Language;
@@ -1460,8 +1459,7 @@ package body Src_Editor_Module.Shell is
             Child := Find_Editor (Kernel, Filename, No_Project);
 
             if Number_Of_Arguments (Data) >= 4 then
-               Style := Get_Or_Create_Style
-                 (Kernel, Nth_Arg (Data, 4), False);
+               Style := Get_Style_Manager (Kernel).Get (Nth_Arg (Data, 4));
 
                if Style = null then
                   Set_Error_Msg (Data, -"No such style: " & Nth_Arg (Data, 4));

@@ -68,6 +68,7 @@ with Case_Handling;                       use Case_Handling;
 with Commands.Editor;                     use Commands.Editor;
 with Completion_Module;                   use Completion_Module;
 with Default_Preferences;                 use Default_Preferences;
+with GPS.Default_Styles;                  use GPS.Default_Styles;
 with GPS.Intl;                            use GPS.Intl;
 with GPS.Kernel;                          use GPS.Kernel;
 with GPS.Kernel.Charsets;                 use GPS.Kernel.Charsets;
@@ -3349,6 +3350,8 @@ package body Src_Editor_Buffer is
          Last  => True);
 
       for Entity_Kind in Standout_Language_Entity'Range loop
+         Buffer.Syntax_Tags (Entity_Kind) := Get_Tag
+           (Language_Styles (Entity_Kind));
          Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
       end loop;
 
@@ -3602,147 +3605,6 @@ package body Src_Editor_Buffer is
       Prev    : Boolean;
       Pref    : constant Preference := Get_Pref (Data);
    begin
-      --  Since we update the tags directly, gtk+ will automatically refresh
-      --  the source view, we don't need to do anything for this.
-
-      if Pref = null
-        or else Pref = Preference (Blocks_Style)
-        or else Pref = Preference (Default_Style)
-      then
-         New_Tag
-           (B.Syntax_Tags (Block_Text),
-            Block_Color_Tag_Name,
-            Fore_Color => Blocks_Style.Get_Pref_Fg,
-            Back_Color => Blocks_Style.Get_Pref_Bg,
-            Font_Desc  => Blocks_Style.Get_Pref_Font);
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Types_Style)
-        or else Pref = Preference (Default_Style)
-      then
-         New_Tag
-           (B.Syntax_Tags (Type_Text),
-            Type_Color_Tag_Name,
-            Fore_Color => Types_Style.Get_Pref_Fg,
-            Back_Color => Types_Style.Get_Pref_Bg,
-            Font_Desc  => Types_Style.Get_Pref_Font);
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Numbers_Style)
-        or else Pref = Preference (Default_Style)
-      then
-         New_Tag
-           (B.Syntax_Tags (Number_Text),
-            Number_Color_Tag_Name,
-            Fore_Color => Numbers_Style.Get_Pref_Fg,
-            Back_Color => Numbers_Style.Get_Pref_Bg,
-            Font_Desc  => Numbers_Style.Get_Pref_Font);
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Keywords_Style)
-        or else Pref = Preference (Default_Style)
-      then
-         New_Tag
-           (B.Syntax_Tags (Keyword_Text),
-            Keyword_Color_Tag_Name,
-            Fore_Color => Keywords_Style.Get_Pref_Fg,
-            Back_Color => Keywords_Style.Get_Pref_Bg,
-            Font_Desc  => Keywords_Style.Get_Pref_Font);
-         New_Tag
-           (B.Syntax_Tags (Annotated_Keyword_Text),
-            Annotated_Keyword_Color_Tag_Name,
-            Fore_Color => Annotated_Comments_Style.Get_Pref_Fg,
-            Back_Color => Annotated_Comments_Style.Get_Pref_Bg,
-            Font_Desc  => Keywords_Style.Get_Pref_Font);
-         New_Tag
-           (B.Syntax_Tags (Aspect_Keyword_Text),
-            Aspect_Keyword_Color_Tag_Name,
-            Fore_Color => Aspects_Style.Get_Pref_Fg,
-            Back_Color => Aspects_Style.Get_Pref_Bg,
-            Font_Desc  => Keywords_Style.Get_Pref_Font);
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Comments_Style)
-        or else Pref = Preference (Default_Style)
-      then
-         New_Tag
-           (B.Syntax_Tags (Comment_Text),
-            Comment_Color_Tag_Name,
-            Fore_Color => Comments_Style.Get_Pref_Fg,
-            Back_Color => Comments_Style.Get_Pref_Bg,
-            Font_Desc  => Comments_Style.Get_Pref_Font);
-         New_Tag
-           (B.Syntax_Tags (Aspect_Comment_Text),
-            Aspect_Comment_Color_Tag_Name,
-            Fore_Color => Aspects_Style.Get_Pref_Fg,
-            Back_Color => Aspects_Style.Get_Pref_Bg,
-            Font_Desc  => Comments_Style.Get_Pref_Font);
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Annotated_Comments_Style)
-        or else Pref = Preference (Default_Style)
-      then
-         New_Tag
-           (B.Syntax_Tags (Annotated_Comment_Text),
-            Annotated_Comment_Color_Tag_Name,
-            Fore_Color => Annotated_Comments_Style.Get_Pref_Fg,
-            Back_Color => Annotated_Comments_Style.Get_Pref_Bg,
-            Font_Desc  => Annotated_Comments_Style.Get_Pref_Font);
-         New_Tag
-           (B.Syntax_Tags (Annotated_Keyword_Text),
-            Annotated_Keyword_Color_Tag_Name,
-            Fore_Color => Annotated_Comments_Style.Get_Pref_Fg,
-            Back_Color => Annotated_Comments_Style.Get_Pref_Bg,
-            Font_Desc  => Keywords_Style.Get_Pref_Font);
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Aspects_Style)
-        or else Pref = Preference (Default_Style)
-      then
-         New_Tag
-           (B.Syntax_Tags (Aspect_Text),
-            Aspect_Color_Tag_Name,
-            Fore_Color => Aspects_Style.Get_Pref_Fg,
-            Back_Color => Aspects_Style.Get_Pref_Bg,
-            Font_Desc  => Aspects_Style.Get_Pref_Font);
-         New_Tag
-           (B.Syntax_Tags (Aspect_Keyword_Text),
-            Aspect_Keyword_Color_Tag_Name,
-            Fore_Color => Aspects_Style.Get_Pref_Fg,
-            Back_Color => Aspects_Style.Get_Pref_Bg,
-            Font_Desc  => Keywords_Style.Get_Pref_Font);
-         New_Tag
-           (B.Syntax_Tags (Aspect_Comment_Text),
-            Aspect_Comment_Color_Tag_Name,
-            Fore_Color => Aspects_Style.Get_Pref_Fg,
-            Back_Color => Aspects_Style.Get_Pref_Bg,
-            Font_Desc  => Comments_Style.Get_Pref_Font);
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (Strings_Style)
-        or else Pref = Preference (Default_Style)
-      then
-         New_Tag
-           (B.Syntax_Tags (String_Text),
-            String_Color_Tag_Name,
-            Fore_Color => Strings_Style.Get_Pref_Fg,
-            Back_Color => Strings_Style.Get_Pref_Bg,
-            Font_Desc  => Strings_Style.Get_Pref_Font);
-         New_Tag
-           (B.Syntax_Tags (Character_Text),
-            Character_Color_Tag_Name,
-            Fore_Color => Strings_Style.Get_Pref_Fg,
-            Back_Color => Strings_Style.Get_Pref_Bg,
-            Font_Desc  => Strings_Style.Get_Pref_Font);
-      end if;
-
       if B.Delimiter_Tag /= null
         and then (Pref = null
                   or else Pref = Preference (Delimiter_Color))
@@ -6245,7 +6107,7 @@ package body Src_Editor_Buffer is
    procedure Set_Line_Highlighting
      (Editor       : access Source_Buffer_Record;
       Line         : Buffer_Line_Type;
-      Style        : Style_Access;
+      Style        : not null Style_Access;
       Set          : Boolean;
       Highlight_In : Highlight_Location_Array)
    is
@@ -6350,7 +6212,7 @@ package body Src_Editor_Buffer is
    procedure Add_Line_Highlighting
      (Editor       : access Source_Buffer_Record;
       Line         : Editable_Line_Type;
-      Style        : Style_Access;
+      Style        : not null Style_Access;
       Highlight_In : Highlight_Location_Array)
    is
       The_Line : Buffer_Line_Type;
@@ -6378,7 +6240,7 @@ package body Src_Editor_Buffer is
    procedure Remove_Line_Highlighting
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Style  : Style_Access)
+      Style  : not null Style_Access)
    is
       The_Line : Buffer_Line_Type;
    begin

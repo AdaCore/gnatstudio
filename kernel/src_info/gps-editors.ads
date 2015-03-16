@@ -25,7 +25,6 @@ with GNATCOLL.Xref;    use GNATCOLL.Xref;
 
 with Basic_Types;      use Basic_Types;
 with Language;         use Language;
-with GPS.Styles;       use GPS.Styles;
 
 package GPS.Editors is
 
@@ -606,7 +605,7 @@ package GPS.Editors is
 
    procedure Apply_Style
      (This  : Editor_Buffer;
-      Style : not null access Simple_Style_Record'Class;
+      Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1) is abstract;
    --  Apply a specific style to part of a buffer.
@@ -616,7 +615,7 @@ package GPS.Editors is
 
    procedure Remove_Style
      (This  : Editor_Buffer;
-      Style : not null access Simple_Style_Record'Class;
+      Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1) is abstract;
    --  Remove highlighting from a specific part of the text.
@@ -1013,13 +1012,13 @@ private
 
    overriding procedure Apply_Style
      (This  : Dummy_Editor_Buffer;
-      Style : not null access Simple_Style_Record'Class;
+      Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1) is null;
 
    overriding procedure Remove_Style
      (This  : Dummy_Editor_Buffer;
-      Style : not null access Simple_Style_Record'Class;
+      Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1) is null;
 

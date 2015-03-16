@@ -20,6 +20,8 @@
 --  are removed automatically. Secondary locations are parsed and
 --  corresponding secondary messages are added.
 
+with GPS.Default_Styles;
+
 package GPS.Kernel.Messages.Tools_Output is
 
    procedure Parse_File_Locations
@@ -27,7 +29,7 @@ package GPS.Kernel.Messages.Tools_Output is
       Text              : UTF8_String;
       Category          : Glib.UTF8_String;
       Highlight         : Boolean := False;
-      Styles            : GPS.Styles.UI.Builder_Message_Styles :=
+      Styles            : GPS.Default_Styles.Builder_Message_Styles :=
         (others => null);
       Show_In_Locations : Boolean := True;
       Allow_Auto_Jump_To_First : Boolean := True);
@@ -45,7 +47,7 @@ package GPS.Kernel.Messages.Tools_Output is
       Text                    : String;
       Category                : String;
       Highlight               : Boolean := False;
-      Styles                  : GPS.Styles.UI.Builder_Message_Styles :=
+      Styles                  : GPS.Default_Styles.Builder_Message_Styles :=
         (others => null);
       File_Location_Regexp    : String;
       File_Index_In_Regexp    : Integer;
@@ -100,7 +102,7 @@ package GPS.Kernel.Messages.Tools_Output is
       Column             : Basic_Types.Visible_Column_Type;
       Text               : String;
       Weight             : Natural;
-      Highlight_Category : GPS.Styles.UI.Style_Access;
+      Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
       Length             : Natural;
       Look_For_Secondary : Boolean;
       Show_In_Locations  : Boolean;

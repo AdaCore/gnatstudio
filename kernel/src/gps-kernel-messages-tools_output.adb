@@ -23,7 +23,6 @@ with GPS.Kernel.Messages.Hyperlink;   use GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Legacy;
 with GPS.Kernel.Messages.Simple;      use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
-with GPS.Kernel.Styles;               use GPS.Kernel.Styles;
 with String_Utils;                    use String_Utils;
 with GPS.Editors;                     use GPS.Editors;
 with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
@@ -36,9 +35,9 @@ package body GPS.Kernel.Messages.Tools_Output is
    use Category_Maps;
    use File_Maps;
    use GNAT.Regpat;
-   use GPS.Styles;
-   use GPS.Styles.UI;
    use Node_Vectors;
+   use GPS.Kernel.Style_Manager;
+   use GPS.Default_Styles;
 
    type Location is record
       File   : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -70,7 +69,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Column             : Basic_Types.Visible_Column_Type;
       Text               : String;
       Weight             : Natural;
-      Highlight_Category : GPS.Styles.UI.Style_Access;
+      Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
       Length             : Natural;
       Look_For_Secondary : Boolean;
       Show_In_Locations  : Boolean;
@@ -448,7 +447,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Weight        : Natural;
 
       Length        : Natural;
-      C             : GPS.Styles.UI.Style_Access;
+      C             : Style_Access;
 
       -----------------
       -- Get_Message --
@@ -542,13 +541,13 @@ package body GPS.Kernel.Messages.Tools_Output is
                Msg : constant String := Get_Message (Last);
             begin
                Action := new Line_Information_Record;
-               if C /= null and then Get_Editor_Icon (C) /= "" then
-                  Action.Image := new String'(Get_Editor_Icon (C));
+               if C /= null and then Get_Icon (C) /= "" then
+                  Action.Image := new String'(Get_Icon (C));
                end if;
                Action.Tooltip_Text := new String'(Msg);
 
                if not Show_In_Locations then
-                  C := GPS.Styles.UI.Builder_Background_Style;
+                  C := Builder_Background_Style;
                end if;
 
                Message := Add_Tool_Message
@@ -617,12 +616,22 @@ package body GPS.Kernel.Messages.Tools_Output is
             Mode => GPS.Kernel.Error);
 
       else
+         --   ??? reuse existing styles defined in Style_Manager?
          Styles (Errors) :=
-           Get_Or_Create_Style (Kernel, Highlight_Category, False);
+           Get_Style_Manager
+             (Kernel_Handle (Kernel)).Get (Highlight_Category);
+
          Styles (Warnings) :=
-           Get_Or_Create_Style (Kernel, Warning_Category, False);
-         Styles (Style) := Get_Or_Create_Style (Kernel, Style_Category, False);
-         Styles (Info) := Get_Or_Create_Style (Kernel, Info_Category, False);
+           Get_Style_Manager
+             (Kernel_Handle (Kernel)).Get (Warning_Category);
+
+         Styles (Style) :=
+           Get_Style_Manager
+             (Kernel_Handle (Kernel)).Get (Style_Category);
+
+         Styles (Info) :=
+           Get_Style_Manager
+             (Kernel_Handle (Kernel)).Get (Info_Category);
 
          if Output = null then
             Parse_File_Locations

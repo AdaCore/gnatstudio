@@ -18,14 +18,16 @@
 --  This package implements GPS shell commands to manipulate styles.
 
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GPS.Kernel.Style_Manager;
 
-package GPS.Kernel.Styles.Shell is
+package GPS.Kernel.Style_Manager.Shell is
 
    procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the shell commands
 
-   function Get_Style (Instance : Class_Instance) return Style_Access;
+   function Get_Style
+     (Instance : Class_Instance) return GPS.Kernel.Style_Manager.Style_Access;
    --  Return Style stored in Instance
 
-end GPS.Kernel.Styles.Shell;
+end GPS.Kernel.Style_Manager.Shell;

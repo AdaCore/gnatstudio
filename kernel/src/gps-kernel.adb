@@ -52,6 +52,7 @@ with Basic_Types;               use Basic_Types;
 with Default_Preferences;       use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Editors;               use GPS.Editors;
+with GPS.Default_Styles;        use GPS.Default_Styles;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
@@ -65,7 +66,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Styles;
+with GPS.Kernel.Style_Manager;  use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Properties;            use GPS.Properties;
 with Histories;                 use Histories;
@@ -334,10 +335,18 @@ package body GPS.Kernel is
       Handle.Preferences := new GPS_Preferences_Record;
       GPS_Preferences_Record (Handle.Preferences.all).Set_Kernel (Handle);
 
+      declare
+         Style_Manager : Style_Manager_Access;
+      begin
+         Style_Manager := new Style_Manager_Record;
+         Set_Style_Manager (Handle, Style_Manager);
+      end;
+
       Register_Global_Preferences (Handle);
       Load_Preferences (Handle);
 
-      GPS.Kernel.Styles.Init (Handle);
+      Initialize_Style_Manager (Handle);
+      GPS.Default_Styles.Initialize_Default_Styles (Handle);
 
       --  Create the message container
       Handle.Messages_Container := Create_Messages_Container (Handle);
@@ -1158,6 +1167,8 @@ package body GPS.Kernel is
       Destroy_Clipboard (Handle);
       Destroy (Handle.Preferences);
 
+      Free_Style_Manager (Kernel_Handle (Handle));
+
       --  ??? Already done in remote.db.Destroy
       --  GNAT.Expect.TTY.Remote.Close_All;
 
@@ -1174,9 +1185,6 @@ package body GPS.Kernel is
 
       Reset (Handle.Action_Filters);
       Action_Filters_List.Free (Handle.All_Action_Filters);
-
-      Reset (Handle.Styles);
-      Unchecked_Free (Handle.Styles);
 
       Hooks_Hash.Reset (Handle.Hooks);
       Free_Tools (Handle);

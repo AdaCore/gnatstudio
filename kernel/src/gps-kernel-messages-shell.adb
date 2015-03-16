@@ -26,7 +26,7 @@ with GPS.Kernel.Actions;             use GPS.Kernel.Actions;
 with GPS.Kernel.Messages.Markup;     use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
 with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
-with GPS.Kernel.Styles.Shell;        use GPS.Kernel.Styles.Shell;
+with GPS.Kernel.Style_Manager.Shell; use GPS.Kernel.Style_Manager.Shell;
 with Gtk.Enums;                      use Gtk.Enums;
 with Gtk.Widget;                     use Gtk.Widget;
 

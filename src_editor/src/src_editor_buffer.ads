@@ -48,9 +48,8 @@ with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Style_Manager;  use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
-with GPS.Styles;                use GPS.Styles;
-with GPS.Styles.UI;             use GPS.Styles.UI;
 with Language.Tree;
 with Src_Highlighting;
 with Ada.Strings.Unbounded;
@@ -854,7 +853,7 @@ package Src_Editor_Buffer is
    procedure Set_Line_Highlighting
      (Editor       : access Source_Buffer_Record;
       Line         : Buffer_Line_Type;
-      Style        : Style_Access;
+      Style        : not null Style_Access;
       Set          : Boolean;
       Highlight_In : Highlight_Location_Array);
    --  Common function for [Add|Remove]_Line_Highlighting
@@ -862,7 +861,7 @@ package Src_Editor_Buffer is
    procedure Add_Line_Highlighting
      (Editor       : access Source_Buffer_Record;
       Line         : Editable_Line_Type;
-      Style        : Style_Access;
+      Style        : not null Style_Access;
       Highlight_In : Highlight_Location_Array);
    --  Enable the highlighting of Line using colors defined in category
    --  corresponding to Id.
@@ -871,7 +870,7 @@ package Src_Editor_Buffer is
    procedure Remove_Line_Highlighting
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Style  : Style_Access);
+      Style  : not null Style_Access);
    --  Disable the highlighting of Line using colors defined in category
    --  corresponding to Id.
    --  See Src_Editor_Box.Remove_Line_Highlighting.
