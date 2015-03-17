@@ -147,6 +147,7 @@ package body GPS.Menu is
       Dir := Select_Directory
         (-"Select a directory",
          History           => Get_History (Kernel),
+         Base_Directory    => Get_Current_Dir,
          Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
          Parent            => Get_Current_Window (Kernel));
 
