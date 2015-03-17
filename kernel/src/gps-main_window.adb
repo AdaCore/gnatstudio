@@ -29,6 +29,7 @@ with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Screen;                use Gdk.Screen;
 
 with Glib;                      use Glib;
+with Glib.Main;
 with Glib.Error;                use Glib.Error;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;
@@ -600,6 +601,9 @@ package body GPS.Main_Window is
       Application.Add_Window (Main_Window);
 
       Application.Kernel.Set_Main_Window (Main_Window);
+
+      --  Useful on Mac OS X, to present the application to the user
+      Glib.Main.Activate_Application;
 
       Pref_Toolbar_Style := Toolbar_Icons_Size_Preferences.Create
         (Get_Preferences (Application.Kernel),
