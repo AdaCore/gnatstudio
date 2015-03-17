@@ -146,6 +146,7 @@ package body Commands.Builder.Scripts is
                Set_Error_Msg
                  (Data,
                   (-"No target is registered with the name: '") & Name & "'");
+               return;
             end if;
 
             Set_Data (Inst, Target_Class_Name, Target_Property'
