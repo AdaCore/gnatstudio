@@ -591,3 +591,11 @@ installing GPS.
   :file:`registry-gps-{version}.reg` in the root of your GPS installation,
   and double-click it.  Then confirm that you want to apply it in the
   dialog that appears.
+
+*Copy/Paste crash GPS running on forwarded X11 display*
+
+  It is possible to run GPS on remote machine using X11 display forwarding
+  feature of :command:`ssh`. But copy/paste operation could cause GPS to
+  crash, if untrusted forwarding (:command:`ssh -X`) is used.
+  Use :command:`ssh -Y` option or the ForwardX11Trusted directive in
+  ssh_config to setup trusted X11 forwarding and avoid GPS crash.
