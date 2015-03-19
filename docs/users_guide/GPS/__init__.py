@@ -3692,15 +3692,6 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def _insert_at_location(self, location, text):
-        """
-        Inserts some text in the buffer.
-
-        :param EditorLocation location: An instance of :class:`EditorLocation`
-        :param string text: A string
-        """
-        pass  # implemented in Ada
-
     def is_modified(self):
         """
         Tests whether the buffer has been modified since it was last opened

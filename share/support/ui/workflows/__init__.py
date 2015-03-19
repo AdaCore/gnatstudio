@@ -15,13 +15,46 @@ import types
 # A table of all registered workflows
 registered_workflows = {}
 
+# A set of the BuildTarget names for every registered workflows. Used by
+# BuildTarget to determine wether a buildtarget is implemented by a workflow or
+# not
+workflows_target_name_set = set()
 
-def run_registered_workflows(workflow_name, *args, **kwargs):
+# Table of exit handlers for build targets implemented via workflows
+exit_handlers_table = {}
+
+
+def run_registered_workflows(workflow_name, target_name, main_name):
     """ Find workflow and run it with the driver.
     """
+    # The BuildTarget wrapper may have registered an on exit handler for us to
+    # call at the end of the workflow execution. Check if there is one in the
+    # exit_handlers_table
+    on_exit_handler = exit_handlers_table.get((target_name, main_name), None)
+
     try:
-        wf = registered_workflows[workflow_name](*args, **kwargs)
-        driver(wf)
+        wf = registered_workflows[workflow_name](main_name)
+
+        def wrapper():
+            """
+            This wrapper just wraps the workflow, and calls the on_exit handler
+            at the end
+            """
+            exit_value = 0
+            try:
+                yield wf
+            except Exception:
+                # In case of problem in the workflow, register a non zero
+                # return value for the exit handler
+                exit_value = 1
+            finally:
+                # Call the on_exit_handler and remove it from the handlers
+                # table
+                if on_exit_handler:
+                    on_exit_handler(exit_value)
+                exit_handlers_table[(target_name, main_name)] = None
+
+        driver(wrapper())
     except KeyError:
         GPS.Console("Messages").write(
             "\nError: Workflow name not registered.\n")
@@ -211,8 +244,10 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
 
     # going to store the feeded workflow in a global variable
     global registered_workflows
-
     registered_workflows[workflow_name] = workflow
+
+    # Add the target's name to the set of registered workflow BuildTargets
+    workflows_target_name_set.add(target_name)
 
     xml1 = """
 <target model="python" category="Workflow" name="%s">
@@ -223,8 +258,8 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
 <do-not-save>TRUE</do-not-save>
 <target-type>main</target-type>
 <command-line>
-    <arg>workflows.run_registered_workflows("%s", "</arg>
-    """ % (target_name, icon_name, workflow_name)
+    <arg>workflows.run_registered_workflows("%s", "%s", "</arg>
+    """ % (target_name, icon_name, workflow_name, target_name)
 
     xml2 = """
     <arg>%T</arg>

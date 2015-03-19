@@ -85,7 +85,7 @@ Exceptions
         for name, kind, defined, obj in inspect.classify_class_attrs(cls):
             if defined != cls:
                 pass  # Inherited method
-            elif name.startswith("__") and name not in ["__init__"]:
+            elif name.startswith("_") and name not in ["__init__"]:
                 pass
             elif kind in ["method", "static method", "class method"]:
                 methods.append(name)
