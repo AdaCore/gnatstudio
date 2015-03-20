@@ -35,6 +35,15 @@ KP-61-O323-029 GPS: "locate in project view" does not clear filters
 
   Workaround: Clear filters on the Project View before using the menu.
 
+KP-61-O316-020 GPS: Directories shown in omnisearch
+
+  Problem:    In the omnisearch, when searching for files, the omnisearch would
+              display directories, but clicking on them would trigger an error
+
+  Status:     This was fixed in 6.2 on 2015-04-10
+
+  Workaround: Don't click on directories in the omnisearch
+
 KP-61-O308-004 GPS: annoyance when clicking on lock icon in editors
 
   Problem:    Editors display two icons in their status bar: a lock to make

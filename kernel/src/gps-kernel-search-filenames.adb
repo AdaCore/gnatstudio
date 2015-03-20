@@ -301,6 +301,10 @@ package body GPS.Kernel.Search.Filenames is
          --  aggregate projects and this is a duplication in the project itself
 
          if F.File_Extension /= ".o"
+
+           --  We don't want to show directories as entries in the results
+           and then not F.Is_Directory
+
            and then
              (Self.Data.Step = Project_Sources
               or else not Self.Seen.Contains (F))
