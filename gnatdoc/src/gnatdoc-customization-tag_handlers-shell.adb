@@ -22,28 +22,20 @@ with GNATCOLL.Utils;     use GNATCOLL.Utils;
 package body GNATdoc.Customization.Tag_Handlers.Shell is
 
    Inline_Tag_Handler_Class_Name : constant String := "InlineTagHandler";
-   Class_Cst                     : aliased constant String := "class";
-   Item_Cst                      : aliased constant String := "item";
-   Name_Cst                      : aliased constant String := "name";
-   Text_Cst                      : aliased constant String := "text";
-   String_Cst                    : aliased constant String := "string";
 
-   Constructor_Parameters     : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access);
+   Has_Parameter_Method          : constant String := "has_parameter";
+   HTML_Method                   : constant String := "emit_html";
+   Paragraph_Start_Method        : constant String := "emit_paragraph_start";
+   Text_Method                   : constant String := "emit_text";
+   To_Markup_Method              : constant String := "to_markup";
+   Register_Tag_Handler_Method   : constant String := "register_tag_handler";
 
-   Emit_Text_Parameters       : constant Cst_Argument_List :=
-     (1 => Text_Cst'Access, 2 => Class_Cst'Access);
+   Attributes_Parameter          : constant String := "attributes";
+   Handler_Parameter             : constant String := "handler";
+   HTML_Parameter                : constant String := "html";
+   Name_Parameter                : constant String := "name";
+   Text_Parameter                : constant String := "text";
 
-   Emit_HTML_Parameters       : constant Cst_Argument_List :=
-     (1 => String_Cst'Access);
-
-   Register_Parameters        : constant Cst_Argument_List :=
-     (1 => Item_Cst'Access);
-
-   Has_Parameter_Method : constant String := "has_parameter";
-   To_Markup_Method     : constant String := "to_markup";
-
-   PS  : aliased constant String := "emit_paragraph_start";
    PE  : aliased constant String := "emit_paragraph_end";
    LS  : aliased constant String := "emit_list_start";
    LLE : aliased constant String := "emit_list_end";
@@ -51,8 +43,7 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    LIE : aliased constant String := "emit_list_item_end";
 
    type Parameterless_Method is
-     (Emit_Paragraph_Start,
-      Emit_Paragraph_End,
+     (Emit_Paragraph_End,
       Emit_List_Start,
       Emit_List_End,
       Emit_List_Item_Start,
@@ -60,8 +51,7 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
 
    Parameterless_Method_Name : constant array (Parameterless_Method)
      of Cst_String_Access :=
-       (Emit_Paragraph_Start => PS'Access,
-        Emit_Paragraph_End   => PE'Access,
+       (Emit_Paragraph_End   => PE'Access,
         Emit_List_Start      => LS'Access,
         Emit_List_End        => LLE'Access,
         Emit_List_Item_Start => LIS'Access,
@@ -166,8 +156,6 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
 
    begin
       if Command = Constructor_Method then
-         Name_Parameters (Data, Constructor_Parameters);
-
          declare
             Name    : constant String := Nth_Arg (Data, 2);
             Handler : constant Inline_Tag_Handler_Access :=
@@ -184,16 +172,23 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
                   Writer => null));
          end;
 
-      elsif Command = "emit_text" then
-         Name_Parameters (Data, Emit_Text_Parameters);
+      elsif Command = Text_Method then
          Get_Properties (Instance).Writer.Text (Text  => Nth_Arg (Data, 2));
 
-      elsif Command = "emit_html" then
-         Name_Parameters (Data, Emit_HTML_Parameters);
+      elsif Command = HTML_Method then
          Get_Properties (Instance).Writer.HTML (Nth_Arg (Data, 2));
 
       elsif Command = Has_Parameter_Method then
          Data.Set_Return_Value (False);
+
+      elsif Command = Paragraph_Start_Method then
+         declare
+            Writer : constant Markup_Generator_Access :=
+              Get_Properties (Instance).Writer;
+
+         begin
+            Writer.Start_Paragraph;
+         end;
 
       else
          for J in Parameterless_Method_Name'Range loop
@@ -209,8 +204,6 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
 
          begin
             case Method is
-               when Emit_Paragraph_Start =>
-                  Writer.Start_Paragraph;
                when Emit_Paragraph_End =>
                   Writer.End_Paragraph;
                when Emit_List_Start =>
@@ -244,9 +237,7 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
      (Data    : in out Callback_Data'Class;
       Command : String) is
    begin
-      if Command = "register_tag_handler" then
-         Name_Parameters (Data, Register_Parameters);
-
+      if Command = Register_Tag_Handler_Method then
          declare
             Instance : constant Class_Instance :=
               Nth_Arg (Data, 1, Get_Inline_Tag_Handler_Class (Data));
@@ -297,47 +288,55 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    procedure Register_Commands (Kernel : access Core_Kernel_Record'Class) is
    begin
       Register_Command
-        (Kernel.Scripts, Constructor_Method,
-         Class         => Get_Inline_Tag_Handler_Class (Kernel),
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Handler       => Inline_Tag_Handler_Command_Handler'Access);
+        (Repo    => Kernel.Scripts,
+         Command => Constructor_Method,
+         Class   => Get_Inline_Tag_Handler_Class (Kernel),
+         Params  => (1 => Param (Name_Parameter)),
+         Handler => Inline_Tag_Handler_Command_Handler'Access);
 
       Register_Command
-        (Kernel.Scripts, "emit_text",
-         Class         => Get_Inline_Tag_Handler_Class (Kernel),
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Handler       => Inline_Tag_Handler_Command_Handler'Access);
+        (Repo    => Kernel.Scripts,
+         Command => Text_Method,
+         Class   => Get_Inline_Tag_Handler_Class (Kernel),
+         Params  => (1 => Param (Text_Parameter),
+                     2 => Param (Attributes_Parameter, True)),
+         Handler => Inline_Tag_Handler_Command_Handler'Access);
 
       Register_Command
-        (Kernel.Scripts, "emit_html",
-         Class         => Get_Inline_Tag_Handler_Class (Kernel),
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Handler       => Inline_Tag_Handler_Command_Handler'Access);
+        (Repo    => Kernel.Scripts,
+         Command => HTML_Method,
+         Class   => Get_Inline_Tag_Handler_Class (Kernel),
+         Params  => (1 => Param (HTML_Parameter)),
+         Handler => Inline_Tag_Handler_Command_Handler'Access);
 
       Register_Command
-        (Kernel.Scripts, Has_Parameter_Method,
-         Class        => Get_Inline_Tag_Handler_Class (Kernel),
-         Minimum_Args => 0,
-         Maximum_Args => 0,
-         Handler      => Inline_Tag_Handler_Command_Handler'Access);
+        (Repo    => Kernel.Scripts,
+         Command => Has_Parameter_Method,
+         Class   => Get_Inline_Tag_Handler_Class (Kernel),
+         Params  => No_Params,
+         Handler => Inline_Tag_Handler_Command_Handler'Access);
+
+      Register_Command
+        (Repo    => Kernel.Scripts,
+         Command => Paragraph_Start_Method,
+         Class   => Get_Inline_Tag_Handler_Class (Kernel),
+         Params  => (1 => Param (Attributes_Parameter, True)),
+         Handler => Inline_Tag_Handler_Command_Handler'Access);
 
       for J of Parameterless_Method_Name loop
          Register_Command
-           (Kernel.Scripts, J.all,
-            Class         => Get_Inline_Tag_Handler_Class (Kernel),
-            Minimum_Args  => 0,
-            Maximum_Args  => 0,
-            Handler       => Inline_Tag_Handler_Command_Handler'Access);
+           (Repo    => Kernel.Scripts,
+            Command => J.all,
+            Class   => Get_Inline_Tag_Handler_Class (Kernel),
+            Params  => No_Params,
+            Handler => Inline_Tag_Handler_Command_Handler'Access);
       end loop;
 
       Register_Command
-        (Kernel.Scripts, "register_tag_handler",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Handler       => Register_Tag_Handler_Command_Handler'Access);
+        (Repo    => Kernel.Scripts,
+         Command => Register_Tag_Handler_Method,
+         Params  => (1 => Param (Handler_Parameter)),
+         Handler => Register_Tag_Handler_Command_Handler'Access);
    end Register_Commands;
 
 end GNATdoc.Customization.Tag_Handlers.Shell;
