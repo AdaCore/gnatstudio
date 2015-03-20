@@ -515,7 +515,7 @@ def serialize(increment=1):
         value = value + increment
 
 
-@interactive("Editor", "Source editor", name="kill forward")
+@interactive("Editor", filter_write_actions, name="kill forward")
 def delete_forward():
     """Delete the character just after the cursor in the current editor"""
     buffer = GPS.EditorBuffer.get()
@@ -523,7 +523,7 @@ def delete_forward():
     buffer.delete(cursor, cursor)
 
 
-@interactive("Editor", "Source editor", name="Delete Line")
+@interactive("Editor", filter_write_actions, name="Delete Line")
 def delete_line():
     """
     Delete the current line and place the cursor on the beginning of the next
@@ -671,12 +671,12 @@ def end_of_line(file, line):
     buffer.current_view().goto(loc.end_of_line() - 1)
 
 
-@interactive("Editor", "Source editor", name="forward delete")
+@interactive("Editor", filter_write_actions, name="forward delete")
 def forward_delete():
     delete(forward=True)
 
 
-@interactive("Editor", "Source editor", name="backward delete")
+@interactive("Editor", filter_write_actions, name="backward delete")
 def backward_delete():
     e = GPS.EditorBuffer.get()
     cursor = e.selection_start()
@@ -870,7 +870,7 @@ def delete_spaces(backward=True, forward=True, leave_one=False):
         buffer.insert(start, " ")
 
 
-@interactive("Editor", "Source editor", name="delete horizontal space")
+@interactive("Editor", filter_write_actions, name="delete horizontal space")
 @with_save_excursion
 def delete_horizontal_space(backward=1, forward=1):
     """
@@ -881,7 +881,7 @@ def delete_horizontal_space(backward=1, forward=1):
     delete_spaces(leave_one=False)
 
 
-@interactive("Editor", "Source editor", name="just one space")
+@interactive("Editor", filter_write_actions, name="just one space")
 @with_save_excursion
 def just_one_space():
     """
@@ -891,7 +891,7 @@ def just_one_space():
     delete_spaces(leave_one=True)
 
 
-@interactive("Editor", "Source editor", name="transpose chars")
+@interactive("Editor", filter_write_actions, name="transpose chars")
 def transpose_chars():
     """Transpose characters around cursor, moving forward one character."""
     buffer = GPS.EditorBuffer.get()
@@ -905,7 +905,7 @@ def transpose_chars():
         buffer.finish_undo_group()
 
 
-@interactive("Editor", "Source editor", name="Transpose lines")
+@interactive("Editor", filter_write_actions, name="Transpose lines")
 def transpose_lines(location=None):
     """
     Transpose the line at LOCATION (or current line) and the previous one,
@@ -925,7 +925,7 @@ def transpose_lines(location=None):
         buffer.finish_undo_group()
 
 
-@interactive("Editor", "Source editor", name="open line")
+@interactive("Editor", filter_write_actions, name="open line")
 @with_save_excursion
 def open_line():
     """Insert a newline and leave cursor at its current place."""
@@ -933,7 +933,7 @@ def open_line():
     buffer.insert(buffer.current_view().cursor(), "\n")
 
 
-@interactive("Editor", "Source editor", name="Join line")
+@interactive("Editor", filter_write_actions, name="Join line")
 def join_line():
     """
     Join the current line and the following one, separated by a single space,
@@ -966,25 +966,25 @@ def apply_func_to_word(func, location=None):
     buffer.finish_undo_group()
 
 
-@interactive("Editor", "Source editor", name="Upper case word")
+@interactive("Editor", filter_write_actions, name="Upper case word")
 def upper_case_word(location=None):
     """Upper case the current word (starting at the current character)"""
     apply_func_to_word(str.upper, location)
 
 
-@interactive("Editor", "Source editor", name="Lower case word")
+@interactive("Editor", filter_write_actions, name="Lower case word")
 def lower_case_word(location=None):
     """Lower case the current word (starting at the current character)"""
     apply_func_to_word(str.lower, location)
 
 
-@interactive("Editor", "Source editor", name="Capitalize word")
+@interactive("Editor", filter_write_actions, name="Capitalize word")
 def capitalize_case_word(location=None):
     """Capitalize the current word (starting at the current character)"""
     apply_func_to_word(str.capitalize, location)
 
 
-@interactive("Editor", "Source editor", name="Center line")
+@interactive("Editor", filter_write_actions, name="Center line")
 def center_line():
     """
     Center the current line on the screen. If a comment line then the text

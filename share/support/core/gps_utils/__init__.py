@@ -74,10 +74,17 @@ def get_focused_widget():
     return GPS.MDI.current().get_child().pywidget().get_toplevel().get_focus()
 
 
-# noinspection PyUnusedLocal
-def filter_text_actions(context):
+def filter_text_actions(*args):
     f = get_focused_widget()
     return isinstance(f, Gtk.TextView) or isinstance(f, Gtk.Entry)
+
+
+def filter_write_actions(*args):
+    f = get_focused_widget()
+
+    if isinstance(f, Gtk.TextView):
+        return not GPS.EditorBuffer.get().is_read_only()
+    return False
 
 
 def save_dir(fn):
