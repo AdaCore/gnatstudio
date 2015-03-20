@@ -44,17 +44,23 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    PE  : aliased constant String := "end_paragraph";
    LLE : aliased constant String := "end_list";
    LIE : aliased constant String := "end_list_item";
+   GAP : aliased constant String := "generate_after_paragraph";
+   GI  : aliased constant String := "generate_inline";
 
    type Parameterless_Method is
      (Emit_Paragraph_End,
       Emit_List_End,
-      Emit_List_Item_End);
+      Emit_List_Item_End,
+      Generate_After_Paragraph,
+      Generate_Inline);
 
    Parameterless_Method_Name : constant array (Parameterless_Method)
      of Cst_String_Access :=
-       (Emit_Paragraph_End   => PE'Access,
-        Emit_List_End        => LLE'Access,
-        Emit_List_Item_End   => LIE'Access);
+       (Emit_Paragraph_End       => PE'Access,
+        Emit_List_End            => LLE'Access,
+        Emit_List_Item_End       => LIE'Access,
+        Generate_After_Paragraph => GAP'Access,
+        Generate_Inline          => GI'Access);
 
    procedure Inline_Tag_Handler_Command_Handler
      (Data    : in out Callback_Data'Class;
@@ -279,6 +285,10 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
                Writer.End_List;
             when Emit_List_Item_End =>
                Writer.End_List_Item;
+            when Generate_After_Paragraph =>
+               Writer.Switch_To_After_Stream;
+            when Generate_Inline =>
+               Writer.Switch_To_Inline_Stream;
          end case;
       end if;
    end Markup_Generator_Command_Handler;
