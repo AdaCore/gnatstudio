@@ -311,12 +311,22 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    function Nth_Arg
      (Data : Callback_Data'Class; N : Positive) return Name_Value_Maps.Map
    is
-      pragma Unreferenced (N, Data);
+      Result : Name_Value_Maps.Map;
 
    begin
-      --  ??? not implemented jet
+      if Number_Of_Arguments (Data) >= N then
+         declare
+            Dict : constant Dictionary_Instance'Class := Nth_Arg (Data, N);
+            Iter : aliased Dictionary_Iterator'Class := Dict.Iterator;
 
-      return Name_Value_Maps.Empty_Map;
+         begin
+            while Iter.Next loop
+               Result.Insert (Iter.Key, Iter.Value);
+            end loop;
+         end;
+      end if;
+
+      return Result;
    end Nth_Arg;
 
    ------------------------------------------
