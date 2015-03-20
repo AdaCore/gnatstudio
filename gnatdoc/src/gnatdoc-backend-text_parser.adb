@@ -203,7 +203,9 @@ package body GNATdoc.Backend.Text_Parser is
                Para_Offset => P_Matches (1).First,
                Emit_After  => Emit_After);
             Result.Append
-              ((Start_Tag, To_Unbounded_String ("p"), Null_Unbounded_String));
+              ((Kind       => Start_Tag,
+                Name       => To_Unbounded_String ("p"),
+                Attributes => <>));
             Result.Append (Line_Events);
 
          else
@@ -223,13 +225,13 @@ package body GNATdoc.Backend.Text_Parser is
             Item_Offset => LI_Matches (1).First,
             Para_Offset => LI_Matches (2).First);
          Result.Append
-           ((Kind      => Start_Tag,
-             Name      => To_Unbounded_String ("ul"),
-             Parameter => Null_Unbounded_String));
+           ((Kind       => Start_Tag,
+             Name       => To_Unbounded_String ("ul"),
+             Attributes => <>));
          Result.Append
-           ((Kind      => Start_Tag,
-             Name      => To_Unbounded_String ("li"),
-             Parameter => Null_Unbounded_String));
+           ((Kind       => Start_Tag,
+             Name       => To_Unbounded_String ("li"),
+             Attributes => <>));
          Result.Append
            ((Text,
             Unbounded_Slice
@@ -340,9 +342,9 @@ package body GNATdoc.Backend.Text_Parser is
 
                   if State.Last_Para_Offset <= P_Matches (1).First - 3 then
                      Result.Append
-                       ((Kind      => Start_Tag,
-                         Name      => To_Unbounded_String ("pre"),
-                         Parameter => Null_Unbounded_String));
+                       ((Kind       => Start_Tag,
+                         Name       => To_Unbounded_String ("pre"),
+                         Attributes => <>));
                      Result.Append
                        ((Text,
                         Unbounded_Slice
@@ -431,9 +433,9 @@ package body GNATdoc.Backend.Text_Parser is
 
                      Result.Append ((End_Tag, To_Unbounded_String ("li")));
                      Result.Append
-                       ((Kind      => Start_Tag,
-                         Name      => To_Unbounded_String ("li"),
-                         Parameter => Null_Unbounded_String));
+                       ((Kind       => Start_Tag,
+                         Name       => To_Unbounded_String ("li"),
+                         Attributes => <>));
                      Result.Append
                        ((Text,
                         Unbounded_Slice

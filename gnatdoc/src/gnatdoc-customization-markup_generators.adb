@@ -78,7 +78,9 @@ package body GNATdoc.Customization.Markup_Generators is
    procedure HTML (Self : not null access Markup_Generator; HTML : String) is
    begin
       Self.Streams (Self.Current).Append
-        ((Start_Tag, To_Unbounded_String ("html"), Null_Unbounded_String));
+        ((Kind       => Start_Tag,
+          Name       => To_Unbounded_String ("html"),
+          Attributes => <>));
       Self.Streams (Self.Current).Append
         ((Markup_Streams.Text, To_Unbounded_String (HTML)));
       Self.Streams (Self.Current).Append
@@ -91,12 +93,17 @@ package body GNATdoc.Customization.Markup_Generators is
 
    procedure Image
      (Self : not null access Markup_Generator;
-      File : String) is
+      File : String)
+   is
+      Attributes : Name_Value_Maps.Map;
+
    begin
+      Attributes.Insert ("file", File);
+
       Self.Streams (Self.Current).Append
-        ((Kind      => Start_Tag,
-          Name      => To_Unbounded_String ("image"),
-          Parameter => To_Unbounded_String (File)));
+        ((Kind       => Start_Tag,
+          Name       => To_Unbounded_String ("image"),
+          Attributes => Attributes));
       Self.Streams (Self.Current).Append
         ((End_Tag, To_Unbounded_String ("image")));
    end Image;
@@ -108,7 +115,9 @@ package body GNATdoc.Customization.Markup_Generators is
    procedure Start_List (Self : not null access Markup_Generator) is
    begin
       Self.Streams (Self.Current).Append
-        ((Start_Tag, To_Unbounded_String ("ul"), Null_Unbounded_String));
+        ((Kind       => Start_Tag,
+          Name       => To_Unbounded_String ("ul"),
+          Attributes => <>));
    end Start_List;
 
    ---------------------
@@ -118,7 +127,9 @@ package body GNATdoc.Customization.Markup_Generators is
    procedure Start_List_Item (Self : not null access Markup_Generator) is
    begin
       Self.Streams (Self.Current).Append
-        ((Start_Tag, To_Unbounded_String ("li"), Null_Unbounded_String));
+        ((Kind       => Start_Tag,
+          Name       => To_Unbounded_String ("li"),
+          Attributes => <>));
    end Start_List_Item;
 
    ---------------------
@@ -128,7 +139,9 @@ package body GNATdoc.Customization.Markup_Generators is
    procedure Start_Paragraph (Self : not null access Markup_Generator) is
    begin
       Self.Streams (Self.Current).Append
-        ((Start_Tag, To_Unbounded_String ("p"), Null_Unbounded_String));
+        ((Kind       => Start_Tag,
+          Name       => To_Unbounded_String ("p"),
+          Attributes => <>));
    end Start_Paragraph;
 
    ----------------------------

@@ -14,8 +14,14 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
 
 package GNATdoc.Markup_Streams is
+
+   package Name_Value_Maps is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (String, String, Ada.Strings.Hash, "=", "=");
 
    type Event_Kinds is (Start_Tag, Text, End_Tag);
 
@@ -26,7 +32,7 @@ package GNATdoc.Markup_Streams is
 
             case Kind is
                when Start_Tag =>
-                  Parameter : Ada.Strings.Unbounded.Unbounded_String;
+                  Attributes : Name_Value_Maps.Map;
 
                when others =>
                   null;

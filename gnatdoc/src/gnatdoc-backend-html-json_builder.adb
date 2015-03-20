@@ -78,7 +78,7 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
                        Dir.Full_Name.all);
                   File :=
                     GNATCOLL.VFS.Create_From_Base
-                      (Filesystem_String (To_String (Event.Parameter)),
+                      (Filesystem_String (Event.Attributes.Element ("file")),
                        Dir.Full_Name.all);
                   File.Copy
                     (GNATdoc.Get_Doc_Directory (Kernel).Create_From_Dir
