@@ -23,6 +23,24 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
 
    Me : constant Trace_Handle := Create ("GNATdoc.1-HTML_Backend");
 
+   procedure Set_CSS_Class
+     (Object     : in out GNATCOLL.JSON.JSON_Value;
+      Attributes : GNATdoc.Markup_Streams.Name_Value_Maps.Map);
+   --  Sets 'class' attribute of object from given event when present
+
+   -------------------
+   -- Set_CSS_Class --
+   -------------------
+
+   procedure Set_CSS_Class
+     (Object     : in out GNATCOLL.JSON.JSON_Value;
+      Attributes : GNATdoc.Markup_Streams.Name_Value_Maps.Map) is
+   begin
+      if Attributes.Contains ("class") then
+         Object.Set_Field ("cssClass", Attributes.Element ("class"));
+      end if;
+   end Set_CSS_Class;
+
    ----------------------------
    -- To_JSON_Representation --
    ----------------------------
@@ -59,6 +77,7 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
 
                if Event.Name = "p" then
                   State.Object.Set_Field ("kind", "paragraph");
+                  Set_CSS_Class (State.Object, Event.Attributes);
 
                elsif Event.Name = "pre" then
                   State.Object.Set_Field ("kind", "code");
@@ -96,6 +115,10 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
 
                else
                   State.Object.Set_Field ("kind", To_String (Event.Name));
+
+                  if Event.Name = "ul" or else Event.Name = "li" then
+                     Set_CSS_Class (State.Object, Event.Attributes);
+                  end if;
                end if;
 
             when GNATdoc.Markup_Streams.End_Tag =>
