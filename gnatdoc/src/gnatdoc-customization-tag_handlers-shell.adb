@@ -24,13 +24,14 @@ with GNATdoc.Markup_Streams; use GNATdoc.Markup_Streams;
 package body GNATdoc.Customization.Tag_Handlers.Shell is
 
    Inline_Tag_Handler_Class_Name : constant String := "InlineTagHandler";
+   Markup_Generator_Class_Name   : constant String := "MarkupGenerator";
 
    Has_Parameter_Method          : constant String := "has_parameter";
-   HTML_Method                   : constant String := "emit_html";
-   List_Item_Start_Method        : constant String := "emit_list_item_start";
-   List_Start_Method             : constant String := "emit_list_start";
-   Paragraph_Start_Method        : constant String := "emit_paragraph_start";
-   Text_Method                   : constant String := "emit_text";
+   HTML_Method                   : constant String := "html";
+   Start_List_Item_Method        : constant String := "start_list_item";
+   Start_List_Method             : constant String := "start_list";
+   Start_Paragraph_Method        : constant String := "start_paragraph";
+   Text_Method                   : constant String := "text";
    To_Markup_Method              : constant String := "to_markup";
    Register_Tag_Handler_Method   : constant String := "register_tag_handler";
 
@@ -40,9 +41,9 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    Name_Parameter                : constant String := "name";
    Text_Parameter                : constant String := "text";
 
-   PE  : aliased constant String := "emit_paragraph_end";
-   LLE : aliased constant String := "emit_list_end";
-   LIE : aliased constant String := "emit_list_item_end";
+   PE  : aliased constant String := "end_paragraph";
+   LLE : aliased constant String := "end_list";
+   LIE : aliased constant String := "end_list_item";
 
    type Parameterless_Method is
      (Emit_Paragraph_End,
@@ -60,6 +61,11 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
       Command : String);
    --  Hanler for GPS.InlineTagHandler commands
 
+   procedure Markup_Generator_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Hanler for GPS.register_tag_handler command
+
    procedure Register_Tag_Handler_Command_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
@@ -73,20 +79,39 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
      (Data : Callback_Data'Class) return Class_Type;
    --  Return class for TagHandler
 
+   function Get_Markup_Generator_Class
+     (Kernel : access Core_Kernel_Record'Class) return Class_Type;
+   --  Return class for Markup_Generator
+
+   function Get_Markup_Generator_Class
+     (Data : Callback_Data'Class) return Class_Type;
+   --  Return class for Markup_Generator
+
    type Markup_Generator_Access is access all Markup_Generator'Class;
 
    type Inline_Tag_Handler_Properties_Record is
      new Instance_Property_Record with record
       Object : Inline_Tag_Handler_Access;
       Name   : Unbounded_String;
-      Writer : Markup_Generator_Access;
    end record;
 
    type Inline_Tag_Handler_Properties_Access is
      access all Inline_Tag_Handler_Properties_Record'Class;
 
-   function Get_Properties
+   type Markup_Generator_Properties_Record is
+     new Instance_Property_Record with record
+      Object : Markup_Generator_Access;
+   end record;
+
+   type Markup_Generator_Properties_Access is
+     access all Markup_Generator_Properties_Record'Class;
+
+   function Get_Inline_Tag_Handler_Properties
      (Object : Class_Instance) return Inline_Tag_Handler_Properties_Access;
+   --  Returns properties of the object.
+
+   function Get_Markup_Generator_Properties
+     (Object : Class_Instance) return Markup_Generator_Properties_Access;
    --  Returns properties of the object.
 
    function Nth_Arg
@@ -113,17 +138,49 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
       return New_Class (Data.Get_Repository, Inline_Tag_Handler_Class_Name);
    end Get_Inline_Tag_Handler_Class;
 
-   --------------------
-   -- Get_Properties --
-   --------------------
+   ---------------------------------------
+   -- Get_Inline_Tag_Handler_Properties --
+   ---------------------------------------
 
-   function Get_Properties
+   function Get_Inline_Tag_Handler_Properties
      (Object : Class_Instance) return Inline_Tag_Handler_Properties_Access is
    begin
       return
         Inline_Tag_Handler_Properties_Access
           (Get_Data (Object, Inline_Tag_Handler_Class_Name));
-   end Get_Properties;
+   end Get_Inline_Tag_Handler_Properties;
+
+   --------------------------------
+   -- Get_Markup_Generator_Class --
+   --------------------------------
+
+   function Get_Markup_Generator_Class
+     (Kernel : access Core_Kernel_Record'Class) return Class_Type is
+   begin
+      return New_Class (Kernel.Scripts, Markup_Generator_Class_Name);
+   end Get_Markup_Generator_Class;
+
+   --------------------------------
+   -- Get_Markup_Generator_Class --
+   --------------------------------
+
+   function Get_Markup_Generator_Class
+     (Data : Callback_Data'Class) return Class_Type is
+   begin
+      return New_Class (Data.Get_Repository, Markup_Generator_Class_Name);
+   end Get_Markup_Generator_Class;
+
+   -------------------------------------
+   -- Get_Markup_Generator_Properties --
+   -------------------------------------
+
+   function Get_Markup_Generator_Properties
+     (Object : Class_Instance) return Markup_Generator_Properties_Access is
+   begin
+      return
+        Markup_Generator_Properties_Access
+          (Get_Data (Object, Markup_Generator_Class_Name));
+   end Get_Markup_Generator_Properties;
 
    -------------------
    -- Has_Parameter --
@@ -154,7 +211,6 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    is
       Instance : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_Inline_Tag_Handler_Class (Data));
-      Method   : Parameterless_Method;
 
    begin
       if Command = Constructor_Method then
@@ -170,45 +226,43 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
                Inline_Tag_Handler_Class_Name,
                Inline_Tag_Handler_Properties_Record'
                  (Object => Handler,
-                  Name   => To_Unbounded_String (Name),
-                  Writer => null));
+                  Name   => To_Unbounded_String (Name)));
          end;
-
-      elsif Command = Text_Method then
-         Get_Properties (Instance).Writer.Text (Text  => Nth_Arg (Data, 2));
-
-      elsif Command = HTML_Method then
-         Get_Properties (Instance).Writer.HTML (Nth_Arg (Data, 2));
 
       elsif Command = Has_Parameter_Method then
          Data.Set_Return_Value (False);
+      end if;
+   end Inline_Tag_Handler_Command_Handler;
 
-      elsif Command = Paragraph_Start_Method then
-         declare
-            Writer : constant Markup_Generator_Access :=
-              Get_Properties (Instance).Writer;
+   --------------------------------------
+   -- Markup_Generator_Command_Handler --
+   --------------------------------------
 
-         begin
-            Writer.Start_Paragraph (Nth_Arg (Data, 2));
-         end;
+   procedure Markup_Generator_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Markup_Generator_Class (Data));
+      Writer   : constant Markup_Generator_Access :=
+        Get_Markup_Generator_Properties (Instance).Object;
+      Method   : Parameterless_Method;
 
-      elsif Command = List_Start_Method then
-         declare
-            Writer : constant Markup_Generator_Access :=
-              Get_Properties (Instance).Writer;
+   begin
+      if Command = Text_Method then
+         Writer.Text (Text  => Nth_Arg (Data, 2));
 
-         begin
-            Writer.Start_List (Nth_Arg (Data, 2));
-         end;
+      elsif Command = HTML_Method then
+         Writer.HTML (Nth_Arg (Data, 2));
 
-      elsif Command = List_Item_Start_Method then
-         declare
-            Writer : constant Markup_Generator_Access :=
-              Get_Properties (Instance).Writer;
+      elsif Command = Start_Paragraph_Method then
+         Writer.Start_Paragraph (Nth_Arg (Data, 2));
 
-         begin
-            Writer.Start_List_Item (Nth_Arg (Data, 2));
-         end;
+      elsif Command = Start_List_Method then
+         Writer.Start_List (Nth_Arg (Data, 2));
+
+      elsif Command = Start_List_Item_Method then
+         Writer.Start_List_Item (Nth_Arg (Data, 2));
 
       else
          for J in Parameterless_Method_Name'Range loop
@@ -218,22 +272,16 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
             end if;
          end loop;
 
-         declare
-            Writer : constant Markup_Generator_Access :=
-              Get_Properties (Instance).Writer;
-
-         begin
-            case Method is
-               when Emit_Paragraph_End =>
-                  Writer.End_Paragraph;
-               when Emit_List_End =>
-                  Writer.End_List;
-               when Emit_List_Item_End =>
-                  Writer.End_List_Item;
-            end case;
-         end;
+         case Method is
+            when Emit_Paragraph_End =>
+               Writer.End_Paragraph;
+            when Emit_List_End =>
+               Writer.End_List;
+            when Emit_List_Item_End =>
+               Writer.End_List_Item;
+         end case;
       end if;
-   end Inline_Tag_Handler_Command_Handler;
+   end Markup_Generator_Command_Handler;
 
    ----------
    -- Name --
@@ -242,7 +290,8 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    overriding function Name
      (Self : Python_Inline_Tag_Handler) return String is
    begin
-      return To_String (Get_Properties (Self.Instance).Name);
+      return
+        To_String (Get_Inline_Tag_Handler_Properties (Self.Instance).Name);
    end Name;
 
    -------------
@@ -275,7 +324,8 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
 
          begin
             GNATdoc.Customization.Tag_Handlers.Register
-              (Tag_Handler_Access (Get_Properties (Instance).Object));
+              (Tag_Handler_Access
+                 (Get_Inline_Tag_Handler_Properties (Instance).Object));
          end;
       end if;
    end Register_Tag_Handler_Command_Handler;
@@ -292,12 +342,24 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
       Method    : Subprogram_Type :=
         Get_Method (Self.Instance, To_Markup_Method);
       Arguments : Callback_Data'Class :=
-        Create (Get_Script (Self.Instance), 1);
+        Create (Get_Script (Self.Instance), 2);
+      Generator : Class_Instance;
 
    begin
-      Get_Properties (Self.Instance).Writer := Writer'Unchecked_Access;
+      Generator :=
+        New_Instance
+          (Get_Script (Self.Instance),
+           New_Class
+             (Get_Repository (Get_Script (Self.Instance)),
+              Markup_Generator_Class_Name));
+      Set_Data
+        (Generator,
+         Markup_Generator_Class_Name,
+         Markup_Generator_Properties_Record'
+           (Object => Writer'Unchecked_Access));
 
-      Set_Nth_Arg (Arguments, 1, Parameter);
+      Set_Nth_Arg (Arguments, 1, Generator);
+      Set_Nth_Arg (Arguments, 2, Parameter);
 
       declare
          Dummy : constant Any_Type := Method.Execute (Arguments);
@@ -309,7 +371,7 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
       Free (Method);
       Free (Arguments);
 
-      Get_Properties (Self.Instance).Writer := null;
+      Get_Markup_Generator_Properties (Generator).Object := null;
    end To_Markup;
 
    -----------------------
@@ -318,6 +380,8 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
 
    procedure Register_Commands (Kernel : access Core_Kernel_Record'Class) is
    begin
+      --  InlineTagHandler
+
       Register_Command
         (Repo    => Kernel.Scripts,
          Command => Constructor_Method,
@@ -327,55 +391,59 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
 
       Register_Command
         (Repo    => Kernel.Scripts,
-         Command => Text_Method,
-         Class   => Get_Inline_Tag_Handler_Class (Kernel),
-         Params  => (1 => Param (Text_Parameter),
-                     2 => Param (Attributes_Parameter, True)),
-         Handler => Inline_Tag_Handler_Command_Handler'Access);
-
-      Register_Command
-        (Repo    => Kernel.Scripts,
-         Command => HTML_Method,
-         Class   => Get_Inline_Tag_Handler_Class (Kernel),
-         Params  => (1 => Param (HTML_Parameter)),
-         Handler => Inline_Tag_Handler_Command_Handler'Access);
-
-      Register_Command
-        (Repo    => Kernel.Scripts,
          Command => Has_Parameter_Method,
          Class   => Get_Inline_Tag_Handler_Class (Kernel),
          Params  => No_Params,
          Handler => Inline_Tag_Handler_Command_Handler'Access);
 
-      Register_Command
-        (Repo    => Kernel.Scripts,
-         Command => Paragraph_Start_Method,
-         Class   => Get_Inline_Tag_Handler_Class (Kernel),
-         Params  => (1 => Param (Attributes_Parameter, True)),
-         Handler => Inline_Tag_Handler_Command_Handler'Access);
+      --  MarkupGenerator
 
       Register_Command
         (Repo    => Kernel.Scripts,
-         Command => List_Start_Method,
-         Class   => Get_Inline_Tag_Handler_Class (Kernel),
-         Params  => (1 => Param (Attributes_Parameter, True)),
-         Handler => Inline_Tag_Handler_Command_Handler'Access);
+         Command => Text_Method,
+         Class   => Get_Markup_Generator_Class (Kernel),
+         Params  => (1 => Param (Text_Parameter),
+                     2 => Param (Attributes_Parameter, True)),
+         Handler => Markup_Generator_Command_Handler'Access);
 
       Register_Command
         (Repo    => Kernel.Scripts,
-         Command => List_Item_Start_Method,
-         Class   => Get_Inline_Tag_Handler_Class (Kernel),
+         Command => HTML_Method,
+         Class   => Get_Markup_Generator_Class (Kernel),
+         Params  => (1 => Param (HTML_Parameter)),
+         Handler => Markup_Generator_Command_Handler'Access);
+
+      Register_Command
+        (Repo    => Kernel.Scripts,
+         Command => Start_Paragraph_Method,
+         Class   => Get_Markup_Generator_Class (Kernel),
          Params  => (1 => Param (Attributes_Parameter, True)),
-         Handler => Inline_Tag_Handler_Command_Handler'Access);
+         Handler => Markup_Generator_Command_Handler'Access);
+
+      Register_Command
+        (Repo    => Kernel.Scripts,
+         Command => Start_List_Method,
+         Class   => Get_Markup_Generator_Class (Kernel),
+         Params  => (1 => Param (Attributes_Parameter, True)),
+         Handler => Markup_Generator_Command_Handler'Access);
+
+      Register_Command
+        (Repo    => Kernel.Scripts,
+         Command => Start_List_Item_Method,
+         Class   => Get_Markup_Generator_Class (Kernel),
+         Params  => (1 => Param (Attributes_Parameter, True)),
+         Handler => Markup_Generator_Command_Handler'Access);
 
       for J of Parameterless_Method_Name loop
          Register_Command
            (Repo    => Kernel.Scripts,
             Command => J.all,
-            Class   => Get_Inline_Tag_Handler_Class (Kernel),
+            Class   => Get_Markup_Generator_Class (Kernel),
             Params  => No_Params,
-            Handler => Inline_Tag_Handler_Command_Handler'Access);
+            Handler => Markup_Generator_Command_Handler'Access);
       end loop;
+
+      --  "register_tag_handler"
 
       Register_Command
         (Repo    => Kernel.Scripts,
