@@ -15,9 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
-with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
-with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.Any_Types;     use GNATCOLL.Any_Types;
+with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GNATCOLL.Utils;         use GNATCOLL.Utils;
+
+with GNATdoc.Markup_Streams; use GNATdoc.Markup_Streams;
 
 package body GNATdoc.Customization.Tag_Handlers.Shell is
 
@@ -25,6 +27,8 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
 
    Has_Parameter_Method          : constant String := "has_parameter";
    HTML_Method                   : constant String := "emit_html";
+   List_Item_Start_Method        : constant String := "emit_list_item_start";
+   List_Start_Method             : constant String := "emit_list_start";
    Paragraph_Start_Method        : constant String := "emit_paragraph_start";
    Text_Method                   : constant String := "emit_text";
    To_Markup_Method              : constant String := "to_markup";
@@ -37,24 +41,18 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    Text_Parameter                : constant String := "text";
 
    PE  : aliased constant String := "emit_paragraph_end";
-   LS  : aliased constant String := "emit_list_start";
    LLE : aliased constant String := "emit_list_end";
-   LIS : aliased constant String := "emit_list_item_start";
    LIE : aliased constant String := "emit_list_item_end";
 
    type Parameterless_Method is
      (Emit_Paragraph_End,
-      Emit_List_Start,
       Emit_List_End,
-      Emit_List_Item_Start,
       Emit_List_Item_End);
 
    Parameterless_Method_Name : constant array (Parameterless_Method)
      of Cst_String_Access :=
        (Emit_Paragraph_End   => PE'Access,
-        Emit_List_Start      => LS'Access,
         Emit_List_End        => LLE'Access,
-        Emit_List_Item_Start => LIS'Access,
         Emit_List_Item_End   => LIE'Access);
 
    procedure Inline_Tag_Handler_Command_Handler
@@ -90,6 +88,10 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    function Get_Properties
      (Object : Class_Instance) return Inline_Tag_Handler_Properties_Access;
    --  Returns properties of the object.
+
+   function Nth_Arg
+     (Data : Callback_Data'Class; N : Positive) return Name_Value_Maps.Map;
+   --  Returns value of nth argument as name-value map
 
    ----------------------------------
    -- Get_Inline_Tag_Handler_Class --
@@ -152,7 +154,7 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    is
       Instance : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_Inline_Tag_Handler_Class (Data));
-      Method : Parameterless_Method;
+      Method   : Parameterless_Method;
 
    begin
       if Command = Constructor_Method then
@@ -187,7 +189,25 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
               Get_Properties (Instance).Writer;
 
          begin
-            Writer.Start_Paragraph;
+            Writer.Start_Paragraph (Nth_Arg (Data, 2));
+         end;
+
+      elsif Command = List_Start_Method then
+         declare
+            Writer : constant Markup_Generator_Access :=
+              Get_Properties (Instance).Writer;
+
+         begin
+            Writer.Start_List (Nth_Arg (Data, 2));
+         end;
+
+      elsif Command = List_Item_Start_Method then
+         declare
+            Writer : constant Markup_Generator_Access :=
+              Get_Properties (Instance).Writer;
+
+         begin
+            Writer.Start_List_Item (Nth_Arg (Data, 2));
          end;
 
       else
@@ -206,12 +226,8 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
             case Method is
                when Emit_Paragraph_End =>
                   Writer.End_Paragraph;
-               when Emit_List_Start =>
-                  Writer.Start_List;
                when Emit_List_End =>
                   Writer.End_List;
-               when Emit_List_Item_Start =>
-                  Writer.Start_List_Item;
                when Emit_List_Item_End =>
                   Writer.End_List_Item;
             end case;
@@ -228,6 +244,21 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
    begin
       return To_String (Get_Properties (Self.Instance).Name);
    end Name;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Callback_Data'Class; N : Positive) return Name_Value_Maps.Map
+   is
+      pragma Unreferenced (N, Data);
+
+   begin
+      --  ??? not implemented jet
+
+      return Name_Value_Maps.Empty_Map;
+   end Nth_Arg;
 
    ------------------------------------------
    -- Register_Tag_Handler_Command_Handler --
@@ -319,6 +350,20 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
       Register_Command
         (Repo    => Kernel.Scripts,
          Command => Paragraph_Start_Method,
+         Class   => Get_Inline_Tag_Handler_Class (Kernel),
+         Params  => (1 => Param (Attributes_Parameter, True)),
+         Handler => Inline_Tag_Handler_Command_Handler'Access);
+
+      Register_Command
+        (Repo    => Kernel.Scripts,
+         Command => List_Start_Method,
+         Class   => Get_Inline_Tag_Handler_Class (Kernel),
+         Params  => (1 => Param (Attributes_Parameter, True)),
+         Handler => Inline_Tag_Handler_Command_Handler'Access);
+
+      Register_Command
+        (Repo    => Kernel.Scripts,
+         Command => List_Item_Start_Method,
          Class   => Get_Inline_Tag_Handler_Class (Kernel),
          Params  => (1 => Param (Attributes_Parameter, True)),
          Handler => Inline_Tag_Handler_Command_Handler'Access);

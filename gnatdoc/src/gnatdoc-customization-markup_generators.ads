@@ -22,19 +22,25 @@ package GNATdoc.Customization.Markup_Generators is
 
    type Markup_Generator is tagged limited private;
 
-   procedure Start_Paragraph (Self : not null access Markup_Generator);
+   procedure Start_Paragraph
+     (Self       : not null access Markup_Generator;
+      Attributes : GNATdoc.Markup_Streams.Name_Value_Maps.Map);
    --  Generate start event for 'p' tag.
 
    procedure End_Paragraph (Self : not null access Markup_Generator);
    --  Generate end event for 'p' tag.
 
-   procedure Start_List (Self : not null access Markup_Generator);
+   procedure Start_List
+     (Self       : not null access Markup_Generator;
+      Attributes : GNATdoc.Markup_Streams.Name_Value_Maps.Map);
    --  Generate start event for 'ul' tag.
 
    procedure End_List (Self : not null access Markup_Generator);
    --  Generate end event for 'ul' tag.
 
-   procedure Start_List_Item (Self : not null access Markup_Generator);
+   procedure Start_List_Item
+     (Self       : not null access Markup_Generator;
+      Attributes : GNATdoc.Markup_Streams.Name_Value_Maps.Map);
    --  Generate start event for 'li' tag.
 
    procedure End_List_Item (Self : not null access Markup_Generator);
