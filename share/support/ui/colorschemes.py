@@ -7,7 +7,12 @@ These themes are inspired from:
 """
 
 import os
-import cairo
+
+has_cairo = True
+try:
+    import cairo
+except:
+    has_cairo = False
 
 import GPS
 import pygps
@@ -291,6 +296,10 @@ def generate_snapshots(directory):
     """
 
     global themes_to_process
+
+    if not has_cairo:
+        GPS.MDI.dialog("pycairo must be enabled in order to take snapshots")
+        return
 
     if not os.path.exists(directory):
         os.mkdir(directory)
