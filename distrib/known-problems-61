@@ -68,6 +68,21 @@ KP-61-O227-005 GPS: Align command depends on auto-indent preference
 
   Workaround: Delete lines with 'indent' call in align.py file.
 
+KP-61-O223-001 WB: scenario.makefile not created when converting to ada project
+
+  Problem:    Sometimes, when converting a Wind River Workbench project to an
+              Ada project, the scenario.makefile is not created, and thus the
+              converted project cannot be built. This occurs when the external
+              gpr file used during the conversion contains unsupported IDE
+              package. When it occurs, the Error Log contains multiple
+              GNATbench errors.
+
+  Status:     This was fixed in 2.9.2 on 2015-03-13
+
+  Workaround: Use during the conversion a modified gpr file without its
+              original IDE package. After the conversion, restore the IDE
+              package to its original state.
+
 KP-61-O222-001 GPS: leftover highlighting from auto_highlight_occurrences
 
   Problem:    When the auto_highlight_occurrences plugin is active, stray
