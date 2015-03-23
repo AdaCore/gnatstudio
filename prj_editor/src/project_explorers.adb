@@ -2090,6 +2090,18 @@ package body Project_Explorers is
       end Select_If_Searched;
 
    begin
+      --  If the target node is not visible due to the current filter
+      --  setting, clear the filter before jumping.
+
+      if Is_Visible (View.Filter, File) = Hide then
+         View.Set_Filter ("");
+         View.Tree.Filter.Refilter;
+
+         --  We use the "execute_again" mechanism here because the filter is
+         --  applied not immediately but in an idle callback.
+         return Execute_Again;
+      end if;
+
       S := Get_Registry (Kernel).Tree.Info_Set (File);
       Node := Find_Project_Node
         (View, File_Info (S.First_Element).Project);
