@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
+
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GPS.Kernel;        use GPS.Kernel;
@@ -73,6 +75,8 @@ package body GPS.Stock_Icons is
 
       Theme := Get_Default;
       Theme.Prepend_Search_Path
-         (System_Dir.Display_Full_Name & "share/gps/icons");
+        (System_Dir.Display_Full_Name
+         & "share" & Directory_Separator
+         & "gps" & Directory_Separator & "icons");
    end Register_Stock_Icons;
 end GPS.Stock_Icons;
