@@ -184,23 +184,34 @@ class Makefile (Builder):
         self.pkg_name = "make"
         self.build_file_attr = "makefile"
         self.default_build_files = ["Makefile", "makefile"]
+        self.target_matcher = re.compile(
+            "^([^#.=%\t][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
+        self.include_matcher = re.compile("^include (.*)$")
         Builder.__init__(self)
 
-    def read_targets(self):
-        targets = []
-        matcher = re.compile("^([^#.=%\t][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
-        f = file(self.buildfile)
+    def __read_targets(self, filename):
+        """
+        Return a set of all targets for a given Makefile
+        """
+        targets = set()
+        f = file(filename)
         for line in f:
-            matches = matcher.match(line)
+            matches = self.target_matcher.match(line)
             if matches:
                 if matches.group(3):
                     if matches.group(3).strip() != "IGNORE":
                         target_name = matches.group(1)
-                        targets += [(target_name, target_name, '')]
+                        targets.add((target_name, target_name, ''))
                 else:
                     # Handle multiple targets on same line
                     for target in matches.group(1).split():
-                        targets += [(target, target, '')]
+                        targets.add((target, target, ''))
+
+            else:
+                matches = self.include_matcher.match(line)
+                if matches:
+                    targets.update(self.__read_targets(matches.group(1)))
+
         f.close()
         return targets
 
@@ -208,7 +219,7 @@ class Makefile (Builder):
         if name == "make":
             self.compute_buildfile()
             if self.buildfile:
-                return self.read_targets()
+                return sorted(self.__read_targets(self.buildfile))
         return None
 
 ant_targets = []
