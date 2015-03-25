@@ -79,14 +79,6 @@ def filter_text_actions(*args):
     return isinstance(f, Gtk.TextView) or isinstance(f, Gtk.Entry)
 
 
-def filter_write_actions(*args):
-    f = get_focused_widget()
-
-    if isinstance(f, Gtk.TextView):
-        return not GPS.EditorBuffer.get().is_read_only()
-    return False
-
-
 def save_dir(fn):
     """
     Saves the current directory before executing the instrumented

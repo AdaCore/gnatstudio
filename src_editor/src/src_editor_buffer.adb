@@ -545,6 +545,9 @@ package body Src_Editor_Buffer is
    --  Return the autosaved file corresponding to File.
    --  See also Is_Auto_Save
 
+   function Is_Editor (Ctxt : Selection_Context) return Boolean;
+   --  Return True iff the context was created from a source editor
+
    -----------
    -- Hooks --
    -----------
@@ -7791,6 +7794,21 @@ package body Src_Editor_Buffer is
       Unchecked_Free (Comment_Start_End_Re);
    end Find_Current_Comment_Paragraph;
 
+   ---------------
+   -- Is_Editor --
+   ---------------
+
+   function Is_Editor (Ctxt : Selection_Context) return Boolean is
+   begin
+      --  Do not check the current focus widget ourselves. Instead, we know
+      --  it has been properly checked when the context was created, and we
+      --  just check the current module from there.
+      return not Completion_Module.In_Smart_Completion
+        and then GPS.Kernel.Modules.Module_ID
+          (Get_Creator (Ctxt)) = Src_Editor_Module_Id
+            and then not Get_Kernel (Ctxt).Get_Contextual_Menu_Open;
+   end Is_Editor;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -7801,13 +7819,27 @@ package body Src_Editor_Buffer is
    is
       pragma Unreferenced (Context);
    begin
-      --  Do not check the current focus widget ourselves. Instead, we know
-      --  it has been properly checked when the context was created, and we
-      --  just check the current module from there.
-      return not Completion_Module.In_Smart_Completion
-        and then GPS.Kernel.Modules.Module_ID
-          (Get_Creator (Ctxt)) = Src_Editor_Module_Id
-            and then not Get_Kernel (Ctxt).Get_Contextual_Menu_Open;
+      return Is_Editor (Ctxt);
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Context : access Writable_Src_Editor_Action_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+      Box : Source_Editor_Box;
+   begin
+      if not Is_Editor (Ctxt) then
+         return False;
+      end if;
+
+      Box := Get_Source_Box_From_MDI (Find_Current_Editor (Get_Kernel (Ctxt)));
+
+      return Box.Get_Buffer.Get_Writable;
    end Filter_Matches_Primitive;
 
    ----------

@@ -1934,6 +1934,8 @@ package body Src_Editor_Module is
                                    new Is_Dispatching_Filter;
       Src_Action_Context       : constant Action_Filter :=
                                    new Src_Editor_Action_Context;
+      Writable_Src_Action_Context  : constant Action_Filter :=
+                                       new Writable_Src_Editor_Action_Context;
       Is_Not_Makefile          : constant Action_Filter :=
                                    new Is_Not_Makefile_Context;
       --  Memory is never freed, but this is needed for the whole life of
@@ -1946,6 +1948,10 @@ package body Src_Editor_Module is
 
       Register_Filter
         (Kernel, Src_Action_Context, "Source editor",
+         Cached => False);
+
+      Register_Filter
+        (Kernel, Writable_Src_Action_Context, "Writable source editor",
          Cached => False);
 
       --  Commands

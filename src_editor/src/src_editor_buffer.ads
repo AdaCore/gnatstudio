@@ -944,6 +944,15 @@ package Src_Editor_Buffer is
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    --  A key context that matches if the current widget is a source editor
 
+   type Writable_Src_Editor_Action_Context
+   is new GPS.Kernel.Action_Filter_Record
+      with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access Writable_Src_Editor_Action_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   --  A key context that matches if the current widget is a writable
+   --  source editor
+
    --------------
    --  Signals --
    --------------
