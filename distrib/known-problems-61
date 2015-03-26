@@ -78,6 +78,21 @@ KP-61-O227-005 GPS: Align command depends on auto-indent preference
 
   Workaround: Delete lines with 'indent' call in align.py file.
 
+KP-61-O223-046 WB: error in building VxWorks 653 integration project tutorial
+
+  Problem:    When running the "Creating and Building a VxWorks 653
+              Integration Project" tutorial on VxWorks 653 2.4 for a
+              powerpc-wrs-vxworksae target, the projects cannot be created, and
+              error dialogs are displayed.
+
+  Status:     This was fixed in 2.9.2 on 2015-03-26
+
+  Workaround: Edit the imported module.xml file, in CoreOS definition use the
+              wrSbcP4080 board support package (BSP) instead of wrSbc750gx.
+              If building the sender/receiver projects, you encounter gprconfig
+              problems, remove the c & c++ languages from the gprconfig command
+              line present in their generated gnat.makefile files.
+
 KP-61-O223-001 WB: scenario.makefile not created when converting to ada project
 
   Problem:    Sometimes, when converting a Wind River Workbench project to an
