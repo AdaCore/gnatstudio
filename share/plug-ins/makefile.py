@@ -187,14 +187,29 @@ class Makefile (Builder):
         self.target_matcher = re.compile(
             "^([^#.=%\t][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
         self.include_matcher = re.compile("^include (.*)$")
+
+        self.current_dir = None
+        # The directory of the toplevel makefile. All include statements
+        # are resolved relative to that directory
+
         Builder.__init__(self)
 
     def __read_targets(self, filename):
         """
         Return a set of all targets for a given Makefile
         """
+        if not self.current_dir:
+            self.current_dir = os.path.join(
+                os.getcwd(), os.path.dirname(filename))
+        else:
+            filename = os.path.join(self.current_dir, filename)
+
         targets = set()
-        f = file(filename)
+        try:
+            f = file(filename)
+        except IOError:
+            # Can't read the file
+            return targets
         for line in f:
             matches = self.target_matcher.match(line)
             if matches:
@@ -210,6 +225,8 @@ class Makefile (Builder):
             else:
                 matches = self.include_matcher.match(line)
                 if matches:
+                    # filenames are relative to the directory of the
+                    # current Makefile
                     targets.update(self.__read_targets(matches.group(1)))
 
         f.close()
