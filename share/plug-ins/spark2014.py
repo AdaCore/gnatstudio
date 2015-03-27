@@ -413,6 +413,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--mode=flow</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
@@ -424,6 +425,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <switches command="%(tool_name)s">
@@ -485,6 +487,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
@@ -508,6 +511,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-U</arg>
@@ -532,6 +536,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-u</arg>
@@ -557,6 +562,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--mode=flow</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
@@ -579,6 +585,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
@@ -601,6 +608,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-U</arg>
        </command-line>
@@ -623,6 +631,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-u</arg>
           <arg>%fp</arg>
@@ -647,6 +656,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
@@ -668,6 +678,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--limit-line=%f:%l</arg>
        </command-line>
@@ -691,6 +702,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
@@ -709,6 +721,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
        </command-line>
        <iconname>gps-build-all-symbolic</iconname>
        <persistent-history>False</persistent-history>
@@ -722,6 +735,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--clean</arg>
        </command-line>
     </target>
@@ -734,6 +748,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <command-line>
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
+          <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
