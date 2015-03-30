@@ -478,6 +478,7 @@ messages. Full: same as normal, plus run-time checks related messages">
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer-gprbuild</arg>
+          <arg>-ws</arg>
           <arg>-c</arg>
           <arg>-f</arg>
           <arg>-u</arg>
@@ -500,6 +501,7 @@ messages. Full: same as normal, plus run-time checks related messages">
        <read-only>TRUE</read-only>
        <command-line>
           <arg>codepeer-gprbuild</arg>
+          <arg>-ws</arg>
           <arg>-d</arg>
           <arg>%eL</arg>
           <arg>-P%PP</arg>
