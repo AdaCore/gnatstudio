@@ -327,13 +327,11 @@ package body GPS.Kernel.Messages.Shell is
             if Action_Str /= "" then
                The_Action := Lookup_Action (Kernel, Action_Str);
 
-               if The_Action = null
-                 or else The_Action.Command = null
-               then
+               if The_Action = null then
                   Set_Error_Msg (Data, "Could not find action for "
                                  & Action_Str);
                else
-                  Command := Command_Access (The_Action.Command);
+                  Command := Command_Access (Get_Command (The_Action));
                end if;
             end if;
 

@@ -119,7 +119,7 @@ package body Shell_Script is
         (Get_Kernel (Args), Get_Command (Subprogram));
    begin
       Custom := Create_Proxy
-        (A.Command,
+        (Get_Command (A),
          Context => (Event       => null,
                      Context     => No_Context,
                      Synchronous => True,

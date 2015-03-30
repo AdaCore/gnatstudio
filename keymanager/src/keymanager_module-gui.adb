@@ -54,7 +54,6 @@ with Gtk.Paned;               use Gtk.Paned;
 with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Separator;           use Gtk.Separator;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
-with Gtk.Text_Iter;           use Gtk.Text_Iter;
 with Gtk.Text_Tag;            use Gtk.Text_Tag;
 with Gtk.Text_View;           use Gtk.Text_View;
 with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
@@ -325,11 +324,9 @@ package body KeyManager_Module.GUI is
       Action : Action_Record_Access) return Gtk_Tree_Iter
    is
       Parent : Gtk_Tree_Iter;
+      Base_Cat : constant String := Get_Category (Action);
       Cat : constant String :=
-        (if Action.Category = null
-         then "<no category>"
-         else Action.Category.all);
-
+        (if Base_Cat = "" then "<no category" else Base_Cat);
    begin
       Parent := Find_Node (Model, Cat, Action_Column);
       if Parent = Null_Iter then
@@ -369,7 +366,7 @@ package body KeyManager_Module.GUI is
          exit when Action = null;
 
          declare
-            Name : constant String := Get (Action_Iter).Name.all;
+            Name : constant String := Get_Name (Get (Action_Iter));
             Key  : constant String := Lookup_Key_From_Action
               (Get_Shortcuts (Editor.Kernel),
                Name,
@@ -380,7 +377,7 @@ package body KeyManager_Module.GUI is
          begin
             --  Do not show actions with no category, by default
             Show := Show_Empty_Cat
-              or else Action.Category /= null
+              or else Get_Category (Action) /= ""
               or else Key /= "";
 
             if Show then
@@ -405,9 +402,7 @@ package body KeyManager_Module.GUI is
                  (Model   => Editor.Model,
                   Parent  => Parent,
                   Descr   => Name,
-                  Icon    => (if Action.Icon_Name /= null then
-                                   Action.Icon_Name.all
-                              else ""),
+                  Icon    => Get_Icon_Name (Action),
                   Key     => Key
                     & (if User_Changed then " (modified)" else ""),
                   Weight  => (if User_Changed then Pango_Weight_Bold
@@ -432,10 +427,7 @@ package body KeyManager_Module.GUI is
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
-      Text_Iter : Gtk_Text_Iter;
       Action    : Action_Record_Access;
-      Bold      : Gtk_Text_Tag;
-      User_Changed : aliased Boolean;
    begin
       Get_Selected (Selection, Model, Iter);
 
@@ -448,44 +440,12 @@ package body KeyManager_Module.GUI is
 
          Action := Lookup_Action (Ed.Kernel, Get_String (Model, Iter, 0));
 
-         if Action /= null and then Action.Description /= null then
-            Set_Text (Ed.Help, Action.Description.all);
-         else
-            Set_Text (Ed.Help, "");
-         end if;
-
          --  Action could be null if we chose to display only lines with
          --  shortcuts and the user clicks on a line for a category
          if Action /= null then
-            Get_End_Iter (Ed.Help, Text_Iter);
-
-            Bold := Create_Tag (Ed.Help);
-            Set_Property (Bold, Gtk.Text_Tag.Weight_Property,
-                          Pango_Weight_Bold);
-
-            Insert_With_Tags
-              (Ed.Help, Text_Iter,
-               ASCII.LF & ASCII.LF & (-"Current key shortcut: "),
-               Bold);
-            Insert
-              (Ed.Help, Text_Iter,
-               Lookup_Key_From_Action
-                 (Get_Shortcuts (Ed.Kernel),
-                  Action            => Get_String (Model, Iter, Action_Column),
-                  Default           => -"none",
-                  Is_User_Changed => User_Changed'Unchecked_Access,
-                  Use_Markup        => False));
-
-            Insert_With_Tags
-              (Ed.Help, Text_Iter, ASCII.LF & (-"Menus: ") & ASCII.LF,
-               Bold);
-            if Action.Menus = null then
-               Insert (Ed.Help, Text_Iter, -"none");
-            else
-               for M in Action.Menus'Range loop
-                  Insert (Ed.Help, Text_Iter, Action.Menus (M).all & ASCII.LF);
-               end loop;
-            end if;
+            Set_Text
+              (Ed.Help,
+               Get_Full_Description (Action, Ed.Kernel, Use_Markup => False));
          end if;
       else
          Set_Sensitive (Ed.Remove_Button, False);
@@ -525,24 +485,12 @@ package body KeyManager_Module.GUI is
 
          if not Row_Visible then
             Action := Lookup_Action (Data.Kernel, Get_String (Model, Iter, 0));
-            if Action /= null and then Action.Description /= null then
+            if Action /= null then
                Row_Visible :=
-                 Data.Filter_Pattern.Start (Action.Description.all)
+                 Data.Filter_Pattern.Start
+                   (Get_Full_Description
+                      (Action, Kernel => null, Use_Markup => False))
                  /= No_Match;
-            end if;
-
-            if Action /= null
-              and then not Row_Visible
-              and then Action.Menus /= null
-            then
-               for M in Action.Menus'Range loop
-                  if Data.Filter_Pattern.Start (Action.Menus (M).all)
-                    /= No_Match
-                  then
-                     Row_Visible := True;
-                     exit;
-                  end if;
-               end loop;
             end if;
          end if;
       end if;

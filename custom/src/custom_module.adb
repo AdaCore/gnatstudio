@@ -536,7 +536,7 @@ package body Custom_Module is
 
          if Action /= "" then
             Command := Lookup_Action (Kernel, Action);
-            if Command = null or else Command.Command = null then
+            if Command = null then
                Insert (Kernel,
                        -"Command not found when creating contextual menu: "
                        & Action,
@@ -1582,10 +1582,6 @@ package body Custom_Module is
          if Action_Inst /= No_Class_Instance then
             Action  := Lookup_Action
               (Kernel, String'(Get_Data (Action_Inst, Action_Class)));
-
-            if Action /= null then
-               The_Filter := Action.Filter;
-            end if;
          end if;
 
          declare
@@ -1603,12 +1599,7 @@ package body Custom_Module is
          if Subp /= null then
             Filter := new Subprogram_Filter_Record'
               (Action_Filter_Record with Filter => Subp);
-
-            if The_Filter = null then
-               The_Filter := Action_Filter (Filter);
-            else
-               The_Filter := The_Filter and Action_Filter (Filter);
-            end if;
+            The_Filter := Action and Filter;
          end if;
 
          Subp := Nth_Arg (Data, 3, null);
@@ -1800,6 +1791,17 @@ package body Custom_Module is
                Filter      => Filter);
          end;
 
+      elsif Command = "disable" then
+         declare
+            Disabled : constant Boolean := Nth_Arg (Data, 2, True);
+         begin
+            Inst := Nth_Arg (Data, 1, Action_Class);
+            Set_Action_Disabled
+              (Kernel,
+               Name     => String'(Get_Data (Inst, Action_Class)),
+               Disabled => Disabled);
+         end;
+
       elsif Command = "key" then
          Name_Parameters (Data, (1 => Key_Cst'Access));
          Inst := Nth_Arg (Data, 1, Action_Class);
@@ -1822,11 +1824,9 @@ package body Custom_Module is
             Context : constant Selection_Context :=
               Get_Current_Context (Kernel);
          begin
-            if Context /= No_Context
-              and then Filter_Matches (Action.Filter, Context)
-            then
+            if Filter_Matches (Action, Context) then
                Launch_Foreground_Command
-                 (Kernel, Action.Command, Destroy_On_Exit => False);
+                 (Kernel, Get_Command (Action), Destroy_On_Exit => False);
                Set_Return_Value (Data, True);
             else
                Set_Return_Value (Data, False);
@@ -1918,8 +1918,13 @@ package body Custom_Module is
          Minimum_Args  => 1,
          Maximum_Args  => 4,
          Handler       => Action_Handler'Access);
-      Register_Command
-        (Kernel, "execute_if_possible",
+      Kernel.Scripts.Register_Command
+        ("disable",
+         Params        => (1 => Param ("disabled", Optional => True)),
+         Class         => Action_Class,
+         Handler       => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("execute_if_possible",
          Class         => Action_Class,
          Handler       => Action_Handler'Access);
       Register_Command

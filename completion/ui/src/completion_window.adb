@@ -1377,7 +1377,7 @@ package body Completion_Window is
                   Context     : constant Selection_Context :=
                     Get_Current_Context (Window.Explorer.Kernel);
                   Command      : constant Command_Access := Create_Proxy
-                    (Command => Action.Command,
+                    (Command => Get_Command (Action),
                      Context =>
                        (Event       => null,
                         Context     => Context,

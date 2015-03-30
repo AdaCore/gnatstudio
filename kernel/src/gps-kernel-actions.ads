@@ -26,34 +26,7 @@ with GNAT.Strings;
 
 package GPS.Kernel.Actions is
 
-   type Action_Record is record
-      Command     : not null access Interactive_Command'Class;
-      Filter      : not null access Action_Filter_Record'Class;
-      Description : GNAT.Strings.String_Access;
-      Name        : GNAT.Strings.String_Access;
-      Modified    : Boolean;
-      Overriden   : Boolean;
-      Category    : GNAT.Strings.String_Access;
-
-      Menus       : GNAT.Strings.String_List_Access;
-      --  List of all menu paths that are associated with this action.
-
-      Icon_Name   : GNAT.Strings.String_Access;
-   end record;
-   --  Command is freed automatically. We use an anonymous type so that calls
-   --  to Register_Action can call "new ..." directly when passing a value to
-   --  the parameter.
-   --
-   --  Filter indicates when the action can be executed. If null, this means
-   --  the action can always be executed. The filter mustn't be deallocated
-   --  in the life of GPS, since there might be actions bound to it at any
-   --  time.
-   --  Category is used in the key bindings editor to group actions. If null,
-   --  the action should not be shown in the keybinding editor.
-   --
-   --  Icon_Name is the icon for this action (optional, might be null). See
-   --  GPS.Stock_Icons for more information on icon themes.
-
+   type Action_Record is private;
    type Action_Record_Access is access Action_Record;
 
    procedure Register_Action
@@ -89,6 +62,49 @@ package GPS.Kernel.Actions is
    --  an action is created dynamically as appropriate (but doesn't need to
    --  be freed explicitly by the caller)
 
+   procedure Set_Action_Disabled
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Name     : String;
+      Disabled : Boolean);
+   --  Whether an action is allowed in GPS.
+   --  This is used to disable the use of specific actions across GPS,
+   --  including for the contextual menus.
+
+   function Filter_Matches
+     (Self    : access Action_Record;
+      Context : Selection_Context) return Boolean;
+   --  Whether the action can be executed in this context
+
+   function "and"
+     (Action : access Action_Record;
+      Filter : access Action_Filter_Record'Class)
+      return access Action_Filter_Record'Class;
+   --  Combine the action's filter with another filter, and return the result.
+   --  Any of the two parameters can be null
+
+   function Get_Filter_Error
+     (Self : access Action_Record) return String;
+   --  Return the error message that might explain why the filter does not
+   --  match the current context
+
+   function Has_Filter (Self : not null access Action_Record) return Boolean;
+   --  Whether there is a filter for this action.
+
+   function Get_Name (Self : not null access Action_Record) return String;
+   --  Return the name for the action
+
+   function Get_Command
+     (Self    : not null access Action_Record)
+      return not null access Interactive_Command'Class;
+   --  The command to execute for this action.
+   --  ??? This subprogram is provided as a transition only. New code should
+   --  always store the name of the action, and execute it via its name.
+   --  The returned command might be free if the command is unregistered or
+   --  overridden, and code that stores the command would access freed memory.
+
+   function Get_Icon_Name (Self : access Action_Record) return String;
+   --  Return the icon to use when this action is made visible to the user.
+
    function Execute_In_Background
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Action  : String;
@@ -99,6 +115,31 @@ package GPS.Kernel.Actions is
    --  If Context is null, it is computed automatically.
    --  Returns True if the command was executed, False if it did not apply to
    --  the context.
+
+   procedure Add_Menu_To_List
+     (Action : not null access Action_Record;
+      Path   : String);
+   --  Add a menu to the list of menus associated with Action.
+
+   procedure Update_Shortcut_Display
+     (Kernel : access Kernel_Handle_Record'Class;
+      Action : String);
+   --  Update the shortcut for all menus associated with the action
+
+   function Get_Category
+     (Action : not null access Action_Record) return String;
+   --  Return the name of the category for the action
+
+   function Get_Full_Description
+     (Action : not null access Action_Record;
+      Kernel : access Kernel_Handle_Record'Class := null;
+      Use_Markup : Boolean := True)
+     return String;
+   --  Return the full description (+ name + category + shortcut) for this
+   --  action.
+   --  If the Kernel is specified, the description includes the known
+   --  keyboard shortcuts for this action.
+   --  The result string includes pango markup.
 
    type Action_Iterator is private;
 
@@ -118,6 +159,37 @@ package GPS.Kernel.Actions is
    --  there are no more actions.
 
 private
+
+   type Action_Record is record
+      Command     : not null access Interactive_Command'Class;
+      Filter      : not null access Action_Filter_Record'Class;
+      Description : GNAT.Strings.String_Access;
+      Name        : GNAT.Strings.String_Access;
+      Modified    : Boolean;
+      Overriden   : Boolean;
+      Category    : GNAT.Strings.String_Access;
+
+      Disabled    : Boolean := False;
+      --  Whether this command was disabled explicitly.
+
+      Menus       : GNAT.Strings.String_List_Access;
+      --  List of all menu paths that are associated with this action.
+
+      Icon_Name   : GNAT.Strings.String_Access;
+   end record;
+   --  Command is freed automatically. We use an anonymous type so that calls
+   --  to Register_Action can call "new ..." directly when passing a value to
+   --  the parameter.
+   --
+   --  Filter indicates when the action can be executed. If null, this means
+   --  the action can always be executed. The filter mustn't be deallocated
+   --  in the life of GPS, since there might be actions bound to it at any
+   --  time.
+   --  Category is used in the key bindings editor to group actions. If null,
+   --  the action should not be shown in the keybinding editor.
+   --
+   --  Icon_Name is the icon for this action (optional, might be null). See
+   --  GPS.Stock_Icons for more information on icon themes.
 
    procedure Free (Action : in out Action_Record_Access);
    --  Free the memory occupied by the action

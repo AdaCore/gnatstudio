@@ -403,10 +403,9 @@ package body GPS.Kernel.Scripts is
                Set_Error_Msg
                  (Data, -"No current context, can't execute action");
 
-            elsif not Filter_Matches (Action.Filter, Context) then
+            elsif not Filter_Matches (Action, Context) then
                declare
-                  M : constant String :=
-                    Get_Error_Message (Action.Filter);
+                  M : constant String := Get_Filter_Error (Action);
                begin
                   if M /= "" then
                      Set_Error_Msg
@@ -426,7 +425,7 @@ package body GPS.Kernel.Scripts is
                end loop;
 
                Custom := Create_Proxy
-                 (Command => Action.Command,
+                 (Command => Get_Command (Action),
                   Context => (Event       => null,
                               Context     => Context,
                               Synchronous => Synchronous,

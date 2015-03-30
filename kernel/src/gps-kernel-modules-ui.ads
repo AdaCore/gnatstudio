@@ -309,6 +309,14 @@ package GPS.Kernel.Modules.UI is
    --  Recompute the visibility and sensitivity of menus and toolbar buttons.
    --  This computation is asynchronous so that it doesn't block the user.
 
+   procedure Action_Status_Changed
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Name    : String);
+   --  This procedure should be called when an action is overridden or
+   --  disabled/enabled by the user. This ensures all associated menus and
+   --  buttons will be put on the list of things to check when the context
+   --  changes.
+
    procedure Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
       Parent_Path : String;
@@ -377,11 +385,6 @@ package GPS.Kernel.Modules.UI is
    --  Given an absolute path (see Register_Menu) for a menu item, return
    --  the underlying gtk menu item. Useful in particular to check or change
    --  the state of a menu item. Path is case insensitive
-
-   procedure Update_Shortcut_Display
-     (Kernel : access Kernel_Handle_Record'Class;
-      Action : String);
-   --  Update the shortcut for all menus associated with the action
 
    procedure Register_MDI_Menu
      (Kernel     : Kernel_Handle;

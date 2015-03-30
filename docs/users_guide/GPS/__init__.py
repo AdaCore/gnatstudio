@@ -275,6 +275,13 @@ class Action(GUI):
         """
         pass  # implemented in Ada
 
+    def disable(self, disabled=True):
+        """
+        :param bool disabled: when True, the action cannot be executed by GPS,
+           and will in fact be hidden in most cases. All associated menus and
+           contextual menus will also be disabled or hidden.
+        """
+
     def execute_if_possible(self):
         """
         Execute the action if its filter matches the current context. If it
@@ -2073,21 +2080,6 @@ class Contextual(object):
         parameter which is the context for which the menu is displayed (this
         is usually the same as :func:`GPS.current_contextual`).
 
-        If ``on_activate`` is None, a separator is created.
-
-        The ``filter`` parameter can be used to filter when the entry should
-        be displayed in the menu. It is a function that receives one
-        parameter, an instance of :class:`GPS.Context`, and returns a
-        boolean. If it returns True, the entry is displayed, otherwise it is
-        hidden.
-
-        The ``label`` parameter can be used to control the text displayed in
-        the contextual menu.  By default, it is the same as the contextual
-        name (used in the constructor to :func:`GPS.Contextual.__init__`).
-        If specified, it must be a subprogram that takes an instance of
-        :class:`GPS.Context` in a parameter and returns a string, which is
-        displayed in the menu.
-
         The parameters ``group``, ``ref`` and ``add_before`` can be used to
         control the location of the entry within the contextual
         menu. ``group`` allows you to create groups of contextual menus that
@@ -2097,13 +2089,29 @@ class Contextual(object):
         is put before or after that second entry.
 
         :param on_activate: A subprogram with one parameter context
+           If None, a separator is created.
         :param label: A subprogram
+           It can be used to control the text displayed in
+           the contextual menu.  By default, it is the same as the contextual
+           name (used in the constructor to :func:`GPS.Contextual.__init__`).
+           If specified, it must be a subprogram that takes an instance of
+           :class:`GPS.Context` in a parameter and returns a string, which is
+           displayed in the menu.
         :param ref: A string
         :param add_before: A boolean
         :param filter: A subprogram
+           This is used to filter when the entry should
+           be displayed in the menu. It is a function that receives one
+           parameter, an instance of :class:`GPS.Context`, and returns a
+           boolean. If it returns True, the entry is displayed, otherwise it is
+           hidden.
+           This parameter is ignored when the ``action`` parameter is
+           specified.
+
         :param group: An integer
-        :param GPS.Action action: An action instance to be executed on menu
-            activation
+        :param GPS.Action action: An action instance
+           The predefined filter for this action is applied for the contextual
+           menu (but the action itself is not executed).
 
         .. code-block:: python
 

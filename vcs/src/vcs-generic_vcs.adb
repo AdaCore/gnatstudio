@@ -396,7 +396,7 @@ package body VCS.Generic_VCS is
             end if;
 
             Custom := Create_Proxy
-              (The_Action.Command,
+              (Get_Command (The_Action),
                (Event       => null,
                 Context     => No_Context,
                 Synchronous => False,
@@ -521,7 +521,7 @@ package body VCS.Generic_VCS is
             end loop;
 
             Custom := Create_Proxy
-              (The_Action.Command,
+              (Get_Command (The_Action),
                (Event            => null,
                 Context          => No_Context,
                 Synchronous      => False,
@@ -593,7 +593,7 @@ package body VCS.Generic_VCS is
       end if;
 
       Custom := Create_Proxy
-        (The_Action.Command,
+        (Get_Command (The_Action),
          (Event            => null,
           Context          => Create_File_Context (Kernel, File),
           Synchronous      => False,

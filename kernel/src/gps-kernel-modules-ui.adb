@@ -18,6 +18,7 @@
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Containers.Doubly_Linked_Lists;
@@ -158,6 +159,8 @@ package body GPS.Kernel.Modules.UI is
             when Type_Separator =>
                Ref_Item         : Contextual_Menu_Access;
                Separator_Filter : access Action_Filter_Record'Class := null;
+               Separator_Action : access Action_Record := null;
+               --  The action is only used for its filter
          end case;
       end record;
    --  A contextual menu entry declared by a user or GPS itself internally
@@ -254,11 +257,6 @@ package body GPS.Kernel.Modules.UI is
       Element_Type    => Node,
       Hash            => Ada.Strings.Hash_Case_Insensitive,
       Equivalent_Keys => "=");
-
-   procedure Add_Menu_To_List
-     (Action : not null access Action_Record;
-      Path   : String);
-   --  Add a menu to the list of menus associated with Action.
 
    -------------------------
    -- proxies for actions --
@@ -429,6 +427,11 @@ package body GPS.Kernel.Modules.UI is
       Filter : access Action_Filter_Record'Class);
    --  Store items when they might need to be filtered when the context changes
 
+   procedure Add_To_Unfiltered_Items (Item : Proxy_And_Filter);
+   --  Add to the list of items that are not associated with a filter. We
+   --  might still need to update them when an action is overridden or
+   --  disabled by the user
+
    procedure On_Delete_Proxy
      (Kernel : System.Address;
       Item   : System.Address)
@@ -458,7 +461,16 @@ package body GPS.Kernel.Modules.UI is
    type Global_Data is record
       Toolbar_Descriptions : Node_Maps.Map;
       Symbols              : Symbol_Table := No_Symbol_Table;
+
       Proxy_Items          : Proxy_Lists.List;
+      --  The list of items whose sensitivity might need to be updated when the
+      --  context changes.
+
+      Unfiltered_Items     : Proxy_Lists.List;
+      --  The list of all items associated with an action and that are not
+      --  already part of Proxy_Items. These are generally ignored when the
+      --  context changes.
+
       Update_Menus_Idle_Id : G_Source_Id := No_Source_Id;
    end record;
    Globals : Global_Data;
@@ -703,7 +715,7 @@ package body GPS.Kernel.Modules.UI is
 
       case Action.Menu_Type is
          when Type_Action =>
-            C := Create_Proxy (Action.Action.Command, Context);
+            C := Create_Proxy (Get_Command (Action.Action), Context);
          when Type_Command =>
             C := Create_Proxy (Action.Command, Context);
          when others =>
@@ -845,6 +857,8 @@ package body GPS.Kernel.Modules.UI is
                --       menu.
                if C.Separator_Filter /= null then
                   return Filter_Matches (C.Separator_Filter, Context);
+               elsif C.Separator_Action /= null then
+                  return Filter_Matches (C.Separator_Action, Context);
                else
                   return C.Ref_Item = null
                     or else C.Ref_Item.Group /= C.Group
@@ -852,7 +866,7 @@ package body GPS.Kernel.Modules.UI is
                end if;
 
             when Type_Action =>
-               return Filter_Matches (C.Action.Filter, Context);
+               return Filter_Matches (C.Action, Context);
 
             when Type_Command =>
                return Filter_Matches (C.Filter, Context);
@@ -1309,58 +1323,6 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Get_Data;
 
-   ----------------------
-   -- Add_Menu_To_List --
-   ----------------------
-
-   procedure Add_Menu_To_List
-     (Action : not null access Action_Record;
-      Path   : String)
-   is
-   begin
-      if Action.Menus /= null then
-         for M in Action.Menus'Range loop
-            if Action.Menus (M).all = Path then
-               return;
-            end if;
-         end loop;
-      end if;
-
-      Append (Action.Menus, Path);
-   end Add_Menu_To_List;
-
-   -----------------------------
-   -- Update_Shortcut_Display --
-   -----------------------------
-
-   procedure Update_Shortcut_Display
-     (Kernel : access Kernel_Handle_Record'Class;
-      Action : String)
-   is
-      Act    : constant access Action_Record := Lookup_Action (Kernel, Action);
-      Item   : Gtk_Menu_Item;
-      Key    : Gdk_Key_Type;
-      Mods   : Gdk_Modifier_Type;
-      Label  : Gtk_Accel_Label;
-   begin
-      if Act /= null and then Act.Menus /= null then
-         Kernel.Get_Shortcut_Simple
-           (Action => Action,
-            Key    => Key,
-            Mods   => Mods);
-         for M in Act.Menus'Range loop
-            Item := Find_Menu_Item (Kernel, Act.Menus (M).all);
-            if Item = null then
-               Trace (Me, "Not updating shortcut for " & Act.Menus (M).all
-                  & " since menu not found");
-            elsif Item.all in Action_Menu_Item_Record'Class then
-               Label := Gtk_Accel_Label (Action_Menu_Item (Item).Get_Child);
-               Label.Set_Accel (Key, Mods);
-            end if;
-         end loop;
-      end if;
-   end Update_Shortcut_Display;
-
    -------------------
    -- Lookup_Action --
    -------------------
@@ -1394,49 +1356,36 @@ package body GPS.Kernel.Modules.UI is
 
             if Self.all in Gtk_Widget_Record'Class then
                Gtk_Widget (Self).Set_Tooltip_Markup
-                 (Escape_Text (Action.Description.all)
-                  & ASCII.LF & ASCII.LF
-                  & "<b>Action:</b> "
-                  & Escape_Text (Action.Name.all) & ASCII.LF
-                  & "<b>Category:</b> "
-                  & Escape_Text
-                    ((if Action.Category = null then ""
-                     else Action.Category.all))
-                  & ASCII.LF
-                  & "<b>Shortcut:</b> "
-                  & Data.Kernel.Get_Shortcut
-                    (Action          => Action.Name.all,
-                     Use_Markup      => True,
-                     Return_Multiple => True));
+                 (Get_Full_Description (Action, Data.Kernel));
                Get_Style_Context (Gtk_Widget (Self)).Remove_Class
                  ("nogpsaction");
             end if;
 
             --  Update the image if the action has one
 
-            if Action.Icon_Name /= null then
-               if Self.all in Action_Menu_Item_Record'Class then
-                  Gtk_New_From_Icon_Name
-                     (Pix, Action.Icon_Name.all, Icon_Size_Menu);
-                  Action_Menu_Item (Self).Set_Image (Pix);
-                  Pix.Show;
-               elsif Self.all in Action_Tool_Button_Record'Class
-                 and then not Action_Tool_Button (Self).Forced_Stock
-               then
-                  Action_Tool_Button (Self).Set_Icon_Name
-                     (Action.Icon_Name.all);
+            declare
+               Icon : constant String :=  Get_Icon_Name (Action);
+            begin
+               if Icon /= "" then
+                  if Self.all in Action_Menu_Item_Record'Class then
+                     Gtk_New_From_Icon_Name (Pix, Icon, Icon_Size_Menu);
+                     Action_Menu_Item (Self).Set_Image (Pix);
+                     Pix.Show;
+                  elsif Self.all in Action_Tool_Button_Record'Class
+                    and then not Action_Tool_Button (Self).Forced_Stock
+                  then
+                     Action_Tool_Button (Self).Set_Icon_Name (Icon);
+                  end if;
                end if;
-            end if;
+            end;
 
             --  Lookup the keybinding. This is only done the first time we do
-            --  the lookup to save time, but this means that after the user has
-            --  edited the keyshortcuts, this will no longer be up-to-date.
-            --  ??? We could use a timestamp somewhere to note we need a
-            --  refresh.
+            --  the lookup to save time. Later on, this is updated via
+            --  Update_Shortcut_Display.
 
             if Self.all in Action_Menu_Item_Record'Class then
                Data.Kernel.Get_Shortcut_Simple
-                 (Action => Action.Name.all,
+                 (Action => Data.Action.all,
                   Key    => Key,
                   Mods   => Mods);
                if Key /= 0 then
@@ -1476,14 +1425,14 @@ package body GPS.Kernel.Modules.UI is
          Data.Kernel.Insert
            ("Action not found: " & Data.Action.all, Mode => Error);
 
-      elsif Filter_Matches (Action.Filter, Context) then
+      elsif Filter_Matches (Action, Context) then
          --  Tests expect that using GPS.execute_action("/menu") will
          --  execute in the foreground, so we run Launch_Foreground_Command.
          --  However, when the user is using the GUI, it might make more
          --  sense to be in the background, not sure.
 
          Proxy := Create_Proxy
-           (Action.Command,
+           (Get_Command (Action),
             (Event            => null,
              Context          => Context,
              Synchronous      => True,
@@ -1511,9 +1460,8 @@ package body GPS.Kernel.Modules.UI is
                Block_Exit      => False);
          end if;
 
-      elsif Get_Error_Message (Action.Filter) /= "" then
-         Insert (Data.Kernel, Get_Error_Message (Action.Filter),
-                 Mode => Error);
+      elsif Get_Filter_Error (Action) /= "" then
+         Insert (Data.Kernel, Get_Filter_Error (Action), Mode => Error);
       else
          Insert (Data.Kernel,
                  -"Invalid context for this action", Mode => Error);
@@ -1557,6 +1505,16 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Add_To_Global_Proxies;
 
+   -----------------------------
+   -- Add_To_Unfiltered_Items --
+   -----------------------------
+
+   procedure Add_To_Unfiltered_Items (Item : Proxy_And_Filter) is
+   begin
+      Globals.Unfiltered_Items.Append (Item);
+      --  This preserves the Weak_Ref we had on the item
+   end Add_To_Unfiltered_Items;
+
    ---------------------
    -- On_Delete_Proxy --
    ---------------------
@@ -1581,7 +1539,7 @@ package body GPS.Kernel.Modules.UI is
       while Has_Element (C) loop
          It := Element (C);
          if Get_Object (It.Proxy) = Item then
-            Globals.Proxy_Items.Delete (C);  --  calls On_Delete_Proxy
+            Globals.Proxy_Items.Delete (C);
 
             --  Update cursor in the background updating, if needed
 
@@ -1589,7 +1547,19 @@ package body GPS.Kernel.Modules.UI is
                Update_Menus_And_Buttons (K);
             end if;
 
-            exit;
+            return;
+         end if;
+         Next (C);
+      end loop;
+
+      --  Not found in the Proxy_Items list, might be in the Unfiltered_Items
+      --  list
+      C := Globals.Unfiltered_Items.First;
+      while Has_Element (C) loop
+         It := Element (C);
+         if Get_Object (It.Proxy) = Item then
+            Globals.Unfiltered_Items.Delete (C);
+            return;
          end if;
          Next (C);
       end loop;
@@ -2041,8 +2011,6 @@ package body GPS.Kernel.Modules.UI is
    is
       T      : Contextual_Label_Param;
       Menu   : Contextual_Menu_Access;
-      Filter : access Action_Filter_Record'Class;
-
       Is_Separator : Boolean := False;
    begin
       if Label /= "" then
@@ -2069,15 +2037,12 @@ package body GPS.Kernel.Modules.UI is
       end if;
 
       if Is_Separator then
-         if Action /= null then
-            Filter := Action.Filter;
-         end if;
-
          Menu := new Contextual_Menu_Record'
            (Kernel                => Kernel_Handle (Kernel),
             Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
-            Separator_Filter      => Filter,
+            Separator_Filter      => null,
+            Separator_Action      => Action,
             Next                  => null,
             Ref_Item              => null,
             Group                 => Group,
@@ -2125,6 +2090,7 @@ package body GPS.Kernel.Modules.UI is
             Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => null,
+            Separator_Action      => null,
             Next                  => null,
             Group                 => Group,
             Ref_Item              => null,
@@ -2174,6 +2140,7 @@ package body GPS.Kernel.Modules.UI is
             Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => Filter,
+            Separator_Action      => null,
             Next                  => null,
             Ref_Item              => null,
             Group                 => Group,
@@ -2235,6 +2202,7 @@ package body GPS.Kernel.Modules.UI is
             Menu_Type             => Type_Separator,
             Name                  => new String'(Name),
             Separator_Filter      => Filter,
+            Separator_Action      => null,
             Next                  => null,
             Ref_Item              => null,
             Visible               => True,
@@ -2412,7 +2380,6 @@ package body GPS.Kernel.Modules.UI is
       Optional : Boolean := False;
       Hide     : Boolean := False)
    is
-      Act : access Action_Record;
    begin
       --  ??? Should automatically grey out when the context does not match.
       Button := new Action_Tool_Button_Record;
@@ -2435,10 +2402,7 @@ package body GPS.Kernel.Modules.UI is
       --  If the action is unknown, or it has a filter, we will need to
       --  monitor this button when the context changes.
 
-      Act := Lookup_Action (Button);
-      if Act = null or else Act.Filter /= null then
-         Add_To_Global_Proxies (Button, Kernel, null);
-      end if;
+      Add_To_Global_Proxies (Button, Kernel, null);
 
       Button.On_Clicked (On_Action_Button_Clicked'Access);
    end Gtk_New;
@@ -2469,11 +2433,13 @@ package body GPS.Kernel.Modules.UI is
       if Active then
          W.Show;  --  in case it was hidden earlier
          W.Set_Sensitive (True);
+         W.Set_No_Show_All (False);
 
       else
          W.Set_Sensitive (False);
          if Self.Optional or else Self.Hide then
             W.Hide;
+            W.Set_No_Show_All (True);  --  later Show_All should not impact
          end if;
       end if;
    end Set_Active;
@@ -2486,10 +2452,9 @@ package body GPS.Kernel.Modules.UI is
      (Data : Update_Menus_Data_Access) return Boolean
    is
       Max_Idle_Duration : constant Duration := 0.05;
-      A, Tmp_Elem : Proxy_And_Filter;
+      A : Proxy_And_Filter;
       Action : access Action_Record;
       Start  : constant Time := Clock;
-      Tmp    : Proxy_Lists.Cursor;
       Menu_Bar : Gtk_Menu_Bar;
       Tool_Bar : Gtk_Toolbar;
       Available : Boolean;
@@ -2596,6 +2561,8 @@ package body GPS.Kernel.Modules.UI is
       end Cleanup_Toolbar_Separators;
 
       D : access Action_Proxy'Class;
+      The_Next : Proxy_Lists.Cursor;
+
    begin
       loop
          if not Has_Element (Data.Current) then
@@ -2617,6 +2584,8 @@ package body GPS.Kernel.Modules.UI is
             return True;
          end if;
 
+         The_Next := Next (Data.Current);
+
          A := Element (Data.Current);
          D := Get_Data (A.Proxy);
 
@@ -2629,9 +2598,16 @@ package body GPS.Kernel.Modules.UI is
                D.Set_Active (False, A.Proxy);
 
             else
-               if Action.Filter = null then
-                  D.Set_Active (True, A.Proxy);
+               --  The context caches the filter, so there is limited
+               --  cost in computing multiple times whether a given
+               --  filter matches.
+               --  Always compute with Filter_Matches, since the action might
+               --  be explicitly disabled by the user.
 
+               Available := Filter_Matches (Action, Data.Context);
+               D.Set_Active (Available, A.Proxy);
+
+               if not Has_Filter (Action) then
                   --  The item is already active, and will remain so, so
                   --  nothing to do here. We thus remove the item from the list
                   --  since there will be nothing to do with it anymore,
@@ -2639,40 +2615,13 @@ package body GPS.Kernel.Modules.UI is
                   --  ??? If the action is overridden, we might need to review
                   --  the policy here, but that should not happen.
 
-                  Tmp := Previous (Data.Current);
-
-                  --  Do this so that we don't hold a cursor on a container
-                  --  which is being modified.
-
-                  if Has_Element (Tmp) then
-                     Tmp_Elem := Element (Tmp);
-
-                     Globals.Proxy_Items.Delete (Data.Current);
-
-                     Tmp := Globals.Proxy_Items.First;
-                     while Has_Element (Tmp)
-                       and then Element (Tmp) /= Tmp_Elem
-                     loop
-                        Next (Tmp);
-                     end loop;
-                     Data.Current := Tmp;
-                  else
-                     Globals.Proxy_Items.Delete (Data.Current);
-                     Data.Current := Globals.Proxy_Items.First;
-                  end if;
-
-               else
-                  --  The context caches the filter, so there is limited
-                  --  cost in computing multiple times whether a given
-                  --  filter matches.
-
-                  Available := Filter_Matches (Action.Filter, Data.Context);
-                  D.Set_Active (Available, A.Proxy);
+                  Add_To_Unfiltered_Items (Element (Data.Current));
+                  Globals.Proxy_Items.Delete (Data.Current);
                end if;
             end if;
          end if;
 
-         Next (Data.Current);
+         Data.Current := The_Next;
       end loop;
    end Update_Menus_And_Buttons_Chunk;
 
@@ -2734,6 +2683,39 @@ package body GPS.Kernel.Modules.UI is
          Destroy (Data);
       end if;
    end Update_Menus_And_Buttons;
+
+   ---------------------------
+   -- Action_Status_Changed --
+   ---------------------------
+
+   procedure Action_Status_Changed
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Name    : String)
+   is
+      Data : access Action_Proxy'Class;
+      C, N : Proxy_Lists.Cursor;
+      P    : Proxy_And_Filter;
+      Lower : constant String := To_Lower (Name);
+   begin
+      --  Put all items on the list to be checked. When they still do not
+      --  have a filter, they will simply be put back on the list of unfiltered
+      --  items.
+      C := Globals.Unfiltered_Items.First;
+      while Has_Element (C) loop
+         N := Next (C);
+         P := Element (C);
+
+         Data := Get_Data (P.Proxy);
+         if Data /= null and then To_Lower (Data.Action.all) = Lower then
+            Add_To_Global_Proxies (P.Proxy, Kernel, P.Filter);
+            Globals.Unfiltered_Items.Delete (C);
+         end if;
+
+         C := N;
+      end loop;
+
+      Update_Menus_And_Buttons (Kernel);
+   end Action_Status_Changed;
 
    ------------------------
    -- On_Context_Changed --

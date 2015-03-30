@@ -203,10 +203,12 @@
          <menu label='New from _Template...'          action='create project from template'/>
          <menu label='_Recent'/>  <!--  contents is dynamic -->
          <separator />
-         <menu label='_Properties...'                 action='open project properties'/>
+         <menu label='_Properties...' optional='true' hide='true'
+               action='open project properties'/>
          <menu label='Save _All'                      action='save all projects'/>
          <menu label='R_eload'                        action='reload project'/>
-         <menu label='Edit File Switches...'          action='open switches editor'/> <!-- duplicate-->
+         <menu label='Edit File Switches...' optional='true' hide='true'
+               action='open switches editor'/> <!-- duplicate-->
          <menu label='Project view'                   action='open project'/> <!-- duplicate-->
       </menu>
 
@@ -278,7 +280,8 @@
             <menu label="B_acktraces"                action="open backtraces"/>
             <menu label="Ca_ll Trees"                action="open call trees"/>
             <menu label="_Clipboard"                 action="open clipboard"/>
-            <menu label="File Sw_itches"             action="open switches editor"/>
+            <menu label="File Sw_itches"             action="open switches editor"
+                  optional='true'  hide='true' />
             <menu label="_Files"                     action="open files"/>
             <menu label="_Locations"                 action="open locations"/>
             <menu label="_Messages"                  action="open messages"/>
@@ -468,7 +471,7 @@
 
    <toolbar id='Project'>
       <button action='reload project'/>
-      <button action='open project properties'/>
+      <button action='open project properties' hide='true'/>
    </toolbar>
 
    <toolbar id='Clipboard'>

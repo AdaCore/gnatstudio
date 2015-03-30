@@ -71,26 +71,28 @@ package body GPS.Kernel.Search.Actions is
       Result := null;
 
       if Action /= null then
+         declare
+            Name : constant String := Get_Name (Action);
+         begin
+            --  Do not complete on menu names
+            if Name (Name'First) /= '/' then
+               C := Self.Pattern.Start (Name);
+               if C /= GPS.Search.No_Match then
+                  S := new String'
+                    (Self.Pattern.Highlight_Match (Name, Context => C));
+                  Result := new Actions_Search_Result'
+                    (Kernel   => Self.Kernel,
+                     Provider => Self,
+                     Score    => C.Score,
+                     Short    => S,
+                     Long     => null,
+                     Id       => S,
+                     Name     => new String'(Name));
 
-         --  Do not complete on menu names
-         if Action.Name (Action.Name'First) /= '/' then
-            C := Self.Pattern.Start (Action.Name.all);
-            if C /= GPS.Search.No_Match then
-               S := new String'
-                  (Self.Pattern.Highlight_Match
-                     (Action.Name.all, Context => C));
-               Result := new Actions_Search_Result'
-                 (Kernel   => Self.Kernel,
-                  Provider => Self,
-                  Score    => C.Score,
-                  Short    => S,
-                  Long     => null,
-                  Id       => S,
-                  Name     => new String'(Action.Name.all));
-
-               Self.Adjust_Score (Result);
+                  Self.Adjust_Score (Result);
+               end if;
             end if;
-         end if;
+         end;
 
          Has_Next := True;
          Next (Self.Kernel, Self.Iter);
@@ -119,15 +121,18 @@ package body GPS.Kernel.Search.Actions is
          Action := Get (Self.Iter);
          exit when Action = null;
 
-         --  Do not complete on menu names
-         if Action.Name (Action.Name'First) /= '/' then
-            C := Self.Pattern.Start (Action.Name.all);
-            if C /= GPS.Search.No_Match then
-               Self.Pattern.Compute_Suffix
-                 (C, Action.Name.all, Suffix, Suffix_Last);
-               exit when Suffix_Last = 0;
+         declare
+            Name : constant String := Get_Name (Action);
+         begin
+            --  Do not complete on menu names
+            if Name (Name'First) /= '/' then
+               C := Self.Pattern.Start (Name);
+               if C /= GPS.Search.No_Match then
+                  Self.Pattern.Compute_Suffix (C, Name, Suffix, Suffix_Last);
+                  exit when Suffix_Last = 0;
+               end if;
             end if;
-         end if;
+         end;
 
          Next (Self.Kernel, Self.Iter);
       end loop;
@@ -175,7 +180,7 @@ package body GPS.Kernel.Search.Actions is
       Bold      : Gtk_Text_Tag;
       Iter   : Gtk_Text_Iter;
    begin
-      if Action /= null and then Action.Description /= null then
+      if Action /= null then
          Gtk_New (Buffer);
          Gtk_New (View, Buffer);
          Unref (Buffer);
@@ -194,10 +199,9 @@ package body GPS.Kernel.Search.Actions is
              Pango_Underline_Single);
 
          Buffer.Get_End_Iter (Iter);
-         Buffer.Insert_With_Tags
-            (Iter, Action.Name.all & ASCII.LF & ASCII.LF, Underline);
-
-         Buffer.Insert (Iter, Action.Description.all);
+         Buffer.Insert
+           (Iter, Get_Full_Description
+              (Action, Self.Kernel, Use_Markup => False));
 
          return Gtk.Widget.Gtk_Widget (View);
       end if;

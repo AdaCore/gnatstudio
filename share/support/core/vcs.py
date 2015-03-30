@@ -121,7 +121,7 @@ def create_menus(system_name, actions):
                     on_activate=Launcher(action_name).launcher,
                     ref=last_menu,
                     filter=not_in_explorer,
-                    action=action,
+                    action=action,   # Additional filter
                     add_before=True)
 
                 contextual_menu_labels[system_name] += [contextual_label]
@@ -136,7 +136,7 @@ def create_menus(system_name, actions):
                 GPS.Contextual(contextual_label).create(
                     on_activate=Launcher(action_name).launcher,
                     ref=last_explorer_menu,
-                    action=action,
+                    action=action,   # Additional filter
                     filter=only_in_explorer,
                     add_before=True)
 
@@ -165,7 +165,6 @@ def create_menus(system_name, actions):
             if need_to_create_contextual_menus:
                 GPS.Contextual(contextual_label).create(
                     on_activate=None,
-                    action=None,
                     filter=only_in_submenu,
                     ref=last_menu,
                     add_before=True)
@@ -181,7 +180,6 @@ def create_menus(system_name, actions):
             if need_to_create_contextual_menus:
                 GPS.Contextual(contextual_label).create(
                     on_activate=None,
-                    action=None,
                     filter=only_in_explorer,
                     ref=last_explorer_menu,
                     add_before=True)
