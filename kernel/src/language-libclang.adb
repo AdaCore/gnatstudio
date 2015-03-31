@@ -54,7 +54,9 @@ package body Language.Libclang is
    Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    Activate_Clang_XRef : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG_XREF", On);
+     GNATCOLL.Traces.Create ("LIBCLANG_XREF", Off);
+   --  Disabled for now, since it seems to break the callgraph browser for C
+   --  files (O327-013)
 
    function Parsing_Timeout_Handler return Boolean;
 
