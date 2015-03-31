@@ -595,7 +595,10 @@ package body Generic_Views is
          Gdk_New (Event, Delete);
          Event.Any.Window := Toplevel_Box (Box.all).Initial.Get_Window;
          Prevent_Delete := Return_Callback.Emit_By_Name
-           (Toplevel_Box (Box.all).Initial, "delete_event", Event);
+           (Toplevel_Box (Box.all).Initial,
+            Gtk.Widget.Signal_Delete_Event,
+            Event);
+
          Event.Any.Window := null;
          Free (Event);
          return Prevent_Delete;
@@ -718,6 +721,14 @@ package body Generic_Views is
          View : constant View_Access := View_Access (Self);
          C    : constant MDI_Child := Child_From_View (View);
       begin
+         if Local_Toolbar or else Local_Config then
+            --  If we have Toplevel_Box query child for delete
+
+            if On_Delete_Event (View.Get_Parent) then
+               return;  --  Сhild rejected delete query
+            end if;
+         end if;
+
          Store_Position (View);
          C.Close_Child (Force => True);
 
