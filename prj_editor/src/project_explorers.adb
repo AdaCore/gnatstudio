@@ -776,9 +776,7 @@ package body Project_Explorers is
             return A_Before_B;
          elsif A_Name = B_Name then
             case A_Type is   --  same as B_Type
-               when Project_Node_Types
-                  | Directory_Node | Obj_Directory_Node
-                  | Exec_Directory_Node | File_Node =>
+               when Project_Node_Types | Directory_Node_Types | File_Node =>
 
                   if Get_File (Model, A, File_Column) <
                     Get_File (Model, B, File_Column)
@@ -841,7 +839,7 @@ package body Project_Explorers is
                   return A_Before_B;
             end case;
 
-         when Obj_Directory_Node =>
+         when Obj_Directory_Node | Lib_Directory_Node =>
             case B_Type is
                when Project_Node_Types =>
                   if Projects_Before_Directories then
@@ -853,7 +851,7 @@ package body Project_Explorers is
                when Directory_Node =>
                   return B_Before_A;
 
-               when Obj_Directory_Node =>
+               when Obj_Directory_Node | Lib_Directory_Node =>
                   return Alphabetical;
 
                when Runtime_Node =>
@@ -872,7 +870,7 @@ package body Project_Explorers is
                      return A_Before_B;
                   end if;
 
-               when Directory_Node | Obj_Directory_Node =>
+               when Directory_Node | Obj_Directory_Node | Lib_Directory_Node =>
                   return B_Before_A;
 
                when Exec_Directory_Node =>
@@ -897,7 +895,7 @@ package body Project_Explorers is
                      return A_Before_B;
                   end if;
 
-               when Obj_Directory_Node =>
+               when Obj_Directory_Node | Lib_Directory_Node =>
                   return A_Before_B;
 
                when others =>
@@ -1923,6 +1921,12 @@ package body Project_Explorers is
          if Project.Executables_Directory /= Project.Object_Dir then
             Dirs.Include
               ((Project.Executables_Directory, Exec_Directory_Node),
+               Files_List.Empty_List);
+         end if;
+
+         if Project.Library_Directory /= Project.Object_Dir then
+            Dirs.Include
+              ((Project.Library_Directory, Lib_Directory_Node),
                Files_List.Empty_List);
          end if;
       end if;

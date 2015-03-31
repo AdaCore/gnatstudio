@@ -120,6 +120,13 @@ package body Project_Explorers_Common is
                return "gps-emblem-objdir-closed";
             end if;
 
+         when Lib_Directory_Node =>
+            if Expanded then
+               return "gps-emblem-libdir-open";
+            else
+               return "gps-emblem-libdir-closed";
+            end if;
+
          when Exec_Directory_Node =>
             if Expanded then
                return "gps-emblem-execdir-open";

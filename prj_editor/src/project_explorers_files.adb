@@ -1090,7 +1090,7 @@ package body Project_Explorers_Files is
 
             when Category_Node | Entity_Node | Dummy_Node
                | Obj_Directory_Node | Exec_Directory_Node
-               | Project_Node_Types | Runtime_Node =>
+               | Lib_Directory_Node | Project_Node_Types | Runtime_Node =>
                null;
          end case;
       end;
