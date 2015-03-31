@@ -361,7 +361,7 @@ package body Generic_Views is
                        Hist_Prefix & "-filter-approximate",
                        F.Approximate, Default => False);
             F.Approximate.Set_Tooltip_Text
-              (-"Matchng allows some errors (e.g. extra or missing text)");
+              (-"Matching allows some errors (e.g. extra or missing text)");
             F.Approximate.On_Toggled (Report_Filter_Changed'Access, Self);
             F.Pattern_Config_Menu.Add (F.Approximate);
          end if;

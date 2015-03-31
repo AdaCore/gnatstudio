@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
+with Ada.Exceptions;          use Ada.Exceptions;
 with System;                  use System;
 with System.Address_Image;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
@@ -1148,12 +1149,22 @@ package body GPS.Kernel.Scripts is
          Set_Error_Msg (Data, -"Cannot create instance of GPS.History");
       elsif Command = "add" then
          declare
-            Key   : constant String := Nth_Arg (Data, 1);
-            Value : constant String := Nth_Arg (Data, 2);
+            Key   : constant History_Key :=
+              History_Key (String'(Nth_Arg (Data, 1)));
          begin
-            Add_To_History
-              (Get_Kernel (Data).Get_History.all,
-               History_Key (Key), Value);
+            case Get_Type (Get_Kernel (Data).Get_History, Key) is
+               when Strings =>
+                  Add_To_History
+                    (Get_Kernel (Data).Get_History.all, Key,
+                     Nth_Arg (Data, 2));
+               when Booleans =>
+                  Set_History
+                    (Get_Kernel (Data).Get_History.all, Key,
+                     Nth_Arg (Data, 2));
+            end case;
+         exception
+            when E : Invalid_Key_Type =>
+               Set_Error_Msg (Data, Exception_Message (E));
          end;
       end if;
    end History_Command_Handler;

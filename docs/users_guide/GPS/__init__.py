@@ -5165,6 +5165,19 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
+    def get_called_entities(self):
+        """
+        Get the list of all entities that are referenced within the scope
+        of self.
+        :return: a list of GPS.Entity instances
+        """
+
+    def child_types(self):
+        """
+        Get the list of all entities that extend or derive from self.
+        :return: a list of GPS.Entity instances
+        """
+
     def name_parameters(self, location):
         """
         Refactors the code at the location, to add named parameters. This
@@ -6071,7 +6084,6 @@ class Help(object):
 ###########################################################
 
 class Hook(object):
-
     """
     General interface to hooks. Hooks are commands executed when some specific
     events occur in GPS, and allow you to customize some of the aspects of GPS
@@ -6258,8 +6270,8 @@ class Hook(object):
          Example of values are 'main', 'exec' and 'make' currently.
       :return: A list of tuples, each of which has the following elements:
          (display name for the target,
-          full name for the target (typically a path),
-          full path for the project (or the empty string))
+         full name for the target (typically a path),
+         full path for the project (or the empty string))
 
       .. code-block:: python
 
@@ -7214,6 +7226,7 @@ class MDI(object):
     POSITION_TOP = 0
     POSITION_LEFT = 0
     POSITION_RIGHT = 0
+    POSITION_FLOAT = 0
     # constants to be used in GPS.MDI.add()
 
     FLAGS_DESTROY_BUTTON = 4
@@ -10496,6 +10509,9 @@ class History(object):
         the list (for instance for recently opened files), and the oldest
         previous value might be removed, depending on the maximum number
         of elements that GPS wants to preserve for that key.
+
+        :param key: a string.
+        :param value: a string or boolean, depending on the key.
         """
 
 

@@ -932,6 +932,36 @@ understand or modify your project:
   :ref:`Scenarios_And_Configuration_Variables`). Howver, you may find it
   more convenient to use the :guilabel:`Scenario` view for this purpose.
 
+.. highlight:: python
+
+All the entries in the local settings menu can be manipulated via python
+extensions, which might be useful when writing your own plugins. Here are
+examples on how to do that::
+
+    # The 'Show flat view" local setting
+    GPS.Preference('explorer-show-flat-view').set(True)
+
+    # The 'Show absolute paths" local setting
+    GPS.Preference('explorer-show-absolute-paths').set(True)
+
+    # The 'Show hidden directories' local setting
+    GPS.Preference('explorer-show-hidden-directories').set(True)
+
+    # The 'Show empty directories' local setting
+    GPS.Preference('explorer-show-empty-directories').set(True)
+
+    # The 'Projects before directories' local setting
+    GPS.Preference('explorer-show-projects-first').set(True)
+
+    # The 'Show object directories' local setting
+    GPS.Preference('explorer-show-object-dirs').set(True)
+
+    # The 'Show runtime files' local setting
+    GPS.Preference('explorer-show-runtime').set(True)
+
+    # The 'Group by directories' local setting
+    GPS.Preference('explorer-show-directories').set(True)
+
 
 .. index:: project; scenario variables
 .. index:: windows; scenario view

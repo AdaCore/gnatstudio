@@ -758,7 +758,7 @@ package body GPS.Kernel.Standard_Hooks is
    begin
       Set_Nth_Arg (D.all, 1, To_String (Hook));
 
-      --  For backward compatibility, do not send the hook name
+      --  For backward compatibility, do not send the pref name
       --  Set_Nth_Arg (D.all, 2, Data.Pref.Get_Name);
       return D;
    end Create_Callback_Data;

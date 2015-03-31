@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Default_Preferences;      use Default_Preferences;
 with GPS.Kernel;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with Gdk.Event;
@@ -94,6 +95,11 @@ package Browsers.Canvas is
    --  Toggle when the user choses to use waypoints or not.
    --  This is suitable for use as callback (for instance when the callback
    --  modifies one of the settings for the browser)
+
+   procedure Preferences_Changed
+     (Self : not null access General_Browser_Record;
+      Pref : Default_Preferences.Preference) is null;
+   --  Override if you need to monitor preferences
 
    -----------
    -- Items --

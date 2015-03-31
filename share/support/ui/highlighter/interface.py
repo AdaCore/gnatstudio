@@ -214,9 +214,10 @@ def region(start_re, end_re, tag=None, name="", highlighter=(),
 
     :param string start_re: The regexp used to match the start of the region
     :param string end_re: The regexp used to match the end of the region
-    :param Style tag: The Tag which will be used to highlight the whole
-      region. Beware, if you plan to apply other tags to elements inside the
-      region, they must have an higher priority than this one !
+    :param highlighter.engine.Style tag: The Tag which will be used to
+      highlight the whole region. Beware, if you plan to apply other tags to
+      elements inside the region, they must have an higher priority than this
+      one !
     :rtype: RegionMatcher
     """
     from highlighter.engine import RegionMatcher
@@ -287,7 +288,7 @@ def new_style(lang, name, foreground_colors,
       :func:`Highlighter.region`
       -1 means default priority: tags added last have precedence.
 
-    :rtype: Style
+    :rtype: highlighter.engine.Style
     """
     try:
         from highlighter.engine import Style, HighlighterModule
@@ -326,7 +327,7 @@ def existing_style(pref_name, name="", prio=-1):
     :param int prio: The priority of the style compared to others. Higher
       priority styles will take precedence over lower priority ones.
       -1 means default priority: tags added last have precedence.
-    :rtype: Style
+    :rtype: highlighter.engine.Style
     """
     try:
         from highlighter.engine import Style, HighlighterModule

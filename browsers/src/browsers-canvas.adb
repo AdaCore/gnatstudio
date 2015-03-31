@@ -57,7 +57,6 @@ with Gtkada.Style;                      use Gtkada.Style;
 
 with Commands;                          use Commands;
 with Commands.Interactive;              use Commands.Interactive;
-with Default_Preferences;               use Default_Preferences;
 with Generic_Views;                     use Generic_Views;
 with GPS.Core_Kernels;                  use GPS.Core_Kernels;
 with GPS.Intl;                          use GPS.Intl;
@@ -66,6 +65,7 @@ with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
@@ -382,11 +382,13 @@ package body Browsers.Canvas is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Kernel);
       B    : constant General_Browser := Hook.Browser;
    begin
       Create_Styles (B.View);
       Toggle_Draw_Grid (B);
+
+      B.Preferences_Changed (GPS.Kernel.Standard_Hooks.Get_Pref (Data));
    end Execute;
 
    --------------

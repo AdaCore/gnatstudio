@@ -29,6 +29,7 @@ with Pango.Font;                use Pango.Font;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
@@ -2023,5 +2024,90 @@ package body GPS.Kernel.Preferences is
          Run_Hook (Kernel, Preference_Changed_Hook, Data'Access);
       end if;
    end Emit_Preferences_Changed;
+
+   type Check_Menu_Item_Pref_Record is new Gtk_Check_Menu_Item_Record with
+      record
+         Kernel : access Kernel_Handle_Record'Class;
+         Pref   : Boolean_Preference;
+      end record;
+   type Check_Menu_Item_Pref is access all Check_Menu_Item_Pref_Record'Class;
+   procedure On_Check_Menu_Item_Changed
+     (Check : access Gtk_Check_Menu_Item_Record'Class);
+
+   type Pref_Changed_For_Menu_Item is new Function_With_Args with record
+      Check : Check_Menu_Item_Pref;
+   end record;
+   overriding procedure Execute
+     (Self   : Pref_Changed_For_Menu_Item;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+
+   --------------------------------
+   -- On_Check_Menu_Item_Changed --
+   --------------------------------
+
+   procedure On_Check_Menu_Item_Changed
+     (Check : access Gtk_Check_Menu_Item_Record'Class)
+   is
+      C : constant Check_Menu_Item_Pref := Check_Menu_Item_Pref (Check);
+   begin
+      if C.Pref.Get_Pref /= C.Get_Active then
+         Set_Pref (C.Pref, C.Kernel.Get_Preferences, C.Get_Active);
+      end if;
+   end On_Check_Menu_Item_Changed;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : Pref_Changed_For_Menu_Item;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      pragma Unreferenced (Kernel);
+      P : constant Preference := Preference_Hooks_Args (Data.all).Pref;
+      V : Boolean;
+   begin
+      if P = Preference (Self.Check.Pref) then
+         V := Self.Check.Pref.Get_Pref;
+         if V /= Self.Check.Get_Active then
+            Self.Check.Set_Active (V);
+         end if;
+      end if;
+   end Execute;
+
+   -----------------
+   -- Append_Menu --
+   -----------------
+
+   procedure Append_Menu
+     (Menu    : not null access Gtk_Menu_Record'Class;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Pref    : Boolean_Preference)
+   is
+      C : constant Check_Menu_Item_Pref := new Check_Menu_Item_Pref_Record;
+      P : access Pref_Changed_For_Menu_Item;
+      Doc : constant String := Pref.Get_Doc;
+   begin
+      Gtk.Check_Menu_Item.Initialize (C, Pref.Get_Label);
+      C.Kernel := Kernel;
+      C.Pref := Pref;
+      Menu.Add (C);
+
+      if Doc /= "" then
+         C.Set_Tooltip_Text (Doc);
+      end if;
+
+      C.Set_Active (Pref.Get_Pref);
+      C.On_Toggled (On_Check_Menu_Item_Changed'Access);
+
+      P := new Pref_Changed_For_Menu_Item;
+      P.Check := C;
+      Add_Hook
+        (Kernel, Preference_Changed_Hook, P,
+         Name  => "check_menu_item.preferences",
+         Watch => GObject (C));
+   end Append_Menu;
 
 end GPS.Kernel.Preferences;

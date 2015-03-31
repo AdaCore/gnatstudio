@@ -70,6 +70,12 @@ package Histories is
 
    Invalid_Key_Type : exception;
 
+   function Get_Type
+     (Hist : access History_Record;
+      Key  : History_Key) return History_Key_Type;
+   --  Report the kind of values expected for this key.
+   --  Invalid_Key_Type is raised if the key is not registered
+
    ---------------------
    -- List of strings --
    ---------------------
@@ -202,18 +208,21 @@ package Histories is
       Button : not null access
         Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button_Record'Class;
       Default : Boolean := True);
-   --  Associate Button with Key.
-   --  The status of the button is set to the value of Key.
-   --  Every time the button is toggled, the key's value is changed. Thus, its
-   --  current value will be saved when Hist is saved.
-   --  Default is used to create the key if it doesn't exist yet.
-
    procedure Associate
      (Hist : in out History_Record;
       Key  : History_Key;
       Item : access Gtk.Check_Menu_Item.Gtk_Check_Menu_Item_Record'Class;
       Default : Boolean := True);
-   --  Same as above
+   --  Associate a widget with Key.
+   --  The status of the button is set to the value of Key.
+   --  Every time the button is toggled, the key's value is changed. Thus, its
+   --  current value will be saved when Hist is saved.
+   --  Default is used to create the key if it doesn't exist yet.
+   --
+   --  ??? It is now recommended to use GPS.Kernel.Preferences.Associate and a
+   --  preference rather than a history key. This provides the flexibility of
+   --  monitoring changes via the "preferences_changed" hook, and thus allow
+   --  modifying the behavior of GPS via Python.
 
 private
 

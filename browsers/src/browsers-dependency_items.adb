@@ -30,6 +30,7 @@ with Gtkada.MDI;               use Gtkada.MDI;
 
 with Browsers.Canvas;         use Browsers.Canvas;
 with Commands.Interactive;    use Commands, Commands.Interactive;
+with Default_Preferences;     use Default_Preferences;
 with Fname;                   use Fname;
 with Generic_Views;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
@@ -41,18 +42,18 @@ with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel;              use GPS.Kernel;
-with Histories;               use Histories;
 with Namet;                   use Namet;
 with Projects;                use Projects;
 with Xref;                    use Xref;
 
 package body Browsers.Dependency_Items is
 
-   Show_System_Files_Key : constant History_Key := "browser_show_system_files";
-   Show_Implicit_Key     : constant History_Key := "browser_show_implicit";
+   Show_System_Files : Boolean_Preference;
+   Show_Implicit     : Boolean_Preference;
 
    Include_Implicit_Cst  : aliased constant String := "include_implicit";
    Include_System_Cst    : aliased constant String := "include_system";
@@ -111,6 +112,9 @@ package body Browsers.Dependency_Items is
      (Self     : not null access Dependency_Browser_Record;
       Node     : XML_Utils.Node_Ptr;
       From, To : not null access GPS_Item_Record'Class);
+   overriding procedure Preferences_Changed
+     (Self : not null access Dependency_Browser_Record;
+      Pref : Default_Preferences.Preference);
 
    function Initialize
      (View   : access Dependency_Browser_Record'Class)
@@ -378,23 +382,11 @@ package body Browsers.Dependency_Items is
 
    overriding procedure Create_Menu
      (View    : not null access Dependency_Browser_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      Check : Gtk_Check_Menu_Item;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       General_Browser_Record (View.all).Create_Menu (Menu);  --  inherited
-
-      Gtk_New (Check, Label => -"Show system files");
-      Associate (Get_History (View.Kernel).all, Show_System_Files_Key, Check);
-      Append (Menu, Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
-
-      Gtk_New (Check, Label => -"Show implicit dependencies");
-      Associate (Get_History (View.Kernel).all, Show_Implicit_Key, Check);
-      Append (Menu, Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
+      Append_Menu (Menu, View.Kernel, Show_System_Files);
+      Append_Menu (Menu, View.Kernel, Show_Implicit);
    end Create_Menu;
 
    -----------------------------
@@ -650,19 +642,17 @@ package body Browsers.Dependency_Items is
       Explicit : Boolean;
       File     : Virtual_File) return Boolean
    is
+      pragma Unreferenced (Kernel);
       Explicit_Dependency : Boolean;
       System_File         : Boolean;
 
    begin
       --  Only show explicit dependencies, not implicit ones
-      Explicit_Dependency :=
-        Explicit
-        or else Get_History (Get_History (Kernel).all, Show_Implicit_Key);
+      Explicit_Dependency := Explicit or else Show_Implicit.Get_Pref;
 
       --  Do not display dependencies on runtime files
       System_File :=
-        Get_History (Get_History (Kernel).all, Show_System_Files_Key)
-        or else not Is_System_File (File);
+        Show_System_Files.Get_Pref or else not Is_System_File (File);
 
       return Explicit_Dependency and then System_File;
    end Filter;
@@ -847,6 +837,22 @@ package body Browsers.Dependency_Items is
       end if;
    end Depends_On_Command_Handler;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   overriding procedure Preferences_Changed
+     (Self : not null access Dependency_Browser_Record;
+      Pref : Default_Preferences.Preference) is
+   begin
+      if Pref = null   --  multiple preferences updated
+        or else Pref = Preference (Show_Implicit)
+        or else Pref = Preference (Show_System_Files)
+      then
+         Force_Refresh (Self);
+      end if;
+   end Preferences_Changed;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -861,6 +867,13 @@ package body Browsers.Dependency_Items is
       Hook    : Project_Changed_Hook;
    begin
       Dependency_Views.Register_Module (Kernel);
+
+      Show_System_Files := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("browser_show_system_files", False,
+         Label => -"Show system files");
+      Show_Implicit := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("browser_show_implicit", False,
+         Label => -"Show implicit dependencies");
 
       Command := new Show_Dep_Command;
       Register_Contextual_Menu

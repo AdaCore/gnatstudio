@@ -18,8 +18,9 @@
 with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums;
 with Language;
-with GPS_Preferences_Types; use GPS_Preferences_Types;
+with GPS_Preferences_Types;    use GPS_Preferences_Types;
 with Gtk.Widget;
+with Gtk.Menu;                 use Gtk.Menu;
 
 package GPS.Kernel.Preferences is
 
@@ -131,6 +132,24 @@ package GPS.Kernel.Preferences is
    package Strip_Trailing_Blanks_Policy_Prefs is new
      Default_Preferences.Enums.Generics (Strip_Trailing_Blanks_Policy);
    --  The list of possible behaviours for stripping trailing blanks
+
+   ------------------------------------------
+   -- Associating preferences with widgets --
+   ------------------------------------------
+   --  There are lots of settings in GPS that need to be preserved across
+   --  sessions. One way to do that is to use the API in histories.ads. A
+   --  better way is to use the functions below, which connect a widget to a
+   --  preference, and automatically keep the two of them in sync.
+   --  This approach provides the flexibilty of connecting to the
+   --  "preferences_changed" signal, so that even if another API is used to
+   --  change the preference, the views are still refreshed.
+
+   procedure Append_Menu
+     (Menu    : not null access Gtk_Menu_Record'Class;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Pref    : Boolean_Preference);
+   --  Append a new entry in the menu showing the preference.
+   --  This entry stays synchronizes with the preference at all time.
 
    -----------------------
    -- List of constants --

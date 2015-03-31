@@ -25,16 +25,16 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;    use GNAT.Strings;
+with GNAT.Strings;        use GNAT.Strings;
 
-with GNATCOLL.VFS;    use GNATCOLL.VFS;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
-with Gdk.RGBA;        use Gdk.RGBA;
-with Glib;            use Glib;
+with Gdk.RGBA;            use Gdk.RGBA;
+with Glib;                use Glib;
 with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Widget;
-with Pango.Font;      use Pango.Font;
+with Pango.Font;          use Pango.Font;
 
 package Default_Preferences is
 
@@ -239,6 +239,22 @@ package Default_Preferences is
    --    tooltip of the preferences dialog
    --  See Default_Preferences.Generics to create preferences associated with
    --    enumerations
+
+   function Create_Invisible_Pref
+     (Manager : access Preferences_Manager_Record'Class;
+      Name    : String;
+      Default : Boolean;
+      Label   : String := "";
+      Doc     : String := "")
+      return Boolean_Preference
+   is (Create (Manager, Name, Label => Label, Page => "", Doc => Doc,
+               Default => Default));
+   --  Convenience function for creating an invisible preference.
+   --  Such preferences are changed via other GUI elements (like a check
+   --  button for instance), rather than in the preferences dialog. They are
+   --  similar to what histories.ads provides, but are also associated with
+   --  standard hooks so that views can be refreshed when the preference
+   --  changes.
 
    function Get_Pref_From_Name
      (Manager             : access Preferences_Manager_Record;

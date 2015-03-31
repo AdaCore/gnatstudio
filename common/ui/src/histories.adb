@@ -174,6 +174,23 @@ package body Histories is
       Tmp := Create_New_Boolean_Key_If_Necessary (Hist, Key, Default_Value);
    end Create_New_Boolean_Key_If_Necessary;
 
+   --------------
+   -- Get_Type --
+   --------------
+
+   function Get_Type
+     (Hist : access History_Record;
+      Key  : History_Key) return History_Key_Type
+   is
+      Val : constant History_Key_Access := Get (Hist.Table.all, String (Key));
+   begin
+      if Val = Null_History then
+         raise Invalid_Key_Type with "Key " & String (Key) & " is not defined";
+      else
+         return Val.Typ;
+      end if;
+   end Get_Type;
+
    --------------------
    -- Set_Max_Length --
    --------------------

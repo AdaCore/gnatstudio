@@ -1570,7 +1570,7 @@ package body Default_Preferences is
       Toggle.Set_Active (Pref.Bool_Value);
 
       Preference_Handlers.Connect
-        (Toggle, Signal_Toggled, Boolean_Changed'Access, P);
+        (Toggle, Gtk.Toggle_Button.Signal_Toggled, Boolean_Changed'Access, P);
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
          Update_Boolean'Access, Toggle, P);
