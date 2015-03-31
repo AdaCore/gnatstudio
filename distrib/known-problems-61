@@ -48,6 +48,18 @@ KP-61-O308-004 GPS: annoyance when clicking on lock icon in editors
 
   Workaround: Wait for the VCS icon to be visible.
 
+KP-61-O305-028 GPS: auto-indent fails with access procedure formal parameter
+
+  Problem:    When a generic packages takes an access to a procedure as a
+              formal parameter, GPS indentation fails for the rest of the
+              file.
+
+  Status:     This was fixed in 6.2 on 2015-03-16
+
+  Workaround: It is often better to use an actual procedure rather than an
+              access to procedure as a formal parameter. This leads to more
+              efficient code.
+
 KP-61-O302-020 GPS: project view not refreshed when view filter cleared
 
   Problem:    Changing Project View options when some filter is applied
@@ -164,6 +176,15 @@ KP-61-O202-032 GB: <Ctrl> click hyperlink not working in ada editor
   Status:     This was fixed in 2.10 on 2015-02-06
 
   Workaround: Close the editor, open it from the project editor view.
+
+KP-61-O120-033 GPS: auto-casing in comments
+
+  Problem:    It sometimes happens that GPS ends up in an incorrect mode
+              where all words in a comment are capitalized as you type.
+
+  Status:     This was fixed in 6.2 on 2015-01-28
+
+  Workaround: Close the editor and reopen it.
 
 KP-61-O120-002 GPS: cannot force background color for editors
 
