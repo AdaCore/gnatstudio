@@ -132,7 +132,7 @@ else
 	$(INSTALL_PROGRAM) -s cli/obj/gps_cli $(bindir)
 	$(INSTALL_PROGRAM) -s spark/obj/gnatspark $(bindir)
 	$(INSTALL_PROGRAM) -s gnatlib/src/obj/gnatinspect $(bindir)
-	$(INSTALL_PROGRAM) distrib/.gps_wrapper $(bindir)/gps
+	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gps
 endif
 
 test: force
