@@ -1546,6 +1546,8 @@ package body Completion_Window is
       case Key is
          when GDK_Escape | GDK_Left | GDK_Right =>
             Delete (Window);
+            --  Let the event through
+            return False;
 
          when GDK_Return =>
             if Window.Volatile then
