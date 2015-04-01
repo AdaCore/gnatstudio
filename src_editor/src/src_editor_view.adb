@@ -2789,6 +2789,10 @@ package body Src_Editor_View is
    procedure End_Completion (View : access Source_View_Record'Class) is
    begin
       Set_In_Completion (Source_Buffer (Get_Buffer (View)), False);
+
+      --  Force a refresh of the context
+      View.Kernel.Context_Changed
+        (Build_Editor_Context (View, Location_Cursor));
    end End_Completion;
 
    -------------------

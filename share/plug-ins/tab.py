@@ -27,7 +27,7 @@ if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
 
 
 @interactive(name='Format selection', category='Editor',
-             filter="Source editor")
+             filter="Writable source editor")
 def smart_tab():
     """
     This action is the default binding for the tab key, and will
