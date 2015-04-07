@@ -36,7 +36,6 @@ with Gdk.RGBA;                          use Gdk.RGBA;
 with Gdk.Window;                        use Gdk.Window;
 
 with Gtk.Box;                           use Gtk.Box;
-with Gtk.Check_Menu_Item;               use Gtk.Check_Menu_Item;
 with Gtk.Enums;                         use Gtk.Enums;
 with Gtk.Handlers;                      use Gtk.Handlers;
 with Gtk.Image;                         use Gtk.Image;
@@ -80,11 +79,10 @@ package body Browsers.Canvas is
    --  would appear in the computation and make zoom_in not the reverse of
    --  zoom_out.
 
-   Hist_Align_On_Grid : constant History_Key := "browsers-align-on-grid";
-   Hist_Straight_Links : constant History_Key := "browsers-straight-links";
-   Hist_Draw_Grid : constant History_Key := "browsers-display-grid";
-   Hist_Add_Waypoints : constant History_Key := "browsers-add-waypoints";
-   Hist_Vertical      : constant History_Key := "browsers-vertical";
+   Align_On_Grid      : Boolean_Preference;
+   Draw_Grid          : Boolean_Preference;
+   Add_Waypoints      : Boolean_Preference;
+   Vertical           : Boolean_Preference;
 
    type Export_Idle_Data is record
       Browser : General_Browser;
@@ -356,12 +354,21 @@ package body Browsers.Canvas is
       Id := Browser.Get_View.Model.On_Selection_Changed
         (On_Selection_Changed'Access, Browser);
 
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Browser.Kernel).all,
-         Hist_Draw_Grid, Default_Value => False);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Browser.Kernel).all,
-         Hist_Straight_Links, Default_Value => True);
+      Align_On_Grid := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
+        ("browsers-align-on-grid", True, Label => -"Align On Grid");
+      Draw_Grid := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
+        ("browsers-display-grid", False, Label => -"Draw grid",
+         Doc => -"Whether to draw a grid in the background");
+      Vertical := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
+        ("browsers-vertical", False, Label => -"Vertical layout",
+         Doc => -("General orientation of the layout: either from left"
+           & " to right, or from top to bottom"));
+      Add_Waypoints := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
+        ("browsers-add-waypoints", False, Label => -"Use waypoints",
+         Doc =>
+           (-("Whether to insert waypoints in long edges when performing the"
+            & " layout of the graph. This might result in less edge crossings"
+            & " but is sometimes harder to use interactively")));
 
       Hook := new Preferences_Hook_Record;
       Hook.Browser := General_Browser (Browser);
@@ -384,11 +391,30 @@ package body Browsers.Canvas is
    is
       pragma Unreferenced (Kernel);
       B    : constant General_Browser := Hook.Browser;
+      Pref : constant Preference := GPS.Kernel.Standard_Hooks.Get_Pref (Data);
    begin
       Create_Styles (B.View);
-      Toggle_Draw_Grid (B);
 
-      B.Preferences_Changed (GPS.Kernel.Standard_Hooks.Get_Pref (Data));
+      if Pref = null
+        or else Pref = Preference (Draw_Grid)
+      then
+         Toggle_Draw_Grid (B);
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Align_On_Grid)
+      then
+         Change_Align_On_Grid (B);
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Vertical)
+        or else Pref = Preference (Add_Waypoints)
+      then
+         Force_Refresh (B);
+      end if;
+
+      B.Preferences_Changed (Pref);
    end Execute;
 
    --------------
@@ -479,51 +505,12 @@ package body Browsers.Canvas is
      (View    : not null access General_Browser_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Check : Gtk_Check_Menu_Item;
+      K     : constant Kernel_Handle := View.Kernel;
    begin
-      Gtk_New (Check, Label => -"Align On Grid");
-      Associate
-        (Get_History (View.Kernel).all, Hist_Align_On_Grid,
-         Check, Default => True);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-         Change_Align_On_Grid'Access, View);
-
-      Gtk_New (Check, Label => -"Draw grid");
-      Check.Set_Tooltip_Text
-        (-"Whether to draw a grid in the background");
-      Associate
-        (Get_History (View.Kernel).all, Hist_Draw_Grid,
-         Check, Default => False);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-         Toggle_Draw_Grid'Access, View);
-
-      Gtk_New (Check, Label => -"Vertical layout");
-      Check.Set_Tooltip_Text
-        (-("General orientation of the layout: either from left to right,"
-         & " or from top to bottom"));
-      Menu.Append (Check);
-      Associate
-        (Get_History (View.Kernel).all, Hist_Vertical, Check);
-      Widget_Callback.Object_Connect
-        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-         Force_Refresh'Access, View);
-
-      Gtk_New (Check, Label => -"Use waypoints");
-      Check.Set_Tooltip_Text
-        (-("Whether to insert waypoints in long edges when performing the"
-         & " layout of the graph. This might result in less edge crossings"
-         & " but is sometimes harder to use interactively"));
-      Menu.Append (Check);
-      Associate
-        (Get_History (View.Kernel).all, Hist_Add_Waypoints, Check,
-         Default => False);
-      Widget_Callback.Object_Connect
-        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-         Force_Refresh'Access, View);
+      Append_Menu (Menu, K, Align_On_Grid);
+      Append_Menu (Menu, K, Draw_Grid);
+      Append_Menu (Menu, K, Vertical);
+      Append_Menu (Menu, K, Add_Waypoints);
    end Create_Menu;
 
    --------------
@@ -857,9 +844,11 @@ package body Browsers.Canvas is
    -----------------------
 
    function Horizontal_Layout
-     (Self : not null access General_Browser_Record) return Boolean is
+     (Self : not null access General_Browser_Record) return Boolean
+   is
+      pragma Unreferenced (Self);
    begin
-      return not Get_History (Get_History (Self.Kernel).all, Hist_Vertical);
+      return not Vertical.Get_Pref;
    end Horizontal_Layout;
 
    --------------------
@@ -882,8 +871,7 @@ package body Browsers.Canvas is
         (Self.View.Model,
          View                 => Self.View,  --  animate
          Horizontal           => Self.Horizontal_Layout,
-         Add_Waypoints        =>
-           Get_History (Get_History (Self.Kernel).all, Hist_Add_Waypoints),
+         Add_Waypoints        => Add_Waypoints.Get_Pref,
          Space_Between_Items  => Space_Between_Items,
          Space_Between_Layers => Space_Between_Layers);
 
@@ -930,8 +918,7 @@ package body Browsers.Canvas is
 
    procedure Change_Align_On_Grid (Browser : access Gtk_Widget_Record'Class) is
       View  : constant General_Browser := General_Browser (Browser);
-      Align : constant Boolean :=
-        Get_History (Get_History (View.Kernel).all, Hist_Align_On_Grid);
+      Align : constant Boolean := Align_On_Grid.Get_Pref;
    begin
       View.View.Set_Snap
         (Snap_To_Grid   => Align,
@@ -954,8 +941,7 @@ package body Browsers.Canvas is
 
    procedure Toggle_Draw_Grid (Browser : access Gtk_Widget_Record'Class) is
       View  : constant General_Browser := General_Browser (Browser);
-      Draw_Grid : constant Boolean :=
-        Get_History (Get_History (View.Kernel).all, Hist_Draw_Grid);
+      Grid : constant Boolean := Draw_Grid.Get_Pref;
       Annotation_Font : Pango_Font_Description;
    begin
       Annotation_Font := Copy (Preferences.Default_Font.Get_Pref_Font);
@@ -965,7 +951,7 @@ package body Browsers.Canvas is
 
       View.View.Set_Grid_Size (Size => 15.0);
 
-      if not Draw_Grid then
+      if not Grid then
          View.View.Background := Background_Color;
       else
          View.View.Background := Background_Grid_Lines;

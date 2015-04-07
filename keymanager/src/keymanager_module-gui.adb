@@ -73,10 +73,14 @@ with Gtkada.MDI;              use Gtkada.MDI;
 with Pango.Enums;             use Pango.Enums;
 
 with Commands.Interactive;    use Commands, Commands.Interactive;
+with Default_Preferences;     use Default_Preferences;
 with Generic_Views;           use Generic_Views;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Search;              use GPS.Search;
 with GUI_Utils;               use GUI_Utils;
@@ -92,10 +96,10 @@ package body KeyManager_Module.GUI is
    Weight_Column     : constant := 2;
    Icon_Name_Column  : constant := 3;
 
-   Hist_Show_All_Menus : constant History_Key := "shortcuts-show-all-menus";
-   Hist_Shortcuts_Only : constant History_Key := "shortcuts-only";
-   Hist_Categories     : constant History_Key := "shorcuts-categories";
-   Hist_Show_Empty_Cat : constant History_Key := "shorcuts-show-empty-cat";
+   Show_All_Menus      : Boolean_Preference;
+   Shortcuts_Only      : Boolean_Preference;
+   Categories_Pref     : Boolean_Preference;
+   Show_Empty_Cat      : Boolean_Preference;
 
    type Keys_Editor_Record is new Generic_Views.View_Record with record
       View               : Gtk_Tree_View;
@@ -220,6 +224,11 @@ package body KeyManager_Module.GUI is
    --  Fill_Editor when possible, since this will preserve expanded/closed
    --  nodes.
 
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when the preferences change
+
    package Keys_Editor_Visible_Funcs is new
      Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (Keys_Editor);
    function Action_Is_Visible
@@ -340,14 +349,10 @@ package body KeyManager_Module.GUI is
    -----------------
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class) is
-      Show_All_Menus : constant Boolean :=
-        Get_History (Get_History (Editor.Kernel).all, Hist_Show_All_Menus);
-      Show_Categories : constant Boolean :=
-        Get_History (Get_History (Editor.Kernel).all, Hist_Categories);
-      Shortcuts_Only : constant Boolean :=
-        Get_History (Get_History (Editor.Kernel).all, Hist_Shortcuts_Only);
-      Show_Empty_Cat : constant Boolean :=
-        Get_History (Get_History (Editor.Kernel).all, Hist_Show_Empty_Cat);
+      All_Menus  : constant Boolean := Show_All_Menus.Get_Pref;
+      Categories : constant Boolean := Categories_Pref.Get_Pref;
+      Shortcuts  : constant Boolean := Shortcuts_Only.Get_Pref;
+      Empty_Cat  : constant Boolean := Show_Empty_Cat.Get_Pref;
 
       Parent       : Gtk_Tree_Iter;
       Action       : Action_Record_Access;
@@ -376,21 +381,20 @@ package body KeyManager_Module.GUI is
             Show : Boolean;
          begin
             --  Do not show actions with no category, by default
-            Show := Show_Empty_Cat
+            Show := Empty_Cat
               or else Get_Category (Action) /= ""
               or else Key /= "";
 
             if Show then
                if Name (Name'First) /= '/' then
-                  Show := not Shortcuts_Only or else Key /= "";
+                  Show := not Shortcuts or else Key /= "";
                else
-                  Show := Key /= ""
-                    or else (not Shortcuts_Only and then Show_All_Menus);
+                  Show := Key /= "" or else (not Shortcuts and then All_Menus);
                end if;
             end if;
 
             if Show then
-               if Show_Categories then
+               if Categories then
                   --  Create category node only when needed, which ensures
                   --  we do not show empty categories
                   Parent := Find_Parent (Editor.Model, Action);
@@ -1046,45 +1050,12 @@ package body KeyManager_Module.GUI is
      (View    : not null access Keys_Editor_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Check : Gtk_Check_Menu_Item;
+      K     : constant Kernel_Handle := View.Kernel;
    begin
-      Gtk_New (Check, Label => -"Shortcuts only");
-      Check.Set_Tooltip_Text
-        (-("If enabled, only actions with a shortcut are displayed"));
-      Associate (Get_History (View.Kernel).all, Hist_Shortcuts_Only, Check);
-      Menu.Append (Check);
-      Check.On_Toggled (Refill_Editor'Access, View);
-
-      Gtk_New (Check, Label => -"Show categories");
-      Check.Set_Tooltip_Text (-"Whether to group actions by categories");
-      Associate (Get_History (View.Kernel).all, Hist_Categories, Check);
-      Menu.Append (Check);
-      Check.On_Toggled (Refill_Editor'Access, View);
-
-      Gtk_New (Check, Label => -"Show all menus");
-      Check.Set_Tooltip_Text
-        (-("Whether to show all menus, or only those with a shortcut"
-         & ASCII.LF
-         & "Historically, shortcuts used to be associated directly to menus,"
-         & " but it is in fact better to associate them with the corresponding"
-         & " action, which you can see by looking at the tooltip on the menu."
-         & ASCII.LF
-         & "This ensures the shortcut remains available even when the menu is"
-         & " not visible."));
-      Associate (Get_History (View.Kernel).all, Hist_Show_All_Menus, Check);
-      Menu.Append (Check);
-      Check.On_Toggled (Refill_Editor'Access, View);
-
-      Gtk_New (Check, Label => -"Show all categories");
-      Check.Set_Tooltip_Text
-        (-("Whether to show actions with no category."
-         & ASCII.LF
-         & "These actions are typically internal to GPS, and are generally not"
-         & " bound to a key shortcut. However, it might occasionally be useful"
-         & " to see them."));
-      Associate (Get_History (View.Kernel).all, Hist_Show_Empty_Cat, Check);
-      Menu.Append (Check);
-      Check.On_Toggled (Refill_Editor'Access, View);
+      Append_Menu (Menu, K, Shortcuts_Only);
+      Append_Menu (Menu, K, Categories_Pref);
+      Append_Menu (Menu, K, Show_All_Menus);
+      Append_Menu (Menu, K, Show_Empty_Cat);
    end Create_Menu;
 
    ------------------------
@@ -1361,6 +1332,30 @@ package body KeyManager_Module.GUI is
       return Gtk_Widget (Editor.View);
    end Initialize;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      Pref : Preference;
+      View : constant Keys_Editor := Keys_Editor_Views.Retrieve_View (Kernel);
+   begin
+      if View /= null then
+         Pref := Get_Pref (Data);
+         if Pref = null
+           or else Pref = Preference (Shortcuts_Only)
+           or else Pref = Preference (Categories_Pref)
+           or else Pref = Preference (Show_All_Menus)
+           or else Pref = Preference (Show_Empty_Cat)
+         then
+            Refill_Editor (View);
+         end if;
+      end if;
+   end Preferences_Changed;
+
    -----------------------
    -- Register_Key_Menu --
    -----------------------
@@ -1370,14 +1365,34 @@ package body KeyManager_Module.GUI is
    begin
       Keys_Editor_Views.Register_Module (Kernel);
 
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Show_All_Menus, False);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Shortcuts_Only, False);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Categories, True);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Show_Empty_Cat, False);
+      Show_All_Menus := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("shortcuts-show-all-menus", False,
+         Label => -"Show all menus",
+         Doc => -("Whether to show all menus, or only those with a shortcut"
+           & ASCII.LF
+           & "Historically, shortcuts used to be associated directly to menus,"
+           & " but it is in fact better to associate them with the"
+           & " corresponding action, which you can see by looking at the"
+           & " tooltip on the menu."
+           & ASCII.LF
+           & "This ensures the shortcut remains available even when the menu"
+           & " is not visible."));
+      Shortcuts_Only := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("shortcuts-only", False,
+         Label => -"Shortcuts only",
+         Doc => -("If enabled, only actions with a shortcut are displayed"));
+      Categories_Pref := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("shortcuts-categories", True,
+         Label => -"Show categories",
+         Doc => -"Whether to group actions by categories");
+      Show_Empty_Cat := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("shortcuts-show-empty-cat", False,
+         Label => -"Show all categories",
+         Doc => -("Whether to show actions with no category."
+           & ASCII.LF
+           & "These actions are typically internal to GPS, and are generally"
+           & " not bound to a key shortcut. However, it might occasionally be"
+           & " useful to see them."));
 
       Register_Action
         (Kernel, "key shortcuts expand all",
@@ -1385,6 +1400,10 @@ package body KeyManager_Module.GUI is
          -"Expand or collapse all nodes in the shortcuts editor",
          Icon_Name => "gps-expand-all-symbolic",
          Category => -"Key Shortcuts");
+
+      Add_Hook (Kernel, Preference_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "key manager.preferences_changed");
    end Register_Key_Menu;
 
 end KeyManager_Module.GUI;

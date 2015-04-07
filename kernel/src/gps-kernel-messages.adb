@@ -35,7 +35,7 @@ with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Project;            use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Style_Manager;      use GPS.Kernel.Style_Manager;
-with Histories;                     use Histories;
+with GPS.Intl;                      use GPS.Intl;
 with Projects;                      use Projects;
 with XML_Parsers;                   use XML_Parsers;
 with XML_Utils;                     use XML_Utils;
@@ -1036,9 +1036,7 @@ package body GPS.Kernel.Messages is
       File              : Virtual_File;
 
    begin
-      if not Get_History
-        (Get_History (Self.Kernel).all, Hist_Locations_Save_In_Desktop)
-      then
+      if not Locations_Save_In_Desktop.Get_Pref then
          Trace (Me, "Not loading " & Messages_File.Display_Full_Name);
          return;
       end if;
@@ -1868,9 +1866,7 @@ package body GPS.Kernel.Messages is
       if GPS.Kernel.Project.Get_Registry (Self.Kernel).Tree.Status
         = GNATCOLL.Projects.From_File
       then
-         if Get_History
-           (Get_History (Self.Kernel).all, Hist_Locations_Save_In_Desktop)
-         then
+         if Locations_Save_In_Desktop.Get_Pref then
             Self.Save (F, (True, True), False);
          elsif F.Is_Regular_File then
             F.Delete (Success);
@@ -2378,5 +2374,21 @@ package body GPS.Kernel.Messages is
 
       return Flags;
    end From_Int;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+   begin
+      Locations_Save_In_Desktop := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("locations-save-in-desktop", False,
+         Label => -"Save locations on exit",
+         Doc => -(
+           -("Whether the contents of the Locations view should be saved"
+             & " and restored when GPS is restarted.")));
+   end Register_Module;
 
 end GPS.Kernel.Messages;

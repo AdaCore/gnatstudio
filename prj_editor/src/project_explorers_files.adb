@@ -52,6 +52,7 @@ with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
 
 with Commands.Interactive;       use Commands, Commands.Interactive;
+with Default_Preferences;        use Default_Preferences;
 with Generic_List;
 with Generic_Views;              use Generic_Views;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
@@ -60,6 +61,7 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
@@ -68,14 +70,12 @@ with Projects;                   use Projects;
 with File_Utils;
 with GUI_Utils;                  use GUI_Utils;
 with Tooltips;                   use Tooltips;
-with Histories;                  use Histories;
 with Project_Explorers_Common;   use Project_Explorers_Common;
 
 package body Project_Explorers_Files is
    Me : constant Trace_Handle := Create ("FILES");
 
-   File_View_Shows_Only_Project : constant History_Key :=
-                                    "explorers-file-show-project-only";
+   File_View_Shows_Only_Project : Boolean_Preference;
 
    type Append_Directory_Idle_Data;
    type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
@@ -214,6 +214,11 @@ package body Project_Explorers_Files is
      (D : Append_Directory_Idle_Data_Access) return Boolean;
    --  ???
    --  Called by File_Append_Directory.
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class);
+   --  Called when preferences change
 
    type Refresh_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -569,10 +574,7 @@ package body Project_Explorers_Files is
          if D.Files (D.File_Index) = No_File then
             null;
 
-         elsif Get_History
-           (Get_History (D.Explorer.Kernel).all,
-            File_View_Shows_Only_Project)
-         then
+         elsif File_View_Shows_Only_Project.Get_Pref then
             if Is_Directory (D.Files (D.File_Index)) then
                if not Get_Registry (D.Explorer.Kernel).Tree.
                  Directory_Belongs_To_Project
@@ -955,15 +957,8 @@ package body Project_Explorers_Files is
      (View    : not null access Project_Explorer_Files_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Check : Gtk_Check_Menu_Item;
    begin
-      Gtk_New (Check, Label => -"Show files from project only");
-      Associate
-        (Get_History (View.Kernel).all, File_View_Shows_Only_Project, Check,
-         Default => False);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Gtk.Check_Menu_Item.Signal_Toggled, Refresh'Access, View);
+      Append_Menu (Menu, View.Kernel, File_View_Shows_Only_Project);
    end Create_Menu;
 
    ----------------------------
@@ -1180,9 +1175,7 @@ package body Project_Explorers_Files is
       Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
 
-      if Get_History
-        (Get_History (Explorer.Kernel).all, File_View_Shows_Only_Project)
-      then
+      if File_View_Shows_Only_Project.Get_Pref then
          declare
             Inc : constant File_Array :=
                     Source_Dirs (Get_Project (Explorer.Kernel), True);
@@ -1527,6 +1520,31 @@ package body Project_Explorers_Files is
       Add_File (Hook.View, Files_2_Hooks_Args (Data.all).Renamed);
    end Execute;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : access Hooks_Data'Class)
+   is
+      Explorer : constant Project_Explorer_Files :=
+        Explorer_Files_Views.Retrieve_View (Kernel);
+      Pref : Preference;
+   begin
+      if Explorer /= null then
+         Pref := Get_Pref (Data);
+         Set_Font_And_Colors
+           (Explorer.File_Tree, Fixed_Font => True, Pref => Pref);
+
+         if Pref = null
+           or else Pref = Preference (File_View_Shows_Only_Project)
+         then
+            Refresh (Explorer);
+         end if;
+      end if;
+   end Preferences_Changed;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1543,10 +1561,19 @@ package body Project_Explorers_Files is
          Filter => File_View_Filter,
          Name   => "File_View");
 
+      File_View_Shows_Only_Project :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorers-file-show-project-only", False,
+           Label => -"Show files from project only");
+
       Register_Action
         (Kernel, "refresh files view", new Refresh_Command,
          -"Refrehs the contents of the Files view",
          Icon_Name => "gps-refresh-symbolic");
+
+      Add_Hook (Kernel, Preference_Changed_Hook,
+                Wrapper (Preferences_Changed'Access),
+                Name => "project_explorer_files.preferences_changed");
    end Register_Module;
 
 end Project_Explorers_Files;

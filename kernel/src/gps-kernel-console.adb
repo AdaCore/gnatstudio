@@ -53,7 +53,7 @@ with Default_Preferences;    use Default_Preferences;
 package body GPS.Kernel.Console is
    Me : constant Trace_Handle := Create ("CONSOLE");
 
-   History_Wrap_Lines : constant History_Key := "messages-wrap-line";
+   Wrap_Lines : Boolean_Preference;
 
    type GPS_Message_Record is new Interactive_Console_Record with
       null record;
@@ -408,10 +408,16 @@ package body GPS.Kernel.Console is
       Data   : access Hooks_Data'Class)
    is
       Console : constant Interactive_Console := Get_Console (Kernel);
+      Pref    : Preference;
    begin
       if Console /= null then
+         Pref := Get_Pref (Data);
          Set_Font_And_Colors
-           (Get_View (Console), Fixed_Font => True, Pref => Get_Pref (Data));
+           (Get_View (Console), Fixed_Font => True, Pref => Pref);
+
+         if Pref = null or else Pref = Preference (Wrap_Lines) then
+            On_Toggle_Line_Wrap (Console);
+         end if;
       end if;
    end On_Preferences_Changed;
 
@@ -422,9 +428,7 @@ package body GPS.Kernel.Console is
    procedure On_Toggle_Line_Wrap (Self : access GObject_Record'Class) is
       Console : constant GPS_Message := GPS_Message (Self);
    begin
-      if Get_History
-        (Get_History (Console.Kernel).all, History_Wrap_Lines)
-      then
+      if Wrap_Lines.Get_Pref then
          Console.Get_View.Set_Wrap_Mode (Wrap_Char);
       else
          Console.Get_View.Set_Wrap_Mode (Wrap_None);
@@ -439,9 +443,11 @@ package body GPS.Kernel.Console is
      (Console : access GPS_Message_Record'Class) return Gtk_Widget
    is
    begin
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Console.Kernel).all, History_Wrap_Lines,
-         Default_Value => True);
+      Wrap_Lines := Console.Kernel.Get_Preferences.Create_Invisible_Pref
+        ("messages-wrap-line", True,
+         Label => -"Wrap lines",
+         Doc =>
+           -"Whether to wrap long lines, or require horizontal scrolling");
 
       Initialize
         (Console,
@@ -478,15 +484,8 @@ package body GPS.Kernel.Console is
      (View    : not null access GPS_Message_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Check : Gtk_Check_Menu_Item;
    begin
-      Gtk_New (Check, -"Wrap lines");
-      Check.Set_Tooltip_Text
-        (-"Whether to wrap long lines, or require horizontal scrolling");
-      Associate (Get_History (View.Kernel).all,
-                 History_Wrap_Lines, Check, Default => True);
-      Check.On_Toggled (On_Toggle_Line_Wrap'Access, View);
-      Menu.Add (Check);
+      Append_Menu (Menu, View.Kernel, Wrap_Lines);
    end Create_Menu;
 
    ---------------------

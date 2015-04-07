@@ -39,13 +39,13 @@ with Pango.Font;                use Pango.Font;
 
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
-with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
 
 with Basic_Types;               use Basic_Types;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Default_Preferences;       use Default_Preferences;
 with Generic_Views;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
@@ -53,9 +53,9 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
-with Histories;                 use Histories;
 with Xref;                      use Xref;
 
 package body Browsers.Entities is
@@ -68,8 +68,7 @@ package body Browsers.Entities is
    UML_Generic  : constant String := "{Generic}";
    --  String used in UML to indicate that an entity is abstract
 
-   Show_Qualified_Name : constant History_Key :=
-     "browser-entities-qualified-names";
+   Show_Qualified_Name : Boolean_Preference;
 
    ------------------
    -- Type browser --
@@ -94,6 +93,9 @@ package body Browsers.Entities is
      (Self     : not null access Type_Browser_Record;
       Node     : XML_Utils.Node_Ptr;
       From, To : not null access GPS_Item_Record'Class);
+   overriding procedure Preferences_Changed
+     (Self : not null access Type_Browser_Record;
+      Pref : Default_Preferences.Preference);
 
    function Initialize
      (View   : access Type_Browser_Record'Class)
@@ -385,7 +387,6 @@ package body Browsers.Entities is
      (View    : not null access Type_Browser_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Check : Gtk_Check_Menu_Item;
       Sep   : Gtk_Separator_Menu_Item;
    begin
       General_Browser_Record (View.all).Create_Menu (Menu);  --  inherited
@@ -393,13 +394,7 @@ package body Browsers.Entities is
       Gtk_New (Sep);
       Menu.Append (Sep);
 
-      Gtk_New (Check, Label => -"Show qualified names");
-      Check.Set_Tooltip_Text
-        (-("Whether the title bars should show a fully qualified name"));
-      Associate (Get_History (View.Kernel).all, Show_Qualified_Name, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Reset_All_Items'Access, View);
+      Append_Menu (Menu, View.Kernel, Show_Qualified_Name);
    end Create_Menu;
 
    --------------
@@ -499,6 +494,22 @@ package body Browsers.Entities is
       return Commands.Success;
    end Execute;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   overriding procedure Preferences_Changed
+     (Self : not null access Type_Browser_Record;
+      Pref : Default_Preferences.Preference)
+   is
+   begin
+      if Pref = null
+        or else Pref = Preference (Show_Qualified_Name)
+      then
+         Reset_All_Items (Self);
+      end if;
+   end Preferences_Changed;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -512,9 +523,10 @@ package body Browsers.Entities is
 
       Command := new Examine_Entity_Command;
 
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Show_Qualified_Name,
-         Default_Value => False);
+      Show_Qualified_Name := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("browser-entities-qualified-names", False,
+         Label => -"Show qualified names",
+         Doc  => -"Whether the title bars should show a fully qualified name");
 
       Register_Contextual_Menu
         (Kernel, "Examine entity",
@@ -1172,7 +1184,7 @@ package body Browsers.Entities is
 
       --  Now compute the contents of the item
 
-      if Get_History (Get_History (B.Kernel).all, Show_Qualified_Name) then
+      if Show_Qualified_Name.Get_Pref then
          Title := To_Unbounded_String (E.Qualified_Name);
       else
          Title := To_Unbounded_String (E.Get_Name);

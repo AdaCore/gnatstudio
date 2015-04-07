@@ -43,6 +43,7 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.MDI;               use Gtkada.MDI;
 
 with Commands.Interactive;      use Commands.Interactive;
+with Default_Preferences;       use Default_Preferences;
 with Projects;                  use Projects;
 with Generic_Views;
 with GNAT.Strings;              use GNAT.Strings;
@@ -60,7 +61,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Histories;                 use Histories;
 with Variable_Editors;          use Variable_Editors;
 with GPS.Intl;                  use GPS.Intl;
 with XML_Utils;                 use XML_Utils;
@@ -157,8 +157,7 @@ package body Scenario_Views is
       Data   : access Hooks_Data'Class);
    --  Called when a new build mode is selected
 
-   Hist_Show_Build_Modes : constant History_Key :=
-     "scenario-show-build-modes";
+   Show_Build_Modes : Boolean_Preference;
 
    type Command_Edit_Variable is new Interactive_Command with null record;
    overriding function Execute
@@ -192,10 +191,17 @@ package body Scenario_Views is
       Data   : access Hooks_Data'Class)
    is
       View : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
+      Pref : Preference;
    begin
       if View /= null then
-         Set_Font_And_Colors
-           (View.View, Fixed_Font => False, Pref => Get_Pref (Data));
+         Pref := Get_Pref (Data);
+         Set_Font_And_Colors (View.View, Fixed_Font => False, Pref => Pref);
+
+         if Pref = null
+           or else Pref = Preference (Show_Build_Modes)
+         then
+            On_Force_Refresh (View);
+         end if;
       end if;
    end On_Preferences_Changed;
 
@@ -534,12 +540,8 @@ package body Scenario_Views is
      (View    : not null access Scenario_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Check    : Gtk_Check_Menu_Item;
    begin
-      Gtk_New (Check, Label => -"Show build modes");
-      Associate (Get_History (View.Kernel).all, Hist_Show_Build_Modes, Check);
-      Menu.Append (Check);
-      Check.On_Toggled (On_Force_Refresh'Access, View);
+      Append_Menu (Menu, View.Kernel, Show_Build_Modes);
    end Create_Menu;
 
    -------------
@@ -558,8 +560,7 @@ package body Scenario_Views is
       Model  : constant Gtk_Tree_Store := Gtk_Tree_Store'(-V.View.Get_Model);
       Val    : GValue;
       Scenario : Gtk_Tree_Iter;
-      Show_Build : constant Boolean :=
-        Get_History (Get_History (V.Kernel).all, Hist_Show_Build_Modes);
+      Show_Build : constant Boolean := Show_Build_Modes.Get_Pref;
    begin
       Trace (Me, "Recomputing list of scenario variables");
 
@@ -698,8 +699,9 @@ package body Scenario_Views is
         (Kernel,
          ID        => Module_ID (M));
 
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Show_Build_Modes, True);
+      Show_Build_Modes := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("scenario-show-build-modes", True,
+         Label => -"Show build modes");
 
       Register_Action
         (Kernel, "Scenario edit variable",

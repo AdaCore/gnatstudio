@@ -46,6 +46,7 @@ with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Basic_Types;               use Basic_Types;
+with Default_Preferences;       use Default_Preferences;
 with Entities_Tooltips;
 with Generic_Views;             use Generic_Views;
 with GPS.Editors;               use GPS.Editors;
@@ -74,17 +75,16 @@ package body Outline_View is
    Outline_View_Module : Module_ID;
    Outline_View_Module_Name : constant String := "Outline_View";
 
-   Hist_Show_Profile      : constant History_Key := "outline-show-profile";
-   Hist_Sort_Alphabetical : constant History_Key := "outline-alphabetical";
-   Hist_Editor_Link       : constant History_Key := "outline-editor-link";
-   Hist_Show_Decls        : constant History_Key := "outline-show-decls";
-   Hist_Show_Types        : constant History_Key := "outline-show-types";
-   Hist_Show_Tasks        : constant History_Key := "outline-show-tasks";
-   Hist_Show_Objects      : constant History_Key := "outline-show-objects";
-   Hist_Show_With         : constant History_Key := "outline-show-with";
-   Hist_Group_Spec_And_Body : constant History_Key :=
-     "outline-group-spec-and-body";
-   Hist_Flat_View         : constant History_Key := "outline-flat-view";
+   Show_Profile           : Boolean_Preference;
+   Sort_Alphabetical      : Boolean_Preference;
+   Editor_Link            : Boolean_Preference;
+   Show_Decls             : Boolean_Preference;
+   Show_Types             : Boolean_Preference;
+   Show_Tasks             : Boolean_Preference;
+   Show_Objects           : Boolean_Preference;
+   Show_With              : Boolean_Preference;
+   Group_Spec_And_Body    : Boolean_Preference;
+   Flat_View              : Boolean_Preference;
 
    type Outline_Child_Record is new GPS_MDI_Child_Record with null record;
    overriding function Build_Context
@@ -278,9 +278,7 @@ package body Outline_View is
       Model   : Outline_Model;
       Path    : Gtk_Tree_Path;
    begin
-      if Get_History (Get_History (Kernel).all, Hist_Editor_Link)
-        and then Outline /= null
-      then
+      if Editor_Link.Get_Pref and then Outline /= null then
          Model   := Get_Outline_Model (Outline);
          Unselect_All (Get_Selection (Outline.Tree));
 
@@ -335,10 +333,26 @@ package body Outline_View is
    is
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
+      Pref : Preference;
    begin
       if Outline /= null then
-         Set_Font_And_Colors
-           (Outline.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
+         Pref := Get_Pref (Data);
+         Set_Font_And_Colors (Outline.Tree, Fixed_Font => True, Pref => Pref);
+
+         if Pref = null
+           or else Pref = Preference (Show_Profile)
+           or else Pref = Preference (Sort_Alphabetical)
+           or else Pref = Preference (Editor_Link)
+           or else Pref = Preference (Show_Decls)
+           or else Pref = Preference (Show_Types)
+           or else Pref = Preference (Show_Tasks)
+           or else Pref = Preference (Show_Objects)
+           or else Pref = Preference (Show_With)
+           or else Pref = Preference (Group_Spec_And_Body)
+           or else Pref = Preference (Flat_View)
+         then
+            Force_Refresh (Outline);
+         end if;
       end if;
    end Preferences_Changed;
 
@@ -418,75 +432,27 @@ package body Outline_View is
      (View    : not null access Outline_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Check    : Gtk_Check_Menu_Item;
+      K        : constant Kernel_Handle := View.Kernel;
       Sep      : Gtk_Menu_Item;
    begin
-      Gtk_New (Check, Label => -"Show profiles");
-      Associate (Get_History (View.Kernel).all, Hist_Show_Profile, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
-
-      Gtk_New (Check, Label => -"Show types");
-      Associate (Get_History (View.Kernel).all, Hist_Show_Types, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
-
-      Gtk_New (Check, Label => -"Show objects");
-      Associate (Get_History (View.Kernel).all, Hist_Show_Objects, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
-
-      Gtk_New (Check, Label => -"Show tasks, entries, and protected types");
-      Associate (Get_History (View.Kernel).all, Hist_Show_Tasks, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
-
-      Gtk_New (Check, Label => -"Show specifications");
-      Associate (Get_History (View.Kernel).all, Hist_Show_Decls, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
-
-      Gtk_New (Check, Label => -"Show with clauses");
-      Associate (Get_History (View.Kernel).all, Hist_Show_With, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
+      Append_Menu (Menu, K, Show_Profile);
+      Append_Menu (Menu, K, Show_Types);
+      Append_Menu (Menu, K, Show_Objects);
+      Append_Menu (Menu, K, Show_Tasks);
+      Append_Menu (Menu, K, Show_Decls);
+      Append_Menu (Menu, K, Show_With);
 
       Gtk_New (Sep);
       Menu.Append (Sep);
 
-      Gtk_New (Check, Label => -"Sort alphabetically");
-      Associate (Get_History (View.Kernel).all, Hist_Sort_Alphabetical, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
-
-      Gtk_New (Check, Label => -"Flat view");
-      Associate (Get_History (View.Kernel).all, Hist_Flat_View, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
-
-      Gtk_New (Check, Label => -"Group spec and body");
-      Associate
-        (Get_History (View.Kernel).all, Hist_Group_Spec_And_Body, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
+      Append_Menu (Menu, K, Sort_Alphabetical);
+      Append_Menu (Menu, K, Flat_View);
+      Append_Menu (Menu, K, Group_Spec_And_Body);
 
       Gtk_New (Sep);
       Menu.Append (Sep);
 
-      Gtk_New (Check, Label => -"Dynamic link with editor");
-      Associate (Get_History (View.Kernel).all, Hist_Editor_Link, Check);
-      Menu.Append (Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Force_Refresh'Access, View);
+      Append_Menu (Menu, K, Editor_Link);
    end Create_Menu;
 
    -----------------------
@@ -494,27 +460,20 @@ package body Outline_View is
    -----------------------
 
    function Get_Filter_Record
-     (Kernel : access Kernel_Handle_Record'Class) return Tree_Filter is
+     (Kernel : access Kernel_Handle_Record'Class) return Tree_Filter
+   is
+      pragma Unreferenced (Kernel);
    begin
       return
-        (Hide_Types        => not Get_History
-           (Get_History (Kernel).all, Hist_Show_Types),
-         Hide_Objects      => not Get_History
-           (Get_History (Kernel).all, Hist_Show_Objects),
-         Hide_Declarations => not Get_History
-           (Get_History (Kernel).all, Hist_Show_Decls),
-         Hide_Tasks => not Get_History
-           (Get_History (Kernel).all, Hist_Show_Tasks),
-         Hide_Withes => not Get_History
-           (Get_History (Kernel).all, Hist_Show_With),
-         Show_Profile => Get_History
-           (Get_History (Kernel).all, Hist_Show_Profile),
-         Sorted       => Get_History
-           (Get_History (Kernel).all, Hist_Sort_Alphabetical),
-         Group_Spec_And_Body => Get_History
-           (Get_History (Kernel).all, Hist_Group_Spec_And_Body),
-         Flat_View           => Get_History
-           (Get_History (Kernel).all, Hist_Flat_View));
+        (Hide_Types          => not Show_Types.Get_Pref,
+         Hide_Objects        => not Show_Objects.Get_Pref,
+         Hide_Declarations   => not Show_Decls.Get_Pref,
+         Hide_Tasks          => not Show_Tasks.Get_Pref,
+         Hide_Withes         => not Show_With.Get_Pref,
+         Show_Profile        => Show_Profile.Get_Pref,
+         Sorted              => Sort_Alphabetical.Get_Pref,
+         Group_Spec_And_Body => Group_Spec_And_Body.Get_Pref,
+         Flat_View           => Flat_View.Get_Pref);
    end Get_Filter_Record;
 
    ------------------
@@ -910,20 +869,28 @@ package body Outline_View is
       Outline_View_Module := new Outline_View_Module_Record;
       Outline_Views.Register_Module (Kernel, Outline_View_Module);
 
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Show_Profile, True);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Sort_Alphabetical, True);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Editor_Link, True);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Show_Decls, True);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Show_Types, True);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Show_Objects, True);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Hist_Flat_View, False);
+      Show_Profile := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-show-profile", True, Label => -"Show profiles");
+      Sort_Alphabetical := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-alphabetical", True, Label => -"Sort alphabetically");
+      Editor_Link := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-editor-link", True, Label => -"Dynamic link with editor");
+      Show_Decls := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-show-decls", True, Label => -"Show specifications");
+      Show_Types := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-show-types", True, Label => -"Show types");
+      Show_Tasks := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-show-tasks", True,
+         Label => -"Show tasks, entries and protected types");
+      Show_Objects := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-show-objects", True, Label => -"Show objects");
+      Show_With := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-show-with", False, Label => -"Show with clauses");
+      Group_Spec_And_Body := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-group-spec-and-body", False,
+         Label => -"Group spec and body");
+      Flat_View := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-flat-view", False, Label => -"Flat view");
    end Register_Module;
 
    --------------

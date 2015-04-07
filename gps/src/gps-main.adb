@@ -1842,6 +1842,7 @@ procedure GPS.Main is
 
       GPS.Kernel.Xref.Register_Module (GPS_Main.Kernel);
 
+      GPS.Kernel.Messages.Register_Module (GPS_Main.Kernel);
       GPS.Kernel.Messages.Shell.Register_Commands (GPS_Main.Kernel);
       GPS.Kernel.Style_Manager.Shell.Register_Commands (GPS_Main.Kernel);
 

@@ -52,6 +52,7 @@ with Gtkada.MDI;                       use Gtkada.MDI;
 
 with Basic_Types;                      use Basic_Types;
 with Commands.Interactive;             use Commands.Interactive;
+with Default_Preferences;              use Default_Preferences;
 with GPS.Editors;                      use GPS.Editors;
 with GPS.Editors.GtkAda;               use GPS.Editors.GtkAda;
 with GPS.Editors.Line_Information;     use GPS.Editors.Line_Information;
@@ -74,14 +75,11 @@ with Histories;                        use Histories;
 
 package body GPS.Location_View is
 
-   History_Sort_By_Subcategory : constant History_Key :=
-     "locations-sort-by-subcategory";
-   Hist_Auto_Jump_To_First : constant History_Key :=
-     "locations-auto-jump-to-first";
-   Hist_Locations_Wrap : constant History_Key := "locations-wrap";
-   Hist_Locations_Auto_Close : constant History_Key := "locations-auto-close";
-   Hist_Sort_Files_Alphabetical : constant History_Key :=
-     "locations-sort-files-alphabetical";
+   Sort_By_Subcategory     : Boolean_Preference;
+   Auto_Jump_To_First      : Boolean_Preference;
+   Locations_Wrap          : Boolean_Preference;
+   Auto_Close              : Boolean_Preference;
+   Sort_Files_Alphabetical : Boolean_Preference;
 
    Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => False,
@@ -341,8 +339,7 @@ package body GPS.Location_View is
       Allow_Auto_Jump_To_First : Boolean)
    is
       Auto : constant Boolean := Allow_Auto_Jump_To_First
-        and then Get_History
-          (Get_History (Self.Kernel).all, Hist_Auto_Jump_To_First);
+        and then Auto_Jump_To_First.Get_Pref;
    begin
       Expand_Category
         (Location_View_Access
@@ -709,9 +706,7 @@ package body GPS.Location_View is
          if not Success
            or else Get_Iter (Model, File_Path) = Null_Iter
          then
-            if Get_History (Get_History (Loc.Kernel).all,
-                            Hist_Locations_Wrap)
-            then
+            if Locations_Wrap.Get_Pref then
                File_Path := Copy (Category_Path);
                Down (File_Path);
 
@@ -826,13 +821,10 @@ package body GPS.Location_View is
    is
       pragma Unreferenced (Self);
       K : constant Kernel_Handle := Get_Kernel (Context.Context);
-      H : constant Histories.History := Get_History (K);
-      V : constant Location_View := Location_Views.Retrieve_View (K);
    begin
-      Set_History
-        (H.all, History_Sort_By_Subcategory,
-         not Get_History (H.all, History_Sort_By_Subcategory));
-      On_Change_Sort (V);
+      Set_Pref
+        (Sort_By_Subcategory,
+         K.Get_Preferences, not Sort_By_Subcategory.Get_Pref);
       return Commands.Success;
    end Execute;
 
@@ -844,17 +836,13 @@ package body GPS.Location_View is
       Msg_Order  : Messages_Sort_Order;
       File_Order : File_Sort_Order;
    begin
-      if Get_History
-        (Get_History (Self.Kernel).all, History_Sort_By_Subcategory)
-      then
+      if Sort_By_Subcategory.Get_Pref then
          Msg_Order := By_Weight;
       else
          Msg_Order := By_Location;
       end if;
 
-      if Get_History
-        (Get_History (Self.Kernel).all, Hist_Sort_Files_Alphabetical)
-      then
+      if Sort_Files_Alphabetical.Get_Pref then
          File_Order := Alphabetical;
       else
          File_Order := Category_Default_Sort;
@@ -1135,10 +1123,22 @@ package body GPS.Location_View is
       Data   : access Hooks_Data'Class)
    is
       View  : constant Location_View := Location_Views.Retrieve_View (Kernel);
+      Pref  : Preference;
    begin
       if View /= null then
-         Set_Font_And_Colors
-           (View.View, Fixed_Font => True, Pref => Get_Pref (Data));
+         Pref := Get_Pref (Data);
+         Set_Font_And_Colors (View.View, Fixed_Font => True, Pref => Pref);
+
+         if Pref = null
+           or else Pref = Preference (Sort_By_Subcategory)
+           or else Pref = Preference (Sort_Files_Alphabetical)
+         then
+            On_Change_Sort (View);
+         end if;
+
+         --  Nothing to do for Auto_Jump_To_First
+         --  Nothing to do for Locations_Wrap
+         --  Nothing to do for Auto_Close
       end if;
    end Preferences_Changed;
 
@@ -1169,66 +1169,14 @@ package body GPS.Location_View is
      (View    : not null access Location_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Check : Gtk_Check_Menu_Item;
+      K     : constant Kernel_Handle := View.Kernel;
    begin
-      Gtk_New (Check, -"Sort by subcategory");
-      Check.Set_Tooltip_Text
-        (-("Sort messages by their subcategory (error vs warning messages for"
-         & " instance). This also impacts the default sort order for files"));
-      Associate (Get_History (View.Kernel).all,
-                 History_Sort_By_Subcategory, Check, Default => False);
-      Location_View_Callbacks.Object_Connect
-        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-         On_Change_Sort'Access, View);
-      Menu.Add (Check);
-
-      Gtk_New (Check, -"Sort files alphabetically");
-      Check.Set_Tooltip_Text
-        (-("Force sorting of files alphabetically, and ignore the default"
-         & " sort order (which depends on the category)"));
-      Associate (Get_History (View.Kernel).all,
-                 Hist_Sort_Files_Alphabetical, Check, Default => True);
-      Location_View_Callbacks.Object_Connect
-        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-         On_Change_Sort'Access, View);
-      Menu.Add (Check);
-
-      Gtk_New (Check, -"Jump to first location");
-      Check.Set_Tooltip_Text
-        (-("Whether GPS should automatically jump to the first location"
-           & " when entries are added to the Location window (error"
-           & " messages, find results, ...)"));
-      Associate (Get_History (View.Kernel).all,
-                 Hist_Auto_Jump_To_First, Check, Default => True);
-      Location_View_Callbacks.Object_Connect
-        (Check, Gtk.Check_Menu_Item.Signal_Toggled,
-         On_Change_Sort'Access, View);  --  force refresh
-      Menu.Add (Check);
-
-      Gtk_New (Check, -"Wrap around on next/previous");
-      Check.Set_Tooltip_Text
-        (-("Whether using the Next Tag and Previous Tag actions "
-         & " should wrap around to the beginning when reaching the end of "
-         & " the category."));
-      Associate (Get_History (View.Kernel).all,
-                 Hist_Locations_Wrap, Check, Default => True);
-      Menu.Add (Check);
-
-      Gtk_New (Check, -"Auto close Locations");
-      Check.Set_Tooltip_Text
-        (-("Whether the Locations view should be closed "
-         & "automatically when it becomes empty."));
-      Associate (Get_History (View.Kernel).all,
-                 Hist_Locations_Auto_Close, Check, Default => True);
-      Menu.Add (Check);
-
-      Gtk_New (Check, -"Save locations on exit");
-      Check.Set_Tooltip_Text
-        (-("Whether the contents of the Locations view should be saved"
-         & " and restored when GPS is restarted."));
-      Associate (Get_History (View.Kernel).all,
-                 Hist_Locations_Save_In_Desktop, Check, Default => False);
-      Menu.Add (Check);
+      Append_Menu (Menu, K, Sort_By_Subcategory);  --  On_Change_Sort'Access
+      Append_Menu (Menu, K, Sort_Files_Alphabetical); --  On_Change_Sort'Access
+      Append_Menu (Menu, K, Auto_Jump_To_First); --  On_Change_Sort'Access
+      Append_Menu (Menu, K, Locations_Wrap);
+      Append_Menu (Menu, K, Auto_Close);
+      Append_Menu (Menu, K, Locations_Save_In_Desktop);
    end Create_Menu;
 
    ---------------------
@@ -1242,22 +1190,38 @@ package body GPS.Location_View is
    begin
       Location_Views.Register_Module (Kernel);
 
-      Create_New_Boolean_Key_If_Necessary
-        (Hist => Get_History (Kernel).all,
-         Key  => Hist_Auto_Jump_To_First,
-         Default_Value => True);
-      Create_New_Boolean_Key_If_Necessary
-        (Hist => Get_History (Kernel).all,
-         Key  => Hist_Locations_Wrap,
-         Default_Value => True);
-      Create_New_Boolean_Key_If_Necessary
-        (Hist => Get_History (Kernel).all,
-         Key  => Hist_Locations_Auto_Close,
-         Default_Value => False);
-      Create_New_Boolean_Key_If_Necessary
-        (Hist => Get_History (Kernel).all,
-         Key  => Hist_Sort_Files_Alphabetical,
-         Default_Value => False);
+      Sort_By_Subcategory := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("locations-sort-by-subcategory", False,
+         Label => -"Sort by subcategory",
+         Doc => -(
+           "Sort messages by their subcategory (error vs warning messages for"
+          & " instance). This also impacts the default sort order for files"));
+      Auto_Jump_To_First := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("locations-auto-jump-to-first", True,
+         Label => -"Jump to first location",
+         Doc =>
+           -("Whether GPS should automatically jump to the first location"
+            & " when entries are added to the Location window (error"
+            & " messages, find results, ...)"));
+      Locations_Wrap := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("locations-wrap", True,
+         Label => -"Wrap around on next/previous",
+         Doc =>
+           -("Whether using the Next Tag and Previous Tag actions "
+            & " should wrap around to the beginning when reaching the end of "
+            & " the category."));
+      Auto_Close := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("locations-auto-close", False,
+         Label => -"Auto close Locations",
+         Doc =>
+           -("Whether the Locations view should be closed "
+            & "automatically when it becomes empty."));
+      Sort_Files_Alphabetical := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("locations-sort-Files-alphabetical", False,
+         Label => -"Sort files alphabetically",
+         Doc =>
+           -("Force sorting of files alphabetically, and ignore the default"
+            & " sort order (which depends on the category)"));
 
       Register_Action
         (Kernel, "locations remove selection",
@@ -1527,7 +1491,7 @@ package body GPS.Location_View is
 
    procedure On_Row_Deleted (Self : access Location_View_Record'Class) is
    begin
-      if Get_History (Get_History (Self.Kernel).all, Hist_Locations_Auto_Close)
+      if Auto_Close.Get_Pref
         and then Get_Iter_First (Self.View.Get_Model) = Null_Iter
       then
          Self.Do_Not_Delete_Messages_On_Exit := True;

@@ -35,15 +35,14 @@ with Ada.Strings.Unbounded;
 private with Ada.Strings.Unbounded.Hash;
 with Ada.Tags;
 
+with Default_Preferences;           use Default_Preferences;
 with GNATCOLL.VFS;
 with GPS.Editors.Line_Information;
 with GPS.Kernel.Style_Manager;
-with Histories;
 
 package GPS.Kernel.Messages is
 
-   Hist_Locations_Save_In_Desktop : constant Histories.History_Key :=
-     "locations-save-in-desktop";
+   Locations_Save_In_Desktop : Boolean_Preference;
    --  Whether we should save the locations between GPS sessions.
 
    type Messages_Container (<>) is tagged limited private;
@@ -402,6 +401,10 @@ package GPS.Kernel.Messages is
    --------------------------
    -- For private use only --
    --------------------------
+
+   procedure Register_Module
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Create the preferences for this module
 
    function Create_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)

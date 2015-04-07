@@ -40,6 +40,7 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Properties;    use GPS.Kernel.Properties;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GPS.Properties;           use GPS.Properties;
@@ -74,7 +75,7 @@ with XML_Utils;                use XML_Utils;
 package body GVD.Canvas is
    Me : constant Trace_Handle := Create ("Canvas");
 
-   Detect_Aliases : constant History_Key := "gvd-detect-aliases";
+   Detect_Aliases : Boolean_Preference;
 
    Float_Re : constant String := "([+-]?\d+(?:\.\d+E[+-]\d+))";
    --  regexp for a float number
@@ -522,9 +523,10 @@ package body GVD.Canvas is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Kernel);
       Canvas : constant access GVD_Canvas_Record'Class := Hook.Canvas;
       Styles : constant access Browser_Styles := Get_Styles (Canvas.Get_View);
+      Pref   : Preference;
 
       procedure On_Item (Item : not null access Abstract_Item_Record'Class);
       procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
@@ -548,6 +550,15 @@ package body GVD.Canvas is
       Canvas.Get_View.Model.For_Each_Item
         (On_Item'Access, Filter => Kind_Item);
       Canvas.Get_View.Model.Refresh_Layout;  --  resize items and links
+
+      Pref := Get_Pref (Data);
+      if Pref = null
+        or else Pref = Preference (Detect_Aliases)
+      then
+         if Get_Process (Canvas) /= null then
+            Change_Detect_Aliases (Canvas);
+         end if;
+      end if;
    end Execute;
 
    ----------
@@ -1001,22 +1012,12 @@ package body GVD.Canvas is
      (View    : not null access GVD_Canvas_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Check : Gtk_Check_Menu_Item;
       Sep   : Gtk_Separator_Menu_Item;
    begin
       General_Browser_Record (View.all).Create_Menu (Menu);  --  inherited
 
       Gtk_New (Sep);
       Menu.Append (Sep);
-
-      Gtk_New (Check, Label => -"Detect aliases");
-      Check.Set_Tooltip_Text
-        (-("When two variables are at the same location in memory, a single it"
-           & ", a single box is displayed if alias detection is enabled."));
-      Associate (Get_History (View.Kernel).all, Detect_Aliases, Check);
-      Append (Menu, Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Change_Detect_Aliases'Access, View);
    end Create_Menu;
 
    ---------------------------
@@ -1047,10 +1048,11 @@ package body GVD.Canvas is
 
    function Get_Detect_Aliases
      (Process : access GVD.Process.Visual_Debugger_Record'Class)
-      return Boolean is
+      return Boolean
+   is
+      pragma Unreferenced (Process);
    begin
-      return Get_History
-        (Get_History (Get_Kernel (Process)).all, Detect_Aliases);
+      return Detect_Aliases.Get_Pref;
    end Get_Detect_Aliases;
 
    ----------------
@@ -1606,8 +1608,13 @@ package body GVD.Canvas is
          Description => -"Open the Data Window for the debugger",
          Category => -"Views");
 
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, Detect_Aliases, Default_Value => True);
+      Detect_Aliases := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("gvd-detect-aliases", True,
+         Label => -"Detect aliases",
+         Doc =>
+           -("When two variables are at the same location in memory, a single"
+           & " it , a single box is displayed if alias detection is enabled.")
+        );
 
       Canvas_Views.Register_Desktop_Functions (Kernel);
    end Register_Module;

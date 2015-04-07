@@ -52,7 +52,6 @@ with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Search;      use GPS.Kernel.Search;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Search;             use GPS.Search;
-with Histories;              use Histories;
 with GUI_Utils;              use GUI_Utils;
 with Src_Editor_Module;      use Src_Editor_Module;
 with GNAT.Strings;           use GNAT.Strings;
@@ -71,13 +70,8 @@ package body Buffer_Views is
    Untitled    : constant String := "Untitled";
    --  Label used for new window that is not yet saved
 
-   History_Editors_Only : constant History_Key :=
-     "Windows_View_Editors_Only";
-   --  Used to store the current filter settings in histories
-
-   History_Show_Notebooks : constant History_Key :=
-     "Windows_View_Show_Notebooks";
-   --  Used to store the current view settings in histories
+   Editors_Only   : Boolean_Preference;
+   Show_Notebooks : Boolean_Preference;
 
    type BV_Child_Record is new GPS_MDI_Child_Record with null record;
    overriding function Build_Context
@@ -433,10 +427,8 @@ package body Buffer_Views is
    procedure Refresh (View : access Gtk_Widget_Record'Class) is
       V       : constant Buffer_View_Access := Buffer_View_Access (View);
       Model   : constant Gtk_Tree_Store := -Get_Model (V.Tree);
-      Editors_Only   : constant Boolean := Get_History
-        (Get_History (V.Kernel).all, History_Editors_Only);
-      Show_Notebooks : constant Boolean := Get_History
-        (Get_History (V.Kernel).all, History_Show_Notebooks);
+      P_Editors_Only   : constant Boolean := Editors_Only.Get_Pref;
+      P_Show_Notebooks : constant Boolean := Show_Notebooks.Get_Pref;
 
       Notebook_Index : Integer := -1;
       Iter           : Gtk_Tree_Iter := Null_Iter;
@@ -488,7 +480,7 @@ package body Buffer_Views is
          Name : constant String := Get_Short_Title (Child);
          Iter : Gtk_Tree_Iter;
       begin
-         if not Editors_Only
+         if not P_Editors_Only
            or else Is_Source_Box (Child)
          then
             Append (Model, Iter, Parent);
@@ -520,20 +512,20 @@ package body Buffer_Views is
 
       Clear (Model);
 
-      if Show_Notebooks then
+      if P_Show_Notebooks then
          Column := Freeze_Sort (-Get_Model (V.Tree));
       else
          Thaw_Sort (-Get_Model (V.Tree), 1);
       end if;
 
       I_Child := First_Child
-        (Get_MDI (V.Kernel), Group_By_Notebook => Show_Notebooks);
+        (Get_MDI (V.Kernel), Group_By_Notebook => P_Show_Notebooks);
 
       loop
          Child := Get (I_Child);
          exit when Child = null;
 
-         if Show_Notebooks then
+         if P_Show_Notebooks then
             if Notebook_Index = -1
               or else Get_Notebook (I_Child) /= Current_Notebook
             then
@@ -553,7 +545,7 @@ package body Buffer_Views is
          Next (I_Child);
       end loop;
 
-      if Show_Notebooks then
+      if P_Show_Notebooks then
          Purify;
       end if;
 
@@ -568,19 +560,9 @@ package body Buffer_Views is
      (View    : not null access Buffer_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Check   : Gtk_Check_Menu_Item;
    begin
-      Gtk_New (Check, Label => -"Show editors only");
-      Associate (Get_History (View.Kernel).all, History_Editors_Only, Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Refresh'Access, Slot_Object => View);
-      Menu.Add (Check);
-
-      Gtk_New (Check, Label => -"Show notebooks");
-      Associate (Get_History (View.Kernel).all, History_Show_Notebooks, Check);
-      Widget_Callback.Object_Connect
-        (Check, Signal_Toggled, Refresh'Access, Slot_Object => View);
-      Menu.Add (Check);
+      Append_Menu (Menu, View.Kernel, Editors_Only);
+      Append_Menu (Menu, View.Kernel, Show_Notebooks);
    end Create_Menu;
 
    -------------------
@@ -855,10 +837,18 @@ package body Buffer_Views is
    is
       View  : constant Buffer_View_Access :=
         Generic_View.Retrieve_View (Kernel);
+      Pref  : Preference;
    begin
       if View /= null then
-         Set_Font_And_Colors
-           (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
+         Pref := Get_Pref (Data);
+         Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
+
+         if Pref = null
+           or else Pref = Preference (Editors_Only)
+           or else Pref = Preference (Show_Notebooks)
+         then
+            Refresh (View);
+         end if;
       end if;
    end Preferences_Changed;
 
@@ -873,10 +863,12 @@ package body Buffer_Views is
    begin
       Generic_View.Register_Module (Kernel);
 
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, History_Editors_Only, True);
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, History_Show_Notebooks, False);
+      Editors_Only := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("windows-view-editors-only", True,
+         Label => "Show editors only");
+      Show_Notebooks := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("windows-view-show-notebooks", False,
+         Label => "Show notebooks");
 
       Register_Action
         (Kernel, "Windows view close selected",
