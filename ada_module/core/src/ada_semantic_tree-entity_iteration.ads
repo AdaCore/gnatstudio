@@ -21,8 +21,6 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Strings;           use GNAT.Strings;
-
 with Ada_Semantic_Tree.Units;        use Ada_Semantic_Tree.Units;
 with Ada_Semantic_Tree.Visibility;   use Ada_Semantic_Tree.Visibility;
 with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
@@ -111,9 +109,8 @@ private
       Finished);
 
    type Full_Construct_Cell is record
-      It     : Construct_Tree_Iterator;
-      Tree   : Construct_Tree;
-      Buffer : String_Access;
+      It   : Construct_Tree_Iterator;
+      Tree : Construct_Tree;
    end record;
 
    type Semantic_Tree_Iterator_Access is access all Semantic_Tree_Iterator;
@@ -133,8 +130,6 @@ private
 
       Step_Has_Started : Boolean := False;
       --  Notes if the current step has started or not.
-
-      Buffer : String_Access;
 
       Current_File      : Structured_File_Access;
       Current_Construct : Construct_Tree_Iterator;
