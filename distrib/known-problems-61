@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O403-018 GPS: "Whole word" option in omni-search is insensitive
+
+  Problem:    The whole word option for the omni-search is only applicable
+              when searching on regular expressions. But it is visible at
+              all times, and can even be interacted with initially even when
+              the "Fuzzy search" mode is used.
+
+  Status:     This was fixed in 6.2 on 2015-04-10
+
+  Workaround: Ignore this option unless searching for regular expressions.
+
 KP-61-O323-029 GPS: "locate in project view" does not clear filters
 
   Problem:    When using the contextual menu "locate in project view" on

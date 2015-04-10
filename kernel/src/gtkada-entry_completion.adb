@@ -667,6 +667,8 @@ package body Gtkada.Entry_Completion is
       --  pop up the completion window immediately.
       Gtk.Editable.On_Changed
          (+Gtk_Entry (Self.GEntry), On_Entry_Changed'Access, Self);
+
+      On_Settings_Changed (Self);
    end Initialize;
 
    -----------------
@@ -1398,6 +1400,8 @@ package body Gtkada.Entry_Completion is
       end if;
 
       S.Settings_Whole_Word.Set_Sensitive (K = Regexp);
+      S.Settings_Whole_Word.Set_Visible (K = Regexp);
+      S.Settings_Whole_Word.Set_No_Show_All (K /= Regexp);
       Add_To_History (Get_History (S.Kernel).all, S.Name.all & "-kind", T);
       Show_Preview (S);
       On_Entry_Changed (S);
