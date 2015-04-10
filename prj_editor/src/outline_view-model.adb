@@ -376,16 +376,15 @@ package body Outline_View.Model is
       --  insert them. Depending on Group_Spec_And_Body, this might mean
       --  adding the current node as well.
 
-      if Root = null
-        and then Construct_Filter (Model, Sem_Node)
+      if
+        --  Verify that the node is not filtered out
+        Construct_Filter (Model, Sem_Node)
+        --  Verify that a node with this ID doesn't already exist in the tree
+        and then Get_Node (Model, Sem_Node) = null
       then
-         --  pragma Assert
-         --  (Sem_Unique_Id /= "", "Cannot add a tree node with no Id");
          if Sem_Unique_Id = "" then
             Put_Line ("Cannot add a tree node with no Id");
          end if;
-
-         Root := Get_Node (Model, Sem_Node);
 
          if Model.Filter.Flat_View then
             Parent_Node := Model.Phantom_Root'Access;
@@ -395,7 +394,7 @@ package body Outline_View.Model is
          else
             if Sem_Parent = No_Semantic_Node then
                Parent_Node := Model.Phantom_Root'Access;
-            elsif Get_Node (Model, Sem_Node) = null then
+            else
                Parent_Node := Get_Node (Model, Sem_Parent);
                if Model.Filter.Group_Spec_And_Body
                  and then Parent_Node = null
@@ -555,10 +554,12 @@ package body Outline_View.Model is
       end Add_Root_With;
 
    begin
+
       --  First delete the nodes, with the previous filters, otherwise we might
       --  be changing the ordering and therefore all operations on .Children
       --  would not find the nodes and clearing the tree would not work well.
       Model.Clear_Nodes (Model.Phantom_Root'Access);
+
       Model.Filter := Filter;
       Add_Root_With;
 

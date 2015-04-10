@@ -22,7 +22,6 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
