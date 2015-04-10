@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+
 with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
@@ -1272,7 +1274,7 @@ package body Codefix.GNAT_Parser is
            Add_Record_Rep_Clause
              (Current_Text  => Current_Text,
               Cursor        => Message,
-              Caption       => "Low_Order_First",
+              Caption       => To_Unbounded_String ("Low_Order_First"),
               First_Clause  =>
                 "'Scalar_Storage_Order use System.Low_Order_First;");
 
@@ -1286,7 +1288,7 @@ package body Codefix.GNAT_Parser is
            Add_Record_Rep_Clause
              (Current_Text  => Current_Text,
               Cursor        => Message,
-              Caption       => "Low_Order_First",
+              Caption       => To_Unbounded_String ("Low_Order_First"),
               First_Clause  =>
                 "'Scalar_Storage_Order use System.High_Order_First;");
 
@@ -1297,7 +1299,7 @@ package body Codefix.GNAT_Parser is
            Add_Record_Rep_Clause
              (Current_Text  => Current_Text,
               Cursor        => Message,
-              Caption       => "Low_Order_First",
+              Caption       => To_Unbounded_String ("Low_Order_First"),
               First_Clause  =>
                 "'Bit_Order use System.Low_Order_First;",
               Second_Clause =>
@@ -1308,7 +1310,7 @@ package body Codefix.GNAT_Parser is
            Add_Record_Rep_Clause
              (Current_Text  => Current_Text,
               Cursor        => Message,
-              Caption       => "High_Order_First",
+              Caption       => To_Unbounded_String ("High_Order_First"),
               First_Clause  =>
                 "'Bit_Order use System.High_Order_First;",
               Second_Clause =>
@@ -1338,7 +1340,12 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Should_Be (Current_Text, Message, "=>", "=");
+      Solutions :=
+        Should_Be
+          (Current_Text,
+           Message,
+           To_Unbounded_String ("=>"),
+           To_Unbounded_String ("="));
    end Fix;
 
    -----------------------
@@ -1369,7 +1376,8 @@ package body Codefix.GNAT_Parser is
       Solutions := Should_Be
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
    ------------------------
@@ -1397,14 +1405,17 @@ package body Codefix.GNAT_Parser is
       Solutions := Should_Be
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
 
       Concat
         (Solutions,
          Should_Be
            (Current_Text,
             Message,
-            Get_Message (Message) (Matches (2).First .. Matches (2).Last)));
+            To_Unbounded_String
+              (Get_Message (Message)
+               (Matches (2).First .. Matches (2).Last))));
    end Fix;
 
    ---------------------
@@ -1429,8 +1440,13 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Should_Be
-        (Current_Text, Message, "goto", "(go[\s]+to)", Regular_Expression);
+      Solutions :=
+        Should_Be
+          (Current_Text,
+           Message,
+           To_Unbounded_String ("goto"),
+           To_Unbounded_String ("(go[\s]+to)"),
+           Regular_Expression);
    end Fix;
 
    -------------------------
@@ -1477,9 +1493,11 @@ package body Codefix.GNAT_Parser is
       Solutions := Should_Be
         (Current_Text,
          Message,
-         Get_Message (Preview)
-           (Fix_Matches (1).First .. Fix_Matches (1).Last),
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         To_Unbounded_String
+           (Get_Message (Preview)
+            (Fix_Matches (1).First .. Fix_Matches (1).Last)),
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)),
          Text_Ascii);
 
       Cancel_Message (Next (Message_It));
@@ -1517,8 +1535,10 @@ package body Codefix.GNAT_Parser is
       Solutions := Should_Be
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (2).First .. Matches (2).Last),
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (2).First .. Matches (2).Last)),
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)),
          Text_Ascii);
    end Fix;
 
@@ -1544,7 +1564,13 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Should_Be (Current_Text, Message, ";", ".", Text_Ascii);
+      Solutions :=
+        Should_Be
+          (Current_Text,
+           Message,
+           To_Unbounded_String (";"),
+           To_Unbounded_String ("."),
+           Text_Ascii);
    end Fix;
 
    ---------------
@@ -1569,7 +1595,11 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Should_Be (Current_Text, Message, "and", "&");
+      Solutions :=
+        Should_Be
+          (Current_Text,
+           Message, To_Unbounded_String ("and"),
+           To_Unbounded_String ("&"));
    end Fix;
 
    --------------
@@ -1594,7 +1624,12 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Should_Be (Current_Text, Message, "or", "\|");
+      Solutions :=
+        Should_Be
+          (Current_Text,
+           Message,
+           To_Unbounded_String ("or"),
+           To_Unbounded_String ("\|"));
    end Fix;
 
    ----------------------------
@@ -1617,13 +1652,15 @@ package body Codefix.GNAT_Parser is
    is
       pragma Unreferenced (This, Options);
    begin
-      Solutions := Should_Be
-        (Current_Text,
-         Get_Message (Message_It),
-         Get_Message (Message_It).Get_Message
-         (Matches (1).First .. Matches (1).Last),
-         "([\w]+)",
-         Regular_Expression);
+      Solutions :=
+        Should_Be
+          (Current_Text,
+           Get_Message (Message_It),
+           To_Unbounded_String
+             (Get_Message (Message_It).Get_Message
+              (Matches (1).First .. Matches (1).Last)),
+           To_Unbounded_String ("([\w]+)"),
+           Regular_Expression);
    end Fix;
 
    -------------------
@@ -1651,12 +1688,14 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Should_Be
-        (Current_Text,
-         Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-         "([^;]+;)",
-         Regular_Expression);
+      Solutions :=
+        Should_Be
+          (Current_Text,
+           Message,
+           To_Unbounded_String
+             (Get_Message (Message) (Matches (1).First .. Matches (1).Last)),
+           To_Unbounded_String ("([^;]+;)"),
+           Regular_Expression);
    end Fix;
 
    ----------------------------
@@ -1681,13 +1720,14 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Should_Be
-        (Current_Text,
-         Message,
-         "'(",
-         "(",
-         Text_Ascii,
-         "Replace conversion by qualification");
+      Solutions :=
+        Should_Be
+          (Current_Text,
+           Message,
+           To_Unbounded_String ("'("),
+           To_Unbounded_String ("("),
+           Text_Ascii,
+           To_Unbounded_String ("Replace conversion by qualification"));
    end Fix;
 
    -----------------
@@ -1722,8 +1762,10 @@ package body Codefix.GNAT_Parser is
       Solutions := Wrong_Order
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-         Get_Message (Message) (Matches (2).First .. Matches (2).Last));
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)),
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (2).First .. Matches (2).Last)));
    end Fix;
 
    --------------------
@@ -1748,9 +1790,14 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Expected (Current_Text, Message, "function");
-      Concat (Solutions, Expected (Current_Text, Message, "procedure"));
-      Concat (Solutions, Expected (Current_Text, Message, "package"));
+      Solutions :=
+        Expected (Current_Text, Message, To_Unbounded_String ("function"));
+      Concat
+        (Solutions,
+         Expected (Current_Text, Message, To_Unbounded_String ("procedure")));
+      Concat
+        (Solutions,
+         Expected (Current_Text, Message, To_Unbounded_String ("package")));
    end Fix;
 
    --------------------
@@ -1775,8 +1822,11 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Expected (Current_Text, Message, "function");
-      Concat (Solutions, Expected (Current_Text, Message, "procedure"));
+      Solutions :=
+        Expected (Current_Text, Message, To_Unbounded_String ("function"));
+      Concat
+        (Solutions,
+         Expected (Current_Text, Message, To_Unbounded_String ("procedure")));
    end Fix;
 
    ------------------
@@ -1804,7 +1854,8 @@ package body Codefix.GNAT_Parser is
       Solutions := Expected
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
    ----------------
@@ -1838,10 +1889,8 @@ package body Codefix.GNAT_Parser is
          raise Uncorrectable_Message;
       end if;
 
-      Solutions := Expected
-        (Current_Text,
-         Message,
-         Str_Red);
+      Solutions :=
+        Expected (Current_Text, Message, To_Unbounded_String (Str_Red));
    end Fix;
 
    -----------------
@@ -1883,7 +1932,7 @@ package body Codefix.GNAT_Parser is
          Solutions := Expected
            (Current_Text,
             Message,
-            """",
+            To_Unbounded_String (""""),
             Add_Spaces => False);
       else
          Match
@@ -1904,7 +1953,7 @@ package body Codefix.GNAT_Parser is
          Solutions := Expected
            (Current_Text,
             Message,
-            Str_Red,
+            To_Unbounded_String (Str_Red),
             Add_Spaces => Add_Spaces);
       end if;
    end Fix;
@@ -1961,7 +2010,7 @@ package body Codefix.GNAT_Parser is
       Solutions := Expected
         (Current_Text,
          Declaration_Cursor,
-         "all",
+         To_Unbounded_String ("all"),
          After_Pattern => "type[\s]+[\w]+[\s]+is[\s]+(access)");
    end Fix;
 
@@ -1986,8 +2035,12 @@ package body Codefix.GNAT_Parser is
    is
       pragma Unreferenced (This, Options, Matches);
    begin
-      Solutions := Expected
-        (Current_Text, Get_Message (Message_It), ".all", Add_Spaces => False);
+      Solutions :=
+        Expected
+          (Current_Text,
+           Get_Message (Message_It),
+           To_Unbounded_String (".all"),
+           Add_Spaces => False);
    end Fix;
 
    -----------------------
@@ -2012,8 +2065,12 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Expected
-        (Current_Text, Message, "null;", Position => Before);
+      Solutions :=
+        Expected
+          (Current_Text,
+           Message,
+           To_Unbounded_String ("null;"),
+           Position => Before);
    end Fix;
 
    ------------------------
@@ -2060,7 +2117,12 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Expected (Current_Text, Message, " ", Add_Spaces => False);
+      Solutions :=
+        Expected
+          (Current_Text,
+           Message,
+           To_Unbounded_String (" "),
+           Add_Spaces => False);
    end Fix;
 
    ------------------------
@@ -2085,7 +2147,12 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Expected (Current_Text, Message, "  ", Add_Spaces => False);
+      Solutions :=
+        Expected
+          (Current_Text,
+           Message,
+           To_Unbounded_String ("  "),
+           Add_Spaces => False);
    end Fix;
 
    ------------------
@@ -2144,7 +2211,8 @@ package body Codefix.GNAT_Parser is
       Solutions := Expected
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (2).First .. Matches (2).Last),
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (2).First .. Matches (2).Last)),
          After_Pattern => This.Matcher_Aux (Match_Number).all);
    end Fix;
 
@@ -2169,11 +2237,14 @@ package body Codefix.GNAT_Parser is
       pragma Unreferenced (This, Options);
 
       Message : constant Error_Message := Get_Message (Message_It);
+
    begin
-      Solutions := Unexpected
-        (Current_Text,
-         Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+      Solutions :=
+        Unexpected
+          (Current_Text,
+           Message,
+           To_Unbounded_String
+             (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
    -----------------
@@ -2198,7 +2269,8 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Unexpected (Current_Text, Message, ")");
+      Solutions :=
+        Unexpected (Current_Text, Message, To_Unbounded_String (")"));
    end Fix;
 
    --------------------
@@ -2254,10 +2326,11 @@ package body Codefix.GNAT_Parser is
       Message : constant Error_Message := Get_Message (Message_It);
    begin
       Solutions :=
-        Unexpected (Current_Text      => Current_Text,
-                    Message           => Message,
-                    String_Unexpected => " ",
-                    All_Occurrences   => True);
+        Unexpected
+          (Current_Text      => Current_Text,
+           Message           => Message,
+           String_Unexpected => To_Unbounded_String (" "),
+           All_Occurrences   => True);
    end Fix;
 
    -----------------------
@@ -2285,9 +2358,11 @@ package body Codefix.GNAT_Parser is
         (Matches (1).First .. Matches (1).Last);
    begin
       if Str_Red = "colon" then
-         Solutions := Unexpected (Current_Text, Message, ":");
+         Solutions :=
+           Unexpected (Current_Text, Message, To_Unbounded_String (":"));
       elsif Str_Red = """then""" then
-         Solutions := Unexpected (Current_Text, Message, "then");
+         Solutions :=
+           Unexpected (Current_Text, Message, To_Unbounded_String ("then"));
       else
          raise Uncorrectable_Message;
       end if;
@@ -2364,7 +2439,8 @@ package body Codefix.GNAT_Parser is
       Solutions := Unexpected
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
    ---------------------
@@ -2394,9 +2470,11 @@ package body Codefix.GNAT_Parser is
         (Matches (2).First .. Matches (2).Last);
    begin
       if Str_Red_1 = "semicolon" and then Str_Red_2 = "ignored" then
-         Solutions := Unexpected (Current_Text, Message, ";");
+         Solutions :=
+           Unexpected (Current_Text, Message, To_Unbounded_String (";"));
       elsif Str_Red_1 = "right" and then Str_Red_2 = "parenthesis" then
-         Solutions := Unexpected (Current_Text, Message, ")");
+         Solutions :=
+           Unexpected (Current_Text, Message, To_Unbounded_String (")"));
       else
          raise Uncorrectable_Message;
       end if;
@@ -2430,7 +2508,8 @@ package body Codefix.GNAT_Parser is
       Solutions := Unexpected
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
    ---------------------
@@ -2467,31 +2546,30 @@ package body Codefix.GNAT_Parser is
       Message : constant Error_Message := Get_Message (Message_It);
 
       All_Occurrences      : Boolean := False;
-      Word_Read            : String_Access;
-      Unallowed_Characters : String_Access;
+      Word_Read            : Unbounded_String;
+      Unallowed_Characters : Unbounded_String;
       Format_Str           : String_Mode := Text_Ascii;
 
    begin
-      Assign
-        (Word_Read,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+      Word_Read :=
+        To_Unbounded_String
+          (Get_Message (Message) (Matches (1).First .. Matches (1).Last));
 
-      if Word_Read.all = "form feed" then
-         Assign (Unallowed_Characters, (1 => ASCII.FF));
+      if Word_Read = "form feed" then
+         Unallowed_Characters := To_Unbounded_String ((1 => ASCII.FF));
          Format_Str := Text_Ascii;
-      elsif Word_Read.all = "vertical tab" then
-         Assign (Unallowed_Characters, (1 => ASCII.VT));
+      elsif Word_Read = "vertical tab" then
+         Unallowed_Characters := To_Unbounded_String ((1 => ASCII.VT));
          Format_Str := Text_Ascii;
-      elsif Word_Read.all = "trailing spaces" then
-         Assign (Unallowed_Characters, "([\s]+)");
+      elsif Word_Read = "trailing spaces" then
+         Unallowed_Characters := To_Unbounded_String ("([\s]+)");
          Format_Str := Regular_Expression;
-      elsif Word_Read.all = "space" then
+      elsif Word_Read = "space" then
          All_Occurrences := True;
-         Assign (Unallowed_Characters, " ");
+         Unallowed_Characters := To_Unbounded_String (" ");
          Format_Str := Text_Ascii;
-      elsif Word_Read.all = "horizontal tab" then
+      elsif Word_Read = "horizontal tab" then
          Solutions := Expand_Tabs (Current_Text, Message);
-         Free (Word_Read);
          return;
       else
          raise Codefix_Panic;
@@ -2501,12 +2579,9 @@ package body Codefix.GNAT_Parser is
         Unexpected
           (Current_Text      => Current_Text,
            Message           => Message,
-           String_Unexpected => Unallowed_Characters.all,
+           String_Unexpected => Unallowed_Characters,
            Mode              => Format_Str,
            All_Occurrences   => All_Occurrences);
-
-      Free (Unallowed_Characters);
-      Free (Word_Read);
    end Fix;
 
    --------------------------
@@ -2532,7 +2607,7 @@ package body Codefix.GNAT_Parser is
       Solutions := Unexpected
         (Current_Text      => Current_Text,
          Message           => Get_Message (Message_It),
-         String_Unexpected => "(in[\s]*)",
+         String_Unexpected => To_Unbounded_String ("(in[\s]*)"),
          Mode              => Regular_Expression);
    end Fix;
 
@@ -2561,7 +2636,7 @@ package body Codefix.GNAT_Parser is
         Unexpected
           (Current_Text      => Current_Text,
            Message           => Get_Message (Message_It),
-           String_Unexpected => "([\s]+out)",
+           String_Unexpected => To_Unbounded_String ("([\s]+out)"),
            Mode              => Regular_Expression,
            Search_Forward    => True);
    end Fix;
@@ -2764,8 +2839,9 @@ package body Codefix.GNAT_Parser is
 
       With_Str : constant String :=
         Get_Message (Message) (Matches (1).First .. Matches (1).Last);
-      Pckg_Str : constant String :=
-        Get_Message (Message) (Matches (2).First .. Matches (2).Last);
+      Pckg_Str : constant Unbounded_String :=
+        To_Unbounded_String
+          (Get_Message (Message) (Matches (2).First .. Matches (2).Last));
       Column_Str : constant String :=
         Get_Message (Message) (Matches (3).First .. Matches (3).Last);
       Use_Str : constant String :=
@@ -2833,7 +2909,8 @@ package body Codefix.GNAT_Parser is
       Solutions := Bad_Casing
         (Current_Text,
          Message,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
    ------------------------
@@ -2858,7 +2935,8 @@ package body Codefix.GNAT_Parser is
 
       Message : constant Error_Message := Get_Message (Message_It);
    begin
-      Solutions := Bad_Casing (Current_Text, Message, "", Lower);
+      Solutions :=
+        Bad_Casing (Current_Text, Message, Null_Unbounded_String, Lower);
    end Fix;
 
    ---------------------------
@@ -2933,7 +3011,8 @@ package body Codefix.GNAT_Parser is
            (Current_Text,
             Message,
             Category,
-            Get_Message (Message) (Matches (2).First .. Matches (2).Last),
+            To_Unbounded_String
+              (Get_Message (Message) (Matches (2).First .. Matches (2).Last)),
             Operation_Mask);
       exception
          when Codefix_Panic =>
@@ -2976,7 +3055,8 @@ package body Codefix.GNAT_Parser is
         (Current_Text,
          Message,
          Cat_Unknown, -- could be Cat_Package or Cat_With
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)),
          Options.Remove_Policy);
    end Fix;
 
@@ -3007,7 +3087,8 @@ package body Codefix.GNAT_Parser is
         (Current_Text,
          Message,
          Cat_Variable,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)),
          Add_Pragma_Unreferenced);
    end Fix;
 
@@ -3039,7 +3120,8 @@ package body Codefix.GNAT_Parser is
         (Current_Text,
          Message,
          Cat_Variable,
-         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)),
          Options.Remove_Policy);
    end Fix;
 
@@ -3116,8 +3198,8 @@ package body Codefix.GNAT_Parser is
       Solutions := Not_Modified
         (Current_Text,
          Message,
-         Get_Message (Message)
-           (Matches (1).First .. Matches (1).Last));
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
    -------------------------
@@ -3230,8 +3312,8 @@ package body Codefix.GNAT_Parser is
         (Current_Text,
          Message,
          Cursor_List,
-         Get_Message (Message)
-           (Matches (1).First .. Matches (1).Last));
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
 
       Free (Cursor_List);
 
@@ -3346,8 +3428,8 @@ package body Codefix.GNAT_Parser is
         (Current_Text,
          Message,
          Cursor_List,
-         Get_Message (Message)
-           (Matches (1).First .. Matches (1).Last));
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
 
       if Length (Solutions) = 0 then
          raise Uncorrectable_Message;
@@ -3412,7 +3494,8 @@ package body Codefix.GNAT_Parser is
          Clause_Missing
            (Current_Text   => Current_Text,
             Cursor         => Message,
-            Missing_Clause => Get_Full_Prefix (Current_Text, Decl_Cur),
+            Missing_Clause =>
+              To_Unbounded_String (Get_Full_Prefix (Current_Text, Decl_Cur)),
             Add_With       => False,
             Add_Use        => True);
    end Fix;
@@ -3448,9 +3531,10 @@ package body Codefix.GNAT_Parser is
       Solutions := Remove_Conversion
         (Current_Text,
          Message,
-         "Remove useless conversion of """ &
-         Get_Message (Message)
-         (Matches (1).First .. Matches (1).Last) & """");
+         To_Unbounded_String
+           ("Remove useless conversion of """
+            & Get_Message (Message)
+            (Matches (1).First .. Matches (1).Last) & """"));
    end Fix;
 
    ----------------
@@ -3481,7 +3565,7 @@ package body Codefix.GNAT_Parser is
       Solutions := Remove_Conversion
         (Current_Text,
          Message,
-         "Remove abs operator");
+         To_Unbounded_String ("Remove abs operator"));
    end Fix;
 
    ---------------------
@@ -3797,9 +3881,9 @@ package body Codefix.GNAT_Parser is
       Solutions := Should_Be
         (Current_Text,
          Message,
-         Get_Message (Message)
-         (Matches (1).First .. Matches (1).Last),
-         "([\w]+)",
+         To_Unbounded_String
+           (Get_Message (Message) (Matches (1).First .. Matches (1).Last)),
+         To_Unbounded_String ("([\w]+)"),
          Regular_Expression);
    end Fix;
 
@@ -3847,9 +3931,10 @@ package body Codefix.GNAT_Parser is
               (Current_Text    => Current_Text,
                Message         => Message,
                String_Expected =>
-                 "pragma Pack ("
-               & Get_Message (Message)
-               (Matches (1).First .. Matches (1).Last) & ");",
+                 To_Unbounded_String
+                   ("pragma Pack ("
+                    & Get_Message (Message)
+                    (Matches (1).First .. Matches (1).Last) & ");"),
                Position        => After);
          end if;
       end if;
@@ -3867,8 +3952,11 @@ package body Codefix.GNAT_Parser is
            (Compile ("""([^""]+)"" is undefined")));
    end Initialize;
 
-   overriding
-   procedure Fix
+   ---------
+   -- Fix --
+   ---------
+
+   overriding procedure Fix
      (This         : Undefined_Entity;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_It   : Error_Message_Iterator;
@@ -3879,7 +3967,7 @@ package body Codefix.GNAT_Parser is
       pragma Unreferenced (This, Options, Solutions);
 
       Message        : Error_Message renames Get_Message (Message_It);
-      Entity_Name    : String_Access := new String'
+      Entity_Name    : GNAT.Strings.String_Access := new String'
         (Get_Message (Message_It).Get_Message
         (Matches (1).First .. Matches (1).Last));
       Expression     : Parsed_Expression;

@@ -17,11 +17,11 @@
 
 --  This package defines the module for code fixing.
 
-with Ada.Strings.Unbounded;
-with Ada.Tags; use Ada.Tags;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Tags;                  use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Glib.Object;               use Glib.Object;
 
@@ -1049,8 +1049,8 @@ package body Codefix_Module is
       Instance : Class_Instance;
       Session  : Codefix_Session;
       Valid    : Boolean;
-      S        : String_Access;
-      Output   : String_Access;
+      S        : GNAT.Strings.String_Access;
+      Output   : GNAT.Strings.String_Access;
 
    begin
       if Command = "parse" then

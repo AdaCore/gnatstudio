@@ -17,14 +17,15 @@
 
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.Regpat;           use GNAT.Regpat;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with Projects; use Projects;
+with Projects;              use Projects;
 
 package Codefix.Error_Lists is
 
@@ -49,7 +50,7 @@ package Codefix.Error_Lists is
       File    : Virtual_File;
       Line    : Integer;
       Column  : Visible_Column_Type;
-      Message : String;
+      Message : Unbounded_String;
       Order   : Long_Long_Integer);
    --  Add the given error to the list. Order is an optional field that may be
    --  set to force an order between messages at a similar location.

@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+
 with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
@@ -45,8 +46,6 @@ package body Codefix.Ada_Tools is
       procedure Free_Pool is new
         Ada.Unchecked_Deallocation (With_Type, Ptr_With);
    begin
-      Free (This.Name_Str);
-
       for J in This.Name'Range loop
          Free (This.Name (J));
       end loop;
@@ -82,7 +81,7 @@ package body Codefix.Ada_Tools is
       Seek_Node := First (List_Of_With);
 
       while Seek_Node /= With_Lists.Null_Node loop
-         if Data (Seek_Node).Name_Str.all = Clause_Name then
+         if Data (Seek_Node).Name_Str = Clause_Name then
             for J in Data (Seek_Node).Clauses'Range loop
                if Data (Seek_Node).Clauses (J) /= null
                  and then (not Exclusive
@@ -99,7 +98,9 @@ package body Codefix.Ada_Tools is
                         Column =>
                           Get_Column (Data (Seek_Node).Clauses (J).Position));
                      Set_Word
-                       (Word_Used, Data (Seek_Node).Clauses (J).Name.all);
+                       (Word_Used,
+                        To_Unbounded_String
+                          (Data (Seek_Node).Clauses (J).Name.all));
                      Append (Result, Word_Used);
                   end;
                end if;
@@ -227,8 +228,8 @@ package body Codefix.Ada_Tools is
               (Get_Parts_Number (Get (Get_Construct (Iterator).Name).all));
             New_Clause.Name := Get_Arr_Str
               (Get (Get_Construct (Iterator).Name).all);
-            Assign
-              (New_Clause.Name_Str, Get (Get_Construct (Iterator).Name).all);
+            New_Clause.Name_Str :=
+              To_Unbounded_String (Get (Get_Construct (Iterator).Name).all);
             Append (Result, New_Clause);
          end if;
 

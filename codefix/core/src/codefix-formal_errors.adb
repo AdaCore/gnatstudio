@@ -45,15 +45,20 @@ package body Codefix.Formal_Errors is
    ----------------
 
    procedure Initialize
-     (This       : in out Error_Message;
-      Registry   : Project_Registry_Access;
-      Error_Line : String;
-      Regexp     : GNAT.Regpat.Pattern_Matcher;
-      File_Index, Line_Index, Col_Index, Msg_Index : Integer;
-      Style_Index, Warning_Index : Integer;
-      Order   : Long_Long_Integer)
+     (This          : in out Error_Message;
+      Registry      : Project_Registry_Access;
+      Error_Line    : Unbounded_String;
+      Regexp        : GNAT.Regpat.Pattern_Matcher;
+      File_Index    : Integer;
+      Line_Index    : Integer;
+      Col_Index     : Integer;
+      Msg_Index     : Integer;
+      Style_Index   : Integer;
+      Warning_Index : Integer;
+      Order         : Long_Long_Integer)
    is
       Max_Index : Integer := File_Index;
+
    begin
       Max_Index := Integer'Max (Max_Index, Line_Index);
       Max_Index := Integer'Max (Max_Index, Col_Index);
@@ -66,7 +71,7 @@ package body Codefix.Formal_Errors is
          Line    : Integer;
          Col     : Visible_Column_Type;
       begin
-         Match (Regexp, Error_Line, Matches);
+         Match (Regexp, To_String (Error_Line), Matches);
 
          if Matches (0) = No_Match then
             Free (This);
@@ -76,21 +81,27 @@ package body Codefix.Formal_Errors is
 
          Set_File
            (This, Registry.Tree.Create
-              (+Error_Line
-                 (Matches (File_Index).First .. Matches (File_Index).Last)));
+              (+Slice
+                   (Error_Line,
+                    Matches (File_Index).First,
+                    Matches (File_Index).Last)));
 
          if Matches (Line_Index) /= No_Match then
             Line := Integer'Value
-              (Error_Line
-                 (Matches (Line_Index).First .. Matches (Line_Index).Last));
+              (Slice
+                 (Error_Line,
+                  Matches (Line_Index).First,
+                  Matches (Line_Index).Last));
          else
             Line := 1;
          end if;
 
          if Matches (Col_Index) /= No_Match then
             Col := Visible_Column_Type'Value
-              (Error_Line
-                 (Matches (Col_Index).First .. Matches (Col_Index).Last));
+              (Slice
+                 (Error_Line,
+                  Matches (Col_Index).First,
+                  Matches (Col_Index).Last));
          else
             Col := 1;
          end if;
@@ -101,11 +112,13 @@ package body Codefix.Formal_Errors is
          Set_Location (This, Line => Line, Column => Col);
 
          if Matches (Msg_Index) /= No_Match then
-            Assign (This.Message,
-                    Error_Line
-                      (Matches (Msg_Index).First .. Matches (Msg_Index).Last));
+            This.Message :=
+              Unbounded_Slice
+                (Error_Line,
+                 Matches (Msg_Index).First,
+                 Matches (Msg_Index).Last);
          else
-            Assign (This.Message, "");
+            This.Message := Null_Unbounded_String;
          end if;
 
          This.Order := Order;
@@ -115,7 +128,7 @@ package body Codefix.Formal_Errors is
       when E : Constraint_Error =>
          Trace (Create ("CODEFIX.EXCEPTIONS"),
                 "Unexpected exception " & Exception_Information (E)
-               & " on message '" & Error_Line & "'");
+               & " on message '" & To_String (Error_Line) & "'");
          Free (This);
          This := Invalid_Error_Message;
    end Initialize;
@@ -129,10 +142,10 @@ package body Codefix.Formal_Errors is
       File    : GNATCOLL.VFS.Virtual_File;
       Line    : Positive;
       Col     : Visible_Column_Type;
-      Message : String;
+      Message : Unbounded_String;
       Order   : Long_Long_Integer) is
    begin
-      Assign (This.Message, Message);
+      This.Message := Message;
       Set_File (This, File);
       Set_Location (This, Line, Col);
       This.Order := Order;
@@ -144,11 +157,7 @@ package body Codefix.Formal_Errors is
 
    function Get_Message (This : Error_Message) return String is
    begin
-      if This.Message = null then
-         return "";
-      else
-         return This.Message.all;
-      end if;
+      return To_String (This.Message);
    end Get_Message;
 
    ---------------
@@ -185,7 +194,6 @@ package body Codefix.Formal_Errors is
    overriding procedure Free (This : in out Error_Message) is
    begin
       Free (File_Cursor (This));
-      Free (This.Message);
    end Free;
 
    -----------
@@ -196,7 +204,7 @@ package body Codefix.Formal_Errors is
       New_Message : Error_Message;
    begin
       New_Message := (Clone (File_Cursor (This)) with
-                      Message      => new String'(This.Message.all),
+                      Message      => This.Message,
                       Is_Style     => This.Is_Style,
                       Is_Warning   => This.Is_Warning,
                       Order        => This.Order,
@@ -353,7 +361,7 @@ package body Codefix.Formal_Errors is
    function Add_Record_Rep_Clause
      (Current_Text  : Text_Navigator_Abstr'Class;
       Cursor        : File_Cursor'Class;
-      Caption       : String;
+      Caption       : Unbounded_String;
       First_Clause  : String;
       Second_Clause : String := "";
       With_Clause   : String := "")
@@ -380,10 +388,11 @@ package body Codefix.Formal_Errors is
    function Should_Be
      (Current_Text : Text_Navigator_Abstr'Class;
       Message      : File_Cursor'Class;
-      Str_Expected : String;
-      Str_Read     : String := "";
+      Str_Expected : Unbounded_String;
+      Str_Read     : Unbounded_String := Null_Unbounded_String;
       Format_Read  : String_Mode := Text_Ascii;
-      Caption      : String := "") return Solution_List
+      Caption      : Unbounded_String := Null_Unbounded_String)
+      return Solution_List
    is
       Result          : Solution_List;
       New_Command_Ptr : constant Ptr_Command := new Replace_Word_Cmd (Simple);
@@ -412,7 +421,8 @@ package body Codefix.Formal_Errors is
          end if;
 
       else
-         Set_Word (Old_Word, "(^[\w]+)", Regular_Expression);
+         Set_Word
+           (Old_Word, To_Unbounded_String ("(^[\w]+)"), Regular_Expression);
 
          if Caption = "" then
             Set_Caption
@@ -423,7 +433,8 @@ package body Codefix.Formal_Errors is
          end if;
       end if;
 
-      Initialize (New_Command, Current_Text, Old_Word, Str_Expected);
+      Initialize
+        (New_Command, Current_Text, Old_Word, To_String (Str_Expected));
 
       Append (Result, New_Command_Ptr);
 
@@ -439,8 +450,8 @@ package body Codefix.Formal_Errors is
    function Wrong_Order
      (Current_Text  : Text_Navigator_Abstr'Class;
       Message       : Error_Message;
-      First_String  : String;
-      Second_String : String) return Solution_List
+      First_String  : Unbounded_String;
+      Second_String : Unbounded_String) return Solution_List
    is
       New_Command_Ptr : constant Ptr_Command := new Invert_Words_Cmd (Simple);
       New_Command     : Invert_Words_Cmd renames
@@ -477,7 +488,8 @@ package body Codefix.Formal_Errors is
       Result          : Solution_List;
    begin
       Initialize (New_Command, File_Cursor (Message));
-      Set_Caption (New_Command, "Expand horizontal tabulations");
+      Set_Caption
+        (New_Command, To_Unbounded_String ("Expand horizontal tabulations"));
       Append (Result, New_Command_Ptr);
 
       return Result;
@@ -490,7 +502,7 @@ package body Codefix.Formal_Errors is
    function Expected
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : File_Cursor'Class;
-      String_Expected : String;
+      String_Expected : Unbounded_String;
       After_Pattern   : String := "";
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified) return Solution_List
@@ -524,7 +536,7 @@ package body Codefix.Formal_Errors is
    function Unexpected
      (Current_Text      : Text_Navigator_Abstr'Class;
       Message           : File_Cursor'Class;
-      String_Unexpected : String;
+      String_Unexpected : Unbounded_String;
       Mode              : String_Mode := Text_Ascii;
       Search_Forward    : Boolean     := False;
       All_Occurrences   : Boolean     := False) return Solution_List
@@ -572,12 +584,13 @@ package body Codefix.Formal_Errors is
          Column_Expected);
 
       if Column_Expected = 0 then
-         Set_Caption (New_Command, "Indent line");
+         Set_Caption (New_Command, To_Unbounded_String ("Indent line"));
       else
          Set_Caption
            (New_Command,
-            "Move begin of instruction to column " &
-            Visible_Column_Type'Image (Column_Expected));
+            To_Unbounded_String
+              ("Move begin of instruction to column "
+               & Visible_Column_Type'Image (Column_Expected)));
       end if;
 
       Append (Result, New_Command_Ptr);
@@ -592,7 +605,7 @@ package body Codefix.Formal_Errors is
    function Clause_Missing
      (Current_Text   : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;
-      Missing_Clause : String;
+      Missing_Clause : Unbounded_String;
       Add_With       : Boolean;
       Add_Use        : Boolean) return Solution_List
    is
@@ -619,7 +632,7 @@ package body Codefix.Formal_Errors is
    function Bad_Casing
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Correct_Word : String := "";
+      Correct_Word : Unbounded_String := Null_Unbounded_String;
       Word_Case    : Case_Type := Mixed) return Solution_List
    is
       Result          : Solution_List;
@@ -628,9 +641,7 @@ package body Codefix.Formal_Errors is
         Recase_Word_Cmd (New_Command_Ptr.all);
    begin
       Initialize (New_Command, Current_Text, Cursor, Correct_Word, Word_Case);
-      Set_Caption
-        (New_Command,
-         "Recase text");
+      Set_Caption (New_Command, To_Unbounded_String ("Recase text"));
       Append (Result, New_Command_Ptr);
 
       return Result;
@@ -644,7 +655,7 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Category     : Language_Category;
-      Name         : String;
+      Name         : Unbounded_String;
       Operations   : Useless_Entity_Operations) return Solution_List
    is
       It : Construct_Tree_Iterator;
@@ -652,7 +663,7 @@ package body Codefix.Formal_Errors is
       Result : Solution_List;
 
       Id : constant Composite_Identifier := To_Composite_Identifier
-        (To_Lower (Name));
+        (To_Lower (To_String (Name)));
 
       function Remove_Quotes (Name : String) return String;
       --  Removes the quotes around a string
@@ -837,7 +848,7 @@ package body Codefix.Formal_Errors is
                        (Current_Text => Current_Text,
                         Position     => Cursor,
                         Category     => Actual_Category,
-                        Name         => "Unreferenced",
+                        Name         => To_Unbounded_String ("Unreferenced"),
                         Argument     => Name);
 
                      Set_Caption (Pragma_Command, "Add pragma for " & Name);
@@ -891,7 +902,7 @@ package body Codefix.Formal_Errors is
                     (Current_Text => Current_Text,
                      Position     => Cursor,
                      Category     => Actual_Category,
-                     Name         => "Unreferenced",
+                     Name         => To_Unbounded_String ("Unreferenced"),
                      Argument     => Name);
 
                   Set_Caption
@@ -944,7 +955,7 @@ package body Codefix.Formal_Errors is
                     (Current_Text => Current_Text,
                      Position     => Cursor,
                      Category     => Actual_Category,
-                     Name         => "Unreferenced",
+                     Name         => To_Unbounded_String ("Unreferenced"),
                      Argument     => Name);
 
                   Set_Caption
@@ -966,7 +977,7 @@ package body Codefix.Formal_Errors is
                     (Current_Text => Current_Text,
                      Position     => Cursor,
                      Category     => Actual_Category,
-                     Name         => "Unreferenced",
+                     Name         => To_Unbounded_String ("Unreferenced"),
                      Argument     => Name);
 
                   Set_Caption
@@ -987,7 +998,7 @@ package body Codefix.Formal_Errors is
                     (Current_Text => Current_Text,
                      Position     => Cursor,
                      Category     => Actual_Category,
-                     Name         => "Unreferenced",
+                     Name         => To_Unbounded_String ("Unreferenced"),
                      Argument     => Name);
 
                   if Actual_Category = Cat_Parameter then
@@ -1082,7 +1093,7 @@ package body Codefix.Formal_Errors is
                     (Current_Text => Current_Text,
                      Position     => Cursor,
                      Category     => Actual_Category,
-                     Name         => "Unreferenced",
+                     Name         => To_Unbounded_String ("Unreferenced"),
                      Argument     => Name);
 
                   Set_Caption
@@ -1121,7 +1132,8 @@ package body Codefix.Formal_Errors is
       Set_Location (Pragma_Cursor, Get_Line (Cursor), Get_Column (Cursor));
       Set_Word
         (Pragma_Cursor,
-         "(pragma\s+[\w\d_]+\s*(\([^\)]*\))?\s*;)", Regular_Expression);
+         To_Unbounded_String ("(pragma\s+[\w\d_]+\s*(\([^\)]*\))?\s*;)"),
+         Regular_Expression);
 
       Set_File (Begin_Cursor, Get_File (Cursor));
       Set_Location (Begin_Cursor, 0, 0);
@@ -1129,7 +1141,8 @@ package body Codefix.Formal_Errors is
       Initialize
         (New_Command, Current_Text, Pragma_Cursor, Begin_Cursor, True);
       Set_Caption
-        (New_Command, "Move the pragma to the beginning of the file");
+        (New_Command,
+         To_Unbounded_String ("Move the pragma to the beginning of the file"));
       Append (Result, New_Command_Ptr);
       Free (Pragma_Cursor);
 
@@ -1143,7 +1156,7 @@ package body Codefix.Formal_Errors is
    function Not_Modified
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Name         : String) return Solution_List
+      Name         : Unbounded_String) return Solution_List
    is
       New_Command_Ptr : constant Ptr_Command := new Make_Constant_Cmd;
       New_Command     : Make_Constant_Cmd renames
@@ -1167,9 +1180,9 @@ package body Codefix.Formal_Errors is
      (Current_Text     : Text_Navigator_Abstr'Class;
       Error_Cursor     : File_Cursor'Class;
       Solution_Cursors : Cursor_Lists.List;
-      Name             : String) return Solution_List
+      Name             : Unbounded_String) return Solution_List
    is
-      Str_Array   : array (1 .. Length (Solution_Cursors)) of String_Access;
+      Str_Array   : array (1 .. Length (Solution_Cursors)) of Unbounded_String;
       Cursor_Node : Cursor_Lists.List_Node;
       Index_Str   : Positive := 1;
       Word        : Word_Cursor;
@@ -1184,18 +1197,12 @@ package body Codefix.Formal_Errors is
             New_Command     : Insert_Word_Cmd renames
               Insert_Word_Cmd (New_Command_Ptr.all);
          begin
-            Assign
-              (Str_Array (Index_Str),
-               Get_Full_Prefix
-                 (Current_Text, Data (Cursor_Node)));
+            Str_Array (Index_Str) :=
+              To_Unbounded_String
+                (Get_Full_Prefix (Current_Text, Data (Cursor_Node)));
 
             for J in 1 ..  Index_Str - 1 loop
-               if Str_Array (J).all = Str_Array (Index_Str).all then
-
-                  for J in Str_Array'Range loop
-                     Free (Str_Array (J));
-                  end loop;
-
+               if Str_Array (J) = Str_Array (Index_Str) then
                   Codefix.Formal_Errors.Free_List (Result);
 
                   return Solution_List (Command_List.Null_List);
@@ -1205,7 +1212,7 @@ package body Codefix.Formal_Errors is
             Set_File (Word, Get_File (Error_Cursor));
             Set_Location
               (Word, Get_Line (Error_Cursor), Get_Column (Error_Cursor));
-            Set_Word (Word, Str_Array (Index_Str).all & ".", Text_Ascii);
+            Set_Word (Word, Str_Array (Index_Str) & ".", Text_Ascii);
 
             Initialize
               (New_Command,
@@ -1215,18 +1222,13 @@ package body Codefix.Formal_Errors is
                Add_Spaces => False);
             Set_Caption
               (New_Command,
-               "Prefix """ & Name & """ by """ &
-                 Str_Array (Index_Str).all & """");
+               "Prefix """ & Name & """ by """ & Str_Array (Index_Str) & """");
             Append (Result, New_Command_Ptr);
             Free (Word);
 
             Index_Str := Index_Str + 1;
             Cursor_Node := Next (Cursor_Node);
          end;
-      end loop;
-
-      for J in Str_Array'Range loop
-         Free (Str_Array (J));
       end loop;
 
       return Result;
@@ -1239,7 +1241,7 @@ package body Codefix.Formal_Errors is
    function Remove_Conversion
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Message      : String) return Solution_List
+      Message      : Unbounded_String) return Solution_List
    is
       New_Command_Ptr : constant Ptr_Command := new Remove_Conversion_Cmd;
       New_Command     : Remove_Conversion_Cmd renames
@@ -1247,8 +1249,7 @@ package body Codefix.Formal_Errors is
       Result          : Solution_List;
    begin
       Initialize (New_Command, Current_Text, Cursor);
-      Set_Caption
-        (New_Command, Message);
+      Set_Caption (New_Command, Message);
       Append (Result, New_Command_Ptr);
 
       return Result;
@@ -1273,7 +1274,7 @@ package body Codefix.Formal_Errors is
       Body_Name := Get_Body_Or_Spec (Current_Text, Get_File (Cursor));
       Set_File (With_Cursor, Get_File (Cursor));
       Set_Location (With_Cursor, Get_Line (Cursor), Get_Column (Cursor));
-      Set_Word (With_Cursor, "", Text_Ascii);
+      Set_Word (With_Cursor, Null_Unbounded_String, Text_Ascii);
 
       Initialize
         (New_Command,
@@ -1283,8 +1284,9 @@ package body Codefix.Formal_Errors is
          Body_Name);
       Set_Caption
         (New_Command,
-         "Move with clause from """ & Display_Base_Name (Get_File (Cursor)) &
-         """ to """ & Display_Base_Name (Body_Name) & """");
+         To_Unbounded_String
+           ("Move with clause from """ & Display_Base_Name (Get_File (Cursor))
+            & """ to """ & Display_Base_Name (Body_Name) & """"));
       Append (Result, New_Command_Ptr);
       Free (With_Cursor);
 
@@ -1324,8 +1326,9 @@ package body Codefix.Formal_Errors is
          Enclosing,
          After);
 
-      Set_Caption (Command1, "Modify the implementation profile");
-      Set_Caption (Command2, "Modify the spec profile");
+      Set_Caption
+        (Command1, To_Unbounded_String ("Modify the implementation profile"));
+      Set_Caption (Command2, To_Unbounded_String ("Modify the spec profile"));
 
       Append (Result, Command1_Ptr);
       Append (Result, Command2_Ptr);
@@ -1352,7 +1355,7 @@ package body Codefix.Formal_Errors is
    begin
       Set_File (Word, Get_File (Cursor));
       Set_Location (Word, Get_Line (Cursor), Get_Column (Cursor));
-      Set_Word (Word, "", Text_Ascii);
+      Set_Word (Word, Null_Unbounded_String, Text_Ascii);
 
       Initialize
         (New_Command,
@@ -1363,9 +1366,9 @@ package body Codefix.Formal_Errors is
          Look_For_Use => Look_For_Use);
 
       if Category = Cat_With then
-         Set_Caption (New_Command, "Remove with clause");
+         Set_Caption (New_Command, To_Unbounded_String ("Remove with clause"));
       elsif Category = Cat_Use then
-         Set_Caption (New_Command, "Remove use clause");
+         Set_Caption (New_Command, To_Unbounded_String ("Remove use clause"));
       end if;
 
       Append (Result, New_Command_Ptr);
@@ -1395,8 +1398,9 @@ package body Codefix.Formal_Errors is
       Prefix_Solution     : Get_Visible_Declaration_Cmd renames
         Get_Visible_Declaration_Cmd (Prefix_Solution_Ptr.all);
 
-      Pkg_Name : constant String := Get_Package_To_Be_Withed
-        (Current_Text, Pkg_Cursor);
+      Pkg_Name : constant Unbounded_String :=
+        To_Unbounded_String
+          (Get_Package_To_Be_Withed (Current_Text, Pkg_Cursor));
       Prefix   : constant String := Get_Full_Prefix (Current_Text, Pkg_Cursor);
    begin
       if Pkg_Name = "" then
@@ -1448,7 +1452,7 @@ package body Codefix.Formal_Errors is
       Result      : Solution_List;
    begin
       Command.Initialize (Current_Text, Cursor);
-      Set_Caption (Command, "Remove extra underlines");
+      Set_Caption (Command, To_Unbounded_String ("Remove extra underlines"));
       Append (Result, Command_Ptr);
 
       return Result;
@@ -1468,7 +1472,8 @@ package body Codefix.Formal_Errors is
       Result      : Solution_List;
    begin
       Initialize (Command, Current_Text, Cursor);
-      Set_Caption (Command, "Change 'in' expression by 'Valid");
+      Set_Caption
+        (Command, To_Unbounded_String ("Change 'in' expression by 'Valid"));
       Append (Result, Command_Ptr);
 
       return Result;
@@ -1488,7 +1493,7 @@ package body Codefix.Formal_Errors is
         Remove_Blank_Lines_Cmd (Command_Ptr.all);
    begin
       Command.Initialize (Current_Text, Cursor);
-      Command.Set_Caption ("Remove extra blank lines");
+      Command.Set_Caption (To_Unbounded_String ("Remove extra blank lines"));
 
       Append (Result, Command_Ptr);
 
@@ -1510,7 +1515,7 @@ package body Codefix.Formal_Errors is
         Remove_Parenthesis_Cmd (Command_Ptr.all);
    begin
       Command.Initialize (Current_Text, Open_Paren);
-      Command.Set_Caption ("Remove parenthesis couple");
+      Command.Set_Caption (To_Unbounded_String ("Remove parenthesis couple"));
       Append (Result, Command_Ptr);
 
       return Result;
@@ -1538,9 +1543,9 @@ package body Codefix.Formal_Errors is
       end if;
 
       if Do_Remove then
-         Command.Set_Caption ("Remove index");
+         Command.Set_Caption (To_Unbounded_String ("Remove index"));
       else
-         Command.Set_Caption ("Add index");
+         Command.Set_Caption (To_Unbounded_String ("Add index"));
       end if;
 
       Append (Result, Command_Ptr);
@@ -1563,7 +1568,7 @@ package body Codefix.Formal_Errors is
         Reorder_Subprogram_Cmd (Command_Ptr.all);
    begin
       Command.Initialize (Current_Text, Location);
-      Command.Set_Caption ("Reorder subprogram");
+      Command.Set_Caption (To_Unbounded_String ("Reorder subprogram"));
 
       Append (Result, Command_Ptr);
 
@@ -1585,7 +1590,7 @@ package body Codefix.Formal_Errors is
         Remove_Instruction_Cmd (Command_Ptr.all);
    begin
       Command.Initialize (Current_Text, Location);
-      Command.Set_Caption ("Remove statement");
+      Command.Set_Caption (To_Unbounded_String ("Remove statement"));
 
       Append (Result, Command_Ptr);
 
@@ -1607,7 +1612,7 @@ package body Codefix.Formal_Errors is
         Remove_Attribute_Cmd (Command_Ptr.all);
    begin
       Command.Initialize (Current_Text, Location);
-      Command.Set_Caption ("Remove attribute");
+      Command.Set_Caption (To_Unbounded_String ("Remove attribute"));
 
       Append (Result, Command_Ptr);
 
@@ -1629,7 +1634,8 @@ package body Codefix.Formal_Errors is
         Renames_To_Constant_Cmd (Command_Ptr.all);
    begin
       Command.Initialize (Current_Text, Location);
-      Command.Set_Caption ("Change renaming to constant");
+      Command.Set_Caption
+        (To_Unbounded_String ("Change renaming to constant"));
 
       Append (Result, Command_Ptr);
 
@@ -1651,7 +1657,8 @@ package body Codefix.Formal_Errors is
         Remove_Comparison_Cmd (Command_Ptr.all);
    begin
       Command.Initialize (Current_Text, Location);
-      Command.Set_Caption ("Remove redundant comparison");
+      Command.Set_Caption
+        (To_Unbounded_String ("Remove redundant comparison"));
 
       Append (Result, Command_Ptr);
 
@@ -1679,7 +1686,8 @@ package body Codefix.Formal_Errors is
          Cursor       => Object_Cursor,
          Element_Name => Object_Name,
          Pragma_Name  => "Unreferenced");
-      Command.Set_Caption ("Remove object from unreferenced pragma");
+      Command.Set_Caption
+        (To_Unbounded_String ("Remove object from unreferenced pragma"));
 
       Append (Result, Command_Ptr);
 
@@ -1707,7 +1715,7 @@ package body Codefix.Formal_Errors is
          Position     => Object_Cursor,
          Line         => Line,
          Indent       => Indent);
-      Command.Set_Caption ("Insert a line");
+      Command.Set_Caption (To_Unbounded_String ("Insert a line"));
 
       Append (Result, Command_Ptr);
 

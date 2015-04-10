@@ -18,11 +18,12 @@
 --  This package provides some tools that can be used in ada formal
 --  errors and commands.
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Generic_List;
 with GNAT.Strings;
 with GNATCOLL.VFS;
 
-with Codefix.Text_Manager; use Codefix.Text_Manager;
+with Codefix.Text_Manager;  use Codefix.Text_Manager;
 
 package Codefix.Ada_Tools is
 
@@ -65,7 +66,7 @@ private
    --  ??? Should use subprogram in basic_types.ads
 
    type With_Type (Nb_Elems : Natural) is record
-      Name_Str : GNAT.Strings.String_Access;
+      Name_Str : Unbounded_String;
       Name     : Arr_Str (1 .. Nb_Elems);
       Clauses  : Arr_Use (1 .. Nb_Elems);
    end record;

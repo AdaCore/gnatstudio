@@ -147,8 +147,8 @@ package Codefix.Text_Manager.Commands is
      (This         : in out Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_Loc  : File_Cursor'Class;
-      First_Word   : String;
-      Second_Word  : String);
+      First_Word   : Unbounded_String;
+      Second_Word  : Unbounded_String);
    --  Set all the marks that will be needed to invert the two words later
 
    overriding
@@ -292,7 +292,7 @@ private
       Position        : Relative_Position := Specified;
       New_Position    : Word_Mark;
       Insert_New_Line : Boolean := False;
-      After_Pattern   : String_Access;
+      After_Pattern   : GNAT.Strings.String_Access;
    end record;
 
    type Move_Word_Cmd (Complexity : Fix_Complexity)
@@ -310,7 +310,7 @@ private
 
    type Invert_Words_Cmd is new Text_Command with record
       Location                : Ptr_Mark;
-      First_Word, Second_Word : String_Access;
+      First_Word, Second_Word : GNAT.Strings.String_Access;
    end record;
 
    type Add_Line_Cmd is new Text_Command with record

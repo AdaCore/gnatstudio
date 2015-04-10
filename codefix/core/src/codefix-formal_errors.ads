@@ -20,14 +20,14 @@
 --  are separated into two different packages: Codefix.Errors_Parsers and
 --  Codefix.Formal_Errors.
 
-with GNAT.Strings;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Regpat;
 
-with Codefix.Text_Manager; use Codefix.Text_Manager;
+with Codefix.Text_Manager;  use Codefix.Text_Manager;
 
 with Generic_List;
-with Language;             use Language;
-with Language.Tree;        use Language.Tree;
+with Language;              use Language;
+with Language.Tree;         use Language.Tree;
 with Projects;
 with GNATCOLL.VFS;
 
@@ -45,13 +45,17 @@ package Codefix.Formal_Errors is
    Invalid_Error_Message : constant Error_Message;
 
    procedure Initialize
-     (This       : in out Error_Message;
-      Registry   : Projects.Project_Registry_Access;
-      Error_Line : String;
-      Regexp     : GNAT.Regpat.Pattern_Matcher;
-      File_Index, Line_Index, Col_Index, Msg_Index : Integer;
-      Style_Index, Warning_Index : Integer;
-      Order   : Long_Long_Integer);
+     (This          : in out Error_Message;
+      Registry      : Projects.Project_Registry_Access;
+      Error_Line    : Unbounded_String;
+      Regexp        : GNAT.Regpat.Pattern_Matcher;
+      File_Index    : Integer;
+      Line_Index    : Integer;
+      Col_Index     : Integer;
+      Msg_Index     : Integer;
+      Style_Index   : Integer;
+      Warning_Index : Integer;
+      Order         : Long_Long_Integer);
    --  Parses an error message from the tool based on the regular expression
 
    procedure Initialize
@@ -59,7 +63,7 @@ package Codefix.Formal_Errors is
       File    : GNATCOLL.VFS.Virtual_File;
       Line    : Positive;
       Col     : Visible_Column_Type;
-      Message : String;
+      Message : Unbounded_String;
       Order   : Long_Long_Integer);
    --  Store the contents of an error message, after it has been parsed
 
@@ -137,25 +141,27 @@ package Codefix.Formal_Errors is
    function Should_Be
      (Current_Text : Text_Navigator_Abstr'Class;
       Message      : File_Cursor'Class;
-      Str_Expected : String;
-      Str_Read     : String := "";
-      Format_Read  : String_Mode := Text_Ascii;
-      Caption      : String := "") return Solution_List;
+      Str_Expected : Unbounded_String;
+      Str_Read     : Unbounded_String := Null_Unbounded_String;
+      Format_Read  : String_Mode      := Text_Ascii;
+      Caption      : Unbounded_String := Null_Unbounded_String)
+      return Solution_List;
    --  This function replace Str_Read by Str_Expected in the current text by
    --  the position specified in the Message. If there is no Str_Read, it
    --  looks for the first word in the position.
 
    function Wrong_Order
-     (Current_Text                : Text_Navigator_Abstr'Class;
-      Message                     : Error_Message;
-      First_String, Second_String : String) return Solution_List;
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Message       : Error_Message;
+      First_String  : Unbounded_String;
+      Second_String : Unbounded_String) return Solution_List;
    --  Seach the position of the second string from the position specified
    --  in the message to the beginning, and invert the two strings.
 
    function Expected
      (Current_Text    : Text_Navigator_Abstr'Class;
       Message         : File_Cursor'Class;
-      String_Expected : String;
+      String_Expected : Unbounded_String;
       After_Pattern   : String := "";
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified) return Solution_List;
@@ -166,7 +172,7 @@ package Codefix.Formal_Errors is
    function Unexpected
      (Current_Text      : Text_Navigator_Abstr'Class;
       Message           : File_Cursor'Class;
-      String_Unexpected : String;
+      String_Unexpected : Unbounded_String;
       Mode              : String_Mode := Text_Ascii;
       Search_Forward    : Boolean     := False;
       All_Occurrences   : Boolean     := False) return Solution_List;
@@ -198,7 +204,7 @@ package Codefix.Formal_Errors is
    function Clause_Missing
      (Current_Text   : Text_Navigator_Abstr'Class;
       Cursor         : File_Cursor'Class;
-      Missing_Clause : String;
+      Missing_Clause : Unbounded_String;
       Add_With       : Boolean;
       Add_Use        : Boolean) return Solution_List;
    --  Add the missing clause in the text
@@ -206,7 +212,7 @@ package Codefix.Formal_Errors is
    function Bad_Casing
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Correct_Word : String := "";
+      Correct_Word : Unbounded_String := Null_Unbounded_String;
       Word_Case    : Case_Type := Mixed) return Solution_List;
    --  Re-case the word
 
@@ -214,7 +220,7 @@ package Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
       Category     : Language_Category;
-      Name         : String;
+      Name         : Unbounded_String;
       Operations   : Useless_Entity_Operations) return Solution_List;
    --  Propose to delete the unit unreferrenced or, in some cases, to add
    --  a pragma 'not referrenced'. Those operations can be disabled with
@@ -228,7 +234,7 @@ package Codefix.Formal_Errors is
    function Not_Modified
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Name         : String) return Solution_List;
+      Name         : Unbounded_String) return Solution_List;
    --  Add 'constant' to the declaration of the variable Name. Create a new
    --  declaration if needed.
 
@@ -236,7 +242,7 @@ package Codefix.Formal_Errors is
      (Current_Text     : Text_Navigator_Abstr'Class;
       Error_Cursor     : File_Cursor'Class;
       Solution_Cursors : Cursor_Lists.List;
-      Name             : String) return Solution_List;
+      Name             : Unbounded_String) return Solution_List;
    --  Add to the object Name the prefix of the package declared at the
    --  position Solution_Cursor. If the ambiguity can't be solved by this
    --  function, then Extract_List.List is empty.
@@ -244,7 +250,7 @@ package Codefix.Formal_Errors is
    function Remove_Conversion
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Message      : String) return Solution_List;
+      Message      : Unbounded_String) return Solution_List;
    --  Remove the conversion at made at Cursor position.
 
    function Move_With_To_Body
@@ -298,7 +304,7 @@ package Codefix.Formal_Errors is
    function Add_Record_Rep_Clause
      (Current_Text  : Text_Navigator_Abstr'Class;
       Cursor        : File_Cursor'Class;
-      Caption       : String;
+      Caption       : Unbounded_String;
       First_Clause  : String;
       Second_Clause : String := "";
       With_Clause   : String := "")
@@ -384,11 +390,12 @@ package Codefix.Formal_Errors is
 private
 
    type Error_Message is new File_Cursor with record
-      Message : GNAT.Strings.String_Access;
+      Message      : Unbounded_String;
       --  Message should be encoded in UTF-8.
-      Is_Style, Is_Warning : Boolean := False;
+      Is_Style     : Boolean := False;
+      Is_Warning   : Boolean := False;
 
-      Order : Long_Long_Integer;
+      Order        : Long_Long_Integer;
       --  This has to be a long long integer, as it may be initialized with a
       --  timestamp on e.g. GNATbench.
 
@@ -406,7 +413,7 @@ private
    type Solution_List_Iterator is new Command_List.List_Node;
 
    Invalid_Error_Message : constant Error_Message :=
-     (Null_File_Cursor with null, False, False, 0, True);
+     (Null_File_Cursor with Null_Unbounded_String, False, False, 0, True);
 
    Null_Solution_List : constant Solution_List := Solution_List
      (Command_List.Null_List);

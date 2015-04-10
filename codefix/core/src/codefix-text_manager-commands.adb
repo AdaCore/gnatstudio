@@ -175,7 +175,7 @@ package body Codefix.Text_Manager.Commands is
       Set_File (New_Word, Get_File (New_Position));
       Set_Location
         (New_Word, Get_Line (New_Position), Get_Column (New_Position));
-      Set_Word (New_Word, "", Text_Ascii);
+      Set_Word (New_Word, Null_Unbounded_String, Text_Ascii);
       Make_Word_Mark (New_Word, Current_Text, This.New_Position);
       This.Insert_New_Line := Insert_New_Line;
    end Initialize;
@@ -362,7 +362,7 @@ package body Codefix.Text_Manager.Commands is
       Make_Word_Cursor (This.Mark, Current_Text, Current_Word);
 
       declare
-         Match        : constant String :=
+         Match : constant String :=
            Current_Word.Get_Matching_Word (Current_Text);
       begin
          Text := Current_Text.Get_File (Current_Word.File);
@@ -409,14 +409,14 @@ package body Codefix.Text_Manager.Commands is
      (This         : in out Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Message_Loc  : File_Cursor'Class;
-      First_Word   : String;
-      Second_Word  : String)
+      First_Word   : Unbounded_String;
+      Second_Word  : Unbounded_String)
    is
    begin
       This.Location :=
         new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Message_Loc));
-      This.First_Word := new String'(First_Word);
-      This.Second_Word := new String'(Second_Word);
+      This.First_Word := new String'(To_String (First_Word));
+      This.Second_Word := new String'(To_String (Second_Word));
    end Initialize;
 
    overriding procedure Free (This : in out Invert_Words_Cmd) is

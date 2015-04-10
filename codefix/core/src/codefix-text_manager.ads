@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
 
@@ -133,13 +134,13 @@ package Codefix.Text_Manager is
 
    type Word_Mark is record
       Mark_Id      : Ptr_Mark;
-      String_Match : GNAT.Strings.String_Access;
+      String_Match : Unbounded_String;
       Mode         : String_Mode := Text_Ascii;
    end record;
 
    procedure Set_Word
      (Word         : in out Word_Cursor;
-      String_Match : String;
+      String_Match : Unbounded_String;
       Mode         : String_Mode := Text_Ascii);
    --  Change the attributes of Word.
    --  No String_Match is registered if an empty string is passed.
@@ -272,7 +273,7 @@ package Codefix.Text_Manager is
    --  Return the name of the file
 
    type Token_Record is record
-      Name : String_Access;
+      Name : GNAT.Strings.String_Access;
       Kind : Language_Entity;
    end record;
 
@@ -733,7 +734,7 @@ package Codefix.Text_Manager is
    --        ??? Cases where Obsolescent_Fix should be raised instead of
    --        Codefix_Panic should be investigated further.
 
-   procedure Free (This : in out Text_Command);
+   procedure Free (This : in out Text_Command) is null;
    --  Free the memory associated to a Text_Command
 
    procedure Free_Data (This : in out Text_Command'Class);
@@ -743,8 +744,8 @@ package Codefix.Text_Manager is
    --  Free the data associated to a Ptr_Command
 
    procedure Set_Caption
-     (This : in out Text_Command'Class;
-      Caption : String);
+     (This    : in out Text_Command'Class;
+      Caption : Unbounded_String);
    --  Define the caption that describes the action of a Text_Command
 
    function Get_Caption (This : Text_Command'Class) return String;
@@ -859,19 +860,19 @@ private
    Null_File_Cursor : constant File_Cursor := (0, 0, GNATCOLL.VFS.No_File);
 
    type Word_Cursor is new File_Cursor with record
-      String_Match : GNAT.Strings.String_Access;
+      String_Match : Unbounded_String;
       Mode         : String_Mode := Text_Ascii;
    end record;
 
    Null_Word_Cursor : constant Word_Cursor :=
-     (Null_File_Cursor with null, Text_Ascii);
+     (Null_File_Cursor with Null_Unbounded_String, Text_Ascii);
 
    function Normalize (Str : GNAT.Strings.String_Access) return String;
    --  Change the string in order to make comparaisons between lists of
    --  parameters.
 
    type Text_Command (Complexity : Fix_Complexity) is abstract tagged record
-      Caption : GNAT.Strings.String_Access;
+      Caption : Unbounded_String;
       Parser  : Error_Parser_Access;
       --  ??? To be set right after the validated fix!
    end record;

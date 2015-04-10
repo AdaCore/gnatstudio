@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+
 with Codefix.Error_Lists;    use Codefix.Error_Lists;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
@@ -96,7 +98,11 @@ package body Codefix.SPARK_Parser is
       Message : constant Error_Message := Get_Message (Message_It);
    begin
       Solutions :=
-        Unexpected (Current_Text, Message, "(~|%)", Regular_Expression);
+        Unexpected
+          (Current_Text,
+           Message,
+           To_Unbounded_String ("(~|%)"),
+           Regular_Expression);
    end Fix;
 
    ---------------------------------

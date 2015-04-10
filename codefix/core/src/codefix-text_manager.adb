@@ -973,7 +973,7 @@ package body Codefix.Text_Manager is
       --  ??? This is a bit Ada-specific (casing, use of Ada_Lang).
 
       Result        : Word_Cursor :=
-        (File_Cursor (Cursor) with null, Text_Ascii);
+        (File_Cursor (Cursor) with Null_Unbounded_String, Text_Ascii);
       Start_Index   : String_Index_Type;
       Found         : Boolean := False;
 
@@ -1000,14 +1000,10 @@ package body Codefix.Text_Manager is
             then
                Found := True;
 
-               if Result.String_Match /= null then
-                  Free (Result.String_Match);
-               end if;
-
                Result.Col := To_Column_Index
                  (String_Index_Type (Sloc_Start.Index), Line);
                Result.String_Match :=
-                 new String'
+                 To_Unbounded_String
                    (Line (Sloc_Start.Index .. Sloc_End.Index));
 
                if Step = Normal_Step then
@@ -1232,16 +1228,18 @@ package body Codefix.Text_Manager is
          --  If the last character is a blank, or a separator and the current
          --  word is not a separator, then forget about the last cursor.
 
-         Word.String_Match := new String'
-           (Current_Line
-              (Natural (Begin_Word) .. Natural (Cursor_Char_Index) - 1));
+         Word.String_Match :=
+           To_Unbounded_String
+             (Current_Line
+                (Natural (Begin_Word) .. Natural (Cursor_Char_Index) - 1));
       else
          --  Otherwise, we're at the end of the line, get the whole parsed
          --  data.
 
-         Word.String_Match := new String'
-           (Current_Line
-              (Natural (Begin_Word) .. Natural (Cursor_Char_Index)));
+         Word.String_Match :=
+           To_Unbounded_String
+             (Current_Line
+                (Natural (Begin_Word) .. Natural (Cursor_Char_Index)));
       end if;
 
       Word.Line := Line_Cursor.Line;
@@ -1432,7 +1430,7 @@ package body Codefix.Text_Manager is
                                    Stop   : in out Boolean);
       Start    : File_Cursor'Class)
    is
-      Contents : String_Access := This.Read_File;
+      Contents : GNAT.Strings.String_Access := This.Read_File;
       Offset   : String_Index_Type;
 
       procedure Internal_Callback
@@ -1810,7 +1808,6 @@ package body Codefix.Text_Manager is
 
    overriding procedure Free (This : in out Word_Cursor) is
    begin
-      Free (This.String_Match);
       Free (File_Cursor (This));
    end Free;
 
@@ -1820,8 +1817,7 @@ package body Codefix.Text_Manager is
 
    overriding function Clone (This : Word_Cursor) return Word_Cursor is
    begin
-      return (Clone (File_Cursor (This)) with
-              Clone (This.String_Match), This.Mode);
+      return (Clone (File_Cursor (This)) with This.String_Match, This.Mode);
    end Clone;
 
    --------------------
@@ -1834,7 +1830,7 @@ package body Codefix.Text_Manager is
       Mark         : out Word_Mark) is
    begin
       Mark.Mode := Word.Mode;
-      Assign (Mark.String_Match, Word.String_Match);
+      Mark.String_Match := Word.String_Match;
       Mark.Mark_Id := new Mark_Abstr'Class'(Get_New_Mark (Current_Text, Word));
    end Make_Word_Mark;
 
@@ -1853,10 +1849,10 @@ package body Codefix.Text_Manager is
       Set_File     (Cursor, Get_File (Curs));
       Set_Location (Cursor, Get_Line (Curs), Get_Column (Curs));
 
-      if Word.String_Match = null then
-         Set_Word (Cursor, "", Word.Mode);
+      if Word.String_Match = Null_Unbounded_String then
+         Set_Word (Cursor, Null_Unbounded_String, Word.Mode);
       else
-         Set_Word (Cursor, Word.String_Match.all, Word.Mode);
+         Set_Word (Cursor, Word.String_Match, Word.Mode);
       end if;
    end Make_Word_Cursor;
 
@@ -1866,7 +1862,6 @@ package body Codefix.Text_Manager is
 
    procedure Free (This : in out Word_Mark) is
    begin
-      Free (This.String_Match);
       Free (This.Mark_Id);
    end Free;
 
@@ -2023,16 +2018,12 @@ package body Codefix.Text_Manager is
    --------------
 
    procedure Set_Word
-     (Word : in out Word_Cursor;
-      String_Match : String;
+     (Word         : in out Word_Cursor;
+      String_Match : Unbounded_String;
       Mode         : String_Mode := Text_Ascii) is
    begin
-      if String_Match = "" then
-         Free (Word.String_Match);
-      else
-         Assign (Word.String_Match, String_Match);
-      end if;
-      Word.Mode := Mode;
+      Word.String_Match := String_Match;
+      Word.Mode         := Mode;
    end Set_Word;
 
    --------------
@@ -2041,11 +2032,7 @@ package body Codefix.Text_Manager is
 
    function Get_Word (Word : Word_Cursor) return String is
    begin
-      if Word.String_Match = null then
-         return "";
-      else
-         return Word.String_Match.all;
-      end if;
+      return To_String (Word.String_Match);
    end Get_Word;
 
    -----------------------
@@ -2061,30 +2048,31 @@ package body Codefix.Text_Manager is
       case Word.Mode is
          when Text_Ascii =>
             if not Check then
-               return Word.String_Match.all;
+               return To_String (Word.String_Match);
             end if;
+
             declare
                Str_Parsed : constant String := Text.Get_Line (Word);
             begin
-               if Str_Parsed'Length < Word.String_Match.all'Length or else
+               if Str_Parsed'Length < Length (Word.String_Match) or else
                  Str_Parsed
                    (Str_Parsed'First ..
-                        Str_Parsed'First + Word.String_Match.all'Length - 1)
-                     /= Word.String_Match.all
+                        Str_Parsed'First + Length (Word.String_Match) - 1)
+                     /= Word.String_Match
                then
                   raise Codefix_Panic with "string '"
-                    & Word.String_Match.all
+                    & To_String (Word.String_Match)
                     & "' in '"
                     & Str_Parsed & "' can't be found";
                else
-                  return Word.String_Match.all;
+                  return To_String (Word.String_Match);
                end if;
             end;
          when Regular_Expression =>
             declare
                Matches    : Match_Array (0 .. 1);
                Matcher    : constant Pattern_Matcher := Compile
-                 (Word.String_Match.all);
+                 (To_String (Word.String_Match));
                Str_Parsed : constant String := Text.Get_Line (Word, 1);
                Index      : constant String_Index_Type :=
                  To_Char_Index (Word.Col, Str_Parsed);
@@ -2095,7 +2083,7 @@ package body Codefix.Text_Manager is
 
                if Matches (0) = No_Match then
                   raise Codefix_Panic with "pattern '"
-                    & Word.String_Match.all
+                    & To_String (Word.String_Match)
                     & "' in '"
                     & Str_Parsed & "' can't be found";
                else
@@ -2113,11 +2101,6 @@ package body Codefix.Text_Manager is
    -- Text_Command --
    ------------------
 
-   procedure Free (This : in out Text_Command) is
-   begin
-      Free (This.Caption);
-   end Free;
-
    procedure Free_Data (This : in out Text_Command'Class) is
    begin
       Free (This);
@@ -2133,19 +2116,27 @@ package body Codefix.Text_Manager is
       end if;
    end Free;
 
+   -----------------
+   -- Set_Caption --
+   -----------------
+
    procedure Set_Caption
-     (This : in out Text_Command'Class;
-      Caption : String) is
+     (This    : in out Text_Command'Class;
+      Caption : Unbounded_String) is
    begin
-      Assign (This.Caption, Caption);
+      This.Caption := Caption;
    end Set_Caption;
+
+   -----------------
+   -- Get_Caption --
+   -----------------
 
    function Get_Caption (This : Text_Command'Class) return String is
    begin
-      if This.Caption = null then
+      if This.Caption = Null_Unbounded_String then
          return "fix not documented";
       else
-         return This.Caption.all;
+         return To_String (This.Caption);
       end if;
    end Get_Caption;
 

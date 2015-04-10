@@ -72,7 +72,8 @@ package body Codefix.Error_Lists is
               (Error,
                Registry      => Registry,
                Error_Line    =>
-                 Messages (Last_Index .. Current_Index - 1),
+                 To_Unbounded_String
+                   (Messages (Last_Index .. Current_Index - 1)),
                Regexp        => List.File_Regexp.all,
                File_Index    => List.File_Index,
                Line_Index    => List.Line_Index,
@@ -98,7 +99,7 @@ package body Codefix.Error_Lists is
       File    : Virtual_File;
       Line    : Integer;
       Column  : Visible_Column_Type;
-      Message : String;
+      Message : Unbounded_String;
       Order   : Long_Long_Integer)
    is
       Error : Error_Message;
