@@ -166,6 +166,10 @@ class PythonLanguage(GPS.Language):
 class PythonSupport(object):
 
     def __init__(self):
+        """
+        Various initializations done before the gps_started hook
+        """
+
         self.port_pref = GPS.Preference("Plugins/python_support/port")
         self.port_pref.create(
             "Pydoc port", "integer",
@@ -174,6 +178,9 @@ This is a small local server to which your web browser connects to display the
 documentation for the standard python library. It is accessed through the
 /Python menu when editing a python file""",
             9432)
+
+        # Add the language definition before the gps_started hook, so that
+        # python files are correctly found
 
         GPS.Language.register(PythonLanguage(), "Python", ".py", "", ".pyc")
         XML = """
@@ -189,9 +196,9 @@ documentation for the standard python library. It is accessed through the
            <category>Scripts</category>
         </documentation_file>
         <documentation_file>
-          <shell lang="python">
-              GPS.execute_action('display python library help')
-          </shell>
+          <shell lang="python">"""
+
+        XML += """GPS.execute_action('display python library help')</shell>
           <descr>Python Library</descr>
           <menu>/Help/Python/Python Library</menu>
           <category>Scripts</category>
@@ -216,8 +223,14 @@ documentation for the standard python library. It is accessed through the
 
         GPS.parse_xml(XML)
 
+    def gps_started(self):
+        """
+        Initializations done after the gps_started hook
+        """
+
         gps_utils.make_interactive(
             callback=self.show_python_library,
+            filter='Python file',
             name='display python library help')
 
         gps_utils.make_interactive(
@@ -450,4 +463,5 @@ class PythonTracer(object):
 
 # Create the class once GPS is started, so that the filter is created
 # immediately when parsing XML, and we can create our actions.
-GPS.Hook("gps_started").add(lambda h: PythonSupport())
+module = PythonSupport()
+GPS.Hook("gps_started").add(lambda h: module.gps_started())
