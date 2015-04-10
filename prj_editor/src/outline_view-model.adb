@@ -699,12 +699,25 @@ package body Outline_View.Model is
       Info   : constant Semantic_Node_Info := Get_Info (Self, Iter, Column);
    begin
 
-      if Column = Spec_Pixbuf_Column
-         or else Column = Body_Pixbuf_Column
+      if Column in Spec_Pixbuf_Column | Body_Pixbuf_Column
       then
          Init (Value, GType_String);
 
-         if Info /= No_Node_Info then
+         if Info /= No_Node_Info
+           and then
+             (
+              --  If not in Group_Spec_And_Body mode, only the spec column is
+              --  shown, so we want to show the icon on this column no
+              --  matter what
+              not Self.Filter.Group_Spec_And_Body
+              --  If not, we want to only show the icon in the appropriate
+              --  column
+              or else
+                ((Column = Spec_Pixbuf_Column and then Info.Is_Decl)
+                 or else
+                   (Column = Body_Pixbuf_Column and then not Info.Is_Decl))
+              )
+         then
             Set_String (Value, Icon_For_Node (Info));
          elsif Iter /= Null_Iter
            and then Get_Sorted_Node (Iter) = Self.Root_With
