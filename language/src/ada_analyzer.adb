@@ -4322,7 +4322,9 @@ package body Ada_Analyzer is
                      end if;
 
                      if In_Declaration = Subprogram_Decl
-                       and then not Top_Token.Attributes (Ada_New_Attribute)
+                       and then not
+                         (Top_Token /= null
+                          and then Top_Token.Attributes (Ada_New_Attribute))
                      then
                         Is_Parameter := True;
                      elsif In_Declaration = Type_Decl then
