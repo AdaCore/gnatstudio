@@ -19,10 +19,7 @@
 --  tools that are used in others packages.
 
 with Basic_Types;  use Basic_Types;
-with Ada.Text_IO;  use Ada.Text_IO;
 with GNAT.Strings; use GNAT.Strings;
-
-with Generic_List;
 
 package Codefix is
 
@@ -66,17 +63,6 @@ package Codefix is
    procedure Assign (This : in out String_Access; Value : String);
    --  Delete the previous string, and create a new initialized with Value.
 
-   procedure Assign (This : in out String_Access; Value : String_Access);
-   --  Delete the previous string This, and create a new initialized with a
-   --  copy of Value.
-
-   procedure Get_Line (File : File_Type; This : in out String_Access);
-   --  Delete the previous string, and create a new initialized with the line
-   --  red File.
-
-   function Clone (This : String_Access) return String_Access;
-   --  Duplicate all information contained in This, allocated in the pool.
-
    ----------------------------------------------------------------------------
    --  type Useless_Entity_Operation
    ----------------------------------------------------------------------------
@@ -112,16 +98,5 @@ private
    Remove_Entity           : constant Useless_Entity_Operations := 1;
    Add_Pragma_Unreferenced : constant Useless_Entity_Operations := 2;
    Comment_Entity          : constant Useless_Entity_Operations := 4;
-
-   type State_Node is record
-      Error : GNAT.Strings.String_Access;
-   end record;
-
-   procedure Free (This : in out State_Node);
-
-   package State_Lists is new Generic_List (State_Node);
-   use State_Lists;
-
-   type State_List is new State_Lists.List;
 
 end Codefix;

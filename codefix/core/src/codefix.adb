@@ -67,45 +67,6 @@ package body Codefix is
    end Assign;
 
    ------------
-   -- Assign --
-   ------------
-
-   procedure Assign (This : in out String_Access; Value : String_Access) is
-      Garbage : String_Access := This;
-      --  Used to prevent usage like 'Assign (Str, Str)'
-   begin
-      This := Clone (Value);
-      Free (Garbage);
-   end Assign;
-
-   --------------
-   -- Get_Line --
-   --------------
-
-   procedure Get_Line (File : File_Type; This : in out String_Access) is
-      Len    : Natural;
-      Buffer : String (1 .. 2048);
-   begin
-      --  We can't read lines longer than 2048 characters. Doesn't seem worth
-      --  it anyway, since we are dealing with source files.
-      Get_Line (File, Buffer, Len);
-      Assign (This,  Buffer (1 .. Len));
-   end Get_Line;
-
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone (This : String_Access) return String_Access is
-   begin
-      if This = null then
-         return null;
-      else
-         return new String'(This.all);
-      end if;
-   end Clone;
-
-   ------------
    -- Is_Set --
    ------------
 
@@ -133,14 +94,5 @@ package body Codefix is
             return Comment_Entity or Remove_Entity;
       end case;
    end Policy_To_Operations;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out State_Node) is
-   begin
-      Free (This.Error);
-   end Free;
 
 end Codefix;

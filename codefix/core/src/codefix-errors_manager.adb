@@ -117,10 +117,9 @@ package body Codefix.Errors_Manager is
       Options     : Fix_Options;
       Callback    : Error_Callback := null)
    is
-      Current_Message : Error_Message;
-      Solutions       : Solution_List;
-      New_Error       : Error_Id;
-      Category        : String_Access;
+      Current_Message  : Error_Message;
+      Solutions        : Solution_List;
+      New_Error        : Error_Id;
       Previous_Message : Error_Message := Invalid_Error_Message;
       It               : Error_Message_Iterator := First (Errors_List);
    begin
@@ -193,8 +192,6 @@ package body Codefix.Errors_Manager is
 
                   Previous_Message := Current_Message;
                end if;
-
-               Free (Category);
             end if;
          end if;
 

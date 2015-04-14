@@ -114,6 +114,7 @@ with GNAT.Regpat;            use GNAT.Regpat;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with Codefix.Error_Lists;    use Codefix.Error_Lists;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
+private with Generic_List;
 
 package Codefix.Errors_Parser is
 
@@ -191,8 +192,7 @@ private
    use Parser_List;
 
    type Fix_Processor is record
-      Parse_List  : Parser_List.List;
-      Preferences : State_List;
+      Parse_List : Parser_List.List;
    end record;
 
 end Codefix.Errors_Parser;
