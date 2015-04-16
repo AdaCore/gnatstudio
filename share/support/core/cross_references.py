@@ -156,6 +156,4 @@ class GnatInspect_OnExit_Hook(tool_output.OutputParser):
 
 
 GPS.Hook.register("xref_updated")
-
-if GPS.Logger("ENTITIES.SQLITE").active:
-    r = Sqlite_Cross_References()
+r = Sqlite_Cross_References()

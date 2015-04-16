@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O415-004 GPS: Cross-references disabled when traces.cfg not found
+
+  Problem:     When the file traces.cfg is not found in the GPS config
+               directory (~/.gps or %USERPROFILE%\.gps), gnatinspect is not
+               spawned and cross-references are disabled
+
+  Status:      This was fixed in 6.2 on 2015-04-16
+
+  Workaround:  Recreate a traces.cfg file that only contains a "+" on a line
+               of its own.
+
 KP-61-O403-018 GPS: "Whole word" option in omni-search is insensitive
 
   Problem:    The whole word option for the omni-search is only applicable
