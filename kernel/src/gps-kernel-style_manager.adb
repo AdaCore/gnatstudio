@@ -164,9 +164,18 @@ package body GPS.Kernel.Style_Manager is
       Style  : in out Style_Record)
    is
       Variant : Variant_Enum;
+      Source_Style_Bg   : constant Gdk_RGBA := Source.Style.Get_Pref_Bg;
+      Source_Variant_Bg : constant Gdk_RGBA := Source.Variant.Get_Pref_Bg;
    begin
       Style.Foreground := Source.Variant.Get_Pref_Fg;
-      Style.Background := Source.Variant.Get_Pref_Bg;
+
+      --  If the variant has the same background as the style, assume
+      --  the variant wants a transparent background.
+      if Source_Style_Bg = Source_Variant_Bg then
+         Style.Background := Null_RGBA;
+      else
+         Style.Background := Source_Variant_Bg;
+      end if;
 
       Variant := Source.Variant.Get_Pref_Variant;
 
