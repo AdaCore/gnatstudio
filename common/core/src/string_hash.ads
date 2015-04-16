@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package instanciates hash tables based on strings.
+--  This package instantiates hash tables based on strings.
 --  See HTables for complete documentation.
 
 with HTables;
