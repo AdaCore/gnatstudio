@@ -112,7 +112,7 @@ class BoardLoader(Module):
         try:
             con = promises.ProcessWrapper(cmd)
         except:
-            self.__error_exit("Could not launch executable st-flash.")
+            self.__error_exit("Could not launch executable arm-eabi-objcopy.")
             return
 
         r1 = yield con.wait_until_terminate()
