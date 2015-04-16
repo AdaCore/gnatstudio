@@ -5,7 +5,7 @@ Provides support for gnatmetric.
 import re
 import os
 import GPS
-from gps_utils import interactive
+from gps_utils import interactive, hook
 
 # Initialize the targets
 xml_base = ("""
@@ -255,10 +255,9 @@ xml_base = ("""
 """)
 
 
-def on_compilation_finished(hook, category,
-                            target_name="", mode_name="", status=""):
-    del hook, category, mode_name  # Unused parameters
-
+@hook('compilation_finished')
+def __on_compilation_finished(category, target_name="",
+                              mode_name="", status=""):
     if not target_name.startswith("GNAT Metric"):
         return
 
@@ -284,4 +283,3 @@ def show_metrics_window():
 
 
 GPS.parse_xml(xml_base)
-GPS.Hook("compilation_finished").add(on_compilation_finished)

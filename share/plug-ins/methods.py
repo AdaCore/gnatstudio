@@ -20,6 +20,7 @@ happen when several methods have the same name.
 ############################################################################
 
 import GPS
+from gps_utils import hook
 
 
 class Methods_Contextual (GPS.Contextual):
@@ -64,11 +65,10 @@ class Methods_Contextual (GPS.Contextual):
     def on_activate(self, context, choice, choice_index):
         decl = context.methods_list[choice_index].body()
         buffer = GPS.EditorBuffer.get(decl.file())
-        buffer.current_view().goto \
-            (buffer.at(decl.line(), decl.column()))
+        buffer.current_view().goto(
+            buffer.at(decl.line(), decl.column()))
 
 
-def on_gps_started(hook_name):
+@hook('gps_started')
+def __on_gps_started():
     Methods_Contextual()
-
-GPS.Hook("gps_started").add(on_gps_started)

@@ -4,6 +4,7 @@ matched by user defined regular expressions.
 """
 
 import GPS
+from gps_utils import hook
 
 # number of regexps
 cu_count = 3
@@ -60,7 +61,8 @@ def cu_load_preference(num):
         return
 
 
-def on_preferences_changed(hook, reload=True):
+@hook('preferences_changed')
+def on_preferences_changed(reload=True):
     cu_load_preferences()
 
 
@@ -68,7 +70,8 @@ def on_gps_started(hook):
     cu_load_preferences()
 
 
-def on_gps_started(hook):
+@hook('gps_started')
+def __on_gps_started():
     cu_load_preferences()
 
 
@@ -80,6 +83,3 @@ def cu_load_preferences():
 
 for j in range(cu_count):
     cu_create_preference(j + 1)
-
-GPS.Hook("gps_started").add(on_gps_started)
-GPS.Hook('preferences_changed').add(on_preferences_changed)

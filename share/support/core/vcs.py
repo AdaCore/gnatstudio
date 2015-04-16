@@ -6,6 +6,7 @@
 ############################################################################
 
 import GPS
+from gps_utils import hook
 
 # Named constants
 LABEL = 0
@@ -217,7 +218,8 @@ def register_vcs_actions(system_name, actions):
 old_name = ""
 
 
-def on_project_changed(Hook):
+@hook("project_view_changed")
+def __on_project_changed():
     global old_name
     # First remove/hide old menus
     remove_old_menus(old_name)
@@ -230,5 +232,3 @@ def on_project_changed(Hook):
         create_menus(name, registered_vcs_actions[name])
 
     GPS.Contextual(last_menu).hide()
-
-GPS.Hook("project_view_changed").add(on_project_changed)

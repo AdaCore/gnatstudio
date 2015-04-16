@@ -79,6 +79,35 @@ def filter_text_actions(*args):
     return isinstance(f, Gtk.TextView) or isinstance(f, Gtk.Entry)
 
 
+class hook:
+    """
+    A decorator that makes it easier to connect to hooks::
+
+       @hook("gps_started")
+       def my_function(*args, **kwargs):
+           pass
+
+    Note that the function does not receive the hook as the first parameter.
+    The function should however accept any number of parameters, for future
+    extensions, since some hooks might receive extra arguments.
+    """
+
+    # ??? We could check whether the function will accept extra arguments by
+    # using    fn.func_code.co_argcount   fn.func_code.co_varnames and
+    #          fn.func_defaults
+
+    def __init__(self, hook, last=True):
+        self.name = hook
+        self.last = last
+
+    def __call__(self, fn):
+        def do_work(hook, *args, **kwargs):
+            return fn(*args, **kwargs)
+        do_work.__name__ = fn.__name__   # Reset name for interactive()
+        do_work.__doc__ = fn.__doc__
+        GPS.Hook(self.name).add(do_work, last=self.last)
+
+
 def save_dir(fn):
     """
     Saves the current directory before executing the instrumented

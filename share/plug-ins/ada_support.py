@@ -11,9 +11,11 @@ editing of Ada files.
 
 import GPS
 import gps_utils.gnat_rules
+from gps_utils import hook
 
 
-def on_switch_editor(hook_name):
+@hook('project_editor')
+def __on_switch_editor():
     gps_utils.gnat_rules.EnsureInitialized()
 
 XML = r"""<?xml version="1.0" ?>
@@ -193,5 +195,4 @@ end;</text>
 """
 
 
-GPS.Hook("project_editor").add(on_switch_editor)
 GPS.parse_xml(XML)

@@ -54,6 +54,7 @@ import os
 import os_utils
 from os.path import *
 from GPS import *
+from gps_utils import hook
 
 # This is an XML model for make/gnumake
 Make_Model = """
@@ -288,10 +289,13 @@ class Antfile (Builder):
 ant_support = False
 
 
-def on_gps_started(hook_name):
+# This module needs to be initialized before the others
+@hook('gps_started', last=False)
+def __on_gps_started():
     Makefile()
     if ant_support:
         Antfile()
+
 
 parse_xml(Make_Model)
 parse_xml(Ant_Model_Template)
@@ -323,9 +327,6 @@ parse_xml("""
     <string type=""/>
   </project_attribute>""")
 
-# This module needs to be initialized before the others
-
-Hook("gps_started").add(on_gps_started, False)
 
 if os_utils.locate_exec_on_path("ant"):
     try:

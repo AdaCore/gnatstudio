@@ -8,6 +8,7 @@ This file provides support for gnattest.
 
 import os.path
 import GPS
+from gps_utils import hook
 
 GPS.Preference("Plugins/gnattest/read_only_color"
                ).create("Highlight color", "color",
@@ -64,8 +65,9 @@ def exit_harness_project():
                                   GPS.Project.root().file().name() + "\n")
 
 
-def on_compilation_finished(hook, category,
-                            target_name="", mode_name="", status=""):
+@hook('compilation_finished')
+def __on_compilation_finished(category, target_name="",
+                              mode_name="", status=""):
 
     global last_gnattest_project
 
@@ -78,7 +80,8 @@ def on_compilation_finished(hook, category,
     open_harness_project(last_gnattest_project)
 
 
-def on_project_view_changed(hook):
+@hook('project_view_changed')
+def on_project_view_changed():
     """ Replace run target in harness project. """
     test_run_target = GPS.BuildTarget("Run a test-driver")
     run_main_target = GPS.BuildTarget("Run Main")
@@ -97,7 +100,8 @@ def on_project_view_changed(hook):
         mark_read_only_areas(buffer)
 
 
-def on_file_edited(hook, file):
+@hook('file_edited')
+def __on_file_edited(file):
     """ Find read-only areas and apply an overlay on them. """
     if not is_harness_project():
         return
@@ -488,6 +492,3 @@ XML = r"""<?xml version="1.0" ?>
 """
 
 GPS.parse_xml(XML)
-GPS.Hook("file_edited").add(on_file_edited)
-GPS.Hook("compilation_finished").add(on_compilation_finished)
-GPS.Hook("project_view_changed").add(on_project_view_changed)

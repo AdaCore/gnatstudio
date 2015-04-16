@@ -15,7 +15,7 @@ import string
 import traceback
 import os_utils
 from gi.repository import GObject, Gtk, GLib
-from gps_utils import interactive
+from gps_utils import interactive, hook
 from gps_utils.gnatcheck_rules_editor import *
 
 gnatcheck = None
@@ -407,7 +407,8 @@ def edit_gnatcheck_rules():
     gnatcheckproc.edit()
 
 
-def on_gps_started(hook_name):
+@hook('gps_started')
+def __on_gps_started():
     contextualMenu()
     GPS.parse_xml("""
   <tool name="GnatCheck" package="Check" index="Ada" override="false">
@@ -423,6 +424,3 @@ def on_gps_started(hook_name):
                section="-rules"/>
      </switches>
   </tool>""")
-
-
-GPS.Hook("gps_started").add(on_gps_started)

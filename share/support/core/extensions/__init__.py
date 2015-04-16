@@ -1,4 +1,3 @@
-__author__ = 'amiard'
 from extensions.private.xml import X
 from GPS import *
 import GPS

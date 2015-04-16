@@ -1309,12 +1309,13 @@ def cancel_mark_command(buffer=None):
         pass  # No such mark
 
 
-def on_clipboard_changed(hook):
+@hook("clipboard_changed")
+def __on_clipboard_changed():
     """Called when the contents of the clipboard has changed"""
     if GPS.Preference("Plugins/emacs/transient_mark").get():
         cancel_mark_command()
 
-GPS.Hook("clipboard_changed").add(on_clipboard_changed)
+
 GPS.parse_xml("""
    <action name="kill line" output="none" category="Editor">
    <description>This is similar to Emacs' kill-line function. It deletes the
