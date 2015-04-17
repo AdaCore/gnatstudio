@@ -34,7 +34,6 @@ package body Codefix.Ada_Tools is
         Ada.Unchecked_Deallocation (Use_Type, Ptr_Use);
    begin
       Free (This.Position);
-      Free (This.Name);
       Free_Pool (This);
    end Free;
 
@@ -99,8 +98,7 @@ package body Codefix.Ada_Tools is
                           Get_Column (Data (Seek_Node).Clauses (J).Position));
                      Set_Word
                        (Word_Used,
-                        To_Unbounded_String
-                          (Data (Seek_Node).Clauses (J).Name.all));
+                        Data (Seek_Node).Clauses (J).Name);
                      Append (Result, Word_Used);
                   end;
                end if;
@@ -164,7 +162,7 @@ package body Codefix.Ada_Tools is
    procedure Try_Link_Clauses
      (With_Clause : Ptr_With; Use_Clause : Ptr_Use)
    is
-      Use_Parsed : Arr_Str := Get_Arr_Str (Use_Clause.Name.all);
+      Use_Parsed : Arr_Str := Get_Arr_Str (To_String (Use_Clause.Name));
       With_Index : Positive := 1;
       Success    : Boolean;
    begin
@@ -263,7 +261,7 @@ package body Codefix.Ada_Tools is
          if Get_Construct (Iterator).Category = Cat_Use then
             New_Clause := new Use_Type;
             New_Clause.Name :=
-              new String'(Get (Get_Construct (Iterator).Name).all);
+              To_Unbounded_String (Get (Get_Construct (Iterator).Name).all);
             Set_File (New_Clause.Position, File_Name);
             Set_Location
               (New_Clause.Position,

@@ -170,7 +170,7 @@ package body Codefix.Text_Manager.Commands is
       This.Add_Spaces := Add_Spaces;
       This.Position := Position;
       Make_Word_Mark (Word, Current_Text, This.Word);
-      This.After_Pattern := new String'(After_Pattern);
+      This.After_Pattern := To_Unbounded_String (After_Pattern);
 
       Set_File (New_Word, Get_File (New_Position));
       Set_Location
@@ -184,7 +184,6 @@ package body Codefix.Text_Manager.Commands is
    begin
       Free (This.Word);
       Free (This.New_Position);
-      Free (This.After_Pattern);
       Free (Text_Command (This));
    end Free;
 
@@ -211,12 +210,12 @@ package body Codefix.Text_Manager.Commands is
 
       Assign (New_Str, Word.Get_Matching_Word (Current_Text));
 
-      if This.After_Pattern.all /= "" then
+      if This.After_Pattern /= "" then
          declare
             Matches : Match_Array (0 .. 1);
          begin
             Match
-              (This.After_Pattern.all,
+              (To_String (This.After_Pattern),
                Get_Line (Current_Text, New_Pos),
                Matches);
 
@@ -336,18 +335,21 @@ package body Codefix.Text_Manager.Commands is
      (This           : in out Replace_Word_Cmd;
       Current_Text   : Text_Navigator_Abstr'Class;
       Word           : Word_Cursor'Class;
-      New_Word       : String;
+      New_Word       : Unbounded_String;
       Do_Indentation : Boolean := False) is
    begin
       Make_Word_Mark (Word, Current_Text, This.Mark);
-      Assign (This.Str_Expected, New_Word);
+      This.Str_Expected := New_Word;
       This.Do_Indentation := Do_Indentation;
    end Initialize;
+
+   ----------
+   -- Free --
+   ----------
 
    overriding procedure Free (This : in out Replace_Word_Cmd) is
    begin
       Free (This.Mark);
-      Free (This.Str_Expected);
       Free (Text_Command (This));
    end Free;
 
@@ -369,21 +371,21 @@ package body Codefix.Text_Manager.Commands is
 
          declare
             Lower_Expected : constant String :=
-              To_Lower (This.Str_Expected.all);
+              To_Lower (To_String (This.Str_Expected));
          begin
             --   ??? We might be interrested by other cases here...
             if Lower_Expected = "is" then
                Current_Text.Replace
                  (Position      => Current_Word,
                   Len           => Match'Length,
-                  New_Text      => This.Str_Expected.all,
+                  New_Text      => To_String (This.Str_Expected),
                   Blanks_Before => One,
                   Blanks_After  => Keep);
             else
                Text.Replace
                  (Cursor    => Current_Word,
                   Len       => Match'Length,
-                  New_Value => This.Str_Expected.all);
+                  New_Value => To_String (This.Str_Expected));
             end if;
          end;
 
@@ -415,14 +417,12 @@ package body Codefix.Text_Manager.Commands is
    begin
       This.Location :=
         new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Message_Loc));
-      This.First_Word := new String'(To_String (First_Word));
-      This.Second_Word := new String'(To_String (Second_Word));
+      This.First_Word := First_Word;
+      This.Second_Word := Second_Word;
    end Initialize;
 
    overriding procedure Free (This : in out Invert_Words_Cmd) is
    begin
-      Free (This.First_Word);
-      Free (This.Second_Word);
       Free (This.Location);
       Free (Text_Command (This));
    end Free;
@@ -433,7 +433,7 @@ package body Codefix.Text_Manager.Commands is
    is
       Matches       : Match_Array (1 .. 1);
       Matcher       : constant Pattern_Matcher :=
-        Compile ("(" & This.Second_Word.all & ") ", Case_Insensitive);
+        Compile ("(" & To_String (This.Second_Word) & ") ", Case_Insensitive);
       First_Cursor  : constant File_Cursor := File_Cursor
         (Current_Text.Get_Current_Cursor (This.Location.all));
       Second_Cursor : File_Cursor := First_Cursor;
@@ -458,10 +458,12 @@ package body Codefix.Text_Manager.Commands is
         (Second_Cursor, Line, Visible_Column_Type (Matches (1).First));
 
       Text.Replace
-        (First_Cursor, This.First_Word'Length, This.Second_Word.all);
+        (First_Cursor, Length (This.First_Word), To_String (This.Second_Word));
 
       Text.Replace
-        (Second_Cursor, This.Second_Word'Length, This.First_Word.all);
+        (Second_Cursor,
+         Length (This.Second_Word),
+         To_String (This.First_Word));
    end Execute;
 
    overriding
@@ -478,18 +480,21 @@ package body Codefix.Text_Manager.Commands is
      (This         : in out Add_Line_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
-      Line         : String;
+      Line         : Unbounded_String;
       Indent       : Boolean) is
    begin
-      Assign (This.Line, Line);
+      This.Line := Line;
       This.Position := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Position));
       This.Indent := Indent;
    end Initialize;
 
+   ----------
+   -- Free --
+   ----------
+
    overriding procedure Free (This : in out Add_Line_Cmd) is
    begin
-      Free (This.Line);
       Free (This.Position);
    end Free;
 
@@ -508,7 +513,7 @@ package body Codefix.Text_Manager.Commands is
 
       Add_Line
         (Get_File (Current_Text, This.Position.File_Name).all,
-         Cursor, End_Of_Line & This.Line.all, This.Indent);
+         Cursor, End_Of_Line & To_String (This.Line), This.Indent);
    end Execute;
 
    overriding
@@ -525,20 +530,23 @@ package body Codefix.Text_Manager.Commands is
      (This                     : in out Replace_Slice_Cmd;
       Current_Text             : Text_Navigator_Abstr'Class;
       Start_Cursor, End_Cursor : File_Cursor'Class;
-      New_Text                 : String) is
+      New_Text                 : Unbounded_String) is
    begin
       This.Start_Mark := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Start_Cursor));
       This.End_Mark := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, End_Cursor));
-      This.New_Text := new String'(New_Text);
+      This.New_Text := New_Text;
    end Initialize;
+
+   ----------
+   -- Free --
+   ----------
 
    overriding procedure Free (This : in out Replace_Slice_Cmd) is
    begin
       Free (This.Start_Mark);
       Free (This.End_Mark);
-      Free (This.New_Text);
    end Free;
 
    overriding procedure Execute
@@ -554,7 +562,8 @@ package body Codefix.Text_Manager.Commands is
         (Get_Current_Cursor (Current_Text, This.End_Mark.all));
       Modified_Text := Current_Text.Get_File (Start_Cursor.File);
 
-      Modified_Text.Replace (Start_Cursor, End_Cursor, This.New_Text.all);
+      Modified_Text.Replace
+        (Start_Cursor, End_Cursor, To_String (This.New_Text));
    end Execute;
 
    overriding

@@ -273,30 +273,30 @@ package Codefix.Text_Manager is
    --  Return the name of the file
 
    type Token_Record is record
-      Name : GNAT.Strings.String_Access;
+      Name : Unbounded_String;
       Kind : Language_Entity;
    end record;
 
    type Token_List is array (Integer range <>) of Token_Record;
 
    Open_Paren_Tok : constant Token_Record :=
-     (Kind => Operator_Text, Name => new String'("("));
+     (Kind => Operator_Text, Name => To_Unbounded_String ("("));
    Close_Paren_Tok : constant Token_Record :=
-     (Kind => Operator_Text, Name => new String'(")"));
+     (Kind => Operator_Text, Name => To_Unbounded_String (")"));
    Semicolon_Tok : constant Token_Record :=
-     (Kind => Operator_Text, Name => new String'(":"));
+     (Kind => Operator_Text, Name => To_Unbounded_String (":"));
    Tick_Tok : constant Token_Record :=
-     (Kind => Operator_Text, Name => new String'("'"));
+     (Kind => Operator_Text, Name => To_Unbounded_String ("'"));
    Equals_Tok : constant Token_Record :=
-     (Kind => Operator_Text, Name => new String'("="));
+     (Kind => Operator_Text, Name => To_Unbounded_String ("="));
    Not_Equals_Tok : constant Token_Record :=
-     (Kind => Operator_Text, Name => new String'("/="));
+     (Kind => Operator_Text, Name => To_Unbounded_String ("/="));
    Renames_Tok : constant Token_Record :=
-     (Kind => Keyword_Text, Name => new String'("renames"));
+     (Kind => Keyword_Text, Name => To_Unbounded_String ("renames"));
    Is_Tok : constant Token_Record :=
-     (Kind => Keyword_Text, Name => new String'("is"));
+     (Kind => Keyword_Text, Name => To_Unbounded_String ("is"));
    True_Tok : constant Token_Record :=
-     (Kind => Identifier_Text, Name => new String'("true"));
+     (Kind => Identifier_Text, Name => To_Unbounded_String ("true"));
 
    function Search_Token
      (This     : Text_Interface'Class;

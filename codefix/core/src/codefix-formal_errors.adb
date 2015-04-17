@@ -373,8 +373,12 @@ package body Codefix.Formal_Errors is
       Result      : Solution_List;
    begin
       Initialize
-        (Command, Current_Text, Cursor,
-         First_Clause, Second_Clause, With_Clause);
+        (Command,
+         Current_Text,
+         Cursor,
+         To_Unbounded_String (First_Clause),
+         To_Unbounded_String (Second_Clause),
+         To_Unbounded_String (With_Clause));
       Set_Caption (Command, Caption);
       Append (Result, Command_Ptr);
 
@@ -433,8 +437,7 @@ package body Codefix.Formal_Errors is
          end if;
       end if;
 
-      Initialize
-        (New_Command, Current_Text, Old_Word, To_String (Str_Expected));
+      Initialize (New_Command, Current_Text, Old_Word, Str_Expected);
 
       Append (Result, New_Command_Ptr);
 
@@ -1701,7 +1704,7 @@ package body Codefix.Formal_Errors is
    function Add_Line
      (Current_Text  : Text_Navigator_Abstr'Class;
       Object_Cursor : File_Cursor'Class;
-      Line          : String;
+      Line          : Unbounded_String;
       Indent        : Boolean) return Solution_List
    is
       Result : Solution_List;

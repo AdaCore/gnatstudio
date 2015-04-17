@@ -119,7 +119,7 @@ package Codefix.Text_Manager.Commands is
      (This           : in out Replace_Word_Cmd;
       Current_Text   : Text_Navigator_Abstr'Class;
       Word           : Word_Cursor'Class;
-      New_Word       : String;
+      New_Word       : Unbounded_String;
       Do_Indentation : Boolean := False);
    --  Set all the marks that will be needed to replace the word later
 
@@ -175,7 +175,7 @@ package Codefix.Text_Manager.Commands is
      (This         : in out Add_Line_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
-      Line         : String;
+      Line         : Unbounded_String;
       Indent       : Boolean);
    --  Set all the marks that will be needed to add the line later
 
@@ -203,7 +203,7 @@ package Codefix.Text_Manager.Commands is
      (This                     : in out Replace_Slice_Cmd;
       Current_Text             : Text_Navigator_Abstr'Class;
       Start_Cursor, End_Cursor : File_Cursor'Class;
-      New_Text                 : String);
+      New_Text                 : Unbounded_String);
    --  Set all the marks that will be necessary later to remove the slice
 
    overriding
@@ -292,7 +292,7 @@ private
       Position        : Relative_Position := Specified;
       New_Position    : Word_Mark;
       Insert_New_Line : Boolean := False;
-      After_Pattern   : GNAT.Strings.String_Access;
+      After_Pattern   : Unbounded_String;
    end record;
 
    type Move_Word_Cmd (Complexity : Fix_Complexity)
@@ -304,17 +304,18 @@ private
 
    type Replace_Word_Cmd is new Text_Command with record
       Mark           : Word_Mark;
-      Str_Expected   : GNAT.Strings.String_Access;
+      Str_Expected   : Unbounded_String;
       Do_Indentation : Boolean := False;
    end record;
 
    type Invert_Words_Cmd is new Text_Command with record
-      Location                : Ptr_Mark;
-      First_Word, Second_Word : GNAT.Strings.String_Access;
+      Location    : Ptr_Mark;
+      First_Word  : Unbounded_String;
+      Second_Word : Unbounded_String;
    end record;
 
    type Add_Line_Cmd is new Text_Command with record
-      Line     : GNAT.Strings.String_Access;
+      Line     : Unbounded_String;
       Position : Ptr_Mark;
       Indent   : Boolean;
    end record;
@@ -322,7 +323,7 @@ private
    type Replace_Slice_Cmd is new Text_Command with record
       Start_Mark : Ptr_Mark;
       End_Mark   : Ptr_Mark;
-      New_Text   : GNAT.Strings.String_Access;
+      New_Text   : Unbounded_String;
    end record;
 
    type Remove_Blank_Lines_Cmd is new Text_Command (Simple) with record

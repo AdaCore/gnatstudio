@@ -17,10 +17,10 @@
 
 --  This package defines the module for code fixing.
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;               use GNAT.Regpat;
+with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
 with Glib.Object;               use Glib.Object;
@@ -304,7 +304,6 @@ package body Codefix_Module is
    begin
       Free (Session.Current_Text);
       Free (Session.Corrector);
-      Free (Session.Category);
       Unchecked_Free (Session);
    end Destroy;
 
@@ -326,7 +325,7 @@ package body Codefix_Module is
 
          GPS.Kernel.Messages.Legacy.Set_Action_Item
            (Kernel,
-            Session.Category.all,
+            To_String (Session.Category),
             Get_File (Err),
             Get_Line (Err),
             Natural (Get_Column (Err)),
@@ -546,7 +545,7 @@ package body Codefix_Module is
 
       if Codefix_Module_ID.Sessions /= null then
          for S in Codefix_Module_ID.Sessions'Range loop
-            if Codefix_Module_ID.Sessions (S).Category.all = Category then
+            if Codefix_Module_ID.Sessions (S).Category = Category then
                Session := Codefix_Module_ID.Sessions (S);
                exit;
             end if;
@@ -558,7 +557,7 @@ package body Codefix_Module is
             Tmp : Codefix_Sessions := Codefix_Module_ID.Sessions;
          begin
             Session := new Codefix_Session_Record;
-            Session.Category := new String'(Category);
+            Session.Category := To_Unbounded_String (Category);
 
             if Tmp = null then
                Codefix_Module_ID.Sessions := new Codefix_Sessions_Array'
@@ -723,7 +722,7 @@ package body Codefix_Module is
    begin
       if Codefix_Module_ID.Sessions /= null then
          for S in Codefix_Module_ID.Sessions'Range loop
-            if Codefix_Module_ID.Sessions (S).Category.all = Category then
+            if Codefix_Module_ID.Sessions (S).Category = Category then
                return Codefix_Module_ID.Sessions (S);
             end if;
          end loop;
@@ -744,7 +743,7 @@ package body Codefix_Module is
    begin
       GPS.Kernel.Messages.Legacy.Set_Action_Item
         (Kernel,
-         Session.Category.all,
+         To_String (Session.Category),
          Get_File (Err),
          Get_Line (Err),
          Natural (Get_Column (Err)),
@@ -785,7 +784,7 @@ package body Codefix_Module is
 
       GPS.Kernel.Messages.Legacy.Set_Action_Item
         (Kernel,
-         Session.Category.all,
+         To_String (Session.Category),
          Get_File (Err),
          Get_Line (Err),
          Natural (Get_Column (Err)),
@@ -1109,7 +1108,7 @@ package body Codefix_Module is
          if Codefix_Module_ID.Sessions /= null then
             for S in Codefix_Module_ID.Sessions'Range loop
                Set_Return_Value
-                 (Data, Codefix_Module_ID.Sessions (S).Category.all);
+                 (Data, To_String (Codefix_Module_ID.Sessions (S).Category));
             end loop;
          end if;
 

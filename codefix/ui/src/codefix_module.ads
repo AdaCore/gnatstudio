@@ -17,14 +17,15 @@
 
 --  This package defines the module for code fixing.
 
-with Gtk.Menu;                use Gtk.Menu;
-with GPS.Kernel;              use GPS.Kernel;
-with GNAT.Strings;            use GNAT.Strings;
-with Codefix;                 use Codefix;
-with Codefix.Errors_Manager;  use Codefix.Errors_Manager;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+
+with Gtk.Menu;               use Gtk.Menu;
+with GPS.Kernel;             use GPS.Kernel;
+with Codefix;                use Codefix;
+with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Text_Manager;
 with Default_Preferences.Enums;
-with Codefix.Formal_Errors;    use Codefix.Formal_Errors;
+with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 
 package Codefix_Module is
 
@@ -33,7 +34,7 @@ package Codefix_Module is
    --  Register the module into the list
 
    type Codefix_Session_Record is record
-      Category     : GNAT.Strings.String_Access;
+      Category     : Unbounded_String;
       Corrector    : Ptr_Correction_Manager;
       Current_Text : Codefix.Text_Manager.Ptr_Text_Navigator;
       Timestamp    : Integer := 0;

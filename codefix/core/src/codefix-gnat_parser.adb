@@ -4171,7 +4171,12 @@ package body Codefix.GNAT_Parser is
    is
       pragma Unreferenced (This, Options, Matches);
    begin
-      Solutions := Add_Line (Current_Text, Get_Message (Message_It), "", True);
+      Solutions :=
+        Add_Line
+          (Current_Text,
+           Get_Message (Message_It),
+           Null_Unbounded_String,
+           True);
    end Fix;
 
    ----------------------

@@ -293,7 +293,7 @@ package Codefix.Formal_Errors is
    function Add_Line
      (Current_Text  : Text_Navigator_Abstr'Class;
       Object_Cursor : File_Cursor'Class;
-      Line          : String;
+      Line          : Unbounded_String;
       Indent        : Boolean) return Solution_List;
    --  Add a line at the given location
 

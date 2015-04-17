@@ -52,7 +52,7 @@ private
 
    type Use_Type is record
       Position : File_Cursor;
-      Name     : GNAT.Strings.String_Access;
+      Name     : Unbounded_String;
       Nb_Ref   : Natural := 0;
    end record;
 

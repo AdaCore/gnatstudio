@@ -581,11 +581,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Position     : Relative_Position := Specified;
       Destination  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Category     : Dependency_Category := Cat_With;
-      Look_For_Use : Boolean := True)
-   is
+      Look_For_Use : Boolean := True) is
    begin
       This.Word := new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Word));
-      This.Word_Str := new String'(Word.Get_Word);
+      This.Word_Str := To_Unbounded_String (Word.Get_Word);
       This.Position := Position;
       This.Destination := Destination;
       This.Category := Category;
@@ -619,7 +618,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       File_Cursor (Word) :=
         File_Cursor (Current_Text.Get_Current_Cursor (This.Word.all));
-      Word.String_Match := To_Unbounded_String (This.Word_Str.all);
+      Word.String_Match := This.Word_Str;
 
       declare
          It : constant Construct_Tree_Iterator := Get_Iterator_At
@@ -672,7 +671,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          if This.Destination /= GNATCOLL.VFS.No_File then
             Append
               (Obj_List,
-               new String'("with " & Get (Pkg_Info.Name).all & ";"));
+               To_Unbounded_String ("with " & Get (Pkg_Info.Name).all & ";"));
          end if;
 
          Is_Instantiation := False;
@@ -717,9 +716,7 @@ package body Codefix.Text_Manager.Ada_Commands is
             if This.Destination /= GNATCOLL.VFS.No_File then
                Append
                  (Obj_List,
-                  new String'
-                    ("use "
-                     & To_String (Data (Clause_Node).String_Match) & ";"));
+                  "use " & Data (Clause_Node).String_Match & ";");
             end if;
 
             Clause_Node := Next (Clause_Node);
@@ -748,7 +745,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          Node := First (Obj_List);
 
          while Node /= String_List.Null_Node loop
-            Current_Text.Add_Line (Last_With, Data (Node).all);
+            Current_Text.Add_Line (Last_With, To_String (Data (Node)));
             Node := Next (Node);
          end loop;
 
@@ -767,7 +764,6 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Remove_Pkg_Clauses_Cmd) is
    begin
-      Free (This.Word_Str);
       Free (Text_Command (This));
    end Free;
 
@@ -1736,7 +1732,6 @@ package body Codefix.Text_Manager.Ada_Commands is
    begin
       Free (This.Source_Position);
       Free (This.Object_Position);
-      Free (This.Pkg_Name);
       Free (Text_Command (This));
    end Free;
 
@@ -1843,7 +1838,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       pragma Unreferenced (Current_Text);
    begin
       This.File := Cursor.File;
-      This.Missing_Clause := new String'(To_String (Missing_Clause));
+      This.Missing_Clause := Missing_Clause;
       This.Add_With := Add_With;
       This.Add_Use := Add_Use;
    end Initialize;
@@ -1861,16 +1856,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       if This.Add_With and then This.Add_Use then
          Current_Text.Add_Line
            (Get_Next_With_Position (Current_Text, This.File),
-            "with " & This.Missing_Clause.all & ";"
-            & " use " & This.Missing_Clause.all & ";");
+            "with " & To_String (This.Missing_Clause) & ";"
+            & " use " & To_String (This.Missing_Clause) & ";");
       elsif This.Add_Use then
          Current_Text.Add_Line
            (Get_Next_With_Position (Current_Text, This.File),
-            "use " & This.Missing_Clause.all & ";");
+            "use " & To_String (This.Missing_Clause) & ";");
       else
          Current_Text.Add_Line
            (Get_Next_With_Position (Current_Text, This.File),
-            "with " & This.Missing_Clause.all & ";");
+            "with " & To_String (This.Missing_Clause) & ";");
       end if;
    end Execute;
 
@@ -1878,10 +1873,8 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   overriding
-   procedure Free (This : in out Add_Clauses_Cmd) is
+   overriding procedure Free (This : in out Add_Clauses_Cmd) is
    begin
-      Free (This.Missing_Clause);
       Free (Text_Command (This));
    end Free;
 
@@ -1903,26 +1896,19 @@ package body Codefix.Text_Manager.Ada_Commands is
      (This          : in out Add_Record_Rep_Clause_Cmd;
       Current_Text  : Text_Navigator_Abstr'Class;
       Cursor        : File_Cursor'Class;
-      First_Clause  : String;
-      Second_Clause : String := "";
-      With_Clause   : String := "")
+      First_Clause  : Unbounded_String;
+      Second_Clause : Unbounded_String := Null_Unbounded_String;
+      With_Clause   : Unbounded_String := Null_Unbounded_String)
    is
    begin
       This.Location :=
         new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Cursor));
-      This.First_Clause := new String'(First_Clause);
-
-      if Second_Clause /= "" then
-         This.Second_Clause := new String'(Second_Clause);
-      else
-         This.Second_Clause := null;
-      end if;
+      This.First_Clause := First_Clause;
+      This.Second_Clause := Second_Clause;
+      This.With_Clause := With_Clause;
 
       if With_Clause /= "" then
-         This.With_Clause := new String'(With_Clause);
          This.File := Cursor.File;
-      else
-         This.With_Clause := null;
       end if;
    end Initialize;
 
@@ -2046,13 +2032,13 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       --  Append the record representation clauses
 
-      if This.Second_Clause /= null then
+      if This.Second_Clause /= Null_Unbounded_String then
          Current_Text.Add_Line
            (Cursor   => Cursor,
             Indent   => True,
             New_Line => "for "
                           & Record_Name (1 .. Record_Name_Len)
-                          & This.Second_Clause.all);
+                          & To_String (This.Second_Clause));
       end if;
 
       Current_Text.Add_Line
@@ -2060,15 +2046,15 @@ package body Codefix.Text_Manager.Ada_Commands is
          Indent   => True,
          New_Line => "for "
                        & Record_Name (1 .. Record_Name_Len)
-                       & This.First_Clause.all);
+                       & To_String (This.First_Clause));
 
-      if This.With_Clause /= null then
+      if This.With_Clause /= Null_Unbounded_String then
          if File_Cursor (Search_With (Current_Text, This.File, "System"))
            = Null_File_Cursor
          then
             Current_Text.Add_Line
               (Get_Next_With_Position (Current_Text, This.File),
-               "with " & This.With_Clause.all & ";");
+               "with " & To_String (This.With_Clause) & ";");
          end if;
       end if;
    end Execute;
@@ -2077,13 +2063,9 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Free --
    ----------
 
-   overriding
-   procedure Free (This : in out Add_Record_Rep_Clause_Cmd) is
+   overriding procedure Free (This : in out Add_Record_Rep_Clause_Cmd) is
    begin
       Free (This.Location);
-      Free (This.First_Clause);
-      Free (This.Second_Clause);
-      Free (This.With_Clause);
    end Free;
 
    -----------------
@@ -2508,8 +2490,8 @@ package body Codefix.Text_Manager.Ada_Commands is
       Pragma_Name  : String)
    is
    begin
-      This.Element_Name := new String'(To_Lower (Element_Name));
-      This.Pragma_Name := new String'(To_Lower (Pragma_Name));
+      This.Element_Name := To_Unbounded_String (To_Lower (Element_Name));
+      This.Pragma_Name := To_Unbounded_String (To_Lower (Pragma_Name));
       This.Location := new Mark_Abstr'Class'
         (Current_Text.Get_New_Mark (Cursor));
    end Initialize;
@@ -2535,12 +2517,12 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       Name := Find_Normalized
         (Symbols => Get_Context (Current_Text).Db.Symbols,
-         Name    => This.Element_Name.all);
+         Name    => To_String (This.Element_Name));
 
       while It /= Null_Construct_Tree_Iterator loop
          if Get_Construct (It).Category = Cat_Pragma
            and then To_Lower (Get (Get_Construct (It).Name).all)
-           = This.Pragma_Name.all
+           = This.Pragma_Name
          then
             --  We're on a pragma of the proper name - see if there's the
             --  element that we're looking for here and if we can delete it.
@@ -2579,12 +2561,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       end loop;
    end Execute;
 
-   overriding
-   procedure Free (This : in out Remove_Pragma_Element_Cmd) is
+   overriding procedure Free (This : in out Remove_Pragma_Element_Cmd) is
    begin
       Free (This.Location);
-      Free (This.Element_Name);
-      Free (This.Pragma_Name);
    end Free;
 
    overriding

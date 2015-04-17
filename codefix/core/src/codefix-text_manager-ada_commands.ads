@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;
 with Refactoring.Services; use Refactoring.Services;
 
 package Codefix.Text_Manager.Ada_Commands is
@@ -410,9 +409,9 @@ package Codefix.Text_Manager.Ada_Commands is
      (This          : in out Add_Record_Rep_Clause_Cmd;
       Current_Text  : Text_Navigator_Abstr'Class;
       Cursor        : File_Cursor'Class;
-      First_Clause  : String;
-      Second_Clause : String := "";
-      With_Clause   : String := "");
+      First_Clause  : Unbounded_String;
+      Second_Clause : Unbounded_String := Null_Unbounded_String;
+      With_Clause   : Unbounded_String := Null_Unbounded_String);
    --  Add the record representation clauses First_Clause and Second_Clause
    --  after the end of the full record type declaration. If With_Clause is
    --  specified then append it to the list of the with clauses of the file.
@@ -640,13 +639,14 @@ private
       Mode        : Remove_Code_Mode := Erase;
    end record;
 
-   package String_List is new Generic_List (GNAT.Strings.String_Access);
+   procedure Free (Item : in out Unbounded_String) is null;
+   package String_List is new Generic_List (Unbounded_String);
    use String_List;
    --  ??? Should use standard string list
 
    type Remove_Pkg_Clauses_Cmd is new Text_Command (Simple) with record
       Word         : Ptr_Mark;
-      Word_Str     : GNAT.Strings.String_Access;
+      Word_Str     : Unbounded_String;
       Position     : Relative_Position;
       Destination  : GNATCOLL.VFS.Virtual_File;
       Category     : Dependency_Category;
@@ -687,7 +687,6 @@ private
       File_Destination : GNATCOLL.VFS.Virtual_File;
       Object_Position  : Ptr_Mark;
       With_Could_Miss  : Boolean := False;
-      Pkg_Name         : GNAT.Strings.String_Access;
    end record;
 
    type Indent_Code_Cmd is new Text_Command (Simple) with record
@@ -697,7 +696,7 @@ private
 
    type Add_Clauses_Cmd is new Text_Command (Simple) with record
       File           : Virtual_File;
-      Missing_Clause : GNAT.Strings.String_Access;
+      Missing_Clause : Unbounded_String;
       Add_With       : Boolean;
       Add_Use        : Boolean;
    end record;
@@ -708,9 +707,9 @@ private
 
    type Add_Record_Rep_Clause_Cmd is new Text_Command (Simple) with record
       Location      : Ptr_Mark;
-      First_Clause  : GNAT.Strings.String_Access;
-      Second_Clause : GNAT.Strings.String_Access;
-      With_Clause   : GNAT.Strings.String_Access;
+      First_Clause  : Unbounded_String;
+      Second_Clause : Unbounded_String;
+      With_Clause   : Unbounded_String;
       File          : Virtual_File;
    end record;
 
@@ -720,8 +719,8 @@ private
 
    type Remove_Pragma_Element_Cmd is new Text_Command (Simple) with record
       Location     : Ptr_Mark;
-      Element_Name : GNAT.Strings.String_Access;
-      Pragma_Name  : GNAT.Strings.String_Access;
+      Element_Name : Unbounded_String;
+      Pragma_Name  : Unbounded_String;
    end record;
 
    type Remove_Parenthesis_Cmd is new Text_Command (Simple) with record

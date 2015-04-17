@@ -983,6 +983,10 @@ package body Codefix.Text_Manager is
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean;
 
+      --------------
+      -- Callback --
+      --------------
+
       function Callback
         (Entity         : Language_Entity;
          Sloc_Start     : Source_Location;
@@ -995,7 +999,7 @@ package body Codefix.Text_Manager is
             if Entity = Searched (J).Kind
               and then Equal
                 (Line (Sloc_Start.Index .. Sloc_End.Index),
-                 Searched (J).Name.all,
+                 To_String (Searched (J).Name),
                  False)
             then
                Found := True;
