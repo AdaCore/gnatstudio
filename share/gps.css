@@ -12,6 +12,9 @@
    @define-color theme_bg_color green;
 */
 
+@define-color mdi_border_color #aaa;
+@define-color local_toolbar_color shade(@theme_bg_color, 0.975);
+
 * {
    /* Reduce the size of the scroll arrows in notebooks */
    -GtkWidget-scroll-arrow-hlength: 8;
@@ -36,7 +39,7 @@ GtkTextView.readonly {
    /* background-color: rgb(200,200,200); */
 }
 
-.mdi tab GtkLabel, .mdifocused tab GtkLabel { 
+.mdi tab GtkLabel, .mdifocused tab GtkLabel {
    color:   @theme_fg_color;
    opacity: 1.0;
 }
@@ -57,65 +60,156 @@ GtkTextView.readonly {
 
 .pane-separator {
    background-color: @theme_bg_color;
+   background-image: none;
 }
 
 /*********************
  * Notebooks
  *********************/
 
+.notebook.mdi {
+  -GtkNotebook-initial-gap: 5;
+
+  background-color: @theme_bg_color;
+  background-image: none;
+  border: 1px solid @mdi_border_color;
+  border-top-width: 0px;
+
+   /* No space between tabs */
+   -GtkNotebook-tab-overlap: 0;
+}
+
+.notebook.mdi tab GtkLabel {
+   font-weight: normal;
+}
+
+.notebook.mdi.header {
+  border: none;
+  box-shadow: none;
+}
+
+.notebook.mdi tab {
+   border-width: 0;
+}
+
+.notebook.mdi tab:active {
+   background-color: @local_toolbar_color;
+   background-image: none;
+}
+
+.notebook.mdi tab:hover {
+   background-color: @local_toolbar_color;
+}
+
+/* Shenanigans to support tabs-not-on-top */
+
 .notebook.leftTabs, .notebook.rightTabs {
    /* When the MDI tabs are displayed on the left or on the right, we do not
     * want an extra space at the top, before the first tab */
    -GtkNotebook-initial-gap: 0;
 }
-.notebook.mdi {
-   /* No space between tabs */
-   -GtkNotebook-tab-overlap: 0;
-}
+
 .notebook.mdi tab.top,
 .notebook.mdi tab.bottom {
    padding: 8px 2px 8px 6px;
 }
-.notebook.mdi tab.left,
-.notebook.mdi tab.right {
+
+.notebook.mdi tab.left {
    padding: 2px 8px 6px 8px;
 }
-.notebook.mdi tab:active {
-   background-color: @theme_base_color;
-}
-.notebook.mdi tab GtkLabel {
-   font-weight: normal;
+.notebook.mdi tab.right {
+   padding: 6px 8px 2px 8px;
 }
 
-/* Change the position of the color line that indicates the current tab */
-.notebook.mdi tab.top {
-   border-bottom-width: 0px;
-   border-top-width: 3px;
+.notebook.mdi.leftTabs {
+  border-top-width: 1px;
+  border-left-width: 0px;
 }
+
+.notebook.mdi.rightTabs {
+  border-top-width: 1px;
+  border-right-width: 0px;
+}
+
+.notebook.mdi.bottomTabs {
+  border-top-width: 1px;
+  border-bottom-width: 0px;
+}
+
+.notebook.mdi tab.top {
+   border-bottom-width: 1px;
+}
+
+.notebook.mdi tab.top:active {
+   border: 1px solid @mdi_border_color;
+}
+
+.notebook.mdi tab.left:active {
+   border: 1px solid @mdi_border_color;
+}
+
+.notebook.mdi tab.right:active {
+   border: 1px solid @mdi_border_color;
+}
+
+.notebook.mdi tab.bottom:active {
+   border: 1px solid @mdi_border_color;
+}
+
+.notebook.mdi tab.left {
+   border-top-width: 0px;
+   border-right-width: 1px;
+}
+
+.notebook.mdi tab.right {
+   border-top-width: 0px;
+   border-left-width: 1px;
+}
+
+.notebook.mdi tab.bottom {
+   border-top-width: 1px;
+}
+
+.notebook.mdi.header.top {
+  border-bottom: 1px solid @mdi_border_color;
+}
+
+.notebook.mdi.header.left {
+  border-right: 1px solid @mdi_border_color;
+}
+
+.notebook.mdi.header.right {
+  border-left: 1px solid @mdi_border_color;
+}
+
+.notebook.mdi.header.bottom {
+  border-top: 1px solid @mdi_border_color;
+}
+
 .notebook.mdi tab:active.top {
    border-top-color: @theme_selected_bg_color;
+   border-top-width: 3px;
+   border-bottom-width: 0;
 }
-.notebook.mdi tab.bottom {
-   border-top-width: 0;
-   border-bottom-width: 3px;
-}
-.notebook.mdi tab:active.bottom {
-   border-bottom-color: @theme_selected_bg_color;
-}
-.notebook.mdi tab.left {
-   border-right-width: 0;
-   border-left-width: 3px;
-}
+
 .notebook.mdi tab:active.left {
    border-left-color: @theme_selected_bg_color;
+   border-left-width: 3px;
+   border-right-width: 0;
 }
-.notebook.mdi tab.right {
-   border-left-width: 0;
-   border-right-width: 3px;
-}
+
 .notebook.mdi tab:active.right {
    border-right-color: @theme_selected_bg_color;
+   border-right-width: 3px;
+   border-left-width: 0;
 }
+
+.notebook.mdi tab:active.bottom {
+   border-bottom-color: @theme_selected_bg_color;
+   border-bottom-width: 3px;
+   border-top-width: 0;
+}
+
 
 /**********************
  * Toolbars
@@ -123,7 +217,7 @@ GtkTextView.readonly {
 
 /* Let's condense things in the local toolbars of the views */
 .gps-local-toolbar {
-   background: shade(@theme_base_color, 0.9);
+   background: @local_toolbar_color;
    padding: 0px;
 }
 
