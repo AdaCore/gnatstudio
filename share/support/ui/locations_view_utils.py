@@ -22,23 +22,6 @@ def message_compare(a, b):
     return 1
 
 
-def remove_markup(text):
-    """ Remove pango markup from text """
-
-    remove = False
-    result = ""
-    for c in text:
-        if c == '<':
-            remove = True
-        elif c == '>':
-            remove = False
-        else:
-            if not remove:
-                result += c
-
-    return result
-
-
 def in_locations_filter(context):
     return context.module_name == "Location_View_Record"
 
@@ -100,7 +83,7 @@ def export_locations_to_editor():
                 text += "        %s:%s %s\n" % (
                     m.get_line(),
                     m.get_column(),
-                    remove_markup(m.get_text()))
+                    m.get_text())
 
         text += "\n"
 
