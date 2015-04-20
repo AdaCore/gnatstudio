@@ -12,8 +12,10 @@
    @define-color theme_bg_color green;
 */
 
-@define-color mdi_border_color #aaa;
-@define-color local_toolbar_color shade(@theme_bg_color, 0.975);
+@define-color middle-gray #888;
+@define-color border-gray #666;
+@define-color mdi_border_color mix(@theme_bg_color, @border-gray, 0.3);
+@define-color local_toolbar_color shade(@theme_bg_color, 1.04);
 
 * {
    /* Reduce the size of the scroll arrows in notebooks */
@@ -111,14 +113,14 @@ GtkTextView.readonly {
 
 .notebook.mdi tab.top,
 .notebook.mdi tab.bottom {
-   padding: 8px 2px 8px 6px;
+   padding: 5px 2px 5px 6px;
 }
 
 .notebook.mdi tab.left {
-   padding: 2px 8px 6px 8px;
+   padding: 2px 5px 6px 5px;
 }
 .notebook.mdi tab.right {
-   padding: 6px 8px 2px 8px;
+   padding: 6px 5px 2px 5px;
 }
 
 .notebook.mdi.leftTabs {
@@ -250,7 +252,6 @@ GtkEntry.search {
 .completion-list {
    /* The list of possible completions, in a completion entry */
 }
-@define-color middle-gray #888888;
 @define-color completion-border-color shade (@theme_base_color, 0.7);
 @define-color completion-selected-color mix(@theme_base_color, @middle-gray, 0.5);
 @define-color completion-background-color shade(@theme_base_color, 1.10);
