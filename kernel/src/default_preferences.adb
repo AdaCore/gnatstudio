@@ -20,6 +20,7 @@ with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings.Hash;
 with GNAT.OS_Lib;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 with Glib.Object;              use Glib.Object;
 with XML_Utils;                use XML_Utils;
@@ -51,10 +52,12 @@ with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Window;               use Gtk.Window;
 
-with Pango.Context;
+with Pango.Context;            use Pango.Context;
 with Pango.Enums;              use Pango.Enums;
+with Pango.Font_Family;        use Pango.Font_Family;
 
 with Config;
+with Defaults;
 with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
 with XML_Parsers;
@@ -208,6 +211,68 @@ package body Default_Preferences is
      (Manager             : access Preferences_Manager_Record'Class;
       Name                : String) return Preferences_Maps.Cursor;
    --  Return a pointer to the preference Name
+
+   function From_Multi_String
+     (M : String) return Pango.Font.Pango_Font_Description;
+   --  Return a font matching M.
+   --  M is a string containing a list of descriptions separated by commas,
+   --  for instance "Consolas 10, Courier New 9, Courier 10".
+   --  The first font that matches a registered family is returned.
+
+   -----------------------
+   -- From_Multi_String --
+   -----------------------
+
+   function From_Multi_String
+     (M : String) return Pango.Font.Pango_Font_Description
+   is
+      Descs    : GNAT.Strings.String_List_Access := Split (M, ',');
+      Result   : Pango_Font_Description;
+      Context  : Pango_Context;
+
+      T : Gtk_Text_View;
+   begin
+      --  We need to create this widget to access the list of available font
+      --  families that apply to a text view.
+      Gtk_New (T);
+      Ref_Sink (T);
+
+      Context := T.Get_Pango_Context;
+
+      declare
+         Families : constant Pango_Font_Family_Array := Context.List_Families;
+
+         function Find (Family : String) return Boolean;
+         --  Return True iff Family is in Families
+
+         ----------
+         -- Find --
+         ----------
+
+         function Find (Family : String) return Boolean is
+            Lower : constant String := To_Lower (Family);
+         begin
+            for F in Families'Range loop
+               if Lower = To_Lower (Families (F).Get_Name) then
+                  return True;
+               end if;
+            end loop;
+            return False;
+         end Find;
+
+      begin
+         for J in Descs'Range loop
+            Result := From_String (Descs (J).all);
+
+            exit when Find (Pango.Font.Get_Family (Result));
+         end loop;
+      end;
+
+      Free (Descs);
+      Unref (T);
+
+      return Result;
+   end From_Multi_String;
 
    --------------
    -- Get_Name --
@@ -462,10 +527,10 @@ package body Default_Preferences is
         or else Pref.all not in Font_Preference_Record'Class
       then
          Pref := new Font_Preference_Record;
-         Font_Preference (Pref).Descr := From_String (Default);
+         Font_Preference (Pref).Descr := From_Multi_String (Default);
       end if;
 
-      Font_Preference (Pref).Default := From_String (Default);
+      Font_Preference (Pref).Default := From_Multi_String (Default);
       Register (Manager, Name, Label, Page, Doc, Pref);
       return Font_Preference (Pref);
    end Create;
@@ -490,7 +555,7 @@ package body Default_Preferences is
       Result.Bg_Color := From_String (Default_Bg);
       Result.Bg_Default := Result.Bg_Color;
 
-      Result.Font_Descr := From_String (Default_Font);
+      Result.Font_Descr := From_Multi_String (Default_Font);
       Result.Font_Default := Copy (Result.Font_Descr);
 
       Register (Manager, Name, Label, Page, Doc, Result);
@@ -1187,7 +1252,7 @@ package body Default_Preferences is
 
       if Pango.Context.Load_Font (Get_Pango_Context (E), Desc) = null then
          Free (Desc);
-         Desc := From_String (Config.Default_Font);
+         Desc := From_Multi_String (Defaults.Default_Font);
       else
          Pango.Context.Set_Font_Description (Get_Pango_Context (E), Desc);
       end if;

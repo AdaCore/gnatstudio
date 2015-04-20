@@ -13,8 +13,6 @@ CAN_OUTPUT=True
 TARGET_CFLAGS=""
 TARGET_LFLAGS='()'
 EXEC_COMMAND="xterm -e"
-DEFAULT_FONT="sans 9"
-DEFAULT_FIXED_FONT="Courier 10"
 PATH_STYLE=UNIX
 SSH_ESCAPE='~'
 
@@ -130,8 +128,6 @@ case "${host}" in
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c start gps_run.cmd"
 	DEFAULT_PS="winps"
-	DEFAULT_FONT="tahoma 8"
-	DEFAULT_FIXED_FONT="Courier New 9"
 	PRINT_CMD=""
 	DIFF_CMD="gnudiff"
 	DIFF3_CMD="gnudiff3"
@@ -145,8 +141,6 @@ case "${host}" in
 
       *-darwin* )
 	STRIP_CR=True
-	DEFAULT_FONT="Lucida Grande 13"
-	DEFAULT_FIXED_FONT="Monaco 10"
 	;;
       # Otherwise we'll fall through to the generic opsys code at the bottom.
     esac
@@ -171,8 +165,6 @@ AC_SUBST(TARGET_IS_DARWIN)
 AC_SUBST(CURRENT_YEAR)
 AC_SUBST(EXEC_COMMAND)
 AC_SUBST(DEFAULT_PS)
-AC_SUBST(DEFAULT_FONT)
-AC_SUBST(DEFAULT_FIXED_FONT)
 AC_SUBST(PRINT_CMD)
 AC_SUBST(DIFF_CMD)
 AC_SUBST(DIFF3_CMD)

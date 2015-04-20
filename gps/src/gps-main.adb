@@ -71,6 +71,8 @@ with Gtk.Widget;                       use Gtk.Widget;
 with Gtk.Window;                       use Gtk.Window;
 with Gtk_Utils;                        use Gtk_Utils;
 
+with Fontconfig;                       use Fontconfig;
+
 with Gtkada.Application;               use Gtkada.Application;
 with Gtkada.Bindings;                  use Gtkada.Bindings;
 with Gtkada.Dialogs;                   use Gtkada.Dialogs;
@@ -408,6 +410,9 @@ procedure GPS.Main is
    procedure Default_Gtk_Mer
      (Occurrence : Ada.Exceptions.Exception_Occurrence);
    --  Called when an Ada callback raises an exception, to log it.
+
+   procedure Load_Fonts (Kernel : Kernel_Handle);
+   --  Load the fonts that ship by default with GPS
 
    --------------------------------------
    -- Initialize_Environment_Variables --
@@ -1232,6 +1237,44 @@ procedure GPS.Main is
       Trace (Me, "GApplication Activated");
    end Activate_Callback;
 
+   ----------------
+   -- Load_Fonts --
+   ----------------
+
+   procedure Load_Fonts (Kernel : Kernel_Handle) is
+      Files : File_Array_Access;
+
+      Fonts_Dir : Virtual_File;
+      Result    : Boolean;
+   begin
+      Fonts_Dir := Create_From_Dir (Get_Share_Dir (Kernel), "fonts");
+
+      Files := Fonts_Dir.Read_Dir (Files_Only);
+
+      for F in Files'Range loop
+         declare
+            File : constant String := +Files (F).Full_Name.all;
+            Ext  : String (1 .. 4);
+         begin
+            if File'Length > 4 then
+               Ext := File (File'Last - 3 .. File'Last);
+               if Ext = ".ttf"
+                 or else Ext = ".otf"
+                 or else Ext = ".ttc"
+               then
+                  Trace (Me, "Adding font: " & File);
+                  Result := App_Font_Add_File (File);
+                  if not Result then
+                     Insert (Kernel, -"Could not add font: " & File);
+                  end if;
+               end if;
+            end if;
+         end;
+      end loop;
+
+      Unchecked_Free (Files);
+   end Load_Fonts;
+
    ---------------------------
    -- Command_Line_Callback --
    ---------------------------
@@ -1263,6 +1306,10 @@ procedure GPS.Main is
          Create_From_Base
            ("menus.xml", Get_Share_Dir (App.Kernel).Full_Name.all),
          Menubar => Menubar);
+
+      --  Load the fonts
+
+      Load_Fonts (App.Kernel);
 
       --  Finally create the main window, and setup the project
 

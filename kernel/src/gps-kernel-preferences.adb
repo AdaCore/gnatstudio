@@ -47,6 +47,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Config;
+with Defaults;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
@@ -325,7 +326,7 @@ package body GPS.Kernel.Preferences is
                   Label   => Label,
                   Page    => Dir_Name (Path),
                   Doc     => Doc,
-                  Default => Nth_Arg (Data, 5, Config.Default_Font))));
+                  Default => Nth_Arg (Data, 5, Defaults.Default_Font))));
 
             elsif Typ = "enum" then
                declare
@@ -377,7 +378,7 @@ package body GPS.Kernel.Preferences is
       Default_Font := Create
         (Manager => Kernel.Preferences,
          Name    => "General-Default-Style",
-         Default_Font => Config.Default_Font,
+         Default_Font => Defaults.Default_Font,
          Default_Fg   => "black",
          Default_Bg   => "white",
          Doc     => -("The default style used in GPS. The color indicates the"
@@ -389,7 +390,7 @@ package body GPS.Kernel.Preferences is
       Small_Font := Create
         (Manager => Kernel.Preferences,
          Name    => "General-Small-Font",
-         Default => Config.Default_Font,
+         Default => Defaults.Default_Font,
          Doc     => -("The font used by GPS to display less important"
            & " information"),
          Page    => -"",
@@ -398,7 +399,7 @@ package body GPS.Kernel.Preferences is
       View_Fixed_Font := Create
         (Manager => Kernel.Preferences,
          Name    => "General-Fixed-Font",
-         Default => Config.Default_Fixed_Font,
+         Default => Defaults.Default_Fixed_Font,
          Doc     => -("Fixed pitch (monospace) font used in the various views "
                       & "(Outline View, Clipboard View, Messages, ...)"),
          Label   => -"Fixed view font",
@@ -634,7 +635,7 @@ package body GPS.Kernel.Preferences is
          Doc          => -("Default style used in the source editors."
            & " The background color defined here also defines the background"
            & " color of all editors."),
-         Default_Font => Config.Default_Fixed_Font,
+         Default_Font => Defaults.Default_Fixed_Font,
          Default_Fg   => "black",
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");

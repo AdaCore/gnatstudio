@@ -1538,6 +1538,18 @@ format: at startup, GPS will look in the directory
 file:`INSTALL/share/gps/color_themes/themes/` and will include all the
 :file:`.tmTheme` found at the first level of each subdirectory.
 
+Custom Fonts
+============
+
+.. index: fonts
+
+In addition to the system fonts, GPS will load the fonts located under 
+:file:`share/gps/fonts`) in the GPS installation directory. The supported
+formats are :file:`.otf`, :file:`.ttf` and :file:`.ttc`.
+
+This mechanism works only on UNIX/Linux systems; under Windows, fonts
+need to be added at the system level.
+
 The Key Shortcuts Editor
 ========================
 
