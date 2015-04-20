@@ -1,3 +1,7 @@
 /*
  * Custom styling for GPS when using the Adwaita style, dark variant
  */
+
+@define-color mdi_border_color shade(#393f3f, 1.2);
+@define-color local_toolbar_color shade(#393f3f, 1.2);
+@define-color notebook_background #393f3f;

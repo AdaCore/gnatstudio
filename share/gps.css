@@ -14,8 +14,10 @@
 
 @define-color middle-gray #888;
 @define-color border-gray #666;
-@define-color mdi_border_color mix(@theme_bg_color, @border-gray, 0.3);
-@define-color local_toolbar_color shade(@theme_bg_color, 1.04);
+
+@define-color mdi_border_color #aaa;
+@define-color local_toolbar_color #f8f8f8;
+@define-color notebook_background #ededed;
 
 * {
    /* Reduce the size of the scroll arrows in notebooks */
@@ -61,7 +63,7 @@ GtkTextView.readonly {
  *********************/
 
 .pane-separator {
-   background-color: @theme_bg_color;
+   background-color: @notebook_background;
    background-image: none;
 }
 
@@ -72,7 +74,7 @@ GtkTextView.readonly {
 .notebook.mdi {
   -GtkNotebook-initial-gap: 5;
 
-  background-color: @theme_bg_color;
+  background-color: @notebook_background;
   background-image: none;
   border: 1px solid @mdi_border_color;
   border-top-width: 0px;
