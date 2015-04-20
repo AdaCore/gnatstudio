@@ -124,6 +124,8 @@ on which you have permission to read and write.
 
     # List all the projects
     projects = root_project.dependencies(True)
+    # List all object dirs
+    object_dirs = root_project.object_dirs(True)
 
     # Write the response file
     res = file("gcov_input.txt", 'wb')
@@ -132,19 +134,14 @@ on which you have permission to read and write.
     gcno_file_found = False
 
     for p in projects:
-        if p.object_dirs(False) == []:
-            object_dir = None
-        else:
-            object_dir = p.object_dirs(False)[0]
+        sources = p.sources(False)
 
-        if object_dir is not None and object_dir != "":
-            sources = p.sources(False)
+        for s in sources:
+            n = s.name()
+            basename = n[max(n.rfind('\\'), n.rfind('/')) + 1:len(n)]
+            unit = basename[0:basename.rfind('.')]
 
-            for s in sources:
-                n = s.name()
-                basename = n[max(n.rfind('\\'), n.rfind('/')) + 1:len(n)]
-                unit = basename[0:basename.rfind('.')]
-
+            for object_dir in object_dirs:
                 gcda = object_dir + sep + unit + ".gcda"
 
                 # If we have not yet found at least one .gcno file, attempt to
@@ -165,6 +162,7 @@ on which you have permission to read and write.
                     gcda = gcda.replace('\\', '\\\\')
 
                     res.write('"' + gcda + '"' + "\n")
+                    break
 
     res.close()
 
