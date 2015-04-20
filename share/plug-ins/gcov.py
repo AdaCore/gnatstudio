@@ -1,5 +1,5 @@
-""" Provides the "Tools/Gcov/Compute coverage files" and "Remove coverage files"
-menus, which executes gcov automatically.
+""" Provides the "Tools/Gcov/Compute coverage files" and "Remove coverage
+files" menus, which executes gcov automatically.
 
 This script will also perform checks along the way to guide through the
 procedure of obtaining gcov info.
@@ -52,17 +52,15 @@ class Gcov_Process (GPS.Console, GPS.Process):
         self.kill()
 
     def __init__(self, process, args=""):
-        GPS.Console.__init__ \
-            (self, "Executing gcov",
-             on_input=Gcov_Process.on_input,
-             on_destroy=Gcov_Process.on_destroy,
-             force=True)
+        GPS.Console.__init__(self, "Executing gcov",
+                             on_input=Gcov_Process.on_input,
+                             on_destroy=Gcov_Process.on_destroy,
+                             force=True)
 
-        GPS.Process.__init__ \
-            (self, process + ' ' + args, ".+",
-             remote_server="Build_Server",
-             on_exit=Gcov_Process.on_exit,
-             on_match=Gcov_Process.on_output)
+        GPS.Process.__init__(self, process + ' ' + args, ".+",
+                             remote_server="Build_Server",
+                             on_exit=Gcov_Process.on_exit,
+                             on_match=Gcov_Process.on_output)
 
 
 def using_gcov(context):
@@ -84,10 +82,11 @@ def run_gcov():
 
         if date < 20071005:
             MDI.dialog("Your version of gcov is dated " + str(date) +
-                       ".\nThis plug-in requires gcov for GNAT dated 20071005 or later.")
+                       ".\nThis plug-in requires gcov for GNAT dated " +
+                       "20071005 or later.")
             return
     except:
-        MDI.dialog ("""Could not read gcov version number.
+        MDI.dialog("""Could not read gcov version number.
 
 Make sure you are using gcov for GNAT dated 20071005 or later.""")
 
@@ -98,10 +97,10 @@ Make sure you are using gcov for GNAT dated 20071005 or later.""")
     # Determine where to create the gcov info
     GCOV_ROOT = getenv("GCOV_ROOT")
 
-    if GCOV_ROOT == None or GCOV_ROOT == "":
+    if GCOV_ROOT is None or GCOV_ROOT == "":
         root_object_dirs = root_project.object_dirs(False)
         if not root_object_dirs:
-            MDI.dialog ("""The root project does not have an object directory.
+            MDI.dialog("""The root project does not have an object directory.
  Please add one, or set the enviroment variable GCOV_ROOT to
  the directory where you would like the gcov files to be
  generated.""")
@@ -113,7 +112,7 @@ Make sure you are using gcov for GNAT dated 20071005 or later.""")
         gcov_dir = GCOV_ROOT
 
     if not access(gcov_dir, R_OK and W_OK):
-        MDI.dialog (""" Could not access the directory:
+        MDI.dialog(""" Could not access the directory:
 
    """ + gcov_dir + """
 
@@ -138,7 +137,7 @@ on which you have permission to read and write.
         else:
             object_dir = p.object_dirs(False)[0]
 
-        if object_dir != None and object_dir != "":
+        if object_dir is not None and object_dir != "":
             sources = p.sources(False)
 
             for s in sources:
@@ -171,7 +170,7 @@ on which you have permission to read and write.
 
     if not gcno_file_found:
         # No gcno file was found: display an appropriate message.
-        MDI.dialog (""" No ".gcno" file was found in any of the object directories.
+        MDI.dialog(""" No ".gcno" file was found in any of the object directories.
 
 Make sure you have compiled the sources of interest with
 the "Code coverage" flags.""")
@@ -179,7 +178,7 @@ the "Code coverage" flags.""")
     else:
         if not gcda_file_found:
             # Some gcno files were found, but no gcna files.
-            MDI.dialog (""" No ".gcda" file was found in any of the object directories.
+            MDI.dialog(""" No ".gcda" file was found in any of the object directories.
 
 Make sure you have run the executable(s) at least once.
 """)
