@@ -126,7 +126,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Begin_Cursor : File_Cursor := Null_File_Cursor;
 
       procedure Scan_Backward_Callback
-        (Buffer : String;
+        (Buffer : Unbounded_String;
          Token  : Language.Token_Record;
          Stop   : in out Boolean);
       --  Scan backward the expanded name. Updates Loc to reference the
@@ -139,7 +139,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Last_Index : String_Index_Type := 0;
 
       procedure Scan_Backward_Callback
-        (Buffer : String;
+        (Buffer : Unbounded_String;
          Token  : Language.Token_Record;
          Stop   : in out Boolean)
       is
@@ -1147,7 +1147,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       New_Word      : constant String := To_Reserved_Word_Case ("constant");
       Cursor        : File_Cursor;
       Work_Extract  : Ada_Statement;
-      New_Instr     : GNAT.Strings.String_Access;
+      New_Instr     : Unbounded_String;
       Col_Decl      : Natural;
       End_Decl      : aliased Universal_Location;
 
@@ -1178,19 +1178,20 @@ package body Codefix.Text_Manager.Ada_Commands is
             Find_Normalized
               (Get_Context (Current_Text).Db.Symbols, To_String (This.Name)));
 
-         Col_Decl := New_Instr'First;
-         Skip_To_Char (New_Instr.all, Col_Decl, ':');
+         Col_Decl := 1;
+         Skip_To_Char (New_Instr, Col_Decl, ':');
 
-         if New_Instr (Col_Decl + 1) /= ' ' then
-            Assign
-              (New_Instr,
-               New_Instr (New_Instr'First .. Col_Decl) & " " & New_Word & " "
-               & New_Instr (Col_Decl + 1 .. New_Instr'Last));
+         if Element (New_Instr, Col_Decl + 1) /= ' ' then
+            New_Instr :=
+              Unbounded_Slice (New_Instr, 1, Col_Decl)
+              & " " & New_Word & " "
+              & Unbounded_Slice (New_Instr, Col_Decl + 1, Length (New_Instr));
+
          else
-            Assign
-              (New_Instr,
-               New_Instr (New_Instr'First .. Col_Decl) & " " & New_Word
-               & New_Instr (Col_Decl + 1 .. New_Instr'Last));
+            New_Instr :=
+              Unbounded_Slice (New_Instr, 1, Col_Decl)
+              & " " & New_Word
+              & Unbounded_Slice (New_Instr, Col_Decl + 1, Length (New_Instr));
          end if;
 
          End_Decl := Get_End (Work_Extract);
@@ -1199,7 +1200,7 @@ package body Codefix.Text_Manager.Ada_Commands is
               (Line => Get_Line (End_Decl'Access),
                Col  => Get_Column (End_Decl'Access),
                File => Get_File_Path (Get_File (End_Decl'Access))),
-            New_Instr.all, True);
+            To_String (New_Instr), True);
 
          Free (New_Instr);
       end if;
@@ -2111,7 +2112,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Has_Negation : Boolean := False;
 
       procedure Scan_Backward_Callback
-        (Buffer : String;
+        (Buffer : Unbounded_String;
          Token  : Language.Token_Record;
          Stop   : in out Boolean);
       --  Scan backward the expression located before the keyword "not".
@@ -2136,7 +2137,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       --   Level of nested parenthesis
 
       procedure Scan_Backward_Callback
-        (Buffer : String;
+        (Buffer : Unbounded_String;
          Token  : Language.Token_Record;
          Stop   : in out Boolean)
       is
@@ -2947,12 +2948,16 @@ package body Codefix.Text_Manager.Ada_Commands is
       Last_Index  : String_Index_Type := 0;
 
       procedure Callback
-        (Buffer : String;
+        (Buffer : Unbounded_String;
          Token  : Language.Token_Record;
          Stop   : in out Boolean);
 
+      --------------
+      -- Callback --
+      --------------
+
       procedure Callback
-        (Buffer : String;
+        (Buffer : Unbounded_String;
          Token  : Language.Token_Record;
          Stop   : in out Boolean)
       is
@@ -2961,9 +2966,12 @@ package body Codefix.Text_Manager.Ada_Commands is
       begin
          if Comp_Cursor = Null_File_Cursor then
             declare
-               Str : constant String := Buffer
-                 (Integer (Token.Token_First)
-                  .. Integer (Token.Token_Last));
+               Str : constant String :=
+                 Slice
+                   (Buffer,
+                    Integer (Token.Token_First),
+                    Integer (Token.Token_Last));
+
             begin
                if Str = "=" or else Str = "/=" then
                   To_Line_Column

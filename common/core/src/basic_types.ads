@@ -15,17 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with System;
-with Interfaces.C.Strings;
+with Ada.Calendar;
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
+with Interfaces.C.Strings;
+with System;
+
 with GNAT.OS_Lib;
 with GNAT.Expect;
 with GNAT.Regpat;
 with GNAT.Strings;
 with GNATCOLL.VFS;
 with GNATCOLL.Xref;
-with Ada.Calendar;
 
 package Basic_Types is
 
@@ -57,6 +59,7 @@ package Basic_Types is
      (Unchecked_String, Unchecked_String_Access);
 
    subtype UTF8_String is String;
+   subtype UTF8_Unbounded_String is Ada.Strings.Unbounded.Unbounded_String;
 
    function Is_Equal
      (List1, List2   : GNAT.OS_Lib.Argument_List;

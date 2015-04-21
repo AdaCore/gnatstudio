@@ -23,17 +23,15 @@
 --  responsibility of the caller.
 
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Basic_Types;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with GNATCOLL.Xref;
-with GNAT.Strings;
 with Language;
 with Language.Tree;
 with Language.Tree.Database;
-with Xref;
-use Xref;
+with Xref;                  use Xref;
 
 package Refactoring.Services is
 
@@ -146,7 +144,7 @@ package Refactoring.Services is
 
    procedure Extract_Element
      (Self      : in out Ada_Statement;
-      Extracted : out GNAT.Strings.String_Access;
+      Extracted : out Unbounded_String;
       Name      : Language.Tree.Normalized_Symbol;
       Mode      : Remove_Code_Mode := Erase);
    --  Removes an element from the list, and provides a String

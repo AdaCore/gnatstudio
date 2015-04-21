@@ -162,6 +162,39 @@ package body String_Utils is
       end loop;
    end Skip_To_Index;
 
+   -------------------
+   -- Skip_To_Index --
+   -------------------
+
+   procedure Skip_To_Index
+     (Buffer        : Unbounded_String;
+      Columns       : out Visible_Column_Type;
+      Index_In_Line : String_Index_Type;
+      Index         : in out String_Index_Type;
+      Tab_Width     : Positive := 8)
+   is
+      Start_Of_Line : constant String_Index_Type := Index;
+   begin
+      Columns := 1;
+
+      loop
+         exit when Index - Start_Of_Line + 1 >= Index_In_Line;
+
+         if Natural (Index) <= Length (Buffer)
+           and then Element (Buffer, Natural (Index)) = ASCII.HT
+         then
+            Columns := Columns +
+              Visible_Column_Type
+                (Tab_Width -
+                     ((Positive (Columns) - 1) mod Tab_Width));
+         else
+            Columns := Columns + 1;
+         end if;
+
+         Index := String_Index_Type (UTF8_Next_Char (Buffer, Natural (Index)));
+      end loop;
+   end Skip_To_Index;
+
    ---------------
    -- Tab_Width --
    ---------------
@@ -230,6 +263,24 @@ package body String_Utils is
       while Index <= Type_Str'Last
         and then Index >= Type_Str'First
         and then Type_Str (Index) /= Char
+      loop
+         Index := Index + Step;
+      end loop;
+   end Skip_To_Char;
+
+   ------------------
+   -- Skip_To_Char --
+   ------------------
+
+   procedure Skip_To_Char
+     (Type_Str : Unbounded_String;
+      Index    : in out Natural;
+      Char     : Character;
+      Step     : Integer := 1) is
+   begin
+      while Index <= Length (Type_Str)
+        and then Index >= 1
+        and then Element (Type_Str, Index) /= Char
       loop
          Index := Index + Step;
       end loop;

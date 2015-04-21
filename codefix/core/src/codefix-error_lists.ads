@@ -17,7 +17,6 @@
 
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Regpat;           use GNAT.Regpat;

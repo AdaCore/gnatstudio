@@ -18,8 +18,9 @@
 --  This is the main package of Codefix, it define constants, exceptions and
 --  tools that are used in others packages.
 
-with Basic_Types;  use Basic_Types;
-with GNAT.Strings; use GNAT.Strings;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
+with Basic_Types;           use Basic_Types;
 
 package Codefix is
 
@@ -40,11 +41,17 @@ package Codefix is
    function To_Char_Index
      (Index : Visible_Column_Type; Str : String) return String_Index_Type
      with Post => To_Char_Index'Result <= String_Index_Type (Str'Last + 1);
+   function To_Char_Index
+     (Index : Visible_Column_Type;
+      Str   : Unbounded_String) return String_Index_Type;
    --  Return the char position corresponding to the column given in parameter
    --  This will handle tabulations
 
    function To_Column_Index
      (Index : String_Index_Type; Str : String) return Visible_Column_Type;
+   function To_Column_Index
+     (Index : String_Index_Type;
+      Str   : Unbounded_String) return Visible_Column_Type;
    --  Return the column index corresponding to the char index given in
    --  parameter. This will handle tabulations.
 
@@ -52,16 +59,6 @@ package Codefix is
    --  Root type for all error parsers
 
    type Error_Parser_Access is access all Root_Error_Parser'Class;
-
-   --------------------------------
-   -- String_Access manipulation --
-   --------------------------------
-
-   --  All the functions of affectation (Affect and Get_Line) destroy the
-   --  previous element in the String_Access.
-
-   procedure Assign (This : in out String_Access; Value : String);
-   --  Delete the previous string, and create a new initialized with Value.
 
    ----------------------------------------------------------------------------
    --  type Useless_Entity_Operation

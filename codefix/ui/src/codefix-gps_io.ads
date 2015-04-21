@@ -15,17 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;           use GPS.Kernel;
-with GNAT.Strings;
-
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GPS.Editors;            use GPS.Editors;
+with GPS.Kernel;             use GPS.Kernel;
+with GNATCOLL.VFS;
 
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
-with GNATCOLL.VFS;
 
 package Codefix.GPS_Io is
 
@@ -124,9 +123,8 @@ package Codefix.GPS_Io is
       Path : GNATCOLL.VFS.Virtual_File);
    --  Initialize the structure of the Console_Interface. Actually do noting.
 
-   overriding
-   function Read_File (This : Console_Interface)
-      return GNAT.Strings.String_Access;
+   overriding function Read_File
+     (This : Console_Interface) return Unbounded_String;
    --  Get the entire file
 
    overriding

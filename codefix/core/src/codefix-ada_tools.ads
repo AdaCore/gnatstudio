@@ -18,9 +18,9 @@
 --  This package provides some tools that can be used in ada formal
 --  errors and commands.
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
+
 with Generic_List;
-with GNAT.Strings;
 with GNATCOLL.VFS;
 
 with Codefix.Text_Manager;  use Codefix.Text_Manager;
@@ -62,7 +62,7 @@ private
 
    type Arr_Use is array (Natural range <>) of Ptr_Use;
 
-   type Arr_Str is array (Natural range <>) of GNAT.Strings.String_Access;
+   type Arr_Str is array (Natural range <>) of Unbounded_String;
    --  ??? Should use subprogram in basic_types.ads
 
    type With_Type (Nb_Elems : Natural) is record
@@ -73,7 +73,7 @@ private
 
    type Ptr_With is access all With_Type;
 
-   procedure Free (This : in out Ptr_With);
+   procedure Free is new Ada.Unchecked_Deallocation (With_Type, Ptr_With);
 
    package With_Lists is new Generic_List (Ptr_With);
    use With_Lists;

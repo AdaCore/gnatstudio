@@ -15,9 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;
 
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
@@ -265,7 +263,7 @@ package Codefix.Text_Manager is
    --  Returns le length of a line from the position of the cursor
 
    function Read_File
-     (This : Text_Interface) return GNAT.Strings.String_Access is abstract;
+     (This : Text_Interface) return Unbounded_String is abstract;
    --  Get the entire file in a String_Access
 
    function Get_File_Name
@@ -383,7 +381,7 @@ package Codefix.Text_Manager is
    procedure Parse_Entities_Backwards
      (Lang     : access Language_Root'Class;
       This     : in out Text_Interface'Class;
-      Callback : access procedure (Buffer : String;
+      Callback : access procedure (Buffer : Unbounded_String;
                                    Token  : Language.Token_Record;
                                    Stop   : in out Boolean);
       Start    : File_Cursor'Class);
@@ -509,7 +507,7 @@ package Codefix.Text_Manager is
 
    function Read_File
      (This      : Text_Navigator_Abstr;
-      File_Name : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access;
+      File_Name : GNATCOLL.VFS.Virtual_File) return Unbounded_String;
    --  Get the entire file File_Name. Result must be freed by the caller.
 
    procedure Replace
@@ -627,7 +625,7 @@ package Codefix.Text_Manager is
    procedure Parse_Entities_Backwards
      (Lang     : access Language_Root'Class;
       This     : Text_Navigator_Abstr'Class;
-      Callback : access procedure (Buffer : String;
+      Callback : access procedure (Buffer : Unbounded_String;
                                    Token  : Language.Token_Record;
                                    Stop   : in out Boolean);
       Start    : File_Cursor'Class);
@@ -866,10 +864,6 @@ private
 
    Null_Word_Cursor : constant Word_Cursor :=
      (Null_File_Cursor with Null_Unbounded_String, Text_Ascii);
-
-   function Normalize (Str : GNAT.Strings.String_Access) return String;
-   --  Change the string in order to make comparaisons between lists of
-   --  parameters.
 
    type Text_Command (Complexity : Fix_Complexity) is abstract tagged record
       Caption : Unbounded_String;

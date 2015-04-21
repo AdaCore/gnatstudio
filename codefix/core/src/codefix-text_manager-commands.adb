@@ -187,12 +187,15 @@ package body Codefix.Text_Manager.Commands is
       Free (Text_Command (This));
    end Free;
 
-   overriding
-   procedure Execute
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
      (This         : Insert_Word_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      New_Str         : GNAT.Strings.String_Access;
+      New_Str         : Unbounded_String;
       Line_Cursor     : File_Cursor;
       Space_Cursor    : File_Cursor;
       Word            : Word_Cursor;
@@ -208,7 +211,7 @@ package body Codefix.Text_Manager.Commands is
       Line_Cursor := Clone (File_Cursor (New_Pos));
       Line_Cursor.Col := 1;
 
-      Assign (New_Str, Word.Get_Matching_Word (Current_Text));
+      New_Str := To_Unbounded_String (Word.Get_Matching_Word (Current_Text));
 
       if This.After_Pattern /= "" then
          declare
@@ -238,7 +241,7 @@ package body Codefix.Text_Manager.Commands is
                if Word_Char_Index > 1
                  and then not Is_Separator (Get (Current_Text, Space_Cursor))
                then
-                  Assign (New_Str, " " & New_Str.all);
+                  New_Str := " " & New_Str;
                end if;
 
                Space_Cursor.Col := Space_Cursor.Col + 1;
@@ -247,32 +250,26 @@ package body Codefix.Text_Manager.Commands is
                  Line_Length (Current_Text, Line_Cursor)
                  and then not Is_Separator (Get (Current_Text, Space_Cursor))
                then
-                  Assign (New_Str, New_Str.all & " ");
+                  Append (New_Str, " ");
                end if;
             end if;
          end if;
 
          if This.Insert_New_Line then
-            Modified_Text.Add_Line
-              (New_Pos,
-               New_Str.all,
-               True);
+            Modified_Text.Add_Line (New_Pos, To_String (New_Str), True);
+
          else
-            Modified_Text.Replace
-              (New_Pos,
-               0,
-               New_Str.all);
+            Modified_Text.Replace (New_Pos, 0, To_String (New_Str));
          end if;
+
       elsif This.Position = After then
-         Modified_Text.Add_Line
-           (New_Pos, New_Str.all, True);
+         Modified_Text.Add_Line (New_Pos, To_String (New_Str), True);
+
       elsif This.Position = Before then
          New_Pos.Line := New_Pos.Line - 1;
-         Modified_Text.Add_Line
-           (New_Pos, New_Str.all, True);
+         Modified_Text.Add_Line (New_Pos, To_String (New_Str), True);
       end if;
 
-      Free (New_Str);
       Free (Word);
    end Execute;
 

@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
-
 with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
 with Ada_Semantic_Tree.Declarations; use Ada_Semantic_Tree.Declarations;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
@@ -24,6 +22,7 @@ with Ada_Semantic_Tree.Generics;     use Ada_Semantic_Tree.Generics;
 with Codefix.Error_Lists;            use Codefix.Error_Lists;
 with Codefix.Text_Manager;           use Codefix.Text_Manager;
 with Codefix.Formal_Errors;          use Codefix.Formal_Errors;
+with GNAT.Strings;                   use GNAT.Strings;
 with GNAT.Regpat;                    use GNAT.Regpat;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;

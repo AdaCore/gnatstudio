@@ -20,7 +20,6 @@
 --  are separated into two different packages: Codefix.Errors_Parsers and
 --  Codefix.Formal_Errors.
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Regpat;
 
 with Codefix.Text_Manager;  use Codefix.Text_Manager;

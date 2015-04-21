@@ -17,7 +17,6 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings, Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Refactoring.Buffer_Helpers; use Refactoring.Buffer_Helpers;
 
@@ -407,10 +406,10 @@ package body Refactoring.Services is
       Mode  : Remove_Code_Mode;
       Name  : Language.Tree.Normalized_Symbol)
    is
-      Str : GNAT.Strings.String_Access;
+      Str : Unbounded_String;
+
    begin
       Extract_Element (Self, Str, Name, Mode);
-      Free (Str);
    end Remove_Element;
 
    ----------------------
@@ -419,7 +418,7 @@ package body Refactoring.Services is
 
    procedure Extract_Element
      (Self      : in out Ada_Statement;
-      Extracted : out GNAT.Strings.String_Access;
+      Extracted : out Unbounded_String;
       Name      : Language.Tree.Normalized_Symbol;
       Mode      : Remove_Code_Mode := Erase)
    is
@@ -483,11 +482,11 @@ package body Refactoring.Services is
       if First_To_Delete /= 0 then
          if Self.Number_Of_Elements = 1 then
             Extracted :=
-              new String'
+              To_Unbounded_String
                 (Get
-                     (Self.Context,
-                      Self.Sloc_Start'Access,
-                      Self.Sloc_End'Access));
+                   (Self.Context,
+                    Self.Sloc_Start'Access,
+                    Self.Sloc_End'Access));
 
             case Mode is
                when Erase =>
@@ -521,18 +520,19 @@ package body Refactoring.Services is
 
                if Self.Sloc_Column = Null_Universal_Location then
                   Extracted :=
-                    new String'
+                    To_Unbounded_String
                       (Get
-                           (Self.Context,
-                            Token_First'Access,
-                            Token_Last'Access));
+                         (Self.Context,
+                          Token_First'Access,
+                          Token_Last'Access));
+
                else
                   Extracted :=
-                    new String'
+                    To_Unbounded_String
                       (Get
-                           (Self.Context,
-                            Token_First'Access,
-                            Token_Last'Access)
+                         (Self.Context,
+                          Token_First'Access,
+                          Token_Last'Access)
                        & " "
                        & Get
                          (Self.Context,

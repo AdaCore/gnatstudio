@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Decode_UTF8_String;
 with Config;
 
@@ -54,7 +55,7 @@ package body UTF8_Utils is
 
    procedure Unknown_To_UTF8
      (Input   : String;
-      Output  : out String_Access;
+      Output  : out GNAT.Strings.String_Access;
       Success : out Boolean) is
    begin
       Open;
@@ -80,7 +81,7 @@ package body UTF8_Utils is
      (Input   : String;
       Success : access Boolean) return UTF8_String
    is
-      Output : String_Access;
+      Output : GNAT.Strings.String_Access;
    begin
 
       Unknown_To_UTF8 (Input, Output, Success.all);
@@ -153,9 +154,34 @@ package body UTF8_Utils is
    --------------------
 
    function UTF8_Next_Char
-     (Str : UTF8_String; Index : Natural) return Natural
+     (Str : UTF8_String; Index : Positive) return Positive
    is
       Byte : constant Character := Str (Index);
+   begin
+      case Byte is
+         when Character'Val (16#C0#) .. Character'Val (16#DF#) =>
+            return Index + 2;
+         when Character'Val (16#E0#) .. Character'Val (16#EF#) =>
+            return Index + 3;
+         when Character'Val (16#F0#) .. Character'Val (16#F7#) =>
+            return Index + 4;
+         when Character'Val (16#F8#) .. Character'Val (16#FB#) =>
+            return Index + 5;
+         when Character'Val (16#FC#) .. Character'Val (16#FD#) =>
+            return Index + 6;
+         when others =>
+            return Index + 1;
+      end case;
+   end UTF8_Next_Char;
+
+   --------------------
+   -- UTF8_Next_Char --
+   --------------------
+
+   function UTF8_Next_Char
+     (Str : UTF8_Unbounded_String; Index : Positive) return Positive
+   is
+      Byte : constant Character := Element (Str, Index);
    begin
       case Byte is
          when Character'Val (16#C0#) .. Character'Val (16#DF#) =>

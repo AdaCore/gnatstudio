@@ -26,7 +26,6 @@ with GNATCOLL.Xref;
 with Case_Handling;     use Case_Handling;
 with Language.Ada;      use Language.Ada;
 with Projects;          use Projects;
-with String_Utils;      use String_Utils;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 
@@ -84,19 +83,6 @@ package body Codefix.Text_Manager is
    begin
       return Char = ' ' or else Char = ASCII.HT;
    end Is_Blank;
-
-   ---------------
-   -- Normalize --
-   ---------------
-
-   function Normalize (Str : GNAT.Strings.String_Access) return String is
-   begin
-      if Str /= null then
-         return Reduce (Str.all);
-      else
-         return "";
-      end if;
-   end Normalize;
 
    -------------------------
    -- Without_Last_Blanks --
@@ -424,8 +410,8 @@ package body Codefix.Text_Manager is
    ---------------
 
    function Read_File
-     (This : Text_Navigator_Abstr;
-      File_Name : Virtual_File) return GNAT.Strings.String_Access is
+     (This      : Text_Navigator_Abstr;
+      File_Name : Virtual_File) return Unbounded_String is
    begin
       return Read_File (Get_File (This, File_Name).all);
    end Read_File;
@@ -779,7 +765,7 @@ package body Codefix.Text_Manager is
    procedure Parse_Entities_Backwards
      (Lang     : access Language_Root'Class;
       This     : Text_Navigator_Abstr'Class;
-      Callback : access procedure (Buffer : String;
+      Callback : access procedure (Buffer : Unbounded_String;
                                    Token  : Language.Token_Record;
                                    Stop   : in out Boolean);
       Start    : File_Cursor'Class) is
@@ -1191,7 +1177,7 @@ package body Codefix.Text_Manager is
       Cursor : in out Text_Cursor'Class;
       Word   : out Word_Cursor)
    is
-      Current_Line      : GNAT.Strings.String_Access;
+      Current_Line      : Unbounded_String;
       Line_Cursor       : Text_Cursor := Text_Cursor (Cursor);
       Begin_Word        : String_Index_Type;
       Cursor_Char_Index : String_Index_Type;
@@ -1200,64 +1186,70 @@ package body Codefix.Text_Manager is
       Word.File := This.File_Name;
 
       Line_Cursor.Col := 1;
-      Assign (Current_Line, Get_Line (This, Line_Cursor));
+      Current_Line := To_Unbounded_String (Get_Line (This, Line_Cursor));
       Cursor_Char_Index := To_Char_Index
-        (Get_Column (Cursor), Current_Line.all);
+        (Get_Column (Cursor), To_String (Current_Line));
 
       while Is_Blank
-        (Current_Line (Natural (Cursor_Char_Index) .. Current_Line'Last)) loop
+        (Slice
+           (Current_Line, Natural (Cursor_Char_Index), Length (Current_Line)))
+      loop
          Cursor_Char_Index := 1;
          Cursor.Line := Cursor.Line + 1;
-         Assign (Current_Line, Get_Line (This, Cursor));
+         Current_Line := To_Unbounded_String (Get_Line (This, Cursor));
       end loop;
 
-      while Is_Blank (Current_Line (Natural (Cursor_Char_Index))) loop
+      while Is_Blank (Element (Current_Line, Natural (Cursor_Char_Index))) loop
          Cursor_Char_Index := Cursor_Char_Index + 1;
       end loop;
 
       Begin_Word := Cursor_Char_Index;
 
-      while Natural (Cursor_Char_Index) < Current_Line'Last
-        and then not Is_Blank (Current_Line (Natural (Cursor_Char_Index)))
-        and then not Is_Separator (Current_Line (Natural (Cursor_Char_Index)))
+      while Natural (Cursor_Char_Index) < Length (Current_Line)
+        and then not Is_Blank
+          (Element (Current_Line, Natural (Cursor_Char_Index)))
+        and then not Is_Separator
+          (Element (Current_Line, Natural (Cursor_Char_Index)))
       loop
          Cursor_Char_Index := Cursor_Char_Index + 1;
       end loop;
 
-      if Is_Blank (Current_Line (Natural (Cursor_Char_Index)))
+      if Is_Blank (Element (Current_Line, Natural (Cursor_Char_Index)))
         or else
-          (Is_Separator (Current_Line (Natural (Cursor_Char_Index)))
+          (Is_Separator (Element (Current_Line, Natural (Cursor_Char_Index)))
            and then (Begin_Word /= Cursor_Char_Index))
       then
          --  If the last character is a blank, or a separator and the current
          --  word is not a separator, then forget about the last cursor.
 
          Word.String_Match :=
-           To_Unbounded_String
-             (Current_Line
-                (Natural (Begin_Word) .. Natural (Cursor_Char_Index) - 1));
+           Unbounded_Slice
+             (Current_Line,
+              Natural (Begin_Word),
+              Natural (Cursor_Char_Index) - 1);
       else
          --  Otherwise, we're at the end of the line, get the whole parsed
          --  data.
 
          Word.String_Match :=
-           To_Unbounded_String
-             (Current_Line
-                (Natural (Begin_Word) .. Natural (Cursor_Char_Index)));
+           Unbounded_Slice
+             (Current_Line,
+              Natural (Begin_Word),
+              Natural (Cursor_Char_Index));
       end if;
 
       Word.Line := Line_Cursor.Line;
-      Word.Col := To_Column_Index (Begin_Word, Current_Line.all);
+      Word.Col := To_Column_Index (Begin_Word, To_String (Current_Line));
 
-      if Cursor_Char_Index = String_Index_Type (Current_Line'Last) then
+      if Cursor_Char_Index = String_Index_Type (Length (Current_Line)) then
          Cursor_Char_Index := 1;
          Cursor.Line := Cursor.Line + 1;
       else
          Cursor_Char_Index := Cursor_Char_Index + 1;
       end if;
 
-      Cursor.Col := To_Column_Index (Cursor_Char_Index, Current_Line.all);
-      Free (Current_Line);
+      Cursor.Col :=
+        To_Column_Index (Cursor_Char_Index, To_String (Current_Line));
    end Next_Word;
 
    --------------
@@ -1306,11 +1298,11 @@ package body Codefix.Text_Manager is
      return Text_Cursor'Class
    is
       Result, Line_Cursor : Text_Cursor := Text_Cursor (Cursor);
-      Current_Line        : GNAT.Strings.String_Access;
+      Current_Line        : Unbounded_String;
    begin
       Line_Cursor.Col := 1;
 
-      Current_Line := new String'(Get_Line (This, Line_Cursor));
+      Current_Line := To_Unbounded_String (Get_Line (This, Line_Cursor));
 
       loop
          Result.Col := Result.Col - 1;
@@ -1323,14 +1315,15 @@ package body Codefix.Text_Manager is
                raise Codefix_Panic;
             end if;
 
-            Assign (Current_Line, Get_Line (This, Line_Cursor));
+            Current_Line := To_Unbounded_String (Get_Line (This, Line_Cursor));
             Result.Col := To_Column_Index
-              (String_Index_Type (Current_Line'Last), Current_Line.all);
+              (String_Index_Type (Length (Current_Line)), Current_Line);
          end if;
 
          if not Is_Blank
-           (Current_Line
-              (Natural (To_Char_Index (Result.Col, Current_Line.all))))
+           (Element
+              (Current_Line,
+               Natural (To_Char_Index (Result.Col, Current_Line))))
          then
             return Result;
          end if;
@@ -1429,12 +1422,12 @@ package body Codefix.Text_Manager is
    procedure Parse_Entities_Backwards
      (Lang     : access Language_Root'Class;
       This     : in out Text_Interface'Class;
-      Callback : access procedure (Buffer : String;
+      Callback : access procedure (Buffer : Unbounded_String;
                                    Token  : Language.Token_Record;
                                    Stop   : in out Boolean);
       Start    : File_Cursor'Class)
    is
-      Contents : GNAT.Strings.String_Access := This.Read_File;
+      Contents : constant Unbounded_String := This.Read_File;
       Offset   : String_Index_Type;
 
       procedure Internal_Callback
@@ -1445,7 +1438,7 @@ package body Codefix.Text_Manager is
         (Token  : Language.Token_Record;
          Stop   : in out Boolean) is
       begin
-         Callback.all (Contents.all, Token, Stop);
+         Callback.all (Contents, Token, Stop);
       end Internal_Callback;
 
    begin
@@ -1455,11 +1448,9 @@ package body Codefix.Text_Manager is
          Start.Col);
 
       Lang.Parse_Tokens_Backwards
-        (Buffer       => Contents.all,
+        (Buffer       => To_String (Contents),
          Start_Offset => Offset,
          Callback     => Internal_Callback'Access);
-
-      Free (Contents);
    end Parse_Entities_Backwards;
 
    ----------------------------------------------------------------------------

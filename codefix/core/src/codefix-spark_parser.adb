@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-
 with Codefix.Error_Lists;    use Codefix.Error_Lists;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;

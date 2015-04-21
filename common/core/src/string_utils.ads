@@ -47,6 +47,12 @@ package String_Utils is
       Index_In_Line : String_Index_Type;
       Index         : in out String_Index_Type;
       Tab_Width     : Positive := 8);
+   procedure Skip_To_Index
+     (Buffer        : Unbounded_String;
+      Columns       : out Visible_Column_Type;
+      Index_In_Line : String_Index_Type;
+      Index         : in out String_Index_Type;
+      Tab_Width     : Positive := 8);
    --  Assuming Index points to the begining of a line, move the index by
    --  "Index_In_Line" characters, and give the new column value.
 
@@ -59,6 +65,11 @@ package String_Utils is
 
    procedure Skip_To_Char
      (Type_Str : String;
+      Index    : in out Natural;
+      Char     : Character;
+      Step     : Integer := 1);
+   procedure Skip_To_Char
+     (Type_Str : Unbounded_String;
       Index    : in out Natural;
       Char     : Character;
       Step     : Integer := 1);

@@ -338,15 +338,14 @@ package body Codefix.GPS_Io is
    -- Read_File --
    ---------------
 
-   overriding function Read_File (This : Console_Interface)
-      return GNAT.Strings.String_Access
+   overriding function Read_File
+     (This : Console_Interface) return Unbounded_String
    is
       Editor : constant Editor_Buffer'Class :=
         This.Kernel.Get_Buffer_Factory.Get (Get_File_Name (This));
-      S    : constant GNAT.Strings.String_Access :=
-        new String'(Editor.Get_Chars);
+
    begin
-      return S;
+      return To_Unbounded_String (Editor.Get_Chars);
    end Read_File;
 
    --------------

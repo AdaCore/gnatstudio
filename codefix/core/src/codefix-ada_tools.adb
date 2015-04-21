@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-
 with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
@@ -34,21 +32,6 @@ package body Codefix.Ada_Tools is
         Ada.Unchecked_Deallocation (Use_Type, Ptr_Use);
    begin
       Free (This.Position);
-      Free_Pool (This);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Ptr_With) is
-      procedure Free_Pool is new
-        Ada.Unchecked_Deallocation (With_Type, Ptr_With);
-   begin
-      for J in This.Name'Range loop
-         Free (This.Name (J));
-      end loop;
-
       Free_Pool (This);
    end Free;
 
@@ -147,7 +130,7 @@ package body Codefix.Ada_Tools is
       for J in Result'Range loop
          Skip_To_Char (Str, End_Ind, '.');
 
-         Result (J) := new String'(Str (Start_Ind .. End_Ind - 1));
+         Result (J) := To_Unbounded_String (Str (Start_Ind .. End_Ind - 1));
          End_Ind := End_Ind + 1;
          Start_Ind := End_Ind;
       end loop;
@@ -162,7 +145,8 @@ package body Codefix.Ada_Tools is
    procedure Try_Link_Clauses
      (With_Clause : Ptr_With; Use_Clause : Ptr_Use)
    is
-      Use_Parsed : Arr_Str := Get_Arr_Str (To_String (Use_Clause.Name));
+      Use_Parsed : constant Arr_Str :=
+        Get_Arr_Str (To_String (Use_Clause.Name));
       With_Index : Positive := 1;
       Success    : Boolean;
    begin
@@ -172,8 +156,8 @@ package body Codefix.Ada_Tools is
          for Use_Index in 1 .. Use_Parsed'Last loop
 
             if With_Index + Use_Index - 1 > With_Clause.Name'Last
-              or else Use_Parsed (Use_Index).all /=
-                With_Clause.Name (With_Index + Use_Index - 1).all
+              or else Use_Parsed (Use_Index) /=
+                With_Clause.Name (With_Index + Use_Index - 1)
             then
                Success := False;
             end if;
@@ -185,10 +169,6 @@ package body Codefix.Ada_Tools is
             With_Clause.Clauses (With_Index + Use_Parsed'Length - 1) :=
               Use_Clause;
 
-            for J in Use_Parsed'Range loop
-               Free (Use_Parsed (J));
-            end loop;
-
             return;
          end if;
 
@@ -196,10 +176,6 @@ package body Codefix.Ada_Tools is
 
          exit when With_Index > With_Clause.Nb_Elems
            or else With_Clause.Clauses (With_Index) = null;
-      end loop;
-
-      for J in Use_Parsed'Range loop
-         Free (Use_Parsed (J));
       end loop;
    end Try_Link_Clauses;
 

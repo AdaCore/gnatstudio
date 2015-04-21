@@ -35,6 +35,23 @@ package body Codefix is
       return String_Index_Type (Current_Index);
    end To_Char_Index;
 
+   -------------------
+   -- To_Char_Index --
+   -------------------
+
+   function To_Char_Index
+     (Index : Visible_Column_Type;
+      Str   : Unbounded_String) return String_Index_Type
+   is
+      Current_Index : Integer := 1;
+
+   begin
+      Skip_To_Column (Str     => To_String (Str),
+                      Columns => Integer (Index),
+                      Index   => Current_Index);
+      return String_Index_Type (Current_Index);
+   end To_Char_Index;
+
    ---------------------
    -- To_Column_Index --
    ---------------------
@@ -54,17 +71,26 @@ package body Codefix is
       return Current_Col;
    end To_Column_Index;
 
-   ------------
-   -- Assign --
-   ------------
+   ---------------------
+   -- To_Column_Index --
+   ---------------------
 
-   procedure Assign (This : in out String_Access; Value : String) is
-      Garbage : String_Access := This;
-      --  Used to prevent usage like 'Assign (Str, Str.all)'
+   function To_Column_Index
+     (Index : String_Index_Type;
+      Str   : Unbounded_String) return Visible_Column_Type
+   is
+      Current_Index : String_Index_Type   := 1;
+      Current_Col   : Visible_Column_Type := 1;
+
    begin
-      This := new String'(Value);
-      Free (Garbage);
-   end Assign;
+      Skip_To_Index
+        (Buffer        => Str,
+         Columns       => Current_Col,
+         Index_In_Line => Index,
+         Index         => Current_Index);
+
+      return Current_Col;
+   end To_Column_Index;
 
    ------------
    -- Is_Set --
