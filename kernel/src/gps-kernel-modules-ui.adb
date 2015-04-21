@@ -1461,7 +1461,8 @@ package body GPS.Kernel.Modules.UI is
          end if;
 
       elsif Get_Filter_Error (Action) /= "" then
-         Insert (Data.Kernel, Get_Filter_Error (Action), Mode => Error);
+         Insert
+           (Data.Kernel, To_String (Get_Filter_Error (Action)), Mode => Error);
       else
          Insert (Data.Kernel,
                  -"Invalid context for this action", Mode => Error);

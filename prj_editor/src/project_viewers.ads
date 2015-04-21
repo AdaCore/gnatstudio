@@ -149,7 +149,7 @@ package Project_Viewers is
    procedure Add_Page
      (Self  : not null access Project_Editor_Multi_Page_Record;
       Page  : not null access Project_Editor_Page_Record'Class;
-      Title : String);
+      Title : Unbounded_String);
    --  Add a new page
 
    type Page_Iterator_Callback is not null access procedure

@@ -295,7 +295,7 @@ package body Custom_Module is
       end Finder;
    begin
       Switches_Parser.Parse_Switches_Node
-        (Current_Tool_Name   => Current_Tool.Tool_Name.all,
+        (Current_Tool_Name   => Current_Tool.Tool_Name,
          Current_Tool_Config => Current_Tool.Config,
          Error_Message       => M,
          Finder              => Finder'Unrestricted_Access,
@@ -607,16 +607,15 @@ package body Custom_Module is
          end if;
 
          Tool := new Tool_Properties_Record;
-         Tool.Tool_Name         := new String'(Name);
-         Tool.Project_Package   := new String'(Pack);
-         Tool.Project_Attribute := new String'(Attribute);
-         Tool.Project_Index     := new String'(Index);
+         Tool.Tool_Name         := To_Unbounded_String (Name);
+         Tool.Project_Package   := To_Unbounded_String (Pack);
+         Tool.Project_Attribute := To_Unbounded_String (Attribute);
+         Tool.Project_Index     := To_Unbounded_String (Index);
          Tool.Override          := Override;
 
          while N /= null loop
             if N.Tag.all = "initial-cmd-line" then
-               Free (Tool.Initial_Cmd_Line);
-               Tool.Initial_Cmd_Line := new String'(N.Value.all);
+               Tool.Initial_Cmd_Line := To_Unbounded_String (N.Value.all);
 
             elsif N.Tag.all = "language" then
                Append (Tool.Languages, To_Lower (N.Value.all));
@@ -708,7 +707,9 @@ package body Custom_Module is
                        Shell      => Shell,
                        Shell_Lang => Shell_Lang,
                        Module     => Module);
-                  Set_Error_Message (Filter, Get_Attribute (Node, "error"));
+                  Set_Error_Message
+                    (Filter,
+                     To_Unbounded_String (Get_Attribute (Node, "error")));
                end if;
             end;
 
@@ -733,7 +734,8 @@ package body Custom_Module is
                Child := Child.Next;
             end loop;
 
-            Set_Error_Message (Filter, Get_Attribute (Node, "error"));
+            Set_Error_Message
+              (Filter, To_Unbounded_String (Get_Attribute (Node, "error")));
          end if;
 
          return Filter;
@@ -815,7 +817,9 @@ package body Custom_Module is
          if Implicit_Filter /= null then
             if Filter_A /= null then
                declare
-                  Error : constant String := Get_Error_Message (Filter_A);
+                  Error : constant Unbounded_String :=
+                    Get_Error_Message (Filter_A);
+
                begin
                   Filter_A := Filter_A and Implicit_Filter;
                   Set_Error_Message (Filter_A, Error);

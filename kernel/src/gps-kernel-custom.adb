@@ -131,7 +131,7 @@ package body GPS.Kernel.Custom is
    ---------------------
 
    function Get_Custom_Path return File_Array is
-      Env : String_Access := Getenv ("GPS_CUSTOM_PATH");
+      Env : GNAT.Strings.String_Access := Getenv ("GPS_CUSTOM_PATH");
       Result : constant Filesystem_String := +Env.all;
    begin
       Free (Env);
@@ -159,7 +159,7 @@ package body GPS.Kernel.Custom is
          for J in Files'Range loop
             declare
                F     : Virtual_File renames Files (J);
-               Error : String_Access;
+               Error : GNAT.Strings.String_Access;
             begin
                if File_Extension (F) = XML_Extension
                  and then Is_Regular_File (F)
@@ -304,7 +304,7 @@ package body GPS.Kernel.Custom is
 
       Node : Node_Ptr;
       N    : Node_Ptr;
-      Err  : String_Access;
+      Err  : GNAT.Strings.String_Access;
 
    begin
       --  Don't do this at declaration time, since we want to catch exceptions
@@ -404,7 +404,7 @@ package body GPS.Kernel.Custom is
    is
       Startup : constant Virtual_File :=
                   Create_From_Dir (Get_Home_Dir (Kernel), "startup.xml");
-      Err     : String_Access;
+      Err     : GNAT.Strings.String_Access;
       Node, N : Node_Ptr;
       Script  : Script_Description_Access;
       Mode    : Load_Mode;

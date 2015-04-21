@@ -83,7 +83,7 @@ package GPS.Kernel.Actions is
    --  Any of the two parameters can be null
 
    function Get_Filter_Error
-     (Self : access Action_Record) return String;
+     (Self : access Action_Record) return Unbounded_String;
    --  Return the error message that might explain why the filter does not
    --  match the current context
 

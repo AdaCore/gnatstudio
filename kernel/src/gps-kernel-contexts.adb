@@ -17,16 +17,15 @@
 
 with System.Address_To_Access_Conversions;
 
-with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with GNATCOLL.Projects;    use GNATCOLL.Projects;
 with GNATCOLL.Tribooleans; use GNATCOLL.Tribooleans;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
 
-with Basic_Types;        use Basic_Types;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
+with Basic_Types;          use Basic_Types;
+with GPS.Kernel.Project;   use GPS.Kernel.Project;
 
-with Projects;           use Projects;
-with Xref;               use Xref;
+with Projects;             use Projects;
+with Xref;                 use Xref;
 
 package body GPS.Kernel.Contexts is
 
@@ -222,17 +221,9 @@ package body GPS.Kernel.Contexts is
       Context.Data.Data.Project                  := Project;
       Context.Data.Data.Importing_Project        := Importing_Project;
 
-      if Revision /= "" then
-         Context.Data.Data.Revision := new String'(Revision);
-      end if;
-
-      if Other_Revision /= "" then
-         Context.Data.Data.Other_Revision := new String'(Other_Revision);
-      end if;
-
-      if Tag /= "" then
-         Context.Data.Data.Tag := new String'(Tag);
-      end if;
+      Context.Data.Data.Revision := To_Unbounded_String (Revision);
+      Context.Data.Data.Other_Revision := To_Unbounded_String (Other_Revision);
+      Context.Data.Data.Tag := To_Unbounded_String (Tag);
    end Set_File_Information;
 
    -----------------------------
@@ -411,7 +402,7 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return Context.Data.Data /= null
-        and then Context.Data.Data.Revision /= null;
+        and then Context.Data.Data.Revision /= Null_Unbounded_String;
    end Has_Revision_Information;
 
    --------------------------
@@ -421,7 +412,7 @@ package body GPS.Kernel.Contexts is
    function Revision_Information
      (Context : Selection_Context) return String is
    begin
-      return Context.Data.Data.Revision.all;
+      return To_String (Context.Data.Data.Revision);
    end Revision_Information;
 
    ------------------------------------
@@ -432,7 +423,7 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return Context.Data.Data /= null
-        and then Context.Data.Data.Other_Revision /= null;
+        and then Context.Data.Data.Other_Revision /= Null_Unbounded_String;
    end Has_Other_Revision_Information;
 
    --------------------------------
@@ -442,7 +433,7 @@ package body GPS.Kernel.Contexts is
    function Other_Revision_Information
      (Context : Selection_Context) return String is
    begin
-      return Context.Data.Data.Other_Revision.all;
+      return To_String (Context.Data.Data.Other_Revision);
    end Other_Revision_Information;
 
    -------------------------
@@ -453,7 +444,7 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return Context.Data.Data /= null
-        and then Context.Data.Data.Tag /= null;
+        and then Context.Data.Data.Tag /= Null_Unbounded_String;
    end Has_Tag_Information;
 
    ---------------------
@@ -463,7 +454,7 @@ package body GPS.Kernel.Contexts is
    function Tag_Information
      (Context : Selection_Context) return String is
    begin
-      return Context.Data.Data.Tag.all;
+      return To_String (Context.Data.Data.Tag);
    end Tag_Information;
 
    ---------------------------------------
@@ -575,14 +566,9 @@ package body GPS.Kernel.Contexts is
       Entity_Column   : Basic_Types.Visible_Column_Type := 0;
       From_Expression : String := "") is
    begin
-      if Entity_Name /= "" then
-         Context.Data.Data.Entity_Name := new String'(Entity_Name);
-         Context.Data.Data.Entity_Column   := Entity_Column;
-      end if;
-
-      if From_Expression /= "" then
-         Context.Data.Data.Expression := new String'(From_Expression);
-      end if;
+      Context.Data.Data.Entity_Name   := To_Unbounded_String (Entity_Name);
+      Context.Data.Data.Entity_Column := Entity_Column;
+      Context.Data.Data.Expression    := To_Unbounded_String (From_Expression);
    end Set_Entity_Information;
 
    ----------------------------
@@ -590,20 +576,16 @@ package body GPS.Kernel.Contexts is
    ----------------------------
 
    procedure Set_Entity_Information
-     (Context : in out Selection_Context;
-      Entity  : Xref.Root_Entity'Class;
+     (Context         : in out Selection_Context;
+      Entity          : Xref.Root_Entity'Class;
       From_Expression : String := "")
    is
       Decl   : constant General_Location := Entity.Get_Declaration.Loc;
    begin
-      Context.Data.Data.Entity_Name   := new String'(Entity.Get_Name);
-
+      Context.Data.Data.Entity_Name   := To_Unbounded_String (Entity.Get_Name);
       Context.Data.Data.Entity_Column := Decl.Column;
       Context.Data.Data.Xref_Entity.Replace_Element (Entity);
-
-      if From_Expression /= "" then
-         Context.Data.Data.Expression := new String'(From_Expression);
-      end if;
+      Context.Data.Data.Expression := To_Unbounded_String (From_Expression);
    end Set_Entity_Information;
 
    --------------------------------
@@ -614,7 +596,7 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return Context.Data.Data /= null
-        and then Context.Data.Data.Expression /= null;
+        and then Context.Data.Data.Expression /= Null_Unbounded_String;
    end Has_Expression_Information;
 
    ----------------------------
@@ -624,11 +606,7 @@ package body GPS.Kernel.Contexts is
    function Expression_Information
      (Context : Selection_Context) return String is
    begin
-      if Context.Data.Data.Expression = null then
-         return "";
-      else
-         return Context.Data.Data.Expression.all;
-      end if;
+      return To_String (Context.Data.Data.Expression);
    end Expression_Information;
 
    ---------------------------------
@@ -639,7 +617,7 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return Context.Data.Data /= null
-        and then Context.Data.Data.Entity_Name /= null;
+        and then Context.Data.Data.Entity_Name /= Null_Unbounded_String;
    end Has_Entity_Name_Information;
 
    -----------------------------
@@ -649,11 +627,7 @@ package body GPS.Kernel.Contexts is
    function Entity_Name_Information
      (Context : Selection_Context) return String is
    begin
-      if Context.Data.Data.Entity_Name = null then
-         return "";
-      else
-         return Context.Data.Data.Entity_Name.all;
-      end if;
+      return To_String (Context.Data.Data.Entity_Name);
    end Entity_Name_Information;
 
    -----------------------------------
@@ -687,8 +661,7 @@ package body GPS.Kernel.Contexts is
       Start_Line : Integer := 0;
       End_Line   : Integer := 0) is
    begin
-      Free (Context.Data.Data.Text);
-      Context.Data.Data.Text       := new String'(Text);
+      Context.Data.Data.Text       := To_Unbounded_String (Text);
       Context.Data.Data.Start_Line := Start_Line;
       Context.Data.Data.End_Line   := End_Line;
    end Set_Area_Information;
@@ -701,7 +674,8 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return Context.Data.Data /= null
-        and then Context.Data.Data.Text /= null;
+        and then not (Context.Data.Data.Start_Line = 0
+                      and then Context.Data.Data.End_Line = 0);
    end Has_Area_Information;
 
    --------------
@@ -738,7 +712,7 @@ package body GPS.Kernel.Contexts is
 
          if Has_File_Information (Context)
            and then Has_Line_Information (Context)
-           and then Context.Data.Data.Entity_Name /= null
+           and then Context.Data.Data.Entity_Name /= Null_Unbounded_String
          then
 
             Context.Data.Data.Xref_Entity.Replace_Element
@@ -749,7 +723,7 @@ package body GPS.Kernel.Contexts is
                        Project => Context.Data.Data.Project,
                        Line   => Context.Data.Data.Line,
                        Column => Context.Data.Data.Entity_Column),
-                  Name => Context.Data.Data.Entity_Name.all,
+                  Name => To_String (Context.Data.Data.Entity_Name),
                   Closest_Ref => Context.Data.Data.Xref_Closest_Ref,
                   Approximate_Search_Fallback => Approximate_Search_Fallback));
          end if;
@@ -866,11 +840,7 @@ package body GPS.Kernel.Contexts is
 
    function Text_Information (Context : Selection_Context) return String is
    begin
-      if Context.Data.Data.Text /= null then
-         return Context.Data.Data.Text.all;
-      else
-         return "";
-      end if;
+      return To_String (Context.Data.Data.Text);
    end Text_Information;
 
    -----------------------------

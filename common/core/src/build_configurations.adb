@@ -389,7 +389,7 @@ package body Build_Configurations is
          Switches : Switches_Editor_Config;
       begin
          Switches_Parser.Parse_Switches_Node
-           (Current_Tool_Name   => "",
+           (Current_Tool_Name   => Null_Unbounded_String,
             Current_Tool_Config => Switches,
             Error_Message       => M,
             Finder              => null,

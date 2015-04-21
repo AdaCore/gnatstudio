@@ -35,14 +35,14 @@ with GPS.Intl;                   use GPS.Intl;
 with String_Utils;               use String_Utils;
 
 package body GPS.Kernel.Charsets is
-   CHARSET : constant String_Access := Getenv ("CHARSET");
+   CHARSET : constant GNAT.Strings.String_Access := Getenv ("CHARSET");
 
    Default_Charset : Charset_Preference;
    --  Preference that defines the default charset to use when opening files
 
    type Charset_Description is record
-      Name        : String_Access;
-      Description : String_Access;
+      Name        : GNAT.Strings.String_Access;
+      Description : GNAT.Strings.String_Access;
    end record;
    type Charset_Description_Array
      is array (Natural range <>) of Charset_Description;

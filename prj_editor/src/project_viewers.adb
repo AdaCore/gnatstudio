@@ -1199,7 +1199,7 @@ package body Project_Viewers is
       for L in Languages'Range loop
          Page := Get_Naming_Scheme_Page (Kernel, Languages (L).all);
          if Page /= null then
-            Result.Add_Page (Page, Languages (L).all);
+            Result.Add_Page (Page, To_Unbounded_String (Languages (L).all));
          end if;
       end loop;
 
@@ -1399,10 +1399,10 @@ package body Project_Viewers is
    procedure Add_Page
      (Self  : not null access Project_Editor_Multi_Page_Record;
       Page  : not null access Project_Editor_Page_Record'Class;
-      Title : String) is
+      Title : Unbounded_String) is
    begin
       Self.Pages.Append
-        ((Title => To_Unbounded_String (Title),
+        ((Title => Title,
           Page  => Project_Editor_Page (Page)));
    end Add_Page;
 

@@ -43,7 +43,7 @@ package body Switches_Parser is
    -------------------------
 
    procedure Parse_Switches_Node
-     (Current_Tool_Name   : String;
+     (Current_Tool_Name   : Unbounded_String;
       Current_Tool_Config : out Switches_Editor_Config;
       Error_Message       : out Unbounded_String;
       Finder              : Other_Config_Finder;

@@ -342,7 +342,7 @@ package body GPS.Kernel.Search.Sources is
       Has_Next : out Boolean)
    is
       Start, Finish : Integer;
-      L : String_Access;
+      L      : GNAT.Strings.String_Access;
    begin
       Result := null;
 

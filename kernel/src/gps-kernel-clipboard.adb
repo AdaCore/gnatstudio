@@ -116,7 +116,7 @@ package body GPS.Kernel.Clipboard is
                       Create_From_Dir
                         (Get_Home_Dir (Kernel), "clipboards.xml");
       File, Child : Node_Ptr;
-      Err         : String_Access;
+      Err         : GNAT.Strings.String_Access;
    begin
       if Clipboard_Size_Pref = null then
          Clipboard_Size_Pref := Create
@@ -589,7 +589,7 @@ package body GPS.Kernel.Clipboard is
      (Clipboard      : access Clipboard_Record;
       Index1, Index2 : Natural)
    is
-      Str : String_Access;
+      Str : GNAT.Strings.String_Access;
    begin
       if Index1 in Clipboard.List'Range
         and then Index2 in Clipboard.List'Range

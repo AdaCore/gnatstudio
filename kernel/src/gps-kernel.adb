@@ -17,7 +17,6 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 
 pragma Warnings (Off);
@@ -240,10 +239,10 @@ package body GPS.Kernel is
    function GNAT_Version
      (Handle : access Kernel_Handle_Record) return String is
    begin
-      if Handle.GNAT_Version = null then
+      if Handle.GNAT_Version = Null_Unbounded_String then
          return -"<unknown version>";
       else
-         return Handle.GNAT_Version.all;
+         return To_String (Handle.GNAT_Version);
       end if;
    end GNAT_Version;
 
@@ -879,10 +878,6 @@ package body GPS.Kernel is
                    & System.Address_Image (Data'Address));
          end if;
 
-         Free (Data.Text);
-         Free (Data.Expression);
-         Free (Data.Entity_Name);
-
          --  Do not unref the entity stored in the context if the kernel is in
          --  destruction or as already been destroyed since the entity has
          --  already been freed as part of the kernel destruction.
@@ -894,9 +889,6 @@ package body GPS.Kernel is
          end if;
 
          String_List_Utils.String_List.Free (Data.Activities);
-         Free (Data.Revision);
-         Free (Data.Other_Revision);
-         Free (Data.Tag);
          Free (Data.Instances);
       end Free;
 
@@ -1216,8 +1208,6 @@ package body GPS.Kernel is
 
       Unchecked_Free (Handle.Refactoring);
 
-      Free (Handle.GNAT_Version);
-
       --  Handle.Symbols.Display_Stats;
 
       GPS.Core_Kernels.Destroy (Core_Kernel_Record (Handle.all)'Access);
@@ -1303,38 +1293,6 @@ package body GPS.Kernel is
    -- Free --
    ----------
 
-   procedure Free (Filter : in out Action_Filter_Record) is
-   begin
-      Free (Filter.Error_Msg);
-      Free (Filter.Name);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (Filter : in out Base_Action_Filter_Record) is
-   begin
-      case Filter.Kind is
-         when Standard_Filter =>
-            Free (Filter.Language);
-            Free (Filter.Shell);
-            Free (Filter.Shell_Lang);
-            Free (Filter.Module);
-         when Filter_And | Filter_Or | Filter_Not =>
-            --  Not need to free anything here: as per Register_Filter, the
-            --  subfilters have already been registered if Filter was, and thus
-            --  they will be freed in turn. If Filter was not registered, we
-            --  have a memory leaks any so things do not really matter
-            null;
-      end case;
-      Free (Action_Filter_Record (Filter));
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
    procedure Free (Filter : in out Action_Filter) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Action_Filter_Record'Class, Action_Filter);
@@ -1378,12 +1336,11 @@ package body GPS.Kernel is
       --  not work correctly anymore
 
       Assert (Me, Name = ""
-              or else Filter.Name = null or else Filter.Name.all = "",
+              or else Filter.Name = Null_Unbounded_String,
               "A named filter is being renamed");
 
       if Name /= "" then
-         Free (Filter.Name);
-         Filter.Name := new String'(Name);
+         Filter.Name := To_Unbounded_String (Name);
          Set (Kernel.Action_Filters, Name, Action_Filter (Filter));
       end if;
 
@@ -1452,11 +1409,6 @@ package body GPS.Kernel is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Tool_Properties_Record, Tool_Properties);
    begin
-      Free (Tool.Tool_Name);
-      Free (Tool.Project_Package);
-      Free (Tool.Project_Attribute);
-      Free (Tool.Project_Index);
-      Free (Tool.Initial_Cmd_Line);
       Free (Tool.Languages);
       Free (Tool.Config);
       Unchecked_Free (Tool);
@@ -1493,29 +1445,31 @@ package body GPS.Kernel is
       Iter : Tools_List.Cursor;
       use Tools_List;
    begin
-      Name_Len := Tool.Project_Package'Length;
-      Name_Buffer (1 .. Name_Len) := To_Lower (Tool.Project_Package.all);
+      Name_Len := Length (Tool.Project_Package);
+      Name_Buffer (1 .. Name_Len) :=
+        To_Lower (To_String (Tool.Project_Package));
       Pkg := Package_Node_Id_Of (Name_Find);
 
       if Pkg = Empty_Package then
-         Register_New_Package (Tool.Project_Package.all, Pkg);
+         Register_New_Package (To_String (Tool.Project_Package), Pkg);
       end if;
 
-      Name_Len := Tool.Project_Attribute'Length;
-      Name_Buffer (1 .. Name_Len) := To_Lower (Tool.Project_Attribute.all);
+      Name_Len := Length (Tool.Project_Attribute);
+      Name_Buffer (1 .. Name_Len) :=
+        To_Lower (To_String (Tool.Project_Attribute));
       Attr := Attribute_Node_Id_Of
         (Name  => Name_Find, Starting_At => First_Attribute_Of (Pkg));
 
       if Attr = Empty_Attribute then
-         if Tool.Project_Index.all = "" then
+         if Tool.Project_Index = "" then
             Register_New_Attribute
-              (Name       => To_Lower (Tool.Project_Attribute.all),
+              (Name       => To_Lower (To_String (Tool.Project_Attribute)),
                In_Package => Pkg,
                Attr_Kind  => Prj.Attr.Single,
                Var_Kind   => Prj.List);
          else
             Register_New_Attribute
-              (Name       => To_Lower (Tool.Project_Attribute.all),
+              (Name       => To_Lower (To_String (Tool.Project_Attribute)),
                In_Package => Pkg,
                Attr_Kind  => Prj.Attr.Associative_Array,
                Var_Kind   => Prj.List);
@@ -1526,17 +1480,18 @@ package body GPS.Kernel is
       while Has_Element (Iter) loop
          Elm := Element (Iter);
 
-         if Elm.Project_Index.all = Tool.Project_Index.all
-           and then Elm.Project_Package.all = Tool.Project_Package.all
-           and then Elm.Project_Attribute.all = Tool.Project_Attribute.all
+         if Elm.Project_Index = Tool.Project_Index
+           and then Elm.Project_Package = Tool.Project_Package
+           and then Elm.Project_Attribute = Tool.Project_Attribute
          then
             Tools_List.Replace_Element (Kernel.Tools, Iter, Tool);
             Free (Elm);
 
             if not Tool.Override then
                Insert (Kernel,
-                       Text   =>  -"Warning: tool " & Tool.Tool_Name.all &
-                                 (-" is defined twice"),
+                       Text   =>  -"Warning: tool "
+                                  & To_String (Tool.Tool_Name)
+                                  & (-" is defined twice"),
                        Add_LF => True,
                        Mode   => Error);
             end if;
@@ -1582,7 +1537,9 @@ package body GPS.Kernel is
       Iter : Tools_List.Cursor := First (Kernel.Tools);
    begin
       while Has_Element (Iter) loop
-         if To_Lower (Element (Iter).Tool_Name.all) = To_Lower (Tool_Name) then
+         if To_Lower (To_String (Element (Iter).Tool_Name))
+           = To_Lower (Tool_Name)
+         then
             return Element (Iter);
          end if;
          Next (Iter);
@@ -1603,18 +1560,14 @@ package body GPS.Kernel is
       F : constant Base_Action_Filter :=
         new Base_Action_Filter_Record (Standard_Filter);
    begin
-      if Language /= "" then
-         F.Language := new String'(Language);
-      end if;
+      F.Language := To_Unbounded_String (Language);
 
-      if Shell /= "" then
-         F.Shell := new String'(Shell);
-         F.Shell_Lang := new String'(Shell_Lang);
-      end if;
+      F.Shell := To_Unbounded_String (Shell);
+      F.Shell_Lang :=
+        (if Shell /= ""
+         then To_Unbounded_String (Shell_Lang) else Null_Unbounded_String);
 
-      if Module /= "" then
-         F.Module := new String'(Module);
-      end if;
+      F.Module := To_Unbounded_String (Module);
 
       return Action_Filter (F);
    end Create;
@@ -1628,7 +1581,9 @@ package body GPS.Kernel is
       return Action_Filter is
    begin
       return new Base_Action_Filter_Record'
-        (Kind => Filter_And, Error_Msg => null, Name => null,
+        (Kind       => Filter_And,
+         Error_Msg  => Null_Unbounded_String,
+         Name       => Null_Unbounded_String,
          Registered => False,
          And1 => Action_Filter (Filter1), And2 => Action_Filter (Filter2));
    end "and";
@@ -1642,9 +1597,12 @@ package body GPS.Kernel is
       return Action_Filter is
    begin
       return new Base_Action_Filter_Record'
-        (Kind => Filter_Or, Error_Msg => null, Name => null,
+        (Kind       => Filter_Or,
+         Error_Msg  => Null_Unbounded_String,
+         Name       => Null_Unbounded_String,
          Registered => False,
-         Or1  => Action_Filter (Filter1), Or2 => Action_Filter (Filter2));
+         Or1        => Action_Filter (Filter1),
+         Or2        => Action_Filter (Filter2));
    end "or";
 
    -----------
@@ -1655,9 +1613,11 @@ package body GPS.Kernel is
      (Filter : access Action_Filter_Record'Class) return Action_Filter is
    begin
       return new Base_Action_Filter_Record'
-        (Kind => Filter_Not, Error_Msg => null, Name => null,
+        (Kind       => Filter_Not,
+         Error_Msg  => Null_Unbounded_String,
+         Name       => Null_Unbounded_String,
          Registered => False,
-         Not1  => Action_Filter (Filter));
+         Not1       => Action_Filter (Filter));
    end "not";
 
    ---------------------
@@ -1675,10 +1635,11 @@ package body GPS.Kernel is
    -- Set_Error_Message --
    -----------------------
 
-   procedure Set_Error_Message (Filter : Action_Filter; Msg : String) is
+   procedure Set_Error_Message
+     (Filter : Action_Filter;
+      Msg    : Unbounded_String) is
    begin
-      Free (Filter.Error_Msg);
-      Filter.Error_Msg := new String'(Msg);
+      Filter.Error_Msg := Msg;
    end Set_Error_Message;
 
    -----------------------
@@ -1686,12 +1647,12 @@ package body GPS.Kernel is
    -----------------------
 
    function Get_Error_Message
-     (Filter : access Action_Filter_Record'Class) return String is
+     (Filter : access Action_Filter_Record'Class) return Unbounded_String is
    begin
-      if Filter /= null and then Filter.Error_Msg /= null then
-         return Filter.Error_Msg.all;
+      if Filter /= null then
+         return Filter.Error_Msg;
       else
-         return "";
+         return Null_Unbounded_String;
       end if;
    end Get_Error_Message;
 
@@ -1711,12 +1672,12 @@ package body GPS.Kernel is
    --------------
 
    function Get_Name
-     (Filter : access Action_Filter_Record'Class) return String is
+     (Filter : access Action_Filter_Record'Class) return Unbounded_String is
    begin
-      if Filter /= null and then Filter.Name /= null then
-         return Filter.Name.all;
+      if Filter /= null then
+         return Filter.Name;
       else
-         return "";
+         return Null_Unbounded_String;
       end if;
    end Get_Name;
 
@@ -1733,7 +1694,7 @@ package body GPS.Kernel is
    begin
       case Filter.Kind is
          when Standard_Filter =>
-            if Filter.Language /= null then
+            if Filter.Language /= Null_Unbounded_String then
                if Has_File_Information (Context)
                  and then GNATCOLL.VFS.No_File /= File_Information (Context)
                then
@@ -1742,14 +1703,16 @@ package body GPS.Kernel is
                        (Get_Language_Handler (Kernel),
                         File_Information (Context));
                   begin
-                     if not Equal (Lang, Filter.Language.all, False) then
+                     if not Equal
+                       (Lang, To_String (Filter.Language), False)
+                     then
                         Result := False;
                      end if;
                   end;
 
                elsif Has_Project_Information (Context) then
                   Result := Project_Information (Context)
-                    .Has_Language (Filter.Language.all);
+                    .Has_Language (To_String (Filter.Language));
 
                else
                   Result := False;
@@ -1757,21 +1720,21 @@ package body GPS.Kernel is
             end if;
 
             if Result
-              and then Filter.Module /= null
+              and then Filter.Module /= Null_Unbounded_String
               and then (Get_Creator (Context) = null
                         or else not Equal
                           (Module_Name (Module_ID (Get_Creator (Context))),
-                           Filter.Module.all,
+                           To_String (Filter.Module),
                            False))
             then
                Result := False;
             end if;
 
-            if Result and then Filter.Shell /= null then
+            if Result and then Filter.Shell /= Null_Unbounded_String then
                declare
                   Lang : constant Scripting_Language :=
                            Lookup_Scripting_Language
-                             (Kernel.Scripts, Filter.Shell_Lang.all);
+                             (Kernel.Scripts, To_String (Filter.Shell_Lang));
 
                   function Substitution
                     (Param : String;
@@ -1801,7 +1764,8 @@ package body GPS.Kernel is
 
                   else
                      CL := Parse_String
-                       (Filter.Shell.all, Command_Line_Treatment (Lang));
+                       (To_String (Filter.Shell),
+                        Command_Line_Treatment (Lang));
 
                      Substitute
                        (CL,

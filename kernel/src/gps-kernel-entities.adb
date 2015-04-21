@@ -190,7 +190,7 @@ package body GPS.Kernel.Entities is
       Filter             : Custom_Filter;
       Iter_Started       : Boolean;
       Show_Caller        : Boolean;
-      Category           : String_Access;
+      Category           : GNAT.Strings.String_Access;
       Include_Overriding : Boolean;
       Count              : Natural := 0;
    end record;

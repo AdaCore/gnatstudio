@@ -406,11 +406,13 @@ package body GPS.Kernel.Scripts is
 
             elsif not Filter_Matches (Action, Context) then
                declare
-                  M : constant String := Get_Filter_Error (Action);
+                  M : constant Unbounded_String := Get_Filter_Error (Action);
                begin
                   if M /= "" then
                      Set_Error_Msg
-                       (Data, M & " when executing """ & Action_Name & '"');
+                       (Data,
+                        To_String (M)
+                        & " when executing """ & Action_Name & '"');
 
                   else
                      Set_Error_Msg
@@ -1247,7 +1249,7 @@ package body GPS.Kernel.Scripts is
       History_Class : constant Class_Type :=
         New_Class (Kernel.Scripts, "History");
 
-      Tmp : String_Access;
+      Tmp : GNAT.Strings.String_Access;
    begin
       GNATCOLL.Scripts.Register_Standard_Classes
         (Get_Scripts (Kernel),

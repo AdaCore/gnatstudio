@@ -297,7 +297,7 @@ package body Switches_Editors is
                end if;
             end if;
 
-            if Self.Tool.Project_Attribute.all = "default_switches" then
+            if Self.Tool.Project_Attribute = "default_switches" then
                --  Tool's attribute is not defined in tool's descriptor,
                --  default handling of switches using "default_switches" and
                --  "switches" is used.
@@ -309,7 +309,7 @@ package body Switches_Editors is
                      Project.Delete_Attribute
                        (Scenario  => Scenario_Variables,
                         Attribute => Attribute_Pkg_List'(Build
-                          (Self.Tool.Project_Package.all, "switches")),
+                          (To_String (Self.Tool.Project_Package), "switches")),
                         Index     => +Base_Name (File_Name));
                      Changed := True;
                   end if;
@@ -322,7 +322,8 @@ package body Switches_Editors is
                         Project.Set_Attribute
                           (Scenario  => Scenario_Variables,
                            Attribute => Attribute_Pkg_List'(Build
-                             (Self.Tool.Project_Package.all, "switches")),
+                             (To_String (Self.Tool.Project_Package),
+                              "switches")),
                            Values    => Args.all,
                            Index     => +Base_Name (File_Name),
                            Prepend   => False);
@@ -333,7 +334,8 @@ package body Switches_Editors is
                         Project.Delete_Attribute
                           (Scenario  => Scenario_Variables,
                            Attribute => Attribute_Pkg_List'(Build
-                             (Self.Tool.Project_Package.all, "switches")),
+                             (To_String (Self.Tool.Project_Package),
+                              "switches")),
                            Index     => +Base_Name (File_Name));
                         Changed := True;
                      end if;
@@ -342,36 +344,36 @@ package body Switches_Editors is
                      Attr_Name := To_Unbounded_String ("default_switches");
                      if Project.Has_Attribute
                        (Attribute_Pkg_List'(Build
-                        (Self.Tool.Project_Package.all, "switches")),
-                        Index => Self.Tool.Project_Index.all)
+                        (To_String (Self.Tool.Project_Package), "switches")),
+                        Index => To_String (Self.Tool.Project_Index))
                      then
                         Attr_Name := To_Unbounded_String ("switches");
                      end if;
 
                      if Args'Length /= 0 then
                         Trace (Me, "Changing default switches for "
-                               & Self.Tool.Project_Package.all
-                               & " " & Self.Tool.Project_Index.all);
+                               & To_String (Self.Tool.Project_Package)
+                               & " " & To_String (Self.Tool.Project_Index));
                         Project.Set_Attribute
                           (Scenario  => Scenario_Variables,
                            Attribute => Attribute_Pkg_List'(Build
-                             (Self.Tool.Project_Package.all,
+                             (To_String (Self.Tool.Project_Package),
                                   To_String (Attr_Name))),
                            Values    => Args.all,
-                           Index     => Self.Tool.Project_Index.all,
+                           Index     => To_String (Self.Tool.Project_Index),
                            Prepend   => False);
                         Changed := True;
 
                      else
                         Trace (Me, "Removing default switches for "
-                               & Self.Tool.Project_Package.all & " "
-                               & Self.Tool.Project_Index.all);
+                               & To_String (Self.Tool.Project_Package) & " "
+                               & To_String (Self.Tool.Project_Index));
                         Project.Delete_Attribute
                           (Scenario  => Scenario_Variables,
                            Attribute => Attribute_Pkg_List'(Build
-                             (Self.Tool.Project_Package.all,
+                             (To_String (Self.Tool.Project_Package),
                               To_String (Attr_Name))),
-                           Index     => Self.Tool.Project_Index.all);
+                           Index     => To_String (Self.Tool.Project_Index));
                         Changed := True;
                      end if;
                   end if;
@@ -382,34 +384,34 @@ package body Switches_Editors is
 
                if Args'Length /= 0 and then not Is_Default_Value then
                   Trace (Me, "Now has switches for '"
-                         & Self.Tool.Project_Package.all & "."
-                         & Self.Tool.Project_Attribute.all
+                         & To_String (Self.Tool.Project_Package) & "."
+                         & To_String (Self.Tool.Project_Attribute)
                          & "' when we had none");
                   Project.Set_Attribute
                     (Scenario  => Scenario_Variables,
                      Attribute =>
                        Attribute_Pkg_List'
                          (Build
-                              (Self.Tool.Project_Package.all,
-                               Self.Tool.Project_Attribute.all)),
+                              (To_String (Self.Tool.Project_Package),
+                               To_String (Self.Tool.Project_Attribute))),
                      Values    => Args.all,
-                     Index     => Self.Tool.Project_Index.all,
+                     Index     => To_String (Self.Tool.Project_Index),
                      Prepend   => False);
                   Changed := True;
 
                elsif not Is_Default_Value then
                   --  Args'Length = 0 and diffs from old value, so drop it
                   Trace (Me, "No more switches for '"
-                         & Self.Tool.Project_Package.all & "."
-                         & Self.Tool.Project_Attribute.all & "'");
+                         & To_String (Self.Tool.Project_Package) & "."
+                         & To_String (Self.Tool.Project_Attribute) & "'");
                   Project.Delete_Attribute
                     (Scenario  => Scenario_Variables,
                      Attribute =>
                        Attribute_Pkg_List'
                          (Build
-                              (Self.Tool.Project_Package.all,
-                               Self.Tool.Project_Attribute.all)),
-                     Index     => Self.Tool.Project_Index.all);
+                              (To_String (Self.Tool.Project_Package),
+                               To_String (Self.Tool.Project_Attribute))),
+                     Index     => To_String (Self.Tool.Project_Index));
                   Changed := True;
                end if;
             end if;
@@ -453,7 +455,7 @@ package body Switches_Editors is
       Value : String_List_Access;
 
    begin
-      if Self.Tool.Project_Attribute.all = "default_switches" then
+      if Self.Tool.Project_Attribute = "default_switches" then
          --  Tool's attribute is not defined in tool's descriptor, default
          --  handling of switches using "default_switches" and "switches" is
          --  used.
@@ -478,9 +480,9 @@ package body Switches_Editors is
            (Attribute =>
               Attribute_Pkg_List'
               (Build
-                 (Self.Tool.Project_Package.all,
-                  Self.Tool.Project_Attribute.all)),
-            Index     => Self.Tool.Project_Index.all);
+                 (To_String (Self.Tool.Project_Package),
+                  To_String (Self.Tool.Project_Attribute))),
+            Index     => To_String (Self.Tool.Project_Index));
 
          if Value = null then
             return (1 .. 0 => null);
@@ -738,7 +740,7 @@ package body Switches_Editors is
                Tool_From_Name =>
                  (Data     => Result,
                   Iterator => For_All_Switches_Pages'Access)),
-            Title => Tools (T).Tool_Name.all);
+            Title => Tools (T).Tool_Name);
       end loop;
 
       return Project_Editor_Page (Result);
@@ -757,12 +759,16 @@ package body Switches_Editors is
 
       procedure Callback
         (Page : not null access Project_Editor_Page_Record'Class);
+
+      --------------
+      -- Callback --
+      --------------
+
       procedure Callback
-        (Page : not null access Project_Editor_Page_Record'Class)
-      is
+        (Page : not null access Project_Editor_Page_Record'Class) is
       begin
          if Page.all in Switches_Editor_Page_Record'Class
-           and then Switches_Editor_Page (Page).Tool.Tool_Name.all = Tool_Name
+           and then Switches_Editor_Page (Page).Tool.Tool_Name = Tool_Name
          then
             Found := Gtk_Switches_Editors.Root_Switches_Editor_Access
               (Switches_Editor_Page (Page).Switches);

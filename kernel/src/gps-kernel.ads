@@ -21,7 +21,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
 with Ada.Finalization;
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with System;
 
@@ -31,13 +31,13 @@ with GNAT.Regpat;
 with GNATCOLL.Scripts;
 with GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with GNATCOLL.Xref; use GNATCOLL.Xref;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.Xref;                   use GNATCOLL.Xref;
 
 with Glib.Main;
-with Glib.Object;       use Glib;
+with Glib.Object;                     use Glib;
 with Gdk.Types;
-with Gtk.Application;   use Gtk.Application;
+with Gtk.Application;                 use Gtk.Application;
 with Gtk.Dialog;
 with Gtk.Widget;
 with Gtk.Window;
@@ -61,8 +61,8 @@ with XML_Utils;
 with Xref;
 
 with GPS.Editors;
-with GPS.Environments;                 use GPS.Environments;
-with GPS.Core_Kernels;                 use GPS.Core_Kernels;
+with GPS.Environments;                use GPS.Environments;
+with GPS.Core_Kernels;                use GPS.Core_Kernels;
 with GPS.Messages_Windows;
 with GPS.Process_Launchers;
 with GPS.Process_Launchers.Implementation;
@@ -468,7 +468,7 @@ package GPS.Kernel is
    --  The default values for the parameters indicate that no special filter
    --  is done for this particular parameter.
 
-   procedure Free (Filter : in out Action_Filter_Record);
+   procedure Free (Filter : in out Action_Filter_Record) is null;
    --  Free the memory associated with the filter. This must never be called
    --  directly and is only needed for the kernel itself. But it needs to be
    --  overridable for new filter types.
@@ -484,15 +484,17 @@ package GPS.Kernel is
       return Action_Filter;
    --  Execute logical operations between filters
 
-   procedure Set_Error_Message (Filter : Action_Filter; Msg : String);
+   procedure Set_Error_Message
+     (Filter : Action_Filter;
+      Msg    : Unbounded_String);
    --  Set the error message to display if Filter doesn't match
 
    function Get_Error_Message
-     (Filter : access Action_Filter_Record'Class) return String;
+     (Filter : access Action_Filter_Record'Class) return Unbounded_String;
    --  Return the error message to display if the filter doesn't match
 
    function Get_Name
-     (Filter : access Action_Filter_Record'Class) return String;
+     (Filter : access Action_Filter_Record'Class) return Unbounded_String;
    --  Return the description of the filter (a short string suitable for
    --  display in the key manager GUI
 
@@ -555,11 +557,11 @@ package GPS.Kernel is
    --  These are associated with the <tool> tag.
 
    type Tool_Properties_Record is record
-      Tool_Name         : GNAT.Strings.String_Access;
-      Project_Package   : GNAT.Strings.String_Access;
-      Project_Attribute : GNAT.Strings.String_Access;
-      Project_Index     : GNAT.Strings.String_Access;
-      Initial_Cmd_Line  : GNAT.Strings.String_Access;
+      Tool_Name         : Unbounded_String;
+      Project_Package   : Unbounded_String;
+      Project_Attribute : Unbounded_String;
+      Project_Index     : Unbounded_String;
+      Initial_Cmd_Line  : Unbounded_String;
       Override          : Boolean := False;
       Config            : Switches_Chooser.Switches_Editor_Config;
       Languages         : GNAT.Strings.String_List_Access;
@@ -938,8 +940,8 @@ private
    type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);
 
    type Action_Filter_Record is abstract tagged record
-      Error_Msg : GNAT.Strings.String_Access;
-      Name      : GNAT.Strings.String_Access;
+      Error_Msg  : Unbounded_String;
+      Name       : Unbounded_String;
 
       Registered : Boolean := False;
       --  For proper memory management, all filters are kept on an internal
@@ -954,10 +956,10 @@ private
    with record
       case Kind is
          when Standard_Filter =>
-            Language   : GNAT.Strings.String_Access;
-            Shell      : GNAT.Strings.String_Access;
-            Shell_Lang : GNAT.Strings.String_Access;
-            Module     : GNAT.Strings.String_Access;
+            Language   : Unbounded_String;
+            Shell      : Unbounded_String;
+            Shell_Lang : Unbounded_String;
+            Module     : Unbounded_String;
 
          when Filter_And =>
             And1, And2 : Action_Filter;
@@ -969,8 +971,6 @@ private
             Not1 : Action_Filter;
       end case;
    end record;
-
-   overriding procedure Free (Filter : in out Base_Action_Filter_Record);
 
    package Filter_Result_Map is new Ada.Containers.Ordered_Maps
      (Key_Type     => System.Address,
@@ -998,21 +998,24 @@ private
       Has_Browser_Details : Boolean := False;
 
       Message        : System.Address := System.Null_Address;
-      Revision       : GNAT.Strings.String_Access := null;
-      Other_Revision : GNAT.Strings.String_Access := null;
-      Tag            : GNAT.Strings.String_Access := null;
+      Revision       : Unbounded_String;
+      Other_Revision : Unbounded_String;
+      Tag            : Unbounded_String;
       --  In the location window
 
-      Start_Line : Integer;
-      End_Line   : Integer;
-      Text       : GNAT.Strings.String_Access;
+      Start_Line : Integer := 0;
+      End_Line   : Integer := 0;
+      --  A start and end line set to 0 means that the context does not have
+      --  area information.
+
+      Text       : Unbounded_String;
       --  When several lines are selected in a file. The selection starts
       --  at Line. Text is the current selection.
 
-      Entity_Name   : GNAT.Strings.String_Access;
+      Entity_Name   : Unbounded_String;
       Entity_Column : Basic_Types.Visible_Column_Type := 0;
 
-      Expression    : GNAT.Strings.String_Access := null;
+      Expression    : Unbounded_String;
 
       Activities   : String_List_Utils.String_List.List :=
                        String_List_Utils.String_List.Null_List;
@@ -1084,7 +1087,12 @@ private
                   (Data => (Ada.Finalization.Controlled with null));
 
    No_Tool : constant Tool_Properties_Record :=
-               (null, null, null, null, null, False, null, null);
+     (Null_Unbounded_String,
+      Null_Unbounded_String,
+      Null_Unbounded_String,
+      Null_Unbounded_String,
+      Null_Unbounded_String,
+      False, null, null);
 
    package Tools_List is new Ada.Containers.Doubly_Linked_Lists
      (Tool_Properties);
@@ -1192,7 +1200,7 @@ private
       --  but this gets invalid early when GPS exists, and we no longer have
       --  access to the main window while destroying its children
 
-      GNAT_Version : GNAT.Strings.String_Access;
+      GNAT_Version : Unbounded_String;
       --  Full GNAT Version, if relevant
 
       Preferences : Default_Preferences.Preferences_Manager;

@@ -120,7 +120,7 @@ package body GPS.Kernel.Timeout is
    --  Handler for user input on the console
 
    type Monitor_Command is new Root_Command with record
-      Name : String_Access;
+      Name : GNAT.Strings.String_Access;
       Data : Console_Process;
    end record;
    type Monitor_Command_Access is access all Monitor_Command'Class;

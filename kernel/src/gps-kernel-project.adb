@@ -242,11 +242,10 @@ package body GPS.Kernel.Project is
    ----------------------
 
    overriding procedure Set_GNAT_Version
-     (Self         : GPS_Project_Environment;
-      Version      : String) is
+     (Self    : GPS_Project_Environment;
+      Version : String) is
    begin
-      Free (Self.Kernel.GNAT_Version);
-      Self.Kernel.GNAT_Version := new String'(Version);
+      Self.Kernel.GNAT_Version := To_Unbounded_String (Version);
    end Set_GNAT_Version;
 
    ------------------
@@ -890,16 +889,16 @@ package body GPS.Kernel.Project is
       Is_Default : Boolean;
    begin
       Project.Switches
-        (To_Lower (Tool.Project_Package.all),
+        (To_Lower (To_String (Tool.Project_Package)),
          File,
-         To_Lower (Tool.Project_Index.all), Value, Is_Default);
+         To_Lower (To_String (Tool.Project_Index)), Value, Is_Default);
 
       --  If no value was found, we might have to return the initial value
       if Value = null
         and then Use_Initial_Value
-        and then Tool.Initial_Cmd_Line /= null
+        and then Tool.Initial_Cmd_Line /= Null_Unbounded_String
       then
-         Value := Argument_String_To_List (Tool.Initial_Cmd_Line.all);
+         Value := Argument_String_To_List (To_String (Tool.Initial_Cmd_Line));
       end if;
 
       if Value = null then

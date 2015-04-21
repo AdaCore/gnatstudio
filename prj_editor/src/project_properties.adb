@@ -1393,9 +1393,9 @@ package body Project_Properties is
             else
                Set_Return_Attribute
                  (Project => Get_Data (Data, 1),
-                  Attr    => Props.Project_Attribute.all,
-                  Pkg     => Props.Project_Package.all,
-                  Index   => Props.Project_Index.all,
+                  Attr    => To_String (Props.Project_Attribute),
+                  Pkg     => To_String (Props.Project_Package),
+                  Index   => To_String (Props.Project_Index),
                   Attribute_Is_List => True,
                   As_List => Command = "get_tool_switches_as_list");
             end if;
@@ -3980,7 +3980,7 @@ package body Project_Properties is
             if Page /= null then
                Page.Initialize (Kernel, Read_Only, Project);
                Editor.Find_Or_Create_Page
-                 ("Build/Switches/" & Tools (T).Tool_Name.all, Page);
+                 ("Build/Switches/" & To_String (Tools (T).Tool_Name), Page);
             end if;
          end loop;
       end;

@@ -342,7 +342,7 @@ package body GPS.Kernel.Console is
       pragma Unreferenced (Self);
       View : constant GPS_Message :=
         Messages_Views.Retrieve_View (Get_Kernel (Context.Context));
-      Contents : String_Access;
+      Contents : GNAT.Strings.String_Access;
       Last     : Natural;
       CR_Found : Boolean;
       File     : Virtual_File;

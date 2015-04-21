@@ -83,12 +83,13 @@ package body GPS.Kernel.Actions is
       Category    : String := "General";
       Icon_Name   : String := "")
    is
-      Old : constant Action_Record_Access := Lookup_Action (Kernel, Name);
-      Overriden : Boolean := False;
-      Cat : String_Access;
-      Action : Action_Record_Access;
-      Stock  : String_Access;
-      Cmd    : access Interactive_Command'Class;
+      Old            : constant Action_Record_Access :=
+        Lookup_Action (Kernel, Name);
+      Overriden      : Boolean := False;
+      Cat            : GNAT.Strings.String_Access;
+      Action         : Action_Record_Access;
+      Stock          : GNAT.Strings.String_Access;
+      Cmd            : access Interactive_Command'Class;
       Status_Changed : Boolean := False;
    begin
       --  Initialize the kernel actions table.
@@ -316,7 +317,7 @@ package body GPS.Kernel.Actions is
    ----------------------
 
    function Get_Filter_Error
-     (Self : access Action_Record) return String
+     (Self : access Action_Record) return Unbounded_String
    is
    begin
       return Get_Error_Message (Self.Filter);
