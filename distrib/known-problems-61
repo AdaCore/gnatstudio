@@ -25,6 +25,21 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O415-010 GB: access check failed reported in toolchains.adb
+
+  Problem:    Sometimes, when loading, cleaning or building a project, an error
+              "toolchains.adb:661 access check failed" is displayed in an
+              error dialog or found in the error log.
+
+  Status:     This was fixed in 2.10 on 2015-03-13
+
+  Workaround: Remove the incorrect toolchain usage from the .gb_project file
+              of the eclipse project that generated the error.
+              Note: .gb_project files are not displayed by default in the
+              "Project Explorer" view. Please uncheck ".* resources" filter
+              using "Customize View..." item of the "Project Explorer"'s view
+              menu (Ctrl+F10 from Project Explorer view)
+
 KP-61-O415-004 GPS: Cross-references disabled when traces.cfg not found
 
   Problem:     When the file traces.cfg is not found in the GPS config
