@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O421-010 GPS: call tree not refreshed after xref recomputed
+
+  Problem:    When querying a call tree for an entity before the
+              cross-references are available, the entry appears as empty
+              in the call tree, and is not refreshed when re-querying
+              once the cross-references are available.
+
+  Status:     This was fixed in 6.2 on 2015-04-22
+
+  Workaround: Clear the call tree manually.
+
 KP-61-O415-010 GB: access check failed reported in toolchains.adb
 
   Problem:    Sometimes, when loading, cleaning or building a project, an error

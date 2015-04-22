@@ -1517,6 +1517,13 @@ package body Call_Graph_Views is
          Next (Model, Iter);
       end loop;
 
+      --  If the Iter has no children, attempt to recompute it here.
+
+      if Model.Children (Iter) = Null_Iter then
+         Model.Remove (Iter);
+         Iter := Null_Iter;
+      end if;
+
       if Iter = Null_Iter then
          --  The new node is inserted at the top of the tree
 
