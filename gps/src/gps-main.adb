@@ -1249,6 +1249,11 @@ procedure GPS.Main is
    begin
       Fonts_Dir := Create_From_Dir (Get_Share_Dir (Kernel), "fonts");
 
+      if not Fonts_Dir.Is_Directory then
+         Trace (Me, "Not a directory: " & (+Fonts_Dir.Full_Name.all));
+         return;
+      end if;
+
       Files := Fonts_Dir.Read_Dir (Files_Only);
 
       for F in Files'Range loop
@@ -1273,6 +1278,10 @@ procedure GPS.Main is
       end loop;
 
       Unchecked_Free (Files);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Load_Fonts;
 
    ---------------------------
