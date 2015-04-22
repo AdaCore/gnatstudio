@@ -5,3 +5,7 @@
 @define-color mdi_border_color shade(#393f3f, 1.2);
 @define-color local_toolbar_color shade(#393f3f, 1.2);
 @define-color notebook_background #393f3f;
+
+@define-color toolbar_button_color #eee;
+@define-color inactive_tab_color #aaa;
+@define-color active_tab_color white;

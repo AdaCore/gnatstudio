@@ -18,6 +18,9 @@
 @define-color mdi_border_color #aaa;
 @define-color local_toolbar_color #f8f8f8;
 @define-color notebook_background #ededed;
+@define-color toolbar_button_color #555;
+@define-color inactive_tab_color #666;
+@define-color active_tab_color black;
 
 * {
    /* Reduce the size of the scroll arrows in notebooks */
@@ -85,6 +88,7 @@ GtkTextView.readonly {
 
 .notebook.mdi tab GtkLabel {
    font-weight: normal;
+   color: @inactive_tab_color;
 }
 
 .notebook.mdi.header {
@@ -98,6 +102,11 @@ GtkTextView.readonly {
 
 .notebook.mdi tab:active {
    background-color: @local_toolbar_color;
+   background-image: none;
+}
+
+.notebook.mdi GtkEventBox.active-page GtkLabel {
+   color: @active_tab_color;
    background-image: none;
 }
 
@@ -226,7 +235,7 @@ GtkTextView.readonly {
 }
 
 .gps-editor-status-bar {
-   background: shade(@theme_base_color, 0.93);
+   background: @local_toolbar_color;
 }
 
 .gps-switches-editor GtkScrolledWindow {
@@ -236,6 +245,11 @@ GtkTextView.readonly {
 .gps-local-toolbar * {
    margin: 0px;
    padding: 2px;
+}
+
+.toolbar GtkImage,
+.toolbar {
+  color: @toolbar_button_color;
 }
 
 /***************************
