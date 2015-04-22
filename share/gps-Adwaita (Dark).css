@@ -7,5 +7,6 @@
 @define-color notebook_background #393f3f;
 
 @define-color toolbar_button_color #eee;
+@define-color toolbar_button_insensitive_color #666;
 @define-color inactive_tab_color #aaa;
 @define-color active_tab_color white;

@@ -19,6 +19,7 @@
 @define-color local_toolbar_color #f8f8f8;
 @define-color notebook_background #ededed;
 @define-color toolbar_button_color #555;
+@define-color toolbar_button_insensitive_color #aaa;
 @define-color inactive_tab_color #666;
 @define-color active_tab_color black;
 
@@ -84,6 +85,11 @@ GtkTextView.readonly {
 
    /* No space between tabs */
    -GtkNotebook-tab-overlap: 0;
+}
+
+GtkNotebook.noTabs {
+  /* notebooks with no tabs need borders all around */
+  border: 1px solid @mdi_border_color;
 }
 
 .notebook.mdi tab GtkLabel {
@@ -250,6 +256,10 @@ GtkTextView.readonly {
 .toolbar GtkImage,
 .toolbar {
   color: @toolbar_button_color;
+}
+
+.toolbar GtkImage:insensitive{
+  color: @toolbar_button_insensitive_color;
 }
 
 /***************************
