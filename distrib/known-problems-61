@@ -62,6 +62,21 @@ KP-61-O415-004 GPS: Cross-references disabled when traces.cfg not found
   Workaround:  Recreate a traces.cfg file that only contains a "+" on a line
                of its own.
 
+KP-61-O408-005 GB: Build All command starts multiple times the same build.
+
+  Problem:     When the workspace contains GNAT projects automatically created
+               during an existing GNAT project import operation, sometimes
+               when running the Build All (Ctrl+B) command, GNATbench starts
+               multiple jobs building the same GNAT project.
+
+  Status:      This was fixed in 2.10 on 2015-04-22
+
+  Workaround:  Disable the GNATbench builder for all non root GNAT project.
+               - To verify the a GNAT project is not a root project, use the
+               GNATbench properties page of the project properties dialog.
+               - To disable the GNATbench builder, uncheck it in the Builders
+               page of the project properties dialog.
+
 KP-61-O403-018 GPS: "Whole word" option in omni-search is insensitive
 
   Problem:    The whole word option for the omni-search is only applicable
