@@ -272,6 +272,15 @@ KP-61-O204-017 GB: random crash after code assist popup display
 
   Workaround: Disable Code Assist feature through Ada/Tools preference page.
 
+KP-61-O202-046 GPS: can't find coverage data from an extended project
+
+  Problem:    GPS is unable to find coverage data when the project
+              tree contains extended and aggregate projects.
+
+  Status:     This was fixed in 6.2 on 2015-04-20
+
+  Workaround: Copy coverage data manually into directory where GPS expects it.
+
 KP-61-O202-032 GB: <Ctrl> click hyperlink not working in ada editor
 
   Problem:    When the ada editor is opened from the problem view, the
