@@ -381,12 +381,12 @@ package body Generic_Views is
          F.Pattern_Config_Menu.Add (Sep);
 
          if (Options and Has_Negate) /= 0 then
-            Gtk_New (F.Negate, -"Revert filter");
+            Gtk_New (F.Negate, -"Invert filter");
             Associate (Get_History (Self.Kernel).all,
                        Hist_Prefix & "-filter-negate",
                        F.Negate, Default => False);
             F.Negate.Set_Tooltip_Text
-              (-"Revert filter : hide matching items");
+              (-"invert filter : hide matching items");
             F.Negate.On_Toggled (Report_Filter_Changed'Access, Self);
             F.Pattern_Config_Menu.Add (F.Negate);
          end if;

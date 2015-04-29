@@ -64,7 +64,7 @@ allow you to configure the filter:
   match, regular expression, or fuzzy matching). These modes are similar to
   the ones used in the omni-search (see :ref:`omni_search`).
 
-* The next entry is :guilabel:`Revert filter`. When you select this
+* The next entry is :guilabel:`Invert filter`. When you select this
   option, lines that do not match the filter are displayed, instead of
   the default behavior of displaying ones that match the filter.  You
   can also enable this mode temporarily by beginning the filter with
