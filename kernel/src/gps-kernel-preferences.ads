@@ -105,11 +105,6 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Line_Terminators);
    --  The list of supported line terminators
 
-   type Speed_Column_Policies is (Never, Automatic, Always);
-   package Speed_Column_Policy_Prefs is new
-     Default_Preferences.Enums.Generics (Speed_Column_Policies);
-   --  The list of possible behaviours for the speed column
-
    type Line_Number_Policy is (Never, Some_Lines, All_Lines);
    package Line_Number_Policy_Prefs is new
      Default_Preferences.Enums.Generics (Line_Number_Policy);
@@ -237,7 +232,6 @@ package GPS.Kernel.Preferences is
    Highlight_Delimiters      : Boolean_Preference;
    Periodic_Save             : Integer_Preference;
    Highlight_Column          : Integer_Preference;
-   Speed_Column_Policy       : Speed_Column_Policy_Prefs.Preference;
    Use_ACL                   : Boolean_Preference;
 
    -- External Commands --

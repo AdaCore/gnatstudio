@@ -15,13 +15,14 @@
 @define-color middle-gray #888;
 @define-color border-gray #666;
 
-@define-color mdi_border_color #aaa;
+@define-color mdi_border_color #ddd;
 @define-color local_toolbar_color #f8f8f8;
 @define-color notebook_background #ededed;
 @define-color toolbar_button_color #555;
 @define-color toolbar_button_insensitive_color #aaa;
 @define-color inactive_tab_color #666;
 @define-color active_tab_color black;
+@define-color scrollbar_slider_color #c3c5c6;
 
 * {
    /* Reduce the size of the scroll arrows in notebooks */
@@ -229,7 +230,22 @@ GtkNotebook.noTabs {
    border-top-width: 0;
 }
 
+/**********************
+ * Scrollbars
+ **********************/
 
+.scrollbar {
+   background-color: @local_toolbar_color;
+
+/* Uncomment this to activate scrollbar steppers
+  -GtkScrollbar-has-backward-stepper: true;
+  -GtkScrollbar-has-forward-stepper: true;
+*/
+
+}
+.scrollbar.slider {
+   background-color: @scrollbar_slider_color;
+}
 /**********************
  * Toolbars
  **********************/
@@ -237,6 +253,9 @@ GtkNotebook.noTabs {
 /* Let's condense things in the local toolbars of the views */
 .gps-local-toolbar {
    background: @local_toolbar_color;
+   border-bottom-width: 1px;
+   border-bottom-color: @mdi_border_color;
+   margin-bottom: 10px;
    padding: 0px;
 }
 

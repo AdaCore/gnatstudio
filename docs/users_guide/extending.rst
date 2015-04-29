@@ -359,23 +359,6 @@ arrow, as seen in the screenshot above).
 
       Whether the editor provides the ability to fold and unfold blocks.
 
-    * :guilabel:`Speed Column Policy`
-
-      .. index:: speed column policy
-
-      When the :guilabel:`Speed Column` is shown on the side of the
-      editors:
-
-      * :samp:`Never`
-
-      * :samp:`Always`
-
-      * :samp:`Automatic`
-
-        Shown whenever lines are highlighted in the editor, for example to
-        show the current execution point or lines containing compilation
-        errors. It disappears when no lines are highlighted.
-
     * :guilabel:`Use Windows ACL`
 
       A Windows-specific preference, disabled by default. When enabled, GPS

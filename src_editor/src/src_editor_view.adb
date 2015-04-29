@@ -69,6 +69,7 @@ with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with Language;                   use Language;
 with Language.Tree;              use Language.Tree;
@@ -111,13 +112,6 @@ package body Src_Editor_View is
    --  implement paste on Unix platforms. The default handling of the Xserver
    --  also copies the syntax highlighting which is unwanted if for instance we
    --  copy a highlighting on an entity.
-
-   Speed_Bar_Default_Width : constant := 10;
-   --  The width of the speed column
-
-   Speed_Column_Timeout : constant Guint := 1000;
-   --  The time (in milliseconds) after which the speed column should be hidden
-   --  when the preference is auto-hide and there are no more lines.
 
    Margin : constant := 3;
    --  The margin left of the text
@@ -265,11 +259,6 @@ package body Src_Editor_View is
       Cr   : Cairo_Context);
    --  Redraw the left area
 
-   procedure Redraw_Speed_Column
-     (View : access Source_View_Record'Class;
-      Cr    : Cairo_Context);
-   --  Redraw the speed column
-
    function On_Delete
      (View  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean;
@@ -330,13 +319,15 @@ package body Src_Editor_View is
    function Scroll_Timeout (View : Source_View) return Boolean;
    --  Scroll to View.Scroll_To_Value
 
-   function Hide_Speed_Column_Timeout (View : Source_View) return Boolean;
-   --  Hide the speed column
-
    function Side_Area_Expose_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
       Cr     : Cairo_Context) return Boolean;
    --  Callback for an "expose" event on the speed bar
+
+   function Scroll_Bar_Draw
+     (Object : access GObject_Record'Class;
+      Cr     : Cairo_Context) return Boolean;
+   --  Draw on the scroll bar
 
    procedure Speed_Bar_Size_Allocate_Cb
      (Widget : access Gtk_Widget_Record'Class);
@@ -350,6 +341,9 @@ package body Src_Editor_View is
 
    procedure Size_Side_Column (View : access Source_View_Record'Class);
    --  Resize the side column area
+
+   procedure Draw_Speed_Column_Data (View : access Source_View_Record'Class);
+   --  Draw the data in the speed column on the cache.
 
    ----------------------
    -- Size_Side_Column --
@@ -407,18 +401,6 @@ package body Src_Editor_View is
       View.Scroll_Requested := False;
       return False;
    end Scroll_Timeout;
-
-   -------------------------------
-   -- Hide_Speed_Column_Timeout --
-   -------------------------------
-
-   function Hide_Speed_Column_Timeout (View : Source_View) return Boolean is
-   begin
-      View.Speed_Bar_Width := 0;
-      Size_Side_Column (View);
-      View.Speed_Column_Hide_Registered := False;
-      return False;
-   end Hide_Speed_Column_Timeout;
 
    ----------------------------
    -- Cursor_Screen_Position --
@@ -538,10 +520,6 @@ package body Src_Editor_View is
       if View.Scroll_Requested then
          Glib.Main.Remove (View.Scroll_Timeout);
       end if;
-
-      if View.Speed_Column_Hide_Registered then
-         Glib.Main.Remove (View.Speed_Column_Hide_Timeout);
-      end if;
    end Delete;
 
    ---------------------
@@ -606,26 +584,22 @@ package body Src_Editor_View is
    -----------------------
 
    procedure Invalidate_Window (User : access Source_View_Record'Class) is
-      Win        : Gdk.Gdk_Window :=
-                     Get_Window (User, Text_Window_Text);
-      X, Y, W, H : Gint;
+      procedure Invalidate (Window : Gdk_Window);
+      --  Invalidate Window
+
+      procedure Invalidate (Window : Gdk_Window) is
+         X, Y, W, H : Gint;
+      begin
+         if Window /= null then
+            Get_Geometry (Window, X, Y, W, H);
+            Gdk.Window.Invalidate_Rect (Window, (X, Y, W, H), True);
+         end if;
+      end Invalidate;
 
    begin
-      if Win = null then
-         return;
-      end if;
-
-      Get_Geometry (Win, X, Y, W, H);
-      Gdk.Window.Invalidate_Rect (Win, (X, Y, W, H), True);
-
-      Win := Get_Window (User.Area);
-
-      if Win = null then
-         return;
-      end if;
-
-      Get_Geometry (Win, X, Y, W, H);
-      Gdk.Window.Invalidate_Rect (Win, (X, Y, W, H), True);
+      Invalidate (Get_Window (User, Text_Window_Text));
+      Invalidate (Get_Window (User.Area));
+      Invalidate (User.Scroll.Get_Vscrollbar.Get_Window);
    end Invalidate_Window;
 
    ---------------------------
@@ -634,65 +608,7 @@ package body Src_Editor_View is
 
    function Line_Highlight_Redraw (User : Source_View) return Boolean is
    begin
-      case User.Speed_Column_Mode is
-         when Never =>
-            User.Speed_Bar_Width := 0;
-         when Always =>
-            User.Speed_Bar_Width := Speed_Bar_Default_Width;
-         when Automatic =>
-            declare
-               Buffer : constant Source_Buffer := Source_Buffer
-                 (Get_Buffer (User));
-               Color  : Gdk_RGBA;
-               Found_Width : Boolean := False;
-            begin
-               --  Change the size if there is new info
-
-               for J in 1 .. Get_Line_Count (Buffer) loop
-                  Color := Get_Highlight_Color
-                    (Buffer, Buffer_Line_Type (J),
-                     Context => Highlight_Speedbar);
-
-                  if Color /= Null_RGBA then
-                     User.Speed_Bar_Width := Speed_Bar_Default_Width;
-                     Found_Width := True;
-                     exit;
-                  end if;
-               end loop;
-
-               if Found_Width then
-                  --  A width has been allocated to the speed column: if we
-                  --  had registered it to be hidden, unregister this now.
-
-                  if User.Speed_Column_Hide_Registered then
-                     User.Speed_Column_Hide_Registered := False;
-                     Glib.Main.Remove (User.Speed_Column_Hide_Timeout);
-                  end if;
-               else
-                  --  We have not found a width: register for the column
-                  --  to be hidden.
-
-                  if not User.Speed_Column_Hide_Registered then
-                     User.Speed_Column_Hide_Registered := True;
-                     User.Speed_Column_Hide_Timeout    :=
-                       Source_View_Timeout.Timeout_Add
-                         (Speed_Column_Timeout,
-                          Hide_Speed_Column_Timeout'Access,
-                          User);
-                  end if;
-               end if;
-            end;
-      end case;
-
-      Size_Side_Column (User);
-
       User.Redraw_Registered := False;
-
-      if User.Speed_Column_Buffer /= Null_Surface then
-         Destroy (User.Speed_Column_Buffer);
-         User.Speed_Column_Buffer := Null_Surface;
-      end if;
-
       Invalidate_Window (User);
 
       return False;
@@ -1027,6 +943,47 @@ package body Src_Editor_View is
       end if;
    end Recompute_Visible_Area;
 
+   ---------------------
+   -- Scroll_Bar_Draw --
+   ---------------------
+
+   function Scroll_Bar_Draw
+     (Object : access GObject_Record'Class;
+      Cr     : Cairo_Context) return Boolean
+   is
+      View   : constant Source_View := Source_View (Object);
+
+   begin
+      --  The drawing of the scrollbar is a two-step process: first we draw
+      --  the regular scrollbar using the Gtk+ routines (so that it is rendered
+      --  according to the theme). Then we draw on top of it the speed column
+      --  data.
+      --
+      --  The Gtk+ mechanism goes through this subprogram: we use the flag
+      --  View.Draw_The_Scrollbar to know whether to do the real drawing
+      --  or the drawing with side info.
+
+      if View.Draw_The_Scrollbar then
+         --  The flag is set: let Gtk draw normally.
+         return False;
+      end if;
+
+      --  If we reach this, this means we want to paint the scrollbar plus
+      --  the line info data. First paint the scrollbar.
+      View.Draw_The_Scrollbar := True;
+      View.Scroll.Get_Vscrollbar.Draw (Cr);
+      View.Draw_The_Scrollbar := False;
+
+      --  Draw the speed column data on the cache
+      Draw_Speed_Column_Data (View);
+
+      --  Draw the cache on top of the scrollbar
+      Set_Source_Surface (Cr, View.Speed_Column_Buffer, 0.0, 0.0);
+      Paint (Cr);
+
+      return True;
+   end Scroll_Bar_Draw;
+
    -------------------------------
    -- Speed_Bar_Expose_Event_Cb --
    -------------------------------
@@ -1043,12 +1000,6 @@ package body Src_Editor_View is
 
       Set_Source_Color (Cr, View.Background_Color_Other);
       Cairo.Paint (Cr);
-
-      if View.Speed_Bar_Width > 0 then
-         Redraw_Speed_Column (View, Cr);
-         Translate (Cr, Gdouble (View.Speed_Bar_Width), 0.0);
-      end if;
-
       Redraw_Columns (View, Cr);
 
       return True;
@@ -1501,6 +1452,8 @@ package body Src_Editor_View is
       Insert_Iter : Gtk_Text_Iter;
       Hook        : Preferences_Hook;
       F_Hook      : File_Hook;
+      Hpolicy, Vpolicy : Gtk.Enums.Gtk_Policy_Type;
+      Value       : GValue;
    begin
       --  Initialize the Source_View. Some of the fields can not be initialized
       --  until the widget is realized or mapped. Their initialization is thus
@@ -1520,6 +1473,22 @@ package body Src_Editor_View is
       View.Scroll  := Gtk_Scrolled_Window (Scroll);
       View.Area    := Area;
       View.Set_Project (Project);
+
+      --  Force the policy of the vertical scrollbar to "always", so it can
+      --  display the speed info highlighting.
+      View.Scroll.Get_Policy (Hpolicy, Vpolicy);
+      View.Scroll.Set_Policy (Hpolicy, Policy_Always);
+
+      --  Grab the size of the steppers. Needed to paint the highlighting
+      --  on the "srcolling" part of the scrollbar.
+
+      Init (Value, GType_Int);
+      View.Scroll.Get_Vscrollbar.Style_Get_Property ("stepper-size", Value);
+      View.Scrollbar_Stepper_Size := Get_Int (Value);
+      View.Scroll.Get_Vscrollbar.Style_Get_Property ("stepper-spacing", Value);
+      View.Scrollbar_Stepper_Size :=
+        View.Scrollbar_Stepper_Size + Get_Int (Value);
+      Unset (Value);
 
       Register_View (Buffer, Add => True);
 
@@ -1554,6 +1523,8 @@ package body Src_Editor_View is
            (Side_Area_Expose_Event_Cb'Access),
          After       => False,
          Slot_Object => View);
+
+      View.Scroll.Get_Vscrollbar.On_Draw (Scroll_Bar_Draw'Access, View);
 
       View.On_Drag_Data_Received
         (View_On_Drag_Data_Received'Access);
@@ -1766,7 +1737,6 @@ package body Src_Editor_View is
       Source : constant Source_View := Hook.View;
       Layout : Pango_Layout;
       Color  : Gdk_RGBA;
-      Mode   : constant Speed_Column_Policies := Source.Speed_Column_Mode;
       Ink_Rect, Logical_Rect : Pango.Pango_Rectangle;
       Pref : constant Preference := Get_Pref (Data);
    begin
@@ -1800,16 +1770,6 @@ package body Src_Editor_View is
       Source.Current_Block_Color := Current_Block_Color.Get_Pref;
       Source.Highlight_Blocks := Block_Highlighting.Get_Pref;
       Source.Highlight_As_Line := Current_Line_Thin.Get_Pref;
-      Source.Speed_Column_Mode := Speed_Column_Policy.Get_Pref;
-
-      if Source.Speed_Column_Mode /= Mode then
-         if Source.Speed_Column_Mode = Never then
-            Source.Speed_Bar_Width := 0;
-
-         elsif Source.Speed_Column_Mode = Always then
-            Source.Speed_Bar_Width := Speed_Bar_Default_Width;
-         end if;
-      end if;
 
       if Source.Speed_Column_Buffer /= Null_Surface then
          Destroy (Source.Speed_Column_Buffer);
@@ -2561,123 +2521,74 @@ package body Src_Editor_View is
       Unref (Layout);
    end Redraw_Columns;
 
-   -------------------------
-   -- Redraw_Speed_Column --
-   -------------------------
+   ----------------------------
+   -- Draw_Speed_Column_Data --
+   ----------------------------
 
-   procedure Redraw_Speed_Column
-     (View : access Source_View_Record'Class;
-      Cr   : Cairo_Context)
-   is
-      Right_Window : Gdk.Gdk_Window;
-
-      X, Y, Width, Height : Gint;
-      Color        : Gdk_RGBA;
-
-      Src_Buffer   : constant Source_Buffer :=
-                       Source_Buffer (Get_Buffer (View));
-
-      Line_Height  : Gdouble;
-      Total_Lines  : Gint;
-
-      Info_Exists  : Boolean := False;
-
+   procedure Draw_Speed_Column_Data (View : access Source_View_Record'Class) is
+      Color          : Gdk_RGBA;
+      Line_Height    : Gdouble;
       Buffer_Context : Cairo_Context;
+
+      Height, Width, Offset : Gint;
+
+      Window : Gdk_Window;
+      A      : Gtk_Allocation;
+      Src_Buffer  : Source_Buffer;
+      Total_Lines : Gint;
    begin
-      if View.Area = null
-        or else View.Speed_Column_Mode = Never
-      then
+      if View.Speed_Column_Buffer /= Null_Surface then
+         --  The cache already contains the information, return now
          return;
       end if;
 
-      Right_Window := Get_Window (View.Area);
-
-      if Right_Window = null then
-         return;
-      end if;
-
-      Get_Geometry (Right_Window, X, Y, Width, Height);
-
+      Src_Buffer := Source_Buffer (Get_Buffer (View));
       Total_Lines := Get_Line_Count (Src_Buffer);
 
-      if View.Speed_Column_Buffer = Null_Surface then
-         View.Speed_Column_Buffer :=
-           Create_Similar_Surface
-           (Right_Window, Cairo_Content_Color_Alpha,
-            View.Speed_Bar_Width,
-            Height);
+      Window := View.Scroll.Get_Vscrollbar.Get_Window;
+      View.Scroll.Get_Vscrollbar.Get_Allocation (A);
 
-         Buffer_Context := Create (View.Speed_Column_Buffer);
+      Height := A.Height - 2 * View.Scrollbar_Stepper_Size;
+      Width  := A.Width;
+      Offset := View.Scrollbar_Stepper_Size;
 
-         Set_Source_Color (Buffer_Context, View.Background_Color_Other);
-         Cairo.Paint (Buffer_Context);
+      View.Speed_Column_Buffer :=
+        Create_Similar_Surface
+          (Window, Cairo_Content_Color_Alpha,
+           A.Width,
+           A.Height);
 
-         Line_Height := Gdouble (Height) / Gdouble (Total_Lines + 1);
+      Buffer_Context := Create (View.Speed_Column_Buffer);
 
-         --  Make the line height at least 2 pixels high
+      Line_Height := Gdouble (Height) / Gdouble (Total_Lines + 1);
 
-         if Line_Height < 1.0 then
-            Line_Height := 1.0;
-         end if;
+      --  Make the line height at least 2 pixels high
 
-         Set_Line_Width (Buffer_Context, Line_Height);
-         Set_Line_Cap (Buffer_Context, Cairo_Line_Cap_Square);
-
-         Info_Exists := False;
-
-         for J in 1 .. Total_Lines loop
-            Color := Get_Highlight_Color
-              (Src_Buffer, Buffer_Line_Type (J),
-               Context => Highlight_Speedbar);
-
-            if Color /= Null_RGBA then
-               Set_Source_Color (Buffer_Context, Color);
-               Draw_Line
-                 (Buffer_Context, Color,
-                  0,
-                  (Height * J) / Total_Lines,
-                  View.Speed_Bar_Width,
-                  (Height * J) / Total_Lines);
-
-               Info_Exists := True;
-            end if;
-         end loop;
-
-         Destroy (Buffer_Context);
-
-         if Info_Exists then
-            View.Speed_Bar_Width := Speed_Bar_Default_Width;
-
-            if View.Speed_Column_Hide_Registered then
-               View.Speed_Column_Hide_Registered := False;
-               Glib.Main.Remove (View.Speed_Column_Hide_Timeout);
-            end if;
-
-            Size_Side_Column (View);
-
-         elsif View.Speed_Column_Mode /= Always
-           and then not View.Speed_Column_Hide_Registered
-         then
-            View.Speed_Column_Hide_Registered := True;
-            View.Speed_Column_Hide_Timeout := Source_View_Timeout.Timeout_Add
-              (Speed_Column_Timeout, Hide_Speed_Column_Timeout'Access,
-               Source_View (View));
-         end if;
+      if Line_Height < 2.0 then
+         Line_Height := 2.0;
       end if;
 
-      Set_Source_Surface (Cr, View.Speed_Column_Buffer, 0.0, 0.0);
-      Paint (Cr);
+      Set_Line_Width (Buffer_Context, Line_Height);
+      Set_Line_Cap (Buffer_Context, Cairo_Line_Cap_Square);
 
-      Set_Line_Width (Cr, 0.5);
-      Draw_Rectangle
-        (Cr, View.Speed_Column_Slider_Color, True,
-         1,
-         (Height * Gint (View.Top_Line - 1)) / Total_Lines,
-         View.Speed_Bar_Width - 2,
-         (Height * Gint (View.Bottom_Line - View.Top_Line + 1)) / Total_Lines,
-         2.0);
-      Cairo.Fill (Cr);
-   end Redraw_Speed_Column;
+      for J in 1 .. Total_Lines loop
+         Color := Get_Highlight_Color
+           (Src_Buffer, Buffer_Line_Type (J),
+            Context => Highlight_Speedbar);
+
+         if Color /= Null_RGBA then
+            Set_Source_Color (Buffer_Context, Color);
+            Draw_Line
+              (Buffer_Context, Color,
+               0,
+               (Height * J) / Total_Lines + Offset,
+               Width,
+               (Height * J) / Total_Lines + Offset);
+         end if;
+      end loop;
+
+      Destroy (Buffer_Context);
+   end Draw_Speed_Column_Data;
 
    -----------------------------
    -- Set_Synchronized_Editor --

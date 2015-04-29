@@ -38,7 +38,6 @@ with GNATCOLL.VFS;
 with GPS.Editors;            use GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with Src_Editor_Buffer;
 
 with Completion_Window;      use Completion_Window;
@@ -248,6 +247,12 @@ private
       Scroll              : Gtk.Scrolled_Window.Gtk_Scrolled_Window := null;
       --  The Gtk_Scrolled_Window that contains the source view
 
+      Scrollbar_Stepper_Size : Gint := 0;
+      --  The size taken on the scrollbar by the stepper and its offset.
+
+      Draw_The_Scrollbar  : Boolean := False;
+      --  Whether to do the actual scrollbar drawing
+
       Area                : Gtk.Drawing_Area.Gtk_Drawing_Area;
       --  The drawing area used for the speed column
 
@@ -319,15 +324,6 @@ private
 
       Speed_Column_Buffer  : Cairo_Surface := Null_Surface;
       --  Cache for avoiding to redraw the speed column too often
-
-      Speed_Column_Mode    : Speed_Column_Policies := Automatic;
-      --  The display policy for the speed column
-
-      Speed_Column_Hide_Timeout : Glib.Main.G_Source_Id := 0;
-      --  The timeout to hide the speed column
-
-      Speed_Column_Hide_Registered : Boolean := False;
-      --  Whether the timeout to hide the speed column has been registered
 
       Scroll_Timeout       : Glib.Main.G_Source_Id := 0;
       Scroll_To_Value      : Gdouble := 0.0;

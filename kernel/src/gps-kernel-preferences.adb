@@ -608,14 +608,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Automatic syntax check",
          Page    => "");
 
-      Speed_Column_Policy := Speed_Column_Policy_Prefs.Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Speed-Column-Policy",
-         Label   => -"Speed column policy",
-         Doc     => -"When the speed column should be displayed",
-         Default => Automatic,
-         Page    => -"Editor");
-
       if Config.Host = Config.Windows then
          Use_ACL := Create
            (Manager => Kernel.Preferences,
