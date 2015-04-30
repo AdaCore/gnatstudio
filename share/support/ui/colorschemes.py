@@ -246,19 +246,20 @@ class ColorThemeSwitcher(object):
                 cb(key, "@".join((subst(v[0]), subst(v[1]), subst(v[2]))))
 
     def apply_theme(self, theme):
+        """ Apply the theme to GPS.
+            :param dict theme: dict to map preferences to their values
+            (with special-case support for CSS-defined values, see above.)
+        """
         colors = ""
 
-        v = theme.get("@theme_bg_color")
-        if v:
-            colors += "@define-color theme_bg_color %s;" % v
+        recognized_colors = ["theme_bg_color", "theme_selected_bg_color",
+                             "theme_fg_color", "gutter_color",
+                             "gutter_background"]
 
-        v = theme.get("@theme_selected_bg_color")
-        if v:
-            colors += "@define-color theme_selected_bg_color %s;" % v
-
-        v = theme.get("@theme_fg_color")
-        if v:
-            colors += "@define-color theme_fg_color %s;" % v
+        for c in recognized_colors:
+            v = theme.get("@" + c)
+            if v:
+                colors += "@define-color %s %s;" % (c, v)
 
         v = theme.get("@editor_bg_selection")
         if v:

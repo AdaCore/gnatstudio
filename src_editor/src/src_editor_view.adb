@@ -998,8 +998,6 @@ package body Src_Editor_View is
       --  Paint the background, common to both the speed column and the side
       --  info column
 
-      Set_Source_Color (Cr, View.Background_Color_Other);
-      Cairo.Paint (Cr);
       Redraw_Columns (View, Cr);
 
       return True;
@@ -1490,6 +1488,11 @@ package body Src_Editor_View is
         View.Scrollbar_Stepper_Size + Get_Int (Value);
       Unset (Value);
 
+      Get_Style_Context (View.Area).Add_Class ("gutter");
+      Get_Style_Context (View.Scroll.Get_Vscrollbar).Add_Class ("gutter");
+      Get_Style_Context (View.Scroll.Get_Hscrollbar).Add_Class ("gutter");
+      Get_Style_Context (View.Scroll).Add_Class ("gutter");
+
       Register_View (Buffer, Add => True);
 
       Set_Events
@@ -1787,7 +1790,6 @@ package body Src_Editor_View is
          Override_Color (Source, Gtk_State_Flag_Normal, Color);
       end if;
 
-      Source.Line_Number_Color := Shade_Or_Lighten (Source.Text_Color, 0.2);
       Source.Current_Line_Color := Current_Line_Color.Get_Pref;
       Source.Highlight_Current := Source.Current_Line_Color /= White_RGBA;
 
@@ -1824,17 +1826,6 @@ package body Src_Editor_View is
 
       if not Self.Get_Editable then
          C := Shade_Or_Lighten (C, Amount => 0.1);
-      end if;
-
-      Self.Background_Color_Other := Shade_Or_Lighten (C, Amount => 0.03);
-
-      if To_HSLA (C).Lightness > 0.5 then
-         --  If the background is light, the slider should be a transparent
-         --  black.
-         Self.Speed_Column_Slider_Color := (0.0, 0.0, 0.0, 0.1);
-      else
-         --  Otherwise use a transparent white
-         Self.Speed_Column_Slider_Color := (1.0, 1.0, 1.0, 0.1);
       end if;
 
       --  Overridding background color also seems to set the selected color, so
@@ -2469,10 +2460,11 @@ package body Src_Editor_View is
                       Source_Buffer (Get_Buffer (View));
       Some_Lines  : constant Boolean :=
                       Display_Line_Numbers.Get_Pref = Preferences.Some_Lines;
-      Num_Color   : Gdk_RGBA := View.Background_Color_Other;
+      Num_Color   : Gdk_RGBA;
 
       Prev_Side_Info_Width : constant Gint := View.Side_Info_Width;
    begin
+
       --  Compute the size of the info to draw
 
       View.Side_Info_Width := Gint (Get_Total_Column_Width (Src_Buffer));
@@ -2500,12 +2492,17 @@ package body Src_Editor_View is
       if Some_Lines then
          --  For the alternative line number format, where every fifth line
          --  is numbered, use a smaller but slightly more constrasting type.
-         Num_Color := Shade_Or_Lighten (View.Background_Color_Other, 0.5);
+
+         Get_Style_Context (View.Area).Get_Background_Color
+           (Gtk_State_Flag_Normal, Num_Color);
+         Num_Color := Shade_Or_Lighten (Num_Color, 0.5);
          Set_Font_Description (Layout, Small_Font.Get_Pref);
 
       else
          --  This is the regular line numbering, with every line numbered
-         Num_Color := View.Line_Number_Color;
+
+         Get_Style_Context (View.Area).Get_Color
+           (Gtk_State_Flag_Normal, Num_Color);
          Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
       end if;
 

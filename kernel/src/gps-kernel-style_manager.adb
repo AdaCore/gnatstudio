@@ -104,7 +104,7 @@ package body GPS.Kernel.Style_Manager is
       Source_Style : Style_Access;
       --  The original style
 
-      Shade_Amount : Float := 0.0;
+      Shade_Amount : Gdouble := 0.0;
       --  The amount of shading to do
    end record;
    overriding function Depends_On_Pref
@@ -132,8 +132,10 @@ package body GPS.Kernel.Style_Manager is
      (Source : Source_Shade_Or_Lighten;
       Style  : in out Style_Record) is
    begin
-      Style.Foreground := Shade_Or_Lighten (Source.Source_Style.Foreground);
-      Style.Background := Shade_Or_Lighten (Source.Source_Style.Background);
+      Style.Foreground := Shade_Or_Lighten
+        (Source.Source_Style.Foreground, Source.Shade_Amount);
+      Style.Background := Shade_Or_Lighten
+        (Source.Source_Style.Background, Source.Shade_Amount);
       Style.Variant := Source.Source_Style.Variant;
    end Apply;
 
@@ -165,41 +167,58 @@ package body GPS.Kernel.Style_Manager is
    is
       Variant : Variant_Enum;
       Source_Style_Bg   : constant Gdk_RGBA := Source.Style.Get_Pref_Bg;
-      Source_Variant_Bg : constant Gdk_RGBA := Source.Variant.Get_Pref_Bg;
-   begin
-      Style.Foreground := Source.Variant.Get_Pref_Fg;
+      Source_Variant_Bg : Gdk_RGBA;
 
+      function Variant_In_Font
+        (Font : Pango_Font_Description) return Variant_Enum;
+      --  Return the variant set in Font
+
+      ---------------------
+      -- Variant_In_Font --
+      ---------------------
+
+      function Variant_In_Font
+        (Font : Pango_Font_Description) return Variant_Enum is
+      begin
+         if Get_Weight (Font) = Pango_Weight_Bold then
+            if Get_Style (Font) = Pango_Style_Italic then
+               return Bold_Italic;
+            else
+               return Bold;
+            end if;
+         else
+            if Get_Style (Font) = Pango_Style_Italic then
+               return Italic;
+            else
+               return Normal;
+            end if;
+         end if;
+      end Variant_In_Font;
+
+   begin
       --  If the variant has the same background as the style, assume
       --  the variant wants a transparent background.
-      if Source_Style_Bg = Source_Variant_Bg then
-         Style.Background := Null_RGBA;
+      if Source.Variant = null then
+         Style.Background := Source.Style.Get_Pref_Bg;
+         Style.Foreground := Source.Style.Get_Pref_Fg;
+         Style.Variant := Variant_In_Font (Source.Style.Get_Pref_Font);
       else
-         Style.Background := Source_Variant_Bg;
-      end if;
+         Style.Foreground := Source.Variant.Get_Pref_Fg;
+         Source_Variant_Bg := Source.Variant.Get_Pref_Bg;
 
-      Variant := Source.Variant.Get_Pref_Variant;
+         if Source_Style_Bg = Source_Variant_Bg then
+            Style.Background := Null_RGBA;
+         else
+            Style.Background := Source_Variant_Bg;
+         end if;
 
-      if Variant = Default then
-         declare
-            Font : constant Pango_Font_Description :=
-              Source.Style.Get_Pref_Font;
-         begin
-            if Get_Weight (Font) = Pango_Weight_Bold then
-               if Get_Style (Font) = Pango_Style_Italic then
-                  Style.Variant := Bold_Italic;
-               else
-                  Style.Variant := Bold;
-               end if;
-            else
-               if Get_Style (Font) = Pango_Style_Italic then
-                  Style.Variant := Italic;
-               else
-                  Style.Variant := Normal;
-               end if;
-            end if;
-         end;
-      else
-         Style.Variant := Variant;
+         Variant := Source.Variant.Get_Pref_Variant;
+
+         if Variant = Default then
+            Style.Variant := Variant_In_Font (Source.Style.Get_Pref_Font);
+         else
+            Style.Variant := Variant;
+         end if;
       end if;
    end Apply;
 
@@ -244,7 +263,7 @@ package body GPS.Kernel.Style_Manager is
      (Self    : Style_Manager_Record;
       Key     : Style_Key;
       Style   : Style_Preference;
-      Variant : Variant_Preference) return Style_Access
+      Variant : Variant_Preference := null) return Style_Access
    is
       V : Style_Access;
    begin
@@ -289,7 +308,7 @@ package body GPS.Kernel.Style_Manager is
      (Self   : Style_Manager_Record;
       Key    : Style_Key;
       Style  : Style_Key;
-      Shade_Or_Lighten_Amount : Float) return Style_Access
+      Shade_Or_Lighten_Amount : Gdouble) return Style_Access
    is
       V : Style_Access;
       O : Style_Access;

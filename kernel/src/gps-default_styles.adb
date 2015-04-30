@@ -89,7 +89,9 @@ package body GPS.Default_Styles is
 
    begin
 
-      --  Language
+      ------------
+      -- Editor --
+      ------------
 
       for E in Standout_Language_Entity'Range loop
          Language_Styles (E) := M.Create_From_Preferences
@@ -98,14 +100,22 @@ package body GPS.Default_Styles is
             Variant => Entity_To_Pref (E));
       end loop;
 
-      --  Search
+      Editor_Default_Style := M.Create_From_Preferences
+        (Key   => "Editor default",
+         Style => Default_Style);
+
+      ------------
+      -- Search --
+      ------------
 
       Init (Search_Results_Style,
             -"Search results",
             "",
             Bg => Search_Src_Highlight, Speedbar => True);
 
-      --  Builder
+      -----------
+      -- Build --
+      -----------
 
       Init (Builder_Styles (Errors),
             -"Builder results",
@@ -131,7 +141,6 @@ package body GPS.Default_Styles is
             -"Background compilation",
             "",
             Bg => null, Speedbar => True);
-
    end Initialize_Default_Styles;
 
 end GPS.Default_Styles;

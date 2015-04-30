@@ -23,6 +23,8 @@
 @define-color inactive_tab_color #666;
 @define-color active_tab_color black;
 @define-color scrollbar_slider_color #c3c5c6;
+@define-color gutter_color grey;
+@define-color gutter_background #f8f8f8;
 
 * {
    /* Reduce the size of the scroll arrows in notebooks */
@@ -235,7 +237,7 @@ GtkNotebook.noTabs {
  **********************/
 
 .scrollbar {
-   background-color: @local_toolbar_color;
+/*   background-color: @local_toolbar_color; */
 
 /* Uncomment this to activate scrollbar steppers
   -GtkScrollbar-has-backward-stepper: true;
@@ -346,6 +348,15 @@ GtkEntry.search {
     background-color: @completion-notes-color;
     color: @completions-notes-text-color;
     text-shadow: none;
+}
+
+/**********************************
+ * Editors
+ **********************************/
+
+.gutter {
+  background-color: @gutter_background;
+  color: @gutter_color;
 }
 
 /**********************************

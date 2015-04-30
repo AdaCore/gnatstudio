@@ -186,6 +186,20 @@ def get_luminosity(color):
     return l
 
 
+def lighten(color, amount):
+    """ If amount is positive, lighten the color. Otherwise, shade.
+    """
+    r, g, b = (int(color[1 + 2*x:1 + 2*x+2], 16) / 255.0 for x in xrange(3))
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+
+    l = l + amount
+    r, g, b = colorsys.hls_to_rgb(h, l, s)
+
+    def c(x):
+        return int(x * 255.0)
+    return '#{:02x}{:02x}{:02x}'.format(c(r), c(g), c(b))
+
+
 class Theme(object):
 
     def __init__(self, filename):
@@ -207,6 +221,8 @@ class Theme(object):
 
         d['name'] = self.name
 
+        is_light = True  # Whether this is a light theme. Recomputed below.
+
         # Go through all the scopes being specified, and attempt to find
         # a match for a GPS pref
         for theme_pref_dict in self.o['settings'][1:]:
@@ -222,14 +238,26 @@ class Theme(object):
             d['@base_color'] = self.general['background']
 
         if 'foreground' in self.general and 'background' in self.general:
-            # ??? Should this be the gutter style instead?
-            d["General-Default-Style"] = ("${font}",
-                                          self.general['foreground'],
-                                          self.general['background'])
+            # We are able to get a better idea of the luminosity
+            # this theme is: if the luminosity of the foreground is higher
+            # than that of the background, we have a dark theme.
+            fg = self.general['foreground']
+            bg = self.general['background']
 
-            d["Src-Editor-Reference-Style"] = ("${editorfont}",
-                                               self.general['foreground'],
-                                               self.general['background'])
+            is_light = get_luminosity(bg) > get_luminosity(fg)
+
+            d["General-Default-Style"] = ("${font}", fg, bg)
+
+            d["Src-Editor-Reference-Style"] = ("${editorfont}", fg, bg)
+
+            # Compute nice gutter settings
+
+            if is_light:
+                d['@gutter_color'] = lighten(fg, 0.1)
+                d['@gutter_background'] = lighten(bg, -0.05)
+            else:
+                d['@gutter_color'] = lighten(fg, -0.1)
+                d['@gutter_background'] = lighten(bg, 0.05)
 
         # ??? The selection is generally too close to the line highlight
         # in textmate themes: do not read the selection from these themes.
@@ -252,17 +280,15 @@ class Theme(object):
 
         if 'lineHighlight' in self.general:
             d["Src-Editor-Current-Line-Color"] = to_rgba(
-                self.general['lineHighlight'], 0.05)
+                self.general['lineHighlight'], 0.1)
 
             d["Src-Editor-Current-Block-Color"] = to_rgba(
-                self.general['lineHighlight'], 0.7, force_alpha=True)
-
-        # Finally, determine whether the theme is light-based or dark-based
+                self.general['lineHighlight'], 0.5, force_alpha=True)
 
         luminosity = get_luminosity(self.general['background'])
         d['@luminosity'] = luminosity
 
-        if luminosity >= 128.0:
+        if is_light:
             d["GPS6-Gtk-Theme-Name"] = "Adwaita"
             return gps_utils.Chainmap(d, light_common)
         else:

@@ -36,6 +36,9 @@ package GPS.Default_Styles is
    Language_Styles : Language_Styles_Array;
    --  Style corresponding to language elements, used for syntax highlighting
 
+   Editor_Default_Style : Style_Access;
+   --  The style for normal text in the editor
+
    -----------
    -- Build --
    -----------
@@ -54,5 +57,6 @@ package GPS.Default_Styles is
    ------------
 
    Search_Results_Style     : Style_Access;
+   --  Style used to highlight search results
 
 end GPS.Default_Styles;

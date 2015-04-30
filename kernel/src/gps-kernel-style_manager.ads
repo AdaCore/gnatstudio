@@ -165,9 +165,9 @@ package GPS.Kernel.Style_Manager is
      (Self    : Style_Manager_Record;
       Key     : Style_Key;
       Style   : Style_Preference;
-      Variant : Variant_Preference) return Style_Access;
-   --  Create an entry for Key in the manager.
-   --  If this key was already entered, set it to follow the preference.
+      Variant : Variant_Preference := null) return Style_Access;
+   --  Create a style that follows a given style pref, modified with a
+   --  variant pref.
 
    function Create_From_Preferences
      (Self    : Style_Manager_Record;
@@ -185,7 +185,7 @@ package GPS.Kernel.Style_Manager is
      (Self   : Style_Manager_Record;
       Key    : Style_Key;
       Style  : Style_Key;
-      Shade_Or_Lighten_Amount : Float) return Style_Access;
+      Shade_Or_Lighten_Amount : Gdouble) return Style_Access;
    --  Create an entry for Key in the manager.
    --  Key will get its value from Source and a Shade_Or_Lighten amount
    --  (specified between 0 and 1)
