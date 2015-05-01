@@ -103,8 +103,17 @@ def on_label(context):
 
 def on_filter(context):
     try:
-        return isinstance(context, GPS.FileContext) and len(
-            GPS.Message.list(file=context.file())) > 0
+        # Return True if there are any messages in the file context
+        # which have the flag '2' set to 0, meaning that they show up in
+        # the Locations view.
+        if not isinstance(context, GPS.FileContext):
+            return False
+
+        for m in GPS.Message.list(file=context.file()):
+            if not m.get_flags() & 2:
+                return True
+
+        return False
     except:
         return False
 

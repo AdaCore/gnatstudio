@@ -212,6 +212,10 @@ package GPS.Kernel.Preferences is
    Hyper_Links_Style         : Variant_Preference;
 
    Delimiter_Color           : Color_Preference;
+
+   Ephemeral_Highlighting_Simple : Variant_Preference;
+   Ephemeral_Highlighting_Smart  : Variant_Preference;
+
    Block_Folding             : Boolean_Preference;
    Block_Highlighting        : Boolean_Preference;
    Automatic_Syntax_Check    : Boolean_Preference;

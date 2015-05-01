@@ -6,6 +6,8 @@ import colorsys
 import glob
 import os
 import plistlib
+import sys
+import traceback
 
 import GPS
 import gps_utils
@@ -20,15 +22,11 @@ light_common = {
 
     "Src-Editor-Aspects-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent"),
 
-    "Plugins/auto_highlight_occurrences/color_type":
-    "rgba(144, 238, 144, 0.5)",
-    "Plugins/auto_highlight_occurrences/color_unknown": "rgb(215,215,215)",
-    "Plugins/auto_highlight_occurrences/color_subprogram":
-    "rgba(252, 175, 62, 0.5)",
-    "Plugins/auto_highlight_occurrences/color_object":
-    "rgba(255, 190, 238, 0.7)",
-    "Plugins/auto_highlight_occurrences/color_package_namespace":
-    "rgba(144, 238, 144, 0.5)",
+    "Src-Editor-Ephemeral-Smart": (
+        "DEFAULT", "transparent", "rgba(252,172,79,0.4)"),
+
+    "Src-Editor-Ephemeral-Simple": (
+        "DEFAULT", "transparent", "rgba(134,134,134,0.35)"),
 
     'Plugins/isearch/nextmatchcolor': 'cyan',
     'Plugins/isearch/bgcolor': 'red',
@@ -62,12 +60,11 @@ dark_common = {
                                    "rgb(117,113,94)",
                                    "transparent"),
 
-    "Plugins/auto_highlight_occurrences/color_type": "rgb(3,41,97)",
-    "Plugins/auto_highlight_occurrences/color_unknown": "rgb(32,74,135)",
-    "Plugins/auto_highlight_occurrences/color_subprogram": "rgb(39,81,0)",
-    "Plugins/auto_highlight_occurrences/color_object": "rgb(92,53,102)",
-    "Plugins/auto_highlight_occurrences/color_package_namespace":
-    "rgb(94,0,118)",
+    "Src-Editor-Ephemeral-Smart": (
+        "DEFAULT", "transparent", "rgba(128,236,255,0.35)"),
+
+    "Src-Editor-Ephemeral-Simple": (
+        "DEFAULT", "transparent", "rgba(180,180,180,0.5)"),
 
     'Plugins/isearch/nextmatchcolor': 'rgb(9,60,60)',
     'Plugins/isearch/bgcolor': 'rgb(77,19,19)',
@@ -163,6 +160,14 @@ def to_GPS_prefs(d):
     return prefs
 
 
+def to_rgb(color, out_of=255.0):
+    """ Return the r, g, b (between 0 and out_of) of a color given in #rrggbb
+        format.
+    """
+    return (int(color[1 + 2*x:1 + 2*x+2], 16) * out_of / 255.0
+            for x in xrange(3))
+
+
 def to_rgba(color, opacity=0.4, force_alpha=False):
     """ Take a color of the form "#RRGGBB" or "RRGGBBAA" and return it in the
         form "rgba(r,g,b,a)". Use given opacity as default opacity.
@@ -173,7 +178,7 @@ def to_rgba(color, opacity=0.4, force_alpha=False):
         if len(color) == 9:
             the_opacity = float(int(color[7:9], 16)) / 256.0
 
-    r, g, b = (int(color[1 + 2*x:1 + 2*x+2], 16) for x in xrange(3))
+    r, g, b = to_rgb(color)
     return "rgba(%s,%s,%s,%s)" % (r, g, b, the_opacity)
 
 
@@ -181,18 +186,45 @@ def get_luminosity(color):
     """ Return as a float between 0 and 255.0 the luminosity of color.
         Color should be given in hex string format, for instance "#5c66b2".
     """
-    r, g, b = (int(color[1 + 2*x:1 + 2*x+2], 16) for x in xrange(3))
+    r, g, b = to_rgb(color, 1.0)
     h, l, s = colorsys.rgb_to_hls(r, g, b)
-    return l
+    return l * 255.0
 
 
 def lighten(color, amount):
     """ If amount is positive, lighten the color. Otherwise, shade.
     """
-    r, g, b = (int(color[1 + 2*x:1 + 2*x+2], 16) / 255.0 for x in xrange(3))
+    r, g, b = to_rgb(color, 1.0)
     h, l, s = colorsys.rgb_to_hls(r, g, b)
 
     l = l + amount
+
+    if l < 0.0:
+        l = 0.0
+    if l > 1.0:
+        l = 1.0
+
+    r, g, b = colorsys.hls_to_rgb(h, l, s)
+
+    def c(x):
+        return int(x * 255.0)
+    return '#{:02x}{:02x}{:02x}'.format(c(r), c(g), c(b))
+
+
+def mix(a, b, coef=0.5):
+    """ Return a mix of colors a and b, specified in #rrggbb format.
+        Coef is where to place the cursor: 0.0 for color a, 1.0 for color b.
+    """
+    ra, ga, ba = to_rgb(a, 1.0)
+    rb, gb, bb = to_rgb(b, 1.0)
+
+    ha, la, sa = colorsys.rgb_to_hls(ra, ga, ba)
+    hb, lb, sb = colorsys.rgb_to_hls(rb, gb, bb)
+
+    h = (1 - coef) * ha + coef * hb
+    s = (1 - coef) * sa + coef * sb
+    l = (1 - coef) * la + coef * lb
+
     r, g, b = colorsys.hls_to_rgb(h, l, s)
 
     def c(x):
@@ -221,7 +253,23 @@ class Theme(object):
 
         d['name'] = self.name
 
-        is_light = True  # Whether this is a light theme. Recomputed below.
+        if 'foreground' in self.general and 'background' in self.general:
+            fg = self.general['foreground']
+            bg = self.general['background']
+        else:
+            # Warn if theme does not provide these essential elements
+            GPS.Console("Messages").write(
+                "Background or foreground not found in textmate theme '%s'.\n"
+                % self.name)
+
+            fg = "#000000"
+            bg = "#ffffff"
+
+        # The right way to get the luminosity of a theme is to compare the
+        # background and the foreground.
+
+        is_light = get_luminosity(bg) > get_luminosity(fg)
+        light_val = is_light * 1 + (not is_light) * -1  # to use in equations
 
         # Go through all the scopes being specified, and attempt to find
         # a match for a GPS pref
@@ -232,32 +280,12 @@ class Theme(object):
 
         # Get the general settings
 
-        if 'foreground' in self.general:
-            d['@text_color'] = self.general['foreground']
-        if 'background' in self.general:
-            d['@base_color'] = self.general['background']
+        d['@text_color'] = fg
+        d['@base_color'] = bg
+        d["Src-Editor-Reference-Style"] = ("${editorfont}", fg, bg)
+        d["General-Default-Style"] = ("${font}", fg, bg)
 
-        if 'foreground' in self.general and 'background' in self.general:
-            # We are able to get a better idea of the luminosity
-            # this theme is: if the luminosity of the foreground is higher
-            # than that of the background, we have a dark theme.
-            fg = self.general['foreground']
-            bg = self.general['background']
-
-            is_light = get_luminosity(bg) > get_luminosity(fg)
-
-            d["General-Default-Style"] = ("${font}", fg, bg)
-
-            d["Src-Editor-Reference-Style"] = ("${editorfont}", fg, bg)
-
-            # Compute nice gutter settings
-
-            if is_light:
-                d['@gutter_color'] = lighten(fg, 0.1)
-                d['@gutter_background'] = lighten(bg, -0.05)
-            else:
-                d['@gutter_color'] = lighten(fg, -0.1)
-                d['@gutter_background'] = lighten(bg, 0.05)
+        # Compute the selection
 
         # ??? The selection is generally too close to the line highlight
         # in textmate themes: do not read the selection from these themes.
@@ -268,9 +296,15 @@ class Theme(object):
 
         # ... instead, invert the default fg and bg.
 
-        if 'foreground' in self.general and 'background' in self.general:
-            d['@editor_bg_selection'] = self.general['foreground']
-            d['@editor_fg_selection'] = self.general['background']
+        d['@editor_bg_selection'] = self.general['foreground']
+        d['@editor_fg_selection'] = self.general['background']
+
+        # Compute nice gutter settings
+
+        d['@gutter_color'] = lighten(fg, 0.07 * light_val)
+        d['@gutter_background'] = lighten(bg, -0.05 * light_val)
+
+        # Caret
 
         if 'caret' in self.general:
             # The following preferences are derived from the caret color:
@@ -278,12 +312,34 @@ class Theme(object):
 
             d["@caret"] = self.general['caret']
 
-        if 'lineHighlight' in self.general:
-            d["Src-Editor-Current-Line-Color"] = to_rgba(
-                self.general['lineHighlight'], 0.1)
+        # Ignore the line highlight in textmate themes. instead,
+        # compute them from the background.
 
-            d["Src-Editor-Current-Block-Color"] = to_rgba(
-                self.general['lineHighlight'], 0.5, force_alpha=True)
+        d["Src-Editor-Current-Line-Color"] = to_rgba(
+            lighten(bg, -0.15 * light_val), 0.5, force_alpha=True)
+        d["Src-Editor-Current-Block-Color"] = to_rgba(
+            lighten(fg, 0.25 * light_val), 0.5, force_alpha=True)
+
+        # Compute values for the auto-highlight-occurrences
+
+        d["Src-Editor-Ephemeral-Simple"] = (
+            "DEFAULT", "transparent",
+            # For the simple case, mix the normal fg and bg, then lighten
+            # and make it transparent
+            to_rgba(lighten(mix(fg, bg, 0.3), 0.05 * light_val),
+                    0.6,
+                    force_alpha=True))
+
+        kw = fg
+        # Attempt to find the color for the keywords
+        if "Src-Editor-Keywords-Variant" in d:
+            kw = d["Src-Editor-Keywords-Variant"][1]
+
+        d["Src-Editor-Ephemeral-Smart"] = (
+            "DEFAULT", "transparent",
+            # For the smart case, use the keyword foreground as background
+            to_rgba(kw, 0.6, force_alpha=True))
+        # Compute the general luminosity of the theme, for sorting purposes
 
         luminosity = get_luminosity(self.general['background'])
         d['@luminosity'] = luminosity
@@ -306,6 +362,14 @@ def textmate_themes():
     for file in glob.glob(os.path.join(
         GPS.get_system_dir(),
             'share', 'gps', 'color_themes', 'themes', '*', '*.tmTheme')):
-        results.append(Theme(file).theme_dict())
+        try:
+            results.append(Theme(file).theme_dict())
+        except:
+            msg, _, tb = sys.exc_info()
+            tb = "\n".join(traceback.format_list(traceback.extract_tb(tb)))
+
+            GPS.Console("Messages").write(
+                "Exception when parsing theme file '%s':\n%s\n%s\n"
+                % (file, msg, str(tb)))
 
     return results

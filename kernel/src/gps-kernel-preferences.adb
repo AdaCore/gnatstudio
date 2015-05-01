@@ -790,6 +790,32 @@ package body GPS.Kernel.Preferences is
          Label   => -"Search results highlighting",
          Page    => -"Editor/Fonts & Colors");
 
+      Ephemeral_Highlighting_Smart := Create
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Ephemeral-Smart",
+         Label        => -"Ephemeral highlighting (smart)",
+         Doc          => -(
+           "Style used for ephemeral highlighting of context-sensitive"
+           & " information, such as highlighting of matching entities."),
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg   => "rgba(0,0,0,0.0)",
+         Default_Bg   => "rgba(252,172,79,0.4)",
+         Page         => -"Editor/Fonts & Colors");
+
+      Ephemeral_Highlighting_Simple := Create
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Ephemeral-Simple",
+         Label        => -"Ephemeral highlighting (simple)",
+         Doc          => -(
+           "Style used for ephemeral highlighting in the editor for simple"
+           & " cases, such as highlighting text-based matches."),
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg   => "rgba(0,0,0,0.0)",
+         Default_Bg   => "rgba(134,134,134,0.35)",
+         Page         => -"Editor/Fonts & Colors");
+
       -- Refactoring --
 
       Add_Subprogram_Box := Create

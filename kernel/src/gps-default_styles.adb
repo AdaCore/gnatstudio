@@ -104,6 +104,16 @@ package body GPS.Default_Styles is
         (Key   => "Editor default",
          Style => Default_Style);
 
+      Editor_Ephemeral_Highlighting_Smart := M.Create_From_Preferences
+        (Key     => "Editor ephemeral highlighting smart",
+         Style   => Default_Style,
+         Variant => Ephemeral_Highlighting_Smart);
+
+      Editor_Ephemeral_Highlighting_Simple := M.Create_From_Preferences
+        (Key     => "Editor ephemeral highlighting simple",
+         Style   => Default_Style,
+         Variant => Ephemeral_Highlighting_Simple);
+
       ------------
       -- Search --
       ------------

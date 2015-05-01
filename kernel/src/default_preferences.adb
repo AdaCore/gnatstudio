@@ -1777,6 +1777,7 @@ package body Default_Preferences is
          Update_Fg'Access, Button, P);
 
       Gtk_New_With_Rgba (Button, Get_Pref_Bg (Style_Preference (Pref)));
+      Button.Set_Use_Alpha (True);
       Set_Tooltip_Text (Button, -"Background color");
       Pack_Start (Box, Button, Expand => False);
       Preference_Handlers.Connect

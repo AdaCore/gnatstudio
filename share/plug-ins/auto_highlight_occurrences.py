@@ -33,20 +33,6 @@ from gps_utils import *
 from gps_utils.highlighter import Location_Highlighter, OverlayStyle
 import traceback
 
-default_colors = {
-    "object":            "rgba(255, 190, 238, 0.7)",
-    "subprogram":        "rgba(252, 175, 62, 0.5)",
-    "package/namespace": "rgba(144, 238, 144, 0.5)",
-    "type":              "rgba(144, 238, 144, 0.5)",
-    "unknown":           "#d7d7d7"}
-
-# Whether to display occurrences in the speed bar
-GPS.Preference("Plugins/auto_highlight_occurrences/speedbar").create(
-    "Show in speedbar", "boolean",
-    "Whether to display the matches in the speed bar in editors."
-    " You must restart gps to take changes into account.",
-    False)
-
 GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlight_entities").create(
     "Highlight entities", "boolean",
@@ -64,17 +50,6 @@ GPS.Preference(
     "Highlight current word", "boolean",
     "Whether to attempt highlighting of the word under the cursor.",
     False)
-
-# The default colors
-for k in default_colors:
-    pref_name = \
-        ("Plugins/auto_highlight_occurrences/color_" + k.replace("/", "_"))
-
-    GPS.Preference(pref_name).create(
-        "Highlight color for " + k, "color",
-        "color used to highlight matching occurrences."
-        " You must restart gps to take changes into account",
-        default_colors[k])
 
 
 class Current_Entity_Highlighter(Location_Highlighter):
@@ -95,8 +70,17 @@ class Current_Entity_Highlighter(Location_Highlighter):
         self.highlight_word = None
         self.entity = None
         self.word = None
-        self.styles = {}  # dict of OverlayStyle
-        self.speedbar = None
+        self.styles = {
+            "text": OverlayStyle(
+                name="dynamic occurrences simple",
+                speedbar=True,
+                style=GPS.Style(
+                    "Editor ephemeral highlighting simple", False)),
+            "entity": OverlayStyle(
+                name="dynamic occurrences smart",
+                speedbar=True,
+                style=GPS.Style(
+                    "Editor ephemeral highlighting smart", False))}
         self.pref_cache = {}
 
         self.current_buffer = None
@@ -116,26 +100,6 @@ class Current_Entity_Highlighter(Location_Highlighter):
         """
 
         changed = False
-
-        v = GPS.Preference("Plugins/auto_highlight_occurrences/speedbar").get()
-        if v != self.speedbar:
-            self.speedbar = v
-            changed = True
-
-        for k in default_colors:
-            pref_name = "Plugins/auto_highlight_occurrences/color_" + \
-                k.replace("/", "_")
-            v = GPS.Preference(pref_name).get()
-            if (pref_name not in self.pref_cache
-                    or self.pref_cache[pref_name] != v
-                    or changed):   # take speedbar changes into account
-
-                self.pref_cache[pref_name] = v
-                changed = True
-                self.styles[k] = OverlayStyle(
-                    name="dynamic occurrences " + k,
-                    background=v,
-                    speedbar=self.speedbar)
 
         v = GPS.Preference(
             "Plugins/auto_highlight_occurrences/highlight_entities").get()
@@ -318,16 +282,9 @@ class Current_Entity_Highlighter(Location_Highlighter):
             self.remove_highlight(buffer=self.current_buffer)
 
         if self.entity:
-            if self.entity.is_subprogram():
-                self.set_style(self.styles["subprogram"])
-            elif self.entity.is_container():
-                self.set_style(self.styles["package/namespace"])
-            elif self.entity.is_type():
-                self.set_style(self.styles["type"])
-            else:
-                self.set_style(self.styles["object"])
+            self.set_style(self.styles["entity"])
         else:
-            self.set_style(self.styles["unknown"])
+            self.set_style(self.styles["text"])
 
         self.current_buffer = buffer
         self.start_highlight(buffer=buffer)

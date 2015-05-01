@@ -31,13 +31,14 @@ class OverlayStyle(object):
     :param boolean whole_line: whether to highlight the whole line, up to the
        right margin
     :param boolean speedbar: whether to show a mark in the speedbar to the left
-       of editors. This forces whole_line to True.
+       of editors.
+    :param GPS.Style style: the style to apply to the overlay.
     :param kwargs: other properties supported by EditorOverlay
     """
 
     def __init__(self, name, foreground="", background="", weight=None,
                  slant=None, editable=None, whole_line=False, speedbar=False,
-                 **kwargs):
+                 style=None, **kwargs):
         self.name = name
         self.foreground = foreground
         self.background = background
@@ -52,12 +53,16 @@ class OverlayStyle(object):
 
         self.others = kwargs
 
-        if speedbar:
-            self._style = GPS.Style(self.name)
-            if self.background:
-                self._style.set_background(self.background)
-            if self.foreground:
-                self._style.set_foreground(self.foreground)
+        if speedbar or style:
+            if style:
+                self._style = style
+            else:
+                self._style = GPS.Style(self.name)
+                if self.background:
+                    self._style.set_background(self.background)
+                if self.foreground:
+                    self._style.set_foreground(self.foreground)
+
             self._style.set_in_speedbar(speedbar)
 
     def use_messages(self):
