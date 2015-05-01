@@ -40,8 +40,14 @@ package body Items.Arrays is
       Index   : Long_Integer;
       Dim_Num : Positive) return String
    is
-      Length : constant Long_Integer := Item.Dimensions (Dim_Num).Last -
-        Item.Dimensions (Dim_Num).First + 1;
+      Length : constant Long_Integer :=
+        (if Item.Dimensions (Dim_Num).Last = Long_Integer'First or
+             Item.Dimensions (Dim_Num).First = Long_Integer'Last
+         then
+            0 --  if we found special values for dynamic bounds
+         else
+            Item.Dimensions (Dim_Num).Last -
+             Item.Dimensions (Dim_Num).First + 1);
    begin
       --  Do we have an array with no element ?
 
