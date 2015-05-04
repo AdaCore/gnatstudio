@@ -539,6 +539,7 @@ package body Completion_Window is
         or else not Explorer.Has_Idle_Computation
         or else Explorer.Completion_Window.In_Destruction
       then
+         Explorer.Has_Idle_Computation := False;
          return False;
       end if;
 
@@ -554,6 +555,7 @@ package body Completion_Window is
               and then Explorer.Completion_Window.Volatile
             then
                Remove (Explorer.Idle_Computation);
+               Explorer.Has_Idle_Computation := False;
                Explorer.Completion_Window.Delete;
                return False;
             end if;
