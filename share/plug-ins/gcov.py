@@ -19,6 +19,7 @@ Note that GPS calls gcov so that the .gcov files are generated
 
 import GPS
 import os
+import re
 from gps_utils import interactive
 from GPS import *
 from os import *
@@ -77,14 +78,17 @@ def run_gcov():
     try:
         p = Process("gcov --version")
         out = p.get_result()
-        paren = out.find("(", out.find("GNAT"))
-        date = int(out[paren + 1:paren + 9])
-
-        if date < 20071005:
-            MDI.dialog("Your version of gcov is dated " + str(date) +
-                       ".\nThis plug-in requires gcov for GNAT dated " +
-                       "20071005 or later.")
-            return
+        p = re.compile("[1-9][0-9][0-9][0-9][0-1][0-9][0-3][0-9]")
+        found = p.findall(out)
+        if not found:
+            MDI.dialog("Could not find a date in the output of gcov.")
+        else:
+            date = found[0]
+            if date < 20071005:
+                MDI.dialog("Your version of gcov is dated " + str(date) +
+                           ".\nThis plug-in requires gcov for GNAT dated " +
+                           "20071005 or later.")
+                return
     except:
         MDI.dialog("""Could not read gcov version number.
 
