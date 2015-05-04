@@ -774,14 +774,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Current block color",
          Page    => -"Editor/Fonts & Colors");
 
-      Delimiter_Color := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Highlight-Delimiters-Color",
-         Default => "cyan",
-         Doc     => -"Color for highlighting delimiters",
-         Label   => -"Delimiter highlighting color",
-         Page    => -"Editor/Fonts & Colors");
-
       Search_Results_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Search_Results-Color",

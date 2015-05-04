@@ -486,9 +486,18 @@ arrow, as seen in the screenshot above).
 
       Color for highlighting the current source block.
 
-    * :guilabel:`Delimiter highlighting color`
+    * :guilabel:`Ephemeral highlighting (simple)`
 
-      Color for highlighting delimiters.
+      Color used for ephemeral highlighting in the editor, for instance the
+      delimiter corresponding to the one under the cursor, or the words matched
+      in simple text by the auto_highlight_occurrences plugin.
+
+    * :guilabel:`Ephemeral highlighting (smart)`
+
+      Same as :guilabel:`Ephemeral highlighting (simple)`, but indicates that
+      there is a more complex mechanism at work behind the scenes. For instance
+      the auto_highlight_occurrences plugin uses this to indicate that the
+      matches come from the cross-references engine.
 
     * :guilabel:`Search results highlighting`
 

@@ -211,8 +211,6 @@ package GPS.Kernel.Preferences is
    Numbers_Style             : Variant_Preference;
    Hyper_Links_Style         : Variant_Preference;
 
-   Delimiter_Color           : Color_Preference;
-
    Ephemeral_Highlighting_Simple : Variant_Preference;
    Ephemeral_Highlighting_Smart  : Variant_Preference;
 

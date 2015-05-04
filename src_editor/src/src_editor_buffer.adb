@@ -3360,8 +3360,7 @@ package body Src_Editor_Buffer is
 
       --  Create Delimiter_Tag and save it into the source buffer tag table
 
-      Create_Highlight_Line_Tag
-        (Buffer.Delimiter_Tag, Delimiter_Color.Get_Pref);
+      Buffer.Delimiter_Tag := Get_Tag (Editor_Ephemeral_Highlighting_Simple);
       Text_Tag_Table.Add (Tags, Buffer.Delimiter_Tag);
 
       --  Create the Hyper Mode Tag
@@ -3602,22 +3601,11 @@ package body Src_Editor_Buffer is
       Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Data);
       B       : constant Source_Buffer := Hook.Buffer;
       Timeout : Gint;
       Prev    : Boolean;
-      Pref    : constant Preference := Get_Pref (Data);
    begin
-      if B.Delimiter_Tag /= null
-        and then (Pref = null
-                  or else Pref = Preference (Delimiter_Color))
-      then
-         Set_Property
-           (B.Delimiter_Tag,
-            Background_Rgba_Property,
-            Delimiter_Color.Get_Pref);
-      end if;
-
       --  Connect timeout, to handle automatic saving of buffer
 
       if B.Timeout_Registered then
