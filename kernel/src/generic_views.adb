@@ -30,6 +30,7 @@ with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Menu;                use Gtk.Menu;
+with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Style_Context;       use Gtk.Style_Context;
 with Gtk.Radio_Menu_Item;     use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
@@ -58,6 +59,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Search;                use GPS.Search;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
+with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with System;
 
@@ -94,29 +96,73 @@ package body Generic_Views is
       Event : Gdk_Event_Button);
    --  Creates the popup menu to configure the filter settings.
 
-   procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
+   procedure On_Destroy_Filter (Self : access Gtk_Widget_Record'Class);
    --  Called when a filter panel is destroyed
+
+   function Build_Filter_Pattern
+     (Self : not null access Filter_Panel_Record'Class)
+      return Search_Pattern_Access;
+   --  Build the search pattern corresponding to the filter
+
+   function On_Filter_Focus_Out
+     (Filter : access GObject_Record'Class;
+      Event  : Gdk_Event_Focus) return Boolean;
+   --  Called when the focus leaves the filter field, to update the history.
+
+   procedure Update_Recent_Entries
+     (Panel : not null access Filter_Panel_Record'Class;
+      Add   : access Search_Pattern'Class := null);
+   --  If Add is specified, add it to the search pattern to the history.
+   --  In all cases, update the menu to show all recent entries.
 
    procedure Filter_Panel_Class_Init (Self : GObject_Class);
    pragma Convention (C, Filter_Panel_Class_Init);
-   --  Initialize the gtk+ classs
+   --  Initialize the gtk+ class
 
-   ----------------
-   -- On_Destroy --
-   ----------------
+   type Recent_Entry_Item_Record is new Gtk_Menu_Item_Record with record
+      Pattern    : String_Access;
+      Kind       : Search_Kind;
+      Invert     : Boolean;
+      Whole_Word : Boolean;
+      Panel      : access Filter_Panel_Record;
+   end record;
+   type Recent_Entry_Item is access all Recent_Entry_Item_Record'Class;
 
-   procedure On_Destroy (Self : access Gtk_Widget_Record'Class) is
+   procedure On_Destroy_Recent_Item (Self : access Gtk_Widget_Record'Class);
+   --  Called hwne an Recent_Entry_Item is destroyed
+
+   procedure On_Recent_Item_Activate
+     (Item : access Gtk_Menu_Item_Record'Class);
+   --  Called when selecting a past search string
+
+   ----------------------------
+   -- On_Destroy_Recent_Item --
+   ----------------------------
+
+   procedure On_Destroy_Recent_Item (Self : access Gtk_Widget_Record'Class) is
+      Item : constant Recent_Entry_Item := Recent_Entry_Item (Self);
+   begin
+      Free (Item.Pattern);
+   end On_Destroy_Recent_Item;
+
+   -----------------------
+   -- On_Destroy_Filter --
+   -----------------------
+
+   procedure On_Destroy_Filter (Self : access Gtk_Widget_Record'Class) is
       Filter : constant Filter_Panel := Filter_Panel (Self);
    begin
       if Filter.Pattern_Config_Menu /= null then
          Unref (Filter.Pattern_Config_Menu);
       end if;
 
+      Free (Filter.History_Prefix);
+
       if Filter.Timeout /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (Filter.Timeout);
          Filter.Timeout := Glib.Main.No_Source_Id;
       end if;
-   end On_Destroy;
+   end On_Destroy_Filter;
 
    ----------------------------
    -- On_Pattern_Config_Menu --
@@ -182,28 +228,26 @@ package body Generic_Views is
       View.Kernel := Kernel_Handle (Kernel);
    end Set_Kernel;
 
-   --------------------------------
-   -- Report_Filter_Changed_Idle --
-   --------------------------------
+   --------------------------
+   -- Build_Filter_Pattern --
+   --------------------------
 
-   function Report_Filter_Changed_Idle
-     (View : Abstract_View_Access) return Boolean
+   function Build_Filter_Pattern
+     (Self : not null access Filter_Panel_Record'Class)
+      return Search_Pattern_Access
    is
-      Regexp : constant Boolean :=
-        View.Filter.Regexp /= null and then View.Filter.Regexp.Get_Active;
+      Regexp      : constant Boolean :=
+        Self.Regexp /= null and then Self.Regexp.Get_Active;
       Approximate : constant Boolean :=
-        View.Filter.Approximate /= null
-        and then View.Filter.Approximate.Get_Active;
-      Fuzzy : constant Boolean :=
-        View.Filter.Fuzzy /= null and then View.Filter.Fuzzy.Get_Active;
-      Negate : constant Boolean :=
-        View.Filter.Negate /= null and then View.Filter.Negate.Get_Active;
-      Whole  : constant Boolean :=
-        View.Filter.Whole_Word /= null
-        and then View.Filter.Whole_Word.Get_Active;
-      Pattern : Search_Pattern_Access;
-      Text : constant String := View.Filter.Pattern.Get_Text;
-      Kind : constant Search_Kind :=
+        Self.Approximate /= null and then Self.Approximate.Get_Active;
+      Fuzzy       : constant Boolean :=
+        Self.Fuzzy /= null and then Self.Fuzzy.Get_Active;
+      Negate      : constant Boolean :=
+        Self.Negate /= null and then Self.Negate.Get_Active;
+      Whole       : constant Boolean :=
+        Self.Whole_Word /= null and then Self.Whole_Word.Get_Active;
+      Text        : constant String := Self.Pattern.Get_Text;
+      Kind        : constant Search_Kind :=
         (if Regexp then
             GPS.Search.Regexp
          elsif Approximate then
@@ -216,7 +260,7 @@ package body Generic_Views is
    begin
       if Text /= "" then
          if Starts_With (Text, "not:") then
-            Pattern := Build
+            return Build
               (Pattern         => Text (Text'First + 4 .. Text'Last),
                Case_Sensitive  => False,
                Whole_Word      => Whole,
@@ -224,7 +268,7 @@ package body Generic_Views is
                Kind            => Kind,
                Allow_Highlight => False);
          else
-            Pattern := Build
+            return Build
               (Pattern         => Text,
                Case_Sensitive  => False,
                Whole_Word      => Whole,
@@ -233,8 +277,19 @@ package body Generic_Views is
                Allow_Highlight => False);
          end if;
       end if;
+      return null;
+   end Build_Filter_Pattern;
 
-      View.Filter_Changed (Pattern);
+   --------------------------------
+   -- Report_Filter_Changed_Idle --
+   --------------------------------
+
+   function Report_Filter_Changed_Idle
+     (View : Abstract_View_Access) return Boolean
+   is
+      Pattern : Search_Pattern_Access := Build_Filter_Pattern (View.Filter);
+   begin
+      View.Filter_Changed (Pattern);  --  Pattern freed by Filter_Changed
       View.Filter.Timeout := Glib.Main.No_Source_Id;
       return False;
    end Report_Filter_Changed_Idle;
@@ -278,6 +333,148 @@ package body Generic_Views is
       end if;
    end Set_Filter;
 
+   ---------------------------
+   -- Update_Recent_Entries --
+   ---------------------------
+
+   procedure Update_Recent_Entries
+     (Panel : not null access Filter_Panel_Record'Class;
+      Add   : access Search_Pattern'Class := null)
+   is
+      Key : constant History_Key :=
+        History_Key (Panel.History_Prefix.all & "-filter-recent");
+      Item : Recent_Entry_Item;
+      List : GNAT.Strings.String_List_Access;
+      Prefix : Character;
+
+      function Is_Recent_Entry
+        (W : access Gtk_Widget_Record'Class) return Boolean
+        is (W.all in Recent_Entry_Item_Record'Class);
+      --  Whether W is a menu item for a recent search
+
+   begin
+      --  Create the history if necessary
+
+      Create_New_Key_If_Necessary
+        (Hist     => Panel.Kernel.Get_History.all,
+         Key      => Key,
+         Key_Type => Strings);
+      Set_Max_Length
+        (Hist     => Panel.Kernel.Get_History.all,
+         Key      => Key,
+         Num      => 5);
+
+      --  Remove all existing menu entries
+
+      Remove_All_Children
+        (Panel.Pattern_Config_Menu,
+         Filter => Is_Recent_Entry'Unrestricted_Access);
+
+      --  Add to history if necessary
+
+      if Add /= null then
+         case Add.Get_Kind is
+            when Full_Text   => Prefix := 'f';
+            when Regexp      => Prefix := 'r';
+            when Fuzzy       => Prefix := 'y';
+            when Approximate => Prefix := 'a';
+         end case;
+
+         Add_To_History
+           (Hist  => Panel.Kernel.Get_History.all,
+            Key   => Key,
+            New_Entry =>
+              Prefix
+              & (if Add.Get_Negate then '-' else '+')
+              & (if Add.Get_Whole_Word then 'w' else ' ')
+              & Add.Get_Text);
+      end if;
+
+      --  Add menu entries for each previous search
+
+      List := Get_History (Panel.Kernel.Get_History.all, Key);
+      if List /= null then
+         --  Add a separator
+         Item := new Recent_Entry_Item_Record;
+         Gtk.Menu_Item.Initialize (Item);
+         Panel.Pattern_Config_Menu.Append (Item);
+
+         for L in List'Range loop
+            declare
+               V : constant String := List (L).all;
+            begin
+               Item := new Recent_Entry_Item_Record;
+
+               case V (V'First) is
+                  when 'r' => Item.Kind := Regexp;
+                  when 'y' => Item.Kind := Fuzzy;
+                  when 'a' => Item.Kind := Approximate;
+                  when others => Item.Kind := Full_Text;
+               end case;
+
+               Item.Invert     := V (V'First + 1) = '-';
+               Item.Whole_Word := V (V'First + 2) = 'w';
+               Item.Pattern    := new String'(V (V'First + 3 .. V'Last));
+               Item.Panel      := Panel;
+
+               Gtk.Menu_Item.Initialize (Item, Item.Pattern.all);
+               Item.On_Destroy (On_Destroy_Recent_Item'Access);
+               Item.On_Activate (On_Recent_Item_Activate'Access);
+               Panel.Pattern_Config_Menu.Append (Item);
+            end;
+         end loop;
+      end if;
+   end Update_Recent_Entries;
+
+   -----------------------------
+   -- On_Recent_Item_Activate --
+   -----------------------------
+
+   procedure On_Recent_Item_Activate
+     (Item : access Gtk_Menu_Item_Record'Class)
+   is
+      Self : constant Recent_Entry_Item := Recent_Entry_Item (Item);
+   begin
+      Self.Panel.Pattern.Set_Text (Self.Pattern.all);
+      if Self.Panel.Whole_Word /= null then
+         Self.Panel.Whole_Word.Set_Active (Self.Whole_Word);
+      end if;
+      if Self.Panel.Negate /= null then
+         Self.Panel.Negate.Set_Active (Self.Invert);
+      end if;
+      if Self.Panel.Full_Text /= null then
+         Self.Panel.Full_Text.Set_Active (Self.Kind = Full_Text);
+      end if;
+      if Self.Panel.Regexp /= null then
+         Self.Panel.Regexp.Set_Active (Self.Kind = Regexp);
+      end if;
+      if Self.Panel.Fuzzy /= null then
+         Self.Panel.Fuzzy.Set_Active (Self.Kind = Fuzzy);
+      end if;
+      if Self.Panel.Approximate /= null then
+         Self.Panel.Approximate.Set_Active (Self.Kind = Approximate);
+      end if;
+   end On_Recent_Item_Activate;
+
+   -------------------------
+   -- On_Filter_Focus_Out --
+   -------------------------
+
+   function On_Filter_Focus_Out
+     (Filter : access GObject_Record'Class;
+      Event  : Gdk_Event_Focus) return Boolean
+   is
+      pragma Unreferenced (Event);
+      F : constant Filter_Panel := Filter_Panel (Filter);
+      Pattern : Search_Pattern_Access := Build_Filter_Pattern (F);
+   begin
+      if Pattern /= null then
+         Update_Recent_Entries (F, Pattern);
+         Free (Pattern);
+      end if;
+      return False;  --  propagate event
+   end On_Filter_Focus_Out;
+
    ------------------
    -- Build_Filter --
    ------------------
@@ -290,9 +487,8 @@ package body Generic_Views is
       Placeholder : String := "";
       Options     : Filter_Options_Mask := 0)
    is
-      F : Filter_Panel;
-      Full_Text : Gtk_Radio_Menu_Item;
-      Sep       : Gtk_Separator_Menu_Item;
+      F   : Filter_Panel;
+      Sep : Gtk_Separator_Menu_Item;
    begin
       if Self.Filter /= null then
          return;
@@ -304,6 +500,8 @@ package body Generic_Views is
 
       Self.Filter := new Filter_Panel_Record;
       F := Self.Filter;
+      F.History_Prefix := new String'(String (Hist_Prefix));
+      F.Kernel := Self.Kernel;
 
       Glib.Object.Initialize_Class_Record
         (Ancestor     => Gtk.Tool_Item.Get_Type,
@@ -316,13 +514,14 @@ package body Generic_Views is
       F.Set_Expand (True);
       F.Set_Homogeneous (False);
 
-      Self.Filter.On_Destroy (On_Destroy'Access);
+      Self.Filter.On_Destroy (On_Destroy_Filter'Access);
 
       Gtk_New (F.Pattern, Placeholder => Placeholder);
       Set_Font_And_Colors (F.Pattern, Fixed_Font => True);
       Object_Callback.Object_Connect
         (F.Pattern, Gtk.Editable.Signal_Changed,
          Report_Filter_Changed'Access, Self);
+      F.Pattern.On_Focus_Out_Event (On_Filter_Focus_Out'Access, F);
       F.Add (F.Pattern);
 
       F.Pattern.Set_Tooltip_Markup
@@ -338,13 +537,13 @@ package body Generic_Views is
          Gtk_New (F.Pattern_Config_Menu);
          Ref (F.Pattern_Config_Menu);  --  unref'ed in On_Destroy
 
-         Gtk_New (Full_Text, Widget_SList.Null_List, -"Full text match");
-         Full_Text.On_Toggled (Report_Filter_Changed'Access, Self);
-         F.Pattern_Config_Menu.Add (Full_Text);
+         Gtk_New (F.Full_Text, Widget_SList.Null_List, -"Full text match");
+         F.Full_Text.On_Toggled (Report_Filter_Changed'Access, Self);
+         F.Pattern_Config_Menu.Add (F.Full_Text);
 
          if (Options and Has_Regexp) /= 0 then
             Gtk_New (F.Regexp, Label => -"Regular Expression",
-                     Group => Full_Text.Get_Group);
+                     Group => F.Full_Text.Get_Group);
             Associate (Get_History (Self.Kernel).all,
                        Hist_Prefix & "-filter-is-regexp",
                        F.Regexp, Default => False);
@@ -356,7 +555,7 @@ package body Generic_Views is
 
          if (Options and Has_Approximate) /= 0 then
             Gtk_New (F.Approximate, Label => -"Approximate matching",
-                     Group => Full_Text.Get_Group);
+                     Group => F.Full_Text.Get_Group);
             Associate (Get_History (Self.Kernel).all,
                        Hist_Prefix & "-filter-approximate",
                        F.Approximate, Default => False);
@@ -368,7 +567,7 @@ package body Generic_Views is
 
          if (Options and Has_Fuzzy) /= 0 then
             Gtk_New (F.Fuzzy, Label => -"Fuzzy matching",
-                     Group => Full_Text.Get_Group);
+                     Group => F.Full_Text.Get_Group);
             Associate (Get_History (Self.Kernel).all,
                        Hist_Prefix & "-filter-fuzzy",
                        F.Fuzzy, Default => False);
@@ -401,6 +600,7 @@ package body Generic_Views is
             F.Pattern_Config_Menu.Add (F.Whole_Word);
          end if;
 
+         Update_Recent_Entries (F);
       end if;
    end Build_Filter;
 

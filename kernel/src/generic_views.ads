@@ -30,6 +30,7 @@ with Gtkada.Handlers;
 with Gtk.Box;
 private with Gtk.Check_Menu_Item;
 private with Gtk.Radio_Menu_Item;
+private with GNAT.Strings;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
@@ -318,8 +319,13 @@ private
       Pattern : Gtkada.Search_Entry.Gtkada_Search_Entry;
       Pattern_Config_Menu : Gtk.Menu.Gtk_Menu;
 
+      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      History_Prefix : GNAT.Strings.String_Access;
+      --  Prefix for the entries in the histories.ads API
+
       Whole_Word  : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
       Negate      : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Full_Text   : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
       Regexp      : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
       Fuzzy       : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
       Approximate : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
