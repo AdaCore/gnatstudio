@@ -45,7 +45,7 @@ Selecting Windows
 =================
 
 Only one window is selected in GPS (the **active window**) at a time.
-Select a window by clicking in its title bar, which becomes a different
+Select a window by clicking on its tab, which becomes a different
 color, or selecting its name in the :menuselection:`Window` menu.  Or use
 the :guilabel:`Windows` view (see :ref:`The_Windows_View`), which also provides
 a convenient mechanism for slecting multiple windows at once.
@@ -67,14 +67,8 @@ Closing Windows
 ===============
 
 Wherever a window is displayed, you can close it by clicking the small
-:guilabel:`X` icon in its tab or selecting the window by clicking anywhere
-in its title bar and selecting the :menuselection:`Window --> Close` menu.
-
-.. index:: preferences; windows --> show title bars
-
-If you have chosen to display window title bars, you can also click the
-:guilabel:`X` button in the title bar or double-click the icon to the left
-of the title bar, if present.
+:guilabel:`X` icon in its tab or selecting the window by clicking
+on its tab and selecting the :menuselection:`Window --> Close` menu.
 
 When you close a window, the focus is set to the window in the same
 notebook that previously had the focus. If you open an editor as a result
@@ -109,10 +103,7 @@ own. The rest of the previously superimposed windows are put in the right
 to achieve any desired layout.
 
 You can resize any split windows by dragging the handles that separate
-them. A preference (the :menuselection:`Edit --> Preferences` menu)
-controls whether this resizing is done in opaque or border mode. In the
-latter case, only the new handle position is displayed while you are
-dragging the window.
+them.
 
 You may want to bind the key shortcuts to the :menuselection:`Window -->
 Split Horizontally` and :menuselection:`Window --> Split Vertically` menus
@@ -191,8 +182,7 @@ containing several editors or browsers and selecting one of the
 :menuselection:`Split` entries in the :menuselection:`Window` menu.
 
 You can also drag and drop the window within GPS.  Select an item
-to drag by left-clicking in its title bar.  If the window is inside a
-notebook, you can also select the notebook tab.  In that case, you can also
+to drag by selecting the notebook tab.  In that case, you can also
 reorder the windows within the notebook: select the tab, then start moving
 left or right to the window's new position.  Your mouse must remain within
 the tab area or GPS will drop the window into another notebook.
@@ -204,7 +194,7 @@ Here are the various places where you can drop a window:
   While the mouse button is pressed, the target area is highlighted and
   shows where the window would be put if you release the mouse button. The
   background color of the highlight indicates whether the window will be
-  preserved (if the color is the same as the title bar) or not when
+  preserved or not when
   changing perspectives (for example, when starting a debug session). You
   can drag a window to one side of a notebook to split that notebook.
 

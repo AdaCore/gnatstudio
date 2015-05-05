@@ -207,49 +207,11 @@ arrow, as seen in the screenshot above).
     system (on Windows) or window manager (on Unix machines). This replaces
     the MDI.
 
-  * :guilabel:`Short titles for floats`
-
-    .. index:: float
-
-    All floating windows have a short title. In particular, base file names
-    are used for editors instead of full names.
-
   * :guilabel:`Background color`
 
     .. index:: color
 
     Color to use for the background of the MDI.
-
-  * :guilabel:`Title bar color`
-
-    .. index:: color
-
-    Color to use for the title bar of unselected items.
-
-  * :guilabel:`Selected title bar color`
-
-    .. index:: color
-
-    Color to use for the title bar of selected items.
-
-  * :guilabel:`Show title bars`
-
-    If :samp:`Always`, each window in GPS has its own title, displaying
-    information such as the name of the file and buttons to iconify,
-    maximize or close the window. The title bar is highlighted when the
-    window is currently selected.
-
-    If :samp:`Never`, the title bar is not displayed to save space on the
-    screen.  Instead, the tabs of notebooks are highlighted.
-
-    If :samp:`Central Only`, only the windows in the central area (i.e.,
-    the part that gets preserved when switching perspectives, which are
-    mostly editors) have a title bar.  This is often a good way to save
-    space on the screen; the title bar is useful for editors since it gives
-    the full name of the file as well as providing an easy handle for drag
-    operations, but the other views do not change position often and
-    it may be better to save space on the screen by not displaying their
-    title bars.
 
   * :guilabel:`Notebook tabs policy`
 

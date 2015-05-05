@@ -24,6 +24,9 @@ UNEXPECTED_EXCEPTIONS=yes
 
 OVERRIDE_MIDDLE_CLICK_PASTE = yes
 
+--  Whether to use opaque resizing in the MDI (this is on by default)
+MDI_OPAQUE_RESIZING = no
+
 --  Whether to use a system menu bar
 
 SYSTEM_MENUS = no

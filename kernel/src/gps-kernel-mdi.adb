@@ -62,7 +62,6 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with Config;
 with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Intl;                  use GPS.Intl;
@@ -93,18 +92,14 @@ package body GPS.Kernel.MDI is
    package Show_Tabs_Policy_Preferences is new
      Default_Preferences.Enums.Generics (Tabs_Policy_Enum);
 
-   package Title_Bars_Policy_Preferences is new
-     Default_Preferences.Enums.Generics (Title_Bars_Policy);
+   MDI_Opaque : constant Trace_Handle := Create ("mdi_opaque_resizing", On);
+   --  If disabled, resizing windows in the MDI will simply draw line on top
+   --  of the windows, rather than resize windows on the fly.
 
-   Pref_Titles_Policy    : Title_Bars_Policy_Preferences.Preference;
    Pref_Tabs_Policy      : Show_Tabs_Policy_Preferences.Preference;
    Pref_Tabs_Position    : Tabs_Position_Preferences.Preference;
-   MDI_Opaque            : Boolean_Preference;
    MDI_Destroy_Floats    : Boolean_Preference;
-   MDI_Title_Bar_Color   : Color_Preference;
-   MDI_Focus_Title_Color : Color_Preference;
    MDI_All_Floating      : Boolean_Preference;
-   MDI_Float_Short_Title : Boolean_Preference;
    MDI_Editors_Floating  : Boolean_Preference;
    MDI_Homogeneous_Tabs  : Boolean_Preference;
    Auto_Reload_Files     : Boolean_Preference;
@@ -351,15 +346,6 @@ package body GPS.Kernel.MDI is
    procedure Create_MDI_Preferences
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
-      MDI_Opaque := Create
-        (Manager => Get_Preferences (Kernel),
-         Name    => "GPS6-MDI-Opaque",
-         Default => Config.Default_Opaque_MDI,
-         Doc     => -("Whether items will be resized or moved opaquely when"
-                      & " not maximized"),
-         Label   => -"Opaque",
-         Page    => -"Windows");
-
       MDI_Destroy_Floats := Create
         (Manager => Get_Preferences (Kernel),
          Name    => "MDI-Destroy-Floats",
@@ -383,17 +369,6 @@ package body GPS.Kernel.MDI is
          Label   => -"All floating",
          Page    => -"Windows");
 
-      MDI_Float_Short_Title := Create
-        (Manager => Get_Preferences (Kernel),
-         Name    => "MDI-Float-Short-Title",
-         Default => False,
-         Doc     =>
-         -("If enabled, a shorter title will be used for both floating windows"
-           & " and the title bar of docked windows. In"
-           & " particular, base file names will be used for editors."),
-         Label   => -"Short titles",
-         Page    => -"Windows");
-
       MDI_Editors_Floating := Create
         (Manager => Kernel.Preferences,
          Name    => "MDI-Editors-Floating",
@@ -413,32 +388,6 @@ package body GPS.Kernel.MDI is
              & " Changing this preference requires a restart of GPS."),
          Label   => -"Homogeneous tabs",
          Page    => -"Windows");
-
-      MDI_Title_Bar_Color := Create
-        (Manager => Get_Preferences (Kernel),
-         Name    => "MDI-Title-Bar-Color",
-         Default => "#AAAAAA",
-         Doc     => -"Color to use for the title bar of unselected items",
-         Label   => -"Title bar color",
-         Page    => -"Windows");
-
-      MDI_Focus_Title_Color := Create
-        (Manager => Get_Preferences (Kernel),
-         Name    => "MDI-Focus-Title-Color",
-         Default => "#6297C5",
-         Doc     => -"Color to use for the title bar of selected items",
-         Label   => -"Selected title bar color",
-         Page    => -"Windows");
-
-      Pref_Titles_Policy := Title_Bars_Policy_Preferences.Create
-        (Get_Preferences (Kernel),
-         Name  => "GPS6-Window-Title-Bars",
-         Label => -"Show title bars",
-         Page  => -"Windows",
-         Doc   => -("Whether the windows should have their own title bars."
-           & " If this is disabled, then the notebooks tabs will"
-           & " be highlighted to show the current window"),
-         Default => Never);
 
       Pref_Tabs_Policy := Show_Tabs_Policy_Preferences.Create
         (Get_Preferences (Kernel),
@@ -493,26 +442,19 @@ package body GPS.Kernel.MDI is
       end case;
 
       if Pref = null
-        or else Pref = Preference (MDI_Opaque)
         or else Pref = Preference (MDI_Destroy_Floats)
         or else Pref = Preference (MDI_Editors_Floating)
         or else Pref = Preference (Default_Font)
-        or else Pref = Preference (MDI_Title_Bar_Color)
-        or else Pref = Preference (MDI_Focus_Title_Color)
-        or else Pref = Preference (Pref_Titles_Policy)
         or else Pref = Preference (Pref_Tabs_Position)
         or else Pref = Preference (Pref_Tabs_Policy)
         or else Pref = Preference (MDI_Homogeneous_Tabs)
       then
          Configure
            (Get_MDI (Kernel),
-            Opaque_Resize             => MDI_Opaque.Get_Pref,
+            Opaque_Resize             => Active (MDI_Opaque),
             Close_Floating_Is_Unfloat => not MDI_Destroy_Floats.Get_Pref
             and not MDI_Editors_Floating.Get_Pref,
-            Title_Font                => Default_Font.Get_Pref_Font,
-            Title_Bar_Color           => MDI_Title_Bar_Color.Get_Pref,
-            Focus_Title_Color         => MDI_Focus_Title_Color.Get_Pref,
-            Draw_Title_Bars           => Pref_Titles_Policy.Get_Pref,
+            Draw_Title_Bars           => Never,
             Show_Tabs_Policy          => Policy,
             Tabs_Position             => Pos,
             Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref);
@@ -522,13 +464,6 @@ package body GPS.Kernel.MDI is
         or else Pref = Preference (MDI_All_Floating)
       then
          Set_All_Floating_Mode (Get_MDI (Kernel), MDI_All_Floating.Get_Pref);
-      end if;
-
-      if Pref = null
-        or else Pref = Preference (MDI_Float_Short_Title)
-      then
-         Use_Short_Titles_For_Floats
-           (Get_MDI (Kernel), MDI_Float_Short_Title.Get_Pref);
       end if;
    end Configure_MDI;
 
