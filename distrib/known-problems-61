@@ -470,6 +470,20 @@ KP-61-N822-004 GPS: Input focus when creating/opening new windows
   Workaround: Use the mouse or Windows Manager shortcuts to switch between
               windows.
 
+KP-61-N717-017 GB: Detect the nature of the project at import
+
+  Problem:     When using WRWB and git repository to check out WR DKM/RTP
+               projects, sometimes the gnat.makefle and
+               scenario.makefile are not created as expected.
+
+  Status:      This is fixed in 2.10 on 2015-04-28.
+
+  Workaround:  Right click project, then properties, then Gnatbench
+               properties and touch something(e.g. deselect root project),
+               APPLY, select is root project, hit OK. This will create
+               the necessary files. Also restarting WRWB or opening a
+               closed project will auto-generate the missing gnat.makefile.
+
 Known problems fixed in GPS 6.1.2 / GNATbench 2.9.2
 ---------------------------------------------------
 
