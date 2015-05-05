@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O423-026 GPS: issue displaying complex objects in the debugger
+
+  Problem:    Sometimes a graphical displaying of complex object does not work
+              during debugging in GPS. As result, an incorrect representation of
+              the object is displayed and a CONSTRAINT_ERROR is reported in GPS
+              log file.
+
+  Status:     This was fixed in 6.2 on 2015-05-01
+
+  Workaround: Use 'print'in the debugger console instead.
+
 KP-61-O421-010 GPS: call tree not refreshed after xref recomputed
 
   Problem:    When querying a call tree for an entity before the
