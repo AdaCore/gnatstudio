@@ -1521,11 +1521,17 @@ package body Project_Explorers is
          begin
             --  If there is in common is '/', we just use a full path
             --  instead, that looks better, especially for runtime files
-            if Starts_With (Rel, "..")
-              and then Greatest_Common_Path
-                ((Dir, Project.Project_Path.Dir)).Full_Name.all = "/"
-            then
-               return Dir.Display_Full_Name;
+            if Starts_With (Rel, "..") then
+               declare
+                  --  Workaround against an early finalization problem
+                  --  (O506-030).
+                  GCP : constant Virtual_File := Greatest_Common_Path
+                    ((Dir, Project.Project_Path.Dir));
+               begin
+                  if GCP.Full_Name.all = "/" then
+                     return Dir.Display_Full_Name;
+                  end if;
+               end;
             end if;
 
             if Rel = "" then
