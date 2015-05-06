@@ -461,10 +461,6 @@ arrow, as seen in the screenshot above).
       the auto_highlight_occurrences plugin uses this to indicate that the
       matches come from the cross-references engine.
 
-    * :guilabel:`Search results highlighting`
-
-      Color for highlighting the search results within the text of editors.
-
   * :guilabel:`Ada`
 
     .. index:: Ada

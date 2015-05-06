@@ -774,14 +774,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Current block color",
          Page    => -"Editor/Fonts & Colors");
 
-      Search_Results_Color := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Search_Results-Color",
-         Default => "light blue",
-         Doc     => -"Color for highlighting search results",
-         Label   => -"Search results highlighting",
-         Page    => -"Editor/Fonts & Colors");
-
       Ephemeral_Highlighting_Smart := Create
         (Manager      => Kernel.Preferences,
          Name         => "Src-Editor-Ephemeral-Smart",
