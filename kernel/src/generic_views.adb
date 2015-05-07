@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;            use Ada.Calendar;
+
 with Glib.Main;               use Glib.Main;
 with Glib.Object;             use Glib, Glib.Object;
 with XML_Utils;               use XML_Utils;
@@ -28,6 +30,8 @@ with Gtk.Button;              use Gtk.Button;
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
 with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
+with Gtk.Event_Box;           use Gtk.Event_Box;
+with Gtk.Image;               use Gtk.Image;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
@@ -35,7 +39,6 @@ with Gtk.Style_Context;       use Gtk.Style_Context;
 with Gtk.Radio_Menu_Item;     use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
-with Gtk.Tool_Button;         use Gtk.Tool_Button;
 with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
@@ -62,6 +65,8 @@ with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with System;
+
+with Config;    use Config;
 
 package body Generic_Views is
    Me : constant Trace_Handle := Create ("Views");
@@ -808,17 +813,43 @@ package body Generic_Views is
       -- On_Display_Local_Config --
       -----------------------------
 
-      procedure On_Display_Local_Config
-        (View : access Gtk_Widget_Record'Class)
+      function On_Display_Local_Config
+        (View  : access Gtk_Widget_Record'Class;
+         Event : Gdk.Event.Gdk_Event) return Boolean
       is
          V : constant View_Access := View_Access (View);
          Menu : Gtk_Menu;
+         Time_Before_Factory : Time;
       begin
+         if Get_Button (Event) /= 1
+           or else Get_Event_Type (Event) /= Button_Press
+         then
+            return False;
+         end if;
+
+         if Host = Windows then
+            Time_Before_Factory := Clock;
+         end if;
+
          Gtk_New (Menu);
          V.Create_Menu (Menu);
+         View.Grab_Focus;
          Menu.Show_All;
 
-         Menu.Popup;
+         --  See comments in GUI_Utils.Button_Press_For_Contextual_Menu
+
+         if Host = Windows then
+            Popup (Menu,
+                   Button        => Gdk.Event.Get_Button (Event),
+                   Activate_Time => Gdk.Event.Get_Time (Event)
+                   + Guint32 ((Clock - Time_Before_Factory) * 1000));
+         else
+            Popup (Menu,
+                   Button        => Gdk.Event.Get_Button (Event),
+                   Activate_Time => Gdk.Event.Get_Time (Event));
+         end if;
+
+         return True;
       end On_Display_Local_Config;
 
       -----------
@@ -986,7 +1017,9 @@ package body Generic_Views is
          Toolbar      : Gtk_Toolbar;
          Box          : Gtk_Box;
          W            : Gtk_Widget;
-         Button       : Gtk_Tool_Button;
+         Item         : Gtk_Tool_Item;
+         Image        : Gtk_Image;
+         Event_Box    : Gtk_Event_Box;
 
       begin
          if Reuse_If_Exist then
@@ -1028,16 +1061,26 @@ package body Generic_Views is
          end if;
 
          if Local_Config then
-            Gtk_New (Button);
-            Button.Set_Icon_Name ("gps-config-menu-symbolic");
-            Button.Set_Name ("local-config");
-            Button.Set_Homogeneous (False);
-            Button.Set_Tooltip_Text (-"Configure this panel");
-            View.Append_Toolbar (Toolbar, Button, Is_Filter => True);
-            Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Button, Gtk.Tool_Button.Signal_Clicked,
-               On_Display_Local_Config_Access, View);
-            Button.Show_All;
+            Gtk_New (Item);
+            Gtk_New (Event_Box);
+            Item.Add (Event_Box);
+            Gtk_New_From_Icon_Name
+              (Image, "gps-config-menu-symbolic", Icon_Size_Menu);
+            Event_Box.Add (Image);
+            Event_Box.Set_Name ("local-config");
+            Item.Set_Homogeneous (False);
+            Item.Set_Tooltip_Text (-"Configure this panel");
+            View.Append_Toolbar (Toolbar, Item, Is_Filter => True);
+
+            Add_Events
+              (Event_Box,
+               Button_Press_Mask or Button_Release_Mask or Key_Press_Mask);
+
+            Gtkada.Handlers.Return_Callback.Object_Connect
+              (Event_Box, Signal_Button_Press_Event,
+               Gtkada.Handlers.Return_Callback.Event_Marshaller.To_Marshaller
+                 (On_Display_Local_Config_Access), View);
+            Item.Show_All;
          end if;
 
          --  A simple check that the widget can indeed get the keyboard focus.

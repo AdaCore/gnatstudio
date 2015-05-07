@@ -25,12 +25,24 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O429-016 GPS: behaviors of local toolbar menus
+
+  Problem:    The menus at the right of the view-local toolbars behave
+              differently to the rest of the menus. In particular, it may
+              happen that the menu stays open, but hidden behind the main
+              window.
+
+  Status:     This was fixed in 6.2 on 2015-05-07
+
+  Workaround: Move the main window and click on the menu to make it
+              disappear.
+
 KP-61-O423-026 GPS: issue displaying complex objects in the debugger
 
   Problem:    Sometimes a graphical displaying of complex object does not work
-              during debugging in GPS. As result, an incorrect representation of
-              the object is displayed and a CONSTRAINT_ERROR is reported in GPS
-              log file.
+              during debugging in GPS. As result, an incorrect representation
+              of the object is displayed and a CONSTRAINT_ERROR is reported in
+              the GPS log file.
 
   Status:     This was fixed in 6.2 on 2015-05-01
 

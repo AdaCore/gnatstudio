@@ -20,6 +20,8 @@
 --  to open them.
 --  This package must be instanciated at library-level
 
+with Gdk.Event;
+
 with GPS.Kernel.Modules;
 with GPS.Kernel.MDI;
 with GPS.Search;
@@ -285,10 +287,11 @@ package Generic_Views is
         GPS.Kernel.MDI.Load_Desktop_Function := Load_Desktop'Access;
       --  Support functions for the MDI
 
-      procedure On_Display_Local_Config
-        (View : access Gtk.Widget.Gtk_Widget_Record'Class);
+      function On_Display_Local_Config
+        (View : access Gtk.Widget.Gtk_Widget_Record'Class;
+         Event : Gdk.Event.Gdk_Event) return Boolean;
       On_Display_Local_Config_Access : constant
-        Gtkada.Handlers.Widget_Callback.Simple_Handler :=
+        Gtkada.Handlers.Return_Callback.Event_Marshaller.Handler :=
           On_Display_Local_Config'Access;
       --  Called to display the local config menu
 
