@@ -2511,6 +2511,7 @@ package body Src_Editor_View is
          Buffer_Line_Type (View.Current_Line),
          View.Highlight_As_Line,
          Gtk_Text_View (View),
+         View.Area,
          Num_Color,
          View.Current_Line_Color,
          Layout, Cr);

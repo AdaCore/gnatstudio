@@ -19,12 +19,16 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with Gdk;                      use Gdk;
 with Gdk.Cairo;                use Gdk.Cairo;
+with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.RGBA;                 use Gdk.RGBA;
 
+with Glib.Error;
 with Glib.Object;              use Glib.Object;
 
 with Gtk;                      use Gtk;
+with Gtk.Icon_Theme;           use Gtk.Icon_Theme;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
@@ -991,6 +995,7 @@ package body Src_Editor_Buffer.Line_Information is
       Current_Line : Buffer_Line_Type;
       As_Line      : Boolean;
       View         : Gtk_Text_View;
+      Area         : Gtk_Drawing_Area;
       Color        : Gdk_RGBA;
       Line_Color   : Gdk_RGBA;
       Layout       : Pango_Layout;
@@ -1062,13 +1067,31 @@ package body Src_Editor_Buffer.Line_Information is
             --  we reserved for the column
             Size := Gint'Min (Default_Icon_Width, Line_Height - 2);
 
-            Gtkada.Style.Draw_Pixbuf_With_Scale
-               (Cr,
-                Icon_Name => Action.Image.all,
-                X  => Gdouble (Starting_X),
-                Y  => Gdouble (Y_Pix_In_Window + (Line_Height - Size) / 2),
-                Size      => Size,
-                Widget    => View);
+            declare
+               P    : Gdk_Pixbuf;
+               Info : Gtk_Icon_Info;
+               Was_Symbolic : aliased Boolean;
+               Error        : aliased Glib.Error.GError;
+
+               Ctxt : constant Gtk_Style_Context := Get_Style_Context (Area);
+            begin
+               Info := Choose_Icon_For_Scale
+                 (Gtk.Icon_Theme.Get_Default, (1 => Action.Image), Size, 1, 0);
+
+               P := Load_Symbolic_For_Context
+                 (Icon_Info    => Info,
+                  Context      => Ctxt,
+                  Was_Symbolic => Was_Symbolic'Access,
+                  Error        => Error'Access);
+
+               Render_Icon
+                 (Ctxt, Cr, P,
+                  Gdouble (Starting_X),
+                  Gdouble (Y_Pix_In_Window + (Line_Height - Size) / 2));
+
+               Unref (Info);
+               Unref (P);
+            end;
          end if;
       end Draw_Info;
 

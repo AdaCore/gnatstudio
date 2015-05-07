@@ -20,6 +20,7 @@
 
 with Cairo;         use Cairo;
 with Gdk.RGBA;
+with Gtk.Drawing_Area; use Gtk.Drawing_Area;
 with Gtk.Text_View; use Gtk.Text_View;
 with Gtk.Widget;    use Gtk.Widget;
 with Pango.Layout;  use Pango.Layout;
@@ -88,6 +89,7 @@ package Src_Editor_Buffer.Line_Information is
       Current_Line : Buffer_Line_Type;
       As_Line      : Boolean;
       View         : Gtk_Text_View;
+      Area         : Gtk_Drawing_Area;
       Color        : Gdk.RGBA.Gdk_RGBA;
       Line_Color   : Gdk.RGBA.Gdk_RGBA;
       Layout       : Pango_Layout;
