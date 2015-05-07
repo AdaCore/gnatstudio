@@ -189,7 +189,20 @@ iplastic = gps_utils.Chainmap(light_common, {
                                              "transparent")
 })
 
-themes = [default, darkside, monokai, iplastic] + textmate.textmate_themes()
+themes = []
+
+
+def get_themes():
+    """ Load and return the list of themes.
+        Each theme is a dictionary of values.
+    """
+    global themes
+
+    if not themes:
+        themes = [default, darkside, monokai, iplastic
+                  ] + textmate.textmate_themes()
+
+    return themes
 
 
 def pref_set(gps_pref, val):
@@ -206,7 +219,6 @@ class ColorThemeSwitcher(object):
 
     def __init__(self):
         self.__modified = False
-        args = ["Custom"] + [t["name"] for t in themes]
 
         GPS.Preference(self.gtkpref_name).create("", "string", "", "")
 
@@ -341,7 +353,7 @@ def generate_snapshots(directory):
     view.goto(buf.at(19, 28))
     widget = view.pywidget()
 
-    themes_to_process = [t for t in themes]
+    themes_to_process = list(get_themes())
 
     def process_one(timeout):
         global themes_to_process
@@ -397,7 +409,7 @@ class ColorSchemePicker(object):
 
         index = 0
 
-        the_themes = [t for t in themes]
+        the_themes = list(get_themes())
 
         the_themes.sort(key=get_luminosity)
 
