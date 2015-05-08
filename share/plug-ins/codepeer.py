@@ -262,6 +262,54 @@ xml_codepeer = """<?xml version="1.0"?>
       <choice>True</choice>
     </project_attribute>
 
+    <project_attribute
+      package="CodePeer"
+      name="Message_Patterns"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Message patterns"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="Alternate MessagePatterns.xml file to use for this project">
+      <string type="file"/>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
+      name="Additional_Patterns"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Additional patterns"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="Extra MessagePatterns.xml file to use in addition to the
+default patterns file">
+      <string type="file"/>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
+      name="Switches"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Switches"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="List of additional switches always used for this project"
+      list="true">
+      <string/>
+    </project_attribute>
+
+    <project_attribute
+      package="CodePeer"
+      name="Excluded_Source_Files"
+      editor_page="CodePeer"
+      editor_section="CodePeer configuration"
+      label="Excluded source files"
+      hide_in="wizard gnatname_wizard library_wizard"
+      description="List of project source file (as base names) which should be
+excluded from CodePeer's analysis"
+      list="true">
+      <string type="file"/>
+    </project_attribute>
+
     <target-model name="generate_scil" category="">
        <description>Generate SCIL files for CodePeer</description>
        <command-line>
