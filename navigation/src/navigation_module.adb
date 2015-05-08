@@ -317,7 +317,7 @@ package body Navigation_Module is
       M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
       Filename    : constant Virtual_File := M.Markers_File;
-      File, Child, Project, Prev : Node_Ptr;
+      File, Child, Project, Prev, Free_Me : Node_Ptr;
 
       Success     : Boolean;
 
@@ -350,6 +350,31 @@ package body Navigation_Module is
             File.Tag := new String'("Locations");
          end if;
 
+         --  Cleanup: remove all <Project> nodes which do not specify the
+         --  project file.
+
+         Child := File.Child;
+
+         while Child /= null loop
+            if Get_File_Child (Child, "file") = No_File then
+               if Prev = null then
+                  File.Child := Child.Next;
+               else
+                  Prev.Next := Child.Next;
+               end if;
+               Free_Me := Child;
+            else
+               Prev := Child;
+            end if;
+            Child := Child.Next;
+            if Free_Me /= null then
+               Free (Free_Me);
+               Free_Me := null;
+            end if;
+         end loop;
+
+         --  Find the right <Project> node
+
          Child := File.Child;
 
          while Child /= null loop
@@ -361,7 +386,10 @@ package body Navigation_Module is
                else
                   Prev.Next := Child.Next;
                end if;
+               Free_Me := Child;
             else
+               Prev := Child;
+
                if Get_File_Child (Child, "file") = Project_File then
                   Project := Child;
                   Project.Child := null;
@@ -369,8 +397,11 @@ package body Navigation_Module is
                end if;
             end if;
 
-            Prev := Child;
             Child := Child.Next;
+            if Free_Me /= null then
+               Free (Free_Me);
+               Free_Me := null;
+            end if;
          end loop;
 
          if Project = null then
