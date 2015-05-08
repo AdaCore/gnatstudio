@@ -199,6 +199,19 @@ package body GPS.Kernel is
       return Internal (To_String (Hook));
    end Hash;
 
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash
+     (Element : Commands.Command_Access) return Ada.Containers.Hash_Type
+   is
+      function Unchecked_Conversion is new Ada.Unchecked_Conversion
+        (Commands.Command_Access, Long_Integer);
+   begin
+      return Ada.Containers.Hash_Type'Mod (Unchecked_Conversion (Element));
+   end Hash;
+
    --------------------------
    -- Set_Destruction_Flag --
    --------------------------
@@ -1192,7 +1205,14 @@ package body GPS.Kernel is
       Free (Handle.Logs_Mapper);
       Free_Messages_Container (Handle);
 
-      Commands.Free (Handle.Perma_Commands);
+      for C of Handle.Perma_Commands loop
+         declare
+            A : Commands.Command_Access := C;
+         begin
+            Commands.Unref (A);
+         end;
+      end loop;
+      Handle.Perma_Commands.Clear;
 
       Unchecked_Free (Handle.Refactoring);
 
@@ -1931,20 +1951,14 @@ package body GPS.Kernel is
       Command : access Commands.Root_Command'Class)
    is
       use Commands.Command_Lists, Commands;
-
-      L : Command_Lists.Cursor := First (Kernel.Perma_Commands);
    begin
-      while Has_Element (L) loop
-         if Element (L) = Commands.Command_Access (Command) then
-            return;  --  Already in list, nothing to do
-         end if;
-
-         L := Next (L);
-      end loop;
+      if Kernel.Perma_Commands.Contains (Command_Access (Command)) then
+         return;
+      end if;
 
       --  Command is not in list: we steal a reference to it
 
-      Kernel.Perma_Commands.Append (Commands.Command_Access (Command));
+      Kernel.Perma_Commands.Insert (Command_Access (Command));
    end Register_Perma_Command;
 
    ----------------------

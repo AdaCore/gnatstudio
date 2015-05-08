@@ -1159,6 +1159,14 @@ private
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, Pattern_Matcher_Access);
 
+   function Hash
+     (Element : Commands.Command_Access) return Ada.Containers.Hash_Type;
+   package Command_Set is new Ada.Containers.Hashed_Sets
+     (Element_Type        => Commands.Command_Access,
+      Hash                => Hash,
+      Equivalent_Elements => Commands."=",
+      "="                 => Commands."=");
+
    type Kernel_Handle_Record is new GPS.Core_Kernels.Core_Kernel_Record with
    record
       Tools   : Tools_List.List;
@@ -1193,7 +1201,7 @@ private
       Style_Manager : System.Address;
       --  A pointer to the color manager.
 
-      Perma_Commands : Commands.Command_Lists.List;
+      Perma_Commands : Command_Set.Set;
       --  The list of global commands associated with menus, actions or
       --  contextual menus, so that they can be freed on exit. These commands
       --  are automatically added to the list when the menu or action is
