@@ -4023,7 +4023,7 @@ The :file:`<project_attribute>` tag accepts the following attributes:
   checkbox is displayed next to the attribute so the user can choose to
   enable the field and add the attribute to the project.
 
-* file:`disable` (space-separated list of attribute names)
+* :file:`disable` (space-separated list of attribute names)
 
   List of attribute whose fields should be greyed out if this attribute is
   specified. This only works if both the current attribute and the
