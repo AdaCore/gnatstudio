@@ -342,8 +342,8 @@ package body Completion_Module is
       Completion_Module.Smart_Completion_Launched :=
         Smart_Completion_Pref /= Disabled;
 
-      if Smart_Completion_Pref /= Disabled
-        and then Completion_Module.Previous_Smart_Completion_State /= Disabled
+      if  Completion_Module.Previous_Smart_Completion_State = Disabled
+        and then Smart_Completion_Pref /= Disabled
       then
          Update_Construct_Database (Kernel);
       end if;
