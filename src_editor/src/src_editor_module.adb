@@ -1945,14 +1945,10 @@ package body Src_Editor_Module is
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
       Source_Editor_Module (Src_Editor_Module_Id).Undo_Redo := UR;
+      Register_Filter (Kernel, Src_Action_Context, "Source editor");
 
       Register_Filter
-        (Kernel, Src_Action_Context, "Source editor",
-         Cached => False);
-
-      Register_Filter
-        (Kernel, Writable_Src_Action_Context, "Writable source editor",
-         Cached => False);
+        (Kernel, Writable_Src_Action_Context, "Writable source editor");
 
       --  Commands
 

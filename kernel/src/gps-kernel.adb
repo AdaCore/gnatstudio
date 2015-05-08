@@ -1352,8 +1352,7 @@ package body GPS.Kernel is
    procedure Register_Filter
      (Kernel : access Kernel_Handle_Record'Class;
       Filter : access Action_Filter_Record;
-      Name   : String;
-      Cached : Boolean := True) is
+      Name   : String) is
    begin
       --  We can't rename an already named filter, since the hash table would
       --  not work correctly anymore
@@ -1367,8 +1366,6 @@ package body GPS.Kernel is
          Filter.Name := new String'(Name);
          Set (Kernel.Action_Filters, Name, Action_Filter (Filter));
       end if;
-
-      Filter.Cached := Cached;
 
       if not Filter.Registered then
          Action_Filters_List.Append
@@ -1384,32 +1381,24 @@ package body GPS.Kernel is
    overriding procedure Register_Filter
      (Kernel : access Kernel_Handle_Record'Class;
       Filter : access Base_Action_Filter_Record;
-      Name   : String;
-      Cached : Boolean := True)
-   is
-      C : Boolean;
+      Name   : String) is
    begin
+      Register_Filter (Kernel, Action_Filter_Record (Filter.all)'Access, Name);
       case Filter.Kind is
          when Standard_Filter =>
-            C := Cached;
+            null;
 
          when Filter_And =>
-            C := Cached
-               and then Filter.And1.Cached and then Filter.And2.Cached;
-            Register_Filter (Kernel, Filter.And1, "", Cached => C);
-            Register_Filter (Kernel, Filter.And2, "", Cached => C);
+            Register_Filter (Kernel, Filter.And1, "");
+            Register_Filter (Kernel, Filter.And2, "");
 
          when Filter_Or =>
-            C := Cached and then Filter.Or1.Cached and then Filter.Or2.Cached;
-            Register_Filter (Kernel, Filter.Or1, "", Cached => C);
-            Register_Filter (Kernel, Filter.Or2, "", Cached => C);
+            Register_Filter (Kernel, Filter.Or1, "");
+            Register_Filter (Kernel, Filter.Or2, "");
 
          when Filter_Not =>
-            C := Cached and then Filter.Not1.Cached;
-            Register_Filter (Kernel, Filter.Not1, "", Cached => C);
+            Register_Filter (Kernel, Filter.Not1, "");
       end case;
-      Register_Filter
-        (Kernel, Action_Filter_Record (Filter.all)'Access, Name, C);
    end Register_Filter;
 
    ------------
@@ -1621,7 +1610,6 @@ package body GPS.Kernel is
       return new Base_Action_Filter_Record'
         (Kind => Filter_And, Error_Msg => null, Name => null,
          Registered => False,
-         Cached     => Filter1.Cached and then Filter2.Cached,
          And1 => Action_Filter (Filter1), And2 => Action_Filter (Filter2));
    end "and";
 
@@ -1635,7 +1623,6 @@ package body GPS.Kernel is
    begin
       return new Base_Action_Filter_Record'
         (Kind => Filter_Or, Error_Msg => null, Name => null,
-         Cached     => Filter1.Cached and then Filter2.Cached,
          Registered => False,
          Or1  => Action_Filter (Filter1), Or2 => Action_Filter (Filter2));
    end "or";
@@ -1649,7 +1636,6 @@ package body GPS.Kernel is
    begin
       return new Base_Action_Filter_Record'
         (Kind => Filter_Not, Error_Msg => null, Name => null,
-         Cached     => Filter.Cached,
          Registered => False,
          Not1  => Action_Filter (Filter));
    end "not";
@@ -1854,21 +1840,16 @@ package body GPS.Kernel is
 
       --  Cache the result of each filter on this context in Computed_Filters.
 
-      if Filter.Cached then
-         C := Context.Data.Data.Computed_Filters.Find (Filter.all'Address);
-         if Has_Element (C) then
-            return Element (C);
-         end if;
-      end if;
+      C := Context.Data.Data.Computed_Filters.Find (Filter.all'Address);
 
-      Result := Filter_Matches_Primitive (Filter, Context);
-
-      if Filter.Cached then
+      if Has_Element (C) then
+         return Element (C);
+      else
+         Result := Filter_Matches_Primitive (Filter, Context);
          Context.Data.Data.Computed_Filters.Insert
            (Filter.all'Address, Result);
+         return Result;
       end if;
-
-      return Result;
    end Filter_Matches;
 
    ----------
