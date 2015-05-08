@@ -1737,13 +1737,19 @@ package body Src_Editor_Buffer.Line_Information is
       ------------------
 
       procedure Expand_Lines (N : Buffer_Line_Type) is
-         H : constant Line_Data_Array := Buffer_Lines.all;
-         K : constant Editable_Line_Array := Buffer.Editable_Lines.all;
+         H : Line_Data_Array_Access;
+         K : Editable_Line_Array_Access;
       begin
+         H := new Line_Data_Array (Buffer_Lines'Range);
+         H.all := Buffer_Lines.all;
+
+         K := new Editable_Line_Array (Editable_Lines'Range);
+         K.all := Editable_Lines.all;
+
          Unchecked_Free (Buffer_Lines);
          Buffer_Lines := new Line_Data_Array (1 .. N * 2);
 
-         Buffer_Lines (H'Range) := H;
+         Buffer_Lines (H'Range) := H.all;
 
          for J in H'Last + 1 .. Buffer_Lines'Last loop
             Buffer_Lines (J) := New_Line_Data;
@@ -1753,7 +1759,7 @@ package body Src_Editor_Buffer.Line_Information is
          Buffer.Editable_Lines := new Editable_Line_Array
            (1 .. Editable_Line_Type (N * 2));
 
-         Buffer.Editable_Lines (K'Range) := K;
+         Buffer.Editable_Lines (K'Range) := K.all;
 
          for J in K'Last + 1 .. Buffer.Editable_Lines'Last loop
             Buffer.Editable_Lines (J) :=
@@ -1763,6 +1769,9 @@ package body Src_Editor_Buffer.Line_Information is
                Block          => null,
                Stored_Editable_Lines => 0);
          end loop;
+
+         Unchecked_Free (K);
+         Unchecked_Free (H);
       end Expand_Lines;
 
    begin
@@ -1949,9 +1958,11 @@ package body Src_Editor_Buffer.Line_Information is
             --  Instead of freeing memory here and allocating some at the
             --  bottom of this subprogram, we simply move the allocated
             --  structures down directly.
-            Lines_To_Report : Editable_Line_Array (1 .. EN);
+            Lines_To_Report : Editable_Line_Array_Access;
          begin
-            Lines_To_Report := Editable_Lines
+            Lines_To_Report := new Editable_Line_Array (1 .. EN);
+
+            Lines_To_Report.all := Editable_Lines
               (Buffer_Lines (Start_Line).Editable_Line
                .. Buffer_Lines (Start_Line).Editable_Line + EN - 1);
 
@@ -1968,7 +1979,9 @@ package body Src_Editor_Buffer.Line_Information is
 
             Editable_Lines
               (Buffer.Last_Editable_Line - EN + 1 ..
-                 Buffer.Last_Editable_Line) := Lines_To_Report;
+                 Buffer.Last_Editable_Line) := Lines_To_Report.all;
+
+            Unchecked_Free (Lines_To_Report);
          end;
 
          Buffer.Last_Editable_Line := Buffer.Last_Editable_Line - EN;
