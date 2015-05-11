@@ -93,11 +93,11 @@ with String_Utils; use String_Utils;
 
 --  Drawing the side info is organized this way:
 --
---     <----  side area (View.Area)   ----><----  editor (View)      --->
---      |             ||                  |
---      | drawing of  || drawing of       |
---      | speed bar   || side info data   |
---      |             ||                  |
+--     <----  side area (View.Area) ----> <----  editor (View)      --->
+--     |                                |
+--     |              drawing of        |
+--     |              side info data    |
+--     |                                |
 --
 --  Both the speed bar and the side info data are drawn on the drawing area
 --  next to the editor view.
@@ -1100,7 +1100,6 @@ package body Src_Editor_View is
 
       procedure Draw_Above is
          Column    : constant Gint := Gint (Highlight_Column.Get_Pref);
-         Tmp_Color : HSV_Color;
 
          procedure Draw_Block (B : in out Block_Record);
          --  Draw block B
@@ -1225,17 +1224,7 @@ package body Src_Editor_View is
 
             Save (Cr);
             Set_Line_Width (Cr, 1.0);
-            Tmp_Color := To_HSV (View.Text_Color);
-
-            if Tmp_Color.V > 0.5 then
-               --  Light color: let's reduce its luminance by 2
-               Tmp_Color.V := Tmp_Color.V * 0.7;
-            else
-               --  Dark color, lighten it
-               Tmp_Color.V := (1.0 - Tmp_Color.V) * 0.7;
-            end if;
-
-            Draw_Line (Cr, To_Cairo (Tmp_Color), X, Y, X, Y + Rect.Height);
+            Draw_Line (Cr, View.Current_Block_Color, X, Y, X, Y + Rect.Height);
             Restore (Cr);
          end if;
       end Draw_Above;
