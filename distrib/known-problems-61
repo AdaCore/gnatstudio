@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O506-020 GPS: project attributes for CodePeer
+
+  Problem:    GPS ignores some project attributes for CodePeer.
+
+  Status:     This is fixed in 6.2 on 2015-05-12
+
+  Workaround: Use text editor to edit project file when CodePeer package is
+              used in it.
+
 KP-61-O429-016 GPS: behaviors of local toolbar menus
 
   Problem:    The menus at the right of the view-local toolbars behave
