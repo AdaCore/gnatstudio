@@ -1889,8 +1889,8 @@ package body Project_Explorers is
 
          --  Prepare list of files
 
-         for F in Files'Range loop
-            Dirs ((Files (F).Dir, Directory_Node)).Append (Files (F));
+         for F of Files.all loop
+            Dirs ((F.Dir, Directory_Node)).Append (F);
          end loop;
 
          --  Remove obsolete directory nodes (which also removes all files at
