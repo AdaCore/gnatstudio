@@ -1531,6 +1531,12 @@ procedure GPS.Main is
    function On_GPS_Started return Boolean is
    begin
       Run_Hook (Application.Kernel, GPS_Started_Hook);
+
+      --  A number of actions are created in reaction to the hook above:
+      --  if there is a menu described in menus.xml corresponding to such
+      --  an action, this menu will remain greyed out until the first context
+      --  change. We force a context refresh here to refresh these menus.
+      Refresh_Context (GPS_Main.Kernel);
       return False;
    end On_GPS_Started;
 
