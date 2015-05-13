@@ -46,6 +46,8 @@ package BT is
    --  Position in a source file.
    --  Line 0 represents an invalid/no location.
 
+   No_Source_Position : constant Source_Position := (0, 0);
+
    type BT_Info is record
       Bt_Id   : Natural;
       Event   : Event_Enum;

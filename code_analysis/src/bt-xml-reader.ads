@@ -63,11 +63,24 @@ package BT.Xml.Reader is
    --  Returns the file_name in which the callee is declared
    --  (for preconditions).
 
+   function Get_Variable_Vn_Value (File : String;
+      Variable      : String;
+      Srcpos        : Source_Position;
+      Closest_Match : out Source_Position)
+     return String;
+   --  Returns the value_set associated with Variable on the closest
+   --  source location to Srcpos available.
+
    function Get_Srcpos_Vn_Values
      (File_Name : String;
       Srcpos    : Source_Position) return Vn_Values_Seqs.Vector;
    --  Given a source position, find all the available vn <-> value_sets pairs
    --  Note that a value_set is actually just a string representing the values
+
+   function Get_Srcpos_Vn_Values
+     (File_Name : String;
+      Line      : Line_Number) return Vn_Values_Seqs.Vector;
+   --  Given a line number, find all the available vn <-> value_sets pairs
 
    procedure Clear;
    --  Clears all cached data

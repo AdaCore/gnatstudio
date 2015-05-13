@@ -108,7 +108,7 @@ package body BT.Xml.Reader is
       Element_Type    => Vn_Values_Seqs.Vector,
       Hash            => Hash,
       Equivalent_Keys => "=",
-      "="             => Vn_Values_Seqs."=");  --  **** source position?? ***
+      "="             => Vn_Values_Seqs."=");  --  elements "="
 
    File_Vals : Srcpos_Vals_Mappings.Map;
 
@@ -449,9 +449,6 @@ package body BT.Xml.Reader is
          declare
             type Source_Attribute_Enum is (Line, Col);
          begin
-            if Debug_On then
-               Put_Line ("reading srcpos");
-            end if;
             for J in 0 .. Get_Length (Attrs) - 1 loop
                declare
                   Attr_Value : constant String := Get_Value (Attrs, J);
@@ -470,9 +467,6 @@ package body BT.Xml.Reader is
             type Source_Attribute_Enum is (Name, Vals);
             Vn_Vals : Vn_Values;
          begin
-            if Debug_On then
-               Put_Line ("reading values");
-            end if;
             for J in 0 .. Get_Length (Attrs) - 1 loop
                declare
                   Attr_Value : constant String := Get_Value (Attrs, J);
@@ -602,7 +596,7 @@ package body BT.Xml.Reader is
       Set_Feature (Reader, Validation_Feature, False);
       Parse (Reader, Input);
       Close (Input);
-      Files_Read.Append (File_Name);
+      Files_Read.Append (File_To_Read);
    end Read_File_Vals_Xml;
 
    -----------------------
@@ -617,6 +611,8 @@ package body BT.Xml.Reader is
    is
       Proc : constant Unbounded_String := To_Unbounded_String (Proc_Name);
       All_Checks     : Check_Kinds_Array := Check_Kinds_Array_Default;
+
+      Debug_On : constant Boolean := False;
 
       procedure Get_Vn_Backtraces_Rec
          (Rec_Proc_Name  : String;
@@ -649,8 +645,7 @@ package body BT.Xml.Reader is
 
          Proc : constant Unbounded_String
            := To_Unbounded_String (Rec_Proc_Name);
-         VN_BTs : constant VN_To_BT_Mappings.Cursor :=
-           Proc_Vns.Element (Proc).Find (Vn_Id);
+         VN_BTs : VN_To_BT_Mappings.Cursor;
 
          This_Level_BTs : BT_Info_Seqs.Vector := BT_Info_Seqs.Empty_Vector;
          use BT_Info_Seqs;
@@ -689,6 +684,13 @@ package body BT.Xml.Reader is
          use VN_To_BT_Mappings;
 
       begin
+         if not Procs_To_Vns_Mappings.Contains (Proc_Vns, Proc) then
+            --  no known backtraces for this proc.
+            return;
+         end if;
+
+         VN_BTs := Proc_Vns.Element (Proc).Find (Vn_Id);
+
          if VN_BTs /= VN_To_BT_Mappings.No_Element then
             for BT of VN_To_BT_Mappings.Element (VN_BTs) loop
                Add_One_Backtrace (BT);
@@ -712,7 +714,9 @@ package body BT.Xml.Reader is
 
          --  now import the precondition backtraces
          for Info of This_Level_BTs loop
-            Append (Rec_Backtraces, Info);
+            if not Contains (Rec_Backtraces, Info) then
+               Append (Rec_Backtraces, Info);
+            end if;
             if Info.Event = Precondition_Event then
                declare
                   Callee_BTs : BT.BT_Info_Seqs.Vector;
@@ -742,8 +746,11 @@ package body BT.Xml.Reader is
                       (Get_Precondition_Callee_Name (Info.Bt_Id),
                         Get_Precondition_VN (Info.Bt_Id),
                         Callee_BTs);
+                     --  Add to list if not already present
                      for Info of Callee_BTs loop
-                        Append (Rec_Backtraces, Info);
+                        if not Contains (Rec_Backtraces, Info) then
+                           Append (Rec_Backtraces, Info);
+                        end if;
                      end loop;
                   end if;
                end;
@@ -941,6 +948,33 @@ package body BT.Xml.Reader is
       return To_String (Info.Callee_File_Name);
    end Get_Callee_File_Name;
 
+   procedure Read_Xml_File (File_Name : String;
+      File_Exists : out Boolean);
+   --  Read the *_vals XML file corresponding to File_Name if it has not yet
+   --  been read
+
+   -----------------
+   --  Read_Xml_File
+   -----------------
+
+   procedure Read_Xml_File (File_Name : String;
+      File_Exists : out Boolean) is
+   begin
+      if not Files_Read.Contains (
+         BT.Xml.Xml_File_Name (
+            To_String (Inspection_Output_Directory),
+            File_Name,
+            For_Backtraces => False))
+      then
+         Read_File_Vals_Xml
+            (To_String (Inspection_Output_Directory),
+               File_Name,
+               File_Exists);
+      else
+         File_Exists := True;
+      end if;
+   end Read_Xml_File;
+
    --------------------------
    -- Get_Srcpos_Vn_Values --
    --------------------------
@@ -952,22 +986,333 @@ package body BT.Xml.Reader is
       File_Exists : Boolean;
    begin
       --  Make sure we have read the corresponding Xml file
-      if not Files_Read.Contains (
-         BT.Xml.Xml_File_Name (
-            To_String (Inspection_Output_Directory),
-            File_Name,
-            For_Backtraces => False))
-      then
-         Read_File_Vals_Xml
-            (To_String (Inspection_Output_Directory),
-               File_Name,
-               File_Exists);
-      end if;
+      Read_Xml_File (File_Name, File_Exists);
 
       if not File_Exists or else not File_Vals.Contains (Srcpos) then
          return Vn_Values_Seqs.Empty_Vector;
       end if;
       return File_Vals.Element (Srcpos);
+   end Get_Srcpos_Vn_Values;
+
+   package List_Of_Source_Positions is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists
+       (Element_Type   => Source_Position,
+        "="        => "=");
+
+   package Map_Of_Source_Positions is new
+     Ada.Containers.Hashed_Maps
+     (Key_Type        => Source_Position,
+      Element_Type    => Vn_Values,
+      Hash            => Hash,
+      Equivalent_Keys => "=",
+      "="             => "=");  --  elements "="
+
+   -------------------------
+   --  Get_Variable_Vn_Value
+   -------------------------
+
+   function Get_Variable_Vn_Value (File : String;
+      Variable      : String;
+      Srcpos        : Source_Position;
+      Closest_Match : out Source_Position)
+     return String is
+
+      File_Exists        : Boolean;
+      Curr               : Srcpos_Vals_Mappings.Cursor;
+      Variable_Positions : List_Of_Source_Positions.List;
+      Variable_Vals      : Map_Of_Source_Positions.Map;
+
+   begin
+      --  Make sure we have read the corresponding Xml file
+      Read_Xml_File (File, File_Exists);
+
+      Closest_Match := No_Source_Position;
+
+      if not File_Exists then
+         if Debug_On then
+            Put_Line ("Get_Variable_Vn_Value ("
+              & Variable & "), no values found for file "
+              & File);
+         end if;
+         return "";
+      end if;
+
+      if Debug_On then
+         Put_Line ("Get_Variable_Vn_Value for " & Variable &
+           " at " &
+            Integer'Image (Srcpos.Line) & ":" &
+            Integer'Image (Srcpos.Column) & ":" &
+           ":");
+      end if;
+      Curr := Srcpos_Vals_Mappings.First (File_Vals);
+      while Srcpos_Vals_Mappings.Has_Element (Curr) loop
+         declare
+            Pos : constant Source_Position :=
+               Srcpos_Vals_Mappings.Key (Curr);
+
+            E  : constant Vector :=
+               Srcpos_Vals_Mappings.Element (Curr);
+
+         begin
+            for Info of E loop
+               if Info.Vn_Image = Variable then
+                  if Pos = Srcpos then
+                     --  exact match
+                     if Debug_On then
+                        Put_Line ("Found an exact match : " &
+                           To_String (Info.Set_Image));
+                     end if;
+                     Closest_Match := Srcpos;
+                     return To_String (Info.Set_Image);
+                  else
+                     if Debug_On then
+                        Put_Line ("add a possible match at " &
+                           Integer'Image (Pos.Line) & ":" &
+                           Integer'Image (Pos.Column) & ":" &
+                           To_String (Info.Set_Image));
+                     end if;
+                     Variable_Positions.Append (Pos);
+                     Variable_Vals.Include (Pos, Info);
+                  end if;
+               end if;
+            end loop;
+         end;
+         Curr := Srcpos_Vals_Mappings.Next (Curr);
+      end loop;
+
+      --  Check the found values, if any.
+      if List_Of_Source_Positions.Is_Empty (Variable_Positions) then
+         --  no known values
+         if Debug_On then
+            Put_Line ("Get_Variable_Vn_Value, "
+            & Variable & " was not found");
+         end if;
+         return "";
+      elsif List_Of_Source_Positions.Length (Variable_Positions) = 1 then
+         if Debug_On then
+            Put_Line ("return only possible match");
+         end if;
+         Closest_Match := List_Of_Source_Positions.First_Element
+            (Variable_Positions);
+         return To_String (Variable_Vals.Element
+                (List_Of_Source_Positions.First_Element
+                  (Variable_Positions)).Set_Image);
+      end if;
+      --  No exact match, find the closest to Srcpos
+      declare
+         function "<" (Left, Right : Source_Position) return Boolean;
+         --  compare 2 source_positions
+
+         -------
+         --  "<"
+         -------
+         function "<" (Left, Right : Source_Position) return Boolean
+         is
+         begin
+            if Left.Line = Right.Line then
+               return Left.Column < Right.Column;
+            else
+               return Left.Line < Right.Line;
+            end if;
+         end "<";
+
+         package Sort_Positions is new
+              List_Of_Source_Positions.Generic_Sorting ("<");
+
+         Cursor, Prev_Cursor, Next_Cursor : List_Of_Source_Positions.Cursor;
+      begin
+         Sort_Positions.Sort (Variable_Positions);
+
+         --  Check first if Srcpos is outside the bounds of known values
+         if List_Of_Source_Positions.First_Element (Variable_Positions).
+            Line > Srcpos.Line
+         then
+            --  the first value is already past the line we are
+            --  interested in, return the first
+            Closest_Match := List_Of_Source_Positions.First_Element
+               (Variable_Positions);
+            if Debug_On then
+               Put_Line ("use first entry at " &
+                  Integer'Image (Closest_Match.Line) & ":" &
+                  Integer'Image (Closest_Match.Column) & " :" &
+                  To_String (Variable_Vals.Element
+                      (List_Of_Source_Positions.First_Element
+                        (Variable_Positions)).Set_Image));
+            end if;
+            return To_String (Variable_Vals.Element
+                (List_Of_Source_Positions.First_Element
+                  (Variable_Positions)).Set_Image);
+         elsif List_Of_Source_Positions.Last_Element (Variable_Positions).
+            Line < Srcpos.Line
+         then
+            --  the last value is still before the line we are
+            --  interested in, return the last
+            Closest_Match := List_Of_Source_Positions.Last_Element
+               (Variable_Positions);
+            if Debug_On then
+               Put_Line ("use last entry at " &
+                  Integer'Image (Closest_Match.Line) & ":" &
+                  Integer'Image (Closest_Match.Column) & " :" &
+                  To_String (Variable_Vals.Element
+                      (List_Of_Source_Positions.Last_Element
+                        (Variable_Positions)).Set_Image));
+            end if;
+            return To_String (Variable_Vals.Element
+               (List_Of_Source_Positions.Last_Element
+               (Variable_Positions)).Set_Image);
+         end if;
+
+         --  Find the values closest to srcpos. We'll choose the closest
+         --  preceding values.
+         Cursor := List_Of_Source_Positions.First (Variable_Positions);
+         Prev_Cursor := List_Of_Source_Positions.No_Element;
+         Next_Cursor := List_Of_Source_Positions.Next (Cursor);
+         declare
+            use List_Of_Source_Positions;
+            Has_Prev : Boolean;
+            Has_Next : Boolean;
+            Pos, Prev_Pos, Next_Pos : Source_Position := No_Source_Position;
+         begin
+            while List_Of_Source_Positions.Has_Element (Cursor) loop
+               Pos := List_Of_Source_Positions.Element (Cursor);
+               Has_Prev := Prev_Cursor /= List_Of_Source_Positions.No_Element
+                 and then List_Of_Source_Positions.Has_Element (Prev_Cursor);
+               Has_Next := Next_Cursor /= List_Of_Source_Positions.No_Element
+                 and then List_Of_Source_Positions.Has_Element (Next_Cursor);
+               if Has_Prev then
+                  Prev_Pos := List_Of_Source_Positions.Element (Prev_Cursor);
+               end if;
+               if Has_Next then
+                  Next_Pos := List_Of_Source_Positions.Element (Next_Cursor);
+               end if;
+               if Pos.Line = Srcpos.Line then
+                  --  found a possible entry
+                  if (Prev_Pos /= No_Source_Position and then
+                     Prev_Pos.Line < Srcpos.Line)
+
+                     or else (Next_Pos /= No_Source_Position and then
+                     Next_Pos.Line > Srcpos.Line)
+                  then
+                     --  use entry on the same line
+                     if Debug_On then
+                        Put_Line ("Only match on line " &
+                           Integer'Image (Pos.Line) & ":" &
+                           Integer'Image (Pos.Column) & " : " &
+                           To_String (Variable_Vals.Element
+                              (Pos).Set_Image));
+                     end if;
+                     Closest_Match := Pos;
+                     return To_String (Variable_Vals.Element
+                              (Pos).Set_Image);
+                  elsif Prev_Pos /= No_Source_Position and then
+                     Prev_Pos.Line = Srcpos.Line
+                  then
+                     if Next_Pos = No_Source_Position or else
+                       Next_Pos.Line > Srcpos.Line
+                     then
+                        --  Choose between Pos and Prev_Pos
+                        if (Prev_Pos.Column < Srcpos.Column
+                          and then Pos.Column > Srcpos.Column)
+                          or else Pos.Column > Srcpos.Column
+                        then
+                           --  return previous
+                           if Debug_On then
+                              Put_Line ("Match on same line " &
+                                 Integer'Image (Prev_Pos.Line) & ":" &
+                                 Integer'Image (Prev_Pos.Column) & " : " &
+                                 To_String (Variable_Vals.Element
+                                    (Prev_Pos).Set_Image));
+                           end if;
+                           Closest_Match := Prev_Pos;
+                           return To_String (Variable_Vals.Element
+                              (Prev_Pos).Set_Image);
+                        else
+                           --  return current
+                           if Debug_On then
+                              Put_Line ("Match on same line " &
+                                 Integer'Image (Pos.Line) & ":" &
+                                 Integer'Image (Pos.Column) & " : " &
+                                 To_String (Variable_Vals.Element
+                                    (Pos).Set_Image));
+                           end if;
+                           Closest_Match := Pos;
+                           return To_String (Variable_Vals.Element
+                              (Pos).Set_Image);
+                        end if;
+                     end if;
+                  elsif Next_Pos.Line > Srcpos.Line then
+                     null;
+                  else
+                     null;
+                  end if;
+               elsif Pos.Line > Srcpos.Line then
+                  --  we passed the desired line.
+                  if Prev_Pos /= No_Source_Position and then
+                     Prev_Pos.Line < Srcpos.Line
+                  then
+                     --  return previous
+                     if Debug_On then
+                        Put_Line ("Match on closest prev line " &
+                           Integer'Image (Prev_Pos.Line) & ":" &
+                           Integer'Image (Prev_Pos.Column) & " : " &
+                           To_String (Variable_Vals.Element
+                              (Prev_Pos).Set_Image));
+                     end if;
+                     Closest_Match := Prev_Pos;
+                     return To_String (Variable_Vals.Element
+                        (Prev_Pos).Set_Image);
+                  end if;
+               else
+                  --  keep looking
+                  null;
+               end if;
+               Prev_Cursor := Cursor;
+               Cursor := List_Of_Source_Positions.Next (Cursor);
+               Next_Cursor := List_Of_Source_Positions.Next (Cursor);
+            end loop;
+         end;
+         if Debug_On then
+            Put_Line ("Get_Variable_Vn_Value, " & Variable & " was not found");
+         end if;
+         return "";
+      end;
+   end Get_Variable_Vn_Value;
+
+   function Get_Srcpos_Vn_Values
+     (File_Name : String;
+      Line      : Line_Number) return Vn_Values_Seqs.Vector is
+
+      File_Exists  : Boolean;
+      Curr         : Srcpos_Vals_Mappings.Cursor;
+      Result       : Vn_Values_Seqs.Vector;
+
+   begin
+      --  Make sure we have read the corresponding Xml file
+      Read_Xml_File (File_Name, File_Exists);
+
+      if not File_Exists then
+         return Vn_Values_Seqs.Empty_Vector;
+      end if;
+      Curr := Srcpos_Vals_Mappings.First (File_Vals);
+      while Srcpos_Vals_Mappings.Has_Element (Curr) loop
+         declare
+            Pos : constant Source_Position :=
+               Srcpos_Vals_Mappings.Key (Curr);
+
+            E  : constant Vector :=
+               Srcpos_Vals_Mappings.Element (Curr);
+
+         begin
+            if Pos.Line = Line then
+               --  Collect values on this line
+               for Info of E loop
+                  Vn_Values_Seqs.Append (Result, Info);
+               end loop;
+            end if;
+         end;
+         Curr := Srcpos_Vals_Mappings.Next (Curr);
+      end loop;
+      return Result;
    end Get_Srcpos_Vn_Values;
 
 end BT.Xml.Reader;

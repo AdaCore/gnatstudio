@@ -48,7 +48,7 @@ package body Message_Kinds is
          when Divide_By_Zero_Check =>
             return "189";
          when Array_Indexing_Check =>
-            return "124,125-127,129-132,135,193";
+            return "124-127,129-132,135,193";
          when Tag_Check | Type_Variant_Check =>
             return "136,137";
          when Numeric_Range_Check =>
@@ -92,7 +92,7 @@ package body Message_Kinds is
             else
                --  We cannot differentiate the other cases, so list all
                --  possibilities. ??? Would be good to refine this.
-               return "118,124,125-132,135,136,137,190-193,197,252,253,476";
+               return "118,124-132,135-137,190-193,197,252,253,476";
             end if;
 
          when others =>
