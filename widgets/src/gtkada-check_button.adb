@@ -204,6 +204,7 @@ package body Gtkada.Check_Button is
    begin
       --  Prevent recursion loop
       if Check.Forcing_Update then
+         Original_Handler (Get_Object (Check));
          return;
       end if;
 
