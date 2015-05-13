@@ -18,6 +18,7 @@
 with Ada.Calendar;                        use Ada.Calendar;
 with Ada.Characters.Handling;             use Ada.Characters.Handling;
 with Ada.Text_IO;
+with Ada.Unchecked_Conversion;
 with System.Address_To_Access_Conversions;
 
 pragma Warnings (Off);
@@ -807,12 +808,15 @@ package body Src_Editor_Buffer is
    ----------
 
    procedure Free (S : in out Src_String) is
+      function To_chars_ptr is new Ada.Unchecked_Conversion
+        (Unchecked_String_Access, Interfaces.C.Strings.chars_ptr);
    begin
-      if S.Read_Only then
-         S.Contents := null;
-      else
-         Free (S.Contents);
+      if not S.Read_Only then
+         --  was returned by Gtk.Text_Buffer.Get_Text
+         --  should be released using Gtkada.Types.g_free
+         Gtkada.Types.g_free (To_chars_ptr (S.Contents));
       end if;
+      S.Contents := null;
    end Free;
 
    -----------------------
