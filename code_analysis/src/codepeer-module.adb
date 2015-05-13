@@ -45,7 +45,6 @@ with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Style_Manager;   use GPS.Kernel.Style_Manager;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Xref;
-with String_Utils;
 
 with BT.Xml.Reader;
 with CodePeer.Backtrace_View;
@@ -1876,7 +1875,6 @@ package body CodePeer.Module is
    begin
       if not Has_File_Information (Context)
         or not Has_Line_Information (Context)
-        or not Has_Column_Information (Context)
         or not Module.Display_Values
         or Module.Tree = null
         or not Module.Has_Backtraces
@@ -1884,33 +1882,10 @@ package body CodePeer.Module is
          return null;
       end if;
 
-      --  CodePeers associate values with position close to start of
-      --  identifier. Code below attempts to go backward to the first
-      --  non-identifier character and requests values information for every
-      --  position.
-
-      declare
-         File     : constant GNATCOLL.VFS.Virtual_File :=
-           File_Information (Context);
-         Buffer   : constant GPS.Editors.Editor_Buffer'Class :=
-           (Module.Kernel.Get_Buffer_Factory.Get (File, False, False, False));
-         Location : GPS.Editors.Editor_Location'Class :=
-           Buffer.New_Location
-             (Line_Information (Context), Column_Information (Context));
-
-      begin
-         while Values.Is_Empty loop
-            Values :=
-              BT.Xml.Reader.Get_Srcpos_Vn_Values
-                (String (File_Information (Context).Full_Name.all),
-                 (Line_Information (Context),
-                  Natural (Location.Column)));
-
-            exit when not String_Utils.Is_Entity_Letter
-              (Wide_Wide_Character'Val (Location.Get_Char));
-            Location := Location.Forward_Char (-1);
-         end loop;
-      end;
+      Values :=
+        BT.Xml.Reader.Get_Srcpos_Vn_Values
+          (String (File_Information (Context).Full_Name.all),
+           Line_Information (Context));
 
       if Values.Is_Empty then
          return null;
