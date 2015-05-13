@@ -19,7 +19,7 @@
 --  construct information of an entire project
 
 with Ada.Finalization; use Ada.Finalization;
-with Ada.Containers.Ordered_Maps;
+with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Ordered_Multisets;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
@@ -817,9 +817,10 @@ private
    function "=" (Left, Right : Structured_File) return Boolean;
    pragma Inline ("=");
 
-   package File_Map is new Ada.Containers.Ordered_Maps
-     (Virtual_File, Structured_File_Access);
-
+   package File_Map is new Ada.Containers.Hashed_Maps
+     (Virtual_File, Structured_File_Access,
+      Equivalent_Keys => "=",
+      Hash            => GNATCOLL.VFS.Full_Name_Hash);
    use File_Map;
 
    package Assistant_Map is new Ada.Containers.Indefinite_Ordered_Maps
