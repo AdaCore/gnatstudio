@@ -22,7 +22,6 @@ with Virtual_Lists;
 with Virtual_Lists.Extensive;
 with Generic_List;
 with Language.Tree;     use Language.Tree;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 --  base package of all ada semantic tree queries.

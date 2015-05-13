@@ -21,7 +21,6 @@ pragma Warnings (On);
 
 with GNAT.Expect;                use GNAT.Expect;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Case_Handling;              use Case_Handling;
 with Default_Preferences;        use Default_Preferences;

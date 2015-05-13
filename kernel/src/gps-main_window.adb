@@ -20,6 +20,7 @@ with Ada.Command_Line;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Cairo;                     use Cairo;

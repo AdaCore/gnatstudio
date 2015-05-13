@@ -18,6 +18,8 @@
 with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with Language.Profile_Formaters;  use Language.Profile_Formaters;
 
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
+
 package Ada_Semantic_Tree.Lang is
 
    function Is_Enum_Type

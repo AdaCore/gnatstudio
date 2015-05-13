@@ -56,7 +56,6 @@ with GNAT.Strings;             use GNAT.Strings;
 with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
 with System;

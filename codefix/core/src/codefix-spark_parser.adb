@@ -19,7 +19,6 @@ with Codefix.Error_Lists;    use Codefix.Error_Lists;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with GNAT.Regpat;            use GNAT.Regpat;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Language;               use Language;
 with Language.Tree;          use Language.Tree;
 with Language.Tree.Database; use Language.Tree.Database;

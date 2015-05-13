@@ -32,7 +32,6 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
 with GNATCOLL.Projects;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Basic_Types;                use Basic_Types;
 with Code_Analysis_Tree_Model;   use Code_Analysis_Tree_Model;
 with Coverage_GUI;               use Coverage_GUI;

@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Application_Window;  use Gtk.Application_Window;

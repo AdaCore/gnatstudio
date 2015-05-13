@@ -23,6 +23,7 @@ with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GNATCOLL.Utils;               use GNATCOLL.Utils;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;          use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;           use GNATCOLL.VFS_Utils;
 

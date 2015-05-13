@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with Wizards;            use Wizards;
 with GPS.Kernel;         use GPS.Kernel;
 with Project_Viewers;    use Project_Viewers;

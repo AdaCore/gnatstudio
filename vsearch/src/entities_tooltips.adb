@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-
 with Gdk.Window;                use Gdk.Window;
 with Gtkada.Style;              use Gtkada.Style;
 with Gtk.Box;                   use Gtk.Box;

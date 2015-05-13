@@ -19,7 +19,6 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;       use GNAT.Strings;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Notebook;       use Gtk.Notebook;
 with Gtk.Widget;         use Gtk.Widget;

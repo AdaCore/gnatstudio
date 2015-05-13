@@ -17,7 +17,6 @@
 
 with Basic_Types;                      use Basic_Types;
 with GNATCOLL.Projects;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 with GNATCOLL.Xref;                    use GNATCOLL.Xref;
 with GPS.Core_Kernels;                 use GPS.Core_Kernels;
 with GPS.Intl;                         use GPS.Intl;

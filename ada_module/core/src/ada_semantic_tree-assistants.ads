@@ -18,6 +18,8 @@
 --  This package provides the entry point registering all assistants needed
 --  by the ada queries.
 
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+
 package Ada_Semantic_Tree.Assistants is
 
    procedure Register_Ada_Assistants

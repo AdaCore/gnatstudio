@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Strings; use GNAT.Strings;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Ada_Semantic_Tree.Std_Entities is
 
