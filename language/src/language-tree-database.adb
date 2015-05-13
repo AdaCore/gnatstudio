@@ -1075,7 +1075,6 @@ package body Language.Tree.Database is
             New_File.Project := Project;
 
             Insert (Db.Files_Db, File, New_File);
-            Insert (Db.Sorted_Files_Db, New_File);
 
             Internal_Update_Contents (New_File, True);
 
@@ -1136,7 +1135,6 @@ package body Language.Tree.Database is
          --  Perform the actual deletion
 
          Db.Files_Db.Delete (File);
-         Db.Sorted_Files_Db.Delete (S_File);
 
          Free (S_File);
       end if;
@@ -1220,7 +1218,6 @@ package body Language.Tree.Database is
 
       Clear (Db.Entities_Db);
       Clear (Db.Files_Db);
-      Clear (Db.Sorted_Files_Db);
    end Clear;
 
    ----------
@@ -1387,17 +1384,6 @@ package body Language.Tree.Database is
    begin
       return Db.Construct_Registry'Access;
    end Get_Construct_Annotation_Key_Registry;
-
-   ---------------
-   -- Get_Files --
-   ---------------
-
-   function Start_File_Search
-     (Db : Construct_Database) return File_Set.Cursor
-   is
-   begin
-      return First (Db.Sorted_Files_Db);
-   end Start_File_Search;
 
    ----------------------
    -- To_Entity_Access --

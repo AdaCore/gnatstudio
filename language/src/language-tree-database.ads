@@ -539,9 +539,6 @@ package Language.Tree.Database is
 
    use File_Set;
 
-   function Start_File_Search (Db : Construct_Database) return File_Set.Cursor;
-   --  Return a cursor pointing at the first element of the file database.
-
    function Get_Identifier
      (Entity : Entity_Access) return Normalized_Symbol;
    pragma Inline (Get_Identifier);
@@ -835,10 +832,6 @@ private
 
    type Construct_Database is tagged record
       Files_Db           : File_Map.Map;
-      Sorted_Files_Db    : File_Set.Set;
-      --  ??? Do we really need these two now that we removed the assertion
-      --  one file = one unit ? Probably not...
-
       Provider           : Buffer_Provider_Access;
       Entities_Db        : aliased Construct_Db_Trie.Construct_Trie;
       Assistants         : Assistant_Map.Map;
