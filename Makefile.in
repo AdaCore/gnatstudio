@@ -14,6 +14,8 @@ bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share
 examplesdir     = $(prefix)/share/examples/gps
 
+SYS := $(shell gcc -dumpmachine)
+
 all default:
 	$(MAKE) -C gps default
 	$(MAKE) -C cli default
@@ -128,12 +130,21 @@ ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) distrib/gps_run.cmd $(bindir)
 	$(MAKE) -C common/expect install-strip
 else
+ifneq (, $(findstring darwin, $(SYS)))
+	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)/gps_exe
+	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
+	$(INSTALL_PROGRAM) cli/obj/gps_cli $(bindir)
+	$(INSTALL_PROGRAM) spark/obj/gnatspark $(bindir)
+	$(INSTALL_PROGRAM) gnatlib/src/obj/gnatinspect $(bindir)
+	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gps
+else
 	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)/gps_exe
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gps_cli $(bindir)
 	$(INSTALL_PROGRAM) -s spark/obj/gnatspark $(bindir)
 	$(INSTALL_PROGRAM) -s gnatlib/src/obj/gnatinspect $(bindir)
 	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gps
+endif
 endif
 
 test: force
