@@ -167,6 +167,21 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       <menu before="About">/Help/%(prefix)s/SPARK 2014 Reference Manual</menu>
     </documentation_file>
 
+    <action name="spark2014_example_autopilot" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/autopilot/test.gpr"</shell>
+      <shell>Editor.edit "ap.ads"</shell>
+      <shell>Editor.edit "instruments.ads"</shell>
+      <shell>Editor.edit "surfaces.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_autopilot">
+        <title>autopilot</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_binary_search" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/binary_search/test.gpr"</shell>
@@ -177,7 +192,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_binary_search">
-        <title>Binary Search</title>
+        <title>binary_search</title>
       </menu>
     </submenu>
 
@@ -192,21 +207,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_binary_search_unconstrained">
-        <title>Binary Search Unconstrained</title>
-      </menu>
-    </submenu>
-
-    <action name="spark2014_example_contract_cases" category=""
-            show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/contract_cases/test.gpr"</shell>
-      <shell>Editor.edit "p.adb"</shell>
-      <shell>Editor.edit "p.ads"</shell>
-    </action>
-
-    <submenu before="About">
-      <title>/Help/%(prefix)s/Examples</title>
-      <menu action="spark2014_example_contract_cases">
-        <title>Contract Cases</title>
+        <title>binary_search_unconstrained</title>
       </menu>
     </submenu>
 
@@ -220,7 +221,34 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_database">
-        <title>Database</title>
+        <title>database</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_euclidian_division" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/euclidian_division/test.gpr"</shell>
+      <shell>Editor.edit "linear_div.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_euclidian_division">
+        <title>euclidian_division</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_evoting" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/evoting/test.gpr"</shell>
+      <shell>Editor.edit "evoting.adb"</shell>
+      <shell>Editor.edit "evoting.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_evoting">
+        <title>evoting</title>
       </menu>
     </submenu>
 
@@ -234,7 +262,20 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_formal_queue">
-        <title>Formal Queue</title>
+        <title>formal_queue</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_heatingsystem" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/heatingsystem/test.gpr"</shell>
+      <shell>Editor.edit "heatingsystem_dfa.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_heatingsystem">
+        <title>heatingsystem</title>
       </menu>
     </submenu>
 
@@ -248,7 +289,21 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_intro">
-        <title>Intro</title>
+        <title>intro</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_linear_search" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/linear_search/test.gpr"</shell>
+      <shell>Editor.edit "linear_search.adb"</shell>
+      <shell>Editor.edit "linear_search.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_linear_search">
+        <title>linear_search</title>
       </menu>
     </submenu>
 
@@ -262,25 +317,11 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_longest_common_prefix">
-        <title>Longest Common Prefix</title>
+        <title>longest_common_prefix</title>
       </menu>
     </submenu>
 
-    <action name="spark2014_example_max_and_sum" category=""
-            show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/max_and_sum/test.gpr"</shell>
-      <shell>Editor.edit "maxandsum.adb"</shell>
-      <shell>Editor.edit "maxandsum.ads"</shell>
-    </action>
-
-    <submenu before="About">
-      <title>/Help/%(prefix)s/Examples</title>
-      <menu action="spark2014_example_max_and_sum">
-        <title>Max and Sum</title>
-      </menu>
-    </submenu>
-
-    <action name="spark2014_example_natural_set" category=""
+    <action name="spark2014_example_natural" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/natural/test.gpr"</shell>
       <shell>Editor.edit "natural_set.adb"</shell>
@@ -289,8 +330,64 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
-      <menu action="spark2014_example_natural_set">
-        <title>Natural Set</title>
+      <menu action="spark2014_example_natural">
+        <title>natural</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_n_queens" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/n_queens/test.gpr"</shell>
+      <shell>Editor.edit "queen.adb"</shell>
+      <shell>Editor.edit "queen.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_n_queens">
+        <title>n_queens</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_openETCS" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/openETCS/test.gpr"</shell>
+      <shell>Editor.edit "section_4_6.adb"</shell>
+      <shell>Editor.edit "step_function.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_openETCS">
+        <title>openETCS</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_patience" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/patience/test.gpr"</shell>
+      <shell>Editor.edit "patience.adb"</shell>
+      <shell>Editor.edit "patience.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_patience">
+        <title>patience</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_railway_signaling" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/railway_signaling/test.gpr"</shell>
+      <shell>Editor.edit "trains.adb"</shell>
+      <shell>Editor.edit "trains.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_railway_signaling">
+        <title>railway_signaling</title>
       </menu>
     </submenu>
 
@@ -304,7 +401,21 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_ring_buffer">
-        <title>Ring Buffer</title>
+        <title>ring_buffer</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_search_linked_list" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/search_linked_list/test.gpr"</shell>
+      <shell>Editor.edit "lists.adb"</shell>
+      <shell>Editor.edit "lists.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_search_linked_list">
+        <title>search_linked_list</title>
       </menu>
     </submenu>
 
@@ -318,7 +429,21 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_segway">
-        <title>Segway</title>
+        <title>segway</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_sparkskein" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/sparkskein/test.gpr"</shell>
+      <shell>Editor.edit "skein.adb"</shell>
+      <shell>Editor.edit "skein.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_sparkskein">
+        <title>sparkskein</title>
       </menu>
     </submenu>
 
@@ -332,7 +457,34 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_spark_io">
-        <title>SPARK IO</title>
+        <title>spark_io</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_tetris" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/tetris/test.gpr"</shell>
+      <shell>Editor.edit "tetris_functional.adb"</shell>
+      <shell>Editor.edit "tetris_functional.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_tetris">
+        <title>tetris</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_tokeneer" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/tokeneer/test.gpr"</shell>
+      <shell>Editor.edit "tis.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_tokeneer">
+        <title>tokeneer</title>
       </menu>
     </submenu>
 
