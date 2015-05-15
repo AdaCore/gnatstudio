@@ -266,6 +266,18 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_gnatprove_by_example" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/gnatprove_by_example/test.gpr"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_gnatprove_by_example">
+        <title>gnatprove_by_example</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_heatingsystem" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/heatingsystem/test.gpr"</shell>
