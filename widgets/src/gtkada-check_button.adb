@@ -228,8 +228,9 @@ package body Gtkada.Check_Button is
          end case;
       end if;
 
-      Underlying_State := Check.State /= State_Unchecked;
-      --  the desired underlying GtkCheckButton state
+      Underlying_State := Check.State = State_Checked;
+      --  The desired underlying GtkCheckButton state. We keep
+      --  State_Checked_Default as unchecked to display an inconsistent icon.
 
       Check.Forcing_Update := True;
 

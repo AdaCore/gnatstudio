@@ -356,6 +356,19 @@ KP-61-O116-007 GPS: selecting -gnatp automatically adds -gnatVn
               prefer. The behavior of the compiler is the same in both
               cases.
 
+KP-61-O116-005 GPS: check box state inverted by multiple clicks
+
+  Problem:    The "three-state" checkboxes in the Project Properties dialog
+              and in the build target settings dialog has an invalid
+              representation: instead of having three states (on, off and
+              default), it switches between 6 states.
+
+  Status:     This is fixed in 6.2 on 2015-05-15
+
+  Workaround: Ignore the visual representation of check box. Verify the
+              textual form of the command line in the switches dialog to
+              get correct the value of the switch setting.
+
 KP-61-O113-020 GPS: build targets refer to "gnatmake"
 
   Problem:    Some GPS build targets (such as "Check syntax") still invoke
