@@ -1,13 +1,16 @@
 """
 This plug-in creates buttons on the toolbar to conveniently
-build, flash, debug, and run programs for the STM32F4 board.
+flash and debug programs for the STM32F4* boards.
 
-The following is required:
- - a recent GNAT compiler targeting arm-elf
- - (optional, required for running programs on the board)
-   the utility stlink present on the PATH.
-   This is included in recent versions of GNAT, or can be downloaded at
-     https://github.com/texane/stlink
+The utility program st-util must be present on the PATH for
+the buttons to be made visible. This utility is included in
+recent Windows-based versions of GNAT for the arm-eabi targets,
+or can be downloaded from https://github.com/texane/stlink and
+built. In addition, the utility st-flash is required to be
+on the path in order to flash memory as a separate operation.
+Note that the USB driver for these utility programs must be
+installed in order for them to operate correctly, but this
+plug-in is not concerned with that aspect.
 
 """
 
@@ -19,6 +22,28 @@ import workflows.promises as promises
 
 def msg_is(msg):
     GPS.Console("Messages").write(msg + "\n")
+
+
+def uses_stm32f4(prj):
+    """ Search the project to see if it uses the STM32F4 boards
+    """
+    s = prj.get_attribute_as_string(package="Builder",
+                                    attribute="Default_Switches",
+                                    index="Ada")
+    if "stm32f4" in s:
+        return True
+
+    s = prj.get_attribute_as_string(package="Builder",
+                                    attribute="Switches",
+                                    index="Ada")
+    if "stm32f4" in s:
+        return True
+
+    s = prj.get_attribute_as_string("runtime", index="Ada")
+    if "stm32f4" in s:
+        return True
+
+    return False
 
 
 class BoardLoader(Module):
@@ -56,20 +81,7 @@ class BoardLoader(Module):
     def __show_button(self):
         """Initialize buttons and parameters.
         """
-        # show button if the following criteria are met:
-        # the string "stm32f3" should be found in the runtime;
-        # we also look in the "legacy" way of specifying this,
-        # in the --RTS switches
-        p = GPS.Project.root()
-        s = p.get_attribute_as_string(package="Builder",
-                                      attribute="Default_Switches",
-                                      index="Ada") + \
-            p.get_attribute_as_string(package="Builder",
-                                      attribute="Switches",
-                                      index="Ada") + \
-            p.get_attribute_as_string("runtime", index="Ada")
-
-        if "stm32f4" in s:
+        if uses_stm32f4(GPS.Project.root()):
             for b in self.__buttons:
                 b.show()
         else:
@@ -87,23 +99,17 @@ class BoardLoader(Module):
         """Workflow to build and flash the program on the board.
         """
 
-        # STEP 1.0 get the main name; it should have been passed to the driver
         if main_name is None:
             self.__error_exit(msg="Could not find the name of the main.")
             return
 
-        # STEP 1.5 Build it
-        msg_is("Building Main %s..." % main_name)
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
         if r0 is not 0:
-            self.__error_exit(msg="... Build error.")
+            self.__error_exit(msg="Build error.")
             return
 
-        msg_is("... done.")
-
-        # STEP 2 create executable
-        msg_is("Creating the binary executable...")
+        msg_is("Creating the binary (flashable) image.")
         b = GPS.Project.root().get_executable_name(GPS.File(main_name))
         d = GPS.Project.root().object_dirs()[0]
         obj = d + b
@@ -120,10 +126,7 @@ class BoardLoader(Module):
             self.__error_exit("arm-eabi-objcopy returned an error.")
             return
 
-        msg_is("... done.")
-
-        # STEP 3.1 connect to mainboard
-        msg_is("Connecting to board...")
+        msg_is("Flashing image to board.")
         cmd = ["st-flash", "write", binary, "0x8000000"]
         try:
             con = promises.ProcessWrapper(cmd)
@@ -143,33 +146,23 @@ class BoardLoader(Module):
             con.get().kill()
             return
 
-        msg_is("... done.")
-        msg_is("Running on board...")
+        msg_is("Flashing complete. You may need to reset (or cycle power).")
 
     def __debug_wf(self, main_name):
         """
         Workflow to build, flash and debug the program on the real board.
         """
-        # STEP 1.0 get main name
-
         if main_name is None:
             self.__error_exit(msg="Main not specified")
             return
 
-        # STEP 1.5 Build it
-
-        msg_is("Building Main %s..." % main_name)
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
         if r0 is not 0:
             self.__error_exit("Build error.")
             return
 
-        msg_is("... done.")
-
-        # STEP 2 connect to mainboard
-
-        msg_is("Connecting to board...")
+        msg_is("Launching st-util.")
         cmd = ["st-util"]
 
         try:
@@ -179,17 +172,10 @@ class BoardLoader(Module):
             return
 
         self.__connection = con
-        msg_is("... done.")
 
-        # STEP 3 begin debugger-> load and run
-        msg_is("Loading executable file...")
-
+        msg_is("Launching debugger.")
         b = GPS.Project.root().get_executable_name(GPS.File(main_name))
-        d = GPS.Project.root().object_dirs()[0]
-        obj = d+b
-
         debugger_promise = promises.DebuggerWrapper(GPS.File(b))
-        debugger_promise.get().non_blocking_send("load "+obj)
         r3 = yield debugger_promise.wait_and_send(cmd="", block=True)
 
         if not r3:
@@ -198,10 +184,6 @@ class BoardLoader(Module):
             r3 = yield debugger_promise.wait_and_send(cmd="", block=True)
             self.__reset_all()
             return
-
-        msg_is("... done.")
-
-        # STEP 3.5 run the program
 
     def gps_started(self):
         """
