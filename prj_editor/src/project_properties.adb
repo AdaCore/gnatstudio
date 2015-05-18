@@ -1294,10 +1294,12 @@ package body Project_Properties is
             if Attribute_Is_List then
                declare
                   List : String_List_Access := Project.Attribute_Value
-                    (Attribute_Pkg_List'(Build (Pkg, Attr)), Index);
+                    (Attribute_Pkg_List'(Build (Pkg, Attr)), Index,
+                     Use_Extended => True);
                   Var  : constant String := Project.Attribute_Value
                     (Attribute_Pkg_String'(Build (Pkg, Attr)),
-                     Default => "", Index => Index);
+                     Default => "", Index => Index,
+                     Use_Extended => True);
                begin
                   if List = null
                     and then Var /= ""
@@ -1320,7 +1322,8 @@ package body Project_Properties is
                declare
                   Val : constant String := Project.Attribute_Value
                     (Attribute_Pkg_String'(Build (Pkg, Attr)),
-                     Default => "", Index => Index);
+                     Default => "", Index => Index,
+                     Use_Extended => True);
                begin
                   if Val = "" then
                      --  Did we have a list attribute in fact ?

@@ -8610,6 +8610,10 @@ class Project(object):
         single element is returned. This function always returns the value of
         the attribute in the currently selected scenario.
 
+        If the project being queried is an extending project, and the attribute
+        is not redefined in this extending project, then the value of the
+        attribute is queried from the extended project.
+
         :param attribute: A string, the name of the attribute
         :param package: A string, the name of the attribute's package
         :param index: A string, the name of the index for the specific value
@@ -8659,6 +8663,10 @@ class Project(object):
         concatenation of all the elements of the list. This function always
         returns the value of the attribute in the currently selected
         scenario.
+
+        If the project being queried is an extending project, and the attribute
+        is not redefined in this extending project, then the value of the
+        attribute is queried from the extended project.
 
         When the attribute is not explicitely overridden in the project, the
         default value is returned. This default value is the one described in
