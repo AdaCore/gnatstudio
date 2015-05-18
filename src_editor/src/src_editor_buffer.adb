@@ -393,10 +393,6 @@ package body Src_Editor_Buffer is
      (Column_Info : Columns_Config_Access);
    --  Free the info contained in Column_Info
 
-   procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
-   pragma Import (C, C_Free, "free");
-   --  Binding to the C "free" function
-
    function Get_Slice
      (Buffer       : Source_Buffer;
       Start_Line   : Gint;
@@ -814,7 +810,7 @@ package body Src_Editor_Buffer is
       if not S.Read_Only then
          --  was returned by Gtk.Text_Buffer.Get_Text
          --  should be released using Gtkada.Types.g_free
-         Gtkada.Types.g_free (To_chars_ptr (S.Contents));
+         g_free (To_chars_ptr (S.Contents));
       end if;
       S.Contents := null;
    end Free;
@@ -916,9 +912,9 @@ package body Src_Editor_Buffer is
          Chars  := Get_Text (Buffer, Start, The_End, True);
          C_Str  := To_Unchecked_String (Chars);
          Result := new String'(C_Str (1 .. Integer (Strlen (Chars))));
-         C_Free (Chars);
-         --  We need to use the C function to free Chars, since memory was
-         --  allocated in C code.
+         g_free (Chars);
+         --  We need to use the Gtkada.Types.g_free function to free Chars,
+         --  since memory was allocated by Gtk.Text_Buffer.Get_Text code.
 
          return Result;
 
