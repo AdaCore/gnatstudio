@@ -358,7 +358,7 @@ package body Src_Editor_Box.Tooltips is
 
          --  If the mouse is not on top of text, do not display a tooltip
 
-         if Entity_Name_Information (Context) = "" then
+         if not Has_Entity_Name_Information (Context) then
             return Gtk_Widget (Vbox);
          end if;
 
