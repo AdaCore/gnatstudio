@@ -363,6 +363,7 @@ package Libclang.Index is
 
    type Clang_Cursor is new clang_c_Index_h.CXCursor;
    subtype Clang_Type is clang_c_Index_h.CXType;
+   subtype Clang_Location is CXSourceLocation;
 
    use Interfaces.C;
 
@@ -487,10 +488,6 @@ package Libclang.Index is
    is
       (clang_getCursorLinkage (Cursor));
 
-   function Location (Cursor : Clang_Cursor) return CXSourceLocation
-   is
-     (clang_getCursorLocation (Cursor));
-
    function Spelling
      (T : Clang_Type) return String;
 
@@ -500,7 +497,9 @@ package Libclang.Index is
    function Spelling (TU : Clang_Translation_Unit) return String is
      (To_String (clang_getTranslationUnitSpelling (TU)));
 
-   subtype Clang_Location is CXSourceLocation;
+   function Location (Cursor : Clang_Cursor) return CXSourceLocation
+   is
+     (clang_getCursorLocation (Cursor));
 
    function Value (Location : Clang_Location) return Clang_Raw_Location;
    function Offset (Location : Clang_Location) return unsigned;
@@ -513,6 +512,11 @@ package Libclang.Index is
      (TU : Clang_Translation_Unit;
       File : GNATCOLL.VFS.Virtual_File;
       Line, Column : Natural) return Clang_Location;
+
+   function Location
+     (TU : Clang_Translation_Unit;
+      File : GNATCOLL.VFS.Virtual_File;
+      Offset : Natural) return Clang_Location;
 
    function Cursor_At (TU : Clang_Translation_Unit;
                        File : GNATCOLL.VFS.Virtual_File;
@@ -558,6 +562,7 @@ package Libclang.Index is
      (clang_getCursorExtent (C));
 
    function In_Range (Sought, Containing : Clang_Cursor) return Boolean;
+   pragma Inline (In_Range);
 
    procedure Dispose_Overriden
      (overridden : access Clang_Cursor) renames clang_disposeOverriddenCursors;

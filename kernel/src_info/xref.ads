@@ -54,7 +54,10 @@ package Xref is
 
    type Root_Entity_Access is access all Root_Entity'Class;
 
-   package Entity_Arrays is new Array_Utils (Root_Entity_Access);
+   function Id_Eq (L, R : Root_Entity_Access) return Boolean is
+     (L.all = R.all);
+
+   package Entity_Arrays is new Array_Utils (Root_Entity_Access, Id_Eq);
    subtype Entity_Array is Entity_Arrays.Array_Type;
 
    No_Entity_Array : Entity_Array (1 .. 0) := (others => <>);

@@ -648,4 +648,17 @@ package body GPS.Editors is
       return No_Class_Instance;
    end Create_Instance;
 
+   --------------------------
+   -- New_Location_At_Line --
+   --------------------------
+
+   function New_Location_At_Line
+     (This   : Editor_Buffer;
+      Line   : Integer) return Editor_Location'Class
+   is
+   begin
+      return Editor_Buffer'Class
+        (This).New_Location (Line, Visible_Column_Type'(1));
+   end New_Location_At_Line;
+
 end GPS.Editors;

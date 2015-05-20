@@ -237,11 +237,7 @@ package body Language.Libclang_Tree is
       use Cursors_Arrays;
 
       function In_Range (Containing : Clang_Cursor) return Boolean
-      is
-        (clang_Location_isFromMainFile
-           (clang_getCursorLocation (Containing)) /= 0
-           and then
-         (In_Range (Top_Cursor, Containing) or else Containing = Top_Cursor));
+      is (In_Range (Top_Cursor, Containing));
 
       function Next_Child (C : Clang_Cursor) return Array_Type
       is (Get_Children (C, In_Range'Access));
@@ -282,7 +278,6 @@ package body Language.Libclang_Tree is
          end if;
 
          --  Now explore down to cursor, and keep the list
-
          declare
             C1 : constant Array_Type := Cursor & Children_Chain (Cursor);
             C : constant Array_Type
@@ -307,7 +302,7 @@ package body Language.Libclang_Tree is
    is
    begin
       return Node_From_Cursor
-           (clang_getCursorSemanticParent (Self.Cursor), Self);
+        (Semantic_Parent (Self.Cursor), Self);
    end Parent;
 
    --------------
@@ -382,7 +377,7 @@ package body Language.Libclang_Tree is
             end if;
          end;
       elsif K in CXCursor_FieldDecl | CXCursor_VarDecl then
-         return Spelling (clang_getCursorType (Self.Cursor));
+         return Spelling (Get_Type (Self.Cursor));
       end if;
 
       return "";
@@ -396,7 +391,7 @@ package body Language.Libclang_Tree is
      (Self : Clang_Node) return Semantic_Node'Class
    is
    begin
-      return Node_From_Cursor (clang_getCursorDefinition (Self.Cursor), Self);
+      return Node_From_Cursor (Definition (Self.Cursor), Self);
    end Definition;
 
    --------------
@@ -406,7 +401,7 @@ package body Language.Libclang_Tree is
    overriding function Sloc_Def
      (Self : Clang_Node) return Sloc_T is
    begin
-      return To_Sloc_T (clang_getCursorLocation (Self.Cursor));
+      return To_Sloc_T (Location (Self.Cursor));
    end Sloc_Def;
 
    ----------------
@@ -417,7 +412,7 @@ package body Language.Libclang_Tree is
      (Self : Clang_Node) return Sloc_T is
    begin
       return To_Sloc_T
-        (clang_getRangeStart (clang_getCursorExtent (Self.Cursor)));
+        (Range_Start (Extent (Self.Cursor)));
    end Sloc_Start;
 
    --------------
@@ -428,7 +423,7 @@ package body Language.Libclang_Tree is
      (Self : Clang_Node) return Sloc_T is
    begin
       return To_Sloc_T
-        (clang_getRangeEnd (clang_getCursorExtent (Self.Cursor)));
+        (Range_End (Extent (Self.Cursor)));
    end Sloc_End;
 
    --------------
@@ -438,7 +433,7 @@ package body Language.Libclang_Tree is
    overriding function Get_Hash
      (Self : Clang_Node) return Hash_Type is
    begin
-      return Hash_Type (clang_hashCursor (Self.Cursor));
+      return Hash (Self.Cursor);
    end Get_Hash;
 
    ----------
@@ -459,7 +454,7 @@ package body Language.Libclang_Tree is
      (Self : Clang_Node) return Boolean is
    begin
       return Self.Category /= Cat_Unknown
-        and then (clang_isCursorDefinition (Self.Cursor) = 0);
+        and then (Is_Definition (Self.Cursor));
    end Is_Declaration;
 
    ----------------
@@ -481,7 +476,7 @@ package body Language.Libclang_Tree is
    overriding function Unique_Id
      (Self : Clang_Node) return String is
    begin
-      return To_String (clang_getCursorUSR (Self.Cursor));
+      return USR (Self.Cursor);
    end Unique_Id;
 
    ----------

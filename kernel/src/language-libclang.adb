@@ -49,14 +49,12 @@ package body Language.Libclang is
    Nb_Tasks : constant := 4;
 
    Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG.DIAGNOSTICS", Off);
+     GNATCOLL.Traces.Create ("LIBCLANG.DIAGNOSTICS", On);
 
    Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    Activate_Clang_XRef : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG_XREF", Off);
-   --  Disabled for now, since it seems to break the callgraph browser for C
-   --  files (O327-013)
+     GNATCOLL.Traces.Create ("LIBCLANG_XREF", On);
 
    function Parsing_Timeout_Handler return Boolean;
 
@@ -137,7 +135,11 @@ package body Language.Libclang is
    procedure Initialize (Self : access Clang_Context)
    is
       Idx : constant Clang_Index :=
-        Create_Index (True, Active (Diagnostics));
+        Create_Index
+          (True,
+           --  We never want to display diagnostics via libclang,
+           --  because it will just dump them on stdout
+           Display_Diagnostics => False);
    begin
       Self.Clang_Indexer := Idx;
       Self.TU_Cache      := new TU_Maps.Map;
@@ -321,10 +323,25 @@ package body Language.Libclang is
    ----------------
    -- Diagnostic --
    ----------------
+   procedure Diagnostic
+     (Client_Data : in out Indexer_Data;
+      Diags : Clang_Diagnostic_Set);
 
    procedure Diagnostic
      (Client_Data : in out Indexer_Data;
-      Diagnostics : Clang_Diagnostic_Set) is null;
+      Diags : Clang_Diagnostic_Set)
+   is
+      pragma Unreferenced (Client_Data);
+   begin
+      for I in 0 .. clang_getNumDiagnosticsInSet (Diags) loop
+         declare
+            D : constant CXDiagnostic :=
+              clang_getDiagnosticInSet (Diags, I);
+         begin
+            Trace (Diagnostics, To_String (clang_formatDiagnostic (D, 0)));
+         end;
+      end loop;
+   end Diagnostic;
 
    procedure Entered_Main_File
      (Client_Data : in out Indexer_Data;

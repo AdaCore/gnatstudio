@@ -35,6 +35,7 @@ with GNAT.Strings;              use GNAT.Strings;
 
 with GVD.Preferences;           use GVD.Preferences;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with Basic_Types;               use Basic_Types;
 
 package body GVD.Source_Editor.GPS is
 
@@ -78,9 +79,7 @@ package body GVD.Source_Editor.GPS is
             View   : constant Editor_View'Class   := Buffer.Current_View;
          begin
             View.Cursor_Goto
-              (Location   => Buffer.New_Location
-                 (Line   => Editor.Line,
-                  Column => 1),
+              (Location   => Buffer.New_Location_At_Line (Editor.Line),
                Raise_View => True);
 
             Buffer.Remove_Style

@@ -46,6 +46,8 @@ package Clang_Xref is
       Clang_Type_Inst : Clang_Type;
    end record;
 
+   overriding function "=" (L, R : Clang_Entity) return Boolean;
+
    overriding function Get_Entity
      (Db         : Clang_Database;
       General_Db : General_Xref_Database;
@@ -271,26 +273,37 @@ package Clang_Xref is
 
    overriding function Reference_Is_Body
      (Ref : Clang_Reference) return Boolean is (False);
+
    overriding function Reference_Is_Declaration
      (Ref : Clang_Reference) return Boolean is (False);
+
    overriding function Is_Real_Reference
      (Ref : Clang_Reference) return Boolean is (True);
+
    overriding function Is_Implicit_Reference
      (Ref : Clang_Reference) return Boolean is (False);
+
    overriding function Is_Real_Or_Implicit_Reference
      (Ref : Clang_Reference) return Boolean is (True);
+
    overriding function Is_Read_Reference
      (Ref : Clang_Reference) return Boolean is (True);
+
    overriding function Is_Write_Reference
      (Ref : Clang_Reference) return Boolean is (False);
+
    overriding function Is_Read_Or_Write_Reference
      (Ref : Clang_Reference) return Boolean is (True);
+
    overriding function Is_Read_Or_Implicit_Reference
      (Ref : Clang_Reference) return Boolean is (True);
+
    overriding function Is_Read_Or_Write_Or_Implicit_Reference
      (Ref : Clang_Reference) return Boolean is (True);
+
    overriding function Show_In_Callgraph
-     (Ref : Clang_Reference) return Boolean is (False);
+     (Ref : Clang_Reference) return Boolean is (True);
+
    overriding function Is_Dispatching_Call
      (Ref : Clang_Reference) return Boolean is (False);
 
@@ -303,7 +316,7 @@ package Clang_Xref is
       Filter    : Reference_Kind_Filter := null) is null;
 
    overriding function Get_Caller
-     (Ref : Clang_Reference) return Root_Entity'Class is (No_Root_Entity);
+     (Ref : Clang_Reference) return Root_Entity'Class;
 
    overriding function Get_Entity
      (Ref : Clang_Reference) return Root_Entity'Class;
@@ -316,6 +329,7 @@ package Clang_Xref is
 
    overriding function Get_Location
      (Ref : Clang_Reference) return General_Location;
+
    overriding function Get_Display_Kind
      (Ref  : Clang_Reference) return String;
 
@@ -360,12 +374,13 @@ private
    use GNATCOLL.Symbols;
 
    type Clang_Reference is new Root_Entity_Reference with record
-      File     : GNATCOLL.VFS.Virtual_File;
-      Offset   : Offset_T;
+      Loc      : General_Location;
       Name     : Symbol;
       Clang_Db : Clang_Database;
       Kind     : Clang_Cursor_Kind;
    end record;
+
+   overriding function "=" (Left, Right : Clang_Reference) return Boolean;
 
    package Clang_Entity_Ref_Vectors is new Ada.Containers.Vectors
      (Index_Type   => Positive,
@@ -383,4 +398,8 @@ private
       Elements : Clang_Entity_Ref_Vector;
       Current_Index : Positive := 1;
    end record;
+
+   overriding function "="
+     (Left, Right : Clang_Reference_Iterator) return Boolean;
+
 end Clang_Xref;

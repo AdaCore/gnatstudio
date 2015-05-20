@@ -624,7 +624,7 @@ package body Navigation_Module is
       Editor   : constant Editor_Buffer'Class :=
                    Kernel.Get_Buffer_Factory.Get (File);
       Location : constant Editor_Location'Class :=
-                   New_Location (Editor, Line, 0);
+                   New_Location_At_Line (Editor, Line);
       Centering : Centering_Type := With_Margin;
    begin
       if Center then
@@ -665,7 +665,8 @@ package body Navigation_Module is
    is
       Editor : constant Editor_Buffer'Class :=
                  Kernel.Get_Buffer_Factory.Get (File);
-      Loc : constant Editor_Location'Class := Editor.New_Location (Line, 1);
+      Loc : constant Editor_Location'Class :=
+         Editor.New_Location_At_Line (Line);
    begin
       return Loc.Block_End.Line;
    exception
@@ -684,7 +685,8 @@ package body Navigation_Module is
    is
       Editor : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File);
-      Loc : constant Editor_Location'Class := Editor.New_Location (Line, 1);
+      Loc : constant Editor_Location'Class :=
+        Editor.New_Location_At_Line (Line);
    begin
       return Loc.Block_Start.Line;
    exception
@@ -703,7 +705,8 @@ package body Navigation_Module is
    is
       Editor : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File);
-      Loc : constant Editor_Location'Class := Editor.New_Location (Line, 1);
+      Loc : constant Editor_Location'Class :=
+        Editor.New_Location_At_Line (Line);
    begin
       return Loc.Block_Type;
    exception

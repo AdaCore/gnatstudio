@@ -927,12 +927,23 @@ package body Libclang.Index is
 
    function In_Range (Sought, Containing : Clang_Cursor) return Boolean
    is
-      Sought_Loc : constant unsigned := Offset (Location (Sought));
-      Containing_Range : constant Clang_Source_Range := Extent (Containing);
    begin
-      return Sought_Loc > Offset (Range_Start (Containing_Range))
-        and then
-          Sought_Loc < Offset (Range_End (Containing_Range));
+      if not Is_From_Main_File (Location (Containing)) then
+         return False;
+      end if;
+
+      if Sought = Containing then
+         return True;
+      end if;
+
+      declare
+         Sought_Loc : constant unsigned := Offset (Location (Sought));
+         Containing_Range : constant Clang_Source_Range := Extent (Containing);
+      begin
+         return Sought_Loc > Offset (Range_Start (Containing_Range))
+           and then
+             Sought_Loc < Offset (Range_End (Containing_Range));
+      end;
    end In_Range;
 
    --------------
@@ -948,6 +959,20 @@ package body Libclang.Index is
       return clang_getLocation
         (TU, Libclang.File.File (TU, File),
          unsigned (Line), unsigned (Column));
+   end Location;
+
+   --------------
+   -- Location --
+   --------------
+
+   function Location
+     (TU : Clang_Translation_Unit;
+      File : GNATCOLL.VFS.Virtual_File;
+      Offset : Natural) return Clang_Location is
+   begin
+      return clang_getLocationForOffset
+        (TU, Libclang.File.File (TU, File),
+         unsigned (Offset));
    end Location;
 
    --------------

@@ -86,7 +86,7 @@ package body Refactoring.Subprograms is
       --  The entities referenced in the extracted code
    end record;
    Invalid_Context : constant Extract_Context :=
-     (Empty_Range_Of_Code, No_File, Parent => <>, Entities => <>);
+     (Empty_Range_Of_Code, No_File, others => <>);
 
    procedure Free (Context : in out Extract_Context);
    --  Free the memory used by the context
@@ -548,8 +548,8 @@ package body Refactoring.Subprograms is
         Context.Code.Context.Buffer_Factory.Get (Context.Code.File);
       Code    : constant String :=
         Editor.Get_Chars
-          (Editor.New_Location (Context.Code.From_Line, 1),
-           Editor.New_Location (Context.Code.To_Line, 1).End_Of_Line);
+          (Editor.New_Location_At_Line (Context.Code.From_Line),
+           Editor.New_Location_At_Line (Context.Code.To_Line).End_Of_Line);
 
       Params               : Parameters;
       Code_Start, Code_End : Integer;
@@ -722,9 +722,10 @@ package body Refactoring.Subprograms is
          if Method_Body /= Null_Unbounded_String then
             declare
                Line_Start : constant Editor_Mark'Class :=
-                 Buffer.New_Location (Context.Code.From_Line, 1).Create_Mark;
+                 Buffer.New_Location_At_Line
+                   (Context.Code.From_Line).Create_Mark;
                Line_End : constant Editor_Mark'Class :=
-                 Buffer.New_Location (Context.Code.To_Line, 1)
+                 Buffer.New_Location_At_Line (Context.Code.To_Line)
                  .End_Of_Line.Create_Mark;
             begin
                Iter := Local_Vars.First;

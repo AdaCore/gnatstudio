@@ -82,25 +82,26 @@ package body Array_Utils is
       return False;
    end Contains;
 
-   ------------
-   -- Unique --
-   ------------
+   ----------------
+   -- Unique_Gen --
+   ----------------
 
-   function Unique
+   function Unique_Gen
      (In_Array : Array_Type) return Array_Type
    is
       Keep : Bool_Array (In_Array'Range) := (others => True);
       Count : Natural := 0;
    begin
       for I in In_Array'Range loop
-         for J in In_Array'First .. I - 1 loop
+
+         A : for J in In_Array'First .. I - 1 loop
             if In_Array (I) = In_Array (J) then
-               Keep (J) := False;
+               Keep (I) := False;
                Count := Count - 1;
+               exit A;
             end if;
 
-            exit when not Keep (J);
-         end loop;
+         end loop A;
 
          Count := Count + 1;
       end loop;
@@ -117,7 +118,12 @@ package body Array_Utils is
             end if;
          end loop;
       end return;
-   end Unique;
+   end Unique_Gen;
+
+   function Unique_Inst is new Unique_Gen ("=" => "=");
+
+   function Unique
+     (In_Array : Array_Type) return Array_Type renames Unique_Inst;
 
    ------------
    -- Filter --

@@ -83,6 +83,11 @@ package Array_Utils is
       Pred : access function
         (E : Element_Type) return Boolean) return Array_Type;
 
+   generic
+      with function "=" (L, R : Element_Type) return Boolean;
+   function Unique_Gen
+     (In_Array : Array_Type) return Array_Type;
+
    function Unique
      (In_Array : Array_Type) return Array_Type;
 

@@ -360,14 +360,12 @@ private
    No_Entity_Declaration : constant Entity_Declaration :=
      (File      => null,
       Db        => null,
-      Entity    => <>,
       Equal_Loc => -1,
-      SFirst    => <>,
-      SLast     => <>,
       First     => null,
       Last      => null,
       Shared    => False,
-      Decl      => Ada.Strings.Unbounded.Null_Unbounded_String);
+      Decl      => Ada.Strings.Unbounded.Null_Unbounded_String,
+      others => <>);
 
    type Range_Of_Code is new With_Factory with record
       File        : GNATCOLL.VFS.Virtual_File;

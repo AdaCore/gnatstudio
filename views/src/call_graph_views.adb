@@ -36,7 +36,6 @@ with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
 with Gtk.Box;                     use Gtk.Box;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Paned;                   use Gtk.Paned;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
@@ -1511,10 +1510,17 @@ package body Call_Graph_Views is
       --  Check whether the entity already exists in the call graph
 
       while Iter /= Null_Iter loop
-         exit when Get_Entity (View, Iter) = Entity
-           and then Get_Int (Model, Iter, Kind_Column) = View_Type'Pos (Kind);
+         declare
+            Current_Entity : constant Root_Entity'Class :=
+              Get_Entity (View, Iter);
+         begin
+            exit when Current_Entity = Entity
+              and then
+                Get_Int (Model, Iter, Kind_Column) = View_Type'Pos (Kind);
 
-         Next (Model, Iter);
+            Next (Model, Iter);
+
+         end;
       end loop;
 
       --  If the Iter has no children, attempt to recompute it here.

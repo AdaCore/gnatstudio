@@ -303,10 +303,10 @@ package body Refactoring.Performers is
    is
       Editor : constant Editor_Buffer'Class :=
         Get_Buffer_Factory (Kernel).Get (In_File);
-      Loc_Start : constant Editor_Location'Class := Editor.New_Location
-        (Line_Start, 1);
+      Loc_Start : constant Editor_Location'Class := Editor.New_Location_At_Line
+        (Line_Start);
       Loc_End   : constant Editor_Location'Class :=
-        Editor.New_Location (Line_End, 1).End_Of_Line;
+        Editor.New_Location_At_Line (Line_End).End_Of_Line;
    begin
       --  ??? Removing the final newline (Loc_End.Forward_Char(1)) results in
       --  removing the first char of the next line

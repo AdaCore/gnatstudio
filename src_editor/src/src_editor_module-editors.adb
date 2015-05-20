@@ -328,6 +328,11 @@ package body Src_Editor_Module.Editors is
       Line   : Integer;
       Column : Visible_Column_Type) return Editor_Location'Class;
 
+   overriding function New_Location_Offset
+     (This   : Src_Editor_Buffer;
+      Line   : Integer;
+      Column : Character_Offset_Type) return Editor_Location'Class;
+
    overriding function New_Location
      (This   : Src_Editor_Buffer;
       Offset : Natural) return Editor_Location'Class;
@@ -1704,6 +1709,36 @@ package body Src_Editor_Module.Editors is
             return Result;
          end;
    end New_Location;
+
+   ------------------
+   -- New_Location --
+   ------------------
+
+   overriding function New_Location_Offset
+     (This   : Src_Editor_Buffer;
+      Line   : Integer;
+      Column : Character_Offset_Type) return Editor_Location'Class
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Screen_Position
+        (This.Contents.Buffer,
+         Iter,
+         Editable_Line_Type (Line),
+         Column);
+      return Create_Editor_Location (This, Iter);
+   exception
+      when Editor_Exception =>
+         declare
+            Result : Src_Editor_Location;
+         begin
+            Result.Buffer := This;
+            Result.Line :=
+              Editable_Line_Type'Max (1, Editable_Line_Type (Line));
+            Result.Column := Visible_Column_Type (Column + 1);
+            return Result;
+         end;
+   end New_Location_Offset;
 
    ---------
    -- Get --

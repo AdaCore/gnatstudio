@@ -820,7 +820,8 @@ package body Vdiff2_Module.Utils is
       function Get_Line
         (Buf : Editor_Buffer'Class; Line : Integer) return String
       is
-         Start : constant Editor_Location'Class := Buf.New_Location (Line, 1);
+         Start : constant Editor_Location'Class :=
+           Buf.New_Location_At_Line (Line);
          The_End : constant Editor_Location'Class := Start.End_Of_Line;
       begin
          return Buf.Get_Chars (Start, The_End);

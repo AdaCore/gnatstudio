@@ -159,11 +159,13 @@ package body Language.Libclang.Utils is
             Spawned_Exec := new String'("cmd");
             Args  := new GNAT.OS_Lib.Argument_List'
               (new String'("/c"),
-               new String'("echo | " & Gcc_Exec_On_Path.all & " -xc -E -v -"));
+               new String'
+                 ("echo | " & Gcc_Exec_On_Path.all
+                  & " -x" & To_Lower (Language) & " -E -v -"));
          else
             Spawned_Exec := new String'(Gcc_Exec_On_Path.all);
             Args  := new GNAT.OS_Lib.Argument_List'
-              (new String'("-xc"),
+              (new String'("-x" & To_Lower (Language)),
                new String'("-E"),
                new String'("-v"),
                new String'("-"));

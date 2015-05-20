@@ -17,7 +17,7 @@
 
 with String_Utils; use String_Utils;
 with Language.Libclang_Tree; use Language.Libclang_Tree;
-with clang_c_Index_h;
+with clang_c_Index_h; use clang_c_Index_h;
 
 with Interfaces.C;
 with GNATCOLL.Projects;
@@ -25,12 +25,13 @@ use GNATCOLL.Projects;
 with Language.Libclang; use Language.Libclang;
 with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with GPS.Editors; use GPS.Editors;
-use clang_c_Index_h;
-with Basic_Types;
+with Basic_Types; use Basic_Types;
 with Interfaces.C.Pointers;
 with GPS.Kernel.Properties; use GPS.Kernel.Properties;
 with GPS.Kernel; use GPS.Kernel;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
+with Language; use Language;
+with Ada.Text_IO; use Ada.Text_IO;
 
 ----------------
 -- Clang_Xref --
@@ -91,7 +92,8 @@ package body Clang_Xref is
 
    function To_Entity_Array
      (From_Entity : Clang_Entity;
-      Cursors : Cursors_Arrays.Array_Type) return Entity_Array;
+      Cursors : Cursors_Arrays.Array_Type;
+      Unique : Boolean := False) return Entity_Array;
    --  Convenience function to convert a vector of clang cursors to an array of
    --  clang entities
 
@@ -159,6 +161,50 @@ package body Clang_Xref is
    function Get_Line_Offset
      (K : Core_Kernel; L : General_Location) return Natural;
 
+   function Get_Body (Entity : Clang_Entity) return Clang_Entity;
+   --  Helper to get the first body of an entity if entity is a decl
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "=" (L, R : Clang_Entity) return Boolean is
+   begin
+      if L.Loc = R.Loc then
+         return True;
+      else
+         --  We want a special case in the equal function, so that the decl of
+         --  a function is equal to the body of a function
+         --  ??? Why not use the USR here from the start ?
+         declare
+            R_Loc, L_Loc : Clang_Raw_Location;
+         begin
+            R_Loc :=  Value (Location (Canonical (Get_Clang_Cursor (L))));
+            L_Loc := Value (Location (Canonical (Get_Clang_Cursor (R))));
+            return R_Loc = L_Loc;
+         end;
+      end if;
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "=" (Left, Right : Clang_Reference) return Boolean is
+      Ret : Boolean;
+   begin
+      Ret := Left.Loc = Right.Loc;
+      return Ret;
+   end "=";
+
+   overriding function "="
+     (Left, Right : Clang_Reference_Iterator) return Boolean is
+   begin
+      Put_Line ("IN = for Clang_Reference_Iterators");
+      return Left.Elements.Element (Left.Current_Index)
+        = Right.Elements.Element (Right.Current_Index);
+   end "=";
+
    ---------------------
    -- Get_Line_Offset --
    ---------------------
@@ -181,58 +227,49 @@ package body Clang_Xref is
 
    function Get_Clang_Cursor (E : Clang_Entity) return Clang_Cursor
    is
-      function Internal (Loc : General_Location) return Clang_Cursor;
-      function Internal (Loc : General_Location) return Clang_Cursor is
-         use Basic_Types;
-         use type Basic_Types.Visible_Column_Type;
-
-         Ret : Clang_Cursor;
-         Line_Offset : constant Natural := Get_Line_Offset (E.Kernel, Loc);
-         TU : constant Clang_Translation_Unit :=
-           Translation_Unit (E.Kernel, Loc.File, False);
-
-      begin
-         Ret := Cursor_At (TU, Loc.File, Loc.Line, Line_Offset);
-
-         --  For some stdlib functions, libclang will present an unexposed_attr
-         --  for the location at which the function is declared. A sufficient
-         --  workaround is usually to get the cursor at one column before.
-
-         --  NB: We never want to return an UnexposedAttr since it means it's
-         --  unsupported anyway, so no harm in trying to recover a meaningful
-         --  cursor
-
-         if Ret.kind = CXCursor_UnexposedAttr then
-            Ret := Cursor_At
-              (TU, Loc.File, Loc.Line, Natural'Max (1, Line_Offset - 1));
-         end if;
-
-         return Ret;
-      end Internal;
-
       Ret : Clang_Cursor;
    begin
-      Ret := Internal (E.Ref_Loc);
+      Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
       if Offset (Location (Ret)) = 0 then
-         Ret := Internal (E.Ref_Loc);
+         Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
       else
          Ret := Referenced (Ret);
       end if;
       return Ret;
    end Get_Clang_Cursor;
 
-   --------------------
-   -- Get_Clang_Node --
-   --------------------
+   ----------------------
+   -- Get_Clang_Cursor --
+   ----------------------
 
    function Get_Clang_Cursor
      (Kernel : Core_Kernel; Loc : General_Location) return Clang_Cursor
    is
+      use Basic_Types;
+      use type Basic_Types.Visible_Column_Type;
+
+      Ret : Clang_Cursor;
+      Line_Offset : constant Natural := Get_Line_Offset (Kernel, Loc);
       TU : constant Clang_Translation_Unit :=
         Translation_Unit (Kernel, Loc.File, False);
-      Line_Offset : constant Natural := Get_Line_Offset (Kernel, Loc);
+
    begin
-      return Cursor_At (TU, Loc.File, Loc.Line, Line_Offset);
+      Ret := Cursor_At (TU, Loc.File, Loc.Line, Line_Offset);
+
+      --  For some stdlib functions, libclang will present an unexposed_attr
+      --  for the location at which the function is declared. A sufficient
+      --  workaround is usually to get the cursor at one column before.
+
+      --  NB: We never want to return an UnexposedAttr since it means it's
+      --  unsupported anyway, so no harm in trying to recover a meaningful
+      --  cursor
+
+      if Ret.kind = CXCursor_UnexposedAttr then
+         Ret := Cursor_At
+           (TU, Loc.File, Loc.Line, Natural'Max (1, Line_Offset - 1));
+      end if;
+
+      return Ret;
    end Get_Clang_Cursor;
 
    ----------------
@@ -350,7 +387,9 @@ package body Clang_Xref is
            K.Get_Buffer_Factory.Get
              (Raw_Loc.File, Open_View => False,
               Focus => False, Open_Buffer => True)
-           .New_Location (Natural (Raw_Loc.Offset));
+           .New_Location_Offset
+             (Natural (Raw_Loc.Line),
+              Character_Offset_Type (Raw_Loc.Column));
 
       begin
          return General_Location'
@@ -482,17 +521,10 @@ package body Clang_Xref is
       F : Virtual_File;
       Offset : Offset_T) return General_Location
    is
-      Ed : constant Editor_Buffer'Class := K.Get_Buffer_Factory.Get
-        (F, Open_View => False, Focus => False, Open_Buffer => True);
-      Loc : constant Editor_Location'Class :=
-        Ed.New_Location (Natural (Offset));
+      TU : constant Clang_Translation_Unit :=
+        Translation_Unit (K, F, False);
    begin
-      return
-        General_Location'
-          (File    => F,
-           Project => GNATCOLL.Projects.No_Project,
-           Line    => Loc.Line,
-           Column  => Loc.Column);
+      return To_General_Location (K, Location (TU, F, Natural (Offset)));
    end To_General_Location;
 
    --------------
@@ -574,6 +606,17 @@ package body Clang_Xref is
          return Ret;
 
       end if;
+   end Get_Body;
+
+   --------------
+   -- Get_Body --
+   --------------
+
+   function Get_Body (Entity : Clang_Entity) return Clang_Entity
+   is
+   begin
+      return Cursor_As_Entity
+        (Entity, Get_Clang_Cursor (Entity.Kernel, Get_Body (Entity)));
    end Get_Body;
 
    -----------------
@@ -1116,7 +1159,8 @@ package body Clang_Xref is
 
    function To_Entity_Array
      (From_Entity : Clang_Entity;
-      Cursors : Cursors_Arrays.Array_Type) return Entity_Array
+      Cursors : Cursors_Arrays.Array_Type;
+      Unique : Boolean := False) return Entity_Array
    is
       Ret : Entity_Array (1 .. Natural (Cursors'Length));
    begin
@@ -1129,7 +1173,8 @@ package body Clang_Xref is
            new Clang_Entity'(Cursor_As_Entity (From_Entity, Cursors (I)));
       end loop;
 
-      return Ret;
+      return (if Unique then Entity_Arrays.Unique (Ret)
+              else Ret);
    end To_Entity_Array;
 
    ------------
@@ -1408,12 +1453,27 @@ package body Clang_Xref is
                  & Id_Flat_Map (Get_Children (C), Get_Calls'Access));
       end Get_Calls;
 
-      Calls : constant Array_Type := Get_Calls (Get_Clang_Cursor (Entity));
-      Call_Entities : constant Entity_Array := To_Entity_Array (Entity, Calls);
+      CC : constant Clang_Cursor := Get_Clang_Cursor (Entity);
+
+      Body_Entity : Clang_Entity := Entity;
+      Body_CC : Clang_Cursor := CC;
+
    begin
-      return
-        (if Call_Entities'Length = 0 then No_Entities_Cursor
-         else Clang_Entities_Cursor'(Call_Entities'Length, Call_Entities, 1));
+      if Kind (CC) = CXCursor_FunctionDecl then
+         Body_Entity := Get_Body (Entity);
+         Body_CC := Get_Clang_Cursor (Body_Entity);
+      end if;
+
+      declare
+         Calls : constant Array_Type := Get_Calls (Body_CC);
+         Call_Entities : constant Entity_Array := To_Entity_Array
+           (Body_Entity, Calls, Unique => True);
+      begin
+         return
+           (if Call_Entities'Length = 0 then No_Entities_Cursor
+            else Clang_Entities_Cursor'
+              (Call_Entities'Length, Call_Entities, 1));
+      end;
    end Get_All_Called_Entities;
 
    -------------------------
@@ -1510,7 +1570,7 @@ package body Clang_Xref is
       then
          Client_Data.Ret_Iterator.Elements.Append
            (Clang_Reference'
-              (Client_Data.File, To_Offset_T (Loc),
+              (To_General_Location (Client_Data.Clang_Db.Kernel, Loc),
                Client_Data.Entity_Name, Client_Data.Clang_Db,
                Info.cursor.kind));
       end if;
@@ -1534,7 +1594,7 @@ package body Clang_Xref is
          then
             Client_Data.Ret_Iterator.Elements.Append
               (Clang_Reference'
-                 (Client_Data.File, To_Offset_T (Loc),
+                 (To_General_Location (Client_Data.Clang_Db.Kernel, Loc),
                   Client_Data.Entity_Name, Client_Data.Clang_Db,
                   Info.cursor.kind));
          end if;
@@ -1611,6 +1671,14 @@ package body Clang_Xref is
      (Entity : Clang_Entity;
       In_Scope : Clang_Entity) return Clang_Reference_Iterator
    is
+      --  Special case when the scope is a declaration that has a body that can
+      --  be explored, we want to explore the body, not the decl.
+      --  TODO ??? Explore other decls when it makes sense
+      Real_Scope : constant Clang_Entity :=
+        (if Kind (Get_Clang_Cursor (In_Scope)) = CXCursor_FunctionDecl
+         then Get_Body (In_Scope)
+         else In_Scope);
+
       Ctx : constant Clang_Context_Access := Context (Get_Project (Entity));
       Searched : constant Clang_Cursor := Get_Clang_Cursor (Entity);
 
@@ -1627,16 +1695,28 @@ package body Clang_Xref is
          return Filter (Children, Is_Reference'Access)
            & Id_Flat_Map (Children, Find_References'Access);
       end Find_References;
+
       Ret_Vec : constant Clang_Entity_Ref_Vector :=
         new Clang_Entity_Ref_Vectors.Vector;
 
+      function Eq_Loc (L, R : Clang_Cursor) return Boolean is
+         (Offset (Location (L)) = Offset (Location (R)));
+
+      function Unique_Loc is new Cursors_Arrays.Unique_Gen (Eq_Loc);
    begin
-      for Cursor of Find_References (Get_Clang_Cursor (In_Scope)) loop
-         Ret_Vec.Append
-           (Clang_Reference'
-              (In_Scope.Loc.File, Offset_T (Value (Location (Cursor)).Offset),
-               Ctx.Sym_Table.Find (+Entity.Name), In_Scope.Db,
-               Kind (Cursor)));
+
+      for Cursor of Unique_Loc
+        (Find_References (Get_Clang_Cursor (Real_Scope)))
+      loop
+         declare
+         begin
+            Ret_Vec.Append
+              (Clang_Reference'
+                 (To_General_Location (Entity.Kernel, Location (Cursor)),
+                  Ctx.Sym_Table.Find (+Entity.Name),
+                  Real_Scope.Db,
+                  Kind (Cursor)));
+         end;
       end loop;
 
       return
@@ -1714,8 +1794,8 @@ package body Clang_Xref is
             for I in V.Decls.First_Index .. V.Decls.Last_Index loop
                Ret.Elements.Append
                  (Clang_Reference'
-                    (File     => F,
-                     Offset   => V.Decls.Element (I).Loc,
+                    (Loc      => To_General_Location
+                       (Entity.Kernel, F, V.Decls.Element (I).Loc),
                      Clang_Db => Entity.Db,
                      Name     => Name,
                      Kind     =>
@@ -1725,8 +1805,8 @@ package body Clang_Xref is
             for I in V.Refs.First_Index .. V.Refs.Last_Index loop
                Ret.Elements.Append
                  (Clang_Reference'
-                    (File     => F,
-                     Offset   => V.Refs.Element (I).Loc,
+                    (Loc      => To_General_Location
+                         (Entity.Kernel, F, V.Refs.Element (I).Loc),
                      Clang_Db => Entity.Db,
                      Name     => Name,
                      Kind     =>
@@ -1795,7 +1875,7 @@ package body Clang_Xref is
    overriding function Get_Location
      (Ref : Clang_Reference) return General_Location is
    begin
-      return To_General_Location (Ref.Clang_Db.Kernel, Ref.File, Ref.Offset);
+      return Ref.Loc;
    end Get_Location;
 
    ------------
@@ -1876,7 +1956,29 @@ package body Clang_Xref is
    ----------------------
 
    overriding function Get_Display_Kind
-     (Ref  : Clang_Reference) return String is
-     ("");
+     (Ref  : Clang_Reference) return String is ("");
+
+   ----------------
+   -- Get_Caller --
+   ----------------
+
+   overriding function Get_Caller
+     (Ref : Clang_Reference) return Root_Entity'Class
+   is
+      Loc : constant General_Location := Get_Location (Ref);
+      Sloc : constant Sloc_T := Sloc_T'(Line   => Loc.Line,
+                                        Column => Loc.Column,
+                                        -- TODO: KLUDGE ???
+                                        Index  => 0);
+
+      File_Tree : constant Semantic_Tree'Class :=
+        Ref.Clang_Db.Kernel.Get_Abstract_Tree_For_File (Ref.Loc.File);
+      Parent : constant Clang_Node := Clang_Node
+        (File_Tree.Node_At
+           (Sloc, (Cat_Function, Cat_Method, Cat_Constructor)));
+   begin
+      return Cursor_As_Entity
+        (Ref.Clang_Db, Ref.Clang_Db.Kernel, Parent.Cursor);
+   end Get_Caller;
 
 end Clang_Xref;
