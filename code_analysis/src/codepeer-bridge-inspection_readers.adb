@@ -24,9 +24,10 @@ with CodePeer.Module;
 
 package body CodePeer.Bridge.Inspection_Readers is
 
+   Annotation_Category_Tag : constant String := "annotation_category";
+   CWE_Category_Tag        : constant String := "cwe_category";
    Inspection_Tag          : constant String := "inspection";
    Message_Category_Tag    : constant String := "message_category";
-   Annotation_Category_Tag : constant String := "annotation_category";
    File_Tag                : constant String := "file";
    Subprogram_Tag          : constant String := "subprogram";
    Message_Tag             : constant String := "message";
@@ -54,11 +55,20 @@ package body CodePeer.Bridge.Inspection_Readers is
    Vn_Id_Attribute          : constant String := "vn-id";
    Vn_Ids_Attribute         : constant String := "vn-ids";
 
+   procedure Include_CWE_Category
+     (Self : in out Reader'Class;
+      Id   : CWE_Identifier;
+      Name : Ada.Strings.Unbounded.Unbounded_String);
+   --  Includes CWE category into internal data structues when it is not
+   --  included yet. Note, in version 3 of interchange format, cwe_category
+   --  elements are optional; set of CWE categories is populated from lists
+   --  of CWEs from message_category elements.
+
    procedure Update_CWE
-     (Self     : in out Reader'Class;
-      Category : Message_Category_Access;
-      CWEs     : String);
-   --  Update sets of CWEs for message category and project nodes.
+     (Self : in out Reader'Class;
+      Set  : in out CWE_Category_Sets.Set;
+      CWEs : String);
+   --  Update sets of CWEs for given set and project node.
 
    -----------------
    -- End_Element --
@@ -116,6 +126,26 @@ package body CodePeer.Bridge.Inspection_Readers is
    begin
       return Ada.Containers.Hash_Type (Item);
    end Hash;
+
+   --------------------------
+   -- Include_CWE_Category --
+   --------------------------
+
+   procedure Include_CWE_Category
+     (Self : in out Reader'Class;
+      Id   : CWE_Identifier;
+      Name : Ada.Strings.Unbounded.Unbounded_String)
+   is
+      Aux : CWE_Category_Access;
+
+   begin
+      if not Self.CWE_Categories.Contains (Id) then
+         Aux := new CWE_Category'(Identifier => Id, Name => Name);
+         Self.CWE_Categories.Include (Id, Aux);
+         CodePeer.Project_Data'Class
+           (Self.Root_Inspection.all).CWE_Categories.Include (Aux);
+      end if;
+   end Include_CWE_Category;
 
    -----------
    -- Parse --
@@ -305,6 +335,7 @@ package body CodePeer.Bridge.Inspection_Readers is
             return Message_Ranking_Level'Value (Image);
          end if;
       end Get_Rank;
+
       ------------
       -- Get_Vn --
       ------------
@@ -442,6 +473,14 @@ package body CodePeer.Bridge.Inspection_Readers is
          Self.Version :=
            Format_Version'Value (Attrs.Get_Value (Format_Attribute));
 
+      elsif Qname = CWE_Category_Tag then
+         Self.Include_CWE_Category
+           (Id   =>
+              CWE_Identifier'Value (Attrs.Get_Value (Identifier_Attribute)),
+            Name =>
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Attrs.Get_Value (Name_Attribute)));
+
       elsif Qname = Message_Category_Tag then
          Message_Category :=
            new CodePeer.Message_Category'
@@ -463,7 +502,7 @@ package body CodePeer.Bridge.Inspection_Readers is
            (Natural'Value (Attrs.Get_Value ("identifier")), Message_Category);
 
          Self.Update_CWE
-           (Message_Category,
+           (Message_Category.CWEs,
             (if Attrs.Get_Index (CWE_Attribute) /= -1
              then Attrs.Get_Value (CWE_Attribute)
              else ""));
@@ -559,7 +598,8 @@ package body CodePeer.Bridge.Inspection_Readers is
               1,
               null,
               Message_Category_Sets.Empty_Set,
-              Get_Vns);
+              Get_Vns,
+              CWE_Category_Sets.Empty_Set);
 
          --  Only primary checks need to be displayed.
 
@@ -623,6 +663,12 @@ package body CodePeer.Bridge.Inspection_Readers is
               (Self.Root_Inspection.all).Warning_Subcategories.Include
               (Self.Current_Message.Category);
          end if;
+
+         Self.Update_CWE
+           (Self.Current_Message.CWEs,
+            (if Attrs.Get_Index (CWE_Attribute) /= -1
+             then Attrs.Get_Value (CWE_Attribute)
+             else ""));
 
       elsif Qname = Annotation_Tag then
          Annotation_Category :=
@@ -709,9 +755,9 @@ package body CodePeer.Bridge.Inspection_Readers is
    ----------------
 
    procedure Update_CWE
-     (Self     : in out Reader'Class;
-      Category : Message_Category_Access;
-      CWEs     : String)
+     (Self : in out Reader'Class;
+      Set  : in out CWE_Category_Sets.Set;
+      CWEs : String)
    is
 
       procedure Insert (Id : CWE_Identifier);
@@ -722,17 +768,10 @@ package body CodePeer.Bridge.Inspection_Readers is
       ------------
 
       procedure Insert (Id : CWE_Identifier) is
-         Aux : CWE_Category_Access;
-
       begin
-         if not Self.CWE_Categories.Contains (Id) then
-            Aux := new CWE_Category'(Identifier => Id);
-            Self.CWE_Categories.Include (Id, Aux);
-            CodePeer.Project_Data'Class
-              (Self.Root_Inspection.all).CWE_Categories.Include (Aux);
-         end if;
-
-         Category.CWEs.Include (Self.CWE_Categories (Id));
+         Self.Include_CWE_Category
+           (Id, Ada.Strings.Unbounded.Null_Unbounded_String);
+         Set.Include (Self.CWE_Categories (Id));
       end Insert;
 
       CWE_Id : CWE_Identifier;

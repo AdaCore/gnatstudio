@@ -25,5 +25,6 @@ package CodePeer.Categories_Criteria_Editors is
     (CodePeer.Message_Category,
      CodePeer.Message_Category_Access,
      CodePeer.Get_Name,
+     CodePeer.Get_Tooltip,
      CodePeer.Less,
      CodePeer.Message_Category_Sets);

@@ -23,18 +23,27 @@ with CodePeer.Generic_Ordered_Set_Models;
 generic
    type Item is limited private;
    type Item_Access is access all Item;
+   --  Criteria of filter
+
    with function Get_Name (Self : Item) return String;
+   --  Should return name of given criteria
+
+   with function Get_Tooltip (Self : Item) return String;
+   --  Should return tooltip to be displayed for given criteria
+
    with function "<" (Left : Item_Access; Right : Item_Access) return Boolean;
    with package Item_Sets is new Ada.Containers.Ordered_Sets (Item_Access);
    with package Ordered_Set_Models is
      new CodePeer.Generic_Ordered_Set_Models
-           (Item, Item_Access, "<", Item_Sets);
+       (Item, Item_Access, "<", Item_Sets);
+   --  Containers of criterias
 
 package CodePeer.Generic_Criteria_Models is
 
-   Active_Column : constant := 0;
-   Name_Column   : constant := 1;
-   Column_Count  : constant := 2;
+   Active_Column  : constant := 0;
+   Name_Column    : constant := 1;
+   Tooltip_Column : constant := 2;
+   Column_Count   : constant := 3;
 
    type Criteria_Model_Record is
      new Ordered_Set_Models.Ordered_Set_Model_Record with private;

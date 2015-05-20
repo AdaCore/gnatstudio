@@ -52,6 +52,9 @@ package body CodePeer.Generic_Criteria_Models is
          when Name_Column =>
             return Glib.GType_String;
 
+         when Tooltip_Column =>
+            return Glib.GType_String;
+
          when others =>
             return Glib.GType_Invalid;
       end case;
@@ -90,6 +93,11 @@ package body CodePeer.Generic_Criteria_Models is
          when Name_Column =>
             Glib.Values.Init (Value, Glib.GType_String);
             Glib.Values.Set_String (Value, Get_Name (Self.Item_At (Iter).all));
+
+         when Tooltip_Column =>
+            Glib.Values.Init (Value, Glib.GType_String);
+            Glib.Values.Set_String
+              (Value, Get_Tooltip (Self.Item_At (Iter).all));
 
          when others =>
             Glib.Values.Init (Value, Glib.GType_Invalid);

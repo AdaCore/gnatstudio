@@ -32,8 +32,10 @@ generic
    type Item is limited private;
    type Item_Access is access all Item;
    with function Get_Name (Self : Item) return String;
+   with function Get_Tooltip (Self : Item) return String;
    with function "<" (Left : Item_Access; Right : Item_Access) return Boolean;
    with package Item_Sets is new Ada.Containers.Ordered_Sets (Item_Access);
+   Enable_Tooltips : Boolean := False;
 
 package CodePeer.Generic_Criteria_Editors is
 
@@ -70,7 +72,13 @@ private
            (Item, Item_Access, "<", Item_Sets);
    package Criteria_Models is
      new CodePeer.Generic_Criteria_Models
-           (Item, Item_Access, Get_Name, "<", Item_Sets, Ordered_Set_Models);
+       (Item,
+        Item_Access,
+        Get_Name,
+        Get_Tooltip,
+        "<",
+        Item_Sets,
+        Ordered_Set_Models);
 
    type Criteria_Editor_Record is
      new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with

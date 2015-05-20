@@ -1538,11 +1538,13 @@ package body CodePeer.Module is
                   return True;
                end if;
 
-               --  or at least one CWE of the message's category should be
-               --  selected
+               --  or at least one CWE of the message or message's category
+               --  should be selected
 
                if not Self.Filter_Criteria.CWEs.Intersection
-                 (Message.Category.CWEs).Is_Empty
+                 ((if not Message.CWEs.Is_Empty
+                  then Message.CWEs
+                  else Message.Category.CWEs)).Is_Empty
                then
                   return True;
                end if;

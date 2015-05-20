@@ -187,6 +187,10 @@ package body CodePeer.Generic_Criteria_Editors is
       Gtk.Tree_View.Gtk_New (Self.View, Self.Model);
       Self.Add (Self.View);
 
+      if Enable_Tooltips then
+         Self.View.Set_Tooltip_Column (Criteria_Models.Tooltip_Column);
+      end if;
+
       Gtk.Tree_View_Column.Gtk_New (Column);
       Column.Set_Clickable (True);
       Tree_View_Column_Callbacks.Connect

@@ -209,6 +209,15 @@ package body CodePeer is
       return Self.Name.all;
    end Get_Name;
 
+   -----------------
+   -- Get_Tooltip --
+   -----------------
+
+   function Get_Tooltip (Item : CWE_Category) return String is
+   begin
+      return Ada.Strings.Unbounded.To_String (Item.Name);
+   end Get_Tooltip;
+
    ----------
    -- Hash --
    ----------

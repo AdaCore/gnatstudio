@@ -55,9 +55,13 @@ package CodePeer is
 
    type CWE_Category is record
       Identifier : CWE_Identifier;
+      Name       : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
    function Get_Name (Item : CWE_Category) return String;
+
+   function Get_Tooltip (Item : CWE_Category) return String;
+   --  Returns tooltip's text to be displayed for given CWE category.
 
    type CWE_Category_Access is access all CWE_Category;
 
@@ -73,6 +77,9 @@ package CodePeer is
    end record;
 
    function Get_Name (Self : Message_Category) return String;
+
+   function Get_Tooltip (Item : Message_Category) return String is ("");
+   --  Returns tooltip's text to be displayed for given message category.
 
    type Message_Category_Access is access all Message_Category;
 
@@ -121,6 +128,7 @@ package CodePeer is
       Message          : GPS.Kernel.Messages.Message_Access;
       Checks           : Message_Category_Sets.Set;
       Vns              : Natural_Sets.Set;
+      CWEs             : CWE_Category_Sets.Set;
    end record;
 
    type Message_Access is access all Message;
