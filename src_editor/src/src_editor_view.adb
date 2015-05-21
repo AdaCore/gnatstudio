@@ -1076,8 +1076,9 @@ package body Src_Editor_View is
 
             if View.Highlight_As_Line then
                Set_Line_Width (Cr, 1.0);
+
                Draw_Line (Cr, View.Current_Line_Color,
-                          0,
+                          -1,
                           Buffer_Line_Y + Line_Height,
                           Rect.Width,
                           Buffer_Line_Y + Line_Height);

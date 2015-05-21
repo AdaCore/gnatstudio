@@ -1122,7 +1122,7 @@ package body Src_Editor_Buffer.Line_Information is
                Draw_Line
                  (Cr, Line_Color,
                   0, Y_Pix_In_Window + Line_Height,
-                  Gint (Buffer.Total_Column_Width),
+                  Gint (Buffer.Total_Column_Width) + 1,
                   Y_Pix_In_Window + Line_Height);
                Restore (Cr);
             else
@@ -1130,7 +1130,8 @@ package body Src_Editor_Buffer.Line_Information is
 
                Cairo.Rectangle
                  (Cr, 0.0, Gdouble (Y_Pix_In_Window),
-                  Gdouble (Buffer.Total_Column_Width), Gdouble (Line_Height));
+                  Gdouble (Buffer.Total_Column_Width) + 1.0,
+                  Gdouble (Line_Height));
                Cairo.Fill (Cr);
                Set_Source_RGBA (Cr, Color);
             end if;
