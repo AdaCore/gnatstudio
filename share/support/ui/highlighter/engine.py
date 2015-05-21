@@ -413,7 +413,8 @@ class Highlighter(object):
         ":type: Gtk.TextIter"
 
         end = (gtk_ed.get_end_iter()
-               if not end_line else gtk_ed.get_iter_at_line(end_line))
+               if (end_line == 0 or end_line > gtk_ed.get_line_count())
+               else gtk_ed.get_iter_at_line(end_line))
         ":type: Gtk.TextIter"
 
         strn = gtk_ed.get_text(start, end, True).decode('utf-8')
