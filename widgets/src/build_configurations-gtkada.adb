@@ -42,6 +42,7 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Widget;               use Gtk.Widget;
 
 with GUI_Utils;                use GUI_Utils;
@@ -829,10 +830,12 @@ package body Build_Configurations.Gtkada is
          Set_Editable (Scrolled.Expanded_Entry, False);
          Set_Sensitive (Scrolled.Expanded_Entry, False);
          Set_Wrap_Mode (Scrolled.Expanded_Entry, Wrap_Word);
+         Get_Style_Context (Scrolled.Expanded_Entry).Add_Class
+           ("command_line_preview");
          Gtk_New (Options_Frame);
          Set_Shadow_Type (Options_Frame, Shadow_None);
          Add (Options_Frame, Scrolled.Expanded_Entry);
-         Pack_Start (Box, Options_Frame, True, True, 0);
+         Pack_Start (Box, Options_Frame, False, False, 3);
       end if;
 
       return Scrolled;
@@ -1433,7 +1436,7 @@ package body Build_Configurations.Gtkada is
                Parent => Parent,
                Flags  => Modal or Destroy_With_Parent
                   or Use_Header_Bar_From_Settings (Parent));
-      Set_Default_Size (Dialog, 600, 0);
+      Set_Default_Size (Dialog, 700, 400);
 
       UI := new Build_UI_Record;
       Initialize_Hbox (UI);
