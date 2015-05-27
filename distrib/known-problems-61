@@ -342,6 +342,17 @@ KP-61-O120-002 GPS: cannot force background color for editors
 
   Workaround: None, the colors are hard-coded in Ada.
 
+KP-61-O119-017 GB: absolute path generated in GPR files
+
+  Problem:    When importing a GNAT project or creating a new ada folder,
+              absolute paths are written in source, object or exec dir
+              definitions in the GPR file.
+
+  Status:     This was fixed in 2.10 on 2015-01-19
+
+  Workaround: Set definitions relative, editing the GPR file using a text
+              editor.
+
 KP-61-O116-007 GPS: selecting -gnatp automatically adds -gnatVn
 
   Problem:    In the Project Properties dialog, adding the "Suppress All
