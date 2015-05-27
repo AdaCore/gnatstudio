@@ -62,6 +62,17 @@ KP-61-O429-016 GPS: behaviors of local toolbar menus
   Workaround: Move the main window and click on the menu to make it
               disappear.
 
+KP-61-O424-012 GB: IDE'Xref_Database attribute not supported in GPR file
+
+  Problem:    GPR files defining in the IDE package the Xref_Database
+              attribute are not supported. They generates undefined attribute
+              "xref_database" error in GPR file. These GNAT projects are not
+              supported by GNATbench.
+
+  Status:     This was fixed in 2.10 on 2015-05-18
+
+  Workaround: Remove the IDE'Xref_Database attribute and restart GNATbench.
+
 KP-61-O423-026 GPS: issue displaying complex objects in the debugger
 
   Problem:    Sometimes a graphical displaying of complex object does not work
