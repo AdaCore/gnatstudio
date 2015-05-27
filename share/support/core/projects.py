@@ -161,6 +161,20 @@ XML = r"""<?xml version="1.0" ?>
        <string type="file" />
    </project_attribute>
 
+   <project_attribute
+       name="global_compilation_switches"
+       package="Builder"
+       editor_page="Build"
+       editor_section="External configuration"
+       description="List of compiler switches to use when compiling any source file in the project hierarchy"
+       label="Global Compilation Switches"
+       list="true"
+       hide_in="wizard library_wizard">
+       <index attribute="Languages">
+          <string />
+       </index>
+   </project_attribute>
+
    <!--  VCS attributes -->
 
    <project_attribute

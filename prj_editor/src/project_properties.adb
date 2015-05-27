@@ -3031,7 +3031,10 @@ package body Project_Properties is
    begin
       if Editor.Current_Values /= null then
          for C in Editor.Current_Values'Range loop
-            if Editor.Current_Values (C).Index.all = Attribute_Index then
+            if Equal (Editor.Current_Values (C).Index.all,
+                      Attribute_Index,
+                      Case_Sensitive => Editor.Attribute.Case_Sensitive_Index)
+            then
                declare
                   V : GNAT.Strings.String_List
                     (Editor.Current_Values (C).Values'Range);
@@ -3322,7 +3325,7 @@ package body Project_Properties is
 
                if Attr.Is_List then
                   declare
-                     Current : constant String_List_Access :=
+                     Current : String_List_Access :=
                        Get_Current_Value
                          (Kernel   => Kernel,
                           Project  => Project,
@@ -3330,6 +3333,11 @@ package body Project_Properties is
                           Index    => Value);
                      Tmp     : Indexed_Values_Array_Access;
                   begin
+                     if Current = null then
+                        Current := new GNAT.OS_Lib.String_List'
+                          (1 .. 0 => null);
+                     end if;
+
                      Set
                        (Ed.Model, Iter, Attribute_Col,
                         To_String (Current.all));
