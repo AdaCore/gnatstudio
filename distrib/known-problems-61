@@ -25,6 +25,22 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O512-001 WB: building VxWorks 653 project for simpc not documented.
+
+  Problem:    Missing documentation in "Creating and Building a VxWorks 653
+              Integration Project" tutorial for the simpc platform.
+
+  Status:     This was fixed in 2.10 on 2015-05-20
+
+  Workaround: The example to use is located at
+              share/examples/i586-wrs-vxworksae/Workbench/apex_raven/config
+              Change imported module.xml file to use the "simpc" platform.
+              When changing the "BINDING" scenario variable, change also the
+              "PLATFORM" scenario variable to "i586-wrs-vxworksae". You can
+              select environment or project specific scope when setting the
+              variables.
+              See also Known problem O223-046.
+
 KP-61-O506-020 GPS: project attributes for CodePeer
 
   Problem:    GPS ignores some project attributes for CodePeer.
@@ -221,7 +237,7 @@ KP-61-O223-046 WB: error in building VxWorks 653 integration project tutorial
               powerpc-wrs-vxworksae target, the projects cannot be created, and
               error dialogs are displayed.
 
-  Status:     This was fixed in 2.9.2 on 2015-03-26
+  Status:     This was fixed in 2.10 on 2015-03-26
 
   Workaround: Edit the imported module.xml file, in CoreOS definition use the
               wrSbcP4080 board support package (BSP) instead of wrSbc750gx.
@@ -238,7 +254,7 @@ KP-61-O223-001 WB: scenario.makefile not created when converting to ada project
               package. When it occurs, the Error Log contains multiple
               GNATbench errors.
 
-  Status:     This was fixed in 2.9.2 on 2015-03-13
+  Status:     This was fixed in 2.10 on 2015-03-13
 
   Workaround: Use during the conversion a modified gpr file without its
               original IDE package. After the conversion, restore the IDE
