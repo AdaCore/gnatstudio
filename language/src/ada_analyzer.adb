@@ -2583,7 +2583,7 @@ package body Ada_Analyzer is
             Do_Indent (Prec, Line_Count, Num_Spaces);
 
             if Prev_Token /= Tok_Left_Paren
-               and then Indent_Case_Extra = RM_Style
+              and then Indent_Case_Extra = RM_Style
             then
                Temp.Extra_Indent := True;
                Num_Spaces := Num_Spaces + Indent_Level;
