@@ -25,11 +25,20 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O522-003 GPS: incorrect indentation after case expression
+
+  Problem:    When 'Case indentation' is set to 'RM_Style' code after case
+              expression is indented incorrectly.
+
+  Status:     This was fixed in 6.2 on 2015-05-27
+
+  Workaround: Use another value for 'Case indentation' preference.
+
 KP-61-O506-020 GPS: project attributes for CodePeer
 
   Problem:    GPS ignores some project attributes for CodePeer.
 
-  Status:     This is fixed in 6.2 on 2015-05-12
+  Status:     This was fixed in 6.2 on 2015-05-12
 
   Workaround: Use text editor to edit project file when CodePeer package is
               used in it.
