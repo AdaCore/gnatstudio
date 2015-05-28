@@ -50,6 +50,17 @@ KP-61-O506-020 GPS: project attributes for CodePeer
   Workaround: Use text editor to edit project file when CodePeer package is
               used in it.
 
+KP-61-O430-006 GB: codepeer details report empty
+
+  Problem:    For very large projects, more than 100,000 lines of code
+              after running Codepeer, the CodePeer Problem Details view
+              is empty.
+
+  Status:     This was fixed in 2.10 on 2015-01-30
+
+  Workaround: See the html files in the Codepeer project.output/html
+              directory using native browser.
+
 KP-61-O429-016 GPS: behaviors of local toolbar menus
 
   Problem:    The menus at the right of the view-local toolbars behave
