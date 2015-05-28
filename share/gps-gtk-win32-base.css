@@ -72,5 +72,5 @@ GtkToggleButton GtkBox{
 
 GtkWindow,
 GtkViewport {
-    background-color: @bg_color;
+    background-color: @theme_bg_color;
 }
