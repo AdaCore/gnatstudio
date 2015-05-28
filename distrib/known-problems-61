@@ -25,22 +25,6 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
-KP-61-O512-001 WB: building VxWorks 653 project for simpc not documented.
-
-  Problem:    Missing documentation in "Creating and Building a VxWorks 653
-              Integration Project" tutorial for the simpc platform.
-
-  Status:     This was fixed in 2.10 on 2015-05-20
-
-  Workaround: The example to use is located at
-              share/examples/i586-wrs-vxworksae/Workbench/apex_raven/config
-              Change imported module.xml file to use the "simpc" platform.
-              When changing the "BINDING" scenario variable, change also the
-              "PLATFORM" scenario variable to "i586-wrs-vxworksae". You can
-              select environment or project specific scope when setting the
-              variables.
-              See also Known problem O223-046.
-
 KP-61-O506-020 GPS: project attributes for CodePeer
 
   Problem:    GPS ignores some project attributes for CodePeer.
@@ -49,17 +33,6 @@ KP-61-O506-020 GPS: project attributes for CodePeer
 
   Workaround: Use text editor to edit project file when CodePeer package is
               used in it.
-
-KP-61-O430-006 GB: codepeer details report empty
-
-  Problem:    For very large projects, more than 100,000 lines of code
-              after running Codepeer, the CodePeer Problem Details view
-              is empty.
-
-  Status:     This was fixed in 2.10 on 2015-01-30
-
-  Workaround: See the html files in the Codepeer project.output/html
-              directory using native browser.
 
 KP-61-O429-016 GPS: behaviors of local toolbar menus
 
@@ -72,17 +45,6 @@ KP-61-O429-016 GPS: behaviors of local toolbar menus
 
   Workaround: Move the main window and click on the menu to make it
               disappear.
-
-KP-61-O424-012 GB: IDE'Xref_Database attribute not supported in GPR file
-
-  Problem:    GPR files defining in the IDE package the Xref_Database
-              attribute are not supported. They generates undefined attribute
-              "xref_database" error in GPR file. These GNAT projects are not
-              supported by GNATbench.
-
-  Status:     This was fixed in 2.10 on 2015-05-18
-
-  Workaround: Remove the IDE'Xref_Database attribute and restart GNATbench.
 
 KP-61-O423-026 GPS: issue displaying complex objects in the debugger
 
@@ -106,21 +68,6 @@ KP-61-O421-010 GPS: call tree not refreshed after xref recomputed
 
   Workaround: Clear the call tree manually.
 
-KP-61-O415-010 GB: access check failed reported in toolchains.adb
-
-  Problem:    Sometimes, when loading, cleaning or building a project, an error
-              "toolchains.adb:661 access check failed" is displayed in an
-              error dialog or found in the error log.
-
-  Status:     This was fixed in 2.10 on 2015-03-13
-
-  Workaround: Remove the incorrect toolchain usage from the .gb_project file
-              of the eclipse project that generated the error.
-              Note: .gb_project files are not displayed by default in the
-              "Project Explorer" view. Please uncheck ".* resources" filter
-              using "Customize View..." item of the "Project Explorer"'s view
-              menu (Ctrl+F10 from Project Explorer view)
-
 KP-61-O415-004 GPS: Cross-references disabled when traces.cfg not found
 
   Problem:     When the file traces.cfg is not found in the GPS config
@@ -131,21 +78,6 @@ KP-61-O415-004 GPS: Cross-references disabled when traces.cfg not found
 
   Workaround:  Recreate a traces.cfg file that only contains a "+" on a line
                of its own.
-
-KP-61-O408-005 GB: Build All command starts multiple times the same build.
-
-  Problem:     When the workspace contains GNAT projects automatically created
-               during an existing GNAT project import operation, sometimes
-               when running the Build All (Ctrl+B) command, GNATbench starts
-               multiple jobs building the same GNAT project.
-
-  Status:      This was fixed in 2.10 on 2015-04-22
-
-  Workaround:  Disable the GNATbench builder for all non root GNAT project.
-               - To verify the a GNAT project is not a root project, use the
-               GNATbench properties page of the project properties dialog.
-               - To disable the GNATbench builder, uncheck it in the Builders
-               page of the project properties dialog.
 
 KP-61-O403-018 GPS: "Whole word" option in omni-search is insensitive
 
@@ -252,36 +184,6 @@ KP-61-O227-005 GPS: Align command depends on auto-indent preference
 
   Workaround: Delete lines with 'indent' call in align.py file.
 
-KP-61-O223-046 WB: error in building VxWorks 653 integration project tutorial
-
-  Problem:    When running the "Creating and Building a VxWorks 653
-              Integration Project" tutorial on VxWorks 653 2.4 for a
-              powerpc-wrs-vxworksae target, the projects cannot be created, and
-              error dialogs are displayed.
-
-  Status:     This was fixed in 2.10 on 2015-03-26
-
-  Workaround: Edit the imported module.xml file, in CoreOS definition use the
-              wrSbcP4080 board support package (BSP) instead of wrSbc750gx.
-              If building the sender/receiver projects, you encounter gprconfig
-              problems, remove the c & c++ languages from the gprconfig command
-              line present in their generated gnat.makefile files.
-
-KP-61-O223-001 WB: scenario.makefile not created when converting to ada project
-
-  Problem:    Sometimes, when converting a Wind River Workbench project to an
-              Ada project, the scenario.makefile is not created, and thus the
-              converted project cannot be built. This occurs when the external
-              gpr file used during the conversion contains unsupported IDE
-              package. When it occurs, the Error Log contains multiple
-              GNATbench errors.
-
-  Status:     This was fixed in 2.10 on 2015-03-13
-
-  Workaround: Use during the conversion a modified gpr file without its
-              original IDE package. After the conversion, restore the IDE
-              package to its original state.
-
 KP-61-O222-001 GPS: leftover highlighting from auto_highlight_occurrences
 
   Problem:    When the auto_highlight_occurrences plugin is active, stray
@@ -317,31 +219,6 @@ KP-61-O208-003 Cross-references not working with aggregate library projects
               only used to load in GPS and do the cross-references, where
               aggregate library projects are replaced with standard projects.
 
-KP-61-O204-044 GB: comment between 'null' and ')' in subprogram definition
-
-  Problem:    Having in a subprogram definition (specification or body) the
-              last parameter default value equal to 'null' and having a
-              comment between this 'null' default value and the ')' character
-              closing the parameters list, generates unhandled ada exceptions
-              in ada_analyzer package, and brakes tooltips & code assist
-              feature.
-
-  Status:     This was fixed in 2.10 on 2015-02-11
-
-  Workaround: Move the comment before the last parameter, or use a constant
-              instead of 'null' to set the default value.
-              ex: MY_TYPE_NULL_DEFAULT_VALUE : constant My_Type := null;
-              Restart the Eclipse or Workbench platform.
-
-KP-61-O204-017 GB: random crash after code assist popup display
-
-  Problem:    After code assist popup was displayed to propose possible
-              completions, Eclipse/Workbench sometimes crashes.
-
-  Status:     This was fixed in 2.10 on 2015-02-09
-
-  Workaround: Disable Code Assist feature through Ada/Tools preference page.
-
 KP-61-O202-046 GPS: can't find coverage data from an extended project
 
   Problem:    GPS is unable to find coverage data when the project
@@ -350,15 +227,6 @@ KP-61-O202-046 GPS: can't find coverage data from an extended project
   Status:     This was fixed in 6.2 on 2015-04-20
 
   Workaround: Copy coverage data manually into directory where GPS expects it.
-
-KP-61-O202-032 GB: <Ctrl> click hyperlink not working in ada editor
-
-  Problem:    When the ada editor is opened from the problem view, the
-              hyperlink navigation is not working.
-
-  Status:     This was fixed in 2.10 on 2015-02-06
-
-  Workaround: Close the editor, open it from the project editor view.
 
 KP-61-O120-033 GPS: auto-casing in comments
 
@@ -379,17 +247,6 @@ KP-61-O120-002 GPS: cannot force background color for editors
   Status:     This was fixed in 6.2.0 on 2015-01-20
 
   Workaround: None, the colors are hard-coded in Ada.
-
-KP-61-O119-017 GB: absolute path generated in GPR files
-
-  Problem:    When importing a GNAT project or creating a new ada folder,
-              absolute paths are written in source, object or exec dir
-              definitions in the GPR file.
-
-  Status:     This was fixed in 2.10 on 2015-01-19
-
-  Workaround: Set definitions relative, editing the GPR file using a text
-              editor.
 
 KP-61-O116-007 GPS: selecting -gnatp automatically adds -gnatVn
 
@@ -529,19 +386,6 @@ KP-61-N930-046 GPS: Debuggee still running after debugger terminated
 
   Workaround: Interrupt the program before closing the debugger.
 
-KP-61-N911-027 GB: auto-generated GB files not created upon svn checkout
-
-  Problem:     When using WRWB and Polarion svn to check out WR DKM/RTP
-               projects, the gpr-gpp.makefle, powerpc-wrs-vxworks.cgpr
-               and scenario.makefile are not created as expected.
-
-  Status:      This is fixed in 2.10 on 2014-12-18.
-
-  Workaround:  Right click project, then properties, then Gnatbench
-               properties and touch something(e.g. deselect root project),
-               APPLY, select is root project, hit OK. This will create
-               the necessary files.
-
 KP-61-N822-004 GPS: Input focus when creating/opening new windows
 
   Problem:    After switching from a floating windows to a non-floating one
@@ -553,22 +397,151 @@ KP-61-N822-004 GPS: Input focus when creating/opening new windows
   Workaround: Use the mouse or Windows Manager shortcuts to switch between
               windows.
 
-KP-61-N717-017 GB: Detect the nature of the project at import
-
-  Problem:     When using WRWB and git repository to check out WR DKM/RTP
-               projects, sometimes the gnat.makefle and
-               scenario.makefile are not created as expected.
-
-  Status:      This is fixed in 2.10 on 2015-04-28.
-
-  Workaround:  Right click project, then properties, then Gnatbench
-               properties and touch something(e.g. deselect root project),
-               APPLY, select is root project, hit OK. This will create
-               the necessary files. Also restarting WRWB or opening a
-               closed project will auto-generate the missing gnat.makefile.
-
 Known problems fixed in GPS 6.1.2 / GNATbench 2.9.2
 ---------------------------------------------------
+
+KP-61-O512-001 WB: building VxWorks 653 project for simpc not documented.
+
+  Problem:    Missing documentation in "Creating and Building a VxWorks 653
+              Integration Project" tutorial for the simpc platform.
+
+  Status:     This was fixed in 2.9.2 on 2015-05-20
+
+  Workaround: The example to use is located at
+              share/examples/i586-wrs-vxworksae/Workbench/apex_raven/config
+              Change imported module.xml file to use the "simpc" platform.
+              When changing the "BINDING" scenario variable, change also the
+              "PLATFORM" scenario variable to "i586-wrs-vxworksae". You can
+              select environment or project specific scope when setting the
+              variables.
+              See also Known problem O223-046.
+
+KP-61-O430-006 GB: codepeer details report empty
+
+  Problem:    For very large projects, more than 100,000 lines of code
+              after running Codepeer, the CodePeer Problem Details view
+              is empty.
+
+  Status:     This was fixed in 2.9.2 on 2015-01-30
+
+  Workaround: See the html files in the Codepeer project.output/html
+              directory using native browser.
+
+KP-61-O424-012 GB: IDE'Xref_Database attribute not supported in GPR file
+
+  Problem:    GPR files defining in the IDE package the Xref_Database
+              attribute are not supported. They generates undefined attribute
+              "xref_database" error in GPR file. These GNAT projects are not
+              supported by GNATbench.
+
+  Status:     This was fixed in 2.9.2 on 2015-05-18
+
+  Workaround: Remove the IDE'Xref_Database attribute and restart GNATbench.
+
+KP-61-O415-010 GB: access check failed reported in toolchains.adb
+
+  Problem:    Sometimes, when loading, cleaning or building a project, an error
+              "toolchains.adb:661 access check failed" is displayed in an
+              error dialog or found in the error log.
+
+  Status:     This was fixed in 2.9.2 on 2015-03-13
+
+  Workaround: Remove the incorrect toolchain usage from the .gb_project file
+              of the eclipse project that generated the error.
+              Note: .gb_project files are not displayed by default in the
+              "Project Explorer" view. Please uncheck ".* resources" filter
+              using "Customize View..." item of the "Project Explorer"'s view
+              menu (Ctrl+F10 from Project Explorer view)
+
+KP-61-O408-005 GB: Build All command starts multiple times the same build.
+
+  Problem:     When the workspace contains GNAT projects automatically created
+               during an existing GNAT project import operation, sometimes
+               when running the Build All (Ctrl+B) command, GNATbench starts
+               multiple jobs building the same GNAT project.
+
+  Status:      This was fixed in 2.9.2 on 2015-04-22
+
+  Workaround:  Disable the GNATbench builder for all non root GNAT project.
+               - To verify the a GNAT project is not a root project, use the
+               GNATbench properties page of the project properties dialog.
+               - To disable the GNATbench builder, uncheck it in the Builders
+               page of the project properties dialog.
+
+KP-61-O223-046 WB: error in building VxWorks 653 integration project tutorial
+
+  Problem:    When running the "Creating and Building a VxWorks 653
+              Integration Project" tutorial on VxWorks 653 2.4 for a
+              powerpc-wrs-vxworksae target, the projects cannot be created, and
+              error dialogs are displayed.
+
+  Status:     This was fixed in 2.9.2 on 2015-03-26
+
+  Workaround: Edit the imported module.xml file, in CoreOS definition use the
+              wrSbcP4080 board support package (BSP) instead of wrSbc750gx.
+              If building the sender/receiver projects, you encounter gprconfig
+              problems, remove the c & c++ languages from the gprconfig command
+              line present in their generated gnat.makefile files.
+
+KP-61-O223-001 WB: scenario.makefile not created when converting to ada project
+
+  Problem:    Sometimes, when converting a Wind River Workbench project to an
+              Ada project, the scenario.makefile is not created, and thus the
+              converted project cannot be built. This occurs when the external
+              gpr file used during the conversion contains unsupported IDE
+              package. When it occurs, the Error Log contains multiple
+              GNATbench errors.
+
+  Status:     This was fixed in 2.9.2 on 2015-03-13
+
+  Workaround: Use during the conversion a modified gpr file without its
+              original IDE package. After the conversion, restore the IDE
+              package to its original state.
+
+KP-61-O204-044 GB: comment between 'null' and ')' in subprogram definition
+
+  Problem:    Having in a subprogram definition (specification or body) the
+              last parameter default value equal to 'null' and having a
+              comment between this 'null' default value and the ')' character
+              closing the parameters list, generates unhandled ada exceptions
+              in ada_analyzer package, and brakes tooltips & code assist
+              feature.
+
+  Status:     This was fixed in 2.9.2 on 2015-02-11
+
+  Workaround: Move the comment before the last parameter, or use a constant
+              instead of 'null' to set the default value.
+              ex: MY_TYPE_NULL_DEFAULT_VALUE : constant My_Type := null;
+              Restart the Eclipse or Workbench platform.
+
+KP-61-O204-017 GB: random crash after code assist popup display
+
+  Problem:    After code assist popup was displayed to propose possible
+              completions, Eclipse/Workbench sometimes crashes.
+
+  Status:     This was fixed in 2.9.2 on 2015-02-09
+
+  Workaround: Disable Code Assist feature through Ada/Tools preference page.
+
+KP-61-O202-032 GB: <Ctrl> click hyperlink not working in ada editor
+
+  Problem:    When the ada editor is opened from the problem view, the
+              hyperlink navigation is not working.
+
+  Status:     This was fixed in 2.9.2 on 2015-02-06
+
+  Workaround: Close the editor, open it from the project editor view.
+
+KP-61-O119-017 GB: absolute path generated in GPR files
+
+  Problem:    When importing a GNAT project or creating a new ada folder,
+              absolute paths are written in source, object or exec dir
+              definitions in the GPR file.
+
+  Status:     This was fixed in 2.9.2 on 2015-01-19
+
+  Workaround: Set definitions relative, editing the GPR file using a text
+              editor.
 
 KP-61-NB10-025 GPS: problems when clicking on Ada files outside of GPS
 
@@ -583,6 +556,33 @@ KP-61-NB10-025 GPS: problems when clicking on Ada files outside of GPS
   Workaround: Open the file from within a running GPS.
               Alternatively, set the environment variable
               "DBUS_SESSION_BUS_ADDRESS" to the value "null".
+
+KP-61-N911-027 GB: auto-generated GB files not created upon svn checkout
+
+  Problem:     When using WRWB and Polarion svn to check out WR DKM/RTP
+               projects, the gpr-gpp.makefle, powerpc-wrs-vxworks.cgpr
+               and scenario.makefile are not created as expected.
+
+  Status:      This is fixed in 2.9.2 on 2014-12-18.
+
+  Workaround:  Right click project, then properties, then Gnatbench
+               properties and touch something(e.g. deselect root project),
+               APPLY, select is root project, hit OK. This will create
+               the necessary files.
+
+KP-61-N717-017 GB: Detect the nature of the project at import
+
+  Problem:     When using WRWB and git repository to check out WR DKM/RTP
+               projects, sometimes the gnat.makefle and
+               scenario.makefile are not created as expected.
+
+  Status:      This is fixed in 2.9.2 on 2015-04-28.
+
+  Workaround:  Right click project, then properties, then Gnatbench
+               properties and touch something(e.g. deselect root project),
+               APPLY, select is root project, hit OK. This will create
+               the necessary files. Also restarting WRWB or opening a
+               closed project will auto-generate the missing gnat.makefile.
 
 Known problems fixed in GPS 6.1.1 / GNATbench 2.9.1
 ---------------------------------------------------
