@@ -1,8 +1,11 @@
+@define-color notebook_background #f0f0f0;
+@define-color mdi_border_color #e0e0e0;
 
-@define-color gps_active_tab green;
 @define-color borders #777777;
 @define-color theme_base_color white;
+@define-color theme_bg_color @notebook_background;
 @define-color theme_fg_color black;
+@define-color active_tab_color white;
 
 @define-color completion-selected-color #888;
 @define-color completions-notes-text-color #444;
@@ -15,12 +18,30 @@ GtkButton {
   padding: 7px;
 }
 
+GtkWindow.tooltip GtkWidget {
+   padding: 7px;
+   background-color: shade(@notebook_background,0.9);
+}
+
 GtkButtonBox .button {
  padding: 4px;
 }
 
 GtkNotebook {
   background: @theme_bg_color;
+}
+
+.notebook.mdi tab {
+  box-shadow: none;
+}
+
+.notebook.mdi tab:active {
+  box-shadow: none;
+  background-color: @active_tab_color;
+}
+
+.notebook {
+   -GtkNotebook-tab-overlap: 1;
 }
 
 GtkToggleButton GtkBox{
@@ -31,35 +52,13 @@ GtkToggleButton GtkBox{
    color:   black;
    opacity: 1.0;
 }
-.notebook.mdifocused tab:active {
-  background-image: none;
-  border: 3px solid black;
-}
 
-.notebook.mdifocused tab.top:active, .notebook.mdifocused tab.bottom:active {
-  border-left-width: 1px;
-  border-right-width: 1px;
-}
-
-.notebook.mdifocused tab.left:active, .notebook.mdifocused tab.right:active {
-  border-top-width: 1px;
-  border-bottom-width: 1px;
-}
-.notebook.mdifocused tab.top:active{ border-top-color: @gps_active_tab; }
-.notebook.mdifocused tab.bottom:active{ border-bottom-color: @gps_active_tab; }
-.notebook.mdifocused tab.left:active{ border-left-color: @gps_active_tab; }
-.notebook.mdifocused tab.right:active{ border-right-color: @gps_active_tab; }
-
-.notebook tab {
-    border-width: 1px;
-    border-style: solid;
-    background-image: none;
-    padding: 5px;
-    background: white;
+.notebook {
+   background-color: @notebook_background;
 }
 
 .menu .menuitem {
-    padding: 4px;
+    padding: 1px;
 }
 
 .gps-local-toolbar {
@@ -68,6 +67,10 @@ GtkToggleButton GtkBox{
 
 .gps-local-toolbar .button {
    padding: 3px;
+}
+
+.button {
+   padding: 6px;
 }
 
 GtkWindow,
