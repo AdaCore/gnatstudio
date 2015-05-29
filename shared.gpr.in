@@ -12,17 +12,7 @@ project Shared is
    for Object_Dir use Gnatcoll_Shared'Object_Dir;
    for Library_Dir use Gnatcoll_Shared'Library_Dir;
 
-   type VCS_Type is ("Subversion", "Git", "Auto");
-   VCS_Kind : VCS_Type := External ("PRJ_VCS", "Subversion");
-
    package IDE is
-      case OS is
-         when "unix" =>
-            for VCS_Kind use "Auto";
-         when "Windows_NT" =>
-            for VCS_Kind use VCS_Kind;
-      end case;
-
       for Documentation_Dir use Project'Object_Dir & "/html";
    end IDE;
 
