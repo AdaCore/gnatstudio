@@ -1419,6 +1419,10 @@ package body Codefix.Text_Manager.Ada_Commands is
                      End_Of_Profile;
                      Is_Spec := False;
                      return True;
+                  elsif Equal (Name, "with", False) then
+                     End_Of_Profile;
+                     Is_Spec := True;
+                     return True;
                   elsif Equal (Name, "return", False) then
                      Begin_Of_Profile;
                      Is_Empty := False;
