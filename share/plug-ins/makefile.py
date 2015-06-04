@@ -9,8 +9,9 @@ the project properties editor.
                  name, or a name relative to the directory containing the
                  root project file (ie the one loaded in GPS). This
                  attribute is optional. If unspecified, GPS will look for
-                 either "Makefile" or "makefile" in the directory
-                 containing the root project.
+                 "Makefile" in the directory containing the root project.
+                 On case-insensitive file systems, "makefile" is also
+                 accepted.
 
 This script defines the following new project attributes in the "ant"
 package of a .gpr file:
@@ -184,7 +185,7 @@ class Makefile (Builder):
     def __init__(self):
         self.pkg_name = "make"
         self.build_file_attr = "makefile"
-        self.default_build_files = ["Makefile", "makefile"]
+        self.default_build_files = ["Makefile"]
         self.target_matcher = re.compile(
             "^([^#.=%\t][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
         self.include_matcher = re.compile("^include (.*)$")

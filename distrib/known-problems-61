@@ -25,6 +25,21 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O604-006 GPS: inconsistent support for makefile
+
+  Problem:    On case-sensitive file systems, GPS correctly finds a "makefile"
+              to parse its targets and display them in a menu. However, when
+              it spawns make, it always passes "make -f Makefile", so make
+              will fail.
+
+  Status:     This was fixed in 6.2 on 2015-06-04
+
+  Workaround: GPS now only parses "Makefile" by default. If you want to use
+              any other file name, you need to modify your project file to add
+              a Make package and a Make'Makefile attribute set to the name of
+              the file, as in:
+                   package Make is for Makefile use "makefile"; end Make;
+
 KP-61-O522-003 GPS: incorrect indentation after case expression
 
   Problem:    When 'Case indentation' is set to 'RM_Style' code after case
