@@ -51,6 +51,9 @@ package body GPS.Kernel.Project is
 
    Me : constant Trace_Handle := Create ("GPS.Kernel.Project");
 
+   Report_Missing_Dirs : constant Trace_Handle :=
+      Create ("PROJECTS.MISSING_DIRS_WARNING", Default => On);
+
    Location_Category : constant String := "Project";
    --  Category uses in the Location window for errors related to loading the
    --  project file
@@ -688,7 +691,8 @@ package body GPS.Kernel.Project is
               (Root_Project_Path => Local_Project,
                Env               => Kernel.Registry.Environment,
                Errors            => Report_Error'Unrestricted_Access,
-               Recompute_View    => False);
+               Recompute_View    => False,
+               Report_Missing_Dirs => Active (Report_Missing_Dirs));
 
          exception
             when Invalid_Project =>
@@ -718,7 +722,8 @@ package body GPS.Kernel.Project is
                     (Root_Project_Path => Local_Project,
                      Errors            => Report_Error'Unrestricted_Access,
                      Env               => Kernel.Registry.Environment,
-                     Recompute_View    => False);
+                     Recompute_View    => False,
+                     Report_Missing_Dirs => Active (Report_Missing_Dirs));
                   New_Project_Loaded := True;
 
                exception
