@@ -255,6 +255,20 @@ xml_base = ("""
 """)
 
 
+def get_metrix_file():
+    """
+    Compute the location of the metrix.xml file created by gnatmetrics
+    :return: None if the file could not be found
+    """
+
+    metrix = os.path.join(GPS.Project.root().object_dirs()[0], "metrix.xml")
+    if not os.path.isfile(metrix):
+        GPS.Console().write('File %s not found' % metrix)
+        return None
+    else:
+        return metrix
+
+
 @hook('compilation_finished')
 def __on_compilation_finished(category, target_name="",
                               mode_name="", status=""):
@@ -265,7 +279,9 @@ def __on_compilation_finished(category, target_name="",
         return
 
     v = GPS.XMLViewer.create_metric("Metrics")
-    v.parse(os.path.join(GPS.Project.root().object_dirs()[0], "metrix.xml"))
+    metrix = get_metrix_file()
+    if metrix:
+        v.parse(metrix)
 
 
 @interactive(name='open metrics view')
@@ -275,8 +291,9 @@ def show_metrics_window():
 
     if w is None:
         v = GPS.XMLViewer.create_metric("Metrics")
-        v.parse(os.path.join(
-            GPS.Project.root().object_dirs()[0], "metrix.xml"))
+        metrix = get_metrix_file()
+        if metrix:
+            v.parse(metrix)
     else:
         w.get_child()
         w.raise_window()
