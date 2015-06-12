@@ -301,8 +301,9 @@ package body Src_Editor_View.Commands is
    is
       pragma Unreferenced (Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Src_Editor_Module_Id.all);
-      View : constant Source_View :=
-               Source_View (Get_Current_Focus_Widget (Kernel));
+      Box    : constant Source_Editor_Box :=
+                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      View   : constant Source_View   := Get_View (Box);
    begin
       case Command.Mode is
          when As_Is =>

@@ -953,6 +953,13 @@ package Src_Editor_Buffer is
    --  A key context that matches if the current widget is a writable
    --  source editor
 
+   type Last_Editor_Action_Context is new GPS.Kernel.Action_Filter_Record
+      with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access Last_Editor_Action_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   --  A key context that matches if the last source editor is available
+
    --------------
    --  Signals --
    --------------

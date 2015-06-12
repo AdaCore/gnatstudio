@@ -7830,6 +7830,20 @@ package body Src_Editor_Buffer is
       return Box.Get_Buffer.Get_Writable;
    end Filter_Matches_Primitive;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Context : access Last_Editor_Action_Context;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+      Editor : constant MDI_Child := Find_Current_Editor (Get_Kernel (Ctxt));
+   begin
+      return Editor /= null;
+   end Filter_Matches_Primitive;
+
    ----------
    -- Free --
    ----------

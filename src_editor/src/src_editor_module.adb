@@ -1938,6 +1938,8 @@ package body Src_Editor_Module is
                                        new Writable_Src_Editor_Action_Context;
       Is_Not_Makefile          : constant Action_Filter :=
                                    new Is_Not_Makefile_Context;
+      Last_Editor_Context      : constant Action_Filter :=
+                                   new Last_Editor_Action_Context;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application.
       Steps : constant array (1 .. 2) of Integer := (1, -1);
@@ -2090,7 +2092,7 @@ package body Src_Editor_Module is
         (Kernel, "No casing/indentation on next key",
          Command, -"Disable the casing and indentation on next key",
          Category   => "Editor",
-         Filter     => Src_Action_Context);
+         Filter     => Last_Editor_Context);
 
       Command := new Control_Command;
       Control_Command (Command.all).Mode := Sticky_As_Is;
