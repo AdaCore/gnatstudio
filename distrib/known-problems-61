@@ -40,6 +40,15 @@ KP-61-O604-006 GPS: inconsistent support for makefile
               the file, as in:
                    package Make is for Makefile use "makefile"; end Make;
 
+KP-61-O601-007 GPS: cannot disable auto-casing when completion window is open
+
+  Problem:    When the completion window is open, the action
+              "No casing/indentation on next key" doesn't work.
+
+  Status:     This was fixed in 6.2 on 2015-06-12
+
+  Workaround: Close the completion window manually.
+
 KP-61-O522-003 GPS: incorrect indentation after case expression
 
   Problem:    When 'Case indentation' is set to 'RM_Style' code after case
