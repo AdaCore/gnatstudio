@@ -1076,10 +1076,9 @@ package body GPS.Location_View is
                      Iter, Node_Mark_Column);
          Message  : constant Message_Access :=
            Get_Message (Self.View.Get_Model, Iter, Message_Column);
---           File     : constant Virtual_File :=
---             Get_File (Gtk.Tree_Model."-" (Self.View.Get_Model),
---                       Iter, File_Column);
-         Location : constant Editor_Location'Class := Mark.Location (True);
+         File     : constant Virtual_File :=
+           Get_File (Gtk.Tree_Model."-" (Self.View.Get_Model),
+                     Iter, File_Column);
 
       begin
          --  Notify about change of selected message
@@ -1088,8 +1087,17 @@ package body GPS.Location_View is
             Run_Message_Selected_Hook (Self.Kernel, Message);
          end if;
 
-         if Mark /= Nil_Editor_Mark then
-            Location.Buffer.Current_View.Cursor_Goto (Location, True);
+         if Mark /= Nil_Editor_Mark
+           and then File /= No_File
+           and then File.Is_Regular_File
+         then
+            declare
+               Location : constant Editor_Location'Class :=
+                 Mark.Location (True);
+
+            begin
+               Location.Buffer.Current_View.Cursor_Goto (Location, True);
+            end;
 
             --  ??? The following causes a simple-click on a file line to
             --  open the editor. This is not what we want, we want to do this
