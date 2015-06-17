@@ -61,6 +61,10 @@ GtkToggleButton GtkBox{
     padding: 1px;
 }
 
+GtkMenu {
+  border: 1px solid #909090;
+}
+
 .gps-local-toolbar {
     border-bottom: 1px solid #d0d0d0;
 }
