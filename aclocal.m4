@@ -30,7 +30,7 @@ sinclude(gnatlib/aclocal.m4)
 conftest_ok="conftest.ok"
 
 AC_DEFUN(AM_PATH_GNAT,
-[   
+[
    AC_PATH_PROG(GNATMAKE, gnatmake, no)
 
    if test x$GNATMAKE = xno ; then
@@ -112,7 +112,7 @@ dnl AM_PATH_GTK([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for GTK, and define GTK_CFLAGS and GTK_LIBS
 dnl
 AC_DEFUN(AM_PATH_GTKADA,
-[dnl 
+[dnl
 dnl Get the cflags and libraries from the gtkada-config script
 dnl
   AC_MSG_CHECKING(GTK GLIB ATK PANGO prefix)
@@ -159,19 +159,19 @@ dnl
     rm -f conf.gtktest
     AC_TRY_RUN([
 #include <stdio.h>
- 
+
 int
 main ()
 {
   int major, minor, micro;
   char *version = "$min_gtk_version";
- 
+
   system ("touch conf.gtktest");
- 
+
   if (sscanf(version, "%d.%d.%d", &major, &minor, &micro) != 3) {
      printf("%s, bad version string\n", "$min_gtk_version");
      exit(1);
-  }  
+  }
 
   if (($gtk_major_version > major) ||
      (($gtk_major_version == major) && ($gtk_minor_version > minor)) ||
@@ -203,7 +203,7 @@ main ()
   fi
   if test "x$no_gtk" = x ; then
      AC_MSG_RESULT(yes)
-     ifelse([$2], , :, [$2])     
+     ifelse([$2], , :, [$2])
   else
      AC_MSG_RESULT(no)
      if test "$GTK_CONFIG" = "no" ; then
@@ -238,4 +238,3 @@ main ()
   AC_SUBST(GTKADA_PREFIX)
   rm -f conf.gtktest
 ])
-

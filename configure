@@ -4655,8 +4655,6 @@ esac
 
 
 
-
-
 ## Recurse for gnatlib, but do not provide support for syslog
 
 
