@@ -49,6 +49,14 @@ else
    XMLADA_GPR=no_xmlada
 fi
 
+######## Check GtkAda
+
+AC_MSG_CHECKING(for gtkada.gpr)
+AM_HAS_GNAT_PROJECT(gtkada)
+if test x"${HAVE_GNAT_PROJECT_gtkada}" != x"yes" ; then
+   AC_MSG_ERROR(GTKADA project required but not found)
+fi
+
 ######## checking for local tools ###
 AC_PROG_CC
 AC_ISC_POSIX

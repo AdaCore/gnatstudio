@@ -133,28 +133,26 @@ dnl
     AC_MSG_RESULT($GTK_PREFIX $GLIB_PREFIX $ATK_PREFIX $PANGO_PREFIX $CAIRO_PREFIX)
   fi
 
-  AC_PATH_PROG(GTK_CONFIG, gtkada-config, no)
+  AC_PATH_PROG(GNATDRV, gnat, no)
   min_gtk_version=ifelse([$1], ,2.0.0,$1)
   AC_MSG_CHECKING(for GtkAda - version >= $min_gtk_version)
+  GTKADA_PRJ=`$GNATDRV ls -vP1 -Pgtkada 2>&1 | grep gtkada.gpr | grep Parsing | cut -d'"' -f2`
   no_gtk=""
-  if test "$GTK_CONFIG" = "no" ; then
+  if test "$GNATDRV" = "no" -o ! -f "$GTKADA_PRJ"; then
     no_gtk=yes
   else
-    GTK_CFLAGS=`$GTK_CONFIG --cflags`
-    GTKADA_PREFIX=`$GTK_CONFIG --prefix`
-    GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/ *-aO.*//' -e 's/-aI//'`
-    GTKADA_OBJ=`echo $GTK_CFLAGS | sed -e 's/.*-aO//'`
-    GTK_LIBS=`$GTK_CONFIG --libs`
-    GTK_STATIC_LIBS=`$GTK_CONFIG --libs --static`
-    gtk_major_version=`$GTK_CONFIG --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
-    gtk_minor_version=`$GTK_CONFIG --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
-    gtk_micro_version=`$GTK_CONFIG --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+    gtk_major_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\1/p' $GTKADA_PRJ`
+    gtk_minor_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\2/p' $GTKADA_PRJ`
+    gtk_micro_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\3/p' $GTKADA_PRJ`
+
+dnl for now we disable the version check to be compatible with GPL 2015
+dnl so we set with a correct version if not found.
+    if test "$gtk_major_version" = ""; then gtk_major_version=3; fi
+    if test "$gtk_minor_version" = ""; then gtk_minor_version=14; fi
+    if test "$gtk_micro_version" = ""; then gtk_micro_version=3; fi
+
 dnl
-dnl Now check if the installed GtkAda is sufficiently new. (Also sanity
-dnl checks the results of gtk-config to some extent
+dnl Now check if the installed GtkAda is sufficiently new.
 dnl
     rm -f conf.gtktest
     AC_TRY_RUN([
@@ -188,12 +186,10 @@ main ()
       printf("*** GtkAda is always available from http://libre.adacore.com\n");
       printf("***\n");
       printf("*** If you have already installed a sufficiently new version, this error\n");
-      printf("*** probably means that the wrong copy of the gtkada-config shell script is\n");
+      printf("*** probably means that the wrong copy of the gtkada.gpr project is\n");
       printf("*** being found. The easiest way to fix this is to remove the old version\n");
-      printf("*** of GtkAda but you can also set the GTK_CONFIG environment to point to the\n");
-      printf("*** correct copy of gtkada-config. (In this case, you will have to\n");
-      printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
-      printf("*** so that the correct libraries are found at run-time))\n");
+      printf("*** of GtkAda. You may may have to modify your LD_LIBRARY_PATH enviroment variable, \n");
+      printf("*** or edit /etc/ld.so.conf so that the correct libraries are found at run-time))\n");
     }
   return 1;
 }
@@ -206,17 +202,10 @@ main ()
      ifelse([$2], , :, [$2])
   else
      AC_MSG_RESULT(no)
-     if test "$GTK_CONFIG" = "no" ; then
-       echo "*** The gtkada-config script could not be found."
-       echo "*** If GtkAda was installed in PREFIX, make sure PREFIX/bin is in"
-       echo "*** your path, or set the GTK_CONFIG environment variable to the"
-       echo "*** full path to gtkada-config."
+     if test -f conf.gtktest ; then
+      :
      else
-       if test -f conf.gtktest ; then
-        :
-       else
-	  echo "*** Could not run GtkAda test program"
-       fi
+      echo "*** Could not run GtkAda test program"
      fi
      GTK_CFLAGS=""
      GTKADA_SRC=""
