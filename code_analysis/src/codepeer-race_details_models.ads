@@ -24,14 +24,17 @@ package CodePeer.Race_Details_Models is
 
    type Race_Details_Model_Record is
      new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record
-       with private;
+        with private;
 
    type Race_Details_Model is access all Race_Details_Model_Record'Class;
 
-   procedure Gtk_New (Model : out Race_Details_Model);
+   procedure Gtk_New
+     (Model  : out Race_Details_Model;
+      Kernel : not null GPS.Kernel.Kernel_Handle);
 
    procedure Initialize
-     (Self : not null access Race_Details_Model_Record'Class);
+     (Self   : not null access Race_Details_Model_Record'Class;
+      Kernel : not null GPS.Kernel.Kernel_Handle);
 
    procedure Set
      (Self : not null access Race_Details_Model_Record'Class;
@@ -40,21 +43,23 @@ package CodePeer.Race_Details_Models is
 
    Entry_Point_Name_Column : constant Glib.Gint := 0;
    Access_Kind_Column      : constant Glib.Gint := 1;
-   Number_Of_Columns       : constant Glib.Gint := 2;
+   Mark_Column             : constant Glib.Gint := 2;
+   Number_Of_Columns       : constant Glib.Gint := 3;
 
 private
 
    type Details_Record is record
-      Entry_Point : Entry_Point_Information_Access;
-      Kind        : Object_Access_Kinds;
+      Entry_Point   : Entry_Point_Information_Access;
+      Object_Access : Object_Access_Information;
    end record;
 
    package Details_Vectors is
      new Ada.Containers.Vectors (Positive, Details_Record);
 
-   type Race_Details_Model_Record is
+   type Race_Details_Model_Record  is
      new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record with record
-      Data : Details_Vectors.Vector;
+      Kernel : GPS.Kernel.Kernel_Handle;
+      Data   : Details_Vectors.Vector;
    end record;
 
    overriding function Get_Column_Type

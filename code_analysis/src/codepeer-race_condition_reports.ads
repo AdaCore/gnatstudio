@@ -48,6 +48,7 @@ private
       Summary_Model : CodePeer.Race_Summary_Models.Race_Summary_Model;
       Summary_View  : Gtk.Tree_View.Gtk_Tree_View;
       Details_Model : CodePeer.Race_Details_Models.Race_Details_Model;
+      Details_View  : Gtk.Tree_View.Gtk_Tree_View;
    end record;
 
 end CodePeer.Race_Condition_Reports;

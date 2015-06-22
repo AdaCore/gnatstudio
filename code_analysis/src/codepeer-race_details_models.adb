@@ -20,6 +20,8 @@ with System;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;
 
+with GPS.Editors.GtkAda;
+
 package body CodePeer.Race_Details_Models is
 
    use type Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -64,6 +66,9 @@ package body CodePeer.Race_Details_Models is
 
          when Access_Kind_Column =>
             return Glib.GType_String;
+
+         when Mark_Column =>
+            return GPS.Editors.GtkAda.Get_Editor_Mark_Type;
 
          when others =>
             return Glib.GType_Invalid;
@@ -158,13 +163,23 @@ package body CodePeer.Race_Details_Models is
             when Access_Kind_Column =>
                Glib.Values.Init (Value, Glib.GType_String);
 
-               case Self.Data.Element (Index).Kind is
+               case Self.Data (Index).Object_Access.Kind is
                   when Read =>
                      Glib.Values.Set_String (Value, "READ");
 
                   when Update =>
                      Glib.Values.Set_String (Value, "UPDATE");
                end case;
+
+            when Mark_Column =>
+               Glib.Values.Init
+                 (Value, GPS.Editors.GtkAda.Get_Editor_Mark_Type);
+               GPS.Editors.GtkAda.Set_Mark
+                 (Value,
+                  Self.Kernel.Get_Buffer_Factory.New_Mark
+                    (Self.Data (Index).Object_Access.File,
+                     Self.Data (Index).Object_Access.Line,
+                     Self.Data (Index).Object_Access.Column));
 
             when others =>
                null;
@@ -176,10 +191,12 @@ package body CodePeer.Race_Details_Models is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Model : out Race_Details_Model) is
+   procedure Gtk_New
+     (Model  : out Race_Details_Model;
+      Kernel : not null GPS.Kernel.Kernel_Handle) is
    begin
       Model := new Race_Details_Model_Record;
-      Initialize (Model);
+      Initialize (Model, Kernel);
    end Gtk_New;
 
    ----------------
@@ -187,9 +204,11 @@ package body CodePeer.Race_Details_Models is
    ----------------
 
    procedure Initialize
-     (Self : not null access Race_Details_Model_Record'Class) is
+     (Self   : not null access Race_Details_Model_Record'Class;
+      Kernel : not null GPS.Kernel.Kernel_Handle) is
    begin
       Gtkada.Abstract_List_Model.Initialize (Self);
+      Self.Kernel := Kernel;
    end Initialize;
 
    ----------------
@@ -284,7 +303,7 @@ package body CodePeer.Race_Details_Models is
            Info.Object_Accesses.First_Index .. Info.Object_Accesses.Last_Index
          loop
             Self.Data.Append
-              ((Info.Entry_Point, Info.Object_Accesses.Element (K).Kind));
+              ((Info.Entry_Point, Info.Object_Accesses (K)));
             Iter := To_Iter (Self.Data.Last_Index);
             Path := Self.Get_Path (Iter);
             Row_Inserted (To_Interface (Self), Path, Iter);
