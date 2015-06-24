@@ -953,8 +953,11 @@ show_report = 'Show Report'
 clean_up = 'Clean Proofs'
 check_msg_prefix = 'medium: '
 
-Default_Trace_Color = "#00ffff"
+Default_Trace_Color = "#00ffff"  # "aqua" (light blue)
 Overlay_Name = "Gnatprove_Trace_Overlay"
+Ce_Spec_Lines_Name = "Gnatprove_Ce_Special_Lines"
+Ce_Highlighting = "Gnatprove_Ce_Highlighting"
+Ce_Highlighting_Color = "#dddddd"  # light grey
 
 Color_Pref_Name = 'Plugins/gnatprove/color_trace'
 
@@ -977,6 +980,34 @@ def get_trace_overlay(buf):
                        GPS.Preference(Color_Pref_Name).get())
         setattr(buf, Overlay_Name, o)
     return getattr(buf, Overlay_Name)
+
+
+def get_ce_special_lines(buf):
+    """retrieve the list of special lines for counter-example for a
+       buffer. If the buffer hasn't got one yet, create it, add it to the
+       buffer, and return it.
+    """
+
+    if not hasattr(buf, Ce_Spec_Lines_Name):
+        setattr(buf, Ce_Spec_Lines_Name, [])
+    return getattr(buf, Ce_Spec_Lines_Name)
+
+
+def add_ce_special_line(buf, line, text):
+    """create a special line in the buffer"""
+
+    line_marker = buf.add_special_line(line+1, text, Ce_Highlighting)
+    spec_lines = get_ce_special_lines(buf)
+    spec_lines.append(line_marker)
+    setattr(buf, Ce_Spec_Lines_Name, spec_lines)
+
+
+def remove_ce_special_lines(buf):
+    """remove all special lines for counter-example in the buffer"""
+
+    line_markers = get_ce_special_lines(buf)
+    for line_marker in line_markers:
+        buf.remove_special_lines(line_marker, 1)
 
 
 # helper functions that do not really fit elsewhere
@@ -1016,6 +1047,7 @@ def editor_before_kill(proc, outp):
 
 trace_msg = None
 trace_lines = []
+counterexample = {}
 
 
 def show_trace(lines):
@@ -1044,21 +1076,72 @@ def remove_trace(lines):
                 buf.remove_overlay(overlay)
 
 
-def toggle_trace(msg, lines):
+def get_ce_text_for_line(line_info):
+    """Generates the test to be displayed in counter-example for given
+       line."""
+    return " and ".join(['%s = %s' % (v, line_info[v]) for v in line_info])
+
+
+def get_str_indent(buf, line):
+    """Returns a string of white spaces that indents up to the indentation of
+       the given line."""
+    line_loc = buf.at(line, 1)
+    last_column = line_loc.end_of_line().column
+    indent = 1
+    while line_loc.get_char() == " " and indent < last_column:
+        indent += 1
+        line_loc = buf.at(line, indent)
+    return "" if (indent == last_column) else " " * (indent-1)
+
+
+def show_ce(ce):
+    for file in ce:
+        if GPS.File(file).language() == "ada":
+            first_sloc = GPS.FileLocation(GPS.File(file),
+                                          int(next(iter(ce[file]))),
+                                          1)
+            buf = GPS.EditorBuffer.get(first_sloc.file())
+            goto_location(first_sloc)
+            overlay = get_trace_overlay(buf)
+            for line in ce[file]:
+                text = get_str_indent(buf, int(line)) + "--  " + \
+                    get_ce_text_for_line(ce[file][line])
+                add_ce_special_line(buf, int(line), text)
+                buf.apply_overlay(overlay,
+                                  buf.at(int(line), 1),
+                                  buf.at(int(line), 1))
+
+
+def remove_ce(ce):
+    for file in ce:
+        if GPS.File(file).language() == "ada":
+            buf = GPS.EditorBuffer.get(GPS.File(file))
+            remove_ce_special_lines(buf)
+            overlay = get_trace_overlay(buf)
+            buf.remove_overlay(overlay)
+
+
+def toggle_trace(msg, lines, ce):
     """toggle the trace for the given msg and lines"""
-    global trace_msg, trace_lines
+    global trace_msg, trace_lines, counterexample
     if trace_msg is None:
         trace_msg = msg
         trace_lines = lines
+        counterexample = ce
         show_trace(lines)
+        show_ce(ce)
     elif trace_msg == msg:
         remove_trace(trace_lines)
+        remove_ce(counterexample)
         trace_msg = None
     else:
         remove_trace(trace_lines)
+        remove_ce(counterexample)
         trace_msg = msg
         trace_lines = lines
+        counterexample = ce
         show_trace(lines)
+        show_ce(ce)
 
 
 class GNATprove_Parser(tool_output.OutputParser):
@@ -1129,10 +1212,22 @@ class GNATprove_Parser(tool_output.OutputParser):
                                              1))
         return lines
 
+    def parse_cntexmp_file(self, filename):
+        """ parse the counter-example file and return the result """
+
+        if os.path.isfile(filename):
+            with open(filename, 'r') as f:
+                try:
+                    dict = json.load(f)
+                    return dict
+                except ValueError:
+                    return {}
+
     def handle_entry(self, unit, list):
         """code do handle one entry of the JSON file. See [parsejson] for the
            details of the format.
         """
+
         for entry in list:
             if 'msg_id' in entry:
                 full_id = unit, entry['msg_id']
@@ -1169,13 +1264,23 @@ class GNATprove_Parser(tool_output.OutputParser):
            information, run the external editor.
         """
 
+        counterexample = {}
+        if 'cntexmpfile' in extra and extra['cntexmpfile'] != '':
+            cntexmpfile = os.path.join(objdir, extra['cntexmpfile'])
+            counterexample = self.parse_cntexmp_file(cntexmpfile)
+
+        lines = []
         if 'tracefile' in extra and extra['tracefile'] != '':
             tracefile = os.path.join(objdir, extra['tracefile'])
             lines = self.parse_trace_file(tracefile)
-            if lines != []:
-                m.set_subprogram(lambda m: toggle_trace(m, lines),
-                                 'gps-gnatprove-symbolic',
-                                 'show path information')
+
+        if counterexample != {} or lines != []:
+            GPS.Editor.register_highlighting(Ce_Highlighting,
+                                             Ce_Highlighting_Color,
+                                             False)
+            m.set_subprogram(lambda m: toggle_trace(m, lines, counterexample),
+                             'gps-gnatprove-symbolic',
+                             'show counter-example information')
         # We don't want to open hundreds of editors if a Prove All
         # or Prove File was launched with a manual prover.
         # We only open an editor for prove check.
@@ -1194,14 +1299,14 @@ class GNATprove_Parser(tool_output.OutputParser):
                     proc._proc_msg = m
                     proc._is_killed = False
                 except OSError:
-                    GPS.MDI.dialog("Editor " + cmd[0]
-                                   + " not found\n"
-                                   + "Manual proof file saved as: "
-                                   + extra['vc_file'] + "\n")
+                    GPS.MDI.dialog("Editor " + cmd[0] +
+                                   " not found\n" +
+                                   "Manual proof file saved as: " +
+                                   extra['vc_file'] + "\n")
             else:
-                GPS.MDI.dialog("No editor configured for this prover\n"
-                               + "Manual proof file saved as: "
-                               + extra['vc_file'] + "\n")
+                GPS.MDI.dialog("No editor configured for this prover\n" +
+                               "Manual proof file saved as: " +
+                               extra['vc_file'] + "\n")
 
     def on_exit(self, status, command):
         """When gnatprove has finished, scan through messages to see if extra
@@ -1394,10 +1499,6 @@ def inside_subp_context(self):
         return 1
     else:
         return 0
-
-
-def is_file_context(self):
-    return isinstance(self, GPS.FileContext)
 
 
 def generic_action_on_subp(self, action):
