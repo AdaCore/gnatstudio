@@ -1789,7 +1789,9 @@ package body GVD.Canvas is
          Name    => Integer'Image (Item.Num) & ": " & Item.Name.all,
          Buttons => (1  => Close));
 
-      if Item.Entity /= null then
+      if Item.Entity /= null
+         and then Item.Entity.Is_Valid
+      then
          Item.Add_Child
            (Item.Entity.Build_Display
               (Item.Name.all,

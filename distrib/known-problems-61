@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O624-029 GPS: debugger shows value even when variable out of scope
+
+  Problem:    If you display a variable in the debugger, and then switch to
+              a task where the variable is not defined, the display still
+              shows the value the variable has in the previous task.
+
+  Status:     This was fixed in 6.2 on 2015-06-29
+
+  Workaround: Look at the tooltips in the editor, that show the value of
+              the variable in the current scope.
+
 KP-61-O604-006 GPS: inconsistent support for makefile
 
   Problem:    On case-sensitive file systems, GPS correctly finds a "makefile"
