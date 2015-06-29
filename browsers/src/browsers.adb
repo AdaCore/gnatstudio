@@ -237,13 +237,13 @@ package body Browsers is
       --  colors.
 
       F2 := Copy (F);
-      Set_Size (F2, Get_Size (F) - 2 * Pango_Scale);
+      Set_Size (F2, Get_Size (F) - Gint (0.5 * Pango_Scale));
 
       F3 := Copy (F);
-      Set_Size (F3, Get_Size (F) - 2 * Pango_Scale);
+      Set_Size (F3, Get_Size (F) - Gint (0.5 * Pango_Scale));
 
       F4 := Copy (F);
-      Set_Size (F4, Get_Size (F) - 2 * Pango_Scale);
+      Set_Size (F4, Get_Size (F) - Gint (0.5 * Pango_Scale));
 
       Self.Styles :=
         (Item => Gtk_New
