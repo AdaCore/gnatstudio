@@ -1303,7 +1303,7 @@ package body Codefix_Module is
 
             Menu_Item.Set_Submenu (Sub_Menu);
 
-            Gtk_New (Mitem, "Apply to this occurence");
+            Gtk_New (Mitem, "Apply to this occurrence");
             Mitem.Fix_Mode     := Specific;
             Mitem.Fix_Command  := Fix_Command;
             Mitem.Error        := Error;
