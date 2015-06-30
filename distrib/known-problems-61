@@ -51,6 +51,18 @@ KP-61-O604-006 GPS: inconsistent support for makefile
               the file, as in:
                    package Make is for Makefile use "makefile"; end Make;
 
+KP-61-O604-003 GPS: Codefix messes up body with aspects
+
+  Problem:    When the profile of a subprogram body differs from its spec,
+              GPS provides an autofix action to change implementation profile.
+              This action behaves incorrectly if the subprogram specification
+              has aspects. It copies aspects to subprogram body, which is not
+              allowed in Ada.
+
+  Status:     This was fixed in 6.2 on 2015-06-04
+
+  Workaround: None
+
 KP-61-O601-007 GPS: cannot disable auto-casing when completion window is open
 
   Problem:    When the completion window is open, the action
