@@ -421,6 +421,16 @@ KP-61-NB10-016 GPS: corrupt notebook tabs when reordering
   Workaround: When this happens, you can still select editors with the
               /Windows menu for instance. Or restart GPS to refresh the GUI.
 
+KP-61-NB07-021 GPS: Input focus in browsers
+
+  Problem:    Activating a contextual menu in any of the browsers could
+              require an extra click to activate other GUI widgets in GPS.
+
+  Status:     This was fixed in 6.2 on 2015-07-01
+
+  Workaround: Click once anywhere outside of the browser to cancel the mouse
+              grab, then click as usual to perform other actions.
+
 KP-61-NB07-018 GPS: filter menus do not stay visible on screen
 
   Problem:    When clicking in one of the filters boxes (in the Outline,
