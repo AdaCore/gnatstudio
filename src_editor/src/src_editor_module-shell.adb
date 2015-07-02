@@ -14,63 +14,54 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
-with Ada.Tags;                  use Ada.Tags;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+
 with Ada.Containers.Indefinite_Holders;
-
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Regpat;               use GNAT.Regpat;
+with Ada.Exceptions;               use Ada.Exceptions;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Ada.Tags;                     use Ada.Tags;
+with Ada.Unchecked_Deallocation;
+with Casing_Exceptions;            use Casing_Exceptions;
+with Commands;                     use Commands;
+with Find_Utils;                   use Find_Utils;
+with GNAT.OS_Lib;                  use GNAT.OS_Lib;
+with GNAT.Regpat;                  use GNAT.Regpat;
 with GNAT.Strings;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.Xref;
-use GNATCOLL.Xref;
-
-with Glib.Convert;              use Glib.Convert;
-with Glib.Object;               use Glib.Object;
-with Glib.Unicode;              use Glib.Unicode;
-
-with Gdk.RGBA;                  use Gdk.RGBA;
-
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtk.Text_Tag;              use Gtk.Text_Tag;
-
-with Casing_Exceptions;         use Casing_Exceptions;
-with Commands;                  use Commands;
-with Find_Utils;                use Find_Utils;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
-with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
+with GNATCOLL.Projects;            use GNATCOLL.Projects;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.Utils;               use GNATCOLL.Utils;
+with GNATCOLL.Xref;                use GNATCOLL.Xref;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
+with GPS.Kernel.Clipboard;         use GPS.Kernel.Clipboard;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GPS.Kernel.Project;           use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GPS.Search;
-with Language;                  use Language;
-with Projects;                  use Projects;
-with Src_Contexts;              use Src_Contexts;
-with Src_Editor_Box;            use Src_Editor_Box;
-
+with Gdk.RGBA;                     use Gdk.RGBA;
+with Glib.Convert;                 use Glib.Convert;
+with Glib.Object;                  use Glib.Object;
+with Glib.Unicode;                 use Glib.Unicode;
+with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Handlers;
+with Gtk.Text_Iter;                use Gtk.Text_Iter;
+with Gtk.Text_Mark;                use Gtk.Text_Mark;
+with Gtk.Text_Tag;                 use Gtk.Text_Tag;
+with Language;                     use Language;
+with Projects;                     use Projects;
+with Src_Contexts;                 use Src_Contexts;
+with Src_Editor_Box;               use Src_Editor_Box;
+with Src_Editor_Buffer.Blocks;     use Src_Editor_Buffer.Blocks;
+with Src_Editor_Buffer.Debug;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
-
-with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
-with Src_Editor_Buffer.Debug;
-
-with Src_Editor_Module.Editors; use Src_Editor_Module.Editors;
+with Src_Editor_Module.Editors;       use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
-with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
-with Src_Editor_View;           use Src_Editor_View;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
-
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
+with Src_Editor_View;                 use Src_Editor_View;
 
 package body Src_Editor_Module.Shell is
    use type GNATCOLL.Xref.Visible_Column;
@@ -777,23 +768,23 @@ package body Src_Editor_Module.Shell is
                      Default => Child_Position'Pos (Position_Automatic));
 
                   if Length = 0 then
-                     Open_File_Editor
+                     Open_File_Action_Hook.Run
                        (Kernel,
-                        File,
-                        No_Project,
-                        Line,
-                        Column,
+                        File              => File,
+                        Project           => No_Project,
+                        Line              => Line,
+                        Column            => Column,
                         Enable_Navigation => False,
                         Force_Reload => Force,
                         Initial_Position => Child_Position'Val (Position));
                   else
-                     Open_File_Editor
+                     Open_File_Action_Hook.Run
                        (Kernel,
-                        File,
-                        No_Project,
-                        Line,
-                        Column,
-                        Column + Visible_Column_Type (Length),
+                        File          => File,
+                        Project       => No_Project,
+                        Line          => Line,
+                        Column        => Column,
+                        Column_End    => Column + Visible_Column_Type (Length),
                         Enable_Navigation => False,
                         Force_Reload => Force);
                   end if;
@@ -1012,7 +1003,11 @@ package body Src_Editor_Module.Shell is
                      Use_Object_Path => False);
                end if;
 
-               Close_File_Editors (Kernel, Filename);
+               Open_File_Action_Hook.Run
+                   (Kernel,
+                    File    => Filename,
+                    Project => No_Project,
+                    Line    => -1);  --  close all editors for this file
             else
                declare
                   Child : MDI_Child;

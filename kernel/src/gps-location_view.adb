@@ -24,6 +24,7 @@ with Generic_Views;
 with GPS.Search;                     use GPS.Search;
 with GPS.Tree_View.Locations;        use GPS.Tree_View.Locations;
 
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
@@ -67,7 +68,6 @@ with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Style_Manager;         use GPS.Kernel.Style_Manager;
 with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
 with GUI_Utils;                        use GUI_Utils;
@@ -146,20 +146,20 @@ package body GPS.Location_View is
 
    package View_Idle is new Glib.Main.Generic_Sources (Location_View);
 
-   procedure On_Location_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Location_Changed is new File_Location_Hooks_Function
+      with null record;
+   overriding procedure Execute
+     (Self   : On_Location_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Line, Column : Integer;
+      Project : Project_Type);
    --  Called whenever the location in the current editor has changed, so that
    --  we can highlight the corresponding line in the locations window
 
    function Idle_Expand (Self : Location_View) return Boolean;
    --  Idle callback used to expand nodes of category and its first or defined
    --  file; select first message and the open first location if requested.
-
-   procedure Run_Message_Selected_Hook
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Message : Message_Access);
-   --  Runs 'message_selected' hook.
 
    -------------
    -- Actions --
@@ -311,9 +311,11 @@ package body GPS.Location_View is
    procedure On_Change_Sort (Self : access Location_View_Record'Class);
    --  Callback for the activation of the sort contextual menu item
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
    procedure Goto_Location (Self : access Location_View_Record'Class);
@@ -851,16 +853,18 @@ package body GPS.Location_View is
       Self.View.Set_Order (File_Order, Msg_Order);
    end On_Change_Sort;
 
-   ----------------------
-   -- Location_Changed --
-   ----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Location_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Location_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Line, Column : Integer;
+      Project : Project_Type)
    is
-      D             : constant File_Location_Hooks_Args_Access :=
-                        File_Location_Hooks_Args_Access (Data);
+      pragma Unreferenced (Self, Column, Project);
       Locations     : constant Location_View :=
         Location_Views.Get_Or_Create_View (Kernel, Focus => False);
       Category_Iter : Gtk_Tree_Iter;
@@ -879,8 +883,8 @@ package body GPS.Location_View is
       Locations.View.Get_Selection.Get_Selected (Model, Iter);
 
       if Iter /= Null_Iter
-        and then Get_File (Model, Iter, File_Column) = D.File
-        and then Integer (Get_Int (Model, Iter, Line_Column)) = D.Line
+        and then Get_File (Model, Iter, File_Column) = File
+        and then Integer (Get_Int (Model, Iter, Line_Column)) = Line
       then
          return;
       end if;
@@ -923,7 +927,7 @@ package body GPS.Location_View is
          File_Iter := Children (Model, Category_Iter);
 
          while File_Iter /= Null_Iter loop
-            exit when Get_File (Model, File_Iter, File_Column) = D.File;
+            exit when Get_File (Model, File_Iter, File_Column) = File;
 
             Next (Model, File_Iter);
          end loop;
@@ -935,7 +939,7 @@ package body GPS.Location_View is
 
             while Message_Iter /= Null_Iter loop
                exit when
-                 Integer (Get_Int (Model, Message_Iter, Line_Column)) = D.Line;
+                 Integer (Get_Int (Model, Message_Iter, Line_Column)) = Line;
 
                Next (Model, Message_Iter);
             end loop;
@@ -949,13 +953,13 @@ package body GPS.Location_View is
 
                --  Notify about change of selected message
 
-               Run_Message_Selected_Hook
+               Message_Selected_Hook.Run
                  (Locations.Kernel,
                   Get_Message (Model, Message_Iter, Message_Column));
             end if;
          end if;
       end if;
-   end On_Location_Changed;
+   end Execute;
 
    ----------------
    -- Initialize --
@@ -1010,16 +1014,10 @@ package body GPS.Location_View is
         (Self.Kernel,
          Event_On_Widget => Self.View);
 
-      Add_Hook (Self.Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "location_view.preferences_changed",
-                Watch => GObject (Self));
+      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Self);
       Set_Font_And_Colors (Self.View, Fixed_Font => True);
 
-      Add_Hook (Self.Kernel, Location_Changed_Hook,
-                Wrapper (On_Location_Changed'Access),
-                Name  => "locations.location_changed",
-                Watch => GObject (Self));
+      Location_Changed_Hook.Add (new On_Location_Changed, Watch => Self);
 
       --  Apply the current "sort by subcategory" setting
       On_Change_Sort (Self);
@@ -1039,7 +1037,7 @@ package body GPS.Location_View is
       use type Commands.Command_Access;
 
       Value   : GValue;
-      Action  : GPS.Kernel.Standard_Hooks.Action_Item;
+      Action  : GPS.Kernel.Messages.Action_Item;
       Ignore  : Commands.Command_Return_Type;
       pragma Unreferenced (Ignore);
 
@@ -1084,7 +1082,7 @@ package body GPS.Location_View is
          --  Notify about change of selected message
 
          if Message /= null then
-            Run_Message_Selected_Hook (Self.Kernel, Message);
+            Message_Selected_Hook.Run (Self.Kernel, Message);
          end if;
 
          if Mark /= Nil_Editor_Mark
@@ -1122,19 +1120,19 @@ package body GPS.Location_View is
       return Location_View_Access (Location_Views.Get_Or_Create_View (Kernel));
    end Get_Or_Create_Location_View;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
+      pragma Unreferenced (Self);
       View  : constant Location_View := Location_Views.Retrieve_View (Kernel);
-      Pref  : Preference;
    begin
       if View /= null then
-         Pref := Get_Pref (Data);
          Set_Font_And_Colors (View.View, Fixed_Font => True, Pref => Pref);
 
          if Pref = null
@@ -1148,7 +1146,7 @@ package body GPS.Location_View is
          --  Nothing to do for Locations_Wrap
          --  Nothing to do for Auto_Close
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    --------------------
    -- Create_Toolbar --
@@ -1273,30 +1271,11 @@ package body GPS.Location_View is
          Icon_Name => "gps-collapse-all-symbolic",
          Category => -"Locations");
 
-      Register_Hook_No_Return
-        (Kernel, Message_Selected_Hook, Message_Hook_Type);
-
       Get_Messages_Container (Kernel).Register_Listener
         (Listener_Access (Manager),
          (Editor_Side => False,
           GPS.Kernel.Messages.Locations => True));
    end Register_Module;
-
-   -------------------------------
-   -- Run_Message_Selected_Hook --
-   -------------------------------
-
-   procedure Run_Message_Selected_Hook
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Message : Message_Access)
-   is
-      Data : aliased Message_Hooks_Args :=
-        (Hooks_Data with Message => Message);
-
-   begin
-      Run_Hook (Kernel, Message_Selected_Hook, Data'Unchecked_Access);
-      Data.Destroy;
-   end Run_Message_Selected_Hook;
 
    -----------------------
    -- Register_Commands --

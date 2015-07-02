@@ -27,7 +27,6 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Vdiff2_Command_Block;      use Vdiff2_Command_Block;
 with Vdiff2_Module.Callback;    use Vdiff2_Module.Callback;
@@ -274,9 +273,7 @@ package body Vdiff2_Module is
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).List_Diff := new Diff_Head_List.List;
 
-      Add_Hook (Kernel, File_Closed_Hook,
-                Wrapper (File_Closed_Cb'Access),
-                Name => "vdiff2.file_closed");
+      File_Closed_Hook.Add (new On_File_Closed);
 
       Register_Module
         (Module      => Vdiff_Module_ID,
@@ -365,14 +362,9 @@ package body Vdiff2_Module is
          Page     => -"Visual diff",
          Default  => "#FDE66A");
 
-      Add_Hook
-        (Kernel, Preference_Changed_Hook,
-         Wrapper (On_Preferences_Changed'Access),
-         Name => "vdiff2.preferences_changed");
-      Add_Hook
-        (Kernel, Diff_Action_Hook,
-         Wrapper (Diff_Hook'Access),
-         Name => "vdiff2.diff");
+      Preferences_Changed_Hook.Add
+         (new Standard.Vdiff2_Module.Callback.On_Pref_Changed);
+      Diff_Action_Hook.Add (new On_Diff);
 
       Register_Action
          (Kernel, "compare two files", new Compare_Two_Files,

@@ -18,14 +18,23 @@
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Maps;          use Ada.Strings.Maps;
-
+with Commands.Custom;           use Commands; use Commands.Custom;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Utils;    use GNATCOLL.Scripts.Utils;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-
+with GPS.Core_Kernels;          use GPS.Core_Kernels;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel, GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Glib.Values;               use Glib.Values;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -39,35 +48,21 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
-
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.MDI;                use Gtkada.MDI;
-
-with Commands.Custom;           use Commands; use Commands.Custom;
-with GPS.Core_Kernels;          use GPS.Core_Kernels;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
+with UTF8_Utils;                use UTF8_Utils;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
 with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
-with VCS_View;                  use VCS_View;
 with VCS_View.Activities;       use VCS_View.Activities;
 with VCS_View.Explorer;         use VCS_View.Explorer;
-
-with UTF8_Utils;                use UTF8_Utils;
+with VCS_View;                  use VCS_View;
 
 package body VCS_View_API is
    use type GNAT.Strings.String_Access;
@@ -1377,7 +1372,8 @@ package body VCS_View_API is
             Line, Column   : Natural;
          begin
             Already_Open := Is_Open (Kernel, ChangeLog_File);
-            Open_File_Editor (Kernel, ChangeLog_File, No_Project);
+            Open_File_Action_Hook.Run
+               (Kernel, ChangeLog_File, Project => No_Project);
 
             --  At this point we know that there is an entry for the current
             --  file for the current data into the ChangeLog file. Set the
@@ -1428,7 +1424,7 @@ package body VCS_View_API is
          begin
             Get_Log_From_ChangeLog (Kernel, File);
 
-            Open_File_Editor
+            Open_File_Action_Hook.Run
               (Kernel,
                Get_Log_From_File (Kernel, File, True),
                Project          => No_Project,
@@ -1570,7 +1566,9 @@ package body VCS_View_API is
          begin
             if Is_Regular_File (Log) then
                Delete (Log, Success);
-               Close_File_Editors (Kernel, Log);
+               Open_File_Action_Hook.Run
+                  (Kernel, File => Log, Project => No_Project,
+                   Line => -1);  --  close all editors
             end if;
 
             Remove_File_From_Mapping (Kernel, File);
@@ -1683,7 +1681,7 @@ package body VCS_View_API is
                Get_Log_From_ChangeLog (Kernel, File, Suffix);
                All_Logs_Exist := False;
 
-               Open_File_Editor
+               Open_File_Action_Hook.Run
                  (Kernel,
                   Get_Log_From_File (Kernel, File, True, Suffix),
                   Project          => No_Project,
@@ -1950,7 +1948,8 @@ package body VCS_View_API is
 
       for J in Files'Range loop
          if not Is_Open (Get_Kernel (Context), Files (J)) then
-            Open_File_Editor (Get_Kernel (Context), Files (J), No_Project);
+            Open_File_Action_Hook.Run
+               (Get_Kernel (Context), Files (J), Project => No_Project);
          end if;
 
          Annotate (Get_Current_Ref (Context), Files (J));

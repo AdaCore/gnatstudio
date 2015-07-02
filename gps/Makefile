@@ -6,6 +6,7 @@ endif
 
 GPRBUILD=gprbuild
 GPRBUILD_FLAGS=
+PYTHON=python
 
 Build?=Debug
 
@@ -28,6 +29,7 @@ include ../Makefile.gnat
 # gnat.adc (No_Tasking restriction) on all gnatcoll sources.
 all: resources do_links
 	$(MAKE) Gnatcoll_Build=${Build} -C ../gnatlib
+	cd ../kernel/src; ${PYTHON} hooks.py
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -ws -P../spark/spark
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
 	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps -largs `pkg-config gmodule-2.0 --libs`

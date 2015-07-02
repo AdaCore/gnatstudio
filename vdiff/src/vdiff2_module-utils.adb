@@ -15,32 +15,28 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;
-
+with Ada.Unchecked_Deallocation;
+with Commands;                          use Commands;
+with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
+with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
+with GPS.Editors;                       use GPS.Editors;
+with GPS.Intl;                          use GPS.Intl;
+with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel.Messages.Simple;        use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
+with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with Gtk.Enums;                         use Gtk.Enums;
-
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.MDI;                        use Gtkada.MDI;
-
-with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
-
-with Commands;                          use Commands;
-with GPS.Intl;                          use GPS.Intl;
-with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
-with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Simple;        use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with String_Utils;                      use String_Utils;
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Module;                     use Vdiff2_Module;
-with GPS.Editors;                       use GPS.Editors;
-with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 
 package body Vdiff2_Module.Utils is
 
@@ -569,21 +565,18 @@ package body Vdiff2_Module.Utils is
          Line_End   : Natural;
          Symbol     : String)
       is
-         Infos : Line_Information_Data;
+         Infos : Line_Information_Data :=
+            new Line_Information_Array (Line_Start .. Line_End);
       begin
-         Infos := new Line_Information_Array (Line_Start .. Line_End);
-
          for J in Infos'Range loop
             Infos (J).Text := new String'(Symbol);
          end loop;
 
          Add_Line_Information
            (Kernel,
-            File,
-            Id_Col_Vdiff,
-            Infos,
-            Normalize => False);
-
+            File       =>  File,
+            Identifier => Id_Col_Vdiff,
+            Info       => Infos);
          Unchecked_Free (Infos);
       end Add_Side_Symbol;
 
@@ -645,11 +638,15 @@ package body Vdiff2_Module.Utils is
       end if;
 
       Create_Line_Information_Column
-        (Kernel, Item.Files (1), Id_Col_Vdiff,
-         Empty_Line_Information, True, True);
+        (Kernel,
+         File       => Item.Files (1),
+         Identifier => Id_Col_Vdiff,
+         Every_Line => True);
       Create_Line_Information_Column
-        (Kernel, Item.Files (2), Id_Col_Vdiff,
-         Empty_Line_Information, True, True);
+        (Kernel,
+         File       => Item.Files (2),
+         Identifier => Id_Col_Vdiff,
+         Every_Line => True);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
@@ -936,8 +933,8 @@ package body Vdiff2_Module.Utils is
 
    begin
       Create_Line_Information_Column
-        (Kernel, Item.Files (3 - Ref), Id_Col_Vdiff,
-         Empty_Line_Information, True, True);
+        (Kernel, File => Item.Files (3 - Ref), Identifier => Id_Col_Vdiff,
+         Every_Line => True);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
@@ -1012,14 +1009,11 @@ package body Vdiff2_Module.Utils is
         (1 .. Get_File_Last_Line (Kernel, Item.Files (3)));
 
       Create_Line_Information_Column
-        (Kernel, Item.Files (1), Id_Col_Vdiff, Empty_Line_Information,
-         True, True);
+         (Kernel, Item.Files (1), Id_Col_Vdiff, Every_Line => True);
       Create_Line_Information_Column
-        (Kernel, Item.Files (2), Id_Col_Vdiff, Empty_Line_Information,
-         True, True);
+         (Kernel, Item.Files (2), Id_Col_Vdiff, Every_Line => True);
       Create_Line_Information_Column
-        (Kernel, Item.Files (3), Id_Col_Vdiff, Empty_Line_Information,
-         True, True);
+         (Kernel, Item.Files (3), Id_Col_Vdiff, Every_Line => True);
 
       Res := Simplify (Item.List, Item.Ref_File);
       Curr_Node := First (Res);
@@ -1031,18 +1025,19 @@ package body Vdiff2_Module.Utils is
       end loop;
 
       Add_Line_Information
-        (Kernel, Item.Files (1), Id_Col_Vdiff,
-         Info (1));
+        (Kernel, Item.Files (1), Id_Col_Vdiff, Info => Info (1));
       Add_Line_Information
-        (Kernel, Item.Files (2), Id_Col_Vdiff,
-         Info (2));
+        (Kernel, Item.Files (2), Id_Col_Vdiff, Info => Info (2));
       Add_Line_Information
-        (Kernel, Item.Files (3), Id_Col_Vdiff,
-         Info (3));
+        (Kernel, Item.Files (3), Id_Col_Vdiff, Info => Info (3));
       Move_Mark (Res, Item.List);
       Free (Res);
       Free (Res);
       Trace (Me, "End Show_Differences3");
+
+      Unchecked_Free (Info (1));
+      Unchecked_Free (Info (2));
+      Unchecked_Free (Info (3));
 
    exception
       when E : others => Trace (Me, E);

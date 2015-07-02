@@ -17,7 +17,7 @@ Classes
 
 .. autoclass:: Diagram
 
-   
+
 
 
    .. autoattribute:: GPS.Browsers.Diagram.Selection
@@ -96,7 +96,7 @@ Classes
 
 .. autoclass:: Item
 
-   
+
 
 
    .. autoattribute:: GPS.Browsers.Item.Align
@@ -153,7 +153,7 @@ Classes
 
 .. autoclass:: Link
 
-   
+
 
 
    .. autoattribute:: GPS.Browsers.Link.Routing
@@ -190,7 +190,7 @@ Classes
 
 .. autoclass:: Style
 
-   
+
 
 
    .. autoattribute:: GPS.Browsers.Style.Align

@@ -30,7 +30,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with XML_Parsers;
 with XML_Utils;                 use XML_Utils;
 
@@ -55,9 +54,11 @@ package body Remote_Module is
    Remote_Module_Id : Module_ID;
    Module_Name : constant String := "Remote_Module";
 
-   procedure File_Saved
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Saved is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file has been modified
 
    procedure Remote_Commands_Handler
@@ -65,15 +66,16 @@ package body Remote_Module is
       Command : String);
    --  Command handler for the "is_local_server" command
 
-   ----------------
-   -- File_Saved --
-   ----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Saved
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Do_Sync : Boolean;
    begin
       for J in Remote.Distant_Server_Type'Range loop
@@ -100,11 +102,11 @@ package body Remote_Module is
                   Print_Output  => False,
                   Force         => False,
                   Queue_Id      => "file_save_remote",
-                  File          => D.File);
+                  File          => File);
             end if;
          end if;
       end loop;
-   end File_Saved;
+   end Execute;
 
    ---------------
    -- Customize --
@@ -150,17 +152,13 @@ package body Remote_Module is
         (Module      => Remote_Module_Id,
          Kernel      => Kernel,
          Module_Name => Module_Name);
-      Register_Hook_No_Args
-        (Kernel, Remote.Db.Server_List_Changed_Hook);
       Remote_Module_Record (Remote_Module_Id.all).Database :=
         Remote.Db.Initialize_Database;
 
       --  Load user specific machine list
       Load_Remote_Config (Kernel);
 
-      Add_Hook (Kernel, File_Saved_Hook,
-                Wrapper (File_Saved'Access),
-                Name  => "remote_module.file_saved");
+      File_Saved_Hook.Add (new On_File_Saved);
 
       Register_Command
         (Kernel, "is_server_local",

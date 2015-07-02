@@ -75,7 +75,6 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;
@@ -150,9 +149,11 @@ package body GPS.Main_Window is
       Params : Glib.Values.GValues) return Boolean;
    --  Callback for the delete event
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
@@ -185,7 +186,10 @@ package body GPS.Main_Window is
       return Command_Return_Type;
    --  Act on the layout of windows
 
-   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_Project_Changed;
+       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project is changed
 
    procedure Default_Command_Handler
@@ -323,15 +327,10 @@ package body GPS.Main_Window is
 
    function Prepare_Quit
      (Main_Window : access GPS_Window_Record'Class)
-      return Boolean
-   is
-      Data : aliased Exit_Before_Action_Hooks_Args :=
-        (Hooks_Data with null record);
+      return Boolean is
    begin
       if Save_MDI_Children (Main_Window.Kernel)
-        and then Run_Hook_Until_Failure
-          (Main_Window.Kernel,
-           Before_Exit_Action_Hook, Data'Unchecked_Access)
+         and then Before_Exit_Action_Hook.Run (Main_Window.Kernel)
       then
          --  Need to save the desktop here, while the MDI still belongs to a
          --  toplevel window, since otherwise we can't save the size or status
@@ -400,34 +399,37 @@ package body GPS.Main_Window is
       return not Prepare_Quit (GPS_Window (Widget));
    end Delete_Callback;
 
-   ------------------------
-   -- On_Project_Changed --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Changed
-     (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+      (Self   : On_Project_Changed;
+       Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
    begin
       Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
-   end On_Project_Changed;
+   end Execute;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      P     : constant Preference := Get_Pref (Data);
       Dead   : Boolean;
-      pragma Unreferenced (Dead);
+      pragma Unreferenced (Dead, Self);
       Theme : Theme_Descr;
       Err   : aliased GError;
       Theme_Css : Virtual_File;
 
    begin
-      if P = null
-        or else P = Preference (Gtk_Theme)
+      if Pref = null
+        or else Pref = Preference (Gtk_Theme)
       then
          Theme := Gtk_Theme.Get_Pref;
 
@@ -474,8 +476,8 @@ package body GPS.Main_Window is
          end if;
       end if;
 
-      if P = null
-        or else P = Preference (Default_Font)
+      if Pref = null
+        or else Pref = Preference (Default_Font)
       then
          --  ??? This creates a new css_provider every time prefs are changed.
          Gtkada.Style.Load_Css_String
@@ -483,8 +485,8 @@ package body GPS.Main_Window is
             Priority => Gtk.Style_Provider.Priority_Theme);
       end if;
 
-      if P = null
-        or else P = Preference (Pref_Toolbar_Style)
+      if Pref = null
+        or else Pref = Preference (Pref_Toolbar_Style)
       then
          case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
          when Text_Only =>
@@ -505,8 +507,8 @@ package body GPS.Main_Window is
          end case;
       end if;
 
-      if P = null
-        or else P = Preference (Tooltips_Background)
+      if Pref = null
+        or else Pref = Preference (Tooltips_Background)
       then
          if Tooltips_Background.Get_Pref = White_RGBA then
             --  Fallback to default color
@@ -538,8 +540,8 @@ package body GPS.Main_Window is
          end if;
       end if;
 
-      Configure_MDI (Kernel, P);
-   end Preferences_Changed;
+      Configure_MDI (Kernel, Pref);
+   end Execute;
 
    -------------------------
    -- On_Draw_Toolbar_Box --
@@ -588,7 +590,8 @@ package body GPS.Main_Window is
       Application : not null access GPS_Application_Record'Class;
       Menubar     : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class)
    is
-      Vbox      : Gtk_Vbox;
+      Vbox : Gtk_Vbox;
+      P    : access On_Pref_Changed;
    begin
       Main_Window := new GPS_Window_Record;
       Glib.Object.Initialize_Class_Record
@@ -647,13 +650,7 @@ package body GPS.Main_Window is
 
       Widget_Callback.Connect (Main_Window, Signal_Destroy, On_Destroy'Access);
 
-      Add_Hook (Application.Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "main_window.preferences_changed");
-
-      Add_Hook (Application.Kernel, Project_Changed_Hook,
-                Wrapper (On_Project_Changed'Access),
-                Name => "main_window.projet_changed");
+      Project_Changed_Hook.Add (new On_Project_Changed);
 
       Return_Callback.Object_Connect
         (Main_Window, Gtk.Widget.Signal_Delete_Event,
@@ -679,7 +676,9 @@ package body GPS.Main_Window is
       Main_Window.Toolbar := Create_Toolbar (Application.Kernel, Id => "main");
       Main_Window.Toolbar_Box.Pack_Start (Main_Window.Toolbar);
 
-      Preferences_Changed (Application.Kernel, Data => null);
+      P := new On_Pref_Changed;
+      Preferences_Changed_Hook.Add (P);
+      P.Execute (Application.Kernel, null);
    end Gtk_New;
 
    -------------------

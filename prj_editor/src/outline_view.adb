@@ -56,7 +56,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
@@ -92,9 +91,11 @@ package body Outline_View is
       return Selection_Context;
    --  See inherited documentation
 
-   procedure On_Context_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Context_Changed is new Context_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self    : On_Context_Changed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context);
    --  Called when the context has changed
 
    type Outline_View_Record is new Generic_Views.View_Record with record
@@ -146,18 +147,25 @@ package body Outline_View is
       Event   : Gdk_Event_Button) return Boolean;
    --  Called every time a row is clicked
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  React to changes in the preferences
 
    function Get_Filter_Record
      (Kernel : access Kernel_Handle_Record'Class) return Tree_Filter;
    --  Return the filters properties extracted from the kernel
 
-   procedure Location_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Location_Changed is new File_Location_Hooks_Function
+      with null record;
+   overriding procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : Project_Type);
    --  Called when the current editor reaches a new location
 
    procedure Location_Changed
@@ -171,21 +179,30 @@ package body Outline_View is
      (Outline : access Gtk_Widget_Record'Class);
    --  Called when the outline is destroyed
 
-   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self  : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
 
-   procedure File_Modified
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Modified is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Modified;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file has been modified
 
-   procedure File_Closed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Closed is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file has been closed
 
-   procedure File_Edited
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Edited is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file has been edited
 
    procedure Set_File
@@ -308,34 +325,36 @@ package body Outline_View is
       end if;
    end Location_Changed;
 
-   ----------------------
-   -- Location_Changed --
-   ----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Location_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : Project_Type)
    is
-      Loc : File_Location_Hooks_Args_Access;
+      pragma Unreferenced (Self, Project, File);
    begin
-      Loc := File_Location_Hooks_Args_Access (Data);
-      Location_Changed (Kernel, Loc.Line, Loc.Column);
-   end Location_Changed;
+      Location_Changed (Kernel, Line, Column);
+   end Execute;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
+      pragma Unreferenced (Self);
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
-      Pref : Preference;
    begin
       if Outline /= null then
-         Pref := Get_Pref (Data);
          Set_Font_And_Colors (Outline.Tree, Fixed_Font => True, Pref => Pref);
 
          if Pref = null
@@ -353,7 +372,7 @@ package body Outline_View is
             Force_Refresh (Outline);
          end if;
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    -------------------
    -- Build_Context --
@@ -614,7 +633,6 @@ package body Outline_View is
       Pixbuf_Render : Gtk_Cell_Renderer_Pixbuf;
       Tooltip       : Outline_View_Tooltips_Access;
       Scrolled      : Gtk_Scrolled_Window;
-      Data          : aliased Context_Hooks_Args;
 
       pragma Unreferenced (Col_Number);
       Out_Model : Outline_Model;
@@ -680,43 +698,20 @@ package body Outline_View is
       Tooltip.Outline := Outline;
       Set_Tooltip (Tooltip, Outline.Tree);
 
-      Data := Context_Hooks_Args'
-        (Hooks_Data with Context => Get_Current_Context (Outline.Kernel));
+      declare
+         P : constant access On_Context_Changed := new On_Context_Changed;
+      begin
+         P.Execute (Outline.Kernel, Get_Current_Context (Outline.Kernel));
+         Context_Changed_Hook.Add (P, Watch => Outline);
+      end;
 
-      On_Context_Changed (Outline.Kernel, Data'Unchecked_Access);
-
-      Add_Hook (Outline.Kernel, Context_Changed_Hook,
-                Wrapper (On_Context_Changed'Access),
-                Name => "outline.context_changed",
-                Watch => GObject (Outline));
-      Add_Hook (Outline.Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "outline.preferences_changed",
-                Watch => GObject (Outline));
-      Add_Hook (Outline.Kernel, Location_Changed_Hook,
-                Wrapper (Location_Changed'Access),
-                Name  => "outline.location_changed",
-                Watch => GObject (Outline));
-      Add_Hook (Outline.Kernel, File_Saved_Hook,
-                Wrapper (File_Modified'Access),
-                Name  => "outline.file_saved",
-                Watch => GObject (Outline));
-      Add_Hook (Outline.Kernel, File_Closed_Hook,
-                Wrapper (File_Closed'Access),
-                Name  => "outline.file_closed",
-                Watch => GObject (Outline));
-      Add_Hook (Outline.Kernel, File_Edited_Hook,
-                Wrapper (File_Edited'Access),
-                Name  => "outline.file_edited",
-                Watch => GObject (Outline));
-      Add_Hook (Outline.Kernel, Buffer_Modified_Hook,
-                Wrapper (File_Modified'Access),
-                Name  => "outline.file_modified",
-                Watch => GObject (Outline));
-      Add_Hook (Outline.Kernel, Project_View_Changed_Hook,
-                Wrapper (On_Project_Changed'Access),
-                Name => "outline.projet_changed",
-                Watch => GObject (Outline));
+      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Outline);
+      Location_Changed_Hook.Add (new On_Location_Changed, Watch => Outline);
+      File_Saved_Hook.Add (new On_File_Modified, Watch => Outline);
+      Buffer_Edited_Hook.Add (new On_File_Modified, Watch => Outline);
+      File_Closed_Hook.Add (new On_File_Closed, Watch => Outline);
+      File_Edited_Hook.Add (new On_File_Edited, Watch => Outline);
+      Project_View_Changed_Hook.Add (new On_Project_Changed, Watch => Outline);
 
       return Gtk_Widget (Outline.Tree);
    end Initialize;
@@ -763,75 +758,78 @@ package body Outline_View is
       end if;
    end Force_Refresh;
 
-   ----------------
-   -- File_Saved --
-   ----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Modified
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Modified;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
    begin
-      if Outline /= null and then Outline.File = D.File then
+      if Outline /= null and then Outline.File = File then
          Refresh (Outline);
-         Location_Changed (Kernel, D.File);
+         Location_Changed (Kernel, File);
       end if;
-   end File_Modified;
+   end Execute;
 
-   -----------------
-   -- File_Closed --
-   -----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Closed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
    begin
-      if Outline /= null and then Outline.File = D.File then
+      if Outline /= null and then Outline.File = File then
          Outline.Set_File (GNATCOLL.VFS.No_File);
          Refresh (Outline);
       end if;
-   end File_Closed;
+   end Execute;
 
-   -----------------
-   -- File_Edited --
-   -----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Edited
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      D       : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
    begin
       if Outline /= null then
          if Outline.File = GNATCOLL.VFS.No_File then
-            Outline.Set_File (D.File);
+            Outline.Set_File (File);
          end if;
 
          Refresh (Outline);
-         Location_Changed (Kernel, D.File);
+         Location_Changed (Kernel, File);
       end if;
-   end File_Edited;
+   end Execute;
 
-   ------------------------
-   -- On_Context_Changed --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Context_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self    : On_Context_Changed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context)
    is
-      type Context_Args is access all Context_Hooks_Args'Class;
-      D       : constant Context_Args := Context_Args (Data);
-      Module  : constant Module_ID := Module_ID (Get_Creator (D.Context));
+      pragma Unreferenced (Self);
+      Module  : constant Module_ID := Module_ID (Get_Creator (Context));
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
       File    : Virtual_File;
@@ -842,8 +840,8 @@ package body Outline_View is
           (Get_Name (Module) = "Source_Editor"
            or else Get_Name (Module) = Outline_View_Module_Name)
       then
-         if Has_File_Information (D.Context) then
-            File := File_Information (D.Context);
+         if Has_File_Information (Context) then
+            File := File_Information (Context);
          else
             File := GNATCOLL.VFS.No_File;
          end if;
@@ -855,7 +853,7 @@ package body Outline_View is
             Refresh (Outline);
          end if;
       end if;
-   end On_Context_Changed;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -954,11 +952,15 @@ package body Outline_View is
       end if;
    end Get_Outline_Model;
 
-   ------------------------
-   -- On_Project_Changed --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+      (Self   : On_Project_Changed;
+       Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
    begin
@@ -969,6 +971,6 @@ package body Outline_View is
 
          Set_File (Outline, Outline.File);
       end if;
-   end On_Project_Changed;
+   end Execute;
 
 end Outline_View;

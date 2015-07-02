@@ -50,7 +50,6 @@ with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GVD.Code_Editors;        use GVD.Code_Editors;
 with GVD.Preferences;         use GVD.Preferences;
 with GVD.Process;             use GVD.Process;
@@ -248,14 +247,13 @@ package body GVD.Assembly_View is
      (View : access Assembly_View_Record'Class);
    --  The user has asked for the previous or next undisplayed assembly page
 
-   type Preferences_Hook_Record is new Function_With_Args with record
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
       View : Assembly_View;
    end record;
-   type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
@@ -1119,7 +1117,8 @@ package body GVD.Assembly_View is
      (Widget : access Assembly_View_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
-      Hook : Preferences_Hook;
+      pragma Unreferenced (Kernel);
+      Hook : access On_Pref_Changed;
       Scrolled : Gtk_Scrolled_Window;
    begin
       Initialize_Vbox (Widget, Homogeneous => False);
@@ -1141,12 +1140,9 @@ package body GVD.Assembly_View is
 
       Configure (Assembly_View (Widget), Default_Style.Get_Pref_Font);
 
-      Hook := new Preferences_Hook_Record'
-        (Function_With_Args with View => Assembly_View (Widget));
-      Add_Hook
-        (Kernel, Preference_Changed_Hook, Hook,
-         Name => "gvd.assembly_view.preferences_changed",
-         Watch => GObject (Widget));
+      Hook := new On_Pref_Changed;
+      Hook.View := Assembly_View (Widget);
+      Preferences_Changed_Hook.Add (Hook, Watch => Widget);
 
       return Gtk_Widget (Widget.View);
    end Initialize;
@@ -1156,18 +1152,17 @@ package body GVD.Assembly_View is
    -------------
 
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
       pragma Unreferenced (Kernel);
-      Pref : constant Preference := Get_Pref (Data);
    begin
       if Pref = null
         or else Pref = Preference (Asm_Highlight_Color)
       then
          Set_Property
-           (Hook.View.Highlight_Tag,
+           (Self.View.Highlight_Tag,
             Foreground_Rgba_Property,
             Asm_Highlight_Color.Get_Pref);
       end if;
@@ -1176,7 +1171,7 @@ package body GVD.Assembly_View is
         or else Pref = Preference (Asm_Breakpoint_Color)
       then
          Set_Property
-           (Hook.View.Breakpoint_Tag,
+           (Self.View.Breakpoint_Tag,
             Background_Rgba_Property,
             Asm_Breakpoint_Color.Get_Pref);
       end if;
@@ -1184,10 +1179,10 @@ package body GVD.Assembly_View is
       if Pref = null
         or else Pref = Preference (Default_Style)
       then
-         Set_Font (Hook.View, Default_Style.Get_Pref_Font);
+         Set_Font (Self.View, Default_Style.Get_Pref_Font);
       end if;
 
-      Update (Hook.View);
+      Update (Self.View);
    end Execute;
 
 end GVD.Assembly_View;

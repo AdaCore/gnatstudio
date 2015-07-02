@@ -24,12 +24,12 @@ with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Window;                 use Gdk.Window;
 with Gdk;                        use Gdk;
@@ -245,8 +245,9 @@ package body Src_Editor_Module.Commands is
              & " Other_File=" & Display_Full_Name (Other_File));
 
       if Other_File /= GNATCOLL.VFS.No_File then
-         Open_File_Editor
-           (Kernel, Other_File, Project_Information (Context.Context),
+         Open_File_Action_Hook.Run
+           (Kernel, Other_File,
+            Project => Project_Information (Context.Context),
             Line => 0);
          return Standard.Commands.Success;
       else
@@ -559,7 +560,8 @@ package body Src_Editor_Module.Commands is
          if Filename /= GNATCOLL.VFS.No_File then
             --  Open with the first possible project, the user cannot choose
             --  which specific project to use (in the case of aggregates)
-            Open_File_Editor (Kernel, Filename, No_Project);
+            Open_File_Action_Hook.Run
+               (Kernel, Filename, Project => No_Project);
          end if;
       end;
       return Standard.Commands.Success;
@@ -589,7 +591,8 @@ package body Src_Editor_Module.Commands is
 
       begin
          if Filename /= GNATCOLL.VFS.No_File then
-            Open_File_Editor (Kernel, Filename, No_Project);
+            Open_File_Action_Hook.Run
+               (Kernel, Filename, Project => No_Project);
          end if;
       end;
       return Standard.Commands.Success;
@@ -939,9 +942,9 @@ package body Src_Editor_Module.Commands is
          Line := 1;
       end if;
 
-      Open_File_Editor
+      Open_File_Action_Hook.Run
         (Get_Kernel (Context.Context),
-         Filename  => File_Information (Context.Context),
+         File      => File_Information (Context.Context),
          Project   => Project_Information (Context.Context),
          Line      => Line,
          Column    => Column_Information (Context.Context));

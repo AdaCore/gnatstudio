@@ -24,6 +24,9 @@ sys.path.insert(0, "../../share/support/ui")
 sys.path.insert(0, "../../share/support/core")
 sys.path.insert(0, ".")   # access to GPS.py
 
+import GPS
+import GPS.generated_hooks  # use the automatic doc for hooks
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

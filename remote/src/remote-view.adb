@@ -57,7 +57,6 @@ with GPS.Kernel.Remote;
 
 with Remote;                 use Remote;
 with Remote.Config_Dialog;   use Remote.Config_Dialog;
-with Remote.Db;              use Remote.Db;
 with Gexpect.Db;             use Gexpect, Gexpect.Db;
 with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 
@@ -137,21 +136,22 @@ package body Remote.View is
    package Sync_Callback is new Gtk.Handlers.User_Callback_With_Setup
      (Gtk_Widget_Record, Sync_Data, Setup);
 
-   type On_Server_Config_Hook is new Function_With_Args with record
+   type On_Server_Config is new Server_Hooks_Function with record
       View : Remote_View;
    end record;
    overriding procedure Execute
-     (Func   : On_Server_Config_Hook;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_Server_Config;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Server : Distant_Server_Type;
+      Nickname : String);
    --  Called when server configuration changed
 
-   type On_Server_List_Hook is new Function_No_Args with record
+   type On_Server_List is new Simple_Hooks_Function with record
       View : Remote_View;
    end record;
    overriding procedure Execute
-     (Func   : On_Server_List_Hook;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Self   : On_Server_List;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when server list changed
 
    procedure On_Combo_Changed
@@ -442,23 +442,14 @@ package body Remote.View is
 
       Set_Servers (View);
 
-      declare
-         Hook_Func : constant Function_With_Args_Access :=
-                       new On_Server_Config_Hook'
-                         (Function_With_Args with View => Remote_View (View));
-      begin
-         Add_Hook (View.Kernel, GPS.Kernel.Remote.Server_Config_Changed_Hook,
-                   Hook_Func, "remote_views module", Watch => GObject (View));
-      end;
-
-      declare
-         Hook_Func : constant Function_No_Args_Access :=
-                       new On_Server_List_Hook'
-                         (Function_No_Args with View => Remote_View (View));
-      begin
-         Add_Hook (View.Kernel, Remote.Db.Server_List_Changed_Hook,
-                   Hook_Func, "remote_views_module", Watch => GObject (View));
-      end;
+      Server_Config_Hook.Add
+         (new On_Server_Config'
+            (Server_Hooks_Function with View => Remote_View (View)),
+          Watch => View);
+      Server_List_Hook.Add
+         (new On_Server_List'
+            (Simple_Hooks_Function with View => Remote_View (View)),
+          Watch => View);
 
       return Gtk_Widget (View);
    end Initialize;
@@ -572,29 +563,30 @@ package body Remote.View is
          (View => Remote_View (View), Server => Build_Server));
    end Set_Servers;
 
-   -----------------------------------
-   -- On_Server_Config_Changed_Hook --
-   -----------------------------------
+   -------------
+   -- Execute --
+   -------------
 
    overriding procedure Execute
-     (Func   : On_Server_Config_Hook;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_Server_Config;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Server : Distant_Server_Type;
+      Nickname : String)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Kernel, Server, Nickname);
    begin
-      if not Func.View.Connecting then
-         Set_Servers (Func.View);
+      if not Self.View.Connecting then
+         Set_Servers (Self.View);
       end if;
    end Execute;
 
-   -------------------------
-   -- On_Server_List_Hook --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
    overriding procedure Execute
-     (Func   : On_Server_List_Hook;
-      Kernel : access Kernel_Handle_Record'Class) is
+     (Self   : On_Server_List;
+      Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       --  Check for deleted server
 
@@ -607,7 +599,7 @@ package body Remote.View is
          end if;
       end loop;
 
-      Set_Servers (Func.View);
+      Set_Servers (Self.View);
    end Execute;
 
    ----------------------

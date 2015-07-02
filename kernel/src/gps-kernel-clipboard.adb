@@ -71,24 +71,27 @@ package body GPS.Kernel.Clipboard is
    procedure Append_To_Clipboard (Clipboard : access Clipboard_Record);
    --  Add the contents of the Gtk.Clipboard to Clipboard
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
    procedure Clipboard_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands associated with the clipboard
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Data);
+      pragma Unreferenced (Self, Pref);
       Size      : constant Integer := Clipboard_Size_Pref.Get_Pref;
       Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
       List      : Selection_List_Access;
@@ -99,9 +102,9 @@ package body GPS.Kernel.Clipboard is
            Clipboard.List (1 .. Integer'Min (Size, Clipboard.List'Length));
          Unchecked_Free (Clipboard.List);
          Clipboard.List := List;
-         Run_Hook (Kernel, Clipboard_Changed_Hook);
+         Clipboard_Changed_Hook.Run (Kernel);
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    ----------------------
    -- Create_Clipboard --
@@ -130,8 +133,6 @@ package body GPS.Kernel.Clipboard is
             Page    => -"General",
             Minimum => 1,
             Maximum => 1_000);
-
-         Register_Hook_No_Args (Kernel, Clipboard_Changed_Hook);
       end if;
 
       Clipboard.Kernel := Kernel_Handle (Kernel);
@@ -160,16 +161,14 @@ package body GPS.Kernel.Clipboard is
             end loop;
             Free (File);
 
-            Run_Hook (Kernel, Clipboard_Changed_Hook);
+            Clipboard_Changed_Hook.Run (Kernel);
          end if;
       end if;
 
       Destroy_Clipboard (Kernel);
       Kernel.Clipboard := Convert (Clipboard);
 
-      Add_Hook (Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "clipboard.preferences_changed");
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
    end Create_Clipboard;
 
    -----------------------
@@ -255,7 +254,7 @@ package body GPS.Kernel.Clipboard is
          Clipboard.Last_Paste  := Clipboard.List'First;
          Clipboard.Last_Widget := null;
 
-         Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+         Clipboard_Changed_Hook.Run (Clipboard.Kernel);
       end if;
    end Append_To_Clipboard;
 
@@ -270,7 +269,7 @@ package body GPS.Kernel.Clipboard is
          Clipboard.List (Index .. Clipboard.List'Last - 1) :=
            Clipboard.List (Index + 1 .. Clipboard.List'Last);
          Clipboard.List (Clipboard.List'Last) := null;
-         Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+         Clipboard_Changed_Hook.Run (Clipboard.Kernel);
       end if;
    end Remove_Clipboard_Entry;
 
@@ -373,13 +372,13 @@ package body GPS.Kernel.Clipboard is
         and then Index_In_List in Clipboard.List'Range
       then
          Clipboard.Last_Paste := Index_In_List;
-         Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+         Clipboard_Changed_Hook.Run (Clipboard.Kernel);
 
          if Clipboard.Last_Paste not in Clipboard.List'Range
            or else Clipboard.List (Clipboard.Last_Paste) = null
          then
             Clipboard.Last_Paste := Clipboard.List'First;
-            Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+            Clipboard_Changed_Hook.Run (Clipboard.Kernel);
          end if;
       end if;
 
@@ -558,7 +557,7 @@ package body GPS.Kernel.Clipboard is
          end if;
       end if;
 
-      Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+      Clipboard_Changed_Hook.Run (Clipboard.Kernel);
    end Paste_Previous_Clipboard;
 
    -----------------
@@ -610,7 +609,7 @@ package body GPS.Kernel.Clipboard is
 
          Clipboard.Last_Paste := Index1;
          Set_Text (Gtk.Clipboard.Get, Clipboard.List (Index1).all);
-         Run_Hook (Clipboard.Kernel, Clipboard_Changed_Hook);
+         Clipboard_Changed_Hook.Run (Clipboard.Kernel);
       end if;
    end Merge_Clipboard;
 

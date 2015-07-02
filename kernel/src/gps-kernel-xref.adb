@@ -106,28 +106,38 @@ package body GPS.Kernel.Xref is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the default commands
 
-   procedure On_Project_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   procedure On_Project_View_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+   type On_Project_View_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Hooks
 
-   ------------------------
-   -- On_Project_Changed --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
    begin
       Standard.Xref.Project_Changed (Kernel.Databases);
-   end On_Project_Changed;
+   end Execute;
 
-   -----------------------------
-   -- On_Project_View_Changed --
-   -----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_View_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
    begin
       Standard.Xref.Project_View_Changed
         (Kernel.Databases, Get_Project_Tree (Kernel));
@@ -140,7 +150,7 @@ package body GPS.Kernel.Xref is
             & "' cannot be written. Cross-references are disabled.");
       end if;
 
-   end On_Project_View_Changed;
+   end Execute;
 
    --------------
    -- On_Error --
@@ -1011,17 +1021,8 @@ package body GPS.Kernel.Xref is
         (Kernel, "xref_db",
          Handler      => Default_Command_Handler'Access);
 
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel,
-         GPS.Kernel.Project_Changed_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_Project_Changed'Access),
-         "xref.project_changed");
-
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel,
-         GPS.Kernel.Project_View_Changed_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_Project_View_Changed'Access),
-         "xref.project_changed");
+      Project_Changed_Hook.Add (new On_Project_Changed);
+      Project_View_Changed_Hook.Add (new On_Project_View_Changed);
    end Register_Module;
 
 end GPS.Kernel.Xref;

@@ -16,16 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-
 with Glib.Object; use Glib.Object;
 with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
-
 with Gtkada.Style; use Gtkada.Style;
-
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body GPS.Kernel.Style_Manager is
@@ -49,14 +44,13 @@ package body GPS.Kernel.Style_Manager is
    procedure Free (X : in out Style_Record);
    --  Free memory associated to X
 
-   type Preferences_Changed_Hook_Record is new Function_With_Args with record
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
       Manager : Style_Manager_Access;
    end record;
-   type Preferences_Hook is access all Preferences_Changed_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Preferences_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Hook   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
 
    type Tag_And_Variant is record
       Style   : Style_Access;
@@ -625,13 +619,12 @@ package body GPS.Kernel.Style_Manager is
    -------------
 
    overriding procedure Execute
-     (Hook   : Preferences_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Hook   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
       pragma Unreferenced (Kernel);
       Self : constant Style_Manager_Access := Hook.Manager;
-      Pref : constant Preference := Get_Pref (Data);
 
       procedure Process (Position : Style_Map.Cursor);
       --  Process one item in the container
@@ -791,13 +784,10 @@ package body GPS.Kernel.Style_Manager is
    -----------------------
 
    procedure Initialize_Style_Manager (Kernel : Kernel_Handle) is
-      P_Hook  : Preferences_Hook;
+      P_Hook : constant access On_Pref_Changed := new On_Pref_Changed;
    begin
-      P_Hook := new Preferences_Changed_Hook_Record'
-        (Function_With_Args with Manager => Get_Style_Manager (Kernel));
-      Add_Hook
-        (Kernel, Preference_Changed_Hook, P_Hook,
-         Name => "Style_Manager.preferences_changed");
+      P_Hook.Manager := Get_Style_Manager (Kernel);
+      Preferences_Changed_Hook.Add (P_Hook);
    end Initialize_Style_Manager;
 
 end GPS.Kernel.Style_Manager;

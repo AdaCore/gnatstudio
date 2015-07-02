@@ -78,13 +78,6 @@ package GPS.Kernel.Preferences is
    --  preference has an impact on the fonts and colors. This is used to limit
    --  the amount of work done when the user changes preferences.
 
-   procedure Emit_Preferences_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Pref   : Default_Preferences.Preference := null);
-   --  Emit the "preferences_changed" hook.
-   --  If pref is non-null, emit this for the Pref. Otherwise, emit it for
-   --  all preferences.
-
    --------------------------------
    -- Specific preferences pages --
    --------------------------------

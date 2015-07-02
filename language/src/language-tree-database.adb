@@ -1045,42 +1045,41 @@ package body Language.Tree.Database is
    is
       Lang      : Language_Access;
       Tree_Lang : Tree_Language_Access;
+      New_File  : Structured_File_Access;
    begin
-      if Contains (Db.Files_Db, File) then
-         return Element (Db.Files_Db, File);
-      else
-         if not Is_Regular_File (File) then
-            return Db.Null_Structured_File'Access;
-         end if;
-
-         Lang := Db.Lg_Handler.Get_Language_From_File (File);
-
-         if Lang = null or else Lang = Unknown_Lang then
-            --  Files that are not yet associated with a language may be later
-            --  on, e.g. after project initialization. So we don't want to
-            --  force the association between a structured file and an unknown
-            --  language. There will be no information to analyze anyway.
-            return Db.Null_Structured_File'Access;
-         end if;
-
-         Tree_Lang := Db.Lg_Handler.Get_Tree_Language_From_File (File);
-
-         declare
-            New_File  : constant Structured_File_Access := new Structured_File;
-         begin
-            New_File.File := File;
-            New_File.Lang := Lang;
-            New_File.Tree_Lang := Tree_Lang;
-            New_File.Db := Db;
-            New_File.Project := Project;
-
-            Insert (Db.Files_Db, File, New_File);
-
-            Internal_Update_Contents (New_File, True);
-
-            return New_File;
-         end;
+      if not File.Is_Regular_File then
+         return Db.Null_Structured_File'Access;
       end if;
+
+      New_File := Get_File (Db, File);
+      if New_File /= null then
+         return New_File;
+      end if;
+
+      Lang := Db.Lg_Handler.Get_Language_From_File (File);
+
+      if Lang = null or else Lang = Unknown_Lang then
+         --  Files that are not yet associated with a language may be later
+         --  on, e.g. after project initialization. So we don't want to
+         --  force the association between a structured file and an unknown
+         --  language. There will be no information to analyze anyway.
+         return Db.Null_Structured_File'Access;
+      end if;
+
+      Tree_Lang := Db.Lg_Handler.Get_Tree_Language_From_File (File);
+
+      New_File := new Structured_File;
+      New_File.File := File;
+      New_File.Lang := Lang;
+      New_File.Tree_Lang := Tree_Lang;
+      New_File.Db := Db;
+      New_File.Project := Project;
+
+      Db.Files_Db.Insert (File, New_File);
+
+      Internal_Update_Contents (New_File, True);
+
+      return New_File;
    end Get_Or_Create;
 
    --------------
@@ -1089,10 +1088,12 @@ package body Language.Tree.Database is
 
    function Get_File
      (Db   : Construct_Database_Access;
-      File : Virtual_File) return Structured_File_Access is
+      File : Virtual_File) return Structured_File_Access
+   is
+      C : constant File_Map.Cursor := Db.Files_Db.Find (File);
    begin
-      if Contains (Db.Files_Db, File) then
-         return Element (Db.Files_Db, File);
+      if Has_Element (C) then
+         return Element (C);
       else
          return null;
       end if;
@@ -1106,36 +1107,24 @@ package body Language.Tree.Database is
      (Db        : Construct_Database_Access;
       File      : Virtual_File)
    is
-      S_File : Structured_File_Access;
+      S_File : Structured_File_Access := Get_File (Db, File);
    begin
-      if Contains (Db.Files_Db, File) then
-         S_File := Element (Db.Files_Db, File);
-
+      if S_File /= null then
          if Is_Externally_Referenced (S_File) then
             --  In this case, the file is still used somewhere else so we can't
             --  remove it. Typically, it's used by the outline.
-
             return;
          end if;
 
          --  Notify database assistants
 
-         declare
-            Cur : Database_Listeners.Cursor;
-         begin
-            Cur := First (Db.Listeners);
-
-            while Cur /= Database_Listeners.No_Element loop
-               File_Updated
-                 (Element (Cur), S_File, Get_Tree (S_File), Removed);
-               Cur := Next (Cur);
-            end loop;
-         end;
+         for L of Db.Listeners loop
+            File_Updated (L, S_File, Get_Tree (S_File), Removed);
+         end loop;
 
          --  Perform the actual deletion
 
          Db.Files_Db.Delete (File);
-
          Free (S_File);
       end if;
    end Remove_File;
@@ -1183,10 +1172,13 @@ package body Language.Tree.Database is
    procedure Update_Contents
      (Db   : access Construct_Database;
       File : Virtual_File;
-      Purge : Boolean := False) is
+      Purge : Boolean := False)
+   is
+      S : constant Structured_File_Access :=
+         Get_File (Construct_Database_Access (Db), File);
    begin
-      if Contains (Db.Files_Db, File) then
-         Update_Contents (Element (Db.Files_Db, File), Purge);
+      if S /= null then
+         Update_Contents (S, Purge);
       end if;
    end Update_Contents;
 
@@ -1195,8 +1187,6 @@ package body Language.Tree.Database is
    -----------
 
    procedure Clear (Db : access Construct_Database) is
-      C : File_Map.Cursor := First (Db.Files_Db);
-      Garbage : Structured_File_Access;
    begin
       declare
          Cur : Database_Listeners.Cursor;
@@ -1209,15 +1199,12 @@ package body Language.Tree.Database is
          end loop;
       end;
 
-      while C /= File_Map.No_Element loop
-         Garbage := Element (C);
-         Free (Garbage);
-
-         C := Next (C);
+      for Garbage of Db.Files_Db loop
+         Free (Garbage);   --  ??? Should we call Unref here ?
       end loop;
 
       Clear (Db.Entities_Db);
-      Clear (Db.Files_Db);
+      Db.Files_Db.Clear;
    end Clear;
 
    ----------
@@ -1823,14 +1810,8 @@ package body Language.Tree.Database is
    is
       Local_Removed : File_Array (1 .. Integer (Db.Files_Db.Length));
       Local_Added : File_Array (1 .. New_Set'Length);
-
       Removed_Index : Integer := 1;
       Added_Index   : Integer := 1;
-
-      Cur : File_Map.Cursor;
-
-      Contained    : Virtual_File;
-
       New_File_Map : File_Map.Map;
    begin
       --  Computes files removed in the new set
@@ -1845,17 +1826,11 @@ package body Language.Tree.Database is
          end if;
       end loop;
 
-      Cur := Db.Files_Db.First;
-
-      while Cur /= File_Map.No_Element loop
-         Contained := File_Map.Key (Cur);
-
-         if not New_File_Map.Contains (Contained) then
-            Local_Removed (Removed_Index) := Contained;
+      for Contained of Db.Files_Db loop
+         if not New_File_Map.Contains (Contained.File) then
+            Local_Removed (Removed_Index) := Contained.File;
             Removed_Index := Removed_Index + 1;
          end if;
-
-         Cur := File_Map.Next (Cur);
       end loop;
 
       --  Computes files added in the new set

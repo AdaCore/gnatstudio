@@ -16,14 +16,10 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;                      use GNATCOLL.VFS;
-
 with Gtk.Window;                        use Gtk.Window;
-
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.MDI;                        use Gtkada.MDI;
-
 with GPS.Editors;                       use GPS.Editors;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
@@ -31,7 +27,6 @@ with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
@@ -312,15 +307,18 @@ package body Vdiff2_Module.Callback is
       end;
    end On_Merge_Two_Files;
 
-   ---------------
-   -- Diff_Hook --
-   ---------------
+   -------------
+   -- Execute --
+   -------------
 
-   function Diff_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
+   overriding function Execute
+     (Self   : On_Diff;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Vcs_File, Orig_File, New_File, Diff_File : Virtual_File;
+      Title  : String)
+      return Boolean
    is
-      D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Success : Boolean;
 
       procedure Setup_Ref (Base, Ref_File : Virtual_File);
@@ -346,32 +344,32 @@ package body Vdiff2_Module.Callback is
 
          begin
             Append_Argument (CL, +Filename, One_Arg);
-            if D.Title = "" then
+            if Title = "" then
                Append_Argument (CL, +Base_Name (Ref_File), One_Arg);
                Append_Argument (CL, +Base_Name (Ref_File), One_Arg);
             else
-               Append_Argument (CL, D.Title, One_Arg);
-               Append_Argument (CL, D.Title, One_Arg);
+               Append_Argument (CL, Title, One_Arg);
+               Append_Argument (CL, Title, One_Arg);
             end if;
 
             Execute_GPS_Shell_Command (Kernel, CL);
          end Set_Title;
 
-         if D.VCS_File /= No_File then
+         if Vcs_File /= No_File then
             Set_Reference : declare
                CL : Arg_List := Create ("VCS.set_reference");
             begin
                Append_Argument (CL, +Filename, One_Arg);
-               Append_Argument (CL, +Full_Name (D.VCS_File), One_Arg);
+               Append_Argument (CL, +Full_Name (Vcs_File), One_Arg);
                Execute_GPS_Shell_Command (Kernel, CL);
             end Set_Reference;
 
-            if Base /= No_File and then Base /= D.VCS_File then
+            if Base /= No_File and then Base /= Vcs_File then
                Set_Base_Reference : declare
                   CL : Arg_List := Create ("VCS.set_reference");
                begin
                   Append_Argument (CL, +Full_Name (Base), One_Arg);
-                  Append_Argument (CL, +Full_Name (D.VCS_File), One_Arg);
+                  Append_Argument (CL, +Full_Name (Vcs_File), One_Arg);
                   Execute_GPS_Shell_Command (Kernel, CL);
                end Set_Base_Reference;
             end if;
@@ -379,20 +377,20 @@ package body Vdiff2_Module.Callback is
       end Setup_Ref;
 
    begin
-      if D.Orig_File = GNATCOLL.VFS.No_File then
-         if D.New_File = GNATCOLL.VFS.No_File then
+      if Orig_File = GNATCOLL.VFS.No_File then
+         if New_File = GNATCOLL.VFS.No_File then
             return False;
          end if;
 
          declare
-            Ref_F : Virtual_File renames Get_Ref_Filename (D.New_File);
+            Ref_F : Virtual_File renames Get_Ref_Filename (New_File);
             Res   : Diff_Head_Access;
          begin
             Res := Visual_Patch
-              (Diff_Mode.Get_Pref, Ref_F, D.New_File, D.Diff_File, True);
+              (Diff_Mode.Get_Pref, Ref_F, New_File, Diff_File, True);
 
             if Res /= null then
-               Setup_Ref (D.New_File, Ref_F);
+               Setup_Ref (New_File, Ref_F);
             end if;
 
             Delete (Ref_F, Success);
@@ -400,13 +398,13 @@ package body Vdiff2_Module.Callback is
             return Res /= null;
          end;
 
-      elsif D.New_File = GNATCOLL.VFS.No_File then
+      elsif New_File = GNATCOLL.VFS.No_File then
          declare
-            Ref_F : Virtual_File renames Get_Ref_Filename (D.Orig_File);
+            Ref_F : Virtual_File renames Get_Ref_Filename (Orig_File);
             Res   : Diff_Head_Access;
          begin
             Res := Visual_Patch
-              (Diff_Mode.Get_Pref, D.Orig_File, Ref_F, D.Diff_File, False);
+              (Diff_Mode.Get_Pref, Orig_File, Ref_F, Diff_File, False);
 
             if Res /= null then
                Setup_Ref (No_File, Ref_F);
@@ -418,19 +416,20 @@ package body Vdiff2_Module.Callback is
 
       else
          return Visual_Patch
-           (Diff_Mode.Get_Pref, D.Orig_File, D.New_File, D.Diff_File) /= null;
+           (Diff_Mode.Get_Pref, Orig_File, New_File, Diff_File) /= null;
       end if;
-   end Diff_Hook;
+   end Execute;
 
-   --------------------
-   -- File_Closed_Cb --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Closed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self    : On_File_Closed;
+      Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      File    : Virtual_File)
    is
-      D    : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Diff : Diff_Head_Access;
       Node : Diff_Head_List.List_Node;
    begin
@@ -439,7 +438,7 @@ package body Vdiff2_Module.Callback is
       end if;
 
       Node :=
-        Get_Diff_Node (D.File, VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+        Get_Diff_Node (File, VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       if Node = Diff_Head_List.Null_Node then
          return;
@@ -456,7 +455,7 @@ package body Vdiff2_Module.Callback is
 
          for J in Diff.Files'Range loop
             if Diff.Files (J) /= No_File
-              and then Diff.Files (J) /= D.File
+              and then Diff.Files (J) /= File
               and then not Is_Regular_File (Diff.Files (J))
             then
                declare
@@ -475,17 +474,18 @@ package body Vdiff2_Module.Callback is
             Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),
             Node);
       end if;
-   end File_Closed_Cb;
+   end Execute;
 
-   ------------------------------
-   --  On_Preferences_Changed  --
-   ------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Preferences_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Data);
+      pragma Unreferenced (Pref, Self);
       Diff      : Diff_Head_Access;
       Curr_Node : Diff_Head_List.List_Node :=
                     First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
@@ -498,7 +498,7 @@ package body Vdiff2_Module.Callback is
          Show_Differences3 (Kernel, Diff);
          Curr_Node := Next (Curr_Node);
       end loop;
-   end On_Preferences_Changed;
+   end Execute;
 
    -------------
    -- Execute --

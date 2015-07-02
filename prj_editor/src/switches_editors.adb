@@ -574,7 +574,7 @@ package body Switches_Editors is
       pragma Unreferenced (Ignore);
 
    begin
-      Run_Hook (Kernel, Project_Editor_Hook);
+      Project_Editor_Hook.Run (Kernel);
 
       if Files'Length > 1 then
          Gtk_New (Dialog,

@@ -35,8 +35,8 @@ with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;    use GNATCOLL.VFS.GtkAda;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Standard_Hooks;
 
 with BT;                     use BT;
 with BT.Xml.Reader;
@@ -252,12 +252,12 @@ package body CodePeer.Backtrace_View is
    begin
       if File /= No_File then
          Self.Activated := True;
-         GPS.Kernel.Standard_Hooks.Open_File_Editor
-           (Self.Kernel,
-            File,
-            Self.Kernel.Get_Project_Tree.Root_Project,
-            Line,
-            Col);
+         Open_File_Action_Hook.Run
+           (Kernel  => Self.Kernel,
+            File    => File,
+            Project => Self.Kernel.Get_Project_Tree.Root_Project,
+            Line    => Line,
+            Column  => Col);
       end if;
    end On_Activated;
 

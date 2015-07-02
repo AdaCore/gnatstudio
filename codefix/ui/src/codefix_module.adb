@@ -50,7 +50,6 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -229,9 +228,14 @@ package body Codefix_Module is
    procedure On_Fix (Widget : access Gtk_Widget_Record'Class);
    --  Fixes the error that is proposed on a Menu_Item of Codefix.
 
-   procedure Compilation_Finished_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
+      with null record;
+   overriding procedure Execute
+     (Self   : On_Compilation_Finished;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Category, Target, Mode : String;
+      Shadow, Background : Boolean;
+      Status : Integer);
    --  Initializes the fix list of Codefix.
 
    type GPS_Navigator is new Text_Navigator_Abstr with record
@@ -679,40 +683,36 @@ package body Codefix_Module is
       when E : others => Trace (Me, E);
    end Activate_Codefix;
 
-   -----------------------------
-   -- Compilation_Finished_Cb --
-   -----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Compilation_Finished_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Compilation_Finished;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Category, Target, Mode : String;
+      Shadow, Background : Boolean;
+      Status : Integer)
    is
-      Compilation_Data : constant Compilation_Finished_Hooks_Args :=
-        Compilation_Finished_Hooks_Args (Data.all);
+      pragma Unreferenced (Self, Mode, Status);
       Cmd : Arg_List;
-
    begin
       Cmd := Create ("get_build_output");
-      Append_Argument (Cmd, Compilation_Data.Target_Name, One_Arg);
-      Append_Argument (Cmd, Compilation_Data.Shadow'Img, One_Arg);
-      Append_Argument (Cmd, Compilation_Data.Background'Img, One_Arg);
+      Append_Argument (Cmd, Target, One_Arg);
+      Append_Argument (Cmd, Shadow'Img, One_Arg);
+      Append_Argument (Cmd, Background'Img, One_Arg);
       Append_Argument (Cmd, "True", One_Arg);  --  Get the output "as_string"
 
-      if Compilation_Data.Background then
+      if Background then
          Activate_Codefix
            (Kernel_Handle (Kernel),
-            Execute_GPS_Shell_Command (Kernel, Cmd),
-            Compilation_Data.Category);
+            Execute_GPS_Shell_Command (Kernel, Cmd), Category);
       else
          Activate_Codefix
            (Kernel_Handle (Kernel),
-            Execute_GPS_Shell_Command (Kernel, Cmd),
-            -"Builder results");
+            Execute_GPS_Shell_Command (Kernel, Cmd), -"Builder results");
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end Compilation_Finished_Cb;
+   end Execute;
 
    -------------------------
    -- Get_Session_By_Name --
@@ -861,10 +861,7 @@ package body Codefix_Module is
          Name    => "Auto Fix",
          Submenu => new Codefix_Contextual_Menu);
 
-      Add_Hook
-        (Kernel, Compilation_Finished_Hook,
-         Wrapper (Compilation_Finished_Cb'Access),
-         Name => "codefix.compilation_finished");
+      Compilation_Finished_Hook.Add (new On_Compilation_Finished);
 
       Codefix_Module_ID.Codefix_Class :=
         New_Class (Kernel, Codefix_Class_Name);

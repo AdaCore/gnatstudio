@@ -76,7 +76,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Search;                use GPS.Search;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
@@ -255,9 +254,13 @@ package body Project_Explorers is
       Project : Project_Type) return Gtk_Tree_Iter;
    --  Find the first node matching the project
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
+      Explorer : Project_Explorer;
+   end record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
    function Sort_Func
@@ -363,22 +366,20 @@ package body Project_Explorers is
    --  This procedure tries to keep as many things as possible in the current
    --  state (expanded nodes,...)
 
-   type Refresh_Hook_Record is new Function_No_Args with record
+   type On_Refresh is new Simple_Hooks_Function with record
       Explorer : Project_Explorer;
    end record;
-   type Refresh_Hook is access all Refresh_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Refresh_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Self   : On_Refresh;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project view has changed
 
-   type Project_Changed_Hook_Record is new Function_No_Args with record
+   type On_Project_Changed is new Simple_Hooks_Function with record
       Explorer : Project_Explorer;
    end record;
-   type Project_Hook is access all Project_Changed_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Project_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project as changed, as opposed to the project view.
    --  This means we need to start up with a completely new tree, no need to
    --  try to keep the current one.
@@ -635,10 +636,11 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      H1       : Refresh_Hook;
-      H2       : Project_Hook;
+      H1       : access On_Refresh;
+      H2       : access On_Project_Changed;
       Tooltip  : Explorer_Tooltips_Access;
       Scrolled : Gtk_Scrolled_Window;
+      P        : access On_Pref_Changed;
    begin
       Initialize_Vbox (Explorer, Homogeneous => False);
 
@@ -691,17 +693,13 @@ package body Project_Explorers is
          Tree_Select_Row_Cb'Access, Explorer, After => True);
 
       --  Automatic update of the tree when the project changes
-      H1 := new Refresh_Hook_Record'
-        (Function_No_Args with Explorer => Project_Explorer (Explorer));
-      Add_Hook
-        (Explorer.Kernel, Project_View_Changed_Hook, H1,
-         Name => "explorer.project_view_changed", Watch => GObject (Explorer));
+      H1 := new On_Refresh;
+      H1.Explorer := Project_Explorer (Explorer);
+      Project_View_Changed_Hook.Add (H1, Watch => Explorer);
 
-      H2 := new Project_Changed_Hook_Record'
-        (Function_No_Args with Explorer => Project_Explorer (Explorer));
-      Add_Hook
-        (Explorer.Kernel, Project_Changed_Hook, H2,
-         Name => "explorer.project_changed", Watch => GObject (Explorer));
+      H2 := new On_Project_Changed;
+      H2.Explorer := Project_Explorer (Explorer);
+      Project_Changed_Hook.Add (H2, Watch => Explorer);
 
       --  The explorer (project view) is automatically refreshed when the
       --  project view is changed.
@@ -728,13 +726,10 @@ package body Project_Explorers is
       Tooltip.Explorer := Project_Explorer (Explorer);
       Tooltip.Set_Tooltip (Explorer.Tree);
 
-      Refresh (Explorer);
-
-      Add_Hook (Explorer.Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "project_Explorer.preferences_changed",
-                Watch => GObject (Explorer));
-      Preferences_Changed (Explorer.Kernel, null);
+      P := new On_Pref_Changed;
+      P.Explorer := Project_Explorer (Explorer);
+      Preferences_Changed_Hook.Add (P, Watch => Explorer);
+      P.Execute (Explorer.Kernel, null);   --  also calls Refresh
 
       return Gtk.Widget.Gtk_Widget (Explorer.Tree);
    end Initialize;
@@ -909,21 +904,20 @@ package body Project_Explorers is
       end case;
    end Sort_Func;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      Explorer : constant Project_Explorer :=
-        Explorer_Views.Retrieve_View (Kernel);
-      Pref : Preference;
+      pragma Unreferenced (Kernel);
    begin
-      if Explorer /= null then
-         Pref := Get_Pref (Data);
-         Set_Font_And_Colors (Explorer.Tree, Fixed_Font => True, Pref => Pref);
+      if Self.Explorer /= null then
+         Set_Font_And_Colors
+            (Self.Explorer.Tree, Fixed_Font => True, Pref => Pref);
 
          if Pref = null   --  multiple preferences updated
            or else Pref = Preference (Show_Flat_View)
@@ -934,15 +928,14 @@ package body Project_Explorers is
            or else Pref = Preference (Show_Runtime)
            or else Pref = Preference (Projects_Before_Directories)
          then
-            Update_View (Explorer);
+            Update_View (Self.Explorer);
          end if;
 
          if Pref = Preference (Show_Absolute_Paths) then
-            Update_Absolute_Paths (Explorer);
+            Update_Absolute_Paths (Self.Explorer);
          end if;
-
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    --------------------
    -- Create_Toolbar --
@@ -1177,8 +1170,8 @@ package body Project_Explorers is
    -------------
 
    overriding procedure Execute
-     (Hook   : Project_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
    begin
@@ -1186,7 +1179,7 @@ package body Project_Explorers is
       --  The next call to refresh via the "project_view_changed" signal will
       --  completely restore the tree.
 
-      Clear (Hook.Explorer.Tree.Model);
+      Clear (Self.Explorer.Tree.Model);
    end Execute;
 
    -------------
@@ -1499,12 +1492,12 @@ package body Project_Explorers is
    -------------
 
    overriding procedure Execute
-     (Hook   : Refresh_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+     (Self   : On_Refresh;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
    begin
-      Refresh (Hook.Explorer);
+      Refresh (Self.Explorer);
    end Execute;
 
    -------------------------

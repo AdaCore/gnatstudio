@@ -51,7 +51,7 @@ package VCS_Utils is
       Status         : File_Status_List.List;
       VCS_Identifier : VCS_Access;
       Clear_Logs     : Boolean;
-      Up_To_Date     : File_Status);
+      Up_To_Date     : VCS_File_Status);
    --  For all files in Status, remove the log file if Clear_Logs is set and
    --  the file has the Up_To_Date status. Also update the editor status.
 

@@ -36,7 +36,6 @@ with Pango.Enums;               use Pango.Enums;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Search;                use GPS.Search;
 
 with Src_Editor_Module.Line_Highlighting;

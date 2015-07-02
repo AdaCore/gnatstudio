@@ -87,7 +87,7 @@ Classes
 
 .. autoclass:: Activities
 
-   
+
 
    .. automethod:: GPS.Activities.__init__
 
@@ -130,7 +130,7 @@ Classes
 
 .. autoclass:: Alias
 
-   
+
 
    .. automethod:: GPS.Alias.get
 
@@ -152,7 +152,7 @@ Classes
 
 .. autoclass:: Bookmark
 
-   
+
 
    .. automethod:: GPS.Bookmark.__init__
 
@@ -175,7 +175,7 @@ Classes
 
 .. autoclass:: BuildTarget
 
-   
+
 
    .. automethod:: GPS.BuildTarget.__init__
 
@@ -205,7 +205,7 @@ Classes
 
 .. autoclass:: Clipboard
 
-   
+
 
    .. automethod:: GPS.Clipboard.contents
 
@@ -220,7 +220,7 @@ Classes
 
 .. autoclass:: CodeAnalysis
 
-   
+
 
    .. automethod:: GPS.CodeAnalysis.__init__
 
@@ -249,7 +249,7 @@ Classes
 
 .. autoclass:: Codefix
 
-   
+
 
    .. automethod:: GPS.Codefix.__init__
 
@@ -266,7 +266,7 @@ Classes
 
 .. autoclass:: CodefixError
 
-   
+
 
    .. automethod:: GPS.CodefixError.__init__
 
@@ -302,7 +302,7 @@ Classes
 
 .. autoclass:: Command
 
-   
+
 
    .. automethod:: GPS.Command.get
 
@@ -338,7 +338,7 @@ Classes
 
 .. autoclass:: Completion
 
-   
+
 
    .. automethod:: GPS.Completion.register
 
@@ -388,7 +388,7 @@ Classes
 
 .. autoclass:: Context
 
-   
+
 
 
    .. autoattribute:: GPS.Context.module_name
@@ -399,7 +399,7 @@ Classes
 
 .. autoclass:: Contextual
 
-   
+
 
    .. automethod:: GPS.Contextual.__init__
 
@@ -420,7 +420,7 @@ Classes
 
 .. autoclass:: Cursor
 
-   
+
 
    .. automethod:: GPS.Cursor.__init__
 
@@ -437,7 +437,7 @@ Classes
 
 .. autoclass:: Debugger
 
-   
+
 
    .. automethod:: GPS.Debugger.__init__
 
@@ -472,7 +472,7 @@ Classes
 
 .. autoclass:: Editor
 
-   
+
 
    .. automethod:: GPS.Editor.add_blank_lines
 
@@ -583,7 +583,7 @@ Classes
 
 .. autoclass:: EditorBuffer
 
-   
+
 
    .. automethod:: GPS.EditorBuffer.__init__
 
@@ -690,7 +690,7 @@ Classes
 
 .. autoclass:: EditorHighlighter
 
-   
+
 
    .. automethod:: GPS.EditorHighlighter.__init__
 
@@ -701,7 +701,7 @@ Classes
 
 .. autoclass:: EditorLocation
 
-   
+
 
    .. automethod:: GPS.EditorLocation.__init__
 
@@ -768,7 +768,7 @@ Classes
 
 .. autoclass:: EditorMark
 
-   
+
 
    .. automethod:: GPS.EditorMark.__init__
 
@@ -785,7 +785,7 @@ Classes
 
 .. autoclass:: EditorOverlay
 
-   
+
 
    .. automethod:: GPS.EditorOverlay.__init__
 
@@ -827,7 +827,7 @@ Classes
 
 .. autoclass:: Entity
 
-   
+
 
    .. automethod:: GPS.Entity.__init__
 
@@ -930,7 +930,7 @@ Classes
 
 .. autoclass:: File
 
-   
+
 
    .. automethod:: GPS.File.__init__
 
@@ -996,7 +996,7 @@ Classes
 
 .. autoclass:: FileLocation
 
-   
+
 
    .. automethod:: GPS.FileLocation.__init__
 
@@ -1011,7 +1011,7 @@ Classes
 
 .. autoclass:: GUI
 
-   
+
 
    .. automethod:: GPS.GUI.__init__
 
@@ -1032,7 +1032,7 @@ Classes
 
 .. autoclass:: HTML
 
-   
+
 
    .. automethod:: GPS.HTML.add_doc_directory
 
@@ -1043,7 +1043,7 @@ Classes
 
 .. autoclass:: Help
 
-   
+
 
    .. automethod:: GPS.Help.__init__
 
@@ -1058,18 +1058,26 @@ Classes
 
 .. autoclass:: History
 
-   
+
 
    .. automethod:: GPS.History.__init__
 
    .. automethod:: GPS.History.add
+
+:class:`GPS.Predefined_Hooks`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Predefined_Hooks
+    :members:
+
+
 
 :class:`GPS.Hook`
 ^^^^^^^^^^^^^^^^^
 
 .. autoclass:: Hook
 
-   
+
 
    .. automethod:: GPS.Hook.__init__
 
@@ -1103,7 +1111,7 @@ Classes
 
 .. autoclass:: Language
 
-   
+
 
    .. automethod:: GPS.Language.__init__
 
@@ -1114,7 +1122,7 @@ Classes
 
 .. autoclass:: Locations
 
-   
+
 
    .. automethod:: GPS.Locations.add
 
@@ -1135,7 +1143,7 @@ Classes
 
 .. autoclass:: Logger
 
-   
+
 
 
    .. autoattribute:: GPS.Logger.active
@@ -1158,7 +1166,7 @@ Classes
 
 .. autoclass:: MDI
 
-   
+
 
 
    .. autoattribute:: GPS.MDI.FLAGS_ALL_BUTTONS
@@ -1309,7 +1317,7 @@ Classes
 
 .. autoclass:: Message
 
-   
+
 
 
    .. autoattribute:: GPS.Message.MESSAGE_INVISIBLE
@@ -1380,7 +1388,7 @@ Classes
 
 .. autoclass:: OutputParserWrapper
 
-   
+
 
    .. automethod:: GPS.OutputParserWrapper.__init__
 
@@ -1395,7 +1403,7 @@ Classes
 
 .. autoclass:: Preference
 
-   
+
 
    .. automethod:: GPS.Preference.__init__
 
@@ -1435,7 +1443,7 @@ Classes
 
 .. autoclass:: Project
 
-   
+
 
    .. automethod:: GPS.Project.__init__
 
@@ -1520,7 +1528,7 @@ Classes
 
 .. autoclass:: ProjectTemplate
 
-   
+
 
    .. automethod:: GPS.ProjectTemplate.add_templates_dir
 
@@ -1538,7 +1546,7 @@ Classes
 
 .. autoclass:: Revision
 
-   
+
 
    .. automethod:: GPS.Revision.add_link
 
@@ -1553,7 +1561,7 @@ Classes
 
 .. autoclass:: Search
 
-   
+
 
 
    .. autoattribute:: GPS.Search.ACTIONS
@@ -1622,7 +1630,7 @@ Classes
 
 .. autoclass:: Search_Result
 
-   
+
 
 
    .. autoattribute:: GPS.Search_Result.long
@@ -1641,7 +1649,7 @@ Classes
 
 .. autoclass:: Style
 
-   
+
 
    .. automethod:: GPS.Style.__init__
 
@@ -1679,7 +1687,7 @@ Classes
 
 .. autoclass:: Task
 
-   
+
 
 
    .. autoattribute:: GPS.Task.visible
@@ -1706,7 +1714,7 @@ Classes
 
 .. autoclass:: Timeout
 
-   
+
 
    .. automethod:: GPS.Timeout.__init__
 
@@ -1750,7 +1758,7 @@ Classes
 
 .. autoclass:: VCS
 
-   
+
 
    .. automethod:: GPS.VCS.annotate
 
@@ -1795,7 +1803,7 @@ Classes
 
 .. autoclass:: Vdiff
 
-   
+
 
    .. automethod:: GPS.Vdiff.__init__
 
@@ -1816,7 +1824,7 @@ Classes
 
 .. autoclass:: XMLViewer
 
-   
+
 
    .. automethod:: GPS.XMLViewer.__init__
 

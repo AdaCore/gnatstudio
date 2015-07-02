@@ -18,54 +18,46 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
-
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
-with GNATCOLL.Utils;          use GNATCOLL.Utils;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
-with Interfaces.C.Strings;
-
-with System.Assertions;       use System.Assertions;
-
-with Gdk.Device;              use Gdk.Device;
-with Gdk.Event;               use Gdk.Event;
-with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
-with Gdk.Types;               use Gdk.Types;
-with Gdk.Window;              use Gdk.Window;
-
-with Glib.Convert;            use Glib.Convert;
-with Glib.Object;             use Glib.Object;
-with Glib;                    use Glib;
-
-with Gtk.Accel_Group;         use Gtk.Accel_Group;
-with Gtk.Main;                use Gtk.Main;
-with Gtk.Window;              use Gtk.Window;
-with Gtk.Widget;              use Gtk.Widget;
-
-with Gtkada.Dialogs;          use Gtkada.Dialogs;
-with Gtkada.Style;            use Gtkada.Style;
-
-with Config;                  use Config;
 with Commands.Interactive;    use Commands, Commands.Interactive;
-
-with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
-with GPS.Kernel;                       use GPS.Kernel;
-with Histories;                        use Histories;
-
-with GUI_Utils;               use GUI_Utils;
-with HTables;                 use HTables;
+with Config;                  use Config;
+with Default_Preferences;     use Default_Preferences;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
+with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Main_Window;          use GPS.Main_Window;
+with GUI_Utils;                use GUI_Utils;
+with Gdk.Device;               use Gdk.Device;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
+with Gdk.Types;                use Gdk.Types;
+with Gdk.Window;               use Gdk.Window;
+with Glib.Convert;             use Glib.Convert;
+with Glib.Object;              use Glib.Object;
+with Glib;                     use Glib;
+with Gtk.Accel_Group;          use Gtk.Accel_Group;
+with Gtk.Main;                 use Gtk.Main;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with Gtkada.Style;             use Gtkada.Style;
+with HTables;                  use HTables;
+with Histories;                use Histories;
+with Interfaces.C.Strings;
 with KeyManager_Module.GUI;
-with String_Utils;            use String_Utils;
-with XML_Utils;               use XML_Utils;
+with String_Utils;             use String_Utils;
+with System.Assertions;        use System.Assertions;
 with XML_Parsers;
-with GPS.Main_Window; use GPS.Main_Window;
+with XML_Utils;                use XML_Utils;
 
 package body KeyManager_Module is
 
@@ -244,9 +236,11 @@ package body KeyManager_Module is
      (System.Address, Kernel_Handle);
    pragma Warnings (On);
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
    procedure Keymanager_Command_Handler
@@ -2313,27 +2307,26 @@ package body KeyManager_Module is
            & " ""ctrl-u 30 t"" to  the character t 30 times"),
          Category => -"General");
 
-      Add_Hook (Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "key_manager.preferences_changed");
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
 
       Set_Key_Setter
         (Kernel, Set_Default_Key'Access,
          Get_Shortcut'Access, Get_Shortcut_Simple'Access);
    end Register_Module;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Self, Kernel, Pref);
    begin
       Keymanager_Module.Menus_Created := True;
-   end Preferences_Changed;
+   end Execute;
 
    -----------------------
    -- Register_Key_Menu --
@@ -2454,7 +2447,7 @@ package body KeyManager_Module is
         (Bindings : Key_Htable.Instance; Prefix : String)
       is
          List : Key_Description_List;
-         Pos  : Cursor;
+         Pos  : Key_Htable.Cursor;
          Key  : Key_Binding;
       begin
          Get_First (Bindings, Pos);

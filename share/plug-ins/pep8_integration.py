@@ -67,7 +67,7 @@ class Pep8_Module(Module):
                 m.set_style(colorschemes.STYLE_WARNING, 1)
 
     # The followings are hooks:
-    def gps_started(self):
+    def setup(self):
         """
            When GPS start, if imported success:
            register hook for format checker

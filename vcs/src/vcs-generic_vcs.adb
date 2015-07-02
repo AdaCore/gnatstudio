@@ -41,7 +41,6 @@ with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
 with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;      use GPS.Kernel.Task_Manager;
 with String_Utils;                 use String_Utils;
 with GNATCOLL.Traces;                       use GNATCOLL.Traces;
@@ -172,7 +171,7 @@ package body VCS.Generic_VCS is
 
    type Run_Hook_Command_Type is new Root_Command with record
       Kernel : Kernel_Handle;
-      Name   : Hook_Name;
+      Hook   : access Simple_Hooks;   --  The hook to run
    end record;
 
    overriding function Execute
@@ -218,7 +217,7 @@ package body VCS.Generic_VCS is
    overriding function Execute
      (Command : access Run_Hook_Command_Type) return Command_Return_Type is
    begin
-      Run_Hook (Command.Kernel, Command.Name);
+      Command.Hook.Run (Command.Kernel);
       return Success;
    end Execute;
 
@@ -1623,7 +1622,7 @@ package body VCS.Generic_VCS is
                N := Next (N);
             end loop;
 
-            Run_Hook (Command.Rep.Kernel, Status_Parsed_Hook);
+            Status_Parsed_Hook.Run (Command.Rep.Kernel);
 
             return Success;
          end if;
@@ -1703,7 +1702,7 @@ package body VCS.Generic_VCS is
 
                      if Matches (0) /= No_Match then
                         declare
-                           New_Status : constant File_Status :=
+                           New_Status : constant VCS_File_Status :=
                                           Command.Rep.Status
                                             (Data (Node).Index);
                         begin
@@ -1942,9 +1941,10 @@ package body VCS.Generic_VCS is
       end if;
 
       if Is_Open (Kernel, File) then
-         Open_File_Editor (Kernel, File, No_Project, Line => 0);
+         Open_File_Action_Hook.Run
+            (Kernel, File, Project => No_Project, Line => 0);
       else
-         Open_File_Editor (Kernel, File, No_Project);
+         Open_File_Action_Hook.Run (Kernel, File, Project => No_Project);
       end if;
 
       Script := Lookup_Scripting_Language
@@ -1971,7 +1971,7 @@ package body VCS.Generic_VCS is
       declare
          use Ada.Strings.Unbounded;
          Max_Length : Integer := 0;
-         A : Line_Information_Array (1 .. Max);
+         A : Line_Information_Data := new Line_Information_Array (1 .. Max);
       begin
          loop
             Match (Parser.Regexp.all, S, Matches, Start, S'Last);
@@ -2047,23 +2047,24 @@ package body VCS.Generic_VCS is
          end loop;
 
          Create_Line_Information_Column
-           (Kernel     => Kernel,
-            File       => File,
-            Info       => (Text => new String'((1 .. Max_Length => ' ')),
-                           Tooltip_Text       => null,
-                           Image              => null,
-                           Associated_Command => null),
-            Identifier => Annotation_Id,
-            Every_Line => False);
-
+            (Kernel,
+             File       => File,
+             Identifier => Annotation_Id,
+             Info       =>
+                (Text  => new String'((1 .. Max_Length => ' ')),
+                 Tooltip_Text => null,
+                 Image        => null,
+                 Associated_Command => null),
+             Every_Line => False);
          Add_Line_Information
-           (Kernel,
-            File,
-            Annotation_Id,
-            new Line_Information_Array'(A));
+            (Kernel,
+             File       => File,
+             Identifier => Annotation_Id,
+             Info       => A);
+         Unchecked_Free (A);
       end;
 
-      Run_Hook (Kernel, Annotation_Parsed_Hook);
+      Annotation_Parsed_Hook.Run (Kernel);
    end Parse_Annotations;
 
    ---------------
@@ -2214,7 +2215,8 @@ package body VCS.Generic_VCS is
       declare
          C : constant Command_Access :=
                new Run_Hook_Command_Type'
-                 (Root_Command with Rep.Kernel, Log_Parsed_Hook);
+                 (Root_Command with
+                  Kernel => Rep.Kernel, Hook => Log_Parsed_Hook'Access);
       begin
          if Commands /= null then
             VCS.Branching_Commands.Add_Consequence_Action (Commands, C);
@@ -2292,7 +2294,8 @@ package body VCS.Generic_VCS is
       declare
          C : constant Command_Access :=
                new Run_Hook_Command_Type'
-                 (Root_Command with Rep.Kernel, Revision_Parsed_Hook);
+                 (Root_Command with
+                  Kernel => Rep.Kernel, Hook => Revision_Parsed_Hook'Access);
       begin
          if Commands /= null then
             VCS.Branching_Commands.Add_Consequence_Action (Commands, C);

@@ -104,7 +104,7 @@ package body GPS.Kernel.Messages.Legacy is
       Line      : Natural;
       Column    : Natural;
       Message   : String;
-      Action    : GPS.Kernel.Standard_Hooks.Action_Item)
+      Action    : Action_Item)
    is
       Container          : constant Messages_Container_Access :=
         Get_Messages_Container (Kernel);

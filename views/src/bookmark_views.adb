@@ -61,7 +61,6 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Search;         use GPS.Kernel.Search;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
@@ -104,7 +103,6 @@ package body Bookmark_Views is
       Deleting  : Boolean := False;
       --  Whether we are deleting multiple bookmarks
    end record;
-   type Bookmark_View is access all Bookmark_View_Record'Class;
 
    package Bookmarks_Selection_Foreach is new
      Gtk.Tree_Selection.Selected_Foreach_User_Data (Bookmark_View_Record);
@@ -158,9 +156,11 @@ package body Bookmark_Views is
    --  Get or create the class_instance associated with the bookmark described
    --  in List.
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
    --  Called when the preferences have changed
 
    function Button_Press
@@ -188,14 +188,11 @@ package body Bookmark_Views is
    --  Function called to start editing the selected line. This is necessary
    --  since any editing is stopped as soon as the tree gains the focus back.
 
-   type Refresh_Hook is new Function_With_Args with record
-      View : Bookmark_View;
-   end record;
-   type Refresh_Hook_Access is access all Refresh_Hook'Class;
+   type Refresh_Hook is new String_Hooks_Function with null record;
    overriding procedure Execute
-     (Func   : Refresh_Hook;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : Refresh_Hook;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Name   : String);
    --  Function called when a hook has been added or removed, so that we can
    --  properly refresh the view.
 
@@ -490,7 +487,7 @@ package body Bookmark_Views is
                Name : constant String := Bookmark_List.Data (Node).Name.all;
             begin
                Remove_Nodes (Bookmark_Views_Module.List, Prev, Node);
-               Run_String_Hook (Kernel, Bookmark_Removed_Hook, Name);
+               Bookmark_Removed_Hook.Run (Kernel, Name);
                exit;
             end;
          end if;
@@ -784,7 +781,7 @@ package body Bookmark_Views is
 
          Model := -Get_Model (View.Tree);
          Refresh (View);
-         Run_String_Hook (Kernel, Bookmark_Added_Hook, To_String (Mark));
+         Bookmark_Added_Hook.Run (Kernel, To_String (Mark));
 
          --  Start editing the name of the bookmark immediately
 
@@ -857,20 +854,21 @@ package body Bookmark_Views is
       Save_Bookmarks (Get_Kernel (Bookmark_Views_Module.all));
    end Edited_Callback;
 
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
    is
+      pragma Unreferenced (Self);
       View : constant Bookmark_View_Access :=
                Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
-      Set_Font_And_Colors
-        (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
-   end On_Preferences_Changed;
+      Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
+   end Execute;
 
    ----------------
    -- Initialize --
@@ -880,7 +878,6 @@ package body Bookmark_Views is
      (View   : access Bookmark_View_Record'Class) return Gtk_Widget
    is
       Tooltip   : Tooltips.Tooltips_Access;
-      Refresh_H : Refresh_Hook_Access;
       Scrolled  : Gtk_Scrolled_Window;
    begin
       Initialize_Vbox (View, Homogeneous => False);
@@ -916,24 +913,11 @@ package body Bookmark_Views is
         (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree);
 
-      Add_Hook (View.Kernel, Preference_Changed_Hook,
-                Wrapper (On_Preferences_Changed'Access),
-                Name  => "bookmark_views.preferences_changed",
-                Watch => GObject (View));
+      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
       Refresh (View);
 
-      Refresh_H := new Refresh_Hook'
-        (Function_With_Args with View => Bookmark_View (View));
-      Add_Hook (View.Kernel, Bookmark_Added_Hook,
-                Refresh_H,
-                Name  => "bookmark_views.refresh",
-                Watch => GObject (View));
-      Add_Hook (View.Kernel, Bookmark_Removed_Hook,
-                Refresh_H,
-                Name  => "bookmark_views.refresh",
-                Watch => GObject (View));
-
-      --  Initialize tooltips
+      Bookmark_Added_Hook.Add (new Refresh_Hook, Watch => View);
+      Bookmark_Removed_Hook.Add (new Refresh_Hook, Watch => View);
 
       Tooltip := new Bookmark_View_Tooltips;
       Tooltip.Set_Tooltip (View.Tree);
@@ -946,13 +930,17 @@ package body Bookmark_Views is
    -------------
 
    overriding procedure Execute
-     (Func   : Refresh_Hook;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : Refresh_Hook;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Name   : String)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Self, Name);
+      View : constant Bookmark_View_Access :=
+          Generic_View.Retrieve_View (Kernel);
    begin
-      Refresh (Func.View);
+      if View /= null then
+         Refresh (View);
+      end if;
    end Execute;
 
    --------------------
@@ -1007,7 +995,7 @@ package body Bookmark_Views is
             Free (File);
          end if;
 
-         Run_Hook (Kernel, Bookmark_Added_Hook);
+         Bookmark_Added_Hook.Run (Kernel, "");
       end if;
    end Load_Bookmarks;
 
@@ -1131,8 +1119,7 @@ package body Bookmark_Views is
                   Instances => Null_Instance_List,
                   Name      => new String'(Nth_Arg (Data, 1))));
             Save_Bookmarks (Get_Kernel (Data));
-            Run_String_Hook
-              (Get_Kernel (Data), Bookmark_Added_Hook, Nth_Arg (Data, 1));
+            Bookmark_Added_Hook.Run (Get_Kernel (Data), Data.Nth_Arg (1));
             Bookmark := First (Bookmark_Views_Module.List);
             Set_Return_Value
               (Data, Instance_From_Bookmark
@@ -1160,15 +1147,13 @@ package body Bookmark_Views is
          if Bookmark = Null_Node then
             Set_Error_Msg (Data, "Invalid bookmark");
          else
-            Run_String_Hook
-              (Get_Kernel (Data), Bookmark_Added_Hook,
-               Bookmark_List.Data (Bookmark).Name.all);
+            Bookmark_Added_Hook.Run
+              (Get_Kernel (Data), Bookmark_List.Data (Bookmark).Name.all);
             Free (Bookmark_List.Data (Bookmark).Name);
             Bookmark_List.Data (Bookmark).Name :=
               new String'(Nth_Arg (Data, 2));
-            Set_Data (Inst, Bookmark_Class, String'(Nth_Arg (Data, 2)));
-            Run_String_Hook
-              (Get_Kernel (Data), Bookmark_Added_Hook, Nth_Arg (Data, 2));
+            Set_Data (Inst, Bookmark_Class, String'(Data.Nth_Arg (2)));
+            Bookmark_Added_Hook.Run (Get_Kernel (Data), Data.Nth_Arg (2));
             Save_Bookmarks (Get_Kernel (Data));
          end if;
 
@@ -1214,10 +1199,6 @@ package body Bookmark_Views is
    begin
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
       Generic_View.Register_Module (Kernel, Module_ID (Bookmark_Views_Module));
-
-      Register_Hook_No_Return (Kernel, Bookmark_Added_Hook, String_Hook_Type);
-      Register_Hook_No_Return
-        (Kernel, Bookmark_Removed_Hook, String_Hook_Type);
 
       Load_Bookmarks (Kernel);
 

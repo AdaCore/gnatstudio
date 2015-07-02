@@ -17,35 +17,24 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Strings.Hash;
-
 with GPS.Editors;       use GPS.Editors;
-
-with GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
-
 with Src_Editor_Box;    use Src_Editor_Box;
-
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
 package body Src_Editor_Module.Messages is
-   Me : constant Trace_Handle := Create ("SRC_MSG");
-
    use Style_Maps;
    use Style_Sets;
 
-   type On_File_Edited_Hook_Record
-     (Manager : not null access Highlighting_Manager'Class) is
-     new GPS.Kernel.Hooks.Function_With_Args with null record;
-
-   type On_File_Edited_Hook is access On_File_Edited_Hook_Record'Class;
-
+   type On_File_Edited is new File_Hooks_Function with record
+      Manager : not null access Highlighting_Manager'Class;
+   end record;
    overriding procedure Execute
-     (Hook   : On_File_Edited_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Callback for the "file_edited" hook. Redirects call to highlighting
    --  manager.
 
@@ -84,18 +73,13 @@ package body Src_Editor_Module.Messages is
    -------------
 
    overriding procedure Execute
-     (Hook   : On_File_Edited_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
       pragma Unreferenced (Kernel);
-
    begin
-      Hook.Manager.File_Opened
-        (GPS.Kernel.Standard_Hooks.File_Hooks_Args (Data.all).File);
-
-   exception
-      when E : others => Trace (Me, E);
+      Self.Manager.File_Opened (File);
    end Execute;
 
    -----------------
@@ -282,20 +266,15 @@ package body Src_Editor_Module.Messages is
                   Source_Editor_Module (Src_Editor_Module_Id);
       Manager : constant Highlighting_Manager_Access :=
                   new Highlighting_Manager (Kernel);
-      Hook    : constant On_File_Edited_Hook :=
-                  new On_File_Edited_Hook_Record (Manager);
 
    begin
       Get_Messages_Container (Kernel).Register_Listener
         (Listener_Access (Manager),
          (Editor_Side => True, Locations => False));
       Id.Highlighting_Manager := To_Address (Manager);
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel,
-         GPS.Kernel.File_Edited_Hook,
-         Hook,
-         "location_view.file_edited",
-         Last => True);
+      File_Edited_Hook.Add
+         (new On_File_Edited'(File_Hooks_Function with Manager => Manager),
+          Last => True);
       --  Register this hook with Last => True, so that it is called after the
       --  one (registered in Src_Editor_Module.Register_Module that reacts to
       --  file_edited and updates marks.

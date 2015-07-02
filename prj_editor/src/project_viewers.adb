@@ -52,6 +52,7 @@ with Commands.Interactive;         use Commands, Commands.Interactive;
 with Creation_Wizard.Dependencies; use Creation_Wizard.Dependencies;
 with Creation_Wizard.Extending;    use Creation_Wizard.Extending;
 with Creation_Wizard.Selector;     use Creation_Wizard.Selector;
+with Default_Preferences;          use Default_Preferences;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
@@ -62,7 +63,6 @@ with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;           use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;    use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                    use GUI_Utils;
 with Language_Handlers;            use Language_Handlers;
 with Project_Properties;           use Project_Properties;
@@ -193,14 +193,11 @@ package body Project_Viewers is
      return Boolean;
    --  Callback when a row/column has been selected in the clist
 
-   type Context_Hook_Record is new Function_With_Args with record
-      Viewer : Project_Viewer;
-   end record;
-   type Context_Hook is access all Context_Hook_Record'Class;
+   type On_Context_Changed is new Context_Hooks_Function with null record;
    overriding procedure Execute
-     (Hook   : Context_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self    : On_Context_Changed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context);
    --  Called every time the selection has changed in the tree
 
    procedure Explorer_Selection_Changed
@@ -249,23 +246,19 @@ package body Project_Viewers is
    --  Set the contents of the line Iter in the model. It is assumed the file
    --  name has already been set on that line
 
-   type Preferences_Hook_Record is new Function_With_Args with record
-      Viewer : Project_Viewer;
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
+      View : access Project_Viewer_Record'Class;
    end record;
-   type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Hook called when the preferences change
 
-   type Project_View_Hook_Record is new Function_No_Args with record
-      Viewer : Project_Viewer;
-   end record;
-   type Project_View_Hook is access all Project_View_Hook_Record'Class;
+   type On_Project_View_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
-     (Hook : Project_View_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Hook called when the project view changes
 
    ----------------------
@@ -390,12 +383,15 @@ package body Project_Viewers is
    -------------
 
    overriding procedure Execute
-     (Hook : Project_View_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class) is
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
+      View : constant Project_Viewer := File_Views.Retrieve_View (Kernel);
    begin
-      if not Hook.Viewer.View_Changed_Blocked then
-         Hook.Viewer.Current_Project := Get_Project (Kernel);
-         Show_Project (Hook.Viewer, Hook.Viewer.Current_Project);
+      if not View.View_Changed_Blocked then
+         View.Current_Project := Get_Project (Kernel);
+         Show_Project (View, View.Current_Project);
       end if;
    end Execute;
 
@@ -484,21 +480,21 @@ package body Project_Viewers is
    -------------
 
    overriding procedure Execute
-     (Hook   : Context_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self    : On_Context_Changed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context)
    is
-      type Context_Hooks_Args_Access is access all Context_Hooks_Args'Class;
+      pragma Unreferenced (Self);
+      View : constant Project_Viewer := File_Views.Retrieve_View (Kernel);
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
    begin
       --  Do nothing if we forced the selection change ourselves. For instance,
       --  when a new switch editor is created in On_Edit_Switches, to avoid
       --  doing extra work.
       if Child = null
-        or else Get_Widget (Child) /= Gtk_Widget (Hook.Viewer)
+        or else Get_Widget (Child) /= Gtk_Widget (View)
       then
-         Explorer_Selection_Changed
-           (Hook.Viewer, Context_Hooks_Args_Access (Data).Context);
+         Explorer_Selection_Changed (View, Context);
       end if;
    end Execute;
 
@@ -523,9 +519,7 @@ package body Project_Viewers is
       Col          : Gtk_Tree_View_Column;
       Render       : Gtk_Cell_Renderer_Text;
       Col_Number   : Gint;
-      Hook         : Preferences_Hook;
-      Hook2        : Project_View_Hook;
-      Hook3        : Context_Hook;
+      H            : access On_Pref_Changed;
       pragma Unreferenced (Col_Number);
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
@@ -570,27 +564,13 @@ package body Project_Viewers is
         (Viewer.Tree, Signal_Button_Press_Event,
          Return_Callback.To_Marshaller (Select_Row'Access), Viewer);
 
-      Hook3 := new Context_Hook_Record'
-        (Function_With_Args with Viewer => Project_Viewer (Viewer));
-      Add_Hook
-        (Viewer.Kernel, Context_Changed_Hook, Hook3,
-         Name => "project_viewer.context_changed", Watch => GObject (Viewer));
-
-      Hook2 := new Project_View_Hook_Record'
-        (Function_No_Args with Viewer => Project_Viewer (Viewer));
-      Add_Hook
-        (Viewer.Kernel, Project_View_Changed_Hook, Hook2,
-         Name => "project_viewer.project_view_changed",
-         Watch => GObject (Viewer));
-
-      Hook := new Preferences_Hook_Record'
-        (Function_With_Args with Viewer => Project_Viewer (Viewer));
-      Execute (Hook.all, Viewer.Kernel, Data => null);
-      Add_Hook
-        (Viewer.Kernel, Preference_Changed_Hook,
-         Hook,
-         Name => "project_viewer.preferences_changed",
-         Watch => GObject (Viewer));
+      Context_Changed_Hook.Add (new On_Context_Changed, Watch => Viewer);
+      Project_View_Changed_Hook.Add
+         (new On_Project_View_Changed, Watch => Viewer);
+      H := new On_Pref_Changed;
+      H.View := Viewer;
+      Preferences_Changed_Hook.Add (H, Watch => Viewer);
+      H.Execute (Viewer.Kernel, null);
 
       Show_All (Viewer);
 
@@ -611,19 +591,18 @@ package body Project_Viewers is
    -------------
 
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      View : constant Project_Viewer := File_Views.Retrieve_View (Kernel);
+      pragma Unreferenced (Kernel);
+      View : constant Project_Viewer := Project_Viewer (Self.View);
    begin
-      Hook.Viewer.Default_Switches_Color :=
-        Default_Switches_Color.Get_Pref;
+      View.Default_Switches_Color := Default_Switches_Color.Get_Pref;
       --  ??? Do we need to change the model to reflect this change
 
       if View /= null then
-         Set_Font_And_Colors
-           (View, Fixed_Font => True, Pref => Get_Pref (Data));
+         Set_Font_And_Colors (View, Fixed_Font => True, Pref => Pref);
       end if;
    end Execute;
 
@@ -751,7 +730,8 @@ package body Project_Viewers is
       else
          Project := Kernel.Registry.Tree.Root_Project;
       end if;
-      Open_File_Editor (Kernel, Project.Project_Path, Project);
+      Open_File_Action_Hook.Run
+         (Kernel, File => Project.Project_Path, Project => Project);
       return Success;
    end Execute;
 
@@ -996,7 +976,7 @@ package body Project_Viewers is
                  (New_Name  => Name,
                   Directory => Create (Path),
                   Errors    => Set_Error_Tmp'Unrestricted_Access);
-               Run_Hook (Kernel, Project_Changed_Hook);
+               Project_Changed_Hook.Run (Kernel);
             end if;
          end;
 

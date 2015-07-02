@@ -35,13 +35,13 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with Commands;                  use Commands;
 with Log_Utils;                 use Log_Utils;
@@ -563,8 +563,7 @@ package body VCS_Activities_View_API is
 
       if not Has_Log (Kernel, Activity) then
          All_Logs_Exist := False;
-
-         Open_File_Editor
+         Open_File_Action_Hook.Run
            (Kernel,
             Get_Log_File (Kernel, Activity),
             Project          => No_Project,
@@ -636,7 +635,7 @@ package body VCS_Activities_View_API is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Activity : Activity_Id) is
    begin
-      Open_File_Editor
+      Open_File_Action_Hook.Run
         (Kernel,
          Get_Log_File (Kernel, Activity),
          Project          => No_Project,
@@ -670,7 +669,7 @@ package body VCS_Activities_View_API is
                begin
                   Get_Log_From_ChangeLog (Kernel, File);
 
-                  Open_File_Editor
+                  Open_File_Action_Hook.Run
                     (Kernel,
                      Get_Log_From_File (Kernel, File, True),
                      Project          => No_Project,
@@ -704,7 +703,9 @@ package body VCS_Activities_View_API is
       Success  : Boolean;
       pragma Unreferenced (Success);
    begin
-      Close_File_Editors (Kernel, Log_File);
+      Open_File_Action_Hook.Run
+         (Kernel, File => Log_File, Project => No_Project,
+          Line => -1);  --  close all editors
       Delete (Log_File, Success);
       Query_Status (null, Kernel);
    end On_Remove_Log;

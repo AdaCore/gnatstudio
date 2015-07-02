@@ -68,7 +68,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Main_Window;           use GPS.Main_Window;
 
 with GPS.Editors;              use GPS.Editors;
@@ -1315,7 +1314,7 @@ package body GPS.Kernel.MDI is
       end loop;
 
       --  Report the load of the desktop
-      Run_Hook (Handle, Desktop_Loaded_Hook);
+      Desktop_Loaded_Hook.Run (Handle);
 
       if Is_Default_Desktop then
          return False;
@@ -1833,7 +1832,6 @@ package body GPS.Kernel.MDI is
       Modified : Monitored_File_Lists.List;
       To_Update : File_Sets.Set;
       F        : Monitored_File_Lists.Cursor;
-      Data     : aliased File_Hooks_Args;
       Dialog   : GPS_Dialog;
       Label    : Gtk_Label;
       Ignore   : Gtk_Widget;
@@ -1855,11 +1853,10 @@ package body GPS.Kernel.MDI is
 
          if C.all in GPS_MDI_Child_Record'Class then
             G := GPS_MDI_Child (C);
-            Data.File := G.Files.File;
 
             if Is_File_Modified (G, G.Files)
-              and then not Run_Hook_Until_Success
-                (Kernel, File_Changed_Detected_Hook, Data'Unchecked_Access)
+               and then not File_Changed_Detected_Hook.Run
+                  (Kernel, G.Files.File)
             then
                Modified.Append ((Child => G, File => G.Files.File));
             end if;

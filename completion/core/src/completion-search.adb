@@ -19,7 +19,7 @@ with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 with Ada_Semantic_Tree;              use Ada_Semantic_Tree;
 with GPS.Kernel;                     use GPS.Kernel;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks;      use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GNAT.Strings;                   use GNAT.Strings;
 with Gtk.Label;                      use Gtk.Label;
 with Gtk.Widget;                     use Gtk.Widget;
@@ -69,13 +69,13 @@ package body Completion.Search is
         Get_Construct (Self.Entity);
       File : constant Structured_File_Access := Get_File (Self.Entity);
    begin
-      Open_File_Editor
+      Open_File_Action_Hook.Run
         (Self.Kernel,
-         Get_File_Path (File),
-         No_Project,   --  ??? unknown
-         Construct.Sloc_Entity.Line,
-         Visible_Column_Type (Construct.Sloc_Entity.Column),
-         Focus => Give_Focus);
+         File    => Get_File_Path (File),
+         Project => No_Project,   --  ??? unknown
+         Line    => Construct.Sloc_Entity.Line,
+         Column  => Visible_Column_Type (Construct.Sloc_Entity.Column),
+         Focus   => Give_Focus);
    end Execute;
 
    ----------

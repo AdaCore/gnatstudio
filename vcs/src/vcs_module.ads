@@ -39,30 +39,6 @@ package VCS_Module is
 
    VCS_Module_Name : constant String := "VCS_Interface";
 
-   Commit_Done_Hook : constant Hook_Name :=
-     GPS.Kernel.To_Hook_Name ("commit_done_hook");
-   --  Raised when a commit has been done
-
-   Activity_Checked_Hook : constant Hook_Name :=
-     GPS.Kernel.To_Hook_Name ("activity_checked_hook");
-   --  Raised when an activity status has been checked
-
-   Log_Parsed_Hook : constant Hook_Name :=
-     GPS.Kernel.To_Hook_Name ("log_parsed_hook");
-   --  Raised when the last log has been parsed
-
-   Status_Parsed_Hook : constant Hook_Name :=
-     GPS.Kernel.To_Hook_Name ("status_parsed_hook");
-   --  Raised when the last status has been parsed
-
-   Revision_Parsed_Hook : constant Hook_Name :=
-     GPS.Kernel.To_Hook_Name ("revision_parsed_hook");
-   --  Raised when the last revision has been parsed
-
-   Annotation_Parsed_Hook : constant Hook_Name :=
-     GPS.Kernel.To_Hook_Name ("annotation_parsed_hook");
-   --  Raised when the last annotation has been parsed
-
    function Equiv_VCS (Left, Right : String) return Boolean;
 
    package VCS_Map is new Containers.Indefinite_Hashed_Maps

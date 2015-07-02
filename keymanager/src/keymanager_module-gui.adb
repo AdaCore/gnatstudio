@@ -80,7 +80,6 @@ with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Search;              use GPS.Search;
 with GUI_Utils;               use GUI_Utils;
@@ -224,9 +223,11 @@ package body KeyManager_Module.GUI is
    --  Fill_Editor when possible, since this will preserve expanded/closed
    --  nodes.
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences change
 
    package Keys_Editor_Visible_Funcs is new
@@ -1332,19 +1333,19 @@ package body KeyManager_Module.GUI is
       return Gtk_Widget (Editor.View);
    end Initialize;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      Pref : Preference;
+      pragma Unreferenced (Self);
       View : constant Keys_Editor := Keys_Editor_Views.Retrieve_View (Kernel);
    begin
       if View /= null then
-         Pref := Get_Pref (Data);
          if Pref = null
            or else Pref = Preference (Shortcuts_Only)
            or else Pref = Preference (Categories_Pref)
@@ -1354,7 +1355,7 @@ package body KeyManager_Module.GUI is
             Refill_Editor (View);
          end if;
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    -----------------------
    -- Register_Key_Menu --
@@ -1401,9 +1402,7 @@ package body KeyManager_Module.GUI is
          Icon_Name => "gps-expand-all-symbolic",
          Category => -"Key Shortcuts");
 
-      Add_Hook (Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "key manager.preferences_changed");
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
    end Register_Key_Menu;
 
 end KeyManager_Module.GUI;

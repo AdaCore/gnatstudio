@@ -28,8 +28,8 @@ with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
 with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
 with Gtkada.Handlers;            use Gtkada.Handlers;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                   use GPS.Intl;
 with GNATCOLL.Projects;
 with Basic_Types;                use Basic_Types;
@@ -368,11 +368,12 @@ package body Code_Analysis_GUI is
       Marker := Create_MDI_Marker (View.Name & (-" Report"));
       Push_Marker_In_History (Kernel, Marker);
 
-      Open_File_Editor
-        (Kernel, File_Node.Name,
-         GNATCOLL.Projects.No_Project,
-         Line,
-         Basic_Types.Visible_Column_Type (Column));
+      Open_File_Action_Hook.Run
+        (Kernel,
+         File    => File_Node.Name,
+         Project => GNATCOLL.Projects.No_Project,
+         Line    => Line,
+         Column  => Basic_Types.Visible_Column_Type (Column));
       Add_File_Coverage_Annotations (Kernel, File_Node);
    end Open_File_Editor;
 

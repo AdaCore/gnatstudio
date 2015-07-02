@@ -55,8 +55,10 @@ package body GPS.Menu is
    end record;
    overriding procedure Activate (Callback : access On_Reopen; Item : String);
 
-   procedure On_Project_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project has just changed
 
    type Clipboard_Kind is (Cut, Copy, Paste, Paste_Previous);
@@ -235,11 +237,15 @@ package body GPS.Menu is
       when E : others => Trace (Me, E);
    end Activate;
 
-   ------------------------
-   -- On_Project_Changed --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
       Project : constant Project_Type := Get_Project (Kernel);
       Path    : constant Virtual_File := Project_Path (Project);
    begin
@@ -248,10 +254,7 @@ package body GPS.Menu is
       then
          Add_To_History (Kernel, Project_History_Key, UTF8_Full_Name (Path));
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Project_Changed;
+   end Execute;
 
    -------------
    -- Execute --
@@ -362,9 +365,8 @@ package body GPS.Menu is
                  Reopen_Menu,
                  new On_Reopen'(Menu_Callback_Record with
                                 Kernel => Kernel_Handle (Kernel)));
-      Add_Hook (Kernel, Project_Changed_Hook,
-                Wrapper (On_Project_Changed'Access),
-                Name => "menu.project_changed");
+
+      Project_Changed_Hook.Add (new On_Project_Changed);
 
       Register_Action
         (Kernel, "reload project", new Reload_Project_Command,

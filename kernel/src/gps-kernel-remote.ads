@@ -18,15 +18,10 @@
 with GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote; use GNAT.Expect.TTY.Remote;
-
 pragma Warnings (On);
-
-with GNATCOLL.Scripts;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with Interactive_Consoles;
 with Remote;                 use Remote;
 with GNATCOLL.VFS;
-
 with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package GPS.Kernel.Remote is
@@ -93,82 +88,6 @@ package GPS.Kernel.Remote is
    --  the command. Returns to current dir after spawning.
    --  Use_Pipes tells wether we are using pipes when spawning the process, or
    --  consoles (on Windows).
-
-   ---------------------
-   -- Connection Hook --
-   ---------------------
-
-   Build_Server_Connected_Hook : constant Hook_Name :=
-                                   To_Hook_Name
-       ("build_server_connected_hook");
-   --  No data hook
-
-   --------------------------
-   -- Synchronization Hook --
-   --------------------------
-
-   Rsync_Action_Hook : constant Hook_Name :=
-                         To_Hook_Name ("rsync_action_hook");
-
-   Rsync_Finished_Hook : constant Hook_Name := To_Hook_Name ("rsync_finished");
-
-   Rsync_Hook_Type : constant Hook_Type := "rsync_action_hook_t";
-
-   type Rsync_Hooks_Args
-     (Tool_Name_Length, Host_Name_Length, Queue_Id_Length : Natural)
-   is new Hooks_Data with record
-      Synchronous   : Boolean;
-      --  Tells if the synchronisation call shall be performed synchronously
-      Force         : Boolean;
-      --  Tells if we want to force the synchronisation.
-      To_Remote     : Boolean;
-      --  Tells if sync so from host to remote (Set to true) or to host from
-      --  remote
-      Print_Output  : Boolean;
-      --  Tells if rsync output is displayed on the Messages window
-      Print_Command : Boolean;
-      --  Tells if rsync command is displayed on thee Messages window
-      Tool_Name     : String (1 .. Tool_Name_Length);
-      --  Source server nickname
-      Host_Name     : String (1 .. Host_Name_Length);
-      --  The host we want to synchronise with
-      Queue_Id      : String (1 .. Queue_Id_Length);
-      --  Queue_Id used to enqueue the sync command
-      File          : GNATCOLL.VFS.Virtual_File;
-   end record;
-
-   overriding function Create_Callback_Data
-     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook   : Hook_Name;
-      Data   : access Rsync_Hooks_Args)
-      return GNATCOLL.Scripts.Callback_Data_Access;
-   --  See inherited for documentation
-
-   --------------------------------
-   -- Server Config Changed Hook --
-   --------------------------------
-
-   Server_Config_Changed_Hook : constant Hook_Name :=
-                                  To_Hook_Name ("server_config_hook");
-
-   Server_Config_Changed_Hook_Type : constant Hook_Type :=
-                                       "server_config_hook_t";
-
-   type Server_Config_Changed_Hooks_Args
-     (Nickname_Length : Natural) is new Hooks_Data with
-   record
-      Server   : Distant_Server_Type;
-      --  The server type modified
-      Nickname : String (1 .. Nickname_Length);
-      --  The new server nickname attached to it
-   end record;
-
-   overriding function Create_Callback_Data
-     (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
-      Hook   : Hook_Name;
-      Data   : access Server_Config_Changed_Hooks_Args)
-      return GNATCOLL.Scripts.Callback_Data_Access;
-   --  See inherited for documentation
 
    ----------------------------
    --  Servers configuration --

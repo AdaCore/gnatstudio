@@ -51,6 +51,7 @@ with Gtkada.MDI;
 
 with Basic_Types;                 use Basic_Types;
 with Commands.Interactive;        use Commands, Commands.Interactive;
+with Default_Preferences;         use Default_Preferences;
 with Generic_Views;
 with GPS.Kernel;                  use GPS.Kernel;
 with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
@@ -61,7 +62,6 @@ with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Xref;             use GPS.Kernel.Xref;
 with GPS.Intl;                    use GPS.Intl;
 with GUI_Utils;                   use GUI_Utils;
@@ -276,9 +276,11 @@ package body Call_Graph_Views is
      (View : access Gtk_Widget_Record'Class);
    --  Called when the view is realized
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_Pref_Changed;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       Pref   : Default_Preferences.Preference);
    --  Called when the preferences change
 
    procedure On_Selection_Changed (View : access Gtk_Widget_Record'Class);
@@ -397,9 +399,9 @@ package body Call_Graph_Views is
 
                --  Give the focus to the editor, to match the behavior of the
                --  Locations view.
-               Open_File_Editor
-                 (View.Kernel,
-                  Filename   => File,
+               Open_File_Action_Hook.Run
+                 (Kernel     => View.Kernel,
+                  File       => File,
                   Project    => Project,
                   Line       => Natural
                     (Get_Int (Model, Iter, Location_Line_Column)),
@@ -639,8 +641,7 @@ package body Call_Graph_Views is
    is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
-
-      Decl   : General_Entity_Declaration;
+      Decl  : General_Entity_Declaration;
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
 
@@ -648,9 +649,9 @@ package body Call_Graph_Views is
          Decl := Get_Declaration
            (Get_Entity (View, Iter));
 
-         Open_File_Editor
-           (View.Kernel,
-            Filename   => Decl.Loc.File,
+         Open_File_Action_Hook.Run
+           (Kernel     => View.Kernel,
+            File       => Decl.Loc.File,
             Project    => Decl.Loc.Project,
             Line       => Decl.Loc.Line,
             Column     => Decl.Loc.Column,
@@ -1470,10 +1471,7 @@ package body Call_Graph_Views is
          Widget_Callback.To_Marshaller (On_Selection_Changed'Access),
          Slot_Object => View);
 
-      Add_Hook (View.Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "calltree.preferences_changed",
-                Watch => GObject (View));
+      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
 
       Free (Names);
 
@@ -1807,22 +1805,23 @@ package body Call_Graph_Views is
       return Commands.Success;
    end Execute;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+      (Self   : On_Pref_Changed;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       Pref   : Default_Preferences.Preference)
    is
+      pragma Unreferenced (Self);
       View  : constant Callgraph_View_Access :=
         Generic_View.Retrieve_View (Kernel);
    begin
       if View /= null then
-         Set_Font_And_Colors
-           (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
+         Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    ---------------------
    -- Register_Module --

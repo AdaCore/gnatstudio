@@ -43,7 +43,6 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -77,13 +76,17 @@ package body Clipboard_Views is
    use Generic_View;
    subtype Clipboard_View_Access is Generic_View.View_Access;
 
-   procedure On_Clipboard_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_Clipboard_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Clipboard_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the contents of the clipboard has changed
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
    --  Called when the preferences have changed
 
    procedure Refresh (View : access Clipboard_View_Record'Class);
@@ -272,30 +275,34 @@ package body Clipboard_Views is
       return False;
    end Button_Press;
 
-   --------------------------
-   -- On_Clipboard_Changed --
-   --------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Clipboard_Changed
-     (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+     (Self   : On_Clipboard_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
    begin
       Refresh (Generic_View.Get_Or_Create_View (Kernel, Focus => False));
-   end On_Clipboard_Changed;
+   end Execute;
 
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
    is
+      pragma Unreferenced (Self);
       View : constant Clipboard_View_Access :=
         Generic_View.Get_Or_Create_View (Kernel, Focus => False);
    begin
-      Set_Font_And_Colors
-        (View.Tree, Fixed_Font => True, Pref => Get_Pref (Data));
-   end On_Preferences_Changed;
+      Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
+   end Execute;
 
    -------------
    -- Refresh --
@@ -417,14 +424,8 @@ package body Clipboard_Views is
          Slot_Object => View,
          After       => False);
 
-      Add_Hook (View.Kernel, Clipboard_Changed_Hook,
-                Wrapper (On_Clipboard_Changed'Access),
-                Name => "clipboard_views.on_clipboard_changed",
-                Watch => GObject (View));
-      Add_Hook (View.Kernel, Preference_Changed_Hook,
-                Wrapper (On_Preferences_Changed'Access),
-                Name  => "clipboard_views.preferences_changed",
-                Watch => GObject (View));
+      Clipboard_Changed_Hook.Add (new On_Clipboard_Changed, Watch => View);
+      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
       Refresh (View);
 
       --  Initialize tooltips

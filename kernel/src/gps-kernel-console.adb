@@ -45,7 +45,6 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Histories;              use Histories;
 with String_Utils;           use String_Utils;
 with Default_Preferences;    use Default_Preferences;
@@ -83,9 +82,11 @@ package body GPS.Kernel.Console is
    use Messages_Views;
    subtype GPS_Message is Messages_Views.View_Access;
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
    type Kernel_Messages_Window is new Abstract_Messages_Window with record
@@ -399,19 +400,19 @@ package body GPS.Kernel.Console is
       return Commands.Success;
    end Execute;
 
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
+      pragma Unreferenced (Self);
       Console : constant Interactive_Console := Get_Console (Kernel);
-      Pref    : Preference;
    begin
       if Console /= null then
-         Pref := Get_Pref (Data);
          Set_Font_And_Colors
            (Get_View (Console), Fixed_Font => True, Pref => Pref);
 
@@ -419,7 +420,7 @@ package body GPS.Kernel.Console is
             On_Toggle_Line_Wrap (Console);
          end if;
       end if;
-   end On_Preferences_Changed;
+   end Execute;
 
    -------------------------
    -- On_Toggle_Line_Wrap --
@@ -465,10 +466,7 @@ package body GPS.Kernel.Console is
       Console.Enable_Prompt_Display (False);
       Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
 
-      Add_Hook (Console.Kernel, Preference_Changed_Hook,
-                Wrapper (On_Preferences_Changed'Access),
-                Name => "console.preferences_changed",
-                Watch => GObject (Console));
+      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Console);
 
       Setup_Contextual_Menu
         (Kernel          => Console.Kernel,

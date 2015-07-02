@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 
 package body Commands.Locations is

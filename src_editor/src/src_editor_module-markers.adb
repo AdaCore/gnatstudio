@@ -18,21 +18,18 @@
 with Ada.Unchecked_Conversion;
 with System;                    use System;
 with System.Address_Image;
-
 with Glib.Object;               use Glib.Object;
-
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
-
 with GNATCOLL.Xref;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with String_Utils;              use String_Utils;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Src_Editor_Module.Markers is
    use type GNATCOLL.Xref.Visible_Column;
@@ -564,13 +561,13 @@ package body Src_Editor_Module.Markers is
          Scroll_To_Mark (Box, Marker.Mark, Marker.Length);
 
       else
-         Open_File_Editor
+         Open_File_Action_Hook.Run
            (Kernel,
-            Marker.File,
-            Marker.Project,
-            Integer (Marker.Line),
-            Marker.Column,
-            Marker.Column + Visible_Column_Type (Marker.Length),
+            File      => Marker.File,
+            Project   => Marker.Project,
+            Line      => Integer (Marker.Line),
+            Column    => Marker.Column,
+            Column_End => Marker.Column + Visible_Column_Type (Marker.Length),
             --  ??? This is incorrect if there is an ASCII.HT before
             --  column+length
             Enable_Navigation => False,

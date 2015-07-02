@@ -17,6 +17,7 @@
 
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel;                       use GPS.Kernel;
+with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with Build_Configurations;             use Build_Configurations;
 with Extending_Environments;           use Extending_Environments;
@@ -221,8 +222,8 @@ package body Build_Command_Manager.End_Of_Build is
         and then not Is_Run (Build.Target)
         and then not Uses_Python (Build.Target)
       then
-         Build.Launch := GPS.Kernel.Compilation_Starting
-           (Handle     => Kernel_Handle (Self.Builder.Kernel),
+         Build.Launch := Compilation_Starting_Hook.Run
+           (Kernel     => Kernel_Handle (Self.Builder.Kernel),
             Category   => To_String (Build.Category),
             Quiet      => Build.Quiet,
             Shadow     => Build.Shadow,
@@ -297,7 +298,7 @@ package body Build_Command_Manager.End_Of_Build is
       --  ??? should also pass the Status value to Compilation_Finished
       --  and to the corresponding hook
 
-      Compilation_Finished
+      Compilation_Finished_Hook.Run
         (Kernel,
          To_String (Self.Build.Category),
          Get_Name (Self.Build.Target),

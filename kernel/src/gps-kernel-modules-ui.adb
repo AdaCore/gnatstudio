@@ -80,7 +80,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
@@ -214,13 +213,18 @@ package body GPS.Kernel.Modules.UI is
    package Kernel_Contextuals is new GUI_Utils.User_Contextual_Menus
      (Contextual_Menu_User_Data);
 
+   procedure On_Contextual_Menu_Hide
+     (Self  : access Gtk_Widget_Record'Class);
+
    procedure Contextual_Action
      (Object : access GObject_Record'Class; Action : Contextual_Menu_Access);
    --  Execute action, in the context of a contextual menu
 
-   procedure On_Context_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Context_Changed is new Context_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self    : On_Context_Changed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context);
    --  Called when the context changes
 
    function Create_Contextual_Menu
@@ -640,7 +644,7 @@ package body GPS.Kernel.Modules.UI is
       W       : Gtk_Widget;
    begin
       while Has_Element (Current) loop
-         Module := Module_ID (Element (Current));
+         Module := Module_ID (Abstract_Module_List.Element (Current));
          if Module /= null then
             W := Tooltip_Handler (Module, Context);
             if W /= null then
@@ -680,7 +684,7 @@ package body GPS.Kernel.Modules.UI is
 
       else
          while Has_Element (Current) loop
-            Module := Module_ID (Element (Current));
+            Module := Module_ID (Abstract_Module_List.Element (Current));
             Marker := Bookmark_Handler (Module, Load);
             if Marker /= null then
                return Marker;
@@ -747,14 +751,9 @@ package body GPS.Kernel.Modules.UI is
    begin
       Kernel.Contextual_Menu_Open := False;
       if Kernel.Last_Context_For_Contextual /= No_Context then
-         Trace (Me, "Running Hook " & To_String (Contextual_Menu_Close_Hook));
-         Run_Hook (Kernel, Contextual_Menu_Close_Hook);
-         Trace (Me, "Destroying contextual menu and its context");
+         Contextual_Menu_Close_Hook.Run (Kernel);
       end if;
    end Contextual_Menu_Destroyed;
-
-   procedure On_Contextual_Menu_Hide
-     (Self  : access Gtk_Widget_Record'Class);
 
    -----------------------------
    -- On_Contextual_Menu_Hide --
@@ -1026,7 +1025,7 @@ package body GPS.Kernel.Modules.UI is
       Is_Sensitive : Boolean;
 
    begin
-      Run_Hook (Kernel, Contextual_Menu_Open_Hook);
+      Contextual_Menu_Open_Hook.Run (Kernel);
 
       --  Compute what items should be made visible, except for separators
       --  for the moment
@@ -1538,7 +1537,7 @@ package body GPS.Kernel.Modules.UI is
       end if;
 
       while Has_Element (C) loop
-         It := Element (C);
+         It := Proxy_Lists.Element (C);
          if Get_Object (It.Proxy) = Item then
             Globals.Proxy_Items.Delete (C);
 
@@ -1557,7 +1556,7 @@ package body GPS.Kernel.Modules.UI is
       --  list
       C := Globals.Unfiltered_Items.First;
       while Has_Element (C) loop
-         It := Element (C);
+         It := Proxy_Lists.Element (C);
          if Get_Object (It.Proxy) = Item then
             Globals.Unfiltered_Items.Delete (C);
             return;
@@ -1866,7 +1865,7 @@ package body GPS.Kernel.Modules.UI is
                   if File_Extension (File) = Project_File_Extension then
                      Load_Project (Kernel, File);
                   else
-                     Open_File_Editor
+                     Open_File_Action_Hook.Run
                        (Kernel, File,
                         Project  => No_Project,  --  will choose a random one
                         New_File => False);
@@ -2587,7 +2586,7 @@ package body GPS.Kernel.Modules.UI is
 
          The_Next := Next (Data.Current);
 
-         A := Element (Data.Current);
+         A := Proxy_Lists.Element (Data.Current);
          D := Get_Data (A.Proxy);
 
          if A.Filter /= null then
@@ -2616,7 +2615,8 @@ package body GPS.Kernel.Modules.UI is
                   --  ??? If the action is overridden, we might need to review
                   --  the policy here, but that should not happen.
 
-                  Add_To_Unfiltered_Items (Element (Data.Current));
+                  Add_To_Unfiltered_Items
+                     (Proxy_Lists.Element (Data.Current));
                   Globals.Proxy_Items.Delete (Data.Current);
                end if;
             end if;
@@ -2704,7 +2704,7 @@ package body GPS.Kernel.Modules.UI is
       C := Globals.Unfiltered_Items.First;
       while Has_Element (C) loop
          N := Next (C);
-         P := Element (C);
+         P := Proxy_Lists.Element (C);
 
          Data := Get_Data (P.Proxy);
          if Data /= null and then To_Lower (Data.Action.all) = Lower then
@@ -2718,32 +2718,30 @@ package body GPS.Kernel.Modules.UI is
       Update_Menus_And_Buttons (Kernel);
    end Action_Status_Changed;
 
-   ------------------------
-   -- On_Context_Changed --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Context_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self    : On_Context_Changed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context)
    is
-      type Context_Args is access all Context_Hooks_Args'Class;
-      D : constant Context_Args := Context_Args (Data);
+      pragma Unreferenced (Self);
    begin
-      Update_Menus_And_Buttons (Kernel, D.Context);
-   end On_Context_Changed;
+      Update_Menus_And_Buttons (Kernel, Context);
+   end Execute;
 
    ----------------------------
    -- Start_Monitoring_Menus --
    ----------------------------
 
    procedure Start_Monitoring_Menus
-     (Kernel      : not null access Kernel_Handle_Record'Class) is
+     (Kernel      : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
    begin
-      Add_Hook
-        (Kernel,
-         Context_Changed_Hook,
-         Wrapper (On_Context_Changed'Access),
-         Name => "monitor context for menus");
+      Context_Changed_Hook.Add (new On_Context_Changed);
    end Start_Monitoring_Menus;
 
    -------------------

@@ -78,7 +78,6 @@ package body GPS.Kernel.Scripts is
               Create ("Scripts.Ref", GNATCOLL.Traces.Off);
 
    Context_Class_Name         : constant String := "Context";
-   Hook_Class_Name            : constant String := "Hook";
    Message_Context_Class_Name : constant String := "MessageContext";
 
    function To_Address is new Ada.Unchecked_Conversion
@@ -464,14 +463,14 @@ package body GPS.Kernel.Scripts is
             Var := Get_Registry (Kernel).Tree.Scenario_Variables (Name);
             Set_Value (Var, Value);
             Get_Registry (Kernel).Tree.Change_Environment ((1 => Var));
-            Run_Hook (Kernel, Variable_Changed_Hook);
+            Variable_Changed_Hook.Run (Kernel);
          end;
 
       elsif Command = "freeze_prefs" then
          Kernel.Preferences.Freeze;
       elsif Command = "thaw_prefs" then
          Kernel.Preferences.Thaw;
-         GPS.Kernel.Preferences.Emit_Preferences_Changed (Kernel);
+         Preferences_Changed_Hook.Run (Kernel);
       end if;
    end Default_Command_Handler;
 
@@ -1613,17 +1612,6 @@ package body GPS.Kernel.Scripts is
       return New_Class (Repo, Context_Class_Name);
    end Get_Context_Class;
 
-   --------------------
-   -- Get_Hook_Class --
-   --------------------
-
-   function Get_Hook_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      return New_Class (Kernel.Scripts, Hook_Class_Name);
-   end Get_Hook_Class;
-
    ----------------------------
    -- Get_Area_Context_Class --
    ----------------------------
@@ -1963,5 +1951,23 @@ package body GPS.Kernel.Scripts is
       Ignore := Execute (Link.Subprogram, Data);
       Free (Data);
    end On_Click;
+
+   ----------------------------
+   -- Get_Or_Create_Instance --
+   ----------------------------
+
+   function Get_Or_Create_Instance
+     (Script  : access Scripting_Language_Record'Class;
+      Process : access Base_Visual_Debugger'Class) return Class_Instance
+   is
+      Inst : Class_Instance := Get_Instance (Script, Process);
+   begin
+      if Inst = No_Class_Instance then
+         Inst := New_Instance
+           (Script, New_Class (Get_Kernel (Script), "Debugger"));
+         Set_Data (Inst, GObject (Process));
+      end if;
+      return Inst;
+   end Get_Or_Create_Instance;
 
 end GPS.Kernel.Scripts;

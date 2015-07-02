@@ -18,9 +18,8 @@
 with GPS.Intl;            use GPS.Intl;
 with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;  use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks;
-
 with CodePeer.Module.Bridge;
 with CodePeer.Shell_Commands;
 
@@ -146,7 +145,7 @@ package body CodePeer.Module.Actions is
             Mode => GPS.Kernel.Error);
 
       else
-         GPS.Kernel.Standard_Hooks.Open_Html
+         Html_Action_Hook.Run
            (Kernel, String (Full_Name (HTML_File).all));
       end if;
 
@@ -233,9 +232,9 @@ package body CodePeer.Module.Actions is
 
    begin
       if Log_File.Is_Regular_File then
-         GPS.Kernel.Standard_Hooks.Open_File_Editor
+         Open_File_Action_Hook.Run
            (Kernel       => Kernel,
-            Filename     => Log_File,
+            File         => Log_File,
             Project      => Project_Information (Context.Context),
             New_File     => False,
             Force_Reload => True);
@@ -467,9 +466,9 @@ package body CodePeer.Module.Actions is
 
    begin
       if Text_File.Is_Regular_File then
-         GPS.Kernel.Standard_Hooks.Open_File_Editor
+         Open_File_Action_Hook.Run
            (Kernel       => Kernel,
-            Filename     => Text_File,
+            File         => Text_File,
             Project      => Project_Information (Context.Context),
             New_File     => False,
             Force_Reload => True);
@@ -502,9 +501,9 @@ package body CodePeer.Module.Actions is
 
    begin
       if Text_File.Is_Regular_File then
-         GPS.Kernel.Standard_Hooks.Open_File_Editor
+         Open_File_Action_Hook.Run
            (Kernel       => Kernel,
-            Filename     => Text_File,
+            File         => Text_File,
             Project      => Project_Information (Context.Context),
             New_File     => False,
             Force_Reload => True);

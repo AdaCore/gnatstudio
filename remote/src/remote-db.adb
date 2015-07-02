@@ -1337,7 +1337,7 @@ package body Remote.Db is
          Config.Machines.Insert (Machine.Nickname.all, Machine);
       end if;
 
-      Run_Hook (Machine.Kernel, Server_List_Changed_Hook);
+      Server_List_Hook.Run (Machine.Kernel);
    end Add_Or_Replace;
 
    ------------
@@ -1362,7 +1362,7 @@ package body Remote.Db is
          Config.Mount_Points.Delete (Nickname);
       end if;
 
-      Run_Hook (Old.Kernel, Server_List_Changed_Hook);
+      Server_List_Hook.Run (Old.Kernel);
       Unref (Old);
    end Remove;
 

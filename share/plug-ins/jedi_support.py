@@ -122,18 +122,16 @@ class Jedi_Module(Module):
             chain.from_iterable(i.source_dirs()
                                 for i in [GPS.Project.root()] +
                                 GPS.Project.root().dependencies()
-                                if "python" in i.languages())
-        )
+                                if "python" in i.languages()))
 
     # The followings are hooks:
 
-    def gps_started(self):
+    def setup(self):
         """
            When GPS start, create and register a resolver
            and update its source dirs
         """
         GPS.Completion.register(self.__resolver)
-        self.__refresh_source_dirs()
 
     def project_changed(self):
         """

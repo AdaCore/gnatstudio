@@ -46,6 +46,7 @@ with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
 with Debugger.Gdb_MI;            use Debugger.Gdb_MI;
+with Default_Preferences;        use Default_Preferences;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Properties;             use GPS.Properties;
@@ -55,8 +56,6 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GVD.Assembly_View;          use GVD.Assembly_View;
 with GVD.Call_Stack;             use GVD.Call_Stack;
@@ -68,7 +67,6 @@ with GVD.Preferences;            use GVD.Preferences;
 with GVD.Memory_View;            use GVD.Memory_View;
 with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Source_Editor.GPS;      use GVD.Source_Editor.GPS;
-with GVD.Scripts;                use GVD.Scripts;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
@@ -125,24 +123,21 @@ package body GVD.Process is
       Mode     : Command_Type);
    --  Process a "graph ..." command
 
-   type Exit_Hook_Record is new Function_With_Args_Return_Boolean with record
+   type On_Before_Exit is new Return_Boolean_Hooks_Function with record
       Process : access Visual_Debugger_Record'Class;
    end record;
-   type Exit_Hook is access all Exit_Hook_Record'Class;
    overriding function Execute
-     (Hook   : Exit_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean;
+     (Self   : On_Before_Exit;
+      Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
    --  Called before exiting
 
-   type Preferences_Changed_Hook_Record is new Function_With_Args with record
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
       Process : access Visual_Debugger_Record'Class;
    end record;
-   type Preferences_Hook is access all Preferences_Changed_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Preferences_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
    procedure Initialize
@@ -500,11 +495,11 @@ package body GVD.Process is
       Set_Command_In_Process (Process_Proxy (Proxy.all)'Access, In_Process);
 
       if In_Process then
-         Run_Debugger_States_Hook
-           (Proxy.Process, Debugger_State_Changed_Hook, Debug_Busy);
+         Debugger_State_Changed_Hook.Run
+           (Proxy.Process.Kernel, Proxy.Process, Debug_Busy);
       else
-         Run_Debugger_States_Hook
-           (Proxy.Process, Debugger_State_Changed_Hook, Debug_Available);
+         Debugger_State_Changed_Hook.Run
+           (Proxy.Process.Kernel, Proxy.Process, Debug_Available);
       end if;
 
       Update_Menus_And_Buttons (Get_Kernel (Proxy.Process));
@@ -1251,9 +1246,8 @@ package body GVD.Process is
 
       --  Let all views know that they should close
 
-      Run_Debugger_States_Hook
-        (Process, Debugger_State_Changed_Hook, Debug_None);
-      Run_Debugger_Hook (Process, Debugger_Terminated_Hook);
+      Debugger_State_Changed_Hook.Run (Process.Kernel, Process, Debug_None);
+      Debugger_Terminated_Hook.Run (Process.Kernel, Process);
 
       if Process.Breakpoints /= null then
          Free (Process.Breakpoints);
@@ -1425,11 +1419,10 @@ package body GVD.Process is
       --  Is this a command handled by a script ?
 
       declare
-         Tmp : constant String :=
-                 Run_Debugger_Hook_Until_Not_Empty
-                   (Debugger => Debugger,
-                    Hook     => Debugger_Command_Action_Hook,
-                    Command  => Command);
+         Tmp : constant String := Debugger_Command_Action_Hook.Run
+             (Kernel   => Debugger.Kernel,
+              Debugger => Debugger,
+              Str      => Command);
       begin
          if Tmp /= "" then
             if Output_Command then
@@ -1628,7 +1621,7 @@ package body GVD.Process is
          --  Update the breakpoints in the assembly view
          GVD.Assembly_View.Update_Breakpoints (Debugger);
 
-         Run_Debugger_Hook (Debugger, Debugger_Breakpoints_Changed_Hook);
+         Debugger_Breakpoints_Changed_Hook.Run (Debugger.Kernel, Debugger);
       end if;
    end Update_Breakpoints;
 
@@ -1730,14 +1723,14 @@ package body GVD.Process is
    -------------
 
    overriding procedure Execute
-     (Hook   : Preferences_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Kernel, Pref);
    begin
-      if Hook.Process.Editor_Text /= null then
-         Hook.Process.Editor_Text.Preferences_Changed;
+      if Self.Process.Editor_Text /= null then
+         Self.Process.Editor_Text.Preferences_Changed;
       end if;
    end Execute;
 
@@ -1746,18 +1739,16 @@ package body GVD.Process is
    -------------
 
    overriding function Execute
-     (Hook   : Exit_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
+     (Self   : On_Before_Exit;
+      Kernel : not null access Kernel_Handle_Record'Class) return Boolean
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Kernel);
    begin
       --  Close the debugger immediately when receiving the "before exit"
       --  action hook. This is needed so that the perspective can be saved
       --  and the default perspective can be reset before the main window
       --  is actually destroyed.
-      Close_Debugger (Hook.Process);
-
+      Close_Debugger (Self.Process);
       return True;
    end Execute;
 
@@ -1782,8 +1773,8 @@ package body GVD.Process is
       Proxy        : Process_Proxy_Access;
       Success      : Boolean;
       Property     : Breakpoint_Property_Record;
-      H            : Preferences_Hook;
-      Exit_H       : Exit_Hook;
+      H            : access On_Pref_Changed;
+      Exit_H       : access On_Before_Exit;
 
       procedure Check_Extension (Module : in out Virtual_File);
       --  Check for a missing extension in module, and add it if needed
@@ -1928,23 +1919,17 @@ package body GVD.Process is
          end if;
       end if;
 
-      H := new Preferences_Changed_Hook_Record;
+      H := new On_Pref_Changed;
       H.Process := Process;
-      Add_Hook
-        (Kernel, Preference_Changed_Hook, H,
-         Name => "gvd.process.preferences_changed",
-         Watch => GObject (Process));
+      Preferences_Changed_Hook.Add (H, Watch => Process);
 
-      Exit_H := new Exit_Hook_Record;
+      Exit_H := new On_Before_Exit;
       Exit_H.Process := Process;
-      Add_Hook
-        (Kernel, Before_Exit_Action_Hook, Exit_H,
-         Name => "gvd.process.before_exit",
-         Watch => GObject (Process));
+      Before_Exit_Action_Hook.Add (Exit_H, Watch => Process);
 
-      Run_Debugger_States_Hook
-        (Process, Debugger_State_Changed_Hook, Debug_Available);
-      Run_Debugger_Hook (Process, Debugger_Started_Hook);
+      Debugger_State_Changed_Hook.Run
+         (Process.Kernel, Process, Debug_Available);
+      Debugger_Started_Hook.Run (Process.Kernel, Process);
 
       return Process;
 
@@ -2197,7 +2182,7 @@ package body GVD.Process is
 
       Project.Set_Modified (False);
       Get_Registry (Kernel).Tree.Set_Status (From_Executable);
-      Run_Hook (Kernel, Project_Changed_Hook);
+      Project_Changed_Hook.Run (Kernel);
       Recompute_View (Kernel);
    end Load_Project_From_Executable;
 

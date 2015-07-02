@@ -35,6 +35,7 @@ with GUI_Utils;                 use GUI_Utils;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
@@ -468,7 +469,7 @@ package body VFS_Module is
 
       --  Need also to update project/file views
       if Success then
-         Get_Kernel (Context.Context).File_Deleted (File);
+         File_Deleted_Hook.Run (Get_Kernel (Context.Context), File);
          Project := Check_Prj
            (Get_Registry (Get_Kernel (Context.Context)).Tree, File);
 
@@ -607,7 +608,8 @@ package body VFS_Module is
             Ensure_Directory (Renamed);
          end if;
 
-         Get_Kernel (Context.Context).File_Renamed (File_In, Renamed);
+         File_Renamed_Hook.Run
+            (Get_Kernel (Context.Context), File_In, Renamed);
 
          --  First check if file_in is defined in the projects
          Project := Check_Prj
@@ -731,7 +733,7 @@ package body VFS_Module is
          end;
       end if;
 
-      GPS.Kernel.File_Saved (Get_Kernel (Context.Context), File);
+      File_Saved_Hook.Run (Get_Kernel (Context.Context), File);
       Project := Check_Prj
         (Get_Registry (Get_Kernel (Context.Context)).Tree, Dir);
 

@@ -63,7 +63,6 @@ with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks; use GPS.Kernel;
 with GVD_Module;       use GVD_Module;
 with GVD.Code_Editors; use GVD, GVD.Code_Editors;
 with GVD.Process;      use GVD.Process;
-with GVD.Scripts;      use GVD.Scripts;
 with GVD.Types;        use GVD.Types;
 with GVD.Views;        use GVD.Views;
 with GUI_Utils;        use GUI_Utils;
@@ -117,9 +116,12 @@ package body Breakpoints_Editor is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Data->Breakpoints
 
-   procedure On_Breakpoints_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   type On_Breakpoints_Changed is new Debugger_Hooks_Function
+      with null record;
+   overriding procedure Execute
+      (Self     : On_Breakpoints_Changed;
+       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Debugger : access Base_Visual_Debugger'Class);
    --  Hook for "debugger_breakpoints_changed"
 
    procedure Update_Breakpoint_List
@@ -362,24 +364,24 @@ package body Breakpoints_Editor is
       Set_Sensitive (View.Editor.Hbox4, True);
    end Update;
 
-   ----------------------------
-   -- On_Breakpoints_Changed --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Breakpoints_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   overriding procedure Execute
+      (Self     : On_Breakpoints_Changed;
+       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Debugger : access Base_Visual_Debugger'Class)
    is
-      pragma Unreferenced (Kernel);
-      Process : constant Visual_Debugger :=
-        Get_Process (Debugger_Hooks_Data_Access (Data));
+      pragma Unreferenced (Self, Kernel);
+      Process : constant Visual_Debugger := Visual_Debugger (Debugger);
       View : constant Breakpoint_Editor :=
         Breakpoint_Editor (Process.Breakpoints_Editor);
    begin
       if View /= null then
          Update_Breakpoint_List (View);
       end if;
-   end On_Breakpoints_Changed;
+   end Execute;
 
    ---------------------------
    -- On_Process_Terminated --
@@ -402,6 +404,7 @@ package body Breakpoints_Editor is
      (Widget : access Breakpoint_Editor_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
+      pragma Unreferenced (Kernel);
    begin
       Gtk.Box.Initialize_Hbox (Widget);
       Gtk_New (Widget.Editor);
@@ -475,11 +478,8 @@ package body Breakpoints_Editor is
       Widget.Editor.Breakpoint_List.On_Button_Press_Event
         (Breakpoint_Clicked'Access, Widget);
 
-      Add_Hook
-        (Kernel, Debugger_Breakpoints_Changed_Hook,
-         Wrapper (On_Breakpoints_Changed'Access),
-         Watch => GObject (Widget),
-         Name  => "breakpoints_editor.on_breakpoints_changed");
+      Debugger_Breakpoints_Changed_Hook.Add
+         (new On_Breakpoints_Changed, Watch => Widget);
 
       Widget.Editor.Notebook1.Set_Current_Page (0);
 

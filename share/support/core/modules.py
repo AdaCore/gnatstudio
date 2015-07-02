@@ -72,7 +72,14 @@ class Module_Metaclass(type):
             # If gps has already started, we should immediately setup the
             # plugin, but the class has not been fully setup yet...
             if Module_Metaclass.gps_started:
-                GLib.idle_add(lambda: new_class()._setup())
+                inst = new_class()
+                Module_Metaclass.modules_instances.append(inst)
+                GLib.idle_add(lambda: inst()._setup())
+
+                # Simulate running the gps_started hook
+                pref = getattr(self, "gps_started", None)
+                if pref:
+                    pref()
 
         return new_class
 
@@ -81,9 +88,9 @@ class Module_Metaclass(type):
         if not Module_Metaclass.gps_started:
             Module_Metaclass.gps_started = True
             for ModuleClass in Module_Metaclass.modules:
-                module_instance = ModuleClass()
-                Module_Metaclass.modules_instances.append(module_instance)
-                module_instance._setup()
+                inst = ModuleClass()
+                Module_Metaclass.modules_instances.append(inst)
+                inst._setup()
 
     @staticmethod
     def load_desktop(name, data):
@@ -115,13 +122,18 @@ class Module(object):
     auto_connect_hooks = (
         "context_changed",
         "buffer_edited",
-        "gps_started",
+        # Do not include "gps_started". Users should override setup() instead,
+        # which is called as part of the gps_started hook already. Otherwise,
+        # when GPS runs "gps_started", we end up in __connect_hooks below,
+        # which adds the local gps_started function to the callbacks. This
+        # callback is then called as part of running the same hook, but the
+        # automatic tests might have already called exit() by then.
+
         "project_view_changed",
         "preferences_changed",
         "file_edited",
         "project_changed",   # not called for the initial project
-        "compilation_finished")
-    auto_connect_hooks_with_no_hook_arg = (
+        "compilation_finished",
         "task_started",
         "task_changed",
         "task_terminated")
@@ -227,23 +239,40 @@ class Module(object):
     def __connect_hook(self, hook_name):
         """
         Connects a method of the object with a hook, and ensure the function
-        will be called without the hook as a first parameter.
+        will be called without the hook name as a first parameter.
         """
         pref = getattr(self, hook_name, None)  # a bound method
         if pref:
-            def internal(hook, *args, **kwargs):
-                return pref(*args, **kwargs)
+            def internal(*args, **kwargs):
+                if args:
+                    hook = args[0]
+                    args = args[1:]
+                    if hook == hook_name:
+                        return pref(*args, **kwargs)
+                    else:
+                        return pref(hook, *args, **kwargs)
+                else:
+                    return pref(*args, **kwargs)
             setattr(self, "__%s" % hook_name, internal)
-            GPS.Hook(hook_name).add(getattr(self, "__%s" % hook_name))
+            p = getattr(self, "__%s" % hook_name)
+            GPS.Hook(hook_name).add(p)
 
-    def __connect_hook_with_no_hook_arg(self, hook_name):
+            # No need to call internal() when the hook is gps_started: this
+            # function __connect_hook is called as part of running gps_started
+            # so any function we just added to the hook will also be run later
+            # on.
+            #   if Module_Metaclass.gps_started and hook_name == "gps_started":
+            #       p()
+
+    def __connect_hooks(self):
         """
-        Connects a method of the object with a hook, and ensure the function
-        will be called without the hook as a first parameter.
+        Connect special methods with the corresponding hooks.
+        The alternative is to use gps_utils.hook decorator.
+        As opposed to that decorator though, the functions here are called
+        without the hook name as a first parameter.
         """
-        pref = getattr(self, hook_name, None)  # a bound method
-        if pref:
-            GPS.Hook(hook_name).add(pref)
+        for h in self.auto_connect_hooks:
+            self.__connect_hook(h)
 
     def __disconnect_hook(self, hook_name):
         """
@@ -270,19 +299,14 @@ class Module(object):
         Internal version of setup
         """
 
+        self.__connect_hooks()
         if not self.view_title:
             self.view_title = self.__class__.__name__.replace("_", " ")
-        for h in self.auto_connect_hooks:
-            self.__connect_hook(h)
-        for h in self.auto_connect_hooks_with_no_hook_arg:
-            self.__connect_hook_with_no_hook_arg(h)
         self.setup()
 
     def _teardown(self):
         for h in self.auto_connect_hooks:
             self.__disconnect_hook(h)
-        for h in self.auto_connect_hooks_with_no_hook_arg:
-            self.__disconnect_hook_with_no_hook_arg(h)
         self.teardown()
 
     def name(self):

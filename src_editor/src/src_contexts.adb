@@ -50,11 +50,11 @@ with Files_Extra_Info_Pkg;       use Files_Extra_Info_Pkg;
 with GPS.Default_Styles;         use GPS.Default_Styles;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Search;                 use GPS.Search;
 with GUI_Utils;                  use GUI_Utils;
@@ -747,13 +747,13 @@ package body Src_Contexts is
          Length     : Positive) is
       begin
          if Interactive then
-            Open_File_Editor
+            Open_File_Action_Hook.Run
               (Kernel,
-               File_Name,
-               GNATCOLL.Projects.No_Project,   --   ??? any project will do
-               Match.Start.Line,
-               Match.Start.Visible_Column,
-               Column_End,
+               File => File_Name,
+               Project => GNATCOLL.Projects.No_Project,   --   ??? any project
+               Line    => Match.Start.Line,
+               Column  => Match.Start.Visible_Column,
+               Column_End => Column_End,
                Focus => Give_Focus);
             Push_Current_Editor_Location_In_History (Kernel);
 
@@ -936,7 +936,7 @@ package body Src_Contexts is
            and then not Continue_Dialog
              (-"No more matches, restart from the end ?")
          then
-            Stop_Macro (Kernel);
+            Stop_Macro_Action_Hook.Run (Kernel);
             Set_End_Notif_Done (Context.all, True);
             Result := GPS.Search.No_Match;
             return;
@@ -978,7 +978,7 @@ package body Src_Contexts is
                elsif not Continue_Dialog
                  (-"No more matches, restart from the beginning ?")
                then
-                  Stop_Macro (Kernel);
+                  Stop_Macro_Action_Hook.Run (Kernel);
                   Set_End_Notif_Done (Context.all, True);
                   return;
                end if;
@@ -1197,7 +1197,28 @@ package body Src_Contexts is
 
    procedure Set_File_List
      (Context : access Files_Project_Context;
-      Files   : File_Array_Access) is
+      Files   : File_Sets.Set)
+   is
+      Idx : Integer;
+   begin
+      Unchecked_Free (Context.Files);
+      Context.Files := new File_Array (1 .. Integer (Files.Length));
+      Idx := Context.Files'First;
+      for F of Files loop
+         Context.Files (Idx) := F;
+         Idx := Idx + 1;
+      end loop;
+
+      Context.Current_File := Context.Files'First - 1;
+   end Set_File_List;
+
+   -------------------
+   -- Set_File_List --
+   -------------------
+
+   procedure Set_File_List
+     (Context : access Files_Project_Context;
+      Files   : GNATCOLL.VFS.File_Array_Access) is
    begin
       Unchecked_Free (Context.Files);
       Context.Files := Files;
@@ -1238,6 +1259,26 @@ package body Src_Contexts is
    begin
       Unchecked_Free (Context.Files);
       Context.Files := Files;
+      Context.Current_File := Context.Files'First - 1;
+   end Set_File_List;
+
+   -------------------
+   -- Set_File_List --
+   -------------------
+
+   procedure Set_File_List
+     (Context : access Open_Files_Context;
+      Files   : File_Sets.Set)
+   is
+      Idx : Integer;
+   begin
+      Unchecked_Free (Context.Files);
+      Context.Files := new File_Array (1 .. Integer (Files.Length));
+      Idx := Context.Files'First;
+      for F of Files loop
+         Context.Files (Idx) := F;
+         Idx := Idx + 1;
+      end loop;
       Context.Current_File := Context.Files'First - 1;
    end Set_File_List;
 
@@ -1672,8 +1713,7 @@ package body Src_Contexts is
 
       if Project'Length /= 0 then
          --  Search in selected project if any
-         Set_File_List
-           (Context, Source_Files_Non_Recursive (Project));
+         Set_File_List (Context, Source_Files_Non_Recursive (Project));
       else
          --  Search in root project if no project selected
          Set_File_List (Context, Get_Project (Kernel).Source_Files (False));
@@ -1744,19 +1784,16 @@ package body Src_Contexts is
    is
       Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context : constant Open_Files_Context_Access := new Open_Files_Context;
-      Open_File_List : GNATCOLL.VFS.File_Array_Access;
-
    begin
       --  GPS.Kernel.Open_Files returns a File_Array, but Set_File_List
       --  takes a File_Array_Access. Memory will be properly freed in
       --  Set_File_List
 
-      Open_File_List          := new File_Array'(Open_Files (Kernel));
       Context.Scope           :=
         Search_Scope'Val (Get_Active (Scope.Combo));
       Context.All_Occurrences := All_Occurrences;
       Context.Current         := GPS.Search.No_Match;
-      Set_File_List (Context, Open_File_List);
+      Set_File_List (Context, Kernel.Open_Files.all);
       return Root_Search_Context_Access (Context);
    end Open_Files_Factory;
 
@@ -2608,7 +2645,7 @@ package body Src_Contexts is
                      if Button = Button_Yes then
                         Move_To_First_File (C);
                      else
-                        Stop_Macro (Kernel);
+                        Stop_Macro_Action_Hook.Run (Kernel);
                         Set_End_Notif_Done (Context.all, True);
 
                         return False;

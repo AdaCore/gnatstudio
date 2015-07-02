@@ -21,28 +21,16 @@
 
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
-
 with GNAT.Expect;          use GNAT.Expect;
 with GNAT.Strings;         use GNAT.Strings;
-
 with GNATCOLL.Remote.Db;   use GNATCOLL.Remote;
 with GNATCOLL.VFS;         use GNATCOLL.VFS;
 with GNATCOLL.VFS_Types;   use GNATCOLL.VFS_Types;
-
 with GPS.Kernel;           use GPS.Kernel;
-
 with Gexpect.Db;           use Gexpect;
 with XML_Utils;
 
 package Remote.Db is
-
-   ------------------------------
-   -- Server List Changed Hook --
-   ------------------------------
-
-   Server_List_Changed_Hook : constant GPS.Kernel.Hook_Name :=
-                                GPS.Kernel.To_Hook_Name ("server_list_hook");
-   --  No data hook
 
    Invalid_Remote_Configuration : exception;
 

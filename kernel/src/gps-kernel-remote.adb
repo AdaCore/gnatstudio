@@ -24,7 +24,6 @@ with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -36,12 +35,11 @@ with XML_Utils;                  use XML_Utils;
 
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Properties;             use GPS.Properties;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
 with Interactive_Consoles;       use Interactive_Consoles;
 with Toolchains_Old;             use Toolchains_Old;
@@ -120,18 +118,12 @@ package body GPS.Kernel.Remote is
    -- Callbacks --
    ---------------
 
-   procedure On_Project_Changing
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Project_Changing is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File);
    --  Called when project is about to change
-
-   function From_Callback_Data_Sync_Hook
-     (Data : Callback_Data'Class) return Hooks_Data'Class;
-   --  retrieve hook data from callback data
-
-   function From_Callback_Data_Server_Config_Changed_Hook
-     (Data : Callback_Data'Class) return Hooks_Data'Class;
-   --  retrieve hook data from callback data
 
    -------------
    -- Destroy --
@@ -144,109 +136,6 @@ package body GPS.Kernel.Remote is
       end loop;
    end Destroy;
 
-   ----------------------------------
-   -- From_Callback_Data_Sync_Hook --
-   ----------------------------------
-
-   function From_Callback_Data_Sync_Hook
-     (Data : Callback_Data'Class) return Hooks_Data'Class is
-   begin
-      declare
-         Tool_Name     : constant String       := Nth_Arg (Data, 2);
-         Host_Name     : constant String       := Nth_Arg (Data, 3);
-         To_Remote     : constant Boolean      := Nth_Arg (Data, 4);
-         Queue_Id      : constant String       := Nth_Arg (Data, 5);
-         Synchronous   : constant Boolean      := Nth_Arg (Data, 6);
-         Print_Output  : constant Boolean      := Nth_Arg (Data, 7);
-         Print_Command : constant Boolean      := Nth_Arg (Data, 8);
-         Force         : constant Boolean      := Nth_Arg (Data, 9);
-         File          : constant Virtual_File := Nth_Arg (Data, 10);
-
-      begin
-         return Rsync_Hooks_Args'
-           (Hooks_Data with
-            Tool_Name_Length => Tool_Name'Length,
-            Host_Name_Length => Host_Name'Length,
-            Queue_Id_Length  => Queue_Id'Length,
-            Tool_Name        => Tool_Name,
-            Host_Name        => Host_Name,
-            To_Remote        => To_Remote,
-            Queue_Id         => Queue_Id,
-            Synchronous      => Synchronous,
-            Print_Output     => Print_Output,
-            Print_Command    => Print_Command,
-            Force            => Force,
-            File             => File);
-      end;
-   end From_Callback_Data_Sync_Hook;
-
-   --------------------------
-   -- Create_Callback_Data --
-   --------------------------
-
-   overriding function Create_Callback_Data
-     (Script : access Scripting_Language_Record'Class;
-      Hook   : Hook_Name;
-      Data   : access Rsync_Hooks_Args)
-      return Callback_Data_Access
-   is
-      D : constant Callback_Data_Access :=
-            new Callback_Data'Class'(Create (Script, 11));
-   begin
-      Set_Nth_Arg (D.all,  1, To_String (Hook));
-      Set_Nth_Arg (D.all,  2, Data.Tool_Name);
-      Set_Nth_Arg (D.all,  3, Data.Host_Name);
-      Set_Nth_Arg (D.all,  4, Data.To_Remote);
-      Set_Nth_Arg (D.all,  5, Data.Queue_Id);
-      Set_Nth_Arg (D.all,  6, Data.Synchronous);
-      Set_Nth_Arg (D.all,  7, Data.Print_Output);
-      Set_Nth_Arg (D.all,  8, Data.Print_Command);
-      Set_Nth_Arg (D.all,  9, Data.Force);
-      Set_Nth_Arg (D.all, 10, Data.File);
-      return D;
-   end Create_Callback_Data;
-
-   ----------------------------------------------
-   -- From_Callback_Server_Config_Changed_Hook --
-   ----------------------------------------------
-
-   function From_Callback_Data_Server_Config_Changed_Hook
-     (Data : Callback_Data'Class) return Hooks_Data'Class
-   is
-      Server : Distant_Server_Type;
-   begin
-      Server  := Distant_Server_Type'Value (String'(Nth_Arg (Data, 2)));
-
-      declare
-         Nickname  : constant String := Nth_Arg (Data, 3);
-      begin
-         return Server_Config_Changed_Hooks_Args'
-           (Hooks_Data with
-            Nickname_Length => Nickname'Length,
-            Server          => Server,
-            Nickname        => Nickname);
-      end;
-   end From_Callback_Data_Server_Config_Changed_Hook;
-
-   ---------------------------
-   -- Create_Callbackc_Data --
-   ---------------------------
-
-   overriding function Create_Callback_Data
-     (Script : access Scripting_Language_Record'Class;
-      Hook   : Hook_Name;
-      Data   : access Server_Config_Changed_Hooks_Args)
-      return Callback_Data_Access
-   is
-      D : constant Callback_Data_Access :=
-            new Callback_Data'Class'(Create (Script, 3));
-   begin
-      Set_Nth_Arg (D.all, 1, To_String (Hook));
-      Set_Nth_Arg (D.all, 2, Distant_Server_Type'Image (Data.Server));
-      Set_Nth_Arg (D.all, 3, Data.Nickname);
-      return D;
-   end Create_Callback_Data;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -254,26 +143,6 @@ package body GPS.Kernel.Remote is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      --  Register synchronisation hook
-      Register_Hook_Data_Type
-        (Kernel, Rsync_Hook_Type,
-         Args_Creator => From_Callback_Data_Sync_Hook'Access);
-      Register_Hook_Return_Boolean
-        (Kernel, Rsync_Action_Hook, Rsync_Hook_Type);
-
-      Register_Hook_No_Args (Kernel, Rsync_Finished_Hook);
-
-      --  Register server config changed hook
-      Register_Hook_Data_Type
-        (Kernel, Server_Config_Changed_Hook_Type,
-         Args_Creator => From_Callback_Data_Server_Config_Changed_Hook'Access);
-      Register_Hook_No_Return
-        (Kernel, Server_Config_Changed_Hook, Server_Config_Changed_Hook_Type);
-
-      --  Register build server connected hook
-      Register_Hook_No_Args
-        (Kernel, Build_Server_Connected_Hook);
-
       --  Register the module
       Remote_Module := new Remote_Module_Record;
       Remote_Module.Kernel := Kernel_Handle (Kernel);
@@ -281,9 +150,7 @@ package body GPS.Kernel.Remote is
       Register_Module (Remote_Module, Kernel, "remote");
 
       --  Connect to project_changing hook
-      Add_Hook
-        (Kernel, Project_Changing_Hook,
-         Wrapper (On_Project_Changing'Access), "gps.kernel.remote");
+      Project_Changing_Hook.Add (new On_Project_Changing);
    end Register_Module;
 
    ----------
@@ -346,15 +213,16 @@ package body GPS.Kernel.Remote is
       end if;
    end Load;
 
-   ------------------------
-   -- On_Project_Changed --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Changing
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : GNATCOLL.VFS.Virtual_File)
    is
-      D          : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Property   : Servers_Property;
       Prop       : Property_Access;
       Success    : Boolean;
@@ -368,10 +236,10 @@ package body GPS.Kernel.Remote is
 
       --  Get local file equivalence for project
 
-      if not Is_Local (D.File) then
-         Local_File := To_Local (D.File);
+      if not Is_Local (File) then
+         Local_File := To_Local (File);
       else
-         Local_File := D.File;
+         Local_File := File;
       end if;
 
       --  Get servers associated with this file
@@ -386,11 +254,11 @@ package body GPS.Kernel.Remote is
       if not Success then
          Trace (Me, "Property servers_config does not exist. Create it");
 
-         if not Is_Local (D.File) then
+         if not Is_Local (File) then
             for J in Property.Servers'Range loop
                Property.Servers (J) :=
                  (Is_Local => False,
-                  Nickname => new String'(Get_Host (D.File)));
+                  Nickname => new String'(Get_Host (File)));
             end loop;
 
          else
@@ -416,32 +284,22 @@ package body GPS.Kernel.Remote is
          if not Is_Local (J)
            and then Property.Servers (J).Nickname.all = Local_Nickname
          then
-            declare
-               Hook_Data : aliased Server_Config_Changed_Hooks_Args :=
-                 (Hooks_Data with
-                  Nickname_Length => Local_Nickname'Length,
-                  Server          => J,
-                  Nickname        => Local_Nickname);
-            begin
-               Assign (J, Local_Nickname);
-               Run_Hook (Kernel, Server_Config_Changed_Hook,
-                         Hook_Data'Unchecked_Access);
-            end;
+            Assign (J, Local_Nickname);
+            Server_Config_Hook.Run
+               (Kernel   => Kernel,
+                Server   => J,
+                Nickname => Local_Nickname);
 
          elsif Property.Servers (J).Nickname.all /= Get_Nickname (J) then
             declare
                Nickname  : constant String :=
                              Property.Servers (J).Nickname.all;
-               Hook_Data : aliased Server_Config_Changed_Hooks_Args :=
-                             (Hooks_Data with
-                              Nickname_Length => Nickname'Length,
-                              Server          => J,
-                              Nickname        => Nickname);
-
             begin
                Assign (J, Nickname);
-               Run_Hook (Kernel, Server_Config_Changed_Hook,
-                         Hook_Data'Unchecked_Access);
+               Server_Config_Hook.Run
+                  (Kernel   => Kernel,
+                   Server   => J,
+                   Nickname => Nickname);
             end;
          end if;
       end loop;
@@ -449,13 +307,13 @@ package body GPS.Kernel.Remote is
       --  If Project is loaded from a distant host, force build_server as
       --  distant host.
 
-      if not Is_Local (D.File)
-        and then Get_Host (D.File) /= Get_Nickname (Build_Server)
+      if not Is_Local (File)
+        and then Get_Host (File) /= Get_Nickname (Build_Server)
       then
          Trace (Me, "Assign build server: project loaded from remote host");
          Assign (Kernel_Handle (Kernel),
                  Build_Server,
-                 Get_Host (D.File),
+                 Get_Host (File),
                  Local_File,
                  Reload_Prj => False);
       end if;
@@ -463,7 +321,7 @@ package body GPS.Kernel.Remote is
       --  If project is loaded from distant host then synchronize all dirs to
       --  local machine
 
-      if not Is_Local (D.File) then
+      if not Is_Local (File) then
          Trace (Me, "Start synchronization of build_server");
          Synchronize
            (Kernel_Handle (Kernel), Build_Server, GPS_Server,
@@ -472,10 +330,7 @@ package body GPS.Kernel.Remote is
             Print_Output  => False,
             Force         => True);
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Project_Changing;
+   end Execute;
 
    -------------------
    -- Reload_Prj_Cb --
@@ -597,11 +452,6 @@ package body GPS.Kernel.Remote is
       Prj_File   : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Reload_Prj : Boolean := False)
    is
-      Data       : aliased Server_Config_Changed_Hooks_Args :=
-                     (Hooks_Data with
-                      Nickname_Length => Nickname'Length,
-                      Server          => Server,
-                      Nickname        => Nickname);
       Timeout    : constant Guint := 50;
       Id         : G_Source_Id;
       Load_Data  : Reload_Callback_Data;
@@ -659,10 +509,13 @@ package body GPS.Kernel.Remote is
 
       if Active (Me) then
          Trace (Me, "run server_changed hook for " &
-                Server_Type'Image (Server) & " => " & Data.Nickname);
+                Server_Type'Image (Server) & " => " & Nickname);
       end if;
 
-      Run_Hook (Kernel, Server_Config_Changed_Hook, Data'Unchecked_Access);
+      Server_Config_Hook.Run
+         (Kernel   => Kernel,
+          Server   => Server,
+          Nickname => Nickname);
    end Assign;
 
    ----------------------
@@ -755,42 +608,29 @@ package body GPS.Kernel.Remote is
          Trace (Me, "Synchronizing paths to " & To);
       end if;
 
-      declare
-         Data : aliased Rsync_Hooks_Args :=
-                  (Hooks_Data with
-                   Tool_Name_Length => Machine.Rsync_Func'Length,
-                   Host_Name_Length => Machine.Nickname'Length,
-                   Queue_Id_Length  => The_Queue_Id'Length,
-                   Tool_Name        => Machine.Rsync_Func,
-                   Host_Name        => Machine.Nickname,
-                   To_Remote        => Remote_Is_Dest,
-                   Queue_Id         => The_Queue_Id,
-                   Synchronous      => Blocking,
-                   Print_Output     => Print_Output,
-                   Print_Command    => Print_Command,
-                   Force            => Force,
-                   File             => File);
+      Trace (Me, "run sync hook for " & Machine.Nickname);
 
-      begin
-         Trace
-           (Me, "run sync hook for " & Data.Host_Name);
+      if not Rsync_Action_Hook.Run
+         (Kernel        => Kernel,
+          Tool_Name     => Machine.Rsync_Func,
+          Host_Name     => Machine.Nickname,
+          To_Remote     => Remote_Is_Dest,
+          Queue_Id      => The_Queue_Id,
+          Synchronous   => Blocking,
+          Print_Output  => Print_Output,
+          Print_Command => Print_Command,
+          Force         => Force,
+          File          => File)
+      then
+         Kernel.Insert
+           (Machine.Rsync_Func & (-" failure: ") &
+            (-"Please verify your network configuration"),
+            Mode => Error);
 
-         if not Run_Hook_Until_Success
-           (Kernel, Rsync_Action_Hook, Data'Unchecked_Access)
-         then
-            Kernel.Insert
-              (Machine.Rsync_Func & (-" failure: ") &
-               (-"Please verify your network configuration"),
-               Mode => Error);
-
-            Trace (Me, "No remote sync was registered or errors during" &
-                   " calls");
-            return;
-         end if;
-
-      exception
-         when E : others => Trace (Me, E);
-      end;
+         Trace (Me, "No remote sync was registered or errors during" &
+                " calls");
+         return;
+      end if;
    end Synchronize;
 
    -----------------
@@ -885,7 +725,7 @@ package body GPS.Kernel.Remote is
       procedure On_New_Connection (Server_Name : String) is
       begin
          if Server_Name = Get_Nickname (Build_Server) then
-            Run_Hook (Kernel, Build_Server_Connected_Hook);
+            Build_Server_Connected_Hook.Run (Kernel);
          end if;
       end On_New_Connection;
 

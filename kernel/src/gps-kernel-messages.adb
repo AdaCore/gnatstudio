@@ -19,7 +19,6 @@ with Ada.Containers;                use Ada.Containers;
 with Ada.Strings.Fixed.Hash;        use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
 with Ada.Tags;                      use Ada.Tags;
-with Ada.Unchecked_Conversion;
 
 with Glib.Convert;
 
@@ -33,7 +32,6 @@ with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Project;            use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks;     use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Style_Manager;      use GPS.Kernel.Style_Manager;
 with GPS.Intl;                      use GPS.Intl;
 with Projects;                      use Projects;
@@ -50,22 +48,30 @@ package body GPS.Kernel.Messages is
    use Note_Maps;
    use Sort_Order_Hint_Maps;
 
-   procedure On_Project_Changed_Hook
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Reset Messages_Loaded flag
 
-   procedure On_Project_View_Changed_Hook
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_Project_View_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Loads data for opened project.
 
-   procedure On_Project_Changing_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Project_Changing is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Save messages and clears messages container.
 
-   procedure On_File_Renamed_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Renamed is new File2_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File, Renamed : Virtual_File);
    --  React to a file renaming
 
    function Get_Flags (Node : not null Node_Access) return Message_Flags;
@@ -227,37 +233,15 @@ package body GPS.Kernel.Messages is
    is
       Result : constant Messages_Container_Access :=
                  new Messages_Container (Kernel);
-
    begin
-      --  Register simple message load/save procedures
-
       GPS.Kernel.Messages.Simple.Register (Result);
       GPS.Kernel.Messages.Hyperlink.Register (Result);
       GPS.Kernel.Messages.Markup.Register (Result);
 
-      --  Setup "project_changing" and "project_changed" hook
-
-      Add_Hook
-        (Kernel,
-         Project_Changing_Hook,
-         Wrapper (On_Project_Changing_Hook'Access),
-         "messages_container.project_changing");
-      Add_Hook
-        (Kernel,
-         Project_Changed_Hook,
-         Wrapper (On_Project_Changed_Hook'Access),
-         "messages_container.project_changed");
-      Add_Hook
-        (Kernel,
-         Project_View_Changed_Hook,
-         Wrapper (On_Project_View_Changed_Hook'Access),
-         "messages_container.project_view_changed");
-
-      Add_Hook
-        (Kernel,
-         File_Renamed_Hook,
-         Wrapper (On_File_Renamed_Hook'Access),
-         "messages_container.file_renamed");
+      Project_Changing_Hook.Add (new On_Project_Changing);
+      Project_Changed_Hook.Add (new On_Project_Changed);
+      Project_View_Changed_Hook.Add (new On_Project_View_Changed);
+      File_Renamed_Hook.Add (new On_File_Renamed);
 
       return To_Address (Result);
    end Create_Messages_Container;
@@ -1424,26 +1408,30 @@ package body GPS.Kernel.Messages is
       end Notify_Listeners_About_Message_Removed;
    end Notifiers;
 
-   -----------------------------
-   -- On_Project_Changed_Hook --
-   -----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Changed_Hook
-     (Kernel : access Kernel_Handle_Record'Class)
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Self);
       Container : constant Messages_Container_Access :=
                     Get_Messages_Container (Kernel);
    begin
       Container.Messages_Loaded := False;
-   end On_Project_Changed_Hook;
+   end Execute;
 
-   ----------------------------------
-   -- On_Project_View_Changed_Hook --
-   ----------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_View_Changed_Hook
-     (Kernel : access Kernel_Handle_Record'Class)
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Self);
       Container : constant Messages_Container_Access :=
                     Get_Messages_Container (Kernel);
 
@@ -1455,44 +1443,37 @@ package body GPS.Kernel.Messages is
          Container.Load (Allow_Auto_Jump_To_First => False);
          Container.Messages_Loaded := True;
       end if;
-   end On_Project_View_Changed_Hook;
+   end Execute;
 
-   ------------------------------
-   -- On_Project_Changing_Hook --
-   ------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Changing_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      pragma Unreferenced (Data);
-
+      pragma Unreferenced (Self, File);
       Container : constant Messages_Container_Access :=
                     Get_Messages_Container (Kernel);
-
    begin
-      --  Save messages for current project
-
       Container.Save;
-
-      --  Clear container.
-
       Container.Clear;
-   end On_Project_Changing_Hook;
+   end Execute;
 
-   --------------------------
-   -- On_File_Renamed_Hook --
-   --------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_File_Renamed_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File, Renamed : Virtual_File)
    is
-      File : constant Virtual_File := Files_2_Hooks_Args (Data.all).File;
-
+      pragma Unreferenced (Self, Renamed);
       Container : constant Messages_Container_Access :=
         Get_Messages_Container (Kernel);
-
       Categories : constant Unbounded_String_Array :=
         Get_Categories (Container);
       Category_Position : Category_Maps.Cursor;
@@ -1522,7 +1503,7 @@ package body GPS.Kernel.Messages is
             end if;
          end if;
       end loop;
-   end On_File_Renamed_Hook;
+   end Execute;
 
    -----------------------
    -- Register_Listener --
@@ -1685,7 +1666,10 @@ package body GPS.Kernel.Messages is
       if File_Node.Children.Is_Empty then
          --  Delete file's node
 
-         Category_Node.File_Map.Delete (File_Position);
+         if Has_Element (File_Position) then
+            Category_Node.File_Map.Delete (File_Position);
+         end if;
+
          Category_Node.Children.Delete (File_Index);
          Free (File_Node);
 

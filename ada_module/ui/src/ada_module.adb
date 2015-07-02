@@ -61,9 +61,11 @@ package body Ada_Module is
    Ada_Indent_Comments       : Boolean_Preference;
    Ada_Stick_Comments        : Boolean_Preference;
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
    --  Called when the preferences have changed
 
    function Naming_Scheme_Editor
@@ -72,15 +74,16 @@ package body Ada_Module is
       (new Ada_Naming_Editor_Record);
    --  Create the naming scheme editor page
 
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Self, Kernel, Pref);
    begin
       Set_Indentation_Parameters
         (Ada_Lang,
@@ -102,7 +105,7 @@ package body Ada_Module is
             Align_Decl_On_Colon => Ada_Align_Decl_On_Colon.Get_Pref,
             Indent_Comments     => Ada_Indent_Comments.Get_Pref,
             Stick_Comments      => Ada_Stick_Comments.Get_Pref));
-   end On_Preferences_Changed;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -280,11 +283,7 @@ package body Ada_Module is
            "'is' keywords immediately with no extra space"),
          Label   => -"Align comments on keywords");
 
-      Add_Hook
-        (Kernel, Preference_Changed_Hook,
-         Wrapper (On_Preferences_Changed'Access),
-         "ada_module_preferences_changed");
-      On_Preferences_Changed (Kernel, null);
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
 
       Register_Naming_Scheme_Editor
         (Kernel, "Ada", Naming_Scheme_Editor'Access);

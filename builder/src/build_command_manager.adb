@@ -25,7 +25,6 @@ with GPS.Kernel.Messages;         use GPS.Kernel.Messages;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                    use GPS.Intl;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
@@ -112,16 +111,9 @@ package body Build_Command_Manager is
          declare
             Targets : constant Unbounded_String :=
               Get_Properties (Target).Target_Type;
-            Data   : aliased String_Hooks_Args :=
-              (Hooks_Data with
-               Length => Length (Targets),
-               Value  => To_String (Targets));
-            Mains  : constant Any_Type :=
-              Run_Hook_Until_Not_Empty
-                (Kernel,
-                 Compute_Build_Targets_Hook,
-                 Data'Unchecked_Access);
-
+            Mains  : constant Any_Type := Compute_Build_Targets_Hook.Run
+               (Kernel   => Kernel,
+                Str      => To_String (Targets));
          begin
             if Mains.Length = 0 then
                return No_File;
@@ -133,7 +125,6 @@ package body Build_Command_Manager is
                               (+Mains.List (1).Tuple (2).Str);
             begin
                Set_Last_Main (Adapter.Builder, Get_Name (Target), The_Main);
-
                return The_Main;
             end;
          end;
@@ -331,15 +322,9 @@ package body Build_Command_Manager is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Target_Type : constant String := To_String (Command.Target_Type);
-      Data        : aliased String_Hooks_Args :=
-                      (Hooks_Data with
-                       Length => Target_Type'Length,
-                       Value  => Target_Type);
-      Mains       : Any_Type := Run_Hook_Until_Not_Empty
-        (Kernel_Handle (Command.Builder.Kernel),
-         Compute_Build_Targets_Hook,
-         Data'Unchecked_Access);
-
+      Mains       : Any_Type := Compute_Build_Targets_Hook.Run
+         (Kernel => Kernel_Handle (Command.Builder.Kernel),
+          Str    => Target_Type);
    begin
       if Mains.T /= List_Type then
          Insert

@@ -200,9 +200,12 @@ package body Toolchains_Editor is
       User_Data : Tool_Callback_User_Object);
    --  Executed when the reset button is clicked
 
-   procedure On_Server_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Server_Changed is new Server_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self     : On_Server_Changed;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Server   : Distant_Server_Type;
+      Nickname : String);
    --  Called when a file has been modified
 
    function Get_Or_Create_Manager
@@ -1544,26 +1547,26 @@ package body Toolchains_Editor is
       end if;
    end Execute;
 
-   -----------------------
-   -- On_Server_Changed --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Server_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self     : On_Server_Changed;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Server   : Distant_Server_Type;
+      Nickname : String)
    is
-      Hook_Data  : constant Server_Config_Changed_Hooks_Args :=
-                     Server_Config_Changed_Hooks_Args (Data.all);
+      pragma Unreferenced (Self, Nickname);
       Kernel_Mgr : Toolchain_Manager := Kernel.Get_Toolchains_Manager;
-
    begin
-      if Hook_Data.Server = Build_Server and then Kernel_Mgr /= null then
+      if Server = Build_Server and then Kernel_Mgr /= null then
          Kernel_Mgr.Clear_Toolchains;
          Free (Kernel_Mgr);
          Kernel_Mgr := new GPS_Toolchain_Manager_Record;
          Kernel.Set_Toolchains_Manager (Kernel_Mgr);
       end if;
-   end On_Server_Changed;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -1581,10 +1584,7 @@ package body Toolchains_Editor is
 
       Kernel.Set_Toolchains_Manager (new GPS_Toolchain_Manager_Record);
 
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel, GPS.Kernel.Remote.Server_Config_Changed_Hook,
-         Wrapper (On_Server_Changed'Access),
-         Name  => "toolchains_editor.on_server_changed");
+      Server_Config_Hook.Add (new On_Server_Changed);
    end Register_Module;
 
    ---------------

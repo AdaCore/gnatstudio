@@ -41,7 +41,6 @@ with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
-with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Properties;                   use GPS.Properties;
 with XML_Utils;                        use XML_Utils;
@@ -375,7 +374,7 @@ package body GPS.Kernel.Project is
       --  refresh it immediately.
       Self.Handle.Refresh_Context;
 
-      Run_Hook (Self.Handle, Project_View_Changed_Hook);
+      Project_View_Changed_Hook.Run (Self.Handle);
    end Recompute_View;
 
    --------------------
@@ -479,7 +478,7 @@ package body GPS.Kernel.Project is
 
       Kernel.Registry.Tree.Load_Empty_Project
         (Kernel.Registry.Environment, Recompute_View => False);
-      Run_Hook (Kernel, Project_Changed_Hook);
+      Project_Changed_Hook.Run (Kernel);
       Recompute_View (Kernel);   --  also resets the xref database.
 
       Ignore := Load_Desktop (Kernel);
@@ -528,10 +527,10 @@ package body GPS.Kernel.Project is
       end;
 
       if Reloaded then
-         Run_Hook (Kernel, Project_Changed_Hook);
+         Project_Changed_Hook.Run (Kernel);
 
          if Recompute_View then
-            Run_Hook (Kernel, Project_View_Changed_Hook);
+            Project_View_Changed_Hook.Run (Kernel);
          end if;
       end if;
    end Reload_Project_If_Needed;
@@ -571,11 +570,9 @@ package body GPS.Kernel.Project is
       Ignore : Boolean;
       pragma Unreferenced (Ignore);
       New_Project_Loaded  : Boolean;
-      Data                : aliased File_Hooks_Args;
-
-      Same_Project     : Boolean;
-      Local_Project    : GNATCOLL.VFS.Virtual_File;
-      Previous_Project : Virtual_File;
+      Same_Project        : Boolean;
+      Local_Project       : GNATCOLL.VFS.Virtual_File;
+      Previous_Project    : Virtual_File;
 
    begin
       Increase_Indent (Me, "Load_Project " & Project.Display_Full_Name);
@@ -636,8 +633,7 @@ package body GPS.Kernel.Project is
       end if;
 
       if Is_Regular_File (Project) then
-         Data.File := Project;
-         Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
+         Project_Changing_Hook.Run (Kernel, Project);
 
          if not Is_Local (Project) then
             Trace (Me, "Converting to Local Project");
@@ -656,8 +652,7 @@ package body GPS.Kernel.Project is
                   Mode => Error, Add_LF => False);
 
                --  Need to run Project_Changing hook to reset build_server
-               Data.File := Previous_Project;
-               Run_Hook (Kernel, Project_Changing_Hook, Data'Unchecked_Access);
+               Project_Changing_Hook.Run (Kernel, Previous_Project);
 
                Ignore := Load_Desktop (Kernel);
                Decrease_Indent (Me);
@@ -738,7 +733,7 @@ package body GPS.Kernel.Project is
             Get_Registry (Kernel).Tree.Set_Status (Default);
          end if;
 
-         Run_Hook (Kernel, Project_Changed_Hook);
+         Project_Changed_Hook.Run (Kernel);
 
          --  Make sure the subdirs is correctly set for objects
          Kernel.Set_Build_Mode (Kernel.Get_Build_Mode);
@@ -829,7 +824,7 @@ package body GPS.Kernel.Project is
       --  ??? Probably not very efficient, however.
 
       if Modified then
-         Run_Hook (Kernel, Project_View_Changed_Hook);
+         Project_View_Changed_Hook.Run (Kernel);
       end if;
 
       return Result;
@@ -859,11 +854,9 @@ package body GPS.Kernel.Project is
          Result := False;
       end Report_Error;
 
-      Data : aliased Project_Hooks_Args :=
-               (Hooks_Data with Project => Project);
    begin
       if Project.Save (Errors => Report_Error'Unrestricted_Access) then
-         Run_Hook (Kernel, Project_Saved_Hook, Data'Access);
+         Project_Saved_Hook.Run (Kernel, Project => Project);
       end if;
 
       return Result;

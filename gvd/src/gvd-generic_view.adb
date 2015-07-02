@@ -17,8 +17,6 @@
 
 with Glib;                use Glib;
 with Glib.Object;         use Glib.Object;
-with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
 with GPS.Intl;            use GPS.Intl;
 with Gtk.Widget;          use Gtk.Widget;
@@ -111,15 +109,17 @@ package body GVD.Generic_View is
          when E : others => Trace (Me, E);
       end On_Destroy;
 
-      ---------------------------
-      -- On_Debugger_Terminate --
-      ---------------------------
+      -------------
+      -- Execute --
+      -------------
 
-      procedure On_Debugger_Terminate
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      overriding procedure Execute
+         (Self     : On_Debugger_Terminate;
+          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+          Debugger : access Base_Visual_Debugger'Class)
       is
-         P : constant Visual_Debugger := Get_Process (Data);
+         pragma Unreferenced (Self);
+         P : constant Visual_Debugger := Visual_Debugger (Debugger);
          V : constant Formal_View_Access := Formal_View_Access (Get_View (P));
       begin
          Trace (Me, "On_Debugger_Terminate, closing view " & Module_Name);
@@ -146,10 +146,7 @@ package body GVD.Generic_View is
             end if;
          end if;
          Trace (Me, "On_Debugger_Terminate, done closing view " & Module_Name);
-
-      exception
-         when E : others => Trace (Me, E);
-      end On_Debugger_Terminate;
+      end Execute;
 
       --------------------
       -- Attach_To_View --
@@ -275,77 +272,68 @@ package body GVD.Generic_View is
          Focus_Widget : Gtk_Widget;
       begin
          Focus_Widget := Initialize (View, View.Kernel);
-         Add_Hook
-           (View.Kernel,
-            Hook  => Debugger_Terminated_Hook,
-            Func  => Wrapper (On_Debugger_Terminate'Unrestricted_Access),
-            Name  => "terminate_" & Module_Name,
-            Watch => GObject (View));
+         Debugger_Terminated_Hook.Add
+            (new On_Debugger_Terminate, Watch => View);
          return Focus_Widget;
       end Local_Initialize;
 
-      ---------------
-      -- On_Update --
-      ---------------
+      -------------
+      -- Execute --
+      -------------
 
-      procedure On_Update
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      overriding procedure Execute
+        (Self     : On_Update;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access Base_Visual_Debugger'Class)
       is
-         pragma Unreferenced (Kernel);
-         Process : constant Visual_Debugger := Get_Process (Data);
+         pragma Unreferenced (Self, Kernel);
+         Process : constant Visual_Debugger := Visual_Debugger (Debugger);
          View    : constant Formal_View_Access :=
                      Formal_View_Access (Get_View (Process));
       begin
          if View /= null then
             Update (View);
          end if;
+      end Execute;
 
-      exception
-         when E : others => Trace (Me, E);
-      end On_Update;
+      -------------
+      -- Execute --
+      -------------
 
-      -------------------
-      -- State_Changed --
-      -------------------
-
-      procedure State_Changed
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      overriding procedure Execute
+        (Self      : On_Debugger_State_Changed;
+         Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger  : access Base_Visual_Debugger'Class;
+         New_State : Debugger_State)
       is
-         pragma Unreferenced (Kernel);
-         Process : constant Visual_Debugger := Get_Process (Data);
+         pragma Unreferenced (Self, Kernel);
+         Process : constant Visual_Debugger := Visual_Debugger (Debugger);
          View    : constant Formal_View_Access :=
                      Formal_View_Access (Get_View (Process));
       begin
          if View /= null then
-            On_State_Changed (View, Get_State (Data));
+            On_State_Changed (View, New_State);
          end if;
+      end Execute;
 
-      exception
-         when E : others => Trace (Me, E);
-      end State_Changed;
+      -------------
+      -- Execute --
+      -------------
 
-      ------------------------
-      -- Process_Terminated --
-      ------------------------
-
-      procedure Process_Terminated
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+      overriding procedure Execute
+         (Self     : On_Debug_Process_Terminated;
+          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+          Debugger : access Base_Visual_Debugger'Class)
       is
-         pragma Unreferenced (Kernel);
-         Process : constant Visual_Debugger := Get_Process (Data);
+         pragma Unreferenced (Self, Kernel);
+         Process : constant Visual_Debugger := Visual_Debugger (Debugger);
          View    : constant Formal_View_Access :=
                      Formal_View_Access (Get_View (Process));
       begin
          if View /= null then
             On_Process_Terminated (View);
          end if;
-
-      exception
-         when E : others => Trace (Me, E);
-      end Process_Terminated;
+      end Execute;
 
       --------------------------------
       -- Register_Desktop_Functions --
@@ -356,18 +344,11 @@ package body GVD.Generic_View is
       is
       begin
          Views.Register_Module (Kernel);
-         Add_Hook (Kernel, Debugger_Process_Stopped_Hook,
-                   Wrapper (On_Update'Unrestricted_Access),
-                   Name => Module_Name & ".process_stopped");
-         Add_Hook (Kernel, Debugger_Context_Changed_Hook,
-                   Wrapper (On_Update'Unrestricted_Access),
-                   Name => Module_Name & ".context_changed");
-         Add_Hook (Kernel, Debugger_State_Changed_Hook,
-                   Wrapper (State_Changed'Unrestricted_Access),
-                   Name => Module_Name & ".state_changed");
-         Add_Hook (Kernel, Debugger_Process_Terminated_Hook,
-                   Wrapper (Process_Terminated'Unrestricted_Access),
-                   Name => Module_Name & ".process_terminated");
+         Debugger_Process_Stopped_Hook.Add (new On_Update);
+         Debugger_Context_Changed_Hook.Add (new On_Update);
+         Debugger_State_Changed_Hook.Add (new On_Debugger_State_Changed);
+         Debugger_Process_Terminated_Hook.Add
+            (new On_Debug_Process_Terminated);
       end Register_Desktop_Functions;
 
    end Simple_Views;

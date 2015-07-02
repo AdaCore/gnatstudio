@@ -20,7 +20,6 @@
 with Generic_Views;
 with GVD.Generic_View;
 with GVD.Process;          use GVD.Process;
-with GVD.Scripts;          use GVD.Scripts;
 with GVD_Module;           use GVD_Module;
 with Interactive_Consoles; use Interactive_Consoles;
 

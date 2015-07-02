@@ -22,11 +22,11 @@ with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 
 with GVD_Module;            use GVD_Module;
-with GVD.Scripts;           use GVD.Scripts;
 with GVD.Process;           use GVD.Process;
 with GVD.Types;             use GVD.Types;
 with Debugger;              use Debugger;
 with Process_Proxies;       use Process_Proxies;
+with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
 with GPS.Intl;              use GPS.Intl;
@@ -131,7 +131,7 @@ package body GPS.Main_Window.Debug is
       --  This test should also go when we use a debugger_switch signal.
 
       if not Command_In_Process (Get_Process (Process.Debugger)) then
-         Run_Debugger_Hook (Process, GVD.Debugger_Executable_Changed_Hook);
+         Debugger_Executable_Changed_Hook.Run (Process.Kernel, Process);
       end if;
 
       --  Update the sensitivity of the Data/Protection Domains menu

@@ -40,13 +40,11 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
 with Glib_String_Utils;         use Glib_String_Utils;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
@@ -57,7 +55,6 @@ with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 package body VCS_View.Explorer is
-   Me : constant Trace_Handle := Create ("VCS.EXPLORER");
 
    --------------------
    -- Local packages --
@@ -120,14 +117,13 @@ package body VCS_View.Explorer is
       Index    : Natural);
    --  Callback for activation of each filter
 
-   type File_Hook_Record is new Function_With_Args with record
+   type On_File_Edited is new File_Hooks_Function with record
       Explorer : VCS_Explorer_View_Access;
    end record;
-   type File_Hook is access all File_Hook_Record'Class;
    overriding procedure Execute
-     (Hook      : File_Hook_Record;
-      Kernel    : access Kernel_Handle_Record'Class;
-      File_Data : access Hooks_Data'Class);
+     (Self      : On_File_Edited;
+      Kernel    : not null access Kernel_Handle_Record'Class;
+      File      : Virtual_File);
    --  Callback for the "file_edited" signal
 
    procedure Contextual_Menu_Factory
@@ -546,7 +542,7 @@ package body VCS_View.Explorer is
       Status_Temp       : File_Status_List.List_Node;
       Sort_Id           : Gint;
 
-      Up_To_Date_Status : VCS.File_Status;
+      Up_To_Date_Status : VCS_File_Status;
       Filter_Status     : Status_Array_Access :=
                             Get (Explorer.Status, Name (VCS_Identifier));
 
@@ -973,33 +969,29 @@ package body VCS_View.Explorer is
    -------------
 
    overriding procedure Execute
-     (Hook      : File_Hook_Record;
-      Kernel    : access Kernel_Handle_Record'Class;
-      File_Data : access Hooks_Data'Class)
+     (Self      : On_File_Edited;
+      Kernel    : not null access Kernel_Handle_Record'Class;
+      File      : Virtual_File)
    is
-      D        : constant File_Hooks_Args := File_Hooks_Args (File_Data.all);
-      Log_Name : constant String := +Full_Name (D.File);
+      Log_Name : constant String := +Full_Name (File);
       Line     : Line_Record;
    begin
       if Log_Name'Length > 4
         and then Log_Name (Log_Name'Last - 3 .. Log_Name'Last) = "$log"
       then
          declare
-            File : constant Virtual_File :=
-                     Get_File_From_Log (Kernel, D.File);
+            F : constant Virtual_File := Get_File_From_Log (Kernel, File);
          begin
-            Line := Get_Cache (Get_Status_Cache, File);
+            Line := Get_Cache (Get_Status_Cache, F);
 
             if Line /= No_Data then
                Line.Log := True;
-               Set_Cache (Get_Status_Cache, File, Line);
+               Set_Cache (Get_Status_Cache, F, Line);
             end if;
 
-            Refresh (Hook.Explorer);
+            Refresh (Self.Explorer);
          end;
       end if;
-   exception
-      when E : others => Trace (Me, E);
    end Execute;
 
    -------------------
@@ -1008,9 +1000,7 @@ package body VCS_View.Explorer is
 
    overriding procedure Do_Initialize
      (Explorer : access VCS_Explorer_View_Record;
-      Kernel   : Kernel_Handle)
-   is
-      Hook : File_Hook;
+      Kernel   : Kernel_Handle) is
    begin
       Setup_Contextual_Menu
         (Kernel,
@@ -1019,12 +1009,11 @@ package body VCS_View.Explorer is
 
       Set_Column_Types (Explorer);
 
-      Hook := new File_Hook_Record'
-        (Function_With_Args
-         with Explorer => VCS_Explorer_View_Access (Explorer));
-      Add_Hook (Kernel, File_Edited_Hook, Hook,
-                Name => "vcs_view.file_edited",
-                Watch => GObject (Explorer));
+      File_Edited_Hook.Add
+         (new On_File_Edited'
+             (File_Hooks_Function with
+              Explorer => VCS_Explorer_View_Access (Explorer)),
+          Watch => Explorer);
    end Do_Initialize;
 
    ------------------------

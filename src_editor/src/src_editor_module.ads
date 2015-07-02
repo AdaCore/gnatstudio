@@ -26,7 +26,6 @@ with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
 with GPS.Kernel.Style_Manager;    use GPS.Kernel.Style_Manager;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel;                  use GPS.Kernel;
@@ -282,18 +281,7 @@ private
    -- Source_Editor_Module --
    --------------------------
 
-   type Lines_Revealed_Hook_Record is new GPS.Kernel.Hooks.Function_With_Args
-      with null record;
-   type Lines_Revealed_Hook is access Lines_Revealed_Hook_Record'Class;
-   overriding procedure Execute
-     (Hook   : Lines_Revealed_Hook_Record;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
-   --  Hook called when the "source_lines_revealed" hook is run
-
    type Source_Editor_Module_Record is new Module_ID_Record with record
-      Lines_Hook            : Lines_Revealed_Hook;
-
       Font                  : Pango.Font.Pango_Font_Description;
       Display_Line_Numbers  : Boolean    := False;
       Character_Width       : Gint := 0;

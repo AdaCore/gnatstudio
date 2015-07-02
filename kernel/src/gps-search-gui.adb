@@ -45,7 +45,6 @@ with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Search;        use GPS.Kernel.Search;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Search.Actions;
 with GPS.Kernel.Search.Filenames;
@@ -183,9 +182,11 @@ package body GPS.Search.GUI is
    Case_Sensitive : constant Flags := 8;
    Whole_Word     : constant Flags := 16;
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences change
 
    function Create_Search_Instance
@@ -796,16 +797,16 @@ package body GPS.Search.GUI is
       end loop;
    end Edit_Settings;
 
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Kernel);
-      Pref : constant Preference := Get_Pref (Data);
+      pragma Unreferenced (Self, Kernel);
    begin
       if Pref = null
         or else Pref = Preference (Pref_Provider_Order)
@@ -865,7 +866,7 @@ package body GPS.Search.GUI is
             Registry.Sort_Providers;
          end;
       end if;
-   end On_Preferences_Changed;
+   end Execute;
 
    ----------------------------
    -- Create_Search_Instance --
@@ -1485,9 +1486,7 @@ package body GPS.Search.GUI is
       Widget_Callback.Connect
          (Module.Search, Signal_Activate, On_Activate'Access);
 
-      Add_Hook (Kernel, Preference_Changed_Hook,
-                Wrapper (On_Preferences_Changed'Access),
-                Name => "search.preferences_changed");
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
 
       Register_Command
         (Kernel.Scripts, Constructor_Method,

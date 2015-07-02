@@ -122,7 +122,7 @@ package body VCS_Status is
       Ref    : VCS_Access;
       Status : Status_Id) return Boolean
    is
-      S : constant File_Status := Get_File_Status (Ref, Status);
+      S : constant VCS_File_Status := Get_File_Status (Ref, Status);
       L : constant Line_Record := Status_Hash.Get (Cache.T.all, File).LR;
    begin
       if L /= No_Data

@@ -223,14 +223,13 @@ package body Interactive_Consoles is
    pragma Inline (Replace_Zeros);
    --  Replace ASCII.NULs in S.
 
-   type Preferences_Hook_Record is new Function_With_Args with record
-      Console : Interactive_Console;
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
+      Console : access Interactive_Console_Record'Class;
    end record;
-   type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
 
    ---------
    -- Ref --
@@ -1474,9 +1473,9 @@ package body Interactive_Consoles is
       ANSI_Support        : Boolean := False;
       Manage_Prompt       : Boolean := True)
    is
+      pragma Unreferenced (Kernel);
       Iter : Gtk_Text_Iter;
       Term : Gtkada_Terminal;
-      Hook : Preferences_Hook;
    begin
       --  Initialize the text buffer and the text view
 
@@ -1591,11 +1590,10 @@ package body Interactive_Consoles is
 
       Console.Empty_Equals_Repeat := Empty_Equals_Repeat;
 
-      Hook := new Preferences_Hook_Record'
-        (Function_With_Args with Console => Interactive_Console (Console));
-      Add_Hook (Kernel, Preference_Changed_Hook, Hook,
-                Name  => "interactive_consoles.preferences_changed",
-                Watch => GObject (Console.View));
+      Preferences_Changed_Hook.Add
+         (new On_Pref_Changed'
+             (Preferences_Hooks_Function with Console => Console),
+          Watch => Console.View);
    end Initialize;
 
    -------------------------
@@ -2317,14 +2315,14 @@ package body Interactive_Consoles is
    -------------
 
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Kernel, Pref);
    begin
-      if Hook.Console.Highlight /= null then
-         Set_Highlight_Color (Hook.Console, Hook.Console.Highlight);
+      if Self.Console.Highlight /= null then
+         Set_Highlight_Color (Self.Console, Self.Console.Highlight);
       end if;
    end Execute;
 

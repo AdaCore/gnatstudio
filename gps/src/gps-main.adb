@@ -100,7 +100,7 @@ with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;        use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Scripts.Hooks;
 with GPS.Kernel.Style_Manager.Shell;
 with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
@@ -1428,8 +1428,9 @@ procedure GPS.Main is
                       Line         => 1,
                       From_Project => False));
                else
-                  Open_File_Editor
-                    (GPS_Main.Kernel, File,
+                  Open_File_Action_Hook.Run
+                    (GPS_Main.Kernel,
+                     File     => File,
                      Project  => No_Project,  --  will choose most appropriate
                      New_File => False);
                end if;
@@ -1518,7 +1519,7 @@ procedure GPS.Main is
 
    function On_GPS_Started return Boolean is
    begin
-      Run_Hook (Application.Kernel, GPS_Started_Hook);
+      Gps_Started_Hook.Run (Application.Kernel);
 
       --  A number of actions are created in reaction to the hook above:
       --  if there is a menu described in menus.xml corresponding to such
@@ -1840,16 +1841,16 @@ procedure GPS.Main is
             end if;
 
             for File_Item of Files_To_Open loop
-               Open_File_Editor
+               File_Opened := True;
+               Open_File_Action_Hook.Run
                  (GPS_Main.Kernel,
-                  Create
+                  File    => Create
                     (Normalize_To_OS_Case (+To_String (File_Item.File)),
                      GPS_Main.Kernel,
                      Use_Source_Path => File_Item.From_Project,
                      Use_Object_Path => False),
                   Project => No_Project,  --  will choose most appropriate
                   Line    => File_Item.Line);
-               File_Opened := True;
             end loop;
 
             --  Load a dummy project, in case the wizard needs to be launched
@@ -1888,6 +1889,13 @@ procedure GPS.Main is
          Python_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
+      --  Register the standard hooks. Other modules were able to connect to
+      --  these earlier anyway, but these add shell commands, and therefore
+      --  must be loaded after the script modules
+
+      GPS.Kernel.Hooks.Register_Hooks (GPS_Main.Kernel);
+      GPS.Kernel.Scripts.Hooks.Register_Module (GPS_Main.Kernel);
+
       Register_Default_Script_Commands (GPS_Main.Kernel);
 
       GPS.Kernel.Xref.Register_Module (GPS_Main.Kernel);
@@ -1914,13 +1922,6 @@ procedure GPS.Main is
       KeyManager_Module.Macros.Register_Module (GPS_Main.Kernel);
       Command_Window.Register_Module (GPS_Main.Kernel);
       Register_Keys (GPS_Main);
-
-      --  Register the standard hooks. Other modules were able to connect to
-      --  these earlier anyway, but these add shell commands, and therefore
-      --  must be loaded after the script modules
-
-      Register_Action_Hooks (GPS_Main.Kernel);
-      Register_Standard_Hooks (GPS_Main.Kernel);
 
       --  Load the theme manager module immediately, so that any customization
       --  file or module can provide its own themes.
@@ -2124,10 +2125,6 @@ procedure GPS.Main is
          Load_System_Custom_Files (GPS_Main.Kernel);
       end if;
 
-      --  Create a hook for when GPS is started
-
-      Register_Hook_No_Args (GPS_Main.Kernel, GPS_Started_Hook);
-
       --  Load the default key theme before the python plug-ins, so that the
       --  latter can override
 
@@ -2308,12 +2305,7 @@ procedure GPS.Main is
       --  created, to be sure they are realized and will take the preferences
       --  into account.
 
-      declare
-         D : aliased Preference_Hooks_Args :=
-           (Hooks_Data with Pref => null);
-      begin
-         Run_Hook (GPS_Main.Kernel, Preference_Changed_Hook, D'Access);
-      end;
+      Preferences_Changed_Hook.Run (GPS_Main.Kernel, null);
 
       if not Hide_GPS then
          GPS_Main.Present;
@@ -2330,7 +2322,7 @@ procedure GPS.Main is
       end if;
 
       --  Execute the startup scripts now, even though it is recommended that
-      --  they connect to the GPS_Started_Hook if they have graphical actions
+      --  they connect to the GPS_Started hook if they have graphical actions
       --  to do
       --  This has to be launched after the call to Show, otherwise, the
       --  mini-loop launched in the trace function of the python module

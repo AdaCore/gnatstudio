@@ -40,7 +40,6 @@ with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Properties;    use GPS.Kernel.Properties;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GPS.Properties;           use GPS.Properties;
@@ -60,7 +59,6 @@ with GVD.Generic_View;
 with GVD.Memory_View;          use GVD.Memory_View;
 with GVD.Menu;                 use GVD.Menu;
 with GVD.Preferences;          use GVD.Preferences;
-with GVD.Scripts;              use GVD.Scripts;
 with GVD.Trace;
 with GVD.Types;
 with GVD_Module;               use GVD_Module;
@@ -177,14 +175,13 @@ package body GVD.Canvas is
      (View    : not null access GVD_Canvas_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
-   type Preferences_Hook_Record is new Function_With_Args with record
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
       Canvas : GVD_Canvas;
    end record;
-   type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed, to refresh the GVD canvas
    --  appropriately.
 
@@ -519,14 +516,13 @@ package body GVD.Canvas is
    -------------
 
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
       pragma Unreferenced (Kernel);
-      Canvas : constant access GVD_Canvas_Record'Class := Hook.Canvas;
+      Canvas : constant access GVD_Canvas_Record'Class := Self.Canvas;
       Styles : constant access Browser_Styles := Get_Styles (Canvas.Get_View);
-      Pref   : Preference;
 
       procedure On_Item (Item : not null access Abstract_Item_Record'Class);
       procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
@@ -551,10 +547,7 @@ package body GVD.Canvas is
         (On_Item'Access, Filter => Kind_Item);
       Canvas.Get_View.Model.Refresh_Layout;  --  resize items and links
 
-      Pref := Get_Pref (Data);
-      if Pref = null
-        or else Pref = Preference (Detect_Aliases)
-      then
+      if Pref = null or else Pref = Preference (Detect_Aliases) then
          if Get_Process (Canvas) /= null then
             Change_Detect_Aliases (Canvas);
          end if;
@@ -1063,7 +1056,7 @@ package body GVD.Canvas is
      (Canvas : access GVD_Canvas_Record'Class;
       Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
    is
-      Hook            : Preferences_Hook;
+      Hook            : access On_Pref_Changed;
    begin
       Assert (Me, Canvas.Kernel /= null,
               "Canvas' kernel not initialized");
@@ -1075,13 +1068,9 @@ package body GVD.Canvas is
          Event_On_Widget => Canvas,
          Context_Func    => Canvas_Contextual_Factory'Access);
 
-      Hook := new Preferences_Hook_Record'
-        (Function_With_Args with Canvas => GVD_Canvas (Canvas));
-      Add_Hook
-        (Canvas.Kernel, Preference_Changed_Hook, Hook,
-         Name  => "canvas.preferences_changed",
-         Watch => GObject (Canvas));
-
+      Hook := new On_Pref_Changed;
+      Hook.Canvas := GVD_Canvas (Canvas);
+      Preferences_Changed_Hook.Add (Hook, Watch => Canvas);
       Hook.Execute (Kernel, null);
 
       return Gtk_Widget (Canvas.Get_View);

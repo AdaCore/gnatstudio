@@ -62,13 +62,13 @@ with Generic_Views;            use Generic_Views;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GVD_Module;               use GVD_Module;
 with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
-with GVD.Scripts;              use GVD.Scripts;
 with GVD.Views;                use GVD.Views;
 
 with Gtk.Text_Tag;          use Gtk.Text_Tag;
@@ -1070,7 +1070,7 @@ package body GVD.Memory_View is
 
       Stop_Editing (View);
       Display_Memory (View, View.Starting_Address);
-      Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
+      Debugger_Process_Stopped_Hook.Run (Process.Kernel, Process);
    end Apply_Changes;
 
    ----------------

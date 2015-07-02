@@ -15,41 +15,34 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk;
-
-with Glib.Main;                 use Glib.Main;
-with Glib.Values;               use Glib.Values;
-
-with Gtk;                       use Gtk;
-with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
-
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.MDI;                use Gtkada.MDI;
-
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GUI_Utils;                 use GUI_Utils;
+with Gdk;
+with Glib.Main;                 use Glib.Main;
+with Glib.Values;               use Glib.Values;
+with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
+with Gtk.Handlers;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
+with Gtk;                       use Gtk;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.MDI;                use Gtkada.MDI;
 with Log_Utils;                 use Log_Utils;
 with String_List_Utils;         use String_List_Utils;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
 with VCS_Utils;                 use VCS_Utils;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
-with Gtk.Handlers;
 
 package body VCS_View.Activities is
-   Me : constant Trace_Handle := Create ("ACTIVITIES");
 
    ---------------------
    -- Local constants --
@@ -118,14 +111,13 @@ package body VCS_View.Activities is
       Data   : Kernel_And_Int);
    --  Called for the edited activity cells
 
-   type File_Hook_Record is new Function_With_Args with record
+   type On_File_Edited is new File_Hooks_Function with record
       Explorer : VCS_Activities_View_Access;
    end record;
-   type File_Hook is access all File_Hook_Record'Class;
    overriding procedure Execute
-     (Hook      : File_Hook_Record;
-      Kernel    : access Kernel_Handle_Record'Class;
-      File_Data : access Hooks_Data'Class);
+     (Self      : On_File_Edited;
+      Kernel    : not null access Kernel_Handle_Record'Class;
+      File      : Virtual_File);
    --  Callback for the "file_edited" signal
 
    procedure Contextual_Menu_Factory
@@ -264,7 +256,9 @@ package body VCS_View.Activities is
       end if;
 
       if Button = Button_OK then
-         Close_File_Editors (Kernel, Log_File);
+         Open_File_Action_Hook.Run
+            (Kernel, Log_File, Project => No_Project,
+             Line => -1);  --  close all editors
          Delete_Activity (Kernel, Activity);
          Iter := Get_Iter_From_Activity (Explorer, Activity);
          Remove (Explorer.Model, Iter);
@@ -494,7 +488,7 @@ package body VCS_View.Activities is
       Log               : Boolean;
       Line              : Line_Record;
       Sort_Id           : Gint;
-      Up_To_Date_Status : VCS.File_Status;
+      Up_To_Date_Status : VCS_File_Status;
 
       use type File_Status_List.List_Node;
    begin
@@ -833,32 +827,30 @@ package body VCS_View.Activities is
    -------------
 
    overriding procedure Execute
-     (Hook      : File_Hook_Record;
-      Kernel    : access Kernel_Handle_Record'Class;
-      File_Data : access Hooks_Data'Class)
+     (Self      : On_File_Edited;
+      Kernel    : not null access Kernel_Handle_Record'Class;
+      File      : Virtual_File)
    is
-      D        : constant File_Hooks_Args := File_Hooks_Args (File_Data.all);
       Line     : Line_Record;
    begin
-      if Has_Suffix (D.File, "$log") then
+      if Has_Suffix (File, "$log") then
          declare
             File_Name : constant Filesystem_String :=
-                          Base_Name (D.File, "$log");
+                          Base_Name (File, "$log");
             Activity  : constant Activity_Id := Value (+File_Name);
          begin
             if Activity = No_Activity then
                --  This is a file
 
                declare
-                  File : constant Virtual_File :=
-                           Get_File_From_Log (Kernel, D.File);
+                  F : constant Virtual_File :=
+                           Get_File_From_Log (Kernel, File);
                begin
-                  Line := Get_Cache (Get_Status_Cache, File);
-
+                  Line := Get_Cache (Get_Status_Cache, F);
                   if Line /= No_Data then
                      Line.Log := True;
-                     Set_Cache (Get_Status_Cache, File, Line);
-                     Refresh (Hook.Explorer);
+                     Set_Cache (Get_Status_Cache, F, Line);
+                     Refresh (Self.Explorer);
                   end if;
                end;
 
@@ -867,17 +859,14 @@ package body VCS_View.Activities is
 
                declare
                   Iter : constant Gtk_Tree_Iter :=
-                           Get_Iter_From_Activity (Hook.Explorer, Activity);
+                           Get_Iter_From_Activity (Self.Explorer, Activity);
                begin
-                  Set (Hook.Explorer.Model, Iter, Has_Log_Column, True);
+                  Set (Self.Explorer.Model, Iter, Has_Log_Column, True);
                end;
-               Refresh (Hook.Explorer);
+               Refresh (Self.Explorer);
             end if;
          end;
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end Execute;
 
    ----------------
@@ -888,7 +877,7 @@ package body VCS_View.Activities is
      (Explorer : access VCS_Activities_View_Record;
       Kernel   : Kernel_Handle)
    is
-      Hook : File_Hook;
+      pragma Unreferenced (Kernel);
    begin
       Setup_Contextual_Menu
         (Explorer.Kernel,
@@ -897,12 +886,11 @@ package body VCS_View.Activities is
 
       Set_Column_Types (Explorer);
 
-      Hook := new File_Hook_Record'
-        (Function_With_Args with
-         Explorer => VCS_Activities_View_Access (Explorer));
-      Add_Hook (Kernel, File_Edited_Hook, Hook,
-                Name => "vcs_activities.file_edited",
-                Watch => GObject (Explorer));
+      File_Edited_Hook.Add
+         (new On_File_Edited'
+             (File_Hooks_Function with
+              Explorer => VCS_Activities_View_Access (Explorer)),
+          Watch => Explorer);
    end Do_Initialize;
 
    ------------------------

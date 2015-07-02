@@ -20,7 +20,10 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
+with Ada.Containers.Ordered_Sets;
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Finalization;
+with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with System;
@@ -35,7 +38,8 @@ with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GNATCOLL.Xref;                   use GNATCOLL.Xref;
 
 with Glib.Main;
-with Glib.Object;                     use Glib;
+with Glib;                            use Glib;
+with Glib.Object;
 with Gdk.Types;
 with Gtk.Application;                 use Gtk.Application;
 with Gtk.Dialog;
@@ -47,7 +51,6 @@ with Basic_Types;
 with Basic_Mapper;
 with Commands;
 with Generic_List;
-with HTables;
 with Language_Handlers;
 with Projects;
 with String_Hash;
@@ -276,6 +279,11 @@ package GPS.Kernel is
    --  The following subprograms are provided in addition to the ones provided
    --  in vfs.ads.
 
+   package File_Sets is new Ada.Containers.Ordered_Sets
+      (Element_Type        => GNATCOLL.VFS.Virtual_File,
+       "<"                 => GNATCOLL.VFS."<",
+       "="                 => GNATCOLL.VFS."=");
+
    function Create
      (Name            : Filesystem_String;
       Kernel          : access Kernel_Handle_Record;
@@ -295,7 +303,7 @@ package GPS.Kernel is
    --  Whether Filename is currently opened in an editor
 
    function Open_Files
-     (Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.File_Array;
+     (Kernel : access Kernel_Handle_Record) return access File_Sets.Set;
    --  Return a list of currently open files
 
    function Is_Hidden
@@ -532,22 +540,101 @@ package GPS.Kernel is
    -----------
    -- Hooks --
    -----------
-   --  See the package GPS.Kernel.Hooks for more subprograms applying to
-   --  hooks.
 
-   type Hook_Function_Record is abstract tagged private;
-   type Hook_Function is access all Hook_Function_Record'Class;
-   --  Hooks are defined as tagged types, so that the user can easily store
-   --  his own data to be memorized with the hook.
+   type Hook_Function is abstract tagged private;
+   type Hook_Function_Access is access all Hook_Function'Class;
+   --  An object, whose Execute method is called when a hook is run.
+   --  Actual subtypes will define different profiles for Execute,
+   --  depending on the expected type of parameters or result value for
+   --  this hook.
+   --  The same object (or access to object) can be attached to multiple
+   --  hooks. It will be freed when it is detached from the last hook.
 
-   procedure Destroy (Hook : in out Hook_Function_Record);
-   --  Destroy the memory associated with Hook.
-   --  By default, this does nothing.
+   procedure Destroy (Self : in out Hook_Function) is null;
+   --  Called when Self is disconnected from its hook.
 
-   function Get_Name (Hook : Hook_Function_Record) return String;
-   --  Return the name to use for that function when listing all functions
-   --  attached to a hook.
-   --  The default is to use <internal>
+   type Hook_Types is abstract tagged private;
+   --  A type that describes hooks and family of hooks.
+   --  The type hierarchy is expected to be three levels deep:
+   --     * Hook_Types is the abstract ancestor
+   --     * child types represent a family of hooks, with their parameters
+   --       and return type. They provide a Type_Name.
+   --     * grand-children types represent specific hooks within those
+   --       those families, with a name given in the discriminant.
+   --  The string used for the discriminant is never freed. For
+   --  efficiency, it is recommended to pass an access to an
+   --  "aliased constant String".
+
+   function Type_Name (Self : Hook_Types) return String is abstract;
+   --  Return the type name for this family of hooks.
+   --  This is overridden by direct children of Hook_Types, but not by
+   --  grand-children.
+   --  This name is only useful when creating new hooks from python.
+
+   procedure Run_From_Python
+      (Self  : Hook_Types;
+       Data  : in out GNATCOLL.Scripts.Callback_Data'Class) is null;
+   --  This procedure is called when a python scripts "run"s a hook from
+   --  python. It is responsible for decoding the parameters (encoded in
+   --  Data) and then call Self.Run (the latter is defined for each child
+   --  type of Hook_Types, since it has a different profile every time).
+   --  The first parameter is always an instance of GPS.Hook, and should
+   --  be ignored.
+
+   procedure Register
+      (Self    : not null access Hook_Types'Class;
+       Kernel  : not null access Kernel_Handle_Record'Class);
+   --  Export both the family of hooks and the specific hook to python, if not
+   --  done yet. Once this is done, users will be able to create new hooks in
+   --  python with the same profile (parameters + return type), and to add
+   --  callbacks to the specific hook.
+   --
+   --  It is not possible to export a family of hooks if there is no specific
+   --  hook that is part of it.
+   --
+   --  This procedure does not need to be called if the hook is only needed
+   --  for Ada, and does not need to be queried by name.
+   --
+   --  Self is never freed. In general, it should point to an aliased
+   --  global variable that represents the hook itself and can most
+   --  efficiently be used by Ada code, without having to look up the
+   --  hook by name.
+
+   procedure Remove
+       (Self       : in out Hook_Types'Class;
+        If_Matches : not null access function
+           (F : not null access Hook_Function'Class) return Boolean);
+   --  Remove the first attached function for which the function returns True.
+   --  This also frees the corresponding function, unless it is attached to
+   --  multiple hooks.
+
+   function List_Functions
+      (Self : not null access Hook_Types'Class)
+      return GNAT.Strings.String_List;
+   --  Return the list of functions (by name) connected to this hook.
+   --  Result must be freed by caller.
+
+   type File_Status is (Modified, Unmodified, Unsaved, Saved, Readonly);
+
+   type Base_Visual_Debugger is abstract new Glib.Object.GObject_Record
+      with null record;
+   type Base_Visual_Debugger_Access is access all Base_Visual_Debugger'Class;
+
+   type Debugger_State is (Debug_None, Debug_Busy, Debug_Available);
+   --  Possible states of a debugger:
+   --  - Debug_None: debugger is not running
+   --  - Debug_Busy: debugger is busy processing a command
+   --  - Debug_Available: debugger is available
+
+   function To_String (State : Debugger_State) return String
+      is (if State = Debug_None then "none"
+          elsif State = Debug_Busy then "busy"
+          else "idle");
+   function From_String (State : String) return Debugger_State
+      is (if State = "none" then Debug_None
+          elsif State = "busy" then Debug_Busy
+          else Debug_Available);
+   --  Use by the hooks to pass the information python.
 
    -----------
    -- Tools --
@@ -702,211 +789,9 @@ package GPS.Kernel is
      (Kernel : access Kernel_Handle_Record) return Boolean;
    --  Return True if we are in Hyper mode
 
-   -----------
-   -- Hooks --
-   -----------
-
-   procedure Source_Lines_Revealed
-     (Handle  : access Kernel_Handle_Record;
-      Context : Selection_Context);
-   --  Runs the "source_lines_revealed" hook
-
-   procedure Source_Lines_Folded
-     (Handle     : access Kernel_Handle_Record;
-      Context    : Selection_Context;
-      Start_Line : Natural;
-      End_Line   : Natural);
-   --  Runs the "source_lines_folded" hook
-
-   procedure Source_Lines_Unfolded
-     (Handle     : access Kernel_Handle_Record;
-      Context    : Selection_Context;
-      Start_Line : Natural;
-      End_Line   : Natural);
-   --  Runs the "source_lines_unfolded" hook
-
-   procedure File_Edited
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Force_Hook : Boolean := False);
-   --  Runs the "file_edited" hook.
-   --  If Force_Hook is True, the hook will always be emitted, otherwise it is
-   --  only emitted if the file wasn't opened yet.
-
-   procedure Before_File_Saved
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File);
-   --  Runs the "before_file_saved" hook
-
-   procedure File_Saved
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File);
-   --  Runs the "file_saved" hook
-
-   procedure File_Closed
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File);
-   --  Runs the "file_closed" hook
-
-   procedure File_Deleted
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File);
-   --  Runs the "file_deleted" hook
-
-   procedure File_Renamed
-     (Handle   : access Kernel_Handle_Record;
-      File     : GNATCOLL.VFS.Virtual_File;
-      New_Path : GNATCOLL.VFS.Virtual_File);
-   --  Runs the "file_renamed" hook
-
-   procedure File_Changed_On_Disk
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File);
-   --  Runs the "file_changed_on_disk" hook
-
-   function Compilation_Starting
-     (Handle   : access Kernel_Handle_Record;
-      Category : String;
-      Quiet    : Boolean;
-      Shadow   : Boolean;
-      Background : Boolean) return Boolean;
-   --  Runs the "compilation_starting" hook.
-   --  The Category corresponds to the location/highlighting category that
-   --  will contain the compilation output.
-   --  Quiet is true if the compilation should not ask the user any question,
-   --  nor, generally, change the MDI setup.
-   --  Return True if the compilation should be started.
-
-   procedure Compilation_Finished
-     (Handle      : access Kernel_Handle_Record;
-      Category    : String;
-      Target_Name : String;
-      Mode_Name   : String;
-      Shadow      : Boolean;
-      Background  : Boolean;
-      Status      : Integer);
-   --  Runs the "compilation_finished" hook
-   --  The Category corresponds to the location/highlighting category that
-   --  contains the compilation output.
-
-   type Hook_Name is new Ada.Strings.Unbounded.Unbounded_String;
-   --  The name/key of the hook as registered into GPS
-
-   type Hook_Type is new String;
-   --  The hook data type
-
-   type Hook_List is array (Positive range <>) of Hook_Name;
-
-   function To_Hook_Name (Item : String) return Hook_Name
-     renames To_Unbounded_String;
-
-   --  Hooks with no arguments
-   Preference_Changed_Hook      : constant Hook_Name :=
-                                     To_Hook_Name ("preferences_changed");
-   Search_Reset_Hook             : constant Hook_Name :=
-                                     To_Hook_Name ("search_reset");
-   Search_Functions_Changed_Hook : constant Hook_Name :=
-                                     To_Hook_Name ("search_functions_changed");
-   Search_Regexps_Changed_Hook   : constant Hook_Name :=
-                                     To_Hook_Name ("search_regexps_changed");
-   Variable_Changed_Hook         : constant Hook_Name :=
-                                     To_Hook_Name ("variable_changed");
-   Project_View_Changed_Hook     : constant Hook_Name :=
-                                     To_Hook_Name ("project_view_changed");
-   Project_Changed_Hook          : constant Hook_Name :=
-                                     To_Hook_Name ("project_changed");
-   Project_Editor_Hook           : constant Hook_Name :=
-                                     To_Hook_Name ("project_editor");
-   Contextual_Menu_Open_Hook     : constant Hook_Name :=
-                                     To_Hook_Name ("contextual_menu_open");
-   Contextual_Menu_Close_Hook    : constant Hook_Name :=
-                                     To_Hook_Name ("contextual_menu_close");
-   Desktop_Loaded_Hook           : constant Hook_Name :=
-                                     To_Hook_Name ("desktop_loaded");
-
-   --  Hooks with File_Hooks_Args argument
-   Project_Changing_Hook         : constant Hook_Name :=
-                                     To_Hook_Name ("project_changing");
-   File_Edited_Hook              : constant Hook_Name :=
-                                     To_Hook_Name ("file_edited");
-   Before_File_Saved_Hook        : constant Hook_Name :=
-                                     To_Hook_Name ("before_file_saved");
-   File_Saved_Hook               : constant Hook_Name :=
-                                     To_Hook_Name ("file_saved");
-   File_Closed_Hook              : constant Hook_Name :=
-                                     To_Hook_Name ("file_closed");
-   File_Deleted_Hook             : constant Hook_Name :=
-                                     To_Hook_Name ("file_deleted");
-   File_Renamed_Hook             : constant Hook_Name :=
-                                     To_Hook_Name ("file_renamed");
-   File_Changed_Detected_Hook    : constant Hook_Name :=
-                                     To_Hook_Name ("file_changed_detected");
-   File_Changed_On_Disk_Hook     : constant Hook_Name :=
-                                     To_Hook_Name ("file_changed_on_disk");
-   Compilation_Finished_Hook     : constant Hook_Name :=
-                                     To_Hook_Name ("compilation_finished");
-   Compilation_Starting_Hook     : constant Hook_Name :=
-                                     To_Hook_Name ("compilation_starting");
-
-   Buffer_Modified_Hook : constant Hook_Name := To_Hook_Name ("buffer_edited");
-   --  Hook called after a buffer has been edited.
-
-   --  Hooks with Context_Hooks_Args argument
-   Context_Changed_Hook          : constant Hook_Name :=
-                                     To_Hook_Name ("context_changed");
-
-   --  Hooks with Context_Hooks_Args argument (a File_Area_Context_Access)
-   Source_Lines_Revealed_Hook    : constant Hook_Name :=
-                                     To_Hook_Name ("source_lines_revealed");
-
-   Source_Lines_Folded_Hook    : constant Hook_Name :=
-                                     To_Hook_Name ("source_lines_folded");
-
-   Source_Lines_Unfolded_Hook    : constant Hook_Name :=
-                                     To_Hook_Name ("source_lines_unfolded");
-
-   --  Hooks with Project_Hooks_Args argument
-   Project_Saved_Hook            : constant Hook_Name :=
-                                     To_Hook_Name ("project_saved");
-
-   --  Hooks with Marker_Hooks_Args argument
-   Marker_Added_In_History_Hook : constant Hook_Name :=
-                                    To_Hook_Name ("marker_added_to_history");
-   --  Called when a new marker has been added in the history. For now, this
-   --  marker isn't exported to the shell
-
-   File_Status_Changed_Hook      : constant Hook_Name :=
-                                     To_Hook_Name ("file_status_changed");
-   --  Called when the status of a file is changed : Modified, Unmodified...
-
-   --  Hooks with String_Hooks_Args argument
-   Compute_Build_Targets_Hook : constant Hook_Name :=
-                                  To_Hook_Name ("compute_build_targets");
-   --  Called when computing list of build targets, e.g. list of mains, or list
-   --  of Makefile targets. The string parameter gives the kind of target to
-   --  be computed (e.g. "main", "makefile").
-   --  The result is of type Any_Type, where each tuple in the list contains
-   --  the following information:
-   --     ("display name of the main",
-   --      "full name of the main",
-   --      "full path of the project or empty")
-
-   -------------------
-   -- Sets of files --
-   -------------------
-
-   package File_Sets is new Ada.Containers.Hashed_Sets
-      (Element_Type        => GNATCOLL.VFS.Virtual_File,
-       Hash                => GNATCOLL.VFS.Full_Name_Hash,
-       Equivalent_Elements => GNATCOLL.VFS."=",
-       "="                 => GNATCOLL.VFS."=");
    -----------------
    -- Build modes --
    -----------------
-
-   Build_Mode_Changed_Hook : constant Hook_Name :=
-                               To_Hook_Name ("build_mode_changed");
-   --  Hook run to request the change of the build mode
 
    procedure Set_Build_Mode
      (Kernel : access Kernel_Handle_Record'Class;
@@ -1128,33 +1013,47 @@ private
    -- Hook --
    ----------
 
-   type Hook_Function_Record is abstract tagged record
-      Ref_Count    : Natural := 0;
-      Watch_Object : Glib.Object.GObject;
-      Watch_Data   : System.Address;
-      --  Watch_Object and Watch_Data are filled when hook is configured to
-      --  watching for Glib object.
+   type Hook_Function is abstract tagged record
+      Refcount : Natural := 0;
+      --  The number of time this object is added to a hook. This is used
+      --  to properly free memory, in particular when the same object is
+      --  connected to multiple hooks.
    end record;
 
-   type Hook_Description_Base is abstract tagged null record;
-   type Hook_Description_Base_Access is access all Hook_Description_Base'Class;
+   type Hook_Func_Info is record
+      Func : not null access Hook_Function'Class;
+   end record;
+   package Hook_Func_Lists is new Ada.Containers.Doubly_Linked_Lists
+      (Hook_Func_Info);
+   --  We use a list, not a vector: when a hook is run, it is possible that
+   --  the list of functions is modified by one of the callbacks. The Run
+   --  subprograms are implemented so that this is safe with a list, but if
+   --  we were using a vector, the cursor might become invalid.
 
-   type Hook_Htable_Num is new Natural range 0 .. 6150;
+   type Hook_Types is abstract tagged record
+      Name  : access constant String;
+      Funcs : Hook_Func_Lists.List;
+   end record;
+   type Hook_Types_Access is access all Hook_Types'Class;
 
-   function Hash (Hook : Hook_Name) return Hook_Htable_Num;
+   package Hooks_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+      (Key_Type        => String,
+       Element_Type    => Hook_Types_Access,
+       Hash            => Ada.Strings.Hash,
+       Equivalent_Keys => "=");
 
-   procedure Free (Hook : in out Hook_Description_Base);
-   --  Free the memory occupied by Hook
+   Hook_Type_Prefix : constant String := "__type__";
+   --  Both hooks and hook types are stored in the kernel's map.
+   --  To distinguish, a prefix is added to the name of the types.
 
-   procedure Free (L : in out Hook_Description_Base_Access);
-   package Hooks_Hash is new HTables.Simple_HTable
-     (Header_Num   => Hook_Htable_Num,
-      Element      => Hook_Description_Base_Access,
-      No_Element   => null,
-      Key          => Hook_Name,
-      Hash         => Hash,
-      Equal        => "=",
-      Free_Element => Free);
+   procedure Add_Hook_Func
+      (Self  : in out Hook_Types'Class;
+       Func  : not null access Hook_Function'Class;
+       Last  : Boolean := True;
+       Watch : access Glib.Object.GObject_Record'Class := null);
+   --  Add a new callback to the hook.
+   --  This function should not be used directly, use the specific Add
+   --  function for each hook, which checks the function has the right profile
 
    type Location_Marker_Record is abstract tagged null record;
 
@@ -1186,8 +1085,16 @@ private
       Startup_Scripts : Root_Table_Access;
       --  The list of startup scripts and whether they should be loaded
 
-      Hooks : Hooks_Hash.Instance;
-      --  The hooks registered in the kernel
+      Hooks       : Hooks_Maps.Map;
+      --  The hooks registered in the kernel. The hooks are indexed by
+      --  their names. A second entry will be created for the family
+      --  of hooks. So for instance, the hook "task_started", which is
+      --  of type "task_hooks" ends up with two entries in this table:
+      --      "task_started" => points to the hook object itself
+      --      "type:task_hooks" => points also to the hook, but only
+      --         its operations will be used, not the list of functions
+      --         connected to it. This is used to create new hook types
+      --         from python.
 
       Action_Filters : Action_Filters_Htable.String_Hash_Table.Instance;
       All_Action_Filters : Action_Filters_List.List;
@@ -1248,7 +1155,7 @@ private
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;
       --  Mapping between files and logs
 
-      Open_Files : GNATCOLL.VFS.File_Array_Access;
+      Open_Files : aliased File_Sets.Set;
       --  The list of currently open files
 
       History : Histories.History;

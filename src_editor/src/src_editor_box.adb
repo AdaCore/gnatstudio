@@ -61,12 +61,12 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 
 with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
@@ -327,10 +327,11 @@ package body Src_Editor_Box is
          Add_Navigation_Location (Source);
       end if;
 
-      Open_File_Editor
-        (Kernel, Filename, Project, Natural (Line), Column,
-         Column + Visible_Column_Type (Length),
-         Enable_Navigation => True);
+      Open_File_Action_Hook.Run
+         (Kernel, File => Filename, Project => Project,
+          Line => Natural (Line), Column => Column,
+          Column_End => Column + Visible_Column_Type (Length),
+          Enable_Navigation => True);
 
       --  Find the correct location for the entity, in case it is in fact
       --  different from what was found in the LI file (ie for instance the LI
@@ -409,8 +410,10 @@ package body Src_Editor_Box is
                   Col_End := 0;
                end if;
 
-               Open_File_Editor
-                 (Kernel, Filename, Project, L, Col, Col_End, False);
+               Open_File_Action_Hook.Run
+                 (Kernel, Filename, Project => Project,
+                  Line => L, Column => Col, Column_End => Col_End,
+                  Enable_Navigation => False);
             end;
          end if;
       end if;
@@ -460,10 +463,10 @@ package body Src_Editor_Box is
       pragma Unreferenced (Buffer, Params);
    begin
       Update_Status (Box.Status_Bar);
-      File_Status_Changed
+      File_Status_Changed_Hook.Run
         (Get_Kernel (Box),
-         Get_Filename (Box.Source_Buffer),
-         Get_Status (Box.Source_Buffer));
+         File   => Get_Filename (Box.Source_Buffer),
+         Status => Get_Status (Box.Source_Buffer));
    end Status_Changed_Handler;
 
    ------------------------------

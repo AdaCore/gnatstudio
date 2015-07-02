@@ -43,7 +43,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GVD.Dialogs;               use GVD.Dialogs;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
-with GVD.Scripts;               use GVD.Scripts;
 with GVD.Trace;                 use GVD.Trace;
 with GVD.Types;                 use GVD.Types;
 with Items.Arrays;              use Items.Arrays;
@@ -56,6 +55,7 @@ with Language;                  use Language;
 with Process_Proxies;           use Process_Proxies;
 with Remote;                    use Remote;
 with String_Utils;              use String_Utils;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 
 package body Debugger.Gdb is
 
@@ -483,8 +483,8 @@ package body Debugger.Gdb is
       --  useful for the automatic testsuite
 
       declare
-         Result : constant String := Run_Debugger_Hook_Until_Not_Empty
-           (Process, Debugger_Question_Action_Hook, Str);
+         Result : constant String := Debugger_Question_Action_Hook.Run
+            (Process.Kernel, Process, Str);
       begin
          if Result /= "" then
             Send (Debugger, Result,
@@ -587,8 +587,8 @@ package body Debugger.Gdb is
       --  useful for the automatic testsuite
 
       declare
-         Output : constant String := Run_Debugger_Hook_Until_Not_Empty
-           (Process, Debugger_Question_Action_Hook, Str);
+         Output : constant String := Debugger_Question_Action_Hook.Run
+           (Process.Kernel, Process, Str);
       begin
          if Output /= "" then
             Send (Debugger, Output,
@@ -1054,8 +1054,7 @@ package body Debugger.Gdb is
 
          Process := Convert (Debugger);
          if Process /= null then
-            Run_Debugger_Hook
-              (Process, Debugger_Executable_Changed_Hook);
+            Debugger_Executable_Changed_Hook.Run (Process.Kernel, Process);
          end if;
 
          --  Get the initial file name, so that we can display the appropriate
@@ -1322,7 +1321,7 @@ package body Debugger.Gdb is
       --  No need to do anything in text-only mode
 
       if Process /= null then
-         Run_Debugger_Hook (Process, GVD.Debugger_Executable_Changed_Hook);
+         Debugger_Executable_Changed_Hook.Run (Process.Kernel, Process);
       end if;
 
       --  Get the name and line of the initial file

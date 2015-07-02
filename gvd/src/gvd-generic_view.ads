@@ -25,7 +25,8 @@
 
 with Glib;
 with Generic_Views;
-with GPS.Kernel.Hooks;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;
 with Gtkada.Handlers;
@@ -38,7 +39,7 @@ generic
    --  The type used as a parent for the view, and used to store the view in
    --  a Visual_Debugger.
 
-   type Visual_Debugger_Record is tagged private;
+   type Visual_Debugger_Record is new Base_Visual_Debugger with private;
    type Visual_Debugger is access all Visual_Debugger_Record'Class;
    --  The visual debugger class. We cannot with GVD.Process in this package,
    --  since otherwise this creates elaboration circularities.
@@ -51,16 +52,6 @@ generic
 
    with function Get_Num (Process : Visual_Debugger) return Glib.Gint is <>;
    --  Return the debugger identifier associated with Process
-
-   with function Get_Process
-     (Data : access GPS.Kernel.Hooks.Hooks_Data'Class)
-      return Visual_Debugger is <>;
-   --  Return the debugger stored in Data
-
-   with function Get_State
-     (Data : access GPS.Kernel.Hooks.Hooks_Data'Class)
-     return Debugger_State is <>;
-   --  Return the state stored in Data
 
    with function Command_In_Process
      (Process : access Visual_Debugger_Record'Class) return Boolean is <>;
@@ -96,7 +87,7 @@ package GVD.Generic_View is
 
    procedure On_State_Changed
      (View      : access Process_View_Record;
-      New_State : Debugger_State) is null;
+      New_State : GPS.Kernel.Debugger_State) is null;
    --  Called when the debugger state has changed. One possibly use is to
    --  clear the view while the debugger is executing because its information
    --  might be confusing in such a case.
@@ -180,26 +171,38 @@ package GVD.Generic_View is
       --  This needs to be in the spec since it is used as a callback in the
       --  body.
 
-      procedure On_Debugger_Terminate
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+      type On_Debugger_Terminate is new Debugger_Hooks_Function
+         with null record;
+      overriding procedure Execute
+        (Self     : On_Debugger_Terminate;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access Base_Visual_Debugger'Class);
       --  Callback when the debugger is terminated.
       --  This needs to be in the spec since it is used as a callback in the
       --  body.
 
-      procedure On_Update
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+      type On_Update is new Debugger_Hooks_Function with null record;
+      overriding procedure Execute
+        (Self     : On_Update;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access Base_Visual_Debugger'Class);
       --  Hook called when the view needs to be refreshed
 
-      procedure State_Changed
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+      type On_Debugger_State_Changed is new Debugger_States_Hooks_Function
+         with null record;
+      overriding procedure Execute
+        (Self      : On_Debugger_State_Changed;
+         Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger  : access Base_Visual_Debugger'Class;
+         New_State : GPS.Kernel.Debugger_State);
       --  Hook called when the state of the debugger changes
 
-      procedure Process_Terminated
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+      type On_Debug_Process_Terminated is new Debugger_Hooks_Function
+         with null record;
+      overriding procedure Execute
+        (Self     : On_Debug_Process_Terminated;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access Base_Visual_Debugger'Class);
       --  Called when the process has terminated
 
    end Simple_Views;

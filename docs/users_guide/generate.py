@@ -33,8 +33,8 @@ Classes
 %(underscore)s
 
 .. autoclass:: %(name)s
-
-   %(inheritance)s
+%(members)s
+%(inheritance)s
 """
 
     method_stub = """
@@ -129,11 +129,21 @@ Exceptions
                    or (len(mro) == 2
                        and mro[1].__name__ != "object"):
                     inheritance = \
-                        ".. inheritance-diagram:: %s.%s" % (n, name)
+                        "   .. inheritance-diagram:: %s.%s" % (n, name)
+
+                if name == 'Hook':
+                    # Include generated doc for predefined hooks
+                    fd.write(Inspect.class_stub % {
+                        'name': 'Predefined_Hooks',
+                        'inheritance': '',
+                        'members': '    :members:\n',
+                        'underscore': '^' * (len(n) + 10 + 16),
+                        'module': n})
 
                 fd.write(Inspect.class_stub % {
                     "name": name,
                     "inheritance": inheritance,
+                    'members': '',
                     "underscore": "^" * (len(name) + len(n) + 10),
                     "module": n})
 
@@ -152,7 +162,7 @@ Exceptions
                         "name": mname,
                         "base_name": m,
                         "inheritance":
-                        ".. inheritance-diagram:: %s.%s" % (n, c),
+                            "   .. inheritance-diagram:: %s.%s" % (n, c),
                         "underscore": "*" * (len(m) + 8)})
 
         if self.excepts:

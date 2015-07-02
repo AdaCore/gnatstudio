@@ -28,7 +28,7 @@ with GNAT.Calendar.Time_IO;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;
@@ -106,8 +106,10 @@ package body GNATTest_Module is
      (Project : GNATCOLL.Projects.Project_Type)
      return String;
 
-   procedure On_Project_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
 
    type Source_Entity is record
       Source_File      : Unbounded_String;
@@ -548,15 +550,17 @@ package body GNATTest_Module is
       return Project.Attribute_Value (Name);
    end Get_Mapping_File;
 
-   ------------------------
-   -- On_Project_Changed --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Project : constant GNATCOLL.Projects.Project_Type
-        := GPS.Kernel.Project.Get_Project (Kernel);
+      pragma Unreferenced (Self);
+      Project : constant GNATCOLL.Projects.Project_Type :=
+         GPS.Kernel.Project.Get_Project (Kernel);
       Map_File_Name : constant String := Get_Mapping_File (Project);
       File        : Input_Sources.File.File_Input;
    begin
@@ -568,7 +572,7 @@ package body GNATTest_Module is
          Map.Parse (File);
          Input_Sources.File.Close (File);
       end if;
-   end On_Project_Changed;
+   end Execute;
 
    ---------------
    -- Open_File --
@@ -666,12 +670,7 @@ package body GNATTest_Module is
          Ref_Item    => "GNATtest",
          Add_Before  => False);
 
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel,
-         GPS.Kernel.Project_View_Changed_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_Project_Changed'Access),
-         "gnattest.project_view_changed");
-
+      Project_View_Changed_Hook.Add (new On_Project_Changed);
    end Register_Module;
 
    -------------------

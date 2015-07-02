@@ -25,11 +25,14 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Xref;             use GNATCOLL.Xref;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib;                      use Glib;
 with Glib.Main;                 use Glib.Main;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -42,7 +45,6 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Toolchains_Old;            use Toolchains_Old;
 
 package body External_Editor_Module is
@@ -260,9 +262,19 @@ package body External_Editor_Module is
      (Args : Argument_List_Access; F, C, L, E, P  : String := "");
    --  Does all the substitutions in Args for %f, %c, %l, %e and %%.
 
-   function Open_File_Hook
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Data      : access Hooks_Data'Class) return Boolean;
+   type On_Open_File is new Open_File_Hooks_Function with null record;
+   overriding function Execute
+     (Self      : On_Open_File;
+      Kernel    : not null access Kernel_Handle_Record'Class;
+      File      : Virtual_File;
+      Line      : Integer;
+      Column, Column_End : GNATCOLL.Xref.Visible_Column;
+      Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
+      Project   : Project_Type;
+      Group : Child_Group;
+      Initial_Position : Child_Position;
+      Areas : Allowed_Areas;
+      Title : String) return Boolean;
    --  Handle an edition request
 
    procedure Spawn_New_Process
@@ -285,9 +297,11 @@ package body External_Editor_Module is
    --  Spawn a new process, and waits for its termination. It hides both its
    --  standard output and standard error.
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed.
 
    -------------------
@@ -742,46 +756,60 @@ package body External_Editor_Module is
          return Commands.Failure;
    end Execute;
 
-   --------------------
-   -- Open_File_Hook --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   function Open_File_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
+   overriding function Execute
+     (Self      : On_Open_File;
+      Kernel    : not null access Kernel_Handle_Record'Class;
+      File      : Virtual_File;
+      Line      : Integer;
+      Column, Column_End : GNATCOLL.Xref.Visible_Column;
+      Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
+      Project   : Project_Type;
+      Group : Child_Group;
+      Initial_Position : Child_Position;
+      Areas : Allowed_Areas;
+      Title : String) return Boolean
    is
-      D : constant Source_File_Hooks_Args := Source_File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self, Column_End, Enable_Navigation, New_File);
+      pragma Unreferenced (Force_Reload, Focus, Project);
+      pragma Unreferenced (Group, Initial_Position, Areas, Title);
    begin
       if External_Editor_Module_Id.Client /= Auto
-        and then Get_Pref (Always_Use_External_Editor)
+        and then Always_Use_External_Editor.Get_Pref
       then
-         if Is_Regular_File (D.File) then
+         if Is_Regular_File (File) then
             --  ??? Incorrect handling of remote files
             Client_Command
               (Kernel => Kernel,
-               File   => D.File,
-               Line   => Natural (D.Line),
-               Column => D.Column);
-
+               File   => File,
+               Line   => Natural (Line),
+               Column => Column);
             return True;
          end if;
       end if;
-
       return False;
-   end Open_File_Hook;
+   end Execute;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Kernel, Self);
    begin
-      Select_Client;
-   end Preferences_Changed;
+      if Pref = null
+         or else Pref = Preference (Always_Use_External_Editor)
+      then
+         Select_Client;
+      end if;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -833,13 +861,8 @@ package body External_Editor_Module is
          Kernel                  => Kernel,
          Module_Name             => External_Editor_Module_Name,
          Priority                => Default_Priority + 1);
-      Add_Hook (Kernel, Open_File_Action_Hook,
-                Wrapper (Open_File_Hook'Access),
-                Name => "external_editor.open_file");
-
-      Add_Hook (Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "external_editor.preferences_changed");
+      Open_File_Action_Hook.Add (new On_Open_File);
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
    end Register_Module;
 
 end External_Editor_Module;

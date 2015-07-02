@@ -29,32 +29,27 @@ with Gtk.Menu;
 with Gtk.Menu_Item;                 use Gtk.Menu_Item;
 with Gtk.Widget;
 with Gtkada.MDI;
-with GPS.Editors.Line_Information;
-with GPS.Intl;
+with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
+with GPS.Intl;                      use GPS.Intl;
 with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;              use GPS.Kernel;
+with GPS.Kernel.Hooks;              use GPS.Kernel, GPS.Kernel.Hooks;
 with GPS.Kernel.Project;
 with GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules.UI;
-with GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Modules.UI;         use GPS.Kernel.Modules.UI;
 with GNATCOLL.Projects;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with Xref;                          use Xref;
 
 with GNATStack.CI_Editors;
 with GNATStack.CI_Utilities;
-with GNATStack.Readers;
+with GNATStack.Readers;             use GNATStack.Readers;
 with GNATStack.Module.Editors;
 with GNATStack.Shell_Commands;
 
 package body GNATStack.Module is
    Me : constant Trace_Handle := Create ("GNATSTACK");
 
-   use GPS.Editors.Line_Information;
-   use GPS.Intl;
-   use GPS.Kernel.Modules.UI;
-   use GNATStack.Readers;
    use GNATStack.Data_Model;
    use GNATStack.Data_Model.Object_Information_Vectors;
    use GNATStack.Data_Model.Subprogram_Information_Sets;
@@ -119,9 +114,14 @@ package body GNATStack.Module is
      (Widget : access Glib.Object.GObject_Record'Class);
    --  Opens call tree for the selected subprogram.
 
-   procedure On_Compilation_Finished
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
+      with null record;
+   overriding procedure Execute
+     (Self   : On_Compilation_Finished;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Category, Target, Mode : String;
+      Shadow, Background : Boolean;
+      Status : Integer);
    --  Callback for the "compilation_finished" hook, to schedule other tasks
 
    procedure On_CIs_Editor_Close
@@ -559,34 +559,26 @@ package body GNATStack.Module is
       return Commands.Success;
    end Execute;
 
-   -----------------------------
-   -- On_Compilation_Finished --
-   -----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Compilation_Finished
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Compilation_Finished;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Category, Target, Mode : String;
+      Shadow, Background : Boolean;
+      Status : Integer)
    is
-      pragma Unreferenced (Kernel);
-
-      Hook_Data : constant
-        GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args :=
-          GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args (Data.all);
-
+      pragma Unreferenced (Self, Kernel, Category, Mode, Shadow, Background);
    begin
-      if Hook_Data.Status = 0
-        and Hook_Data.Target_Name = "Run GNATStack"
-      then
+      if Status = 0 and then Target = "Run GNATStack" then
          Load_Data (Module);
          Open_Report (Module);
          Editors.Show_Stack_Usage_In_Opened_Editors (Module);
          Fill_Entry_Points (Module);
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Compilation_Finished;
+   end Execute;
 
    ------------------------
    -- On_Goto_Subprogram --
@@ -1058,10 +1050,7 @@ package body GNATStack.Module is
       Register_Action
         (Kernel, "clear stack usage information", new Clear_Data_Command);
 
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel, GPS.Kernel.Compilation_Finished_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
-         Name => "gnatstack.compilation_finished");
+      Compilation_Finished_Hook.Add (new On_Compilation_Finished);
 
       Editors.Register_Module (Module);
    end Register_Module;

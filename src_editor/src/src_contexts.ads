@@ -267,9 +267,13 @@ package Src_Contexts is
 
    procedure Set_File_List
      (Context : access Files_Project_Context;
+      Files   : GPS.Kernel.File_Sets.Set);
+   procedure Set_File_List
+     (Context : access Files_Project_Context;
       Files   : GNATCOLL.VFS.File_Array_Access);
    --  Set the list of files to search.
-   --  No copy of Files is made, the memory will be freed automatically.
+   --  No copy of Files is made, and it will be freed when the context no
+   --  longer needs it.
 
    function Files_From_Project_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -338,8 +342,12 @@ package Src_Contexts is
    procedure Set_File_List
      (Context : access Open_Files_Context;
       Files   : GNATCOLL.VFS.File_Array_Access);
+   procedure Set_File_List
+     (Context : access Open_Files_Context;
+      Files   : GPS.Kernel.File_Sets.Set);
    --  Set the list of files to search.
-   --  No copy of Files is made, the memory will be freed automatically.
+   --  No copy of Files is made, and it will be freed when the context no
+   --  longer needs it.
 
    function Open_Files_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -474,8 +482,8 @@ private
    end record;
 
    type Files_Project_Context is new Abstract_Files_Context with record
-      Files         : GNATCOLL.VFS.File_Array_Access := null;
-      Current_File  : Natural;
+      Files        : GNATCOLL.VFS.File_Array_Access;
+      Current_File : Integer;
    end record;
 
    type Open_Files_Context is new Abstract_Files_Context with record

@@ -15,19 +15,47 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
+with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
+with Basic_Types;               use Basic_Types;
+with Commands.Editor;           use Commands.Editor;
+with Commands.Interactive;      use Commands, Commands.Interactive;
+with Completion.Ada.Constructs_Extractor;
+use Completion.Ada.Constructs_Extractor;
+with Completion.Ada;            use Completion.Ada;
+with Completion.C.Constructs_Extractor;
+use Completion.C.Constructs_Extractor;
+with Completion.C.Libclang;     use Completion.C.Libclang;
+with Completion.C;              use Completion.C;
+with Completion.History;        use Completion.History;
+with Completion.Keywords;       use Completion.Keywords;
+with Completion.Python;         use Completion.Python;
+with Completion;                use Completion;
+with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
+with Completion_Window;         use Completion_Window;
+with Default_Preferences.Enums; use Default_Preferences;
+with Engine_Wrappers;                 use Engine_Wrappers;
 with GNAT.Strings;              use GNAT.Strings;
-
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-
-with Glib;                      use Glib;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
+with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.Kernel;                use GPS.Kernel;
 with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Unicode;              use Glib.Unicode;
+with Glib;                      use Glib;
+with Glib_String_Utils;         use Glib_String_Utils;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
@@ -36,58 +64,19 @@ with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
-
-with Basic_Types;               use Basic_Types;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Commands.Editor;           use Commands.Editor;
-with Default_Preferences.Enums; use Default_Preferences;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Commands;       use GPS.Kernel.Commands;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-
-with GPS.Intl;                  use GPS.Intl;
-with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
-with Src_Editor_Buffer;         use Src_Editor_Buffer;
-with Src_Editor_Buffer.Hooks;   use Src_Editor_Buffer.Hooks;
-with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
-with Src_Editor_Box;            use Src_Editor_Box;
-with Src_Editor_Module;         use Src_Editor_Module;
-with Src_Editor_View;           use Src_Editor_View;
-with String_List_Utils;         use String_List_Utils;
-with Glib_String_Utils;         use Glib_String_Utils;
-
-with Completion_Window;         use Completion_Window;
-with Completion;                use Completion;
-with Completion.History;        use Completion.History;
-with Completion.Keywords;       use Completion.Keywords;
-with Completion.Python;         use Completion.Python;
-
-with Completion.Ada;            use Completion.Ada;
-with Completion.Ada.Constructs_Extractor;
-use Completion.Ada.Constructs_Extractor;
-
-with Completion.C;              use Completion.C;
-with Completion.C.Constructs_Extractor;
-use Completion.C.Constructs_Extractor;
-with Completion.C.Libclang;     use Completion.C.Libclang;
-
 with Language.Ada;              use Language.Ada;
 with Language.C;                use Language.C;
 with Language.Cpp;              use Language.Cpp;
 with Language.Tree.Database;    use Language.Tree.Database;
-
-with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
-with Engine_Wrappers;                 use Engine_Wrappers;
+with Language;                  use Language;
+with Language_Handlers;         use Language_Handlers;
 with Projects;                        use Projects;
-with Ada_Semantic_Tree;               use Ada_Semantic_Tree;
-with Ada.Containers.Doubly_Linked_Lists;
+with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
+with Src_Editor_Buffer;         use Src_Editor_Buffer;
+with Src_Editor_Module;         use Src_Editor_Module;
+with Src_Editor_View;           use Src_Editor_View;
+with String_List_Utils;         use String_List_Utils;
 
 package body Completion_Module is
 
@@ -128,6 +117,15 @@ package body Completion_Module is
 
       Python_Resolvers    : Python_Resolver_List.List;
    end record;
+
+   type On_Character_Added is new Character_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_Character_Added;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : Virtual_File;
+       Char   : Glib.Gunichar;
+       Interactive : Boolean);
+   --  Hook callback on a character added
 
    type Completion_Module_Record is new Module_ID_Record with record
       Prefix : GNAT.Strings.String_Access;
@@ -206,7 +204,7 @@ package body Completion_Module is
       --  signals are propagated, and this data is never properly finalized as
       --  it must.
 
-      Completion_Triggers_Callback    : Function_With_Args_Access;
+      On_Char_Added              : access On_Character_Added;
       --  The hook callback corresponding to character triggers
 
       Trigger_Timeout       : Glib.Main.G_Source_Id;
@@ -250,14 +248,18 @@ package body Completion_Module is
    procedure On_Completion_Destroy (Win  : access Gtk_Widget_Record'Class);
    --  Called when the completion widget is destroyed
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
-   procedure File_Saved
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Saved is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file is changed
 
    procedure Register_Preferences
@@ -272,7 +274,10 @@ package body Completion_Module is
      (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the Completion class
 
-   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
+   type On_View_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_View_Changed;
+       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project view is changed
 
    procedure Update_Construct_Database
@@ -285,11 +290,6 @@ package body Completion_Module is
 
    function Trigger_Timeout_Callback return Boolean;
    --  Timeout callback after a trigger character has been entered
-
-   procedure Character_Added_Hook_Callback
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
-   --  Hook callback on a character added
 
    function Smart_Complete
      (Kernel   : Kernel_Handle;
@@ -327,17 +327,23 @@ package body Completion_Module is
               else null);
    end Get_Focused_Buffer;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Data);
+      pragma Unreferenced (Self, Pref);
       Smart_Completion_Pref : constant Smart_Completion_Type :=
                                 Smart_Completion.Get_Pref;
+
+      function Is_Character_Added
+         (F : not null access Hook_Function'Class) return Boolean
+         is (F.all in On_Character_Added'Class);
+      --  Whether a specific hook function is our own callback
    begin
       Completion_Module.Smart_Completion_Launched :=
         Smart_Completion_Pref /= Disabled;
@@ -357,55 +363,48 @@ package body Completion_Module is
          if Completion_Module.Previous_Smart_Completion_Trigger_State
            /= Disabled
          then
-            if Completion_Module.Completion_Triggers_Callback = null then
-               --  ??? Needed so that we can remove it, would be nice if the
-               --  kernel knew how to look inside wrappers.
-               --  This memory is automatically freed when the kernel exits
-               Completion_Module.Completion_Triggers_Callback :=
-                 Wrapper (Character_Added_Hook_Callback'Access);
+            if Completion_Module.On_Char_Added = null then
+               --  ??? Needed so that we can remove it
+               Completion_Module.On_Char_Added := new On_Character_Added;
+               Character_Added_Hook.Add (Completion_Module.On_Char_Added);
             end if;
 
-            Add_Hook (Kernel, Character_Added_Hook,
-                      Completion_Module.Completion_Triggers_Callback,
-                      Name => "completion_module.character_added");
-
-         elsif Completion_Module.Completion_Triggers_Callback /= null then
-            Remove_Hook (Kernel, Character_Added_Hook,
-                         Completion_Module.Completion_Triggers_Callback);
+         elsif Completion_Module.On_Char_Added /= null then
+            Character_Added_Hook.Remove (Is_Character_Added'Access);
+            Completion_Module.On_Char_Added := null;
+            --  function was freed as part of Remove
          end if;
       end if;
 
       Completion_Module.Previous_Smart_Completion_State :=
         Smart_Completion_Pref;
-   end Preferences_Changed;
+   end Execute;
 
-   ----------------
-   -- File_Saved --
-   ----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Saved
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-      File      : Structured_File_Access;
+      pragma Unreferenced (Self);
+      F      : Structured_File_Access;
       Smart_Completion_Pref : constant Smart_Completion_Type :=
         Smart_Completion.Get_Pref;
    begin
       if Smart_Completion_Pref /= Disabled then
-         if Get_Language_From_File
-           (Get_Language_Handler (Kernel), File_Data.File)
+         if Get_Language_From_File (Get_Language_Handler (Kernel), File)
            = Ada_Lang
          then
             --  ??? This is a temporary kludge in order to avoid considering C
             --  files.
-            File := Get_Or_Create
-              (Get_Construct_Database (Kernel), File_Data.File);
-
-            Update_Contents (File);
+            F := Get_Or_Create (Get_Construct_Database (Kernel), File);
+            Update_Contents (F);
          end if;
       end if;
-   end File_Saved;
+   end Execute;
 
    ---------------------------
    -- On_Completion_Destroy --
@@ -1141,14 +1140,18 @@ package body Completion_Module is
       return Commands.Success;
    end Execute;
 
-   ---------------------
-   -- On_View_Changed --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+      (Self   : On_View_Changed;
+       Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
    begin
       Update_Construct_Database (Kernel);
-   end On_View_Changed;
+   end Execute;
 
    -------------------------------
    -- Update_Construct_Database --
@@ -1270,20 +1273,9 @@ package body Completion_Module is
          Category => "Editor",
          Filter   => Src_Action_Context);
 
-      Add_Hook (Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "completion_module.preferences_changed");
-      Add_Hook
-        (Kernel => Kernel,
-         Hook   => Project_View_Changed_Hook,
-         Func   => Wrapper (On_View_Changed'Access),
-         Name   => "completion_module.on_view_changed");
-
-      Add_Hook
-        (Kernel,
-         File_Saved_Hook,
-         Wrapper (File_Saved'Access),
-         Name => "completion_module.file_saved");
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
+      Project_View_Changed_Hook.Add (new On_View_Changed);
+      File_Saved_Hook.Add (new On_File_Saved);
 
       Register_Preferences (Kernel);
 
@@ -1426,14 +1418,19 @@ package body Completion_Module is
       end if;
    end Triggers_Auto_Completion;
 
-   -----------------------------------
-   -- Character_Added_Hook_Callback --
-   -----------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Character_Added_Hook_Callback
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+      (Self   : On_Character_Added;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : Virtual_File;
+       Char   : Glib.Gunichar;
+       Interactive : Boolean)
    is
+      pragma Unreferenced (Self, File, Interactive);
+
       function Char_Triggers_Auto_Completion return Boolean;
       --  Return True iff the character being added is a completion trigger
 
@@ -1441,9 +1438,6 @@ package body Completion_Module is
       Lang   : constant Language.Language_Access
         := (if Buffer /= null then Buffer.Get_Language
             else null);
-
-      Edition_Data : constant File_Edition_Hooks_Args :=
-                       File_Edition_Hooks_Args (Data.all);
 
       Is_Dynamic : constant Boolean :=
         Smart_Completion.Get_Pref = Dynamic
@@ -1461,13 +1455,13 @@ package body Completion_Module is
             return False;
          end if;
 
-         Unichar_To_UTF8 (Edition_Data.Character, Char_Buffer, Last);
+         Unichar_To_UTF8 (Char, Char_Buffer, Last);
          return Last = 1
            and then Triggers_Auto_Completion (Buffer, Char_Buffer (Last));
       end Char_Triggers_Auto_Completion;
 
    begin
-      if Edition_Data.Character = 8 then
+      if Char = 8 then
          --  This is a special case: we are calling Character_Added after
          --  deleting some text, and the character is a backspace character.
          --  In this case, return.
@@ -1525,7 +1519,7 @@ package body Completion_Module is
    exception
       when E : others =>
          Trace (Me, E);
-   end Character_Added_Hook_Callback;
+   end Execute;
 
    --------------------------
    -- Register_Preferences --

@@ -47,7 +47,6 @@ with Commands;                  use Commands;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Style_Manager;  use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with Language.Tree;
@@ -697,7 +696,7 @@ package Src_Editor_Buffer is
    -- Buffer Status --
    -------------------
 
-   subtype Status_Type is File_Status;
+   subtype Status_Type is GPS.Kernel.File_Status;
 
    function Get_Status
      (Buffer : access Source_Buffer_Record) return Status_Type;
@@ -1537,7 +1536,7 @@ private
       Current_Command : Command_Access := null;
       --  The current editor command. Belongs to Queue, defined above
 
-      Current_Status  : Status_Type := Unmodified;
+      Current_Status  : GPS.Kernel.File_Status := GPS.Kernel.Unmodified;
       --  The current buffer status
 
       Number_Of_Views : Integer := 0;

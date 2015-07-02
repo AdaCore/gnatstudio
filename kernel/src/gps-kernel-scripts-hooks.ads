@@ -15,14 +15,42 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  This package handles the GUI part of the task manager
+--  This package provides scripting support for hooks, so that they can be
+--  used from python.
 
-with GPS.Kernel;       use GPS.Kernel;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
-package Task_Manager.GUI is
+package GPS.Kernel.Scripts.Hooks is
+
+   Hook_Class_Name : constant String := "Hook";
+   --  The python class name for hooks
+
+   type Python_Hook_Function is new Hook_Function with record
+      Func : Subprogram_Type;
+   end record;
+   --  A special function that encapsulates a python subprogram.
+   --  We do not check the number of parameters or their types, since
+   --  python does not support this in any case. So this wrapper can be
+   --  used for any type of hook.
+
+   function Get_Hook_Class
+      (Kernel : not null access Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return the "GPS.Hook" class
+
+   function Get_Hook
+      (Data : Callback_Data'Class; Param : Positive)
+      return access Hook_Types'Class;
+   --  Return the hook associated with the class instance as the
+   --  Param-th argument in data.
 
    procedure Register_Module
-     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Initialize support for the task manager view, and reg
+      (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Add python support for the Hook class.
 
-end Task_Manager.GUI;
+   function Get_Hook
+      (Kernel : not null access Kernel_Handle_Record'Class;
+       Name   : String) return access Hook_Types'Class;
+   --  Fetch a hook by name
+
+end GPS.Kernel.Scripts.Hooks;

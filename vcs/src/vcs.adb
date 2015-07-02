@@ -118,7 +118,7 @@ package body VCS is
    -- "=" --
    ---------
 
-   overriding function "=" (S1, S2 : File_Status) return Boolean is
+   overriding function "=" (S1, S2 : VCS_File_Status) return Boolean is
       use type GNAT.Strings.String_Access;
    begin
       return (S1.Label = null and then S2.Label = null
@@ -136,7 +136,7 @@ package body VCS is
    -- Is_Local_Status --
    ---------------------
 
-   function Is_Local_Status (Status : File_Status) return Boolean is
+   function Is_Local_Status (Status : VCS_File_Status) return Boolean is
    begin
       return Status /= Needs_Update and then Status /= Needs_Merge;
    end Is_Local_Status;
@@ -234,7 +234,7 @@ package body VCS is
    -- Free --
    ----------
 
-   procedure Free (X : in out File_Status) is
+   procedure Free (X : in out VCS_File_Status) is
    begin
       GNAT.Strings.Free (X.Label);
       GNAT.Strings.Free (X.Icon_Name);
@@ -266,9 +266,9 @@ package body VCS is
 
    function Get_File_Status
      (Ref    : access VCS_Record'Class;
-      Status : Status_Id) return File_Status
+      Status : Status_Id) return VCS_File_Status
    is
-      function Status_For (Status : File_Status) return File_Status;
+      function Status_For (Status : VCS_File_Status) return VCS_File_Status;
       --  Return the File_Status for the corresponding VCS, uses the Stock_Id
       --  as a key.
 
@@ -278,7 +278,7 @@ package body VCS is
       -- Status_For --
       ----------------
 
-      function Status_For (Status : File_Status) return File_Status is
+      function Status_For (Status : VCS_File_Status) return VCS_File_Status is
       begin
          for K in Ref_Status'Range loop
             if Ref_Status (K).Icon_Name.all = Status.Icon_Name.all then
@@ -313,7 +313,7 @@ package body VCS is
    -- Get_File_Status_Id --
    ------------------------
 
-   function Get_File_Status_Id (Status : File_Status) return Status_Id is
+   function Get_File_Status_Id (Status : VCS_File_Status) return Status_Id is
    begin
       if Status.Icon_Name.all = Up_To_Date_Stock then
          return Up_To_Date_Id;

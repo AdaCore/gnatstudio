@@ -19,10 +19,10 @@ with Ada.Calendar;              use Ada.Calendar;
 with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
 with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Default_Preferences.Enums;
 
 with Language;                  use Language;
@@ -243,8 +243,7 @@ package body Coverage_GUI is
       Line_Info : Line_Information_Data;
    begin
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
-         Line_Info  := new Line_Information_Array (File_Node.Lines'Range);
-
+         Line_Info := new Line_Information_Array (File_Node.Lines'Range);
          for J in File_Node.Lines'Range loop
             if File_Node.Lines (J) /= Null_Line then
                declare
@@ -263,9 +262,9 @@ package body Coverage_GUI is
          end loop;
 
          Create_Line_Information_Column
-           (Kernel, File_Node.Name, CodeAnalysis_Cst, Empty_Line_Information);
+            (Kernel, File_Node.Name, CodeAnalysis_Cst);
          Add_Line_Information
-           (Kernel, File_Node.Name, CodeAnalysis_Cst, Line_Info);
+            (Kernel, File_Node.Name, CodeAnalysis_Cst, Line_Info);
          Unchecked_Free (Line_Info);
       end if;
    end Add_File_Coverage_Annotations;

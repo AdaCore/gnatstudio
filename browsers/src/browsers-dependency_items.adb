@@ -140,11 +140,10 @@ package body Browsers.Dependency_Items is
       Menu    : Gtk.Menu.Gtk_Menu);
    --  Add custom entries to contextual menus created by this browser.
 
-   type Project_Changed_Hook_Record is new Function_No_Args with null record;
-   type Project_Changed_Hook is access all Project_Changed_Hook_Record'Class;
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
-     (Hook   : Project_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project as changed
 
    ----------------
@@ -428,10 +427,10 @@ package body Browsers.Dependency_Items is
    -------------
 
    overriding procedure Execute
-     (Hook   : Project_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Hook);
+      pragma Unreferenced (Self);
       B : constant Dependency_Browser :=
         Dependency_Views.Retrieve_View (Kernel);
    begin
@@ -864,7 +863,6 @@ package body Browsers.Dependency_Items is
       Filter  : constant Action_Filter :=
                   (not Lookup_Filter (Kernel, "Entity"))
                    and Lookup_Filter (Kernel, "In project");
-      Hook    : Project_Changed_Hook;
    begin
       Dependency_Views.Register_Module (Kernel);
 
@@ -917,11 +915,7 @@ package body Browsers.Dependency_Items is
          Class        => Get_File_Class (Kernel),
          Handler      => Depends_On_Command_Handler'Access);
 
-      Hook := new Project_Changed_Hook_Record;
-      Add_Hook
-        (Kernel, GPS.Kernel.Project_Changed_Hook,
-         Hook,
-         Name  => "browsers.dependency_items.project_changed");
+      Project_Changed_Hook.Add (new On_Project_Changed);
    end Register_Module;
 
    --------------

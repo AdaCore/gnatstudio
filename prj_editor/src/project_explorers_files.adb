@@ -63,7 +63,6 @@ with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
 with Projects;                   use Projects;
@@ -215,9 +214,11 @@ package body Project_Explorers_Files is
    --  ???
    --  Called by File_Append_Directory.
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when preferences change
 
    type Refresh_Command is new Interactive_Command with null record;
@@ -237,46 +238,30 @@ package body Project_Explorers_Files is
    -- Hooks --
    -----------
 
-   type Internal_Hook_Record is abstract new Function_With_Args with record
-      View : Project_Explorer_Files;
-   end record;
-
-   type File_Deleted_Hook_Record is new Internal_Hook_Record with null record;
-   type File_Deleted_Hook is access File_Deleted_Hook_Record'Class;
-
-   type File_Saved_Hook_Record is new Internal_Hook_Record with null record;
-   type File_Saved_Hook is access File_Saved_Hook_Record'Class;
-
-   type File_Renamed_Hook_Record is new Internal_Hook_Record with null record;
-   type File_Renamed_Hook is access File_Renamed_Hook_Record'Class;
-
-   type Project_View_Changed_Hook_Record is new Function_No_Args with record
-      View : Project_Explorer_Files;
-   end record;
-   type Project_View_Changed_Hook
-     is access Project_View_Changed_Hook_Record'Class;
-
+   type On_Deleted is new File_Hooks_Function with null record;
    overriding procedure Execute
-     (Hook   : File_Deleted_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_Deleted;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Callback for the "file_deleted" hook
 
+   type On_File_Saved is new File_Hooks_Function with null record;
    overriding procedure Execute
-     (Hook   : Project_View_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
+
+   type On_Project_View_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Callback for the "project_view_changed" hook
 
+   type On_File_Renamed is new File2_Hooks_Function with null record;
    overriding procedure Execute
-     (Hook   : File_Saved_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
-   --  Callback for the "file_saved" hook
-
-   overriding procedure Execute
-     (Hook   : File_Renamed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File, Renamed   : Virtual_File);
    --  Callback for the "file_renamed" hook
 
    procedure Remove_File
@@ -492,13 +477,13 @@ package body Project_Explorers_Files is
                   Source.Rename (Target, Success);
 
                   if Success then
-                     Kernel.File_Renamed (Source, Target);
+                     File_Renamed_Hook.Run (Kernel, Source, Target);
                   end if;
                else
                   Source.Copy (Target.Full_Name, Success);
 
                   if Success then
-                     Kernel.File_Saved (Target);
+                     File_Saved_Hook.Run (Kernel, Target);
                   end if;
                end if;
             end if;
@@ -834,10 +819,6 @@ package body Project_Explorers_Files is
      (Explorer : access Project_Explorer_Files_Record'Class)
       return Gtk_Widget
    is
-      Deleted_Hook : File_Deleted_Hook;
-      Saved_Hook   : File_Saved_Hook;
-      Renamed_Hook : File_Renamed_Hook;
-      Project_Hook : Project_View_Changed_Hook;
       Tooltip      : Explorer_Tooltips_Access;
       Scrolled     : Gtk_Scrolled_Window;
    begin
@@ -914,31 +895,11 @@ package body Project_Explorers_Files is
         (Explorer.File_Tree, Signal_Drag_Data_Get,
          Drag_Data_Get'Access, Explorer.Kernel);
 
-      Deleted_Hook := new File_Deleted_Hook_Record;
-      Deleted_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Explorer.Kernel, GPS.Kernel.File_Deleted_Hook,
-                Deleted_Hook,
-                Name  => "project_explorers_files.file_deleted",
-                Watch => GObject (Explorer));
-      Saved_Hook := new File_Saved_Hook_Record;
-      Saved_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Explorer.Kernel, GPS.Kernel.File_Saved_Hook,
-                Saved_Hook,
-                Name  => "project_explorers_files.file_saved",
-                Watch => GObject (Explorer));
-      Renamed_Hook := new File_Renamed_Hook_Record;
-      Renamed_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Explorer.Kernel, GPS.Kernel.File_Renamed_Hook,
-                Renamed_Hook,
-                Name  => "project_explorers_files.file_renamed",
-                Watch => GObject (Explorer));
-
-      Project_Hook := new Project_View_Changed_Hook_Record;
-      Project_Hook.View := Project_Explorer_Files (Explorer);
-      Add_Hook (Explorer.Kernel, GPS.Kernel.Project_View_Changed_Hook,
-                Project_Hook,
-                Name => "project_explorers_files.project_view_changed",
-                Watch => GObject (Explorer));
+      File_Deleted_Hook.Add (new On_Deleted, Watch => Explorer);
+      File_Saved_Hook.Add (new On_File_Saved, Watch => Explorer);
+      File_Renamed_Hook.Add (new On_File_Renamed, Watch => Explorer);
+      Project_View_Changed_Hook.Add
+         (new On_Project_View_Changed, Watch => Explorer);
 
       --  Initialize tooltips
 
@@ -1469,13 +1430,15 @@ package body Project_Explorers_Files is
    -------------
 
    overriding procedure Execute
-     (Hook   : File_Deleted_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_Deleted;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Self);
+      V : constant Project_Explorer_Files :=
+        Explorer_Files_Views.Retrieve_View (Kernel);
    begin
-      Remove_File (Hook.View, File_Hooks_Args (Data.all).File);
+      Remove_File (V, File);
    end Execute;
 
    -------------
@@ -1483,13 +1446,15 @@ package body Project_Explorers_Files is
    -------------
 
    overriding procedure Execute
-     (Hook   : File_Saved_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Self);
+      V : constant Project_Explorer_Files :=
+        Explorer_Files_Views.Retrieve_View (Kernel);
    begin
-      Add_File (Hook.View, File_Hooks_Args (Data.all).File);
+      Add_File (V, File);
    end Execute;
 
    -------------
@@ -1497,12 +1462,14 @@ package body Project_Explorers_Files is
    -------------
 
    overriding procedure Execute
-     (Hook   : Project_View_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Self);
+      V : constant Project_Explorer_Files :=
+        Explorer_Files_Views.Retrieve_View (Kernel);
    begin
-      Refresh (Hook.View);
+      Refresh (V);
    end Execute;
 
    -------------
@@ -1510,30 +1477,33 @@ package body Project_Explorers_Files is
    -------------
 
    overriding procedure Execute
-     (Hook   : File_Renamed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self    : On_File_Renamed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      File    : Virtual_File;
+      Renamed : Virtual_File)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Self);
+      V : constant Project_Explorer_Files :=
+        Explorer_Files_Views.Retrieve_View (Kernel);
    begin
-      Remove_File (Hook.View, Files_2_Hooks_Args (Data.all).File);
-      Add_File (Hook.View, Files_2_Hooks_Args (Data.all).Renamed);
+      Remove_File (V, File);
+      Add_File (V, Renamed);
    end Execute;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
+      pragma Unreferenced (Self);
       Explorer : constant Project_Explorer_Files :=
         Explorer_Files_Views.Retrieve_View (Kernel);
-      Pref : Preference;
    begin
       if Explorer /= null then
-         Pref := Get_Pref (Data);
          Set_Font_And_Colors
            (Explorer.File_Tree, Fixed_Font => True, Pref => Pref);
 
@@ -1543,7 +1513,7 @@ package body Project_Explorers_Files is
             Refresh (Explorer);
          end if;
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -1571,9 +1541,7 @@ package body Project_Explorers_Files is
          -"Refrehs the contents of the Files view",
          Icon_Name => "gps-refresh-symbolic");
 
-      Add_Hook (Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "project_explorer_files.preferences_changed");
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
    end Register_Module;
 
 end Project_Explorers_Files;

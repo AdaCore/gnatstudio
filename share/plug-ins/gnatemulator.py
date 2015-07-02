@@ -156,7 +156,7 @@ class GNATemulator(Module):
 
     # The followings are hooks:
 
-    def gps_started(self):
+    def setup(self):
         """
         When GPS start, add button (include cireteria there)
         """

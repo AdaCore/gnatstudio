@@ -62,7 +62,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Search;                use GPS.Search;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -277,12 +276,16 @@ package body Vsearch is
    --  If Find_Next is False, a new search will be started, otherwise the next
    --  occurence of the current search will be searched.
 
-   procedure Set_First_Next_Mode_Cb
-     (Kernel : access Kernel_Handle_Record'Class);
+   type Set_First_Next_Mode_Cb is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : Set_First_Next_Mode_Cb;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Aborts the current search pattern
 
-   procedure On_Project_View_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_Project_View_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project view has changed.
    --  In such a case, we cancel any pending search, since the list of
    --  source files might have changed and thus we need to restart from
@@ -413,16 +416,21 @@ package body Vsearch is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for menu Edit->Search Previous
 
-   procedure New_Predefined_Regexp
-     (Kernel : access Kernel_Handle_Record'Class);
+   type New_Predefined_Regexp is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : New_Predefined_Regexp;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when a new predefined regexp has been added to the kernel.
 
    procedure Selection_Changed (Vsearch : access Gtk_Widget_Record'Class);
    --  Called when the selected pattern has changed, to reflect the settings
    --  for the predefined patterns
 
-   procedure Search_Functions_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+   type Search_Functions_Changed is new Simple_Hooks_Function
+      with null record;
+   overriding procedure Execute
+     (Self   : Search_Functions_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the list of registered search functions has changed.
 
    procedure Close_Vsearch (Search : access Gtk_Widget_Record'Class);
@@ -431,9 +439,11 @@ package body Vsearch is
    procedure Float_Vsearch (Search_Child : access Gtk_Widget_Record'Class);
    --  The floating state of the search widget has changed
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed.
 
    procedure Store_Position (Vsearch : Vsearch_Access);
@@ -1016,7 +1026,7 @@ package body Vsearch is
               and then not Has_Next
               and then not Get_End_Notif_Done (Vsearch.Last_Search_Context.all)
             then
-               Stop_Macro (Vsearch.Kernel);
+               Stop_Macro_Action_Hook.Run (Vsearch.Kernel);
                Button := Message_Dialog
                  (Msg     => (-"No occurrences of '") & Pattern &
                   (-"' found in") & ASCII.LF
@@ -1098,7 +1108,7 @@ package body Vsearch is
                Continue        => Has_Next);
 
             if not Found then
-               Stop_Macro (Vsearch.Kernel);
+               Stop_Macro_Action_Hook.Run (Vsearch.Kernel);
                Set_Sensitive
                  (Vsearch.Replace_Search_Button, False);
                Set_Sensitive (Vsearch.Replace_Button, False);
@@ -1406,14 +1416,15 @@ package body Vsearch is
       end if;
    end Set_First_Next_Mode;
 
-   ----------------------------
-   -- Set_First_Next_Mode_Cb --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Set_First_Next_Mode_Cb
-     (Kernel : access Kernel_Handle_Record'Class)
+   overriding procedure Execute
+     (Self   : Set_First_Next_Mode_Cb;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Self, Kernel);
    begin
       --  We might be in the process of destroying GPS (for instance, the
       --  current search context detects that the current MDI_Child was
@@ -1423,20 +1434,20 @@ package body Vsearch is
          Set_Sensitive (Vsearch_Module_Id.Search.Replace_Search_Button, False);
          Set_Sensitive (Vsearch_Module_Id.Search.Replace_Button, False);
       end if;
+   end Execute;
 
-   exception
-      when E : others => Trace (Me, E);
-   end Set_First_Next_Mode_Cb;
+   -------------
+   -- Execute --
+   -------------
 
-   -----------------------------
-   -- On_Project_View_Changed --
-   -----------------------------
-
-   procedure On_Project_View_Changed
-     (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
    begin
       Reset_Search (null, Kernel_Handle (Kernel));
-   end On_Project_View_Changed;
+   end Execute;
 
    ---------------
    -- Key_Press --
@@ -1541,13 +1552,15 @@ package body Vsearch is
          null;
    end Selection_Changed;
 
-   ---------------------------
-   -- New_Predefined_Regexp --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure New_Predefined_Regexp
-     (Kernel : access Kernel_Handle_Record'Class)
+   overriding procedure Execute
+     (Self   : New_Predefined_Regexp;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Self);
       Search  : constant Vsearch_Access := Vsearch_Module_Id.Search;
       Item    : Gtk_Tree_Iter;
       List    : Gtk_List_Store;
@@ -1579,7 +1592,7 @@ package body Vsearch is
       Set_Active (Search.Case_Check, Casing);
       Set_Active (Search.Whole_Word_Check, Whole_Word);
       Set_Active (Search.Regexp_Check, Regexp);
-   end New_Predefined_Regexp;
+   end Execute;
 
    ---------------------------
    -- Refresh_Context_Combo --
@@ -1629,16 +1642,18 @@ package body Vsearch is
       end loop;
    end Refresh_Context_Combo;
 
-   ------------------------------
-   -- Search_Functions_Changed --
-   ------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Search_Functions_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+   overriding procedure Execute
+     (Self   : Search_Functions_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Self);
    begin
       Refresh_Context_Combo (Kernel);
-   end Search_Functions_Changed;
+   end Execute;
 
    -----------------------
    -- On_Button_Release --
@@ -2029,18 +2044,10 @@ package body Vsearch is
          Set_Active_Text (Vsearch.Pattern_Combo, "");
       end if;
 
-      Add_Hook (Handle, Search_Reset_Hook,
-                Wrapper (Set_First_Next_Mode_Cb'Access),
-                Name => "vsearch.search_reset");
-      Add_Hook (Handle, Search_Functions_Changed_Hook,
-                Wrapper (Search_Functions_Changed'Access),
-                Name => "vsearch.search_functions");
-      Add_Hook (Handle, Search_Regexps_Changed_Hook,
-                Wrapper (New_Predefined_Regexp'Access),
-                Name => "vsearch.search_regexps");
-      Add_Hook (Handle, Project_View_Changed_Hook,
-                Wrapper (On_Project_View_Changed'Access),
-                Name => "vsearch.project_view_changed");
+      Search_Reset_Hook.Add (new Set_First_Next_Mode_Cb);
+      Search_Functions_Changed_Hook.Add (new Search_Functions_Changed);
+      Search_Regexps_Changed_Hook.Add (new New_Predefined_Regexp);
+      Project_View_Changed_Hook.Add (new On_Project_View_Changed);
 
       --  ??? Should be changed when prefs are changed
       Set_Font_And_Colors (Vsearch.Table, Fixed_Font => False);
@@ -2175,8 +2182,13 @@ package body Vsearch is
             Gtk_New (Vsearch_Module_Id.Search, Kernel_Handle (Kernel));
 
             --  Show the already registered modules
-            Search_Functions_Changed (Kernel);
-            New_Predefined_Regexp (Kernel);
+            declare
+               P : aliased Search_Functions_Changed;
+               P2 : aliased New_Predefined_Regexp;
+            begin
+               P.Execute (Kernel);
+               P2.Execute (Kernel);
+            end;
 
             --  keep a reference on it so that it isn't destroyed when the MDI
             --  child is destroyed.
@@ -2526,7 +2538,7 @@ package body Vsearch is
            & " field to """ & Label & """"),
          Category    => -"Search");
 
-      Run_Hook (Kernel, Search_Functions_Changed_Hook);
+      Search_Functions_Changed_Hook.Run (Kernel);
    end Register_Search_Function;
 
    ---------------------------
@@ -2698,7 +2710,7 @@ package body Vsearch is
          Case_Sensitive => Case_Sensitive,
          Is_Regexp      => Is_Regexp);
 
-      Run_Hook (Kernel, Search_Regexps_Changed_Hook);
+      Search_Regexps_Changed_Hook.Run (Kernel);
    end Register_Search_Pattern;
 
    --------------------------
@@ -2832,10 +2844,7 @@ package body Vsearch is
 
       Register_Default_Search (Kernel);
 
-      Add_Hook (Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "vsearch.preferences_changed");
-
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
       Register_Preferences (Kernel);
    end Register_Module;
 
@@ -2889,18 +2898,19 @@ package body Vsearch is
       end if;
    end Get_Tab_Width;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Self, Kernel, Pref);
    begin
       Vsearch_Module_Id.Tab_Width := Tab_Width;
-   end Preferences_Changed;
+   end Execute;
 
    ------------------
    -- Reset_Search --
@@ -2912,10 +2922,7 @@ package body Vsearch is
    is
       pragma Unreferenced (Object);
    begin
-      Run_Hook (Kernel, Search_Reset_Hook);
-
-   exception
-      when E : others => Trace (Me, E);
+      Search_Reset_Hook.Run (Kernel);
    end Reset_Search;
 
 end Vsearch;

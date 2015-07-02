@@ -17,18 +17,15 @@
 
 with Glib.Object;               use Glib.Object;
 with Gdk.Window;                use Gdk.Window;
-
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Label;                 use Gtk.Label;
-
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with String_Utils;              use String_Utils;
 
 package body Completion_Utils is
@@ -57,12 +54,12 @@ package body Completion_Utils is
    is
       pragma Unreferenced (Object);
    begin
-      Open_File_Editor
+      Open_File_Action_Hook.Run
         (User_Data.Kernel,
-         User_Data.Location.File_Path,
-         No_Project,  --   ??? unknown
-         User_Data.Location.Line,
-         User_Data.Location.Column);
+         File    => User_Data.Location.File_Path,
+         Project => No_Project,  --   ??? unknown
+         Line    => User_Data.Location.Line,
+         Column  => User_Data.Location.Column);
    end On_Location_Button_Clicked;
 
    -----------------------

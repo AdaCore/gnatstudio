@@ -76,7 +76,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Core_Kernels;          use GPS.Core_Kernels;
 with GPS.Project_Properties;    use GPS.Project_Properties;
@@ -4402,14 +4401,16 @@ package body Project_Properties is
         Project.Is_Aggregate_Project
         or else not Project.Is_Editable;
    begin
-      Run_Hook (Kernel, Project_Editor_Hook);
+      Project_Editor_Hook.Run (Kernel);
       Gtk_New (Editor, Project, Kernel, Read_Only => Read_Only);
 
       loop
          Response := Editor.Run;
          case Response is
             when Response_Edit =>
-               Open_File_Editor (Kernel, Project.Project_Path, Project);
+               Open_File_Action_Hook.Run
+                  (Kernel, File => Project.Project_Path,
+                   Project => Project);
                exit;
             when Gtk_Response_OK =>
                declare
@@ -4539,7 +4540,7 @@ package body Project_Properties is
                --  that stored the name of the projects are now obsolete), we
                --  act as if a new project had been loaded.
 
-               Run_Hook (Kernel, Project_Changed_Hook);
+               Project_Changed_Hook.Run (Kernel);
 
                Changed := True;
                Trace (Me, "Project was renamed or moved");

@@ -25,7 +25,6 @@ use GPS.Editors, GPS.Editors.Line_Information;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Style_Manager;   use GPS.Kernel.Style_Manager;
 
 package body GNATStack.Module.Editors is
@@ -54,14 +53,18 @@ package body GNATStack.Module.Editors is
       Subprogram_Location_Position : Subprogram_Location_Sets.Cursor);
    --  Hides subprogram's stack usage information in source editor.
 
-   procedure On_File_Closed_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   type On_File_Closed is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file has been closed
 
-   procedure On_File_Edited_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   type On_File_Edited is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file has been opened
 
    ----------------------
@@ -179,43 +182,37 @@ package body GNATStack.Module.Editors is
           Lines  => 0));
    end Hide_Subprogram_Stack_Usage;
 
-   -------------------------
-   -- On_File_Closed_Hook --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_File_Closed_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      pragma Unreferenced (Kernel);
-
-      D : constant GPS.Kernel.Standard_Hooks.File_Hooks_Args :=
-                     GPS.Kernel.Standard_Hooks.File_Hooks_Args (Data.all);
-
+      pragma Unreferenced (Self, Kernel);
    begin
       if Module.Loaded then
-         Hide_Stack_Usage (Module, D.File);
+         Hide_Stack_Usage (Module, File);
       end if;
-   end On_File_Closed_Hook;
+   end Execute;
 
-   -------------------------
-   -- On_File_Edited_Hook --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_File_Edited_Hook
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      pragma Unreferenced (Kernel);
-
-      D : constant GPS.Kernel.Standard_Hooks.File_Hooks_Args :=
-                     GPS.Kernel.Standard_Hooks.File_Hooks_Args (Data.all);
-
+      pragma Unreferenced (Self, Kernel);
    begin
       if Module.Loaded then
-         Show_Stack_Usage (Module, D.File);
+         Show_Stack_Usage (Module, File);
       end if;
-   end On_File_Edited_Hook;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -248,14 +245,8 @@ package body GNATStack.Module.Editors is
              Fg_Pref => Module.Annotations_Foreground,
              Bg_Pref => Module.Annotations_Background);
 
-      GPS.Kernel.Hooks.Add_Hook
-        (Module.Kernel, GPS.Kernel.File_Closed_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_File_Closed_Hook'Access),
-         Name  => "gnatstack.file_closed");
-      GPS.Kernel.Hooks.Add_Hook
-        (Module.Kernel, GPS.Kernel.File_Edited_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_File_Edited_Hook'Access),
-         Name  => "gnatstack.file_edited");
+      File_Closed_Hook.Add (new On_File_Closed);
+      File_Edited_Hook.Add (new On_File_Edited);
    end Register_Module;
 
    ---------------------------------

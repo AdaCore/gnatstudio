@@ -28,7 +28,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Tools_Output;          use GPS.Tools_Output;
 with GPS.Intl;                  use GPS.Intl;
 with Gtk.Widget;                use Gtk.Widget;
@@ -84,9 +83,14 @@ package body Browsers.Elaborations is
      (Item    : not null access Unit_Item_Record;
       Context : in out Selection_Context) is null;
 
-   procedure On_Compilation_Finished
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
+      with null record;
+   overriding procedure Execute
+     (Self   : On_Compilation_Finished;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Category, Target, Mode : String;
+      Shadow, Background : Boolean;
+      Status : Integer);
    --  compilation finished hook callback
 
    procedure Fill_Browser
@@ -299,33 +303,29 @@ package body Browsers.Elaborations is
          Space_Between_Layers => 60.0);  --  long labels in this browser
    end Fill_Browser;
 
-   -----------------------------
-   -- On_Compilation_Finished --
-   -----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Compilation_Finished
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Compilation_Finished;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Category, Target, Mode : String;
+      Shadow, Background : Boolean;
+      Status : Integer)
    is
+      pragma Unreferenced (Self, Category, Target, Mode, Shadow, Background);
       use type Ada.Containers.Count_Type;
-
-      Hook_Data : constant
-        GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args :=
-          GPS.Kernel.Standard_Hooks.Compilation_Finished_Hooks_Args (Data.all);
-
       Cycle   : Elaboration_Cycles.Cycle renames Last_Elaboration_Cycle;
-
       Show : constant Boolean := Get_Pref (Auto_Show_Preference);
    begin
-      if not Show
-        or else Hook_Data.Status = 0
-        or else Dependencies_Count (Cycle) = 0
+      if Show
+        and then Status /= 0
+        and then Dependencies_Count (Cycle) /= 0
       then
-         return;
+         Fill_Browser (Kernel_Handle (Kernel), Cycle);
       end if;
-
-      Fill_Browser (Kernel_Handle (Kernel), Cycle);
-   end On_Compilation_Finished;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -336,10 +336,7 @@ package body Browsers.Elaborations is
    begin
       Elaboration_Views.Register_Module (Kernel);
 
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel, GPS.Kernel.Compilation_Finished_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_Compilation_Finished'Access),
-         Name => "gnatstack.compilation_finished");
+      Compilation_Finished_Hook.Add (new On_Compilation_Finished);
 
       Register_Output_Parser (Output_Parser'Access, "elaboration_cycles");
 

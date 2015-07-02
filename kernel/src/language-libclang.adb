@@ -107,8 +107,10 @@ package body Language.Libclang is
 
    Clang_Module_Id : access Clang_Module_Record := null;
 
-   procedure On_Project_View_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_Project_View_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
 
    -------------
    -- Destroy --
@@ -802,20 +804,22 @@ package body Language.Libclang is
       Id.Global_Cache.Clear;
    end Clean_Cache;
 
-   -----------------------------
-   -- On_Project_View_Changed --
-   -----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_View_Changed
-     (Kernel : access Kernel_Handle_Record'Class)
+   overriding procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Self);
       P_Tree : constant GNATCOLL.Projects.Project_Tree_Access
         := Kernel.Get_Project_Tree;
       RP     : constant GNATCOLL.Projects.Project_Type := P_Tree.Root_Project;
       Files : File_Array_Access;
       Filtered_Files : Virtual_File_Vectors.Vector;
-   begin
 
+   begin
       while Parsing_Request_Queue.Length > 0 loop
          delay 0.1;
       end loop;
@@ -915,8 +919,7 @@ package body Language.Libclang is
                                        Show_Bar        => True);
          end if;
       end;
-
-   end On_Project_View_Changed;
+   end Execute;
 
    --------------------
    -- Index_One_File --
@@ -994,9 +997,7 @@ package body Language.Libclang is
       Clang_Module_Id.Parsing_Timeout_Id :=
         Glib.Main.Timeout_Add (100, Parsing_Timeout_Handler'Access);
 
-      Add_Hook (Kernel, Project_View_Changed_Hook,
-                Wrapper (On_Project_View_Changed'Access),
-                Name => "libclang.project_view_changed");
+      Project_View_Changed_Hook.Add (new On_Project_View_Changed);
    end Register_Module;
 
    -------------

@@ -28,6 +28,7 @@ with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with Gdk.Event;             use Gdk.Event;
 with Glib.Main;
+with Glib.Object;
 with Glib.Xml_Int;
 with Gtk.Accel_Group;
 with Gtk.Dialog;            use Gtk.Dialog;

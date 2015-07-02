@@ -15,13 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
-with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
-with Vdiff2_Module.Utils.Shell_Command;
-use Vdiff2_Module.Utils.Shell_Command;
-with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
-with GPS.Editors; use GPS.Editors;
+with Vdiff2_Module.Utils;          use Vdiff2_Module.Utils;
+with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
+with Vdiff2_Module.Utils.Text;     use Vdiff2_Module.Utils.Text;
+with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 
 package body Vdiff2_Command_Line is
 
@@ -175,16 +174,14 @@ package body Vdiff2_Command_Line is
                   VRange (Num_File), VRange (Diff.Ref_File));
 
       declare
-         Info           : constant Line_Information_Data :=
-           new Line_Information_Array
+         Info : Line_Information_Data := new Line_Information_Array
              (VRange (Num_File).First - 1 .. VRange (Num_File).First - 1);
          Null_Line_Info : Line_Information_Record;
 
       begin
          Info (Info'First) := Null_Line_Info;
-         Add_Line_Information
-           (Kernel, File, "Vdiff2_Col_Merge",
-            Info);
+         Add_Line_Information (Kernel, File, "Vdiff2_Col_Merge", Info => Info);
+         Unchecked_Free (Info);
          Unhighlight_Block
            (Kernel, VFile (Num_File), VRange (Num_File), "Change_diff");
          Unhighlight_Block
@@ -243,16 +240,14 @@ package body Vdiff2_Command_Line is
                     VRange (Num_File), VRange (Diff.Ref_File));
 
       declare
-         Info           : constant Line_Information_Data :=
-           new Line_Information_Array
+         Info           : Line_Information_Data := new Line_Information_Array
              (VRange (Num_File).First - 1 .. VRange (Num_File).First - 1);
          Null_Line_Info : Line_Information_Record;
 
       begin
          Info (Info'First) := Null_Line_Info;
-         Add_Line_Information
-           (Kernel, File, "Vdiff2_Col_Merge",
-            Info);
+         Add_Line_Information (Kernel, File, "Vdiff2_Col_Merge", Info => Info);
+         Unchecked_Free (Info);
          Unhighlight_Block
            (Kernel, VFile (Num_File), VRange (Num_File), "Change_diff");
          Unhighlight_Block

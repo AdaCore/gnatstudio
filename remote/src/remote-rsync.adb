@@ -39,7 +39,6 @@ with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Console;               use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
-with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
 with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
 
 with Commands;              use Commands;
@@ -106,9 +105,13 @@ package body Remote.Rsync is
       Buffer            : GNAT.Strings.String_Access;
    end record;
 
-   function On_Rsync_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean;
+   type On_Rsync is new Rsync_Hooks_Function with null record;
+   overriding function Execute
+     (Self   : On_Rsync;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Synchronous, Force, To_Remote, Print_Output, Print_Cmd : Boolean;
+      Tool_Name, Host_Name, Queue_Id : String;
+      File : Virtual_File) return Boolean;
    --  run RSync hook
 
    procedure On_Abort_Clicked (Dialog : access Gtk_Widget_Record'Class);
@@ -132,8 +135,7 @@ package body Remote.Rsync is
       Rsync_Module.Ret_Data := new Return_Data'(Status => 0);
       Register_Module (Rsync_Module, Kernel, "rsync");
 
-      Add_Hook
-        (Kernel, Rsync_Action_Hook, Wrapper (On_Rsync_Hook'Access), "rsync");
+      Rsync_Action_Hook.Add (new On_Rsync);
    end Register_Module;
 
    -------------
@@ -207,16 +209,19 @@ package body Remote.Rsync is
       Show_All (Dialog);
    end Gtk_New;
 
-   -------------------
-   -- On_Rsync_Hook --
-   -------------------
+   -- Execute --
+   -------------
+   -- Execute --
+   -------------
 
-   function On_Rsync_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
+   overriding function Execute
+     (Self   : On_Rsync;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Synchronous, Force, To_Remote, Print_Output, Print_Cmd : Boolean;
+      Tool_Name, Host_Name, Queue_Id : String;
+      File : Virtual_File) return Boolean
    is
-      Rsync_Data          : Rsync_Hooks_Args renames
-                              Rsync_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Remote_Path         : GNAT.OS_Lib.String_Access;
       Src_Path, Dest_Path : GNAT.OS_Lib.String_Access;
       Machine             : Gexpect.Machine_Access;
@@ -316,7 +321,7 @@ package body Remote.Rsync is
 
    begin
       --  Check that we want to use rsync
-      if Rsync_Data.Tool_Name /= "rsync" then
+      if Tool_Name /= "rsync" then
          return False;
       end if;
 
@@ -327,19 +332,18 @@ package body Remote.Rsync is
          return False;
       end if;
 
-      if not Is_Configured (Rsync_Data.Host_Name) then
-         Insert (Kernel, "Invalid configuration : " & Rsync_Data.Host_Name &
+      if not Is_Configured (Host_Name) then
+         Insert (Kernel, "Invalid configuration : " & Host_Name &
                  " is not configured",
                  Mode => Error);
          return False;
       end if;
 
-      Machine := Get_Server (Rsync_Data.Host_Name);
+      Machine := Get_Server (Host_Name);
 
       declare
          M_Points : constant Mount_Point_Array :=
-                      Get_Mount_Points
-                        (Get_Database.all, Rsync_Data.Host_Name);
+                      Get_Mount_Points (Get_Database.all, Host_Name);
          Do_Sync  : Boolean;
       begin
          for J in M_Points'Range loop
@@ -349,23 +353,23 @@ package body Remote.Rsync is
                when Always =>
                   Do_Sync := True;
                when On_Request =>
-                  Do_Sync := Rsync_Data.Force;
+                  Do_Sync := Force;
                when Never =>
                   Do_Sync := False;
                when To_Local =>
-                  Do_Sync := not Rsync_Data.To_Remote;
-               when To_Remote =>
-                  Do_Sync := Rsync_Data.To_Remote;
+                  Do_Sync := not To_Remote;
+               when Remote.Db.To_Remote =>
+                  Do_Sync := To_Remote;
             end case;
 
             if Do_Sync then
-               if Rsync_Data.File /= No_File then
-                  if M_Points (J).Local_Root.Is_Parent (Rsync_Data.File) then
+               if File /= No_File then
+                  if M_Points (J).Local_Root.Is_Parent (File) then
                      Src := To_Unbounded_String
-                       (+Rsync_Data.File.Unix_Style_Full_Name (True));
+                       (+File.Unix_Style_Full_Name (True));
                      Dst := To_Unbounded_String
-                       (+Rsync_Data.File.To_Remote
-                          (Rsync_Data.Host_Name).Unix_Style_Full_Name (True));
+                       (+File.To_Remote
+                          (Host_Name).Unix_Style_Full_Name (True));
                   else
                      Do_Sync := False;
                   end if;
@@ -390,7 +394,7 @@ package body Remote.Rsync is
                      To_String (Dst));
                end if;
 
-               if Rsync_Data.To_Remote then
+               if To_Remote then
                   Src_Path := new String'(To_String (Src));
                   Dest_Path := Remote_Path;
                else
@@ -404,15 +408,15 @@ package body Remote.Rsync is
                  (Network_Name      => new String'(Machine.Network_Name),
                   User_Name         => new String'(Machine.User_Name),
                   Nb_Password_Tries => 0,
-                  Synchronous       => Rsync_Data.Synchronous,
+                  Synchronous       => Synchronous,
                   Dialog            => null,
                   Dialog_Running    => False,
                   Ret_Data          => Rsync_Module.Ret_Data,
                   Buffer            => null);
 
-               if Rsync_Data.Synchronous then
+               if Synchronous then
                   --  We create the dialog that will be updated as rsync runs.
-                  if Rsync_Data.To_Remote then
+                  if To_Remote then
                      Gtk_New
                        (Cb_Data.Dialog, Kernel,
                         M_Points (J).Local_Root, M_Points (J).Remote_Root);
@@ -429,8 +433,7 @@ package body Remote.Rsync is
                   Cb_Data.Dialog.Grab_Add;
                end if;
 
-               Real_Print_Output :=
-                 not Rsync_Data.Synchronous and then Rsync_Data.Print_Output;
+               Real_Print_Output := not Synchronous and then Print_Output;
 
                if Real_Print_Output then
                   Raise_Console (Kernel);
@@ -455,15 +458,15 @@ package body Remote.Rsync is
                     (Kernel_Handle (Kernel),
                      CL                => CL,
                      Console           => Get_Console (Kernel),
-                     Show_Command      => Rsync_Data.Print_Command,
+                     Show_Command      => Print_Cmd,
                      Show_Output       => Real_Print_Output,
                      Success           => Success,
                      Line_By_Line      => False,
                      Callback          => Parse_Rsync_Output'Access,
                      Exit_Cb           => Rsync_Terminated'Access,
                      Callback_Data     => new Rsync_Callback_Data'(Cb_Data),
-                     Queue_Id          => Rsync_Data.Queue_Id,
-                     Synchronous       => Rsync_Data.Synchronous,
+                     Queue_Id          => Queue_Id,
+                     Synchronous       => Synchronous,
                      Timeout           => Machine.Timeout,
                      Strip_CR          => False,
                      Use_Pipes         => False);
@@ -478,7 +481,7 @@ package body Remote.Rsync is
       end;
 
       return Rsync_Module.Ret_Data.Status = 0 and then All_Success;
-   end On_Rsync_Hook;
+   end Execute;
 
    ----------------------
    -- On_Abort_Clicked --
@@ -793,10 +796,7 @@ package body Remote.Rsync is
       Cb_Data.Ret_Data.Status := Status;
       Trace (Me, "rsync status is" & Integer'Image (Status));
 
-      Run_Hook (Data.Kernel, Rsync_Finished_Hook);
-
-   exception
-      when E : others => Trace (Me, E);
+      Rsync_Finished_Hook.Run (Data.Kernel);
    end Rsync_Terminated;
 
 end Remote.Rsync;

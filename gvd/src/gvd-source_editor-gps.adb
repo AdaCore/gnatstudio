@@ -17,7 +17,6 @@
 
 with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with GVD.Process;               use GVD.Process;
 with GVD.Types;                 use GVD.Types;
@@ -34,8 +33,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;              use GNAT.Strings;
 
 with GVD.Preferences;           use GVD.Preferences;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
-with Basic_Types;               use Basic_Types;
 
 package body GVD.Source_Editor.GPS is
 
@@ -115,12 +114,17 @@ package body GVD.Source_Editor.GPS is
       end if;
 
       if Line /= 0 then
-         Add_Line_Information
-           (Kernel,
-            Editor.Current_File,
-            "Current Line",
-            --  ??? we should get that from elsewhere.
-            new Line_Information_Array'(Line => Empty_Line_Information));
+         declare
+            Info : aliased Line_Information_Array :=
+               (Line => Empty_Line_Information);
+         begin
+            Add_Line_Information
+              (Kernel,
+               File       => Editor.Current_File,
+               Identifier => "Current Line",
+               --  ??? we should get that from elsewhere.
+               Info       => Info'Access);
+         end;
       end if;
 
       Kernel.Get_Buffer_Factory.Get (Editor.Current_File).Remove_Style
@@ -172,7 +176,7 @@ package body GVD.Source_Editor.GPS is
       if Editor.Current_File /= File then
          Editor.Current_File := File;
 
-         Open_File_Editor
+         Open_File_Action_Hook.Run
            (Kernel, File,
             Project           => GNATCOLL.Projects.No_Project, --   ??? unknown
             New_File          => False,
@@ -206,13 +210,17 @@ package body GVD.Source_Editor.GPS is
 
    begin
       if Prev_Current_Line /= 0 then
-         Add_Line_Information
-           (Kernel,
-            Prev_File,
-            "Current Line",
-            --  ??? we should get that from elsewhere.
-            new Line_Information_Array'
-              (Prev_Current_Line => Empty_Line_Information));
+         declare
+            Info : aliased Line_Information_Array :=
+               (Prev_Current_Line => Empty_Line_Information);
+         begin
+            Add_Line_Information
+              (Kernel,
+               File => Prev_File,
+               Identifier => "Current Line",
+               --  ??? we should get that from elsewhere.
+               Info => Info'Access);
+         end;
       end if;
 
       if Editor.Current_File = GNATCOLL.VFS.No_File then
@@ -220,7 +228,7 @@ package body GVD.Source_Editor.GPS is
       end if;
 
       Editor.Line := Line;
-      Open_File_Editor
+      Open_File_Action_Hook.Run
         (Kernel,
          Editor.Current_File,
          Project  => GNATCOLL.Projects.No_Project,  --   ??? unknown
@@ -231,18 +239,22 @@ package body GVD.Source_Editor.GPS is
       Append (Editor.Highlighted_Files,
               +Full_Name (Editor.Current_File));
 
-      Add_Line_Information
-        (Kernel,
-         Editor.Current_File,
-         "Current Line",
-         --  ??? we should get that from elsewhere.
-         new Line_Information_Array'
-           (Line => Line_Information_Record'
-              (Text               => null,
-               Tooltip_Text       => null,
-               Image              => new String'(Current_Line_Pixbuf),
-               Associated_Command => null)));
-      Set_Current_Source_Location (Tab, Editor.Current_File, Line);
+      declare
+         Info : aliased Line_Information_Array :=
+            (Line => Line_Information_Record'
+               (Text               => null,
+                Tooltip_Text       => null,
+                Image              => new String'(Current_Line_Pixbuf),
+                Associated_Command => null));
+      begin
+         Add_Line_Information
+           (Kernel,
+            File => Editor.Current_File,
+            Identifier => "Current Line",
+            --  ??? we should get that from elsewhere.
+            Info => Info'Access);
+         Set_Current_Source_Location (Tab, Editor.Current_File, Line);
+      end;
    end Set_Line;
 
    ------------------
@@ -408,8 +420,8 @@ package body GVD.Source_Editor.GPS is
             declare
                Other_Command : Set_Breakpoint_Command_Access;
                L             : constant Integer := Br (J).Line;
-               A             : Line_Information_Array (L .. L);
-
+               A             : Line_Information_Data :=
+                  new Line_Information_Array (L .. L);
             begin
                Create
                  (Other_Command,
@@ -432,10 +444,10 @@ package body GVD.Source_Editor.GPS is
 
                Add_Line_Information
                  (Kernel,
-                  File,
-                  Breakpoints_Column_Id,
-                  new Line_Information_Array'(A));
-
+                  File  => File,
+                  Identifier => Breakpoints_Column_Id,
+                  Info => A);
+               Unchecked_Free (A);
             end;
          end if;
       end loop;
@@ -467,7 +479,8 @@ package body GVD.Source_Editor.GPS is
                declare
                   Other_Command : Set_Breakpoint_Command_Access;
                   L : constant Integer := Editor.Current_Breakpoints (J).Line;
-                  A : Line_Information_Array (L .. L);
+                  A : Line_Information_Data :=
+                     new Line_Information_Array (L .. L);
                begin
                   Create
                     (Other_Command,
@@ -496,9 +509,10 @@ package body GVD.Source_Editor.GPS is
 
                   Add_Line_Information
                     (Kernel,
-                     File,
-                     Breakpoints_Column_Id,
-                     new Line_Information_Array'(A));
+                     File       => File,
+                     Identifier => Breakpoints_Column_Id,
+                     Info       => A);
+                  Unchecked_Free (A);
                end;
 
                Free (Editor.Current_Breakpoints (J));

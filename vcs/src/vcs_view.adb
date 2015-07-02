@@ -18,23 +18,18 @@
 with GNAT.Strings;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
-
-with Gdk;                       use Gdk;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GUI_Utils;                 use GUI_Utils;
 with Gdk.Rectangle;
 with Gdk.Window;                use Gdk.Window;
-
+with Gdk;                       use Gdk;
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-
 with Gtkada.Handlers;           use Gtkada.Handlers;
-
-with Basic_Types;               use Basic_Types;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GUI_Utils;                 use GUI_Utils;
 with Log_Utils;                 use Log_Utils;
 with VCS;                       use VCS;
 with VCS_Module;                use VCS_Module;
@@ -220,9 +215,9 @@ package body VCS_View is
 
             if Get_Depth (Path) = 2 then
                Iter := Get_Iter (Explorer.Model, Path);
-               Open_File_Editor
+               Open_File_Action_Hook.Run
                  (Kernel,
-                  Get_File (Explorer.Model, Iter, File_Column),
+                  File    => Get_File (Explorer.Model, Iter, File_Column),
                   Project => No_Project,  --  any project will do
                   Line   => 0,
                   Column => 0);

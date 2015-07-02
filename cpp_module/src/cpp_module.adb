@@ -48,26 +48,25 @@ package body Cpp_Module is
    C_Indent_Extra          : Boolean_Preference;
    C_Indent_Comments       : Boolean_Preference;
 
-   -----------------------
-   -- Local Subprograms --
-   -----------------------
-
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed. Subsidiary of Register_Module
    --  but must be defined at library level because it is invoked from the
    --  gps kernel.
 
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Self, Kernel, Pref);
       Style  : constant Indentation_Kind := C_Automatic_Indentation.Get_Pref;
       Params : constant Indent_Parameters :=
                  (Indent_Level        => C_Indentation_Level.Get_Pref,
@@ -90,7 +89,7 @@ package body Cpp_Module is
    begin
       Set_Indentation_Parameters (C_Lang, Params, Style);
       Set_Indentation_Parameters (Cpp_Lang, Params, Style);
-   end On_Preferences_Changed;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -100,6 +99,7 @@ package body Cpp_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
+      P : access On_Pref_Changed;
    begin
       Register_Language (Handler, C_Lang, null);
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension
@@ -123,18 +123,16 @@ package body Cpp_Module is
          Doc     => -"How the editor should indent C/C++ sources",
          Label   => -"Auto indentation");
 
-      C_Use_Tabs := Create
-        (Get_Preferences (Kernel),
-         Name    => "C-Use-Tabs",
+      C_Use_Tabs := Kernel.Get_Preferences.Create
+        (Name    => "C-Use-Tabs",
          Default => True,
          Page    => -"Editor/C & C++",
          Doc     =>
              -("Whether the editor should use tabulations when indenting"),
          Label   => -"Use tabulations");
 
-      C_Indentation_Level := Create
-        (Get_Preferences (Kernel),
-         Name    => "C-Indent-Level",
+      C_Indentation_Level := Kernel.Get_Preferences.Create
+        (Name    => "C-Indent-Level",
          Minimum => 1,
          Maximum => 9,
          Default => 2,
@@ -142,18 +140,16 @@ package body Cpp_Module is
          Doc     => -"The number of spaces for the default indentation",
          Label   => -"Default indentation");
 
-      C_Indent_Extra := Create
-        (Get_Preferences (Kernel),
-         Name    => "C-Indent-Extra",
+      C_Indent_Extra := Kernel.Get_Preferences.Create
+        (Name    => "C-Indent-Extra",
          Default => True,
          Page    => -"Editor/C & C++",
          Doc     => -("Whether to indent if/loop/switch constructs an extra"
                       & " level after '{'"),
          Label   => -"Extra indentation");
 
-      C_Indent_Comments := Create
-        (Get_Preferences (Kernel),
-         Name    => "C-Indent-Comments",
+      C_Indent_Comments := Kernel.Get_Preferences.Create
+        (Name    => "C-Indent-Comments",
          Default => True,
          Page    => -"Editor/C & C++",
          Doc     => -"Whether to indent lines with comments only",
@@ -165,11 +161,9 @@ package body Cpp_Module is
       Kernel.Register_Tree_Provider
         (Cpp_Lang, new Clang_Tree_Provider'(Kernel => Core_Kernel (Kernel)));
 
-      Add_Hook
-        (Kernel, Preference_Changed_Hook,
-         Wrapper (On_Preferences_Changed'Access),
-         Name => "cpp_module.preferences_changed");
-      On_Preferences_Changed (Kernel, Data => null);
+      P := new On_Pref_Changed;
+      Preferences_Changed_Hook.Add (P);
+      P.Execute (Kernel, null);
 
       Register_Naming_Scheme_Editor
         (Kernel, "c", Naming_Editor_Factory'Access);

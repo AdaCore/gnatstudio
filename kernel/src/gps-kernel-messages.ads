@@ -33,6 +33,7 @@ private with Ada.Containers.Hashed_Maps;
 private with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 private with Ada.Strings.Unbounded.Hash;
+with Ada.Unchecked_Conversion;
 with Ada.Tags;
 
 with Default_Preferences;           use Default_Preferences;
@@ -68,6 +69,8 @@ package GPS.Kernel.Messages is
    type Listener_Access is access all Abstract_Listener'Class;
 
    subtype Action_Item is GPS.Editors.Line_Information.Action_Item;
+   function To_Action_Item is new Ada.Unchecked_Conversion
+      (System.Address, Action_Item);
 
    type Unbounded_String_Array is
      array (Positive range <>) of Ada.Strings.Unbounded.Unbounded_String;

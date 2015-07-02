@@ -34,9 +34,9 @@ with Gtk.Window;                use Gtk.Window;
 
 with Config;                    use Config;
 with Default_Preferences;       use Default_Preferences;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
-with GVD.Scripts;               use GVD.Scripts;
 with GVD.Trace;                 use GVD.Trace;
 with GVD.Types;                 use GVD.Types;
 with MI.Lexer;                  use MI.Lexer;
@@ -722,8 +722,7 @@ package body Debugger.Gdb_MI is
 
          Process := Convert (Debugger);
          if Process /= null then
-            Run_Debugger_Hook
-              (Process, Debugger_Executable_Changed_Hook);
+            Debugger_Executable_Changed_Hook.Run (Process.Kernel, Process);
          end if;
 
          --  ??? missing support for Open_Main_Unit preference
@@ -953,7 +952,7 @@ package body Debugger.Gdb_MI is
       --  No need to do anything in text-only mode
 
       if Process /= null then
-         Run_Debugger_Hook (Process, GVD.Debugger_Executable_Changed_Hook);
+         Debugger_Executable_Changed_Hook.Run (Process.Kernel, Process);
       end if;
 
       if Get_Pref (Break_On_Exception) then

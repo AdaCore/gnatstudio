@@ -16,35 +16,29 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-
+with Commands.Interactive;       use Commands, Commands.Interactive;
 with GNAT.Strings;               use GNAT.Strings;
-
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
-
-with Glib;                       use Glib;
-with Glib.Object;                use Glib.Object;
-with XML_Utils;                  use XML_Utils;
-with Gtk.Widget;                 use Gtk.Widget;
-
-with Commands.Interactive;       use Commands, Commands.Interactive;
 with GPS.Editors;                use GPS.Editors;
+with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;       use GPS.Kernel.Locations;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;                   use GPS.Intl;
-with XML_Parsers;                use XML_Parsers;
-
+with Glib.Object;                use Glib.Object;
+with Glib;                       use Glib;
+with Gtk.Widget;                 use Gtk.Widget;
 with Language;                   use Language;
-with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with XML_Parsers;                use XML_Parsers;
+with XML_Utils;                  use XML_Utils;
 
 package body Navigation_Module is
    Me : constant Trace_Handle := Create ("Navigation");
@@ -225,9 +219,12 @@ package body Navigation_Module is
       Line   : Natural) return Language_Category;
    --  Returns type for block enclosing Line
 
-   procedure On_Marker_Added_In_History
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Marker_Added_In_History is new Marker_Hooks_Function
+      with null record;
+   overriding procedure Execute
+     (Self     : On_Marker_Added_In_History;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Marker  : Location_Marker);
    --  Called when a new marker is added in the history
 
    procedure Move_In_Marker_History
@@ -250,25 +247,28 @@ package body Navigation_Module is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Load all locations from an XML file
 
-   procedure On_Project_Loaded_Hook
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_Project_Loaded is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Loaded;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when a project is loaded.
 
-   procedure On_Desktop_Loaded_Hook
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_Desktop_Loaded is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Desktop_Loaded;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the desktop is loaded
 
-   --------------------------------
-   -- On_Marker_Added_In_History --
-   --------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Marker_Added_In_History
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self     : On_Marker_Added_In_History;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Marker   : Location_Marker)
    is
-      pragma Unreferenced (Kernel);
-      D      : constant Marker_Hooks_Args_Access :=
-                 Marker_Hooks_Args_Access (Data);
+      pragma Unreferenced (Self, Kernel);
       Module : constant Navigation_Module :=
                  Navigation_Module (Navigation_Module_ID);
    begin
@@ -280,7 +280,7 @@ package body Navigation_Module is
       end if;
 
       if Module.Current_Marker = 0
-        or else not Similar (D.Marker, Module.Markers (Module.Current_Marker))
+        or else not Similar (Marker, Module.Markers (Module.Current_Marker))
       then
          Module.Current_Marker := Module.Current_Marker + 1;
 
@@ -292,19 +292,19 @@ package body Navigation_Module is
             Module.Current_Marker := Module.Markers'Last;
          end if;
 
-         Module.Markers (Module.Current_Marker) := D.Marker;
+         Module.Markers (Module.Current_Marker) := Marker;
          Module.Last_Marker := Module.Current_Marker;
       else
          --  We are not storing marker: release memory now.
-         Destroy (D.Marker.all);
-         Unchecked_Free (D.Marker);
+         Destroy (Marker.all);
+         --  ??? Unchecked_Free (Marker);
       end if;
 
       --  In all cases, we should no longer use the marker (which is either
       --  stored in the history list, and thus should not be freed, or was
       --  already freed)
-      D.Marker := null;
-   end On_Marker_Added_In_History;
+      --  ???   Marker := null;
+   end Execute;
 
    --------------------------
    -- Save_History_Markers --
@@ -519,29 +519,35 @@ package body Navigation_Module is
       end if;
    end Load_History_Markers;
 
-   ----------------------------
-   -- On_Project_Loaded_Hook --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Loaded_Hook
-     (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+     (Self   : On_Project_Loaded;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
    begin
       --  Save the previous history
       Save_History_Markers (Kernel, Old_Project => True);
 
       --  Load the history for the new project
       Load_History_Markers (Kernel);
-   end On_Project_Loaded_Hook;
+   end Execute;
 
-   ----------------------------
-   -- On_Desktop_Loaded_Hook --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Desktop_Loaded_Hook
-     (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+     (Self   : On_Desktop_Loaded;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
    begin
       Load_History_Markers (Kernel);
-   end On_Desktop_Loaded_Hook;
+   end Execute;
 
    ----------------------------
    -- Move_In_Marker_History --
@@ -1130,10 +1136,10 @@ package body Navigation_Module is
               Get_Registry (Kernel).Tree.Other_File (File);
          begin
             if Dir_Name (Other_File) /= "" then
-               Open_File_Editor
-                 (Kernel, Other_File,
-                  Project_Information (Context.Context),
-                  Line => 0);
+               Open_File_Action_Hook.Run
+                  (Kernel, File => Other_File,
+                   Project => Project_Information (Context.Context),
+                   Line => 0);
             else
                Trace (Me, "Other file not found for "
                       & File.Display_Full_Name);
@@ -1227,22 +1233,9 @@ package body Navigation_Module is
          Category    => -"Editor",
          Icon_Name   => "gps-forward-symbolic");
 
-      Register_Hook_No_Args (Kernel, Marker_Added_In_History_Hook);
-      Add_Hook (Kernel, Marker_Added_In_History_Hook,
-                Wrapper (On_Marker_Added_In_History'Access),
-                Name => "navigation.maker_added");
-
-      Add_Hook
-        (Kernel  => Kernel,
-         Hook    => Project_View_Changed_Hook,
-         Func    => Wrapper (On_Project_Loaded_Hook'Access),
-         Name    => "navigation_module.project_view_changed");
-
-      Add_Hook
-        (Kernel  => Kernel,
-         Hook    => Desktop_Loaded_Hook,
-         Func    => Wrapper (On_Desktop_Loaded_Hook'Access),
-         Name    => "navigation_module.desktop_loaded");
+      Marker_Added_To_History_Hook.Add (new On_Marker_Added_In_History);
+      Project_View_Changed_Hook.Add (new On_Project_Loaded);
+      Desktop_Loaded_Hook.Add (new On_Desktop_Loaded);
    end Register_Module;
 
    -------------

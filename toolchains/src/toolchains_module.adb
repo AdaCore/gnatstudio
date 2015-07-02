@@ -30,7 +30,6 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Toolchains_Old;            use Toolchains_Old;
 with Toolchains_Dialog;         use Toolchains_Dialog;
 with Builder_Facility_Module;
@@ -71,8 +70,10 @@ package body Toolchains_Module is
    pragma Warnings (On);
    --  Retrieve the global property
 
-   procedure On_GPS_Started
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_GPS_Started is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_GPS_Started;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when GPS is starting
 
    ----------
@@ -188,17 +189,19 @@ package body Toolchains_Module is
       end if;
    end Apply;
 
-   --------------------
-   -- On_GPS_Started --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_GPS_Started
-     (Kernel : access Kernel_Handle_Record'Class)
+   overriding procedure Execute
+     (Self   : On_GPS_Started;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
+      pragma Unreferenced (Self);
       Property : constant Toolchains_Property := Get_Property;
    begin
       Apply (Property, GPS.Kernel.Kernel_Handle (Kernel));
-   end On_GPS_Started;
+   end Execute;
 
    -------------
    -- Execute --
@@ -319,9 +322,7 @@ package body Toolchains_Module is
          Category => -"Views");
 
       --  Load the property after all modules and plug-ins are loaded.
-      Add_Hook (Kernel, GPS_Started_Hook,
-                Wrapper (On_GPS_Started'Access),
-                Name  => "toolchains_module.gps_started");
+      Gps_Started_Hook.Add (new On_GPS_Started);
    end Register_Module;
 
 end Toolchains_Module;

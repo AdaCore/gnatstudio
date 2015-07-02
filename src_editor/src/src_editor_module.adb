@@ -55,11 +55,11 @@ with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
 with Histories;                         use Histories;
 with Projects;                          use Projects;
@@ -67,7 +67,6 @@ with Remote;                            use Remote;
 with Src_Contexts;                      use Src_Contexts;
 with Src_Editor_Box;                    use Src_Editor_Box;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
-with Src_Editor_Buffer.Hooks;           use Src_Editor_Buffer.Hooks;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
@@ -121,24 +120,47 @@ package body Src_Editor_Module is
       return Selection_Context;
    --  See inherited documentation
 
-   function Source_File_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean;
+   type On_Open_File is new Open_File_Hooks_Function with null record;
+   overriding function Execute
+     (Self   : On_Open_File;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Line   : Integer;
+      Column, Column_End : GNATCOLL.Xref.Visible_Column;
+      Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
+      Project : Project_Type;
+      Group : Child_Group;
+      Initial_Position : Child_Position;
+      Areas : Allowed_Areas;
+      Title : String) return Boolean;
    --  Reacts to the Open_File_Action_Hook
 
-   function File_Line_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean;
+   type On_File_Line_Action is new Line_Info_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self       : On_File_Line_Action;
+      Kernel     : not null access Kernel_Handle_Record'Class;
+      Identifier : String;
+      File       : Virtual_File;
+      Every_Line : Boolean;
+      Tooltip    : String;
+      Info       : access Line_Information_Array;
+      Icon_Name  : String);
    --  Reacts to the File_Line_Action_Hook
 
-   procedure Word_Added_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Word_Added is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Word_Added;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Reacts to the word_added Hook
 
-   procedure User_Character_Added_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Character_Added is new Character_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self        : On_Character_Added;
+      Kernel      : not null access Kernel_Handle_Record'Class;
+      File        : Virtual_File;
+      Character   : Glib.Gunichar;
+      Interactive : Boolean);
    --  Reacts to the character_added Hook
 
    type Location_Idle_Data is record
@@ -170,38 +192,62 @@ package body Src_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit->Insert File... menu
 
-   procedure File_Edited_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Edited is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Callback for the "file_edited" hook
 
-   procedure File_Changed_On_Disk_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Changed_On_Disk is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Changed_On_Disk;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Callback for the "file_changed_on_disk" hook
 
-   procedure File_Renamed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Renamed is new File2_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File, Renamed : Virtual_File);
    --  Callback for the "file_renamed" hook
 
-   procedure File_Saved_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Saved is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Callback for the "file_saved" hook
 
-   procedure Cursor_Stopped_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Lines_Revealed is new Context_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self    : On_Lines_Revealed;
+      Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Context : GPS.Kernel.Selection_Context);
+   --  Hook called when the "source_lines_revealed" hook is run
+
+   type On_Cursor_Stopped is new File_Location_Hooks_Function
+      with null record;
+   overriding procedure Execute
+     (Self   : On_Cursor_Stopped;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Line, Column : Integer;
+      Project : Project_Type);
    --  Callback for the "cursor_stopped" hook
 
-   procedure File_Modified_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Buffer_Edited is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Buffer_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
    procedure Add_To_Recent_Menu
@@ -461,7 +507,11 @@ package body Src_Editor_Module is
       Column  : Character_Offset_Type;
    begin
       if not File.Is_Regular_File then
-         Close_File_Editors (Editor.Get_Kernel, File);
+         Open_File_Action_Hook.Run
+            (Editor.Get_Kernel,
+             File => File,
+             Project => No_Project,
+             Line => -1);   --  close editors for File
       else
          Get_Cursor_Position (Buffer, Line, Column);
          Load_File
@@ -555,80 +605,80 @@ package body Src_Editor_Module is
       end loop;
    end For_All_Views;
 
-   --------------------
-   -- File_Edited_Cb --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Edited_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-
+      pragma Unreferenced (Self);
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class);
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class) is
       begin
          Child.Update_File_Info;
       end On_View;
    begin
-      Reset_Markers_For_File (Kernel, D.File);
-      For_All_Views (Kernel, D.File, On_View'Access);
-   end File_Edited_Cb;
+      Reset_Markers_For_File (Kernel, File);
+      For_All_Views (Kernel, File, On_View'Access);
+   end Execute;
 
-   -----------------------------
-   -- File_Changed_On_Disk_Cb --
-   -----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Changed_On_Disk_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Changed_On_Disk;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
+      pragma Unreferenced (Self);
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class);
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class) is
       begin
          Check_Writable (Source_Editor_Box (Get_Widget (Child)));
       end On_View;
 
-      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Ignored : Boolean;
    begin
       Ignored := Check_Monitored_Files (Kernel, Interactive => False);
-      For_All_Views (Kernel, D.File, On_View'Access);
-   end File_Changed_On_Disk_Cb;
+      For_All_Views (Kernel, File, On_View'Access);
+   end Execute;
 
-   ---------------------
-   -- File_Renamed_Cb --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Renamed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File, Renamed : Virtual_File)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Self);
       Id : constant Source_Editor_Module :=
              Source_Editor_Module (Src_Editor_Module_Id);
-      D  : constant Files_2_Hooks_Args := Files_2_Hooks_Args (Data.all);
-      E  : Element;
+      E  : constant Element := Editors_Hash.Get (Id.Editors, File);
    begin
-      E := Editors_Hash.Get (Id.Editors, D.File);
-
       if E /= No_Element then
-         Editors_Hash.Remove (Id.Editors, D.File);
-         Editors_Hash.Set (Id.Editors, D.Renamed, E);
+         Editors_Hash.Remove (Id.Editors, File);
+         Editors_Hash.Set (Id.Editors, Renamed, E);
       end if;
-   end File_Renamed_Cb;
+   end Execute;
 
-   -------------------
-   -- File_Saved_Cb --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Saved_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
+      pragma Unreferenced (Self);
       Id    : constant Source_Editor_Module :=
                 Source_Editor_Module (Src_Editor_Module_Id);
-      D     : constant File_Hooks_Args := File_Hooks_Args (Data.all);
 
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class);
       procedure On_View (Child : not null access GPS_MDI_Child_Record'Class) is
@@ -649,34 +699,34 @@ package body Src_Editor_Module is
             E := Editors_Hash.Get_Element (I);
          end loop;
 
-         Editors_Hash.Set (Id.Editors, D.File, (Child => MDI_Child (Child)));
+         Editors_Hash.Set (Id.Editors, File, (Child => MDI_Child (Child)));
       end On_View;
 
    begin
       --  Insert the saved file in the Recent menu
 
-      if D.File /= GNATCOLL.VFS.No_File
-        and then not Is_Auto_Save (D.File)
+      if File /= GNATCOLL.VFS.No_File
+        and then not Is_Auto_Save (File)
       then
-         Add_To_Recent_Menu (Kernel, D.File);
+         Add_To_Recent_Menu (Kernel, File);
       end if;
 
-      For_All_Views (Kernel, D.File, On_View'Access);
-   end File_Saved_Cb;
+      For_All_Views (Kernel, File, On_View'Access);
+   end Execute;
 
-   ----------------------
-   -- File_Modified_Cb --
-   ----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Modified_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Buffer_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      D   : constant File_Hooks_Args :=
-        File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Id  : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      C   : constant MDI_Child := Find_Editor (Kernel, D.File, No_Project);
+      C   : constant MDI_Child := Find_Editor (Kernel, File, No_Project);
       Box : constant Source_Editor_Box :=
         Get_Source_Box_From_MDI (C);
    begin
@@ -686,19 +736,21 @@ package body Src_Editor_Module is
          end if;
          Box.Get_View.Queue_Draw;
       end if;
-   end File_Modified_Cb;
+   end Execute;
 
-   -----------------------
-   -- Cursor_Stopped_Cb --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Cursor_Stopped_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Cursor_Stopped;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Line, Column : Integer;
+      Project : Project_Type)
    is
-      D   : constant File_Location_Hooks_Args_Access :=
-              File_Location_Hooks_Args_Access (Data);
-      C   : constant MDI_Child := Find_Editor (Kernel, D.File, D.Project);
+      pragma Unreferenced (Self, Line, Column);
+      C   : constant MDI_Child := Find_Editor (Kernel, File, Project);
       Id  : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Box : constant Source_Editor_Box :=
@@ -710,7 +762,7 @@ package body Src_Editor_Module is
          end if;
          Box.Get_View.Queue_Draw;
       end if;
-   end Cursor_Stopped_Cb;
+   end Execute;
 
    ------------------------
    -- File_Edit_Callback --
@@ -734,7 +786,7 @@ package body Src_Editor_Module is
          end if;
       end if;
 
-      File_Edited (Get_Kernel (D.Edit), Get_Filename (D.Edit));
+      File_Edited_Hook.Run (Get_Kernel (D.Edit), Get_Filename (D.Edit));
 
       return False;
 
@@ -832,37 +884,35 @@ package body Src_Editor_Module is
    -------------
 
    overriding procedure Execute
-     (Hook   : Lines_Revealed_Hook_Record;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+     (Self    : On_Lines_Revealed;
+      Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Context : GPS.Kernel.Selection_Context)
    is
-      pragma Unreferenced (Hook);
-      D : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
-      Infos        : Line_Information_Data;
+      pragma Unreferenced (Self);
       Line1, Line2 : Integer;
-
    begin
-      if Has_Area_Information (D.Context) then
-         Get_Area (D.Context, Line1, Line2);
+      if Has_Area_Information (Context) then
+         Get_Area (Context, Line1, Line2);
 
          --  ??? This is probably unnecessary if not Has_File_Information
          --  (Area_Context), see below.
-         Infos := new Line_Information_Array (Line1 .. Line2);
+         if Has_File_Information (Context) then
+            declare
+               Infos : Line_Information_Data :=
+                  new Line_Information_Array (Line1 .. Line2);
+            begin
+               for J in Infos'Range loop
+                  Infos (J).Text := new String'(Image (J));
+               end loop;
 
-         for J in Infos'Range loop
-            Infos (J).Text := new String'(Image (J));
-         end loop;
-
-         if Has_File_Information (D.Context) then
-            Add_Line_Information
-              (Kernel,
-               File_Information (D.Context),
-               Src_Editor_Module_Name,
-               Infos,
-               Normalize => False);
+               Add_Line_Information
+                (Kernel     => Kernel,
+                 File       => File_Information (Context),
+                 Identifier => Src_Editor_Module_Name,
+                 Info       => Infos);
+               Unchecked_Free (Infos);
+            end;
          end if;
-
-         Unchecked_Free (Infos);
       end if;
    end Execute;
 
@@ -1399,7 +1449,7 @@ package body Src_Editor_Module is
 
             --  Report a change of name, so that the titles of the MDI window
             --  are updated properly
-            File_Edited (Kernel, Get_Filename (MDI_Child (Child)));
+            File_Edited_Hook.Run (Kernel, Get_Filename (MDI_Child (Child)));
          else
             --  Determine the number of "Untitled" files open
 
@@ -1464,7 +1514,7 @@ package body Src_Editor_Module is
                Set_File_Identifier (Get_Buffer (Editor), Ident);
                Set_Filename
                  (Get_Buffer (Editor), Get_Filename (MDI_Child (Child)));
-               File_Edited (Kernel, Ident, Force_Hook => True);
+               File_Edited_Hook.Run (Kernel, Ident);
             end;
          end if;
 
@@ -1492,9 +1542,9 @@ package body Src_Editor_Module is
    overriding procedure Activate
      (Callback : access On_Recent; Item : String) is
    begin
-      Open_File_Editor
+      Open_File_Action_Hook.Run
         (Callback.Kernel,
-         Create (Full_Filename => +Item),
+         File    => Create (Full_Filename => +Item),
          Project => No_Project);  --  will choose one at random ???
    end Activate;
 
@@ -1557,27 +1607,35 @@ package body Src_Editor_Module is
       return Standard.Commands.Success;
    end Execute;
 
-   ----------------------
-   -- Source_File_Hook --
-   ----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   function Source_File_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
+   overriding function Execute
+     (Self   : On_Open_File;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Line   : Integer;
+      Column, Column_End : GNATCOLL.Xref.Visible_Column;
+      Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
+      Project : Project_Type;
+      Group : Child_Group;
+      Initial_Position : Child_Position;
+      Areas : Allowed_Areas;
+      Title : String) return Boolean
    is
-      D      : constant Source_File_Hooks_Args :=
-                 Source_File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Child  : MDI_Child;
       Source : Source_Editor_Box;
       Edit   : Source_Editor_Box;
       Tmp    : Boolean;
 
    begin
-      if D.Line = -1 then
+      if Line = -1 then
          --  Close all file editors corresponding to File
 
          loop
-            Child := Find_Editor (Kernel, D.File, D.Project);
+            Child := Find_Editor (Kernel, File, Project);
             exit when Child = null;
             Close_Child (Child);
          end loop;
@@ -1586,20 +1644,20 @@ package body Src_Editor_Module is
 
       else
          Source := Open_File
-           (Kernel, D.File,
-            Project          => D.Project,
-            Create_New       => D.New_File,
-            Focus            => D.Focus,
-            Group            => D.Group,
-            Initial_Position => D.Initial_Position,
-            Line             => Editable_Line_Type (D.Line),
-            Column           => D.Column,
-            Column_End       => D.Column_End,
-            Areas            => D.Areas);
+           (Kernel, File,
+            Project          => Project,
+            Create_New       => New_File,
+            Focus            => Focus,
+            Group            => Group,
+            Initial_Position => Initial_Position,
+            Line             => Editable_Line_Type (Line),
+            Column           => Column,
+            Column_End       => Column_End,
+            Areas            => Areas);
 
-         if D.Force_Reload then
+         if Force_Reload then
             Source.Get_Buffer.Load_File
-              (Filename        => D.File,
+              (Filename        => File,
                Success         => Tmp);
          end if;
 
@@ -1607,22 +1665,22 @@ package body Src_Editor_Module is
          --  the Hook, but then we wouldn't have access to Create_File_Marker.
          --  Another module that deals with this hook would likely want its own
          --  type of Marker anyway...
-         if D.Enable_Navigation then
+         if Enable_Navigation then
             Push_Marker_In_History
               (Kernel => Kernel,
                Marker => Create_File_Marker
                  (Kernel  => Kernel,
-                  File    => D.File,
-                  Project => D.Project,
-                  Line    => Convert (D.Line),
-                  Column  => D.Column));
+                  File    => File,
+                  Project => Project,
+                  Line    => Convert (Line),
+                  Column  => Column));
          end if;
 
          if Source /= null then
             Edit := Source;
 
-            if D.Title /= "" then
-               Source.Get_Buffer.Set_Title (D.Title);
+            if Title /= "" then
+               Source.Get_Buffer.Set_Title (Title);
             end if;
 
             Source.Get_Buffer.Filename_Changed;  --  force update of MDI title
@@ -1630,119 +1688,99 @@ package body Src_Editor_Module is
 
          return Edit /= null;
       end if;
-   end Source_File_Hook;
+   end Execute;
 
-   --------------------
-   -- File_Line_Hook --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   function File_Line_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
+   overriding procedure Execute
+     (Self       : On_File_Line_Action;
+      Kernel     : not null access Kernel_Handle_Record'Class;
+      Identifier : String;
+      File       : Virtual_File;
+      Every_Line : Boolean;
+      Tooltip    : String;
+      Info       : access Line_Information_Array;
+      Icon_Name  : String)
    is
-      D     : constant File_Line_Hooks_Args := File_Line_Hooks_Args (Data.all);
-      Child : constant MDI_Child :=
-        Find_Editor (Kernel, D.File, No_Project);  --  any project ???
+      pragma Unreferenced (Self);
 
-      function Get_Tooltip return String;
-      function Get_Icon_Name return String;
+      procedure Process_File (F : Virtual_File);
 
-      function Get_Tooltip return String is
+      procedure Process_File (F : Virtual_File) is
+         Child : constant MDI_Child := Find_Editor (Kernel, F, No_Project);
       begin
-         if D.Tooltip = null then
-            return "";
-         else
-            return D.Tooltip.all;
-         end if;
-      end Get_Tooltip;
-
-      function Get_Icon_Name return String is
-      begin
-         if D.Icon_Name = null then
-            return "";
-         else
-            return D.Icon_Name.all;
-         end if;
-      end Get_Icon_Name;
-
-   begin
-      if Child /= null then
-         if D.Info'First = 0 then
-            Create_Line_Information_Column
-              (Source_Editor_Box (Get_Widget (Child)).Get_Buffer,
-               D.Identifier,
-               D.Every_Line,
-               D.Info (0));
-
-         elsif D.Info'Length = 0 then
-            Remove_Line_Information_Column
-              (Source_Editor_Box (Get_Widget (Child)), D.Identifier);
-         else
-            if D.Info'Last < 0 then
+         if Child /= null then
+            if Info = null or else Info'Length = 0 then
+               Remove_Line_Information_Column
+                 (Source_Editor_Box (Get_Widget (Child)), Identifier);
+            elsif Info'First = 0 then
+               Create_Line_Information_Column
+                 (Source_Editor_Box (Get_Widget (Child)).Get_Buffer,
+                  Identifier,
+                  Every_Line,
+                  Info (0));
+            elsif Info'Last < 0 then
                --  This how the hook data encodes extra information
-
                Add_Extra_Information
-                 (Get_Buffer
-                    (Source_Editor_Box
-                       (Get_Widget (Child))),
-                  D.Identifier, D.Info,
-                  Icon => Get_Icon_Name,
-                  Tooltip => Get_Tooltip);
-
+                 (Get_Buffer (Source_Editor_Box (Get_Widget (Child))),
+                  Identifier => Identifier,
+                  Info       => Info,
+                  Icon       => Icon_Name,
+                  Tooltip    => Tooltip);
             else
-               --  ??? Source duplicated in src_editor_buffer-line_information
-               --  (Add_Blank_Lines)
-
+               --  ??? Source duplicated in
+               --  src_editor_buffer-line_information (Add_Blank_Lines)
                Add_Side_Information
                  (Source_Editor_Box (Get_Widget (Child)).Get_Buffer,
-                  D.Identifier, D.Info.all, 0);
+                  Identifier, Info.all, 0);
             end if;
          end if;
+      end Process_File;
 
-         return True;
-      end if;
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end File_Line_Hook;
-
-   -------------------------------
-   -- User_Character_Added_Hook --
-   -------------------------------
-
-   procedure User_Character_Added_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-   is
-      File_Data : constant File_Edition_Hooks_Args :=
-                    File_Edition_Hooks_Args (Data.all);
    begin
-      if File_Data.File = GNATCOLL.VFS.No_File
-        or else not File_Data.Interactive
-      then
+      if File /= No_File then
+         Process_File (File);
+      else
+         for F of Kernel.Open_Files.all loop
+            Process_File (F);
+         end loop;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self        : On_Character_Added;
+      Kernel      : not null access Kernel_Handle_Record'Class;
+      File        : Virtual_File;
+      Character   : Glib.Gunichar;
+      Interactive : Boolean)
+   is
+      pragma Unreferenced (Self);
+   begin
+      if File = GNATCOLL.VFS.No_File or else not Interactive then
          return;
       end if;
 
-      if Is_Alnum (File_Data.Character)
-        or else File_Data.Character = Underscore
-        or else File_Data.Character = Backspace
+      if Is_Alnum (Character)
+        or else Character = Underscore
+        or else Character = Backspace
       then
          declare
             --  get the most recent editor for this file, for any project
             Box    : constant Source_Editor_Box :=
               Get_Source_Box_From_MDI
-                (Find_Editor (Kernel, File_Data.File,
-                 No_Project));  -- any project
+                (Find_Editor (Kernel, File, No_Project));  -- any project
             Buffer : constant Source_Buffer := Get_Buffer (Box);
 
          begin
-            if Is_Alnum (File_Data.Character) then
-               Add_Typed_Char (Buffer, File_Data.Character);
-            elsif File_Data.Character = Backspace then
+            if Is_Alnum (Character) then
+               Add_Typed_Char (Buffer, Character);
+            elsif Character = Backspace then
                Delete_Last_Typed_Char (Buffer);
             end if;
 
@@ -1753,35 +1791,32 @@ package body Src_Editor_Module is
             end if;
          end;
 
-      elsif File_Data.Character = Space then
+      elsif Character = Space then
          Get_View
            (Get_Source_Box_From_MDI
-              (Find_Editor
-                   (Kernel, File_Data.File, No_Project))).Reset_As_Is_Mode;
+              (Find_Editor (Kernel, File, No_Project))).Reset_As_Is_Mode;
       end if;
-   end User_Character_Added_Hook;
+   end Execute;
 
-   ---------------------
-   -- Word_Added_Hook --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Word_Added_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Word_Added;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
       Buffer    : Source_Buffer;
    begin
-      if File_Data.File = GNATCOLL.VFS.No_File then
-         return;
+      if File /= GNATCOLL.VFS.No_File then
+         --  Get the most recent editor for this file, for any project
+         Buffer := Get_Buffer
+           (Get_Source_Box_From_MDI (Find_Editor (Kernel, File, No_Project)));
+         Autocase_Text (Buffer, Casing => End_Of_Word);
       end if;
-
-      --  Get the most recent editor for this file, for any project
-      Buffer := Get_Buffer
-        (Get_Source_Box_From_MDI
-           (Find_Editor (Kernel, File_Data.File, No_Project)));
-      Autocase_Text (Buffer, Casing => End_Of_Word);
-   end Word_Added_Hook;
+   end Execute;
 
    -------------------
    -- Build_Context --
@@ -2117,18 +2152,10 @@ package body Src_Editor_Module is
          Priority    => Default_Priority);
       Register_Desktop_Functions (null, Load_Desktop'Access);
 
-      Add_Hook (Kernel, Open_File_Action_Hook,
-                Wrapper (Source_File_Hook'Access),
-                Name => "src_editor.open_file");
-      Add_Hook (Kernel, File_Line_Action_Hook,
-                Wrapper (File_Line_Hook'Access),
-                Name => "src_editor.file_line");
-      Add_Hook (Kernel, Src_Editor_Buffer.Hooks.Word_Added_Hook,
-                Wrapper (Word_Added_Hook'Access),
-                Name => "src_editor.word_added");
-      Add_Hook (Kernel, Src_Editor_Buffer.Hooks.Character_Added_Hook,
-                Wrapper (User_Character_Added_Hook'Access),
-                Name => "src_editor.after_character_added");
+      Open_File_Action_Hook.Add (new On_Open_File);
+      File_Line_Action_Hook.Add (new On_File_Line_Action);
+      Word_Added_Hook.Add (new On_Word_Added);
+      Character_Added_Hook.Add (new On_Character_Added);
 
       --  Menus
 
@@ -2282,29 +2309,13 @@ package body Src_Editor_Module is
          Category   => "Editor",
          Filter     => Src_Action_Context);
 
-      Add_Hook (Kernel, File_Renamed_Hook,
-                Wrapper (File_Renamed_Cb'Access),
-                Name => "src_editor.file_renamed");
-      Add_Hook (Kernel, File_Saved_Hook,
-                Wrapper (File_Saved_Cb'Access),
-                Name => "src_editor.file_saved");
-      Add_Hook (Kernel, Location_Changed_Hook,
-                Wrapper (Cursor_Stopped_Cb'Access),
-                Name => "src_editor.location_changed");
-
-      Add_Hook (Kernel, Buffer_Modified_Hook,
-                Wrapper (File_Modified_Cb'Access),
-                Name => "src_editor.buffer_modified");
-
-      Add_Hook (Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "src_editor.preferences_changed");
-      Add_Hook (Kernel, File_Edited_Hook,
-                Wrapper (File_Edited_Cb'Access),
-                Name => "src_editor.file_edited");
-      Add_Hook (Kernel, File_Changed_On_Disk_Hook,
-                Wrapper (File_Changed_On_Disk_Cb'Access),
-                Name => "src_editor.file_changed_on_disk");
+      File_Renamed_Hook.Add (new On_File_Renamed);
+      File_Saved_Hook.Add (new On_File_Saved);
+      Location_Changed_Hook.Add (new On_Cursor_Stopped);
+      Buffer_Edited_Hook.Add (new On_Buffer_Edited);
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
+      File_Edited_Hook.Add (new On_File_Edited);
+      File_Changed_On_Disk_Hook.Add (new On_File_Changed_On_Disk);
 
       Register_Commands (Kernel);
 
@@ -2386,11 +2397,7 @@ package body Src_Editor_Module is
         (Kernel, -"Directory of current file", 'd',
          Expand_Aliases_Entities'Access);
 
-      Register_Editor_Hooks (Kernel);
-
       Completion_Module.Register_Module (Kernel);
-
-      Register_Hook_No_Return (Kernel, Buffer_Modified_Hook, File_Hook_Type);
 
       --  Register the message listener for editors
       Src_Editor_Module.Messages.Register (Kernel);
@@ -2405,15 +2412,16 @@ package body Src_Editor_Module is
 
    end Register_Module;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Data);
+      pragma Unreferenced (Self, Pref);
       Pref_Display_Line_Numbers     : constant Boolean :=
                                         Display_Line_Numbers.Get_Pref /= Never;
       Pref_Display_Subprogram_Names : constant Boolean :=
@@ -2508,7 +2516,7 @@ package body Src_Editor_Module is
             Runtime_Use_ACL := 0;
          end if;
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    ----------
    -- Free --

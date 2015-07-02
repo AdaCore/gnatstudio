@@ -70,7 +70,6 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with Language;                   use Language;
 with Language.Tree;              use Language.Tree;
 with Src_Editor_Buffer.Line_Information;
@@ -273,25 +272,23 @@ package body Src_Editor_View is
      (View : access Source_View_Record'Class);
    --  Restore the stored cursor position
 
-   type Preferences_Hook_Record is new Function_With_Args with record
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
       View : Source_View;
    end record;
-   type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed, to refresh the editor
    --  appropriately.
 
-   type File_Hook_Record is new Function_With_Args with record
+   type On_File_Saved is new File_Hooks_Function with record
       View : Source_View;
    end record;
-   type File_Hook is access all File_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : File_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Callback for "File_Saved_Signal"
 
    procedure Size_Allocated_Before (View : access Gtk_Widget_Record'Class);
@@ -1354,7 +1351,7 @@ package body Src_Editor_View is
             Uris : constant GNAT.Strings.String_List := Data.Get_Uris;
          begin
             for Url of Uris loop
-               Open_File_Editor
+               Open_File_Action_Hook.Run
                  (View.Kernel,
                   Create (+Filename_From_URI (Url.all, null)),
                   Project  => No_Project,  --  will choose one at random
@@ -1439,8 +1436,7 @@ package body Src_Editor_View is
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
-      Hook        : Preferences_Hook;
-      F_Hook      : File_Hook;
+      Hook        : access On_Pref_Changed;
       Hpolicy, Vpolicy : Gtk.Enums.Gtk_Policy_Type;
       Value       : GValue;
    begin
@@ -1630,19 +1626,15 @@ package body Src_Editor_View is
             After => False);
       end if;
 
-      Hook := new Preferences_Hook_Record'
-        (Function_With_Args with View => Source_View (View));
-      Execute (Hook.all, Kernel, Data => null);
-      Add_Hook
-        (Kernel, Preference_Changed_Hook, Hook,
-         Name  => "src_editor_view.preferences_changed",
-         Watch => GObject (View));
+      Hook := new On_Pref_Changed;
+      Hook.View := Source_View (View);
+      Hook.Execute (Kernel, null);
+      Preferences_Changed_Hook.Add (Hook, Watch => View);
 
-      F_Hook := new File_Hook_Record'
-        (Function_With_Args with View => Source_View (View));
-      Add_Hook (Kernel, File_Saved_Hook, F_Hook,
-                Name  => "src_editor_view.file_saved",
-                Watch => GObject (View));
+      File_Saved_Hook.Add
+         (new On_File_Saved'
+             (File_Hooks_Function with View => Source_View (View)),
+          Watch => View);
 
       --  Connect in an idle callback, otherwise the lines-with-code in the
       --  debugger are recomputed all at once (before the editor has a size).
@@ -1724,16 +1716,15 @@ package body Src_Editor_View is
    -------------
 
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
       pragma Unreferenced (Kernel);
-      Source : constant Source_View := Hook.View;
+      Source : constant Source_View := Self.View;
       Layout : Pango_Layout;
       Color  : Gdk_RGBA;
       Ink_Rect, Logical_Rect : Pango.Pango_Rectangle;
-      Pref : constant Preference := Get_Pref (Data);
    begin
       --  Recompute the width of one character
 
@@ -1837,15 +1828,13 @@ package body Src_Editor_View is
    -------------
 
    overriding procedure Execute
-     (Hook   : File_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Kernel, File);
    begin
-      Invalidate_Window (Hook.View);
-   exception
-      when E : others => Trace (Me, E);
+      Invalidate_Window (Self.View);
    end Execute;
 
    -------------------------------
@@ -2312,7 +2301,7 @@ package body Src_Editor_View is
       use Interfaces.C.Strings;
    begin
       if not Active (Testsuite_Handle) then
-         if not (View.Get_Realized) then
+         if not View.Get_Realized then
             return True;
          end if;
       end if;

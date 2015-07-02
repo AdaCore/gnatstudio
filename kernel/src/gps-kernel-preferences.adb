@@ -56,7 +56,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Language;                  use Language;
 
 package body GPS.Kernel.Preferences is
@@ -118,8 +117,8 @@ package body GPS.Kernel.Preferences is
 
       if not Self.Is_Loading_Preferences then
          Trace (Me, "Preference changed: " & Pref.Get_Name);
-         Emit_Preferences_Changed
-           (Self.Kernel, Default_Preferences.Preference (Pref));
+         Preferences_Changed_Hook.Run
+            (Self.Kernel, Default_Preferences.Preference (Pref));
 
          if Self.Nested_Pref_Changed = 1 then
             if Self.Get_Editor /= null then
@@ -1893,8 +1892,7 @@ package body GPS.Kernel.Preferences is
          if Backup_Created then
             Backup_File.Copy (Filename.Full_Name, Success => Backup_Created);
             Manager.Load_Preferences (Filename);
-
-            Emit_Preferences_Changed (Kernel, null);
+            Preferences_Changed_Hook.Run (Kernel, null);
          end if;
       end if;
 
@@ -2012,22 +2010,6 @@ package body GPS.Kernel.Preferences is
       end if;
    end Set_Font_And_Colors;
 
-   ------------------------------
-   -- Emit_Preferences_Changed --
-   ------------------------------
-
-   procedure Emit_Preferences_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Pref   : Preference := null)
-   is
-      Data : aliased Preference_Hooks_Args;
-   begin
-      if not Kernel.Preferences.Is_Frozen then
-         Data.Pref := Pref;
-         Run_Hook (Kernel, Preference_Changed_Hook, Data'Access);
-      end if;
-   end Emit_Preferences_Changed;
-
    type Check_Menu_Item_Pref_Record is new Gtk_Check_Menu_Item_Record with
       record
          Kernel : access Kernel_Handle_Record'Class;
@@ -2037,13 +2019,14 @@ package body GPS.Kernel.Preferences is
    procedure On_Check_Menu_Item_Changed
      (Check : access Gtk_Check_Menu_Item_Record'Class);
 
-   type Pref_Changed_For_Menu_Item is new Function_With_Args with record
+   type Pref_Changed_For_Menu_Item is new Preferences_Hooks_Function
+   with record
       Check : Check_Menu_Item_Pref;
    end record;
    overriding procedure Execute
      (Self   : Pref_Changed_For_Menu_Item;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
 
    --------------------------------
    -- On_Check_Menu_Item_Changed --
@@ -2065,14 +2048,13 @@ package body GPS.Kernel.Preferences is
 
    overriding procedure Execute
      (Self   : Pref_Changed_For_Menu_Item;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
       pragma Unreferenced (Kernel);
-      P : constant Preference := Preference_Hooks_Args (Data.all).Pref;
       V : Boolean;
    begin
-      if P = Preference (Self.Check.Pref) then
+      if Pref = Preference (Self.Check.Pref) then
          V := Self.Check.Pref.Get_Pref;
          if V /= Self.Check.Get_Active then
             Self.Check.Set_Active (V);
@@ -2107,10 +2089,7 @@ package body GPS.Kernel.Preferences is
 
       P := new Pref_Changed_For_Menu_Item;
       P.Check := C;
-      Add_Hook
-        (Kernel, Preference_Changed_Hook, P,
-         Name  => "check_menu_item.preferences",
-         Watch => GObject (C));
+      Preferences_Changed_Hook.Add (P, Watch => C);
    end Append_Menu;
 
 end GPS.Kernel.Preferences;

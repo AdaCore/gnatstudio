@@ -45,7 +45,6 @@ with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Search;                 use GPS.Search;
 
 package body GPS.Kernel.Search.Sources is
@@ -73,13 +72,13 @@ package body GPS.Kernel.Search.Sources is
    end record;
    type Result_View_Access is access all Result_View'Class;
 
-   type Hook_Project_View_Changed is new Function_No_Args with record
+   type On_Project_View_Changed is new Simple_Hooks_Function with record
       Provider : access Sources_Search_Provider;
       --  The provider to refresh (do not free)
    end record;
    overriding procedure Execute
-     (Hook : Hook_Project_View_Changed;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project view has changed
 
    procedure On_Size_Allocate
@@ -154,22 +153,22 @@ package body GPS.Kernel.Search.Sources is
    -------------
 
    overriding procedure Execute
-     (Hook : Hook_Project_View_Changed;
-      Kernel : access Kernel_Handle_Record'Class)
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
    begin
-      Free (Hook.Provider.Files);
-      Hook.Provider.Files :=
+      Free (Self.Provider.Files);
+      Self.Provider.Files :=
         Get_Project (Kernel).Source_Files
            (Recursive => True, Include_Project_Files => True);
 
       --  In testsuite mode, we want to sort the results so that the matches
       --  do not depend on the filesystem order.
       if Active (Testsuite_Handle) then
-         Sort (Hook.Provider.Files.all);
+         Sort (Self.Provider.Files.all);
       end if;
 
-      Hook.Provider.Index := Hook.Provider.Files'First;
+      Self.Provider.Index := Self.Provider.Files'First;
    end Execute;
 
    ----------
@@ -297,18 +296,16 @@ package body GPS.Kernel.Search.Sources is
       Pattern : not null access Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
    is
-      Hook : access Hook_Project_View_Changed;
+      Hook : access On_Project_View_Changed;
    begin
       if Self.Files = null then
          --  The first time the provider is used, we connect to the
          --  appropriate hooks so that we refresh the cached list of
          --  source and runtime files whenever the project is recomputed.
 
-         Hook := new Hook_Project_View_Changed'
-            (Function_No_Args with Provider => Self);
-         Add_Hook
-            (Self.Kernel, Project_View_Changed_Hook, Hook,
-             "gps-kernel-search-sources.on_project_view_changed");
+         Hook := new On_Project_View_Changed;
+         Hook.Provider := Self;
+         Project_View_Changed_Hook.Add (Hook);
          Hook.Execute (Self.Kernel);
       end if;
 
@@ -477,9 +474,9 @@ package body GPS.Kernel.Search.Sources is
       (Self       : not null access Source_Search_Result;
        Give_Focus : Boolean) is
    begin
-      Open_File_Editor
+      Open_File_Action_Hook.Run
         (Self.Kernel,
-         Filename          => Self.File,
+         File              => Self.File,
          Project           => Self.Project,
          Enable_Navigation => True,
          New_File          => False,

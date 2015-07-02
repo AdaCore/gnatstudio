@@ -155,6 +155,15 @@ package GPS.Kernel.Scripts is
      (Kernel : access Kernel_Handle_Record'Class) return Class_Type;
    --  Return the class to use for GUI elements. This encapsulate a Gtk_Widget
 
+   --------------
+   -- Debugger --
+   --------------
+
+   function Get_Or_Create_Instance
+     (Script  : access Scripting_Language_Record'Class;
+      Process : access Base_Visual_Debugger'Class) return Class_Instance;
+   --  Get or create an existing instance associated with Process
+
    -------------------------
    -- File_Location_Class --
    -------------------------
@@ -178,15 +187,6 @@ package GPS.Kernel.Scripts is
       renames GPS.Scripts.File_Locations.Create_File_Location;
    --  Return a new file.
    --  File mustn't be destroyed after this call.
-
-   ----------------
-   -- Hook_Class --
-   ----------------
-
-   function Get_Hook_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type;
-   --  Return the class used to provide an interface to hooks
 
    -------------------
    -- Project_Class --

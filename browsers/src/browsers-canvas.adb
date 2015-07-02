@@ -64,7 +64,6 @@ with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks;         use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
@@ -181,14 +180,13 @@ package body Browsers.Canvas is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove all selected items
 
-   type Preferences_Hook_Record is new Function_With_Args with record
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
       Browser : General_Browser;
    end record;
-   type Preferences_Hook is access all Preferences_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
    --  Called when the preferences have changed
 
    procedure On_Selection_Changed
@@ -333,7 +331,7 @@ package body Browsers.Canvas is
    procedure Initialize
      (Browser         : access General_Browser_Record'Class)
    is
-      Hook     : Preferences_Hook;
+      Hook     : access On_Pref_Changed;
       Scrolled : Gtk_Scrolled_Window;
       Id       : Handler_Id;
       pragma Unreferenced (Id);
@@ -370,12 +368,10 @@ package body Browsers.Canvas is
             & " layout of the graph. This might result in less edge crossings"
             & " but is sometimes harder to use interactively")));
 
-      Hook := new Preferences_Hook_Record;
+      Hook := new On_Pref_Changed;
       Hook.Browser := General_Browser (Browser);
-      Add_Hook
-        (Browser.Kernel, Preference_Changed_Hook, Hook,
-         Name => "browsers.preferences_changed", Watch => GObject (Browser));
-      Execute (Hook.all, Browser.Kernel, Data => null);
+      Preferences_Changed_Hook.Add (Hook, Watch => Browser);
+      Hook.Execute (Browser.Kernel, Pref => null);
 
       Change_Align_On_Grid (Browser);
    end Initialize;
@@ -385,13 +381,12 @@ package body Browsers.Canvas is
    -------------
 
    overriding procedure Execute
-     (Hook   : Preferences_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
    is
       pragma Unreferenced (Kernel);
-      B    : constant General_Browser := Hook.Browser;
-      Pref : constant Preference := GPS.Kernel.Standard_Hooks.Get_Pref (Data);
+      B    : constant General_Browser := Self.Browser;
    begin
       Create_Styles (B.View);
 

@@ -55,7 +55,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Search;         use GPS.Kernel.Search;
 with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
@@ -322,14 +321,18 @@ package body Builder_Facility_Module is
      (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
    --  Called when a user selects a new item from the combo
 
-   procedure On_File_Saved
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Saved is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file has been saved
 
-   procedure On_Buffer_Modified
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Buffer_Modified is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Buffer_Modified;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a buffer has been modified
 
    procedure File_Saved_Or_Buffer_Modified
@@ -348,32 +351,51 @@ package body Builder_Facility_Module is
    --  Clear the compiler output, the console, and the locations view for
    --  Category.
 
-   function On_Compilation_Starting
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean;
+   type On_Compilation_Starting is new Compilation_Hooks_Function
+      with null record;
+   overriding function Execute
+      (Self   : On_Compilation_Starting;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       Category : String;
+       Quiet, Shadow, Background : Boolean) return Boolean;
    --  Called when the compilation is starting
 
-   procedure On_Compilation_Finished
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
+      with null record;
+   overriding procedure Execute
+      (Self   : On_Compilation_Finished;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       Category, Target, Mode : String;
+       Shadow, Background : Boolean;
+       Status : Integer);
    --  Called when the compilation has ended
 
-   procedure On_GPS_Started
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_GPS_Started is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_GPS_Started;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when GPS is starting
 
-   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
+   type On_View_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called every time the project view has changed, ie potentially the list
    --  of main units.
 
-   function On_Compute_Build_Targets
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Any_Type;
+   type On_Compute_Targets is new String_Return_Any_Hooks_Function
+      with null record;
+   overriding function Execute
+      (Self   : On_Compute_Targets;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       Kind   : String) return GNATCOLL.Any_Types.Any_Type;
    --  Called when computing build targets
 
-   procedure On_Build_Mode_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Build_Mode_Changed is new String_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Build_Mode_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Mode   : String);
    --  Called when the build mode is being changed by the user
 
    procedure Add_Action_And_Menu_For_Target (Target : Target_Access);
@@ -424,17 +446,11 @@ package body Builder_Facility_Module is
       begin
          Targets := Get_Properties (T).Target_Type;
 
-         if Length (Targets) /= 0 then
+         if Targets /= Null_Unbounded_String then
             declare
-               Data   : aliased String_Hooks_Args :=
-                 (Hooks_Data with
-                  Length => Length (Targets),
-                  Value  => To_String (Targets));
                Mains  : Any_Type :=
-                 Run_Hook_Until_Not_Empty
-                   (Get_Kernel,
-                    Compute_Build_Targets_Hook,
-                    Data'Unchecked_Access);
+                  Compute_Build_Targets_Hook.Run
+                     (Get_Kernel, Str => To_String (Targets));
             begin
                for J in 1 .. Mains.Length loop
                   if Mains.List (J).Length /= 0 then
@@ -463,7 +479,6 @@ package body Builder_Facility_Module is
                      end;
                   end if;
                end loop;
-               Destroy (Data);
                Free (Mains);
             end;
          else
@@ -609,18 +624,12 @@ package body Builder_Facility_Module is
       end Menu_For_Action;
 
    begin
-      if Length (Targets) /= 0 then
+      if Targets /= Null_Unbounded_String then
          --  Register the "build main number x"-like actions
 
          declare
-            Data   : aliased String_Hooks_Args :=
-              (Hooks_Data with
-               Length => Length (Targets),
-               Value  => To_String (Targets));
-            Mains  : Any_Type := Run_Hook_Until_Not_Empty
-              (Kernel,
-               Compute_Build_Targets_Hook,
-               Data'Unchecked_Access);
+            Mains  : Any_Type :=
+               Compute_Build_Targets_Hook.Run (Kernel, To_String (Targets));
             D : Dialog_Mode;
 
          begin
@@ -687,7 +696,6 @@ package body Builder_Facility_Module is
                end loop;
             end if;
 
-            Destroy (Data);
             Free (Mains);
          end;
       else
@@ -815,28 +823,30 @@ package body Builder_Facility_Module is
       Builder_Module_ID.Builder.Clear_Build_Output (Shadow, Background);
    end Clear_Compilation_Output;
 
-   --------------------
-   -- On_GPS_Started --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_GPS_Started
-     (Kernel : access Kernel_Handle_Record'Class)
+   overriding procedure Execute
+     (Self   : On_GPS_Started;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Self, Kernel);
    begin
       Load_Targets;
-   end On_GPS_Started;
+   end Execute;
 
-   -----------------------------
-   -- On_Compilation_Starting --
-   -----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   function On_Compilation_Starting
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
+   overriding function Execute
+      (Self   : On_Compilation_Starting;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       Category : String;
+       Quiet, Shadow, Background : Boolean) return Boolean
    is
-      D : constant Compilation_Hooks_Args :=
-        Compilation_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
    begin
       --  Small issue here: if the user cancels the compilation in one of the
       --  custom hooks the user might have connected, then all changes done
@@ -848,7 +858,7 @@ package body Builder_Facility_Module is
       --  project whose name is changed when saving
 
       Builder_Module_ID.Prevent_Save_Reentry := True;
-      if not (D.Quiet or else D.Shadow)
+      if not (Quiet or else Shadow)
         and then not Save_MDI_Children (Kernel, Force => Auto_Save.Get_Pref)
       then
          return False;
@@ -857,64 +867,66 @@ package body Builder_Facility_Module is
 
       Clear_Compilation_Output
         (Kernel_Handle (Kernel),
-         Category        => D.Value,
-         Clear_Console   => (not D.Quiet)
-           and then (D.Shadow or else Builder_Module_ID.Build_Count = 0),
-         Clear_Locations => (not D.Quiet)
+         Category        => Category,
+         Clear_Console   => (not Quiet)
+           and then (Shadow or else Builder_Module_ID.Build_Count = 0),
+         Clear_Locations => (not Quiet)
            and then Builder_Module_ID.Build_Count = 0,
-         Shadow          => D.Shadow,
-         Background      => D.Background);
+         Shadow          => Shadow,
+         Background      => Background);
 
       Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count + 1;
 
       return True;
-   end On_Compilation_Starting;
+   end Execute;
 
-   ---------------------
-   -- On_View_Changed --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
-      pragma Unreferenced (Kernel);
-   begin
-      --  Clear the items that might depend on the number of mains
-
-      Refresh_Graphical_Elements;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_View_Changed;
-
-   -----------------------------
-   -- On_Compilation_Finished --
-   -----------------------------
-
-   procedure On_Compilation_Finished
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Kernel, Data);
+      pragma Unreferenced (Self, Kernel);
+   begin
+      Refresh_Graphical_Elements;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self   : On_Compilation_Finished;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       Category, Target, Mode : String;
+       Shadow, Background : Boolean;
+       Status : Integer)
+   is
+      pragma Unreferenced (Self, Kernel, Category, Target, Mode, Shadow);
+      pragma Unreferenced (Background, Status);
    begin
       if Builder_Module_ID.Build_Count > 0 then
          Builder_Module_ID.Build_Count := Builder_Module_ID.Build_Count - 1;
       end if;
-   end On_Compilation_Finished;
+   end Execute;
 
-   ------------------------------
-   -- On_Compute_Build_Targets --
-   ------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   function On_Compute_Build_Targets
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Any_Type
+   overriding function Execute
+      (Self   : On_Compute_Targets;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       Kind   : String) return GNATCOLL.Any_Types.Any_Type
    is
-      Kind : constant String := String_Hooks_Args (Data.all).Value;
+      pragma Unreferenced (Self);
    begin
       if Kind = "main" then
          declare
             Mains  : constant Project_And_Main_Array :=
                Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
-
             Result : Any_Type (List_Type, Mains'Length);
          begin
             for J in Mains'Range loop
@@ -1007,7 +1019,7 @@ package body Builder_Facility_Module is
       else
          return Empty_Any_Type;
       end if;
-   end On_Compute_Build_Targets;
+   end Execute;
 
    --------------------------------
    -- Refresh_Graphical_Elements --
@@ -1105,15 +1117,16 @@ package body Builder_Facility_Module is
       end loop;
    end File_Saved_Or_Buffer_Modified;
 
-   -------------------
-   -- On_File_Saved --
-   -------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_File_Saved
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
    begin
       --  Protect against the following recursion:
       --   a script connects the action Compilation_Starting to the saving
@@ -1126,22 +1139,23 @@ package body Builder_Facility_Module is
       end if;
 
       Builder_Module_ID.Currently_Saving := True;
-      File_Saved_Or_Buffer_Modified (Kernel, File_Data.File, Saved => True);
+      File_Saved_Or_Buffer_Modified (Kernel, File, Saved => True);
       Builder_Module_ID.Currently_Saving := False;
-   end On_File_Saved;
+   end Execute;
 
-   ------------------------
-   -- On_Buffer_Modified --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Buffer_Modified
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Buffer_Modified;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      File_Data : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
    begin
-      File_Saved_Or_Buffer_Modified (Kernel, File_Data.File, Saved => False);
-   end On_Buffer_Modified;
+      File_Saved_Or_Buffer_Modified (Kernel, File, Saved => False);
+   end Execute;
 
    -----------------------------
    -- Attempt_Target_Register --
@@ -1412,26 +1426,16 @@ package body Builder_Facility_Module is
 
       Targets := Get_Properties (Target).Target_Type;
 
-      if Length (Targets) /= 0 then
+      if Targets /= Null_Unbounded_String then
          declare
-            Data   : aliased String_Hooks_Args :=
-              (Hooks_Data with
-                 Length => Length (Targets),
-                 Value  => To_String (Targets));
-            Mains  : Any_Type :=
-              Run_Hook_Until_Not_Empty
-                (Get_Kernel,
-                 Compute_Build_Targets_Hook,
-                 Data'Unchecked_Access);
-
+            Mains  : Any_Type := Compute_Build_Targets_Hook.Run
+               (Get_Kernel, To_String (Targets));
          begin
             --  Do not display if no main is available
             if Mains.Length > 0 then
                Button_For_Target (Get_Name (Target), Mains);
             end if;
-
             Free (Mains);
-            Destroy (Data);
          end;
       else
          Button_For_Target (Get_Name (Target), Empty_Any_Type);
@@ -1746,37 +1750,14 @@ package body Builder_Facility_Module is
          Name    => "Run",
          Submenu => new Run_Contextual);
 
-      --  Connect to the File_Saved_Hook
-      Add_Hook (Kernel, File_Saved_Hook,
-                Wrapper (On_File_Saved'Access),
-                Name  => "builder_facility_module.file_saved");
-
-      Add_Hook (Kernel, Buffer_Modified_Hook,
-                Wrapper (On_Buffer_Modified'Access),
-                Name  => "builder_facility_module.file_buffer_modified");
-
-      --  Connect to the Compilation_Starting_Hook
-
-      Add_Hook (Kernel, Compilation_Starting_Hook,
-                Wrapper (On_Compilation_Starting'Access),
-                Name => "builder_facility_module.compilation_starting");
-
-      Add_Hook (Kernel, Compilation_Finished_Hook,
-                Wrapper (On_Compilation_Finished'Access),
-                Name => "builder_facility_module.compilation_finished");
-
-      Add_Hook
-        (Kernel => Kernel,
-         Hook   => Project_View_Changed_Hook,
-         Func   => Wrapper (On_View_Changed'Access),
-         Name   => "builder_facility_module.on_view_changed");
-
-      Add_Hook (Kernel, Compute_Build_Targets_Hook,
-                Wrapper (On_Compute_Build_Targets'Access),
-                Name => "builder_facility_module.compute_build_targets");
-      Add_Hook (Kernel, Build_Mode_Changed_Hook,
-                Wrapper (On_Build_Mode_Changed'Access),
-                Name => "builder_facility_module.build_mode_changed");
+      File_Saved_Hook.Add (new On_File_Saved);
+      Buffer_Edited_Hook.Add (new On_Buffer_Modified);
+      Compilation_Starting_Hook.Add (new On_Compilation_Starting);
+      Compilation_Finished_Hook.Add (new On_Compilation_Finished);
+      Project_View_Changed_Hook.Add (new On_View_Changed);
+      Compute_Build_Targets_Hook.Add (new On_Compute_Targets);
+      Build_Mode_Changed_Hook.Add (new On_Build_Mode_Changed);
+      Gps_Started_Hook.Add (new On_GPS_Started);
 
       --  Register the shell commands
 
@@ -1784,10 +1765,6 @@ package body Builder_Facility_Module is
         (Kernel_Handle (Kernel));
 
       --  Load the user-defined targets
-
-      Add_Hook (Kernel, GPS_Started_Hook,
-                Wrapper (On_GPS_Started'Access),
-                Name  => "builder_facility_module.gps_started");
 
       Register_Output_Parser
         (Builder_Module_ID.Output_Chopper'Access, "output_chopper");
@@ -1874,15 +1851,16 @@ package body Builder_Facility_Module is
       end if;
    end Set_Subdir;
 
-   ---------------------------
-   -- On_Build_Mode_Changed --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Build_Mode_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Build_Mode_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Mode   : String)
    is
-      Mode : constant String := String_Hooks_Args (Data.all).Value;
+      pragma Unreferenced (Self);
       Reg  : Project_Registry renames
                Project_Registry (Get_Registry (Kernel).all);
    begin
@@ -1890,7 +1868,7 @@ package body Builder_Facility_Module is
          Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Registry, Mode));
          Recompute_View (Get_Kernel);
       end if;
-   end On_Build_Mode_Changed;
+   end Execute;
 
    -----------------
    -- Set_Pattern --
@@ -1930,15 +1908,10 @@ package body Builder_Facility_Module is
          declare
             Targets : constant Unbounded_String :=
                Get_Properties (T).Target_Type;
-            Data : aliased String_Hooks_Args :=
-               (Hooks_Data with
-                Length => Length (Targets),
-                Value  => To_String (Targets));
          begin
-            Self.Mains := new Any_Type'(Run_Hook_Until_Not_Empty
-               (Self.Kernel,
-                Compute_Build_Targets_Hook,
-                Data'Unchecked_Access));
+            Self.Mains := new Any_Type'
+               (Compute_Build_Targets_Hook.Run
+                  (Self.Kernel, To_String (Targets)));
             Self.Current_Main := 1;
          end;
       else

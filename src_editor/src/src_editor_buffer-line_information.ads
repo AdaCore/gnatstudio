@@ -43,7 +43,7 @@ package Src_Editor_Buffer.Line_Information is
    procedure Add_Extra_Information
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
-      Info       : Line_Information_Data;
+      Info       : access Line_Information_Array;
       Tooltip    : String := "";
       Icon       : String := "");
    --  Add extra information in the buffer. Extra information is for example

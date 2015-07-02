@@ -577,7 +577,7 @@ package body Variable_Editors is
          --  Recompute the view so that the explorer is updated graphically
 
          Recompute_View (Editor.Kernel);
-         Run_Hook (Editor.Kernel, Variable_Changed_Hook);
+         Variable_Changed_Hook.Run (Editor.Kernel);
       end if;
 
       return True;

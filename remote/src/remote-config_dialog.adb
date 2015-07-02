@@ -69,7 +69,6 @@ with Gexpect;                    use Gexpect;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
@@ -1014,12 +1013,13 @@ package body Remote.Config_Dialog is
            "filesystems, if these are not shared filesystems."));
 
       declare
-         Rsync_List : constant Hook_List :=
-                        Get_Hook_Func_List (Kernel, Rsync_Action_Hook);
+         Rsync_List : GNAT.Strings.String_List :=
+            Rsync_Action_Hook.List_Functions;
       begin
-         for J in Rsync_List'Range loop
-            Dialog.Remote_Sync_Combo.Append_Text (To_String (Rsync_List (J)));
+         for J of Rsync_List loop
+            Dialog.Remote_Sync_Combo.Append_Text (J.all);
          end loop;
+         Free (Rsync_List);
       end;
 
       Line_Nb := Line_Nb + 1;

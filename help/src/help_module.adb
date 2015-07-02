@@ -48,7 +48,6 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
@@ -150,9 +149,13 @@ package body Help_Module is
       User   : Kernel_Handle) return Node_Ptr;
    --  Support functions for the MDI
 
-   function Open_Help_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean;
+   type On_Open_Html is new Html_Hooks_Function with null record;
+   overriding function Execute
+     (Self              : On_Open_Html;
+      Kernel            : not null access Kernel_Handle_Record'Class;
+      Url_Or_File       : String;
+      Enable_Navigation : Boolean;
+      Anchor            : String) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
    procedure Display_Help
@@ -693,7 +696,7 @@ package body Help_Module is
    begin
       if Self.URL /= "" then
          Trace (Me, "Loading HTML file " & To_String (Self.URL));
-         Open_Html (Kernel, To_String (Self.URL));
+         Html_Action_Hook.Run (Kernel, To_String (Self.URL));
 
       elsif Self.Shell /= "" then
          Trace (Me, "On_Load_HTML: No file specified, executing shell cmd");
@@ -717,7 +720,7 @@ package body Help_Module is
                   & To_String (Self.Shell),
                   Mode => Error);
             else
-               Open_Html (Kernel, File);
+               Html_Action_Hook.Run (Kernel, File);
             end if;
          end;
       end if;
@@ -851,25 +854,26 @@ package body Help_Module is
       end if;
    end Open_HTML_File;
 
-   --------------------
-   -- Open_Help_Hook --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   function Open_Help_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class) return Boolean
+   overriding function Execute
+     (Self              : On_Open_Html;
+      Kernel            : not null access Kernel_Handle_Record'Class;
+      Url_Or_File       : String;
+      Enable_Navigation : Boolean;
+      Anchor            : String) return Boolean
    is
-      D   : constant Html_Hooks_Args := Html_Hooks_Args (Data.all);
-      URL : constant String := Create_URL (D.URL_Or_File, Kernel);
+      pragma Unreferenced (Self, Enable_Navigation);
+      URL : constant String := Create_URL (Url_Or_File, Kernel);
    begin
-      if URL = "" then
-         return True;
-      else
-         Open_HTML_File (Kernel, URL, D.Anchor);
+      if URL /= "" then
+         Open_HTML_File (Kernel, URL, Anchor);
       end if;
 
       return True;
-   end Open_Help_Hook;
+   end Execute;
 
    -------------
    -- Execute --
@@ -1178,7 +1182,7 @@ package body Help_Module is
 
          Free (Buffer);
 
-         Open_Html (Kernel, +Output.Full_Name (True));
+         Html_Action_Hook.Run (Kernel, +Output.Full_Name (True));
       end if;
       return Commands.Success;
    end Execute;
@@ -1227,9 +1231,7 @@ package body Help_Module is
          Module_Name  => Help_Module_Name,
          Priority     => GPS.Kernel.Modules.Default_Priority - 20);
       Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
-      Add_Hook (Kernel, Html_Action_Hook,
-                Wrapper (Open_Help_Hook'Access),
-                Name => "help.html");
+      Html_Action_Hook.Add (new On_Open_Html);
 
       Register_Action
         (Kernel, "display GPS welcome view", new Display_Welcome_Command,

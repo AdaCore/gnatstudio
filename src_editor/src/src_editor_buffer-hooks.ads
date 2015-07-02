@@ -21,24 +21,6 @@ with GPS.Kernel; use GPS.Kernel;
 
 package Src_Editor_Buffer.Hooks is
 
-   Word_Added_Hook : constant Hook_Name := To_Hook_Name ("word_added");
-
-   ------------------------
-   -- File_Edition_Hooks --
-   ------------------------
-
-   File_Edition_Hook_Type : constant Hook_Type := "file_edition_hooks";
-
-   type File_Edition_Hooks_Args is new File_Hooks_Args with record
-      Character   : Gunichar;
-      Interactive : Boolean;
-   end record;
-   type File_Edition_Hooks_Args_Access is access all
-     File_Edition_Hooks_Args'Class;
-
-   Character_Added_Hook : constant Hook_Name :=
-                            To_Hook_Name ("character_added");
-
    procedure Location_Changed (Buffer : Source_Buffer);
    --  Emit the hook Cursor_Stopped_Hook
 
@@ -56,9 +38,5 @@ package Src_Editor_Buffer.Hooks is
 
    procedure Buffer_Modified (Buffer : Source_Buffer);
    --  Emit the Buffer_Modified hook
-
-   procedure Register_Editor_Hooks
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the hooks related to the source editors
 
 end Src_Editor_Buffer.Hooks;

@@ -37,7 +37,6 @@ with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Search;                use GPS.Search;
 with Histories;                 use Histories;
 
@@ -49,14 +48,13 @@ package body GPS.Kernel.Search.Filenames is
    --  whether to include files found in the source dirs and that are not
    --  sources of the project.
 
-   type Hook_Project_View_Changed is new Function_No_Args with record
+   type On_Project_View_Changed is new Simple_Hooks_Function with record
       Provider : access Filenames_Search_Provider;
       --  The provider to refresh (do not free)
    end record;
-
    overriding procedure Execute
-     (Hook : Hook_Project_View_Changed;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project view has changed
 
    procedure Check_Pattern
@@ -80,14 +78,14 @@ package body GPS.Kernel.Search.Filenames is
    -------------
 
    overriding procedure Execute
-     (Hook   : Hook_Project_View_Changed;
-      Kernel : access Kernel_Handle_Record'Class)
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
    begin
-      Free (Hook.Provider.Files);
-      Unchecked_Free (Hook.Provider.Runtime);
-      Unchecked_Free (Hook.Provider.Source_Dirs);
+      Free (Self.Provider.Files);
+      Unchecked_Free (Self.Provider.Runtime);
+      Unchecked_Free (Self.Provider.Source_Dirs);
    end Execute;
 
    ----------
@@ -224,18 +222,16 @@ package body GPS.Kernel.Search.Filenames is
       Text : constant String := Pattern.Get_Text;
       P    : constant Pattern_Matcher := Compile (":(\d+)?(:(\d+))?$");
       M    : Match_Array (0 .. 3);
-      Hook : access Hook_Project_View_Changed;
+      Hook : access On_Project_View_Changed;
    begin
       if Self.Files = null then
          --  The first time the provider is used, we connect to the
          --  appropriate hooks so that we refresh the cached list of
          --  source and runtime files whenever the project is recomputed.
 
-         Hook := new Hook_Project_View_Changed'
-            (Function_No_Args with Provider => Self);
-         Add_Hook
-            (Self.Kernel, Project_View_Changed_Hook, Hook,
-             "gps-kernel-search-filenames.on_project_view_changed");
+         Hook := new On_Project_View_Changed;
+         Hook.Provider := Self;
+         Project_View_Changed_Hook.Add (Hook);
          Hook.Execute (Self.Kernel);
       end if;
 
@@ -546,7 +542,7 @@ package body GPS.Kernel.Search.Filenames is
      (Self       : not null access Filenames_Search_Result;
       Give_Focus : Boolean) is
    begin
-      Open_File_Editor
+      Open_File_Action_Hook.Run
         (Self.Kernel, Self.File,
          Project           => Self.Project,
          Enable_Navigation => True,

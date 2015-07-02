@@ -48,7 +48,6 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Search;      use GPS.Kernel.Search;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Search;             use GPS.Search;
@@ -109,9 +108,11 @@ package body Buffer_Views is
    procedure Child_Selected (View : access Gtk_Widget_Record'Class);
    --  Called when a new child is selected
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences change
 
    procedure Refresh (View : access Gtk_Widget_Record'Class);
@@ -660,10 +661,7 @@ package body Buffer_Views is
         (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree);
 
-      Add_Hook (View.Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "windows view.preferences_changed",
-                Watch => GObject (View));
+      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
 
       --  Initialize tooltips
 
@@ -827,30 +825,29 @@ package body Buffer_Views is
       return null;
    end Full;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      View  : constant Buffer_View_Access :=
-        Generic_View.Retrieve_View (Kernel);
-      Pref  : Preference;
+      pragma Unreferenced (Self);
+      V  : constant Buffer_View_Access := Generic_View.Retrieve_View (Kernel);
    begin
-      if View /= null then
-         Pref := Get_Pref (Data);
-         Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
+      if V /= null then
+         Set_Font_And_Colors (V.Tree, Fixed_Font => True, Pref => Pref);
 
          if Pref = null
            or else Pref = Preference (Editors_Only)
            or else Pref = Preference (Show_Notebooks)
          then
-            Refresh (View);
+            Refresh (V);
          end if;
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    ---------------------
    -- Register_Module --

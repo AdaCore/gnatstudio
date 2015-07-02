@@ -18,7 +18,7 @@
 --  reviewed and removed at some point after switching of all modules
 --  to use messages container.
 
-with GPS.Kernel.Standard_Hooks;
+with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
 
 package GPS.Kernel.Messages.Legacy is
 
@@ -29,7 +29,7 @@ package GPS.Kernel.Messages.Legacy is
       Line     : Natural;
       Column   : Natural;
       Message  : String;
-      Action   : GPS.Kernel.Standard_Hooks.Action_Item);
+      Action   : GPS.Editors.Line_Information.Action_Item);
    --  Associates an action item to the primary message at the specified
    --  location. If Action is null, the action item will be removed from
    --  that location.

@@ -216,7 +216,7 @@ package body Commands.VCS is
       end if;
 
       if Command.Action = Commit then
-         Run_Hook (Command.Kernel, Commit_Done_Hook);
+         Commit_Done_Hook.Run (Command.Kernel);
       end if;
 
       Command_Finished (Command, True);
@@ -242,7 +242,7 @@ package body Commands.VCS is
       use String_List;
    begin
       for J in Command.Filenames'Range loop
-         File_Changed_On_Disk (Command.Kernel, Command.Filenames (J));
+         File_Changed_On_Disk_Hook.Run (Command.Kernel, Command.Filenames (J));
       end loop;
 
       Command_Finished (Command, True);
@@ -293,7 +293,7 @@ package body Commands.VCS is
       Set_Closed (Command.Kernel, Command.Activity, To => Closed);
       Refresh (Explorer);
 
-      Run_Hook (Command.Kernel, Activity_Checked_Hook);
+      Activity_Checked_Hook.Run (Command.Kernel);
 
       Command_Finished (Command, True);
       return Success;

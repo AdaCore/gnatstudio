@@ -60,7 +60,6 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Variable_Editors;          use Variable_Editors;
 with GPS.Intl;                  use GPS.Intl;
 with XML_Utils;                 use XML_Utils;
@@ -135,26 +134,30 @@ package body Scenario_Views is
    --  This recomputes the scenario view, so that changes are reflected in
    --  other parts of GPS.
 
-   type Refresh_Hook_Record is new Function_No_Args with record
-      View : Scenario_View;
+   type On_Refresh is new Simple_Hooks_Function with record
+      View : access Scenario_View_Record'Class;
    end record;
-   type Refresh_Hook is access all Refresh_Hook_Record'Class;
    overriding procedure Execute
-     (Hook : Refresh_Hook_Record; Kernel : access Kernel_Handle_Record'Class);
+     (Self   : On_Refresh;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Callback when some aspect of the project has changed, to refresh the
    --  view.
 
    procedure On_Force_Refresh (View : access GObject_Record'Class);
    --  Force a refresh of the view when some settings have changed.
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
-   procedure On_Build_Mode_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Build_Mode_Changed is new String_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Build_Mode_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Mode   : String);
    --  Called when a new build mode is selected
 
    Show_Build_Modes : Boolean_Preference;
@@ -182,19 +185,19 @@ package body Scenario_Views is
       Unref (Self.Modes);
    end Destroy;
 
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
+      pragma Unreferenced (Self);
       View : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
-      Pref : Preference;
    begin
       if View /= null then
-         Pref := Get_Pref (Data);
          Set_Font_And_Colors (View.View, Fixed_Font => False, Pref => Pref);
 
          if Pref = null
@@ -203,18 +206,19 @@ package body Scenario_Views is
             On_Force_Refresh (View);
          end if;
       end if;
-   end On_Preferences_Changed;
+   end Execute;
 
-   ---------------------------
-   -- On_Build_Mode_Changed --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Build_Mode_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Build_Mode_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Mode   : String)
    is
+      pragma Unreferenced (Self);
       View  : constant Scenario_View := Scenario_Views.Retrieve_View (Kernel);
-      Mode  : constant String := String_Hooks_Args (Data.all).Value;
       Model : constant Gtk_Tree_Store := Gtk_Tree_Store'(-View.View.Get_Model);
       Build : Gtk_Tree_Iter;
    begin
@@ -222,7 +226,7 @@ package body Scenario_Views is
          Build := Model.Get_Iter (View.Build_Node);
          Model.Set (Build, 1, Mode);
       end if;
-   end On_Build_Mode_Changed;
+   end Execute;
 
    ----------------
    -- Initialize --
@@ -232,7 +236,6 @@ package body Scenario_Views is
      (View    : access Scenario_View_Record'Class)
       return Gtk_Widget
    is
-      Hook     : Refresh_Hook;
       Scrolled : Gtk_Scrolled_Window;
       Model    : Gtk_Tree_Store;
       Col      : Gtk_Tree_View_Column;
@@ -298,28 +301,19 @@ package body Scenario_Views is
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
       --  same thing in both cases.
-      Hook := new Refresh_Hook_Record'
-        (Function_No_Args with View => Scenario_View (View));
-
-      Add_Hook
-        (View.Kernel, Project_View_Changed_Hook, Hook,
-         Name => "scenario.project_view_changed",
-         Watch => GObject (View));
-      Add_Hook (View.Kernel, Variable_Changed_Hook, Hook,
-                Name => "scenario.variable_changed", Watch => GObject (View));
-      Add_Hook (View.Kernel, Preference_Changed_Hook,
-                Wrapper (On_Preferences_Changed'Access),
-                Name  => "scenario_views.preferences_changed",
-                Watch => GObject (View));
-      Add_Hook (View.Kernel, Build_Mode_Changed_Hook,
-                Wrapper (On_Build_Mode_Changed'Access),
-                Name => "scenario_view.build_mode_changed",
-                Watch => GObject (View));
+      Project_View_Changed_Hook.Add
+         (new On_Refresh'(Simple_Hooks_Function with View => View),
+          Watch => View);
+      Variable_Changed_Hook.Add
+         (new On_Refresh'(Simple_Hooks_Function with View => View),
+          Watch => View);
+      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
+      Build_Mode_Changed_Hook.Add (new On_Build_Mode_Changed, Watch => View);
 
       Set_Font_And_Colors (View.View, Fixed_Font => False);
 
       --  Update the viewer with the current project
-      Execute (Hook.all, View.Kernel);
+      On_Force_Refresh (View);
 
       Setup_Contextual_Menu
         (Kernel          => View.Kernel,
@@ -509,7 +503,7 @@ package body Scenario_Views is
               (External_Name            => External_Name (Var),
                Keep_Choice              => Value (Var),
                Delete_Direct_References => False);
-            Run_Hook (V.Kernel, Variable_Changed_Hook);
+            Variable_Changed_Hook.Run (V.Kernel);
 
             --  Recompute the view so that the explorer is updated graphically
             Recompute_View (V.Kernel);
@@ -526,10 +520,10 @@ package body Scenario_Views is
 
    procedure On_Force_Refresh (View : access GObject_Record'Class) is
       V : constant Scenario_View := Scenario_View (View);
-      Cmd : Refresh_Hook_Record;
+      H : aliased On_Refresh;
    begin
-      Cmd.View := V;
-      Cmd.Execute (Kernel => V.Kernel);
+      H.View := V;
+      H.Execute (V.Kernel);
    end On_Force_Refresh;
 
    -----------------
@@ -549,11 +543,12 @@ package body Scenario_Views is
    -------------
 
    overriding procedure Execute
-     (Hook : Refresh_Hook_Record; Kernel : access Kernel_Handle_Record'Class)
+     (Self   : On_Refresh;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
       Module : constant Scenario_View_Module :=
         Scenario_View_Module (Scenario_Views.Get_Module);
-      V      : constant Scenario_View := Hook.View;
+      V      : constant Scenario_View := Scenario_View (Self.View);
       Row    : Guint;
       pragma Unreferenced (Row);
       Iter   : Gtk_Tree_Iter;

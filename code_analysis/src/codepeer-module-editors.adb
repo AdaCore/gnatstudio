@@ -17,27 +17,25 @@
 
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-
-with GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Project;
-
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Editors;        use GPS.Editors;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 
 package body CodePeer.Module.Editors is
 
-   use GPS.Editors;
-   use GPS.Kernel.Project;
-   use GPS.Kernel.Standard_Hooks;
-
-   procedure On_File_Closed_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   type On_File_Closed is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file has been closed
 
-   procedure On_File_Edited_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   type On_File_Edited is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when a file has been opened
 
    procedure Show_Annotations
@@ -95,25 +93,24 @@ package body CodePeer.Module.Editors is
       end if;
    end Hide_Annotations;
 
-   -------------------------
-   -- On_File_Closed_Hook --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_File_Closed_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
+      pragma Unreferenced (Self);
       use type Code_Analysis.Code_Analysis_Tree;
-
-      D            : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Project_Node : Code_Analysis.Project_Access;
       Project      : Project_Type;
-
    begin
       declare
          F_Info : constant File_Info'Class :=
            File_Info'Class
-             (Get_Registry (Kernel).Tree.Info_Set (D.File).First_Element);
+             (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
       begin
          Project := F_Info.Project;
       end;
@@ -123,31 +120,30 @@ package body CodePeer.Module.Editors is
       then
          Project_Node := Module.Tree.Element (Project);
 
-         if Project_Node.Files.Contains (D.File) then
-            Hide_Annotations (Module, Project_Node.Files.Element (D.File));
+         if Project_Node.Files.Contains (File) then
+            Hide_Annotations (Module, Project_Node.Files.Element (File));
          end if;
       end if;
-   end On_File_Closed_Hook;
+   end Execute;
 
-   -------------------------
-   -- On_File_Edited_Hook --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_File_Edited_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
+      pragma Unreferenced (Self);
       use type Code_Analysis.Code_Analysis_Tree;
-
-      D            : constant File_Hooks_Args := File_Hooks_Args (Data.all);
       Project_Node : Code_Analysis.Project_Access;
       Project      : Project_Type;
-
    begin
       declare
          F_Info : constant File_Info'Class :=
            File_Info'Class
-             (Get_Registry (Kernel).Tree.Info_Set (D.File).First_Element);
+             (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
       begin
          Project := F_Info.Project;
       end;
@@ -157,27 +153,23 @@ package body CodePeer.Module.Editors is
       then
          Project_Node := Module.Tree.Element (Project);
 
-         if Project_Node.Files.Contains (D.File) then
-            Show_Annotations (Module, Project_Node.Files.Element (D.File));
+         if Project_Node.Files.Contains (File) then
+            Show_Annotations (Module, Project_Node.Files.Element (File));
          end if;
       end if;
-   end On_File_Edited_Hook;
+   end Execute;
 
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
    begin
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel, GPS.Kernel.File_Closed_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_File_Closed_Hook'Access),
-         Name  => "codepeer.file_closed");
-      GPS.Kernel.Hooks.Add_Hook
-        (Kernel, GPS.Kernel.File_Edited_Hook,
-         GPS.Kernel.Hooks.Wrapper (On_File_Edited_Hook'Access),
-         Name  => "codepeer.file_edited");
+      File_Closed_Hook.Add (new On_File_Closed);
+      File_Edited_Hook.Add (new On_File_Edited);
    end Register_Module;
 
    ----------------------

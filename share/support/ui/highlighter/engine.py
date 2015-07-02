@@ -15,9 +15,6 @@ class HighlighterModule(Module):
     highlighters = {}
     preferences = {}
 
-    def setup(self):
-        pass
-
     def init_highlighting(self, f):
         highlighter = self.highlighters.get(f.language(), None)
         if isinstance(highlighter, Highlighter):
@@ -28,7 +25,7 @@ class HighlighterModule(Module):
                     highlighter.init_highlighting(ed)
                     highlighter.gtk_highlight(gtk_ed)
 
-    def gps_started(self):
+    def setup(self):
         for ed in GPS.EditorBuffer.list():
             if is_editor_visible(ed):
                 self.init_highlighting(ed.file())

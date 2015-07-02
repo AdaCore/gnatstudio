@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Tags;                  use Ada.Tags;
 with Ada.Unchecked_Conversion;
 
 pragma Warnings (Off);
@@ -64,8 +65,8 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel.Style_Manager;  use GPS.Kernel.Style_Manager;
+with GPS.Kernel.Scripts.Hooks;
 with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
 with GPS.Properties;            use GPS.Properties;
 with Histories;                 use Histories;
@@ -75,7 +76,6 @@ with Namet;                     use Namet;
 with Prj.Attr;                  use Prj.Attr;
 with Projects;                  use Projects;
 with Refactoring;               use Refactoring;
-with String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
 with System.Address_Image;
@@ -89,6 +89,7 @@ package body GPS.Kernel is
                  Create ("Contexts.Ref", GNATCOLL.Traces.Off);
    Create_Me : constant Trace_Handle :=
                  Create ("Contexts.Mem", GNATCOLL.Traces.Off);
+   Me_Hooks  : constant Trace_Handle := Create ("HOOKS", GNATCOLL.Traces.Off);
 
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
@@ -114,10 +115,26 @@ package body GPS.Kernel is
    procedure Free_Tools (Kernel : access Kernel_Handle_Record'Class);
    --  Free the list of registered tools
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences change
+
+   type On_File_Closed is new File_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_File_Closed;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : Virtual_File);
+   --  Called when a file is closed
+
+   type On_File_Edited is new File_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_File_Edited;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : Virtual_File);
+   --  Called when a file is opened
 
    type GPS_Refactoring_Factory_Context
      is new Refactoring.Factory_Context_Record with record
@@ -146,6 +163,28 @@ package body GPS.Kernel is
    function Context_Timeout (Kernel : Kernel_Handle) return Boolean;
    --  Timeout callback which actually emits the "context_changed" hook
    --  an interval after the context has last been actually changed.
+
+   -----------
+   -- Hooks --
+   -----------
+
+   procedure Remove_Hook_Cb
+      (Data : System.Address;
+       Obj  : System.Address);
+   pragma Convention (C, Remove_Hook_Cb);
+   --  Called when an object is destroyed, to disconnect hook functions
+   --  that depended on it.
+
+   type Hook_User_Data is record
+      Hook : not null access Hook_Types'Class;
+      Func : not null access Hook_Function'Class;
+   end record;
+   type Hook_User_Data_Access is access all Hook_User_Data;
+   pragma Convention (C, Hook_User_Data_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+      (Hook_User_Data, Hook_User_Data_Access);
+   function Convert is new Ada.Unchecked_Conversion
+      (System.Address, Hook_User_Data_Access);
 
    ------------------
    -- Report_Error --
@@ -187,16 +226,6 @@ package body GPS.Kernel is
    begin
       return Handle.Lang_Handler;
    end Get_Language_Handler;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (Hook : Hook_Name) return Hook_Htable_Num is
-      function Internal is new String_Utils.Hash (Hook_Htable_Num);
-   begin
-      return Internal (To_String (Hook));
-   end Hash;
 
    ----------
    -- Hash --
@@ -328,7 +357,9 @@ package body GPS.Kernel is
      (Handle           : out Kernel_Handle;
       Application      : not null access Gtk_Application_Record'Class;
       Home_Dir         : Virtual_File;
-      Prefix_Directory : Virtual_File) is
+      Prefix_Directory : Virtual_File)
+   is
+      P : access On_Pref_Changed;
    begin
       Handle := new Kernel_Handle_Record;
       Handle.Home_Dir := Home_Dir;
@@ -363,8 +394,6 @@ package body GPS.Kernel is
       --  Create the message container
       Handle.Messages_Container := Create_Messages_Container (Handle);
 
-      On_Preferences_Changed (Handle, Data => null);
-
       Handle.History := new History_Record;
       Trace (Me, "Loading histories.xml");
       Load (Handle.History.all,
@@ -378,10 +407,12 @@ package body GPS.Kernel is
       Handle.Construct_Tree :=
         Language.Abstract_Construct_Tree.Create (Handle);
 
-      Add_Hook
-        (Handle, Preference_Changed_Hook,
-         Wrapper (On_Preferences_Changed'Access),
-         Name => "kernel.preferences_changed");
+      P := new On_Pref_Changed;
+      Preferences_Changed_Hook.Add (P);
+      P.Execute (Handle, null);
+
+      File_Closed_Hook.Add (new On_File_Closed);
+      File_Edited_Hook.Add (new On_File_Edited);
    end Gtk_New;
 
    ------------------------------
@@ -407,18 +438,19 @@ package body GPS.Kernel is
       Win.Weak_Ref (On_Main_Window_Destroyed'Access, Convert (Self));
    end Set_Main_Window;
 
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
+   ---------------------
+   -- On_Pref_Changed --
+   ---------------------
 
-   procedure On_Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      P : constant Preference := Get_Pref (Data);
+      pragma Unreferenced (Self);
    begin
-      if P = null
-        or else P = Preference (Hidden_Directories_Pattern)
+      if Pref = null
+        or else Pref = Preference (Hidden_Directories_Pattern)
       then
          if Kernel.Hidden_File_Matcher /= null then
             Unchecked_Free (Kernel.Hidden_File_Matcher);
@@ -434,13 +466,13 @@ package body GPS.Kernel is
          end;
       end if;
 
-      if P = null
-        or else P = Preference (GPS.Kernel.Preferences.Trusted_Mode)
+      if Pref = null
+        or else Pref = Preference (GPS.Kernel.Preferences.Trusted_Mode)
       then
          Get_Registry (Kernel).Environment.Set_Trusted_Mode
            (GPS.Kernel.Preferences.Trusted_Mode.Get_Pref);
       end if;
-   end On_Preferences_Changed;
+   end Execute;
 
    ----------------------
    -- Preferences_File --
@@ -508,235 +540,38 @@ package body GPS.Kernel is
       Kernel.Editor_Factory := Factory;
    end Set_Buffer_Factory;
 
-   -------------------------
-   -- Source_Lines_Folded --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Source_Lines_Folded
-     (Handle     : access Kernel_Handle_Record;
-      Context    : Selection_Context;
-      Start_Line : Natural;
-      End_Line   : Natural)
+   overriding procedure Execute
+      (Self   : On_File_Edited;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : Virtual_File)
    is
-      Data : aliased Two_Lines_Hook_Args :=
-        (Hooks_Data with Context => Context,
-         Line_1 => Start_Line,
-         Line_2 => End_Line);
+      pragma Unreferenced (Self);
    begin
-      Run_Hook (Handle, Source_Lines_Folded_Hook, Data'Unchecked_Access);
-   end Source_Lines_Folded;
+      Kernel.Open_Files.Include (File);
+   end Execute;
 
-   ---------------------------
-   -- Source_Lines_Unfolded --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Source_Lines_Unfolded
-     (Handle     : access Kernel_Handle_Record;
-      Context    : Selection_Context;
-      Start_Line : Natural;
-      End_Line   : Natural)
+   overriding procedure Execute
+      (Self   : On_File_Closed;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : Virtual_File)
    is
-      Data : aliased Two_Lines_Hook_Args :=
-        (Hooks_Data with Context => Context,
-         Line_1 => Start_Line,
-         Line_2 => End_Line);
+      pragma Unreferenced (Self);
    begin
-      Run_Hook (Handle, Source_Lines_Unfolded_Hook, Data'Unchecked_Access);
-   end Source_Lines_Unfolded;
-
-   ---------------------------
-   -- Source_Lines_Revealed --
-   ---------------------------
-
-   procedure Source_Lines_Revealed
-     (Handle  : access Kernel_Handle_Record;
-      Context : Selection_Context)
-   is
-      Data : aliased Context_Hooks_Args :=
-               (Hooks_Data with Context => Context);
-   begin
-      Run_Hook (Handle, Source_Lines_Revealed_Hook, Data'Unchecked_Access);
-   end Source_Lines_Revealed;
-
-   -----------------
-   -- File_Edited --
-   -----------------
-
-   procedure File_Edited
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Force_Hook : Boolean := False)
-   is
-      Files : File_Array_Access := Handle.Open_Files;
-      Data  : aliased File_Hooks_Args;
-   begin
-      if Force_Hook or else not Is_Open (Handle, File) then
-         if Files = null then
-            Handle.Open_Files := new File_Array (1 .. 1);
-         else
-            Handle.Open_Files :=
-              new File_Array (Files'First .. Files'Last + 1);
-            Handle.Open_Files (Files'Range) := Files.all;
-            Unchecked_Free (Files);
-         end if;
-
-         Handle.Open_Files (Handle.Open_Files'Last) := File;
-         Data := File_Hooks_Args'(Hooks_Data with File => File);
-         Run_Hook (Handle, File_Edited_Hook, Data'Unchecked_Access);
+      if Kernel.Open_Files.Contains (File) then
+         Kernel.Open_Files.Delete (File);
+      else
+         Trace (Me, "file_closed on a file not registered as open: "
+             & File.Display_Full_Name);
       end if;
-   end File_Edited;
-
-   -----------------------
-   -- Before_File_Saved --
-   -----------------------
-
-   procedure Before_File_Saved
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File)
-   is
-      Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
-   begin
-      Run_Hook (Handle, Before_File_Saved_Hook, Data'Unchecked_Access);
-   end Before_File_Saved;
-
-   ----------------
-   -- File_Saved --
-   ----------------
-
-   procedure File_Saved
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File)
-   is
-      Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
-   begin
-      Run_Hook (Handle, File_Saved_Hook, Data'Unchecked_Access);
-   end File_Saved;
-
-   -----------------
-   -- File_Closed --
-   -----------------
-
-   procedure File_Closed
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File)
-   is
-      Files : File_Array_Access;
-      Data  : aliased File_Hooks_Args := (Hooks_Data with File => File);
-   begin
-      Run_Hook (Handle, File_Closed_Hook, Data'Unchecked_Access);
-
-      --  We must compute the open files after having run the hook, in case
-      --  the file array has been reallocated.
-      Files := Handle.Open_Files;
-
-      if Files /= null then
-         for F in Files'Range loop
-            if Files (F) = File then
-               Handle.Open_Files :=
-                 new File_Array (Files'First .. Files'Last - 1);
-               Handle.Open_Files (Files'First .. F - 1) :=
-                 Files (Files'First .. F - 1);
-               Handle.Open_Files (F .. Handle.Open_Files'Last) :=
-                 Files (F + 1 .. Files'Last);
-               Unchecked_Free (Files);
-               exit;
-            end if;
-         end loop;
-      end if;
-   end File_Closed;
-
-   ------------------
-   -- File_Deleted --
-   ------------------
-
-   procedure File_Deleted
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File)
-   is
-      Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
-   begin
-      Run_Hook (Handle, File_Deleted_Hook, Data'Unchecked_Access);
-   end File_Deleted;
-
-   ------------------
-   -- File_Renamed --
-   ------------------
-
-   procedure File_Renamed
-     (Handle   : access Kernel_Handle_Record;
-      File     : GNATCOLL.VFS.Virtual_File;
-      New_Path : GNATCOLL.VFS.Virtual_File)
-   is
-      Data : aliased Files_2_Hooks_Args :=
-               (Hooks_Data with File => File, Renamed => New_Path);
-   begin
-      Run_Hook (Handle, File_Renamed_Hook, Data'Unchecked_Access);
-   end File_Renamed;
-
-   --------------------------
-   -- File_Changed_On_Disk --
-   --------------------------
-
-   procedure File_Changed_On_Disk
-     (Handle : access Kernel_Handle_Record;
-      File   : GNATCOLL.VFS.Virtual_File)
-   is
-      Data : aliased File_Hooks_Args := (Hooks_Data with File => File);
-   begin
-      Run_Hook (Handle, File_Changed_On_Disk_Hook, Data'Unchecked_Access);
-   end File_Changed_On_Disk;
-
-   --------------------------
-   -- Compilation_Finished --
-   --------------------------
-
-   procedure Compilation_Finished
-     (Handle      : access Kernel_Handle_Record;
-      Category    : String;
-      Target_Name : String;
-      Mode_Name   : String;
-      Shadow      : Boolean;
-      Background  : Boolean;
-      Status      : Integer)
-   is
-      Data : aliased Compilation_Finished_Hooks_Args :=
-               (Hooks_Data with
-                Category_Length    => Category'Length,
-                Category           => Category,
-                Target_Name_Length => Target_Name'Length,
-                Target_Name        => Target_Name,
-                Mode_Name_Length   => Mode_Name'Length,
-                Mode_Name          => Mode_Name,
-                Shadow             => Shadow,
-                Background         => Background,
-                Status             => Status);
-
-   begin
-      Run_Hook (Handle, Compilation_Finished_Hook, Data'Unchecked_Access);
-   end Compilation_Finished;
-
-   --------------------------
-   -- Compilation_Starting --
-   --------------------------
-
-   function Compilation_Starting
-     (Handle   : access Kernel_Handle_Record;
-      Category : String;
-      Quiet    : Boolean;
-      Shadow   : Boolean;
-      Background : Boolean) return Boolean
-   is
-      Data : aliased Compilation_Hooks_Args :=
-               (Hooks_Data with
-                Length => Category'Length,
-                Value  => Category,
-                Quiet  => Quiet,
-                Shadow => Shadow,
-                Background => Background);
-   begin
-      return Run_Hook_Until_Failure
-        (Handle, Compilation_Starting_Hook, Data'Unchecked_Access);
-   end Compilation_Starting;
+   end Execute;
 
    -------------
    -- Is_Open --
@@ -746,15 +581,7 @@ package body GPS.Kernel is
      (Kernel   : access Kernel_Handle_Record;
       Filename : GNATCOLL.VFS.Virtual_File) return Boolean is
    begin
-      if Kernel.Open_Files /= null then
-         for F in Kernel.Open_Files'Range loop
-            if Kernel.Open_Files (F) = Filename then
-               return True;
-            end if;
-         end loop;
-      end if;
-
-      return False;
+      return Kernel.Open_Files.Contains (Filename);
    end Is_Open;
 
    ----------------
@@ -762,13 +589,9 @@ package body GPS.Kernel is
    ----------------
 
    function Open_Files
-     (Kernel : access Kernel_Handle_Record) return GNATCOLL.VFS.File_Array is
+     (Kernel : access Kernel_Handle_Record) return access File_Sets.Set is
    begin
-      if Kernel.Open_Files /= null then
-         return Kernel.Open_Files.all;
-      else
-         return (1 .. 0 => GNATCOLL.VFS.No_File);
-      end if;
+      return Kernel.Open_Files'Access;
    end Open_Files;
 
    ---------------
@@ -788,10 +611,8 @@ package body GPS.Kernel is
    ---------------------
 
    function Context_Timeout (Kernel : Kernel_Handle) return Boolean is
-      Data : aliased Context_Hooks_Args :=
-        (Hooks_Data with Context => Kernel.Current_Context);
    begin
-      Run_Hook (Kernel, Context_Changed_Hook, Data'Unchecked_Access);
+      Context_Changed_Hook.Run (Kernel, Context => Kernel.Current_Context);
 
       --  Lower the flag, and stop calling this in a timeout.
       Kernel.Context_Timeout_Registered := False;
@@ -982,12 +803,7 @@ package body GPS.Kernel is
       --  context.
 
       if Kernel.Context_Timeout_Registered then
-         declare
-            Data : aliased Context_Hooks_Args :=
-              (Hooks_Data with Context => Kernel.Current_Context);
-         begin
-            Run_Hook (Kernel, Context_Changed_Hook, Data'Unchecked_Access);
-         end;
+         Context_Changed_Hook.Run (Kernel, Kernel.Current_Context);
 
          Glib.Main.Remove (Kernel.Context_Timeout);
          Kernel.Context_Timeout_Registered := False;
@@ -1191,7 +1007,7 @@ package body GPS.Kernel is
       Reset (Handle.Action_Filters);
       Action_Filters_List.Free (Handle.All_Action_Filters);
 
-      Hooks_Hash.Reset (Handle.Hooks);
+      Handle.Hooks.Clear;
       Free_Tools (Handle);
 
       Free (Handle.Logs_Mapper);
@@ -1225,6 +1041,17 @@ package body GPS.Kernel is
 
       Kernel_Desktop.Free_Registered_Desktop_Functions;
    end Destroy;
+
+   ----------------------------
+   -- Push_Marker_In_History --
+   ----------------------------
+
+   procedure Push_Marker_In_History
+     (Kernel : access Kernel_Handle_Record'Class;
+      Marker : access Location_Marker_Record'Class) is
+   begin
+      Marker_Added_To_History_Hook.Run (Kernel, Location_Marker (Marker));
+   end Push_Marker_In_History;
 
    -----------------
    -- Get_History --
@@ -1836,50 +1663,6 @@ package body GPS.Kernel is
       end if;
    end Filter_Matches;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Hook : in out Hook_Description_Base) is
-      pragma Unreferenced (Hook);
-   begin
-      null;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (L : in out Hook_Description_Base_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Hook_Description_Base'Class, Hook_Description_Base_Access);
-   begin
-      if L /= null then
-         Free (L.all);
-         Unchecked_Free (L);
-      end if;
-   end Free;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Hook : in out Hook_Function_Record) is
-      pragma Unreferenced (Hook);
-   begin
-      null;
-   end Destroy;
-
-   --------------
-   -- Get_Name --
-   --------------
-
-   function Get_Name (Hook : Hook_Function_Record) return String is
-      pragma Unreferenced (Hook);
-   begin
-      return -"<internal>";
-   end Get_Name;
-
    -------------
    -- Destroy --
    -------------
@@ -1889,22 +1672,6 @@ package body GPS.Kernel is
    begin
       null;
    end Destroy;
-
-   ----------------------------
-   -- Push_Marker_In_History --
-   ----------------------------
-
-   procedure Push_Marker_In_History
-     (Kernel : access Kernel_Handle_Record'Class;
-      Marker : access Location_Marker_Record'Class)
-   is
-      Data : aliased Marker_Hooks_Args :=
-               (Hooks_Data with Marker => Location_Marker (Marker));
-   begin
-      Run_Hook (Kernel,
-                Marker_Added_In_History_Hook,
-                Data'Unchecked_Access);
-   end Push_Marker_In_History;
 
    ----------------------------
    -- Register_Perma_Command --
@@ -2164,10 +1931,6 @@ package body GPS.Kernel is
      (Kernel : access Kernel_Handle_Record'Class;
       New_Mode : String)
    is
-      Data   : aliased String_Hooks_Args :=
-        (Hooks_Data with
-         Length => New_Mode'Length,
-         Value  => New_Mode);
       Prop : aliased String_Property_Access;
    begin
       Trace (Me, "Change build mode to: " & New_Mode);
@@ -2188,8 +1951,7 @@ package body GPS.Kernel is
             Build_Mode_Property);
       end if;
 
-      Run_Hook (Kernel, Build_Mode_Changed_Hook, Data'Access);
-      Destroy (Data);
+      Build_Mode_Changed_Hook.Run (Kernel, Str => New_Mode);
    end Set_Build_Mode;
 
    --------------------
@@ -2263,5 +2025,138 @@ package body GPS.Kernel is
 
       return Self.Registry.Tree.Root_Project.Get_Runtime;
    end Get_Runtime;
+
+   --------------
+   -- Register --
+   --------------
+
+   procedure Register
+      (Self    : not null access Hook_Types'Class;
+       Kernel  : not null access Kernel_Handle_Record'Class)
+   is
+   begin
+      Kernel.Hooks.Include
+         (Hook_Type_Prefix & Self.Type_Name, Hook_Types_Access (Self));
+      Kernel.Hooks.Include (Self.Name.all, Hook_Types_Access (Self));
+   end Register;
+
+   --------------------
+   -- Remove_Hook_Cb --
+   --------------------
+
+   procedure Remove_Hook_Cb
+      (Data : System.Address;
+       Obj  : System.Address)
+   is
+      pragma Unreferenced (Obj);
+      D : Hook_User_Data_Access := Convert (Data);
+      function If_Matches
+         (F : not null access Hook_Function'Class) return Boolean
+         is (F = D.Func);
+   begin
+      D.Hook.Remove (If_Matches'Access);
+      Unchecked_Free (D);
+   end Remove_Hook_Cb;
+
+   -------------------
+   -- Add_Hook_Func --
+   -------------------
+
+   procedure Add_Hook_Func
+      (Self  : in out Hook_Types'Class;
+       Func  : not null access Hook_Function'Class;
+       Last  : Boolean := True;
+       Watch : access Glib.Object.GObject_Record'Class := null)
+   is
+      D : Hook_User_Data_Access;
+   begin
+      if Active (Me_Hooks) then
+         Trace (Me_Hooks, "Adding "
+             & GPS.Kernel.Hooks.Name (Func) & " to hook "
+             & GPS.Kernel.Hooks.Name (Self));
+      end if;
+
+      Func.Refcount := Func.Refcount + 1;
+
+      --  We use Unrestricted_Access here, as we do for Register_Action,
+      --  so that users can do a  Hook.Add (new Type)  directly, instead
+      --  of using a temporary variable.
+      if Last then
+         Self.Funcs.Append ((Func => Func.all'Unrestricted_Access));
+      else
+         Self.Funcs.Prepend ((Func => Func.all'Unrestricted_Access));
+      end if;
+
+      if Watch /= null then
+         --  D is freed as part of Remove_Hook_Cb.
+         --  The access on Self is valid, since a hook is never freed.
+         D := new Hook_User_Data'
+            (Hook => Self'Unchecked_Access,
+             Func => Func.all'Unrestricted_Access);
+         Watch.Weak_Ref (Remove_Hook_Cb'Access, D.all'Address);
+      end if;
+   end Add_Hook_Func;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove
+      (Self       : in out Hook_Types'Class;
+       If_Matches : not null access function
+          (F : not null access Hook_Function'Class) return Boolean)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+         (Hook_Function'Class, Hook_Function_Access);
+
+      use Hook_Func_Lists;
+      C : Hook_Func_Lists.Cursor := Self.Funcs.First;
+      F : Hook_Function_Access;
+   begin
+      while Has_Element (C) loop
+         F := Hook_Function_Access (Element (C).Func);
+         if If_Matches (F) then
+            if Active (Me_Hooks) then
+               Trace
+                  (Me_Hooks, "Removing " & GPS.Kernel.Hooks.Name (F)
+                   & " from hook " & GPS.Kernel.Hooks.Name (Self));
+            end if;
+
+            F.Refcount := F.Refcount - 1;
+            if F.Refcount = 0 then
+               F.Destroy;
+               Unchecked_Free (F);
+            end if;
+
+            Self.Funcs.Delete (C);
+            exit;
+         end if;
+         Next (C);
+      end loop;
+   end Remove;
+
+   --------------------
+   -- List_Functions --
+   --------------------
+
+   function List_Functions
+      (Self : not null access Hook_Types'Class)
+      return GNAT.Strings.String_List
+   is
+      use GPS.Kernel.Scripts.Hooks;
+      Result : GNAT.Strings.String_List (1 .. Integer (Self.Funcs.Length));
+      Idx : Integer := Result'First;
+   begin
+      for F of Self.Funcs loop
+         if F.Func.all in Python_Hook_Function'Class then
+            Result (Idx) := new String'
+               (Python_Hook_Function (F.Func.all).Func.Get_Name);
+         else
+            Result (Idx) := new String'(External_Tag (F.Func'Tag));
+         end if;
+         Idx := Idx + 1;
+      end loop;
+      return Result;
+   end List_Functions;
 
 end GPS.Kernel;

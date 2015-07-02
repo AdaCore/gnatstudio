@@ -311,23 +311,21 @@ package body Src_Editor_Buffer is
    --  If Internal is True, do not emit kernel signals. This is used notably
    --  for automatic saves.
 
-   type Preferences_Changed_Hook_Record is new Function_With_Args with record
+   type On_Pref_Changed is new Preferences_Hooks_Function with record
       Buffer : Source_Buffer;
    end record;
-   type Preferences_Hook is access all Preferences_Changed_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Preferences_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
-   type Project_Changed_Hook_Record is new Function_No_Args with record
+   type On_Project_Changed is new Simple_Hooks_Function with record
       Buffer : Source_Buffer;
    end record;
-   type Project_Hook is access all Project_Changed_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : Project_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class);
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project has changed
 
    procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class);
@@ -549,26 +547,22 @@ package body Src_Editor_Buffer is
    -- Hooks --
    -----------
 
-   type Internal_Hook_Record is abstract new Function_With_Args with record
+   type On_File_Deleted is new File_Hooks_Function with record
       Buffer : Source_Buffer;
    end record;
-
-   type File_Deleted_Hook_Record is new Internal_Hook_Record with null record;
-   type File_Deleted_Hook is access File_Deleted_Hook_Record'Class;
-
-   type File_Renamed_Hook_Record is new Internal_Hook_Record with null record;
-   type File_Renamed_Hook is access File_Renamed_Hook_Record'Class;
-
    overriding procedure Execute
-     (Hook   : File_Deleted_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_File_Deleted;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Callback for the "file_deleted" hook
 
+   type On_File_Renamed is new File2_Hooks_Function with record
+      Buffer : Source_Buffer;
+   end record;
    overriding procedure Execute
-     (Hook   : File_Renamed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File, Renamed : Virtual_File);
    --  Callback for the "file_renamed" hook
 
    procedure Reset_Slave_Cursors_Commands
@@ -718,14 +712,12 @@ package body Src_Editor_Buffer is
    -------------
 
    overriding procedure Execute
-     (Hook   : File_Deleted_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_File_Deleted;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
       pragma Unreferenced (Kernel);
-      File        : constant GNATCOLL.VFS.Virtual_File :=
-                      File_Hooks_Args (Data.all).File;
-      Edited      : constant GNATCOLL.VFS.Virtual_File := Hook.Buffer.Filename;
+      Edited      : constant GNATCOLL.VFS.Virtual_File := Self.Buffer.Filename;
       Need_Action : Boolean := False;
    begin
       if Edited /= GNATCOLL.VFS.No_File then
@@ -737,13 +729,9 @@ package body Src_Editor_Buffer is
       end if;
 
       if Need_Action then
-         Hook.Buffer.Saved_Position := -1;
-         Hook.Buffer.Status_Changed;
+         Self.Buffer.Saved_Position := -1;
+         Self.Buffer.Status_Changed;
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
    end Execute;
 
    -------------
@@ -751,32 +739,26 @@ package body Src_Editor_Buffer is
    -------------
 
    overriding procedure Execute
-     (Hook   : File_Renamed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_File_Renamed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File, Renamed : Virtual_File)
    is
       pragma Unreferenced (Kernel);
-      File   : constant Virtual_File := Files_2_Hooks_Args (Data.all).File;
-      Edited : constant Virtual_File := Hook.Buffer.Filename;
+      Edited : constant Virtual_File := Self.Buffer.Filename;
       Dest   : GNATCOLL.VFS.Virtual_File;
    begin
       if Edited /= GNATCOLL.VFS.No_File then
          if Is_Directory (File) and then Is_Parent (File, Edited) then
             Dest := Create_From_Dir
-              (Files_2_Hooks_Args (Data.all).Renamed.Dir,
-               Relative_Path (Edited, File));
-            Hook.Buffer.Filename := Dest;
-            Hook.Buffer.Filename_Changed;
+              (Renamed.Dir, Relative_Path (Edited, File));
+            Self.Buffer.Filename := Dest;
+            Self.Buffer.Filename_Changed;
 
          elsif not Is_Directory (File) and then Edited = File then
-            Hook.Buffer.Filename := Files_2_Hooks_Args (Data.all).Renamed;
-            Hook.Buffer.Filename_Changed;
+            Self.Buffer.Filename := Renamed;
+            Self.Buffer.Filename_Changed;
          end if;
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
    end Execute;
 
    ----------------------
@@ -3289,10 +3271,10 @@ package body Src_Editor_Buffer is
    is
       Tags         : Gtk_Text_Tag_Table;
       Command      : Check_Modified_State;
-      P_Hook       : Preferences_Hook;
-      Prj_Hook     : Project_Hook;
-      Deleted_Hook : File_Deleted_Hook;
-      Renamed_Hook : File_Renamed_Hook;
+      P_Hook       : access On_Pref_Changed;
+      Prj_Hook     : access On_Project_Changed;
+      Deleted_Hook : access On_File_Deleted;
+      Renamed_Hook : access On_File_Renamed;
 
       use Pango.Enums.Underline_Properties;
    begin
@@ -3315,42 +3297,27 @@ package body Src_Editor_Buffer is
 
       --  Preference changed hook
 
-      P_Hook := new Preferences_Changed_Hook_Record'
-        (Function_With_Args with Buffer => Source_Buffer (Buffer));
-      Add_Hook
-        (Kernel, Preference_Changed_Hook, P_Hook,
-         Name => "src_editor_buffer.preferences_changed",
-         Watch => GObject (Buffer));
-      Execute (P_Hook.all, Kernel, Data => null);
+      P_Hook := new On_Pref_Changed;
+      P_Hook.Buffer := Source_Buffer (Buffer);
+      Preferences_Changed_Hook.Add (P_Hook, Watch => Buffer);
+      P_Hook.Execute (Kernel, null);
 
       --  Project recomputed hook
-      Prj_Hook := new Project_Changed_Hook_Record'
-        (Function_No_Args with Buffer => Source_Buffer (Buffer));
-      Add_Hook
-        (Kernel => Kernel,
-         Hook   => Project_View_Changed_Hook,
-         Func   => Prj_Hook,
-         Name   => "src_editor_buffer.on_project_changed",
-         Watch  => GObject (Buffer));
+      Prj_Hook := new On_Project_Changed;
+      Prj_Hook.Buffer := Source_Buffer (Buffer);
+      Project_View_Changed_Hook.Add (Prj_Hook, Watch => Buffer);
 
       --  File hooks
-      Deleted_Hook := new File_Deleted_Hook_Record;
+      Deleted_Hook := new On_File_Deleted;
       Deleted_Hook.Buffer := Source_Buffer (Buffer);
-      Add_Hook
-        (Kernel, GPS.Kernel.File_Deleted_Hook, Deleted_Hook,
-         Name  => "project_explorers_files.file_deleted",
-         Watch => GObject (Buffer));
+      File_Deleted_Hook.Add (Deleted_Hook, Watch => Buffer);
 
       --  Renamed_Hook.Execute will change the buffer's filename:
       --  Add it with Last=>True so that other modules have a chance to react
       --  on the editor before it is renamed
-      Renamed_Hook := new File_Renamed_Hook_Record;
+      Renamed_Hook := new On_File_Renamed;
       Renamed_Hook.Buffer := Source_Buffer (Buffer);
-      Add_Hook
-        (Kernel, GPS.Kernel.File_Renamed_Hook, Renamed_Hook,
-         Name  => "project_explorers_files.file_renamed",
-         Watch => GObject (Buffer),
-         Last  => True);
+      File_Renamed_Hook.Add (Renamed_Hook, Watch => Buffer, Last => True);
 
       for Entity_Kind in Standout_Language_Entity'Range loop
          Buffer.Syntax_Tags (Entity_Kind) := Get_Tag
@@ -3574,10 +3541,10 @@ package body Src_Editor_Buffer is
    -------------
 
    overriding procedure Execute
-     (Hook   : Project_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class)
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
-      Buffer : constant Source_Buffer := Hook.Buffer;
+      Buffer : constant Source_Buffer := Self.Buffer;
    begin
       --  The project has changed: if this buffer has a file and the language
       --  is unknown, it is possible that the new project knows which language
@@ -3597,12 +3564,12 @@ package body Src_Editor_Buffer is
    -------------
 
    overriding procedure Execute
-     (Hook   : Preferences_Changed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Kernel, Data);
-      B       : constant Source_Buffer := Hook.Buffer;
+      pragma Unreferenced (Kernel, Pref);
+      B       : constant Source_Buffer := Self.Buffer;
       Timeout : Gint;
       Prev    : Boolean;
    begin
@@ -3973,7 +3940,7 @@ package body Src_Editor_Buffer is
          if not Is_Auto_Save then
             if not File_Is_New then
                Emit_By_Name (Get_Object (Buffer), Signal_Closed & ASCII.NUL);
-               File_Closed (Buffer.Kernel, From_File);
+               File_Closed_Hook.Run (Buffer.Kernel, From_File);
                Reset_Buffer (Buffer);
             else
                Buffer.Start_Inserting;  --  no undo should be available
@@ -4074,7 +4041,7 @@ package body Src_Editor_Buffer is
       --  properly the information relative to this file.
 
       if not File_Is_New then
-         File_Edited (Buffer.Kernel, Filename);
+         File_Edited_Hook.Run (Buffer.Kernel, Filename);
       end if;
 
    exception
@@ -4137,7 +4104,7 @@ package body Src_Editor_Buffer is
 
       if not Internal then
          --  Run the "before_file_saved" hook
-         Before_File_Saved (Buffer.Kernel, Filename);
+         Before_File_Saved_Hook.Run (Buffer.Kernel, Filename);
       end if;
 
       declare
@@ -4344,17 +4311,18 @@ package body Src_Editor_Buffer is
             --  If we "save as" the buffer, we emit a closed for the previous
             --  name
             if Buffer.Filename = GNATCOLL.VFS.No_File then
-               File_Closed (Buffer.Kernel, Buffer.File_Identifier);
+               File_Closed_Hook.Run (Buffer.Kernel, Buffer.File_Identifier);
             end if;
 
-            File_Renamed (Handle   => Buffer.Kernel,
-                          File     => Buffer.Filename,
-                          New_Path => Filename);
+            File_Renamed_Hook.Run
+               (Kernel   => Buffer.Kernel,
+                File     => Buffer.Filename,
+                File2    => Filename);
 
             Buffer.Filename := Filename;
          end if;
 
-         File_Saved (Buffer.Kernel, Filename);
+         File_Saved_Hook.Run (Buffer.Kernel, Filename);
 
          for J in 1 .. Buffer.Last_Editable_Line loop
             Buffer_Line := Get_Buffer_Line (Buffer, J);
@@ -4454,7 +4422,7 @@ package body Src_Editor_Buffer is
          if Filename /= Original_Filename then
             --  We have just "saved as" with a new file name: tell GPS that
             --  this file is now open
-            File_Edited (Buffer.Kernel, Filename);
+            File_Edited_Hook.Run (Buffer.Kernel, Filename);
          end if;
 
          Buffer.Modified_Auto := False;
@@ -5787,7 +5755,7 @@ package body Src_Editor_Buffer is
       Context : constant Selection_Context := Source_Lines_Context
         (Buffer, No_Project, Start_Line, End_Line);
    begin
-      GPS.Kernel.Source_Lines_Folded
+      Source_Lines_Folded_Hook.Run
         (Buffer.Kernel, Context,
          Natural (Start_Line),
          Natural (End_Line));
@@ -5805,7 +5773,7 @@ package body Src_Editor_Buffer is
       Context : constant Selection_Context := Source_Lines_Context
         (Buffer, No_Project, Start_Line, End_Line);
    begin
-      GPS.Kernel.Source_Lines_Unfolded
+      Source_Lines_Unfolded_Hook.Run
         (Buffer.Kernel, Context,
          Natural (Start_Line),
          Natural (End_Line));
@@ -5848,7 +5816,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Context := Source_Lines_Context (Buffer, Project, First, Last);
-      GPS.Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
+      Source_Lines_Revealed_Hook.Run (Buffer.Kernel, Context);
    end Source_Lines_Revealed;
 
    --------------------------
@@ -5919,10 +5887,10 @@ package body Src_Editor_Buffer is
          Emit_By_Name (Get_Object (Buffer), Signal_Closed & ASCII.NUL);
 
          if Buffer.Filename /= GNATCOLL.VFS.No_File then
-            File_Closed (Buffer.Kernel, Buffer.Filename);
+            File_Closed_Hook.Run (Buffer.Kernel, Buffer.Filename);
 
          elsif Buffer.File_Identifier /= GNATCOLL.VFS.No_File then
-            File_Closed (Buffer.Kernel, Buffer.File_Identifier);
+            File_Closed_Hook.Run (Buffer.Kernel, Buffer.File_Identifier);
          end if;
       end if;
    end Register_View;

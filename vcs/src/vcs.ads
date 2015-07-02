@@ -132,7 +132,7 @@ package VCS is
      (Ref : access VCS_Record'Class; Action : VCS_Action) return Boolean;
    --  Returns true if the given action is supported by the VCS Ref
 
-   type File_Status is record
+   type VCS_File_Status is record
       Label    : GNAT.Strings.String_Access;
       --  The label corresponding to the status
 
@@ -140,15 +140,15 @@ package VCS is
       --  Associated stock icon
    end record;
 
-   procedure Free (X : in out File_Status);
+   procedure Free (X : in out VCS_File_Status);
    --  Free memory associated to X.
    --  Note that file status are intended to be static objects, they should not
    --  be freed until the end of the program.
 
-   overriding function "=" (S1, S2 : File_Status) return Boolean;
+   overriding function "=" (S1, S2 : VCS_File_Status) return Boolean;
    --  Returns true if status S1 is equal/equivalent to status S2
 
-   function Is_Local_Status (Status : File_Status) return Boolean;
+   function Is_Local_Status (Status : VCS_File_Status) return Boolean;
    --  Return True if Status is a status that can be returned by the local
    --  status actions.
 
@@ -159,7 +159,7 @@ package VCS is
    Unknown_Label : aliased String := "Unknown";
    Unknown_Stock : aliased String := "gps-emblem-vcs-unknown";
 
-   Unknown : constant File_Status :=
+   Unknown : constant VCS_File_Status :=
      (Unknown_Label'Access, Unknown_Stock'Access);
    --  The status is not yet determined or the VCS repository is not able to
    --  tell (disconnected, locked, broken, etc)
@@ -170,17 +170,17 @@ package VCS is
 
    function Get_File_Status
      (Ref    : access VCS_Record'Class;
-      Status : Status_Id) return File_Status;
+      Status : Status_Id) return VCS_File_Status;
    --  Return the File_Status given one of standard status. This routine uses
    --  the File_Status Stock_Id as the key. Return the Unknown status if the
    --  key is not found for the given VCS.
 
-   function Get_File_Status_Id (Status : File_Status) return Status_Id;
+   function Get_File_Status_Id (Status : VCS_File_Status) return Status_Id;
    --  Return the Status_Id given a File_Status . This routine uses the
    --  File_Status Stock_Id as the key. Return the Unknown status if the key is
    --  not found for the given VCS.
 
-   type Status_Array is array (Natural range <>) of File_Status;
+   type Status_Array is array (Natural range <>) of VCS_File_Status;
    type Status_Array_Access is access Status_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -192,7 +192,7 @@ package VCS is
       File                : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       --  The corresponding file
 
-      Status              : File_Status := Unknown;
+      Status              : VCS_File_Status := Unknown;
       --  The status of the file
 
       Working_Revision    : GNAT.Strings.String_Access := null;
@@ -498,44 +498,44 @@ private
 
    Up_To_Date_Label : aliased String := "Up to date";
    Up_To_Date_Stock : aliased String := "gps-emblem-vcs-up-to-date";
-   Up_To_Date : File_Status :=
+   Up_To_Date : VCS_File_Status :=
      (Up_To_Date_Label'Access, Up_To_Date_Stock'Access);
    --  The file corresponds to the latest version in the corresponding
    --  branch on the repository.
 
    Added_Label : aliased String := "Added";
-   Added : File_Status :=
+   Added : VCS_File_Status :=
      (Added_Label'Access, Added_Stock'Access);
    --  The file has been locally added to the VCS repository but the change
    --  has not been committed.
 
    Removed_Label : aliased String := "Removed";
-   Removed : File_Status :=
+   Removed : VCS_File_Status :=
      (Removed_Label'Access, Removed_Stock'Access);
    --  The file still exists locally but is known to have been removed from
    --  the VCS repository.
 
    Modified_Label : aliased String := "Modified";
-   Modified : File_Status :=
+   Modified : VCS_File_Status :=
      (Modified_Label'Access, Modified_Stock'Access);
    --  The file has been modified by the user or has been explicitly opened
    --  for editing.
 
    Needs_Merge_Label : aliased String := "Needs merge";
    Needs_Merge_Stock : aliased String := "gps-emblem-vcs-needs-merge";
-   Needs_Merge : File_Status :=
+   Needs_Merge : VCS_File_Status :=
      (Needs_Merge_Label'Access, Needs_Merge_Stock'Access);
    --  The file has been modified locally and on the repository
 
    Needs_Update_Label : aliased String := "Needs update";
    Needs_Update_Stock : aliased String := "gps-emblem-vcs-needs-update";
-   Needs_Update : File_Status :=
+   Needs_Update : VCS_File_Status :=
      (Needs_Update_Label'Access, Needs_Update_Stock'Access);
    --  The file has been modified in the repository but not locally
 
    Not_Registered_Label : aliased String := "Not registered";
    Not_Registered_Stock : aliased String := "gps-emblem-vcs-not-registered";
-   Not_Registered : File_Status :=
+   Not_Registered : VCS_File_Status :=
      (Not_Registered_Label'Access, Not_Registered_Stock'Access);
    --  The file is unknown of the VCS repository
 

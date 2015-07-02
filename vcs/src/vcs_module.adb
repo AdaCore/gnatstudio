@@ -39,7 +39,6 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with VCS.Generic_VCS;           use VCS.Generic_VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
@@ -73,19 +72,27 @@ package body VCS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Display the VCS Activities explorer
 
-   procedure File_Edited_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Edited is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Callback for the "file_edited" signal
 
-   procedure File_Closed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Closed is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Callback for the "file_closed" signal
 
-   procedure File_Status_Changed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_File_Status_Changed is new File_Status_Hooks_Function
+      with null record;
+   overriding procedure Execute
+     (Self   : On_File_Status_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Status : GPS.Kernel.File_Status);
    --  Callback for the file status changed hook
 
    function Load_Desktop
@@ -134,13 +141,17 @@ package body VCS_Module is
       Command : String);
    --  Handler for VCS Activities commands that take no parameter
 
-   procedure On_Project_Changing
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Project_Changing is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Called when project is about to change
 
-   procedure On_Project_Changed
-     (Kernel : access Kernel_Handle_Record'Class);
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when project has been changed and is fully loaded
 
    ---------------
@@ -533,34 +544,13 @@ package body VCS_Module is
       Standard.VCS.Unknown_VCS.Register_Module (Kernel);
       Standard.VCS.Generic_VCS.Register_Module (Kernel);
 
-      Add_Hook (Kernel, File_Edited_Hook,
-                Wrapper (File_Edited_Cb'Access),
-                Name => "vcs.file_edited");
-
-      Add_Hook (Kernel, File_Status_Changed_Action_Hook,
-                Wrapper (File_Status_Changed_Cb'Access),
-                Name => "vcs.file_status_changed");
-
-      Add_Hook (Kernel, File_Closed_Hook,
-                Wrapper (File_Closed_Cb'Access),
-                Name => "vcs.file_closed_edited");
-
-      Add_Hook
-        (Kernel, Project_Changing_Hook,
-         Wrapper (On_Project_Changing'Access), "vcs.project_changing");
-
-      Add_Hook
-        (Kernel, Project_View_Changed_Hook,
-         Wrapper (On_Project_Changed'Access), "vcs.project_changed");
+      File_Edited_Hook.Add (new On_File_Edited);
+      File_Status_Changed_Hook.Add (new On_File_Status_Changed);
+      File_Closed_Hook.Add (new On_File_Closed);
+      Project_Changing_Hook.Add (new On_Project_Changing);
+      Project_View_Changed_Hook.Add (new On_Project_Changed);
 
       Load_Cache (Kernel, VCS_Module_ID.Cached_Status);
-
-      Register_Hook_No_Args (Kernel, Commit_Done_Hook);
-      Register_Hook_No_Args (Kernel, Activity_Checked_Hook);
-      Register_Hook_No_Args (Kernel, Log_Parsed_Hook);
-      Register_Hook_No_Args (Kernel, Status_Parsed_Hook);
-      Register_Hook_No_Args (Kernel, Revision_Parsed_Hook);
-      Register_Hook_No_Args (Kernel, Annotation_Parsed_Hook);
 
       --  Register VCS commands
 
@@ -970,21 +960,21 @@ package body VCS_Module is
       Parse_Revision (Ref, File, S);
    end Revision_Parse_Handler;
 
-   --------------------
-   -- File_Edited_Cb --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Edited_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      D      : constant File_Hooks_Args := File_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
 
       --  Choose the first possible project, since for the same physical file,
       --  the VCS will be the same anyway
-      F_Info : constant File_Info'Class :=
-        File_Info'Class
-          (Get_Registry (Kernel).Tree.Info_Set (D.File).First_Element);
+      F_Info : constant File_Info'Class := File_Info'Class
+          (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
       Ref    : constant VCS_Access :=
         Get_Current_Ref (Kernel, F_Info.Project (True));
       Status : File_Status_Record;
@@ -993,55 +983,56 @@ package body VCS_Module is
          return;
       end if;
 
-      Status := Get_Cache (Get_Status_Cache, D.File).Status;
+      Status := Get_Cache (Get_Status_Cache, File).Status;
 
       if Status.File = GNATCOLL.VFS.No_File
         or else Status.Status.Icon_Name.all = Unknown_Stock
       then
          --  If file not found in the cache or the status is not yet known
-         Get_Status (Ref, (1 => D.File), False, Local => True);
+         Get_Status (Ref, (1 => File), False, Local => True);
       else
          Display_Editor_Status (Kernel_Handle (Kernel), Ref, Status);
       end if;
-   end File_Edited_Cb;
+   end Execute;
 
-   --------------------
-   -- File_Closed_Cb --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Closed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Self, Kernel);
       M : constant VCS_Module_ID_Access := VCS_Module_ID;
-      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
    begin
-      M.Reference_Map.Exclude (D.File);
-   end File_Closed_Cb;
+      M.Reference_Map.Exclude (File);
+   end Execute;
 
-   ----------------------------
-   -- File_Status_Changed_Cb --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Status_Changed_Cb
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_File_Status_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Status : GPS.Kernel.File_Status)
    is
-      D        : constant File_Status_Changed_Hooks_Args :=
-        File_Status_Changed_Hooks_Args (Data.all);
+      pragma Unreferenced (Self);
 
       --  At random chose the first possible project. If this is the same
       --  physicial source file, the VCS system will be the same anyway
       F_Info   : constant File_Info'Class :=
         File_Info'Class
-          (Get_Registry (Kernel).Tree.Info_Set (D.File).First_Element);
+          (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
       Project  : constant Project_Type := F_Info.Project;
       Ref      : VCS_Access;
-      Status   : Line_Record;
+      Stat     : Line_Record;
       F_Status : File_Status_List.List;
    begin
-      if D.Status = Unmodified then
+      if Status = Unmodified then
          --  Nothing else to do, this is a status changed hook run when the
          --  file is first loaded. There is no local modification done to this
          --  file.
@@ -1058,15 +1049,15 @@ package body VCS_Module is
 
       --  First ensure that the file is already in the explorer
 
-      Status := Get_Cache (Get_Status_Cache, D.File);
+      Stat := Get_Cache (Get_Status_Cache, File);
 
-      if Status = No_Data then
+      if Stat = No_Data then
          --  This is not part of the cache yet
-         Status.Status.File := D.File;
+         Stat.Status.File := File;
       end if;
 
-      if Status.Status.Status.Icon_Name.all /= Added_Stock
-        and then Status.Status.Status.Icon_Name.all /= Removed_Stock
+      if Stat.Status.Status.Icon_Name.all /= Added_Stock
+        and then Stat.Status.Status.Icon_Name.all /= Removed_Stock
       then
          --  We do not want to change the status of added or removed files
 
@@ -1077,15 +1068,15 @@ package body VCS_Module is
             --  probably benefit the maintenance.
             for K in S'Range loop
                if S (K).Icon_Name.all = Modified_Stock then
-                  Status.Status.Status := S (K);
+                  Stat.Status.Status := S (K);
                   exit;
                end if;
             end loop;
          end;
 
-         Set_Cache (Get_Status_Cache, D.File, Status);
+         Set_Cache (Get_Status_Cache, File, Stat);
 
-         File_Status_List.Append (F_Status, Copy_File_Status (Status.Status));
+         File_Status_List.Append (F_Status, Copy_File_Status (Stat.Status));
 
          Display_File_Status
            (Kernel_Handle (Kernel), F_Status, Ref, False, True);
@@ -1093,13 +1084,12 @@ package body VCS_Module is
          --  present.
 
          Refresh_File
-           (Get_Explorer
-              (Kernel_Handle (Kernel), Raise_Child => False), D.File);
+           (Get_Explorer (Kernel_Handle (Kernel), Raise_Child => False), File);
          Refresh_File
            (Get_Activities_Explorer
-              (Kernel_Handle (Kernel), Raise_Child => False), D.File);
+              (Kernel_Handle (Kernel), Raise_Child => False), File);
       end if;
-   end File_Status_Changed_Cb;
+   end Execute;
 
    ------------------
    -- Get_Explorer --
@@ -1230,11 +1220,15 @@ package body VCS_Module is
       return M.Cached_Status;
    end Get_Status_Cache;
 
-   ------------------------
-   -- On_Project_Changed --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
    begin
       VCS_Module_ID.VCS_Project_Cache.Clear;
 
@@ -1242,21 +1236,22 @@ package body VCS_Module is
          --  The VCS Activities window is opened, refresh it
          Open_Activities_Explorer (Kernel, No_Context);
       end if;
-   end On_Project_Changed;
+   end Execute;
 
-   -------------------------
-   -- On_Project_Changing --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Project_Changing
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Project_Changing;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
-      pragma Unreferenced (Data, Kernel);
+      pragma Unreferenced (Self, Kernel, File);
    begin
       --  ??? This could be removed
       VCS_Module_ID.VCS_Project_Cache.Clear;
-   end On_Project_Changing;
+   end Execute;
 
    -------------------
    -- Get_Reference --

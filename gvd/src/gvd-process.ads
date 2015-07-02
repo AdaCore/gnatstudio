@@ -26,7 +26,7 @@ with GNAT.Expect;          use GNAT.Expect;
 with Gtk.Widget;
 
 with Debugger;             use Debugger;
-with GPS.Kernel;
+with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GVD.Code_Editors;
 with GVD.Types;
@@ -58,9 +58,7 @@ package GVD.Process is
 
    type Regexp_Filter_List is private;
 
-   type Visual_Debugger_Record is
-     new Glib.Object.GObject_Record with
-   record
+   type Visual_Debugger_Record is new Base_Visual_Debugger with record
       Editor_Text             : GVD.Code_Editors.Code_Editor;
       Debugger_Num            : Natural;
       --  The number identifying the debugger.

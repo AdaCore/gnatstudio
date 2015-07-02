@@ -45,26 +45,29 @@ with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with Debugger;                  use Debugger;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
+with Default_Preferences;       use Default_Preferences;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Main_Window.Debug;     use GPS.Main_Window.Debug;
 with GPS.Main_Window;           use GPS.Main_Window;
-
 with GUI_Utils;                 use GUI_Utils;
 with GVD.Assembly_View;         use GVD.Assembly_View;
 with GVD.Call_Stack;            use GVD.Call_Stack;
 with GVD.Canvas;                use GVD.Canvas;
-with GVD.Consoles;              use GVD.Consoles;
 with GVD.Code_Editors;          use GVD.Code_Editors;
+with GVD.Consoles;              use GVD.Consoles;
 with GVD.Dialogs;               use GVD.Dialogs;
 with GVD.Memory_View;           use GVD.Memory_View;
 with GVD.Menu;                  use GVD.Menu;
@@ -82,10 +85,6 @@ with List_Select_Pkg;           use List_Select_Pkg;
 with Process_Proxies;           use Process_Proxies;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GPS.Editors;               use GPS.Editors;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with Xref;                      use Xref;
 
 package body GVD_Module is
@@ -103,22 +102,20 @@ package body GVD_Module is
 
    type Bp_Array is array (Integer range <>) of Breakpoint_Identifier;
 
-   type File_Edited_Hook_Record is new Function_With_Args with record
+   type On_File_Edited is new File_Hooks_Function with record
       Top : GPS_Window;
    end record;
-   type File_Edited_Hook is access File_Edited_Hook_Record'Class;
    overriding procedure Execute
-     (Hook   : File_Edited_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
    --  Callback for the "file_edited" hook
 
-   type Lines_Revealed_Hook_Record is new Function_With_Args with null record;
-   type Lines_Revealed_Hook is access Lines_Revealed_Hook_Record'Class;
+   type On_Lines_Revealed is new Context_Hooks_Function with null record;
    overriding procedure Execute
-     (Hook   : Lines_Revealed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+     (Self    : On_Lines_Revealed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context);
    --  Callback for the "source_lines_revealed_hook" hook
 
    type GVD_Module_Record is new Module_ID_Record with record
@@ -131,8 +128,6 @@ package body GVD_Module is
       Initialize_Menu                : Gtk_Menu;
 
       Delete_Id                      : Handler_Id := (Null_Handler_Id, null);
-      File_Hook                      : File_Edited_Hook;
-      Lines_Hook                     : Lines_Revealed_Hook;
 
       Cont_Button,
       Step_Button,
@@ -160,7 +155,10 @@ package body GVD_Module is
    GVD_Module_Name : constant String := "Debugger";
    GVD_Module_ID   : GVD_Module;
 
-   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class);
+   type On_View_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_View_Changed;
+       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called every time the project view changes, to recompute the dynamic
    --  menus.
 
@@ -171,9 +169,11 @@ package body GVD_Module is
    --  in the editors for file.
    --  If File is empty, remove them for all files.
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences are changed in the GPS kernel
 
    procedure Create_Debugger_Columns
@@ -414,13 +414,11 @@ package body GVD_Module is
      (Command : access Down_Command;
       Process : Visual_Debugger) return Command_Return_Type;
 
-   --------------------
-   -- Misc Callbacks --
-   --------------------
-
-   procedure On_Executable_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   type On_Executable_Changed is new Debugger_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self     : On_Executable_Changed;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class);
    --  Hook for "debugger_executable_changed"
 
    ----------------
@@ -562,20 +560,13 @@ package body GVD_Module is
    begin
       --  Create the information column for the current line
       Create_Line_Information_Column
-        (Kernel,
-         File,
-         "Current Line",
-         Empty_Line_Information,
-         --  ??? That should be centralized somewhere !!!
-         Every_Line    => False);
+         (Kernel, File, "Current Line", Every_Line => False);
 
       --  Create the information column for the breakpoints
       Create_Line_Information_Column
-        (Kernel,
-         File,
-         Breakpoints_Column_Id,
-         Empty_Line_Information,
-         Every_Line    => True);
+        (Kernel     => Kernel,
+         Identifier => Breakpoints_Column_Id,
+         File       => File);
    end Create_Debugger_Columns;
 
    -----------------------------
@@ -1650,21 +1641,13 @@ package body GVD_Module is
    is
       Top : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
    begin
-      if GVD_Module_ID.Lines_Hook = null then
+      if not GVD_Module_ID.Initialized then
          --  Add columns information for not currently opened files
 
-         GVD_Module_ID.Lines_Hook := new Lines_Revealed_Hook_Record;
-         Add_Hook
-           (Kernel, Source_Lines_Revealed_Hook, GVD_Module_ID.Lines_Hook,
-            Name  => "gvd.lines_revealed",
-            Watch => GObject (Top));
-
-         GVD_Module_ID.File_Hook := new File_Edited_Hook_Record;
-         GVD_Module_ID.File_Hook.Top := Top;
-         Add_Hook
-           (Kernel, GPS.Kernel.File_Edited_Hook, GVD_Module_ID.File_Hook,
-            Name  => "gvd.file_edited",
-            Watch => GObject (Top));
+         Source_Lines_Revealed_Hook.Add (new On_Lines_Revealed, Watch => Top);
+         File_Edited_Hook.Add
+            (new On_File_Edited'(File_Hooks_Function with Top => Top),
+             Watch => Top);
 
          --  Add columns for debugging information to all the files that
          --  are currently open.
@@ -1689,19 +1672,6 @@ package body GVD_Module is
       end loop;
 
       GVD_Module_ID.Initialized := False;
-
-      if GVD_Module_ID.Lines_Hook /= null then
-         Remove_Hook
-           (Kernel, Source_Lines_Revealed_Hook, GVD_Module_ID.Lines_Hook);
-         GVD_Module_ID.Lines_Hook := null;
-      end if;
-
-      if GVD_Module_ID.File_Hook /= null then
-         Remove_Hook
-           (Kernel, GPS.Kernel.File_Edited_Hook, GVD_Module_ID.File_Hook);
-         GVD_Module_ID.File_Hook := null;
-      end if;
-
       Remove_Debugger_Columns (Kernel, GNATCOLL.VFS.No_File);
    end Debug_Terminate;
 
@@ -1822,16 +1792,17 @@ package body GVD_Module is
       return Commands.Success;
    end Execute_Dbg;
 
-   ---------------------------
-   -- On_Executable_Changed --
-   ---------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Executable_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class)
+   overriding procedure Execute
+     (Self     : On_Executable_Changed;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class)
    is
-      Process : constant Visual_Debugger :=
-                  Get_Process (Debugger_Hooks_Data_Access (Data));
+      pragma Unreferenced (Self);
+      Process : constant Visual_Debugger := Visual_Debugger (Debugger);
    begin
       --  Change the project to match the executable
 
@@ -1845,24 +1816,6 @@ package body GVD_Module is
 
       Remove_Debugger_Columns (Kernel_Handle (Kernel), GNATCOLL.VFS.No_File);
       Create_Debugger_Columns (Kernel_Handle (Kernel), GNATCOLL.VFS.No_File);
-   end On_Executable_Changed;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Hook   : File_Edited_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
-   is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data.all);
-   begin
-      Create_Debugger_Columns (Kernel_Handle (Kernel), D.File);
-
-   exception
-      when E : others =>  Trace (Me, E);
-         Close_Debugger (Get_Current_Process (Hook.Top));
    end Execute;
 
    -------------
@@ -1870,31 +1823,42 @@ package body GVD_Module is
    -------------
 
    overriding procedure Execute
-     (Hook   : Lines_Revealed_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+     (Self   : On_File_Edited;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File) is
+   begin
+      Create_Debugger_Columns (Kernel_Handle (Kernel), File);
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Close_Debugger (Get_Current_Process (Self.Top));
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self    : On_Lines_Revealed;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : Selection_Context)
    is
-      pragma Unreferenced (Hook);
-      D       : constant Context_Hooks_Args := Context_Hooks_Args (Data.all);
-
+      pragma Unreferenced (Self);
       Process : constant Visual_Debugger :=
-                  Get_Current_Process
-                    (Get_Main_Window (Get_Kernel (D.Context)));
-
+                  Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
    begin
       if Process = null
         or else Process.Debugger = null
-        or else not Has_Area_Information (D.Context)
+        or else not Has_Area_Information (Context)
       then
          return;
       end if;
 
       declare
-         File         : constant Virtual_File := File_Information (D.Context);
+         File         : constant Virtual_File := File_Information (Context);
          Line1, Line2 : Integer;
-
       begin
-         Get_Area (D.Context, Line1, Line2);
+         Get_Area (Context, Line1, Line2);
 
          if GVD_Module_ID.Show_Lines_With_Code
            and then Command_In_Process (Get_Process (Process.Debugger))
@@ -1906,7 +1870,8 @@ package body GVD_Module is
             Tab         : constant Visual_Debugger :=
                             Get_Current_Process (Get_Main_Window (Kernel));
             Lines       : Line_Array (Line1 .. Line2);
-            A           : Line_Information_Array (Line1 .. Line2);
+            A           : Line_Information_Data :=
+               new Line_Information_Array (Line1 .. Line2);
             C           : Set_Breakpoint_Command_Access;
             Mode        : Breakpoint_Command_Mode := Set;
             Bps         : Bp_Array (Line1 .. Line2) := (others => 0);
@@ -1958,21 +1923,29 @@ package body GVD_Module is
             end loop;
 
             Add_Line_Information
-              (Kernel, File, Breakpoints_Column_Id,
-               new Line_Information_Array'(A));
+              (Kernel     => Kernel,
+               Identifier => Breakpoints_Column_Id,
+               File       => File,
+               Info       => A);
+            Unchecked_Free (A);
          end;
       end;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
          Close_Debugger (Process);
    end Execute;
 
-   ---------------------
-   -- On_View_Changed --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+      (Self   : On_View_Changed;
+       Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
       use GNAT.OS_Lib;
       Menu              : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
       Loaded_Project    : constant Project_Type := Get_Project (Kernel);
@@ -2110,17 +2083,18 @@ package body GVD_Module is
       when E : others =>
          Trace (Me, E);
          Debug_Terminate (Kernel_Handle (Kernel));
-   end On_View_Changed;
+   end Execute;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
    is
-      pragma Unreferenced (Data);
+      pragma Unreferenced (Self, Pref);
       Window : constant Gtk_Window := Get_Main_Window (Kernel);
       Top    : constant GPS_Window := GPS_Window (Window);
       Prev   : Boolean;
@@ -2138,7 +2112,7 @@ package body GVD_Module is
          Remove_Debugger_Columns (Kernel_Handle (Kernel), No_File);
          Create_Debugger_Columns (Kernel_Handle (Kernel), No_File);
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    -----------------------
    -- Create_GVD_Module --
@@ -2281,9 +2255,7 @@ package body GVD_Module is
       Gtk_New (Menu);
       Set_Submenu (Mitem, Menu);
       GVD_Module_ID.Initialize_Menu := Menu;
-      Add_Hook (Kernel, Project_View_Changed_Hook,
-                Wrapper (On_View_Changed'Access),
-                Name => "gvd.project_view_changed");
+      Project_View_Changed_Hook.Add (new On_View_Changed);
 
       --  Add debugger menus
 
@@ -2461,12 +2433,8 @@ package body GVD_Module is
          Description => -"Terminate all running debugger",
          Filter      => Debugger_Active);
 
-      Add_Hook (Kernel, Preference_Changed_Hook,
-                Wrapper (Preferences_Changed'Access),
-                Name => "gvd.preferences_changed");
-      Add_Hook (Kernel, Debugger_Executable_Changed_Hook,
-                Wrapper (On_Executable_Changed'Access),
-                Name => "gvd.debugger_ext_changed");
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
+      Debugger_Executable_Changed_Hook.Add (new On_Executable_Changed);
    end Register_Module;
 
    -------------

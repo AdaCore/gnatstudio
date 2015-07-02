@@ -35,8 +35,8 @@ with Glib.Convert;              use Glib.Convert;
 
 with Basic_Types;               use Basic_Types;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Unknown;          use Language.Unknown;
@@ -696,7 +696,7 @@ package body Project_Explorers_Common is
          if Copy and then C /= null then
             return Dnd_Data (C, Copy => True);
          else
-            Open_File_Editor
+            Open_File_Action_Hook.Run
               (Child.Kernel,
                Child.Dnd_From_File,
                Project => Child.Dnd_From_Project,
@@ -810,7 +810,7 @@ package body Project_Explorers_Common is
                  or else Event.The_Type = Gdk_3button_Press
                then
                   Cancel_Child_Drag (Child);
-                  Open_File_Editor
+                  Open_File_Action_Hook.Run
                     (Kernel,
                      File,
                      Project => Project,
@@ -883,7 +883,7 @@ package body Project_Explorers_Common is
                   Project := Get_Project_From_Node
                     (Model, Kernel, Iter, Importing => False);
 
-                  Open_File_Editor
+                  Open_File_Action_Hook.Run
                     (Kernel,
                      File,
                      Project => Project,
@@ -933,7 +933,7 @@ package body Project_Explorers_Common is
             Project := Get_Project_From_Node
               (Gtk_Tree_Store'(-Model), Kernel, Iter, Importing => False);
 
-            Open_File_Editor
+            Open_File_Action_Hook.Run
               (Kernel,
                File,
                Project => Project,
@@ -947,7 +947,7 @@ package body Project_Explorers_Common is
             Project := Get_Project_From_Node
               (Gtk_Tree_Store'(-Model), Kernel, Iter, Importing => False);
 
-            Open_File_Editor
+            Open_File_Action_Hook.Run
               (Kernel,
                File,
                Project => Project,

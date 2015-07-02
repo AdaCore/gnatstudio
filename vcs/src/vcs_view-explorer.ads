@@ -76,7 +76,7 @@ package VCS_View.Explorer is
 private
 
    type Status_Record is record
-      Status  : File_Status;
+      Status  : VCS_File_Status;
       Display : Boolean := True;
    end record;
 

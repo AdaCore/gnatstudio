@@ -23,9 +23,9 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Custom;        use GPS.Kernel.Custom;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Main_Window;          use GPS.Main_Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
@@ -60,8 +60,7 @@ with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;      use GNATCOLL.VFS.GtkAda;
 
 package body Startup_Module is
-
-      Column_Load       : constant := 0;
+   Column_Load       : constant := 0;
    Column_Name       : constant := 1;
    Column_Explicit   : constant := 2;
    Column_File       : constant := 3;
@@ -125,10 +124,10 @@ package body Startup_Module is
    function On_File_Clicked
      (Self : access Gtk_Link_Button_Record'Class) return Boolean is
    begin
-      Open_File_Editor
-        (Kernel_Link_Button (Self).Kernel,
-         Project  => GNATCOLL.Projects.No_Project,
-         Filename => Create (+Self.Get_Label));
+      Open_File_Action_Hook.Run
+         (Kernel_Link_Button (Self).Kernel,
+          Project  => GNATCOLL.Projects.No_Project,
+          File     => Create (+Self.Get_Label));
       return True;
    end On_File_Clicked;
 

@@ -16,18 +16,17 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-
 with GNAT.Strings;
-
-with Gtkada.MDI;                use Gtkada.MDI;
-
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with VCS_Module;                use VCS_Module;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with Gtkada.MDI;                use Gtkada.MDI;
 with Log_Utils;                 use Log_Utils;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
+with VCS_Module;                use VCS_Module;
 
 package body VCS_Utils is
    Me : constant Trace_Handle := Create ("VCS_UTILS");
@@ -70,6 +69,7 @@ package body VCS_Utils is
       end Short_Revision;
 
       Label   : GNAT.Strings.String_Access;
+      Infos   : Line_Information_Data;
 
    begin
       if Ref = null then
@@ -92,11 +92,18 @@ package body VCS_Utils is
          end;
       end if;
 
-      Add_Editor_Label
-        (Kernel, Status.File, VCS_Module_Name, Label.all,
+      Infos := new Line_Information_Array (-1 .. -1);
+      Infos (-1).Text := new String'(Label.all);
+
+      File_Line_Action_Hook.Run
+        (Kernel,
+         File => Status.File,
+         Identifier => VCS_Module_Name,
+         Info => Infos,
          Tooltip => "Status for <b>" & Name (Ref) & "</b>: " & Label.all,
          Icon_Name => Status.Status.Icon_Name.all);
 
+      Unchecked_Free (Infos);
       GNAT.Strings.Free (Label);
    end Display_Editor_Status;
 
@@ -180,7 +187,7 @@ package body VCS_Utils is
       Status         : File_Status_List.List;
       VCS_Identifier : VCS_Access;
       Clear_Logs     : Boolean;
-      Up_To_Date     : VCS.File_Status)
+      Up_To_Date     : VCS_File_Status)
    is
       use type File_Status_List.List_Node;
       Iter : File_Status_List.List_Node := File_Status_List.First (Status);
@@ -201,7 +208,11 @@ package body VCS_Utils is
                begin
                   if Log /= No_File and then Is_Regular_File (Log) then
                      Delete (Log, Success);
-                     Close_File_Editors (Kernel, Log);
+                     Open_File_Action_Hook.Run
+                         (Kernel,
+                          File      => Log,
+                          Project   => No_Project,
+                          Line      => -1);  --  close all editors
                   end if;
 
                   Remove_File_From_Mapping (Kernel, File);

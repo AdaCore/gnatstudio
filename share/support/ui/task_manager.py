@@ -150,7 +150,6 @@ class Task_Manager_Widget():
 
 
 class Task_Manager(Module):
-
     """ A GPS module, providing a view that wraps around a task manager """
 
     view_title = "Task Manager"

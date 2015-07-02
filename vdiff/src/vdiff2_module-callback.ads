@@ -16,15 +16,19 @@
 ------------------------------------------------------------------------------
 
 with Glib.Object;          use Glib.Object;
-
 with Commands.Interactive; use Commands, Commands.Interactive;
+with Default_Preferences;  use Default_Preferences;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 
 package Vdiff2_Module.Callback is
 
-   function Diff_Hook
-     (Kernel : access Kernel_Handle_Record'Class;
-      Data   : access Hooks_Data'Class)
+   type On_Diff is new Diff_Hooks_Function with null record;
+   overriding function Execute
+     (Self   : On_Diff;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Vcs_File, Orig_File, New_File, Diff_File : Virtual_File;
+      Title  : String)
       return Boolean;
    --  Process, if possible, the data sent by the kernel
 
@@ -48,14 +52,18 @@ package Vdiff2_Module.Callback is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->VDiff->Merge Two Files...
 
-   procedure File_Closed_Cb
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data    : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   type On_File_Closed is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self    : On_File_Closed;
+      Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      File    : Virtual_File);
    --  Callback for the "file_closed" signal
 
-   procedure On_Preferences_Changed
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Data   : access GPS.Kernel.Hooks.Hooks_Data'Class);
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Pref   : Preference);
    --  Called when the preferences have changed
 
    type Change_Ref_File_Command is new Interactive_Command with null record;

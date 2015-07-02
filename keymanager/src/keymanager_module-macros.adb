@@ -43,7 +43,6 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 
 package body KeyManager_Module.Macros is
@@ -166,7 +165,10 @@ package body KeyManager_Module.Macros is
       Events : Event_Set_Access);
    --  Stop the current macro
 
-   procedure Stop_Macro_Hook_Cb (Kernel : access Kernel_Handle_Record'Class);
+   type On_Stop_Macro is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_Stop_Macro;
+       Kernel : not null access Kernel_Handle_Record'Class);
    --  Stop running current macro as a result of the "stop_macro_action_hook'
 
    type In_Macro_Filter is new Action_Filter_Record with null record;
@@ -510,17 +512,21 @@ package body KeyManager_Module.Macros is
       end if;
    end Stop_Macro;
 
-   ------------------------
-   -- Stop_Macro_Hook_Cb --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Stop_Macro_Hook_Cb (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+      (Self   : On_Stop_Macro;
+       Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
    begin
       if Keymanager_Macro_Module.Current_Macro /= null then
          Stop_Macro
            (Kernel_Handle (Kernel), Keymanager_Macro_Module.Current_Macro);
       end if;
-   end Stop_Macro_Hook_Cb;
+   end Execute;
 
    ----------------
    -- Play_Macro --
@@ -848,9 +854,7 @@ package body KeyManager_Module.Macros is
             Handler      => Macro_Command_Handler'Access);
       end if;
 
-      Add_Hook (Kernel, Stop_Macro_Action_Hook,
-                Wrapper (Stop_Macro_Hook_Cb'Access),
-                "do stop macro");
+      Stop_Macro_Action_Hook.Add (new On_Stop_Macro);
    end Register_Module;
 
 end KeyManager_Module.Macros;

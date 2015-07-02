@@ -41,8 +41,8 @@ with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Process;                use GVD.Process;
 with GVD.Source_Editor;          use GVD.Source_Editor;
-with GVD.Scripts;                use GVD.Scripts;
 with GVD.Types;                  use GVD.Types;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
 with GPS.Intl;                   use GPS.Intl;
 with Items;                      use Items;
@@ -497,17 +497,21 @@ package body Debugger is
             --  other debugger commands as a side effect.
             Bp_Changed := Breakpoints_Changed (Debugger, Current_Command);
 
-            case Command_Kind (Debugger, Current_Command) is
+            if Process /= null then  --  null in testsuite
+               case Command_Kind (Debugger, Current_Command) is
                when Load_Command =>
-                  Run_Debugger_Hook
-                    (Process, Debugger_Executable_Changed_Hook);
+                  Debugger_Executable_Changed_Hook.Run
+                     (Process.Kernel, Process);
                when Context_Command =>
-                  Run_Debugger_Hook (Process, Debugger_Context_Changed_Hook);
+                  Debugger_Context_Changed_Hook.Run
+                     (Process.Kernel, Process);
                when Execution_Command =>
-                  Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
+                  Debugger_Process_Stopped_Hook.Run
+                     (Process.Kernel, Process);
                when Misc_Command =>
                   null;
-            end case;
+               end case;
+            end if;
 
             Update_Breakpoints (Process, Force => Bp_Changed);
 
@@ -660,17 +664,21 @@ package body Debugger is
          if Mode /= Internal then
             --  Postprocessing (e.g handling of auto-update).
 
-            case Kind is
+            if Process /= null then  --  null in testsuite
+               case Kind is
                when Load_Command =>
-                  Run_Debugger_Hook
-                    (Process, Debugger_Executable_Changed_Hook);
+                  Debugger_Executable_Changed_Hook.Run
+                     (Process.Kernel, Process);
                when Context_Command =>
-                  Run_Debugger_Hook (Process, Debugger_Context_Changed_Hook);
+                  Debugger_Context_Changed_Hook.Run
+                     (Process.Kernel, Process);
                when Execution_Command =>
-                  Run_Debugger_Hook (Process, Debugger_Process_Stopped_Hook);
+                  Debugger_Process_Stopped_Hook.Run
+                     (Process.Kernel, Process);
                when Misc_Command =>
                   null;
-            end case;
+               end case;
+            end if;
 
             Update_Breakpoints (Process, Force => Bp_Changed);
          end if;
@@ -928,11 +936,14 @@ package body Debugger is
 
    procedure Set_Is_Started
      (Debugger   : access Debugger_Root;
-      Is_Started : Boolean) is
+      Is_Started : Boolean)
+   is
+      Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
    begin
       Debugger.Is_Started := Is_Started;
-      Run_Debugger_Hook
-        (GVD.Process.Convert (Debugger), Debugger_Process_Terminated_Hook);
+      if Process /= null then   --  null in testsuite
+         Debugger_Process_Terminated_Hook.Run (Process.Kernel, Process);
+      end if;
    end Set_Is_Started;
 
    ------------------
