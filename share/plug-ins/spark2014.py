@@ -1185,16 +1185,6 @@ class GNATprove_Parser(tool_output.OutputParser):
         if self.child:
             self.child.on_stdout(text + '\n', command)
 
-    def error_msg_from_json(self, msg):
-        """Given a JSON dict that contains the data for a message, print a
-        corresponding "compiler-like" message on the GPS Console"""
-
-        text = self.build_msg_full_text(msg['file'],
-                                        msg['line'],
-                                        msg['col'],
-                                        msg['message'])
-        return text
-
     def parse_trace_file(self, filename):
         """ parse the trace file as a list of "file:line" information and
             return the result
