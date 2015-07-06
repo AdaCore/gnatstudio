@@ -91,7 +91,7 @@ package body CodePeer.Backtrace_View is
    is
       View     : constant Backtrace_View :=
         Backtrace_View (Backtrace_Views.Retrieve_View (Kernel));
-      Found    : Boolean;
+      Found    : Boolean := False;
       Info     : BT.BT_Info_Seqs.Vector;
       Vn_Iter  : Gtk_Tree_Iter;
       Bt_Iter  : Gtk_Tree_Iter;
@@ -130,7 +130,7 @@ package body CodePeer.Backtrace_View is
          end if;
       end if;
 
-      if Set.Is_Empty or not Found then
+      if Set.Is_Empty or else not Found then
          View.Store.Append (Vn_Iter, Null_Iter);
          View.Store.Set (Vn_Iter, Text_Column, "<no backtrace info>");
 
