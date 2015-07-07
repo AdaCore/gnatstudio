@@ -488,6 +488,7 @@ package body Src_Editor_View is
 
    procedure Delete (View : access Source_View_Record) is
    begin
+      View.Area.Unref;
       View.Area := null;
 
       if View.Speed_Column_Buffer /= Null_Surface then
@@ -1460,6 +1461,7 @@ package body Src_Editor_View is
       View.Kernel  := Kernel_Handle (Kernel);
       View.Scroll  := Gtk_Scrolled_Window (Scroll);
       View.Area    := Area;
+      View.Area.Ref;
       View.Set_Project (Project);
 
       --  Force the policy of the vertical scrollbar to "always", so it can
