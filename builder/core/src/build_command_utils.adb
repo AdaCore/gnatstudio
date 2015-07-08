@@ -48,8 +48,10 @@ package body Build_Command_Utils is
    --  Character set to separate parser names in a list
 
    function To_Parser_List
-     (Parser_List : String) return String_List_Utils.String_List.List;
-   --  Convert string with parser_names to list of parser
+     (Parser_List : String;
+      Default     : String) return List;
+   --  Convert string with parser_names to list of parser.
+   --  Substitute [default] macro with Default text if found
 
    package Projects_Stack is new Generic_Stack (Project_Type);
 
@@ -1675,7 +1677,10 @@ package body Build_Command_Utils is
    -- To_Parser_List --
    --------------------
 
-   function To_Parser_List (Parser_List : String) return List is
+   function To_Parser_List
+     (Parser_List : String;
+      Default     : String) return List
+   is
       Macros : constant Natural := Index (Parser_List, Default_Macros);
       First  : Positive;
       Last   : Natural := 0;
@@ -1687,7 +1692,8 @@ package body Build_Command_Utils is
               (Parser_List,
                Low  => Macros,
                High => Macros + Default_Macros'Length - 1,
-               By   => Default_Parser_Names));
+               By   => Default),
+            Default);
       end if;
       loop
          exit when Last >= Parser_List'Last;
@@ -1704,10 +1710,12 @@ package body Build_Command_Utils is
    ----------------
 
    function Has_Parser
-     (Parser_List : String;
-      Parser_Name : String) return Boolean
+     (Parser_List   : String;
+      Parser_Name   : String;
+      Is_Run_Target : Boolean) return Boolean
    is
-      Parsers : List := To_Parser_List (Parser_List);
+      Parsers : List := To_Parser_List
+        (Parser_List, Default_Parser_Names (Is_Run_Target));
       Node    : List_Node := First (Parsers);
       Found   : Boolean := False;
    begin
@@ -1724,7 +1732,11 @@ package body Build_Command_Utils is
       return Found;
    end Has_Parser;
 
-   Default_Parsers : constant List := To_Parser_List (Default_Parser_Names);
+   Default_Parsers : constant array (Boolean) of List :=
+     (True  => To_Parser_List
+                 (Default_Parser_Names (Is_Run_Target => True), ""),
+      False => To_Parser_List
+                 (Default_Parser_Names (Is_Run_Target => False), ""));
 
    ----------------------
    -- New_Parser_Chain --
@@ -1732,25 +1744,26 @@ package body Build_Command_Utils is
 
    function New_Parser_Chain
      (Self        : access Builder_Context_Record;
-      Target_Name : String) return Tools_Output_Parser_Access
+      Target      : Target_Access) return Tools_Output_Parser_Access
    is
-      function Get_Parser_List (Target_Name : String) return List;
+      function Get_Parser_List (Target : Target_Access) return List;
       --  Return list of parser names for given target
 
       ---------------------
       -- Get_Parser_List --
       ---------------------
 
-      function Get_Parser_List (Target_Name : String) return List is
+      function Get_Parser_List (Target : Target_Access) return List is
+         Target_Name : constant String := Get_Name (Target);
       begin
          if Self.Target_Parsers.Contains (Target_Name) then
             return Self.Target_Parsers (Target_Name);
          else
-            return Default_Parsers;
+            return Default_Parsers (Is_Run (Target));
          end if;
       end Get_Parser_List;
 
-      Name_List : constant List := Get_Parser_List (Target_Name);
+      Name_List : constant List := Get_Parser_List (Target);
    begin
       return New_Parser_Chain (Name_List);
    end New_Parser_Chain;
@@ -1761,8 +1774,10 @@ package body Build_Command_Utils is
 
    procedure Set_Parsers
      (Self        : access Builder_Context_Record;
-      Target_Name : String;
-      Parser_List : String) is
+      Target      : Target_Access;
+      Parser_List : String)
+   is
+      Target_Name : constant String := Get_Name (Target);
    begin
       if Parser_List = "" then
          if Self.Target_Parsers.Contains (Target_Name) then
@@ -1770,7 +1785,10 @@ package body Build_Command_Utils is
          end if;
       else
          Self.Target_Parsers.Include
-           (Target_Name, To_Parser_List (Parser_List));
+           (Target_Name,
+            To_Parser_List
+              (Parser_List,
+               Default_Parser_Names (Is_Run (Target))));
       end if;
    end Set_Parsers;
 

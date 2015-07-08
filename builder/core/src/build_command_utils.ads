@@ -379,18 +379,19 @@ package Build_Command_Utils is
 
    function New_Parser_Chain
      (Self        : access Builder_Context_Record;
-      Target_Name : String) return Tools_Output_Parser_Access;
+      Target      : Target_Access) return Tools_Output_Parser_Access;
    --  Create new chain of Tools_Output_Parsers.
    --  Result should be deallocated after use
 
    function Has_Parser
-     (Parser_List : String;
-      Parser_Name : String) return Boolean;
+     (Parser_List   : String;
+      Parser_Name   : String;
+      Is_Run_Target : Boolean) return Boolean;
    --  Check if list of parser contains given parser
 
    procedure Set_Parsers
      (Self        : access Builder_Context_Record;
-      Target_Name : String;
+      Target      : Target_Access;
       Parser_List : String);
    --  Assign parser name list to given target
 

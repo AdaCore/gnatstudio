@@ -47,8 +47,7 @@ package body GPS.CLI_Target_Loaders is
          declare
             P : constant Target_Properties := Get_Properties (Target);
          begin
-            Builder.Set_Parsers
-              (Get_Name (Target), To_String (P.Output_Parsers));
+            Builder.Set_Parsers (Target, To_String (P.Output_Parsers));
          end;
 
       elsif Node.Tag.all = "target-model" then
